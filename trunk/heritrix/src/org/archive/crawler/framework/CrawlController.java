@@ -139,7 +139,7 @@ public class CrawlController extends Thread {
 	 * 
 	 * @param owner
 	 */
-	public void addListener(CrawlListener cl) {
+	public void addListener(CrawlStatusListener cl) {
 		if(registeredListeners == null) {
 			registeredListeners = new ArrayList();	
 		}
@@ -311,13 +311,12 @@ public class CrawlController extends Thread {
 							wait(200);
 						}
 						paused = true;
-						sExit = CrawlJob.STATUS_PAUSED;
 						
 						// Tell everyone that we have paused
 						logger.info("Crawl job paused");
 						Iterator it = registeredListeners.iterator();
 						while(it.hasNext()) {
-							((CrawlListener) it.next()).crawlPausing(sExit);
+							((CrawlStatusListener) it.next()).crawlPaused(CrawlJob.STATUS_PAUSED);
 						}
 						
 						wait();
@@ -326,15 +325,13 @@ public class CrawlController extends Thread {
 						e.printStackTrace();
 					}
 					paused = false;
-					sExit = CrawlJob.STATUS_RESUMED;
 					logger.info("Crawl job resumed");
 
 					// Tell everyone that we have resumed from pause
 					Iterator it = registeredListeners.iterator();
 					while(it.hasNext()) {
-						((CrawlListener) it.next()).crawlPausing(sExit);
+						((CrawlStatusListener) it.next()).crawlResuming(CrawlJob.STATUS_RUNNING);
 					}
-					sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
 				}
 			}
 		
@@ -356,7 +353,7 @@ public class CrawlController extends Thread {
 		while(registeredListeners.size()>0)
 		{
 			// Let the listeners know that the crawler is finished.
-			((CrawlListener)registeredListeners.get(0)).crawlEnding(sExit);
+			((CrawlStatusListener)registeredListeners.get(0)).crawlEnding(sExit);
 			registeredListeners.remove(0);
 		}
 
@@ -411,7 +408,7 @@ public class CrawlController extends Thread {
 		// Notify listeners that we are going to pause
 		Iterator it = registeredListeners.iterator();
 		while(it.hasNext()) {
-			((CrawlListener) it.next()).crawlPausing(sExit);
+			((CrawlStatusListener) it.next()).crawlPausing(sExit);
 		}
 	}
 	
@@ -427,7 +424,7 @@ public class CrawlController extends Thread {
 	 * Resume crawl from paused state
 	 */
 	public synchronized void resumeCrawl() {
-		if(!paused || !shouldPause) {
+		if(!paused ) {
 			// Can't resume if not been told to pause
 			return;
 		}

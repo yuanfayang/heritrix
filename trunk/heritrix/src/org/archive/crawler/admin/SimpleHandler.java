@@ -14,7 +14,7 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.CrawlJobHandler;
-import org.archive.crawler.framework.CrawlListener;
+import org.archive.crawler.framework.CrawlStatusListener;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 import org.w3c.dom.Node;
@@ -33,7 +33,7 @@ import org.w3c.dom.Node;
  * all page instances.
  */
 
-public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlListener
+public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStatusListener
 {
 	private String orderFile;			// Default order file (order.xml by default)
 	private CrawlOrder crawlOrder;		// Default CrawlOrder. (matches order.xml) 
@@ -243,7 +243,6 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		controller = new CrawlController(); //Create new controller.
 		controller.addListener(this);		//Register as listener to get job finished notice.
 
-		currentJob.setStatus(CrawlJob.STATUS_RUNNING);
 		
 		try {
 			controller.initialize(currentJob.getCrawlOrder());
@@ -254,7 +253,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 			e.printStackTrace();
 		}
 		controller.startCrawl();
-		currentJob.setStatus("Crawling");
+		currentJob.setStatus(CrawlJob.STATUS_RUNNING);
 		currentJob.setStatisticsTracker(getStatistics());
 		crawling = true;
 		statusMessage = CRAWLER_STARTED;
@@ -304,6 +303,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	
 	public void pauseJob() {
 		controller.pauseCrawl();
+		currentJob.setStatus(CrawlJob.STATUS_WAITING_FOR_PAUSE); //We'll do this pre-emptively so that the UI can be updated.
 	}
 	
 	public void resumeJob() {
@@ -455,7 +455,20 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
 	 */
 	public void crawlPausing(String statusMessage) {
-		// TODO Auto-generated method stub
-		
+		currentJob.setStatus(statusMessage);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
+	 */
+	public void crawlPaused(String statusMessage) {
+		currentJob.setStatus(statusMessage);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
+	 */
+	public void crawlResuming(String statusMessage) {
+		currentJob.setStatus(statusMessage);
 	}
 }
