@@ -277,12 +277,12 @@
 					}
 			%>
 					<tr <%=alt?"bgcolor=#EEEEFF":""%>>
-						<td>
+						<td nowrap>
 							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true">
                                 <%=org.archive.crawler.datamodel.CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
                             </a>&nbsp;
 						</td>
-						<td colspan="2">
+						<td colspan="2" nowrap>
                             <img src="/admin/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
 						</td>
 					</tr>
@@ -321,10 +321,10 @@
 						<td nowrap>
 							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=file.getKey()%>&grep=true"><%=file.getKey()%></a>&nbsp;&nbsp;
 						</td>
-						<td>
+						<td nowrap>
                             <img src="/admin/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;&nbsp;
 						</td>
-						<td align="right">
+						<td align="right" nowrap>
 						    <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerFileType((String)file.getKey()))%>
 						</td>
 					</tr>
@@ -357,13 +357,13 @@
 					Map.Entry host = (Map.Entry)hosts.next();
 			%>
 					<tr <%=alt?"bgcolor=#EEEEFF":""%>>
-						<td>
+						<td nowrap>
 							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=host.getKey()%>&grep=true"><%=host.getKey()%></a>&nbsp;
 						</td>
-						<td>
+						<td nowrap>
 							<%=((LongWrapper)host.getValue()).longValue%>
 						</td>
-						<td align="right">
+						<td align="right" nowrap>
 		                    <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)host.getKey()))%>
 						</td>
 					</tr>
