@@ -269,7 +269,7 @@ public class Frontier
      * 
      * @see org.archive.crawler.framework.CrawlController#kickUpdate()
      */
-    public synchronized void loadSeeds() {
+    public void loadSeeds() {
         // Get the seeds to refresh and then get an iterator inside a 
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
@@ -813,7 +813,9 @@ public class Frontier
         if (state == KeyedQueue.READY ) {
             // has become ready
             readyClassQueues.add(kq);
-            notify(); // wake a waiting thread
+            synchronized (this) {
+                notify(); // wake a waiting thread
+            }
             return;
         } 
         // otherwise, no need to change whatever state it's in

@@ -153,9 +153,9 @@ public class SeedList extends AbstractList {
      * ever after.  Callers that do not want caching should not call this 
      * method.
      */
-    public synchronized void refresh(File file) {
-        if (file != null) {
-            setSeedfile(file);
+    public void refresh(File file) {
+        if (file == null) {
+            throw new IllegalArgumentException("File is null");
         }
 
         // Get iterator before we check on whether cache exists.  Null cache 
@@ -164,24 +164,25 @@ public class SeedList extends AbstractList {
         Iterator i = iterator();
         if (this.cache == null) {
             this.cache = Collections.synchronizedList(new ArrayList());
-        } else {
-            this.cache.clear();
         }
         synchronized (this.cache) {
-            // 
-            if (this.cache == null) {
-                this.cache = Collections.synchronizedList(new ArrayList());
-            } else {
-                this.cache.clear();
-            }
+            this.cache.clear();
             while(i. hasNext()) {
                 this.cache.add(i.next());
             }
         }
     }
     
+    protected synchronized void createCache() {
+        if (this.cache == null) {
+            this.cache = Collections.synchronizedList(new ArrayList());
+        }
+    }
+    
     /**
      * Add a URI to the list of seeds. Includes adding the URI to the seed file.
+     * 
+     * Assumption is that the caller is worrying about synchronization.
      * 
      * @param newSeed The new seed to add.
      * @return True if we updated the seedlist.
@@ -194,14 +195,8 @@ public class SeedList extends AbstractList {
         }
         
         if (this.cache != null) {
-            synchronized(this.cache) {
-                // Recheck flag. May have changed since we came inside this 
-                // sync block.
-                if (this.cache != null) {
-                    this.cache.add(newSeed);
-                    result = true;
-                }
-            }
+            this.cache.add(newSeed);
+             result = true;
         }
 
         File f = getSeedfile();
