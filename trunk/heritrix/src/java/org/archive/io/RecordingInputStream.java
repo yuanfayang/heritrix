@@ -152,7 +152,8 @@ public class RecordingInputStream
     public long readFully() throws IOException {
         byte[] buf = new byte[4096];
         while(read(buf) != -1) {
-            // Empty out the stream.
+            // Empty out stream.
+            continue;
         }
         return this.recordingOutputStream.getSize();
     }
