@@ -190,8 +190,8 @@ public class DiskBackedQueueTest extends QueueTestBase {
         ObjectPlusFilesInputStream in = null;
         try {
             in = new ObjectPlusFilesInputStream(
-                        new FileInputStream(serFile));
-            in.pushAuxiliaryDirectory(storeDir);
+                        new FileInputStream(serFile),
+                        storeDir);
             queue = (Queue) in.readObject();
         } finally {
             in.close();
