@@ -376,4 +376,16 @@ public class CrawlScope extends Filter {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Take note of a situation (such as settings edit) where
+     * involved reconfiguration (such as reading from external
+     * files) may be necessary.
+     */
+    public void kickUpdate() {
+        // TODO:  evaluate whether refreshSeeds brings in too 
+        // much (eg if crawling from a million seeds)    
+        refreshSeeds();
+        excludeFilter.kickUpdate();
+    }
 }

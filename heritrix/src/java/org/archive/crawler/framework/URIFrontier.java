@@ -442,4 +442,10 @@ public interface URIFrontier {
      * @param u
      */
     public void considerIncluded(UURI u);
+
+    /**
+     * Notify Frontier that it should consider updating configuration
+     * info that may have changed in external files.
+     */
+    public void kickUpdate();
 }

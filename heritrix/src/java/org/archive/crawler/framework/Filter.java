@@ -166,4 +166,10 @@ public class Filter extends ModuleType {
         return input;
     }
 
+    /**
+     * 
+     */
+    public void kickUpdate() {
+        // by default, do nothing
+    }
 }
