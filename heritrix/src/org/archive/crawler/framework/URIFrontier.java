@@ -54,4 +54,23 @@ public interface URIFrontier {
 	 * @return
 	 */
 	long failedFetchCount();
+
+	/**
+	 * Put caUri into a queue of items to be scheduled 
+	 * later (that is, avoid synchronization overhead)
+	 * @param caUri
+	 */
+	void batchSchedule(CandidateURI caUri);
+
+	/**
+	 * @param caUri
+	 */
+	void batchScheduleHigh(CandidateURI caUri);
+	
+	/**
+	 * Force all batch-scheduled candidates to be 
+	 * actually scheduled. 
+	 * 
+	 */
+	void batchFlush();
 }
