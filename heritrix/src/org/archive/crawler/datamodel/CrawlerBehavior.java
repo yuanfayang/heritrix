@@ -36,7 +36,12 @@ public class CrawlerBehavior extends XMLConfig {
 	public int getMaxToes() {
 		return getIntAt("//limits/max-toe-threads/@value");
 	}
-
+	/**
+	 * @return
+	 */	
+	public int getMaxLinkDepth(){
+		return getIntAt("//limits/max-link-depth/@value");
+	}
 	/**
 	 * @return
 	 */
@@ -87,4 +92,18 @@ public class CrawlerBehavior extends XMLConfig {
 	}
 
 
+	/**
+	 * @param list
+	 */
+	public void clearSeeds() {
+		seeds = new ArrayList();
+	}
+
+	public void addSeed(String url){
+		try {
+			seeds.add( UURI.createUURI(url) );
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
+		}
+	}
 }
