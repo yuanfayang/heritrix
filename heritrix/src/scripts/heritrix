@@ -10,7 +10,7 @@
 ##                  make an educated guess based of position relative to this
 ##                  script.
 ##
-## JAVA_OPTS        Java runtime options.
+## JAVA_OPTS        Java runtime options.  Default setting is '-Xmx256m'.
 ##
 ## FOREGROUND       Set to any value -- e.g. 'true' -- if you want to run 
 ##                  heritrix in foreground (Used by build system when it runs
@@ -71,7 +71,7 @@ done
 # Make sure of java opts.
 if [ -z "$JAVA_OPTS" ]
 then
-  JAVA_OPTS=""
+  JAVA_OPTS=" -Xmx256m"
 fi
 
 # heritrix_dmesg.log contains startup output from the crawler main class. 

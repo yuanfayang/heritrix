@@ -25,6 +25,17 @@
         <boolean name="enabled">true</boolean>
         <boolean name="if-matches-return">true</boolean>
         <map name="filters">
+            <newObject name="pathdepth" 
+                    class="org.archive.crawler.filter.PathDepthFilter">
+                <boolean name="enabled">true</boolean>
+                <integer name="max-path-depth">20</integer>
+                <boolean name="path-less-or-equal-return">false</boolean>
+            </newObject>
+            <newObject name="pathologicalpath" 
+                    class="org.archive.crawler.filter.PathologicalPathFilter">
+                <boolean name="enabled">true</boolean>
+                <integer name="repetitions">3</integer>
+            </newObject>
         </map>
       </newObject>
       <newObject name="additionalScopeFocus" class="org.archive.crawler.filter.FilePatternFilter">
@@ -66,7 +77,7 @@
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
-        <boolean name="recheck-scope">false</boolean>
+        <boolean name="recheck-scope">true</boolean>
         <boolean name="block-all">false</boolean>
         <string name="block-by-regexp"></string>
       </newObject>
@@ -107,7 +118,19 @@
         <map name="filters">
         </map>
       </newObject>
+      <newObject name="ExtractorCSS" 
+            class="org.archive.crawler.extractor.ExtractorCSS">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
       <newObject name="ExtractorJS" class="org.archive.crawler.extractor.ExtractorJS">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+      <newObject name="ExtractorSWF"    
+            class="org.archive.crawler.extractor.ExtractorSWF">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
