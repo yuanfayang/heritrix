@@ -17,6 +17,7 @@
 	 *           3 - Logs
 	 *           4 - Reports
 	 *           5 - About
+	 *           6 - Help
 	 *
 	 * SimpleHandler handler - In general this is provided by the include
 	 *                         page 'handler.jsp' which should be included
@@ -166,6 +167,10 @@
 							<td class="tab_seperator">&nbsp;</td>
 							<td class="tab<%=tab==5?"_selected":""%>">
 								<a href="/admin/about.jsp" class="tab_text<%=tab==5?"_selected":""%>">About</a>
+							</td>
+							<td class="tab_seperator">&nbsp;</td>
+							<td class="tab<%=tab==6?"_selected":""%>">
+								<a href="/admin/help.jsp" class="tab_text<%=tab==6?"_selected":""%>">Help</a>
 							</td>
 							<td width="100%">
 							</td>
