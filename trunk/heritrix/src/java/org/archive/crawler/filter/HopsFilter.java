@@ -31,6 +31,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.scope.ClassicScope;
 
 /**
  * Accepts (returns  for)) for all CandidateURIs passed in
@@ -78,11 +79,11 @@ public class HopsFilter extends Filter {
             try {
                 maxLinkHops =
                     ((Integer) scope
-                        .getAttribute(CrawlScope.ATTR_MAX_LINK_HOPS, curi))
+                        .getAttribute(ClassicScope.ATTR_MAX_LINK_HOPS, curi))
                         .intValue();
                 maxTransHops =
                     ((Integer) scope
-                        .getAttribute(CrawlScope.ATTR_MAX_TRANS_HOPS, curi))
+                        .getAttribute(ClassicScope.ATTR_MAX_TRANS_HOPS, curi))
                         .intValue();
             } catch (AttributeNotFoundException e) {
                 logger.severe(e.getMessage());

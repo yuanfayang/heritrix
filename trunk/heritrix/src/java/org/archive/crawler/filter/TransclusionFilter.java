@@ -28,6 +28,7 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.scope.ClassicScope;
 import org.archive.crawler.settings.SimpleType;
 
 /**
@@ -162,7 +163,7 @@ public class TransclusionFilter extends Filter {
         try {
             CrawlScope scope =
                 (CrawlScope) globalSettings().getModule(CrawlScope.ATTR_NAME);
-            this.maxTransHops = ((Integer) scope.getAttribute(o, CrawlScope.ATTR_MAX_TRANS_HOPS)).intValue();
+            this.maxTransHops = ((Integer) scope.getAttribute(o, ClassicScope.ATTR_MAX_TRANS_HOPS)).intValue();
             this.maxSpeculativeHops = ((Integer) getAttribute(o, ATTR_MAX_SPECULATIVE_HOPS)).intValue();
             this.maxReferralHops = ((Integer) getAttribute(o, ATTR_MAX_REFERRAL_HOPS)).intValue();
             this.maxEmbedHops = ((Integer) getAttribute(o, ATTR_MAX_EMBED_HOPS)).intValue();

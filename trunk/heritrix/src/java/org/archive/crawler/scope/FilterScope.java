@@ -63,7 +63,7 @@ import org.archive.crawler.framework.Filter;
  * @author gojomo
  *
  */
-public class FilterScope extends CrawlScope {
+public class FilterScope extends ClassicScope {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.FilterScope");
     public static final String ATTR_FOCUS_FILTER = "focusFilter";

@@ -48,7 +48,7 @@ import org.archive.crawler.framework.CrawlScope;
  * @author gojomo
  *
  */
-public class BroadScope extends CrawlScope {
+public class BroadScope extends ClassicScope {
 
     /**
      * Constructor.

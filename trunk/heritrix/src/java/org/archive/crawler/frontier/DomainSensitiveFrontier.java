@@ -32,7 +32,7 @@ import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.filter.URIRegExpFilter;
-import org.archive.crawler.framework.CrawlScope;
+import org.archive.crawler.scope.ClassicScope;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -122,7 +122,7 @@ public class DomainSensitiveFrontier extends HostQueuesFrontier {
                 }
                 // Adding an exclude filter for this host
                 OrFilter or = (OrFilter) controller.getScope().getAttribute(
-                        CrawlScope.ATTR_EXCLUDE_FILTER);
+                        ClassicScope.ATTR_EXCLUDE_FILTER);
                 String filter = "^((https?://)?[a-zA-Z0-9\\.]*)" + host
                         + "($|/.*)";
                 logger.fine("** Adding filter: [" + filter + "] **");
