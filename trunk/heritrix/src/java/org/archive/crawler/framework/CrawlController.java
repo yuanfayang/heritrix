@@ -47,7 +47,6 @@ import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
-import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -457,21 +456,7 @@ public class CrawlController extends Thread {
         String diskPath
               = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
 
-        if (!diskPath.endsWith(File.separator)) {
-            diskPath = diskPath + File.separator;
-        }
-        disk = new File(diskPath);
-        // If 'disk' path is not absolute, create 'disk' directory
-        // relative to the path of the order file
-        if (!disk.isAbsolute()) {
-            disk =
-                new File(
-                    ArchiveUtils.getFilePath(
-                        ((XMLSettingsHandler) settingsHandler)
-                            .getOrderFile()
-                            .getAbsolutePath())
-                        + disk.toString());
-        }
+        disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
         disk.mkdirs();
         scratchDisk = new File(disk.getPath(), "scratch");
         scratchDisk.mkdirs();

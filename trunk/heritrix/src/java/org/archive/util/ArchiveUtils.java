@@ -204,43 +204,6 @@ public class ArchiveUtils {
     	return sb.toString();
     }
 
-    /**
-     * Example: On Windows machine file test/test.txt is converted to test\test.txt
-     * @param aFileName
-     * @return Retruns a file name apropriate for the system
-     */
-    public static String systemFileName(String aFileName){
-    	return (aFileName != null ? (new File(aFileName)).getPath() : "null");
-    }
-
-    /**
-     * @param aFileName Filename to get a file path for.
-     * @return Returns a file's path.
-     */
-    public static String getFilePath(String aFileName){
-    	String tmpFileName = systemFileName(aFileName);
-    	int pathEnd = tmpFileName.lastIndexOf(File.separatorChar);
-    	if(pathEnd >=0 ){
-    		return tmpFileName.substring(0, pathEnd+1);
-    	}else{
-    		return "." + File.separator;
-    	}
-    }
-
-    /**
-     * Tests if a file's path is absolute.
-     *
-     * @param aFileName the filename to check
-     * @return <code>true</code> if it is an absolute file
-     */
-    public static boolean isFilePathAbsolute(String aFileName){
-        // deal with null argument to avoid npe
-        if(aFileName == null) {
-            return false;
-        }
-    	return (new File(aFileName)).isAbsolute();
-     }
-
     /** check that two byte arrays are equal.  They may be <code>null</code>.
      *
      * @param lhs a byte array

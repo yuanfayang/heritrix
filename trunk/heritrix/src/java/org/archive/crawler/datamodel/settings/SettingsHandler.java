@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -461,7 +462,7 @@ public abstract class SettingsHandler {
      * @return The same path modified so that it is relative to the file level
      *         location that is considered the working directory for these settings.
      */
-    public abstract String getPathRelativeToWorkingDirectory(String path);
+    public abstract File getPathRelativeToWorkingDirectory(String path);
 
     /**
      * Will return an array of strings with domains that contain 'per' domain

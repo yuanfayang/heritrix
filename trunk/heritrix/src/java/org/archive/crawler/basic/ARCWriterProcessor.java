@@ -118,7 +118,7 @@ public class ARCWriterProcessor
     /**
      * Where to drop ARC files.
      */
-    private String outputDir = "";
+    private File outputDir;
 
     /**
      * Maximum active elements in the ARCWriterPool.
@@ -154,7 +154,7 @@ public class ARCWriterProcessor
                 "Max size of arc file",
                 new Integer(arcMaxSize)));
         addElementToDefinition(
-            new SimpleType(ATTR_PATH, "Where to store arc files", outputDir));
+            new SimpleType(ATTR_PATH, "Where to store arc files", ""));
         addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
             "Maximum active ARC writers in pool",
             new Integer(poolMaximumActive)));
@@ -184,7 +184,7 @@ public class ARCWriterProcessor
                 // Set up the pool of ARCWriters.
                 this.pool =
                     new ARCWriterPool(
-                        new File(outputDir),
+                        outputDir,
                         this.arcPrefix,
                         this.useCompression,
                         poolMaximumActive,
@@ -333,7 +333,7 @@ public class ARCWriterProcessor
             return arcPrefix;
     }
 
-    public String getOutputDir() {
+    public File getOutputDir() {
         return outputDir;
     }
 
@@ -354,22 +354,19 @@ public class ARCWriterProcessor
     }
 
     public void setOutputDir(String buffer) {
-        // make sure it's got a trailing file.separator so the
-        // dir is not treated as a file prefix
-        if ((buffer.length() > 0) && !buffer.endsWith(File.separator)) {
-            buffer = new String(buffer + File.separator);
+        outputDir = new File(buffer);
+        if (!outputDir.isAbsolute()) {
+            // OutputDir should be relative to "disk"
+            outputDir = new File(getController().getDisk(), buffer);
         }
 
-        File newDir = new File(getController().getDisk(), buffer);
-
-        if (!newDir.exists()) {
+        if (!outputDir.exists()) {
             try {
-                newDir.mkdirs();
+                outputDir.mkdirs();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        outputDir = newDir.getAbsolutePath()+ File.separatorChar;
     }
 
     /**
