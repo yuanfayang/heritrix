@@ -1,4 +1,8 @@
-/* Copyright (C) 2003 Internet Archive.
+/* CrawlJobHandler
+ * 
+ * $Id$
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -110,10 +114,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Default order file name.
      */
     public static final String DEFAULT_ORDER_FILE = "order.xml";
-    /**
-     * Default CrawlOrder.
-     */
-    private CrawlOrder crawlOrder = null;
 
     /**
      * Job currently being crawled.
@@ -531,9 +531,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                                        String filename,
                                        String seedfile) 
                                        throws FatalConfigurationException{
-        XMLSettingsHandler profileSettingsHandler;
         XMLSettingsHandler newHandler;
-        CrawlJob tmpJob = null; 
 
         try {
             newHandler = new XMLSettingsHandler(baseOn.getSettingsHandler().getOrderFile());
@@ -542,9 +540,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
             throw new FatalConfigurationException("InvalidAttributeValueException occured while creating new settings handler for new job/profile\n" + e2.getMessage());
         }
 
-        // Get a UID.
-        String newUID = getNextJobUID();
-        
         // Create filenames etc.
         File newSettingsDir = new File(path);
         newSettingsDir.mkdirs();

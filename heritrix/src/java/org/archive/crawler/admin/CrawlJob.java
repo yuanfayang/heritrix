@@ -86,7 +86,6 @@ public class CrawlJob
     private boolean isRunning = false;
     private StatisticsTracking stats;
     private int priority;
-    private int orderVersion;
     
     private String errorMessage = null;
     
