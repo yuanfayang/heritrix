@@ -26,6 +26,7 @@ package org.archive.crawler.scope;
 import java.io.File;
 import java.util.logging.Logger;
 
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 
 /**
@@ -73,9 +74,9 @@ public class BroadScope extends CrawlScope {
      * @param l Logger to use internally.
      * @param caching True if seed list created is to cache seeds.
      */
-    protected synchronized void createSeedlist(File seedfile, Logger l,
+    protected synchronized void createSeedlist(File seedfile, CrawlController c,
             boolean caching) {
-        super.createSeedlist(seedfile, l, false);
+        super.createSeedlist(seedfile, c, false);
     }
 
     /**
