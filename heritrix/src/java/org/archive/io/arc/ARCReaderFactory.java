@@ -192,7 +192,7 @@ public class ARCReaderFactory implements ARCConstants {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = getInputStream(arcfile);
-            initialize();
+            initialize(arcFile);
         }
     }
     
@@ -204,14 +204,14 @@ public class ARCReaderFactory implements ARCConstants {
 
         /**
          * Constructor.
-         * @param arcfile Compressed arcfile to read.
+         * @param arcFile Compressed arcfile to read.
          * @throws IOException
          */
-        public CompressedARCReader(File arcfile) throws IOException {
+        public CompressedARCReader(File arcFile) throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
-            this.in = new GzippedInputStream(getInputStream(arcfile));
-            initialize();
+            this.in = new GzippedInputStream(getInputStream(arcFile));
+            initialize(arcFile);
         }
         
         /**

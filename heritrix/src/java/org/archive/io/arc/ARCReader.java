@@ -125,12 +125,20 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     private ArrayList headerFieldNameKeys = null;
     
+    
+    /**
+     * The file this arcreader is going against.
+     */
+    protected File arcFile = null;
+    
 
     /**
      * Convenience method used by subclass constructors.
+     * @param arcFile ARC that this reader goes against.
      * @throws IOException
      */
-    protected void initialize() throws IOException {
+    protected void initialize(File arcFile) throws IOException {
+        this.arcFile = arcFile;
         // Read in the first record so headerFieldNameKeys gets populated.
         // Always do it even if we're creating ARCReader just to do a get
         // to get a record at any old offset.
@@ -358,7 +366,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     private int getTokenizedHeaderLine(final InputStream stream,
             List list) throws IOException {
-        StringBuffer buffer = new StringBuffer();
+        // Preallocate max with some padding.
+        StringBuffer buffer = new StringBuffer(MAX_HEADER_LINE_LENGTH + 20);
         int read = 0;
         for (int c = -1; true;) {
             c = stream.read() & 0xff;
@@ -429,7 +438,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         headerFields.put(VERSION_HEADER_FIELD_KEY, version);
         headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
-        return new ARCRecordMetaData(headerFields);
+        return new ARCRecordMetaData(this.arcFile, headerFields);
     }
 
     /**
@@ -567,13 +576,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     protected static void index(File f) throws IOException {
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
-        ARCRecord headRecord = arc.getCurrentRecord();
-        String url = headRecord.getMetaData().getUrl();
-        if (!url.startsWith(ARCConstants.ARC_MAGIC_NUMBER)) {
-            throw new IOException("Unexpected arc header.");
-        }
-        String arcFileName = url.
-        substring(ARCConstants.ARC_MAGIC_NUMBER.length());
+        ARCRecord headerRecord = arc.getCurrentRecord();
+        String arcFileName = headerRecord.getMetaData().getArcFile().getName();
         if (arcFileName.endsWith("." + COMPRESSED_FILE_EXTENSION)) {
             int stripLen = COMPRESSED_FILE_EXTENSION.length() + 1;
             arcFileName = arcFileName.substring(0,
