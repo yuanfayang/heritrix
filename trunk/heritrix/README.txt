@@ -13,6 +13,8 @@ I.  Before You Begin
 II. Getting Started
   a. Fetching from CVS
   b. Building
+  c. Building CVS by Tag
+  d. Meta-data
   
 III.  Configuration Files
   a. Configuration File Manifest
@@ -113,6 +115,33 @@ are serveral options not discussed here that may be very useful.  Specifically,
 once you set up authenticated CVS, you may find the 'nightlybuild' target
 useful.
 
+c.  Building Releases from CVS by Tag
+
+CVS allows us to keep track of which files, in what state, went into each
+build/version that is released.  If you wish to build a specific version or build,
+for example to test the behavior of an old build, you may do so by specifying
+a build target of 'build-by-tag' and passing the build/versions' cvs tag as
+an additional argument.
+
+To determine a particular build's tag refer to the file build.metadata within the
+crawler's root directory.  All official releases should contain a tag that is in the
+form vX_Y for major/minor version releases, where X is the major version 
+number and Y is the minor version number, and bX for regularly occuring
+builds, where X is an integer (e.g. b1025).
+
+d. Meta-data
+
+As mentioned in 'Building Releases from CVS by Tag' ant builds of Heritrix
+include a file called 'build.metadata' that contains some useful information 
+pertaining to the who/what/when/wheres of the build process.
+
+If you experience execution problems and the build environment differs 
+significantly from your own you may need to rebuild.  If you experience
+a problem that is solved in this way (they should be few and far between)
+PLEASE REPORT IT.
+
+Additionally, some of this information should be included whenever 
+submitting a bug report, where pertinent.
 
 III. Configuration
 
