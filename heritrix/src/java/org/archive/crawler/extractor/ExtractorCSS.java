@@ -27,18 +27,14 @@
 package org.archive.crawler.extractor;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-import org.archive.extractor.ExtractErrorListener;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
