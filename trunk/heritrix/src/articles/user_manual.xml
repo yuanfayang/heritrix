@@ -1116,7 +1116,7 @@
         FetchHTTP log level to fine</para>
 
         <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
-org.archive.crawler.basic.PreconditionEnforcer.level = FINE</programlisting></para>
+org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting></para>
 
         <para>This is done by editing the
         <filename>heritrix.properties</filename> file under the

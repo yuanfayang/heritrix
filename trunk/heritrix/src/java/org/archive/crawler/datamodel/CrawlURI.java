@@ -116,7 +116,7 @@ public class CrawlURI extends CandidateURI
     
     /**
      * True if this CrawlURI has been deemed a prerequisite by the
-     * {@link org.archive.crawler.basic.PreconditionEnforcer}.
+     * {@link org.archive.crawler.prefetch.PreconditionEnforcer}.
      * 
      * This flag is used at least inside in the precondition enforcer so that
      * subsequent prerequisite tests know to let this CrawlURI through because
