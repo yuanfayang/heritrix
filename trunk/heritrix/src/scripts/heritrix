@@ -114,7 +114,7 @@ then
 fi
 sed -e "s/@PASSWORD@/${JMX_PASSWORD}/" \
     "${HERITRIX_HOME}/conf/jmxremote.password.template" > "${JMX_PWORD_FILE}"
-chmod 400 "${JMX_PWORD_FILE}"
+chmod 600 "${JMX_PWORD_FILE}"
 
 # Main heritrix class.
 if [ -z "$CLASS_MAIN" ]
