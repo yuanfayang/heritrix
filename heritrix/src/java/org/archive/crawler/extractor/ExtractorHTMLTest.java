@@ -24,6 +24,7 @@ package org.archive.crawler.extractor;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,16 +83,7 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
             fos.flush();
             fos.close();
         }
-        // Record the download for later playback by the extractor.
-        this.recorder = new HttpRecorder(getTmpDir(), this.ARCHIVE_DOT_ORG);
-        InputStream is = this.recorder.inputWrap(new BufferedInputStream(
-            url.openStream()));
-        final int BUFFER_SIZE = 1024 * 4;
-        byte [] buffer = new byte[BUFFER_SIZE];
-        for (int read = -1; (read = is.read(buffer)) != -1;) {
-            // Just read it all down.
-        }
-        is.close();
+        this.recorder = setupRecorder(url, this.ARCHIVE_DOT_ORG);
     }
 
     /*
@@ -105,14 +97,7 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
         extractor.earlyInitialize(this.globalSettings);
         UURI uuri = new UURI("http://" + this.ARCHIVE_DOT_ORG);
-        CrawlURI curi = new CrawlURI(uuri);
-        curi.setContentSize(this.recorder.getRecordedInput().getSize());
-        curi.setContentType("text/html");
-        curi.setFetchStatus(200);
-        curi.setHttpRecorder(this.recorder);
-        // Fake out the extractor that this is a HTTP transaction.
-        curi.getAList().putObject(CoreAttributeConstants.A_HTTP_TRANSACTION,
-            new Object());
+        CrawlURI curi = setupCrawlURI(this.recorder, uuri.toString());
         extractor.innerProcess(curi);
         Set links = (Set)curi.getAList().
             getObject(CoreAttributeConstants.A_HTML_LINKS);
@@ -126,9 +111,74 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
         }
         assertTrue("Did not find gif url", foundLinkToHewlettFoundation);
     }
+    
+	/**
+	 * Record the download for later playback by the extractor.
+	 * @param url URL to record.
+	 * @param basename of what we're recording.
+	 * @throws IOException
+	 * @return An httprecorder.
+	 */
+    private HttpRecorder setupRecorder(URL url, String basename)
+    		throws IOException {
+        HttpRecorder rec = new HttpRecorder(getTmpDir(), basename);
+        InputStream is = rec.inputWrap(new BufferedInputStream(
+            url.openStream()));
+        final int BUFFER_SIZE = 1024 * 4;
+        byte [] buffer = new byte[BUFFER_SIZE];
+        for (int read = -1; (read = is.read(buffer)) != -1;) {
+            // Just read it all down.
+        }
+        is.close();
+        return rec;
+    }
+    
+    private CrawlURI setupCrawlURI(HttpRecorder rec, String url)
+    		throws URIException {
+        CrawlURI curi = new CrawlURI(new UURI(url));
+        curi.setContentSize(this.recorder.getRecordedInput().getSize());
+        curi.setContentType("text/html");
+        curi.setFetchStatus(200);
+        curi.setHttpRecorder(rec);
+        // Fake out the extractor that this is a HTTP transaction.
+        curi.getAList().putObject(CoreAttributeConstants.A_HTTP_TRANSACTION,
+            new Object());
+        return curi;
+    }
+    
+//    /**
+//     * Use this method to parse a page you've downloaded to the junit
+//     * tmp dir.
+//     * 
+//     * Its commented out usually.  Comment it in when you want to
+//     * try a page.  Name the page for this class.
+//     * 
+//     * @throws IOException
+//     */
+//    public void testParseOfLocalPage() throws IOException {        
+//        ExtractorHTML extractor = new ExtractorHTML("html extractor");
+//        extractor.earlyInitialize(this.globalSettings);
+//        final String BASENAME = this.getClass().getName();
+//        File f = new File(getTmpDir(), BASENAME + ".html");
+//        if (!f.exists()) {
+//            throw new FileNotFoundException(f.getAbsolutePath());
+//        }
+//        final UURI baseUURI = new UURI("file://" + f.getAbsolutePath());
+//        URL url = new URL(baseUURI.toString());
+//        this.recorder = setupRecorder(url, BASENAME);
+//        CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
+//        extractor.innerProcess(curi);
+//        Set links = (Set)curi.getAList().
+//            getObject(CoreAttributeConstants.A_HTML_LINKS);
+//        UURI tmp = null;
+//        int size = links.size();
+//        for (Iterator i = links.iterator(); i.hasNext();) {
+//            tmp = new UURI(baseUURI, (String)i.next());
+//        }
+//    }
 
     /**
-     * Test a paritculate <embed src=...> construct that was suspicious in
+     * Test a particular <embed src=...> construct that was suspicious in
      * the No10GovUk crawl.
      *
      * @throws URIException
@@ -140,5 +190,27 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
         CharSequence cs = "<embed src=\"/documents/prem/18/1/graphics/qtvr/hall.mov\" width=\"320\" height=\"212\" controller=\"true\" CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/quicktime/download/\" /> ";
         extractor.extract(curi,cs);
         assertTrue(((Collection)curi.getAList().getObject(A_HTML_EMBEDS)).contains("/documents/prem/18/1/graphics/qtvr/hall.mov"));
+    }
+    
+    /**
+     * Test a whitespace issue found in href.
+     * 
+     * See [ 963965 ] Either UURI or ExtractHTML should strip whitespace better.
+     * https://sourceforge.net/tracker/?func=detail&atid=539099&aid=963965&group_id=73833
+     *
+     * @throws URIException
+     */
+    public void testHrefWhitespace() throws URIException {
+        ExtractorHTML extractor = new ExtractorHTML("html extractor");
+        CrawlURI curi = new CrawlURI(new UURI("http://www.carsound.dk"));
+        CharSequence cs = "<a href=\"http://www.carsound.dk\n\n\n" +
+        	"\"\ntarget=\"_blank\">C.A.R. Sound\n\n\n\n</a>";   
+        extractor.extract(curi,cs);
+        Collection c = (Collection)curi.getAList().getObject(A_HTML_LINKS);
+        for (Iterator i = c.iterator(); i.hasNext();) {
+            UURI uuri = new UURI((String)i.next());
+            assertTrue("Not stripping new lines",
+                uuri.toString().equals("http://www.carsound.dk/"));
+        }
     }
 }
