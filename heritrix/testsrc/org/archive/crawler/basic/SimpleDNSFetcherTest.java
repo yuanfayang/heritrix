@@ -88,7 +88,7 @@ public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConst
 		Record[] rrSet = (Record[])curiBasic.getAList().getObject(A_RRECORD_SET_LABEL);
 		
 		long expireTime = host.getIpExpires();
-		long timestamp = curiBasic.getAList().getLong(A_DNS_FETCH_TIME);
+		long timestamp = curiBasic.getAList().getLong(A_FETCH_BEGAN_TIME);
 		
 		// we should have at least one record
 		assertTrue(rrSet.length > 0);

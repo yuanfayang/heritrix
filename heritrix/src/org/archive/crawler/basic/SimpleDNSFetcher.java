@@ -67,12 +67,22 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 		}
 		
 		String DnsName = parseTargetDomain(curi);	
-		CrawlHost targetHost = controller.getHostCache().getHostFor(DnsName);
 		
-		if(targetHost.hasBeenLookedUp()){
-			return;			
+		CrawlHost targetHost = null;
+		if(controller != null && controller.getHostCache() != null){
+
+			targetHost = controller.getHostCache().getHostFor(DnsName);
+		
+			if(targetHost.hasBeenLookedUp()){
+				return;			
+			}
+		
+		// standalone operation (operating without the controller/cache)
+		}else{
+			targetHost = new CrawlHost(DnsName);
+			curi.setHost(targetHost);
 		}
-		
+			
 		// give it a go    
 		curi.incrementFetchAttempts();
 
