@@ -60,8 +60,12 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
         this.receiver = r;
     }
 
-    public synchronized void add(HasUri obj) {
-        if(fpset.add(getFp(obj))) {
+    public void add(HasUri obj) {
+        boolean passOn = false;
+        synchronized(this) {
+            passOn = fpset.add(getFp(obj));
+        }
+        if(passOn) {
             this.receiver.receive(obj);
         }
     }
@@ -74,17 +78,21 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
         add(obj);
     }
 
-    public synchronized void addForce(HasUri obj) {
-        fpset.add(getFp(obj));
+    public void addForce(HasUri obj) {
+        synchronized(this) {
+            fpset.add(getFp(obj));
+        }
         this.receiver.receive(obj);
     }
 
-    public synchronized void note(HasUri hu) {
+    public void note(HasUri hu) {
         fpset.add(getFp(hu));        
     }
     
-    public synchronized void forget(HasUri hu) {
-        fpset.remove(getFp(hu));        
+    public void forget(HasUri hu) {
+        synchronized(this) {
+            fpset.remove(getFp(hu));        
+        }
     }
 
     public long flush() {
