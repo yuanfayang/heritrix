@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
+import org.archive.util.SURT;
 import org.archive.util.TextUtils;
 
 
@@ -228,6 +229,11 @@ public class UURI extends URI {
      * total elapsed time in URI class.
      */
     private String cachedString = null;
+
+    /**
+     * Cache of this uuri in SURT format
+     */
+    private String surtForm = null;
 
 
     /**
@@ -607,4 +613,18 @@ public class UURI extends URI {
         }
         return this.cachedHost;
     }
+
+    /**
+     * Return the 'SURT' format of this UURI
+     * 
+     * @return
+     * @throws URIException
+     */
+    public String getSurtForm() {
+        if (surtForm == null) {
+            surtForm = SURT.transform(this.toString());
+        }
+        return surtForm;
+    }
+
 }
