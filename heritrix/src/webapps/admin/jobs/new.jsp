@@ -65,6 +65,7 @@
 		<form name="frmNew" method="post" action="new.jsp">
 			<input type="hidden" name="action" value="new">
 			<input type="hidden" name="profile" value="<%=isProfile%>">
+			<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 			<b>
 				Create new 
 			<% 	if(isProfile){ %>
