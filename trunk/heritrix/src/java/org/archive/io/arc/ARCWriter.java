@@ -187,7 +187,7 @@ public class ARCWriter implements ARCConstants {
         this.out = out;
         this.arcFile = arc;
         a14DigitDate = (a14DigitDate == null)?
-            ArchiveUtils.get14DigitDate():a14DigitDate;
+            ArchiveUtils.get14DigitDate(): a14DigitDate;
         this.out.write(generateARCFileMetaData(a14DigitDate));
     }
     
