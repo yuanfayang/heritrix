@@ -25,7 +25,7 @@
 	CrawlOrder crawlOrder = handler.getDefaultCrawlOrder(); //We'll use the default crawl order if we have no other choice
 	if(request.getParameter("job") != null && request.getParameter("job").length() > 0){
 		//Get logs for specific job. This assumes that the logs for each job are stored in a unique location.
-		crawlOrder = handler.getJob(request.getParameter("job"));
+		crawlOrder = handler.getJob(request.getParameter("job")).getCrawlOrder();
 	}else{
 		if(handler.getCurrentJob() != null){
 			// Use current job settings rather then default
