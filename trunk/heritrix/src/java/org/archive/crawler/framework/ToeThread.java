@@ -207,37 +207,38 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
         if(currentCuri!=null)
         {
             rep.append(currentCuri.getURIString());
-            rep.append(" ("+currentCuri.getFetchAttempts()+" attempts)\n");
+            rep.append(" ("+currentCuri.getFetchAttempts()+" attempts)");
+            rep.append(" "+currentCuri.getPathFromSeed());
         }
         else
         {
-            rep.append("[no CrawlURI]\n");
+            rep.append("[no CrawlURI]");
         }
-
-		long now = System.currentTimeMillis();
         
-		if(lastFinishTime > lastStartTime)
+        rep.newline();
+        rep.padTo(8);
+    
+		long now = System.currentTimeMillis();
+        long time = 0;
+		
+        if(lastFinishTime > lastStartTime)
 		{
-//            if(isAvailable()==false){
-//                rep.append("     ERROR THIS THREAD SHOULD BE AVAILIBLE!!!!!");
-//                rep.append("       currentCuri: "+currentCuri.getURIString()+"\n");
-//            }
 			// That means we finished something after we last started something
 			// or in other words we are not working on anything.
-			rep.append("     WAITING for ");
+			rep.append("WAITING for ");
 
-			long time = now-lastFinishTime;
-            appendTime(rep, time);
+			time = now-lastFinishTime;
 		}
 		else if(lastStartTime > 0)
 		{
 			// We are working on something
-			rep.append("     ACTIVE  for ");
+			rep.append("ACTIVE  for ");
 
-			long time = now-lastStartTime;
-            appendTime(rep,time);
+			time = now-lastStartTime;
 		}
-		
+        appendTime(rep, time);
+		rep.newline();
+        
 		return rep.toString();		
 	}
 
