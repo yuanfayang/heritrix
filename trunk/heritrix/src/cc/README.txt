@@ -109,9 +109,10 @@ a sample:
     maven.repo.local=/0/cruisecontrol/maven_repository
     version.build.timestamp=200404261658
 
-This file is updated by the continuous build as it runs.  It has the name
-of the user who's key is up at sourceforge and it has location of the 
-maven repository.
+This file is updated by the continuous build as it runs.  It has the name of
+the user who's key is up at sourceforge and it has location of the maven
+repository.  When done, there should be a file named 
+$CCBUILDDIR/checkout/ArchiveOpenCrawler/build.properties.
 
 + Now set up the continuous build webserver. See item 6, "Building the web app",
 on this page: http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl.
