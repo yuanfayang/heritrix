@@ -559,7 +559,7 @@ public class Heritrix
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
         List webapps = Arrays.asList(
-            new String [] {SimpleHttpServer.getRootWebappName(),SELFTEST});
+            new String [] {SimpleHttpServer.getRootWebappName(), SELFTEST});
         Heritrix.httpServer = new SimpleHttpServer(webapps, port);
         // Set up basic auth for a section of the server so selftest can run
         // auth tests.
