@@ -234,7 +234,8 @@ public class CrawlServer implements Serializable {
     private CrawlerSettings getSettings(CandidateURI curi)
     throws URIException {
         return this.settingsHandler.
-            getSettings(curi.getUURI().getReferencedHost(), curi);
+            getSettings(curi.getUURI().getReferencedHost(),
+                curi.getUURI());
     }
 
     /** Set the settings handler to be used by this server.

@@ -74,9 +74,6 @@
             } else if(item.equals("regExpr")) {
                 // Add new regular expr. criteria
                 newCrit = new RegularExpressionCriteria(request.getParameter("regexpr"));
-            } else if(item.equals("ContentType")) {
-                // Add new regular expr. criteria
-                newCrit = new ContentTypeRegExprCriteria(request.getParameter("ctregexpr"));
             } else if(item.equals("port")) {
                 // Add new port critera
                 newCrit = new PortnumberCriteria(request.getParameter("port"));
@@ -212,28 +209,7 @@
                     <input type="button" value="Add" onClick="doAdd('port')">
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <b>Time of day</b>:
-                </td>
-                <td>
-                    From: 
-                </td>
-                <td>
-                    <input name="todFrom" style="width: 50px" maxlength="4">
-                    <a class='help' href="javascript:alert('Time format is HHMM (hours and minutes). All times are GMT')">?</a>
-                </td>
-                <td>
-                    To: 
-                </td>
-                <td width="100">
-                    <input name="todTo" style="width: 50px" maxlength="4">
-                    <a class='help' href="javascript:alert('Time format is HHMM (hours and minutes). All times are GMT')">?</a>
-                </td>
-                <td>
-                    <input type="button" value="Add" onClick="doAdd('timeOfDay')">
-                </td>
-            </tr>
+
             <tr>
                 <td>
                     <b>Regular expression</b>:&nbsp;
@@ -248,21 +224,30 @@
                     <input type="button" value="Add" onClick="doAdd('regExpr')">
                 </td>
             </tr>
+
             <tr>
                 <td>
-                    <b>Content type</b>:&nbsp;
+                    <b>Time of day</b>:
+                </td>
+                <td width="40">
+                    From 
                 </td>
                 <td>
-                    Regex.
-                </td>
-                <td colspan="3">    
-                    <input name="ctregexpr" style="width: 230px">
-                    <a class='help' href="javascript:alert('When the content-type matches the specified regex, the refinement is triggered. NOTE: When using content type refinement, changes to settings that are checked prior to fetch completion will have no effect!\nThat is, if either no CrawlURI is specified when looking up the refinement, or one with no set mime type, this refinement will not match.')">?</a>
+                    <input name="todFrom" style="width: 50px" maxlength="4">
+                    <a class='help' href="javascript:alert('Time format is HHMM (hours and minutes). All times are GMT')">?</a>
                 </td>
                 <td>
-                    <input type="button" value="Add" onClick="doAdd('ContentType')">
+                    To
+                </td>
+                <td width="110">
+                    <input name="todTo" style="width: 50px" maxlength="4">
+                    <a class='help' href="javascript:alert('Time format is HHMM (hours and minutes). All times are GMT')">?</a>
+                </td>
+                <td>
+                    <input type="button" value="Add" onClick="doAdd('timeOfDay')">
                 </td>
             </tr>
+
         </table>
         <p>
             <%@include file="/include/jobrefinementnav.jsp"%>

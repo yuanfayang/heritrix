@@ -41,8 +41,9 @@ import java.util.logging.Level;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.util.ArchiveUtils;
 
@@ -245,8 +246,7 @@ public abstract class SettingsHandler {
         return getRefinementsForSettings(getSettingsForHost(host), null);
     }
 
-    /** 
-    * Get CrawlerSettings object in effect for a host or domain.
+    /** Get CrawlerSettings object in effect for a host or domain.
     *
     * If there is no specific settings for the host/domain, it will recursively
     * go up the hierarchy to find the settings object that should be used for
@@ -255,17 +255,18 @@ public abstract class SettingsHandler {
     * This method passes around a URI that refinement are checked against.
     *
     * @param host the host or domain to get the settings for.
-    * @param curi CandidateURI instance.
+    * @param uuri UURI for context.
     * @return settings object in effect for the host/domain.
     * @see #getSettingsObject(String)
     * @see #getOrCreateSettingsObject(String)
     */
-    public CrawlerSettings getSettings(String host, CandidateURI curi) {
-        return getRefinementsForSettings(getSettingsForHost(host), curi);
+    public CrawlerSettings getSettings(String host, UURI uuri) {
+        return getRefinementsForSettings(getSettingsForHost(host), uuri);
     }
-    
+
     protected CrawlerSettings getSettingsForHost(String host) {
         CrawlerSettings settings = settingsCache.getSettings(host, null);
+
         if (settings == null) {
             String tmpHost = host;
             settings = getSettingsObject(tmpHost);
@@ -276,15 +277,16 @@ public abstract class SettingsHandler {
 
             settingsCache.putSettings(host, settings);
         }
+
         return settings;
     }
 
     private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings,
-            CandidateURI curi) {
+            UURI uri) {
         if (settings.hasRefinements()) {
             for(Iterator it = settings.refinementsIterator(); it.hasNext();) {
                 Refinement refinement = (Refinement) it.next();
-                if (refinement.isWithinRefinementBounds(curi)) {
+                if (refinement.isWithinRefinementBounds(uri)) {
                     settings = getSettingsObject(settings.getScope(),
                             refinement.getReference());
                 }
