@@ -19,9 +19,12 @@
     <code>org.archive.crawler.selftest.SelfTestCase</code> which is itself 
     a subclass of <code>org.junit.TestCase</code>). All tests need to be 
     registered with the {@link org.archive.crawler.selftest.AllSelfTestCases} 
-    class. The class
+    class and must live in the org.archive.crawler.selftest package. The class
     {@link org.archive.crawler.selftest.SelfTestCrawlJobHandler} 
-    manages the running of selftest.</p> <p>The first crop of self tests are 
+    manages the running of selftest.</p> 
+    <p>Run one test only by passing its name as the option value to the 
+    selftest argument.</p>
+    <p>The first crop of self tests are 
     derived from tests developed by Parker Thompson &lt; pt at archive dot org 
     &gt;. See <a 
     href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/Tests/">Tests</a>. 

@@ -88,8 +88,11 @@ public class CommandLineParser
         this.options.addOption(new Option("n", "nowui", false,
             "Put heritrix into run mode and begin crawl using ORDER_FILE." +
             " Do not put up web user interface."));
-        this.options.addOption(new Option("s", "selftest", false,
-            "Run integrated self test."));
+        Option option = new Option("s", "selftest", true,
+            "Run the integrated selftests. Pass test name to it only" +
+            " (Case sensitive: E.g. pass 'Charset' to run charset selftest).");
+        option.setOptionalArg(true);
+        this.options.addOption(option);
 
         PosixParser parser = new PosixParser();
         try
@@ -224,7 +227,7 @@ public class CommandLineParser
             out.println(USAGE + NAME + " --nowui ORDER_FILE");
             out.println(USAGE + NAME + " [--port=PORT]" +
                 " [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]");
-            out.println(USAGE + NAME + " [--port=PORT] --selftest");
+            out.println(USAGE + NAME + " [--port=PORT] --selftest[=TESTNAME]");
             out.println("Version: " + this.version);
         }
 
