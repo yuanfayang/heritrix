@@ -94,12 +94,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         throws InvalidAttributeValueException {
         this.settingsHandler = settingsHandler;
         this.parent = null;
-        this.absoluteName = getName();
-        settingsHandler.getSettingsObject(null).addTopLevelModule((CrawlerModule) this);
-        //settingsHandler.addToComplexTypeRegistry(this);
-        settingsHandler.getSettingsObject(null).addComplexType(this);
-        //settingsHandler.addToModuleRegistry((CrawlerModule) this);
-        initializeComplexType(globalSettings());
+        this.absoluteName = "";
+        addComplexType(settingsHandler.getSettingsObject(null), this);
     }
 
     /** Get the global settings object (aka order).
@@ -125,25 +121,14 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     private ComplexType addComplexType(
-        CrawlerSettings settings,
-        ComplexType object)
-        throws InvalidAttributeValueException {
+            CrawlerSettings settings, ComplexType object)
+            throws InvalidAttributeValueException {
+                
         if (this.settingsHandler == null) {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
         setupVaiables(object);
-/*
-        if (settings.getScope() == null) {
-            // We're working with the global order file
-            getSettingsHandler().addToComplexTypeRegistry(object);
-            if (object instanceof CrawlerModule) {
-                getSettingsHandler().addToModuleRegistry(
-                    (CrawlerModule) object);
-            }
-        }
-*/
         settings.addComplexType(object);
-        //object.initializeComplexType(settings);
         if (!object.initialized) {
             Iterator it = object.definition.iterator();
             while (it.hasNext()) {
@@ -416,6 +401,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     private DataContainer getOrCreateDataContainer(CrawlerSettings settings)
         throws InvalidAttributeValueException {
+
         // Get this ComplexType's data container for the submitted settings
         DataContainer data = settings.getData(this);
 
@@ -431,7 +417,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                     if (this instanceof CrawlerModule) {
                         settings.addTopLevelModule((CrawlerModule) this);
                     } else {
-                        settings.addTopLevelModule((CrawlerModule) this.getParent());
+                        settings.addTopLevelModule((CrawlerModule) parent);
+                        try {
+                            parent.setAttribute(settings, this);
+                        } catch (AttributeNotFoundException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
                     }
                 } else {
                     globalSettings().getData(parent).copyAttributeInfo(
@@ -574,7 +566,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *        complex type is defined.
      * @throws InvalidAttributeValueException is thrown if default values
      *         is of wrong type.
-     */
+     *//*
     private void initializeComplexType(CrawlerSettings settings)
         throws InvalidAttributeValueException {
         if (!initialized) {
@@ -587,7 +579,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             earlyInitialize(settings);
         }
         initialized = true;
-    }
+    }*/
 
     /** This method can be overridden in subclasses to do local
      * initialisation.

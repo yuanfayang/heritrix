@@ -128,12 +128,12 @@ public class CrawlerSettings {
     }
 
     protected void addTopLevelModule(CrawlerModule module) {
-        if (topLevelModules.containsKey(module.getName())) {
-            throw new IllegalArgumentException(
-                "Duplicate module name: " + module.getName());
-        } else {
+//        if (topLevelModules.containsKey(module.getName())) {
+//            throw new IllegalArgumentException(
+//                "Duplicate module name: " + module.getName());
+//        } else {
             topLevelModules.put(module.getName(), module);
-        }
+//        }
     }
 
     protected DataContainer addComplexType(ComplexType type) {

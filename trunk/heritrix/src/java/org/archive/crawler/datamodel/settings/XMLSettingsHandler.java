@@ -134,12 +134,20 @@ public class XMLSettingsHandler extends SettingsHandler {
         return new File(getPathRelativeToWorkingDirectory(settingsDirectoryName));
     }
     
-    private File scopeToFile(String scope) {
+    /** Resolves a scope (host/domain) into a file path.
+     * 
+     * It will also create the directory structure leading to this file
+     * if it doesn't exist. 
+     * 
+     * @param scope the host or domain to get file path for.
+     * @return the file path for this scope.
+     */
+    protected final File scopeToFile(String scope) {
         File settingsDirectory = getSettingsDirectory();
-        
         File file;
+
         if (scope == null || scope.equals("")) {
-            file = settingsDirectory;
+            return orderFile;
         } else {
             String elements[] = scope.split("\\.");
             StringBuffer path = new StringBuffer();
@@ -150,6 +158,9 @@ public class XMLSettingsHandler extends SettingsHandler {
             path.append(elements[0]);
             file = new File(settingsDirectory, path.toString());
         }
+        
+        file.mkdirs();
+        file = new File(file, settingsFilename);
         return file;
     }
 
@@ -157,14 +168,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @see org.archive.crawler.datamodel.settings.SettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
      */
     public final void writeSettingsObject(CrawlerSettings settings) {
-        File filename;
-        if (settings.getScope() == null) {
-            filename = orderFile;
-        } else {
-            File dirname = scopeToFile(settings.getScope());
-            filename = new File(dirname, settingsFilename);
-            dirname.mkdirs();
-        }
+        File filename = scopeToFile(settings.getScope());
         writeSettingsObject(settings, filename);
     }
 
@@ -251,15 +255,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
      */
     protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
-        File filename;
-        if (settings.getScope() == null) {
-            // Read order file
-            filename = orderFile;
-        } else {
-            // Read per host file
-            File dirname = scopeToFile(settings.getScope());
-            filename = new File(dirname, settingsFilename);
-        }
+        File filename = scopeToFile(settings.getScope());
         return readSettingsObject(settings, filename);
     }
 
