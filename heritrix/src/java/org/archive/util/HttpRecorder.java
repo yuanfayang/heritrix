@@ -264,15 +264,12 @@ public class HttpRecorder {
      * @return This threads' HttpRecorder.  Returns null if can't find a
      * HttpRecorder in current instance.
      */
-    public static HttpRecorder getHttpRecorder()
-    {
+    public static HttpRecorder getHttpRecorder() {
         HttpRecorder recorder = null;
         Thread thread = Thread.currentThread();
-        if (thread instanceof HttpRecorderMarker)
-        {
+        if (thread instanceof HttpRecorderMarker) {
             recorder = ((HttpRecorderMarker)thread).getHttpRecorder();
         }
-
         return recorder;
     }
 
