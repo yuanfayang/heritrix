@@ -138,7 +138,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			} else if (attr.start(7)>-1) {
 				// CLASSID,DATA
 				if (resources==null) { resources = new ArrayList(); }
-				resources.add(value);
+				resources.add(value.toString());
 			} else if (attr.start(8)>-1) {
 				// ARCHIVE
 				if (resources==null) { resources = new ArrayList(); }
@@ -179,8 +179,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processEmbed(curi,res);
 			}
 		} catch (URISyntaxException e) {
-			System.out.println("BAD CODEBASE "+codebase+" at "+curi);
-			e.printStackTrace();
+			//System.out.println("BAD CODEBASE "+codebase+" at "+curi);
+			// e.printStackTrace();
 			curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
