@@ -196,6 +196,14 @@ public class DiskBackedQueue implements Queue, Serializable {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.queue.Queue#unpeek()
+     */
+    public void unpeek() {
+        // nothign necessary; head of this queue is stable
+        
+    }
+    
     /**
      * @see org.archive.queue.Queue#getIterator(boolean)
      */

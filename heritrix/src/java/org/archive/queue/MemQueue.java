@@ -98,6 +98,13 @@ public class MemQueue extends LinkedList implements Queue {
         return numberOfDeletes;
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.queue.Queue#unpeek()
+     */
+    public void unpeek() {
+        // nothing necessary
+    }
+
 
 
 }

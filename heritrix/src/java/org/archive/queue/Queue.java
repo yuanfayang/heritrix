@@ -29,7 +29,9 @@ import java.util.NoSuchElementException;
 import org.apache.commons.collections.Predicate;
 
 
-/** An Abstract queue.  It should implement FIFO semantics.
+/** 
+ * An Abstract queue.  It should implement FIFO semantics.
+ * 
  * @author gojomo
  *
  */
@@ -65,10 +67,22 @@ public interface Queue {
     void release();
 
     /**
+     * Give the top object in the queue, leaving it in place to be
+     * returned by future peek() or dequeue() invocations.
+     * 
      * @return top object, without removing it
      */
     Object peek();
 
+    /**
+     * Releases queue from the obligation to return in the
+     * next peek()/dequeue() the same object as returned by
+     * any previous peek(). 
+     * 
+     * @return
+     */
+    void unpeek();
+    
     /**
      * Returns an iterator for the queue.
      * <p>
