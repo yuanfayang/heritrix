@@ -182,19 +182,6 @@
             </tr>
             <tr>
                 <td nowrap>
-                    <b>Pending:</b>
-                </td>
-                <td align="right">
-                    <%=stats.pendingUriCount()%>
-                </td>
-                <td colspan="3">
-                    &nbsp;<a class='help' href="javascript:alert('URIs found but not yet verified as in scope. \nSome frontiers will delay detailed examination of links extracted from documents until it is actually needed. Until that is done there is no way of knowing if the URI is of any interest and so it is marked as \'pending\'. \nFrontiers that check the URIs as they get them will always have 0 pending URIs.')">?</a>
-                </td>
-                <td width="100%">
-                </td>
-            </tr>
-            <tr>
-                <td nowrap>
                     <b>Discovered:</b>
                 </td>
                 <td align="right">
