@@ -172,7 +172,8 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				UURI u = UURI.createUURI(e,curi.getBaseUri());
 				//if(filtersAccept(u)) {
 					logger.fine("inserting header at head "+u);
-					store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
+					//store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
+					store.insert(u,curi,0);
 				//}
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, e };
@@ -278,7 +279,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				UURI link = UURI.createUURI(l,curi.getBaseUri());
 				if(filtersAccept(link)) {
 					logger.fine("inserting link "+link+" "+curi.getStoreState());
-					store.insert(link,curi.getAList().getInt("distance-from-seed")+1);
+					store.insert(link,curi,1);
 				} 
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, l };
@@ -301,7 +302,11 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				UURI embed = UURI.createUURI(e,curi.getBaseUri());
 				//if(filtersAccept(embed)) {
 					logger.fine("inserting embed at head "+embed);
+					// For now, insert at tail instead of head
+					store.insert(embed,curi,0);
+					/* 
 					store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
+					*/
 				//}
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, e };
@@ -326,7 +331,8 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				return;
 			}
 			logger.fine("inserting prereq at head "+prereq);
-			CrawlURI prereqCuri = store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
+			//CrawlURI prereqCuri = store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
+			CrawlURI prereqCuri = store.insert(prereq,curi,0);
 			if (prereqCuri.getStoreState()==URIStoreable.FINISHED) {
 				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
 				failureDisposition(curi);
