@@ -558,11 +558,11 @@ public class Heritrix implements HeritrixMBean {
             file = new File(getConfdir(), PROPERTIES);
         }
         // If not on the command-line, there is no conf dir. Then get the
-        // properties from the CLASSPATH.
+        // properties from the CLASSPATH (Classpath file separator is always
+        // '/', whatever the platform.
         InputStream is = (file != null)?
             new FileInputStream(file):
-            Heritrix.class.getResourceAsStream(File.separator +
-                PROPERTIES_KEY);
+            Heritrix.class.getResourceAsStream("/" + PROPERTIES_KEY);
         if (is == null) {
             throw new IOException("Failed to load properties file from" +
                 " filesystem or from classpath.");
