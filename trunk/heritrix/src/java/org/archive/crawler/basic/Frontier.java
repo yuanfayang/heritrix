@@ -912,6 +912,8 @@ public class Frontier
         if (kq==null) {
             try {
                 kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+                kq.setStoreState(URIStoreable.EMPTY);
+                allClassQueuesMap.put(kq.getClassKey(),kq);
             } catch (IOException e) {
                 // An IOException occured trying to make new KeyedQueue.
                 curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
@@ -921,8 +923,6 @@ public class Frontier
                         curi.getUURI().getURIString(),
                         array);
             }
-            kq.setStoreState(URIStoreable.EMPTY);
-            allClassQueuesMap.put(kq.getClassKey(),kq);
         }
         return kq;
     }
