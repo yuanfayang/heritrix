@@ -39,9 +39,12 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	private Object state;
 	Processor nextProcessor;
 	CrawlHost host;
-	CrawlFetch fetch;
+
 	private int fetchStatus = 0;	// default to unattempted
 	private int numberOfFetchAttempts = 0;	// the number of fetch attempts that have been made
+
+	private int threadNumber;
+
 
 
 	/**
@@ -252,6 +255,20 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * @param i
+	 */
+	public void setThreadNumber(int i) {
+		threadNumber = i;
+	}
+
+	/**
+	 * 
+	 */
+	public int getThreadNumber() {
+		return threadNumber;
 	}
 
 }
