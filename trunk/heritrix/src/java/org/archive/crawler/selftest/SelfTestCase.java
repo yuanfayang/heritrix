@@ -337,7 +337,7 @@ public class SelfTestCase extends TestCase
         boolean result = true;
         for (Iterator i = files.iterator(); i.hasNext();)
         {
-            if (!fileExists((String)i.next()))
+            if (!fileExists((File)i.next()))
             {
                 result = false;
                 break;
@@ -352,13 +352,13 @@ public class SelfTestCase extends TestCase
      * This method takes care of building up the file path under the selftest
      * webapp.  Just pass the file name.
      *
-     * @param fileName Name of file to look for.
+     * @param file Name of file to look for.
      * @return True if file exists.
      */
-    public boolean fileExists(String fileName)
+    public boolean fileExists(File file)
     {
         File testDir = new File(getHtdocs(), getTestName());
-        File fileOnDisk = new File(testDir, fileName);
+        File fileOnDisk = new File(testDir, file.getPath());
         return fileOnDisk.exists();
     }
 
@@ -380,10 +380,9 @@ public class SelfTestCase extends TestCase
 
     /**
      * Find all files that belong to this test that are mentioned in the arc.
-     * @return List of found files.
+     * @return List of unique found file File objects.
      */
-    protected List filesFoundInArc()
-    {
+    protected List filesFoundInArc() {
         String baseURL = getSelftestURLWithTrailingSlash();
         if (baseURL.endsWith(getTestName() + '/')) {
             // URL may already end in the test name for case where we're
@@ -395,17 +394,21 @@ public class SelfTestCase extends TestCase
         List metaDatas = getReadReader().getMetaDatas();
         ARCRecordMetaData metaData = null;
         List filesFound = new ArrayList();
-        for (Iterator i = metaDatas.iterator(); i.hasNext();)
-        {
+        for (Iterator i = metaDatas.iterator(); i.hasNext();) {
             metaData = (ARCRecordMetaData)i.next();
             String url = metaData.getUrl();
             if (url.startsWith(baseURL) &&
-                metaData.getMimetype().equalsIgnoreCase("text/html"))
-            {
-                String name = url.substring(url.lastIndexOf("/") + 1);
-                if (name != null && name.length() > 0)
-                {
-                    filesFound.add(name);
+                metaData.getMimetype().equalsIgnoreCase("text/html")) {
+                String fileName = url.substring(baseURL.length());
+                if (fileName.startsWith("/")) {
+                    fileName = fileName.substring(1);
+                }
+                if (fileName != null && fileName.length() > 0) {
+                    File f = new File(fileName);
+                    if (!filesFound.contains(f)) {
+                        // Don't add duplicates.
+                        filesFound.add(new File(fileName));
+                    }
                 }
             }
         }

@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,16 +36,15 @@ import java.util.List;
 public class FramesSelfTestCase extends SelfTestCase
 {
     /**
-     * Files we expect to find in the archive as an array.
+     * Files to find as a list.
      */
-    private static final String [] FILES_AS_ARRAY = { "topframe.html",
-            "leftframe.html", "rightframe.html",
-            "noframe.html", "index.html"};
-
-    /**
-     * Files we expect to find in the archive as a list.
-     */
-    private static final List FILES = Arrays.asList(FILES_AS_ARRAY);
+    private static final List FILES_TO_FIND =
+        Arrays.asList(new File[] 
+            {new File("topframe.html"), 
+                new File("leftframe.html"),
+                new File("noframe.html"),
+                new File("index.html"),
+                new File("rightframe.html")});
 
 
     /**
@@ -53,6 +53,6 @@ public class FramesSelfTestCase extends SelfTestCase
      */
     public void testFrames()
     {
-        testFilesInArc(FILES);
+        testFilesInArc(FILES_TO_FIND);
     }
 }

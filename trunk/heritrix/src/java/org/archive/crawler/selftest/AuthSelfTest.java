@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,23 +36,33 @@ import java.util.List;
 public class AuthSelfTest
     extends SelfTestCase
 {
+    private static final File DIGEST = new File("digest");
+    private static final File FORM = new File("form");
+    private static final File GET = new File(FORM, "get");
+    private static final File POST = new File(FORM, "post");
+    
     /**
      * Files to find as a list.
      */
     private static final List FILES_TO_FIND =
-        Arrays.asList(new String[] {"digest-loggedin.html"});
+        Arrays.asList(new File[] {
+                DIGEST,
+                new File(DIGEST, "digest-loggedin.html"),
+                FORM,
+                new File(POST, "success.jsp"),
+                new File(POST, "index.html"),
+                new File(POST, "post-loggedin.html"),
+                new File(GET, "success.jsp"),
+                new File(GET, "index.html"),
+                new File(GET, "get-loggedin.html")
+        });
 
 
     /**
      * Test the max-link-hops setting is being respected.
      */
     public void testAuth() {
-        // Ok.  The file not to find exists.  Lets see if it made it into arc.
-         List foundFiles = filesFoundInArc();
-         assertTrue("All found", foundFiles.containsAll(FILES_TO_FIND));
-         // TODO: Make this like other selftests that look also on disk. Means
-         // cneed to change the filesFoundInArc method without breaking other
-         // selftests.
+        testFilesInArc(FILES_TO_FIND);
     }
 }
 
