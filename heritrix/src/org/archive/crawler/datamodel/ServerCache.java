@@ -52,7 +52,7 @@ public class ServerCache {
 			}
 		}
 
-		String hostOrAuthority = curi.getUURI().getUri().getHost();
+		String hostOrAuthority = curi.getUURI().getUri().getAuthority();
 		if (hostOrAuthority != null) {
 			return getServerFor(hostOrAuthority);
 			// TODOSOMEDAY: make this robust against those rare cases
