@@ -559,6 +559,55 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
 
     /**
+     * Write the arc meta data in pseudo-CDX format.
+     * 
+     * @param f Arc file to read.
+     * @throws IOException
+     */
+    protected static void writePseudoCDX(File f) throws IOException {
+        boolean compressed = ARCReaderFactory.isCompressed(f);
+        ARCReader arc = ARCReaderFactory.get(f);
+        ARCRecord headRecord = arc.getCurrentRecord();
+        String url = headRecord.getMetaData().getUrl();
+        if (!url.startsWith(ARCConstants.ARC_MAGIC_NUMBER)) {
+            throw new IOException("Unexpected arc header.");
+        }
+        String arcFileName = url.
+        substring(ARCConstants.ARC_MAGIC_NUMBER.length());
+        if (arcFileName.endsWith("." + COMPRESSED_FILE_EXTENSION)) {
+            int stripLen = COMPRESSED_FILE_EXTENSION.length() + 1;
+            arcFileName = arcFileName.substring(0,
+                    arcFileName.length() - stripLen);
+        }
+        // Write output as pseudo-CDX file.  See
+        // http://www.archive.org/web/researcher/cdx_legend.php
+        // and http://www.archive.org/web/researcher/example_cdx.php.
+        // Hash is hard-coded straight SHA-1 hash of content.
+        System.out.println("CDX b e a m s c " +
+                ((compressed)? "V": "v") + " n g");
+        for (Iterator ii = arc.iterator(); ii.hasNext();) {
+            ARCRecord r = (ARCRecord)ii.next();
+            // Read the whole record so we get out a hash.
+            r.close();
+            ARCRecordMetaData meta = r.getMetaData();
+            String statusCode = (meta.getStatusCode() == null)?
+                    "-": meta.getStatusCode();
+            System.out.println(meta.getDate() + " " +	// 'b' date.
+                    meta.getIp() + " " +		// 'e' IP
+                    meta.getUrl() + " " +		// 'a' Original URI
+                    meta.getMimetype() + " " +	// 'm' Mimetype
+                    statusCode + " " +			// 's' Mimetype
+                    meta.getDigest() + " " +	// 'c' "Old-style" checksum
+                    meta.getOffset() + " " +	// 'V' or 'v' offset.
+                    meta.getLength() + " " +	// 'n' Arc doc length.
+                    arcFileName		 			// 'g' Arc doc length.
+            );
+        }
+        System.out.flush();
+        // System.out.println(System.currentTimeMillis() - start);
+    }   
+    
+    /**
      * Command-line interface to ARCReader.
      *
      * Here is the command-line interface:
@@ -646,32 +695,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 // long start = System.currentTimeMillis();
-                File f = new File((String)i.next());
-                boolean compressed = ARCReaderFactory.isCompressed(f);
-                ARCReader arc = ARCReaderFactory.get(f);
-                // Write output as pseudo-CDX file.  See
-                // http://www.archive.org/web/researcher/cdx_legend.php
-                // and http://www.archive.org/web/researcher/example_cdx.php.
-                // Hash is hard-coded straight SHA-1 hash of content.
-                System.out.println("CDX b e a m c " +
-                    ((compressed)? "V": "v") + " n");
-                for (Iterator ii = arc.iterator(); ii.hasNext();) {
-                    ARCRecord r = (ARCRecord)ii.next();
-                    // Read the whole record so we get out a hash.
-                    r.close();
-                    ARCRecordMetaData meta = r.getMetaData();
-                    System.out.println(meta.getDate() + " " +	// 'b' date.
-                        meta.getIp() + " " +		// 'e' IP
-                        meta.getUrl() + " " +		// 'a' Original URI
-                        meta.getMimetype() + " " +	// 'm' Mimetype
-                        meta.getDigest() + " " +	// 'c' "Old-style" checksum
-                        meta.getOffset() + " " +	// 'V' or 'v' offset.
-                        meta.getLength() + " "		// 'n' Arc doc length.
-                        );
-                    System.out.flush();
-                }
-
-                // System.out.println(System.currentTimeMillis() - start);
+                writePseudoCDX(new File((String)i.next()));
             }
         }
     }

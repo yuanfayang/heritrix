@@ -77,12 +77,9 @@ public class ARCWriterTest
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // Start the record with an arbitrary 14-digit date per RFC2540
         String now = ArchiveUtils.get14DigitDate();
-        byte[] fetchDate = now.getBytes();
-        baos.write(fetchDate);
-        baos.write("\n".getBytes());
-        int recordLength = fetchDate.length + 1;
-        byte[] record = ("HTTP/1.1 200 OK\n" +
-            "Content-Type: text/html\n" +
+        int recordLength = 0;
+        byte[] record = ("HTTP/1.1 200 OK\r\n" +
+            "Content-Type: text/html\r\n\r\n" +
             "<html><head><title>Page #" + indexStr +
             "</title></head>" +
             "<body>Page #" + indexStr +
@@ -124,7 +121,7 @@ public class ARCWriterTest
         if (recordCount == -1) {
             metaDatas = reader.validate();
         } else {
-                metaDatas = reader.validate(recordCount);
+            metaDatas = reader.validate(recordCount);
         }
         reader.close();
         // Now, run through each of the records doing absolute get going from
