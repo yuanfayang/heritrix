@@ -13,6 +13,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
+import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 
 /**
@@ -67,16 +68,18 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	public void run() {
 		String name = controller.getOrder().getName();
 		logger.fine(getName()+" started for order '"+name+"'");
-		try {
+		// OutOfMemory catch might interfere with usual IBM JVM
+		// heapdump: so commenting out. memory problems will be fatal
+		// try {
 			while ( shouldCrawl ) {
 				processingLoop();
 			} 
 			controller.toeFinished(this);
-		} catch (OutOfMemoryError e) {
-			e.printStackTrace();
-			logger.warning(getName()+" exitting: out of memory error");
-			shouldCrawl = false;
-		}
+		//} catch (OutOfMemoryError e) {
+		//	e.printStackTrace();
+		//	logger.warning(getName()+" exitting: out of memory error");
+		//	shouldCrawl = false;
+		//}
 		
 		// Do cleanup so that objects can be GC.
 		pool = null;
@@ -98,9 +101,15 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 					currentProcessor.process(currentCuri);
 				}
 			} catch (RuntimeException e) {
-				currentCuri.setFetchStatus(S_INTERNAL_ERROR);
+				currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
 				// store exception temporarily for logging
 				currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+			} catch (Error err) {
+				// OutOfMemory & StackOverflow & etc.
+				System.err.println(err);
+				System.err.println(DevUtils.extraInfo());
+				err.printStackTrace(System.err);
+				currentCuri.setFetchStatus(S_SERIOUS_ERROR);
 			}
 		
 			controller.getFrontier().finished(currentCuri);
