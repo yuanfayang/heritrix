@@ -633,7 +633,6 @@ public class Frontier
      */
     public synchronized void finished(CrawlURI curi) {
         logger.fine("Frontier.finished: " + curi.getURIString());
-
         // Catch up on scheduling
         innerBatchFlush();
 
@@ -1230,8 +1229,11 @@ public class Frontier
      */
     private void reschedule(CrawlURI curi) {
         // Eliminate state related to only prior processing passthrough.
-        curi.processingCleanup();
-        curi.setSchedulingDirective(CandidateURI.MEDIUM);
+        boolean isPrereq = curi.isPrerequisite(); 
+        curi.processingCleanup(); // This will reset prereq value.
+        if (isPrereq == false) {
+        	curi.setSchedulingDirective(CandidateURI.MEDIUM);
+        }
         enqueueToKeyed(curi);
         queuedCount++;
     }

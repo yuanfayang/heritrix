@@ -124,7 +124,8 @@ public class CrawlServer implements Serializable {
         robotsFetched = System.currentTimeMillis();
         if (curi.getFetchStatus() != 200 ||
                 honoringPolicy.getType(getSettings(curi.getUURI())) ==
-                    RobotsHonoringPolicy.IGNORE)
+                    RobotsHonoringPolicy.IGNORE || 
+                        curi.isHttpTransaction() == false)
         {
             // not found or other errors == all ok for now
             // TODO: consider handling server errors, redirects differently

@@ -65,17 +65,14 @@ public class CrawlStateUpdater extends Processor implements
             
             // update robots info
             try {
-                if (curi.getFetchStatus() > 0 &&
-                        (curi.getUURI().getPath() != null) &&
+                if (curi.getUURI().getPath() != null &&
                         curi.getUURI().getPath().equals("/robots.txt")) {
                     // Update host with robots info
-                    if (curi.isHttpTransaction()) {
-                        try {
-                            curi.getServer().updateRobots(curi);
-                        } catch (IOException e) {
-                            curi.addLocalizedError(getName(), e,
-                                    "robots.txt parsing IOException");
-                        }
+                    try {
+                        curi.getServer().updateRobots(curi);
+                    } catch (IOException e) {
+                        curi.addLocalizedError(getName(), e,
+                                "robots.txt parsing IOException");
                     }
                 }
             }
