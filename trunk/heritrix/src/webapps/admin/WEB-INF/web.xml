@@ -27,7 +27,8 @@
     </listener>
     <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
     <session-config>
-        <session-timeout>120</session-timeout>
+        <!--Make timeout be a day-long-->
+        <session-timeout>1440</session-timeout>
     </session-config>
     <security-constraint>
         <display-name>Heritrix Console Constraint</display-name>
