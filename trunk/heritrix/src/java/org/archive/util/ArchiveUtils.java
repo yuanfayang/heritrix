@@ -29,6 +29,8 @@ package org.archive.util;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.TimeZone;
 import java.io.File;
 import java.io.IOException;
@@ -256,60 +258,6 @@ public class ArchiveUtils {
             }
         }
         return true;
-    }
-
-    /**
-     * Ensure writeable directory.
-     *
-     * If doesn't exist, we attempt creation.
-     *
-     * @param dir Directory to test for exitence and is writeable.
-     *
-     * @return The passed <code>dir</code>.
-     *
-     * @exception IOException If passed directory does not exist and is not
-     * createable, or directory is not writeable or is not a directory.
-     */
-    public static File ensureWriteableDirectory(String dir)
-        throws IOException
-    {
-        return ensureWriteableDirectory(new File(dir));
-    }
-
-    /**
-     * Ensure writeable directory.
-     *
-     * If doesn't exist, we attempt creation.
-     *
-     * @param dir Directory to test for exitence and is writeable.
-     *
-     * @return The passed <code>dir</code>.
-     *
-     * @exception IOException If passed directory does not exist and is not
-     * createable, or directory is not writeable or is not a directory.
-     */
-    public static File ensureWriteableDirectory(File dir)
-        throws IOException
-    {
-        if (!dir.exists())
-        {
-            dir.mkdirs();
-        }
-        else
-        {
-            if (!dir.canWrite())
-            {
-                throw new IOException("Dir " + dir.getAbsolutePath() +
-                    " not writeable.");
-            }
-            else if (!dir.isDirectory())
-            {
-                throw new IOException("Dir " + dir.getAbsolutePath() +
-                    " is not a directory.");
-            }
-        }
-
-        return dir;
     }
 
     /**

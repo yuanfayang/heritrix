@@ -39,6 +39,7 @@ import junit.framework.TestCase;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.settings.ComplexType;
+import org.archive.crawler.settings.StringList;
 import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
@@ -217,8 +218,8 @@ public class SelfTestCase extends TestCase
         // one. Then make an instance of ARCReader and call the validate on it.
         ComplexType arcWriterProcessor =
             crawlOrder.getSettingsHandler().getModule("Archiver");
-        String arcDirStr = (String)arcWriterProcessor.
-            getAttribute(ARCWriterProcessor.ATTR_PATH);
+        String arcDirStr = (String)((StringList)arcWriterProcessor.
+            getAttribute(ARCWriterProcessor.ATTR_PATH)).get(0);
         File arcDir = null;
         if (arcDirStr != null && arcDirStr.length() > 0 &&
                 arcDirStr.startsWith(File.separator)) {
