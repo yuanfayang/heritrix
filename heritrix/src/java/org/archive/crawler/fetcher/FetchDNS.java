@@ -35,7 +35,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
-import org.archive.util.DNSJavaUtil;
+import org.archive.util.InetAddressUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Record;
@@ -98,7 +98,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
             targetServer = new CrawlServer(dnsName);
         }
         
-        Matcher matcher = DNSJavaUtil.IPV4_QUADS.matcher(dnsName);
+        Matcher matcher = InetAddressUtil.IPV4_QUADS.matcher(dnsName);
         // if it's an ip no need to do a lookup
         if (matcher != null && matcher.matches()) {
             // Ideally this branch would never be reached: no CrawlURI
@@ -148,7 +148,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
                 ARecord AsA = (ARecord) rrecordSet[i];
                 targetServer.getHost().setIP(
-                        AsA.getAddress(), (long) AsA.getTTL());
+                        AsA.getAddress(), AsA.getTTL());
                 break; // only need to process one record
             }
         } else {
