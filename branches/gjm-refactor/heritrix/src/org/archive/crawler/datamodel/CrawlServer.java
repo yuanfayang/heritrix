@@ -143,13 +143,29 @@ public class CrawlServer implements Serializable {
 		return server.substring(0,colonIndex);
 	}
 
+
+	/**
+	 * Refuse to be serialized, but do not halt serialization:
+	 * replace with null. 
+	 * 
+	 * @return
+	 * @throws ObjectStreamException
+	 */
 	protected Object writeReplace() throws ObjectStreamException {
-		// TODO implement
 		return null;
 	}
-	protected Object readResolve() throws ObjectStreamException {
-		// TODO implement
-		return null;
-	}
+	
+//	private void writeObject(ObjectOutputStream stream)
+//	 throws IOException {
+//	 	ObjectOutputStream.PutField puts = stream.putFields();
+//	 	puts.put("server",server);
+//	 	stream.writeFields();
+//	 }
+// 
+//	private void readObject(ObjectInputStream stream)
+//	 throws IOException, ClassNotFoundException {
+//	 	ObjectInputStream.GetField reads = stream.readFields();
+//	 	server = (String)reads.get("server",null);
+//	 }
 
 }
