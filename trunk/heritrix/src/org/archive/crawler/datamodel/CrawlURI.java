@@ -61,6 +61,9 @@ public class CrawlURI
 	private int fetchAttempts = 0;	// the number of fetch attempts that have been made
 	private int chaffness = 0; // suspiciousness of being of chaff
 	
+	private int linkHopCount = -1; // from seeds
+	private int embedHopCount = -1; // from a sure link
+	
 	private int threadNumber;
 	
 	private int contentSize = -1;
@@ -460,11 +463,56 @@ public class CrawlURI
 	/**
 	 * @param sourceCuri
 	 */
-	public void setVia(CrawlURI sourceCuri) {
+	public void setViaLinkFrom(CrawlURI sourceCuri) {
 		via = sourceCuri;
+		int candidateLinkHopCount = sourceCuri.getLinkHopCount()+1;
+		embedHopCount = 0;
+		if (linkHopCount == -1) {
+			linkHopCount = candidateLinkHopCount;
+			return;
+		}
+		if (linkHopCount > candidateLinkHopCount) {
+			linkHopCount = candidateLinkHopCount; 
+		}
 	}
+	
+	/**
+	 * @param sourceCuri
+	 */
+	public void setViaEmbedFrom(CrawlURI sourceCuri) {
+		via = sourceCuri;
+		int candidateLinkHopCount = sourceCuri.getLinkHopCount();
+		if (linkHopCount == -1) {
+			linkHopCount = candidateLinkHopCount;
+		} else if (linkHopCount > candidateLinkHopCount) {
+			linkHopCount = candidateLinkHopCount; 
+		}
+		int candidateEmbedHopCount = sourceCuri.getEmbedHopCount()+1;
+		if (embedHopCount == -1) {
+			embedHopCount = candidateEmbedHopCount;
+		} else if (embedHopCount > candidateEmbedHopCount) {
+			embedHopCount = candidateEmbedHopCount; 
+		}
+	}
+
 	
 /*	public boolean isFubared(){
 		return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);
 	}*/
+
+	
+	/**
+	 * @return
+	 */
+	public int getEmbedHopCount() {
+		return embedHopCount;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getLinkHopCount() {
+		return linkHopCount;
+	}
+
 }
