@@ -95,7 +95,7 @@ implements Frontier,
             .classnameBasedUID(BdbFrontier.class, 1);
 
     /** truncate reporting of queues at some large but not unbounded number */
-    private static final int REPORT_MAX_QUEUES = 1000;
+    private static final int REPORT_MAX_QUEUES = 5000;
 
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
@@ -579,6 +579,7 @@ implements Frontier,
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
                 } else {
+                    logger.info("declining to wake "+peek.getClassKey()+"("+peek.getWakeTime()+") at "+now);
                     return;
                 }
             }
