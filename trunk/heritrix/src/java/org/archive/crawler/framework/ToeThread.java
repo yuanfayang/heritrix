@@ -497,4 +497,14 @@ public class ToeThread extends Thread
         }
     }
 
+	/**
+	 * For debugging/reporting, give abstract step where this
+	 * thread is.
+	 * 
+	 * @return
+	 */
+	public Object getStep() {
+		return step;
+	}
+
 }
