@@ -1,7 +1,7 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
 <%
 	/**
 	 *  Page allows user to view the information in the StatisticsTracker 
@@ -192,7 +192,7 @@
 						while(statusCodes.hasNext())
 						{
 							Map.Entry entry = (Map.Entry)statusCodes.next();
-							long count = ((Number)(entry.getValue())).longValue();
+							long count = ((LongWrapper)(entry.getValue())).longValue;
 							long percent = count*100/stats.successfulFetchAttempts();
 					%>
 							<tr>
@@ -234,7 +234,7 @@
 						while(files.hasNext())
 						{
 							Map.Entry file = (Map.Entry)files.next();
-							long count = ((Number)file.getValue()).longValue();
+							long count = ((LongWrapper)file.getValue()).longValue;
 							long percent = count*100/stats.successfulFetchAttempts();
 					%>
 							<tr>
@@ -270,18 +270,18 @@
 			<%
 				TreeSet hostsDistribution = stats.getSortedByValue(stats.getHostsDistribution());
 				Iterator hosts = hostsDistribution.iterator();
-				int i=0;
+				long i=0;
 				while(hosts.hasNext())
 				{
-					i++;
 					Map.Entry host = (Map.Entry)hosts.next();
+					i+=((LongWrapper)host.getValue()).longValue;
 			%>
 					<tr>
 						<td>
 							<%=host.getKey()%>
 						</td>
 						<td>
-							<%=host.getValue()%>
+							<%=((LongWrapper)host.getValue()).longValue%>
 						</td>
 					</tr>
 			<%
@@ -289,6 +289,7 @@
 			%>				
 		</table>
 		<%
+			out.println(i);
 			} // End if(cjob==null)else clause
 		%>
 <%@include file="/include/foot.jsp"%>
