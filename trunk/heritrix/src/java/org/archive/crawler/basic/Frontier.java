@@ -64,7 +64,7 @@ import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
 
-import EDU.oswego.cs.dl.util.concurrent.Semaphore;
+// import EDU.oswego.cs.dl.util.concurrent.Semaphore;
 
 // import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
 // import EDU.oswego.cs.dl.util.concurrent.Channel;
@@ -155,33 +155,33 @@ public class Frontier
 
     // all per-class queues who are on hold until a certain time
     SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
-    long wakeTime;
-    volatile Thread wakerThread; 
-    Semaphore snoozer = new Semaphore(0);
-    private class Waker implements Runnable {
-        /** 
-         * @see java.lang.Runnable#run()
-         */
-        public void run() {
-              while(true) {
-                  long now = System.currentTimeMillis();
-                  synchronized(Frontier.this) {
-                      wakeTime = earliestWakeTime();
-                      if (wakeTime<=now) {
-                          wakeReadyQueues(now);
-                          wakeTime = earliestWakeTime();
-                      } // else: it was just a kick to reset (or first time through)
-                  }
-                  try {
-                      snoozer.attempt(wakeTime-now);
-                  } catch (InterruptedException e) {
-                      // e.printStackTrace();
-                      wakerThread=null;
-                      break; // just finish when interrupted
-                  }
-              }
-          }
-    }
+//    long wakeTime;
+//    volatile Thread wakerThread; 
+//    Semaphore snoozer = new Semaphore(0);
+//    private class Waker implements Runnable {
+//        /** 
+//         * @see java.lang.Runnable#run()
+//         */
+//        public void run() {
+//              while(true) {
+//                  long now = System.currentTimeMillis();
+//                  synchronized(Frontier.this) {
+//                      wakeTime = earliestWakeTime();
+//                      if (wakeTime<=now) {
+//                          wakeReadyQueues(now);
+//                          wakeTime = earliestWakeTime();
+//                      } // else: it was just a kick to reset (or first time through)
+//                  }
+//                  try {
+//                      snoozer.attempt(wakeTime-now);
+//                  } catch (InterruptedException e) {
+//                      // e.printStackTrace();
+//                      wakerThread=null;
+//                      break; // just finish when interrupted
+//                  }
+//              }
+//          }
+//    }
 //    private class Waker implements Runnable {
 //        /** 
 //         * @see java.lang.Runnable#run()
@@ -230,14 +230,18 @@ public class Frontier
      * @param name
      */
     public Frontier(String name) {
-        // The frontier should always have the same name.
-        // the argument to this constructor is just ignored.
+        //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
+        //therefore we'll ignore the supplied parameter. 
         super(URIFrontier.ATTR_NAME, "Frontier. \nMaintains the internal" +
-                " state of the crawl. It dictates the order in which URIs" +
-                " will be scheduled.");
+            " state of the crawl. It dictates the order in which URIs" +
+            " will be scheduled. \nThis frontier is mostly a breadth-first" +
+            " frontier, which refrains from emitting more than one" +
+            " CrawlURI of the same \'key\' (host) at once, and respects" +
+            " minimum-delay and delay-factor specifications for" +
+            " politeness.");
         addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
-             "How many multiples of last fetch elapsed time to wait before " +
-             "recontacting same server", DEFAULT_DELAY_FACTOR));
+            "How many multiples of last fetch elapsed time to wait before " +
+            "recontacting same server", DEFAULT_DELAY_FACTOR));
         addElementToDefinition(new SimpleType(ATTR_MAX_DELAY,
             "Never wait more than this long, regardless of multiple",
             DEFAULT_MAX_DELAY));
@@ -291,9 +295,9 @@ public class Frontier
 //                      0.75f,
 //                      20, // 1 million slots in cache (always)
 //                      0.75f));
-        wakerThread = new Thread(new Waker());
-        wakerThread.setName("Frontier.Waker");
-        wakerThread.start();
+//        wakerThread = new Thread(new Waker());
+//        wakerThread.setName("Frontier.Waker");
+//        wakerThread.start();
         
         this.controller = c;
         controller.addCrawlStatusListener(this);
@@ -1312,14 +1316,14 @@ public class Frontier
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.setStoreState(URIStoreable.SNOOZED);
-        kickWakerIfNecessary();
+//        kickWakerIfNecessary();
     }
 
-    private void kickWakerIfNecessary() {
-        if(wakeTime>earliestWakeTime()) {
-            snoozer.release(); // cause Waker to spin and sleep for shorter period
-        }
-    }
+//    private void kickWakerIfNecessary() {
+//        if(wakeTime>earliestWakeTime()) {
+//            snoozer.release(); // cause Waker to spin and sleep for shorter period
+//        }
+//    }
 //    private void kickWakerIfNecessary() {
 //        if(wakeTime>earliestWakeTime()) {
 //            notifyAll(); 
@@ -1753,7 +1757,7 @@ public class Frontier
      */
     protected void finalize() throws Throwable {
         super.finalize();
-        wakerThread.interrupt();
+//        wakerThread.interrupt();
     }
 
     /** 
