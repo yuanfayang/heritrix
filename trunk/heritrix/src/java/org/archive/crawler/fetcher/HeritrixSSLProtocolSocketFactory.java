@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -54,7 +55,7 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
  * @version $Id$
  * @see org.archive.httpclient.ConfigurableX509TrustManager
  */
-public class HeritixSSLProtocolSocketFactory
+public class HeritrixSSLProtocolSocketFactory
 implements SecureProtocolSocketFactory {
     /**
      * Socket factory that has the configurable trust manager installed.
@@ -62,7 +63,7 @@ implements SecureProtocolSocketFactory {
     private SSLSocketFactory sslfactory = null;
 
 
-    public HeritixSSLProtocolSocketFactory()
+    public HeritrixSSLProtocolSocketFactory()
     throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException{
         this(ConfigurableX509TrustManager.DEFAULT);
     }
@@ -76,7 +77,7 @@ implements SecureProtocolSocketFactory {
      * @throws KeyStoreException
      * @see ConfigurableX509TrustManager
      */
-    public HeritixSSLProtocolSocketFactory(String level)
+    public HeritrixSSLProtocolSocketFactory(String level)
     throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException {
         super();
@@ -130,6 +131,13 @@ implements SecureProtocolSocketFactory {
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
             socket.connect(address, timeout);
+            try {
+                socket.connect(address, timeout);
+            } catch (SocketTimeoutException e) {
+                // Add timeout info. to the exception.
+                throw new SocketTimeoutException(e.getMessage() +
+                    ": timeout set at " + Integer.toString(timeout) + "ms.");
+            }
             assert socket.isConnected(): "Socket not connected " + host;
         }
         return socket;
@@ -143,11 +151,11 @@ implements SecureProtocolSocketFactory {
     
     public boolean equals(Object obj) {
         return ((obj != null) && obj.getClass().
-            equals(HeritixSSLProtocolSocketFactory.class));
+            equals(HeritrixSSLProtocolSocketFactory.class));
     }
 
     public int hashCode() {
-        return HeritixSSLProtocolSocketFactory.class.hashCode();
+        return HeritrixSSLProtocolSocketFactory.class.hashCode();
     }
     
     /**
