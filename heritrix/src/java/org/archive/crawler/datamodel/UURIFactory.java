@@ -381,13 +381,6 @@ public class UURIFactory extends URI {
         // Get rid of any trailing spaces or new-lines. 
         uri = uri.trim();
         
-        // Get rid of any trailing escaped spaces.
-        for(Matcher m = TextUtils.getMatcher(TRAILING_ESCAPED_SPACE, uri);
-                m !=  null && m.matches();
-                m = TextUtils.getMatcher(TRAILING_ESCAPED_SPACE, uri)) {
-            uri = m.group(1);
-        }
-        
         // IE actually converts backslashes to slashes rather than to %5C.
         // Since URIs that have backslashes usually work only with IE, we will
         // convert backslashes to slashes as well.
@@ -452,6 +445,15 @@ public class UURIFactory extends URI {
         // userinfo capitalizations.  Make sure no illegal characters in
         // domainlabel substring of the uri authority.
         if (uriAuthority != null) {
+            // Get rid of any trailing escaped spaces:
+            // http://www.archive.org%20.  Rare but happens.
+            for(Matcher m = TextUtils.
+                        getMatcher(TRAILING_ESCAPED_SPACE, uriAuthority);
+                    m !=  null && m.matches();
+                    m = TextUtils.
+                        getMatcher(TRAILING_ESCAPED_SPACE, uriAuthority)) {
+                uriAuthority = m.group(1);
+            }
             int index = uriAuthority.indexOf(COMMERCIAL_AT);
             if (index < 0) {
                 uriAuthority = checkDomainlabel(uriAuthority.toLowerCase());
