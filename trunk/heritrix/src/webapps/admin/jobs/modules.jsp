@@ -190,13 +190,13 @@
 			String item = request.getParameter("item");
 			String className = request.getParameter("cbo"+item);
 						
-			CrawlerModule tmp = null;
+			ModuleType tmp = null;
 			if(item.equals("Frontier")){
 				// Changing URI frontier
-				tmp = SettingsHandler.instantiateCrawlerModuleFromClassName("frontier",className);
+				tmp = SettingsHandler.instantiateModuleTypeFromClassName("frontier",className);
 			} else if(item.equals("Scope")){
 				// Changing Scope
-				tmp = SettingsHandler.instantiateCrawlerModuleFromClassName(org.archive.crawler.framework.CrawlScope.ATTR_NAME,className);
+				tmp = SettingsHandler.instantiateModuleTypeFromClassName(org.archive.crawler.framework.CrawlScope.ATTR_NAME,className);
 			} 
 			if(tmp != null){
 				// If tmp is null then something went wrong but we'll ignore it.
@@ -248,7 +248,7 @@
 						className = className.substring(0,className.indexOf("|"));
 	
 						map.addElement(settingsHandler.getSettings(null),
-										 SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+										 SettingsHandler.instantiateModuleTypeFromClassName(typeName,className));
 					}
 					// Write changes
 					settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));

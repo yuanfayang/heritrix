@@ -35,7 +35,7 @@ import javax.management.MBeanAttributeInfo;
 /** This class represents a container of settings.
  *
  * This class is usually used to make it possible to have a dynamic number
- * of CrawlerModules like for instance a list of filters of different type.
+ * of ModuleTypes like for instance a list of filters of different type.
  *
  * When this type is overridden on a per domain basis, the following
  * restrictions apply:

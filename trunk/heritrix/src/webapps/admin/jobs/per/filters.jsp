@@ -170,7 +170,7 @@
 					String typeName = request.getParameter(map+".name");
 					if(typeName != null && typeName.length() > 0 
 					   && className != null && className.length() > 0 ){
-						CrawlerModule tmp = SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className);
+						ModuleType tmp = SettingsHandler.instantiateModuleTypeFromClassName(typeName,className);
 						filterMap.addElement(settings,tmp);
 					}
 				} else if(subaction.equals("moveup")){

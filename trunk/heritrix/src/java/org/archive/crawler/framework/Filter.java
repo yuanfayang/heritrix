@@ -30,7 +30,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.ComplexType;
-import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
@@ -48,7 +48,7 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  *
  * @see org.archive.crawler.framework.Processor
  */
-public class Filter extends CrawlerModule {
+public class Filter extends ModuleType {
     protected static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 

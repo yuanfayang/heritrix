@@ -33,7 +33,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
@@ -47,9 +47,9 @@ import org.archive.crawler.framework.URIFrontier;
  * do not belong to any specific module, but rather relate to the crawl as a
  * whole (much of this is used by the CrawlController directly or indirectly).
  *
- * @see org.archive.crawler.datamodel.settings.CrawlerModule
+ * @see org.archive.crawler.datamodel.settings.ModuleType
  */
-public class CrawlOrder extends CrawlerModule {
+public class CrawlOrder extends ModuleType {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.CrawlOrder");
 
@@ -151,7 +151,7 @@ public class CrawlOrder extends CrawlerModule {
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
-        addElementToDefinition(new CrawlerModule(
+        addElementToDefinition(new ModuleType(
                 URIFrontier.ATTR_NAME, "Frontier"));
 
         e = addElementToDefinition(new MapType(

@@ -356,7 +356,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
      */
     private String resolveElementName(ComplexType complexType) {
         String elementName;
-        if (complexType instanceof CrawlerModule) {
+        if (complexType instanceof ModuleType) {
             if (complexType.getParent() == null) {
                 // Top level controller element
                 elementName = XMLSettingsHandler.XML_ELEMENT_CONTROLLER;

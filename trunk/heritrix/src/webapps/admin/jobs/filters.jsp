@@ -149,7 +149,7 @@
 					if(typeName != null && typeName.length() > 0 
 					   && className != null && className.length() > 0 ){
 						filterMap.addElement(settingsHandler.getSettings(null),
-										     SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+										     SettingsHandler.instantiateModuleTypeFromClassName(typeName,className));
 					}
 				} else if(subaction.equals("moveup")){
 					// Move a filter down in a map

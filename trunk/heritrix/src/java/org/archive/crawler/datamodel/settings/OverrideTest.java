@@ -69,8 +69,8 @@ public class OverrideTest extends SettingsFrameworkTestCase {
             throws AttributeNotFoundException, MBeanException,
             ReflectionException, InvalidAttributeValueException {
         final String MODULE_NAME = "module1";
-        CrawlerModule module1 = new CrawlerModule(MODULE_NAME);
-        CrawlerModule module2 = new CrawlerModule(MODULE_NAME);
+        ModuleType module1 = new ModuleType(MODULE_NAME);
+        ModuleType module2 = new ModuleType(MODULE_NAME);
 
         // Set up override
         MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(
@@ -79,16 +79,16 @@ public class OverrideTest extends SettingsFrameworkTestCase {
         proc.setAttribute(getPerDomainSettings(), module2);
 
         // Read back values to see if we get the right ones
-        CrawlerModule getMod;
-        getMod = (CrawlerModule) proc.getAttribute(getGlobalSettings(),
+        ModuleType getMod;
+        getMod = (ModuleType) proc.getAttribute(getGlobalSettings(),
                 MODULE_NAME);
         assertSame("Wrong global value", module1, getMod);
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerDomainSettings(),
+        getMod = (ModuleType) proc.getAttribute(getPerDomainSettings(),
                 MODULE_NAME);
         assertSame("Wrong domain value", module2, getMod);
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerHostSettings(),
+        getMod = (ModuleType) proc.getAttribute(getPerHostSettings(),
                 MODULE_NAME);
         assertSame("Wrong host value", module2, getMod);
     }
@@ -97,8 +97,8 @@ public class OverrideTest extends SettingsFrameworkTestCase {
             throws AttributeNotFoundException, MBeanException,
             ReflectionException, InvalidAttributeValueException {
         final String MODULE_NAME = "module1";
-        CrawlerModule module1 = new CrawlerModule(MODULE_NAME);
-        CrawlerModule module2 = new CrawlerModule(MODULE_NAME);
+        ModuleType module1 = new ModuleType(MODULE_NAME);
+        ModuleType module2 = new ModuleType(MODULE_NAME);
 
         // Set up override
         MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(
@@ -107,20 +107,20 @@ public class OverrideTest extends SettingsFrameworkTestCase {
         proc.setAttribute(getPerHostSettings(), module2);
 
         // Read back values to see if we get the right ones
-        CrawlerModule getMod;
+        ModuleType getMod;
         try {
-            getMod = (CrawlerModule) proc.getAttribute(getGlobalSettings(),
+            getMod = (ModuleType) proc.getAttribute(getGlobalSettings(),
                     MODULE_NAME);
             fail("Global value should not exist");
         } catch (AttributeNotFoundException e) {
             // OK! this should throw an exception;
         }
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerDomainSettings(),
+        getMod = (ModuleType) proc.getAttribute(getPerDomainSettings(),
                 MODULE_NAME);
         assertSame("Wrong domain value", module1, getMod);
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerHostSettings(),
+        getMod = (ModuleType) proc.getAttribute(getPerHostSettings(),
                 MODULE_NAME);
         assertSame("Wrong host value", module2, getMod);
     }

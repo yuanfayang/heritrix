@@ -80,7 +80,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertTrue("Map should be empty", map.isEmpty(null));
         assertEquals("Map should be empty", map.size(null), 0);
 
-        CrawlerModule module = new Preselector("testModule");
+        ModuleType module = new Preselector("testModule");
         assertSame("Did not return added element",
                 map.addElement(null, module), module);
         assertFalse("Map should contain a element", map.isEmpty(null));
@@ -110,9 +110,9 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertTrue("Map should be empty", map.isEmpty(getPerHostSettings()));
         assertEquals("Map should be empty", 0, map.size(getPerHostSettings()));
 
-        CrawlerModule module1 = new Preselector("testModule1");
-        CrawlerModule module2 = new Preselector("testModule2");
-        CrawlerModule module3 = new Preselector("testModule3");
+        ModuleType module1 = new Preselector("testModule1");
+        ModuleType module2 = new Preselector("testModule2");
+        ModuleType module3 = new Preselector("testModule3");
 
         assertSame("Did not return added element",
             map.addElement(getGlobalSettings(), module1), module1);
@@ -154,9 +154,9 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
                 CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
-        CrawlerModule module1 = new Preselector("testModule1");
-        CrawlerModule module2 = new Preselector("testModule2");
-        CrawlerModule module3 = new Preselector("testModule3");
+        ModuleType module1 = new Preselector("testModule1");
+        ModuleType module2 = new Preselector("testModule2");
+        ModuleType module3 = new Preselector("testModule3");
         map.addElement(null, module1);
         map.addElement(null, module2);
         map.addElement(null, module3);
@@ -180,9 +180,9 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
                 CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
-        CrawlerModule module1 = new Preselector("testModule1");
-        CrawlerModule module2 = new Preselector("testModule2");
-        CrawlerModule module3 = new Preselector("testModule3");
+        ModuleType module1 = new Preselector("testModule1");
+        ModuleType module2 = new Preselector("testModule2");
+        ModuleType module3 = new Preselector("testModule3");
         map.addElement(null, module1);
         map.addElement(null, module2);
         map.addElement(null, module3);

@@ -26,7 +26,7 @@ package org.archive.crawler.datamodel;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
-import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.StringList;
@@ -55,7 +55,7 @@ import org.archive.crawler.datamodel.settings.TextField;
  * @author John Erik Halse
  *
  */
-public class RobotsHonoringPolicy  extends CrawlerModule {
+public class RobotsHonoringPolicy  extends ModuleType {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.RobotsHonoringPolicy");
 
