@@ -88,8 +88,7 @@ import com.sleepycat.je.OperationStatus;
  * @author Gordon Mohr
  */
 public class BdbFrontier extends AbstractFrontier
-implements Frontier,
-        FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
+implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(BdbFrontier.class, 1);
@@ -110,17 +109,21 @@ implements Frontier,
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
 
-    /** whether to hold queues INACTIVE until needed for throughput */
-    public final static String ATTR_USE_BUDGETTED_ROTATION = "use-budgetted-rotation";
-    protected final static Boolean DEFAULT_USE_BUDGETTED_ROTATION = new Boolean(true); 
+//    /** whether to hold queues INACTIVE until needed for throughput */
+//    public final static String ATTR_USE_BUDGETTED_ROTATION = "use-budgetted-rotation";
+//    protected final static Boolean DEFAULT_USE_BUDGETTED_ROTATION = new Boolean(true); 
 
     /** whether to hold queues INACTIVE until needed for throughput */
-    public final static String ATTR_BUDGET_REPLENISH_AMOUNT = "budget-replenish-amount";
-    protected final static Integer DEFAULT_BUDGET_REPLENISH_AMOUNT = new Integer(3000);
+    public final static String ATTR_BALANCE_REPLENISH_AMOUNT = "balance-replenish-amount";
+    protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT = new Integer(3000);
+
+    /** total expenditure to allow a queue before 'retiring' it  */
+    public final static String ATTR_QUEUE_TOTAL_BUDGET = "queue-total-budget";
+    protected final static Long DEFAULT_QUEUE_TOTAL_BUDGET = new Long(-1);
 
     /** cost assignment policy to use (by class name) */
     public final static String ATTR_COST_POLICY = "cost-policy";
-    protected final static String DEFAULT_COST_POLICY = UnitCostAssignmentPolicy.class.getName();
+    protected final static String DEFAULT_COST_POLICY = ZeroCostAssignmentPolicy.class.getName();
 
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
@@ -144,7 +147,10 @@ implements Frontier,
 
     /** all 'inactive' queues, not yet in active rotation */
     protected LinkedQueue inactiveQueues = new LinkedQueue();
-    
+
+    /** 'retired' queues, no longer considered for activation */
+    protected LinkedQueue retiredQueues = new LinkedQueue();
+
     /** moves waking items from snoozedClassQueues to readyClassQueues */
     protected ClockDaemon wakeDaemon = new ClockDaemon();
     
@@ -163,6 +169,7 @@ implements Frontier,
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
 
+    /** a policy for assigning 'cost' values to CrawlURIs */
     private CostAssignmentPolicy costAssignmentPolicy;
     
     /**
@@ -206,35 +213,44 @@ implements Frontier,
                 DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_USE_BUDGETTED_ROTATION,
-                "Whether to rotate queues out of active status based on " +
-                "a budgetting mechanism. If true, an active queue will move " +
-                "to inactive status -- making room for a waiting inactive queue " +
-                "to become active -- when its budget is depleted. When its " +
-                "turn to reactivate comes up, it will be given a refreshed " +
-                "budget. Each URI attempted from a queue depletes its budget by " +
-                "some amount. Default is true. ",
-                DEFAULT_USE_BUDGETTED_ROTATION));
+//        t = addElementToDefinition(new SimpleType(ATTR_USE_BUDGETTED_ROTATION,
+//                "Whether to rotate queues out of active status based on " +
+//                "a budgetting mechanism. If true, an active queue will move " +
+//                "to inactive status -- making room for a waiting inactive queue " +
+//                "to become active -- when its budget is depleted. When its " +
+//                "turn to reactivate comes up, it will be given a refreshed " +
+//                "budget. Each URI attempted from a queue depletes its budget by " +
+//                "some amount. Default is true. ",
+//                DEFAULT_USE_BUDGETTED_ROTATION));
+//        t.setExpertSetting(true);
+//        t.setOverrideable(true);
+        t = addElementToDefinition(new SimpleType(ATTR_BALANCE_REPLENISH_AMOUNT,
+                "Amount to replenish a queue's activity balance when it becomes " +
+                "active. Larger amounts mean more URIs will be tried from the " +
+                "queue before it is deactivated in favor of waiting queues. " +
+                "Default is 3000",
+                DEFAULT_BALANCE_REPLENISH_AMOUNT));
         t.setExpertSetting(true);
         t.setOverrideable(true);
-        t = addElementToDefinition(new SimpleType(ATTR_BUDGET_REPLENISH_AMOUNT,
-                "Amount to replenish a queue's budget when it becomes active. " +
-                "Larger amounts mean more URIs will be tried from the queue " +
-                "before it is deactivated in favor of waiting queues. Default " +
-                "is 3000",
-                DEFAULT_BUDGET_REPLENISH_AMOUNT));
+        t = addElementToDefinition(new SimpleType(ATTR_QUEUE_TOTAL_BUDGET,
+                "Total activity expenditure allowable to a single queue; queues " +
+                "over this expenditure will be 'retired' and crawled no more. " +
+                "Default of -1 means no ceiling on activity expenditures is " +
+                "enforced.",
+                DEFAULT_QUEUE_TOTAL_BUDGET));
         t.setExpertSetting(true);
         t.setOverrideable(true);
-        
 
         String[] availableCostPolicies = new String[] {
                 DEFAULT_COST_POLICY,
+                UnitCostAssignmentPolicy.class.getName(),
                 WagCostAssignmentPolicy.class.getName()};
 
         addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
                 "Policy for calculating the cost of each URI attempted. " +
                 "The default UnitCostAssignmentPolicy considers the cost of " +
                 "each URI to be '1'.", DEFAULT_COST_POLICY, availableCostPolicies));
+        t.setExpertSetting(true);
     }
 
     /**
@@ -380,7 +396,7 @@ implements Frontier,
      * @param curi
      */
     private void sendToQueue(CrawlURI curi) {
-        BdbWorkQueue wq = getQueueFor(curi.getClassKey());
+        BdbWorkQueue wq = getQueueFor(curi);
         synchronized (wq) {
             wq.enqueue(curi);
             if(!wq.isHeld()) {
@@ -388,7 +404,7 @@ implements Frontier,
                 if(holdQueues()) {
                     deactivateQueue(wq);
                 } else {
-                    replenishBudget(wq);
+                    replenishSessionBalance(wq);
                     readyQueue(wq);
                 }
             }
@@ -427,6 +443,7 @@ implements Frontier,
      */
     private void deactivateQueue(BdbWorkQueue wq) {
         try {
+            wq.setSessionBalance(0); // zero out session balance
             inactiveQueues.put(wq);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -435,19 +452,72 @@ implements Frontier,
             throw new RuntimeException(e);
         }
     }
+    
     /**
-     * Return the work queue for the given classKey. URIs
+     * Put the given queue on the inactiveQueues queue
+     * @param wq
+     */
+    private void retireQueue(BdbWorkQueue wq) {
+        try {
+            retiredQueues.put(wq);
+            decrementQueuedCount(wq.count);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.err.println("unable to retire queue "+wq);
+            // propagate interrupt up 
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /** 
+     * Accomodate any changes in settings.
+     * 
+     * @see org.archive.crawler.framework.Frontier#kickUpdate()
+     */
+    public void kickUpdate() {
+        super.kickUpdate();
+        try {
+            // The rules for a 'retired' queue may have changed; so,
+            // unretire all queues to 'inactive'. If they still qualify
+            // as retired/overbudget next time they come up, they'll
+            // be re-retired; if not, they'll get a chance to become
+            // active under the new rules.
+            BdbWorkQueue q = (BdbWorkQueue) retiredQueues.poll(0);
+            while(q != null) {
+                unretireQueue(q);
+                q = (BdbWorkQueue) retiredQueues.poll(0);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            // propagate interrupt up 
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Restore a retired queue to the 'inactive' state. 
+     * 
+     * @param q
+     */
+    private void unretireQueue(BdbWorkQueue q) {
+        deactivateQueue(q);
+        incrementQueuedUriCount(q.count);
+    }
+
+    /**
+     * Return the work queue for the given CrawlURI's classKey. URIs
      * are ordered and politeness-delayed within their 'class'.
      * 
-     * @param classKey
+     * @param curi CrawlURI to base queue on
      * @return the found or created BdbWorkQueue
      */
-    private BdbWorkQueue getQueueFor(String classKey) {
+    private BdbWorkQueue getQueueFor(CrawlURI curi) {
         BdbWorkQueue wq;
+        String classKey = curi.getClassKey();
         synchronized (allQueues) {
             wq = (BdbWorkQueue) allQueues.get(classKey);
             if (wq == null) {
                 wq = new BdbWorkQueue(classKey, pendingUris);
+                wq.setTotalBudget(((Long)getUncheckedAttribute(curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
                 allQueues.put(classKey, wq);
             }
         }
@@ -530,13 +600,15 @@ implements Frontier,
      * @see org.archive.crawler.frontier.AbstractFrontier#noteAboutToEmit(org.archive.crawler.datamodel.CrawlURI, org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue)
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
-        // TODO Auto-generated method stub
         super.noteAboutToEmit(curi, q);
-        if (((Boolean) getUncheckedAttribute(curi, ATTR_USE_BUDGETTED_ROTATION))
-                .booleanValue()) {
-            // only dock budget if rotation is in effect
-            q.decrementBudget(getCost(curi));
-        }
+//        if (((Boolean) getUncheckedAttribute(curi, ATTR_USE_BUDGETTED_ROTATION))
+//                .booleanValue()) {
+//            // only dock budget if rotation is in effect
+            q.expend(getCost(curi));
+//        }
+        // TODO: is this the best way to be sensitive to potential mid-crawl changes
+        long totalBudget = ((Long)getUncheckedAttribute(curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
+        q.setTotalBudget(totalBudget);
     }
 
     /**
@@ -561,12 +633,19 @@ implements Frontier,
      * @throws InterruptedException
      */
     private void activateInactiveQueue() throws InterruptedException {
-        BdbWorkQueue activatedQ = (BdbWorkQueue) inactiveQueues.poll(0);
-        if(activatedQ!=null) {
-            replenishBudget(activatedQ);
-            readyQueue(activatedQ);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ACTIVATED queue: "+activatedQ.classKey);
+        BdbWorkQueue candidateQ = (BdbWorkQueue) inactiveQueues.poll(0);
+        if(candidateQ!=null) {
+            synchronized(candidateQ) {
+                replenishSessionBalance(candidateQ);
+                if(candidateQ.isOverBudget()){
+                    // if still over-budget after an activation & replenishing, retire
+                    retireQueue(candidateQ);
+                } else {
+                    readyQueue(candidateQ);
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("ACTIVATED queue: "+candidateQ.classKey);
+                    }
+                }
             }
         }
     }
@@ -574,23 +653,39 @@ implements Frontier,
     /**
      * Replenish the budget of the given queue by the appropriate amount.
      * 
-     * @param activatedQ queue to replenish
+     * @param queue queue to replenish
      */
-    private void replenishBudget(BdbWorkQueue queue) {
+    private void replenishSessionBalance(BdbWorkQueue queue) {
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
-        queue.incrementBudget(((Integer) getUncheckedAttribute(contextUri,
-                ATTR_BUDGET_REPLENISH_AMOUNT)).intValue());
+        queue.incrementSessionBalance(((Integer) getUncheckedAttribute(contextUri,
+                ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
         queue.unpeek(); // don't insist on that URI being next released
     }
 
+    /**
+     * Enqueue the given queue to either readyClassQueues or inactiveQueues,
+     * as appropriate.
+     * 
+     * @param wq
+     */
+    private void reenqueueQueue(BdbWorkQueue wq) {
+        if(wq.isOverBudget()) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("DEACTIVATED queue: "+wq.classKey);
+            }
+            deactivateQueue(wq);
+        } else {
+            readyQueue(wq);
+        }
+    }
     /**
      * Wake any queues sitting in the snoozed queue whose time has come
      */
     void wakeQueues() {
         long now = System.currentTimeMillis();
-        logger.info("wakeReadyQueues() at "+now);
+//        logger.info("wakeReadyQueues() at "+now);
         synchronized (snoozedClassQueues) {
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
@@ -602,7 +697,7 @@ implements Frontier,
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
                 } else {
-                    logger.info("declining to wake "+peek.getClassKey()+"("+peek.getWakeTime()+") at "+now);
+//                    logger.info("declining to wake "+peek.getClassKey()+"("+peek.getWakeTime()+") at "+now);
                     return;
                 }
             }
@@ -701,23 +796,6 @@ implements Frontier,
     }
 
     /**
-     * Enqueue the given queue to either readyClassQueues or inactiveQueues,
-     * as appropriate.
-     * 
-     * @param wq
-     */
-    private void reenqueueQueue(BdbWorkQueue wq) {
-        if(wq.getBudget() <= 0) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("DEACTIVATED queue: "+wq.classKey);
-            }
-            deactivateQueue(wq);
-        } else {
-            readyQueue(wq);
-        }
-    }
-
-    /**
      * Place the given queue into 'snoozed' state, ineligible to
      * supply any URIs for crawling, for the given amount of time. 
      * 
@@ -728,7 +806,7 @@ implements Frontier,
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
         wq.setWakeTime(now+delay_ms);
         snoozedClassQueues.add(wq);
-        logger.info("executeAfterDelay("+delay_ms+" for "+wq.getClassKey()+")");
+//        logger.info("executeAfterDelay("+delay_ms+" for "+wq.getClassKey()+")");
         wakeDaemon.executeAfterDelay(delay_ms, waker);
     }
 
@@ -812,13 +890,15 @@ implements Frontier,
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
+        int retiredCount = retiredQueues.getCount();
         StringBuffer rep = new StringBuffer();
         rep.append(allCount + " queues: " + 
                 activeCount + " active (" + 
                 inProcessCount + " in-process; " +
                 readyCount + " ready; " + 
                 snoozedCount + " snoozed); " +
-                inactiveCount +" inactive");
+                inactiveCount +" inactive; " +
+                retiredCount + " retired");
         return rep.toString();
     }
 
@@ -835,6 +915,7 @@ implements Frontier,
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
+        int retiredCount = retiredQueues.getCount();
         StringBuffer rep = new StringBuffer();
 
         rep.append("Frontier report - "
@@ -856,8 +937,8 @@ implements Frontier,
         rep.append(  "                    In-process: " + inProcessCount  + "\n");
         rep.append(  "                         Ready: " + readyCount + "\n");
         rep.append(  "                       Snoozed: " + snoozedCount + "\n");
-        rep.append(  "           Inactive queues: " + 
-                inactiveCount + "\n");
+        rep.append(  "           Inactive queues: " + inactiveCount + "\n");
+        rep.append(  "            Retired queues: " + retiredCount + "\n");
         rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
         Iterator iter = inProcessQueues.iterator();
         int count = 0; 
@@ -901,6 +982,17 @@ implements Frontier,
         }
         if(inactiveQueues.getCount()>REPORT_MAX_QUEUES) {
             rep.append("...and "+(inactiveQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
+        }
+        rep.append("\n -----===== RETIRED QUEUES =====-----\n");
+        iter = retiredQueues.iterator();
+        count = 0; 
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(retiredQueues.getCount()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(retiredQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
         }
         return rep.toString();
     }
@@ -1130,18 +1222,21 @@ implements Frontier,
          * desired spot. First 60 bits are always host (classKey)
          * based -- ensuring grouping by host. Next 4 bits are
          * priority -- allowing 'immediate' and 'soon' items to 
-         * sort above regular. Last 64 bits are ordinal serial number,
-         * ensuring earlier-discovered URIs sort before later. 
+         * sort above regular. Next 8 bits are 'cost'. Last 64 bits 
+         * are ordinal serial number, ensuring earlier-discovered 
+         * URIs sort before later. 
          * 
          * @param curi
          * @return a DatabaseEntry key for the CrawlURI
          */
         private DatabaseEntry calculateInsertKey(CrawlURI curi) {
             byte[] keyData = new byte[16];
-            long fp = FPGenerator.std64.fp(curi.getClassKey()) & 0xFFFFFFFFFFFFFFF0L;
-            fp = fp | curi.getSchedulingDirective();
-            ArchiveUtils.longIntoByteArray(fp, keyData, 0);
-            ArchiveUtils.longIntoByteArray(curi.getOrdinal(), keyData, 8);
+            long fpPlus = FPGenerator.std64.fp(curi.getClassKey()) & 0xFFFFFFFFFFFFFFF0L;
+            fpPlus = fpPlus | curi.getSchedulingDirective(); 
+            ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
+            long ordinalPlus = curi.getOrdinal() & 0x00FFFFFFFFFFFFFFL;
+            ordinalPlus = (((long)curi.getHolderCost()) << 56) | ordinalPlus;
+            ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, 8);
             return new DatabaseEntry(keyData);
         }
 
@@ -1205,8 +1300,21 @@ implements Frontier,
         long wakeTime = 0;
         
         /** running 'budget' indicating whether queue should stay active */
-        int budget = 0;
+        int sessionBalance = 0;
         
+        /** cost of the last item to be charged against queue */
+        int lastCost = 0;
+        
+        /** total number of items charged against queue; with totalExpenditure
+         * can be used to calculate 'average cost'. */
+        long costCount = 0;
+        
+        /** running tally of total expenditures on this queue */
+        long totalExpenditure = 0;
+        
+        /** total to spend on this queue over its lifetime */
+        long totalBudget = 0;
+
         /**
          * Create a virtual queue inside the given BdbMultiQueue 
          * 
@@ -1221,8 +1329,55 @@ implements Frontier,
             ArchiveUtils.longIntoByteArray(fp, origin, 0);
         }
 
-        public int getBudget() {
-            return budget;
+        /**
+         * Set the session 'activity budget balance' to the given value
+         * 
+         * @param balance to use
+         */
+        public void setSessionBalance(int balance) {
+            this.sessionBalance = balance;
+        }
+
+        /**
+         * Return current session 'activity budget balance' 
+         * 
+         * @return session balance
+         */
+        public int getSessionBalance() {
+            return this.sessionBalance;
+        }
+
+        /**
+         * Set the total expenditure level allowable before queue is 
+         * considered inherently 'over-budget'. 
+         * 
+         * @param budget
+         */
+        public void setTotalBudget(long budget) {
+            this.totalBudget = budget;
+        }
+
+        /**
+         * Check whether queue has temporarily or permanently exceeded
+         * its budget. 
+         * 
+         * @return true if queue is over its set budget(s)
+         */
+        public boolean isOverBudget() {
+            // check whether running balance is depleted 
+            // or totalExpenditure exceeds totalBudget
+            return this.sessionBalance <= 0
+                    || (this.totalBudget >= 0 
+                            && this.totalExpenditure > this.totalBudget);
+        }
+        
+        /**
+         * Return the tally of all expenditures on this queue
+         * 
+         * @return total amount expended on this queue
+         */
+        public long getTotalExpenditure() {
+            return totalExpenditure;
         }
 
         /**
@@ -1232,9 +1387,9 @@ implements Frontier,
          * @param amount amount to increment
          * @return updated budget value
          */
-        public int incrementBudget(int amount) {
-            this.budget = this.budget + amount;
-            return this.budget;
+        public int incrementSessionBalance(int amount) {
+            this.sessionBalance = this.sessionBalance + amount;
+            return this.sessionBalance;
         }
 
         /**
@@ -1242,9 +1397,12 @@ implements Frontier,
          * @param amount tp decrement
          * @return updated budget value
          */
-        public int decrementBudget(int amount) {
-            this.budget = this.budget - amount;
-            return this.budget;
+        public int expend(int amount) {
+            this.sessionBalance = this.sessionBalance - amount;
+            this.totalExpenditure = this.totalExpenditure + amount;
+            this.lastCost = amount;
+            this.costCount++;
+            return this.sessionBalance;
         }
 
         /**
@@ -1275,7 +1433,13 @@ implements Frontier,
                    "      last peeked: " + lastPeeked + "\n" +
                    ((wakeTime == 0) ? "" :
                    "         wakes in: " + 
-                           (wakeTime-System.currentTimeMillis()) + "ms\n");
+                           (wakeTime-System.currentTimeMillis()) + "ms\n") +
+                   "   total expended: " + totalExpenditure + 
+                       " (total budget: " + totalBudget + ")\n" +
+                   "   active balance: " + sessionBalance + "\n" +
+                   "   last(avg) cost: " + lastCost + 
+                       "("+ArchiveUtils.doubleToString(
+                               ((double)totalExpenditure/costCount),1)+")\n";
         }
 
         /**
