@@ -2,6 +2,6 @@
 
 <html>
 	<body>
-		<pre><%=handler.getFrontierReport().replaceAll(" ","&nbsp;")%></pre>
+	<pre><%=handler.getThreadsReport().replaceAll(" ","&nbsp;")%></pre>
 	</body>
 </html>
