@@ -853,9 +853,10 @@ public class Foo extends ModuleType {
             This class always normalizes and derelativizes URIs.
             It also provides methods for accessing the different parts of the
             URI.</para>
-            <para>We used to use <literal>java.net.URI</literal> but bugs
-            and its strict RFC2396 conformance in the face of a real world
-            that acts otherwise, it was replaced by UURI.</para>
+            <para>We used to base all on <literal>java.net.URI</literal> but 
+            because of bugs and its strict RFC2396 conformance in the face of
+            a real world that acts otherwise, its facility was was 
+            subsumed by UURI.</para>
 
         <para>Two classes wrap the <literal>UURI</literal> in Heritrix:</para>
         <variablelist>
