@@ -461,6 +461,16 @@
                 <license>Public Domain</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>commons-net</id>
+            <version>1.1.0</version>
+            <url>http://jakarta.apache.org/commons/net/</url>
+            <properties>
+                <description> This is an Internet protocol suite Java library originally developed by ORO, Inc. This version supports Finger, Whois, TFTP, Telnet, POP3, FTP, NNTP, SMTP, and some miscellaneous protocols like Time and Echo as well as BSD R command support. Heritrix uses its FTP implementation.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
 
   </dependencies>
 
