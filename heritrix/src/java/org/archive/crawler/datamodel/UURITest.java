@@ -60,6 +60,31 @@ public class UURITest extends TestCase {
         assertTrue(ESCAPED_URISTR.equals(uuriStr));
     }
     
+    /**
+     * Part of  <a
+     * href="https://sourceforge.net/tracker/?func=detail&aid=788219&group_id=73833&atid=539099">[ 788219 ]
+     * URI Syntax Errors stop page parsing</a>.
+     * @throws URIException
+     */
+    public final void testThreeSlashes() throws URIException {
+        boolean expectedException = false;
+        UURI goodURI = new UURI("http://lcweb.loc.gov/rr/goodtwo.html");
+        String uuri = "http:///lcweb.loc.gov/rr/goodtwo.html";
+        UURI rewrittenURI = new UURI(uuri);
+        assertTrue("Not equal " + goodURI + ", " + uuri,
+                goodURI.toString().equals(rewrittenURI.toString()));
+        uuri = "http:////lcweb.loc.gov/rr/goodtwo.html";
+        rewrittenURI = new UURI(uuri);
+        assertTrue("Not equal " + goodURI + ", " + uuri,
+                goodURI.toString().equals(rewrittenURI.toString()));
+        // Check https.
+        goodURI = new UURI("https://lcweb.loc.gov/rr/goodtwo.html");
+        uuri = "https:////lcweb.loc.gov/rr/goodtwo.html";
+        rewrittenURI = new UURI(uuri);
+        assertTrue("Not equal " + goodURI + ", " + uuri,
+                goodURI.toString().equals(rewrittenURI.toString()));
+    }
+    
     public final void testNoScheme() {
         boolean expectedException = false;
         String uuri = "www.loc.gov/rr/european/egw/polishex.html";

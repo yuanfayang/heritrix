@@ -389,7 +389,20 @@ public class SelfTestCase extends TestCase
      */
     public void testFilesInArc(List files)
     {
-        List foundFiles = filesFoundInArc();
+        testFilesInArc(files, filesFoundInArc());
+    }
+    
+    /**
+     * Test passed list were all found in the arc.
+     *
+     * If more or less found, test fails.
+     *
+     * @param files List of files to find in the arc.  No other files but these
+     * should be found in the arc.
+     * @param Files found in the arc.
+     */
+    public void testFilesInArc(List files, List foundFiles)
+    {
         assertTrue("All files are on disk", filesExist(files));
         assertTrue("All found", foundFiles.containsAll(files));
         assertTrue("Same size", foundFiles.size() == files.size());

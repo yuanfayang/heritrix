@@ -27,10 +27,7 @@ package org.archive.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.zip.DataFormatException;
 import java.util.zip.GZIPInputStream;
-
-import org.archive.io.PositionableStream;
 
 
 /**

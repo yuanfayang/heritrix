@@ -193,6 +193,13 @@ public class UURI extends URI {
      */
     final static String LEGAL_DOMAINLABEL_REGEX =
         "^(?:[a-zA-Z0-9_-]++(?:\\.)?)++(:[0-9]+)?$";
+    
+    /**
+     * Pattern that looks for case of three or more slashes after the 
+     * scheme.  If found, we replace them with two only as mozilla does.
+     */
+    final static Pattern HTTP_SCHEME_SLASHES =
+        Pattern.compile("^(https?://)/+(.*)");
 
     /**
      * Cache of the host name.
@@ -287,10 +294,16 @@ public class UURI extends URI {
         uri = TextUtils.replaceAll(IMPROPERESC, uri, IMPROPERESC_REPLACE);
         // Kill newlines etc
         uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
-
+        // Test for the case of more than two slashes after the http(s) scheme.
+        // Replace with two slashes as mozilla does if found.
+        // See [ 788219 ] URI Syntax Errors stop page parsing.
+        Matcher matcher = HTTP_SCHEME_SLASHES.matcher(uri);
+        if (matcher.matches()){
+            uri = matcher.group(1) + matcher.group(2);
+        }
         // For further processing, get uri elements.  See the RFC2396REGEX
         // comment above for explaination of group indices used in the below.
-        Matcher matcher = RFC2396REGEX.matcher(uri);
+        matcher = RFC2396REGEX.matcher(uri);
         if (!matcher.matches()) {
             throw new URIException("Failed parse of " + uri);
         }
