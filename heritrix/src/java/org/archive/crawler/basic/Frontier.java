@@ -1204,7 +1204,7 @@ public class Frontier
 				{
 					CrawlURI cu = (CrawlURI)q[i];
 					rep.append("   Snooze item " + (i+1) + " - " + "CrawlUri" + "\n");
-					rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+					rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
 					rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
                     rep.append("     Wakes in: " + (cu.getWakeTime()-System.currentTimeMillis()) + " msec\n"); 
 				}
@@ -1220,7 +1220,7 @@ public class Frontier
 			{
 				CrawlURI cu = (CrawlURI)inProcessMap.get(q.next());
 				rep.append("   In process CrawlUri " + (i++) + "\n");
-				rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+				rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
 				rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
 			}
 		}
@@ -1236,7 +1236,7 @@ public class Frontier
 				{
 					CrawlURI cu = (CrawlURI)qn;
 					rep.append("   Held item " + (i++) + " is a CrawlURI\n");
-					rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+					rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
 					rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
 				}
 				else if(qn instanceof UURI)
