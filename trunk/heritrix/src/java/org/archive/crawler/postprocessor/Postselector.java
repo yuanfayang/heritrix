@@ -56,10 +56,9 @@ import org.archive.crawler.settings.Type;
  * Could in the future also control whether current URI is retried.
  *
  * @author gojomo
- *
  */
-public class Postselector extends Processor implements CoreAttributeConstants,
-        FetchStatusCodes {
+public class Postselector extends Processor
+implements CoreAttributeConstants, FetchStatusCodes {
 
     private static Logger logger =
         Logger.getLogger(Postselector.class.getName());
@@ -79,10 +78,6 @@ public class Postselector extends Processor implements CoreAttributeConstants,
      */
     private MapType rejectLogFilters = null;
     
-
-    // limits on retries TODO: separate into retryPolicy?
-    //private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
-
     /**
      * @param name Name of this filter.
      */
@@ -148,9 +143,6 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
-     */
     protected void innerProcess(CrawlURI curi) {
         logger.finest(getName()+" processing "+curi);
 
@@ -260,12 +252,11 @@ public class Postselector extends Processor implements CoreAttributeConstants,
 
     /**
      * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
-     *
-     * @param caUri The CandidateURI to be scheduled
-     *
-     * @return true if CandidateURI was accepted by crawl scope, false otherwise
+     * @param caUri The CandidateURI to be scheduled.
+     * @return true if CandidateURI was accepted by crawl scope, false
+     * otherwise.
      */
-    private boolean schedule(CandidateURI caUri) {
+    protected boolean schedule(CandidateURI caUri) {
         if(getController().getScope().accepts(caUri)) {
             if (logger.isLoggable(Level.FINER)) {
                 logger.finer("Accepted: " + caUri);
@@ -371,5 +362,4 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             }
         }
     }
-
 }
