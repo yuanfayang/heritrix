@@ -8,8 +8,6 @@ package org.archive.crawler.admin;
 
 import org.mortbay.http.*;
 import org.mortbay.jetty.Server;
-import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.framework.CrawlController;
 
 /**
  * @author Administrator
@@ -25,8 +23,6 @@ public class SimpleHttpServer {
 	private static String _contextPath = "/";
 	private static String _resourceBase = "./WebUIResources/";
 	private HttpContext _context = new HttpContext();
-	private CrawlController _controller = new CrawlController();
-	private CrawlOrder _order;
 	public SimpleHttpServer() throws Exception {
 		initialize(DEFAULT_PORT);
 	}
@@ -59,15 +55,4 @@ public class SimpleHttpServer {
 		return _server;
 	}
 
-	public CrawlController getController() {
-		return _controller;
-	}
-
-	public void setControler(CrawlController c) {
-		_controller = c;
-	}
-
-	public void setOrder(CrawlOrder o) {
-		_order = o;
-	}
 }
