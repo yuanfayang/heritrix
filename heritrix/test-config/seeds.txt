@@ -10,4 +10,4 @@
 http://crawl08.archive.org
 #http://parkert.com/misc/tstpage.html
 #dns:yahoo.com
-http://www.yahoo.com/
+#http://www.yahoo.com/
