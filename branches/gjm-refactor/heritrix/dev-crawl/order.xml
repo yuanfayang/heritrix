@@ -6,15 +6,15 @@
  <scope 
    class="org.archive.crawler.basic.Scope"
    mode="broad"
-   max-link-hops="1"
+   max-link-hops="0"
    max-trans-hops="4">
    
   <seeds>
- #  http://www.archive.org/movies/movies.php
+ # http://www.archive.org/movies/movies.php
  # http://www.drudgereport.com
-   http://www.yahoo.com
-   http://www.yahoo.com
-   http://www.yahoo.com
+   http://my.yahoo.com
+   http://my.yahoo.com
+   http://my.yahoo.com
  # http://www.google.com/dirhp
    
   </seeds>
