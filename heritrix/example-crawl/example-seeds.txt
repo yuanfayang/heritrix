@@ -2,11 +2,11 @@
 http://www.yahoo.com
 http://www.google.com/dirhp
 # http://www.lycos.com
-# http://www.msn.com
+http://www.msn.com
 # http://www.cnn.com
 http://www.drudgereport.com
 # http://www.aol.com
-http://www.msnbc.com
+# http://www.msnbc.com
 
 # http://www.archive.org
 # http://www.google.com
@@ -21,9 +21,9 @@ http://www.msnbc.com
 
 #http://java.sun.com
 
-http://www.loc.gov
+#http://www.loc.gov
 
-http://www.discovery.com
+#http://www.discovery.com
 
-http://www.disneyland.com
+#http://www.disneyland.com
 
