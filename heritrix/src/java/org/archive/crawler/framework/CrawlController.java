@@ -25,9 +25,12 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -638,25 +641,31 @@ public class CrawlController extends Thread {
                 synchronized (this) {
                     try {
                         // Wait until all ToeThreads are finished with their work
-                        while (getActiveToeCount() > 0) {
+                        while (getActiveToeCount() > 0 && shouldPause) {
                             wait(200);
                         }
-                        paused = true;
+                        if(shouldPause){
+                            paused = true;
+                            // Tell everyone that we have paused
+                            logger.info("Crawl job paused");
+                            iterator = registeredCrawlStatusListeners.iterator();
+                            while (iterator.hasNext()) {
+                                ((CrawlStatusListener) iterator.next()).crawlPaused(
+                                    CrawlJob.STATUS_PAUSED);
+                            }
 
-                        // Tell everyone that we have paused
-                        logger.info("Crawl job paused");
-                        iterator = registeredCrawlStatusListeners.iterator();
-                        while (iterator.hasNext()) {
-                            ((CrawlStatusListener) iterator.next()).crawlPaused(
-                                CrawlJob.STATUS_PAUSED);
+                            wait(); // resumeCrawl() will wake us.
+                            paused = false;
+                        } else{
+                            // Been given an order to resume while waiting
+                            // to pause
+                            paused = false;
                         }
 
-                        wait();
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                    paused = false;
                     logger.info("Crawl job resumed");
 
                     // Tell everyone that we have resumed from pause
@@ -667,8 +676,16 @@ public class CrawlController extends Thread {
                     }
                 }
             }
-
-            CrawlURI curi = frontier.next(timeout);
+            
+            CrawlURI curi = null;
+            try {
+                curi = frontier.next(timeout);
+            } catch(NoSuchElementException e){
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                runtimeErrors.fine(ArchiveUtils.get17DigitDate() + " NoSuchElementException occured\n  "+sw.toString());
+            }
+            
             if (curi != null) {
                 curi.setNextProcessorChain(getFirstProcessorChain());
                 ToeThread toe = toePool.available();
@@ -801,7 +818,7 @@ public class CrawlController extends Thread {
      * Resume crawl from paused state
      */
     public synchronized void resumeCrawl() {
-        if (!paused) {
+        if (shouldPause==false) {
             // Can't resume if not been told to pause
             return;
         }
