@@ -59,8 +59,10 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private StringBuffer buffer = new StringBuffer();
     private String value;
 
-    /**
+    /** Creates a new CrawlSettingsSAXHandler.
      * 
+     * @param settings the settings object that should be updated from
+     *        this handler.
      */
     public CrawlSettingsSAXHandler(CrawlerSettings settings) {
         super();
@@ -163,6 +165,12 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             locator);
     }
 
+    /** Superclass of all the elementhandlers.
+     * 
+     * This class should be subclassed for the different XML-elements.
+     * 
+     * @author John Erik Halse
+     */
     private class ElementHandler {
         /**
          * Start of an element
@@ -178,15 +186,20 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         }
     }
 
+    /** Handle the root element.
+     * 
+     * This class checks that the root element is of the right type.
+     * 
+     * @author John Erik Halse
+     */
     private class RootHandler extends ElementHandler {
         public void startElement(String name, Attributes atts)
             throws SAXException {
             //  Check filetype
             if ((name.equals(XMLSettingsHandler.XML_ROOT_ORDER)
-                && settings.getScope() == null)
+                && settings.getScope() != null)
                 || (name.equals(XMLSettingsHandler.XML_ROOT_HOST_SETTINGS)
-                    && settings.getScope() != null)) {
-            } else {
+                    && settings.getScope() == null)) {
                 throw new SAXParseException(
                     "Wrong document type '" + name + "'",
                     locator);
