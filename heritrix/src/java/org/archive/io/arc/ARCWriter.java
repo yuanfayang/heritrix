@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
+import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
@@ -156,7 +157,7 @@ public class ARCWriter implements ARCConstants {
      * Metadata line pattern.
      */
     private static final Pattern METADATA_LINE_PATTERN =
-        Pattern.compile("^[^ ]+ [^ ]+ [^ ]+ [^ ]+ [^ ]+");
+        Pattern.compile("^\\S+ \\S+ \\S+ \\S+ \\S+(" + LINE_SEPARATOR + "?)$");
 
     /**
      * Suffix given to files currently being written by Heritrix.
@@ -164,6 +165,11 @@ public class ARCWriter implements ARCConstants {
     public static final String OCCUPIED_SUFFIX = ".open";
     
     public static final String UTF8 = "UTF-8";
+    
+    /**
+     * Buffer to reuse writing streams.
+     */
+    private byte [] readbuffer = new byte[4 * 1024];
 
     
     /**
@@ -245,22 +251,23 @@ public class ARCWriter implements ARCConstants {
      * @throws IOException
      */
     public void close() throws IOException {
-        if (this.out != null) {
-            this.out.close();
-            this.out = null;
-            if (this.arcFile != null && this.arcFile.exists()) {
-                String path = this.arcFile.getAbsolutePath();
-                if (path.endsWith(OCCUPIED_SUFFIX)) {
-                    File f = new File(path.substring(0,
+        if (this.out == null) {
+            return;
+        }
+        this.out.close();
+        this.out = null;
+        if (this.arcFile != null && this.arcFile.exists()) {
+            String path = this.arcFile.getAbsolutePath();
+            if (path.endsWith(OCCUPIED_SUFFIX)) {
+                File f = new File(path.substring(0,
                         path.length() - OCCUPIED_SUFFIX.length()));
-                    if (!this.arcFile.renameTo(f)) {
-                        logger.warning("Failed rename of " + path);
-                    }
-                    this.arcFile = f;
+                if (!this.arcFile.renameTo(f)) {
+                    logger.warning("Failed rename of " + path);
                 }
-                logger.info("Closed " + this.arcFile.getAbsolutePath() +
-                    ", size " + this.arcFile.length());
+                this.arcFile = f;
             }
+            logger.info("Closed " + this.arcFile.getAbsolutePath() +
+                    ", size " + this.arcFile.length());
         }
     }
 
@@ -331,7 +338,7 @@ public class ARCWriter implements ARCConstants {
             ARCWriter.roundRobinIndex++;
         }
         if (d == null) {
-            throw new IOException("None of these directories are usable.");
+            throw new IOException("ARC directories unusable.");
         }
         return d;
     }
@@ -344,9 +351,9 @@ public class ARCWriter implements ARCConstants {
         try {
             IoUtils.ensureWriteableDirectory(d);
         } catch(IOException e) {
-            d = null;
             logger.warning("Directory " + d.getPath() + " is not" +
                 " writeable or cannot be created: " + e.getMessage());
+            d = null;
         }
         return d;
     }
@@ -440,9 +447,10 @@ public class ARCWriter implements ARCConstants {
         if (metadataBodyLength > 0) {
             writeMetaData(metabaos);
         }
-        // Write out a couple of LINE_SEPARATORs to end this record.
-        metabaos.write(("" + LINE_SEPARATOR + LINE_SEPARATOR).
-            getBytes(DEFAULT_ENCODING));
+        
+        // Write out a LINE_SEPARATORs to end this record.
+        metabaos.write(LINE_SEPARATOR);
+        
         // Now get bytes of all just written and compress if flag set.
         byte [] bytes = metabaos.toByteArray();
         
@@ -454,11 +462,7 @@ public class ARCWriter implements ARCConstants {
             // produces a 'default' header only).  We can get away w/ these
             // maniupulations because the GZIP 'default' header doesn't
             // do the 'optional' CRC'ing of the header.
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            GZIPOutputStream gzipOS = new GZIPOutputStream(baos);
-            gzipOS.write(bytes, 0, bytes.length);
-            gzipOS.close();
-            byte [] gzippedMetaData = baos.toByteArray();
+            byte [] gzippedMetaData = GzippedInputStream.gzip(bytes);
             if (gzippedMetaData[3] != 0) {
                 throw new IOException("The GZIP FLG header is unexpectedly " +
                     " non-zero.  Need to add smarter code that can deal " +
@@ -623,35 +627,13 @@ public class ARCWriter implements ARCConstants {
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength, InputStream in)
     throws IOException {
-        write(uri, contentType, hostIP, fetchBeginTimeStamp,
-            recordLength, in, new byte[4 * 1024]);
-    }
-    
-    /**
-     * Write a record to ARC file.
-     *
-     * @param uri URI of page we're writing metaline for.  Candidate URI would
-     *        be output of curi.getURIString().
-     * @param contentType Content type of content meta line describes.
-     * @param hostIP IP of host we got content from.
-     * @param fetchBeginTimeStamp Time at which fetch began.
-     * @param recordLength Length of the content fetched.
-     * @param in Where to read record content from.
-     * @param buffer Buffer to use.
-     *
-     * @throws IOException
-     */
-    public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength,
-            InputStream in, byte [] buffer)
-    throws IOException {
         preWriteRecordTasks();
         try {
             this.out.write(getMetaLine(uri, contentType, hostIP,
-                fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            int read = buffer.length;
-            while((read = in.read(buffer)) != -1) {
-                this.out.write(buffer, 0, read);
+                    fetchBeginTimeStamp, recordLength).getBytes(UTF8));
+            int read = this.readbuffer.length;
+            while((read = in.read(this.readbuffer)) != -1) {
+                this.out.write(this.readbuffer, 0, read);
             }
             this.out.write(LINE_SEPARATOR);
         } finally {
@@ -670,38 +652,38 @@ public class ARCWriter implements ARCConstants {
      * @param hostIP IP of host we got content from.
      * @param fetchBeginTimeStamp Time at which fetch began.
      * @param recordLength Length of the content fetched.
-     * @param ris Where to read record content from.
+     * @param ris ReplayInputStream to read from.
      *
      * @throws IOException
      */
     public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength, ReplayInputStream ris)
+            long fetchBeginTimeStamp, int recordLength,
+            ReplayInputStream ris)
     throws IOException {
         preWriteRecordTasks();
         try {
             this.out.write(getMetaLine(uri, contentType, hostIP,
-                fetchBeginTimeStamp, recordLength).getBytes(UTF8));
+                    fetchBeginTimeStamp, recordLength).getBytes(UTF8));
             try {
                 ris.readFullyTo(this.out);
                 long remaining = ris.remaining();
-                if (remaining != 0) // should be zero
-                {
+                // Should be zero at this stage.  If not, something is
+                // wrong.
+                if (remaining != 0) {
                     // TODO: Move this DevUtils out of this class so no
                     // dependency upon it.
-                    String message = "Gap between expected and actual: "
-                        +  remaining + LINE_SEPARATOR + DevUtils.extraInfo();
+                    String message = "Gap between expected and actual: " +
+                    remaining + LINE_SEPARATOR + DevUtils.extraInfo() +
+                    " writing arc " +
+                    this.getArcFile().getAbsolutePath();
                     DevUtils.warnHandle(new Throwable(message), message);
-                    while (remaining > 0) {
-                        // Pad with zeros
-                        this.out.write(0);
-                        remaining--;
-                    }
+                    throw new IOException(message);
                 }
             } finally {
                 ris.close();
-            }
-
-            // Trailing newline
+            } 
+            
+            // Write out trailing newline
             this.out.write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
@@ -760,14 +742,6 @@ public class ARCWriter implements ARCConstants {
                 Long.toString(fetchBeginTimeStamp));
         }
 
-        if (hostIP == null) {
-            throw new IOException("Null hostIP passed.");
-        }
-
-        if (uri == null || uri.length() <= 0) {
-            throw new IOException("URI is empty: " + uri);
-        }
-
         return validateMetaLine(makeMetaline(uri, hostIP, 
             ArchiveUtils.get14DigitDate(fetchBeginTimeStamp),
             MimetypeUtils.truncate(contentType),
@@ -797,7 +771,7 @@ public class ARCWriter implements ARCConstants {
         }
      	Matcher m = METADATA_LINE_PATTERN.matcher(metaLineStr);
         if (!m.matches()) {
-        	throw new IOException("Metadata line doesn't match expected" +
+            throw new IOException("Metadata line doesn't match expected" +
                 " pattern: " + metaLineStr);
         }
         return metaLineStr;

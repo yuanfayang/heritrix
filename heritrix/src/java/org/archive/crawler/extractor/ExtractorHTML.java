@@ -40,6 +40,7 @@ import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
+import org.archive.util.HttpRecorder;
 
 /**
  * Basic link-extraction, from an HTML content-body,
@@ -319,27 +320,25 @@ implements CoreAttributeConstants {
             // Some other extractor already handled this one. We'll pass on it.
             return;
         }
-        if (!curi.isHttpTransaction())
-        {
+        
+        if (!curi.isHttpTransaction()) {
             return;
         }
 
-        if(this.ignoreUnexpectedHTML) {
+        if (this.ignoreUnexpectedHTML) {
             try {
                 if(!isHtmlExpectedHere(curi)) {
                     // HTML was not expected (eg a GIF was expected) so ignore
                     // (as if a soft 404)
                     return;
                 }
-            }
-            catch (URIException e) {
+            } catch (URIException e) {
                 logger.severe("Failed expectedHTML test: " + e.getMessage());
             }
         }
 
         String contentType = curi.getContentType();
-        if ((contentType==null) || (!contentType.startsWith("text/html")))
-        {
+        if ((contentType == null) || (!contentType.startsWith("text/html"))) {
             // nothing to extract for other types here
             return;
         }
@@ -350,7 +349,12 @@ implements CoreAttributeConstants {
         
         try {
 	       cs = curi.getHttpRecorder().getReplayCharSequence();
-        } catch(Exception e) {
+           HttpRecorder hr = curi.getHttpRecorder();
+           if (hr == null) {
+               throw new IOException("Why is recorder null here?");
+           }
+           cs = hr.getReplayCharSequence();
+        } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e,
                 "Failed get of replay char sequence " + curi.toString() +
                     " " + e.getMessage());
@@ -358,6 +362,7 @@ implements CoreAttributeConstants {
                 curi.toString() + " " + e.getMessage() + " " +
                 Thread.currentThread().getName());
         }
+        
         if (cs == null) {
             return;
         }

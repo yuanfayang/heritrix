@@ -24,11 +24,13 @@
 */
 package org.archive.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 
 /**
@@ -266,5 +268,20 @@ public class GzippedInputStream extends GZIPInputStream
     public void gzipMemberSeek(long position) throws IOException {
         seek(position);
         readHeader();
+    }
+    
+    /**
+     * Gzip passed bytes.
+     * Use only when bytes is small.
+     * @param bytes What to gzip.
+     * @return A gzip member of bytes.
+     * @throws IOException
+     */
+    public static byte [] gzip(byte [] bytes) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        GZIPOutputStream gzipOS = new GZIPOutputStream(baos);
+        gzipOS.write(bytes, 0, bytes.length);
+        gzipOS.close();
+        return baos.toByteArray();
     }
 }

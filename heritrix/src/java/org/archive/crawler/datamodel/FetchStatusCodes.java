@@ -96,6 +96,8 @@ public interface FetchStatusCodes {
 
     /** DNS success */
     public static final int S_DNS_SUCCESS = 1;
+    /** InetAddress.getByName success */
+    public static final int S_GETBYNAME_SUCCESS = 1001;
 }
 
 

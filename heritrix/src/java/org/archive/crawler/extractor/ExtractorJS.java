@@ -138,17 +138,16 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         }
     }
 
-    public static long considerStrings(
-            CrawlURI curi, CharSequence cs, boolean handlingJSFile) {
+    public static long considerStrings(CrawlURI curi, CharSequence cs,
+            boolean handlingJSFile) {
         long foundLinks = 0;
-        Matcher strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
+        Matcher strings =
+            TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
         while(strings.find()) {
             CharSequence subsequence =
                 cs.subSequence(strings.start(2), strings.end(2));
-
             Matcher uri =
                 TextUtils.getMatcher(STRING_URI_EXTRACTOR, subsequence);
-
             if(uri.matches()) {
                 String string = uri.group();
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
@@ -156,10 +155,12 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                 if (handlingJSFile) {
                     curi.addLinkToCollection(string, A_JS_FILE_LINKS);
                 } else {
-                    curi.addLinkToCollection(string, A_HTML_SPECULATIVE_EMBEDS);
+                    curi.addLinkToCollection(string,
+                        A_HTML_SPECULATIVE_EMBEDS);
                 }
             } else {
-               foundLinks += considerStrings(curi,subsequence, handlingJSFile);
+               foundLinks += considerStrings(curi, subsequence,
+                   handlingJSFile);
             }
             TextUtils.freeMatcher(uri);
         }

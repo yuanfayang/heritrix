@@ -823,9 +823,29 @@ public class Heritrix implements HeritrixMBean {
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
         httpServer = new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
+        
+        final String DOTWAR = ".war";
+        final String ADMIN = "admin";
+        final String SELFTEST = "selftest";
+        
+        // Look for additional WAR files beyond 'selftest' and 'admin'.
+        File[] wars = getWarsdir().listFiles();
+        for(int i = 0; i < wars.length; i++) {
+            if(wars[i].isFile()) {
+                final String warName = wars[i].getName();
+                final String warNameNC = warName.toLowerCase();
+                if(warNameNC.endsWith(DOTWAR) &&
+                        !warNameNC.equals(ADMIN + DOTWAR) &&
+                        !warNameNC.equals(SELFTEST + DOTWAR)) {
+                    int dot = warName.indexOf('.');
+                    httpServer.addWebapp(warName.substring(0, dot), null, true);
+                }
+            }
+        }
+        
         // Name of passed 'realm' must match what is in configured in web.xml.
         // We'll use ROLE for 'realm' and 'role'.
-        final String ROLE = "admin";
+        final String ROLE = ADMIN;
         Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUN,
             adminPW, ROLE);
         httpServer.startServer();
