@@ -112,16 +112,17 @@ public class PathDepthFilter extends Filter {
             false;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Filter#applyInversion()
-     */
     protected boolean returnTrueIfMatches(CrawlURI curi) {
        try {
-           return ((Boolean) getAttribute(
-                   ATTR_MATCH_RETURN_VALUE, curi)).booleanValue();
+           return ((Boolean) getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).
+               booleanValue();
        } catch (AttributeNotFoundException e) {
            logger.severe(e.getMessage());
            return true;
        }
+    }
+    
+    protected boolean getFilterOffPosition(CrawlURI curi) {
+        return returnTrueIfMatches(curi);
     }
 }

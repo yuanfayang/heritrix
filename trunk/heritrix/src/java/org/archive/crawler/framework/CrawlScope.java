@@ -310,11 +310,9 @@ public class CrawlScope extends Filter {
      * @return True if exclude filter accepts passed object.
      */
     protected boolean excludeAccepts(Object o) {
-        if (this.excludeFilter.isEmpty(o)) {
-            return exceedsMaxHops(o);
-        } else {
-            return this.excludeFilter.accepts(o) || exceedsMaxHops(o);
-        }
+        return (this.excludeFilter.isEmpty(o))?
+            exceedsMaxHops(o):
+            this.excludeFilter.accepts(o) || exceedsMaxHops(o);
     }
 
     /** Check if a URI is in the seeds.

@@ -68,7 +68,7 @@ public class OrFilter extends Filter {
                     + "this filter will return true if one of the subfilters "
                     + "return true, false otherwise. If false, this filter "
                     + "will return false if one of the subfilters"
-                    + "return true, false otherwise.",
+                    + " returns true, false otherwise.",
                 new Boolean(true)));
 
         addElementToDefinition(new MapType(ATTR_FILTERS,
@@ -90,10 +90,9 @@ public class OrFilter extends Filter {
         if (isEmpty(o)) {
             return true;
         }
-        Iterator iter = iterator(o);
-        while(iter.hasNext()) {
+        for (Iterator iter = iterator(o); iter.hasNext();) {
             Filter f = (Filter)iter.next();
-            if( f.accepts(o) ) {
+            if (f.accepts(o)) {
                 return true;
             }
         }
@@ -116,12 +115,10 @@ public class OrFilter extends Filter {
         return getFilters(o).iterator(o);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Filter#applyInversion()
-     */
     protected boolean returnTrueIfMatches(CrawlURI curi) {
        try {
-           return ((Boolean) getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).booleanValue();
+           return ((Boolean) getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).
+               booleanValue();
        } catch (AttributeNotFoundException e) {
            logger.severe(e.getMessage());
            return true;

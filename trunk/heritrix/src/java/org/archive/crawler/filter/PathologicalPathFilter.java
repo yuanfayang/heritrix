@@ -26,15 +26,17 @@ package org.archive.crawler.filter;
 
 import javax.management.AttributeNotFoundException;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
-/** Checks if a URI contains a repated pattern.
+/** 
+ * Checks if a URI contains a repeated pattern.
  *
  * This filter is checking if a pattern is repeated a specific number of times.
  * The use is to avoid crawler traps where the server adds the same pattern to
- * the requested URI like:
- * http://host/img/img/img/img....
+ * the requested URI like: <code>http://host/img/img/img/img....</code>. This
+ * filter returns TRUE if the path is pathological.  FALSE otherwise.
  *
  * @author John Erik Halse
  */
@@ -52,7 +54,10 @@ public class PathologicalPathFilter extends URIRegExpFilter {
         super(name);
         setDescription("Pathological path filter. \nThe Pathologicalpath filter" +
                 " is used to avoid crawler traps by adding a constraint on" +
-                " how many times a pattern in the URI could be repeated.");
+                " how many times a pattern in the URI could be repeated." +
+                " Returns false if the path is NOT pathological (There" +
+                " are no subpath reptitions or reptitions are less than" +
+                " the '" + ATTR_REPETITIONS + "' limit).");
 
         Type type = getElementFromDefinition(ATTR_MATCH_RETURN_VALUE);
         type.setTransient(true);
@@ -67,22 +72,22 @@ public class PathologicalPathFilter extends URIRegExpFilter {
                 DEFAULT_REPETITIONS));
     }
 
-    /** Construct the regexp string to be matched aginst the URI.
-     *
+    /** 
+     * Construct the regexp string to be matched aginst the URI.
      * @param o an object to extract a URI from.
      * @return the regexp pattern.
      */
     protected String getRegexp(Object o) {
-        int rep;
+        int rep = 0;
         try {
-            rep = ((Integer) getAttribute(o, ATTR_REPETITIONS)).intValue();
+            rep = ((Integer)getAttribute(o, ATTR_REPETITIONS)).intValue();
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
-            return null;
         }
-
-        if (rep == 0) return null;
-
-        return ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
+        return rep == 0? null: ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
+    }
+    
+    protected boolean getFilterOffPosition(CrawlURI curi) {
+        return false;
     }
 }
