@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.archive.util.HttpRecorder;
@@ -101,7 +100,7 @@ public class HttpRecorderPostMethod extends PostMethod
     }
 
     public int execute(HttpState state, HttpConnection conn)
-            throws HttpException, HttpRecoverableException, IOException {
+            throws HttpException, IOException {
         // Save off the connection so we can close it on our way out in case
         // httpclient fails to (We're not supposed to have access to the
         // underlying connection object; am only violating contract because

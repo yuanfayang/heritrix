@@ -184,14 +184,6 @@ public class ARCWriter implements ARCConstants {
      * 'body' of the first record in the arc file, the arc file meta record.
      */
     private final List metadata;
-
-    /**
-     * Encoding to use getting bytes from strings.
-     *
-     * Specify an encoding rather than leave it to chance: i.e whatever the
-     * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
-     */
-    private static final String ENCODING = "ISO-8859-1";
     
     /**
      * Metadata line pattern.
@@ -407,21 +399,21 @@ public class ARCWriter implements ARCConstants {
             "URL IP-address Archive-date Content-type Archive-length" +
             LINE_SEPARATOR;
         int recordLength = metadataBodyLength +
-            metadataHeaderLinesTwoAndThree.getBytes(ENCODING).length;
+            metadataHeaderLinesTwoAndThree.getBytes(DEFAULT_ENCODING).length;
         String metadataHeaderStr = ARC_MAGIC_NUMBER + getArcName() +
             " 0.0.0.0 " + date + " text/plain " + recordLength +
             metadataHeaderLinesTwoAndThree;
         ByteArrayOutputStream metabaos =
             new ByteArrayOutputStream(recordLength);
         // Write the metadata header.
-        metabaos.write(metadataHeaderStr.getBytes(ENCODING));
+        metabaos.write(metadataHeaderStr.getBytes(DEFAULT_ENCODING));
         // Write the metadata body, if anything to write.
         if (metadataBodyLength > 0) {
             writeMetaData(metabaos);
         }
         // Write out a couple of LINE_SEPARATORs to end this record.
         metabaos.write(("" + LINE_SEPARATOR + LINE_SEPARATOR).
-            getBytes(ENCODING));
+            getBytes(DEFAULT_ENCODING));
         // Now get bytes of all just written and compress if flag set.
         byte [] bytes = metabaos.toByteArray();
         if(isCompress())
@@ -493,7 +485,7 @@ public class ARCWriter implements ARCConstants {
         for (Iterator i = this.metadata.iterator(); i.hasNext();) {
             Object obj = i.next();
             if (obj instanceof String) {
-                baos.write(((String)obj).getBytes(ENCODING));
+                baos.write(((String)obj).getBytes(DEFAULT_ENCODING));
             } else if (obj instanceof File) {
                 InputStream is = null;
                 try {
@@ -526,7 +518,7 @@ public class ARCWriter implements ARCConstants {
             for (Iterator i = this.metadata.iterator(); i.hasNext();) {
                 Object obj = i.next();
                 if (obj instanceof String) {
-                    result += ((String)obj).getBytes(ENCODING).length;
+                    result += ((String)obj).getBytes(DEFAULT_ENCODING).length;
                 } else if (obj instanceof File) {
                     result += ((File)obj).length();
                 } else {

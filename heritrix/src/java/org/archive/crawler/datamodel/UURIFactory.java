@@ -279,35 +279,17 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(String uri, String charset) throws URIException {
-        UURI uuri = isEscaped(uri)? 
-            new UURIImpl(escapeWhitespace(fixup(uri, null)).toCharArray(),
-                charset):
-            new UURIImpl(fixup(uri, null), charset);
-         if (logger.isLoggable(Level.FINE)) {
-             logger.fine("URI " + uri +
-                 " PRODUCT " + uuri.toString() +
-                 " ESCAPED " + escaped +
-                 " CHARSET " + charset);
-            }
-         validityCheck(uuri);
-         return uuri;
-    }
-    
-    /**
-     * Check the generated UURI.
-     * 
-     * At the least look at length of uuri string.  We were seeing case
-     * where before escaping, string was &lt; MAX_URL_LENGTH but after was
-     * &gt;.  Letting out a too-big message was causing us troubles later
-     * down the processing chain.
-     * @param uuri Created uuri to check.
-     * @throws URIException
-     */
-    protected void validityCheck(UURI uuri) throws URIException {
-    	if (uuri.getRawURI().length > MAX_URL_LENGTH) {
-           throw new URIException("Created (escaped) uuri > " +
-              MAX_URL_LENGTH);
+        boolean escaped = isEscaped(uri);
+        UURI uuri  = (escaped)?
+            new UURIImpl(escapeWhitespace(fixup(uri, null)), escaped, charset):
+            new UURIImpl(fixup(uri, null), escaped, charset);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("URI " + uri +
+                " PRODUCT " + uuri.toString() +
+                " ESCAPED " + escaped +
+                " CHARSET " + charset);
         }
+        return validityCheck(uuri);
     }
     
     /**
@@ -317,18 +299,33 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(UURI base, String relative) throws URIException {
-        UURI uuri = isEscaped(relative)? 
-            new UURIImpl(base,
-                    new UURI(fixup(relative, base).toCharArray(),
-                    base.getProtocolCharset())):
-            new UURIImpl(base, new UURI(fixup(relative, base),
-                    base.getProtocolCharset()));
+        UURI uuri = new UURIImpl(base,  new UURI(fixup(relative, base),
+            isEscaped(relative), base.getProtocolCharset()));
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(" URI " + relative +
                 " PRODUCT " + uuri.toString() +
                 " ESCAPED " + escaped +
                 " CHARSET " + base.getProtocolCharset() +
                 " BASE " + base);
+        }
+        return validityCheck(uuri);
+    }
+
+    /**
+     * Check the generated UURI.
+     * 
+     * At the least look at length of uuri string.  We were seeing case
+     * where before escaping, string was &lt; MAX_URL_LENGTH but after was
+     * &gt;.  Letting out a too-big message was causing us troubles later
+     * down the processing chain.
+     * @param uuri Created uuri to check.
+     * @return The passed <code>uuri</code> so can easily inline this check.
+     * @throws URIException
+     */
+    protected UURI validityCheck(UURI uuri) throws URIException {
+        if (uuri.getRawURI().length > MAX_URL_LENGTH) {
+           throw new URIException("Created (escaped) uuri > " +
+              MAX_URL_LENGTH);
         }
         return uuri;
     }
@@ -338,7 +335,7 @@ public class UURIFactory extends URI {
      * escaped.
      * @return True if the passed URI exhibits 'escapedness'.
      */
-    protected boolean isEscaped(String uri) {
+    public static boolean isEscaped(String uri) {
         return (uri == null || uri.length() <= 0)? false:
             TextUtils.getMatcher(URI_HEX_ENCODING, uri).matches();
     }
@@ -637,19 +634,13 @@ public class UURIFactory extends URI {
     private class UURIImpl extends UURI  implements Serializable {
         /**
          * @param uri String representation of an absolute URI.
+         * @param escaped True if URI is already escaped.
+         * @param charset Charset the <code>uri</code> uses.
          * @throws org.apache.commons.httpclient.URIException
          */
-        protected UURIImpl(String uri, String charset) throws URIException {
-            super(uri, charset);
-            normalize();
-        }
-        
-        /**
-         * @param uri String representation of an absolute URI.
-         * @throws org.apache.commons.httpclient.URIException
-         */
-        protected UURIImpl(char [] uri, String charset) throws URIException {
-            super(uri, charset);
+        protected UURIImpl(String uri, boolean escaped, String charset)
+        throws URIException {
+            super(uri, escaped, charset);
             normalize();
         }
         

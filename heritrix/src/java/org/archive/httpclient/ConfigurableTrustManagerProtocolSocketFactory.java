@@ -24,6 +24,7 @@ package org.archive.httpclient;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
@@ -34,22 +35,21 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
+import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
-import org.archive.util.ConfigurableX509TrustManager;
 
 
 /**
  * Implementation of the commons-httpclient SSLProtocolSocketFactory so we
  * can return SSLSockets whose trust manager is
- * {@link org.archive.util.ConfigurableX509TrustManager}.
+ * {@link org.archive.httpclient.ConfigurableX509TrustManager}.
  *
  * @author stack
  * @version $Id$
- * @see org.archive.util.ConfigurableX509TrustManager
+ * @see org.archive.httpclient.ConfigurableX509TrustManager
  */
 public class ConfigurableTrustManagerProtocolSocketFactory
-    implements SecureProtocolSocketFactory
-{
+implements SecureProtocolSocketFactory {
     /**
      * Socket factory that has the configurable trust manager installed.
      *
@@ -61,9 +61,7 @@ public class ConfigurableTrustManagerProtocolSocketFactory
 
 
     public ConfigurableTrustManagerProtocolSocketFactory()
-        throws KeyManagementException, KeyStoreException,
-            NoSuchAlgorithmException
-    {
+    throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException{
         this(ConfigurableX509TrustManager.DEFAULT);
     }
 
@@ -77,9 +75,8 @@ public class ConfigurableTrustManagerProtocolSocketFactory
      * @see ConfigurableX509TrustManager
      */
     public ConfigurableTrustManagerProtocolSocketFactory(String level)
-        throws KeyManagementException, KeyStoreException,
-            NoSuchAlgorithmException
-    {
+    throws KeyManagementException, KeyStoreException,
+            NoSuchAlgorithmException {
         super();
 
         // Get an SSL context and initialize it.
@@ -94,22 +91,41 @@ public class ConfigurableTrustManagerProtocolSocketFactory
     }
 
     public Socket createSocket(String host, int port, InetAddress clientHost,
-            int clientPort)
-        throws IOException, UnknownHostException
-    {
+        int clientPort)
+    throws IOException, UnknownHostException {
         return this.sslfactory.createSocket(host, port, clientHost, clientPort);
     }
 
     public Socket createSocket(String host, int port)
-        throws IOException, UnknownHostException
-    {
+    throws IOException, UnknownHostException {
         return this.sslfactory.createSocket(host, port);
     }
 
-    public Socket createSocket(Socket socket, String host, int port,
-            boolean autoClose)
-        throws IOException, UnknownHostException
-    {
-        return this.sslfactory.createSocket(socket, host, port, autoClose);
+    public Socket createSocket(String host, int port, InetAddress localAddress,
+        int localPort, HttpConnectionParams params)
+    throws IOException, UnknownHostException {
+        // Below code is from the DefaultSSLProtocolSocketFactory#createSocket
+        // method only it has workarounds to deal with pre-1.4 JVMs.  I've
+        // cut these out.
+        if (params == null) {
+            throw new IllegalArgumentException("Parameters may not be null");
+        }
+        Socket socket = null;
+        int timeout = params.getConnectionTimeout();
+        if (timeout == 0) {
+            socket = createSocket(host, port, localAddress, localPort);
+        } else {
+            socket = this.sslfactory.createSocket();
+            InetSocketAddress address = new InetSocketAddress(host, port);
+            socket.connect(address, timeout);
+            assert socket.isConnected(): "Socket not connected " + host;
+        }
+        return socket;
     }
+    
+	public Socket createSocket(Socket socket, String host, int port,
+        boolean autoClose)
+    throws IOException, UnknownHostException {
+        return this.sslfactory.createSocket(socket, host, port, autoClose);
+	}
 }

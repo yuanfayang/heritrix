@@ -20,20 +20,13 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.util;
+package org.archive.httpclient;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -44,7 +37,7 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
-import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 
 /**
  * Test configurable trust.
@@ -71,13 +64,14 @@ public class ConfigurableX509TrustManagerTest extends TestCase
     /**
      * Logging instance.
      */
-    private static Logger logger = Logger.getLogger(
-        "org.archive.httpclient.ConfigurableX509TrustManagerTest");
+    private static Logger logger =
+        Logger.getLogger(ConfigurableX509TrustManagerTest.class.getName());
 
     /**
      * Site w/ selfsigned certificate.
      */
-    private static final String SELF_SIGNED_URL = "https://foia.aphis.usda.gov";
+    private static final String SELF_SIGNED_URL =
+        "https://foia.aphis.usda.gov";
 
     /**
      * This is an url that is signed by a CA not in the IBM cacerts truststore
@@ -90,8 +84,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * URLs that should work w/ the LOOSE trust level but that fail w/
      * default httpclient ssl.
      */
-    private static final String [] LOOSE_URLS =
-    {
+    private static final String [] LOOSE_URLS = {
         SELF_SIGNED_URL
     };
 
@@ -99,8 +92,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * URLS that throw exceptions using default httpclient ssl socket factory
      * but if trust manager set to OPEN, then we get into the site.
      */
-    private static final String [] OPEN_URLS =
-    {
+    private static final String [] OPEN_URLS = {
         SELF_SIGNED_URL,
 
         // Gives back a 40x if we use our 'open' TrustManager otherwise
@@ -158,8 +150,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
     /**
      * @param test Name of the test to run.
      */
-    public ConfigurableX509TrustManagerTest(String test)
-    {
+    public ConfigurableX509TrustManagerTest(String test) {
         super(test);
     }
 
@@ -168,8 +159,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      *
      * @return Test to run for ConfigurableX509TrustManagerTest.
      */
-    public static Test suite()
-    {
+    public static Test suite() {
         TestSuite suite = new TestSuite();
 
         /*
@@ -210,19 +200,19 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * @throws NoSuchAlgorithmException
      */
     public void testOpenConfigurableX509TrustManagerTest()
-        throws KeyManagementException, KeyStoreException,
-            NoSuchAlgorithmException
-    {
+    throws KeyManagementException, KeyStoreException,
+            NoSuchAlgorithmException {
         HttpClient client = new HttpClient();
         Protocol.registerProtocol("https",
-            new Protocol("https", new SSLProtocolSocketFactory(), 443));
+            new Protocol("https",
+                (ProtocolSocketFactory)(new SSLProtocolSocketFactory()), 443));
         runURLs(client, OPEN_URLS, true);
 
         Protocol.registerProtocol("https",
             new Protocol("https",
-                new TestTrustSecureProtocolSocketFactory(
-                    ConfigurableX509TrustManager.OPEN),
-				443));
+                (ProtocolSocketFactory)
+                    (new ConfigurableTrustManagerProtocolSocketFactory(
+                        ConfigurableX509TrustManager.OPEN)), 443));
         runURLs(client, OPEN_URLS, false);
     }
 
@@ -234,19 +224,20 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * @throws NoSuchAlgorithmException
      */
     public void testLooseConfigurableX509TrustManagerTest()
-        throws KeyManagementException, KeyStoreException,
+    throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
         HttpClient client = new HttpClient();
         Protocol.registerProtocol("https",
-            new Protocol("https", new SSLProtocolSocketFactory(), 443));
+            new Protocol("https",
+                (ProtocolSocketFactory)(new SSLProtocolSocketFactory()), 443));
         runURLs(client, LOOSE_URLS, true);
 
         Protocol.registerProtocol("https",
            new Protocol("https",
-           new TestTrustSecureProtocolSocketFactory(
-           		    ConfigurableX509TrustManager.LOOSE),
-                443));
+                (ProtocolSocketFactory)
+                    (new ConfigurableTrustManagerProtocolSocketFactory(
+           		        ConfigurableX509TrustManager.LOOSE)), 443));
         runURLs(client, LOOSE_URLS, false);
     }
 
@@ -264,19 +255,20 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * @throws NoSuchAlgorithmException
      */
     public void testNormalConfigurableX509TrustManagerTest()
-        throws KeyManagementException, KeyStoreException,
+    throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
         HttpClient client = new HttpClient();
         Protocol.registerProtocol("https",
-            new Protocol("https", new SSLProtocolSocketFactory(), 443));
+            new Protocol("https",
+                ((ProtocolSocketFactory)new SSLProtocolSocketFactory()), 443));
         runURLs(client, OPEN_URLS, true);
 
         Protocol.registerProtocol("https",
            new Protocol("https",
-           new TestTrustSecureProtocolSocketFactory(
-           		    ConfigurableX509TrustManager.NORMAL),
-                443));
+                ((ProtocolSocketFactory)
+                    new ConfigurableTrustManagerProtocolSocketFactory(
+           		    ConfigurableX509TrustManager.NORMAL)), 443));
         runURLs(client, OPEN_URLS, true);
     }
 
@@ -299,20 +291,21 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * @throws NoSuchAlgorithmException
      */
     public void testHeritrixTrustStore()
-        throws KeyManagementException, KeyStoreException,
+    throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
         String [] caNotInIBMTrustStore = {CA_NOT_IN_IBM_TRUSTSTORE};
         HttpClient client = new HttpClient();
         Protocol.registerProtocol("https",
-            new Protocol("https", new SSLProtocolSocketFactory(), 443));
+            new Protocol("https",
+                ((ProtocolSocketFactory)new SSLProtocolSocketFactory()), 443));
         runURLs(client, caNotInIBMTrustStore, true);
 
         Protocol.registerProtocol("https",
            new Protocol("https",
-           new TestTrustSecureProtocolSocketFactory(
-           		    ConfigurableX509TrustManager.NORMAL),
-                443));
+                ((ProtocolSocketFactory)
+                    new ConfigurableTrustManagerProtocolSocketFactory(
+           		    ConfigurableX509TrustManager.NORMAL)), 443));
         // TODO: Set the javax.net.ssl.trustStore before calling next method.
         // See org.archive.crawler.Heritrix#configureTrustStore().
         runURLs(client, caNotInIBMTrustStore, false);
@@ -327,119 +320,27 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * exception.
      */
     private void runURLs(HttpClient client, String [] URLS,
-        boolean expectExceptions)
-    {
-        for (int i = 0; i < URLS.length; i++)
-        {
+        boolean expectExceptions) {
+        for (int i = 0; i < URLS.length; i++) {
             boolean exception = false;
-            try
-            {
+            try {
                 getPage(client, URLS[i]);
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 exception = true;
                 logger.info(URLS[i] + ": " + e.toString());
             }
 
-            if (expectExceptions)
-            {
+            if (expectExceptions) {
                 assertTrue("No exception: " + URLS[i], exception);
             }
         }
     }
 
     private void getPage(HttpClient client, String url)
-        throws HttpException, IOException
-    {
+        throws HttpException, IOException {
         GetMethod httpget = new GetMethod(url);
         client.executeMethod(httpget);
         logger.info(url + ": " + httpget.getStatusLine().toString());
         httpget.releaseConnection();
-    }
-
-    /**
-     * Implementation of the commons-httpclient SecureProtocolSocketFactory so we
-     * can insert our own configurable trust manager.
-     *
-     * Used testing configurable trustmanager. Based on suggestions found up on
-     * commons-httpclient:
-     * <a href="http://jakarta.apache.org/commons/httpclient/sslguide.html">SSL
-     * Guide</a>.
-     *
-     * <p>Should be only one instance of this factory per JVM.
-     *
-     * @author stack
-     * @version $Id$
-     */
-    public class TestTrustSecureProtocolSocketFactory
-        implements SecureProtocolSocketFactory
-    {
-        /**
-         * Socket factory that has the configurable trust manager installed.
-         *
-         * TODO: Is this thread safe?  Is this the way factories are supposed
-         * to be used -- one instance out of which all sockets are given or
-         * do we get a factory each time we need sockets?
-         */
-        private SSLSocketFactory factory = null;
-
-
-        public TestTrustSecureProtocolSocketFactory()
-            throws KeyManagementException, KeyStoreException,
-			    NoSuchAlgorithmException
-        {
-            this(ConfigurableX509TrustManager.DEFAULT);
-        }
-
-        /**
-         * Constructor.
-         *
-         * @param level Level of trust to effect.
-         *
-         * @throws NoSuchAlgorithmException
-         * @throws KeyStoreException
-         * @see ConfigurableX509TrustManager
-         */
-        public TestTrustSecureProtocolSocketFactory(String level)
-            throws KeyManagementException, KeyStoreException,
-			    NoSuchAlgorithmException
-        {
-            super();
-
-            // Get an SSL context and initialize it.
-            SSLContext context = SSLContext.getInstance("SSL");
-            // I tried to get the default KeyManagers but below doesn't work, at
-            // least on IBM JVM.  Passing in null seems to do the right thing so
-            // we'll go w/ that.
-            //  KeyManagerFactory kmf = KeyManagerFactory.
-            //      getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            //  // Get default KeyStore.  Assume empty string password.
-            // kmf.init(KeyStore.getInstance(KeyStore.getDefaultType()),
-            //      "".toCharArray());
-            context.init(null,
-                    new TrustManager[] {new ConfigurableX509TrustManager(level)}, null);
-            this.factory = context.getSocketFactory();
-        }
-
-        public Socket createSocket(String host, int port, InetAddress clientHost,
-                int clientPort)
-            throws IOException, UnknownHostException
-        {
-            return this.factory.createSocket(host, port, clientHost, clientPort);
-        }
-
-        public Socket createSocket(String host, int port)
-            throws IOException, UnknownHostException
-        {
-            return this.factory.createSocket(host, port);
-        }
-
-        public Socket createSocket(Socket socket, String host, int port,
-                boolean autoClose)
-            throws IOException, UnknownHostException
-        {
-            return this.factory.createSocket(socket, host, port, autoClose);
-        }
     }
 }

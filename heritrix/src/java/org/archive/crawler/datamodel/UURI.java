@@ -98,19 +98,13 @@ public class UURI extends URI implements Serializable, HasUri {
     
     /**
      * @param uri String representation of an absolute URI.
+     * @param escaped If escaped.
+     * @param charset Charset to use.
      * @throws org.apache.commons.httpclient.URIException
      */
-    protected UURI(String uri, String charset) throws URIException {
-        super(uri, charset);
-        normalize();
-    }
-    
-    /**
-     * @param uri String representation of an absolute URI.
-     * @throws org.apache.commons.httpclient.URIException
-     */
-    protected UURI(char [] uri, String charset) throws URIException {
-        super(uri, charset);
+    protected UURI(String uri, boolean escaped, String charset)
+    throws URIException {
+        super(uri, escaped, charset);
         normalize();
     }
     
@@ -123,24 +117,40 @@ public class UURI extends URI implements Serializable, HasUri {
         super(base, relative);
         normalize();
     }
-
+    
     /**
      * @param uri URI as string that is resolved relative to this UURI.
+     * @param charset Charset to use.
      * @return UURI that uses this UURI as base.
      * @throws URIException
      */
-    public UURI resolve(String uri) throws URIException {
-        return resolve(uri, this.getProtocolCharset());
+    public UURI resolve(String uri)
+    throws URIException {
+        return resolve(uri, UURIFactory.isEscaped(uri),
+            this.getProtocolCharset());
+    }
+
+    /**
+     * @param uri URI as string that is resolved relative to this UURI.
+     * @param charset Charset to use.
+     * @return UURI that uses this UURI as base.
+     * @throws URIException
+     */
+    public UURI resolve(String uri, boolean escaped)
+    throws URIException {
+        return resolve(uri, escaped, this.getProtocolCharset());
     }
     
     /**
      * @param uri URI as string that is resolved relative to this UURI.
+     * @param escaped True if uri is escaped.
+     * @param charset Charset to use.
      * @return UURI that uses this UURI as base.
-     * @param charset Character
      * @throws URIException
      */
-    public UURI resolve(String uri, String charset) throws URIException {
-        return new UURI(this, new UURI(uri, charset));
+    public UURI resolve(String uri, boolean escaped, String charset)
+    throws URIException {
+        return new UURI(this, new UURI(uri, escaped, charset));
     }
 
     /**
@@ -232,7 +242,11 @@ public class UURI extends URI implements Serializable, HasUri {
         if (this.cachedHost == null) {
             synchronized (this) {
                 if (this.cachedHost == null) {
-                    this.cachedHost = super.getHost();
+                    // If this._host is null, 3.0 httpclient throws
+                    // illegalargumentexception.  Don't go there.
+                    if (this._host != null) {
+                    	this.cachedHost = super.getHost();
+                    }
                 }
             }
         }

@@ -33,8 +33,9 @@ import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.ListIterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,16 +46,22 @@ import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.HttpConstants;
+import org.apache.commons.httpclient.HttpVersion;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.auth.AuthChallengeParser;
 import org.apache.commons.httpclient.auth.AuthScheme;
-import org.apache.commons.httpclient.auth.HttpAuthenticator;
+import org.apache.commons.httpclient.auth.BasicScheme;
+import org.apache.commons.httpclient.auth.DigestScheme;
 import org.apache.commons.httpclient.auth.MalformedChallengeException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -68,18 +75,16 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.crawler.settings.StringList;
+import org.archive.crawler.settings.Type;
 import org.archive.httpclient.CloseConnectionMarker;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
+import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
-import org.archive.httpclient.PatchedHttpClient;
-import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.ConfigurableX509TrustManager;
 import org.archive.util.HttpRecorder;
 
 /**
@@ -122,26 +127,15 @@ public class FetchHTTP extends Processor
 
     /**
      * Default character encoding to use for pages that do not specify.
-     * Instead of using HttpConstants.DEFAULT_CONTENT_CHARSET directly, define
-     * this here so the definition can be trivially changed later.
      */
-    private static String DEFAULT_DEFAULT_ENCODING =
-        HttpConstants.DEFAULT_CONTENT_CHARSET;
+    private static String DEFAULT_CONTENT_CHARSET = Heritrix.DEFAULT_ENCODING;
 
     /**
      * Default whether to perform on-the-fly SHA1 hashing of content-bodies.
      */
     private static Boolean DEFAULT_SHA1_CONTENT = new Boolean(true);
-    
-   /**
-     * Default setting for HttpClient's "strict mode".
-     * In strict mode, Cookies are served on a single header.
-     */
-    private static final boolean DEFAULT_HTTPCLIENT_STRICT = true;
 
-    transient PatchedHttpClient http = null;
-
-    private int soTimeout;
+    private transient HttpClient http = null;
 
     /**
      * How many 'instant retries' of HttpRecoverableExceptions have occurred
@@ -150,8 +144,12 @@ public class FetchHTTP extends Processor
      */
     private int recoveryRetries = 0;
 
-    // Would like to be 'long', but longs aren't atomic
+    /**
+     * Count of crawl uris handled.
+     * Would like to be 'long', but longs aren't atomic
+     */
     private int curisHandled = 0;
+    
 
     /**
      * Constructor.
@@ -163,10 +161,11 @@ public class FetchHTTP extends Processor
         Type e;
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
             "If the fetch is not completed in this number of seconds,"
-            + " give up", DEFAULT_TIMEOUT_SECONDS));
+            + " give up.", DEFAULT_TIMEOUT_SECONDS));
         e = addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
             "If the socket is unresponsive for this number of milliseconds, "
-            + "give up (and retry later)", DEFAULT_SOTIMEOUT_MS));
+            + "give up (and retry later).  Set to zero for no timeout.",
+                DEFAULT_SOTIMEOUT_MS));
         e.setExpertSetting(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
             "Max length in bytes to fetch (truncate at this length)",
@@ -201,8 +200,8 @@ public class FetchHTTP extends Processor
         e = addElementToDefinition(new SimpleType(ATTR_DEFAULT_ENCODING,
             "The character encoding to use for files that do not have one" +
             " specified in the HTTP response headers.  Default: " +
-            "ISO-8859-1.",
-            DEFAULT_DEFAULT_ENCODING));
+            DEFAULT_CONTENT_CHARSET + ".",
+            DEFAULT_CONTENT_CHARSET));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_SHA1_CONTENT,
                 "Whether or not to perform an on-the-fly SHA1 hash of" +
@@ -224,62 +223,45 @@ public class FetchHTTP extends Processor
 
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
-        boolean sha1Content = ((Boolean) getUncheckedAttribute(curi,
-                ATTR_SHA1_CONTENT)).booleanValue();
+        
+        // Shall we get a digest on the content downloaded?
+        boolean sha1Content = ((Boolean)getUncheckedAttribute(curi,
+            ATTR_SHA1_CONTENT)).booleanValue();
         if(sha1Content) {
             rec.getRecordedInput().setSha1Digest();
         } else {
             // clear
             rec.getRecordedInput().setDigest(null);
         }
+        
         HttpMethod method = curi.isPost()?
-            (HttpMethod)new HttpRecorderPostMethod(
-                curi.getUURI().toString(), rec):
-            (HttpMethod)new HttpRecorderGetMethod(
-                curi.getUURI().toString(), rec);
+            (HttpMethod)new HttpRecorderPostMethod(curi.getUURI().toString(),
+                rec):
+            (HttpMethod)new HttpRecorderGetMethod(curi.getUURI().toString(),
+                rec);
         configureMethod(curi, method);
-        maybeSetAcceptHeaders(curi, method);
+        
+        // Populate credentials. Set config so auth. is not automatic.
         boolean addedCredentials = populateCredentials(curi, method);
-        int immediateRetries = 0;
-        while (true) {
-            // Retry until success (break) or unrecoverable exception
-            // (early return)
-            try {
-                // TODO: make this initial reading subject to the same
-                // length/timeout limits; currently only the soTimeout
-                // is effective here, once the connection succeeds
-                this.http.executeMethod(method);
-                break;
-            } catch (HttpRecoverableException e) {
-                checkForInterrupt();
-                if (immediateRetries < getMaxImmediateRetries()) {
-                    // See "[ 910219 ] [httpclient] unable...starting with"
-                    // http://sourceforge.net/tracker/?group_id=73833&atid=539099&func=detail&aid=910219
-                    // for the justification for this loop.
-                    this.recoveryRetries++;
-                    immediateRetries++;
-                    continue;
-                } else {
-                    // Treat as connect failed
-                    failedExecuteCleanup(method, curi, e);
-                    return;
-                }
-            } catch (IOException e) {
-                failedExecuteCleanup(method, curi, e);
-                return;
-            } catch (ArrayIndexOutOfBoundsException e) {
-                // For weird windows-only ArrayIndex exceptions in native
-                // code... see
-                // http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-                // treating as if it were an IOException
-                failedExecuteCleanup(method, curi, e);
-                return;
-            }
+        method.setDoAuthentication(addedCredentials);
+        
+        try {
+        	this.http.executeMethod(method);
+        } catch (IOException e) {
+        	failedExecuteCleanup(method, curi, e);
+        	return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+        	// For weird windows-only ArrayIndex exceptions in native
+        	// code... see
+        	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+        	// treating as if it were an IOException
+        	failedExecuteCleanup(method, curi, e);
+        	return;
         }
 
         try {
             // Force read-to-end, so that any socket hangs occur here,
-            // not in later modules
+            // not in later modules.
             rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
                 1000 * getTimeout(curi));
         } catch (RecorderTimeoutException ex) {
@@ -370,14 +352,13 @@ public class FetchHTTP extends Processor
      * @param method Method used for the request.
      */
     private void setCharacterEncoding(final HttpRecorder rec,
-                                      final HttpMethod method)
-    {
+        final HttpMethod method) {
         String encoding = null;
 
         try {
             encoding = ((HttpMethodBase) method).getResponseCharSet();
             if (encoding == null ||
-                    encoding.equals(HttpConstants.DEFAULT_CONTENT_CHARSET)) {
+                    encoding.equals(DEFAULT_CONTENT_CHARSET)) {
                 encoding = (String) getAttribute(ATTR_DEFAULT_ENCODING);
             }
         } catch (Exception e) {
@@ -464,17 +445,26 @@ public class FetchHTTP extends Processor
     {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
+        
+        // Set cookie policy.
+        method.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
 
-        // Set strict on the client; whatever the client's mode overrides
-        // the methods mode inside in the depths of executeMethod.
-        this.http.setStrictMode(DEFAULT_HTTPCLIENT_STRICT);
-
+        // Configure how we want the method to act.
+        this.http.getParams().setParameter(
+            HttpMethodParams.SINGLE_COOKIE_HEADER, new Boolean(true));
+        this.http.getParams().setParameter(
+            HttpMethodParams.UNAMBIGUOUS_STATUS_LINE , new Boolean(false));
+        this.http.getParams().setParameter(
+            HttpMethodParams.STRICT_TRANSFER_ENCODING, new Boolean(false));
+        this.http.getParams().setIntParameter(
+            HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
+        
         try {
             String proxy = (String) getAttribute(ATTR_HTTP_PROXY_HOST);
-            if (proxy.equals("") != true) {
-                this.http.setHttpProxy(proxy);
-                this.http.setHttpProxyport(
-                    Integer.parseInt(((String)getAttribute(ATTR_HTTP_PROXY_PORT))));
+            if (proxy != null && proxy.length() > 0) {
+                String port = (String)getAttribute(ATTR_HTTP_PROXY_PORT);
+                this.http.getHostConfiguration().setProxy(proxy,
+                   Integer.parseInt(port));
             }
         } catch (AttributeNotFoundException e) {
             logger.warning("Failed get of proxy settings: " +
@@ -488,7 +478,7 @@ public class FetchHTTP extends Processor
         }
 
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
-        ((HttpMethodBase)method).setHttp11(false);
+        method.getParams().setVersion(HttpVersion.HTTP_1_0);
 
         CrawlOrder order = getSettingsHandler().getOrder();
         String userAgent = curi.getUserAgent();
@@ -497,6 +487,12 @@ public class FetchHTTP extends Processor
         }
         method.setRequestHeader("User-Agent", userAgent);
         method.setRequestHeader("From", order.getFrom(curi));
+        
+        // Set retry handler.
+        method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+            new HeritrixHttpMethodRetryHandler());
+        
+        maybeSetAcceptHeaders(curi, method);
     }
 
     /**
@@ -599,68 +595,133 @@ public class FetchHTTP extends Processor
      * already tried this domain and still got a 401, then our credentials are
      * bad. Remove them and let this curi die.
      *
-     * @param get Method that got a 401.
+     * @param method Method that got a 401.
      * @param curi CrawlURI that got a 401.
      */
-    private void handle401(final HttpMethod method, final CrawlURI curi) {
-
+    protected void handle401(final HttpMethod method, final CrawlURI curi) {
         AuthScheme authscheme = getAuthScheme(method, curi);
         if (authscheme == null) {
-            return;
+        	return;
         }
-
         String realm = authscheme.getRealm();
-        if (realm == null) {
-            return;
-        }
-
+        
         // Look to see if this curi had rfc2617 avatars loaded.  If so, are
-        // any of them for this realm?  If so, then the credential failed if
-        // we got a 401 and it should be let die a natural 401 death.
-        Set curiRfc2617Credentials =
-            getCredentials(getSettingsHandler(), curi, Rfc2617Credential.class);
+        // any of them for this realm?  If so, then the credential failed
+        // if we got a 401 and it should be let die a natural 401 death.
+        Set curiRfc2617Credentials = getCredentials(getSettingsHandler(),
+        		curi, Rfc2617Credential.class);
         Rfc2617Credential extant = Rfc2617Credential.
-            getByRealm(curiRfc2617Credentials, realm, curi);
+		getByRealm(curiRfc2617Credentials, realm, curi);
         if (extant != null) {
-            // Then, already tried this credential.  Remove ANY rfc2617
-            // credential since presence of a rfc2617 credential serves
-            // as flag to frontier to requeue this curi and let the curi
-            // die a natural death.
-            extant.detachAll(curi);
-            logger.fine("Auth failed (401) though supplied realm " +
-                realm + " to " + curi.toString());
+        	// Then, already tried this credential.  Remove ANY rfc2617
+        	// credential since presence of a rfc2617 credential serves
+        	// as flag to frontier to requeue this curi and let the curi
+        	// die a natural death.
+        	extant.detachAll(curi);
+        	logger.fine("Auth failed (401) though supplied realm " +
+        			realm + " to " + curi.toString());
         } else {
-            // Look see if we have a credential that corresponds to this realm
-            // in credential store.  Filter by type and credential domain.  If
-            // not, let this curi die. Else, add it to the curi and let it come
-            // around again. Add in the AuthScheme we got too.  Its needed when
-            // we go to run the Auth on second time around.
-            CredentialStore cs =
-                CredentialStore.getCredentialStore(getSettingsHandler());
-            if (cs == null) {
-                logger.severe("No credential store for " + curi);
-            } else {
-                Set storeRfc2617Credentials = cs.subset(curi,
-                    Rfc2617Credential.class, curi.getServer().getName());
-                if (storeRfc2617Credentials == null ||
-                    storeRfc2617Credentials.size() <= 0) {
-                    logger.fine("No rfc2617 credentials for " + curi);
-                } else {
-                    Rfc2617Credential found = Rfc2617Credential.
-                    		getByRealm(storeRfc2617Credentials, realm, curi);
-                    if (found == null) {
-                        logger.fine("No rfc2617 credentials for realm " +
-                            realm + " in " + curi);
-                    } else {
-                        found.attach(curi, authscheme);
-                        logger.fine("Found credential for realm " + realm +
-                            " in store for " + curi.toString());
-                    }
-                }
-            }
+        	// Look see if we have a credential that corresponds to this
+        	// realm in credential store.  Filter by type and credential
+        	// domain.  If not, let this curi die. Else, add it to the
+        	// curi and let it come around again. Add in the AuthScheme
+        	// we got too.  Its needed when we go to run the Auth on
+        	// second time around.
+        	CredentialStore cs =
+        		CredentialStore.getCredentialStore(getSettingsHandler());
+        	if (cs == null) {
+        		logger.severe("No credential store for " + curi);
+        	} else {
+        		Set storeRfc2617Credentials = cs.subset(curi,
+        				Rfc2617Credential.class, curi.getServer().getName());
+        		if (storeRfc2617Credentials == null ||
+        				storeRfc2617Credentials.size() <= 0) {
+        			logger.fine("No rfc2617 credentials for " + curi);
+        		} else {
+        			Rfc2617Credential found = Rfc2617Credential.
+					getByRealm(storeRfc2617Credentials, realm, curi);
+        			if (found == null) {
+        				logger.fine("No rfc2617 credentials for realm " +
+        						realm + " in " + curi);
+        			} else {
+        				found.attach(curi, authscheme);
+        				logger.fine("Found credential for realm " + realm +
+        						" in store for " + curi.toString());
+        			}
+        		}
+        	}
         }
     }
+    
+    /**
+     * @param method Method that got a 401.
+     * @param curi CrawlURI that got a 401.
+     * @return Returns first wholesome authscheme found else null.
+     */
+    protected AuthScheme getAuthScheme(final HttpMethod method,
+            final CrawlURI curi) {
+        Header [] headers = method.getResponseHeaders("WWW-Authenticate");
+        if (headers == null || headers.length <= 0) {
+            logger.warning("We got a 401 but no WWW-Authenticate challenge: " +
+                curi.toString());
+            return null;
+        }
 
+        Map authschemes = null;
+        try {
+            authschemes = AuthChallengeParser.parseChallenges(headers);
+        } catch(MalformedChallengeException e) {
+            logger.warning("Failed challenge parse: " + e.getMessage());
+        }
+        if (authschemes == null || authschemes.size() <= 0) {
+            logger.warning("We got a 401 and WWW-Authenticate challenge" +
+                " but failed parse of the header " + curi.toString());
+            return null;
+        }            
+         
+        AuthScheme result = null;
+        // Use the first auth found.
+        for (Iterator i = authschemes.keySet().iterator();
+                result == null && i.hasNext();) {
+        	String key = (String)i.next();
+            String challenge = (String)authschemes.get(key);
+            if (key == null || key.length() <= 0 || challenge == null ||
+                  challenge.length() <= 0) {
+            	logger.warning("Empty scheme: " + curi.toString() +
+                  ": " + headers);
+            }
+        	AuthScheme authscheme = null;
+        	if (key.equals("basic")) {
+        		authscheme = new BasicScheme();
+        	} else if (key.equals("digest")) {
+        		authscheme = new DigestScheme();
+        	} else {
+        		logger.warning("Unexpected scheme: " + key);
+        		continue;
+        	}
+            
+            try {
+				authscheme.processChallenge(challenge);
+			} catch (MalformedChallengeException e) {
+				logger.warning(e.getMessage() + " " + curi + " " + headers);
+                continue;
+			}
+        	if (authscheme.isConnectionBased()) {
+        		logger.warning("Connection based " + authscheme);
+        		continue;
+        	}
+        	
+        	if (authscheme.getRealm() == null ||
+        			authscheme.getRealm().length() <= 0) {
+        		logger.warning("Empty realm " + authscheme + " for " + curi);
+        		continue;
+        	}
+        	result = authscheme;
+        }
+        
+        return result;
+    }
+        
     /**
      * @param handler Settings Handler.
      * @param curi CrawlURI that got a 401.
@@ -686,41 +747,7 @@ public class FetchHTTP extends Processor
         return result;
     }
 
-    /**
-     * @param get Method that got a 401.
-     * @param curi CrawlURI that got a 401.
-     * @return Authscheme made from the authenticate header or null if failed to
-     * get it.
-     */
-    private AuthScheme getAuthScheme(final HttpMethod method,
-            final CrawlURI curi) {
-        AuthScheme result = null;
-        Header header = method.getResponseHeader(HttpAuthenticator.WWW_AUTH);
-        if (header == null) {
-            logger.info("No " + HttpAuthenticator.WWW_AUTH + " headers though" +
-                " we got a 401: " + curi);
-        } else {
-            try {
-                result =
-                    HttpAuthenticator.selectAuthScheme(new Header[] {header});
-            } catch (MalformedChallengeException e) {
-                logger.severe("Failed to get auth headers: " + e.toString() +
-                    " " + curi.toString());
-            } catch (UnsupportedOperationException uoe) {
-                // This is probably a message like this:
-                // Authentication scheme(s) not supported:
-                // {negotiate,=Negotiate, NTLM}
-                // Log it as a warning.  Not much we can do about it.  Return
-                // null.  We'll get the 401 in the arcs and a page that says
-                // something like 'Access denied'.
-                logger.info(curi + ": " + uoe);
-            }
-        }
-        return result;
-    }
-
     public void initialTasks() {
-        this.soTimeout = getSoTimeout(null);
         setupHttp();
 
         // load cookies from a file if specified in the order file.
@@ -728,39 +755,49 @@ public class FetchHTTP extends Processor
     }
 
     void setupHttp() throws RuntimeException {
-		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-        SingleHttpConnectionManager connectionManager =
-            new SingleHttpConnectionManager();
-        this.http = new PatchedHttpClient(connectionManager);
+        // Get timeout.  Use it for socket and for connection timeout.
+        int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
+        
+        MultiThreadedHttpConnectionManager mtcm =
+            new MultiThreadedHttpConnectionManager();
+        int maxToeThreads = getController().getOrder().getMaxToes();
+        mtcm.getParams().setMaxTotalConnections(maxToeThreads * 2);
+        // TODO: This needs to match the frontier valence but valence
+        // seems to be particular to a frontier implementation.  Fix.
+        mtcm.getParams().setDefaultMaxConnectionsPerHost(10);
+        mtcm.getParams().setConnectionTimeout(timeout);
+        mtcm.getParams().setStaleCheckingEnabled(true);
+        // Minimizes bandwidth usage.  Setting to true disables Nagle's
+        // alogarthim.  IBM JVMs < 142 give an NPE setting this boolean
+        // on ssl sockets.
+        mtcm.getParams().setTcpNoDelay(false);
+        this.http = new HttpClient(mtcm);
+        
+        // Set default socket timeout.
+        this.http.getParams().setSoTimeout(timeout);
 
         try {
             String trustLevel = (String) getAttribute(ATTR_TRUST);
             Protocol.registerProtocol("https", new Protocol("https",
+                ((ProtocolSocketFactory)
                     new ConfigurableTrustManagerProtocolSocketFactory(
-                            trustLevel), 443));
-        }
-
-        catch (Exception e) {
+                        trustLevel)), 443));
+        } catch (Exception e) {
             // Convert all to RuntimeException so get an exception out if
             // initialization fails.
             throw new RuntimeException(
                     "Failed initialization getting attributes: "
                             + e.getMessage());
         }
-
-        // Considered same as overall timeout, for now.
-        // TODO: When HTTPClient stops using a monitor 'waitingThread'
-        // thread to watch over the getting of the socket from socket
-        // factory and instead supports the java.net.Socket#connect timeout.
-        // http.setConnectionTimeout((int)timeout);
-        // set per-read() timeout: overall timeout will be checked at least
-        // this
-        // frequently
-        this.http.setTimeout(this.soTimeout);
+        
 	}
 
+    /**
+     * @param curi Current CrawlURI.  Used to get context.
+     * @return Socket timeout value.
+     */
     private int getSoTimeout(CrawlURI curi) {
-        Integer res;
+        Integer res = null;
         try {
             res = (Integer) getAttribute(ATTR_SOTIMEOUT_MS, curi);
         } catch (Exception e) {
@@ -769,6 +806,10 @@ public class FetchHTTP extends Processor
         return res.intValue();
     }
 
+    /**
+     * @param curi Current CrawlURI.  Used to get context.
+     * @return Timeout value for total request.
+     */
     private int getTimeout(CrawlURI curi) {
         Integer res;
         try {
