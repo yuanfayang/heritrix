@@ -66,7 +66,6 @@ public class CrawlURI extends CandidateURI
     private Object state;   // state within scheduling/store/selector
     private long wakeTime; // if "snoozed", when this CrawlURI may awake
     private String classKey; // cached classKey value
-    private long dontRetryBefore = -1;
 
     // Processing progress
     private Processor nextProcessor;
