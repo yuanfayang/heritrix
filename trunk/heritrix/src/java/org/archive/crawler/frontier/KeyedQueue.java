@@ -182,7 +182,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Move queue from READY or EMPTY state to SNOOZED
      */
     public void snooze() {
-        assert this.state == READY || this.state == EMPTY;
+        assert this.state == READY || this.state == EMPTY : "bad state for queue about to be snoozed: "+ this.state;
         this.state = SNOOZED;
     }
     /**
@@ -359,6 +359,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     private void enqueueMedium(CrawlURI curi) {
         this.unqueued.addLast(curi);
     }
+
     /**
      * enqueue ahead of everything else
      *
