@@ -66,6 +66,15 @@
       <a href="articles/releasenotes.html">Release Notes</a>
       page.</answer>
     </faq>
+    <faq id="testsfail">
+      <question>Why do unit tests fail when I build?</question>
+      <answer>You're probably on a platform other than linux (or using 
+      a 2.6.x kernel and a JVM that is other than the release 1.5 jdk).
+      See sections 4.1.3/4.1.4 in 
+      <a href="articles/releasenotes.html#984390">Release Notes</a>
+      page.</answer>
+    </faq>
+
     <faq id="windowsstart">
       <question>The crawler gets dns fine but nothing subsequently.
       Why?</question>
