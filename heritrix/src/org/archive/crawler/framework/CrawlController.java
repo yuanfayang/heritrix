@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import org.archive.crawler.io.UriProcessingFormatter;
  * @author Gordon Mohr
  */
 public class CrawlController {
+	private File disk;
 	public Logger uriProcessing = Logger.getLogger("uri-processing");
 	public Logger crawlErrors = Logger.getLogger("crawl-errors");
 	public Logger uriErrors = Logger.getLogger("uri-errors");
@@ -44,7 +46,7 @@ public class CrawlController {
 	int nextToeSerialNumber = 0;
 	
 	HostCache hostCache;
-	ThreadKicker kicker;
+	//ThreadKicker kicker;
 	
 	private boolean paused = false;
 	private boolean finished = false;
@@ -63,8 +65,8 @@ public class CrawlController {
 		selector.initialize(this);
 		
 		hostCache = new HostCache();
-		kicker = new ThreadKicker();
-		kicker.start();
+		//kicker = new ThreadKicker();
+		//kicker.start();
 		
 		Iterator iter = processors.entrySet().iterator();
 		while (iter.hasNext()) {
@@ -75,17 +77,25 @@ public class CrawlController {
 		}
 		
 		try {
-			FileHandler up = new FileHandler("uri-processing.log");
+			String diskPath = order.getStringAt("//disk/@path");
+			if(! diskPath.endsWith(File.separator)){
+				diskPath = diskPath + File.separator;
+			}
+			disk = new File(diskPath);
+			disk.mkdirs();
+
+			
+			FileHandler up = new FileHandler(diskPath+"uri-processing.log");
 			up.setFormatter(new UriProcessingFormatter());
 			uriProcessing.addHandler(up);
 			uriProcessing.setUseParentHandlers(false);
 			
-			FileHandler cerr = new FileHandler("crawl-errors.log");
+			FileHandler cerr = new FileHandler(diskPath+"crawl-errors.log");
 			cerr.setFormatter(new CrawlErrorFormatter());
 			crawlErrors.addHandler(cerr);
 			crawlErrors.setUseParentHandlers(false);
 			
-			FileHandler uerr = new FileHandler("uri-errors.log");
+			FileHandler uerr = new FileHandler(diskPath+"uri-errors.log");
 			uerr.setFormatter(new UriErrorFormatter());
 			uriErrors.addHandler(uerr);
 			uriErrors.setUseParentHandlers(false);
@@ -197,8 +207,8 @@ public class CrawlController {
 	/**
 	 * 
 	 */
-	public ThreadKicker getKicker() {
-		return kicker;
-	}
+	//public ThreadKicker getKicker() {
+	//	return kicker;
+	//}
 
 }
