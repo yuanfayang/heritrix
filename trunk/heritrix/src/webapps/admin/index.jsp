@@ -1,9 +1,24 @@
 <%@include file="/include/handler.jsp"%>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 
 <%
+    String sAction = request.getParameter("action");
+    if(sAction != null) {
+        if(sAction.equalsIgnoreCase("logout")) {
+            // Logging out.
+            session = request.getSession();
+            if (session != null) {
+                session.invalidate();
+                // Redirect back to here and we'll get thrown to the login
+                // page.
+                response.sendRedirect(request.getContextPath() + "/index.jsp"); 
+            }
+        }
+    }
+
     String title = "Administrator Console";
     int tab = 0;
 %>
@@ -266,6 +281,10 @@
             &nbsp;
     </td></tr>
     <tr><td>
-        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a> | <a href="<%=request.getContextPath()%>/login.jsp?action=logout">Logout</a>
+        <% if (Heritrix.isCommandLine()) {  
+            // Print the shutdown only if we were started from command line.
+            // It makes no sense when in webcontainer mode.
+         %>
+        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a> | <% } %><a href="<%=request.getContextPath()%>/index.jsp?action=logout">Logout</a>
     </td></tr></table>
 <%@include file="/include/foot.jsp"%>

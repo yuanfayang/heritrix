@@ -153,7 +153,7 @@ public class CrawlScope extends Filter {
     protected synchronized void createSeedlist(File seedfile, CrawlController c,
             boolean caching) {
         if (this.seedlist == null) {
-            this.seedlist = new SeedList(seedfile, c, caching);
+            this.seedlist = new SeedList(seedfile, caching);
         }
     }
 

@@ -84,13 +84,17 @@ public class CommandLineParser
             "Login and password for web user interface administration." +
             " Default: admin/letmein."));
         this.options.addOption(new Option("r", "run", false,
-            "Put heritrix into run mode. If ORDER_FILE begin crawl."));
+            "Put heritrix into run mode. If ORDER.XML begin crawl."));
         this.options.addOption(new Option("n", "nowui", false,
-            "Put heritrix into run mode and begin crawl using ORDER_FILE." +
+            "Put heritrix into run mode and begin crawl using ORDER.XML." +
             " Do not put up web user interface."));
         Option option = new Option("s", "selftest", true,
-            "Run the integrated selftests. Pass test name to it only" +
+            "Run the integrated selftests. Pass test name to test it only" +
             " (Case sensitive: E.g. pass 'Charset' to run charset selftest).");
+        option.setOptionalArg(true);
+        this.options.addOption(option);
+        option = new Option("j", "jmx", true,
+             "Start JMX. Allows remote control. Default jmxmp port 8081.");
         option.setOptionalArg(true);
         this.options.addOption(option);
 
@@ -172,7 +176,7 @@ public class CommandLineParser
                 new HeritrixHelpFormatter(this.version);
             formatter.printHelp(this.out, 80, NAME, "Options:", this.options,
                 1, 2, "Arguments:", false);
-            this.out.println(" ORDER_FILE     Crawl order to run.\n");
+            this.out.println(" ORDER.XML     Crawl order to run.\n");
         }
 
         // Close printwriter so stream gets flushed.
@@ -211,8 +215,7 @@ public class CommandLineParser
      * @version $Id$
      */
     public class HeritrixHelpFormatter
-        extends HelpFormatter
-    {
+    extends HelpFormatter {
         private String version = null;
 
         public HeritrixHelpFormatter(String version)
@@ -224,10 +227,10 @@ public class CommandLineParser
         public void printUsage(PrintWriter pw, int width, String cmdLineSyntax)
         {
             out.println(USAGE + NAME + " --help");
-            out.println(USAGE + NAME + " --nowui ORDER_FILE");
-            out.println(USAGE + NAME + " [--port=PORT]" +
-                " [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]");
-            out.println(USAGE + NAME + " [--port=PORT] --selftest[=TESTNAME]");
+            out.println(USAGE + NAME + " --nowui ORDER.XML");
+            out.println(USAGE + NAME + " [--port=#]" +
+                " [--admin=LOGIN:PWRD] [--jmx[=#]] [--run] [ORDER.XML]");
+            out.println(USAGE + NAME + " [--port=#] --selftest[=TESTNAME]");
             out.println("Version: " + this.version);
         }
 

@@ -110,11 +110,8 @@ public class OneLineSimpleLogger extends SimpleFormatter {
         }
         return buffer.toString();
     }
-
-    /**
-     * Test this logger.
-     */
-    public static void main(String[] args) {
+    
+    public static Logger setConsoleHandler() {
         Logger logger = Logger.getLogger("");
         Handler [] hs = logger.getHandlers();
         for (int i = 0; i < hs.length; i++) {
@@ -123,6 +120,14 @@ public class OneLineSimpleLogger extends SimpleFormatter {
                 h.setFormatter(new OneLineSimpleLogger());
             }
         }
+        return logger;
+    }
+
+    /**
+     * Test this logger.
+     */
+    public static void main(String[] args) {
+        Logger logger = setConsoleHandler();
         logger = Logger.getLogger("Test");
         logger.severe("Does this come out?");
         logger.severe("Does this come out?");

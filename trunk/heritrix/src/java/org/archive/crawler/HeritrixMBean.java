@@ -1,6 +1,6 @@
-/* WebappLifecycle
+/* HeritrixMBean
  * 
- * Created on Oct 26, 2004
+ * Created on Nov 10, 2004
  *
  * Copyright (C) 2004 Internet Archive.
  * 
@@ -20,30 +20,16 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.admin.ui;
-
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-
-import org.archive.crawler.Heritrix;
+package org.archive.crawler;
 
 /**
- * Used to start and stop Heritrix when Heritrix is bundled as a webapp.
+ * MBean interface implemented by Heritrix.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class WebappLifecycle implements ServletContextListener {
-    private Heritrix heritrix = null;
-    public void contextInitialized(ServletContextEvent sce) {
-        if (!Heritrix.isCommandLine()) {
-            this.heritrix = new Heritrix();
-            this.heritrix.start();
-        }
-    }
-
-    public void contextDestroyed(ServletContextEvent sce) {
-        if (this.heritrix !=  null) {
-            this.heritrix.stop();
-        }
-    }
+public interface HeritrixMBean {
+    public void start();
+    public boolean isStarted();
+    public String getState();
+    public void stop();
 }

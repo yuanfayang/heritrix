@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">
   <meta>
-    <name>Simple</name>
-    <description>Profile: Simple crawl</description>
+    <name>default</name>
+    <description>Default Profile</description>
     <operator>Admin</operator>
     <organization />
     <audience />
