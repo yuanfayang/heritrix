@@ -96,7 +96,7 @@ implements ServerCache {
         return hostOrAuthority;
     }
     
-    public CrawlHost getHostFor(String hostname) {
+    public synchronized CrawlHost getHostFor(String hostname) {
         if (hostname == null || hostname.length() == 0) {
             return null;
         }
