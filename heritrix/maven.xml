@@ -115,8 +115,13 @@
             <include name="*.war"/>
           </fileset>
         </copy>
+
+        <!--Copy articles to the docs dir.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/docs/">
+          <fileset dir="${maven.build.dir}/docs/articles" />
+        </copy>
     </postGoal>
-    
+
     <postGoal name="dist:prepare-src-filesystem">
         <echo>[Heritrix] dist:prepare-src-filesystem postGoal</echo>
         <!--Add the lib dir to our binary distribution.-->
