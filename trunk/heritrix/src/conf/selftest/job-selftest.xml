@@ -16,7 +16,7 @@
       <boolean name="enabled">true</boolean>
       <boolean name="inverted">false</boolean>
       <string name="seedsfile">seeds.txt</string>
-      <integer name="max-link-hops">25</integer>
+      <integer name="max-link-hops">5</integer>
       <integer name="max-trans-hops">5</integer>
       <string name="mode">domain</string>
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
