@@ -73,7 +73,7 @@
 			if(theJob.isRunning()){
 				handler.kickUpdate();
 			}
-			response.sendRedirect("/admin/jobs/refinements/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
+			response.sendRedirect("/admin/jobs/refinements/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Refinement changes saved");
             return;
 		}else if(action.equals("goto")){
             // Goto another page of the job/profile settings
@@ -169,7 +169,9 @@
 	</script>
 
 	<p>
-		<b>Override for the <%=theJob.isProfile()?"profile":"job"%> <%=theJob.getJobName()%> on domain '<%=currDomain%>'</b>
+        <b>Refinement '<%=refinement.getReference()%>' on '<%=global?"global settings":currDomain%>' of
+        <%=theJob.isProfile()?"profile":"job"%>
+        <%=theJob.getJobName()%>:</b>
 		<%@include file="/include/jobrefinementnav.jsp"%>
 	<p>
 	
