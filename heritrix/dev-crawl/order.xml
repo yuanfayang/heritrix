@@ -6,16 +6,18 @@
  <scope 
    class="org.archive.crawler.basic.Scope"
    mode="broad"
-   max-link-hops="5"
+   max-link-hops="3"
    max-trans-hops="5">
    
   <seeds>
+  http://www.rawr.net/index.swf
+  
  # http://www.drudgereport.com
-   http://www.yahoo.com
-   http://www.yahoo.com
-   http://www.yahoo.com
+ # http://www.yahoo.com
+ # http://www.yahoo.com
+ # http://www.yahoo.com
  # http://my.yahoo.com
-   http://www.google.com/dirhp
+ # http://www.google.com/dirhp
    
   </seeds>
  
@@ -23,7 +25,7 @@
  
  <behavior
    disk-path="disk"
-   max-toe-threads="20"
+   max-toe-threads="5"
    >
    
   <http-headers
