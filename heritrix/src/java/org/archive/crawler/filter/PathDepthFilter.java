@@ -46,7 +46,6 @@ public class PathDepthFilter extends Filter {
     public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
     Integer maxPathDepth = new Integer(Integer.MAX_VALUE);
     final static char slash = '/';
-    private String path = null;
 
     /**
      * @param name
@@ -64,7 +63,7 @@ public class PathDepthFilter extends Filter {
      * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
      */
     protected boolean innerAccepts(Object o) {
-        this.path = null;
+        String path = null;
         
         if (o == null) {
             return false;
@@ -73,7 +72,7 @@ public class PathDepthFilter extends Filter {
         if(o instanceof CandidateURI) {
             try {
                 if (((CandidateURI)o).getUURI() != null) {
-                    this.path = ((CandidateURI)o).getUURI().getPath();
+                    path = ((CandidateURI)o).getUURI().getPath();
                 }
             }
             catch (URIException e) {
@@ -82,20 +81,20 @@ public class PathDepthFilter extends Filter {
             }
         } else if (o instanceof UURI ){
             try {
-                this.path = ((UURI)o).getPath();
+                path = ((UURI)o).getPath();
             }
             catch (URIException e) {
                 logger.severe("Failed getpath for " + ((UURI)o));
             }
         }
 
-        if (this.path == null) {
+        if (path == null) {
             return true;
         }
 
         int count = 0;
-        for (int i = this.path.indexOf(slash); i != -1;
-        		i = this.path.indexOf(slash, i + 1)) {
+        for (int i = path.indexOf(slash); i != -1;
+        		i = path.indexOf(slash, i + 1)) {
             count++;
         }
         
