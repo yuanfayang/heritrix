@@ -28,12 +28,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.logging.Logger;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 
 
 /**
  * Queue which uses a DiskQueue ('tailQ') for spillover entries once a
- * MemQueue ('headQ') reaches a maximum size.
+ * in-memory LinkedList ('headQ') reaches a maximum size.
  *
  * @author Gordon Mohr
  */
@@ -41,10 +45,10 @@ public class DiskBackedQueue implements Queue, Serializable {
     private static Logger logger = 
         Logger.getLogger(DiskBackedQueue.class.getName());
 
-    int headMax;
-    MemQueue headQ;
-    DiskQueue tailQ;
-    String name;
+    protected int headMax;
+    protected LinkedList headQ;
+    protected DiskQueue tailQ;
+    protected String name;
 
     /**
      * @param dir
@@ -58,7 +62,7 @@ public class DiskBackedQueue implements Queue, Serializable {
             throws IOException {
         this.headMax = headMax;
         this.name = name;
-        this.headQ = new MemQueue();
+        this.headQ = new LinkedList();
         this.tailQ = new DiskQueue(dir, name, reuse);
     }
 
@@ -69,7 +73,7 @@ public class DiskBackedQueue implements Queue, Serializable {
         logger.finest(name+"("+length()+"): "+o);
         if (length()<headMax) {
             fillHeadQ();
-            headQ.enqueue(o);
+            headQ.addLast(o);
         } else {
             tailQ.enqueue(o);
         }
@@ -86,13 +90,25 @@ public class DiskBackedQueue implements Queue, Serializable {
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
+        Object retObj = null;
         if (headQ.isEmpty()) {
+            // batch fill head if possible
             fillHeadQ();
         }
-        Object o = headQ.dequeue();
-        logger.finest(name+"("+length()+"): "+o);
-        
-      	if(length()<=headMax/4 && tailQ.isInitialized()){
+        if (headQ.isEmpty()) {
+            // if still no memory head, get from backing
+            retObj = backingDequeue();
+        } else {
+            // get from memory head where possible
+            retObj = headQ.removeFirst();
+        }
+        logger.finest(name+"("+length()+"): "+retObj);
+        backingUpdate();
+        return retObj;
+    }
+
+    protected void backingUpdate() {
+        if(length()<=headMax/4 && tailQ.isInitialized()){
       		// Currently less then a quarter of what can fit in the memory cache
             // is left in the queue. Flush out the items on disk and close the
             // files to free up file handles.
@@ -103,21 +119,33 @@ public class DiskBackedQueue implements Queue, Serializable {
                 tailQ.release();
             }
         }
-        
-        return o;
     }
 
-    private void fillHeadQ() {
-        while (headQ.length()<headMax && tailQ.length()>0) {
-            headQ.enqueue(tailQ.dequeue());
+    protected void fillHeadQ() {
+        while (headQ.size()<headTargetSize() && headQ.size()<length()) {
+            headQ.addLast(backingDequeue());
         }
+     }
+
+    /**
+     * @return
+     */
+    protected Object backingDequeue() {
+        return tailQ.dequeue();
+    }
+
+    /**
+     * @return
+     */
+    protected int headTargetSize() {
+        return headMax;
     }
 
     /**
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-        return headQ.length()+tailQ.length();
+        return headQ.size()+tailQ.length();
     }
 
     /**
@@ -134,7 +162,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     	if(headQ.isEmpty()){
     		fillHeadQ();
     	} 
-    	return headQ.peek();
+    	return headQ.getFirst();
     }
 
     /**
@@ -144,11 +172,11 @@ public class DiskBackedQueue implements Queue, Serializable {
         if(inCacheOnly){
             // The headQ is a memory based structure and
             // that the tailQ is a disk based structure
-            return headQ.getIterator(true);
+            return headQ.iterator();
         } else {
             // Create and return a composite iterator over the two queues.
             Iterator it = new CompositeIterator(
-                    headQ.getIterator(false),
+                    headQ.iterator(),
                     tailQ.getIterator(false));
             
             return it;
@@ -156,13 +184,27 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
-    public long deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(Predicate matcher) {
         long numberOfDeletes = 0;
-        numberOfDeletes += headQ.deleteMatchedItems(matcher);
+        long oldSize = headQ.size();
+        CollectionUtils.filter(headQ,new Inverter(matcher));
+        numberOfDeletes += oldSize-headQ.size();
         numberOfDeletes += tailQ.deleteMatchedItems(matcher);
         return numberOfDeletes;
+    }
+
+    /**
+     * Set the maximum number of items to keep in memory
+     * at the structure's top. If more than that number are
+     * already in memory, they will remain in memory until 
+     * dequeued, and thereafter the max will not be exceeded.
+     * 
+     * @param hm
+     */
+    public void setHeadMax(int hm) {
+        headMax = hm;
     }
 
 }
