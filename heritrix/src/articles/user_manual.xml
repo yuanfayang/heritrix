@@ -851,9 +851,9 @@
 
         </itemizedlist>
 
-		<para>The following scopes are deprecated as the same effects can 
-        be achieved more efficiently with SurtPrefixScope. When 
-        SurtPrefixScope can be more easily understood and configured,
+		<para>The following scopes are available, but the same effects can 
+        be achieved more efficiently, and in combination, with SurtPrefixScope.
+        When SurtPrefixScope can be more easily understood and configured,
         these scopes may be removed entirely.</para>
 		
 		<itemizedlist>
@@ -1297,7 +1297,7 @@
           <title>org.archive.crawler.filter.SurtPrefixFilter</title>
 
           <para>Returns true if a URI is prefixed by one of the <xref
-          linkend="surt" /> prefixes supplied by an external file. </para>
+          linkend="surtprefix" />es supplied by an external file. </para>
         </sect4>
 
         <sect4>
@@ -3784,22 +3784,21 @@ collapsed in this lookup).</para>
           </para>
           
           <para>A URI &lt;scheme://domain.tld/path?query&gt; has SURT form
-          &lt;scheme://(tld,domain,:port@userinfo)/path?query&gt;.</para>
+          &lt;scheme://(tld,domain,)/path?query&gt;.</para>
           
           <para>Conversion to SURT form also involves making all characters
-          lowercase, and changing the 'https' scheme to 'http'. And, in a 
-          small convention that can be important when using real URIs as
-          a shorthand for SURT prefixes (see below), the '/' after a URI 
-          authority component -- the third slash in a regular HTTP URI -- will 
-          only appear in the SURT form if it appeared in the plain URI form.)
-          </para>
+          lowercase, and changing the 'https' scheme to 'http'. Further, the 
+          '/' after a URI authority component -- for example, the third slash 
+          in a regular HTTP URI -- will only appear in the SURT form if it 
+          appeared in the plain URI form. (This convention proves important 
+          when using real URIs as a shorthand for SURT prefixes, as described
+          below.)</para>
           
-          <para>SURT form URIs are typically not fetched -- nor is the SURT
-          form used to specify exact URIs. Rather SURT form is useful when
-          comparing or sorting URIs. For example, URIs in SURT format sort 
-          into natural groups -- all 'archive.org' URIs will be adjacent, 
-          regardless of what subdomains like 'books.archive.org' or 
-          'movies.archive.org' are used.</para>
+          <para>SURT form URIs are typically not used to specify exact URIs
+          for fetching. Rather, SURT form is useful when comparing or sorting 
+          URIs. For example, URIs in SURT format sort into natural groups -- 
+          all 'archive.org' URIs will be adjacent, regardless of what subdomains 
+          like 'books.archive.org' or 'movies.archive.org' are used.</para>
           
           <para>Most importantly, a SURT form URI, or a truncated version of
           a SURT form URI, can be used as a <xref linkend="surtprefix" />.
@@ -3816,19 +3815,19 @@ collapsed in this lookup).</para>
 
         <glossdef>
           <para>A URI in <xref linkend="surt" /> form, especially if truncated,
-          may be of use as a "SURT prefix", which may be a shared prefix string
-          of all SURT form URIs in the same 'area' of interest for web crawling.
+          may be of use as a "SURT prefix", a shared prefix string of all SURT 
+          form URIs in the same 'area' of interest for web crawling.
           </para>
           
           <para>For example, the prefix 
-          &lt;http://(is,&gt; will be shared by all URIs in the '.is' top-level 
-          domain. The prefix &lt;http://(org,archive,www,)/movies&gt; (which is
-          also a valid full SURT form URI) will be shared by all URIs at 
+          &lt;http://(is,&gt; will be shared by all SURT form URIs in the '.is' 
+          top-level domain. The prefix &lt;http://(org,archive,www,)/movies&gt; 
+          (which is also a valid full SURT form URI) will be shared by all URIs at 
           www.archive.org with a path beginning '/movies'.</para>
           
           <para>A collection of sorted SURT prefixes is an efficient way to
           specify a desired crawl scope: any URI whose SURT form starts with
-          any of these prefixes should be ruled in.</para>
+          any of the prefixes should be included.</para>
           
           <para>A small set of conventions can be also be used to calculate an
           "implied SURT prefix" from a regular URI, such as a URI supplied as a
@@ -3846,23 +3845,25 @@ collapsed in this lookup).</para>
           &lt;http://(org,example,www,)&gt; is unchanged.
           </listitem>
           <listitem>If the resulting form ends in an off-parenthesis (')'),
-          remove it. So each of the above examples except for the last is
-          unchanged, while the last &lt;http://(org,example,www,)&gt; becomes
+          remove the off-parenthesis. So each of the above examples except for 
+          the last is unchanged, while the last 
+          &lt;http://(org,example,www,)&gt; becomes
           &lt;http://(org,example,www,&gt;.
           </listitem>
           </orderedlist>
           
-          <para>This allows many lists of seed URIs, in their usual form, to
-          imply the most useful SURT prefixes for crawling all related URIs --
+          <para>This allows many seed URIs, in their usual form, to
+          imply the most useful SURT prefixes for crawling related URIs --
           with the presence or absence of a trailing '/' on URIs without 
           further path-info being a subtle indicator as to whether subdomains
           of the supplied domain should be included.</para>
           
           <para>For example, seed &lt;http://www.archive.org/&gt; will become 
           SURT form and implied SURT prefix &lt;http://(org,archive,www,)/&gt;, 
-          and match the prefix of all URIs on www.archive.org. However, any 
-          subdomain URI like &lt;http://homepages.www.archive.org/directory&gt;
-          would be ruled out, because its SURT form
+          and is the prefix of all SURT form URIs on www.archive.org. However, 
+          any subdomain URI like 
+          &lt;http://homepages.www.archive.org/directory&gt; would be ruled out, 
+          because its SURT form 
           &lt;http://(org,archive,www,homepages,)/directory&gt; does not
           begin with the full SURT prefix, including the ')/', deduced from 
           the seed.</para>
