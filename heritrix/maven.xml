@@ -71,6 +71,12 @@
           </fileset>
         </chmod>
 
+        <!--Copy articles to the docs dir.-->
+        <attainGoal name="docbook"/>
+        <mkdir dir="${maven.dist.bin.assembly.dir}/docs/articles/" />
+        <copy todir="${maven.dist.bin.assembly.dir}/docs/articles/">
+          <fileset dir="${maven.build.dir}/docs/articles/" />
+        </copy>
 
         <!--Copy webapps to build directory w/ filtering enabled.
             Do the copy like this doing non-jpg first and then gif.
@@ -90,6 +96,12 @@
             <include name="**/*.jpg"/>
             <include name="**/*.png"/>
           </fileset>
+        </copy>
+
+        <!--Copy docs into the admin webapp so available to UI.-->
+        <mkdir dir="${maven.build.dir}/webapps/admin/docs/articles/" />
+        <copy todir="${maven.build.dir}/webapps/admin/docs/articles/">
+          <fileset dir="${maven.build.dir}/docs/articles/" />
         </copy>
 
         <!--Compile jsp pages into a jar.
@@ -116,12 +128,6 @@
           </fileset>
         </copy>
 
-        <!--Copy articles to the docs dir.-->
-        <attainGoal name="docbook"/>
-        <mkdir dir="${maven.dist.bin.assembly.dir}/docs/articles/" />
-        <copy todir="${maven.dist.bin.assembly.dir}/docs/articles/">
-          <fileset dir="${maven.build.dir}/docs/articles/" />
-        </copy>
     </postGoal>
 
     <postGoal name="dist:prepare-src-filesystem">
