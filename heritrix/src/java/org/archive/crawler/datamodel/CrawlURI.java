@@ -89,7 +89,7 @@ public class CrawlURI extends CandidateURI
     private boolean linkExtractorFinished = false;
 
 ////////////////////////////////////////////////////////////////////
-    CrawlServer server;
+    private transient CrawlServer server;
 
     private long contentSize = -1;
     private long contentLength = -1;

@@ -26,13 +26,14 @@ package org.archive.crawler.datamodel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectStreamException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.zip.Checksum;
 
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.io.ReplayInputStream;
 
 /**
@@ -48,8 +49,8 @@ public class CrawlServer implements Serializable {
 
     private final String server; // actually, host+port in the http case
     private int port;
-    private CrawlHost host;
-    private SettingsHandler settingsHandler;
+    private transient CrawlHost host;
+    private transient SettingsHandler settingsHandler;
     RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
     Checksum robotstxtChecksum;
@@ -103,7 +104,6 @@ public class CrawlServer implements Serializable {
      */
     public void updateRobots(CrawlURI curi)
             throws IOException {
-
         RobotsHonoringPolicy honoringPolicy =
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
@@ -212,29 +212,27 @@ public class CrawlServer implements Serializable {
         return port;
     }
 
-    /**
-     * Refuse to be serialized, but do not halt serialization:
-     * replace with null.
-     *
-     * @return Null.
-     * @throws ObjectStreamException
+    /** Called when object is beeing deserialized.
+     * 
+     * In addition to the default java deserialation, this method re-establishes
+     * the references to settings handler and robots honoring policy.
+     * 
+     * @param stream the stream to deserialize from.
+     * @throws IOException if I/O errors occur
+     * @throws ClassNotFoundException If the class for an object being restored
+     *         cannot be found.
      */
-    protected Object writeReplace() throws ObjectStreamException {
-        return null;
+    private void readObject(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        settingsHandler = ((ToeThread) Thread.currentThread())
+                            .getController().getSettingsHandler();
+        if (robots != null) {
+            RobotsHonoringPolicy honoringPolicy =
+                settingsHandler.getOrder().getRobotsHonoringPolicy();
+            robots.honoringPolicy = honoringPolicy;
+        }
     }
-
-//    private void writeObject(ObjectOutputStream stream)
-//     throws IOException {
-//         ObjectOutputStream.PutField puts = stream.putFields();
-//         puts.put("server",server);
-//         stream.writeFields();
-//     }
-//
-//    private void readObject(ObjectInputStream stream)
-//     throws IOException, ClassNotFoundException {
-//         ObjectInputStream.GetField reads = stream.readFields();
-//         server = (String)reads.get("server",null);
-//     }
 
     /** Get the settings handler.
      *
@@ -249,7 +247,7 @@ public class CrawlServer implements Serializable {
      * @return the settings object in effect for this server.
      */
     public CrawlerSettings getSettings() {
-        return settingsHandler.getSettings(getHost().name, getPort());
+        return settingsHandler.getSettings(getHost().getHostName(), getPort());
     }
 
     /** Set the settings handler to be used by this server.
@@ -259,4 +257,5 @@ public class CrawlServer implements Serializable {
     public void setSettingsHandler(SettingsHandler settingsHandler) {
         this.settingsHandler = settingsHandler;
     }
+
 }
