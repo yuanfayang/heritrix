@@ -188,4 +188,25 @@ public class TextUtils {
 	public static String[] split(Pattern p, CharSequence input) {
 		return p.split(input);
 	}
+    
+    /**
+     * This method takes a string and returns the same string with any single 
+     * quote escaped by prepending the character with a backslash.
+     * @param s The string to escape
+     * @return The same string with all single quotes escaped.
+     */
+    public static String escape(String s) {
+        if(s.indexOf('\'') < 0 ){
+            return s;
+        }
+        StringBuffer buffer = new StringBuffer(s.length() + 10);
+        char[] characters = s.toCharArray();
+        for(int j=0 ; j<characters.length ; j++){
+            if(characters[j] == '\''){
+                buffer.append('\\'); 
+            }
+            buffer.append(characters[j]);
+        }
+        return buffer.toString();
+    }
 }
