@@ -191,7 +191,7 @@ public class Frontier
 			return (Queue)super.get();
 		}
 
-}
+	}
 	
 	
 	/* (non-Javadoc)
@@ -459,7 +459,7 @@ public class Frontier
 		// release any other curis that were waiting for this to finish
 		releaseHeld(curi);	
 		
-		controller.raiseCrawledURIFailureEvent(curi); //Let interested listeners know of disregard disposition.
+		controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of disregard disposition.
 
 		// send to basic log 
 		Object array[] = { curi };
@@ -568,7 +568,7 @@ public class Frontier
 				curi.setDontRetryBefore(Long.MAX_VALUE);
 			}
 		}
-		controller.raiseCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
+		controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
 		curi.stripToMinimal();
 		decrementScheduled();
 		controller.recover.info(F_SUCCESS+curi.getURIString());
@@ -640,7 +640,7 @@ public class Frontier
 	}
 
 	/**
-	 * @param crawlURI
+	 * @param curi
 	 * @return
 	 */
 	private CrawlURI emitCuri(CrawlURI curi) {
@@ -879,7 +879,7 @@ public class Frontier
 		// release any other curis that were waiting for this to finish
 		releaseHeld(curi);	
 		
-		controller.raiseCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
+		controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
 		
 		// send to basic log 
 		Object array[] = { curi };
@@ -994,13 +994,15 @@ public class Frontier
 			// eligible for retry asap
 			pushToPending(curi);
 		}
-		controller.raiseCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
+		controller.throwCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
 		controller.recover.info(F_RESCHEDULE+curi.getURIString());
 	}
 	
 	/**
-	 * @param object
-	 * @param l
+	 * Snoozes a queue until a fixed point in time has passed.
+	 * 
+	 * @param classKey The key (in the allClassqueuesMap) to the queue that we want to snooze
+	 * @param wake Time (in millisec.) when we want the queue to stop snoozing.
 	 */
 	protected void snoozeQueueUntil(Object classKey, long wake) {
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(classKey);
@@ -1062,7 +1064,7 @@ public class Frontier
 
 	/** Return the number of URIs successfully completed to date.
 	 * 
-	 * @return
+	 * @return The number of URIs successfully completed to date
 	 */
 	public long successfullyFetchedCount(){
 		return completionCount;
