@@ -37,13 +37,12 @@ import org.archive.crawler.settings.SimpleType;
  * @author gojomo
  */
 public class TooManyHopsDecideRule extends PredicatedDecideRule {
-
     private static final String ATTR_MAX_HOPS = "max-hops";
     private static final Integer DEFAULT_MAX_HOPS = new Integer(20);
 
     /**
      * Usual constructor. 
-     * @param name
+     * @param name Name of this DecideRule.
      */
     public TooManyHopsDecideRule(String name) {
         super(name);
@@ -80,5 +79,4 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
     private int getThresholdHops(Object obj) {
         return ((Integer)getUncheckedAttribute(obj,ATTR_MAX_HOPS)).intValue();
     }
-
 }

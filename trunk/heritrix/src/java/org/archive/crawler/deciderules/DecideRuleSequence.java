@@ -25,32 +25,29 @@
 package org.archive.crawler.deciderules;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.filter.OrFilter;
-import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.Type;
 
 /**
  * RuleSequence represents a series of Rules, which are applied in turn
- * to give the final result.
+ * to give the final result.  Rules return {@link DecideRule#ACCEPT}, 
+ * {@link DecideRule#REJECT}, or {@link DecideRule#PASS}.  The final result
+ * of a DecideRuleSequence is that of the last rule decision made, either
+ * ACCEPT or REJECT (PASS is used by rules that do not have an opinion
+ * on a particular processing pass).
  *
  * @author gojomo
  */
 public class DecideRuleSequence extends DecideRule {
     private static final Logger logger =
         Logger.getLogger(OrFilter.class.getName());
-    
+
     public static final String ATTR_RULES = "rules";
     
-    /**
-     * @param name
-     */
     public DecideRuleSequence(String name) {
         super(name);
         setDescription("DecideRuleSequence. Multiple DecideRules applied in " +
@@ -61,13 +58,10 @@ public class DecideRuleSequence extends DecideRule {
                 DecideRule.class));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.rules.Rule#applyTo(java.lang.Object)
-     */
     public Object decisionFor(Object object) {
         Object runningAnswer = PASS;
-        Iterator iter = getRules(object).iterator(object);
-        while(iter.hasNext()) {
+        for(Iterator iter = getRules(object).iterator(object);
+                iter.hasNext();) {
             Object answer = ((DecideRule)iter.next()).decisionFor(object);
             if (answer != PASS) {
                 runningAnswer = answer;

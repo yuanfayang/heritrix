@@ -32,31 +32,17 @@ package org.archive.crawler.deciderules;
  * @author gojomo
  */
 public abstract class PredicatedDecideRule extends ConfiguredDecideRule {
-
-    public final static String ATTR_DECISION = "decision";
-    /**
-     * @param name
-     */
     public PredicatedDecideRule(String name) {
         super(name);
         setDescription("ABSTRACT: Should not appear as choice.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.rules.Rule#applyTo(java.lang.Object)
-     */
     public Object decisionFor(Object object) {
         if(evaluate(object)) {
             return super.decisionFor(object);
-        } else {
-            return PASS;
         }
+        return PASS;
     }
 
-    /**
-     * @param object
-     * @return
-     */
     abstract boolean evaluate(Object object);
-
 }
