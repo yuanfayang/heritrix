@@ -34,6 +34,8 @@ public class RecordingOutputStream extends OutputStream {
 	protected OutputStream wrappedStream;
 	protected byte[] buffer;
 	protected long position;
+	protected long responseBodyStart; // when recording HTTP, where the content-body starts
+
 	
 	/**
 	 * Create a new RecordingInputStream with the specified parameters.
@@ -82,7 +84,7 @@ public class RecordingOutputStream extends OutputStream {
 	 * @param b
 	 */
 	private void record(int b) throws IOException {
-		if(position>buffer.length){
+		if(position>=buffer.length){
 			diskStream.write(b);
 		} else {
 			buffer[(int)position] = (byte)b;
@@ -111,7 +113,23 @@ public class RecordingOutputStream extends OutputStream {
 	}
 	
 	public ReplayInputStream getReplayInputStream() throws IOException {
-		return new ReplayInputStream(buffer,size,backingFilename);
+		return new ReplayInputStream(buffer,size,responseBodyStart,backingFilename);
+	}
+
+
+	/**
+	 * @return
+	 */
+	public long getSize() {
+		return size;
+	}
+
+
+	/**
+	 * 
+	 */
+	public void markResponseBodyStart() {
+		responseBodyStart = position;
 	}
 
 }

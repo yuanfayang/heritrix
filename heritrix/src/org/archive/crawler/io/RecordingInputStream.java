@@ -9,6 +9,8 @@ package org.archive.crawler.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.swing.text.Position;
+
 import org.archive.util.NullOutputStream;
 
 /**
@@ -61,8 +63,23 @@ public class RecordingInputStream extends InputStream {
 	public long readFully() throws IOException {
 		while(read()!=-1) {
 		}
-		return recordingOutputStream.size;
+		return recordingOutputStream.getSize();
 		
+	}
+
+	/**
+	 * @return
+	 */
+	public long getSize() {
+		// TODO Auto-generated method stub
+		return recordingOutputStream.getSize();
+	}
+
+	/**
+	 * 
+	 */
+	public void markResponseBodyStart() {
+		recordingOutputStream.markResponseBodyStart();
 	}
 
 }

@@ -1614,6 +1614,9 @@ public abstract class HttpMethodBase implements HttpMethod {
                 this.statusLine = null;
             }
         }
+        if(recorder!=null) {
+        	recorder.markResponseBodyStart();
+        }
         readResponseBody(state, conn);
         processResponseBody(state, conn);
     }

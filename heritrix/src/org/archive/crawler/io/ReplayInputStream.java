@@ -10,18 +10,31 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * @author gojomo
  *
  */
 public class ReplayInputStream extends InputStream {
-	private BufferedInputStream diskStream;
-	byte[] buffer;
-	long size;
-	long position;
-	String backingFilename;
+	protected BufferedInputStream diskStream;
+	protected byte[] buffer;
+	protected long size;
+	protected long responseBodyStart; // where the response body starts, if marked
+	protected long position;
+	protected String backingFilename;
 	
+	/**
+		 * @param buffer
+		 * @param size
+		 * @param responseBodyStart
+		 * @param backingFilename
+		 */
+		public ReplayInputStream(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
+			this(buffer,size,backingFilename);
+			this.responseBodyStart = responseBodyStart;
+		}
+
 	/**
 	 * @param buffer
 	 * @param size
@@ -36,10 +49,18 @@ public class ReplayInputStream extends InputStream {
 		}
 	}
 
+	public long setToResponseBodyStart() {
+		position = responseBodyStart;
+		return position;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.io.InputStream#read()
 	 */
 	public int read() throws IOException {
+		if (position==size) {
+			return -1; // EOF
+		}
 		if (position<buffer.length) {
 			return buffer[(int)position++];
 		} else {
@@ -50,4 +71,13 @@ public class ReplayInputStream extends InputStream {
 	
 	// TODO: implement other read()s for efficiency
 
+
+	public void readFullyTo(OutputStream os) throws IOException {
+		// TODO make this more efficient
+		int c = read();
+		while (c != -1) {
+			os.write(c);
+			c = read();
+		}
+	}
 }

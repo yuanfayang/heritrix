@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.io.ReplayInputStream;
 
 /**
  * Represents a single remote "host". 
@@ -90,9 +91,10 @@ public class CrawlServer {
 		// TODO: handle other errors, perhaps redirects
 		// note that akamai will return 400 for some "not founds"
 		try {
+			ReplayInputStream contentBodyStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
+			contentBodyStream.setToResponseBodyStart();
 			BufferedReader reader = new BufferedReader(
-					new InputStreamReader(
-						get.getResponseBodyAsStream()));
+					new InputStreamReader(contentBodyStream));
 			robots = RobotsExclusionPolicy.policyFor(reader);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

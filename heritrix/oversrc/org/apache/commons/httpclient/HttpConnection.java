@@ -1372,7 +1372,7 @@ public class HttpConnection {
     private InetAddress localAddress;
     
 	/** Optional recorder. */
-	private HttpRecorder recorder;
+	protected HttpRecorder recorder;
 
 	/* (non-Javadoc)
 	 * @see org.apache.commons.httpclient.HttpMethod#setHttpRecorder(org.archive.util.HttpRecorder)
