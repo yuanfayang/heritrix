@@ -26,7 +26,8 @@
 		seeds = new BufferedReader(new FileReader(new File(crawlOrder.getStringAt(SimpleHandler.XP_SEEDS_FILE))));
 	}
 
-	String title = "Update current job";
+	String title = "Modify crawl job";
+	int tab = 1;
 %>
 
 <%@include file="/include/head.jsp"%>
@@ -86,6 +87,35 @@
 						<option value="host" <%=crawlOrder.getStringAt(SimpleHandler.XP_CRAWL_MODE).equals("host")?"selected":""%>>Host</option>
 						<option value="path" <%=crawlOrder.getStringAt(SimpleHandler.XP_CRAWL_MODE).equals("path")?"selected":""%>>Path</option>
 					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<b>Stop crawl after</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Maximum time (sec):
+				</td>
+				<td>
+					<input name="<%=SimpleHandler.XP_MAX_TIME%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_TIME)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Maximum bytes to download:
+				</td>
+				<td>
+					<input name="<%=SimpleHandler.XP_MAX_BYTES_DOWNLOAD%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_BYTES_DOWNLOAD)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Maximum documents to download:
+				</td>
+				<td>
+					<input name="<%=SimpleHandler.XP_MAX_DOCUMENT_DOWNLOAD%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_DOCUMENT_DOWNLOAD)%>" size="<%=iInputSize%>">
 				</td>
 			</tr>
 			<tr>
@@ -156,7 +186,7 @@
 			</tr>
 			<tr>
 				<td>
-					Max lenght (bytes):
+					Max length (bytes):
 				</td>
 				<td>
 					<input name="<%=SimpleHandler.XP_HTTPFETCH_MAX_LENGTH_BYTES%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_HTTPFETCH_MAX_LENGTH_BYTES)%>" size="<%=iInputSize%>">

@@ -3,7 +3,7 @@
 
 <%
 	String title = "Frontier report";
-	int navigation = 72;
+	int tab = 4;
 %>
 
 <%@include file="/include/head.jsp"%>
