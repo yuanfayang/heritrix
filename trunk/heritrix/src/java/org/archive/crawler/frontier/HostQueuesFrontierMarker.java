@@ -96,13 +96,6 @@ public class HostQueuesFrontierMarker implements FrontierMarker {
     }
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontierMarker#isCacheOnly()
-     */
-    public boolean isCacheOnly() {
-        return inCacheOnly;
-    }
-
-    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontierMarker#hasNext()
      */
     public boolean hasNext() {
