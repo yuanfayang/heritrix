@@ -116,7 +116,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 				Thread.sleep(logInterval * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				controller.crawlErrors.log(
+				controller.runtimeErrors.log(
 					Level.INFO,
 					"Periodic stat logger interrupted while sleeping.");
 			}
