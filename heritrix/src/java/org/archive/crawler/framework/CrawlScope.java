@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -76,6 +77,7 @@ public class CrawlScope extends Filter {
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
     private List seeds = null;
+    private boolean seedsCached = false;
     private OrFilter excludeFilter;
 
     /** Constructs a new CrawlScope.
@@ -124,11 +126,18 @@ public class CrawlScope extends Filter {
      */
     public void refreshSeedsIteratorCache() {
         // seeds should be in memory for scope tests
-        seeds = null;
-        Iterator iter = getSeedsIterator();
-        seeds = new ArrayList();
-        while (iter.hasNext()) {
-            seeds.add(iter.next());
+        if (seeds == null) {
+            seeds = Collections.synchronizedList(new ArrayList());
+        } else {
+            seeds.clear();
+        }
+        synchronized (seeds) {
+            seedsCached = false;
+            Iterator iter = getSeedsIterator();
+            while (iter.hasNext()) {
+                seeds.add(iter.next());
+            }
+            seedsCached = true;
         }
     }
 
@@ -142,7 +151,7 @@ public class CrawlScope extends Filter {
     public Iterator getSeedsIterator() {
         Iterator seedIterator;
 
-        if (seeds != null) {
+        if (seedsCached) {
             seedIterator = seeds.iterator();
         } else {
             try {
