@@ -480,7 +480,11 @@ HasUriReceiver,  CrawlStatusListener {
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    protected void batchFlush() {
+    /**
+     * Flush pending URI queues.
+     * Used when scheduling URIs from the commandline.
+     */
+    public void batchFlush() {
         innerBatchFlush();
     }
 

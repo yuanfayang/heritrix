@@ -19,16 +19,17 @@
      */
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
     boolean isProfile = false;
-    if(request.getParameter("profile") != null && request.getParameter("profile").equals("true")){
+    if(request.getParameter("profile") != null &&
+            request.getParameter("profile").equals("true")) {
         isProfile = true;
     }
     
-    if(theJob == null)
-    {
+    if(theJob == null) {
         //Ok, use default profile then.
         theJob = handler.getDefaultProfile();
         if(theJob == null){
-            // ERROR - This should never happen. There must always be at least one (default) profile.
+            // ERROR - This should never happen. There must always be at least
+            // one (default) profile.
             out.println("ERROR: NO PROFILE FOUND");
             return;
         }
@@ -41,13 +42,13 @@
     String error = null;
     String metaName = request.getParameter("meta/name");
     
-    if(request.getParameter("action") != null){
-        //Make new job.
+    if(request.getParameter("action") != null) {
+        // Make new job.
         CrawlJob newJob = null;
 
         // Ensure we got a valid name. ([a-zA-Z][0-9][-_])
         Pattern p = Pattern.compile("[a-zA-Z_\\-0-9\\.,]*");
-        if(p.matcher(metaName).matches()==false){
+        if (p.matcher(metaName).matches()==false) {
             // Illegal name!
             error = "Name can only contain letters, digits, and dash, "
                    +"underscore, period, or comma ( - _ . , ).<br> "
@@ -55,7 +56,7 @@
         }
         
         if(error == null) {
-            if(isProfile){
+            if(isProfile) {
                 // Ensure unique name
                 CrawlJob test = handler.getJob(metaName);
                 if(test == null) {
@@ -67,7 +68,7 @@
                     // Need a unique name!
                     error = "Profile name must be unique!";
                 }
-            }else{
+            } else {
                 newJob = handler.newJob(theJob, metaName, 
                     request.getParameter("meta/description"),
                     request.getParameter("seeds"),
@@ -75,7 +76,7 @@
             }
         }
         
-        if(error == null && newJob != null){
+        if(error == null && newJob != null) {
             if(request.getParameter("action").equals("configure")){
                 response.sendRedirect(request.getContextPath() +
                     "/jobs/configure.jsp?job="+newJob.getUID());
@@ -85,7 +86,8 @@
             } else if(request.getParameter("action").equals("filters")){
                 response.sendRedirect(request.getContextPath() +
                    "/jobs/filters.jsp?job="+newJob.getUID());
-            } else if(request.getParameter("action").equals("url-canonicalization-rules")){
+            } else if(request.getParameter("action").
+                    equals("url-canonicalization-rules")){
                 response.sendRedirect(request.getContextPath() +
                    "/jobs/url-canonicalization-rules.jsp?job="+newJob.getUID());
             } else if(request.getParameter("action").equals("override")){

@@ -310,6 +310,22 @@ h.launch();</programlisting>
         </p>
         </answer>
       </faq>
+      <faq id="cmdlinecontrol">
+        <question>Can I stop/pause and get status from a running Heritrix
+        using command-line tools?
+        </question>
+        <answer>
+        <p>An experimental cmdline control utility has been added to HEAD
+(Post 1.2.0 release).  The script can be found in the scripts directory.  Its
+packaged as a jar file named <code>cmdline-jmxclient.X.X.X.jar</code>.  
+It has no dependencies on other jars being found in its classpath so it 
+can be safely moved from this location.  Its only dependency is jdk1.5.0.
+To learn more, obtain client usage by typing the following:
+<code>${PATH_TO_JDK1.5.0}/bin/java -jar cmdline-jmxclient.X.X.X.jar</code>. 
+See also <a href="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient</a>
+to learn more.</p>  
+        </answer>
+      </faq>
 
 
 <faq id="toethreads">

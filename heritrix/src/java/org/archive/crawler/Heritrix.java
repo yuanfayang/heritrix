@@ -52,6 +52,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import org.apache.commons.cli.Option;
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
@@ -113,11 +114,6 @@ public class Heritrix implements HeritrixMBean {
      * CrawlJob handler. Manages multiple crawl jobs at runtime.
      */
     private static CrawlJobHandler jobHandler = null;
-
-    /**
-     * CrawlController, used when running jobs without a WUI.
-     */
-    private static CrawlController controller = null;
 
     /**
      * Heritrix start log file.
@@ -754,7 +750,7 @@ public class Heritrix implements HeritrixMBean {
         XMLSettingsHandler handler =
             new XMLSettingsHandler(new File(crawlOrderFile));
         handler.initialize();
-        controller = new CrawlController();
+        CrawlController controller = new CrawlController();
         controller.initialize(handler);
         controller.requestCrawlStart();
         return "Crawl started using " + crawlOrderFile + ".";
@@ -877,8 +873,7 @@ public class Heritrix implements HeritrixMBean {
      *
      * @return The CrawlJobHandler being used.
      */
-    public static CrawlJobHandler getJobHandler()
-    {
+    public static CrawlJobHandler getJobHandler() {
         return jobHandler;
     }
 
@@ -948,10 +943,8 @@ public class Heritrix implements HeritrixMBean {
             if(jobHandler.isCrawling()){
                 jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
             }
+            jobHandler.requestCrawlStop();
             Heritrix.jobHandler = null;
-        } else if(Heritrix.controller != null) {
-            Heritrix.controller.requestCrawlStop();
-            Heritrix.controller = null;
         }
     }
 
@@ -1143,8 +1136,37 @@ public class Heritrix implements HeritrixMBean {
         return Heritrix.jobHandler != null;
     }
     
-    public String getState() {
-        return "UNIMPLEMENTED";
+    public String getStatus() {
+        StringBuffer buffer = new StringBuffer();
+        if (Heritrix.getJobHandler() != null) {
+            buffer.append("isRunning=");
+            buffer.append(Heritrix.getJobHandler().isRunning());
+            buffer.append(", isCrawling=");
+            buffer.append(Heritrix.getJobHandler().isCrawling());
+            buffer.append(", newAlertCount=");
+            buffer.append(Heritrix.getNewAlerts());
+            CrawlJob job = getCurrentJob();
+            buffer.append(", isCurrentJob=");
+            buffer.append((job != null)? true: false);
+            if (job != null) {
+                buffer.append(", currentJob=");
+                buffer.append(job.getJobName());
+                buffer.append(", jobStatus=");
+                buffer.append(job.getStatus());
+                buffer.append(", frontierReport=\"");
+                buffer.append(Heritrix.jobHandler.getFrontierOneLine());
+                buffer.append("\", Threads Report=\"");
+                buffer.append(Heritrix.jobHandler.getThreadOneLine());
+                buffer.append("\"");
+            }
+        }
+        return buffer.toString();
+    }
+    
+    private CrawlJob getCurrentJob() {
+        return (Heritrix.getJobHandler() != null)?
+            Heritrix.getJobHandler().getCurrentJob():
+            null;
     }
     
     /**
@@ -1172,5 +1194,79 @@ public class Heritrix implements HeritrixMBean {
      */
     public void stop() {
         Heritrix.prepareHeritrixShutDown();
+    }
+
+    public boolean pause() {
+        boolean paused = false;
+        if (Heritrix.getJobHandler() != null && getCurrentJob() != null &&
+                Heritrix.getJobHandler().isCrawling()) {
+            Heritrix.getJobHandler().pauseJob();
+            paused = true;
+        }
+        return paused;
+    }
+
+    public boolean resume() {
+        boolean resumed = false;
+        if (Heritrix.getJobHandler() != null && getCurrentJob() != null &&
+                !Heritrix.getJobHandler().isCrawling()) {
+            Heritrix.getJobHandler().resumeJob();
+            resumed = true;
+        }
+        return resumed;
+    }
+
+    public boolean terminateCurrentJob() {
+        boolean terminated = false;
+        if (Heritrix.getJobHandler() != null && getCurrentJob() != null) {
+            Heritrix.getJobHandler().deleteJob(getCurrentJob().getUID());
+            terminated = true;
+        }
+        return terminated;
+    }
+
+    public boolean schedule(final String url) {
+        return schedule(url, false, false);
+    }
+    
+    public boolean scheduleForceFetch(final String url) {
+        return schedule(url, true, false);
+    }
+    
+    public boolean scheduleSeed(final String url) {
+        return schedule(url, true, true);
+    }
+    
+    private boolean schedule(final String url, final boolean forceFetch,
+            final boolean isSeed) {
+        boolean scheduled = false;
+        if (Heritrix.getJobHandler() != null &&
+                Heritrix.getJobHandler().isCrawling()) {
+            try {
+                Heritrix.getJobHandler().importUri(url, forceFetch, isSeed);
+                scheduled = true;
+            } catch (URIException e) {
+                e.printStackTrace();
+            }
+        }
+        return scheduled;
+    }
+    
+    public String scheduleFile(final String path) {
+        return scheduleFile(path, false);
+    }
+    
+    public String scheduleFileForceFetch(final String path) {
+        return scheduleFile(path, true);
+    }
+    
+    private String scheduleFile(final String path, final boolean forceFetch) {
+        String scheduled = "0";
+        if (Heritrix.getJobHandler() != null &&
+                Heritrix.getJobHandler().isCrawling()) {
+            scheduled = Heritrix.getJobHandler().
+                importUris(path, "NoStyle", forceFetch);
+        }
+        return scheduled;
     }
 }
