@@ -30,6 +30,7 @@ import javax.management.InvalidAttributeValueException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -80,17 +81,15 @@ public class OrFilter extends Filter {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize()
 	 */
-     /*
-	public void initialize(CrawlURI curi) {
-		super.initialize(curi);
+	public void initialize(CrawlController controller) {
+		super.initialize(controller);
         
-        Iterator iter = iterator(curi);
+        Iterator iter = iterator(null);
         while(iter.hasNext()) {
             Filter f = (Filter) iter.next();
-            f.initialize(curi);
+            f.initialize(controller);
         }
 	}
-    */
     
     public boolean isEmpty(Object o) {
         CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);

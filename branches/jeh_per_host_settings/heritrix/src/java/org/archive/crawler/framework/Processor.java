@@ -163,13 +163,11 @@ public class Processor extends CrawlerModule {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-		//instantiateAllInto(XP_FILTERS,filters);
-		//Iterator iter = filters.iterator();
-		//while(iter.hasNext()) {
-		//	Object o = iter.next();
-		//	Filter f = (Filter)o;
-		//	f.initialize(controller);
-		//}
+
+        Iterator iter = filters.iterator(null);
+        while (iter.hasNext()) {
+            ((Filter) iter.next()).initialize(c);
+        }
 	}
 	
 	/**

@@ -29,7 +29,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
@@ -86,9 +85,8 @@ public abstract class Filter extends CrawlerModule {
      */
     protected abstract boolean innerAccepts(Object o);
 
-    public void earlyInitialize(CrawlerSettings settings) {
-        settings = settings == null ? globalSettings() : settings;
-        this.controller = settings.getSettingsHandler().getOrder().getController();
+    public void initialize(CrawlController controller) {
+        this.controller = controller;
     }
 
     /* (non-Javadoc)

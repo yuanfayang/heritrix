@@ -342,7 +342,6 @@ public class CrawlController extends Thread {
             throw new FatalConfigurationException(e.getMessage());
         }
 
-        // TODO: firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
         processors = order.getProcessors();
         if (processors.isEmpty(null)) {
             throw new FatalConfigurationException("No processors defined");
@@ -361,7 +360,7 @@ public class CrawlController extends Thread {
         }
 
         // try to initialize each scope and frontier from the config file
-        scope.initialize(scope.globalSettings());
+        scope.initialize(this);
         try {
             frontier.initialize(this);
         } catch (IOException e) {

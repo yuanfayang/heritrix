@@ -40,6 +40,7 @@ import org.archive.crawler.filter.HopsFilter;
 import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.filter.SeedExtensionFilter;
 import org.archive.crawler.filter.TransclusionFilter;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 
@@ -144,8 +145,9 @@ public class Scope extends CrawlScope {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#initialize(org.archive.crawler.framework.CrawlController)
      */
-    public void initialize(CrawlerSettings settings) {
-        super.initialize(settings);
+    public void initialize(CrawlController controller) {
+        super.initialize(controller);
+        CrawlerSettings settings = globalSettings();
         // setup focusFilter
         try {
             mode = (String) getAttribute(settings, ATTR_MODE);
@@ -165,7 +167,7 @@ public class Scope extends CrawlScope {
                 setAttribute(settings, focusFilter);
             }
             if (focusFilter != null) {
-                //focusFilter.initialize(settings);
+                focusFilter.initialize(controller);
                 // only set up transitiveFilter if focusFilter set
                 Object filter = getAttribute(settings, ATTR_TRANSITIVE_FILTER);
                 if (filter instanceof Filter) {
@@ -178,7 +180,7 @@ public class Scope extends CrawlScope {
                     transitiveFilter.setTransient(true);
                     setAttribute(settings, transitiveFilter);
                 }
-                //transitiveFilter.initialize(settings);
+                transitiveFilter.initialize(controller);
             }
 
             // setup exclude filter
@@ -194,7 +196,7 @@ public class Scope extends CrawlScope {
             if (excludeFilter.isEmpty(settings)) {
                 excludeFilter = null;
             } else {
-                //excludeFilter.initialize(settings);
+                excludeFilter.initialize(controller);
             }
 
         } catch (InvalidAttributeValueException e) {
