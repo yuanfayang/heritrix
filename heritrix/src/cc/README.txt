@@ -105,12 +105,14 @@ w/ settings under the jetty etc/ dir (jetty.xml) and then did
 'java -Djetty.port=8080 -jar start.jar' under the jetty dir (Note, our crawl??
 machines only allow web access on port 8080).
 
-+ Run cruisecontrol
++ Run cruisecontrol.  Run it w/ the '-port 8081' argument so you can browse to 
+the JMX server that cruisecontrol puts up (At the least you can force 
+a build using the JMX server):
     
     % export CCDIR=/PATH/TO/cruisecontrol-2.1.4/main
     % export CVS_RSH=ssh
     % export MAVEN_HOME=/home/stack/software/maven
-    % chmod u+x $CCDIR/bin/cruisecontrol.sh
+    % chmod u+x $CCDIR/bin/cruisecontrol.sh -port 8081
     % cd $CCBUILDDIR
     % $CCDIR/bin/cruisecontrol.sh
 
