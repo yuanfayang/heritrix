@@ -13,7 +13,7 @@ import org.archive.crawler.datamodel.UURI;
  * 
  * @author Gordon Mohr
  */
-public class RegExpFilter implements Filter {
+public class RegExpFilter implements UURIFilter {
 	String name;
 	
 

@@ -14,27 +14,39 @@ import org.archive.crawler.datamodel.CrawlURI;
  */
 public class ToeThread extends Thread {
 	CrawlController controller;
-	boolean shouldRun = true;
-	boolean shouldExit = false;
-	Object gate = new Object();
 	CrawlURI currentCuri;
-	// in-process/on-hold curis?
-	// a queue of curis to do next?
-	
-	
-	
+	// in-process/on-hold curis? not for now
+	// a queue of curis to do next? not for now
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		controller.scheduler.curiWantedFor(this);
-		while ( currentCuri == null ) {
-			gate.wait();
-		}
-		// TODO 
+		processingLoop();
+		controller.toeFinished(this);
+	}
+	
+	private void processingLoop() {
+		assert currentCuri == null;
 		
+		currentCuri = controller.crawlUriFor(this);
+		
+		while ( currentCuri != null ) {
+		
+			while ( currentCuri.nextProcessor() != null ) {
+				currentCuri.nextProcessor().process(currentCuri);
+			}
+	
+			finishCurrentCuri();
+			
+			currentCuri = controller.crawlUriFor(this);
+			
+		}
 		
 	}
 
+	private void finishCurrentCuri() {
+		controller.getSelector().inter(currentCuri);
+		currentCuri = null;
+	}
 }

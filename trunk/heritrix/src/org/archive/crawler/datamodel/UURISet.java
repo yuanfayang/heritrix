@@ -1,5 +1,5 @@
 /*
- * URISet.java
+ * UURISet.java
  * Created on Apr 17, 2003
  *
  * $Header$
@@ -18,7 +18,7 @@ package org.archive.crawler.datamodel;
  * @author gojomo
  *
  */
-public interface URISet /* extends Set ??? */ {
+public interface UURISet /* extends Set ??? */ {
 	public long size();
 	public boolean contains(UURI u);
 	public boolean contains(CrawlURI curi);
