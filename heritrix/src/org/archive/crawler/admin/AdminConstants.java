@@ -13,14 +13,6 @@ package org.archive.crawler.admin;
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public interface AdminConstants {
-	public static final int ORDER = 0;
-	public static final int STOP = 1;
-	public static final int UPDATE = 2;
-	public static final int START = 3;
-	public static final int STATS = 4;
-	public static final int TERMINATE = 5;
-	public static final int MAINMENU = 6;
-	public static final int UPDATEWM = 7;
 	public static final String CRAWLER_STARTED = "Crawler Started!";
 	public static final String CRAWLER_STOPPED = "Crawler Stopped!";
 	public static final String CRAWLER_RUNNING_ERR =
@@ -30,11 +22,6 @@ public interface AdminConstants {
 	public static final String CRAWLER_TERMINATED =
 		"===>Crawling Stopped!<===<br>\nShutting Down the Server!";
 	public static final String WEB_APP_PATH = "WebUIResources/webapps/admin/";
-	public static final String XSL_STYLE = "order-conf.xsl";
-	public static final String MAINMENU_JSP = "mainmenu.jsp";
-	public static final String CRAWL_ORDER_JSP = "crawlorder.jsp";
-	public static final String ORDER_HTML_FORM_PAGE = "orderform.html"; // TODO: Remove all depracted constants.
-	public static final String STATS_JSP = "stats.jsp";
 	public static final String DEFAULT_ORDER_FILE = "order.xml";
 	public static final String CRAWLING_IN_PROGRESS = "Crawling In Progress";
 	public static final String NO_CRAWLING = "No Crawling in Progress";
@@ -59,18 +46,18 @@ public interface AdminConstants {
 	public static final String XP_FRONTIER = "//behavior/frontier";
 	public static final String XP_CRAWL_SCOPE = "//scope";
 	// From Frontier
-	public static String XP_DELAY_FACTOR = "@delay-factor";
-	public static String XP_MIN_DELAY = "@min-delay-ms";
-	public static String XP_MAX_DELAY = "@max-delay-ms";
+	public static final String XP_DELAY_FACTOR = "@delay-factor";
+	public static final String XP_MIN_DELAY = "@min-delay-ms";
+	public static final String XP_MAX_DELAY = "@max-delay-ms";
 	
 	// Custom	
-	public static String XP_MAX_TRANS_HOPS = "//scope/@max-trans-hops";
-	public static String XP_MAX_LINK_HOPS = "//scope/@max-link-hops";
-	public static String XP_CRAWL_MODE = "//scope/@mode";
+	public static final String XP_MAX_TRANS_HOPS = "//scope/@max-trans-hops";
+	public static final String XP_MAX_LINK_HOPS = "//scope/@max-link-hops";
+	public static final String XP_CRAWL_MODE = "//scope/@mode";
 	
-	public static String XP_ARC_PREFIX = "//@prefix";
-	public static String XP_ARC_COMPRESSION_IN_USE = "//@compress";
-	public static String XP_MAX_ARC_SIZE = "//@max-arc-size";
+	public static final String XP_ARC_PREFIX = "//@prefix";
+	public static final String XP_ARC_COMPRESSION_IN_USE = "//@compress";
+	public static final String XP_MAX_ARC_SIZE = "//@max-arc-size";
 	
 	public static final String XP_CRAWL_COMMENT = "//crawl-order/@comment";
 	public static final String XP_SEEDS = "//seeds";
