@@ -53,8 +53,8 @@ public abstract class TransformingIteratorWrapper extends LookaheadIterator {
     }
 
     /**
-     * @param object
-     * @return
+     * @param object Object to transform.
+     * @return Transfomed object.
      */
     protected abstract Object transform(Object object);
 
