@@ -44,7 +44,7 @@ import org.archive.util.ArchiveUtils;
  * 
  * @author Gordon Mohr
  */
-public class CrawlController extends Thread{
+public class CrawlController extends Thread {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
 
 	private static final String LOGNAME_PROGRESS_STATISTICS = "progress-statistics";
@@ -70,6 +70,7 @@ public class CrawlController extends Thread{
 	private ToePool toePool;
 	private URIFrontier frontier;
 	private boolean shouldCrawl;
+	private boolean shouldPause;
 
 	private File disk;
 	private File scratchDisk;
@@ -97,6 +98,9 @@ public class CrawlController extends Thread{
 	
 	private boolean paused = false;
 	private boolean finished = false;
+
+	public CrawlController() {
+	}
 
 	/**
 	 * Starting from nothing, set up CrawlController and associated
@@ -135,10 +139,8 @@ public class CrawlController extends Thread{
 	 * 
 	 * @param owner
 	 */
-	public void addListener(CrawlListener cl)
-	{
-		if(registeredListeners == null)
-		{
+	public void addListener(CrawlListener cl) {
+		if(registeredListeners == null) {
 			registeredListeners = new ArrayList();	
 		}
 		registeredListeners.add(cl);
@@ -165,7 +167,7 @@ public class CrawlController extends Thread{
 		Iterator iter = processors.entrySet().iterator();
 		while (iter.hasNext()) {
 			Object obj = iter.next();
-			System.out.println(obj);
+			logger.info(obj.toString());
 			Processor p = (Processor) ((Map.Entry)obj).getValue();
 			p.initialize(this);
 		}
@@ -281,6 +283,7 @@ public class CrawlController extends Thread{
 	public void startCrawl() {
 		// assume Frontier state already loaded
 		shouldCrawl=true;
+		shouldPause=false;
 		logger.info("Should start Crawl");
 
 		this.start();
@@ -300,6 +303,41 @@ public class CrawlController extends Thread{
 		statLogger.start();
 
 		while(shouldCrawl()) {
+			if (shouldPause) {
+				synchronized (this) {
+					try {
+						// Wait until all ToeThreads are finished with their work
+						while (getActiveToeCount() > 0) {
+							wait(200);
+						}
+						paused = true;
+						sExit = CrawlJob.STATUS_PAUSED;
+						
+						// Tell everyone that we have paused
+						logger.info("Crawl job paused");
+						Iterator it = registeredListeners.iterator();
+						while(it.hasNext()) {
+							((CrawlListener) it.next()).crawlPausing(sExit);
+						}
+						
+						wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					paused = false;
+					sExit = CrawlJob.STATUS_RESUMED;
+					logger.info("Crawl job resumed");
+
+					// Tell everyone that we have resumed from pause
+					Iterator it = registeredListeners.iterator();
+					while(it.hasNext()) {
+						((CrawlListener) it.next()).crawlPausing(sExit);
+					}
+					sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
+				}
+			}
+		
 			 CrawlURI curi = frontier.next(timeout);
 			 if(curi != null) {
 				curi.setNextProcessor(firstProcessor);
@@ -310,6 +348,7 @@ public class CrawlController extends Thread{
 			 	//} 
 			 }
 		}
+		
 		controlThread = null;
 		logger.info("exitting run");
 		
@@ -352,7 +391,51 @@ public class CrawlController extends Thread{
 	public void stopCrawl() {
 		sExit = CrawlJob.STATUS_ABORTED;
 		shouldCrawl = false;
+		// If crawl is paused it should be resumed first so it
+		// can be stopped properly
+		resumeCrawl();
 	}	
+
+	/**
+	 * Stop the crawl temporarly.
+	 */
+	public synchronized void pauseCrawl() {
+		if(shouldPause) {
+			// Already about to pause
+			return;
+		}
+		sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
+		shouldPause = true;
+		logger.info("Pausing crawl job ...");
+
+		// Notify listeners that we are going to pause
+		Iterator it = registeredListeners.iterator();
+		while(it.hasNext()) {
+			((CrawlListener) it.next()).crawlPausing(sExit);
+		}
+	}
+	
+	/**
+	 * Tell if the controller is paused
+	 * @return true if paused
+	 */
+	public boolean isPaused() {
+		return paused;
+	}
+	
+	/**
+	 * Resume crawl from paused state
+	 */
+	public synchronized void resumeCrawl() {
+		if(!paused || !shouldPause) {
+			// Can't resume if not been told to pause
+			return;
+		}
+		
+		shouldPause = false;
+		notify();
+	}
+
 
 	
 	public int getActiveToeCount(){
@@ -553,7 +636,7 @@ public class CrawlController extends Thread{
 	 * 
 	 * @param o The new CrawlOrder
 	 */
-	public void updateOrder(CrawlOrder o){
+	public void updateOrder(CrawlOrder o) {
 		// Prepare the new CrawlOrder
 		o.initialize();
 		// Replace the old CrawlOrder
