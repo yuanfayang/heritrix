@@ -408,13 +408,15 @@ public abstract class ComplexType implements DynamicMBean, Type {
      */
     private void initializeComplexType(CrawlerSettings settings)
         throws InvalidAttributeValueException {
-        Iterator it = definition.iterator();
-        while (it.hasNext()) {
-            Type t = (Type) it.next();
-            definitionMap.put(t.getName(), t);
-            addElement(settings, t);
+        if (!initialized) {
+            Iterator it = definition.iterator();
+            while (it.hasNext()) {
+                Type t = (Type) it.next();
+                definitionMap.put(t.getName(), t);
+                addElement(settings, t);
+            }
+            earlyInitialize(settings);
         }
-        earlyInitialize(settings);
         initialized = true;
     }
     
