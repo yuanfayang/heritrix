@@ -24,7 +24,11 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.Iterator;
+
+import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
 
 /**
  * 
@@ -50,5 +54,43 @@ public class MapType extends ComplexType {
         } else {
             throw new IllegalArgumentException("Nested maps are not allowed.");
         }
+    }
+    
+    class It implements Iterator {
+        CrawlerSettings settings;
+        Iterator atts;
+                        
+        public It(CrawlerSettings settings) {
+            this.settings = settings;
+            this.atts = settings.getData(getAbsoluteName()).attributeInfoIterator();
+        }
+
+        public boolean hasNext() {
+            return atts.hasNext();
+        }
+
+        public Object next() {
+            try {
+                return getAttribute(settings, ((MBeanAttributeInfo) atts.next()).getName());
+            } catch (AttributeNotFoundException e) {
+                // This should never happen
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    };
+
+    public Iterator iterator(CrawlerSettings settings) {
+        settings = settings == null ? globalSettings() : settings;
+        return new It(settings);
+    }
+    
+    public boolean isEmpty(CrawlerSettings settings) {
+        settings = settings == null ? globalSettings() : settings;
+        return !settings.getData(getAbsoluteName()).hasAttributes();
     }
 }
