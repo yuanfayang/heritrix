@@ -34,6 +34,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -153,6 +154,13 @@ public class StatisticsTracker extends AbstractTracker
         super( name,
                 "A statistics tracker that's been designed to work well " +
                 "with the web UI and creates the progress-statistics log.");
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.StatisticsTracking#initalize(org.archive.crawler.framework.CrawlController)
+     */
+    public void initalize(CrawlController c) {
+        super.initalize(c);
         controller.addCrawlURIDispositionListener(this);
     }
 
