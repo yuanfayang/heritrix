@@ -63,6 +63,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 			curi.incrementFetchAttempts();
 			curi.cancelFurtherProcessing();
+			// should there be a return here? -gm
 		}
 		
 		// make sure we only process schemes we understand (i.e. not dns)
@@ -92,6 +93,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		if( curi.getHost().getRobots().disallows(curi.getUURI().getUri().getPath(),ua)) {
 			// don't fetch
 			curi.cancelFurtherProcessing();  // turn off later stages
+			curi.setFetchStatus(S_ROBOTS_PRECLUDED);
 			curi.getAList().putString("error","robots.txt exclusion");
 			logger.info("robots.txt precluded "+curi);
 			return;
