@@ -2626,10 +2626,10 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
         <para>The first column is a time stamp. Then comes the status code
         (<xref linkend="statuscodes" />) and the size of the downloaded
-        document in bytes.</para>
+        document in bytes followed by the URI of the document
+        downloaded.</para>
 
-        <para>Next comes the document URI itself (this includes the protocol
-        prefix).  Then the discovery path that got us to this URI (<xref
+        <para>Next comes the discovery path that got us to this URI (<xref
         linkend="discoverypath" />) and then the URI that immediately
         referenced this URI ('referrer').  Both of the latter two fields
         will be empty for such as the seed URIs.</para>
@@ -3036,37 +3036,27 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       </sect3>
 
       <sect3>
-        <title>herihop.pl</title>
+        <title>hoppath.pl</title>
 
-        <para>This script recreates the hop path to the specified url. The hop
-        path is a path of links (URLs) that we followed to get to the
-        specified url.</para>
+        <para>This perl script, found in $HERITRIX_HOME/bin recreates the hop
+        path to the specified url. The hop path is a path of links (URLs) that
+        we followed to get to the specified url.</para>
 
-        <para>Usage:<programlisting>  hoppath.pl crawl.log urlprefix
-  - urlprefix This parameter should start with a URI scheme such as 'http(s)://',
-    dns:', and others. Wrap this parameter with single quotes to avoid shell problems
-      usually caused by '&amp;'.</programlisting></para>
+        <para>Usage:<programlisting>Usage: hoppath.pl crawl.log URI_PREFIX
+  crawl.log    Full-path to Heritrix crawl.log instance.
+  URI_PREFIX   URI we're querying about. Must begin 'http(s)://' or 'dns:'.
+               Wrap this parameter in quotes to avoid shell interpretation
+               of any '&amp;' present in URI_PREFIX.</programlisting></para>
 
-        <para>Example:<programlisting>  hoppath.pl crawl.log 'http://www.house.gov/'</programlisting></para>
+        <para>Example:<programlisting>% hoppath.pl crawl.log 'http://www.house.gov/'</programlisting></para>
 
-        <para>Result:<programlisting>  2004-02-25-02-36-06:  http://www.house.gov/house/MemberWWW_by_State.html
-  2004-02-25-02-36-06:   L: http://wwws.house.gov/search97cgi/s97_cgi
-  2004-02-25-03-30-38:    L: http://www.house.gov/</programlisting></para>
+        <para>Result:<programlisting>  2004-02-25-02-36-06 - http://www.house.gov/house/MemberWWW_by_State.html
+  2004-02-25-02-36-06   L http://wwws.house.gov/search97cgi/s97_cgi
+  2004-02-25-03-30-38    L http://www.house.gov/</programlisting></para>
 
         <para>The L in the above example refers to the type of link followed
         (see <xref linkend="discoverypath" />).</para>
 
-        <note>
-          <para>Keep in mind that for now this script works in the IA
-          environment only.</para>
-
-          <para>To run it outside the IA environment replace sort ($sort) and
-          bin_search ($bin_search) commands.</para>
-
-          <para>Please send problems/suggestions/questions to
-          <literal>archive-crawler (at) yahoogroups (dot)
-          com</literal>.</para>
-        </note>
       </sect3>
     </sect2>
   </sect1>
