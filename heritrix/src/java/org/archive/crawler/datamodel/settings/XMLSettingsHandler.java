@@ -290,9 +290,8 @@ public class XMLSettingsHandler extends SettingsHandler {
         // If path is not absolute, set f's directory
         // relative to the path of the order file
         if (!f.isAbsolute()) {
-            return ArchiveUtils.getFilePath(
-                this.getOrderFile().getAbsolutePath() + f.toString()
-            );
+            return ArchiveUtils.getFilePath(this.getOrderFile().getAbsolutePath()) 
+                   + f.toString();
         }
         // If path is absolute, we return it itself.
         return path;
