@@ -99,7 +99,7 @@
 
           <para>The Heritrix crawler is implemented purely in Java. This means
           that the only true requirement for running it is that you have a JRE
-          installed.</para>
+          installed (Building will require a JDK).</para>
 
           <para>The Heritrix crawler makes use of Java 1.4 features so your
           JRE must be at least of a 1.4.x pedigree.</para>
