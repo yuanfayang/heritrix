@@ -5,7 +5,6 @@
 
  <scope 
    class="org.archive.crawler.basic.Scope"
-   
    max-link-hops="1"
    max-trans-hops="3">
    
@@ -40,6 +39,7 @@
       name="Preselector" 
       class="org.archive.crawler.basic.Preselector"
       next="Preprocessor"
+      
       scope="yes"
      />
 
@@ -59,6 +59,7 @@
       name="HTTP" 
       class="org.archive.crawler.fetcher.FetcherHTTPSimple"
       next="ExtractorHTTP"
+      
       timeout-seconds="10"
      />
     
@@ -96,6 +97,7 @@
       name="Archiver" 
       class="org.archive.crawler.basic.ARCWriter"
       next="Updater"
+      
       path="arcs"
       compress="yes"
       max-arc-size="20000000">
