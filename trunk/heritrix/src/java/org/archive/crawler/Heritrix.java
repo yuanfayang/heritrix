@@ -154,20 +154,27 @@ public class Heritrix
     /**
      * Heritrix start log file.
      *
-     * This file contains standard out produced by this main class.
-     * Soley used by heritrix shell script.
+     * This file contains standard out produced by this main class for startup
+     * only.  Used by heritrix shell script.  Name here MUST match that in the
+     * <code>bin/heritrix</code> shell script.  This is a DEPENDENCY the shell
+     * wrapper has on this here java heritrix.
      */
     private static final String STARTLOG = "heritrix_dmesg.log";
+    
+    /**
+     * Heritrix stderr/stdout log file.
+     *
+     * This file should have nothing in it except messages over which we have
+     * no control (JVM stacktrace, 3rd-party lib emissions).  The wrapper 
+     * startup script directs stderr/stdout here. This is a DEPENDENCY the shell
+     * wrapper has on this here java heritrix.
+     */
+    static final String HERITRIX_OUT_FILE = "heritrix_out.log";
 
     /**
      * Where to write this classes startup output.
      */
     private static PrintWriter out = null;
-
-    /**
-     * Name of the file to which heritrix logs stdout and stderr.
-     */
-    public static final String HERITRIX_OUT_FILE = "heritrix_out.log";
 
     /**
      * When running selftest, we set in here the URL for the selftest.
@@ -197,34 +204,47 @@ public class Heritrix
     public static void main(String[] args)
         throws Exception
     {
+        calculateHome();
+        File startLog = (Heritrix.heritrixHome != null)? 
+            new File(Heritrix.heritrixHome, STARTLOG):
+            new File(STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? System.out:
-            new PrintStream(new FileOutputStream(new File(STARTLOG))));
+            new PrintStream(new FileOutputStream(startLog)));
 
-        try
-        {
+        try {
             initialize();
             doStart(args);
         }
 
-        catch(Exception e)
-        {
+        catch(Exception e) {
             // Show any exceptions in STARTLOG.
             e.printStackTrace(out);
             throw e;
         }
 
-        finally
-        {
-            // Its important the STARTLOG output stream gets closed.  Its a
-            // signal to the shell that started us up that startup is done --
-            // or that it failed -- and that it can move on from waiting.
-            // BUT, don't close if development (We set STARTLOG to be System.out
-            // in the dev. environment).
-            if (!isDevelopment())
-            {
+        finally {
+            // If not development, close the file that signals the wrapper
+            // script that we've started.  Otherwise, just flush it; if in 
+            // development, the output is probably a console.
+            if (!isDevelopment()) {
                 Heritrix.out.close();
             } else {
                 Heritrix.out.flush();
+            }
+        }
+    }
+    
+    /**
+     * Exploit <code>-Dheritrix.home</code> if available to us.
+     * @throws IOException
+     */
+    private static void calculateHome() throws IOException {
+        String home = System.getProperty(HOME_KEY);
+        if (home != null && home.length() > 0) {
+            heritrixHome = new File(home);
+            if (!heritrixHome.exists()) {
+                throw new IOException("HERITRIX_HOME <" + home +
+                    "> does not exist.");
             }
         }
     }
@@ -232,16 +252,6 @@ public class Heritrix
     private static void initialize()
         throws IOException
     {
-        String home = System.getProperty(HOME_KEY);
-        if (home != null && home.length() > 0)
-        {
-            heritrixHome = new File(home);
-            if (!heritrixHome.exists())
-            {
-                throw new IOException("HERITRIX_HOME <" + home +
-                    "> does not exist.");
-            }
-        }
         confdir = getSubDir("conf");
         loadProperties();
         patchLogging();

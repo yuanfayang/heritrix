@@ -91,7 +91,7 @@ fi
 stdouterrlog=${HERITRIX_HOME}/heritrix_out.log
 echo "`date` Starting heritrix" >> $stdouterrlog
 main=org.archive.crawler.Heritrix
-CLASSPATH=${CP} nohup $JAVA_HOME/bin/java -Dheritrix.home=${HERITRIX_HOME} \
+CLASSPATH=${CP} nohup $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
     ${JAVA_OPTS} $main $@ >> ${stdouterrlog} 2>&1 &
 
 # Wait for content in the heritrix_dmesg.log file.
