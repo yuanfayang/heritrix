@@ -14,7 +14,7 @@
 
     <target name="build">
         <!-- Get the latest from CVS -->
-        <cvs command="up -d -P ${cvs.revision}"/>
+        <cvs command="up -d -P"/>
 
         <!-- Write timestamp build suffix into build.properties -->
         <propertyfile file="build.properties"
