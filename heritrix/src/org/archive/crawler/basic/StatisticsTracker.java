@@ -4,10 +4,14 @@
  */
 package org.archive.crawler.basic;
 
+import org.apache.xalan.lib.Redirect;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.*;
 import java.util.List;
 import java.util.*;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.util.Queue;
+import org.archive.util.DiskWrite;
 
 /**
  * Tracks statistics that relate to the crawl in progress.
@@ -21,6 +25,13 @@ public class StatisticsTracker {
 
 	// keep track of the file types we see (mime type -> count)
 	protected HashMap fileTypeDistribution = new HashMap();
+	
+	// keep track of fetch status codes
+	protected HashMap statusCodeDistribution = new HashMap();
+
+	protected Queue recentDiskWrites = new Queue(10);
+	protected int totalBytesToDisk = 0;
+
 
 	public StatisticsTracker() {
 		super();
@@ -73,6 +84,48 @@ public class StatisticsTracker {
 			fileTypeDistribution.put(mime, new Integer(1));
 		}
 	}
+
+
+	/** Keeps a count of processed uri's status codes so that we can
+	 *  generate histograms.
+	 * @param code
+	 */
+	public void incrementStatusCodeCount(int code){
+		incrementStatusCodeCount( (new Integer(code)).toString());
+	}
+	
+	/** Keeps a count of processed uri's status codes so that we can
+	 *  generate histograms.
+	 * @param code
+	 */
+	public void incrementStatusCodeCount(String code){
+
+		if(code == null){
+			code = "unknown";
+		}
+		
+		if(statusCodeDistribution.containsKey(code)){
+
+			Integer matchValue = (Integer)statusCodeDistribution.get(code);
+			matchValue = new Integer(matchValue.intValue() + 1);
+			statusCodeDistribution.put(code, matchValue);
+
+		}else{
+			// if we didn't find this mime type add it
+			statusCodeDistribution.put(code, new Integer(1));
+		}
+	}
+	
+	
+	/** Return a HashMap representing the distribution of status codes for
+	 *  successfully fetched curis, as represented by a hashmap where
+	 *  key -> val represents (string)code -> (integer)count
+	 * @return statusCodeDistribution
+	 */
+	public HashMap getStatusCodeDistribution(){
+		return statusCodeDistribution;
+	}
+	
 	
 	
 	/**
@@ -148,7 +201,90 @@ public class StatisticsTracker {
 		return controller.getSelector().successfullyFetchedCount();
 	}
 	
+	/** Keep a record of how many bytes we think we're writing to disk. 
+	 *  and stores descretely a certain number of the latest writes for 
+	 *  relatively "real time" statistic calculation.
+	 * @param bytes
+	 */
+	public void sentToDisk(DiskWrite latest){
+		recentDiskWrites.add(latest);
+		totalBytesToDisk += latest.getByteCount();
+	}
+	
+	/** Returns the total number of uncompressed bytes written to disk.  This may 
+	 *  be different from the actual number if you are using compression.
+	 * @return byteCount
+	 */
+	public int getTotalBytesWritten(){
+		return totalBytesToDisk;
+	}
+	
+	/** Returns the approximate rate at which we are writing uncompressed data
+	 *  to disk as calculated using a finite set (see declaration of recentDiskWrites)
+	 *  of recent disk writes.
+	 */
+	public int approximateDiskWriteRate(){
+		
+		if(recentDiskWrites.size() < 2){
+			return 0;
+		}
+		
+		long startTime = ((DiskWrite)recentDiskWrites.getFirst()).getTime();
+		long endTime = ((DiskWrite)recentDiskWrites.getLast()).getTime();
+		long period = endTime - startTime;
+		
+		int totalRecentBytes = 0;
+		
+		Iterator recentWriteItr = recentDiskWrites.iterator();
+		
+		while(recentWriteItr.hasNext() ){
+			DiskWrite current = (DiskWrite)recentWriteItr.next();
+			
+			// don't add the last value, since timestamps are *before* writes
+			// adding the bytes from the last write would inflate our rate
+			if(!recentWriteItr.hasNext()){
+				break;
+			}
+			totalRecentBytes += current.getByteCount();
+		}
+		
+		// return bytes/sec
+		return (int)(1000*totalRecentBytes/period);
+	}
 	
 	
+
+	
+	
+//	/** Note the last X urls we've seen so we can use them
+//	 *  to make estimates about what's happening right now (e.g. download rates)
+//	 * @param crawluri
+//	 */
+//	public void noteLatestFetchedURI(CrawlURI c){
+//		
+//		if(latestFetchedCuris.size() <= MAX_LATEST_TO_TRACK){
+//			latestFetchedCuris.add(c);
+//		
+//		}else{
+//			latestFetchedCuris.add(latestIFetchedItem, c);
+//			latestIFetchedItem++;
+//		}
+//		
+//		if(latestIFetchedItem >= MAX_LATEST_TO_TRACK ){
+//			latestIFetchedItem = 0;
+//		}
+//	}
+//	
+//	/** Look at our buffer of latest uris and attempt to estimate a
+//	 *  download rate (in bytes) for those resources
+//	 * @return rateBytes
+//	 */
+//	public int calculateRecentFetchRate(){
+//		
+//		int startTime = 
+//		
+//		
+//		
+//	}
 
 }
