@@ -127,4 +127,17 @@ public class OrFilter extends Filter {
            return true;
        }
     }
+
+    /**
+     * Note that configuration updates may be necessary. Pass to 
+     * constituent filters. 
+     */
+    public void kickUpdate() {
+        // TODO: figure out if there's any way to reconcile this with
+        // overrides/refinement filters 
+        Iterator iter = iterator(null);
+        while(iter.hasNext()) {
+            ((Filter)iter.next()).kickUpdate();
+        }
+    }
 }

@@ -62,7 +62,7 @@ public class SurtPrefixFilter extends Filter {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
      */
-    protected boolean innerAccepts(Object o) {
+    protected synchronized boolean innerAccepts(Object o) {
         if (surtPrefixes == null) {
             readPrefixes();
         }
@@ -96,5 +96,16 @@ public class SurtPrefixFilter extends Filter {
             e.printStackTrace();
             throw new RuntimeException(e);
         } 
+    }
+    
+    /**
+     * Re-read prefixes after a settings update.
+     * 
+     */
+    public synchronized void kickUpdate() {
+        super.kickUpdate();
+        // TODO: make conditional on file having actually changed,
+        // perhaps by remembering mod-time
+        readPrefixes();
     }
 }
