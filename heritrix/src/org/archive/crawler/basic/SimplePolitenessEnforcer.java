@@ -16,6 +16,11 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class SimplePolitenessEnforcer extends Processor {
+	private static String XP_DELAY_FACTOR = "//params/@delay-factor";
+	private static String XP_MINIMUM_DELAY = "//params/@minimum-delay";
+	private static int DEFAULT_DELAY_FACTOR = 10;
+	private static int DEFAULT_MINIMUM_DELAY = 2000;
+	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimplePolitenessEnforcer");
 
 	/* (non-Javadoc)
@@ -23,9 +28,10 @@ public class SimplePolitenessEnforcer extends Processor {
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
-		// for all curis, set appropriate delay factor
-		// TODO: someday, allow per-host factors
-		curi.setDelayFactor(getDefaultDelayFactor());
+		// for all curis, set appropriate delays
+		// TODOSOMEDAY: allow per-host factors
+		curi.setDelayFactor(getDelayFactorFor(curi));
+		curi.setMinimumDelay(getMinimumDelayFor(curi));
 		// treat /robots.txt fetches specially
 		if (curi.getUURI().getUri().getPath().equals("/robots.txt")) {
 			// allow processing to continue
@@ -54,8 +60,15 @@ public class SimplePolitenessEnforcer extends Processor {
 	/**
 	 * 
 	 */
-	private int getDefaultDelayFactor() {
-		return getIntAt("//params/@delay-factor");
+	private int getMinimumDelayFor(CrawlURI curi) {
+		return getIntAt(XP_MINIMUM_DELAY,DEFAULT_MINIMUM_DELAY);		
+	}
+
+	/**
+	 * 
+	 */
+	private int getDelayFactorFor(CrawlURI curi) {
+		return getIntAt(XP_DELAY_FACTOR, DEFAULT_DELAY_FACTOR);
 	}
 
 }

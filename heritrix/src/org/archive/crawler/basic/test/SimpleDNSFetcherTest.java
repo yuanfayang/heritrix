@@ -4,17 +4,23 @@
  */
 package org.archive.crawler.basic.test;
 
-import junit.framework.*;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
+
 import org.archive.crawler.basic.SimpleDNSFetcher;
-import org.archive.crawler.datamodel.*;
-import org.xbill.DNS.*;
-//import java.net.URI;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
+import org.xbill.DNS.Record;
 
 /**
  * @author parkert
  *
  */
-public class SimpleDNSFetcherTest extends TestCase {
+public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConstants {
 
 	SimpleDNSFetcher fetcher;
 	CrawlURI curiBasic;
@@ -79,10 +85,10 @@ public class SimpleDNSFetcherTest extends TestCase {
 		
 		CrawlHost host = curiBasic.getHost();	
 		
-		Record[] rrSet = (Record[])curiBasic.getAList().getObject(SimpleDNSFetcher.RRECORD_SET_LABEL);
+		Record[] rrSet = (Record[])curiBasic.getAList().getObject(A_RRECORD_SET_LABEL);
 		
 		long expireTime = host.getIpExpires();
-		long timestamp = curiBasic.getAList().getLong(SimpleDNSFetcher.DNSFETCH_TIMESTAMP_LABEL);
+		long timestamp = curiBasic.getAList().getLong(A_DNS_FETCH_TIME);
 		
 		// we should have at least one record
 		assertTrue(rrSet.length > 0);

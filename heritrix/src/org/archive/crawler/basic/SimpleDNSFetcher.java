@@ -57,9 +57,9 @@ public class SimpleDNSFetcher extends Processor implements org.archive.crawler.d
 		// do the lookup and store the results back to the curi
 		now = System.currentTimeMillis();
 		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
-		curi.getAList().putString(A_CONTENT_TYPE, DNS_CONTENT_TYPE);
-		curi.getAList().putObject(RRECORD_SET_LABEL, rrecordSet);
-		curi.getAList().putLong(FETCH_BEGAN_AT, now);
+		curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
+		curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
+		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
 		// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
 		// then update the CrawlHost

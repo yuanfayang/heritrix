@@ -161,7 +161,14 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants {
 	 * @param object
 	 */
 	public void setDelayFactor(int f) {
-		alist.putInt("delay-factor",f);
+		alist.putInt(A_DELAY_FACTOR,f);
+	}
+	
+	/**
+	 * @param object
+	 */
+	public void setMinimumDelay(int m) {
+		alist.putInt(A_MINIMUM_DELAY,m);
 	}
 
 	/**

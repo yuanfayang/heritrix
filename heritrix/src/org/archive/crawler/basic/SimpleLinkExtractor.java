@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 
@@ -19,15 +20,15 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  *
  */
-public class SimpleLinkExtractor extends Processor {
+public class SimpleLinkExtractor extends Processor implements CoreAttributeConstants {
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
-		if(curi.getAList().containsKey("http-transaction")) {
-			GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
+		if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+			GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 			
 			processHeaders(curi, get);
 			processContentBody(curi, get);
