@@ -151,11 +151,11 @@ public class UURI {
 			if (s.indexOf(" ") < 0) {// TODOSOON: fix NPE here!
 				return s;
 			}
+			return s.replaceAll(" ", "%20");
 		} catch (NullPointerException npe) {
 			logger.warning(npe.toString());
 		}
-
-		return s.replaceAll(" ", "%20");
+		return null; 
 	}
 	
 	/* (non-Javadoc)
