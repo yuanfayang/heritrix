@@ -68,10 +68,10 @@ public class OrFilter extends Filter {
         addElementToDefinition(
             new SimpleType(
                 ATTR_INVERTED,
-                "Turn the filter into an XOR filter. \nIf true, instead of " +
-                "filtering out anything that any of the filters added to it" +
-                "matches, it will only filter out URIs that none of them " +
-                "matches.",
+                "Turn the filter into an XOR filter. \nIf true, instead of "
+                    + "filtering out anything that any of the filters added to it "
+                    + "matches, it will only filter out URIs that none of them "
+                    + "matches.",
                 new Boolean(false)));
         addElementToDefinition(filters);
     }
