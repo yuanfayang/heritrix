@@ -60,8 +60,8 @@ import com.sleepycat.je.EnvironmentConfig;
  */
 public class CachedBdbMap extends AbstractMap implements Map {
 
-    private static final Logger logger = Logger.getLogger(CachedBdbMap.class
-            .getName());
+    private static final Logger logger =
+        Logger.getLogger(CachedBdbMap.class.getName());
 
     /** The database name of the class definition catalog */
     private static final String CLASS_CATALOG = "java_class_catalog";
@@ -176,6 +176,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
         // http://www.javaspecialists.co.za/archive/Issue098.html and for
         // discussion:
         // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
+        // TODO: This should only happen once.  Currently happens on every
+        // construction.
         try {
             referent = Reference.class.getDeclaredField("referent");
             referent.setAccessible(true);
@@ -292,11 +294,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
         return entrySet;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.util.Map#get(java.lang.Object)
-     */
     public Object get(Object key) {
         getCount++;
         expungeStaleEntries();

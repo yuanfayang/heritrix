@@ -29,7 +29,7 @@ import org.archive.util.CachedBdbMap;
 import com.sleepycat.je.DatabaseException;
 
 /**
- * Implementation of BigMapFactory based on CachedBdbMap
+ * Implementation of BigMap based on CachedBdbMap
  * @author stack
  * @version $Date$, $Revision$
  */

@@ -57,7 +57,6 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
-import org.archive.crawler.datamodel.ServerCacheFactory;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -541,15 +540,17 @@ public class CrawlController implements Serializable {
 
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
-             MBeanException, ReflectionException, ClassNotFoundException,
-             InstantiationException, IllegalAccessException {
+             MBeanException, ReflectionException {
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
         }
-        
-        this.serverCache =
-            ServerCacheFactory.getServerCache(getSettingsHandler());
+        try {
+            this.serverCache = new ServerCache(getSettingsHandler());
+        } catch (Exception e) {
+            throw new FatalConfigurationException("Unable to" +
+               " initialize frontier (Failed setup of ServerCache) " + e);
+        }
         
         if (frontier == null) {
             Object o = order.getAttribute(Frontier.ATTR_NAME);
@@ -644,8 +645,10 @@ public class CrawlController implements Serializable {
      * Do it here now so that when modules retrieve the object from the
      * controller during initialization (which some do), its in place.
      * @throws InvalidAttributeValueException
+     * @throws FatalConfigurationException
      */
-    private void setupStatTracking() throws InvalidAttributeValueException {
+    private void setupStatTracking()
+    throws InvalidAttributeValueException, FatalConfigurationException {
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
             // set up a default tracker
@@ -656,7 +659,7 @@ public class CrawlController implements Serializable {
         }
         Iterator it = loggers.iterator(null);
         while (it.hasNext()) {
-            StatisticsTracking tracker = (StatisticsTracking) it.next();
+            StatisticsTracking tracker = (StatisticsTracking)it.next();
             tracker.initialize(this);
             if (statistics == null) {
                 statistics = tracker;

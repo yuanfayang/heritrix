@@ -29,10 +29,11 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
+ * Server and Host cache.
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class ServerCache {
+public class ServerCache {
     private static Logger logger =
         Logger.getLogger(ServerCache.class.getName());
     
@@ -51,10 +52,21 @@ public abstract class ServerCache {
     protected Map hosts = null;
     
     /**
-     * Initialization called after initial instantiation.
-     * @param handler Settings handler to use.
+     * Constructor.
+     * Shutdown access to the default constructor by making it protected.
      */
-    public abstract void initialize(SettingsHandler handler);
+    protected ServerCache() {
+        super();
+    }
+    
+    public ServerCache(SettingsHandler settings)
+    throws Exception {
+        this.settingsHandler = settings;
+        this.servers = BigMapFactory.getBigMap(settings, "servers",
+            String.class, CrawlServer.class);
+        this.hosts = BigMapFactory.getBigMap(settings, "hosts",
+            String.class, CrawlHost.class);
+    }
     
     /**
      * Get the {@link CrawlServer} associated with <code>name</code>.
