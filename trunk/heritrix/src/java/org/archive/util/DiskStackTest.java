@@ -102,7 +102,7 @@ public class DiskStackTest extends TmpDirTestCase {
     /** test the creation of a stack using a non-creatable file */
     public void testCtorBadFile() {
          try {
-            File storeFile = new File("/foo/boo/doo/");
+            File storeFile = new File("/dev/uncreateablefile");
             DiskStack stack = new DiskStack(storeFile);
             stack.height(); // suppress never-accessed warning
         } catch(IOException e) {

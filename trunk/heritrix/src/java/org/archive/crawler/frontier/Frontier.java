@@ -1386,8 +1386,9 @@ public class Frontier
         ArrayList list = new ArrayList(numberOfMatches);
 
         // inspect the KeyedQueues
-        while( numberOfMatches > 0 && mark.currentQueue != -1){
-            String queueKey = (String)mark.keyqueues.get(mark.currentQueue);
+        while( numberOfMatches > 0 && mark.getCurrentQueue() != -1){
+            String queueKey = (String)mark.getKeyQueues().
+                get(mark.getCurrentQueue());
             KeyedQueue keyq = (KeyedQueue)allClassQueuesMap.get(queueKey);
             if(keyq==null){
                 throw new InvalidURIFrontierMarkerException();
@@ -1425,7 +1426,7 @@ public class Frontier
                               boolean verbose,
                               int numberOfMatches)
                           throws InvalidURIFrontierMarkerException{
-        if(queue.length() < marker.absolutePositionInCurrentQueue){
+        if(queue.length() < marker.getAbsolutePositionInCurrentQueue()) {
             // Not good. Invalid marker.
             throw new InvalidURIFrontierMarkerException();
         }
@@ -1434,12 +1435,12 @@ public class Frontier
             return 0;
         }
 
-        Iterator it = queue.getIterator(marker.inCacheOnly);
+        Iterator it = queue.getIterator(marker.isInCacheOnly());
         int foundMatches = 0;
         long itemsScanned = 0;
         while(it.hasNext() && foundMatches < numberOfMatches){
             Object o = it.next();
-            if( itemsScanned >= marker.absolutePositionInCurrentQueue
+            if( itemsScanned >= marker.getAbsolutePositionInCurrentQueue()
                     && o instanceof CandidateURI ){
                 // Ignore items that are in front of current position
                 // and those that are not CandidateURIs.
@@ -1466,12 +1467,12 @@ public class Frontier
                     }
                     list.add(text);
                     foundMatches++;
-                    marker.nextItemNumber++;
+                    marker.incrementNextItemNumber();
                 }
             }
             itemsScanned++;
         }
-        marker.absolutePositionInCurrentQueue = itemsScanned;
+        marker.setAbsolutePositionInCurrentQueue(itemsScanned);
         return foundMatches;
     }
 
@@ -1572,7 +1573,8 @@ public class Frontier
         rep.append("     Length:        " + kq.length() + "\n");
 //        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
         if(kq instanceof KeyedQueue){
-        	rep.append("     Status:        " + ((KeyedQueue)kq).state.toString() + "\n");
+        	rep.append("     Status:        " +
+            ((KeyedQueue)kq).getState().toString() + "\n");
         }
         if(kq.getState()==URIWorkQueue.SNOOZED) {
             rep.append("     Wakes in:      " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
