@@ -12,7 +12,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.crawler.basic.CrawlerConfigurationContants;
+import org.archive.crawler.basic.CrawlerConfigurationConstants;
 import org.archive.crawler.framework.XMLConfig;
 import org.w3c.dom.Node;
 
@@ -20,7 +20,7 @@ import org.w3c.dom.Node;
  * @author gojomo
  *
  */
-public class CrawlerBehavior extends XMLConfig implements CrawlerConfigurationContants {
+public class CrawlerBehavior extends XMLConfig implements CrawlerConfigurationConstants {
 	List seeds = null;
 	String caseFlattenedUserAgent = null;
 
