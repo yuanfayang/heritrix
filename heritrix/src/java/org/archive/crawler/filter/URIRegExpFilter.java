@@ -25,9 +25,7 @@ package org.archive.crawler.filter;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.TextUtils;
@@ -60,15 +58,7 @@ public class URIRegExpFilter extends Filter {
      */
     protected boolean innerAccepts(Object o) {
         String input = null;
-        // TODO consider changing this to ask o for its matchString
-        if(o instanceof CandidateURI) {
-            input = ((CandidateURI)o).getURIString();
-        } else if (o instanceof UURI ){
-            input = ((UURI)o).toString();
-        } else {
-            //TODO handle other inputs
-            input = o.toString();
-        }
+        input = asString(o);
         String regexp = getRegexp(o);
         if (regexp == null) {
             return false;
