@@ -45,6 +45,7 @@ import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.url.canonicalize.BaseRule;
 
 /**
  * Represents the 'root' of the settings hierarchy. Contains those settings that
@@ -78,6 +79,7 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_WRITE_PROCESSORS = "write-processors";
     public static final String ATTR_POST_PROCESSORS = "post-processors";
     public static final String ATTR_LOGGERS = "loggers";
+    public static final String ATTR_RULES = "uri-canonicalization-rules";
 
 
     String caseFlattenedUserAgent;
@@ -172,6 +174,18 @@ public class CrawlOrder extends ModuleType {
                 "Maximum number of threads processing URIs at the same time.",
                 new Integer(100)));
         e.setOverrideable(false);
+      
+        e = (MapType) addElementToDefinition(new MapType(ATTR_RULES,
+            "Ordered list of url canonicalization rules.\n" +
+            "Rules are applied in the order listed from top to bottom.",
+            BaseRule.class));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_TOE_THREADS,
+                "Maximum number of threads processing URIs at the same time.",
+                new Integer(100)));
+        e.setOverrideable(true);
 
         addElementToDefinition(new CrawlScope());
 

@@ -174,19 +174,18 @@ public class ExperimentalFrontier
      */
     public void schedule(CandidateURI caUri) {
         if(caUri.forceFetch()) {
-            alreadyIncluded.addForce(caUri);
+            alreadyIncluded.addForce(caUri, canonicalize(caUri.getUURI()));
         } else {
-            alreadyIncluded.add(caUri);
+            alreadyIncluded.add(caUri, canonicalize(caUri.getUURI()));
         }
     }
     
     /**
      * Accept the given CandidateURI for scheduling.
      * 
-     * @param huri
+     * @param caUri Candidate uri to schedule
      */
-    public void receive(UriUniqFilter.HasUri huri) {
-        CandidateURI caUri = (CandidateURI) huri;
+    public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
 
         applySpecialHandling(curi);
@@ -504,7 +503,7 @@ public class ExperimentalFrontier
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting "+curi);
-        alreadyIncluded.forget(curi.getUURI());
+        alreadyIncluded.forget(canonicalize(curi.getUURI()));
     }
 
     /**  (non-Javadoc)
@@ -782,7 +781,7 @@ public class ExperimentalFrontier
      * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
      */
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.note(u);
+        this.alreadyIncluded.note(canonicalize(u));
     }
     
     protected class WakeTask implements Runnable {

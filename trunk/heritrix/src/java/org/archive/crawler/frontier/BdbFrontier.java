@@ -84,7 +84,8 @@ import com.sleepycat.je.OperationStatus;
  *
  * @author Gordon Mohr
  */
-public class BdbFrontier extends AbstractFrontier implements Frontier,
+public class BdbFrontier extends AbstractFrontier
+implements Frontier,
         FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     // be robust against trivial implementation changes
     private static final int REPORT_MAX_QUEUES = 100;
@@ -208,9 +209,9 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public void schedule(CandidateURI caUri) {
         if (caUri.forceFetch()) {
-            alreadyIncluded.addForce(caUri);
+            alreadyIncluded.addForce(caUri, canonicalize(caUri.getUURI()));
         } else {
-            alreadyIncluded.add(caUri);
+            alreadyIncluded.add(caUri, canonicalize(caUri.getUURI()));
         }
     }
 
@@ -224,12 +225,9 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * 
      * @param huri
      */
-    public void receive(UriUniqFilter.HasUri huri) {
-        CandidateURI caUri = (CandidateURI) huri;
+    public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
-
         applySpecialHandling(curi);
-
         incrementQueuedUriCount();
         sendToQueue(curi);
         // Update recovery log.
@@ -488,7 +486,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting " + curi);
-        alreadyIncluded.forget(curi.getUURI());
+        alreadyIncluded.forget(canonicalize(curi.getUURI()));
     }
 
     /**  (non-Javadoc)
@@ -642,7 +640,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
      */
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.note(u);
+        this.alreadyIncluded.note(canonicalize(u));
     }
 
     /**

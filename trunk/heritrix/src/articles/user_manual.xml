@@ -655,6 +655,12 @@
 
         <para>Add/remove/set configurable modules</para>
       </listitem>
+      
+      <listitem>
+        <para>URL (<xref linkend="urlcanon" />)</para>
+
+        <para>Add/remove/reorder URL canonicalization rules.</para>
+      </listitem>
 
       <listitem>
         <para>Filters (<xref linkend="filters" />)</para>
@@ -1015,6 +1021,54 @@
         information about a crawl. It is strongly recommended that any crawl
         running with the WUI use this module.</para>
       </sect3>
+    </sect2>
+    <sect2 id="urlcanon">
+        <title>URL Canonicalization Rules</title>
+        <para>Heritrix keeps a list of already seen URLs and before
+        fetching, does a look up into this 'already seen' or
+        'already included' list to see if the URL has already been crawled.  
+        Often an URL can be written in multiple ways but the
+        page fetched is the same in each case.  For example, the page that
+        is at <literal>http://www.archive.org/index.html</literal>
+        is the same page as is at 
+        <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs differ. 
+        Before going to the 'already included' list, Heritrix makes an effort
+        at equating the likes of 
+        <literal>http://www.archive.org/index.html</literal>
+        and <literal>http://ARCHIVE.ORG/</literal> by running each URL through
+        a set of canonicalization rules.  Heritrix uses the result of this
+        canonicalization process when it goes to test if an URL has already
+        been seen.</para>  
+        <para>An example of a canonicalization
+            rule would lowercase all URLs.  Another might strip the
+            'www' prefix from domains.</para>
+        <para>The <literal>URL Canonicalization Rules</literal> screen allows
+        you to specify canonicalization rules and the order in which they are
+        run.  A default set lowercases, strips wwws, removes sessionids and
+        does other types of fixup such as removal of any userinfo.
+        The URL page works in the same manner as the 
+        <xref id="filters" /> page.
+        </para>
+        <para>A limitation of the <literal>RegexRule</literal> is that
+        it cannot be used in an override; it only has access to the global
+        settings object when it goes to run.  For now, if you need to
+        add a particular regex as an override, you'll need to write a
+        new Canonicalization Rule that does the required substitution and add
+        it to list of canonicalization rules so it shows in the
+        configuration (See <ulink 
+        url="developer_manual.html#writefilter">Writing a Filter</ulink> for
+        how to add a filter.  Canonicalization Rules are much like Filters).
+        </para>
+        <para>To watch the canonicalization process, enable
+        <literal>org.archive.crawler.url.Canonicalizer</litera>
+        logging in <literal>heritrix.properties</literal> (There should
+        already be a commented out directive in the properties file.  
+        Search for it).   Output
+        will show in <literal>heritrix_out.log</literal>.
+        Set the logging level to INFO to see just before and after
+        the transform.  Set level to FINE to see the result of each 
+        rule's transform.
+        </para>
     </sect2>
 
     <sect2 id="filters">
@@ -1875,6 +1929,17 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       will have:</para>
 
       <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">URL</emphasis></para>
+
+          <para>Add URL Canonicalization Rules to the override. 
+          It is not possible to remove
+          inherited filters or interject new filters among them. New filters
+          will be added after existing filters. Note that the
+          <literal>RegexRule</literal> cannot be used in an override.
+          See <xref id="urlcanon" /></para>
+
+        </listitem>
         <listitem>
           <para><emphasis role="bold">Filters</emphasis></para>
 

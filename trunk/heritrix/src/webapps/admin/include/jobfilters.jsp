@@ -32,8 +32,11 @@
 	 * @param last True if mbean is the last element of a Map.
 	 * @parent The absolute name of the ComplexType that contains the
 	 *         current ComplexType (i.e. parent).
-	 * @alt If true and mbean is a filter then an alternate background color
-	 *      is used for displaying it.
+     * @param alt If true and mbean is a filter then an alternate background
+     * color is used for displaying it.
+     * @param type Class to check for.
+     * @param printAtttributeNames True if we're to print out attribute names
+     * as we recurse.
 	 *
 	 * @return The variable part of the HTML code for selecting filters.
 	 */
@@ -45,7 +48,8 @@
 	                           boolean last, 
 	                           String parent, 
 	                           boolean alt, 
-	                           ArrayList availibleFilters) 
+	                           ArrayList availibleFilters, Class type,
+                               boolean printAttributeNames) 
                            throws Exception {
 		if(mbean.isTransient()){
 			return "";
@@ -55,7 +59,7 @@
 
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
-		if(mbean instanceof Filter){
+		if(type.isInstance(mbean)){
             if(possible){
 				// Have a local filter.
 				p.append("<tr");
@@ -74,7 +78,7 @@
 				p.append("</td><td><a href=\"javascript:doRemove('"+mbean.getName()+"','"+parent+"')\">Remove</a></td>");
 				p.append("<td><i>"+mbean.getClass().getName()+"</i></td></tr>\n");
 			}
-		} else {
+		} else if (printAttributeNames) {
 			// Not a filter, or an inherited filter.
 			p.append("<tr><td colspan='5'><b>" + indent + mbean.getName() + "</b></td></tr>\n");
 		}
@@ -106,11 +110,11 @@
 		    	}
 
 				if(currentAttribute instanceof ComplexType) {
-			    	p.append(printFilters((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",possible,n==firstEditable,n==a.length-1,mbean.getAbsoluteName(),alt,availibleFilters));
+			    	p.append(printFilters((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",possible,n==firstEditable,n==a.length-1,mbean.getAbsoluteName(),alt,availibleFilters, type, printAttributeNames));
 			    	if(currentAttribute instanceof MapType)
 			    	{
 			    		MapType thisMap = (MapType)currentAttribute;
-			    		if(thisMap.getContentType().getName().equals(Filter.class.getName())){
+			    		if(thisMap.getContentType().getName().equals(type.getName())){
 				    		p.append("<tr><td colspan='5'>\n<b>"+indent+"&nbsp;&nbsp;&nbsp;&nbsp;</b>");
 				    		p.append("Name: <input size='8' name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
 				    		p.append("Filter: <select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");

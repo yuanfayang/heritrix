@@ -25,6 +25,7 @@ package org.archive.crawler.util;
 
 import java.util.HashSet;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 
 /**
@@ -35,34 +36,35 @@ import org.archive.crawler.datamodel.UriUniqFilter;
  *
  */
 public class MemUriUniqFilter
-extends HashSet implements UriUniqFilter {
+extends HashSet
+implements UriUniqFilter {
     HasUriReceiver receiver;
 
     public void setDestination(HasUriReceiver r) {
         this.receiver = r;
     }
 
-    public void add(HasUri obj) {
-        if(super.add(obj.getUri())) {
+    public void add(CandidateURI obj, String canonical) {
+        if(super.add(canonical)) {
             this.receiver.receive(obj);
         }
     }
 
-    public void addNow(HasUri obj) {
-        add(obj);
+    public void addNow(CandidateURI obj, String canonical) {
+        add(obj, canonical);
     }
 
-    public void addForce(HasUri obj) {
-        super.add(obj.getUri());
+    public void addForce(CandidateURI obj, String canonical) {
+        super.add(canonical);
         this.receiver.receive(obj);
     }
 
-    public void note(HasUri hu) {
-        super.add(hu.getUri());
+    public void note(String canonical) {
+        super.add(canonical);
     }
     
-    public void forget(HasUri hu) {
-        super.remove(hu.getUri());
+    public void forget(String canonical) {
+        super.remove(canonical);
     }
     
     public long flush() {

@@ -26,6 +26,7 @@ package org.archive.crawler.util;
 import java.io.Serializable;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongFPSet;
@@ -41,7 +42,8 @@ import st.ata.util.FPGenerator;
  *
  * @author gojomo
  */
-public class FPUriUniqFilter implements UriUniqFilter, Serializable {
+public class FPUriUniqFilter
+implements UriUniqFilter, Serializable {
     // Be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
@@ -66,8 +68,8 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
         this.receiver = r;
     }
 
-    public void add(HasUri obj) {
-        if(fpAdd(getFp(obj))) {
+    public void add(CandidateURI obj, String canonical) {
+        if(fpAdd(getFp(canonical))) {
             this.receiver.receive(obj);
         }
     }
@@ -76,25 +78,25 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
         return fpset.add(fp);
     }
     
-    private long getFp(HasUri obj) {
-        return fpgen.fp(obj.getUri());
+    private long getFp(String canonical) {
+        return fpgen.fp(canonical);
     }
 
-    public void addNow(HasUri obj) {
-        add(obj);
+    public void addNow(CandidateURI obj, String canonical) {
+        add(obj, canonical);
     }
 
-    public void addForce(HasUri obj) {
-        fpAdd(getFp(obj));
+    public void addForce(CandidateURI obj, String canonical) {
+        fpAdd(getFp(canonical));
         this.receiver.receive(obj);
     }
 
-    public void note(HasUri hu) {
-        fpAdd(getFp(hu));        
+    public void note(String canonical) {
+        fpAdd(getFp(canonical));        
     }
     
-    public synchronized void forget(HasUri hu) {
-        fpset.remove(getFp(hu));        
+    public synchronized void forget(String canonical) {
+        fpset.remove(getFp(canonical));        
     }
 
     public long flush() {

@@ -72,6 +72,8 @@
 	    		response.sendRedirect("/admin/jobs/modules.jsp?job="+newJob.getUID());
 	    	} else if(request.getParameter("action").equals("filters")){
 	    		response.sendRedirect("/admin/jobs/filters.jsp?job="+newJob.getUID());
+	    	} else if(request.getParameter("action").equals("url-canonicalization-rules")){
+	    		response.sendRedirect("/admin/jobs/url-canonicalization-rules.jsp?job="+newJob.getUID());
 	    	} else if(request.getParameter("action").equals("override")){
 	    		response.sendRedirect("/admin/jobs/per/overview.jsp?job="+newJob.getUID());
 	    	} else {
@@ -163,6 +165,7 @@
 			</table>
 			<input type="button" value="Modules" onClick="document.frmNew.action.value='modules';document.frmNew.submit()">
 			<input type="button" value="Filters" onClick="document.frmNew.action.value='filters';document.frmNew.submit()">
+			<input type="button" value="URL" onClick="document.frmNew.action.value='url-canonicalization-rules';document.frmNew.submit()">
 			<input type="button" value="Settings" onClick="document.frmNew.action.value='configure';document.frmNew.submit()">
 			<input type="button" value="Overrides" onClick="document.frmNew.action.value='override';document.frmNew.submit()">
 			<% if(isProfile == false){ %>

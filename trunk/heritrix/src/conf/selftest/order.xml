@@ -16,6 +16,23 @@
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
     <integer name="max-toe-threads">1</integer>
+    <map name="uri-canonicalization-rules">
+      <newObject name="Lowercase" 
+        class="org.archive.crawler.url.canonicalize.LowercaseRule">
+      </newObject>
+      <newObject name="Userinfo" 
+        class="org.archive.crawler.url.canonicalize.StripUserinfoRule">
+      </newObject>
+      <newObject name="WWW" 
+        class="org.archive.crawler.url.canonicalize.StripWWWRule">
+      </newObject>
+      <newObject name="SessionIDs" 
+        class="org.archive.crawler.url.canonicalize.StripSessionIDs">
+      </newObject>
+      <newObject name="QueryStrPrefix" 
+        class="org.archive.crawler.url.canonicalize.FixupQueryStr">
+      </newObject>
+    </map>
     <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
       <string name="seedsfile">seeds.txt</string>

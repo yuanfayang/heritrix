@@ -51,6 +51,7 @@ import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.url.Canonicalizer;
 
 /**
  * Shared facilities for Frontier implementations. 
@@ -679,6 +680,22 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             default:
                 return false;
         }
+    }
+
+    /**
+     * Canonicalize passed uuri.
+     * Its would be sweeter if this canonicalize function was encapsulated
+     * by that which it canonicalizes but because settings change with
+     * context -- i.e. there may be overrides in operation for a
+     * particular URI -- its not so easy; Each CandidateURI would need
+     * a reference to the settings system.  That's awkward to pass in.
+     * @param uuri Candidate URI to canonicalize.
+     * @return Canonicalized version of passed <code>caUri</code>.
+     * If a problem, no canonicalization is done and the
+     * CandidateURI#getURIString() is returned.
+    */
+    protected String canonicalize(UURI uuri) {
+        return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
     }
     
     /**

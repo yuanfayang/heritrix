@@ -32,10 +32,11 @@ import java.util.logging.Logger;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.datamodel.UriUniqFilter.HasUri;
 import org.archive.util.MemLongFPSet;
 
 
@@ -44,7 +45,7 @@ import org.archive.util.MemLongFPSet;
  * @author stack
  */
 public class FPUriUniqFilterTest extends TestCase
-implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
+implements UriUniqFilter.HasUriReceiver {
     private Logger logger =
         Logger.getLogger(FPUriUniqFilterTest.class.getName());
 
@@ -62,10 +63,16 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
 		this.filter.setDestination(this);
     }
     
-    public void testAdding() {
-    	this.filter.add(this);
-        this.filter.addNow(this);
-        this.filter.addForce(this);
+    public void testAdding() throws URIException {
+        this.filter.add(
+            new CandidateURI(UURIFactory.getInstance(this.getUri())),
+                this.getUri());
+        this.filter.addNow(
+            new CandidateURI(UURIFactory.getInstance(this.getUri())),
+               this.getUri());
+        this.filter.addForce(
+            new CandidateURI(UURIFactory.getInstance(this.getUri())),
+                this.getUri());
         // Should only have add 'this' once.
         assertTrue("Count is off", this.filter.count() == 1);
     }
@@ -83,7 +90,7 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
         for (; count < MAX_COUNT; count++) {
         	UURI u = UURIFactory.getInstance("http://www" +
         			count + ".archive.org/" + count + "/index.html");
-        	this.filter.add(u);
+        	this.filter.add(new CandidateURI(u), u.toString());
         	if (count > 0 && ((count % 100) == 0)) {
         		list.add(u);
         	}
@@ -92,17 +99,18 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
         		(System.currentTimeMillis() - start));
         
         start = System.currentTimeMillis();
-        for (Iterator i = list.iterator(); i.hasNext();
-        this.filter.add((UURI)i.next())) {
-        	continue;
+        for (Iterator i = list.iterator(); i.hasNext();) {
+            UURI uuri = (UURI)i.next();
+            this.filter.add(new CandidateURI(uuri), uuri.toString());
         }
         this.logger.info("Added random " + list.size() + " in " +
         		(System.currentTimeMillis() - start));
         
         start = System.currentTimeMillis();
-        for (Iterator i = list.iterator(); i.hasNext();
-        this.filter.add((UURI)i.next())) {
-        	continue;
+        for (Iterator i = list.iterator(); i.hasNext();) {
+            UURI uuri = (UURI)i.next();
+            this.filter.add(new CandidateURI(uuri),
+                uuri.toString());
         }
         this.logger.info("Deleted random " + list.size() + " in " +
             (System.currentTimeMillis() - start));
@@ -112,16 +120,16 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
     }
     
     public void testNote() {
-    	this.filter.note(this);
+    	this.filter.note(this.getUri());
         assertFalse("Receiver was called", this.received);
     }
     
     public void testForget() {
-        this.filter.forget(this);
+        this.filter.forget(this.getUri());
         assertTrue("Didn't forget", this.filter.count() == 0);
     }
     
-	public void receive(HasUri item) {
+	public void receive(CandidateURI item) {
 		this.received = true;
 	}
 

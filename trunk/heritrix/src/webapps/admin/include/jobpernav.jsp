@@ -36,6 +36,11 @@
                         </td>
                         <td class="tab_seperator">
                         </td>
+                        <td class="tab<%=jobtab==6?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('url-canonicalization-rules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==6?"_selected":""%>">URL</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
                         <td class="tab<%=jobtab==4?"_selected":""%>" nowrap>
                             <a href="javascript:doGoto('/admin/jobs/per/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
                         </td>

@@ -631,7 +631,7 @@ public class UURIFactory extends URI {
     /**
      * Implementation of UURI protected class used by enclosing factory.
      */
-    private class UURIImpl extends UURI  implements Serializable {
+    private class UURIImpl extends UURI implements Serializable {
         /**
          * @param uri String representation of an absolute URI.
          * @param escaped True if URI is already escaped.
