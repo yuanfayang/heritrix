@@ -10,7 +10,6 @@
 ##
 ## JAVA_OPTS        (Optional) Java runtime options.  Default ''.
 ##
-## TODO: Replace by just starting up java.
 
 # Read local heritrix properties if any.
 if [ -f $HOME/.heritrixrc ]
@@ -25,6 +24,18 @@ then
     echo "Before running this script, you must set the HERITRIX_HOME" 
     echo "environment variable so it points at your heritrix install." 
     exit 1
+fi
+
+# We need a LOGGING_DIR to write stdout and stdin to.
+if [ -z "${HERITRIX_LOGGING_DIR}" ]
+then
+    # TODO: Do this hardcoding better.  Read from order file.
+    HERITRIX_LOGGING_DIR=${HERITRIX_HOME}/disk
+fi
+
+if [ ! -d ${HERITRIX_LOGGING_DIR} ]
+then
+    mkdir -p ${HERITRIX_LOGGING_DIR}
 fi
 
 # Find JAVA_HOME.
@@ -46,11 +57,10 @@ then
    JAVACMD=$JAVA_HOME/bin/java
 fi
 
-# Ignore previous classpath.  Heritrix jar has a launch location dependent 
-# Class-Path define in its MANIFEST-MF that points to all jars its dependent on.
+# Ignore previous classpath.  Build one that contains heritrix jar and contain
+# of the lib directory.
 oldCP=$CLASSPATH
 unset CLASSPATH
-
 CLASSPATH=`ls ${HERITRIX_HOME}/heritrix*.jar`
 for jar in `ls $HERITRIX_HOME/lib`
 do
@@ -63,12 +73,11 @@ then
   JAVA_OPTS=""
 fi
 
-
-# Start log contains useful information on started crawler.
-# This file is created by Heritrix main class on start up.
+# Start log contains useful information on started crawler.  This file is
+# created by Heritrix main class on start up.
 startlog="start.log"
 
-# Clean up start log just in case that something whent wrong during previous 
+# Clean up start log just in case that something went wrong during previous 
 # run.
 if [ -f $startlog ]
 then
@@ -77,11 +86,13 @@ fi
 
 # Run heritrix as daemon
 MAIN=org.archive.crawler.Heritrix
-run="$JAVA_HOME/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} $MAIN $@"
-nohup $run >> heritrix-run.log 2>> heritrix-run.err < /dev/null &
+nohup $JAVA_HOME/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} $MAIN $@ >> \
+    ${HERITRIX_LOGGING_DIR}/stdout.log 2>> ${HERITRIX_LOGGING_DIR}/stderr.log \
+    &
+
+echo "Starting Heritrix..."
 
 # Wait for creation of start log 
-echo "Starting Heritrix... please wait!"
 while [ ! -f $startlog ]
 do
     sleep 1;
