@@ -80,4 +80,14 @@ public class CachingDiskLongFPSet extends DiskLongFPSet {
 		return super.remove(val);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.util.LongFPSet#quickContains(long)
+	 */
+	public boolean quickContains(long fp) {
+		if(cache.contains(fp)) {
+			return true;
+		}
+		return false;
+	}
+
 }

@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * @author gojomo
  *
  */
-public abstract class AbstractLongFPSet {
+public abstract class AbstractLongFPSet implements LongFPSet {
 	private static Logger logger = Logger.getLogger("org.archive.util.AbstractLongFPSet");
 	// slot states
 	protected static byte EMPTY = -1;
@@ -209,5 +209,15 @@ public abstract class AbstractLongFPSet {
 	 * @param newIndex
 	 */
 	abstract void relocate(long value, long fromIndex, long toIndex);
+
+	/** 
+	 * Low-cost, non-definitive (except when true) contains
+	 * test. Default answer of false is acceptable.
+	 * 
+	 * @see org.archive.util.LongFPSet#quickContains(long)
+	 */
+	public boolean quickContains(long fp) {
+		return false;
+	}
 
 }

@@ -67,4 +67,18 @@ public class MemUURISet extends HashSet implements UURISet {
 		remove(curi.getUURI());
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
+	 */
+	public boolean quickContains(UURI u) {
+		return contains(u);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	public boolean quickContains(CandidateURI curi) {
+		return contains(curi);
+	}
+
 }

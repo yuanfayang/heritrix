@@ -109,4 +109,23 @@ public class FPUURISet extends AbstractSet implements UURISet {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
+	 */
+	public boolean quickContains(UURI u) {
+		long fp = fpgen.fp(u.getUri().toASCIIString());
+		boolean retVal = fpset.quickContains(fp);
+		if(retVal) {
+			logger.fine("Already quickContains "+fp+" "+u);
+		}
+		return retVal;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	public boolean quickContains(CandidateURI curi) {
+		return quickContains(curi.getUURI());
+	}
+
 }
