@@ -63,7 +63,7 @@ public interface URIFrontier {
      *                next URI to become availible.
      * @return the next URI that should be crawled
      */
-    CrawlURI next(int timeout);
+    CrawlURI next(int timeout) throws InterruptedException;
 
     /**
      * Report finished crawl URIs. Once the processors finish with a URI 
@@ -243,7 +243,7 @@ public interface URIFrontier {
      * @return
      * @throws InterruptedException
      */
-    CrawlURI newNext(int timeout) throws InterruptedException;
+//    CrawlURI newNext(int timeout) throws InterruptedException;
 
     /**
      * 
