@@ -122,12 +122,10 @@ implements StatisticsTracking, CrawlStatusListener {
         shouldrun = true; //If we are starting, this should always be true.
 
         // log the legend
-        controller.progressStats.log(Level.INFO,
-                "   [timestamp]    [discovered] [queued] [downloaded]"
-                    + "   [doc/s(avg)]  [KB/s(avg)]"
-                    + " [dl-failures] [busy-thread] [mem-use-KB]"
-            );
-
+        controller.progressStats.log(Level.INFO, "           timestamp" +
+            "  discovered   " +
+            "   queued   downloaded       doc/s(avg)  KB/s(avg) " +
+            "  dl-failures   busy-thread   mem-use-KB");
         lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
         // keep logging until someone calls stop()
@@ -233,18 +231,13 @@ implements StatisticsTracking, CrawlStatusListener {
      * time spent paused {@link #getCrawlTotalPauseTime() getCrawlTotalPauseTime()}.
      * @return Total amount of time (in msec.) spent crawling so far.
      */
-    public long getCrawlerTotalElapsedTime()
-    {
-        if(getCrawlPauseStartedTime()!=0)
-        {
+    public long getCrawlerTotalElapsedTime() {
+        return getCrawlPauseStartedTime() != 0?
             //Are currently paused, calculate time up to last pause
-            return getCrawlPauseStartedTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
-        }
-        else
-        {
-            //Not paused, calculate total time.
-            return getCrawlEndTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
-        }
+            (getCrawlPauseStartedTime() - getCrawlTotalPauseTime() -
+                getCrawlStartTime()):
+            // Not paused, calculate total time.
+            (getCrawlEndTime() - getCrawlTotalPauseTime() - getCrawlStartTime());
     }
 
     /**

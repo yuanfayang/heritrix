@@ -172,9 +172,8 @@ implements CrawlURIDispositionListener {
         "Seed has not been processed";
 
     public StatisticsTracker(String name) {
-        super( name,
-                "A statistics tracker that's been designed to work well " +
-                "with the web UI and creates the progress-statistics log.");
+        super( name, "A statistics tracker that's been designed to work well " +
+            "with the web UI and creates the progress-statistics log.");
     }
 
     public void initialize(CrawlController c)
@@ -244,8 +243,7 @@ implements CrawlURIDispositionListener {
         busyThreads = activeThreadCount();
 
         if(shouldrun ||
-            (System.currentTimeMillis() - lastLogPointTime) >= 1000)
-        {
+            (System.currentTimeMillis() - lastLogPointTime) >= 1000) {
             // If shouldrun is false there is a chance that the time interval
             // since last time is too small for a good sample.  We only want
             // to update "current" data when the interval is long enough or
@@ -259,21 +257,23 @@ implements CrawlURIDispositionListener {
 
             // if we haven't done anyting or there isn't a reasonable sample
             // size give up.
-            if(sampleTime >= 1000)
-            {
+            if(sampleTime >= 1000) {
                 // Update docs/sec snapshot
                 long currentPageCount = successfullyFetchedCount();
                 long samplePageCount = currentPageCount - lastPagesFetchedCount;
 
-                currentDocsPerSecond = (double) samplePageCount / (double)(sampleTime / 1000);
+                currentDocsPerSecond =
+                    (double) samplePageCount / (double)(sampleTime / 1000);
 
                 lastPagesFetchedCount = currentPageCount;
 
                 // Update kbytes/sec snapshot
                 long currentProcessedBytes = totalProcessedBytes;
-                long sampleProcessedBytes = currentProcessedBytes - lastProcessedBytesCount;
+                long sampleProcessedBytes =
+                    currentProcessedBytes - lastProcessedBytesCount;
 
-                currentKBPerSec = (int) (((sampleProcessedBytes/1024) / (sampleTime / 1000)) + .5);
+                currentKBPerSec =
+                    (int)(((sampleProcessedBytes/1024)/(sampleTime/1000)) + .5);
 
                 lastProcessedBytesCount = currentProcessedBytes;
             }
@@ -281,20 +281,19 @@ implements CrawlURIDispositionListener {
 
         Date now = new Date();
         controller.progressStats.log(
-            Level.INFO,
-            new PaddingStringBuffer()
+            Level.INFO, new PaddingStringBuffer()
                 .append(ArchiveUtils.TIMESTAMP14ISO8601Z.format(now))
-                .raAppend(26, discoveredUriCount)
-                .raAppend(38, queuedUriCount)
-                .raAppend(51, downloadedUriCount)
-                .raAppend(66, ArchiveUtils.doubleToString(currentDocsPerSecond,2) + "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
-                .raAppend(79, currentKBPerSec + "(" + totalKBPerSec + ")")
-                .raAppend(93, downloadFailures)
-                .raAppend(107, busyThreads)
-                .raAppend(120, Runtime.getRuntime().totalMemory() / 1024)
+                .raAppend(32, discoveredUriCount)
+                .raAppend(44, queuedUriCount)
+                .raAppend(57, downloadedUriCount)
+                .raAppend(74, ArchiveUtils.
+                    doubleToString(currentDocsPerSecond,2) +
+                    "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
+                .raAppend(85, currentKBPerSec + "(" + totalKBPerSec + ")")
+                .raAppend(99, downloadFailures)
+                .raAppend(113, busyThreads)
+                .raAppend(126, Runtime.getRuntime().totalMemory()/1024)
                 .toString());
-
-
         lastLogPointTime = System.currentTimeMillis();
     }
 
@@ -411,8 +410,10 @@ implements CrawlURIDispositionListener {
         TreeSet sortedSet = new TreeSet(new Comparator() {
 
             public int compare(Object e1, Object e2) {
-                long firstVal = ((LongWrapper) ((Map.Entry) e1).getValue()).longValue;
-                long secondVal = ((LongWrapper) ((Map.Entry) e2).getValue()).longValue;
+                long firstVal = ((LongWrapper) ((Map.Entry) e1).getValue()).
+                    longValue;
+                long secondVal = ((LongWrapper) ((Map.Entry) e2).getValue()).
+                    longValue;
                 if (firstVal < secondVal) { return 1; }
                 if (secondVal < firstVal) { return -1; }
                 // If the values are the same, sort by keys.
@@ -537,7 +538,8 @@ implements CrawlURIDispositionListener {
     public long discoveredUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().discoveredUriCount() : discoveredUriCount;
+        return shouldrun ?
+            controller.getFrontier().discoveredUriCount() : discoveredUriCount;
     }
 
     /**
@@ -548,7 +550,8 @@ implements CrawlURIDispositionListener {
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        return shouldrun ? controller.getFrontier().finishedUriCount() : finishedUriCount;
+        return shouldrun ?
+            controller.getFrontier().finishedUriCount() : finishedUriCount;
     }
 
     /**
@@ -559,7 +562,8 @@ implements CrawlURIDispositionListener {
     public long failedFetchAttempts() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().failedFetchCount() : downloadFailures;
+        return shouldrun ?
+            controller.getFrontier().failedFetchCount() : downloadFailures;
     }
 
     /**
@@ -586,7 +590,8 @@ implements CrawlURIDispositionListener {
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().succeededFetchCount() : downloadedUriCount;
+        return shouldrun ?
+            controller.getFrontier().succeededFetchCount() : downloadedUriCount;
     }
 
     /**
@@ -602,7 +607,8 @@ implements CrawlURIDispositionListener {
     public long queuedUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().queuedUriCount() : queuedUriCount;
+        return shouldrun ?
+            controller.getFrontier().queuedUriCount() : queuedUriCount;
     }
 
     /**
@@ -612,7 +618,8 @@ implements CrawlURIDispositionListener {
      * @return The total number of uncompressed bytes written to disk
      */
     public long totalBytesWritten() {
-        return shouldrun ? controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
+        return shouldrun ?
+            controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
 
     /**
@@ -659,7 +666,8 @@ implements CrawlURIDispositionListener {
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
             processedSeedsDisposition.put(curi.getURIString(),disposition);
-            processedSeedsStatusCodes.put(curi.getURIString(),new Integer(curi.getFetchStatus()));
+            processedSeedsStatusCodes.put(curi.getURIString(),
+                    new Integer(curi.getFetchStatus()));
         }
     }
 
