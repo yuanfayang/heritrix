@@ -38,12 +38,12 @@ public class ToeThread extends Thread {
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		logger.info("ToeThread Started: "+serialNumber+" for order '"+controller.getOrder().getName()+"'");
+		logger.info("ToeThread #"+serialNumber+" started for order '"+controller.getOrder().getName()+"'");
 		while ( shouldCrawl ) {
 			processingLoop();
 		} 
 		controller.toeFinished(this);
-		logger.info("ToeThread Finished: "+serialNumber+" for order '"+controller.getOrder().getName()+"'");
+		logger.info("ToeThread #"+serialNumber+" finished for order '"+controller.getOrder().getName()+"'");
 	}
 	
 	private void processingLoop() {
@@ -82,6 +82,7 @@ public class ToeThread extends Thread {
 	 * 
 	 */
 	public void unpause() {
+		if(!paused) return;
 		paused = false;
 		this.notify();
 	}
