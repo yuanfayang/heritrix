@@ -330,9 +330,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                 ((CandidateURI) o).getUURI() : (UURI)o;
             try {
                 context.settings = getSettingsHandler().
-                    getSettings(context.uri.getReferencedHost(),
-                        (o instanceof CrawlURI)?
-                            (CrawlURI)o: new CrawlURI(context.uri));
+                    getSettings(context.uri.getReferencedHost(), context.uri);
             }
             catch (URIException e1) {
                 logger.severe("Failed to get host");

@@ -39,10 +39,6 @@ import junit.framework.TestCase;
  *
  */
 public class TimespanCriteriaTest extends TestCase {
-
-    public final void testTimespanLimit() {
-    }
-
     public final void testIsWithinRefinementBounds() throws ParseException {
         DateFormat timeFormat;
         TimeZone TZ = TimeZone.getTimeZone("GMT");

@@ -24,7 +24,7 @@
  */
 package org.archive.crawler.settings.refinements;
 
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.util.TextUtils;
 
 
@@ -40,6 +40,7 @@ public class RegularExpressionCriteria implements Criteria {
      * Create a new instance of RegularExpressionCriteria.
      */
     public RegularExpressionCriteria() {
+        super();
     }
 
     /**
@@ -55,11 +56,9 @@ public class RegularExpressionCriteria implements Criteria {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.refinements.Criteria#isWithinRefinementBounds(org.archive.crawler.datamodel.UURI, int)
      */
-    public boolean isWithinRefinementBounds(CrawlURI uri) {
-        if (uri == null || uri.getUURI() == null) {
-            return false;
-        }
-        return TextUtils.matches(regexp, uri.getURIString());
+    public boolean isWithinRefinementBounds(UURI uri) {
+        return (uri == null || uri == null)?
+            false: TextUtils.matches(regexp, uri.toString());
     }
 
     /**
