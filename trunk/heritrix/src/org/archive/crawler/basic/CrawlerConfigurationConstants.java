@@ -8,7 +8,7 @@ package org.archive.crawler.basic;
  * @author Parker Thompson
  *
  */
-public interface CrawlerConfigurationContants {
+public interface CrawlerConfigurationConstants {
 	
 	public static final String DEFAULT_CRAWLER_NAME = "HerItrix";
 	public static final String DEFAULT_USER_AGENT = "Heritrix pre-Alpha (contact gojomo@archive.org)";
