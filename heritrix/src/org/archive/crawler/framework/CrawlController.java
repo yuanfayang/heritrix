@@ -23,6 +23,7 @@ import org.archive.crawler.datamodel.HostCache;
 import org.archive.crawler.io.CrawlErrorFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
+import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.basic.StatisticsTracker;
 
 /**
@@ -34,6 +35,7 @@ public class CrawlController {
 	public Logger uriProcessing = Logger.getLogger("uri-processing");
 	public Logger crawlErrors = Logger.getLogger("crawl-errors");
 	public Logger uriErrors = Logger.getLogger("uri-errors");
+	public Logger progressStats = Logger.getLogger("progress-statistics");
 	
 	protected StatisticsTracker statistics = new StatisticsTracker(this);
 
@@ -69,6 +71,13 @@ public class CrawlController {
 		selector = (URISelector) order.getBehavior().instantiate("//selector");
 		
 		firstProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
+		
+		// for statistics log interval
+		//Integer timeIntervalSec = (Integer)order.getBehavior().instantiate("//crawl-statistics/interval");
+		//f(timeIntervalSec==null){
+		//	timeIntervalSec=new Integer(60);
+		//}
+		
 		
 		store.initialize(this);
 		scheduler.initialize(this);
@@ -109,10 +118,21 @@ public class CrawlController {
 			uerr.setFormatter(new UriErrorFormatter());
 			uriErrors.addHandler(uerr);
 			uriErrors.setUseParentHandlers(false);
+			
+			FileHandler stat = new FileHandler(diskPath+"progress-statistics.log");
+			stat.setFormatter(new StatisticsLogFormatter());
+			progressStats.addHandler(stat);
+			progressStats.setUseParentHandlers(false);
+			
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		// start periodic background logging
+		Thread statLogger = new Thread(statistics);
+		statLogger.start();
 	}
 	
 	/**

@@ -11,13 +11,19 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.util.DiskWrite;
 import org.archive.util.Queue;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Tracks statistics that relate to the crawl in progress.
  * 
  * @author Parker Thompson
  *
  */
-public class StatisticsTracker {
+public class StatisticsTracker implements Runnable {
 
 	protected CrawlController controller;
 
@@ -31,6 +37,9 @@ public class StatisticsTracker {
 	protected int totalBytesToDisk = 0;
 
 
+	protected Logger periodicLogger = null;
+	protected int logInterval = 60;
+
 	public StatisticsTracker() {
 		super();
 	}
@@ -42,7 +51,87 @@ public class StatisticsTracker {
 	 */
 	public StatisticsTracker(CrawlController c){
 		controller = c;
+		periodicLogger = c.progressStats;
 	}
+	
+	public void setLogInterval(int interval){
+		logInterval = interval;
+	}
+	public int getLogInterval(){
+		return logInterval;
+	}
+	
+	/** This object can be run as a thread to enable periodic loggin */
+	public void run(){
+		// don't start logging if we have no logger
+		if(periodicLogger==null){
+			return;
+		}
+		
+		// keep logging as long as this thang is running
+		while(true){
+			
+			int kPerSec = approximateDiskWriteRate()/1000;
+			
+			String delimiter = "-----------------------------------";
+			SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");
+			
+			periodicLogger.log(Level.INFO,timestamp.format(new Date()));
+			periodicLogger.log(Level.INFO,"\tURIs Completed:\t" + percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
+			periodicLogger.log(Level.INFO,"\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
+			periodicLogger.log(Level.INFO,"\tDiscovered URIs:\t" + urisEncounteredCount());
+			periodicLogger.log(Level.INFO,"\tFrontier (unfetched):\t" + urisInFrontierCount());
+			periodicLogger.log(Level.INFO,"\tFetch Attempts:\t" + totalFetchAttempts());
+			periodicLogger.log(Level.INFO,"\tSuccesses:\t" + successfulFetchAttempts());
+			periodicLogger.log(Level.INFO,"\tThreads:");
+			periodicLogger.log(Level.INFO,"\t\tTotal:\t" + threadCount());
+			periodicLogger.log(Level.INFO,"\t\tActive:\t" + activeThreadCount());
+
+			HashMap dist = getFileDistribution();
+		
+			if(dist.size() > 0){
+				Iterator keyIterator = dist.keySet().iterator();
+
+				periodicLogger.log(Level.INFO,"\tFetched Resources MIME Distribution:");
+	
+				while(keyIterator.hasNext()){
+					String key = (String)keyIterator.next();
+					String val = ((Integer)dist.get(key)).toString();
+				
+					periodicLogger.log(Level.INFO,"\t\t" + val + "\t" + key);	
+				}
+			}else{
+				periodicLogger.log(Level.INFO,"\tNo mime statistics currently available.");
+			}
+		
+			HashMap codeDist = getStatusCodeDistribution();
+		
+			if(codeDist.size() > 0){
+				Iterator keyIterator = codeDist.keySet().iterator();
+
+				periodicLogger.log(Level.INFO,"\tStatus Code Distribution:");
+	
+				while(keyIterator.hasNext()){
+					String key = (String)keyIterator.next();
+					String val = ((Integer)codeDist.get(key)).toString();
+				
+					periodicLogger.log(Level.INFO,"\t\t" + val + "\t" + key);
+				}
+			}else{
+				periodicLogger.log(Level.INFO,"\tNo code sistribution statistics.");
+			}
+			
+			try{
+				Thread.sleep(logInterval*1000);
+			}catch(InterruptedException e){
+				e.printStackTrace();
+				controller.crawlErrors.log(Level.INFO, "Periodic stat logger interrupted while sleeping.");
+			}
+			
+			periodicLogger.log(Level.INFO,delimiter);
+		}	
+	}
+	
 	
 	/** Returns a HashMap that contains information about distributions of 
 	 *  encountered mime types.  Key/value pairs represent 
