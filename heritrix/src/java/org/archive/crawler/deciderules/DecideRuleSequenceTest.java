@@ -214,6 +214,29 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
             decision == DecideRule.PASS);
     }
     
+    public void testPathologicalPath()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new PathologicalPathDecideRule("PATHOLOGICAL"));
+        final int max =
+            PathologicalPathDecideRule.DEFAULT_REPETITIONS.intValue();
+        final String baseUri = "http://archive.org/abc/";
+        UURI uuri = UURIFactory.getInstance(baseUri);
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+            decision == DecideRule.PASS);
+        uuri = UURIFactory.getInstance(baseUri + "abc/");
+        candidate = new CandidateURI(uuri);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+            decision == DecideRule.PASS);
+        uuri = UURIFactory.getInstance(baseUri + "abc/abc/");
+        candidate = new CandidateURI(uuri);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.REJECT + " but got " + decision,
+            decision == DecideRule.REJECT);
+    }
+    
     protected void testHopLimit(final int max, final char pathExpansion,
         final String defaultDecision, final String overLimitDecision)
     throws URIException {

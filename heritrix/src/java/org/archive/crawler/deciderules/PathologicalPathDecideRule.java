@@ -1,4 +1,4 @@
-/* AcceptRule
+/* PathologicalPathDecideRule
 *
 * $Id$
 *
@@ -44,9 +44,13 @@ public class PathologicalPathDecideRule extends MatchesRegExpDecideRule {
     private static final Logger logger =
         Logger.getLogger(PathologicalPathDecideRule.class.getName());
 
-    public static final String ATTR_REPETITIONS = "repetitions";
+    public static final String ATTR_REPETITIONS = "max-repetitions";
 
-    public static final Integer DEFAULT_REPETITIONS = new Integer(3);
+    /**
+     * Default maximum repetitions.
+     * Default access so accessible by unit test.
+     */
+    static final Integer DEFAULT_REPETITIONS = new Integer(2);
 
     protected String constructedRegexp;
     
@@ -56,7 +60,7 @@ public class PathologicalPathDecideRule extends MatchesRegExpDecideRule {
      */
     public PathologicalPathDecideRule(String name) {
         super(name);
-        setDescription("PathologicalPathDecideRule. \nThis rule" +
+        setDescription("PathologicalPathDecideRule. This rule" +
                 " is used to avoid crawler traps by adding a constraint on" +
                 " how many times a path-segment pattern in the URI may be" +
                 " repeated. A URI will be REJECTed if the same path-segment" +
@@ -72,16 +76,16 @@ public class PathologicalPathDecideRule extends MatchesRegExpDecideRule {
         type.setTransient(true);
         
         type = addElementToDefinition(new SimpleType(ATTR_REPETITIONS,
-                "Number of times the pattern should be allowed to occur. \n" +
+                "Number of times the pattern should be allowed to occur. " +
                 "This rule returns its decision (usually REJECT) if a " +
-                "path-segment is repeated this number of times or more.",
+                "path-segment is repeated more than number of times.",
                 DEFAULT_REPETITIONS));
         // overriding would require reconstruction of regexp every test
         type.setOverrideable(false); 
     }
 
     /** 
-     * Construct the regexp string to be matched aginst the URI.
+     * Construct the regexp string to be matched against the URI.
      * @param o an object to extract a URI from.
      * @return the regexp pattern.
      */
@@ -100,12 +104,12 @@ public class PathologicalPathDecideRule extends MatchesRegExpDecideRule {
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        return (rep == 0) ? null : ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
+        return (rep == 0) ? null : ".*/(.*/)\\1{" + rep + ",}.*";
     }
     
     
     /**
-     * repetitions may have changed; refresh constructedRegexp
+     * Repetitions may have changed; refresh constructedRegexp
      * 
      * @see org.archive.crawler.deciderules.DecideRule#kickUpdate()
      */
