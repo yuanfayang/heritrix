@@ -116,9 +116,7 @@ abstract public class LongFPSetTestCase extends TestCase {
 
     /** check count works ok */
     public void testCount() {
-        // JC -- set NUM to below 768 to avoid trigger a count buf
-        // in AbstractLongFPSet
-        final int NUM = 100;
+        final int NUM = 1000;
         assertEquals("empty set to start", 0, fpSet.count());
 
         for(int i = 1; i < NUM; ++i) {

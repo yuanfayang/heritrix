@@ -27,11 +27,14 @@ package org.archive.util;
 import java.util.logging.Logger;
 
 /**
- * Shell of functionality for a Set of primitive long fingerprints.
+ * Shell of functionality for a Set of primitive long fingerprints, held
+ * in an array of possibly-empty slots. The implementation of that holding
+ * array is delegated to subclasses.
  * 
- * Capacity is always a power of 2. * Fingerprints are already assumed 
- * to be well-distributed, so the hashed position for a value is just
- * its high-order bits. 
+ * Capacity is always a power of 2. 
+ * 
+ * Fingerprints are already assumed to be well-distributed, so the 
+ * hashed position for a value is just its high-order bits. 
  * 
  * @author gojomo
  *
@@ -68,7 +71,8 @@ public abstract class AbstractLongFPSet implements LongFPSet {
         this.count = 0;
     }
 
-	/* @(non-Javadoc)
+	/** Does this set contain the given value?
+     * 
      * @see org.archive.util.LongFPSet#contains(long)
 	 */
 	public boolean contains(long val) {
@@ -87,23 +91,25 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 */
 	protected abstract int getSlotState(long i);
 
-	/**
-	 * Note access (hook for subclass cache-replacement strategies)
-	 * @param i
+	/** Note access (hook for subclass cache-replacement strategies)
+     * 
+	 * @param index
 	 */
-	private void noteAccess(long i) {
+	private void noteAccess(long index) {
 		// by default do nothing
 		// cache subclasses may use to update access counts, etc.	
 	}
 
-	/* @(non-Javadoc)
+	/** Return the number of entries in this set.
+     * 
      * @see org.archive.util.LongFPSet#count()
 	 */
 	public long count() {
 		return count;
 	}
 
-	/* @(non-Javadoc)
+	/** Add the given value to this set
+     * 
      * @see org.archive.util.LongFPSet#add(long)
 	 */
 	public boolean add(long val) {
@@ -113,11 +119,10 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 			// positive index indicates already in set
 			return false;
 		}
-        // we have a possible slot now, which is encoded asa negative number
+        // we have a possible slot now, which is encoded as a negative number
 
         // check for space, and grow if needed
-        count++;
-        if(count>(loadFactor*(1<<capacityPowerOfTwo))) {
+        if((count+1)>(loadFactor*(1<<capacityPowerOfTwo))) {
 			makeSpace();
 			// find new i
 			i = indexFor(val);
@@ -126,6 +131,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 
         i = asDataSlot(i); // convert to positive index
         setAt(i, val);
+        count++;
         noteAccess(i);
         return true;
 	}
@@ -146,19 +152,19 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 */
 	protected abstract void setAt(long i, long l);
 
-	/**
-	 * Get the stored value at the given slot. 
+	/** Get the stored value at the given slot. 
+     * 
 	 * @param i the slot index
 	 * @return The stored value at the given slot. 
 	 */
 	protected abstract long getAt(long i);
 
-	/** Given a value, check the store for it's existence. If it exists, it
+	/** Given a value, check the store for its existence. If it exists, it
      * will return the index where the value resides.  Otherwise it return
      * an encoded index, which is a possible storage location for the value.
      *
-     * Note, if we have a loading factor < 1.0, there should always be an
-     * empty location where we can store the value
+     * Note, if we have a loading factor less than 1.0, there should always 
+     * be an empty location where we can store the value
      *
 	 * @param val the fingerprint value to check for
 	 * @return The (positive) index where the value already resides, 
