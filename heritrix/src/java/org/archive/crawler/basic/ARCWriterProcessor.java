@@ -41,8 +41,10 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
+import org.archive.io.arc.ARCWriterPool;
 import org.archive.util.ArchiveUtils;
 import org.xbill.DNS.Record;
+
 
 /**
  * Processor module for writing the results of successful fetches (and
@@ -54,9 +56,9 @@ import org.xbill.DNS.Record;
  * 
  * @author Parker Thompson
  */
-public class ARCWriterProcessor
-    extends Processor
-    implements CoreAttributeConstants, ARCConstants {
+public class ARCWriterProcessor 
+    extends Processor implements CoreAttributeConstants, ARCConstants
+{    
     /**
      * Max size we want ARC files to be (bytes).
      * 
@@ -65,21 +67,21 @@ public class ARCWriterProcessor
      * to next boundary.
      */
     protected int arcMaxSize = DEFAULT_MAX_ARC_FILE_SIZE;
-
+    
     /**
      * File prefix for ARCs.
      * 
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     protected String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
-
+    
     /**
      * Use compression flag.
-     * 
+     *
      * Default is ARCConstants.DEFAULT_COMPRESS.
      */
     protected boolean useCompression = DEFAULT_COMPRESS;
-
+    
     /**
      * Where to drop ARC files.
      */
@@ -88,7 +90,7 @@ public class ARCWriterProcessor
     /**
      * Reference to an ARCWriter.
      */
-    ARCWriter arcWriter = null;
+    ARCWriterPool pool = null;
 
     // Constants for this methods attribute names
     private final static String ATTR_COMPRESS = "compress";
@@ -119,7 +121,7 @@ public class ARCWriterProcessor
 
     public void initialize(CrawlController c) {
         super.initialize(c);
-
+        
         // readConfiguration populates settings used creating ARCWriter.
         try {
             readConfiguration();
@@ -128,19 +130,20 @@ public class ARCWriterProcessor
             // TODO: This is critical failure.  Should be let out.
         }
 
-        try {
-            this.arcWriter =
-                new ARCWriter(
-                    new File(this.outputDir),
-                    this.arcPrefix,
-                    this.useCompression,
-                    this.arcMaxSize);
-        } catch (IOException e) {
+        try
+        {
+            // Set up the pool of ARCWriters.
+            this.pool = new ARCWriterPool(new File(outputDir), this.arcPrefix,
+                this.useCompression);
+        }
+        
+        catch (IOException e) 
+        {
             e.printStackTrace();
             // TODO: This is critical failure.  Should be let out.
         }
     }
-
+      
     protected void readConfiguration()
         throws AttributeNotFoundException, MBeanException, ReflectionException {
         // set up output directory
@@ -158,7 +161,8 @@ public class ARCWriterProcessor
      * 
      * @param curi CrawlURI to process.
      */
-    protected synchronized void innerProcess(CrawlURI curi) {
+    protected synchronized void innerProcess(CrawlURI curi)
+    {
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
             return;
@@ -166,48 +170,61 @@ public class ARCWriterProcessor
 
         // Find the write protocol and write this sucker
         String scheme = curi.getUURI().getScheme();
-
-        try {
+      
+        try
+        {               
             if (scheme.equals("dns")) {
                 writeDns(curi);
             } else if (scheme.equals("http")) {
                 writeHttp(curi);
-            }
+            }                      
         } catch (IOException e) {
-            e.printStackTrace();
+              e.printStackTrace();
         }
-    }
-
-    protected void writeHttp(CrawlURI curi) throws IOException {
-        if (curi.getFetchStatus() <= 0) {
+    }    
+    
+    protected void writeHttp(CrawlURI curi) 
+        throws IOException
+    {
+        if (curi.getFetchStatus() <= 0)
+        {
             // Error; do not write to ARC (for now) 
             return;
         }
-
-        GetMethod get =
-            (GetMethod) curi.getAList().getObject("http-transaction");
-        if (get == null) {
+        
+        GetMethod get = (GetMethod) curi.getAList().
+            getObject("http-transaction");
+        if (get == null)
+        {
             // Some error occurred; nothing to write.
             // TODO: capture some network errors in the ARC file for posterity
             return;
         }
-
-        int recordLength = (int) curi.getContentSize();
-        if (recordLength == 0) {
+        
+        int recordLength = (int)curi.getContentSize();
+        if (recordLength == 0)
+        {
             // Write nothing.
             return;
         }
 
-        this.arcWriter.write(
-            curi.getURIString(),
-            curi.getContentType(),
-            curi.getServer().getHost().getIP().getHostAddress(),
-            curi.getAList().getLong(A_FETCH_BEGAN_TIME),
-            recordLength,
-            get.getHttpRecorder().getRecordedInput().getReplayInputStream());
+        ARCWriter writer = this.pool.borrowARCWriter();
+        try
+        {
+            writer.write(curi.getURIString(), curi.getContentType(),
+               curi.getServer().getHost().getIP().getHostAddress(),
+               curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
+               get.getHttpRecorder().getRecordedInput().getReplayInputStream());
+        }
+        finally
+        {
+            this.pool.returnARCWriter(writer);
+        }
     }
 
-    protected void writeDns(CrawlURI curi) throws IOException {
+    protected void writeDns(CrawlURI curi)
+        throws IOException
+    {  
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // Start the record with a 14-digit date per RFC 2540
         long ts = curi.getAList().getLong(A_FETCH_BEGAN_TIME);
@@ -215,40 +232,46 @@ public class ARCWriterProcessor
         baos.write(fetchDate);
         // Don't forget the newline
         baos.write("\n".getBytes());
-        int recordLength = fetchDate.length + 1;
-        Record[] rrSet =
-            (Record[]) curi.getAList().getObject(A_RRECORD_SET_LABEL);
-        if (rrSet != null) {
-            for (int i = 0; i < rrSet.length; i++) {
+        int recordLength = fetchDate.length + 1;         
+        Record[] rrSet = (Record[]) curi.getAList().
+            getObject(A_RRECORD_SET_LABEL);
+        if (rrSet != null)
+        {
+            for (int i = 0; i < rrSet.length; i++)
+            {
                 byte[] record = rrSet[i].toString().getBytes();
                 recordLength += record.length;
                 baos.write(record);
                 // Add the newline between records back in 
                 baos.write("\n".getBytes());
-                recordLength += 1;
+                recordLength += 1;    
             }
         }
-
-        this.arcWriter.write(
-            curi.getURIString(),
-            curi.getContentType(),
-            curi.getServer().getHost().getIP().getHostAddress(),
-            curi.getAList().getLong(A_FETCH_BEGAN_TIME),
-            recordLength,
-            baos);
-
+        
+        ARCWriter writer = this.pool.borrowARCWriter();
+        try
+        {
+            writer.write(curi.getURIString(), curi.getContentType(),
+               curi.getServer().getHost().getIP().getHostAddress(),
+               curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength, baos);
+        }
+        finally
+        {
+            this.pool.returnARCWriter(writer);
+        }
+        
         // Save the calculated contentSize for logging purposes
         // TODO handle this need more sensibly
-        curi.setContentSize((long) recordLength);
-    }
-
+        curi.setContentSize((long)recordLength);
+    }  
+    
     // getters and setters        
     public int getArcMaxSize() {
         return arcMaxSize;
     }
 
     public String getArcPrefix() {
-        return arcPrefix;
+            return arcPrefix;
     }
 
     public String getOutputDir() {
@@ -258,15 +281,15 @@ public class ARCWriterProcessor
     public void setArcMaxSize(int i) {
         arcMaxSize = i;
     }
-
-    public void setArcPrefix(String buffer) {
+    
+    public void setArcPrefix(String buffer) {    
         arcPrefix = buffer;
     }
-
+    
     public void setUseCompression(boolean use) {
         useCompression = use;
     }
-
+    
     public boolean useCompression() {
         return useCompression;
     }
@@ -287,6 +310,6 @@ public class ARCWriterProcessor
                 e.printStackTrace();
             }
         }
-        outputDir = newDir.getAbsolutePath() + File.separatorChar;
+        outputDir = newDir.getAbsolutePath()+ File.separatorChar;
     }
 }

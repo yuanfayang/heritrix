@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* ReplayInputStream
+ * 
+ * $Id$
+ * 
+ * Created on Sep 24, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ReplayInputStream.java
- * Created on Sep 24, 2003
- *
- * $Header$
  */
 package org.archive.io;
 
@@ -29,69 +30,107 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+
 /**
  * Replays the bytes recorded from a RecordingInputStream or
  * RecordingOutputStream. 
  * 
+ * This InputStream supports mark and reset.
+ * 
  * @author gojomo
- *
  */
-public class ReplayInputStream extends InputStream {
-	protected FileInputStream fileStream;
-	protected BufferedInputStream diskStream;
-	protected byte[] buffer;
-	protected long size;
-	protected long responseBodyStart; // where the response body starts, if marked
-	protected long position;
-	protected String backingFilename;
-	
+public class ReplayInputStream extends InputStream
+{    
+	private BufferedInputStream diskStream;
+    private byte[] buffer;
+    private long position;
+    
+    /**
+     * Total size of stream content.
+     * 
+     * Size of data to replay.
+     */
+    private long size = -1;
+    
+    /**
+     * Where the response body starts, if marked
+     */
+    protected long responseBodyStart = -1;
+    
+    /**
+     * The position the last time {@link #mark(int)} was called.
+     */
+	private long markpos = -1;
+    
+    /**
+     * The readlimit passed the last time mark was called.
+     */
+    private long readlimit = -1;
+    
+    
 	/**
-	 * @param buffer
-	 * @param size
-	 * @param responseBodyStart
-	 * @param backingFilename
-	 * @throws IOException
+     * Constructor.
+     * 
+	 * @param buffer Buffer to read from.
+	 * @param size Size of data to replay.
+	 * @param responseBodyStart Start of the response body.
+     * @param backingFilename Backing file that sits behind the buffer.  If
+     * <code>size<code> > than buffer then we go to backing file to read 
+     * data that is beyond buffer.length.
+     * 
+	 * @throws IOException If we fail to open an input stream on 
+     * backing file.
 	 */
-	public ReplayInputStream(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
-		this(buffer,size,backingFilename);
+	public ReplayInputStream(byte[] buffer, long size, long responseBodyStart,
+            String backingFilename)
+        throws IOException
+    {
+		this(buffer, size, backingFilename);
 		this.responseBodyStart = responseBodyStart;
 	}
 
 	/**
-	 * @param buffer
-	 * @param size
-	 * @param backingFilename
-	 * @throws IOException
+     * Constructor.
+     * 
+     * @param buffer Buffer to read from.
+     * @param size Size of data to replay.
+     * @param backingFilename Backing file that sits behind the buffer.  If
+     * <code>size<code> > than buffer then we go to backing file to read 
+     * data that is beyond buffer.length.
+     * @throws IOException If we fail to open an input stream on 
+     * backing file.
 	 */
-	public ReplayInputStream(byte[] buffer, long size, String backingFilename) throws IOException {
+	public ReplayInputStream(byte[] buffer, long size, String backingFilename)
+        throws IOException
+    {
 		this.buffer = buffer;
 		this.size = size;
-		if (size>buffer.length) {
-			this.backingFilename = backingFilename;
-			fileStream = new FileInputStream(backingFilename);
-			diskStream = new BufferedInputStream(fileStream,4096);
+		if (size > buffer.length) {
+            FileInputStream fis = new FileInputStream(backingFilename);
+			diskStream = new BufferedInputStream(fis, 4096);
 		}
 	}
 
 	public long setToResponseBodyStart() {
-		position = responseBodyStart;
-		return position;
+		this.position = responseBodyStart;
+		return this.position;
 	}
 	
 	/* (non-Javadoc)
 	 * @see java.io.InputStream#read()
 	 */
 	public int read() throws IOException {
-		if (position==size) {
+		if (position == size) {
 			return -1; // EOF
 		}
-		if (position<buffer.length) {
-			int c= (int)buffer[(int)position]&0xFF; // convert to unsigned int
+		if (position < buffer.length) {
+		    // Convert to unsigned int.
+			int c = (int)buffer[(int)position] & 0xFF;
 			position++;
 			return c; 
 		} else {
 			int c = diskStream.read();
-			if(c>=0) {
+			if(c >= 0) {
 				position++;
 			}
 			return c;
@@ -102,13 +141,14 @@ public class ReplayInputStream extends InputStream {
 	 * @see java.io.InputStream#read(byte[], int, int)
 	 */
 	public int read(byte[] b, int off, int len) throws IOException {
-		if (position==size) {
+		if (position == size) {
 			return -1; // EOF
 		}
-		if (position<buffer.length) {
-			int toCopy = (int) Math.min(size-position,Math.min(len,buffer.length-position));
-			System.arraycopy(buffer,(int)position,b,off,toCopy);
-			if(toCopy>0) {
+		if (position < buffer.length) {
+			int toCopy = (int)Math.min(size - position,
+                Math.min(len, buffer.length - position));
+			System.arraycopy(buffer, (int)position, b, off, toCopy);
+			if (toCopy > 0) {
 				position += toCopy;
 			} 
 			return toCopy;
@@ -120,7 +160,6 @@ public class ReplayInputStream extends InputStream {
 		}
 		return read;
 	}
-
 
 	public void readFullyTo(OutputStream os) throws IOException {
 		byte[] buf = new byte[4096];
@@ -136,14 +175,61 @@ public class ReplayInputStream extends InputStream {
 	 */
 	public void close() throws IOException {
 		super.close();
-		if(diskStream!=null) {
+		if(diskStream != null) {
 			diskStream.close();
 		} 
 	}
-	
-	public long remaining() {
-		// amount THEORETICALLY remaining; 
-		return size-position;
-	}
+    
+    /* (non-Javadoc)
+     * @see java.io.InputStream#mark(int)
+     */
+    public synchronized void mark(int readlimit)
+    {
+        this.readlimit = readlimit;
+        this.markpos = this.position;
+    }
 
+    /* (non-Javadoc)
+     * @see java.io.InputStream#markSupported()
+     */
+    public boolean markSupported()
+    {
+        return true;
+    }
+
+    /* (non-Javadoc)
+     * @see java.io.InputStream#reset()
+     */
+    public synchronized void reset()
+        throws IOException
+    {
+        if (this.markpos == -1)
+        {
+            throw new IOException("Mark has not been called (markpos == -1).");
+        }
+        
+        // Adhere to the InputStream.reset contract -- only reset if we're 
+        // w/i readlimit.
+        if ((this.markpos - this.position) < this.readlimit)
+        {
+            this.position = markpos;
+        }
+    }
+    
+    /**
+     * Total size of stream content.
+     * @return Returns the size.
+     */
+    public long getSize()
+    {
+        return size;
+    }
+    
+    /**
+     * @return Amount THEORETICALLY remaining (TODO: Its not theoretical
+     * seemingly.  The class implemetentation depends on it being exact).
+     */
+    public long remaining() {
+        return size - position;
+    }
 }

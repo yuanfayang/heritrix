@@ -80,7 +80,7 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
     private void reuse(String baseName, RecordingOutputStream ros, int index)
         throws IOException
     {
-        final String BASENAME = baseName + Integer.toString(index);
+        final String BASENAME = "testWriteint" + Integer.toString(index);
         File f = writeIntRecordedFile(ros, BASENAME, WRITE_TOTAL);
         verifyRecording(ros, f, WRITE_TOTAL);
         // Do again to test that I can get a new ReplayInputStream on same 

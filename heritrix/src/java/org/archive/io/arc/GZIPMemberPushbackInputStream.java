@@ -90,7 +90,7 @@ public class GZIPMemberPushbackInputStream extends PushbackInputStream
     /**
      * Moves us on to the next GZIP member.
      * 
-     * Call {@link #hasMore} before calling this method else you'll get a
+     * Call {@link #hasNext()} before calling this method else you'll get a
      * IOException at the end of the stream.
      * 
      * @throws IOException

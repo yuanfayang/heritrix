@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* RecordingInputStream
+ * 
+ * $Id$
+ * 
+ * Created on Sep 24, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * RecordingInputStream.java
- * Created on Sep 24, 2003
- *
- * $Header$
  */
 package org.archive.io;
 
@@ -32,53 +33,56 @@ import java.security.MessageDigest;
 
 
 /**
- * Stream which records all data read from it, which
- * it acquires from a wrapped input stream.
+ * Stream which records all data read from it, which it acquires from a wrapped
+ * input stream.
  * 
- * Makes use of a RecordingOutputStream (with a dummy
- * wrapped stream) for recording.
+ * Makes use of a RecordingOutputStream for recording because of its being
+ * file backed so we can write massive amounts of data w/o worrying about
+ * overflowing memory.
  * 
  * @author gojomo
  *
  */
-public class RecordingInputStream extends InputStream {
-//	private long timeout;
-//	private long maxLength;
-//	private long timeoutTime;
-	protected InputStream wrappedStream;
-	protected RecordingOutputStream recordingOutputStream;
+public class RecordingInputStream
+    extends InputStream 
+{   
+    /**
+     * Where we are recording to.
+     */
+	private RecordingOutputStream recordingOutputStream;
+    
+    /**
+     * Stream to record.
+     */
+    private InputStream in = null;
 
 
 	/**
-	 * Create a new RecordingInputStream with the specified parameters.
+	 * Create a new RecordingInputStream.
 	 * 
-	 * @param bufferSize
-	 * @param backingFilename
-	 * @param maxSize
+	 * @param bufferSize Size of buffer to use.
+	 * @param backingFilename Name of backing file.
 	 */
-	public RecordingInputStream(int bufferSize, String backingFilename, int maxSize) {
-		recordingOutputStream = new RecordingOutputStream(bufferSize, backingFilename, maxSize);
+	public RecordingInputStream(int bufferSize, String backingFilename)
+    {
+		recordingOutputStream = new RecordingOutputStream(bufferSize,
+            backingFilename);
 	}
 
 	public void open(InputStream wrappedStream) throws IOException {
-		this.wrappedStream = wrappedStream;
-		recordingOutputStream.open(new NullOutputStream()); 
-//		if (timeout>0) {
-//			timeoutTime = System.currentTimeMillis() + timeout;
-//		} else {
-//			timeoutTime = 0;
-//		}
+        assert this.in == null;
+		this.in = wrappedStream;
+		recordingOutputStream.open(); 
 	}
 
 	/* (non-Javadoc)
 	 * @see java.io.InputStream#read()
 	 */
 	public int read() throws IOException {
-		int b = wrappedStream.read();
+		int b = this.in.read();
 		if (b != -1) {
 			recordingOutputStream.write(b);
 		}
-//		checkLimits();
 		return b;
 	}
 	
@@ -86,8 +90,8 @@ public class RecordingInputStream extends InputStream {
 	 * @see java.io.InputStream#read(byte[], int, int)
 	 */
 	public int read(byte[] b, int off, int len) throws IOException {
-		int count = wrappedStream.read(b,off,len);
-		if (count>0) {
+		int count = this.in.read(b,off,len);
+		if (count > 0) {
 			recordingOutputStream.write(b,off,count);
 		} 
 		return count;
@@ -97,8 +101,8 @@ public class RecordingInputStream extends InputStream {
 	 * @see java.io.InputStream#read(byte[])
 	 */
 	public int read(byte[] b) throws IOException {
-		int count = wrappedStream.read(b);
-		if (count>0) {
+		int count = this.in.read(b);
+		if (count > 0) {
 			recordingOutputStream.write(b,0,count);
 		} 
 		return count;
@@ -108,8 +112,11 @@ public class RecordingInputStream extends InputStream {
 	 * @see java.io.OutputStream#close()
 	 */
 	public void close() throws IOException {
-		super.close();
-		wrappedStream.close();
+        if (this.in != null)
+        {
+            this.in.close();
+            this.in = null;
+        }
 		recordingOutputStream.close();
 	}
 	
@@ -127,22 +134,15 @@ public class RecordingInputStream extends InputStream {
 		}
 		return recordingOutputStream.getSize();
 	}
-
-//	/**
-//	 * @param maxLength
-//	 * @param timeout
-//	 */
-//	public void setLimits(long maxLength, long timeout) {
-//		this.maxLength = maxLength;
-//		this.timeout = timeout;
-//	}
 	
 	/**
 	 * @param maxLength
 	 * @param timeout
 	 * @throws IOException
 	 */
-	public void readFullyOrUntil(long maxLength, long timeout) throws IOException {
+	public void readFullyOrUntil(long maxLength, long timeout)
+        throws IOException
+    {
 		long timeoutTime;
 		long totalBytes = 0;
 		if(timeout>0) {
@@ -172,7 +172,6 @@ public class RecordingInputStream extends InputStream {
 	}
 
 	public long getSize() {
-		// TODO Auto-generated method stub
 		return recordingOutputStream.getSize();
 	}
 
@@ -203,7 +202,6 @@ public class RecordingInputStream extends InputStream {
         recordingOutputStream.setDigest(md);
     }
 
-    
     /**
      * Return the digest value for any recorded, digested data. Call
      * only after all data has been recorded; otherwise, the running
@@ -238,13 +236,4 @@ public class RecordingInputStream extends InputStream {
 		fos.close();
 		ris.close();
 	}
-
-	/**
-	 * 
-	 */
-	public void verify() {
-		recordingOutputStream.verify();
-	}
-
-
 }

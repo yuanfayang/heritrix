@@ -78,11 +78,9 @@ import org.archive.util.HttpRecorder;
  * chance to chat on it w/ Nutch folks (Their SocketFactory will have to do
  * initialize too if they go w/ this pattern).
  * 
- * <p>This factory is a singleton to ensure only a single instance of an
- * ARCWriter shared by all ARCSockets.  Means no public constructor as per 
- * original description of how the ARCSocketFactory was to look on delivery.
- * This could be changed if caller could guarantee only one SocketFactory per
- * JVM.
+ * <p>This factory is also a singleton to ensure only a single instance of an
+ * ARCWriter shared by all ARCSockets.
+ * 
  * 
  * <p>Internet Archive ARC files are described here: 
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
@@ -145,10 +143,10 @@ public class ARCSocketFactory extends SocketFactory
      */
     private static final int MAX_HEADER_SIZE = 1024 * 1024;
     
-    /**
+	/**
      * Singleton instance of ARCSocketFactory.
      */
-    private static ARCSocketFactory instance = null;
+	private static ARCSocketFactory instance = null;
 
     /**
      * Pool of ARCWriters.
@@ -164,15 +162,8 @@ public class ARCSocketFactory extends SocketFactory
      */
     private static int id = 0;
     
-    /**
-     * Constructor to block access to default constructor.
-     */
-    private ARCSocketFactory()
-    {
-        // Inaccessible constructor.
-    }
     
-    /**
+	/**
      * Constructor.
      * 
      * Private so users go via {@link getInstance} to get an instance.
@@ -180,7 +171,7 @@ public class ARCSocketFactory extends SocketFactory
      * @param properties Properties to configure ARCSocketFactory.  There must
      * at least be a 'arcsocketfactory.dumpDir' property that points at a 
      * location on local disk to which arc and scratch files can be written.
-     */
+	 */
     private ARCSocketFactory(Properties properties)
         throws IOException
     {
@@ -219,55 +210,55 @@ public class ARCSocketFactory extends SocketFactory
     public static synchronized void initialize(Properties properties)
         throws IOException
     {
-        if(instance == null)
+    	if(instance == null)
         {
-            instance = new ARCSocketFactory(properties);
+    		instance = new ARCSocketFactory(properties);
         }
     }
     
-    public Socket createSocket(String host, int port)
-        throws IOException, UnknownHostException
-    {
-        return new ARCSocket(host, port);
-    }
+	public Socket createSocket(String host, int port)
+		throws IOException, UnknownHostException
+	{
+		return new ARCSocket(host, port);
+	}
     
     public Socket createSocket(InetAddress host, int port) 
         throws IOException
     {
         return new ARCSocket(host, port);
     }
-    
-    public Socket createSocket(String host, int port, InetAddress localHost, 
+	
+	public Socket createSocket(String host, int port, InetAddress localHost, 
             int localPort)
-        throws IOException, UnknownHostException
-    {
-        return new ARCSocket(host, port, localHost, localPort);
-    }
+		throws IOException, UnknownHostException
+	{
+		return new ARCSocket(host, port, localHost, localPort);
+	}
 
-    public Socket createSocket(InetAddress address, int port, InetAddress 
-            localAddress, int localPort)
-        throws IOException
-    {
-        return new ARCSocket(address, port, localAddress, localPort);
-    }
+	public Socket createSocket(InetAddress address, int port, InetAddress 
+			localAddress, int localPort)
+		throws IOException
+	{
+		return new ARCSocket(address, port, localAddress, localPort);
+	}
 
-    /**
+	/**
      * Returns singleton instance of ARCSocketFactory.
      * 
      *  @return Singleton instance of ARCSocketFactory or null if
      * {@link #initialize(java.util.Properties)} hasn't first been called.
      * Return type is SocketFactory.  No need for client to know about
      * ARCSocketFactory.
-     */
-    public static SocketFactory getInstance()
-    {
-        return instance;
-    }
+	 */
+	public static SocketFactory getInstance()
+	{
+		return instance;
+	}
     
     /**
      * Return a unique basename.
      * 
-     * Name is timestamp + an ever increasing sequence number.  Used 
+     * Name is timestamp + an every increasing sequence number.  Used 
      * creating backing files for recording input and output streams.
      * 
      * @return Unique basename.
@@ -432,16 +423,6 @@ public class ARCSocketFactory extends SocketFactory
         
         /**
          * Ready socket for recording of all read and written.
-         * 
-         * Creates a subdirectory named for the host we're connecting to.
-         * Sets up backing files named w/ a unique named inside in this 
-         * subdirectory to back the streams that catch all read and written 
-         * in case the buffers need to overflow to disk.  Would be nicer
-         * having the backing files mimic the layout of the URL path but 
-         * we don't know the URL path till <code>close</code> time so for 
-         * now make do w/ files of unique name (They are cleaned up on 
-         * close so shouldn't be problems w/ too many files in the 
-         * subdir).
          *
          * @exception IOException
          */
@@ -467,8 +448,7 @@ public class ARCSocketFactory extends SocketFactory
         /* (non-Javadoc)
          * @see java.net.Socket#getInputStream()
          */
-        public InputStream getInputStream()
-            throws IOException
+        public InputStream getInputStream() throws IOException
         {
             return this.recorder.getRecordedInput();
         }
@@ -482,26 +462,17 @@ public class ARCSocketFactory extends SocketFactory
             throws IOException
         {
             super.close();
-            record();
-        }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#finalize()
-         */
-        protected void finalize() throws Throwable
-        {
+            this.recorder.close();
             try
             {
-                close();
+                record();
             }
-            catch(Exception e)
+            finally
             {
-                // No point letting it out when we're in finalize.
-                e.printStackTrace(System.out);
+                this.recorder.cleanup();
             }
-            super.finalize();
         }
-
+        
         /**
          * Write socket recordings to an ARC file.
          * 
@@ -512,45 +483,30 @@ public class ARCSocketFactory extends SocketFactory
         private void record()
             throws IOException
         {
-            if (this.recorder == null)
+            ReplayInputStream response =
+                this.recorder.getRecordedInput().getReplayInputStream();
+            ReplayInputStream request =
+                this.recorder.getRecordedOutput().getReplayInputStream();
+            if (response.remaining() > 0)
             {
-                // We already wrote content.
-                return;
-            }
-
-            ARCWriter writer = null;
-            try
-            {
-                this.recorder.close();
-                ReplayInputStream response =
-                    this.recorder.getRecordedInput().getReplayInputStream();
-                ReplayInputStream request =
-                    this.recorder.getRecordedOutput().getReplayInputStream();
-                if (response.remaining() > 0)
+                // Mark start of stream.  We'll want to reset to here below.
+                response.mark(MAX_HEADER_SIZE);
+                StatusLine statusLine = getStatusLine(response);
+                String contentType = getContentType(response);
+                // Reset to start of stream so can write out total repsonse.
+                response.reset();
+                ARCWriter writer = getPool().borrowARCWriter();
+                try
                 {
-                    // Mark start of stream.  We'll want to reset to here below.
-                    response.mark(MAX_HEADER_SIZE);
-                    // Read past the status line.  Ignore return.
-                    getStatusLine(response);
-                    String contentType = getContentType(response);
-                    // Reset to start of stream so can write out total repsonse.
-                    response.reset();
-                    writer = getPool().borrowARCWriter();
                     writer.write(getURL(request), contentType,
                         this.getInetAddress().getHostAddress(),
                         this.connectTime.getTime(), (int)response.getSize(),
                         response);
                 }
-            }
-            
-            finally
-            {
-                if (writer != null)
+                finally
                 {
                     getPool().returnARCWriter(writer);
                 }
-                this.recorder.cleanup();
-                this.recorder = null;
             }
         }
         
@@ -564,7 +520,7 @@ public class ARCSocketFactory extends SocketFactory
         {
             String s = HttpParser.readLine(replayInputStream);
             // TODO: Upgrade httpclient and use StatusLine.startsWithHTTP().
-            while (s != null && !s.startsWith("HTTP"))
+            for (; s != null && !s.startsWith("HTTP");)
             {
                 s = HttpParser.readLine(replayInputStream);
             }
@@ -692,7 +648,7 @@ public class ARCSocketFactory extends SocketFactory
         
         /**
          * @return Sub directory to write recording backing files into for this 
-         * socket named for the name of the host we're connecting to.
+         * socket named for the ip of the host we're connecting to.
          * @exception IOException
          */
         private File getBackingFileSubDir()
