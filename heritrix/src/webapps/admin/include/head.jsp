@@ -43,7 +43,7 @@
 		<table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">
 			<tr>
 				<td width="155" height="60" valign="top" nowrap>
-					<table border="0" cellspacing="0" cellpadding="0" width="100%" height="60">
+					<table border="0" cellspacing="0" cellpadding="0" height="60">
 						<tr>
 							<td align="center" height="40" valign="bottom">
 								<a border="0" href="/admin/main.jsp"><img border="0" src="/admin/images/logo.gif" height="37" width="145"></a>
@@ -59,7 +59,7 @@
 				<td width="5">
 					&nbsp;&nbsp;
 				</td>
-				<td width="100%">
+				<td align="left">
 					<table border="0" cellspacing="0" cellpadding="0" height="60">
 						<tr>
 							<td colspan="2">
