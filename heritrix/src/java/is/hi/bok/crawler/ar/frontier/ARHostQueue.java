@@ -1053,11 +1053,16 @@ public class ARHostQueue implements ARAttributeConstants {
                     case CandidateURI.NORMAL : 
                         ret.append("  Sched. directive: NORMAL\n"); break;
                 }
-                ret.append("  Next processing:  " + 
-                        ArchiveUtils.formatMillisecondsToConventional(
-                                tmp.getLong(
-                                        A_TIME_OF_NEXT_PROCESSING) - 
-                                        System.currentTimeMillis()) + "\n");
+                ret.append("  Next processing:  ");
+                long nextProcessing = 
+                    tmp.getLong(A_TIME_OF_NEXT_PROCESSING) - 
+                    System.currentTimeMillis();
+                if(nextProcessing < 0){
+                    ret.append("Overdue ");
+                    nextProcessing = nextProcessing*-1;
+                } 
+                ret.append(ArchiveUtils.formatMillisecondsToConventional(
+                        nextProcessing) + "\n");
                 if(tmp.containsKey(A_WAIT_INTERVAL)){
                     ret.append("  Wait interval:    " + 
                             ArchiveUtils.formatMillisecondsToConventional(
