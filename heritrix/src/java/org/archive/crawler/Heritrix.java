@@ -1100,17 +1100,17 @@ public class Heritrix implements HeritrixMBean {
             NotCompliantMBeanException, MalformedObjectNameException,
             NullPointerException {
         List servers = MBeanServerFactory.findMBeanServer(null);
-        if (servers != null) {
-            for (Iterator i = servers.iterator(); i.hasNext();) {
-                MBeanServer server = (MBeanServer)i.next();
-                if (server != null) {
-                    // Only register with the JMX agent started on cmdline.
-                    if ((System.getProperty("com.sun.management.jmxremote.port")
-                                != null)) {
-                            server.registerMBean(h,
-                                new ObjectName(getJmxName()));
-                        break;
-                    }
+        if (servers == null) {
+            return;
+        }
+        for (Iterator i = servers.iterator(); i.hasNext();) {
+            MBeanServer server = (MBeanServer)i.next();
+            if (server != null) {
+                // Only register with the JMX agent started on cmdline.
+                if ((System.getProperty("com.sun.management.jmxremote.port")
+                        != null)) {
+                    server.registerMBean(h, new ObjectName(getJmxName()));
+                    break;
                 }
             }
         }
