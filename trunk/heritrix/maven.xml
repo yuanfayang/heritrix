@@ -16,7 +16,7 @@
     </preGoal> 
 
     <goal name="docbook">
-        <attainGoal name="sdocbook"/>
+        <attainGoal name="sdocbook:generate-html"/>
     </goal>
 
     <preGoal name="java:jar-resources"> 
