@@ -4,21 +4,20 @@
  */
 package org.archive.crawler.basic;
 
-import junit.framework.TestCase;
+import java.util.ArrayList;
+
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
-import org.archive.crawler.basic.ExtractorDOC;
-import org.archive.crawler.datamodel.*;
-import org.archive.crawler.framework.*;
-
-//import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.crawler.util.OfflineGet;
 import org.apache.commons.httpclient.HttpClient;
-
-import java.net.*;
-import java.util.ArrayList;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.extractor.ExtractorDOC;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.util.OfflineGet;
 
 
 /**
