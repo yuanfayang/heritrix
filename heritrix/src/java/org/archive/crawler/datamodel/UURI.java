@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.apache.commons.httpclient.URIException;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -104,7 +105,9 @@ public class UURI implements Serializable {
     static final String HTTPS_PORT = ":443";
     static final String DOT = ".";
     static final String EMPTY_STRING = "";
-     
+ 
+    public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
+    
     /**
      * Normalize and derelativize
      *
@@ -417,4 +420,20 @@ public class UURI implements Serializable {
     public String getHost() {
         return uri.getHost();
     }
+
+    /**
+     * Strips www[0-9]*\. from the host.
+     * 
+     * 
+     * @return Host's basename.
+     * @throws URIException
+     */
+    public String getHostBasename() throws URIException {
+	if (this.getHost() != null) {
+        	return TextUtils.replaceFirst(MASSAGEHOST_PATTERN, this.getHost(),
+                    	EMPTY_STRING);
+	}
+	return null;
+    }
+
 }
