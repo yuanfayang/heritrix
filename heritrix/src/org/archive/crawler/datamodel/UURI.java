@@ -9,6 +9,8 @@ package org.archive.crawler.datamodel;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Usable URI: a legal URI for our purposes.
@@ -75,6 +77,10 @@ public class UURI {
 	 */
 	public static String normalize(String s, URI parent)
 		throws URISyntaxException {
+		
+		if (s==null) {
+			throw new URISyntaxException("n/a","Is null");
+		}
 		// TODO: stop creating temporary instances like a drunken sailor
 		String es = patchEscape(s);
 		URI u = new URI(es);
@@ -147,15 +153,14 @@ public class UURI {
 		// of the rfc2396 'delims' or 'unwise' characters
 		// and escape them, as well as other special 
 		// handling of '%' and '+'
-		try {
-			if (s.indexOf(" ") < 0) {// TODOSOON: fix NPE here!
-				return s;
-			}
-			return s.replaceAll(" ", "%20");
-		} catch (NullPointerException npe) {
-			logger.warning(npe.toString());
+
+		if (s.indexOf(" ") >= 0) {
+			s = s.replaceAll(" ", "%20");
 		}
-		return null; 
+		if (s.indexOf("|") >= 0) {
+			s = s.replaceAll("|","%7C");
+		}
+		return s; 
 	}
 	
 	/* (non-Javadoc)
@@ -196,12 +201,28 @@ public class UURI {
 	 * @return
 	 */
 	public static UURI createUURI(String string, URI uri) {
+		if (isUnusableScheme(string)) {
+			return null;
+		}
 		try {
 			return createUURI(normalize(string,uri));
 		} catch (URISyntaxException e) {
-			logger.warning("BAD URI: "+string+" from "+uri);
+			logger.warning("BAD URI: "+e.getReason()+":"+string+" from "+uri);
 			return null;
 		}
+	}
+
+	static Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
+	/**
+	 * @param string
+	 * @return
+	 */
+	private static boolean isUnusableScheme(String string) {
+		Matcher m = UNUSABLE_SCHEMES.matcher(string);
+		if (m.matches()) {
+			return true;
+		}
+		return false;
 	}
 
 }
