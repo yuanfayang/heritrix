@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,6 +20,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -171,12 +173,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		}
 		Iterator iter = resources.iterator();
 		URI codebaseURI = null;
+		String res = null;
 		try {
 			if (codebase != null) {
 				codebaseURI = new URI(codebase.toString());
 			}
 			while(iter.hasNext()) {
-				String res = iter.next().toString();
+				res = iter.next().toString();
 				//res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 				res = TextUtils.replaceAll(ESCAPED_AMP, res, "&");
 				if (codebaseURI != null) {
@@ -189,7 +192,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			// e.printStackTrace();
 			curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
 		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
+			DevUtils.logger.log(
+				Level.SEVERE,
+				"processGeneralTag()\n"+
+				"codebase="+codebase+" res="+res+"\n"+
+				DevUtils.extraInfo(),
+				e);
 		}
 	}
 	
