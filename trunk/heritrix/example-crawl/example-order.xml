@@ -6,7 +6,7 @@
  <crawler-behavior>
 
   <http-headers>
-   <User-Agent>ArchiveOpenCrawler Alpha (new ia-archiver; problems to archive-crawler-agent@lists.sourceforge.net)</User-Agent>
+   <User-Agent>heritrix-aoc/alpha (+http://crawler.archive.org)</User-Agent>
    <From>archive-crawler-agent@lists.sourceforge.net</From>
   </http-headers>
  
@@ -104,7 +104,7 @@
  
  <loggers>
   <crawl-statistics>
-    <interval>60</interval>
+    <interval>10</interval>
   </crawl-statistics>
 </loggers>
 

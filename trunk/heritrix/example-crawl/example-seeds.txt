@@ -1,7 +1,13 @@
+http://www.sony.com
+
+# http://crawl08.archive.org/links/javascript.html
+
+# http://www.arts.gov
+
 # http://www.copyright.gov/newsnet/past_issues.html
 # http://www.exploratorium.edu/xref/exhibits/glow_wheel.html
 # http://www.comcast.net
-http://crawl08.archive.org/meta/refresh.html
+# http://crawl08.archive.org/meta/refresh.html
 
 # http://www.yahoo.com
 # http://www.google.com/dirhp
