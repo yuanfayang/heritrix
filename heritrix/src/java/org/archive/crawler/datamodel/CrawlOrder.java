@@ -246,7 +246,7 @@ public class CrawlOrder extends ModuleType {
                 "Optional recover.log to preload Frontier.\n A recover log " +
                 "is automatically generated during a crawl. If a crawl " +
                 "crashes it can be used to recreate the status of the crawler" +
-                " at the time of the crash to recover. This can take a long" +
+                " at the time of the crash. This can take a long" +
                 " time in some cases, but is usually much quicker then " +
                 "repeating a crawl.", ""));
         e.setOverrideable(false);
