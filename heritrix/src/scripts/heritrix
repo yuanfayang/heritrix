@@ -2,19 +2,19 @@
 ##
 ## This script launches the heritrix crawler.
 ##
-##
-## Environment variable prerequisites
-##
-## JAVA_HOME        Must point at your JDK install.
-##
-##
 ## Optional environment variables
+##
+## JAVA_HOME        Point at a JDK install to use.
 ## 
 ## HERITRIX_HOME    Pointer to your heritrix install.  If not present, we 
 ##                  make an educated guess based of position relative to this
 ##                  script.
 ##
 ## JAVA_OPTS        Java runtime options.
+##
+## FOREGROUND       Set to any value -- e.g. 'true' -- if you want to run 
+##                  heritrix in foreground (Used by build system when it runs
+##                  selftest to see if completed successfully or not).
 ##
 
 # Resolve links - $0 may be a softlink
@@ -91,20 +91,27 @@ fi
 stdouterrlog=${HERITRIX_HOME}/heritrix_out.log
 echo "`date` Starting heritrix" >> $stdouterrlog
 main=org.archive.crawler.Heritrix
-CLASSPATH=${CP} nohup $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
-    ${JAVA_OPTS} $main $@ >> ${stdouterrlog} 2>&1 &
+# If FOREGROUND is set, run heritrix in foreground.
+if [ -n "$FOREGROUND" ]
+then
+    CLASSPATH=${CP} $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
+        ${JAVA_OPTS} $main $@
+else
+    CLASSPATH=${CP} nohup $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
+        ${JAVA_OPTS} $main $@ >> ${stdouterrlog} 2>&1 &
 
-# Wait for content in the heritrix_dmesg.log file.
-echo -n "`date` Starting heritrix"
-while true 
-do
-    sleep 1
-    if [ -s $startMessage ]
-    then
-        echo
-        cat $startMessage
-        rm -f $startMessage
-        break
-    fi
-    echo -n '.'
-done
+    # Wait for content in the heritrix_dmesg.log file.
+    echo -n "`date` Starting heritrix"
+    while true 
+    do
+        sleep 1
+        if [ -s $startMessage ]
+        then
+            echo
+            cat $startMessage
+            rm -f $startMessage
+            break
+        fi
+        echo -n '.'
+    done
+fi

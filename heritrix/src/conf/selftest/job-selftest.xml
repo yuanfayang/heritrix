@@ -146,11 +146,38 @@
     <string name="recover-path"></string>
     <newObject name="credential-store" class="org.archive.crawler.datamodel.CredentialStore">
       <map name="credentials" >
+        <!--Credential-domain is filled in by the Heritrix#selftest method on 
+            startup.  Its done there in case selftest port is changed  on us.
+         -->
         <newObject name="selftest" class="org.archive.crawler.datamodel.credential.Rfc2617Credential">
-          <string name="credential-domain">127.0.0.1:8080</string>
+          <string name="credential-domain" />
           <string name="realm">selftest</string>
           <string name="login">selftest</string>
           <string name="password">basic</string>
+        </newObject>
+        <newObject name="Selftest GET form login" 
+            class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
+          <string name="credential-domain" />
+          <string 
+            name="login-uri">/Auth/form/get/index.html</string>
+          <string name="http-method">GET</string>
+          <map name="form-items">
+            <string name="login">login</string>
+            <string name="password">password</string>
+            <string name="submit">submit</string>
+          </map>
+        </newObject>
+        <newObject name="Selftest POST form login" 
+            class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
+          <string name="credential-domain" />
+          <string 
+            name="login-uri">/Auth/form/post/index.html</string>
+          <string name="http-method">POST</string>
+          <map name="form-items">
+            <string name="login">login</string>
+            <string name="password">password</string>
+            <string name="submit">submit</string>
+          </map>
         </newObject>
       </map>
     </newObject>
