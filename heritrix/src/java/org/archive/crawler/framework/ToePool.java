@@ -138,7 +138,9 @@ public class ToePool extends CrawlStatusAdapter {
         // Destory referances to facilitate GC.
         toes.removeAll(toes); //Empty it
         toes = null;
-        killedToes.removeAll(killedToes);
+        if(killedToes!=null){
+            killedToes.removeAll(killedToes);
+        }
         // TODO Can anything more be done to ensure that the killed threads die?
         killedToes = null;
         controller = null;
