@@ -157,6 +157,8 @@ public class SimpleHttpServer
         }
         // Selftest depends on finding the extracted WARs. TODO: Fix.
         c.setExtractWAR(expand);
+        // let login sessions last 24 hours
+        c.getServletHandler().getSessionManager().setMaxInactiveInterval(86400);
         this.contexts.add(c);
     }
     
