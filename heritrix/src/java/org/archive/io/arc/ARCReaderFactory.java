@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.NoSuchElementException;
 
 import org.archive.io.GzipHeader;
@@ -47,33 +46,33 @@ public class ARCReaderFactory implements ARCConstants {
      */
     private static final ARCReaderFactory factory = new ARCReaderFactory();
 
-	/**
-	 * Shutdown any access to default constructor.
-	 */
-	private ARCReaderFactory() {
-		super();
-	}
-	
-	/**
-	 * @param arcFile An arcfile to read.
-	 * @return An ARCReader.
+    /**
+     * Shutdown any access to default constructor.
+     */
+    private ARCReaderFactory() {
+        super();
+    }
+    
+    /**
+     * @param arcFile An arcfile to read.
+     * @return An ARCReader.
      * @throws IOException
-	 */
-	public static ARCReader get(File arcFile) throws IOException {
+     */
+    public static ARCReader get(File arcFile) throws IOException {
         boolean compressed =
-        		ARCReaderFactory.factory.testCompressedARCFile(arcFile);
+                ARCReaderFactory.factory.testCompressedARCFile(arcFile);
         if (!compressed) {
             if (!ARCReaderFactory.factory.testUncompressedARCFile(arcFile)) {
                 throw new IOException(arcFile.getAbsolutePath() +
                     " is not an Internet Archive ARC file.");
             }
         }
-		return compressed?
-			(ARCReader)ARCReaderFactory.factory.
-				new CompressedARCReader(arcFile):
-		    (ARCReader)ARCReaderFactory.factory.
-				new UncompressedARCReader(arcFile);
-	}
+        return compressed?
+            (ARCReader)ARCReaderFactory.factory.
+                new CompressedARCReader(arcFile):
+            (ARCReader)ARCReaderFactory.factory.
+                new UncompressedARCReader(arcFile);
+    }
 
     /**
      * Check file is compressed and in ARC GZIP format.
@@ -92,7 +91,7 @@ public class ARCReaderFactory implements ARCConstants {
         isReadable(arcFile);
         if(arcFile.getName().toLowerCase()
             .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
-        	
+            
             FileInputStream fis = new FileInputStream(arcFile);
             try {
                 GzipHeader gh = new GzipHeader(new FileInputStream(arcFile));
@@ -175,92 +174,64 @@ public class ARCReaderFactory implements ARCConstants {
         }
     }
 
-	/**
-	 * Uncompressed arc file reader.
-	 * @author stack
-	 */
-	private class UncompressedARCReader extends ARCReader {
-		
-		/**
-		 * Constructor.
-		 * @param arcfile Uncompressed arcfile to read.
+    /**
+     * Uncompressed arc file reader.
+     * @author stack
+     */
+    private class UncompressedARCReader extends ARCReader {
+        
+        /**
+         * Constructor.
+         * @param arcfile Uncompressed arcfile to read.
          * @throws IOException
-		 */
-		public UncompressedARCReader(File arcfile) throws IOException {
-			// Arc file has been tested for existence by time it has come
-			// to here.
+         */
+        public UncompressedARCReader(File arcfile) throws IOException {
+            // Arc file has been tested for existence by time it has come
+            // to here.
             this.in = getInputStream(arcfile);
-		}
-	}
-	
-	/**
-	 * Compressed arc file reader.
-	 * @author stack
-	 */
-	private class CompressedARCReader extends ARCReader {
+            initialize();
+        }
+    }
+    
+    /**
+     * Compressed arc file reader.
+     * @author stack
+     */
+    private class CompressedARCReader extends ARCReader {
 
-		/**
-		 * Constructor.
-		 * @param arcfile Compressed arcfile to read.
+        /**
+         * Constructor.
+         * @param arcfile Compressed arcfile to read.
          * @throws IOException
-		 */
-		public CompressedARCReader(File arcfile) throws IOException {
-			// Arc file has been tested for existence by time it has come
-			// to here.
-			this.in = new GzippedInputStream(getInputStream(arcfile));
-		}
-		
-        public boolean hasNext() {
-            if (this.currentRecord != null) {
-                // Call close on any extant record.  This will scoot us past
-                // any content not yet read.
-                try {
-                    cleanupCurrentRecord();
-                } catch (IOException e) {
-                    throw new NoSuchElementException(e.getMessage());
-                }
-            }
-            return ((GzippedInputStream)this.in).hasNext();
+         */
+        public CompressedARCReader(File arcfile) throws IOException {
+            // Arc file has been tested for existence by time it has come
+            // to here.
+            this.in = new GzippedInputStream(getInputStream(arcfile));
+            initialize();
         }
         
         /**
-         * Return the next record.
-         *
-         * @return Next ARCRecord else null if no more records left.  You need to
-         * cast result to ARCRecord.
-         */
-        public Object next() {
-            this.in = (InputStream)((GzippedInputStream)this.in).next();
-
-            try {
-                return createARCRecord(this.in,
-                    ((GzippedInputStream)this.in).getMemberOffset());
-            } catch (IOException e) {
-                throw new NoSuchElementException(e.getClass() + ": " +
-                    e.getMessage());
-            }
-        }
-
-        /**
-         * Create new arc record.
-         *
-         * Override so can attach a GZIPInputStream onto the passed stream.
-         *
-         * <p>Encapsulate housekeeping that has to do w/ creating a new record.
-         *
-         * <p>Call this method at end of constructor to read in the
-         * arcfile header.  Will be problems reading subsequent arc records
-         * if you don't since arcfile header has the list of metadata fields for
-         * all records that follow.
-         *
-         * @param is InputStream to use.
-         * @param offset Absolute offset into arc file.
+         * Get record at passed <code>offset</code>.
+         * 
+         * @param offset Byte index into arcfile at which a record starts.
+         * @return An ARCRecord reference.
          * @throws IOException
-         * @return An arc record.
          */
-		protected ARCRecord createARCRecord(InputStream is, long offset)
-				throws IOException {
-			return super.createARCRecord(is, offset);
-		}
-	}
+        public ARCRecord get(long offset) throws IOException {
+            cleanupCurrentRecord();
+            ((GzippedInputStream)this.in).gzipMemberSeek(offset);
+            return createARCRecord(this.in, offset);
+        }
+        
+        public boolean hasNext() {
+            try {
+                cleanupCurrentRecord();
+            } catch (IOException e) {
+                throw new NoSuchElementException(e.getMessage());
+            }
+            
+            return ((GzippedInputStream)this.in).hasNext();
+        }
+    }
 }

@@ -76,7 +76,7 @@ import org.archive.io.PositionableStream;
  * @author stack
  */
 public abstract class ARCReader implements ARCConstants, Iterator {
-	
+    
     /**
      * Assumed maximum size of a record meta header line.
      *
@@ -95,8 +95,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * even if the caller doesn't.  On construction, has the
      * arcfile header metadata.
      */
-	protected ARCRecord currentRecord = null;
-	
+    protected ARCRecord currentRecord = null;
+    
     /**
      * ARC file input stream.
      *
@@ -106,14 +106,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * PositionableStream interface.  Constructor should check.
      */
     protected InputStream in = null;
-	
-	/**
-	 * Channel we got the memory mapped byte buffer from.
-	 *
-	 * Keep around so can close when done.
-	 */
-	protected FileChannel channel = null;
-	
+    
+    /**
+     * Channel we got the memory mapped byte buffer from.
+     *
+     * Keep around so can close when done.
+     */
+    protected FileChannel channel = null;
+    
     /**
      * ARC file version.
      */
@@ -124,49 +124,71 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * the 3rd line.
      */
     private ArrayList headerFieldNameKeys = null;
+    
 
-
-	/**
-	 * Iterator can be used once only.
-	 * 
-	 * Get new instance of class if want to do a new iteration.
-	 * 
-	 * @return An iterator over the total arcfile.
-	 */
-	public Iterator iterator() {
-	    return (Iterator)this;
-	}
-	
-	/**
-	 * Get record at passed <code>offset</code>.
-	 * 
-	 * @param offset Byte index into arcfile at which a record starts.
-	 * @return An ARCRecord reference.
+    /**
+     * Convenience method used by subclass constructors.
      * @throws IOException
-	 */
-	public ARCRecord get(long offset) throws IOException {
-        cleanupCurrentRecord();
-        ((PositionableStream)this.in).seek(offset);
-        // Calling next looks weird but under the wraps it does the right thing.
-        return (ARCRecord)next();
+     */
+    protected void initialize() throws IOException {
+        // Read in the first record so headerFieldNameKeys gets populated.
+        // Always do it even if we're creating ARCReader just to do a get
+        // to get a record at any old offset.
+        createARCRecord(this.in, 0).close();
     }
-	
-	/**
-	 * Convenience method for constructors.
-	 * 
-	 * @param arcfile File to read.
+    
+    /**
+     * Rewinds stream to start of the arc file.
+     * @throws IOException if stream is not resettable.
+     */
+    protected void rewind() throws IOException {
+        cleanupCurrentRecord();
+        if (this.in instanceof PositionableStream) {
+            try {
+                ((PositionableStream)this.in).seek(0);
+            } catch (IOException e) {
+                throw new RuntimeException(e.getClass().getName() + ": " +
+                    e.getMessage());
+            }
+       } else {
+           throw new IOException("Stream is not resettable.");
+       }
+    }
+    
+    /**
+     * Get record at passed <code>offset</code>.
+     * 
+     * @param offset Byte index into arcfile at which a record starts.
+     * @return An ARCRecord reference.
+     * @throws IOException
+     */
+    public ARCRecord get(long offset) throws IOException {
+        cleanupCurrentRecord();
+        PositionableStream ps = (PositionableStream)this.in;
+        long currentOffset = ps.getFilePointer();
+        if (currentOffset != offset) {
+            currentOffset = offset;
+            ps.seek(offset);
+        }
+        return createARCRecord(this.in, currentOffset);
+    }
+    
+    /**
+     * Convenience method for constructors.
+     * 
+     * @param arcfile File to read.
      * @return InputStream to read from.
-	 * @throws IOException If failed open or fail to get a memory
-	 * mapped byte buffer on file.
-	 */
-	protected InputStream getInputStream(File arcfile) throws IOException {
-		FileInputStream fis = new FileInputStream(arcfile);
-		this.channel = fis.getChannel();
+     * @throws IOException If failed open or fail to get a memory
+     * mapped byte buffer on file.
+     */
+    protected InputStream getInputStream(File arcfile) throws IOException {
+        FileInputStream fis = new FileInputStream(arcfile);
+        this.channel = fis.getChannel();
         return new MappedByteBufferInputStream(
                 this.channel.map(FileChannel.MapMode.READ_ONLY, 0,
                         this.channel.size()));
                        
-	}
+    }
 
     /**
      * Cleanout the current record if there is one.
@@ -178,11 +200,11 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             this.currentRecord = null;
         }
     }
-	
-	/**
-	 * Call close when done so we can cleanup after ourselves.
+    
+    /**
+     * Call close when done so we can cleanup after ourselves.
      * @throws IOException
-	 */
+     */
     public void close() throws IOException {
         cleanupCurrentRecord();
         if (this.in != null) {
@@ -190,8 +212,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             this.in = null;
         }
         if (this.channel != null && this.channel.isOpen()) {
-        		this.channel.close();
-        		this.channel = null;
+                this.channel.close();
+                this.channel = null;
         }
     }
 
@@ -199,11 +221,43 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         super.finalize();
         close();
     }
-
+    
+    /**
+     * @return An iterator over the total arcfile.
+     */
+    public Iterator iterator() {
+            // Eat up any record outstanding.
+            try {
+                    cleanupCurrentRecord();
+            } catch (IOException e) {
+                    throw new RuntimeException(e.getClass().getName() + ": " +
+                    e.getMessage());
+            }
+        
+        // Now reset stream to the start of the arc file.
+        try {
+            rewind();
+        } catch (IOException e) {
+            throw new RuntimeException(e.getClass().getName() + ": " +
+                    e.getMessage());
+        }
+        return (Iterator)this;
+    }
+    
     /**
      * @return True if we have more ARC records to read.
      */
     public boolean hasNext() {
+        if (this.currentRecord != null) {
+            // Call close on any extant record.  This will scoot us past
+            // any content not yet read.
+            try {
+                cleanupCurrentRecord();
+            } catch (IOException e) {
+                throw new NoSuchElementException(e.getMessage());
+            }
+        }
+        
         try {
             return this.in.available() > 0;
         } catch (IOException e) {
@@ -218,31 +272,21 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * cast result to ARCRecord.
      */
     public Object next() {
-        if (this.currentRecord != null) {
-            // Call close on any extant record.  This will scoot us past
-            // any content not yet read.
-            try {
-                cleanupCurrentRecord();
-			} catch (IOException e) {
-				throw new NoSuchElementException(e.getMessage());
-			}
-        }
-
         try {
-			return createARCRecord(this.in, ((PositionableStream)this.in).getFilePointer());
-		} catch (IOException e) {
-			throw new NoSuchElementException(e.getClass() + ": " +
+            return get(((PositionableStream)this.in).getFilePointer());
+        } catch (IOException e) {
+            throw new NoSuchElementException(e.getClass() + ": " +
                 e.getMessage());
-		}
+        }
     }
 
     /* (non-Javadoc)
-	 * @see java.util.Iterator#remove()
-	 */
-	public void remove() {
-		throw new UnsupportedOperationException();
-	}
-	
+     * @see java.util.Iterator#remove()
+     */
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+    
     /**
      * Create new arc record.
      *
@@ -259,7 +303,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @throws IOException
      */
     protected ARCRecord createARCRecord(InputStream is, long offset)
-        		throws IOException {
+                throws IOException {
         ArrayList firstLineValues = new ArrayList(20);
         getTokenizedHeaderLine(is, firstLineValues);
         int bodyOffset = 0;
@@ -562,9 +606,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     break;
 
                 case 'o':
-                	    offset =
+                        offset =
                         Long.parseLong(cmdlineOptions[i].getValue());
-                	    break;
+                        break;
 
                 case 'n':
                     nohead = true;
@@ -578,8 +622,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
         if (offset >= 0) {
             if (cmdlineArgs.size() != 1) {
-        	    System.out.println("Error: Pass one arcfile only.");
-        	    usage(formatter, options, 1);
+                System.out.println("Error: Pass one arcfile only.");
+                usage(formatter, options, 1);
             }
             ARCReader arc = ARCReaderFactory.
                 get(new File((String)cmdlineArgs.get(0)));
@@ -594,7 +638,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
-                long start = System.currentTimeMillis();
+                // long start = System.currentTimeMillis();
                 ARCReader arc =
                     ARCReaderFactory.get(new File((String)i.next()));
                 for (Iterator ii = arc.iterator(); ii.hasNext();) {

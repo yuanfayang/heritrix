@@ -126,8 +126,11 @@ public class ARCWriterTest
         } else {
                 metaDatas = reader.validate(recordCount);
         }
+        reader.close();
         // Now, run through each of the records doing absolute get going from
-        // the end to start.
+        // the end to start.  Reopen the arc so no context between this test
+        // and the previous.
+        reader = ARCReaderFactory.get(arcFile);
         for (int i = metaDatas.size() - 1; i >= 0; i--) {
             ARCRecordMetaData meta = (ARCRecordMetaData)metaDatas.get(i);
             ARCRecord r = reader.get(meta.getOffset());
