@@ -273,15 +273,15 @@ public class UURI extends URI {
         if (uriSchemeSpecificPart != null &&
                 uriSchemeSpecificPart.startsWith(SLASH)) {
             if (uriPath != null) {
-
                 // Eliminate '..' if its first thing in the path.  IE does this.
                 uriPath = TextUtils.replaceFirst(DOTDOT, uriPath,
                     EMPTY_STRING);
-                
-                // Ensure root URLs end with '/'
-                if (uriPath == null || EMPTY_STRING.equals(uriPath)) {
-                    uriPath = SLASH;
-                }
+            }   
+            // Ensure root URLs end with '/': browsers always send "/"
+            // on the request-line, so we should consider "http://host" 
+            // to be "http://host/".
+            if (uriPath == null || EMPTY_STRING.equals(uriPath)) {
+                uriPath = SLASH;
             }
         }        
         
