@@ -231,6 +231,9 @@ public class SelfTestCase extends TestCase
         testNonNullExists(arcDir);
         String prefix = testNonNullNonEmpty((String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PREFIX));
+        // The renaming of the ARC seems to take time.  Wait around for a little
+        // while.
+        long start = System.currentTimeMillis();
         for (int i = 0; i < 10; i++) {
             File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
             if (arcs.length != 1) {
@@ -238,15 +241,19 @@ public class SelfTestCase extends TestCase
                     " instead " + Integer.toString(arcs.length) + " files.");
             }
             SelfTestCase.arcFile = arcs[0];
-            if (!arcFile.getName().endsWith(ARCWriter.OCCUPIED_SUFFIX)) {
-                // The arc has been renamed.  Its safe to leave this loop.
+            if (SelfTestCase.arcFile.exists()) {
                 break;
             }
             Thread.sleep(1000);
         }
-        SelfTestCase.readReader = ARCReaderFactory.get(arcFile);
+        if (!SelfTestCase.arcFile.exists()) {
+            throw new FileNotFoundException("Waited " +
+                (System.currentTimeMillis() - start) + " ms but no " +
+                SelfTestCase.arcFile.getAbsolutePath());
+        }
+        SelfTestCase.readReader = ARCReaderFactory.
+            get(SelfTestCase.arcFile);
         SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
-
         SelfTestCase.initialized = true;
     }
 
