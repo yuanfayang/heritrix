@@ -79,6 +79,18 @@ public class ARCWriterProcessor
      */
     public static final String ATTR_PATH ="path";
     
+    /**
+     * Key to get maximum pool size.
+     * 
+     * This key is for maximum ARC writers active in the pool of ARC writers. 
+     */
+    public static final String ATTR_POOL_MAX_ACTIVE = "pool-max-active";
+    
+    /**
+     * Key to get maximum wait on pool object before we give up and 
+     * throw IOException.
+     */
+    public static final String ATTR_POOL_MAX_WAIT = "pool-max-wait";
     
     /**
      * Max size we want ARC files to be (bytes).
@@ -87,27 +99,37 @@ public class ARCWriterProcessor
      * files will usually be bigger than maxSize; they'll be maxSize + length
      * to next boundary.
      */
-    protected int arcMaxSize = DEFAULT_MAX_ARC_FILE_SIZE;
+    private int arcMaxSize = DEFAULT_MAX_ARC_FILE_SIZE;
     
     /**
      * File prefix for ARCs.
      * 
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
-    protected String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
+    private String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
     
     /**
      * Use compression flag.
      *
      * Default is ARCConstants.DEFAULT_COMPRESS.
      */
-    protected boolean useCompression = DEFAULT_COMPRESS;
+    private boolean useCompression = DEFAULT_COMPRESS;
     
     /**
      * Where to drop ARC files.
      */
-    protected String outputDir = "";
+    private String outputDir = "";
 
+    /**
+     * Maximum active elements in the ARCWriterPool.
+     */
+    private int poolMaximumActive = ARCWriterPool.DEFAULT_MAX_ACTIVE;
+    
+    /**
+     * Maximum time to wait on pool elements.
+     */
+    private int poolMaximumWait = ARCWriterPool.DEFAULT_MAXIMUM_WAIT;
+        
     /**
      * Reference to an ARCWriter.
      */
@@ -133,9 +155,16 @@ public class ARCWriterProcessor
                 new Integer(arcMaxSize)));
         addElementToDefinition(
             new SimpleType(ATTR_PATH, "Where to store arc files", outputDir));
+        addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
+            "Maximum active ARC writers in pool",
+            new Integer(poolMaximumActive)));
+        addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
+            "Maximum time to wait on ARC writer pool element (milliseconds)",
+            new Integer(poolMaximumWait)));        
     }
 
-    public void initialize(CrawlController c) throws AttributeNotFoundException {
+    public void initialize(CrawlController c) throws AttributeNotFoundException
+    {
         super.initialize(c);
         
         // readConfiguration populates settings used creating ARCWriter.
@@ -169,6 +198,10 @@ public class ARCWriterProcessor
         setArcPrefix((String) getAttribute(ATTR_PREFIX));
         setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
         setOutputDir((String) getAttribute(ATTR_PATH));
+        setPoolMaximumActive(
+            ((Integer)getAttribute(ATTR_POOL_MAX_ACTIVE)).intValue());
+        setPoolMaximumWait(
+            ((Integer)getAttribute(ATTR_POOL_MAX_WAIT)).intValue());
     }
 
     /**
@@ -195,8 +228,10 @@ public class ARCWriterProcessor
             } else if (scheme.equals("http")) {
                 writeHttp(curi);
             }                      
-        } catch (IOException e) {
-              e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            curi.addLocalizedError(this.getName(), e, "WriteARCRecord");
         }
     }    
     
@@ -328,5 +363,37 @@ public class ARCWriterProcessor
             }
         }
         outputDir = newDir.getAbsolutePath()+ File.separatorChar;
+    }
+    
+    /**
+     * @return Returns the poolMaximumActive.
+     */
+    public int getPoolMaximumActive()
+    {
+        return this.poolMaximumActive;
+    }
+
+    /**
+     * @param poolMaximumActive The poolMaximumActive to set.
+     */
+    public void setPoolMaximumActive(int poolMaximumActive)
+    {
+        this.poolMaximumActive = poolMaximumActive;
+    }
+
+    /**
+     * @return Returns the poolMaximumWait.
+     */
+    public int getPoolMaximumWait()
+    {
+        return this.poolMaximumWait;
+    }
+
+    /**
+     * @param poolMaximumWait The poolMaximumWait to set.
+     */
+    public void setPoolMaximumWait(int poolMaximumWait)
+    {
+        this.poolMaximumWait = poolMaximumWait;
     }
 }
