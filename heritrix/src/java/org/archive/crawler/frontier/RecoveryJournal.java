@@ -75,7 +75,7 @@ public class RecoveryJournal {
      * @throws IOException
      */
     public RecoveryJournal(String path, String filename) throws IOException {
-        out = new OutputStreamWriter(new GZIPOutputStream(
+        this.out = new OutputStreamWriter(new GZIPOutputStream(
                 new BufferedOutputStream(new FileOutputStream(new File(path,
                         filename + ".gz")))));
     }
@@ -131,7 +131,7 @@ public class RecoveryJournal {
 
     private void write(String string) {
         try {
-            out.write(string);
+            this.out.write(string);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -139,7 +139,10 @@ public class RecoveryJournal {
 
     /**
      * Utility method for scanning a recovery journal and applying it to
-     * a Frontier. 
+     * a Frontier.
+     * 
+     * @param pathToLog Recover log path.
+     * @param frontier Frontier reference.
      * 
      * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
      */
@@ -164,8 +167,10 @@ public class RecoveryJournal {
             }
         } catch (EOFException e1) {
             // no problem; end of recovery journal
+        } finally {
+            reader.close();
         }
-        reader.close();
+        
         // scan log for all 'F+' lines: if not alreadyIncluded, schedule for
         // visitation
         reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(
@@ -197,9 +202,9 @@ public class RecoveryJournal {
             }
         } catch (EOFException e) {
             // no problem: untidy end of recovery journal
+        } finally {
+        	    reader.close(); 
         }
-        reader.close();
-
     }
 
     /**
@@ -207,8 +212,8 @@ public class RecoveryJournal {
      */
     public void close() {
         try {
-            out.flush();
-            out.close();
+            this.out.flush();
+            this.out.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
