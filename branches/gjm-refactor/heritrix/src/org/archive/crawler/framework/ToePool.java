@@ -40,7 +40,8 @@ public class ToePool {
 		}
 		// nothing available
 		try {
-			wait();
+			System.out.println("no ToeThreads available");
+			wait(2000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
