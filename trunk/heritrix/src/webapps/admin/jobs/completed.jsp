@@ -19,8 +19,11 @@
 
 <%@include file="/include/head.jsp"%>
 
-		<table border="0"> 
+		<table border="0" cellspacing="0" cellpadding="1"> 
 			<tr>
+			    <th>
+			        UID
+			    </th>
 				<th>
 					Job name
 				</th>
@@ -28,33 +31,44 @@
 					Status
 				</th>
 				<th>
-					Options
+				    Options
 				</th>
 			</tr>
 			<%
+			    boolean alt = true;
 				for(int i=0 ; i	< jobs.size() ; i++)
 				{
 					CrawlJob job = (CrawlJob)jobs.get(i);
 			%>		
-					<tr>
+					<tr <%=alt?"bgcolor='#EEEEFF'":""%>>
 						<td>
-							<%=job.getJobName()%>
+                            <code><%=job.getUID()%></code>&nbsp;&nbsp;
 						</td>
 						<td>
-							<%=job.getStatus()%>
+							<%=job.getJobName()%>&nbsp;&nbsp;
 						</td>
 						<td>
-							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
-                            <a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
-							<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
-                            <a href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
-                            <a href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
-                            <a href="/admin/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
-                            <a href="/admin/jobs/completed.jsp?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
+							<i><%=job.getStatus()%></i>&nbsp;&nbsp;&nbsp;
+						</td>
+						<td>
+							<a style="color: #003399;" class="underLineOnHover" target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
+							&nbsp;
+                            <a style="color: #003399;" class="underLineOnHover" href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
+                            &nbsp;
+							<a style="color: #003399;" class="underLineOnHover" href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
+                            &nbsp;
+                            <a style="color: #003399;" class="underLineOnHover" href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
+                            &nbsp;
+                            <a style="color: #003399;" class="underLineOnHover" href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
+                            &nbsp;
+                            <a style="color: #003399;" class="underLineOnHover" href="/admin/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
+                            &nbsp;
+                            <a style="color: #003399;" class="underLineOnHover" href="/admin/jobs/completed.jsp?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
+                            &nbsp;
 						</td>
 					</tr>
 					<% if(job.getErrorMessage()!=null){ %>
-					<tr>
+					<tr <%=alt?"bgcolor='#EEEEFF'":""%>>
 						<td>
 						</td>
 						<td colspan="2">
@@ -63,6 +77,7 @@
 					</tr>
 					<% } %>
 			<%
+                    alt = !alt;
 				}
 			%>
 		</table>
