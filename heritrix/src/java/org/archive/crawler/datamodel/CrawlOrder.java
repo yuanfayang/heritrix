@@ -56,6 +56,7 @@ public class CrawlOrder extends CrawlerModule {
     public static final String ATTR_NAME = "crawl-order";
     public static final String ATTR_SETTINGS_DIRECTORY = "settings-directory";
     public static final String ATTR_DISK_PATH = "disk-path";
+    public static final String ATTR_SCRATCH_PATH = "scratch-path";
     public static final String ATTR_RECOVER_PATH = "recover-path";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
     public static final String ATTR_MAX_DOCUMENT_DOWNLOAD = "max-document-download";
@@ -96,8 +97,16 @@ public class CrawlOrder extends CrawlerModule {
         e.setExpertSetting(true);
         
         e = addElementToDefinition(new SimpleType(ATTR_DISK_PATH,
-                "Directory relative to the crawl order where logs, arcs and"
-                        + " other run time files will be kept.", "disk"));
+                "Directory where logs, arcs and other run time files will " +
+                "be kept. If this path is a relative path, it will be " +
+                "relative to the crawl order.", "disk"));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+
+        e = addElementToDefinition(new SimpleType(ATTR_SCRATCH_PATH,
+                "Directory where temporary files will be kept. If this path " +
+                "is a relative path, it will be relative to the 'disk-path'.",
+                "scratch"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
