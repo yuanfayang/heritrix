@@ -1024,6 +1024,17 @@ public class Foo extends ModuleType {
         </listitem>
       </varlistentry>
     </variablelist>
+    <sect2 id="urischemes">
+      <title>Supported Schemes (UnsupportedUriSchemeException)</title>
+      <para>A property in <literal>heritrix.properties</literal> 
+      named <literal>org.archive.crawler.datamodel.UURIFactory.schemes</literal>
+      lists supported schemes.  Any scheme not listed here will cause an
+      UnsupportedUriSchemeException which will be reported in
+      uri-errors.log with a 'Unsupported scheme' prefix.  If you add a
+      fetcher for a scheme, you'll need to add to this list of supported
+      schemes (Later, Heritrix can ask its fetchers what schemes are
+      supported).</para>
+    </sect2>
 
     <sect2>
       <title>The CrawlURI's Attribute list</title>
