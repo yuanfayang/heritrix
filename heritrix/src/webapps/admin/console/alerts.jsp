@@ -48,6 +48,17 @@
 		document.frmAlerts.action.value="markasread";
 		document.frmAlerts.submit();
 	}
+	
+	function setAll(val){
+        boxes = document.frmAlerts.elements;
+        for( i = 0 ; i < boxes.length ; i++){
+            boxes[i].checked = val;
+        }
+	}
+	
+	function clearAll(){
+	
+	}
 </script>
 
 <p>
@@ -57,43 +68,47 @@
 <% } else { %>
 	<form name="frmAlerts" method="post" action="alerts.jsp">
 	<input type="hidden" name="action">
-	<table cellspacing="1" cellpadding="0" border="0">
-		<tr>
-			<th>
-			</th>
-			<th>
+	<table cellspacing="1" cellpadding="0" border="0" >
+		<THEAD>
+		<tr height="18">
+            <th bgcolor="#003399" style="color:#FFFFFF" colspan="2">
 				&nbsp;Time of alert&nbsp;
 			</th>
-			<th>
+			<th bgcolor="#003399" style="color:#FFFFFF">
                 &nbsp;Level&nbsp;
-			<th>
+			<th bgcolor="#003399" style="color:#FFFFFF">
 				&nbsp;Alert title&nbsp;
 			</th>
 		</tr>
+		</THEAD>
+		<TBODY>
 		<%
 			for(int i = alerts.size()-1 ; i >= 0 ; i--)
 			{
 				Alert alert = (Alert)alerts.get(i);
 		%>
-				<tr bgcolor="<%=levelColors.get(alert.getLevel())%>" <%=alert.isNew()?"style='font-weight: bold'":""%>>
+				<tr bgcolor="<%=levelColors.get(alert.getLevel())%>" <%=alert.isNew()?"style='font-weight: bold'":""%> valign="middle">
 					<td nowrap>
 						&nbsp;<input name="alerts" value="<%=alert.getID()%>" type="checkbox">&nbsp;
-					</td>
-                    <td nowrap>
-                        &nbsp;<a style="color: #003399; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=sdf.format(alert.getTimeOfAlert())%> GMT</a>&nbsp;
                     </td>
                     <td nowrap>
-                        &nbsp;<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getLevel().getName()%></a>&nbsp;
+                        &nbsp;&nbsp;<code><a style="color: #003399; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=sdf.format(alert.getTimeOfAlert())%> GMT</a></code>&nbsp;
+                    </td>
+                    <td nowrap>
+                        &nbsp;<code><a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getLevel().getName()%></a></code>&nbsp;
                     </td>
 					<td nowrap>
-						&nbsp;<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a>&nbsp;
+						&nbsp;<code><a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a></code>&nbsp;
 					</td>
 				</tr>
 		<%
 			}
 		%>
+		</TBODY>
 	</table>
 	</form>
+	<p style="font-size: 10px;">
+	   <a style="color: #003399; text-decoration: none" href="javascript:setAll(true)">Check All</a> - <a style="color: #003399; text-decoration: none" href="javascript:setAll(false)">Clear All</a>
 	<p>
 		<input type="button" value="Mark selected as read" onClick="doMarkAllAsRead()">
 		<input type="button" value="Delete selected" onClick="doDeleteAll()">
