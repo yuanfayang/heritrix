@@ -28,11 +28,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
-import org.archive.util.SurtPrefixSet;
 import org.archive.util.SURT;
+import org.archive.util.SurtPrefixSet;
 /**
  * A filter which tests a URI against a set of SURT 
  * prefixes, and if the URI's prefix is in the set,
@@ -77,8 +76,8 @@ public class SurtPrefixFilter extends Filter {
 
     private void readPrefixes() {
         surtPrefixes = new SurtPrefixSet(); 
-        String sourcePath = (String) getAttributeOrNull(ATTR_SURTS_SOURCE_FILE,
-                (CrawlURI) null);
+        String sourcePath = (String) getUncheckedAttribute(null,
+                ATTR_SURTS_SOURCE_FILE);
         File source = new File(sourcePath);
         if (!source.isAbsolute()) {
             source = new File(getSettingsHandler().getOrder()

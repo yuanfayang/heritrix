@@ -28,7 +28,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -108,8 +107,8 @@ public class SurtPrefixScope extends RefinedScope {
         FileReader fr = null;
         
         // read SURTs from file, if appropriate 
-        String sourcePath = (String) getAttributeOrNull(ATTR_SURTS_SOURCE_FILE,
-                (CrawlURI) null);
+        String sourcePath = (String) getUncheckedAttribute(null,
+                ATTR_SURTS_SOURCE_FILE);
         if(sourcePath.length()>0) {
             File source = new File(sourcePath);
             if (!source.isAbsolute()) {
@@ -131,7 +130,8 @@ public class SurtPrefixScope extends RefinedScope {
         }
         
         // interpret seeds as surts, if appropriate
-        if(((Boolean)getAttributeOrNull(ATTR_SEEDS_AS_SURT_PREFIXES, null)).booleanValue()) {
+        if (((Boolean) getUncheckedAttribute(null, ATTR_SEEDS_AS_SURT_PREFIXES))
+                .booleanValue()) {
             try {
                 fr = new FileReader(getSeedfile());
                 try {
@@ -146,8 +146,8 @@ public class SurtPrefixScope extends RefinedScope {
         }      
 
         // dump surts to file, if appropriate
-        String dumpPath = (String) getAttributeOrNull(ATTR_SURTS_DUMP_FILE,
-                (CrawlURI) null);
+        String dumpPath = (String) getUncheckedAttribute(null,
+                ATTR_SURTS_DUMP_FILE);
         if(dumpPath.length()>0) {
             File dump = new File(dumpPath);
             if (!dump.isAbsolute()) {
