@@ -62,7 +62,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * <li> (1) whole &lt;script&gt;...&lt;/script&gt; or
      * <li> (2) &lt;style&gt;...&lt;/style&gt; or
      * <li> (3) &lt;meta ...&gt; or
-     * <li> (3) any other open-tag with at least one attribute
+     * <li> (4) any other open-tag with at least one attribute
      * (eg matches "&lt;a href='boo'&gt;" but not "&lt;/a&gt;" or "&lt;br&gt;")
      * <p>
      * groups:
@@ -281,8 +281,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
         String code = cs.toString();
-        //code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-        code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
+        // escaping is done by ExtractorJS
+        // code = TextUtils.replaceAll(ESCAPED_AMP, code, "&"); 
         
         this.numberOfLinksExtracted +=
             ExtractorJS.considerStrings(curi, code, false);
