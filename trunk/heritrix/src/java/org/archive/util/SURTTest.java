@@ -69,6 +69,10 @@ public class SURTTest extends TestCase {
 
     public void testMisc() throws URIException {
         assertEquals("", 
+                "http://(org,archive,www,)/",
+                SURT.fromURI("http://www.archive.org"));
+
+        assertEquals("", 
                 "http://(org,archive,www,)/movies/movies.php",
                 SURT.fromURI("http://www.archive.org/movies/movies.php"));
 

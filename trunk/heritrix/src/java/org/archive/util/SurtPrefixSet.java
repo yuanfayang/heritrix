@@ -144,14 +144,13 @@ public class SurtPrefixSet extends TreeSet {
      *    (1) removing the last path component, if any
      *        (anything after the last '/', if there are
      *        at least 3 '/'s)
-     *    (2) removing a trailing ',)', if present, opening
-     *        the possibility of proper subdomains and 
-     *        numbered sibling domains like www3. (This
-     *        means that the presence or absense of a
-     *        trailing '/' after a hostname is significant
-     *        for the how the SURT prefix is created, even
-     *        though it is not signficant for the URI's
-     *        treatment as a seed.)
+     *    (2) removing a trailing ')', if present, opening
+     *        the possibility of proper subdomains. (This
+     *        means that the presence or absence of a
+     *        trailing '/' after a hostname in a seed list
+     *        is significant for the how the SURT prefix is 
+     *        created, even though it is not signficant for 
+     *        the URI's treatment as a seed.)
      * </pre>
      *
      * @param s String to work on.
@@ -162,7 +161,7 @@ public class SurtPrefixSet extends TreeSet {
         s = s.replaceAll("^(.*//.*/)[^/]*","$1");
         // Strip trailing ",)", if present and NO path (no 3rd slash).
         if (!s.endsWith("/")) {
-            s = s.replaceAll("^(.*),\\)","$1");
+            s = s.replaceAll("^(.*)\\)","$1");
         }
         return s;
     }
