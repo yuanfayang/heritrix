@@ -51,14 +51,6 @@ public interface FrontierMarker {
     public long getNextItemNumber();
 
     /**
-     * If true then this marker is limited to those parts of the frontier
-     * considered to be 'cached' (in fast access medium, such as memory,
-     * rather then slow access, such as disk).
-     * @return is marker limited to cached URIs
-     */
-    public boolean isCacheOnly();
-
-    /**
      * Returns false if no more URIs can be found matching the expression
      * beyond those already covered. True otherwise.
      * @return Are there any more matches.
