@@ -114,7 +114,7 @@ public class MapType extends ComplexType {
      * @throws AttributeNotFoundException is thrown if there is no attribute
      *         with the submitted name.
      */
-    public Type removeElement(CrawlerSettings settings, String name)
+    public Object removeElement(CrawlerSettings settings, String name)
       throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).removeElement(name);

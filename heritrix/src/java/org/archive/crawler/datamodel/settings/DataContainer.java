@@ -287,7 +287,7 @@ public class DataContainer extends HashMap {
      * @throws AttributeNotFoundException is thrown if there is no attribute
      *         with the submitted key.
      */
-    protected Type removeElement(String key) throws AttributeNotFoundException {
+    protected Object removeElement(String key) throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);
         if (element == null) {
             throw new AttributeNotFoundException(key);
@@ -295,7 +295,7 @@ public class DataContainer extends HashMap {
 
         attributes.remove(element);
         attributeNames.remove(element.getName());
-        return (Type) super.remove(element.getName()); 
+        return super.remove(element.getName()); 
     }
     
     /** Get the ComplexType for which this DataContainer keeps data.
