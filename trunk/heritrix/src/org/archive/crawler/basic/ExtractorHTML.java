@@ -27,29 +27,29 @@ import org.archive.crawler.framework.Processor;
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTML");
 	
-	// TODO: correct this so that it handles name= and content= in alternate order, with intervening spaces, etc.
-	static Pattern META_ROBOTS_EXTRACTOR = Pattern.compile(
-	 "(?i)<meta\\s[^<]*?name=(?:\"|')robots(?:\"|')[^<]*?(?:content=(?:\"|')([^\"^']*)(?:\"|'))[^<]*>"
-	);
-	static Pattern BASE_EXTRACTOR = Pattern.compile(
-	 "(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
-	);
-	static Pattern LINK_EXTRACTOR = Pattern.compile(
-	 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
-	);
-	static Pattern EMBED_EXTRACTOR = Pattern.compile(
-	 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
-	);
+//	// TODO: correct this so that it handles name= and content= in alternate order, with intervening spaces, etc.
+//	static Pattern META_ROBOTS_EXTRACTOR = Pattern.compile(
+//	 "(?i)<meta\\s[^<]*?name=(?:\"|')robots(?:\"|')[^<]*?(?:content=(?:\"|')([^\"^']*)(?:\"|'))[^<]*>"
+//	);
+//	static Pattern BASE_EXTRACTOR = Pattern.compile(
+//	 "(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+//	);
+//	static Pattern LINK_EXTRACTOR = Pattern.compile(
+//	 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+//	);
+//	static Pattern EMBED_EXTRACTOR = Pattern.compile(
+//	 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+//	);
 
     // this pattern extracts either (1) whole <script>...</script>
     // ranges; or (2) any other open-tag with at least one attribute
     // (eg matches "<a href='boo'>" but not "</a>" or "<br>")
 	static Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
-	 "(?is)<(?:(script\\s.*?>.*?</script>)|((?:(base)|(meta)|(\\w+))\\s+.*?)>)");
+	 "(?is)<(?:(script.*?>.*?</script>)|((?:(base)|(meta)|(\\w+))\\s+.*?)>)");
 	// this pattern extracts 'href' or 'src' attributes from 
 	// any open-tag innards matched by the above
 	static Pattern RELEVANT_ATTRIBUTE_EXTRACTOR = Pattern.compile(
-	 "(?is)(\\w+)\\s+.*?(?:(href)|(src))\\s*=(?:(?:\\s*\"(.+?)\")|(?:\\s*'(.+?)')|(\\S+))");
+	 "(?is)(\\w+)(?:\\s+|(?:\\s.*?\\s))(?:(href)|(src))\\s*=(?:(?:\\s*\"(.+?)\")|(?:\\s*'(.+?)')|(\\S+))");
 	// this pattern extracts 'robots' attributes
 	static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 	 "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
