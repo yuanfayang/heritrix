@@ -79,11 +79,15 @@
         <copy todir="${maven.build.dir}/webapps" filtering="true">
           <fileset dir="${maven.src.dir}/webapps">
             <exclude name="**/*.gif"/>
+            <exclude name="**/*.jpg"/>
+            <exclude name="**/*.png"/>
           </fileset>
         </copy>
         <copy todir="${maven.build.dir}/webapps" filtering="false">
           <fileset dir="${maven.src.dir}/webapps">
             <include name="**/*.gif"/>
+            <include name="**/*.jpg"/>
+            <include name="**/*.png"/>
           </fileset>
         </copy>
 
