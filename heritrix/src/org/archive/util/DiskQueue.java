@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.io.DiskBackedByteQueue;
+import org.archive.io.NullOutputStream;
 
 /**
  * Queue which stores all its objects to disk using object
@@ -35,6 +37,7 @@ public class DiskQueue implements Queue {
 	String name;
 	long length;
 	DiskBackedByteQueue bytes;
+	ObjectOutputStream testStream; // to verify that object is serializable
 	ObjectOutputStream tailStream;
 	ObjectInputStream headStream;
 	
@@ -50,6 +53,7 @@ public class DiskQueue implements Queue {
 	
 	private void lateInitialize() throws FileNotFoundException, IOException {
 		bytes = new DiskBackedByteQueue(scratchDir,this.name);
+		testStream = new ObjectOutputStream(new NullOutputStream());
 		tailStream = new ObjectOutputStream(bytes.getTailStream());
 		headStream = new ObjectInputStream(bytes.getHeadStream());
 	}
@@ -63,13 +67,16 @@ public class DiskQueue implements Queue {
 			if(bytes==null) {
 				lateInitialize();
 			}
+			// TODO: optimize this, for example by serializing to buffer, then writing to disk on success
+			testStream.writeObject(o);
+			testStream.reset();
 			tailStream.writeObject(o);
 			tailStream.reset(); // forget state with each enqueue
+			length++;
 		} catch (IOException e) {
 			// TODO convert to runtime exception?
-			e.printStackTrace();
+			DevUtils.logger.log(Level.SEVERE,"enqueue("+o+")"+DevUtils.extraInfo(),e);
 		}
-		length++;
 	}
 
 	/* (non-Javadoc)
