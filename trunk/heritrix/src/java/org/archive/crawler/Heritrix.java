@@ -101,10 +101,12 @@ public class Heritrix {
         boolean noWUI = false;
         int port = -1;
         String crawlOrderFile = null;
+        String admin = "admin:letmein";
+        String user = "user:archive";
         // 0 = no crawl order specified, 1 = start, 2 = wait, 3 = set as default.
         int crawllaunch = -1; 
         
-        if(args.length > 3){
+        if(args.length > 7){
             // Too many arguments. Display usage
             usage();
             return;
@@ -172,6 +174,32 @@ public class Heritrix {
                             crawllaunch = 3;
                         }
                     }
+                    else if(arg.equals("--admin")){
+                    	// Overwriting the default admin login options.
+                    	if(args[i+1].indexOf("-") != 0 && args[i+1].indexOf(":")>0 && args[i+1].indexOf(":") < args[i+1].length()){
+							// Ok everything looks right. Increment i and overwrite admin login.
+							admin = args[++i];
+                    	} else {
+							// The next argument sould be the new login info but it doesn't look right.
+							// Should not start with "-" and must contain ":" somewhere (but not at the 
+							// front of the string or at the end.
+							usage();
+							return;
+                    	}
+                    }
+					else if(arg.equals("--user")){
+						// Overwriting the default user login options.
+						if(args[i+1].indexOf("-") != 0 && args[i+1].indexOf(":")>0 && args[i+1].indexOf(":") < args[i+1].length()){
+							// The next argument sould be the new login info but it doesn't look right.
+							// Should not start with "-" and must contain ":" somewhere (but not at the 
+							// front of the string or at the end.
+							usage();
+							return;
+						} else {
+							// Ok everything looks right. Increment i and overwrite user login.
+							admin = args[++i];
+						}
+					}
                     else{
                         //Unknown or -?
                         usage();
@@ -228,7 +256,7 @@ public class Heritrix {
                 launch(crawlOrderFile);
             }
             else{
-                launch(port,crawlOrderFile,crawllaunch);
+                launch(port,crawlOrderFile,crawllaunch,admin,user);
             }
         }
     }
@@ -296,10 +324,18 @@ public class Heritrix {
      *                        Any other = no crawl order specified)
      */
     protected static void launch(int port, String crawlOrderFile,
-                                 int crawllaunch)
+                                 int crawllaunch, String admin, String user)
     {
         handler = new SimpleHandler();
         String status = "";
+        
+        // Deconstruction of login permissions.
+        String adminUN = admin.substring(0,admin.indexOf(":"));
+        String adminPW = admin.substring(admin.indexOf(":")+1);
+        User.addLogin(adminUN, adminPW,User.ADMINISTRATOR);
+        String userUN = user.substring(0,user.indexOf(":"));
+        String userPW = user.substring(user.indexOf(":")+1);
+		User.addLogin(userUN, userPW,User.USER);
 
         if(crawllaunch == 3){
             // Set crawl order file as new default 
@@ -340,9 +376,9 @@ public class Heritrix {
         }
         System.out.println(
       " operator login/password = "
-        + User.getOperatorUsername()
+        + adminUN
         + "/"
-        + User.getOperatorPassword());
+        + adminPW);
         System.out.println(status);
     }
 
@@ -353,11 +389,14 @@ public class Heritrix {
      * Usage: java org.archive.crawler.Heritrix --help
      * Usage: java org.archive.crawler.Heritrix --no-wui ORDER.XML
      * Usage: java org.archive.crawler.Heritrix [--port=PORT] \
+     *       [--admin username:password] [--user username:password] \ 
      *       [ORDER.XML [--start|--wait|--set]]
      * Options:
      * --help|-h   Prints this message.
      * --no-wui    Start crawler without a web User Interface.
      * --port      PORT is port the web UI runs on. Default: 8080.
+     * --admin     Set the username and password for the WUI administrator.
+     * --user      Set the username and password for the WUI lesser access. 
      * ORDER.XML   The crawl to launch. Optional if '--no-wui' NOT specified.
      * --start     Start crawling using specified ORDER.XML:
      * --wait      Load job specified by ORDER.XML but do not start. Default.
@@ -372,13 +411,16 @@ public class Heritrix {
         System.out.println(" --no-wui ORDER.XML");
         System.out.print("Usage: java org.archive.crawler.Heritrix");
         System.out.println(" [--port=PORT] \\");
-        System.out.println("\t\t\t[ORDER.XML [--start|--wait|--set]]");
+        System.out.println("\t\t\t[--admin username:password] [--user username:password] \\");
+		System.out.println("\t\t\t[ORDER.XML [--start|--wait|--set]]");
         System.out.println("Options:");
         System.out.println("  --help|-h\tPrints this message.");
         System.out.print("  --no-wui\t");
         System.out.println("Start crawler without a web User Interface.");
-        System.out.print("  --port\t");
-        System.out.println("PORT is port the web UI runs on. Default: 8080.");
+		System.out.print("  --admin\t");
+		System.out.println("Set the username and password for the WUI administrator.");
+		System.out.print("  --user\t");
+		System.out.println("Set the username and password for the WUI lesser access.");
         System.out.print("  ORDER.XML\t");
         System.out.print("The crawl to launch. Optional if '--no-wui'");
         System.out.println(" NOT specified.");
