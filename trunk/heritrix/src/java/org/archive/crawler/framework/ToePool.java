@@ -95,7 +95,10 @@ public class ToePool extends ThreadGroup {
     	Histotable ht = new Histotable();
         Thread[] toes = getToes();
         for (int i = 0; i < toes.length; i++) {
-            // TODO: protect against non-ToeThread group members
+
+            if(!(toes[i] instanceof ToeThread)) {
+                continue;
+            }
             ToeThread tt = (ToeThread)toes[i];
             if(tt!=null) {
                 ht.tally(tt.getStep());
@@ -142,7 +145,9 @@ public class ToePool extends ThreadGroup {
         Thread[] toes = this.getToes();
         synchronized (toes) {
             for (int i = 0; i < toes.length ; i++) {
-                // TODO: protect against non-ToeThread group members
+                if(!(toes[i] instanceof ToeThread)) {
+                    continue;
+                }
                 ToeThread tt = (ToeThread)toes[i];
                 if(tt!=null) {
                     rep.append("   ToeThread #" + tt.getSerialNumber() + "\n");
