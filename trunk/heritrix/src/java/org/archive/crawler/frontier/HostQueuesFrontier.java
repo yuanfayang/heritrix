@@ -95,10 +95,9 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  *
  * @author Gordon Mohr
  */
-public class HostQueuesFrontier
-extends ModuleType
+public class HostQueuesFrontier extends ModuleType
 implements Frontier, FetchStatusCodes, CoreAttributeConstants,
-        CrawlStatusListener, HasUriReceiver {
+HasUriReceiver,  CrawlStatusListener {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(HostQueuesFrontier.class, 1);
@@ -176,7 +175,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * True if we're to use the BDB already seen implementation
      * in place of the in-memory already included set.
      * 
-     * @see http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen
+     * @see <a href="http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen">AlreadySeen</a>
      */
     private static String ATTR_USE_BDB_ALREADY_INCLUDED =
         "use-bdb-already-included";
@@ -261,7 +260,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 " politeness.");
     }
 
-    public HostQueuesFrontier(String name, String description) {
+    public HostQueuesFrontier(String q, String description) {
         //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         //therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
@@ -390,6 +389,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public void initialize(CrawlController c)
     throws FatalConfigurationException, IOException {
         this.controller = c;
+        c.addCrawlStatusListener(this);
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
             "alreadyIncluded");
         
@@ -422,7 +422,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @throws IOException If problems occur creating files on disk
      */
     protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
-    throws IOException, FatalConfigurationException {
+    throws IOException {
         Boolean b = DEFAULT_USE_BDB_ALREADY_INCLUDED;
         try {
             b = (Boolean)getAttribute(null, ATTR_USE_BDB_ALREADY_INCLUDED);
@@ -565,8 +565,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * pending queue.
      *
      * @return next CrawlURI to be processed. Or null if none is available.
+     * @throws InterruptedException
+     * @throws EndedException
      *
-     * @see org.archive.crawler.framework.Frontier#next(int)
+     * @see org.archive.crawler.framework.Frontier#next()
      */
     synchronized public CrawlURI next()
     throws InterruptedException, EndedException {
@@ -617,21 +619,20 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 if (currentQueueKey.equals(curi.getClassKey())) {
                     // curi was in right queue, emit
                     return emitCuri(curi);
-                } else {
-                    // URI's assigned queue has changed since it
-                    // was queued (eg because its IP has become
-                    // known). 
-                    // update old queue
-                    KeyedQueue kq = (KeyedQueue)curi.getHolder();
-                    if(kq.getState() == URIWorkQueue.EMPTY) {
-                        // source queue depleted
-                        readyClassQueues.removeFirst();
-                        updateQ(kq); // discard
-                    }
-                    // send to new queue
-                    curi.setClassKey(currentQueueKey);
-                    enqueueToKeyed(curi);
                 }
+                // URI's assigned queue has changed since it
+                // was queued (eg because its IP has become
+                // known). 
+                // update old queue
+                KeyedQueue kq = (KeyedQueue)curi.getHolder();
+                if(kq.getState() == URIWorkQueue.EMPTY) {
+                    // source queue depleted
+                    readyClassQueues.removeFirst();
+                    updateQ(kq); // discard
+                }
+                // send to new queue
+                curi.setClassKey(currentQueueKey);
+                enqueueToKeyed(curi);
             }
             
             // See if URIs exhausted
@@ -1057,7 +1058,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * hex digits of the key string's java hashcode. 
      * 
      * @param key
-     * @return
+     * @return Scratch directory.
      */
     private File scratchDirFor(String key) {
         String hex = Integer.toHexString(key.hashCode());
@@ -1076,7 +1077,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * to create the KeyedQueue will have been logged.
      *
      * @param curi The CrawlURI
-     * @return wether CrawlURI was ssuccessfully enqueued
      */
     protected void enqueueToKeyed(CrawlURI curi) {
         URIWorkQueue kq = keyedQueueFor(curi);
@@ -1111,7 +1111,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * discards queue if discardable.
      *
      * @param kq Queue to update.
-     * @throws InterruptedException
      */
     private void updateQ(URIWorkQueue kq) {
         Object state = kq.getState();
@@ -1409,7 +1408,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
-        return alreadyIncluded.count();
+        return (this.alreadyIncluded != null)? this.alreadyIncluded.count(): 0;
     }
 
     /** (non-Javadoc)
@@ -1690,44 +1689,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
     }
 
-    /** (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-     */
-    public void crawlPausing(String statusMessage) {
-        // We are not interested in the crawlPausing event
-    }
-
-    /** (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-     */
-    public void crawlPaused(String statusMessage) {
-        // We are not interested in the crawlPaused event
-    }
-
-    /** (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-     */
-    public void crawlResuming(String statusMessage) {
-        // We are not interested in the crawlResuming event
-    }
-
-    /** (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
-     */
-    public void crawlEnding(String sExitMessage) {
-        // We are not interested in the crawlEnding event
-    }
-
-    /** (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
-    public void crawlEnded(String sExitMessage) {
-        // Ok, if the CrawlController is exiting we delete our reference to it
-        // to facilitate gc.
-        this.controller = null;
-    }
-
-
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
         ObjectPlusFilesOutputStream coostream = (ObjectPlusFilesOutputStream)stream;
@@ -1780,6 +1741,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         shouldPause = false;
         notifyAll();
     }
+    
     synchronized public void terminate() { 
         shouldTerminate = true;
         if (this.recover != null) {
@@ -1813,5 +1775,54 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
     public FrontierJournal getFrontierJournal() {
         return this.recover;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
+     */
+    public void crawlEnding(String sExitMessage) {
+        // TODO Auto-generated method stub 
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        // Ok, if the CrawlController is exiting we delete our
+        // reference to it to facilitate gc.  In fact, do it for
+        // all references because frontier instances stick around
+        // betweeen crawls so the UI can build new jobs based off
+        // the old and so old jobs can be looked at.
+        if (this.alreadyIncluded != null) {
+            this.alreadyIncluded.close();
+            this.alreadyIncluded = null;
+        }
+        this.queueAssignmentPolicy = null;
+        this.readyClassQueues = null;
+        this.allClassQueuesMap = null;
+        this.inactiveClassQueues = null;
+        this.snoozeQueues = null;
+        this.controller = null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+     */
+    public void crawlPaused(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        // TODO Auto-generated method stub
     }
 }

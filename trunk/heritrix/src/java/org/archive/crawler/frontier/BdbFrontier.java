@@ -210,6 +210,39 @@ implements Frontier,
         }
         loadSeeds();
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        // Ok, if the CrawlController is exiting we delete our
+        // reference to it to facilitate gc.  In fact, do it for
+        // all references because frontier instances stick around
+        // betweeen crawls so the UI can build new jobs based off
+        // the old and so old jobs can be looked at.
+        this.allQueues = null;
+        this.inProcessQueues = null;
+        if (this.alreadyIncluded != null) {
+            this.alreadyIncluded.close();
+            this.alreadyIncluded = null;
+        }
+        if (this.pendingUris != null) {
+            this.pendingUris.close();
+            this.pendingUris = null;
+        }
+        this.snoozedClassQueues = null;
+        if (this.wakeDaemon != null) {
+            this.wakeDaemon.shutDown();
+            this.wakeDaemon = null;
+        }
+        this.queueAssignmentPolicy = null;
+        this.readyClassQueues = null;
+        this.dbEnvironment = null;
+        // Clearing controller is a problem. We get
+        // NPEs in #preNext.
+        // this.controller = null;
+        super.crawlEnded(sExitMessage);
+    }
 
     /**
      * Create the single object (within which is one BDB database)
@@ -371,8 +404,10 @@ implements Frontier,
                 }
             }
 
-            // nothing was ready; ensure any piled-up scheduled URIs are considered
-            alreadyIncluded.flush();
+            // Nothing was ready; ensure any piled-up scheduled URIs are considered
+            if (this.alreadyIncluded != null) {
+                this.alreadyIncluded.flush();
+            }
         }
     }
 
@@ -502,7 +537,7 @@ implements Frontier,
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
         wq.setWakeTime(now+delay_ms);
         snoozedClassQueues.add(wq);
-        wakeDaemon.executeAfterDelay(delay_ms,waker);
+        wakeDaemon.executeAfterDelay(delay_ms, waker);
     }
 
     /**
@@ -521,7 +556,7 @@ implements Frontier,
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount() {
-        return alreadyIncluded.count();
+        return (this.alreadyIncluded != null)? this.alreadyIncluded.count(): 0;
     }
 
     /** (non-Javadoc)
@@ -690,9 +725,17 @@ implements Frontier,
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setAllowCreate(true);
             pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-            Environment e = pendingUrisDB.getEnvironment();
-            e.truncateDatabase(null, pendingUrisDB.getDatabaseName(), false);
+            // The below truncate is a deprecated call but using the
+            // suggested alternative method, Envionment#truncateDatabase,
+            // gives out complaints about unable to lock. I'm guessing this
+            // is because db is empty.  Investigate.  The alternative would
+            // be to get the database stats and ask if the db is empty; If it
+            // is, close it and ask the environment to truncate (Asking
+            // the Environment to truncate a non-existent DB throws
+            // exceptions).
+            pendingUrisDB.truncate(null, false);
             classCatalogDB = env.openDatabase(null, "classes", dbConfig);
+            pendingUrisDB.truncate(null, false);
             classCatalog = new StoredClassCatalog(classCatalogDB);
             crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
         }

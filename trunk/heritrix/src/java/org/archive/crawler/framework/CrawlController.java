@@ -1225,9 +1225,6 @@ public class CrawlController implements Serializable {
         // TODO someday: snapshot on-disk settings/overrides/refinements
     }
 
-    /**
-     * @return
-     */
     private List getAllLogFilenames() {
         LinkedList names = new LinkedList();
         Iterator iter = fileHandlers.keySet().iterator();

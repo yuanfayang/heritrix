@@ -50,8 +50,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.admin.StatisticsTracker
  */
 public abstract class AbstractTracker extends ModuleType
-                                   implements StatisticsTracking,
-                                              CrawlStatusListener{
+implements StatisticsTracking, CrawlStatusListener {
     /** default period between logging stat values */
     public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(20);
     /** attrbiute name for interval setting */

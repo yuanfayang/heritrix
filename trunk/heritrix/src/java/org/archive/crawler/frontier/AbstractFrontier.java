@@ -42,6 +42,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -58,8 +59,9 @@ import org.archive.crawler.url.Canonicalizer;
  * 
  * @author gojomo
  */
-public abstract class AbstractFrontier extends ModuleType implements Frontier,
-        FetchStatusCodes, CoreAttributeConstants {
+public abstract class AbstractFrontier extends ModuleType
+implements CrawlStatusListener, Frontier, FetchStatusCodes,
+CoreAttributeConstants {
     private static final Logger logger =
         Logger.getLogger(AbstractFrontier.class.getName());
 
@@ -233,6 +235,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     
     public void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
+        c.addCrawlStatusListener(this);
         File logsDisk = null;
         try {
             logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
@@ -791,5 +794,45 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     
     public FrontierJournal getFrontierJournal() {
         return this.recover;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
+     */
+    public void crawlEnding(String sExitMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+     */
+    public void crawlPaused(String statusMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        // TODO Auto-generated method stub
+        
     }
 }
