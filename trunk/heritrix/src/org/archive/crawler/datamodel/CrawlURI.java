@@ -46,7 +46,7 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 
 	private int fetchStatus = 0;	// default to unattempted
 	private int deferrals = 0;
-	private int numberOfFetchAttempts = 0;	// the number of fetch attempts that have been made
+	private int fetchAttempts = 0;	// the number of fetch attempts that have been made
 
 	private int threadNumber;
 
@@ -74,16 +74,12 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 		fetchStatus = newstatus;
 	}
 	
-	public int getNumberOfFetchAttempts(){
-		return numberOfFetchAttempts;
-	}
-	
-	public void setNumberOfFetchAttempts(int newnum){
-		numberOfFetchAttempts = newnum;
+	public int getFetchAttempts(){
+		return fetchAttempts;
 	}
 	
 	public int incrementFetchAttempts(){
-		return numberOfFetchAttempts++;
+		return fetchAttempts++;
 	}
 	
 	/**
@@ -301,6 +297,13 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	 */
 	public int getDeferrals() {
 		return deferrals;
+	}
+
+	/**
+	 * 
+	 */
+	public void stripToMinimal() {
+		alist = null;
 	}
 	
 /*	public boolean isFubared(){
