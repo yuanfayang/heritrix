@@ -481,6 +481,8 @@ public class Frontier
         while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
             URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
             kq.activate();
+            kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
+                    ,curi)).intValue());
             updateQ(kq);
         }
         
@@ -891,7 +893,10 @@ public class Frontier
         URIWorkQueue kq = keyedQueueFor(curi);
         if(kq==null){
             logger.severe("No workQueue found for "+curi);
-            curi.setFetchStatus(S_UNQUEUEABLE);
+            // should only happen when other parts of the
+            // system -- such as the U(sable)URI prescreening --
+            // have problems.
+            curi.setFetchStatus(S_UNQUEUEABLE); 
             failureDisposition(curi);
             return false; // Couldn't find/create kq.
         }
