@@ -235,7 +235,7 @@ public class StatisticsTracker extends AbstractTracker
         }
 
         Date now = new Date();
-        periodicLogger.log(
+        controller.progressStats.log(
             Level.INFO,
             new PaddingStringBuffer()
                 .append(ArchiveUtils.TIMESTAMP14.format(now))
