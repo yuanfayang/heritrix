@@ -427,11 +427,7 @@ implements CrawlURIDispositionListener{
      */
     public long getHostLastFinished(String host){
     	Long l = (Long)hostsLastFinished.get(host);
-        if(l != null){
-            return l.longValue();   
-        } else {
-            return -1;
-        }
+        return (l != null)? l.longValue(): -1;
     }
 
     /**
@@ -547,7 +543,7 @@ implements CrawlURIDispositionListener{
      *
      * @return The number of successully fetched URIs
      *
-     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
@@ -792,6 +788,7 @@ implements CrawlURIDispositionListener{
     }
     
     /**
+     * @param i Iterator.
      * @return Length of longest URL.
      */
     protected int getLongestString(Iterator i) {
@@ -806,6 +803,7 @@ implements CrawlURIDispositionListener{
     }
     
     /**
+     * @param i Iterator instance.
      * @return Get longest map entry key.
      */
     protected int getLongestMapEntryKey(Iterator i) {
@@ -821,6 +819,7 @@ implements CrawlURIDispositionListener{
     }
     
     /**
+     * @param c CrawlController instance.
      * @return A summary of seeds crawled and not crawled.
      */
     protected SeedsSummary writeSeedsReport(CrawlController c) {
@@ -840,10 +839,6 @@ implements CrawlURIDispositionListener{
                 i.hasNext();) {
             String UriString = (String)i.next();
             int code = getSeedStatusCode(UriString);
-            String statusCode = "";
-            if (code != 0) {
-                statusCode = Integer.toString(code);
-            }
             rep.append(UriString);
             rep.raAppend(maxURILength + 11, code);
             if (code > 0) {
@@ -991,7 +986,7 @@ implements CrawlURIDispositionListener{
     /**
      * Run the reports.
      * @param c A CrawlController instance.
-     * @param seeds A seeds iterator.
+     * @param exitMessage
      */
     public void report(CrawlController c, String exitMessage) {
         // Add all files mentioned in the crawl order to the
