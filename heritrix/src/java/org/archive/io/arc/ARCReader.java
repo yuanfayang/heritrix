@@ -24,11 +24,10 @@
  */
 package org.archive.io.arc;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,9 +41,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-
-import org.archive.io.MappedByteBufferInputStream;
 import org.archive.io.PositionableStream;
+import org.archive.io.RandomAccessInputStream;
 
 
 /**
@@ -109,13 +107,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * PositionableStream interface.  Constructor should check.
      */
     protected InputStream in = null;
-    
-    /**
-     * Channel we got the memory mapped byte buffer from.
-     *
-     * Keep around so can close when done.
-     */
-    protected FileChannel channel = null;
     
     /**
      * ARC file version.
@@ -205,14 +196,50 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * mapped byte buffer on file.
      */
     protected InputStream getInputStream(File arcfile) throws IOException {
-        FileInputStream fis = new FileInputStream(arcfile);
-        this.channel = fis.getChannel();
-        return new MappedByteBufferInputStream(
-                this.channel.map(FileChannel.MapMode.READ_ONLY, 0,
-                        this.channel.size()));
-                       
+        return new PositionableBufferedInputStream(
+            new RandomAccessInputStream(arcfile));
     }
 
+    /**
+     * Class that adds PositionableStream methods to a BufferedInputStream.
+     */
+    private class PositionableBufferedInputStream extends BufferedInputStream
+    		implements PositionableStream {
+
+        public PositionableBufferedInputStream(InputStream in)
+        		throws IOException {
+            super(in);
+            doStreamCheck();
+        }
+
+        public PositionableBufferedInputStream(InputStream in, int size)
+        		throws IOException {
+            super(in, size);
+            doStreamCheck();
+        }
+        
+        private void doStreamCheck() throws IOException {
+            if (!(this.in instanceof PositionableStream)) {
+                throw new IOException(
+                    "Passed stream must implement PositionableStream");
+            }
+        }
+
+        public long getFilePointer() throws IOException {
+            // Current position is the underlying files position
+            // minus the amount thats in the buffer yet to be read.
+            return ((PositionableStream)this.in).getFilePointer() -
+            	(this.count - this.pos);
+        }
+
+        public void seek(long position) throws IOException {
+            // Force refill of buffer whenever there's been a seek.
+            this.pos = 0;
+            this.count = 0;
+            ((PositionableStream)this.in).seek(position);
+        }
+    }
+    
     /**
      * Cleanout the current record if there is one.
      * @throws IOException
@@ -233,10 +260,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         if (this.in != null) {
             this.in.close();
             this.in = null;
-        }
-        if (this.channel != null && this.channel.isOpen()) {
-                this.channel.close();
-                this.channel = null;
         }
     }
 
@@ -559,6 +582,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @throws IOException
      */
     protected static void index(File f) throws IOException {
+        // long start = System.currentTimeMillis();
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
         // Get arc header record, the first record in the file.
@@ -686,7 +710,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
-                // long start = System.currentTimeMillis();
                 index(new File((String)i.next()));
             }
         }

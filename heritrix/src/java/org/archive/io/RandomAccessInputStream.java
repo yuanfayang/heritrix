@@ -34,27 +34,61 @@ import java.io.RandomAccessFile;
  *
  * @author gojomo
  */
-public class RandomAccessInputStream extends InputStream  implements PositionableStream {
+public class RandomAccessInputStream extends InputStream
+		implements PositionableStream {
     
     /**
      * Reference to the random access file this stream is reading from.
      */
     private RandomAccessFile raf = null;
+    
+    /**
+     * When mark is called, save here the current position so we can go back
+     * on reset.
+     */
+    private long markpos = -1;
 
     /**
+     * True if we are to close the underlying random access file when this
+     * stream is closed.
+     */
+    private boolean sympathyClose;
+
+    /**
+     * Constructor.
+     * 
+     * If using this constructor, caller created the RAF and therefore
+     * its assumed wants to control close of the RAF.  The RAF.close
+     * is not called if this constructor is used on close of this stream.
+     * 
      * @param raf RandomAccessFile to wrap.
      */
     public RandomAccessInputStream(RandomAccessFile raf) {
-        super();
-        this.raf = raf;
+        this(raf, false);
     }
     
     /**
+     * Constructor.
+     * 
+     * @param file File to get RAFIS on.  Creates an RAF from passed file.
+     * Closes the created RAF when this stream is closed.
+     * 
      * @param file File to wrap.
      */
     public RandomAccessInputStream(File file) throws FileNotFoundException {
+        this(new RandomAccessFile(file, "r"), true);
+    }
+    
+    /**
+     * @param raf RandomAccessFile to wrap.
+     * @param sympathyClose Set to true if we are to close the RAF
+     * file when this stream is closed.
+     */
+    public RandomAccessInputStream(RandomAccessFile raf,
+            boolean sympathyClose) {
         super();
-        this.raf = new RandomAccessFile(file, "r");
+        this.sympathyClose = sympathyClose;
+        this.raf = raf;
     }
 
     /* (non-Javadoc)
@@ -98,4 +132,34 @@ public class RandomAccessInputStream extends InputStream  implements Positionabl
         long amount = this.raf.length() - this.getFilePointer();
         return (amount >= Integer.MAX_VALUE)? Integer.MAX_VALUE: (int)amount;
 	}
+	
+    public boolean markSupported() {
+        return true;
+    }
+    
+    public synchronized void mark(int readlimit) {
+        try {
+            this.markpos = getFilePointer();
+        } catch (IOException e) {
+            // Set markpos to -1. Will cause exception reset.
+            this.markpos = -1;
+        }
+    }
+    
+    public synchronized void reset() throws IOException {
+        if (this.markpos == -1) {
+            throw new IOException("Mark has not been set.");
+        }
+        seek(this.markpos);
+    }
+    
+    public void close() throws IOException {
+        try {
+            super.close();
+        } finally {
+            if (this.sympathyClose) {
+                this.raf.close();
+            }
+        }
+    }
 }
