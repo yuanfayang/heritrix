@@ -34,6 +34,8 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
@@ -123,7 +125,6 @@ public class CrawlController extends Thread {
 
     Processor firstProcessor;
     Processor postprocessor;
-    //LinkedHashMap processors = new LinkedHashMap();
     MapType processors;
     int nextToeSerialNumber = 0;
 
@@ -160,20 +161,52 @@ public class CrawlController extends Thread {
         sExit = "";
 
         // read from the configuration file
+
         try {
-
             setupDisk();
-            setupLogs();
+        } catch (FatalConfigurationException e) {
+            throw new InitializationException(
+                "Unable to setup disk: " + e.toString(), e);
+        } catch (AttributeNotFoundException e) {
+            throw new InitializationException(
+                "Unable to setup disk: " + e.toString(), e);
+        }
 
+        try {
+            setupLogs();
         } catch (IOException e) {
             throw new InitializationException(
                 "Unable to create log file(s): " + e.toString(),
                 e);
         }
 
-        setupStatTracking();
+        try {
+            setupStatTracking();
+        } catch (InvalidAttributeValueException e) {
+            throw new InitializationException(
+                "Unable to setup statistics: " + e.toString(), e);
+        }
+
         setupToePool();
-        setupCrawlModules();
+
+        try {
+            setupCrawlModules();
+        } catch (FatalConfigurationException e) {
+            throw new InitializationException(
+                "Unable to setup crawl modules: " + e.toString(), e);
+        } catch (AttributeNotFoundException e) {
+            throw new InitializationException(
+                "Unable to setup crawl modules: " + e.toString(), e);
+        } catch (InvalidAttributeValueException e) {
+            throw new InitializationException(
+                "Unable to setup crawl modules: " + e.toString(), e);
+        } catch (MBeanException e) {
+            throw new InitializationException(
+                "Unable to setup crawl modules: " + e.toString(), e);
+        } catch (ReflectionException e) {
+            throw new InitializationException(
+                "Unable to setup crawl modules: " + e.toString(), e);
+        }
 
     }
 
@@ -325,38 +358,21 @@ public class CrawlController extends Thread {
         }
     }
 
-    private void setupCrawlModules() throws FatalConfigurationException {
-        //scope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
-        //frontier = (URIFrontier) order.instantiate(XP_FRONTIER);
-
-        try {
-            scope = (CrawlScope) order.getAttribute(Scope.ATTR_NAME);
-            Object o = order.getAttribute(URIFrontier.ATTR_NAME);
-            if (o instanceof URIFrontier) {
-                frontier = (URIFrontier) o;
-            } else {
-                frontier = new Frontier(URIFrontier.ATTR_NAME);
-                order.setAttribute((Frontier) frontier);
-            }
-        } catch (Exception e) {
-            throw new FatalConfigurationException(e.getMessage());
+    private void setupCrawlModules() throws FatalConfigurationException,
+             AttributeNotFoundException, InvalidAttributeValueException,
+             MBeanException, ReflectionException {
+        scope = (CrawlScope) order.getAttribute(Scope.ATTR_NAME);
+        Object o = order.getAttribute(URIFrontier.ATTR_NAME);
+        if (o instanceof URIFrontier) {
+            frontier = (URIFrontier) o;
+        } else {
+            frontier = new Frontier(URIFrontier.ATTR_NAME);
+            order.setAttribute((Frontier) frontier);
         }
 
         processors = order.getProcessors();
         if (processors.isEmpty(null)) {
             throw new FatalConfigurationException("No processors defined");
-        }
-
-        try {
-            String firstProcessorName =
-                (String) order.getAttribute(
-                    null,
-                    CrawlOrder.ATTR_FIRST_PROCESSOR);
-            firstProcessor =
-                (Processor) processors.getAttribute(null, firstProcessorName);
-        } catch (AttributeNotFoundException e) {
-            throw new FatalConfigurationException(
-                "Could not resolve first processor " + e.getMessage());
         }
 
         // try to initialize each scope and frontier from the config file
@@ -370,32 +386,29 @@ public class CrawlController extends Thread {
 
         serverCache = new ServerCache(this);
 
+        Processor previous = null;
         Iterator it = processors.iterator(null);
         while (it.hasNext()) {
             Processor p = (Processor) it.next();
+
+            if (previous == null) {
+                firstProcessor = p;
+            } else {
+                previous.setDefaultNextProcessor(p);
+            }
+            
+            p.initialize(this);
             logger.info(
                 "Processor: " + p.getName() + " --> " + p.getClass().getName());
-            p.initialize(this);
+
+            previous = p;
         }
     }
 
-    private void setupDisk() throws FatalConfigurationException {
-        //String diskPath = order.getStringAt(XP_DISK_PATH);
-        String diskPath;
-        try {
-            diskPath =
-                (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
-        } catch (AttributeNotFoundException e) {
-            throw new FatalConfigurationException(e.getMessage());
-        }
-        /*
-        if(diskPath == null || diskPath.length() == 0){
-        	throw new FatalConfigurationException("No output Directory specified", 
-        							order.getCrawlOrderFilename(), 
-        							XP_DISK_PATH
-        	);
-        }
-        */
+    private void setupDisk() throws FatalConfigurationException,
+                                    AttributeNotFoundException {
+        String diskPath
+              = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
 
         if (!diskPath.endsWith(File.separator)) {
             diskPath = diskPath + File.separator;
@@ -417,21 +430,14 @@ public class CrawlController extends Thread {
         scratchDisk.mkdirs();
     }
 
-    private void setupStatTracking() {
+    private void setupStatTracking() throws InvalidAttributeValueException {
         // the statistics object must be created before modules that use it if those 
         // modules retrieve the object from the controller during initialization 
         // (which some do).  So here we go with that.
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
             // set up a default tracker
-            try {
-                loggers.addElement(
-                    null,
-                    new StatisticsTracker("crawl-statistics"));
-            } catch (InvalidAttributeValueException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            loggers.addElement(null, new StatisticsTracker("crawl-statistics"));
         }
         Iterator it = loggers.iterator(null);
         while (it.hasNext()) {
