@@ -147,10 +147,7 @@ CoreAttributeConstants {
      *
      * Currently captures Frontier/URI transitions.
      */
-    transient private FrontierJournal recover = null;
-    
-    static final String LOGNAME_RECOVER = "recover";
-    
+    transient private FrontierJournal recover = null;    
     
     /**
      * @param name
@@ -258,7 +255,7 @@ CoreAttributeConstants {
         }
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
-            this.recover = new RecoveryJournal(logsPath, LOGNAME_RECOVER);
+            this.recover = new RecoveryJournal(logsPath, FrontierJournal.LOGNAME_RECOVER);
         }
         if(((Boolean)getUncheckedAttribute(null,ATTR_IP_POLITENESS)).booleanValue()) {
             queueAssignmentPolicy = new IPQueueAssignmentPolicy();

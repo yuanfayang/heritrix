@@ -449,4 +449,28 @@ public class CrawlOrder extends ModuleType {
             return null;
         }
     }
+    
+    /**
+     * Return fullpath to the directory named by <code>key</code>
+     * in settings.
+     * If directory does not exist, it and all intermediary dirs
+     * will be created.
+     * @param key Key to use going to settings.
+     * @return Full path to directory named by <code>key</code>.
+     * @throws AttributeNotFoundException
+     */
+    public File getSettingsDir(String key)
+    throws AttributeNotFoundException {
+        String path = (String)getAttribute(null, key);
+        File f = new File(path);
+        if (!f.isAbsolute()) {
+            f = getDirectoryRelativeToDiskPath(path);
+        }
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+        return f;
+    }
+    
+    
 }
