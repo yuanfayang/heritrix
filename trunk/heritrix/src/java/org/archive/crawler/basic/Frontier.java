@@ -49,15 +49,18 @@ import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.MemLongFPSet;
 import org.archive.util.MemQueue;
 import org.archive.util.Queue;
+import org.archive.util.QueueItemMatcher;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -1140,6 +1143,141 @@ public class Frontier
         return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
+     */
+    public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
+        ArrayList keyqueueKeys = new ArrayList();
+        if(allClassQueuesMap.size()!=0)
+        {
+            Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
+            while(q.hasNext())
+            {
+                keyqueueKeys.add(q.next());
+            }
+        }
+        return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
+     */
+    public ArrayList getPendingURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
+        if(marker instanceof FrontierMarker == false){
+            throw new InvalidURIFrontierMarkerException();
+        }
+        
+        FrontierMarker mark = (FrontierMarker)marker;
+        ArrayList list = new ArrayList(numberOfMatches);
+        
+        // inspect PendingHighQueue
+        if(mark.currentQueue==-1){
+            numberOfMatches -= inspectQueue(pendingHighQueue,list,mark,verbose, numberOfMatches);
+            if(numberOfMatches>0){
+                mark.nextQueue();
+            }
+        }
+        
+        // inspect the KeyedQueues
+        while( numberOfMatches > 0 && mark.currentQueue != -2){
+            Queue keyq = (Queue)allClassQueuesMap.get(mark.keyqueues.get(mark.currentQueue));
+            if(keyq==null){
+                throw new InvalidURIFrontierMarkerException();
+            }
+            
+            numberOfMatches -= inspectQueue(keyq,list,mark,verbose, numberOfMatches);
+            if(numberOfMatches>0){
+                mark.nextQueue();
+            }
+        }
+        
+        // inspect the PendingQueue
+        if(numberOfMatches > 0 && mark.currentQueue == -2){
+            numberOfMatches =- inspectQueue(pendingQueue,list,mark,verbose, numberOfMatches);
+            if(numberOfMatches > 0){
+                // reached the end
+                mark.hasNext = false;
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Adds any applicable URIs from a given queue to the given list.
+     * @param queue The queue to inspect
+     * @param list The list to add matched URIs to.
+     * @param marker Where to start accepting matches from.
+     * @param verbose List items are verbose
+     * @param numberOfMatches maximum number of matches to add to list
+     * @return the number of matches found
+     */
+    private int inspectQueue( Queue queue,
+                              ArrayList list,
+                              FrontierMarker marker,
+                              boolean verbose,
+                              int numberOfMatches)
+                          throws InvalidURIFrontierMarkerException{
+        if(queue.length() < marker.absolutePositionInCurrentQueue){
+            // Not good. Invalid marker.
+            throw new InvalidURIFrontierMarkerException();
+        }
+        
+        if(queue.length()==0){
+            return 0;
+        }
+        
+        Iterator it = queue.getIterator(marker.inCacheOnly);
+        int foundMatches = 0;
+        long itemsScanned = 0;
+        while(it.hasNext() && foundMatches < numberOfMatches){
+            Object o = it.next();
+            if( itemsScanned >= marker.absolutePositionInCurrentQueue
+                    && o instanceof CandidateURI ){
+                // Ignore items that are in front of current position
+                // and those that are not CandidateURIs.
+                CandidateURI caURI = (CandidateURI)o;
+                if(marker.match(caURI)){
+                    // Found match.
+                    String text;
+                    if(verbose){
+                        // TODO: write verbose description
+                        text = caURI.getURIString();
+                    } else {
+                        text = caURI.getURIString();
+                    }
+                    list.add(text);
+                    foundMatches++;
+                }
+            }
+            itemsScanned++;
+        }
+        marker.absolutePositionInCurrentQueue = itemsScanned;
+        return foundMatches;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
+     */
+    public void deleteURIsFromPending(String match) {
+        // Create QueueItemMatcher
+        QueueItemMatcher mat = new URIQueueMatcher(match);
+        // Delete from pendingHigh
+        pendingHighQueue.deleteMatchedItems(mat);
+        // Delete from all KeyedQueues
+        if(allClassQueuesMap.size()!=0)
+        {
+            Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
+            while(q.hasNext())
+            {
+                ((KeyedQueue)allClassQueuesMap.get(q.next())).deleteMatchedItems(mat);
+            }
+        }
+        // Delete from pendingQueue
+        pendingQueue.deleteMatchedItems(mat);
+    }
+
 
 
     /**
@@ -1365,4 +1503,5 @@ public class Frontier
         reader.close();
 
     }
+
 }
