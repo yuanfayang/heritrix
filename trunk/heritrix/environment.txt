@@ -8,12 +8,11 @@
 
 
 ## path to java home (not java executible)
-#export JAVA_HOME=<PUT_JAVA_HOME_HERE>
-JAVA_HOME=/usr/local/j2sdk1.4.0_02
+export JAVA_HOME=<PUT_JAVA_HOME_HERE>
+
 
 ## path to ant (for builds)
-#ANT_HOME=<PUT ANT HOME HERE>
-ANT_HOME=/0/cvs_webcrawler_nightly_build/CrawlerTesting/utils/Ant/apache-ant-1.5.2
+export ANT_HOME=<PUT ANT HOME HERE>
 
 ## do you want to use authenticated CVS?  If so uncomment
 #CVS_RSH=ssh
