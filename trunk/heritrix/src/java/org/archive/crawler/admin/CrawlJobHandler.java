@@ -43,6 +43,7 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -96,13 +97,19 @@ import org.archive.util.FileUtils;
 
 public class CrawlJobHandler implements CrawlStatusListener {
 
+    /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_FILTERS = "filters.options";
+    /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_PROCESSORS = "processors.options";
+    /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_SCOPES = "scopes.options";
+    /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_TRACKERS = "trackers.options";
+    /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_FRONTIERS = "urifrontiers.options";
-	public static final String MODULE_OPTIONS_DIRECTORY = Heritrix.getConfdir()
-			+ File.separator + "modules" + File.separator;
+	/** path to directory featuring lists of options to offer in UI */
+    public static final String MODULE_OPTIONS_DIRECTORY = Heritrix.getConfdir()
+		+ File.separator + "modules" + File.separator;
     
     /**
      * Name of system property whose specification overrides default profile
@@ -553,6 +560,17 @@ public class CrawlJobHandler implements CrawlStatusListener {
             controller.requestCrawlResume();
         }
     }
+    
+    /**
+     * Cause the current job to write a checkpoint to disk. Currently
+     * requires job to already be paused. 
+     */
+    public void checkpointJob() {
+        if (controller != null) {
+            controller.requestCrawlCheckpoint();
+        }
+    }
+
     /**
      * Returns a unique job ID.
      * <p>
@@ -672,8 +690,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *            Description of the new settings.
      * @param seeds
      *            The contents of the new settings' seed file.
-     * @param path
-     *            The directory where the new settings should be stored.
+     * @param newSettingsDir
+     * 
+     * @param errorHandler
+     * 
+     * @param filename
+     * 
+     * @param seedfile
+     * 
      * @return The new settings handler.
      * @throws FatalConfigurationException
      *             If there are problems with reading the 'base on'
@@ -774,6 +798,26 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
+     * Resume the given job from the given checkpoint. Currently
+     * happens in-place of the existing job, and thus may clobber 
+     * any job output that was subsequent to the given checkpoint,
+     * and corrupt subsequent checkpoints. 
+     * 
+     * @param job
+     * @param cp
+     */
+    public void resumeJobFromCheckpoint(CrawlJob job, Checkpoint cp) {        
+        //  remove Job from completed
+        completedCrawlJobs.remove(job);
+        
+        //  touchup internal values  to indicate resume
+        job.configureForResume(cp);
+        
+        //  add to pending & start if necessary
+        addJob(job);
+    }
+    
+    /**
      * Discard the handler's 'new job'. This will remove any files/directories
      * written to disk.
      */
@@ -841,13 +885,23 @@ public class CrawlJobHandler implements CrawlStatusListener {
         assert pendingCrawlJobs.contains(currentJob) : "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
 
-        // Create new controller.
-        controller = new CrawlController();
-        // Register as listener to get job finished notice.
-        controller.addCrawlStatusListener(this);
+        Checkpoint resumeFrom = currentJob.getResumeFromCheckpoint();
 
-        SettingsHandler settingsHandler = currentJob.getSettingsHandler();
         try {
+            if (resumeFrom == null) {
+                // Create new controller
+                controller = new CrawlController();
+            } else {
+                // restore old controller
+                controller = CrawlController.readFrom(resumeFrom);
+                // reuse restored settings handler
+                currentJob.setSettingsHandler((XMLSettingsHandler)controller.getSettingsHandler());
+            }
+            // Register as listener to get job finished notice.
+            controller.addCrawlStatusListener(this);
+            
+            SettingsHandler settingsHandler = currentJob.getSettingsHandler();
+            
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
@@ -973,7 +1027,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
     }
 
-    /* (non-Javadoc)
+    /* 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
@@ -1086,5 +1140,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return 0;
     }
+
+
 
 }
