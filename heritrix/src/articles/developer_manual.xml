@@ -2370,10 +2370,21 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Update the README.txt. Do html2txt on maven generated xdocs (I
+        <para>Update the README.txt.</para> 
+        <para>To get a manageable list of changes for the README, 
+        do html2txt on maven generated changes-report.html xdocs (I
         did 'cat PAGE.html| w3m -dump -T text/html &gt; PAGE.txt', catted the
         product together and then did vi regex'ing to clean out website
         navigations and extra whitespace).</para>
+        <para>To get the list of dependencies for the README, use the
+        stylesheet in src/scripts named <literal>dependencies.xsl</literal>
+        and run it against <literal>project.xml</literal> (I used
+        <literal>xslproc</literal>).</para>
+        <para>Otherwise, for the rest of the README, I used the 
+        stylesheet in src/scripts named <literal>xdocToTxt.xsl</literal>
+        and ran it against <literal>./xdoc/*</literal> pages manually
+        concatenating the output into a README.
+        </para>
       </listitem>
 
       <listitem>
