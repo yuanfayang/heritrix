@@ -2312,7 +2312,9 @@ public class SimpleExtractor extends Processor
       <para><ulink
       url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html">ARCReader</ulink>
       can be used reading arc files. It has a command line interface that can
-      be used to print out meta info and for doing random access getting of
+      be used to print out meta info in a pseudo 
+      <a href="http://www.archive.org/web/researcher/example_cdx.php">CDX format</a> 
+      and for doing random access getting of
       arc records (The command-line interface is described in the <ulink
       url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main
       method javadoc</ulink> comments).</para>
