@@ -55,7 +55,9 @@ public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue {
      */
     protected void insert(Object x) {
         super.insert(x);
-        count++;
+        synchronized(this) { // (increments are not atomic)
+            count++; 
+        }
     }
 
     /**
