@@ -512,6 +512,13 @@ public class ARCSocketFactory extends SocketFactory
         private void record()
             throws IOException
         {
+            if (this.recorder == null)
+            {
+                // We already wrote content.
+                return;
+            }
+
+            ARCWriter writer = null;
             try
             {
                 this.recorder.close();
@@ -528,24 +535,22 @@ public class ARCSocketFactory extends SocketFactory
                     String contentType = getContentType(response);
                     // Reset to start of stream so can write out total repsonse.
                     response.reset();
-                    ARCWriter writer = getPool().borrowARCWriter();
-                    try
-                    {
-                        writer.write(getURL(request), contentType,
-                            this.getInetAddress().getHostAddress(),
-                            this.connectTime.getTime(), (int)response.getSize(),
-                            response);
-                    }
-                    finally
-                    {
-                        getPool().returnARCWriter(writer);
-                    }
+                    writer = getPool().borrowARCWriter();
+                    writer.write(getURL(request), contentType,
+                        this.getInetAddress().getHostAddress(),
+                        this.connectTime.getTime(), (int)response.getSize(),
+                        response);
                 }
             }
             
             finally
             {
+                if (writer != null)
+                {
+                    getPool().returnARCWriter(writer);
+                }
                 this.recorder.cleanup();
+                this.recorder = null;
             }
         }
         
