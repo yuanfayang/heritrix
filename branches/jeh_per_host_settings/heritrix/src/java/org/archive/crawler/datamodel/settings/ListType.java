@@ -164,6 +164,15 @@ public abstract class ListType implements Type {
     public void clear() {
         listData.clear();
     }
+    
+    /**
+     * Returns the object stored at the index specified
+     * @param index The location of the object to get within the list.
+     * @return the object stored at the index specified
+     */
+    public Object get(int index){
+        return listData.get(index);
+    }
 
     /** The getLegalValues is not applicable for list so this method will
      * always return null.

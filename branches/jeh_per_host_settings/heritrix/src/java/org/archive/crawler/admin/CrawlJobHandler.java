@@ -16,14 +16,16 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.admin;
 
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
+
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 
@@ -52,7 +54,37 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * crawler.
      */
     private String settingsFile = null;
+    
+    /**
+     *  Default webapp path.
+     */
+    public static final String DEFAULT_WEBAPP_PATH = "webapps";
+    
+    /**
+     * Name of system property whose specification overrides
+     * DEFAULT_WEBAPP_PATH.
+     */
+    public static final String WEBAPP_PATH_NAME = "heritrix.webapp.path";
 
+    /**
+     * Default name of admin webapp.
+     */
+    public static final String ADMIN_WEBAPP_NAME = "admin";
+
+    /**
+     * Name of system property whose specification overrides default order file
+     * used.
+     * 
+     * Default is WEBAPP_PATH + ADMIN_WEBAPP_NAME 
+     * + DEFAULT_ORDER_FILE.  Pass an absolute or relative path.
+     */
+    public static final String DEFAULT_ORDER_FILE_NAME 
+        = "heritrix.default.orderfile";
+    
+    /**
+     * Default order file name.
+     */
+    public static final String DEFAULT_ORDER_FILE = "order.xml";
     /**
      * Default CrawlOrder.
      */
@@ -86,6 +118,22 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     private CrawlController controller = null;
 
+    /**
+     * Constructor.
+     *
+     */
+    public CrawlJobHandler(){
+        // Look to see if a default order file system property has been
+        // supplied. If so, use it instead.
+        String aOrderFile = System.getProperty(DEFAULT_ORDER_FILE_NAME);
+        if (aOrderFile != null) {
+                settingsFile = aOrderFile;
+        }
+        else {
+            settingsFile = SimpleHttpServer.getAdminWebappPath() + DEFAULT_ORDER_FILE;
+        }
+    }
+    
     /**
      * Submit a job to the handler. At present it will not take the job's
      * priority into consideration.
@@ -170,7 +218,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void deleteJob(String jobUID) {
         // First check to see if we are deleting the current job.
-        if (jobUID.equals(currentJob.getUID())) {
+        if (currentJob != null && jobUID.equals(currentJob.getUID())) {
             // Need to terminate the current job.
             controller.stopCrawl(); // This will cause crawlEnding to be invoked. 
                                     // It will handle the clean up.
@@ -339,7 +387,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Returns the Frontier report.
+     * Returns the Frontier report for the running crawl. If no crawl is running  
+     * a message to that effect will be returned instead.
      * 
      * @return A report of the frontier's status.
      */
@@ -352,6 +401,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
+     * Get the CrawlControllers ToeThreads report for the running crawl. If no 
+     * crawl is running a message to that effect will be returned instead.
      * @return The CrawlControllers ToeThreads report
      */
     public String getThreadsReport() {
@@ -359,6 +410,19 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return "Crawler not running";
         } else {
             return controller.reportThreads();
+        }
+    }
+
+    /**
+     * Get the Processors report for the running crawl. If no crawl is running a 
+     * message to that effect will be returned instead.
+     * @return The Processors report for the running crawl.
+     */
+    public String getProcessorsReport() {
+        if (controller == null) {
+            return "Crawler not running";
+        } else {
+            return controller.reportProcessors();
         }
     }
 

@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
+import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.basic.Frontier;
 import org.archive.crawler.basic.Scope;

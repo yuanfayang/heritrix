@@ -37,12 +37,12 @@ import java.util.logging.Logger;
 
 import javax.management.InvalidAttributeValueException;
 
+import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlJob;
-import org.archive.crawler.framework.CrawlJobHandler;
 import org.archive.crawler.framework.exceptions.InitializationException;
 
 

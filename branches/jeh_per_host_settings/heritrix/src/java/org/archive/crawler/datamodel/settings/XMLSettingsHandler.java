@@ -167,8 +167,8 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param filename the file to which the settings object should be written.
      */
     public final void writeSettingsObject(
-        CrawlerSettings settings,
-        File filename) {
+                        CrawlerSettings settings,
+                        File filename) {
         logger.fine("Writing " + filename.getAbsolutePath());
         try {
             StreamResult result =
@@ -240,7 +240,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             filename = new File(dirname, settingsFilename);
         }
         return readSettingsObject(settings, filename);
-    }
+	}
 
     /** Get the <code>File</code> object pointing to the order file.
      * 
@@ -249,5 +249,17 @@ public class XMLSettingsHandler extends SettingsHandler {
     public File getOrderFile() {
         return orderFile;
     }
-
+    
+    /**
+     * Creates a replica of the settings file structure in another directory 
+     * (fully recursive, includes all per host settings) and returns an 
+     * XMLSettingsHandler that has been set up for it.
+     * 
+     * @param cloneDirectory The target directory for the replica configuration files.
+     * @return An XMLSettingsHandler for the replicated settings files.
+     */
+    public XMLSettingsHandler clone(String cloneDirectory){
+        //TODO:Implement
+        return null;
+    }
 }
