@@ -401,6 +401,8 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         if (atts == null) {
             atts = new AttributesImpl();
         }
+        // make sure that the value is never null
+        value = value == null ? "" : value;
         handler.ignorableWhitespace(indentArray, 0, indent);
         handler.startElement(nsu, elementName, elementName, atts);
         handler.characters(value.toCharArray(), 0, value.length());
