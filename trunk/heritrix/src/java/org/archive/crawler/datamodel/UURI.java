@@ -29,7 +29,7 @@ import java.net.URISyntaxException;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import org.archive.util.DevUtils;
+//import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -66,7 +66,7 @@ public class UURI implements Serializable {
 		try {
 			uriString = u.toASCIIString();
 		} catch (NullPointerException npe) {
-			DevUtils.warnHandle(npe,"URI problem with "+u);
+			// DevUtils.warnHandle(npe,"URI problem with "+u);
 			throw new URISyntaxException(u.toString(),"URI.encode NPE");
 		}
 		if (uriString.length()>DEFAULT_MAX_URI_LENGTH) {
