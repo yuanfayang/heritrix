@@ -46,6 +46,7 @@ import org.archive.util.Queue;
 public class Frontier
 	extends XMLConfig 
 	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants {
+	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 5;
 	private static String XP_DELAY_FACTOR = "@delay-factor";
 	private static String XP_MIN_DELAY = "@min-delay-ms";
 	private static String XP_MAX_DELAY = "@max-delay-ms";
@@ -60,7 +61,6 @@ public class Frontier
 	// those UURIs which are already in-process (or processed), and
 	// thus should not be rescheduled	
 	UURISet alreadyIncluded;
-	
 	
 	private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 	private ThreadLocalQueue threadWaitingHigh = new ThreadLocalQueue();
@@ -176,7 +176,7 @@ public class Frontier
 	 */
 	public void batchSchedule(CandidateURI caUri) {
 		// initially just pass-through
-		schedule(caUri);
+		// schedule(caUri);
 		threadWaiting.getQueue().enqueue(caUri);
 	}
 
@@ -514,7 +514,7 @@ public class Frontier
 	 */
 	private CrawlURI dequeueFromReady() {
 		KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
-		CrawlURI readyCuri = (CrawlURI) firstReadyQueue.removeFirst();
+		CrawlURI readyCuri = (CrawlURI) firstReadyQueue.dequeue();
 		return readyCuri;
 	}
 
@@ -616,17 +616,17 @@ public class Frontier
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if (classQueue != null) {
 			// must enqueue
-			classQueue.add(curi);
+			classQueue.enqueue(curi);
 			curi.setStoreState(classQueue.getStoreState());
 			return true;
 		}
 		CrawlURI classmateInProgress = (CrawlURI) inProcessMap.get(curi.getClassKey());
 		if (classmateInProgress != null) {
 			// must create queue, and enqueue
-			classQueue = new KeyedQueue(curi.getClassKey());
+			classQueue = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
 			allClassQueuesMap.put(classQueue.getClassKey(), classQueue);
 			enqueueToHeld(classQueue);
-			classQueue.add(curi);
+			classQueue.enqueue(curi);
 			curi.setStoreState(classQueue.getStoreState());
 			return true;
 		}
@@ -842,7 +842,7 @@ public class Frontier
 	protected void snoozeQueueUntil(Object classKey, long wake) {
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(classKey);
 		if ( classQueue == null ) {
-			classQueue = new KeyedQueue(classKey);
+			classQueue = new KeyedQueue(classKey,controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
 			allClassQueuesMap.put(classQueue.getClassKey(),classQueue);
 		} else {
 			assert classQueue.getStoreState() == URIStoreable.READY : "snoozing queue should have been READY";
