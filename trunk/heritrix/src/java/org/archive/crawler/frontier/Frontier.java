@@ -529,7 +529,7 @@ public class Frontier
      */
     private void disregardDisposition(CrawlURI curi) {
         //Let interested listeners know of disregard disposition.
-        controller.throwCrawledURIDisregardEvent(curi);
+        controller.fireCrawledURIDisregardEvent(curi);
 
         // send to basic log
         curi.aboutToLog();
@@ -614,7 +614,7 @@ public class Frontier
         } else {
             successCount++;
         }
-        controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
+        controller.fireCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
         controller.recover.info("\n"+F_SUCCESS+curi.getURIString());
     }
@@ -1005,7 +1005,7 @@ public class Frontier
      * @param curi The CrawlURI
      */
     private void failureDisposition(CrawlURI curi) {
-        controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
+        controller.fireCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
 
         // send to basic log
         curi.aboutToLog();
@@ -1132,7 +1132,7 @@ public class Frontier
 
         reschedule(curi);
         
-        controller.throwCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
+        controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
         controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
     }
 

@@ -360,7 +360,7 @@ public class CrawlController extends Thread {
      *
      * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
      */
-    public void throwCrawledURISuccessfulEvent(CrawlURI curi) {
+    public void fireCrawledURISuccessfulEvent(CrawlURI curi) {
         if (registeredCrawlURIDispositionListener != null) {
             // Then we'll just use that.
             registeredCrawlURIDispositionListener.crawledURISuccessful(curi);
@@ -389,7 +389,7 @@ public class CrawlController extends Thread {
      *
      * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
      */
-    public void throwCrawledURINeedRetryEvent(CrawlURI curi) {
+    public void fireCrawledURINeedRetryEvent(CrawlURI curi) {
         if (registeredCrawlURIDispositionListener != null) {
             // Then we'll just use that.
             registeredCrawlURIDispositionListener.crawledURINeedRetry(curi);
@@ -418,7 +418,7 @@ public class CrawlController extends Thread {
      *
      * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
      */
-    public void throwCrawledURIDisregardEvent(CrawlURI curi) {
+    public void fireCrawledURIDisregardEvent(CrawlURI curi) {
         if (registeredCrawlURIDispositionListener != null) {
             // Then we'll just use that.
             registeredCrawlURIDispositionListener.crawledURIDisregard(curi);
@@ -446,7 +446,7 @@ public class CrawlController extends Thread {
      *
      * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
      */
-    public void throwCrawledURIFailureEvent(CrawlURI curi) {
+    public void fireCrawledURIFailureEvent(CrawlURI curi) {
         if (registeredCrawlURIDispositionListener != null) {
             // Then we'll just use that.
             registeredCrawlURIDispositionListener.crawledURIFailure(curi);
