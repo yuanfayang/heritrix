@@ -22,6 +22,7 @@ public class ToePool implements CrawlListener {
 	
 	protected CrawlController controller;
 	protected ArrayList toes;
+	protected int effectiveSize = 0;
 	/**
 	 * @param i
 	 */
@@ -30,12 +31,7 @@ public class ToePool implements CrawlListener {
 		controller.addListener(this);
 		toes = new ArrayList(count);
 		// TODO make number of threads self-optimizing
-		for(int i = 0; i<count; i++) {
-			ToeThread newThread = new ToeThread(c,this,i);
-			newThread.setPriority(DEFAULT_TOE_PRIORITY);
-			toes.add(newThread);
-			newThread.start();
-		}
+		setSize(count);
 	}
 
 	/**
@@ -43,7 +39,7 @@ public class ToePool implements CrawlListener {
 	 */
 	public synchronized ToeThread available() {	
 		while(true) {
-			for(int i=0; i < toes.size();i++){
+			for(int i=0; i < effectiveSize ; i++){
 				if(((ToeThread)toes.get(i)).isAvailable()) {
 					return (ToeThread) toes.get(i);
 				}
@@ -115,5 +111,37 @@ public class ToePool implements CrawlListener {
 	public String getReport(int toe)
 	{
 		return ((ToeThread)toes.get(toe)).report();
+	}
+	
+	/**
+	 * Change the number of availible ToeThreads. 
+	 * @param newsize The new number of availible ToeThreads. 
+	 */
+	public void setSize(int newsize)
+	{
+		if(newsize > getToeCount())
+		{
+			// Adding more ToeThreads.
+			for(int i = getToeCount(); i<newsize; i++) {
+				ToeThread newThread = new ToeThread(controller,this,i);
+				newThread.setPriority(DEFAULT_TOE_PRIORITY);
+				toes.add(newThread);
+				newThread.start();
+			}
+			effectiveSize = newsize;
+		}
+		else if(newsize < getToeCount())
+		{
+			effectiveSize = newsize;
+			// Removing some ToeThreads.
+			while(getToeCount()>newsize)
+			{
+				ToeThread t = (ToeThread)toes.get(newsize);
+				// Tell it to exit gracefully
+				t.stopAfterCurrent();
+				// and then remove it from the pool
+				toes.remove(newsize);
+			}
+		}
 	}
 }

@@ -258,6 +258,26 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		crawling = true;
 		statusMessage = CRAWLER_STARTED;
 	}
+
+	/**
+	 * Update the crawl order for the running crawl to match the given filename.
+	 * The new crawl order is then loaded into the CrawlController.
+	 * @param filename
+	 */	
+	public void updateCrawlOrder(String filename)
+	{
+		currentJob.setCrawlOrder(filename);
+		updateCrawlOrder();
+	}
+	
+	/**
+	 * The specified crawl order for the current job is (re)loaded into the CrawlController
+	 * This will cause changes to it to be put into effect.
+	 */	
+	public void updateCrawlOrder()
+	{
+		controller.updateOrder(currentJob.getCrawlOrder());
+	}
 	
 	/**
 	 * Terminate the currently running job
