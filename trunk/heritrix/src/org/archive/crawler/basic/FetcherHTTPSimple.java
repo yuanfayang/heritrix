@@ -34,7 +34,7 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
 	public static int MAX_HTTP_FETCH_ATTEMPTS = 3;
 	
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherHTTPSimple");
 	HttpClient http;
 	private int timeout;
 
@@ -50,7 +50,7 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 		}
 		
 		// only try so many times...
-		if(curi.getNumberOfFetchAttempts() >= MAX_HTTP_FETCH_ATTEMPTS){
+		if(curi.getFetchAttempts() >= MAX_HTTP_FETCH_ATTEMPTS){
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		}
 		
@@ -72,7 +72,7 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
 		get.setRequestHeader("From",controller.getOrder().getBehavior().getFrom());
 		
-		controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
+		//controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
 
 		try {
 						
@@ -113,7 +113,7 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 			logger.warning(e+" on "+curi);
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		} finally {
-			controller.getKicker().cancelKick(Thread.currentThread());
+			//controller.getKicker().cancelKick(Thread.currentThread());
 		}
 	}
 
