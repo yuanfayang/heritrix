@@ -172,8 +172,8 @@ public class DataContainer extends HashMap {
     protected Object put(String key, Object value)
         throws InvalidAttributeValueException, AttributeNotFoundException {
 
-        ModuleAttributeInfo attrInfo =
-            (ModuleAttributeInfo) complexType.getAttributeInfo((String) key);
+        ModuleAttributeInfo attrInfo = (ModuleAttributeInfo) complexType
+                .getAttributeInfo(settings.getParent(), (String) key);
 
         ModuleAttributeInfo localAttrInfo =
             (ModuleAttributeInfo) getAttributeInfo((String) key);
