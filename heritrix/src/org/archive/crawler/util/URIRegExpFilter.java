@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
 
 
@@ -45,9 +46,9 @@ public class URIRegExpFilter extends Filter {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize()
 	 */
-	public void initialize() {
+	public void initialize(CrawlController c) {
 		// TODO Auto-generated method stub
-		super.initialize();
+		super.initialize(c);
 		String regexp = getStringAt("@regexp");
 		pattern = Pattern.compile(regexp);
 	}

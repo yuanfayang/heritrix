@@ -31,7 +31,7 @@ public abstract class Filter extends XMLConfig {
 	 */
 	protected abstract boolean innerAccepts(Object o);
 	
-	public void initialize() {
+	public void initialize(CrawlController controller) {
 		setName(getStringAt("@name"));
 		if("not".equals(getStringAt("@modifier"))) {
 			inverter = true;

@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.Set;
+
 
 /**
  * Represents a collection of URIs, without duplicates.
@@ -18,8 +20,8 @@ package org.archive.crawler.datamodel;
  * @author gojomo
  *
  */
-public interface UURISet /* extends Set ??? */ {
-	public long size();
+public interface UURISet extends Set {
+	public long count();
 	public boolean contains(UURI u);
 	public boolean contains(CrawlURI curi);
 	
