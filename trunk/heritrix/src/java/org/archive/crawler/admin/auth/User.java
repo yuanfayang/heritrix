@@ -26,7 +26,11 @@ package org.archive.crawler.admin.auth;
 public class User
 {
 	// Defined roles
-	public static final int INVALID_USER = -1; 	//Failed login
+	private static final String USER_PASSWORD = "archive";
+  private static final String USER_USERNAME = "user";
+  private static final String OPERATOR_PASSWORD = "letmein";
+  private static final String OPERATOR_USERNAME = "admin";
+  public static final int INVALID_USER = -1; 	//Failed login
 	public static final int ADMINISTRATOR = 0;	//Super user, full permissions
 	public static final int USER = 1;			//General user, minimum permissions
 	
@@ -47,15 +51,29 @@ public class User
 	{
 		if(sUsername!=null && sPassword != null)
 		{
-			if (sUsername.equalsIgnoreCase("admin") && sPassword.equalsIgnoreCase("letmein"))
+			if (sUsername.equalsIgnoreCase(getOperatorUsername()) && sPassword.equalsIgnoreCase(getOperatorPassword()))
 			{
 				return ADMINISTRATOR;
 			}	
-			else if(sUsername.equalsIgnoreCase("user") && sPassword.equalsIgnoreCase("archive"))
+			else if(sUsername.equalsIgnoreCase(USER_USERNAME) && sPassword.equalsIgnoreCase(USER_PASSWORD))
 			{
 				return USER;
 			}
 		}
 		return INVALID_USER;
 	}
+
+  /**
+   * @return
+   */
+  public static String getOperatorPassword() {
+    return OPERATOR_PASSWORD;
+  }
+
+  /**
+   * @return
+   */
+  public static String getOperatorUsername() {
+    return OPERATOR_USERNAME;
+  }
 }
