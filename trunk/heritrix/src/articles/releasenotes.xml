@@ -90,7 +90,7 @@ java.net.SocketException: Socket is not connected
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=902970">902970</ulink></entry><entry>Add</entry><entry>HTTPClient should use supplied IP / avoid DNS lookup</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903093">903093</ulink></entry><entry>Add</entry><entry>Setting of Integer.MAX_VALUE is ugly</entry><entry>2004-02-23</entry><entry>nobody  stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903093">903093</ulink></entry><entry>Add</entry><entry>Setting of Integer.MAX_VALUE is ugly</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=900004">900004</ulink></entry><entry>Add</entry><entry>canonicalization of URIs for alreadyIncluded testing</entry><entry>2004-02-18</entry><entry>stack-sf</entry>
 </row>
@@ -129,7 +129,7 @@ java.net.SocketException: Socket is not connected
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=998184">998184</ulink></entry><entry>Fix</entry><entry>Gzipped recover log corrupt at end; last &lt; 32K unrecoverable</entry><entry>2004-07-26</entry><entry>gojomo</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=998272">998272</ulink></entry><entry>Fix</entry><entry>No crawl if host-queues-memory-capacity = 0</entry><entry>2004-07-26</entry><entry>nobody  stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=998272">998272</ulink></entry><entry>Fix</entry><entry>No crawl if host-queues-memory-capacity = 0</entry><entry>2004-07-26</entry><entry>stack-sf</entry>
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002335">1002335</ulink></entry><entry>Fix</entry><entry>frontier report unusable in big crawls; frontier info needed</entry><entry>2004-08-02</entry><entry>gojomo</entry>
 </row>
