@@ -58,12 +58,13 @@ public class DiskQueueIterator implements Iterator {
         objectInStream = new ObjectInputStream(inStream);
         this.length = length;
     }
-    
-    /** Does nothing. This iterator can not modify the set.
-     * @see java.util.Iterator#remove()
+
+    /**
+     * Not supported
+     * @throws UnsupportedOperationException if invoked
      */
     public void remove() {
-        ; //noop
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
