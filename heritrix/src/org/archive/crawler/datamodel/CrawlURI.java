@@ -9,8 +9,11 @@ package org.archive.crawler.datamodel;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
@@ -36,13 +39,18 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI
 	implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
+	private Pattern FUZZY_TOKENS = Pattern.compile("\\w+");
+
 	private long wakeTime;
 
 	public static final String CONTENT_TYPE_LABEL = "content-type";
+	private static int FUZZY_WIDTH = 32;
 	
 	private UURI baseUri;
 	private AList alist = new HashtableAList();
 	private UURI uuri; 
+	private BitSet fuzzy; // uri token bitfield as sort of fuzzy checksum
+	private CrawlURI via; // curi that led to this (lowest hops from seed)
 	private Object state;
 	CrawlController controller;
 	Processor nextProcessor;
@@ -51,7 +59,8 @@ public class CrawlURI
 	private int fetchStatus = 0;	// default to unattempted
 	private int deferrals = 0;
 	private int fetchAttempts = 0;	// the number of fetch attempts that have been made
-
+	private int chaffness = 0; // suspiciousness of being of chaff
+	
 	private int threadNumber;
 	
 	private int contentSize = -1;
@@ -62,9 +71,29 @@ public class CrawlURI
 	 * @param uuri
 	 */
 	public CrawlURI(UURI u) {
-		uuri=u;
+		setUuri(u);
 	}
 		
+	/**
+	 * @param u
+	 */
+	private void setUuri(UURI u) {
+		uuri=u;
+		setFuzzy();
+	}
+
+	/**
+	 * set a fuzzy fingerprint for the correspoding URI based on its word-char segments
+	 */
+	private void setFuzzy() {
+		fuzzy = new BitSet(FUZZY_WIDTH);
+		Matcher tokens = FUZZY_TOKENS.matcher(uuri.toString());
+		tokens.find(); // skip http
+		while(tokens.find()) {
+			fuzzy.set(Math.abs(tokens.group().hashCode() % FUZZY_WIDTH));
+		}
+	}
+
 	/**
 	 * Set the time this curi is considered expired (and thus must be refetched)
 	 * to 'expires'.  This function will set the time to an arbitrary value.
@@ -92,13 +121,7 @@ public class CrawlURI
 	}
 
 	
-	/**
-	 * @param uri
-	 * @return
-	 */
-	public CrawlURI(URI u){
-		uuri = new UURI(u);
-	}
+
 	
 	
 	public int getFetchStatus(){
@@ -122,9 +145,9 @@ public class CrawlURI
 	 */
 	public CrawlURI(String s){
 		try{
-			uuri = new UURI(new URI(s));
+			setUuri(UURI.createUURI(s));
 		}catch(Exception e){
-			uuri = null;
+			setUuri(null);
 		}
 	}
 	
@@ -410,6 +433,35 @@ public class CrawlURI
 	public void addLocalizedError(String processorName, Exception ex, String message) {
 		// TODO implement
 		System.out.println("CrawlURI.addLocalizedError() says: \"Implement me!\"");
+	}
+
+	/**
+	 * @return
+	 */
+	public int getChaffness() {
+		return chaffness;
+	}
+
+	/**
+	 * @return
+	 */
+	public BitSet getFuzzy() {
+		// TODO Auto-generated method stub
+		return fuzzy;
+	}
+
+	/**
+	 * @param i
+	 */
+	public void setChaffness(int i) {
+		chaffness = i;
+	}
+
+	/**
+	 * @param sourceCuri
+	 */
+	public void setVia(CrawlURI sourceCuri) {
+		via = sourceCuri;
 	}
 	
 /*	public boolean isFubared(){

@@ -29,6 +29,7 @@ public interface FetchStatusCodes {
 	public static int S_UNFETCHABLE_URI = -7;
 	
 	public static int S_ROBOTS_PRECLUDED = -9998;
+	public static int S_DEEMED_CHAFF = -4000;
 	
 	public static int S_DNS_SUCCESS = 1;
 

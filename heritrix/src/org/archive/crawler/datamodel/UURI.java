@@ -38,9 +38,11 @@ public class UURI {
 	/**
 	 * @param u
 	 */
-	public UURI(URI u) {
+	private UURI(URI u) {
 		uri = u;
 	}
+
+
 
 	/**
 	 * Return a "normalized" String for the given String.
