@@ -334,7 +334,7 @@
       object</emphasis> made for the current domain is loaded with the
       discovered credentials and the 401'ing current URI is marked for retry
       (If no matching credentials found, the current URI is marked failed with
-      a 401 response code). </para>
+      a 401 response code).</para>
 
       <para>Let it be a given that any rfc2617 credentials found in a
       <emphasis>persistent domain/virtualdomain object</emphasis> always get
@@ -656,6 +656,30 @@
         <para>A command-line tool to run single logins to aid debugging logins
         will aid development and be of use to operators.</para>
       </sect3>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Design</title>
+
+    <sect2>
+      <title>Configuration</title>
+
+      <para>Will add to the HTTP Fetcher options that enable, disable and
+      configuration of the two authentication types supported.</para>
+    </sect2>
+
+    <sect2>
+      <title>Credential store</title>
+
+      <para>Below is a static class model diagram for accessing the credential
+      store.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="credentials.gif" />
+        </imageobject>
+      </mediaobject>
     </sect2>
   </sect1>
 
