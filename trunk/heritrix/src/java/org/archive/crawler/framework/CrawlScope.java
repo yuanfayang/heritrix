@@ -165,7 +165,7 @@ public class CrawlScope extends Filter {
      * @param o An instance of UURI or of CandidateURI.
      * @return Make into a UURI.
      */
-    protected UURI getUURI(Object o) {
+    protected UURI getUURI(final Object o) {
         UURI u = null;
         if (o instanceof UURI) {
             u = (UURI)o;
@@ -237,7 +237,7 @@ public class CrawlScope extends Filter {
      * Returns whether the given object (typically a CandidateURI) falls
      * within this scope.
      *
-     * @param o
+     * @param o Object to test.
      * @return Whether the given object (typically a CandidateURI) falls
      * within this scope.
      */

@@ -66,6 +66,11 @@ implements Serializable {
      * total elapsed time in URI class.
      */
     private String cachedHost = null;
+    
+    /**
+     * Cache of the host base name.
+     */
+    private String cachedHostBasename = null;
 
     /**
      * Cache of this uuri escaped as a string.
@@ -205,11 +210,21 @@ implements Serializable {
      * @throws URIException
      */
     public String getHostBasename() throws URIException {
+        if (this.cachedHostBasename == null) {
+            cacheHostBasename();
+        }
+        return this.cachedHostBasename;
+    }
+    
+    protected synchronized void cacheHostBasename() throws URIException {
+        if (this.cachedHostBasename != null) {
+            return;
+        }
         if (this.getHost() != null) {
-            return TextUtils.replaceFirst(MASSAGEHOST_PATTERN, this.getHost(),
+            this.cachedHostBasename = TextUtils.
+                replaceFirst(MASSAGEHOST_PATTERN, this.getHost(),
                 UURIFactory.EMPTY_STRING);
         }
-        return null;
     }
 
     /**

@@ -114,7 +114,7 @@ public class DomainScope extends CrawlScope {
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
-        List seeds = getSeedlist();
+        final List seeds = getSeedlist();
         String seedDomain = null;
         String candidateDomain =null;
 
@@ -139,7 +139,8 @@ public class DomainScope extends CrawlScope {
                     seedDomain = s.getHostBasename();
                 }
                 catch (URIException e) {
-                    logger.severe("UURI getHostBasename failed for seed: " + s);
+                    logger.severe("UURI getHostBasename failed for seed: " +
+                        s);
                 }
                 if (seedDomain == null) {
                     // GetHost can come back null.  See bug item
