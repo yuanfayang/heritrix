@@ -177,12 +177,21 @@ public class UURI extends URI {
     public static final String IMPROPERESC_REPLACE = "%25$1";
     public static final String IMPROPERESC =
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
+    public static final String COMMERCIAL_AT = "@";
 
     public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
     /**
      * Authority port number regex.
      */
     final static Pattern PORTREGEX = Pattern.compile(".*:([0-9]+)$");
+    
+    /**
+     * Legal characters in the domain label part of a uri authority.
+     * 
+     * We're looser than the spec. allowing underscores.
+     */
+    final static String LEGAL_DOMAINLABEL_REGEX =
+        "^(?:[a-zA-Z0-9_-]++(?:\\.)?)++(:[0-9]+)?$";
 
     /**
      * Cache of the host name.
@@ -289,11 +298,17 @@ public class UURI extends URI {
         String uriFragment = checkUriElement(matcher.group(10));
 
         // Lowercase the host part of the uriAuthority; don't destroy any
-        // userinfo capitalizations.
-        int index = (uriAuthority != null)? uriAuthority.indexOf('@'): -1;
-        if (index > 0) {
-            uriAuthority = uriAuthority.substring(0, index) +
-                uriAuthority.substring(index).toLowerCase();
+        // userinfo capitalizations.  Make sure no illegal characters in
+        // domainlabel substring of the uri authority.
+        if (uriAuthority != null) {
+            int index = uriAuthority.indexOf(COMMERCIAL_AT);
+            if (index < 0) {
+                uriAuthority = checkDomainlabel(uriAuthority.toLowerCase());
+            } else {
+                uriAuthority = uriAuthority.substring(0, index) +
+                	COMMERCIAL_AT + checkDomainlabel(
+                	    uriAuthority.substring(index + 1).toLowerCase());
+            }
         }
 
         // Test if relative URI.  If so, need a base to resolve against.
@@ -334,6 +349,23 @@ public class UURI extends URI {
 
         return reassemble(uriScheme, uriAuthority, uriPath, uriQuery,
             uriFragment);
+    }
+
+    /**
+     * Check the domain label part of the authority.
+     * 
+     * We're more lax than the spec. in that we allow underscores.
+     * 
+     * @param label Domain label to check.
+     * @return Return passed domain label.
+     * @throws URIException
+     */
+    private static String checkDomainlabel(String label)
+    		throws URIException {
+        if (!TextUtils.matches(LEGAL_DOMAINLABEL_REGEX, label)) {
+            throw new URIException("Illegal domain label: " + label);
+        }
+        return label;
     }
 
     /**

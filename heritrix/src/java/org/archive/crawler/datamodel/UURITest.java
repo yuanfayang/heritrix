@@ -89,6 +89,29 @@ public class UURITest extends TestCase {
         assertTrue("Not equal",
             uuriTgt.toString().equals(uuri.toString()));
     }
+    
+    /**
+     * [ 962892 ] UURI accepting/creating unUsable URIs (bad hosts).
+     * https://sourceforge.net/tracker/?func=detail&atid=539099&aid=962892&group_id=73833
+     */
+    public final void testHostWithLessThan() {
+        checkExceptionOnIllegalDomainlabel("http://www.betamobile.com</A");
+        checkExceptionOnIllegalDomainlabel(
+            "http://C|/unzipped/426/spacer.gif");
+        checkExceptionOnIllegalDomainlabel("http://www.lycos.co.uk\"/l/b/\"");
+    }    
+    
+    private void checkExceptionOnIllegalDomainlabel(String uuri) {
+        boolean expectedException = false;
+        try {
+            new UURI(uuri);
+        } catch (URIException e) {
+            // Expected exception.
+            expectedException = true;
+        }
+        assertTrue("Didn't get expected exception: " + uuri, 
+            expectedException); 
+    }
 
     /**
      * [ 788277 ] Doing separate DNS lookup for same host
@@ -123,12 +146,26 @@ public class UURITest extends TestCase {
      *
      * @throws URIException If fail to get host.
      */
-    public final void testSpaceInHost() throws URIException {
-        UURI uuri = new UURI(
-            "http://www.local-regions.odpm%20.gov.uk" +
-                "/lpsa/challenge/pdf/propect.pdf");
-        assertTrue("Failed space in host " + uuri.toString(),
-            uuri.getHost() != null && uuri.getHost().length() > 0);
+    public final void testSpaceInHost() {
+        boolean expectedException = false;
+        try {
+            new UURI(
+                "http://www.local-regions.odpm%20.gov.uk" +
+                	"/lpsa/challenge/pdf/propect.pdf");
+        } catch (URIException e) {
+            expectedException = true;
+        }
+        assertTrue("Did not fail with escaped space.", expectedException);
+        
+        expectedException = false;
+        try {
+            new UURI(
+                "http://www.local-regions.odpm .gov.uk" +
+                	"/lpsa/challenge/pdf/propect.pdf");
+        } catch (URIException e) {
+            expectedException = true;
+        }
+        assertTrue("Did not fail with real space.", expectedException);
     }
 
     /**
@@ -142,6 +179,23 @@ public class UURITest extends TestCase {
             "http://x_underscore_underscore.2u.com.tw/nonexistent_page.html");
         assertEquals("Failed get of host with underscore",
             "x_underscore_underscore.2u.com.tw", uuri.getHost());
+    }
+    
+
+    /**
+     * Two dots for igor.
+     * 
+     * @throws URIException
+     */
+    public final void testTwoDots() throws URIException {
+        boolean expectedException = false;
+        try {
+            new UURI(
+              "http://x_underscore_underscore..2u.com/nonexistent_page.html");
+        } catch (URIException e) {
+            expectedException = true;
+        }
+        assertTrue("Two dots did not throw exception", expectedException);
     }
 
     /**
