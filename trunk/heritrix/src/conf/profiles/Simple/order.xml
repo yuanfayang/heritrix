@@ -3,7 +3,7 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
-    <date>20040210174759</date>
+    <date>20040218011024</date>
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
@@ -19,6 +19,13 @@
       <integer name="max-link-hops">25</integer>
       <integer name="max-trans-hops">5</integer>
       <string name="mode">domain</string>
+      <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
+        <boolean name="enabled">true</boolean>
+        <boolean name="inverted">false</boolean>
+        <integer name="max-speculative-hops">1</integer>
+        <integer name="max-referral-hops">2147483647</integer>
+        <integer name="max-embed-hops">2147483647</integer>
+      </newObject>
       <newObject name="excludeFilter" class="org.archive.crawler.filter.OrFilter">
         <boolean name="enabled">true</boolean>
         <boolean name="inverted">false</boolean>
@@ -43,7 +50,7 @@
       <integer name="min-delay-ms">500</integer>
       <integer name="min-interval-ms">1000</integer>
       <integer name="max-retries">10</integer>
-      <long name="retry-delay">900000</long>
+      <long name="retry-delay-seconds">900</long>
     </newObject>
     <map name="processors">
       <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
@@ -129,9 +136,6 @@
       </newObject>
     </map>
     <map name="loggers">
-      <newObject name="crawl-statistics" class="org.archive.crawler.admin.StatisticsTracker">
-        <integer name="interval-seconds">20</integer>
-      </newObject>
     </map>
   </controller>
 </crawl-order>
