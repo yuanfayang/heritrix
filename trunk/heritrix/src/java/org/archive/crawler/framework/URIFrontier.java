@@ -79,4 +79,19 @@ public interface URIFrontier {
 	 * 
 	 */
 	void batchFlush();
+	
+	/**
+	* The total amounts of bytes written (uncompressed)
+	* 
+	* @return The total amounts of bytes written
+	*/
+	public long totalBytesWritten();
+	
+	/**
+	* This methods compiles a human readable report on the status of the frontier
+	* at the time of the call. 
+	* 
+	* @return A report on the current status of the frontier.
+	*/
+	public String report();
 }

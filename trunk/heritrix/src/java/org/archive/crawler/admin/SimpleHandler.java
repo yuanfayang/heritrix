@@ -33,7 +33,6 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.archive.crawler.basic.Frontier;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -175,9 +174,7 @@ public class SimpleHandler
         }
         else
         {
-            // TODO: Consider making Frontier.report() method a part of the
-            // URIFrontier interface.
-            return ((Frontier)controller.getFrontier()).report();
+            return controller.getFrontier().report();
         }
     }
     

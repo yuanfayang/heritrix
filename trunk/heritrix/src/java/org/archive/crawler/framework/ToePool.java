@@ -165,11 +165,4 @@ public class ToePool extends CrawlStatusAdapter {
 			}
 		}
 	}
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
-	 */
-	public void crawlPausing(String statusMessage) {
-		// TODO Auto-generated method stub
-		
-	}
 }

@@ -140,4 +140,7 @@ public interface AdminConstants {
         = "//processor/@sotimeout-ms";
     public static final String XP_HTTPFETCH_TIMEOUT 
         = "//processor/@timeout-seconds";
-}
+        
+	public static final String XP_MAX_BYTES_DOWNLOAD = "//behavior/@max-bytes-download";
+	public static final String XP_MAX_DOCUMENT_DOWNLOAD = "//behavior/@max-document-download";
+	public static final String XP_MAX_TIME = "//behavior/@max-time-sec";}

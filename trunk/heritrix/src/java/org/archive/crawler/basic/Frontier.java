@@ -140,6 +140,8 @@ public class Frontier
 	long completionCount = 0;
 	long failedCount = 0;
 	long disregardedCount = 0; //URI's that are disregarded (for example because of robot.txt rules)
+
+	long totalProcessedBytes = 0;
 	
 	// increments for every URI ever queued up (even dups)
 	long totalUrisScheduled = 0;
@@ -551,6 +553,7 @@ public class Frontier
 	 */
 	protected void successDisposition(CrawlURI curi) {
 		completionCount++;
+		totalProcessedBytes += curi.getContentSize();
 		
 		if ( (completionCount % 500) == 0) {
 			logger.info("==========> " +
@@ -1259,5 +1262,12 @@ public class Frontier
 	public void crawlEnded(String sExitMessage) {
 		// Ok, if the CrawlController is exiting we delete our reference to it to facilitate gc.
 		controller = null;			
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#getTotalBytesWritten()
+	 */
+	public long totalBytesWritten() {
+		return totalProcessedBytes;
 	}
 }
