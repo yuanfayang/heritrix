@@ -289,7 +289,25 @@ public class UURIFactory extends URI {
                  " ESCAPED " + escaped +
                  " CHARSET " + charset);
             }
-        return uuri;
+         validityCheck(uuri);
+         return uuri;
+    }
+    
+    /**
+     * Check the generated UURI.
+     * 
+     * At the least look at length of uuri string.  We were seeing case
+     * where before escaping, string was &lt; MAX_URL_LENGTH but after was
+     * &gt;.  Letting out a too-big message was causing us troubles later
+     * down the processing chain.
+     * @param uuri Created uuri to check.
+     * @throws URIException
+     */
+    protected void validityCheck(UURI uuri) throws URIException {
+    	if (uuri.getRawURI().length > MAX_URL_LENGTH) {
+           throw new URIException("Created (escaped) uuri > " +
+              MAX_URL_LENGTH);
+        }
     }
     
     /**
