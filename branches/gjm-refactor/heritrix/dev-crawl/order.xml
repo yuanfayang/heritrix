@@ -5,21 +5,23 @@
 
  <scope 
    class="org.archive.crawler.basic.Scope"
-   max-link-hops="1"
-   max-trans-hops="3">
+   mode="broad"
+   max-link-hops="10"
+   max-trans-hops="4">
    
   <seeds>
  #  http://www.archive.org/movies/movies.php
- #  http://www.drudgereport.com
-    http://www.yahoo.com
-    http://www.google.com/dirhp
+   http://www.drudgereport.com
+   http://www.yahoo.com
+   http://www.google.com/dirhp
+   
   </seeds>
  
  </scope>
  
  <behavior
    disk-path="disk"
-   max-toe-threads="10"
+   max-toe-threads="50"
    >
    
   <http-headers
@@ -29,8 +31,9 @@
 
   <frontier 
     class="org.archive.crawler.basic.Frontier"
-    delay-factor="0"
-    minimum-delay="0"
+    delay-factor="1"
+    min-delay="0"
+    max-delay="1000"
    />
   
    <processors>
@@ -39,8 +42,6 @@
       name="Preselector" 
       class="org.archive.crawler.basic.Preselector"
       next="Preprocessor"
-      
-      scope="yes"
      />
 
     <processor 
