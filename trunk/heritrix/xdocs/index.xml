@@ -25,8 +25,16 @@
         <a href="http://www.robotstxt.org/wc/robots.html">robots.txt</a>
         exclusion directives and 
         <a href="http://www.robotstxt.org/wc/exclusion.html#meta">META robots
-        tags</a>.  If you notice our crawler behaving poorly, please send us
-        email at archive-crawler-agent *at* lists *dot* sourceforge *dot* net.
+        tags</a>, and collect material at a measured, adaptive pace unlikely
+        to disrupt normal website activity.
+        </p>
+        
+        <p>If you notice our crawler behaving poorly, please send us
+        email at:
+        </p>
+        
+        <p><img src="/images/crawler-problem-report-email.gif"
+                alt="archive-crawler-agent, @at@ lists .dot. soruceforge .dot. net"/>
         </p>
     </section>
     <section name="Getting Started">
