@@ -78,6 +78,8 @@ public class DiskQueue implements Queue, Serializable {
      * object is ready for use
      */
     private boolean isInitialized = false;
+    
+    private boolean reuse;
 
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
@@ -97,8 +99,7 @@ public class DiskQueue implements Queue, Serializable {
         length = 0;
         this.prefix = prefix;
         this.scratchDir = dir;
-        bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
-        bytes.initializeStreams(0);
+        this.reuse = reuse;
     }
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
@@ -111,6 +112,8 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     private void lateInitialize() throws FileNotFoundException, IOException {
+        bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
+        bytes.initializeStreams(0);
         testStream = new ObjectOutputStream(new DevNull());        
         tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
         headStream = new HeaderlessObjectInputStream(bytes.getHeadStream());
