@@ -115,6 +115,8 @@ public class Frontier
 	// top-level stats
 	long completionCount = 0;
 	long failedCount = 0;
+	long disregardedCount = 0; //URI's that are disregarded (for example because of robot.txt rules)
+	
 	// increments for every URI ever queued up (even dups)
 	long totalUrisScheduled = 0;
 	// increments for every URI ever queued up (even dups); decrements when retired
@@ -392,10 +394,10 @@ public class Frontier
 			
 			logLocalizedErrors(curi);
 			
-			// consider errors which halt further processing
-			if (isDispositiveFailure(curi)) {
-				failureDisposition(curi);
-				return;
+			// Regard any status larger then 0 as meaning success.
+			if(curi.getFetchStatus() > 0){
+				// SUCCESS: note & log
+				successDisposition(curi);
 			}
 			
 			// consider errors which can be retried
@@ -403,9 +405,15 @@ public class Frontier
 				scheduleForRetry(curi);
 				return;
 			}
+
+			// Check for codes that mean that while we the crawler did manage to get it it 
+			// must be disregarded for any reason.			
+			if(isDisregarded(curi)){
+				disregardDisposition(curi);
+			}
 					
-			// SUCCESS: note & log
-			successDisposition(curi);
+			// In that case FAILURE, note & log
+			failureDisposition(curi);
 		} catch (RuntimeException e) {
 			curi.setFetchStatus(S_RUNTIME_EXCEPTION);
 			// store exception temporarily for logging
@@ -414,6 +422,67 @@ public class Frontier
 		}	
 	} 
 			
+	/**
+	 * @param curi
+	 */
+	private void disregardDisposition(CrawlURI curi) {
+		disregardedCount++;
+
+		// release any other curis that were waiting for this to finish
+		releaseHeld(curi);	
+
+		// send to basic log 
+		Object array[] = { curi };
+		controller.uriProcessing.log(
+			Level.INFO,
+			curi.getUURI().getUriString(),
+			array);
+
+		// if exception, also send to crawlErrors
+		if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
+			controller.runtimeErrors.log(
+				Level.WARNING,
+				curi.getUURI().getUriString(),
+				array);
+		}
+		if (shouldBeForgotten(curi)) {
+			// curi is dismissed without prejudice: it can be reconstituted
+			forget(curi);
+		} else {
+			curi.setStoreState(URIStoreable.FINISHED);
+			if (curi.getDontRetryBefore() < 0) {
+				// if not otherwise set, retire this URI forever
+				curi.setDontRetryBefore(Long.MAX_VALUE);
+			}
+			curi.stripToMinimal();
+		}
+		decrementScheduled();
+	}
+
+
+
+	/**
+	 * @param curi
+	 * @return
+	 */
+	private boolean isDisregarded(CrawlURI curi) {
+		switch (curi.getFetchStatus()) {
+			case S_ROBOTS_PRECLUDED :
+				 // they don't want us to have it	
+			case S_OUT_OF_SCOPE :
+				 // filtered out
+			case S_TOO_MANY_EMBED_HOPS :
+				 // too far from last true link
+			case S_TOO_MANY_LINK_HOPS :
+				 // too far from seeds
+				return true;
+			default:
+				return false;
+		}
+	}
+
+
+
 	/**
 	 * Take note of any processor-local errors that have
 	 * been entered into the CrawlURI. 
@@ -443,6 +512,7 @@ public class Frontier
 	 */
 	protected void successDisposition(CrawlURI curi) {
 		completionCount++;
+		
 		if ( (completionCount % 500) == 0) {
 			logger.info("==========> " +
 				completionCount+" <========== HTTP URIs completed");
@@ -833,15 +903,6 @@ public class Frontier
 			case S_UNATTEMPTED :
 				// nothing happened to this URI: don't send it through again
 
-// THESE NEXT FOUR AREN'T TRULY FAILURES
-//			case S_ROBOTS_PRECLUDED :
-//				// they don't want us to have it	
-//			case S_OUT_OF_SCOPE :
-//				// filtered out
-//			case S_TOO_MANY_EMBED_HOPS :
-//				// too far from last true link
-//			case S_TOO_MANY_LINK_HOPS :
-//				// too far from seeds
 				return true;
 
 			default :
