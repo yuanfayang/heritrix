@@ -84,6 +84,7 @@ import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.ConfigurableX509TrustManager;
+import org.archive.httpclient.DNSJavaProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
 import org.archive.io.RecorderLengthExceededException;
@@ -836,6 +837,15 @@ public class FetchHTTP extends Processor
         // Set client to be version 1.0.
         this.http.getParams().setVersion(HttpVersion.HTTP_1_0);
         
+        // Use our own protocol factory, one that goes to 
+        // dnsjava to do lookups rather than to native InetAddress
+        // lookup.  Without this factory, dnsjava does one lookup
+        // and then the native InetAddress does its own lookup.
+        Protocol.registerProtocol("http", new Protocol("http",
+            DNSJavaProtocolSocketFactory.getSocketFactory(), 80));
+
+        // Put in place a configurable trustmanager as well as go
+        // by dnsjava to lookup remote hosts.
         try {
             String trustLevel = (String) getAttribute(ATTR_TRUST);
             Protocol.registerProtocol("https", new Protocol("https",

@@ -37,6 +37,7 @@ import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.archive.util.DNSJavaUtil;
 
 
 /**
@@ -93,12 +94,19 @@ implements SecureProtocolSocketFactory {
     public Socket createSocket(String host, int port, InetAddress clientHost,
         int clientPort)
     throws IOException, UnknownHostException {
-        return this.sslfactory.createSocket(host, port, clientHost, clientPort);
+        InetAddress hostAddress = DNSJavaUtil.getHostAddress(host);
+        return (hostAddress == null)?
+            this.sslfactory.createSocket(host, port, clientHost, clientPort):
+            this.sslfactory.createSocket(hostAddress, port, clientHost,
+                clientPort);    
     }
 
     public Socket createSocket(String host, int port)
     throws IOException, UnknownHostException {
-        return this.sslfactory.createSocket(host, port);
+        InetAddress hostAddress = DNSJavaUtil.getHostAddress(host);
+        return (hostAddress == null)?
+            this.sslfactory.createSocket(host, port):
+            this.sslfactory.createSocket(hostAddress, port);
     }
 
     public Socket createSocket(String host, int port, InetAddress localAddress,
@@ -116,7 +124,10 @@ implements SecureProtocolSocketFactory {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
             socket = this.sslfactory.createSocket();
-            InetSocketAddress address = new InetSocketAddress(host, port);
+            InetAddress hostAddress = DNSJavaUtil.getHostAddress(host);
+            InetSocketAddress address = (hostAddress != null)?
+                    new InetSocketAddress(hostAddress, port):
+                    new InetSocketAddress(host, port);
             socket.connect(address, timeout);
             assert socket.isConnected(): "Socket not connected " + host;
         }
@@ -128,4 +139,13 @@ implements SecureProtocolSocketFactory {
     throws IOException, UnknownHostException {
         return this.sslfactory.createSocket(socket, host, port, autoClose);
 	}
+    
+    public boolean equals(Object obj) {
+        return ((obj != null) && obj.getClass().
+            equals(ConfigurableTrustManagerProtocolSocketFactory.class));
+    }
+
+    public int hashCode() {
+        return ConfigurableTrustManagerProtocolSocketFactory.class.hashCode();
+    }
 }
