@@ -387,12 +387,6 @@ public class ReplayCharSequenceFactory {
             return this.length;
         }
 
-//        public char charAt(int index) {
-//            // Add to index start-of-content offset to get us over HTTP header
-//            // if present.
-//            return charAtAbsolute(index + this.contentOffset);
-//        }
-        
         /**
          * Get character at passed absolute position.
          * 
@@ -875,19 +869,15 @@ public class ReplayCharSequenceFactory {
                 CoderResult result = null;
                 ByteBuffer bb = null;
                 for (int i = 0; i < buffers.length; i++) {
-                    bb = buffers[i];
-                    assert bb.hasRemaining(): "Buffer has nought in it: " + i;
+                    bb = manageTransition(bb, buffers[i], decoder, cb);
                     // If we fill the decoder buffer or if decoder reports
                     // underfilled and the buffer has content in it, then go 
                     // and drain the buffer and recall the decoder.
-                    while(((result = decoder.decode(bb, cb, false))
-                                == CoderResult.OVERFLOW) ||
-                            ((result == CoderResult.UNDERFLOW) &&
-                                bb.hasRemaining())) {
-                        
+                    while((result = decoder.decode(bb, cb, false))
+                                == CoderResult.OVERFLOW) {
                         drainCharBuffer(cb, writer);
                     }
-                    
+
                     if (result != CoderResult.UNDERFLOW) {
                         throw new IOException("Unexpected result: " + result);
                     }
@@ -903,7 +893,7 @@ public class ReplayCharSequenceFactory {
                 while (decoder.flush(cb) == CoderResult.OVERFLOW) {
                     drainCharBuffer(cb, writer);
                 }
-            
+
                 // Drain any chars remaining in the output buffer
                 drainCharBuffer(cb, writer);
             }
@@ -929,12 +919,64 @@ public class ReplayCharSequenceFactory {
         }
             
         /**
+         * Manage buffer transition.
+         * 
+         * Handle case of multibyte characters spanning buffers.
+         * See "[ 935122 ] ToeThreads hung in ExtractorHTML after Pause":
+         * http://sourceforge.net/tracker/?func=detail&aid=935122&group_id=73833&atid=539099
+         * 
+		 * @param previous The buffer we're leaving.
+		 * @param next The buffer we're going to.
+         * @param decoder Decoder to use decoding.
+         * @param cb Where we're putting decoded characters.
+		 * @return Pointer to next buffer with postion set to just past
+         * any byte read making the transition.
+		 */
+		private ByteBuffer manageTransition(ByteBuffer previous,
+             ByteBuffer next, CharsetDecoder decoder, CharBuffer cb) {
+
+            if (previous == null || !previous.hasRemaining()) {
+                return next;
+            }
+            
+            // previous has content remaining but its just a piece of a
+            // multibyte character.  Need to go to next buffer to get the
+            // rest of the character.  Save off tail for moment.
+
+            ByteBuffer tail = previous.slice();
+            int cbPosition = cb.position();
+            
+            ByteBuffer tbb = null;
+            final int MAX_CHAR_SIZE = 6;
+            for (int i = 0; i < MAX_CHAR_SIZE; i++) {
+            	    tbb = ByteBuffer.allocate(tail.capacity() + i + 1);
+                tbb.put(tail);
+                // Copy first bytes without disturbing buffer position.
+                for (int j = 0; j <= i; j++) {
+                    tbb.put(next.get(j));   
+                }
+                CoderResult result = decoder.decode(tbb, cb, false);
+                if (result == CoderResult.UNDERFLOW) {
+                	    // Enough bytes for us to move on.
+                    next.position(i + 1);
+                    break;
+                } else {
+                	    // Go around again.  Restore cb to where it was.
+                    cb.position(cbPosition);
+                    tail.rewind();
+                }
+            }
+            
+            return next;
+		}
+
+		/**
          * Helper method to drain the char buffer and write its content to
          * the given output stream (as bytes).  Upon return, the buffer is empty
          * and ready to be refilled.
          * 
          * @param cb A CharBuffer containing chars to be written.
-         * @param out An output stream to consume the bytes in cb.
+         * @param writer An output stream to consume the bytes in cb.
          */
         private void drainCharBuffer(CharBuffer cb, Writer writer)
             throws IOException  {

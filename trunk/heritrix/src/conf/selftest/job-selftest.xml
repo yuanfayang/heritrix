@@ -12,7 +12,7 @@
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
-    <integer name="max-toe-threads">3</integer>
+    <integer name="max-toe-threads">1</integer>
     <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
       <string name="seedsfile">seeds-selftest.txt</string>
