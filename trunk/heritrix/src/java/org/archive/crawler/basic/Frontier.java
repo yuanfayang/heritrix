@@ -230,7 +230,7 @@ public class Frontier
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
             caUri.setIsSeed(true);
-            scheduleHigh(caUri);
+            scheduleURI(caUri);
         }
     }
 
@@ -251,40 +251,33 @@ public class Frontier
 
     }
 
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
+    /**
+     *  
+     * @see org.archive.crawler.framework.URIFrontier#batchScheduleURI(org.archive.crawler.datamodel.CandidateURI)
      */
-    public void batchSchedule(CandidateURI caUri) {
-        // initially just pass-through
-        // schedule(caUri);
-        threadWaiting.getQueue().enqueue(caUri);
+    public void batchScheduleURI (CandidateURI caURI) {
+        switch (caURI.getPriority()) {
+            case CandidateURI.FORCED_FETCH_PRIORITY:
+            case CandidateURI.HIGH_PRIORITY:
+                threadWaitingHigh.getQueue().enqueue(caURI);
+                break;
+            case CandidateURI.NORMAL_PRIORITY:
+            threadWaiting.getQueue().enqueue(caURI);               
+        }
     }
 
-
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#batchScheduleHigh(org.archive.crawler.datamodel.CandidateURI)
-     */
-    public void batchScheduleHigh(CandidateURI caUri) {
-        // initially just pass-through
-        //scheduleHigh(caUri);
-        threadWaitingHigh.getQueue().enqueue(caUri);
-    }
-
-
-
-    /* (non-Javadoc)
+    /**
+     *  
      * @see org.archive.crawler.framework.URIFrontier#batchFlush()
      */
     public synchronized void batchFlush() {
         Queue q = threadWaitingHigh.getQueue();
         while(!q.isEmpty()) {
-            scheduleHigh((CandidateURI) q.dequeue());
+            scheduleURI((CandidateURI) q.dequeue());
         }
         q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
-            schedule((CandidateURI) q.dequeue());
+            scheduleURI((CandidateURI) q.dequeue());
         }
     }
 
@@ -295,31 +288,22 @@ public class Frontier
      *
      * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
-    public synchronized void schedule(CandidateURI caUri) {
-        if(!caUri.forceFetch() && alreadyIncluded.quickContains(caUri)) {
-            logger.finer("Disregarding alreadyIncluded "+caUri);
+    public synchronized void scheduleURI (CandidateURI caURI) {
+        if(!caURI.forceFetch() && alreadyIncluded.quickContains(caURI)) {
+            logger.finer("Disregarding alreadyIncluded " + caURI);
             return;
         }
-        pendingQueue.enqueue(caUri);
-        incrementScheduled();
-        controller.recover.info("\n"+F_ADD+caUri.getURIString());
-    }
+        switch (caURI.getPriority()) {
+            case CandidateURI.FORCED_FETCH_PRIORITY:
+            case CandidateURI.HIGH_PRIORITY:
+                pendingHighQueue.enqueue(caURI);
+                break;
+            default:
+                pendingQueue.enqueue(caURI);
 
-    /**
-     * Arrange for the given CandidateURI to be visited, with top
-     * priority (before anything else), if it is not already
-     * scheduled/completed.
-     *
-     * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
-     */
-    public synchronized void scheduleHigh(CandidateURI caUri) {
-        if(!caUri.forceFetch() && alreadyIncluded.quickContains(caUri)) {
-            logger.finer("Disregarding alreadyIncluded "+caUri);
-            return;
         }
-        pendingHighQueue.enqueue(caUri);
         incrementScheduled();
-        controller.recover.info("\n"+F_ADD+caUri.getURIString());
+        controller.recover.info("\n" + F_ADD + caURI.getURIString());
     }
 
     /**
@@ -630,7 +614,7 @@ public class Frontier
         controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
         decrementScheduled();
-        controller.recover.info("\n"+F_SUCCESS+curi.getURIString());
+        controller.recover.info("\n" + F_SUCCESS+curi.getURIString());
     }
 
 
@@ -1519,7 +1503,7 @@ public class Frontier
                         CandidateURI caUri = new CandidateURI(u);
                         caUri.setVia(pathToLog);
                         caUri.setPathFromSeed("L"); // TODO: reevaluate if this is correct
-                        schedule(caUri);
+                        scheduleURI(caUri);
                     }
                 } catch (URISyntaxException e) {
                     // TODO Auto-generated catch block
@@ -1530,5 +1514,4 @@ public class Frontier
         reader.close();
 
     }
-
 }
