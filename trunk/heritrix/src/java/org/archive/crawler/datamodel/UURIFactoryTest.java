@@ -98,6 +98,20 @@ public class UURIFactoryTest extends TestCase {
    }
    
    /**
+    * Test space plus encoding ([ 1010966 ] crawl.log has URIs with spaces in them).
+    * @see <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=1010966&group_id=73833&atid=539099">[ 1010966 ] crawl.log has URIs with spaces in them</a>.
+    * @throws URIException
+    */
+   public final void testSpaceDoubleEncoding() throws URIException {
+       final String uri = "http://www.brook.edu/i.html? %20taxonomy=Politics";
+       final String encodedUri =
+           "http://www.brook.edu/i.html?%20%20taxonomy=Politics";
+       UURI uuri = UURIFactory.getInstance(uri, "ISO-8859-1");
+       assertTrue("Not equal " + uuri.toString(),
+           uuri.toString().equals(encodedUri));
+   }
+   
+   /**
     * Test for doubly-encoded sequences.
     * @see <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=966219&group_id=73833&atid=539099">[ 966219 ] UURI doubly-encodes %XX sequences</a>.
     * @throws URIException
