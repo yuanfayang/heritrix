@@ -83,6 +83,8 @@ public class SeedListTest extends TmpDirTestCase {
         // First create array of seeds and add to treeset.
         SeedListTest.seeds = new TreeSet(SeedListTest.CMP);
         UURI [] tmp = {
+            UURIFactory.getInstance("mailto:www.google.com"),
+            UURIFactory.getInstance("news:www.google.com"),
             UURIFactory.getInstance("http://www.google.com"),
             UURIFactory.getInstance("https://www.google.com"),
             UURIFactory.getInstance("gopher://www.google.com"),
@@ -135,6 +137,9 @@ public class SeedListTest extends TmpDirTestCase {
         SeedList sl = new SeedList(this.seedsfile, null, false);
         for (Iterator i = sl.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
+            if (uuri.getHost() == null) {
+                continue;
+            }
             if (uuri.getHost().equals(NOSCHEME)) {
                 found = true;
                 break;
@@ -144,7 +149,7 @@ public class SeedListTest extends TmpDirTestCase {
     }
 
     public void coreTest(boolean caching) throws URIException {
-        // First make sure that I can the seed set from seed file.
+        // First make sure that I can get the seed set from seed file.
         SeedList sl = checkContent(SeedListTest.seeds, caching);
         // Now do add and see if get set matches seed file content.
         final UURI uuri = UURIFactory.getInstance("http://one.two.three");
