@@ -191,15 +191,16 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		if(useCompression()){
 			fileExtension += ".gz";
 		}
-			
-		String fileName = outputDir + arcPrefix + date +  "-" + uniqueIdentifier + fileExtension;
+		
+		String fileName = arcPrefix + date +  "-" + uniqueIdentifier + fileExtension;
+		String fqFileName = outputDir + fileName;
 		
 		try {
 			if(out != null){
 				out.close();
 			}
 							
-			file = new File(fileName);
+			file = new File(fqFileName);
 			arcOut = new FileOutputStream(file);
 			
 			if(useCompression()){
