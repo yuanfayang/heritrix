@@ -106,45 +106,50 @@ public class ToeThread extends Thread
         String name = controller.getOrder().getCrawlOrderName();
         logger.fine(getName()+" started for order '"+name+"'");
 
-        while ( shouldCrawl ) {
-            try {
-                while ( shouldPause ) {
-                    synchronized(this){
-                        wait();
+        try {
+            while ( shouldCrawl ) {
+                try {
+                    while ( shouldPause ) {
+                        controller.toePausing(this);
+                        synchronized(this){
+                            wait();
+                        }
                     }
-                }
-                if(shouldDie){ 
-                    return; 
-                }
-                currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
-                if ( currentCuri != null ) {
                     if(shouldDie){ 
                         return; 
                     }
-                    processCrawlUri();
-                }
-                where = 16;
-            } catch (InterruptedException e1) {
-                currentCuri = null;
-                if(shouldDie){ 
-                    return;
-                } else {
-                    // Thread was interrupted for unknown reasons.
-                    e1.printStackTrace();
+                    currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
+                    if ( currentCuri != null ) {
+                        if(shouldDie){ 
+                            return; 
+                        }
+                        processCrawlUri();
+                    }
+                    where = 16;
+                } catch (InterruptedException e1) {
+                    currentCuri = null;
+                    if(shouldDie){ 
+                        return;
+                    } else {
+                        // Thread was interrupted for unknown reasons.
+                        e1.printStackTrace();
+                    }
                 }
             }
+        } finally {
+            where = 17;
+            if(controller!=null) {
+                controller.toeFinished(this);
+            }
+            // Do cleanup so that objects can be GC.
+            pool = null;
+            controller = null;
+            httpRecorder.closeRecorders();
+            httpRecorder = null;
+            localProcessors = null;
+    
+            logger.fine(getName()+" finished for order '"+name+"'");
         }
-        where = 17;
-//        controller.toeFinished(this);
-
-        // Do cleanup so that objects can be GC.
-        pool = null;
-        controller = null;
-        httpRecorder.closeRecorders();
-        httpRecorder = null;
-        localProcessors = null;
-
-        logger.fine(getName()+" finished for order '"+name+"'");
     }
 
     private void processCrawlUri() throws InterruptedException {
@@ -392,6 +397,7 @@ public class ToeThread extends Thread
               //In any case we don't want another extrenous call.
         }
         this.interrupt();
+        controller.toeFinished(this);
     }
     
 }
