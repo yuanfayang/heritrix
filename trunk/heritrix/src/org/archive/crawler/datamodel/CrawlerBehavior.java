@@ -56,7 +56,7 @@ public class CrawlerBehavior extends XMLConfig {
 		return getStringAt("//http-headers/From");
 	}
 
-	public List getSeeds() {
+	public List getSeeds() throws IOException {
 		if (seeds != null) {
 			return seeds;
 		}
@@ -105,5 +105,9 @@ public class CrawlerBehavior extends XMLConfig {
 		} catch (URISyntaxException e1) {
 			e1.printStackTrace();
 		}
+	}
+	
+	public BufferedReader  nodeValueOrSrcReader(String node) throws IOException {
+		return super.nodeValueOrSrcReader(node, this.getDefaultFileLocation());
 	}
 }
