@@ -47,6 +47,13 @@ public class ARCRecordMetaData
      * <p>Keys are lowercase.
      */
     protected Map headerFields = null;
+    
+    /**
+     * Digest for the record.
+     * 
+     * Only available after the record has been read in totality.
+     */
+    private String digest = null;
 
 
     /**
@@ -157,5 +164,19 @@ public class ARCRecordMetaData
     public Map getHeaderFields()
     {
         return this.headerFields;
+    }
+    
+    /**
+     * @return Returns the digest.
+     */
+    public String getDigest() {
+        return this.digest;
+    }
+    
+    /**
+     * @param d The digest to set.
+     */
+    public void setDigest(String d) {
+        this.digest = d;
     }
 }

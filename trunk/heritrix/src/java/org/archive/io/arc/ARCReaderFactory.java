@@ -53,14 +53,17 @@ public class ARCReaderFactory implements ARCConstants {
         super();
     }
     
+    public static boolean isCompressed(File arcFile) throws IOException {
+        return ARCReaderFactory.factory.testCompressedARCFile(arcFile);
+    }
+    
     /**
      * @param arcFile An arcfile to read.
      * @return An ARCReader.
      * @throws IOException
      */
     public static ARCReader get(File arcFile) throws IOException {
-        boolean compressed =
-                ARCReaderFactory.factory.testCompressedARCFile(arcFile);
+        boolean compressed = isCompressed(arcFile);
         if (!compressed) {
             if (!ARCReaderFactory.factory.testUncompressedARCFile(arcFile)) {
                 throw new IOException(arcFile.getAbsolutePath() +
