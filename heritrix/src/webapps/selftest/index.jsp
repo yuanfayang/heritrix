@@ -41,14 +41,13 @@
         <p>This is the home page for the serverside of the Heritrix crawler 
             integration self test.  The clientside of 
             the integration self test can be found in the 
-            <i>org.archive.crawler.garden</i> package. See the javadoc for this 
-            package for more on the integration self test including how to add 
+            <i>org.archive.crawler.selftest</i> package. See the javadoc for
+	this package for more on the integration self test including how to add 
             new tests.</p>
             
             <p>The integration self test is run from the command line. This 
-                will start a crawler that will meander in this <i>garden</i> 
-                webapp (This webapp is called a <i>garden</i> because garden 
-                conveys notions of containment). Code on the
+                will start a crawler that will meander here, 
+		in this <i>selftest</i> webapp. Code on the
                 client validates successful crawler traversal of all tests. </p>
             
         <p>Below are the tests to run. Each test is totally contained in a 
