@@ -3,6 +3,14 @@
 <%@ page import="org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
 
 <%
+    String sAction = request.getParameter("action");
+    if(sAction != null){
+        // Need to handle an action 
+        if(sAction.equalsIgnoreCase("delete")){
+            handler.deleteJob(request.getParameter("job"));
+        }
+    }   
+
 	Vector jobs = handler.getCompletedJobs();
 
 	String title = "Completed crawl jobs";
@@ -20,7 +28,7 @@
 					Status
 				</th>
 				<th>
-					View
+					Options
 				</th>
 			</tr>
 			<%
@@ -37,10 +45,11 @@
 						</td>
 						<td>
 							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
-							<a href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
-							<a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
+                            <a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
 							<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
-							<a href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
+                            <a href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
+                            <a href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
+                            <a href="/admin/jobs/completed.jsp?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
 						</td>
 					</tr>
 					<% if(job.getErrorMessage()!=null){ %>

@@ -85,6 +85,7 @@
 	
 	String title = isProfile?"New profile":"New crawl job";
 	int tab = isProfile?2:1;
+	// TODO: Offer setting of priority.
 %>
 
 <%@include file="/include/head.jsp"%>

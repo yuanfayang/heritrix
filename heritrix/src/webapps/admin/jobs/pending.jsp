@@ -4,19 +4,11 @@
 
 <%
 	String sAction = request.getParameter("action");
-
-	if(sAction != null)
-	{
+	if(sAction != null){
 		// Need to handle an action	
-		if(sAction.equalsIgnoreCase("delete"))
-		{
-			try
-			{
-				handler.deleteJob(request.getParameter("job"));
-			}
-			catch(java.lang.NumberFormatException e){}
+		if(sAction.equalsIgnoreCase("delete")){
+			handler.deleteJob(request.getParameter("job"));
 		}
-		
 	}	
 
 	Vector jobs = handler.getPendingJobs();

@@ -289,7 +289,7 @@ public class CrawlURI extends CandidateURI
 
     /**
      * @return Token (usually the hostname) which indicates
-     * what "class" this CrawlURI should br grouped with,
+     * what "class" this CrawlURI should be grouped with,
      * for the purposes of ensuring only one item of the
      * class is processed at once, all items of the class
      * are held for a politeness period, etc.

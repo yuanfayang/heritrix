@@ -20,17 +20,25 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.logging.Level;
 
+import javax.management.InvalidAttributeValueException;
+
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.StatisticsTracking;
-
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and
  * methods needed by a CrawlJobHandler to accept and execute them. A given crawl
- * job may also be a 'profile' for a crawl. In that case it should not be executed
- * as a crawl but can be edited and used as a template for creating new CrawlJobs.
+ * job may also be a 'profile' for a crawl. In that case it should not be 
+ * executed as a crawl but can be edited and used as a template for creating new
+ * CrawlJobs.
  * <p>
  * All of it's constructors are protected since only the CrawlJobHander (or it's
  * subclasses) should construct new CrawlJobs.
@@ -61,7 +69,7 @@ public class CrawlJob
     public static final String STATUS_PENDING = "Pending";
     /** Job is being crawled */
     public static final String STATUS_RUNNING = "Running";
-    /** Job was deleted from the CrawlJobHandler before it was crawled. */
+    /** Job was deleted by user, will not be displayed in UI. */
     public static final String STATUS_DELETED = "Deleted";
     /** Job was terminted by user input while crawling */
     public static final String STATUS_ABORTED = "Aborted by user";
@@ -92,30 +100,17 @@ public class CrawlJob
     private boolean isNew = true;
     private boolean isProfile = false;
     private boolean isRunning = false;
+    private int priority;
+
     // TODO: Statistics tracker will be saved at end of crawl. We will also want to save it at checkpoints.
     private StatisticsTracking stats;
-    private int priority;
+    private String statisticsFileSave = "";
 
     private String errorMessage = null;
     
     private File jobDir = null;
 
     protected XMLSettingsHandler settingsHandler;
-
-    /**
-     * Simple constructor. Settings need to be added seperately before a job 
-     * created with this constructor can be submitted to the CrawlJobHandler.
-     *
-     * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
-     * @param dir The directory to store the job file.
-     *
-     * @see CrawlJobHandler#getNextJobUID()
-     */
-//    protected CrawlJob(String UID, File dir){
-//        this.UID = UID;
-//        isReadOnly = false;
-//        jobDir = dir;
-//    }
 
     /**
      * A constructor for jobs. Create, ready to crawl, jobs.
@@ -153,23 +148,132 @@ public class CrawlJob
      * A constructor for reloading jobs from disk. Jobs (not profiles) have 
      * their data written to persistent storage in the file system. This method 
      * is used to load the job from such storage. This is done by the 
-     * <code>CrawlJobHandler</code>
+     * <code>CrawlJobHandler</code>.
+     * <p>
+     * Proper structure of a job file (TODO: Maybe one day make this an XML file)
+     * Line 1. UID <br>
+     * Line 2. Job name (string) <br>
+     * Line 3. Job status (string) <br>
+     * Line 4. is job read only (true/false) <br>
+     * Line 5. is job running (true/false) <br>
+     * Line 6. job priority (int) <br>
+     * Line 7. setting file (with path) <br>
+     * Line 8. statistics tracker file (with path) <br>
+     * Line 9-?. error message (String, empty for null), can be many lines <br>
+     * 
      * @param jobFile
+     *            a file containing information about the job to load.
+     * @throws InvalidJobFileException
+     *             if the specified file does not refer to a valid job file.
      */
-    protected CrawlJob(File jobFile){
-        
+    protected CrawlJob(File jobFile) throws InvalidJobFileException, IOException{
+        // Open file
+        // Read data and set up class variables accordingly...
+        BufferedReader jobReader = new BufferedReader(new FileReader(jobFile),4096);
+        // UID
+        UID = jobReader.readLine();
+        // name
+        name = jobReader.readLine();
+        // status
+        status = jobReader.readLine();
+        if(status.equals(STATUS_ABORTED)==false 
+                && status.equals(STATUS_FINISHED)==false
+                && status.equals(STATUS_FINISHED_ABNORMAL)==false
+                && status.equals(STATUS_FINISHED_DATA_LIMIT)==false
+                && status.equals(STATUS_FINISHED_DOCUMENT_LIMIT)==false
+                && status.equals(STATUS_FINISHED_TIME_LIMIT)==false
+                && status.equals(STATUS_MISCONFIGURED)==false
+                && status.equals(STATUS_PAUSED)==false
+                && status.equals(STATUS_PENDING)==false
+                && status.equals(STATUS_RUNNING)==false
+                && status.equals(STATUS_WAITING_FOR_PAUSE)==false){
+            // status is invalid. Must be one of the above
+            throw new InvalidJobFileException("Status (line 3) in job file " +
+                    "is not valild: '" + status + "'");
+        }
+        // isReadOnly
+        String tmp = jobReader.readLine();
+        if(tmp.equals("true")){
+            isReadOnly = true;
+        } else if(tmp.equals("false")){
+            isReadOnly = false;
+        } else {
+            throw new InvalidJobFileException("isReadOnly (line 4) in job" +
+                    " file '" + jobFile.getAbsolutePath() + "' is not " +
+                    "valid: '" + tmp + "'");
+        }
+        // isRunning
+        tmp = jobReader.readLine();
+        if(tmp.equals("true")){
+            isRunning = true;
+        } else if(tmp.equals("false")){
+            isRunning = false;
+        } else {
+            throw new InvalidJobFileException("isRunning (line 5) in job " +
+                    "file '" + jobFile.getAbsolutePath() + "' is not valid: " +
+                    "'" + tmp + "'");
+        }
+        // priority
+        tmp = jobReader.readLine();
+        try{
+            priority = Integer.parseInt(tmp);
+        } catch(NumberFormatException e){
+            throw new InvalidJobFileException("priority (line 5) in job " +
+                    "file '" + jobFile.getAbsolutePath() + "' is not valid: " +
+                    "'" + tmp + "'");
+        }
+        // settingsHandler
+        tmp = jobReader.readLine();
+        try {
+            settingsHandler = new XMLSettingsHandler(new File(tmp));
+            settingsHandler.initialize();
+        } catch (InvalidAttributeValueException e1) {
+            throw new InvalidJobFileException("Problem reading from settings " +
+                    "file (" + tmp + ") specified in job file '" + 
+                    jobFile.getAbsolutePath() + "'\n" + e1.getMessage());
+        }
+        // Statistics tracker.
+        jobReader.readLine();
+        // errorMessage
+        // TODO: Multilines
+        tmp = jobReader.readLine();
+        while(tmp!=null){
+            errorMessage+=tmp;
+            tmp = jobReader.readLine();
+        }
+        // TODO: Load stattrack if needed.
     }
 
     /**
-     * Cause the job to be written to persistent storage. This will also
-     * save the statistics tracker if it is not null and the job status is
-     * finished (regardless of how it's finished)
+     * Cause the job to be written to persistent storage. This will also save the
+     * statistics tracker if it is not null and the job status is finished
+     * (regardless of how it's finished)
      */
     private void writeJobFile(){
-        
+        if(isProfile==false && isNew==false){
+            try {
+                FileWriter jobWriter = new FileWriter(jobDir.getAbsolutePath() + 
+                        File.separator + name + ".job", false);
+                jobWriter.write(UID+"\n");
+                jobWriter.write(name+"\n");
+                jobWriter.write(status+"\n");
+                jobWriter.write(isReadOnly+"\n");
+                jobWriter.write(isRunning+"\n");
+                jobWriter.write(priority+"\n");
+                jobWriter.write(getSettingsDirectory()+"\n");
+                jobWriter.write(statisticsFileSave+"\n");// TODO: Is this right?
+                // Can be multiple lines so we keep it last
+                jobWriter.write(errorMessage==null?"":errorMessage+"\n"); 
+                jobWriter.flush();
+                jobWriter.close();
+            } catch (IOException e) {
+                Heritrix.addAlert(new Alert("IOException saving job " + name,
+                        "An IOException occured when saving job " +
+                                name + " (" + UID + ")",e, Level.WARNING));
+            }
+        }
     }
     
-
     /**
      * Returns this jobs unique ID (UID) that was issued by the CrawlJobHandler()
      * when this job was first created.
@@ -180,17 +284,6 @@ public class CrawlJob
     public String getUID(){
         return UID;
     }
-
-    /**
-     * Set the 'name' of this job. The name corrisponds to the 'name' tag in the
-     * 'meta' section of the settings file.
-     *
-     * @param jobname The 'name' of the job.
-     */
-//Should not be editable
-//    protected void setJobName(String jobname){
-//        this.name = jobname;
-//    }
 
     /**
      * Returns this job's 'name'. The name comes from the settings for this job,
@@ -218,7 +311,6 @@ public class CrawlJob
      * @see #PRIORITY_HIGH
      * @see #PRIORITY_CRITICAL
      */
-    // TODO: Either implement the priority or get rid of it.
     public void setJobPriority(int priority){
         this.priority = priority;
     }
@@ -324,16 +416,6 @@ public class CrawlJob
     }
 
     /**
-     * Set's wether or not this job is a profile.
-     * @param b True/False
-     */
-// Can't change a profile into a job directly or vica versa!
-//    public void setProfile(boolean b) {
-//        isProfile = b;
-//        // TODO: Is this method needed? Probably not.
-//    }
-
-    /**
      * Returns true if the job is being crawled.
      * @return true if the job is being crawled
      */
@@ -354,17 +436,26 @@ public class CrawlJob
 
     /**
      * Returns the directory where the configuration files for this job are
-     * located or null if no settings handler has been set.
+     * located.
      *
      * @return the directory where the configuration files for this job are
      *         located
      */
-    // TODO: Split into two methods. getJobDirectory() and getSettingsDirectory()
-    public String getDirectory() {
-        if(settingsHandler!=null){
-            return settingsHandler.getOrderFile().getPath();
+    public String getSettingsDirectory() {
+        return settingsHandler.getOrderFile().getPath();
+    }
+    
+    /**
+     * Returns the path of the job's base directory. For profiles this is always
+     * equal to <code>new File(getSettingsDirectory())</code>.
+     * @return the path of the job's base directory.
+     */
+    public File getDirectory(){
+        if(isProfile){
+            return new File(getSettingsDirectory());
+        } else {
+            return jobDir;
         }
-        return null;
     }
     
     /**

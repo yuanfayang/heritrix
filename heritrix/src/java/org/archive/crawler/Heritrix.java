@@ -571,7 +571,7 @@ public class Heritrix
         out.println("Result of analysis printed to " + HERITRIX_OUT_FILE +
             " when done.");
         out.println("Selftest job directory for logs and arcs:\n" +
-            Heritrix.jobHandler.getJobdir(job).getAbsolutePath());
+            job.getDirectory().getAbsolutePath());
     }
 
     /**
