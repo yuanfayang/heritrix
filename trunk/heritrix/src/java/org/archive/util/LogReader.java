@@ -119,7 +119,6 @@ public class LogReader
 	 */
 	public static int findFirstLineContaining(String aFileName, String regExpr)
 	{
-		StringBuffer ret = new StringBuffer();
 		Pattern p = Pattern.compile(regExpr);
 		
 		try{
