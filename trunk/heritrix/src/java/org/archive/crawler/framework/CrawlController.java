@@ -169,14 +169,7 @@ public class CrawlController extends Thread {
     CrawlOrder order;
     CrawlScope scope;
 
-    public ProcessorChain firstProcessorChain;
-    public ProcessorChain postprocessorChain;
-
-    public ProcessorChain preFetchProcessorChain;
-    public ProcessorChain fetchProcessorChain;
-    public ProcessorChain extractProcessorChain;
-    public ProcessorChain writeProcessorChain;
-    public ProcessorChain postProcessorChain;
+    private ProcessorChainList processorChains;
 
     int nextToeSerialNumber = 0;
 
@@ -469,13 +462,6 @@ public class CrawlController extends Thread {
             order.setAttribute((Frontier) frontier);
         }
 
-        /*
-        processors = order.getProcessors();
-        if (processors.isEmpty(null)) {
-            throw new FatalConfigurationException("No processors defined");
-        }
-        */
-
         // try to initialize each scope and frontier from the config file
         //scope.initialize(this);
         try {
@@ -499,20 +485,7 @@ public class CrawlController extends Thread {
         serverCache = new ServerCache(getSettingsHandler());
 
         // Setup processors
-        preFetchProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS));
-        fetchProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_FETCH_PROCESSORS));
-        extractProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_EXTRACT_PROCESSORS));
-        writeProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_WRITE_PROCESSORS));
-        postProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_POST_PROCESSORS));
-
-        preFetchProcessorChain.initialize(fetchProcessorChain);
-        fetchProcessorChain.initialize(extractProcessorChain);
-        extractProcessorChain.initialize(writeProcessorChain);
-        writeProcessorChain.initialize(postProcessorChain);
-        postProcessorChain.initialize(null);
-
-        setFirstProcessorChain(preFetchProcessorChain);
-        setPostprocessorChain(postProcessorChain);
+        processorChains = new ProcessorChainList(order);
     }
 
     private void setupDisk() throws FatalConfigurationException,
@@ -737,9 +710,6 @@ public class CrawlController extends Thread {
         registeredCrawlStatusListeners = null;
         order = null;
         scope = null;
-        firstProcessorChain = null;
-        postprocessorChain = null;
-        //processors = null;
         serverCache = null;
 
         logger.fine(getName() + " finished for order CrawlController");
@@ -852,10 +822,6 @@ public class CrawlController extends Thread {
         return order;
     }
 
-//    public MapType getProcessors() {
-//        return processors;
-//    }
-
     public ServerCache getServerCache() {
         return serverCache;
     }
@@ -941,23 +907,28 @@ public class CrawlController extends Thread {
         return scope;
     }
 
-    public ProcessorChain getFirstProcessorChain() {
-        return firstProcessorChain;
-    }
-
-    public void setFirstProcessorChain(ProcessorChain processorChain) {
-        firstProcessorChain = processorChain;
-    }
-
-    public ProcessorChain getPostprocessorChain() {
-        return postprocessorChain;
-    }
-
-    /**
-     * @param processor
+    /** Get the list of processor chains.
+     * 
+     * @return the list of processor chains.
      */
-    public void setPostprocessorChain(ProcessorChain processorChain) {
-        postprocessorChain = processorChain;
+    public ProcessorChainList getProcessorChainList() {
+        return processorChains;
+    }
+    
+    /** Get the first processor chain.
+     * 
+     * @return the first processor chain.
+     */
+    public ProcessorChain getFirstProcessorChain() {
+        return processorChains.getFirstChain();
+    }
+
+    /** Get the postprocessor chain.
+     * 
+     * @return the postprocessor chain.
+     */
+    public ProcessorChain getPostprocessorChain() {
+        return processorChains.getLastChain();
     }
 
     public File getDisk() {
@@ -1020,31 +991,17 @@ public class CrawlController extends Thread {
                 + ArchiveUtils.TIMESTAMP12.format(new Date())
                 + "\n");
         rep.append("  Job being crawled:    " + getOrder().getCrawlOrderName()
-                   + "\n");
+                + "\n");
 
-        int processorCount = preFetchProcessorChain.size()
-                             + fetchProcessorChain.size()
-                             + extractProcessorChain.size()
-                             + writeProcessorChain.size()
-                             + postProcessorChain.size();
-
-        rep.append("  Number of Processors: " + processorCount + "\n");
+        rep.append("  Number of Processors: " + processorChains.processorCount()
+                + "\n");
         rep.append("  NOTE: Some processors may not return a report!\n\n");
 
-        for (Iterator it = preFetchProcessorChain.iterator(); it.hasNext(); ) {
-            rep.append(((Processor) it.next()).report());
-        }
-        for (Iterator it = fetchProcessorChain.iterator(); it.hasNext(); ) {
-            rep.append(((Processor) it.next()).report());
-        }
-        for (Iterator it = extractProcessorChain.iterator(); it.hasNext(); ) {
-            rep.append(((Processor) it.next()).report());
-        }
-        for (Iterator it = writeProcessorChain.iterator(); it.hasNext(); ) {
-            rep.append(((Processor) it.next()).report());
-        }
-        for (Iterator it = postProcessorChain.iterator(); it.hasNext(); ) {
-            rep.append(((Processor) it.next()).report());
+        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
+            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
+                    ip.hasNext(); ) {
+                rep.append(((Processor) ip.next()).report());
+            }
         }
 
         return rep.toString();
@@ -1052,8 +1009,8 @@ public class CrawlController extends Thread {
 
     /**
      * While many settings will update automatically when the SettingsHandler is
-     * modified, some settings need to be explicitly changed to reflect new settings.
-     * This includes, number of toe threads and seeds.
+     * modified, some settings need to be explicitly changed to reflect new
+     * settings. This includes, number of toe threads and seeds.
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
