@@ -84,7 +84,7 @@ public abstract class AbstractTracker extends ModuleType
     }
 
     /**
-     * Set's up the Logger (including logInterval) and registers with the CrawlController
+     * Sets up the Logger (including logInterval) and registers with the CrawlController
      * for CrawlStatus and CrawlURIDisposition events.
      *
      * @param c A crawl controller instance.
@@ -92,7 +92,7 @@ public abstract class AbstractTracker extends ModuleType
      * @see CrawlStatusListener
      * @see org.archive.crawler.event.CrawlURIDispositionListener
      */
-    public void initalize(CrawlController c) {
+    public void initialize(CrawlController c) {
         controller = c;
 
         // Add listeners
@@ -110,7 +110,6 @@ public abstract class AbstractTracker extends ModuleType
             return;
         }
 
-        crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
         shouldrun = true; //If we are starting, this should always be true.
 
         // log the legend
@@ -141,6 +140,15 @@ public abstract class AbstractTracker extends ModuleType
                 logActivity();
             }
         }
+    }
+
+    /**
+     * Notify tracker that crawl has begun. Must be called
+     * outside tracker's own thread, to ensure it is noted
+     * before other threads start interacting with tracker. 
+     */
+    public void noteStart() {
+        crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
     }
 
     /**
