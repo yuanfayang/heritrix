@@ -139,8 +139,12 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	}
 
 	/**
+	 * Schedule the given CandidateURI with the Frontier as a "high" priority
+	 * item (such as a prerequisite or embedded resource which should be fetched
+	 * in an expedited manner). 
+	 * 
 	 * @param prereq
-	 * @return
+	 * @return true if CandidateURI was accepted by crawl scope, false otherwise
 	 */
 	private boolean scheduleHigh(CandidateURI caUri) {
 		if(controller.getScope().accepts(caUri)) {
@@ -156,8 +160,10 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	}
 
 	/**
+	 * Schedule the given CandidateURI with the Frontier.
+	 * 
 	 * @param prereq
-	 * @return
+	 * @return true if CandidateURI was accepted by crawl scope, false otherwise
 	 */
 	private boolean schedule(CandidateURI caUri) {
 		if(controller.getScope().accepts(caUri)) {

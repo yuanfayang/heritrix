@@ -124,7 +124,9 @@ public class CrawlServer implements Serializable {
 	}
 	
 	/**
-	 * @return
+	 * Get the associated CrawlHost
+	 * 
+	 * @return host
 	 */
 	public CrawlHost getHost() {
 		return host;

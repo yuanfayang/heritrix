@@ -204,7 +204,9 @@ public class CrawlURI extends CandidateURI
 	
 	
 	/**
-	 * @return
+	 * Return the associated CrawlServer
+	 * 
+	 * @return server
 	 */
 	public CrawlServer getServer() {
 		return server;
@@ -246,10 +248,10 @@ public class CrawlURI extends CandidateURI
 	}
 	
 	/**
-	 * @
+	 * @return URI String
 	 */
 	public String getURIString(){
-		return this.getUURI().getUri().toString();
+		return getUURI().getUriString();
 	}
 	
 	public String getContentType(){
@@ -351,7 +353,7 @@ public class CrawlURI extends CandidateURI
 	}
 
 	/**
-	 * Make note of a non-fatal error. local to a particular Processor,
+	 * Make note of a non-fatal error, local to a particular Processor,
 	 * which should be logged somewhere, but allows processing to continue.
 	 * 
 	 * @param string
