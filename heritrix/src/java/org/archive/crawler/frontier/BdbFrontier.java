@@ -260,6 +260,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         this.snoozedClassQueues = null;
         this.queueAssignmentPolicy = null;
         this.readyClassQueues = null;
+        this.costAssignmentPolicy = null;
         // Clearing controller is a problem. We get
         // NPEs in #preNext.
         // this.controller = null;

@@ -170,7 +170,7 @@ public class CrawlController implements Serializable {
     private File scratchDisk; // for discardable temp files (eg fetch buffers)
 
     // checkpoint support
-    CheckpointContext cpContext;
+    private CheckpointContext cpContext;
 
     // crawl limits
     private long maxBytes;
@@ -749,7 +749,7 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Close all log files.
+     * Close all log files and remove handlers from loggers.
      */
     public void closeLogFiles() {
         Iterator iter = fileHandlers.keySet().iterator();
@@ -758,6 +758,7 @@ public class CrawlController implements Serializable {
             GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
                     .get(l);
             gfh.close();
+            l.removeHandler(gfh);
         }
     }
 
@@ -866,8 +867,13 @@ public class CrawlController implements Serializable {
         
         closeLogFiles();
         
-        // Release reference to file handler instances.
+        // Release reference to logger file handler instances.
         this.fileHandlers = null;
+        this.uriErrors = null;
+        this.uriProcessing = null;
+        this.localErrors = null;
+        this.runtimeErrors = null;
+        this.progressStats = null;
 
         logger.info("Finished crawl.");
 
@@ -879,6 +885,7 @@ public class CrawlController implements Serializable {
         this.order = null;
         this.scope = null;
         this.serverCache = null;
+        this.cpContext = null;
         if (this.classCatalogDB != null) {
             try {
                 this.classCatalogDB.close();
@@ -887,7 +894,14 @@ public class CrawlController implements Serializable {
             }
             this.classCatalogDB = null;
         }
-        this.bdbEnvironment = null;
+        if (this.bdbEnvironment != null) {
+            try {
+                this.bdbEnvironment.close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            }
+            this.bdbEnvironment = null;
+        }
     }
 
     private void completePause() {
