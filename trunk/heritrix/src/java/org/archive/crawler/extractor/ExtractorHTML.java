@@ -472,7 +472,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         while (attr.find()) {
             int valueGroup =
-                (attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
+                (attr.start(12) > -1) ? 12 : (attr.start(13) > -1) ? 13 : 14;
             CharSequence value =
                 cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
             if (attr.group(1).equalsIgnoreCase("name")) {
