@@ -329,8 +329,9 @@ public class ToeThread extends Thread
     public synchronized void stopAfterCurrent() {
         logger.info("ToeThread " + this.serialNumber +
             " has been told to stopAfterCurrent()");
-        shouldCrawl = false;
-        notify();
+        this.shouldCrawl = false;
+        this.shouldPause = false;
+        notifyAll();
     }
 
     /**
@@ -436,18 +437,17 @@ public class ToeThread extends Thread
      * @param b If true pause else resume.
      */
     public void setShouldPause(boolean b) {
+        if (b == this.shouldPause) {
+        	return;
+        }
         // Updating this field outside of a synchronized block should be ok
         // as its volatile -- the value will be read right through to
         // memory (If the JVM acts on the volatile keyword at all).
-        shouldPause = b;
-        // Don't synchronize if we don't have to.
-        if (!shouldPause) {
-            synchronized (this) {
-                // Recheck in case changed after we got the lock.
-                if(!shouldPause) {
-                    notifyAll();
-                }
-            }
+        // We're doing it like this to narrow synchronization; we're having
+        // probs. 'cos takes long time for sync block to get attention.
+        this.shouldPause = b;
+        synchronized (this) {
+        	notifyAll();
         }
     }
 
