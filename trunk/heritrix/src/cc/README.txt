@@ -67,6 +67,10 @@ path:
 
     % export PATH=$PATH:$MAVEN_HOME/bin
     
++ You'll need to add to the base maven install the sdocbook plugin 
+[http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/maven-plugins/maven-plugins/sdocbook/] and manually add the jimi jar from sun 
+[http://java.sun.com/products/jimi/]. 
+
 + Install cruisecontrol.  This doc. was done w/ 2.1.4.  You have to build it
 after downloading.
     
