@@ -4,6 +4,16 @@
         <attainGoal name="faq"/>
     </preGoal> 
 
+    <goal name="build-properties">
+        <propertyfile file="build.properties"
+                comment="Written by the maven task build-properties">
+            <entry  key="version.build.timestamp" type="date" value="now"
+                pattern="yyyyMMddHHmm"/>
+            <entry  key="version.build.suffix" 
+                value="-${version.build.timestamp}" />
+        </propertyfile>
+    </goal>
+
     <preGoal name="java:jar-resources"> 
         <filter token="VERSION" value="${pom.currentVersion}" /> 
     </preGoal> 
