@@ -58,8 +58,19 @@ public interface AdminConstants {
 	public static final String XP_ARC_PREFIX = "//@prefix";
 	public static final String XP_ARC_COMPRESSION_IN_USE = "//@compress";
 	public static final String XP_MAX_ARC_SIZE = "//@max-arc-size";
+	public static final String XP_ARC_DUMP_PATH = "//processor/@path";
 	
 	public static final String XP_CRAWL_COMMENT = "//crawl-order/@comment";
 	public static final String XP_SEEDS = "//seeds";
 	public static final String XP_SEEDS_FILE = "//seeds/@src";
+	
+	public static final String XP_POLITENESS_DELAY_FACTOR = "//frontier/@delay-factor";
+	public static final String XP_POLITENESS_MIN_DELAY = "//frontier/@min-delay-ms";
+	public static final String XP_POLITENESS_MAX_DELAY = "//frontier/@max-delay-ms";
+	public static final String XP_POLITENESS_MIN_INTERVAL = "//frontier/@min-interval-ms";
+
+	public static final String XP_HTTPFETCH_MAX_FETCH_ATTEMPTS = "//processor/@max-fetch-attempts";
+	public static final String XP_HTTPFETCH_MAX_LENGTH_BYTES = "//processor/@max-length-bytes";
+	public static final String XP_HTTPFETCH_SOTIMEOUT = "//processor/@sotimeout-ms";
+	public static final String XP_HTTPFETCH_TIMEOUT = "//processor/@timeout-seconds";
 }
