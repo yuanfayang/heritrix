@@ -24,6 +24,8 @@
  */
 package is.hi.bok.crawler.ar;
 
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+
 /**
  * Defines static constants for the Adaptive Revisiting module defining data
  * keys in the CrawlURI AList. 
@@ -32,7 +34,7 @@ package is.hi.bok.crawler.ar;
  * 
  * @see org.archive.crawler.datamodel.CoreAttributeConstants
  */
-public interface ARAttributeConstants {
+public interface ARAttributeConstants extends CoreAttributeConstants{
 
     /** Designates a field in the CrawlURIs AList for the content digest of
      *  an earlier visit. */
@@ -43,5 +45,8 @@ public interface ARAttributeConstants {
     public static final String A_NUMBER_OF_VISITS = "number-of-visits";
     public static final String A_NUMBER_OF_VERSIONS = "number-of-versions";
     public static final String A_FETCH_OVERDUE = "fetch-overdue";
+    
+    public static final String A_LAST_ETAG = "last-etag";
+    public static final String A_LAST_DATESTAMP = "last-datestamp";
 
 }
