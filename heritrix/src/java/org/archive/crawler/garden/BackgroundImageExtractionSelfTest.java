@@ -42,22 +42,6 @@ public class BackgroundImageExtractionSelfTest
      */
     private static final String IMAGE_NAME = "example-background-image.jpeg";
     private static final String JPEG = "image/jpeg";
-    
-    /*
-     * @see TestCase#setUp()
-     */
-    protected void setUp() throws Exception
-    {
-        super.setUp();
-    }
-
-    /*
-     * @see TestCase#tearDown()
-     */
-    protected void tearDown() throws Exception
-    {
-        super.tearDown();
-    }
 
     /**
      * Read ARC file for the background image the file that contained it.
@@ -68,7 +52,7 @@ public class BackgroundImageExtractionSelfTest
     public void testBackgroundImageExtraction()
     {
         String relativePath = getTestName() + '/' + IMAGE_NAME;
-        String url = getSelftestURL() + relativePath;
+        String url = getSelftestURLWithTrailingSlash() + relativePath;
         File image = new File(getWebappDir(), relativePath);
         assertTrue("Image exists", image.exists());
         List metaDatas = getReadReader().getMetaDatas();

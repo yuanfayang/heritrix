@@ -57,7 +57,10 @@ public class AllGardenSelfTests
     {
         TestSuite suite = new TestSuite("Test for org.archive.crawler.garden");
         //$JUnit-BEGIN$
+        // Add mention of self tests here for them to be run as part of the
+        // general integration self test.
         suite.addTestSuite(BackgroundImageExtractionSelfTest.class);
+        suite.addTestSuite(FramesSelfTest.class);
         //$JUnit-END$
         
         // Return an anonymous instance of TestSetup that does the one-time
