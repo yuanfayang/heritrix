@@ -137,11 +137,14 @@ implements FrontierJournal {
      * 
      * @param source Recover log path.
      * @param frontier Frontier reference.
+     * @param retainFailures
+     * @throws IOException
      * 
-     * @see org.archive.crawler.framework.Frontier#importRecoverLog(java.lang.String)
+     * @see org.archive.crawler.framework.Frontier#importRecoverLog(String, boolean)
      */
-    public static void importRecoverLog(File source, Frontier frontier, boolean retainFailures)
-            throws IOException {
+    public static void importRecoverLog(File source, Frontier frontier,
+            boolean retainFailures)
+    throws IOException {
         if (source == null) {
             throw new IllegalArgumentException("Passed source file is null.");
         }
@@ -185,18 +188,12 @@ implements FrontierJournal {
                     String args[] = read.split("\\s+");
                     try {
                         u = UURIFactory.getInstance(args[1]);
-                        CandidateURI caUri = new CandidateURI(u);
-                        if (args.length > 2) {
-                            caUri.setPathFromSeed(args[2]);
-                        } else {
-                            caUri.setPathFromSeed("");
-                        }
-                        if (args.length > 3) {
-                            caUri.setVia(args[3]);
-                        } else {
-                            // filler
-                            caUri.setVia(source.getPath());
-                        }
+                        String pathFromSeed = (args.length > 2)?
+                            args[2]: "";
+                        String via = (args.length > 3)?
+                            args[3]: source.getPath();
+                        CandidateURI caUri = new CandidateURI(u, pathFromSeed,
+                            via);
                         frontier.schedule(caUri);
                     } catch (URIException e) {
                         e.printStackTrace();
@@ -211,6 +208,7 @@ implements FrontierJournal {
     }
     
     /**
+     * @param source
      * @return Recover log buffered reader.
      * @throws IOException
      */

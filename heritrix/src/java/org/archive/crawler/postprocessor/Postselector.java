@@ -147,44 +147,44 @@ implements CoreAttributeConstants, FetchStatusCodes {
         logger.finest(getName() + " processing " + curi);
 
         // handle any prerequisites
-        if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
+        if (curi.containsKey(A_PREREQUISITE_URI)) {
             handlePrerequisites(curi);
             return;
         }
 
         UURI baseUri = getBaseURI(curi);
         // handle http headers
-        if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
+        if (curi.containsKey(A_HTTP_HEADER_URIS)) {
             handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
                 CandidateURI.MEDIUM);
         }
         
         // handle embeds
-        if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+        if (curi.containsKey(A_HTML_EMBEDS)) {
             handleLinkCollection(curi, baseUri, A_HTML_EMBEDS, 'E',
                 CandidateURI.NORMAL);
         }
         
         // handle speculative embeds
-        if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
+        if (curi.containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
             handleLinkCollection(curi, baseUri,A_HTML_SPECULATIVE_EMBEDS, 'X',
                 CandidateURI.NORMAL);
         }
         
         // handle links
-        if (curi.getAList().containsKey(A_HTML_LINKS)) {
+        if (curi.containsKey(A_HTML_LINKS)) {
             handleLinkCollection(
                 curi, baseUri, A_HTML_LINKS, 'L', CandidateURI.NORMAL);
         }
         
         // handle css links
-        if (curi.getAList().containsKey(A_CSS_LINKS)) {
+        if (curi.containsKey(A_CSS_LINKS)) {
             handleLinkCollection(
                 curi, baseUri, A_CSS_LINKS, 'E', CandidateURI.NORMAL);
         }
         
         // handle js file links
-        if (curi.getAList().containsKey(A_JS_FILE_LINKS)) {
+        if (curi.containsKey(A_JS_FILE_LINKS)) {
             UURI viaURI = baseUri;
             if (curi.flattenVia() != null && curi.flattenVia().length() != 0) {
                 try {
@@ -201,10 +201,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     private UURI getBaseURI(CrawlURI curi) {
-        if (!curi.getAList().containsKey(A_HTML_BASE)) {
+        if (!curi.containsKey(A_HTML_BASE)) {
             return curi.getUURI();
         }
-        String base = curi.getAList().getString(A_HTML_BASE);
+        String base = curi.getString(A_HTML_BASE);
         try {
             return UURIFactory.getInstance(base);
         } catch (URIException e) {
@@ -219,7 +219,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         try {
             // create and schedule prerequisite
             CandidateURI caUri = createCandidateURI(curi, getBaseURI(curi),
-                (String)curi.getPrerequisiteUri());
+                (String)curi.getPrerequisiteUri(), curi.getPathFromSeed() +
+                    "P");
             int prereqPriority = curi.getSchedulingDirective() - 1;
             if (prereqPriority < 0) {
                 prereqPriority = 0;
@@ -228,7 +229,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
             }
             caUri.setSchedulingDirective(curi.getSchedulingDirective() - 1);
             caUri.setForceFetch(true);
-            caUri.setPathFromSeed(curi.getPathFromSeed() + "P");
             if (!schedule(caUri)) {
                 // prerequisite cannot be scheduled (perhaps excluded by scope)
                 // must give up on
@@ -327,17 +327,17 @@ implements CoreAttributeConstants, FetchStatusCodes {
             }
         }
 
-        Collection links = (Collection)curi.getAList().getObject(collection);
+        Collection links = (Collection)curi.getObject(collection);
         for (Iterator iter = links.iterator(); iter.hasNext(); ) {
             String link = (String)iter.next();
             if (link == null || link.length() <= 0) {
                 continue;
             }
             try {
-                CandidateURI caURI = createCandidateURI(curi, baseUri, link);
+                CandidateURI caURI = createCandidateURI(curi, baseUri, link,
+                    curi.getPathFromSeed() + linkType);
                 caURI.setSchedulingDirective(directive);
                 caURI.setIsSeed(seed);
-                caURI.setPathFromSeed(curi.getPathFromSeed() + linkType);
                 if (logger.isLoggable(Level.FINEST)) {
                     logger.finest("inserting link from " + collection +
                         " of type " + linkType + " at head " +
@@ -358,11 +358,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     protected CandidateURI createCandidateURI(CrawlURI curi, UURI base,
-            String link)
+            String link, String pathFromSeed)
     throws URIException {
         CandidateURI caURI =
-            new CandidateURI(UURIFactory.getInstance(base, link));
-        caURI.setVia(curi);
+            new CandidateURI(UURIFactory.getInstance(base, link), pathFromSeed,
+                curi);
         return caURI;
     }
 }

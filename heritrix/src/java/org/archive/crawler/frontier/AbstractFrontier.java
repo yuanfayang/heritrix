@@ -424,8 +424,7 @@ CoreAttributeConstants {
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI u = (UURI)i.next();
-                CandidateURI caUri = new CandidateURI(u);
-                caUri.setSeed();
+                CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
                 caUri.setSchedulingDirective(CandidateURI.MEDIUM);
                 schedule(caUri);
             }
@@ -437,7 +436,7 @@ CoreAttributeConstants {
         if(caUri instanceof CrawlURI) {
             curi = (CrawlURI)caUri;
         } else {
-            curi = CrawlURI.from(caUri,nextOrdinal++);
+            curi = CrawlURI.from(caUri, nextOrdinal++);
         }
         curi.setClassKey(getClassKey(curi));
         return curi;
@@ -550,8 +549,8 @@ CoreAttributeConstants {
         int status = curi.getFetchStatus();
         if ( status == S_CONNECT_FAILED || status == S_CONNECT_LOST 
              || status == S_DOMAIN_UNRESOLVABLE ) {
-            if(curi.getAList().containsKey(A_RETRY_DELAY)) {
-                return curi.getAList().getInt(A_RETRY_DELAY);
+            if(curi.containsKey(A_RETRY_DELAY)) {
+                return curi.getInt(A_RETRY_DELAY);
             }
             return ((Long)getUncheckedAttribute(curi,ATTR_RETRY_DELAY)).
                 longValue();
@@ -570,11 +569,11 @@ CoreAttributeConstants {
      */
     protected long politenessDelayFor(CrawlURI curi) {
         long durationToWait = 0;
-        if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
-            && curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
+        if (curi.containsKey(A_FETCH_BEGAN_TIME)
+            && curi.containsKey(A_FETCH_COMPLETED_TIME)) {
 
-            long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
-            long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+            long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
+            long durationTaken = (completeTime - curi.getLong(A_FETCH_BEGAN_TIME));
             durationToWait =
                     (long) (((Float) getUncheckedAttribute(curi, ATTR_DELAY_FACTOR)).floatValue()
                         * durationTaken);
@@ -671,8 +670,8 @@ CoreAttributeConstants {
      *
      */
     protected void logLocalizedErrors(CrawlURI curi) {
-        if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
-            List localErrors = (List)curi.getAList().getObject(A_LOCALIZED_ERRORS);
+        if(curi.containsKey(A_LOCALIZED_ERRORS)) {
+            List localErrors = (List)curi.getObject(A_LOCALIZED_ERRORS);
             Iterator iter = localErrors.iterator();
             while(iter.hasNext()) {
                 Object array[] = { curi, iter.next() };
@@ -682,7 +681,7 @@ CoreAttributeConstants {
                     array);
             }
             // once logged, discard
-            curi.getAList().remove(A_LOCALIZED_ERRORS);
+            curi.remove(A_LOCALIZED_ERRORS);
         }
     }
     

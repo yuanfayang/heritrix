@@ -249,7 +249,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.curisHandled++;
 
         // Note begin time
-        curi.getAList().putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
+        curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
 
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
@@ -350,7 +350,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         // Note completion time
-        curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
+        curi.putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
         // Set the response charset into the HttpRecord if available.
@@ -387,7 +387,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         // Save off the GetMethod just in case needed by subsequent processors.
-        curi.getAList().putObject(A_HTTP_TRANSACTION, method);
+        curi.putObject(A_HTTP_TRANSACTION, method);
         
         if (rec.getRecordedInput().isOpen()) {
             logger.severe(curi.toString() + " RIS still open. Should have" +
