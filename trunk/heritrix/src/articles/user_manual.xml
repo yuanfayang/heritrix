@@ -3156,9 +3156,10 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         <glossterm>Frontier</glossterm>
 
         <glossdef>
-          <para>A Frontier is a plug-able module in Heritrix that maintains
-          the internal state of the crawl. See (<xref
-          linkend="frontier" />).</para>
+        <para>A Frontier is a plug-able module in Heritrix that maintains the
+        internal state of the crawl.  See 
+          <xref linkend="frontier" />.
+          </para>
         </glossdef>
       </glossentry>
 
@@ -3276,6 +3277,16 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         </glossdef>
       </glossentry>
 
+      <glossentry id="server">
+        <glossterm>Server</glossterm>
+        <glossdef>
+          <para>A server is a service on a 
+          <xref linkend="host" />.
+          There might be more than one service on a host differentiated by
+          port number.</para>
+        </glossdef>
+      </glossentry>
+
       <glossentry id="statuscodes">
         <glossterm>Status codes</glossterm>
 
@@ -3322,17 +3333,16 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
       <glossentry id="toethreads">
         <glossterm>Toe Threads</glossterm>
-
         <glossdef>
           <para>When crawling Heritrix employs a configurable number of Toe
           Threads to process each URI.</para>
-
           <para>Each of these threads will request a URI from the Frontier
           (<xref linkend="frontier" />), apply each of the set Processors
           (<xref linkend="processors" />) to it and finally report it as
           completed back to the Frontier.</para>
         </glossdef>
       </glossentry>
+
     </glossdiv>
   </glossary>
 </article>
