@@ -484,6 +484,15 @@
         <include>**/*Test.java</include>
       </includes>
     </unitTest>
+    <resources>
+    <resource>
+        <directory>${basedir}/src/resources</directory>
+        <includes>
+            <include>*.xsl</include>
+        </includes>
+    </resource>
+    </resources>
+
   </build>
 
     <!--List of reports to generate.
