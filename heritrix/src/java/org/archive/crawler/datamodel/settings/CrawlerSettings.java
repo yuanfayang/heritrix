@@ -47,13 +47,30 @@ public class CrawlerSettings {
     private final Map localComplexTypes = new HashMap();
     private final Map modules = new HashMap();
     private final SettingsHandler handler;
+
+    /** Scope for this collection of settings (hostname) */
     private final String scope;
+
+    /** Name of this collection of settings */
     private String name = "";
+
+    /** Description of this collection of settings */
     private String description = "";
+
     private CrawlerSettings parent;
 
-    /**
+    /** Constructs a new CrawlerSettings object.
      * 
+     * Application code should not call the constructor directly, but use the
+     * methods in SettingsHandler instead.
+     * 
+     * @param handler The SettingsHandler this object belongs to.
+     * @param parent The parent of this settings object or null if this is the
+     *               order.
+     * @param scope The scope of this settings object (ie. host or domain).
+     * 
+     * @see SettingsHandler#getSettings(String)
+     * @see SettingsHandler#getSettingsObject(String)
      */
     public CrawlerSettings(
         SettingsHandler handler,
@@ -64,42 +81,47 @@ public class CrawlerSettings {
         this.parent = parent;
     }
 
-    /**
-     * @return
+    /** Get the description of this CrawlerSettings object.
+     * 
+     * @return the description of this CrawlerSettings object.
      */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * @return
+    /** Get the name of this CrawlerSettings object.
+     * 
+     * @return the name of this CrawlerSettings object.
      */
     public String getName() {
         return name;
     }
 
-    /**
-     * @return
+    /** Get the scope of this CrawlerSettings object.
+     * 
+     * @return the scope of this CrawlerSettings object.
      */
     public String getScope() {
         return scope;
     }
 
-    /**
-     * @param string
+    /** Set the description of this CrawlerSettings object.
+     * 
+     * @param the description to be set for this CrawlerSettings object.
      */
     public void setDescription(String string) {
         description = string;
     }
 
-    /**
-     * @param string
+    /** Set the name of this CrawlerSettings object.
+     * 
+     * @param the name to be set for this CrawlerSettings object.
      */
     public void setName(String string) {
         name = string;
     }
 
-    public void addModule(CrawlerModule module) {
+    protected void addModule(CrawlerModule module) {
         if (modules.containsKey(module.getName())) {
             throw new IllegalArgumentException(
                 "Duplicate module name: " + module.getName());
@@ -108,13 +130,13 @@ public class CrawlerSettings {
         }
     }
 
-    public DataContainer addComplexType(ComplexType type) {
+    protected DataContainer addComplexType(ComplexType type) {
         DataContainer data = new DataContainer(type);
         localComplexTypes.put(type.getAbsoluteName(), data);
         return data;
     }
 
-    public DataContainer getData(String absoluteName) {
+    protected DataContainer getData(String absoluteName) {
         DataContainer data =
             (DataContainer) localComplexTypes.get(absoluteName);
         if (data != null) {
@@ -124,21 +146,26 @@ public class CrawlerSettings {
         }
     }
 
-    public CrawlerModule getModule(String name) {
+    protected CrawlerModule getModule(String name) {
         return (CrawlerModule) modules.get(name);
     }
 
-    public Iterator modules() {
+    protected Iterator modules() {
         return modules.values().iterator();
     }
 
-    /**
-     * @return
+    /** Get the parent of this CrawlerSettings object.
+     * 
+     * @return the parent of this CrawlerSettings object.
      */
     public CrawlerSettings getParent() {
         return parent;
     }
 
+    /** Get the SettingHandler this CrawlerSettings object belongs to.
+     * 
+     * @return the SettingHandler this CrawlerSettings object belongs to.
+     */
     public SettingsHandler getSettingsHandler() {
         return handler;
     }
