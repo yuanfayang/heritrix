@@ -150,7 +150,7 @@ public class IdentityCachingMapTest extends TestCase {
             if(!containsKey(key)) {
                 return null;
             }
-            return ((Integer)key).toString();
+            return new String(((Integer)key).toString());
         }
 
         /* (non-Javadoc)
