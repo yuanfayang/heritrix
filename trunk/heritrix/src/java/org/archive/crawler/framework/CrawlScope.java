@@ -186,8 +186,8 @@ public class CrawlScope extends Filter {
      * within this scope.
      */
     protected final boolean innerAccepts(Object o) {
-        return ((isSeed(o) || focusAccepts(o)) || transitiveAccepts(o))
-            && !excludeAccepts(o);
+        return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
+                transitiveAccepts(o)) && !excludeAccepts(o);
     }
 
     /** Check if there is too many hops
@@ -299,5 +299,16 @@ public class CrawlScope extends Filter {
             }
         }
         return isSameHost;
+    }
+    
+    /** Check if URI is accepted by the additional focus of this scope.
+     *
+     * This method should be overridden in subclasses.
+     *
+     * @param o the URI to check.
+     * @return True if additional focus filter accepts passed object.
+     */
+    protected boolean additionalFocusAccepts(Object o){
+        return false; 
     }
 }
