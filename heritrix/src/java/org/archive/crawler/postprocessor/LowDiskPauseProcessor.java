@@ -41,9 +41,6 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.util.IoUtils;
 
-import sun.security.krb5.internal.av;
-
-
 /**
  * Processor module which uses 'df', where available, to monitor
  * available disk space and pause the crawl if free space on 
