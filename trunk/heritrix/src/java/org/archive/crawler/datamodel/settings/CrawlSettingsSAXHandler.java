@@ -97,6 +97,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         handlers.put(SettingsHandler.FLOAT_LIST, new ListHandler());
         handlers.put(SettingsHandler.LONG_LIST, new ListHandler());
         handlers.put(SettingsHandler.STRING, new SimpleElementHandler());
+        handlers.put(SettingsHandler.TEXT, new SimpleElementHandler());
         handlers.put(SettingsHandler.INTEGER, new SimpleElementHandler());
         handlers.put(SettingsHandler.FLOAT, new SimpleElementHandler());
         handlers.put(SettingsHandler.LONG, new SimpleElementHandler());
