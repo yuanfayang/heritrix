@@ -47,7 +47,7 @@ public class DNSJavaUtil {
     /**
      * ipv4 address.
      */
-    private static Pattern IPV4_QUADS = Pattern.compile(
+    public static Pattern IPV4_QUADS = Pattern.compile(
         "([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})");
     
     /**
