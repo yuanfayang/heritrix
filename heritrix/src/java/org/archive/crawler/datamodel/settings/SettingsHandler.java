@@ -268,6 +268,10 @@ public abstract class SettingsHandler {
      * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettings(String host) {
+        if (host != null) {
+            host = host.intern();
+        }
+        
         CrawlerSettings settings = null;
 
         // Try to get reference to settings from cache
@@ -313,6 +317,8 @@ public abstract class SettingsHandler {
             // No scopestring, return global settings
             settings = globalSettings;
         } else {
+            scope = scope.intern();
+            
             // Try to get settings object from cache
             WeakReference ref = (WeakReference) settingsCache.get(scope);
             if (ref != null) {
@@ -355,6 +361,8 @@ public abstract class SettingsHandler {
         CrawlerSettings settings;
         settings = getSettingsObject(scope);
         if (settings == null) {
+            scope = scope.intern();
+            
             // No existing settings object found, create one
             settings = new CrawlerSettings(this, scope);
             synchronized (settingsCache) {
