@@ -99,7 +99,6 @@ public class DiskQueue implements Queue, Serializable {
         this.scratchDir = dir;
         bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
         bytes.initializeStreams(0);
-        // TODO someday: enable queue to already be filled
     }
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
