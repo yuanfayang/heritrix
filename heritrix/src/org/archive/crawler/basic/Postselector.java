@@ -97,22 +97,22 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	 */
 	private URI getBaseURI(CrawlURI curi) {
 		if (!curi.getAList().containsKey(A_HTML_BASE)) {
-			return curi.getUURI().getUri();
+			return curi.getUURI().getRawUri();
 		}
 		String base = curi.getAList().getString(A_HTML_BASE);
 		try {
-			return UURI.createUURI(base).getUri();
+			return UURI.createUURI(base).getRawUri();
 		} catch (URISyntaxException e) {
 			Object[] array = { this, base };
 			controller.uriErrors.log(Level.INFO,e.getMessage(), array );
 			// next best thing: use self
-			return curi.getUURI().getUri();
+			return curi.getUURI().getRawUri();
 		}
 	}
 
 	protected void handlePrerequisites(CrawlURI curi) {
 		try {
-			UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),curi.getUURI().getUri());
+			UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),getBaseURI(curi));
 			CandidateURI caUri = new CandidateURI(prereq);
 			caUri.setVia(curi);
 			caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
@@ -145,7 +145,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	private boolean scheduleHigh(CandidateURI caUri) {
 		if(controller.getScope().accepts(caUri)) {
 			logger.finer("URI accepted: "+caUri);
-			controller.getFrontier().scheduleHigh(caUri);
+			controller.getFrontier().batchScheduleHigh(caUri);
 			return true;
 		}
 		logger.finer("URI rejected: "+caUri);
@@ -162,7 +162,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	private boolean schedule(CandidateURI caUri) {
 		if(controller.getScope().accepts(caUri)) {
 			logger.finer("URI accepted: "+caUri);
-			controller.getFrontier().schedule(caUri);
+			controller.getFrontier().batchSchedule(caUri);
 			return true;
 		}
 		logger.finer("URI rejected: "+caUri);
