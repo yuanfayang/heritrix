@@ -18,14 +18,15 @@
 	String action = request.getParameter("action");
 	if(action != null){
 		String alertIDs[] = request.getParameterValues("alerts");
-		
-		for(int i=0 ; i<alertIDs.length ; i++){		
-			if(action.equals("markasread")){
-				Heritrix.seenAlert(alertIDs[i]);				
-			} else if(action.equals("delete")){
-				Heritrix.removeAlert(alertIDs[i]);
-			}
-		}
+        if (alertIDs != null) {	
+            for(int i = 0; i < alertIDs.length; i++) {		
+                if(action.equals("markasread")) {
+                    Heritrix.seenAlert(alertIDs[i]);				
+                } else if(action.equals("delete")) {
+                    Heritrix.removeAlert(alertIDs[i]);
+                }
+            }
+        }
 	}
 
 	Vector alerts = Heritrix.getAlerts();
