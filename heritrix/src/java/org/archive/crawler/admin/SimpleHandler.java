@@ -98,7 +98,7 @@ public class SimpleHandler
      */
     private Vector completedCrawlJobs = new Vector();
     
-    private boolean shouldcrawl = false;
+    private boolean shouldCrawl = false;
     
     private boolean crawling = false;
     
@@ -108,6 +108,11 @@ public class SimpleHandler
      * TODO: Reconsider how this is used and if it should stay in at all.
      */
     private String statusMessage = "No actions taken";
+    
+    /** 
+     * A high-priority, one-time alert to show the user 
+     */
+    private String alertMessage = null;
     
     private CrawlController controller =  null;
     
@@ -201,7 +206,7 @@ public class SimpleHandler
     {
         newJob.setStatus(CrawlJob.STATUS_PENDING);
         pendingCrawlJobs.add(newJob);
-        if(crawling == false && shouldcrawl)
+        if(crawling == false && shouldCrawl)
         {
             // Start crawling
             startNextJob();
@@ -308,7 +313,7 @@ public class SimpleHandler
      */
     public void startCrawler()
     {
-        shouldcrawl = true;
+        shouldCrawl = true;
         if(pendingCrawlJobs.size()>0 && crawling == false)
         {
             // Ok, can just start the next job
@@ -323,7 +328,7 @@ public class SimpleHandler
      */
     public void stopCrawler()
     {
-        shouldcrawl = false;
+        shouldCrawl = false;
     }
     
     /**
@@ -346,7 +351,6 @@ public class SimpleHandler
         }
         
         currentJob = (CrawlJob)pendingCrawlJobs.get(0);
-        pendingCrawlJobs.remove(0);
         
         // Create new controller.
         controller = new CrawlController();         
@@ -356,11 +360,15 @@ public class SimpleHandler
         try {
             controller.initialize(currentJob.getCrawlOrder());
         } catch (InitializationException e) {
-            //TODO Report Error
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            currentJob = null;
+            controller = null;
+            shouldCrawl = false;
+            setAlertMessage(e.getMessage());
+            return;
+        } // catch (Exception e) {
+        //  e.printStackTrace();
+        // }
+        pendingCrawlJobs.remove(0);
         controller.startCrawl();
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         currentJob.setStatisticsTracking(getStatistics());
@@ -449,7 +457,7 @@ public class SimpleHandler
      */
     public boolean shouldcrawl()
     {
-        return shouldcrawl;
+        return shouldCrawl;
     }
     
     /**
@@ -675,7 +683,7 @@ public class SimpleHandler
         currentJob = null;
         // Remove the reference so that the old controller can be gc.
         controller = null; 
-        if(shouldcrawl)
+        if(shouldCrawl)
         {
             startNextJob();        
         }
@@ -696,4 +704,20 @@ public class SimpleHandler
         // Not interested.  Once the Controller tells us that it is ending it's
         // crawl we will simply assume that that was indeed done.
     }
+    /**
+     * @return Returns the alertMessage.
+     */
+    public String consumeAlertMessage() {
+      String retVal = alertMessage;
+      alertMessage = null;
+      return retVal;
+    }
+
+    /**
+     * @param alertMessage The alertMessage to set.
+     */
+    public void setAlertMessage(String alertMessage) {
+      this.alertMessage = alertMessage;
+    }
+
 }
