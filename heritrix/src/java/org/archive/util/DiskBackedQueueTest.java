@@ -25,7 +25,14 @@
 
 package org.archive.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+
+import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
+import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -67,7 +74,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
 
     protected Queue makeQueue() {
         try {
-            return new DiskBackedQueue(getTmpDir(), "foo", 10);
+            return new DiskBackedQueue(getTmpDir(), "foo", false, 5);
         } catch (final IOException e) {
             fail("Caught IO Exception on creation of queue : " + e.getMessage());
             // never gets here
@@ -76,5 +83,119 @@ public class DiskBackedQueueTest extends QueueTestBase {
     }
 
     // TODO - implement test methods in DiskBackedQueueTest
+
+    /**
+     * Test which will overflow into disk backing,
+     * trigger flip of write and read files.
+     */
+    public void testIntoDiskBacking() {
+        queue.enqueue("foo1");
+        queue.enqueue("foo2");
+        queue.enqueue("foo3");
+        queue.enqueue("foo4");
+        queue.enqueue("foo5");
+        // these next six go to disk backing (first file)
+        queue.enqueue("foo6");
+        queue.enqueue("foo7");
+        queue.enqueue("foo8");
+        queue.enqueue("foo9");
+        queue.enqueue("foo10");
+        queue.enqueue("foo11");
+        // now dequeue
+        assertEquals("foo1 dequeued","foo1",queue.dequeue());
+        assertEquals("foo2 dequeued","foo2",queue.dequeue());
+        assertEquals("foo3 dequeued","foo3",queue.dequeue());
+        assertEquals("foo4 dequeued","foo4",queue.dequeue());
+        assertEquals("foo5 dequeued","foo5",queue.dequeue());
+        // this next forces read of 5 into memory from disk, file flip
+        assertEquals("foo6 dequeued","foo6",queue.dequeue());
+        
+        // these next 4 write to new file
+        queue.enqueue("foo12");
+        queue.enqueue("foo13");
+        queue.enqueue("foo14");
+        queue.enqueue("foo15");
+
+        // dequeue rest
+        assertEquals("foo7 dequeued","foo7",queue.dequeue());
+        assertEquals("foo8 dequeued","foo8",queue.dequeue());
+        assertEquals("foo9 dequeued","foo9",queue.dequeue());
+        assertEquals("foo10 dequeued","foo10",queue.dequeue());
+        assertEquals("foo11 dequeued","foo11",queue.dequeue());
+        assertEquals("foo12 dequeued","foo12",queue.dequeue());
+        assertEquals("foo13 dequeued","foo13",queue.dequeue());
+        assertEquals("foo14 dequeued","foo14",queue.dequeue());
+        assertEquals("foo15 dequeued","foo15",queue.dequeue());
+        assertTrue("queue is empty", queue.isEmpty());    
+    }
+    
+    public void testSerialization() throws IOException, ClassNotFoundException {
+        queue.enqueue("foo1");
+        queue.enqueue("foo2");
+        queue.enqueue("foo3");
+        queue.enqueue("foo4");
+        queue.enqueue("foo5");
+        // these next six go to disk backing (first file)
+        queue.enqueue("foo6");
+        queue.enqueue("foo7");
+        queue.enqueue("foo8");
+        queue.enqueue("foo9");
+        queue.enqueue("foo10");
+        queue.enqueue("foo11");
+        // now dequeue
+        assertEquals("foo1 dequeued","foo1",queue.dequeue());
+        assertEquals("foo2 dequeued","foo2",queue.dequeue());
+        assertEquals("foo3 dequeued","foo3",queue.dequeue());
+        assertEquals("foo4 dequeued","foo4",queue.dequeue());
+        assertEquals("foo5 dequeued","foo5",queue.dequeue());
+        // this next forces read of 5 into memory from disk, file flip
+        assertEquals("foo6 dequeued","foo6",queue.dequeue());
+        
+        // next 4 enqueues write to new file
+        queue.enqueue("foo12");
+        
+        // TODO serialize/deserialize
+        File tmpDir = getTmpDir();
+        File serFile = new File(tmpDir,"foo.ser");
+        File storeDir = new File(tmpDir,"serialization");
+        ObjectPlusFilesOutputStream out = null;
+		try {
+			out = new ObjectPlusFilesOutputStream(
+			        new FileOutputStream(serFile),storeDir);
+			out.writeObject(queue);
+		} finally {
+			out.close();
+        }
+        
+        ((DiskBackedQueue)queue).release();
+        queue = null;
+        
+        ObjectPlusFilesInputStream in = null;
+        try {
+            in = new ObjectPlusFilesInputStream(
+                        new FileInputStream(serFile));
+            in.pushAuxiliaryDirectory(storeDir);
+            queue = (Queue) in.readObject();
+        } finally {
+            in.close();
+        }
+ 
+        // continue where we left off
+        queue.enqueue("foo13");
+        queue.enqueue("foo14");
+        queue.enqueue("foo15");
+
+        // dequeue rest
+        assertEquals("foo1 dequeued","foo7",queue.dequeue());
+        assertEquals("foo1 dequeued","foo8",queue.dequeue());
+        assertEquals("foo1 dequeued","foo9",queue.dequeue());
+        assertEquals("foo1 dequeued","foo10",queue.dequeue());
+        assertEquals("foo1 dequeued","foo11",queue.dequeue());
+        assertEquals("foo1 dequeued","foo12",queue.dequeue());
+        assertEquals("foo1 dequeued","foo13",queue.dequeue());
+        assertEquals("foo1 dequeued","foo14",queue.dequeue());
+        assertEquals("foo1 dequeued","foo15",queue.dequeue());
+        assertTrue("queue is empty", queue.isEmpty());    
+    }
 }
 
