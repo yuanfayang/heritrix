@@ -1,4 +1,10 @@
-http://www.sony.com
+http://www.xavvy.com:9090/
+# http://www.xavvy.com
+
+# http://crawl08.archive.org/links/formtags.html
+# http://www.archive.org
+
+# http://www.comcast.net
 
 # http://crawl08.archive.org/links/javascript.html
 
