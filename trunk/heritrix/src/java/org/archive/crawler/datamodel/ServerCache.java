@@ -24,6 +24,7 @@
 package org.archive.crawler.datamodel;
 
 import java.util.HashMap;
+import java.util.logging.Level;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.SettingsHandler;
@@ -63,8 +64,9 @@ public class ServerCache {
     }
 
     /**
-     * @param curi
+     * @param curi CrawlURI we're to get server from.
      * @return CrawlServer
+     * @throws URIException
      */
     public CrawlServer getServerFor(CrawlURI curi) throws URIException {
         String scheme = curi.getUURI().getScheme();
@@ -72,8 +74,10 @@ public class ServerCache {
             // set crawlhost to default nameserver
             String primaryDns = FindServer.server();
             if (primaryDns == null) {
+                Object [] curiArray = {curi};
                 this.settingsHandler.getOrder().getController()
-                    .runtimeErrors.warning("Could not get primary DNS server.");
+                    .runtimeErrors.log(Level.WARNING,
+                        "Could not get primary DNS server.", curiArray);
                 return null;
             } else {
                 return getServerFor(primaryDns);

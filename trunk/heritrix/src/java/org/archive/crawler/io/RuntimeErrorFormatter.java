@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* RuntimeErrorFormatter
+ * 
+ * Created on Jul 7, 2003
+ * 
+ * $Id$
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * CrawlErrorFormatter.java
- * Created on Jul 7, 2003
- *
- * $Header$
  */
 package org.archive.crawler.io;
 
@@ -31,22 +32,29 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
+ * Runtime exception log formatter.
+ * 
  * @author gojomo
- *
  */
-public class RuntimeErrorFormatter extends UriProcessingFormatter implements CoreAttributeConstants {
+public class RuntimeErrorFormatter
+		extends UriProcessingFormatter
+		implements CoreAttributeConstants {
 
-    /* (non-Javadoc)
-     * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
-     */
     public String format(LogRecord lr) {
-        CrawlURI curi = (CrawlURI) lr.getParameters()[0];
-        Exception e = (Exception)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
-        assert e != null : "null exception";
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-
-        return super.format(lr) + " " + sw.toString();
+        Object [] parameters = lr.getParameters();
+        String stackTrace = "None retreived";
+        if (parameters != null) {
+            CrawlURI curi = (CrawlURI)parameters[0];
+            if (curi != null) {
+                Exception e = (Exception)curi.getAList().
+                	getObject(A_RUNTIME_EXCEPTION);
+                assert e != null : "null exception";
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                stackTrace = sw.toString();
+            }
+        }
+        return super.format(lr) + " " + stackTrace;
     }
 }
 
