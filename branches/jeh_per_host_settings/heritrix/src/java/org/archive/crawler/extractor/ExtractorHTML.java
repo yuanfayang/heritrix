@@ -116,7 +116,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	static final Pattern WHITESPACE = Pattern.compile("\\s");
 	
     protected long numberOfCURIsHandled = 0;
-    protected long numberOfLinksExtracted= 0;
+    protected long numberOfLinksExtracted = 0;
 
     /**
      * @param name

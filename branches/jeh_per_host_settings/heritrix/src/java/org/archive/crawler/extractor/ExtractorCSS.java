@@ -69,8 +69,8 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         Pattern.compile(
             "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
-    private long numberOfLinksExtracted= 0;
     private long numberOfCURIsHandled = 0;
+    private long numberOfLinksExtracted = 0;
     
     /**
      * @param name
@@ -128,6 +128,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         }
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
     }
+    
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorCSS\n");
@@ -136,4 +137,5 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
         
         return ret.toString();
-    }}
+    }
+}
