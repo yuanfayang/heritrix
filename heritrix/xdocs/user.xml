@@ -308,8 +308,45 @@ org.apache.commons.httpclient.level= SEVERE</source>
 	the option of terminating it.
 </subsection>
 </section>
-<section name="Monitoring the Crawler">
-    <p>TODO</p>
+
+
+<section name="Monitoring the Crawler via the web UI">
+<p>
+	Once logged in the user will be take to the Console. It is the central page
+	for monitoring and affecting a running job. However more detailed reports
+	and actions are possible from other pages.
+</p>
+<p>
+	Every single page in the admin interface displays the same info header. It
+	tells you if the crawler is running or crawling a job. If a job is being
+	crawled it's name is displayed and minimal progress statistics. Information
+	about the number of pending and completed jobs is also provided.
+</p>
+<subsection name="Jobs">
+<p>
+	While a job is running this page allows users to view it's crawl order (the
+	actual XML configuration file), to view a crawl job report on it (both are
+	also available after the job is in the completed list) and the option to
+	edit the job. As noted in the chapter about launching jobs via the WUI you
+	can not modify the plugable modules but you can change the configurable
+	parameters that they possess. This page also gives access to a list of 
+	pending jobs.
+</p>
+</subsection>
+<subsection name="Logs">
+<p>
+	A very useful page that allows you to view any of the logs that are created
+	on a per-job basis. Log's can be viewed by line number, time stamp, regular
+	expression or 'tail' (show the last lines of the file).
+</p>
+</subsection>
+<subsection name="Reports">
+<p>
+	This page allows access to the same crawl job report mentioned in the 'Jobs'
+	page section. This report details number of downloaded documents and various
+	associated statistics.
+</p>
+</subsection>
 </section>
 
 </body>
