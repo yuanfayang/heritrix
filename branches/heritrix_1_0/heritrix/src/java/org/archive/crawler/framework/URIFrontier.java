@@ -32,6 +32,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.frontier.FrontierJournal;
 
 
 /**
@@ -446,7 +447,7 @@ public interface URIFrontier {
      * Notify Frontier that it should consider the given UURI as if
      * already scheduled.
      * 
-     * @param u
+     * @param u UURI instance to add to the Already Included set.
      */
     public void considerIncluded(UURI u);
 
@@ -455,6 +456,10 @@ public interface URIFrontier {
      * info that may have changed in external files.
      */
     public void kickUpdate();
-
-
+     
+     /**
+      * @return Return the instance of {@link FrontierJournal} that
+      * this Frontier is using.  May be null if no journaling.
+      */
+     public FrontierJournal getFrontierJournal();
 }
