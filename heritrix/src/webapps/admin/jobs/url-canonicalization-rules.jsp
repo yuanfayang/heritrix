@@ -12,7 +12,6 @@
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.url.canonicalize.BaseRule" %>
 
-<%@include file="/include/filters.jsp"%>
 <%
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
             response, request.getContextPath() + "/jobs.jsp", null);
@@ -42,11 +41,8 @@
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
         <table>
-            <%=printFilters(theJob.getSettingsHandler().getOrder(), "", false,
-                   false, false, null, false, 
-                       CrawlJobHandler.loadOptions(CrawlJobHandler.
-                           MODULE_OPTIONS_URL_CANONICALIZATION_RULES), 
-                   BaseRule.class, false)%>
+            <%=JobConfigureUtils.printOfType(theJob.getSettingsHandler().getOrder(), "", false,
+                   false, false, null, false, BaseRule.class, false)%>
         </table>
     </form>
     <p>

@@ -31,6 +31,11 @@
                         <td class="tab_seperator">
 
                         </td>
+                        <td class="tab<%=jobtab==7?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/submodules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==7?"_selected":""%>">Submodules</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
                         <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
                             <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
                         </td>

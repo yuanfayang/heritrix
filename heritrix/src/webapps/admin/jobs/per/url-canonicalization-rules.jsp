@@ -11,8 +11,6 @@
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.url.canonicalize.BaseRule" %>
 
-<%@include file="/include/jobfilters.jsp"%>
-
 <%
     String currDomain = request.getParameter("currDomain");
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
@@ -49,12 +47,9 @@
             super domain!
         <p>
         <table>
-            <%=printFilters(theJob.getSettingsHandler().getOrder(),
-                    ((XMLSettingsHandler)theJob.getSettingsHandler()).
-                        getSettingsObject(currDomain), "", false,
-                    false, false, null, false,
-                    CrawlJobHandler.loadOptions(CrawlJobHandler.
-                        MODULE_OPTIONS_URL_CANONICALIZATION_RULES), 
+            <%=JobConfigureUtils.printOfType(theJob.getSettingsHandler().getOrder(),
+                    "", 
+                    false, false, false, null, false,
                    BaseRule.class, false)%>
         </table>
     </form>

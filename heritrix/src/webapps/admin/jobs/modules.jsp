@@ -1,9 +1,14 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.settings.*" %>
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
+<%@ page import="org.archive.crawler.framework.Frontier" %>
+<%@ page import="org.archive.crawler.framework.CrawlScope" %>
+<%@ page import="org.archive.crawler.framework.Processor" %>
+<%@ page import="org.archive.crawler.framework.StatisticsTracking" %>
 <%@ page import="org.archive.util.TextUtils" %>
 
 <%@ page import="java.io.*,java.lang.Boolean,java.util.ArrayList" %>
@@ -335,9 +340,9 @@
         <p>
             <b>Select URI Frontier</b>
         <p>
-            <%=buildModuleSetter(
+            <%=JobConfigureUtils.buildModuleSetter(
                 settingsHandler.getOrder().getAttributeInfo("frontier"),
-                CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FRONTIERS),
+                Frontier.class,
                 "Frontier",
                 ((ComplexType)settingsHandler.getOrder().getAttribute("frontier")).getMBeanInfo().getDescription())%>
 
@@ -345,38 +350,62 @@
         <p>
             <b>Select crawl scope</b>
         <p>
-            <%=buildModuleSetter(
+            <%=JobConfigureUtils.buildModuleSetter(
                 settingsHandler.getOrder().getAttributeInfo("scope"),
-                CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_SCOPES),
+                CrawlScope.class,
                 "Scope",
                 ((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getMBeanInfo().getDescription())%>
                 
         <p>
             <b>Select Pre Processors</b> <i>Processors that should be run before any fetching occurs</i>
         <p>
-            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "PreFetchProcessors")%>
+            <%=JobConfigureUtils.buildModuleMap(
+                (ComplexType)settingsHandler.getOrder().getAttribute(
+                    CrawlOrder.ATTR_PRE_FETCH_PROCESSORS),
+                    Processor.class,
+                    "PreFetchProcessors")%>
         <p>
             <b>Select Fetchers</b> <i>Processors that fetch documents from various protocols</i>
         <p>
-            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_FETCH_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Fetchers")%>
+            <%=JobConfigureUtils.buildModuleMap(
+                (ComplexType)settingsHandler.getOrder().getAttribute(
+                    CrawlOrder.ATTR_FETCH_PROCESSORS),
+                    Processor.class,
+                    "Fetchers")%>
         <p>
             <b>Select Extractors</b> <i>Processors that extracts links from URIs</i>
         <p>
-            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_EXTRACT_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Extractors")%>
+            <%=JobConfigureUtils.buildModuleMap(
+                (ComplexType)settingsHandler.getOrder().getAttribute(
+                    CrawlOrder.ATTR_EXTRACT_PROCESSORS),
+                    Processor.class,
+                    "Extractors")%>
         <p>
             <b>Select Writers</b> <i>Processors that write documents to archive files</i>
         <p>
-            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_WRITE_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Writers")%>
+            <%=JobConfigureUtils.buildModuleMap(
+                (ComplexType)settingsHandler.getOrder().getAttribute(
+                    CrawlOrder.ATTR_WRITE_PROCESSORS),
+                    Processor.class,
+                    "Writers")%>
         <p>
             <b>Select Post Processors</b> <i>Processors that do cleanup and feeds the frontier with new URIs</i>
         <p>
-            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_POST_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Postprocessors")%>
-
+            <%=JobConfigureUtils.buildModuleMap(
+                (ComplexType)settingsHandler.getOrder().getAttribute(
+                    CrawlOrder.ATTR_POST_PROCESSORS),
+                    Processor.class,
+                    "Postprocessors")
+            %>
         <p>
             <b>Select Statistics Tracking</b>
         <p>
-            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("loggers"), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_TRACKERS), "StatisticsTracking")%>
-    </form>
+            <%=JobConfigureUtils.buildModuleMap(
+                (ComplexType)settingsHandler.getOrder().getAttribute("loggers"),
+                StatisticsTracking.class,
+                "StatisticsTracking")
+            %>
+       </form>
     <p>
         <%@include file="/include/jobnav.jsp"%>
 <%@include file="/include/foot.jsp"%>
