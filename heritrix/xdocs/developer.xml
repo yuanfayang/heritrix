@@ -8,48 +8,48 @@
     </properties>
     <body>
         <section name="Developer Manual Introduction">
-            <p>This doc. is for observers and contributors who'd like to pull 
-                and build from source. In here we'll talk of cvs access, the 
-                code layout, core technologies and patterns and their why, key 
-                technical decisions and their why.</p>
+            <p>This section is for observers and contributors who'd like to
+                build from source. In here we'll talk of cvs access, the 
+                code layout, core technologies and key technical decisions.</p>
         </section>
         <section name="Obtaining Heritrix">
-            <p>There three ways to obtain Heritrix: packaged binary or packaged 
-                source download from the crawler <a 
-                href="http://sourceforge.net/projects/archive-crawler">sourceforge 
+            <p>There are three ways to obtain Heritrix: packaged binary or
+            packaged source downloaded from the crawler <a 
+            href="http://sourceforge.net/projects/archive-crawler">sourceforge 
                 home page</a> or via CVS checkout. See the crawler <a 
                 href="http://sourceforge.net/cvs/?group_id=73833">sourceforge 
                 cvs page</a> for how to fetch from CVS (Note, anonymous access 
-                does not give you the current HEAD but a snapshot that can at 
-                times be up to 24 hours behind HEAD). The packaged binary will 
-                be named <em>heritrix-?.?.?.tar.gz</em> (or 
-                <em>heritrix-?.?.?.zip</em>) and the packaged source will be 
+                does not give you the current HEAD but a snapshot that can
+                some times be up to 24 hours behind HEAD). The packaged binary
+                is named <em>heritrix-?.?.?.tar.gz</em> (or 
+                <em>heritrix-?.?.?.zip</em>) and the packaged source is
                 named <em>heritrix-?.?.?-src.tar.gz</em> (or 
                 <em>heritrix-?.?.?-src.zip</em>) where <em>?.?.?</em> is the 
                 heritrix release version. </p>
         </section>
         <section name="Building Heritrix">
             <p>You can build Heritrix from source using Ant or Maven. The Maven 
-                build is more comprehensive and will generate all from either 
+                build is more comprehensive and will generate everything from
+                either 
                 the packaged source or from a CVS checkout. The Ant build is 
                 less so in that it doesn't generate the distribution 
-                documentation but it does produce all else needed to run 
+                documentation but it does produce everything else needed to run 
                 Heritrix.</p>
 
                 <p>If you are building Heritrix with Ant, you must have Ant 1.5 
                     installed.  Make sure the Ant optional.jar file 
                     sits beside the junit.jar. See <a 
                     href="http://ant.apache.org/manual/OptionalTasks/junit.html">JUnit 
-                    Task</a> for what you must do setting up Ant to run junit 
+                    Task</a> for what you must do to set up Ant to run junit 
                     tests (The build requires junit).</p>
                     <p>The Heritrix maven build was developed using 
                     1.0-rc1. See maven.apache.org. </p>
 
 	<subsection name="Building Heritrix with Ant">
-	    <p>If you obtained packaged source, here is how you build with Ant: 
+	    <p>If you obtained the packaged source, here is how you build with Ant: 
 <source>% tar xfz heritrix-?.?.?-src.tar.gz 
 % cd heritrix-?.?.? % $ANT_HOME/bin/ant dist </source> </p>
-            <p>In the <em>dist</em> subdir will be all you need to run the 
+            <p>In the <em>dist</em> subdir, you have all you need to run the 
                 Heritrix crawler. To learn more about the ant build, type 
                 <em>ant -projecthelp</em>. </p>
 	</subsection>
@@ -192,9 +192,9 @@ ${package_declaration}</source></p>
         </section>
 
         <section name="Making a Heritrix Release" id="release">
-            <p>Before going about a release, its assumed that the current HEAD 
+            <p>Before initiating a release, its assumed that the current HEAD 
                 version has been run through the integration self test, 
-                all unit tests pass, that the (as yet non-existent) test 
+                that all unit tests pass, that the (as yet non-existent) test 
                 suite has been exercised, and that general usage
                 shows HEAD to be release worthy.</p>
             <ol>
@@ -207,13 +207,14 @@ ${package_declaration}</source></p>
                     number to use)</li>
                 <li>Generate the site.  Review all documentation making
                 sure it remains applicable. Fix at least the 
-                embarrassing.  Make issues to have the rest addressed.</li>
+                embarrassing.  Make issues to have all that remains
+                addressed.</li>
 
                 <li>Make the maven distributions: % $MAVEN_HOME/bin/maven dist</li>
                 <li>Build the maven produced src distribution version using 
-                    both maven and ant.</li>
+                    both maven and ant to ensure both builds work.</li>
                 <li>Run both the binary and src-built product through the
-                    integration self test suite: % $HERITRIX_HOME/bin/heritrix.sh --selftest</li>
+                    integration self test suite: % $HERITRIX_HOME/bin/heritrix --selftest</li>
                 <li>Update <em>xdocs/changes.xml</em>.</li>
                 <li>(TODO: Changelog based off CVS history).</li>
                 <li>Update the README.txt.  Do html2txt on maven generated
@@ -239,7 +240,7 @@ ${package_declaration}</source></p>
         <section name="Integration self test">
             <p>Run the integration self test on the command line by doing the
             following:
-            <source>% $HERITRIX_HOME/bin/heritrix.sh --selftest</source>
+            <source>% $HERITRIX_HOME/bin/heritrix --selftest</source>
             </p>
             <p>This will set the crawler going against itself, in particular,
             the <i>selftest</i> webapp.  When done, it runs an analsys of 

@@ -39,7 +39,7 @@
         <!--Copy to a bin dir the heritrix start script.-->
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
           <fileset dir="${maven.src.dir}/scripts">
-            <include name="heritrix*.sh"/>
+            <include name="heritrix*"/>
           </fileset>
         </copy>
 
@@ -51,7 +51,7 @@
             files (Putting the task in here whole doesn't work).-->
         <chmod perm="ugo+rx" >
           <fileset dir="${maven.dist.bin.assembly.dir}/bin">
-            <include name="heritrix*.sh"/>
+            <include name="heritrix*"/>
           </fileset>
         </chmod>
 

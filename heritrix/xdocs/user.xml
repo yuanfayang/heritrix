@@ -35,8 +35,8 @@ or under the untarred
 <p>Next run:
 <source>
     % cd $HERITRIX_HOME
-    % chmod u+x $HERITRIX_HOME/bin/heritrix.sh
-    % $HERITRIX_HOME/bin/heritrix.sh --help
+    % chmod u+x $HERITRIX_HOME/bin/heritrix
+    % $HERITRIX_HOME/bin/heritrix --help
 </source></p>
 
 <p>This should give you usage output like the following:
@@ -59,10 +59,10 @@ Arguments:
 </p>
 
 <p>Launch the crawler with the UI enabled by doing the following:
-<source>% $HERITRIX_HOME/bin/heritrix.sh</source></p>
+<source>% $HERITRIX_HOME/bin/heritrix</source></p>
 <p>This will start up heritrix printing out a startup message that looks like
 the following:
-<source>[b116-dyn-60 619] heritrix-0.4.0 > ./bin/heritrix.sh
+<source>[b116-dyn-60 619] heritrix-0.4.0 > ./bin/heritrix
 Tue Feb 10 17:03:01 PST 2004 Starting heritrix...
 Tue Feb 10 17:03:05 PST 2004 Heritrix 0.4.0 is running.
 Web UI is at: http://b116-dyn-60.archive.org:8080/admin
@@ -94,10 +94,11 @@ tab.
 <p>It is not possible to create jobs from scratch but you will be allowed to
 edit any configurable part of the profile or job selected to serve as a
 template for the new job. If running Heritrix for the first time there is only
-the supplied default profile to chose from.
+the supplied default profile to choose from.
 </p>
 <p>Having selected a profile/job the user will be asked to supply a name, 
-    description, and seed list for the job (A seed list the list of URLs the
+    description, and seed list for the job (A seed list contains the list of
+    URLs the
     crawler should start its crawl from). Once submitted the name can not be 
     changed. The description and seed list can however be modified at a later 
     date.
@@ -114,7 +115,8 @@ the supplied default profile to chose from.
     </ul>
 </p>
 <p>
-    Each of the first 4 corresponds to a section of the crawl configuration
+    Each of the first 4 buttons corresponds to a section of the crawl
+    configuration
     that can 
     be modified. <em>Modules</em> refers to selecting which pluggable modules 
     (classes) to use. This includes the 'frontier' and 'processors'. It does
@@ -139,7 +141,7 @@ the supplied default profile to chose from.
     <i>User-Agent</i> and <i>From</i> attributes in the 
     the <em>http-headers</em> section -- see the <em>Settings</em> on your
     job -- *MUST* be set to other than the default in the default profile 
-    for crawl to begin.
+    for the crawl to begin.
     You should set these to something meaningful that allows administrators of
     sites you'll be crawling to contact you. The software requires that
     User-Agent value be of the form...  
@@ -149,18 +151,19 @@ the supplied default profile to chose from.
     be an email address.  (Please do not leave the Archive Open Crawler
     project's contact
     information in these fields, we do not have the time or the resources to
-    field complaints about crawlers which we do not administer.)</p>
+    handle complaints about crawlers which we do not administer.)</p>
 
-<p>Note, the term <i>running</i> generally means that the crawler will
-start crawling
-a job as soon as one is available and no job is crawling: i.e. it will accept
-new jobs to be crawled. While not running jobs will be held in the pending
-queue even if there is no current job crawling.  
-The term <i>crawling</i> generally refers to a job that is actually being
-executed (crawled). That is pages are being fetched, links extracted etc. If
-the crawler is set to not run, there can still be a job crawling! That is a
-job that started before the crawler was stopped. In that scenario once the
-current job is completed the next job will not be started.
+<p>Note, the state <i>running</i> generally means that the crawler will
+start executing a job as soon as one is made available in the pending jobs 
+queue (as long as there is not a job currently being run).
+If the crawler is not in the running state, jobs added to the pending jobs
+queue will be held there in stasis; they will not be run, even if there 
+are no jobs currently being run.  The term <i>crawling</i> generally refers to
+a state whereby a job being currently run (crawled): i.e. pages are being
+fetched, links extracted etc. Note that if a crawler is set to the not run
+state, a job currently running will continue to run.  In other words, a job
+that started before the crawler was stopped will continue running. In that
+scenario once the current job has completed, the next job will not be started.
 </p>
 
 <subsection name="Modules">
@@ -172,7 +175,7 @@ current job is completed the next job will not be started.
     Options are provided for moving processors up, down,
     removing them and adding those not currently in the chain.
     Those that are 
-    added are placed at the end by default, generally the user should then move
+    added are placed at the end by default, Generally the user should then move
     them to their correct location. Detailed configuration of these modules is 
     then performed by going to the 'Settings' page afterwards.
 </p>
@@ -182,8 +185,8 @@ current job is completed the next job will not be started.
     Certain modules (Scope, all processors, the OrFilter for example) will
     allow 
     an arbitrary number of filters to be applied to them. This page presents a
-    treelike structure of the configuration with the ability to add remove and
-    reorder filters where they can be placed. For each grouping of filters the
+    treelike structure of the configuration with the ability to add, remove, and
+    reorder filters. For each grouping of filters the
     options provided correspond to those that are provided for processors. Note
     however that since filters can contain filters the lists can become 
     complicated. As with modules, detailed configuration of the filters is 
@@ -194,9 +197,10 @@ current job is completed the next job will not be started.
 <p>
     This page provides a treelike representation of the crawl configuration
     similar
-    to the one the 'Filters' page does. Here however an input field is provided
-    for each configurable parameter of each module. Changes made will be saved 
-    when the user navigates to one of the other crawl configuration pages or 
+    to the one that the 'Filters' page provides. In this case however an input
+    field is provided for each configurable parameter of each module. Changes
+    made will be saved when the user navigates to one of the other crawl
+    configuration pages or 
     selects 'Finished'. On all pages choosing 'Finish' will submit the job to
     the
     pending queue. Navigation to other parts of the admin interface will cause 
@@ -212,23 +216,23 @@ current job is completed the next job will not be started.
     Users can navigate to any domain that has an override, create/edit the
     overrides and delete them. When creating/editing them a page similar to the
    'Settings' page is provided. The main difference is that each input field is
-    preceded by a checkbox. If a check is in that box it is an override. If
-    there
-    is no check the value being displayed is inherited from the current
-    domains'
-    super domain. To override a setting it is necessary to add a check in front
-    of it. Removing a check effectively removes the override. Changes made to
+    preceded by a checkbox. If a box is checked, the value being displayed
+    overrides the global configuration.
+    If not, the setting being displayed is inherited fromt he current 
+    domains' super domain.  Therefore, to override a setting, remember to 
+    add a check in front of it.
+    Removing a check effectively removes the override. Changes made to
     non-checked fields will be ignored.
 </p>
 <p>
     It is not possible to override what modules are used in an override.
-    Some of that functionality can though be achieved via the 'enabled'
+    Some of that functionality can however be achieved via the 'enabled'
     option that each
     processor has. By overriding it and setting it to false you can disable
     that
     processor. It is even possible to have it set to false by default and only
-    enable it on select domains. Thus any arbitrary chain of processors can be
-    created for each domain with one major exception. It is not possible to
+    enable it on selected domains. Thus any arbitrary chain of processors can
+    be created for each domain with one major exception. It is not possible to
     manipulate the order of the processors. It is possible to similarly 
     disable/enable filters. It is also possible to add filters. You can not
     affect the order of inherited filters, and you can not interject new
@@ -252,19 +256,21 @@ current job is completed the next job will not be started.
 <p>
     Once logged in the user will be taken to the Console.
     It is the central page
-    for monitoring and affecting a running job. However more detailed reports
+    for monitoring and managing a running job. However more detailed reports
     and actions are possible from other pages.
 </p>
 <p>
     Every single page in the admin interface displays the same info header. It
-    tells you if the crawler is running or crawling a job. If a job is being
-    crawled it's name is displayed and minimal progress statistics. Information
-    about the number of pending and completed jobs is also provided.
+    tells you if the crawler is running or crawling a job (i.e.
+    the state of teh crawler). If a job is being
+    crawled it's name is displayed as well as some minimal progress statistics.
+    Information about the number of pending and completed jobs is also provided.
 </p>
 <subsection name="Jobs">
 <p>
     While a job is running this page allows users to view it's crawl order (the
-    actual XML configuration file), to view a crawl job report on it (both are
+    actual XML configuration file), to view reports about a specific job (both
+    are
     also available after the job is in the completed list) and the option to
     edit the job. As noted in the chapter about launching jobs via the WUI you
     cannot modify the pluggable modules but you can change the configurable
@@ -275,25 +281,55 @@ current job is completed the next job will not be started.
 <subsection name="Logs">
 <p>
     A very useful page that allows you to view any of the logs that are created
-    on a per-job basis. Log's can be viewed by line number, time stamp, regular
+    on a per-job basis. Logs can be viewed by line number, time stamp, regular
     expression or 'tail' (show the last lines of the file).
 </p>
 </subsection>
 <subsection name="Reports">
 <p>
     This page allows access to the same crawl job report mentioned in the
-    'Jobs' page section. This report details number of downloaded documents
+    'Jobs' page section. This report includes the number of downloaded
+    documents
     and various associated statistics.
 </p>
 </subsection>
 </section>
+<section name="Environment Variables">
+    <subsection name="HERITRIX_HOME">
+    <p>Set this environment variable to point at the heritrix home directory.
+    For example, if you've unpacked heritrix in your home directory and 
+    heritrix is sitting in the <code>heritrix-0.5.2</code> directory, you'd 
+    set HERITRIX_HOME as follows.
+    Assuming your shell is bash:
+    <source>% export HERITRIX_HOME=~/heritrix-0.5.2</source>
+    If you don't set this environment variable, the heritrix start script
+    makes a guess at the home for heritrix.  It doesn't always guess 
+    correctly.
+    </p>
+    </subsection>
+    <subsection name="JAVA_OPTS">
+        <p>Pass options to the heritrix JVM by populating the JAVA_OPTS
+        environment variable with values.  For example, if you want to 
+        have heritrix run with a larger heap, say 512 megs, you could do 
+        either of the following (assuming your shell is bash):
+    <source>% export JAVA_OPTS=-Xmx512m
+% $HERITRIX_HOME/bin/heritrix</source>
+        Or, you could do it all on the one line as follows:, 
+    <source>% JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix</source>
+        </p>
+
+    </subsection>
+
+</section>
 
 <section name="System Properties">
-<p>Below we document system properties passed on the command-line that 
+<p>Below we document the system properties passed on the command-line that 
 can influence Heritrix behavior.
 </p>
 <subsection name="heritrix.development">
-<p>Set this property on the command-line when you want to run the crawler
+<p>Set this property on the command-line (i.e. "-Dheritrix.development"
+or include as part of <code>JAVA_OPTS</code> environment value) 
+when you want to run the crawler
 from eclipse.  When this property is set, the conf and webapps directories
 will be found in their development locations and startup messages will
 show on the console.
@@ -315,10 +351,10 @@ e.g. <code>java -Djavax.net.ssl.trustStore=/tmp/truststore org.archive.crawler.H
 <p>The heritrix conf directory
     includes a file named <em>heritrix.properties</em>.  A 
     section of this file specifies the default heritrix logging configuration.
-    To override, point
+    To override these settings, point
     <em>java.util.logging.config.file</em> at a properties file with an
-    alternate logging configuration.  Below we reproduce the default for
-    reference:
+    alternate logging configuration.  Below we reproduce the default
+    heritrix.properties for reference:
     <source># Basic logging setup; to console, all levels
 handlers= java.util.logging.ConsoleHandler
 java.util.logging.ConsoleHandler.level= ALL
@@ -338,7 +374,7 @@ org.apache.commons.httpclient.level= SEVERE</source>
 </p>
 <p>Here's an example of how you might specify an override: 
     <source>% JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
-        ./bin/heritrix.sh --no-wui order.xml</source> </p>
+        ./bin/heritrix --no-wui order.xml</source> </p>
 </subsection>
 </section>
 
