@@ -1148,7 +1148,7 @@
                 the RegexRule
                 <literal>matching-regex</literal> with 
                 something like the following:
-              <literal>"^(.+)(?:(?:cid)=" + "[0-9a-zA-Z]{32})(&amp;.*)?$"</literal>
+              <literal>^(.+)(?:cid=[0-9a-zA-Z]{32})?$</literal>
               (Match a tail of 'cid=SOME_32_CHAR_STR' grouping all that comes
               before this tail).  Fill into the <literal>format</literal>
               field <literal>${1}</literal> (This will copy the first
@@ -1157,8 +1157,10 @@
                 <literal>org.archive.crawler.url.Canonicalizer</literal>
                 in <literal>heritrix.properties</literal> (Try 
                 uncommenting the line <literal>org.archive.crawler.url.Canonicalizer.level = INFO</literal>). Study the output and adjust your
-                regex accordingly.
+                regex accordingly. 
                 </para>
+                <para>See also <ulink 
+                url="http://groups.yahoo.com/group/archive-crawler/message/1611">msg1611</ulink> for another's experience getting regext to work.</para>
             </sect4>
         </sect3>
     </sect2>
