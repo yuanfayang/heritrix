@@ -30,6 +30,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.PaddingStringBuffer;
 import org.archive.util.TextUtils;
 
 /**
@@ -67,6 +68,282 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     static final Pattern LIKELY_URL_EXTRACTOR = Pattern.compile(
         "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)"); //TODO: IMPROVE THIS    
 
+    /**
+     * Matches any string that begins with http:// or https:// followed by 
+     * something that looks like an ip address (four numbers, none longer then
+     * 3 chars seperated by 3 dots). Does <b>not</b> ensure that the numbers are 
+     * each in the range 0-255.
+     */
+    static final Pattern IP_ADDRESS = Pattern.compile(
+        "((http://)|(https://))(\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?)");
+
+    /**
+     * Matches any string that begins with a TLD (no .) followed by a '/' slash
+     * or end of string. If followed by slash then nothing after the slash is
+     * of consequence. 
+     */
+    public static final Pattern TLDs = Pattern.compile(
+          "(ac(/.*)?)"  // ac  Ascension Island
+        + "|(ad(/.*)?)" // ad  Andorra
+        + "|(ae(/.*)?)" // ae  United Arab Emirates
+        + "|(af(/.*)?)" // af  Afghanistan
+        + "|(ag(/.*)?)" // ag  Antigua and Barbuda
+        + "|(ai(/.*)?)" // ai  Anguilla
+        + "|(al(/.*)?)" // al  Albania
+        + "|(am(/.*)?)" // am  Armenia
+        + "|(an(/.*)?)" // an  Netherlands Antilles
+        + "|(ao(/.*)?)" // ao  Angola
+        + "|(aero(/.*)?)" // aero Air-transport industry
+        + "|(aq(/.*)?)" // aq  Antarctica
+        + "|(ar(/.*)?)" // ar  Argentina
+        + "|(as(/.*)?)" // as  American Samoa
+        + "|(at(/.*)?)" // at  Austria
+        + "|(au(/.*)?)" // au  Australia
+        + "|(aw(/.*)?)" // aw  Aruba
+        + "|(az(/.*)?)" // az  Azerbaijan
+        + "|(ba(/.*)?)" // ba  Bosnia Hercegovina
+        + "|(bb(/.*)?)" // bb  Barbados
+        + "|(bd(/.*)?)" // bd  Bangladesh
+        + "|(be(/.*)?)" // be  Belgium
+        + "|(bf(/.*)?)" // bf  Burkina Faso
+        + "|(bg(/.*)?)" // bg  Bulgaria
+        + "|(bh(/.*)?)" // bh  Bahrain
+        + "|(bi(/.*)?)" // bi  Burundi
+        + "|(biz(/.*)?)" // biz Businesses
+        + "|(bj(/.*)?)" // bj  Benin
+        + "|(bm(/.*)?)" // bm  Bermuda
+        + "|(bn(/.*)?)" // bn  Brunei Darussalam
+        + "|(bo(/.*)?)" // bo  Bolivia
+        + "|(br(/.*)?)" // br  Brazil
+        + "|(bs(/.*)?)" // bs  Bahamas
+        + "|(bt(/.*)?)" // bt  Bhutan
+        + "|(bv(/.*)?)" // bv  Bouvet Island
+        + "|(bw(/.*)?)" // bw  Botswana
+        + "|(by(/.*)?)" // by  Belarus (Byelorussia)
+        + "|(bz(/.*)?)" // bz  Belize
+        + "|(ca(/.*)?)" // ca  Canada
+        + "|(cc(/.*)?)" // cc  Cocos Islands (Keeling)
+        + "|(cd(/.*)?)" // cd  Congo, Democratic Republic of the
+        + "|(cf(/.*)?)" // cf  Central African Republic
+        + "|(cg(/.*)?)" // cg  Congo, Republic of
+        + "|(ch(/.*)?)" // ch  Switzerland
+        + "|(ci(/.*)?)" // ci  Cote d'Ivoire (Ivory Coast)
+        + "|(ck(/.*)?)" // ck  Cook Islands               
+        + "|(cl(/.*)?)" // cl  Chile
+        + "|(cm(/.*)?)" // cm  Cameroon
+        + "|(cn(/.*)?)" // cn  China
+        + "|(co(/.*)?)" // co  Colombia
+        + "|(com(/.*)?)" // com Commercial
+        + "|(coop(/.*)?)" // coop Cooperatives
+        + "|(cr(/.*)?)" // cr  Costa Rica
+        + "|(cs(/.*)?)" // cs  Czechoslovakia
+        + "|(cu(/.*)?)" // cu  Cuba
+        + "|(cv(/.*)?)" // cv  Cap Verde
+        + "|(cx(/.*)?)" // cx  Christmas Island
+        + "|(cy(/.*)?)" // cy  Cyprus
+        + "|(cz(/.*)?)" // cz  Czech Republic
+        + "|(de(/.*)?)" // de  Germany
+        + "|(dj(/.*)?)" // dj  Djibouti
+        + "|(dk(/.*)?)" // dk  Denmark
+        + "|(dm(/.*)?)" // dm  Dominica
+        + "|(do(/.*)?)" // do  Dominican Republic
+        + "|(dz(/.*)?)" // dz  Algeria
+        + "|(ec(/.*)?)" // ec  Ecuador
+        + "|(edu(/.*)?)" // edu Educational Institution
+        + "|(ee(/.*)?)" // ee  Estonia
+        + "|(eg(/.*)?)" // eg  Egypt
+        + "|(eh(/.*)?)" // eh  Western Sahara
+        + "|(er(/.*)?)" // er  Eritrea
+        + "|(es(/.*)?)" // es  Spain
+        + "|(et(/.*)?)" // et  Ethiopia
+        + "|(fi(/.*)?)" // fi  Finland
+        + "|(fj(/.*)?)" // fj  Fiji
+        + "|(fk(/.*)?)" // fk  Falkland Islands
+        + "|(fm(/.*)?)" // fm  Micronesia, Federal State of
+        + "|(fo(/.*)?)" // fo  Faroe Islands
+        + "|(fr(/.*)?)" // fr  France
+        + "|(ga(/.*)?)" // ga  Gabon
+        + "|(gd(/.*)?)" // gd  Grenada
+        + "|(ge(/.*)?)" // ge  Georgia
+        + "|(gf(/.*)?)" // gf  French Guiana
+        + "|(gg(/.*)?)" // gg  Guernsey
+        + "|(gh(/.*)?)" // gh  Ghana
+        + "|(gi(/.*)?)" // gi  Gibraltar
+        + "|(gl(/.*)?)" // gl  Greenland
+        + "|(gm(/.*)?)" // gm  Gambia
+        + "|(gn(/.*)?)" // gn  Guinea
+        + "|(gov(/.*)?)" // gov Government (US)
+        + "|(gp(/.*)?)" // gp  Guadeloupe
+        + "|(gq(/.*)?)" // gq  Equatorial Guinea
+        + "|(gr(/.*)?)" // gr  Greece
+        + "|(gs(/.*)?)" // gs  South Georgia and the South Sandwich Islands
+        + "|(gt(/.*)?)" // gt  Guatemala
+        + "|(gu(/.*)?)" // gu  Guam
+        + "|(gw(/.*)?)" // gw  Guinea-Bissau
+        + "|(gy(/.*)?)" // gy  Guyana
+        + "|(hk(/.*)?)" // hk  Hong Kong
+        + "|(hm(/.*)?)" // hm  Heard and McDonald Islands
+        + "|(hn(/.*)?)" // hn  Honduras
+        + "|(hr(/.*)?)" // hr  Croatia/Hrvatska
+        + "|(ht(/.*)?)" // ht  Haiti
+        + "|(hu(/.*)?)" // hu  Hungary
+        + "|(id(/.*)?)" // id  Indonesia
+        + "|(ie(/.*)?)" // ie  Ireland
+        + "|(il(/.*)?)" // il  Israel
+        + "|(im(/.*)?)" // im  Isle of Man
+        + "|(in(/.*)?)" // in  India
+        + "|(info(/.*)?)" // info
+        + "|(int(/.*)?)" // int Int. Organizations
+        + "|(io(/.*)?)" // io  British Indian Ocean Territory
+        + "|(iq(/.*)?)" // iq  Iraq
+        + "|(ir(/.*)?)" // ir  Iran, Islamic Republic of
+        + "|(is(/.*)?)" // is  Iceland
+        + "|(it(/.*)?)" // it  Italy
+        + "|(je(/.*)?)" // je  Jersey
+        + "|(jm(/.*)?)" // jm  Jamaica
+        + "|(jo(/.*)?)" // jo  Jordan
+        + "|(jp(/.*)?)" // jp  Japan
+        + "|(ke(/.*)?)" // ke  Kenya
+        + "|(kg(/.*)?)" // kg  Kyrgyzstan
+        + "|(kh(/.*)?)" // kh  Cambodia
+        + "|(ki(/.*)?)" // ki  Kiribati
+        + "|(km(/.*)?)" // km  Comoros
+        + "|(kn(/.*)?)" // kn  Saint Kitts and Nevis
+        + "|(kp(/.*)?)" // kp  Korea, Democratic People's Republic
+        + "|(kr(/.*)?)" // kr  Korea, Republic of
+        + "|(kw(/.*)?)" // kw  Kuwait
+        + "|(ky(/.*)?)" // ky  Cayman Islands
+        + "|(kz(/.*)?)" // kz  Kazakhstan
+        + "|(la(/.*)?)" // la  Lao People's Democratic Republic
+        + "|(lb(/.*)?)" // lb  Lebanon
+        + "|(lc(/.*)?)" // lc  Saint Lucia
+        + "|(li(/.*)?)" // li  Liechtenstein
+        + "|(lk(/.*)?)" // lk  Sri Lanka
+        + "|(lr(/.*)?)" // lr  Liberia
+        + "|(ls(/.*)?)" // ls  Lesotho        
+        + "|(lt(/.*)?)" // lt  Lithuania
+        + "|(lu(/.*)?)" // lu  Luxembourg
+        + "|(lv(/.*)?)" // lv  Latvia
+        + "|(ly(/.*)?)" // ly  Libyan Arab Jamahiriya
+        + "|(ma(/.*)?)" // ma  Morocco
+        + "|(mc(/.*)?)" // mc  Monaco
+        + "|(md(/.*)?)" // md  Moldova, Republic of
+        + "|(mg(/.*)?)" // mg  Madagascar
+        + "|(mh(/.*)?)" // mh  Marshall Islands
+        + "|(mil(/.*)?)" // mil Military (US Dept of Defense)
+        + "|(mk(/.*)?)" // mk  Macedonia, Former Yugoslav Republic
+        + "|(ml(/.*)?)" // ml  Mali
+        + "|(mm(/.*)?)" // mm  Myanmar
+        + "|(mn(/.*)?)" // mn  Mongolia
+        + "|(mo(/.*)?)" // mo  Macau
+        + "|(mp(/.*)?)" // mp  Northern Mariana Islands
+        + "|(mq(/.*)?)" // mq  Martinique
+        + "|(mr(/.*)?)" // mr  Mauritani
+        + "|(ms(/.*)?)" // ms  Montserrat
+        + "|(mt(/.*)?)" // mt  Malta
+        + "|(mu(/.*)?)" // mu  Mauritius
+        + "|(museum(/.*)?)" // museum Museums
+        + "|(mv(/.*)?)" // mv  Maldives
+        + "|(mw(/.*)?)" // mw  Malawi
+        + "|(mx(/.*)?)" // mx  Mexico
+        + "|(my(/.*)?)" // my  Malaysia
+        + "|(mz(/.*)?)" // mz  Mozambique
+        + "|(na(/.*)?)" // na  Namibia
+        + "|(name(/.*)?)" // name Individuals
+        + "|(nc(/.*)?)" // nc  New Caledonia
+        + "|(ne(/.*)?)" // ne  Niger
+        + "|(net(/.*)?)" // net networks
+        + "|(nf(/.*)?)" // nf  Norfolk Island
+        + "|(ng(/.*)?)" // ng  Nigeria
+        + "|(ni(/.*)?)" // ni  Nicaragua
+        + "|(nl(/.*)?)" // nl  Netherlands
+        + "|(no(/.*)?)" // no  Norway
+        + "|(np(/.*)?)" // np  Nepal
+        + "|(nr(/.*)?)" // nr  Nauru
+        + "|(nt(/.*)?)" // nt  Neutral Zone
+        + "|(nu(/.*)?)" // nu  Niue
+        + "|(nz(/.*)?)" // nz  New Zealand
+        + "|(om(/.*)?)" // om  Oman
+        + "|(org(/.*)?)" // org Organization (non-profit)
+        + "|(pa(/.*)?)" // pa  Panama
+        + "|(pe(/.*)?)" // pe  Peru
+        + "|(pf(/.*)?)" // pf  French Polynesia
+        + "|(pg(/.*)?)" // pg  Papua New Guinea
+        + "|(ph(/.*)?)" // ph  Philippines
+        + "|(pk(/.*)?)" // pk  Pakistan
+        + "|(pl(/.*)?)" // pl  Poland
+        + "|(pm(/.*)?)" // pm  St. Pierre and Miquelon
+        + "|(pn(/.*)?)" // pn  Pitcairn Island
+        + "|(pr(/.*)?)" // pr  Puerto Rico
+        + "|(pro(/.*)?)" // pro Accountants, lawyers, and physicians
+        + "|(ps(/.*)?)" // ps  Palestinian Territories
+        + "|(pt(/.*)?)" // pt  Portugal
+        + "|(pw(/.*)?)" // pw  Palau
+        + "|(py(/.*)?)" // py  Paraguay
+        + "|(qa(/.*)?)" // qa  Qatar
+        + "|(re(/.*)?)" // re  Reunion Island
+        + "|(ro(/.*)?)" // ro  Romania
+        + "|(ru(/.*)?)" // ru  Russian Federation
+        + "|(rw(/.*)?)" // rw  Rwanda
+        + "|(sa(/.*)?)" // sa  Saudi Arabia
+        + "|(sb(/.*)?)" // sb  Solomon Islands
+        + "|(sc(/.*)?)" // sc  Seychelles
+        + "|(sd(/.*)?)" // sd  Sudan
+        + "|(se(/.*)?)" // se  Sweden
+        + "|(sg(/.*)?)" // sg  Singapore
+        + "|(sh(/.*)?)" // sh  St. Helena
+        + "|(si(/.*)?)" // si  Slovenia
+        + "|(sj(/.*)?)" // sj  Svalbard and Jan Mayen Islands
+        + "|(sk(/.*)?)" // sk  Slovak Republic
+        + "|(sl(/.*)?)" // sl  Sierra Leone
+        + "|(sm(/.*)?)" // sm  San Marino
+        + "|(sn(/.*)?)" // sn  Senegal
+        + "|(so(/.*)?)" // so  Somalia
+        + "|(sr(/.*)?)" // sr  Suriname
+        + "|(sv(/.*)?)" // sv  El Salvador
+        + "|(st(/.*)?)" // st  Sao Tome and Principe
+        + "|(sy(/.*)?)" // sy  Syrian Arab Republic
+        + "|(sz(/.*)?)" // sz  Swaziland
+        + "|(tc(/.*)?)" // tc  Turks and Caicos Islands
+        + "|(td(/.*)?)" // td  Chad
+        + "|(tf(/.*)?)" // tf  French Southern Territories
+        + "|(tg(/.*)?)" // tg  Togo
+        + "|(th(/.*)?)" // th  Thailand
+        + "|(tj(/.*)?)" // tj  Tajikistan
+        + "|(tk(/.*)?)" // tk  Tokelau
+        + "|(tm(/.*)?)" // tm  Turkmenistan
+        + "|(tn(/.*)?)" // tn  Tunisia
+        + "|(to(/.*)?)" // to  Tonga
+        + "|(tp(/.*)?)" // tp  East Timor
+        + "|(tr(/.*)?)" // tr  Turkey
+        + "|(tt(/.*)?)" // tt  Trinidad and Tobago
+        + "|(tv(/.*)?)" // tv  Tuvalu
+        + "|(tw(/.*)?)" // tw  Taiwan
+        + "|(tz(/.*)?)" // tz  Tanzania
+        + "|(ua(/.*)?)" // ua  Ukraine
+        + "|(ug(/.*)?)" // ug  Uganda
+        + "|(uk(/.*)?)" // uk  United Kingdom
+        + "|(um(/.*)?)" // um  US Minor Outlying Islands
+        + "|(us(/.*)?)" // us  United States
+        + "|(uy(/.*)?)" // uy  Uruguay
+        + "|(uz(/.*)?)" // uz  Uzbekistan
+        + "|(va(/.*)?)" // va  Holy See (City Vatican State)
+        + "|(vc(/.*)?)" // vc  Saint Vincent and the Grenadines
+        + "|(ve(/.*)?)" // ve  Venezuela
+        + "|(vg(/.*)?)" // vg  Virgin Islands (British)
+        + "|(vi(/.*)?)" // vi  Virgin Islands (USA)
+        + "|(vn(/.*)?)" // vn  Vietnam
+        + "|(vu(/.*)?)" // vu  Vanuatu
+        + "|(wf(/.*)?)" // wf  Wallis and Futuna Islands
+        + "|(ws(/.*)?)" // ws  Western Samoa
+        + "|(ye(/.*)?)" // ye  Yemen
+        + "|(yt(/.*)?)" // yt  Mayotte
+        + "|(yu(/.*)?)" // yu  Yugoslavia
+        + "|(za(/.*)?)" // za  South Africa
+        + "|(zm(/.*)?)" // zm  Zambia
+        + "|(zw(/.*)?)" // zw  Zimbabwe
+        );
+
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted= 0;
 
@@ -103,9 +380,15 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
                     // It takes a bare mininum of 4 characters to form a URL
                     // Since we have at least that many let's try link extraction.
                     Matcher uri = TextUtils.getMatcher(LIKELY_URL_EXTRACTOR, lookat.toString());
-                    if(uri.matches())
+                    if(looksLikeAnURL(lookat.toString()))
                     {
                         // Looks like we found something.
+                        PaddingStringBuffer msg = new PaddingStringBuffer();
+                        msg.append("EU MATCH: " + lookat.toString());
+                        msg.padTo(60);
+                        msg.append(" in " + curi.getURIString()+"\n");
+                        controller.reports.info(msg.toString());
+
                         numberOfLinksExtracted++;
                         curi.addSpeculativeEmbed(lookat.toString());
                     }
@@ -122,6 +405,58 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * This method takes a look at a string and determines if it could be a URL.
+     * To qualify the string must either begin with "http://" (https would also
+     * work) followed by something that looks like an IP address or contain 
+     * within the string (possible at the end but not at the beginning) a TLD 
+     * (Top Level Domain) preceded by a dot.
+     * 
+     * @param lookat The string to examine in an effort to determine if it could be a URL
+     * @return True if the string matches the above criteria for a URL.
+     */
+    private boolean looksLikeAnURL(String lookat) {
+        if(lookat.indexOf("http://")==0 || lookat.indexOf("https://")==0){
+            //Check if the rest of the string looks like an IP address.
+            //if so return true. Otherwise continue on.
+            Matcher ip = TextUtils.getMatcher(IP_ADDRESS, lookat);
+            if(ip.matches()){
+                return true;
+            }
+        }
+        
+        int dot = lookat.indexOf(".");
+        if(dot!=0){//An URL can't start with a .tld.
+            while(dot != -1 && dot < lookat.length()){
+                if(isTLD(lookat.substring(dot,lookat.length()<=dot+6?lookat.length()-1:dot+6))){
+                    return true;
+                }               
+                dot = lookat.substring(dot+1).indexOf(".");
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Checks if a string is equal to known Top Level Domain. The string may
+     * contain additional characters <i>after</i> the TLD but not before. 
+     * @param potentialTLD The string (usually 2-6 chars) to check if it starts with a TLD.
+     * @return True if the given string starts with the name of a known TLD
+     * 
+     * @see #TLDs
+     */
+    private boolean isTLD(String potentialTLD) {
+        if(potentialTLD.length()<2){
+            return false;
+        }
+        
+        potentialTLD.toLowerCase();
+        Matcher uri = TextUtils.getMatcher(LIKELY_URL_EXTRACTOR, potentialTLD);
+        
+        return uri.matches();
     }
 
     /**
