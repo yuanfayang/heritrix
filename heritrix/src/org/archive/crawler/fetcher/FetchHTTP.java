@@ -1,5 +1,5 @@
 /*
- * SimpleHTTPFetcher.java
+ * FetchHTTP.java
  * Created on Jun 5, 2003
  *
  * $Header$
@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpClientParams;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -30,17 +31,21 @@ import org.archive.crawler.framework.ToeThread;
  * @author gojomo
  *
  */
-public class FetcherHTTPSimple
+public class FetchHTTP
 	extends Processor
 	implements CoreAttributeConstants, FetchStatusCodes {
-	private static String XP_TIMEOUT_SECONDS = "//params/@timeout-seconds";
+	private static String XP_TIMEOUT_SECONDS = "@timeout-seconds";
+	private static String XP_MAX_LENGTH_BYTES = "@max-length-bytes";
+	private static String XP_MAX_FETCH_ATTEMPTS = "@max-fetch-attempts";
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
-	public static int MAX_HTTP_FETCH_ATTEMPTS = 3;
+	private static long DEFAULT_MAX_LENGTH_BYTES = Long.MAX_VALUE;
+	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 3;
 	
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherHTTPSimple");
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetchHTTPSimple");
 	HttpClient http;
-	private int timeout;
-
+	private long timeout;
+	private long maxLength;
+	private int maxTries;
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -59,7 +64,7 @@ public class FetcherHTTPSimple
 		}
 		
 		// only try so many times...
-		if(curi.getFetchAttempts() >= MAX_HTTP_FETCH_ATTEMPTS){
+		if(curi.getFetchAttempts() >= maxTries){
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		}
 		
@@ -105,7 +110,7 @@ public class FetcherHTTPSimple
 			// the cost here rather than elsewhere. )
 			//InputStream is = get.getResponseBodyAsStream(); 
 			//while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
-			get.getHttpRecorder().getRecordedInput().readFully();
+			get.getHttpRecorder().getRecordedInput().readFullyOrUntil(maxLength,timeout);
 			get.getHttpRecorder().close();
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
@@ -143,10 +148,17 @@ public class FetcherHTTPSimple
 	public void initialize(CrawlController c) {
 		super.initialize(c);
 		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
+		maxLength = getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES);
+		maxTries = getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS);
 		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
 		MultiThreadedHttpConnectionManager connectionManager = 
 					new MultiThreadedHttpConnectionManager();
 		http = new HttpClient(connectionManager);
+		// set connection timeout: considered same as overall timeout, for now
+		((HttpClientParams)http.getParams()).setConnectionTimeout((int)timeout);
+		// set per-read() timeout: overall timeout will be checked at least this
+		// frequently
+		((HttpClientParams)http.getParams()).setSoTimeout(1000);
 	}
 
 }
