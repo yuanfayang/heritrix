@@ -54,6 +54,7 @@ import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
+import org.mortbay.http.HashUserRealm;
 
 
 /**
@@ -443,12 +444,16 @@ public class Heritrix
         throws IOException
     {
         InputStream is =
-            new FileInputStream(new File(getConfdir(), PROPERTIES));
+            new FileInputStream(getPropertiesFile());
         if (is != null)
         {
             properties = new Properties();
             properties.load(is);
         }
+    }
+    
+    private static File getPropertiesFile() {
+        return new File(getConfdir(), PROPERTIES);
     }
 
     /**
@@ -474,8 +479,7 @@ public class Heritrix
 
         // No user-set logging properties established; use defaults
         // from distribution-packaged 'heritrix.properties'
-        InputStream is =
-            new FileInputStream(new File(getConfdir(), PROPERTIES));
+        InputStream is = new FileInputStream(getPropertiesFile());
         if (is != null)
         {
             LogManager.getLogManager().readConfiguration(is);
@@ -557,6 +561,11 @@ public class Heritrix
         List webapps = Arrays.asList(
             new String [] {SimpleHttpServer.getRootWebappName(),SELFTEST});
         Heritrix.httpServer = new SimpleHttpServer(webapps, port);
+        // Set up basic auth for a section of the server so selftest can run
+        // auth tests.
+        Heritrix.httpServer.getServer().addRealm(new HashUserRealm(SELFTEST,
+            getPropertiesFile().getAbsolutePath()));
+        // Start server.
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), SELFTEST);
         File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
