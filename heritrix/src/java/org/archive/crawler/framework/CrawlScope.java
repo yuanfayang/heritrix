@@ -26,7 +26,6 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -131,7 +130,7 @@ public class CrawlScope extends Filter {
      */
     public void initialize(CrawlController controller) {
         createSeedlist(getSeedfile(), getSettingsHandler().
-            getOrder().getController().uriErrors, true);
+            getOrder().getController(), true);
     }
     
     /**
@@ -144,10 +143,10 @@ public class CrawlScope extends Filter {
      * @param l Logger to use internally.
      * @param caching True if seed list created is to cache seeds.
      */
-    protected synchronized void createSeedlist(File seedfile, Logger l,
+    protected synchronized void createSeedlist(File seedfile, CrawlController c,
             boolean caching) {
         if (this.seedlist == null) {
-            this.seedlist = new SeedList(seedfile, l, caching);
+            this.seedlist = new SeedList(seedfile, c, caching);
         }
     }
 
@@ -198,6 +197,7 @@ public class CrawlScope extends Filter {
     public void refreshSeeds() {
         this.seedlist.refresh(getSeedfile());
     }
+        
     
     /**
      * @return Seed list file or null if problem getting settings file.
