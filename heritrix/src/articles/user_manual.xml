@@ -17,7 +17,7 @@
 
     <para>If you want to build Heritrix from source or if you'd like to make
     contributions and would like to know about contribution conventions, etc.,
-    see instead the Developer Manual.</para>
+    see instead the Developer's Manual.</para>
   </sect1>
 
   <sect1>
@@ -34,7 +34,7 @@
 
     <para>This chapter also only covers installing and running the prepackaged
     binary distributions of Heritrix. For information about downloading and
-    compiling the source see the Developers manual.</para>
+    compiling the source see the Developer's Manual.</para>
 
     <sect2>
       <title>Obtaining and installing Heritrix</title>
@@ -1198,7 +1198,7 @@
           with exceptional resources.</para>
         </sect4>
 
-        <sect4>
+        <sect4 id="httpheaders">
           <title>HTTP headers</title>
 
           <para>Currently Heritrix supports configuring the
@@ -2106,7 +2106,29 @@
       <sect3 id="header">
         <title>All page status header</title>
 
-        <para></para>
+        <para>At the top of every page in the WUI, right next to the Heritrix
+        logo, is a brief overview of it's current status.</para>
+
+        <para>The three lines contain the following information (starting at
+        the top left and working across and down).</para>
+
+        <para>First bit of information is the current time when the page was
+        displayed. This is useful since the status of the crawler will
+        continue to change after a page loads, but those changes will not be
+        reflected on the page until it is reloaded (usually manually by the
+        user). As always this time is in GMT.</para>
+
+        <para>Right next to it is the number of current and new alerts.</para>
+
+        <para>The second line tells the user if the crawler is running or not
+        (see also <xref linkend="runningvcrawling" />). If a job is being
+        crawled at the moment the name of it will be displayed next.</para>
+
+        <para>In the final line the number of pending and completed jobs are
+        displayed. Clicking on either value takes the user to the related
+        overview page. Finally if a job is being crawled the number of
+        documents downloaded and how long the crawl has been running are
+        displayed.</para>
       </sect3>
 
       <sect3>
@@ -2182,24 +2204,314 @@
   <sect1>
     <title>Analysis of jobs</title>
 
-    <para></para>
+    <para>Heritrix offers several facilities for examining the details of a
+    crawl. The reports and logs are also availible at run time.</para>
 
     <sect2 id="completedjobs">
       <title>Completed jobs</title>
 
-      <para></para>
+      <para>In the Jobs tab (and page headers) is a listing of how many
+      completed jobs there are along with a link to a page that lists
+      them.</para>
+
+      <para>The following information / options are provided for each
+      completed job:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">UID</emphasis></para>
+
+          <para>Each job has a unique (generated) ID. This is actually a time
+          stamp. It differentiates jobs with the same name from one
+          another.</para>
+
+          <para>This ID is used (among other things) for creating the job's
+          directory on disk and.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Job name</emphasis></para>
+
+          <para>The name that the user gave the job.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Status</emphasis></para>
+
+          <para>Status of the job. Indicates how it ended.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Options</emphasis></para>
+
+          <para>In addtion the following options are available for each
+          job.</para>
+
+          <itemizedlist>
+            <listitem>
+              <para><emphasis>Crawl order</emphasis></para>
+
+              <para>Opens up the actual XML file of the jobs configuration in
+              a seperate window. Generally only of interest to advanced
+              users.</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis>Crawl report</emphasis></para>
+
+              <para>Takes the user to the job's Crawl report (<xref
+              linkend="crawlreport" />).</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis>Seeds report</emphasis></para>
+
+              <para>Takes the user to the job's Seeds report (<xref
+              linkend="seedsreport" />).</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis>Seed file</emphasis></para>
+
+              <para>Displays the seed</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis>Logs</emphasis></para>
+
+              <para>Takes the user to the job's logs (<xref
+              linkend="logs" />).</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis>Journal</emphasis></para>
+
+              <para>Takes the user to the Journals page for the job (<xref
+              linkend="journal" />). Users can still add entries to it.</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis>Delete</emphasis></para>
+
+              <para>Marks the job as deleted. This will remove it from the WUI
+              but not from disk.</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+      </itemizedlist>
+
+      <note>
+        <para>It is not possible to directly access the configuration for
+        completed jobs in the same way as you can for new, pending and running
+        jobs. Instead users can look at the actual XML configuration file
+        <emphasis>or</emphasis> create a new job based on the old one. The new
+        job (and it need never be run) will perfectly mirror the settings of
+        the old one.</para>
+      </note>
     </sect2>
 
     <sect2 id="logs">
       <title>Logs</title>
 
-      <para></para>
+      <para>Heritrix writes several logs as it crawls a job. Each crawl job
+      has it's own set of these logs.</para>
+
+      <para>The location where logs are written can be configured (expert
+      setting). Otherwise refer to the crawl-manifest.txt for on disk location
+      of logs (<xref linkend="crawl-manifest.txt" />).</para>
+
+      <para>The WUI offers users four ways of viewing these logs by:</para>
+
+      <orderedlist>
+        <listitem>
+          <para><emphasis role="bold">Line number</emphasis></para>
+
+          <para>View a section of a log that starts at a given line number and
+          the next X lines following it. X is configurable, is 50 by
+          default.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Time stamp</emphasis></para>
+
+          <para>View a section of a log that starts at a given time stamp and
+          the next X lines following it. X is configurable, is 50 by default.
+          The format of the time stamp is the same as in the logs
+          (YYYYMMDDHHMMSS). It is not necessary to add more detail to this
+          then is desired. For instance the entry 2004042508 will match the
+          first entry made after 8 am on the 25 of April, 2004.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Regular expression</emphasis></para>
+
+          <para>Filter the log based on a regular expression. Only lines
+          matching it (and optionally lines following it that are indented -
+          usually means that they are related to the previous ones) are
+          displayed.</para>
+
+          <para>This can be an expensive operation on really big logs.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Tail</emphasis></para>
+
+          <para>Allows users to just look at the last X lines of the given
+          log. X can be configured, is 50 by default.</para>
+        </listitem>
+      </orderedlist>
+
+      <sect3>
+        <title>crawl.log</title>
+
+        <para>For each URI that completes processing (and will not be retried)
+        will get an entry, regardless of success or failure. Each entry is two
+        lines. </para>
+
+        <para>An exmple of two consecutive entries:</para>
+
+        <para><programlisting>  20040422222643484     1         59 #3 dns:www.lockergnome.com 31 text/dns 
+    LLP http://www.lockergnome.com/
+  20040422222644093   200       8216 #3 http://www.lockergnome.com/ 609 text/html 2t
+    LL http://dmoz.org/about.html</programlisting></para>
+
+        <para>The first line contains a time stamp. Then comes the status code
+        (<xref linkend="statuscodes" />). Next is the size of the downloaded
+        document in bytes, followed by the serial number of the toe thread
+        that handled this URI. </para>
+
+        <para>Next up is the URI ifself (this includes the protocol prefix).
+        Then comes the number of milliseconds that the actual fetching of the
+        document took. Then there follows the document's mime type and finally
+        (if needed) the number of times the URI had to be tried. If never
+        retried (i.e. just 1 try) then this is omitted.</para>
+
+        <para>The second line contains the discovery path (<xref
+        linkend="discoverypath" />). Followed by the URIs parent URI.</para>
+      </sect3>
+
+      <sect3>
+        <title>local-errors.log</title>
+
+        <para>Errors that occur when processing a URI that can be handled by
+        the processors (usually these are network related problems trying to
+        fetch the document) are logged here.</para>
+
+        <para>Generally these can be safely ignored, but can provide insight
+        to advanced users when other logs and/or reports have unusual
+        data.</para>
+      </sect3>
+
+      <sect3>
+        <title>progress-statistics.log</title>
+
+        <para>This log is written by the <literal>StatisticsTracker</literal>
+        (<xref linkend="stattrack" />).</para>
+
+        <para>At configurable intervals a line about the progress of the crawl
+        is written to this file.</para>
+
+        <para>From left to right the data contained on the line is as
+        follows:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">timestamp</emphasis></para>
+
+            <para>Time stamp indicating when the line was written.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">discovered</emphasis></para>
+
+            <para>Number of URIs discovered to date.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">queued</emphasis></para>
+
+            <para>Number of URIs queued at the moment.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">downloaded</emphasis></para>
+
+            <para>Number of URIs downloaded to date</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">doc/s(avg)</emphasis></para>
+
+            <para>Number of documents downloaded per second since the last
+            snapshot. In parenthesis since the crawl began.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">KB/s(avg)</emphasis></para>
+
+            <para>Amount in Kilobytes downloaded per second since the last
+            snapshot. In parenthesis since the crawl began.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">dl-failures</emphasis></para>
+
+            <para>Number of URIs that Heritrix has failed to download to
+            date.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">busy-thread</emphasis></para>
+
+            <para>Number of toe threads currently busy processing a
+            URI.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">mem-use-KB</emphasis></para>
+
+            <para>Amount of memory currently assigned to the Java Virtual
+            Machine.</para>
+          </listitem>
+        </itemizedlist>
+      </sect3>
+
+      <sect3>
+        <title>runtime-errors.log</title>
+
+        <para>This log captures unexpected exceptions and errors that occur
+        during the crawl. Some may be due to hardware limitation (out of
+        memory, although that error may occur without being written to this
+        log), but most are probably because of software bugs, either in
+        Heritrix's core but more likely in one of the pluggable
+        classes.</para>
+      </sect3>
+
+      <sect3>
+        <title>uri-errors.log</title>
+
+        <para>Contains errors in dealing with encountered URIs. Usually it's
+        caused by erroneous URIs. Generally only of interest to advanced users
+        trying to explain unexpected crawl behavior.</para>
+      </sect3>
     </sect2>
 
     <sect2>
       <title>Reports</title>
 
       <para></para>
+
+      <sect3 id="crawlreport">
+        <title>Crawl report</title>
+
+        <para></para>
+      </sect3>
+
+      <sect3 id="seedsreport">
+        <title>Seeds report</title>
+
+        <para></para>
+      </sect3>
     </sect2>
   </sect1>
 
@@ -2225,10 +2537,11 @@
         party modules who do their own output logging.</para>
 
         <para>This file is created in the same directory as the Heritrix JAR
-        file.</para>
+        file. It is not associated with any one job, but contains output from
+        all jobs run by the crawler.</para>
       </sect3>
 
-      <sect3>
+      <sect3 id="crawl-manifest.txt">
         <title>crawl-manifest.txt</title>
 
         <para>A manifest of all files (excluding ARC and other data files)
@@ -2428,6 +2741,26 @@
         </glossdef>
       </glossentry>
 
+      <glossentry id="discovereduris">
+        <glossterm>Discovered URIs</glossterm>
+
+        <glossdef>
+          <para>That is any URI that has been confirmed be within 'scope'
+          (i.e. the Frontier decides that it should be processed). This
+          includes those that have been processed, are being processed and
+          have finished processing. Does not include URIs that have been
+          'forgotten' (deemed out of scope when trying to fetch, most likely
+          due to operator changing scope definition).</para>
+
+          <para>Note that this only counts discovered URIs. Since the same URI
+          can (at least in most frontiers) be fetched multiple times, this
+          number may be somewhat lower then the combined queued, in process
+          and finished items combined due to duplicate URIs being queued and
+          processed. This variance is likely to be especially high in
+          Frontiers implementing 'revist' strategies. </para>
+        </glossdef>
+      </glossentry>
+
       <glossentry id="discoverypath">
         <glossterm>Discovery path</glossterm>
 
@@ -2471,6 +2804,19 @@
         <glossdef>
           <para>Number of link follow from the seed to the current URI. Seeds
           have a link hop count of 0.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry id="queueduris">
+        <glossterm>Queued URIs</glossterm>
+
+        <glossdef>
+          <para>Number of URIs <emphasis>queued</emphasis> up and waiting for
+          processing.</para>
+
+          <para>This includes any URIs that failed but will be retried.
+          Basically this is any discovered URI that has not either been
+          processed or is being processed.</para>
         </glossdef>
       </glossentry>
 
