@@ -101,17 +101,20 @@ public class DiskStackTest extends TmpDirTestCase {
      * DiskStack specific tests
      */
 
-    /** test the creation of a stack using a non-creatable file */
-    public void testCtorBadFile() {
-         try {
-            File storeFile = new File("/proc/uncreateablefile");
-            DiskStack stack = new DiskStack(storeFile);
-            stack.height(); // suppress never-accessed warning
-        } catch(IOException e) {
-            return;
-        }
-        fail("no exception on bad file");
-    }
+// Comment out till we come up with a file name that is guaranteed not
+// createable on all platforms.
+// 
+//    /** test the creation of a stack using a non-creatable file */
+//    public void testCtorBadFile() {
+//         try {
+//            File storeFile = new File("/proc/uncreateablefile");
+//            DiskStack stack = new DiskStack(storeFile);
+//            stack.height(); // suppress never-accessed warning
+//        } catch(IOException e) {
+//            return;
+//        }
+//        fail("no exception on bad file");
+//    }
 
     /** test that stack puts things on, and they stay there :) */
     public void testStack() {
