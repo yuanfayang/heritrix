@@ -252,7 +252,7 @@ public class CrawlURI extends CandidateURI
             String authority =  getUURI().getUri().getAuthority();
             if(authority == null) {
                 // let it be its own key
-                return getUURI().getUriString();
+                return getUURI().getURIString();
             } else {
                 return authority;
             }
@@ -362,8 +362,7 @@ public class CrawlURI extends CandidateURI
     /**
      * @return Fetched URIs content type.  May be null.
      */
-    public String getContentType()
-    {
+    public String getContentType() {
         return this.contentType;
     }
     
@@ -372,8 +371,7 @@ public class CrawlURI extends CandidateURI
      * 
      * @param ct Contenttype.  May be null.
      */
-    public void setContentType(String ct)
-    {
+    public void setContentType(String ct) {
         this.contentType = ct;
     }
 
@@ -587,10 +585,8 @@ public class CrawlURI extends CandidateURI
      * calculated).
      *
      */
-    public long getContentLength()
-    {
-        if (this.contentLength < 0)
-        {
+    public long getContentLength() {
+        if (this.contentLength < 0) {
             this.contentLength = getHttpRecorder().getResponseContentLength();
         }
         return this.contentLength;
@@ -670,8 +666,7 @@ public class CrawlURI extends CandidateURI
     /**
      * @return True if this is a http transaction.
      */
-    public boolean isHttpTransaction()
-    {
+    public boolean isHttpTransaction() {
         return getAList().containsKey(A_HTTP_TRANSACTION);
     }
 
@@ -681,8 +676,7 @@ public class CrawlURI extends CandidateURI
      * Called on the end of processing chain by Frontier#finish.  Null out any
      * state gathered during processing.
      */
-    public void processingCleanup()
-    {
+    public void processingCleanup() {
         this.httpRecorder = null; 
 
         // Allow get to be GC'd.

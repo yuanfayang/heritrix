@@ -173,10 +173,10 @@ public class CandidateURI implements Serializable, Lineable {
             return (String) via;
         }
         if (via instanceof UURI) {
-            return ((UURI)via).getUriString();
+            return ((UURI)via).getURIString();
         }
         if (via instanceof CandidateURI) {
-            return ((CandidateURI)via).getUURI().getUriString();
+            return ((CandidateURI)via).getUURI().getURIString();
         }
         return via.toString();
     }
@@ -186,7 +186,7 @@ public class CandidateURI implements Serializable, Lineable {
      */
     public String getLine() {
         return this.getClass().getName()
-                +" "+getUURI().getUriString()
+                +" "+getUURI().getURIString()
                 +" "+pathFromSeed
                 +" "+flattenVia();
     }
@@ -195,7 +195,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return URI String
      */
     public String getURIString() {
-        return getUURI().getUriString();
+        return getUURI().getURIString();
     }
 
     /**

@@ -607,7 +607,7 @@ public class StatisticsTracker extends AbstractTracker{
             Iterator tmp = controller.getScope().getSeedsIterator();
             allSeeds = new Vector();
             while(tmp.hasNext()){
-                String s = ((UURI)tmp.next()).getUriString();
+                String s = ((UURI)tmp.next()).getURIString();
                 allSeeds.add(s);
             }
         }

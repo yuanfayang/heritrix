@@ -50,18 +50,20 @@ public class PathologicalPathFilter extends URIRegExpFilter {
      */
     public PathologicalPathFilter(String name) {
         super(name);
-        setDescription("Pathological path filter. The Pathologicalpath filter" +
+        setDescription("Pathological path filter. \nThe Pathologicalpath filter" +
                 " is used to avoid crawler traps by adding a constraint on" +
                 " how many times a pattern in the URI could be repeated.");
 
-        Type type = getElementFromDefinition(ATTR_INVERTED);
+        Type type = getElementFromDefinition(ATTR_MATCH_RETURN_VALUE);
         type.setTransient(true);
 
         type = getElementFromDefinition(ATTR_REGEXP);
         type.setTransient(true);
 
         addElementToDefinition(new SimpleType(ATTR_REPETITIONS,
-                "Number of times the pattern should be allowed to occur.",
+                "Number of times the pattern should be allowed to occur. \n" +
+                "This filter returns true if number of repetitions of a" +
+                " pattern exceeds this value",
                 DEFAULT_REPETITIONS));
     }
 

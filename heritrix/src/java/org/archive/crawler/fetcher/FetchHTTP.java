@@ -60,10 +60,9 @@ import org.archive.util.HttpRecorder;
  * @author others
  * @version $Id$
  */
-public class FetchHTTP
-    extends Processor
-    implements CoreAttributeConstants, FetchStatusCodes
-{
+public class FetchHTTP extends Processor
+    	implements CoreAttributeConstants, FetchStatusCodes {
+    
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
@@ -169,10 +168,9 @@ public class FetchHTTP
         
         // Get and configure a new GetMethod.
         HttpRecorderGetMethod get =
-            new HttpRecorderGetMethod(curi.getUURI().getUriString(), rec);
+            new HttpRecorderGetMethod(curi.getUURI().getURIString(), rec);
         configureGetMethod(curi, get);
 
-        
         try {
             // TODO: make this initial reading subject to the same
             // length/timeout limits; currently only the soTimeout
@@ -230,7 +228,7 @@ public class FetchHTTP
         curi.setHttpRecorder(rec);
         
         long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
-        logger.fine(curi.getUURI().getUriString() + ": " +
+        logger.fine(curi.getUURI().getURIString() + ": " +
             get.getStatusCode() + " " + contentSize);
         curi.setContentSize(contentSize);
         curi.setFetchStatus(get.getStatusCode());
@@ -288,8 +286,7 @@ public class FetchHTTP
         this.http.setStrictMode(getStrict(curi));
 
         String userAgent = curi.getUserAgent();
-        if (userAgent == null)
-        {
+        if (userAgent == null) {
             userAgent = getSettingsHandler().getOrder().getUserAgent(curi);
         }
         get.setRequestHeader("User-Agent", userAgent);
@@ -325,7 +322,7 @@ public class FetchHTTP
                 throw new RuntimeException("Failed setting SSL Protocol: " +
                     e.getMessage());
             }
-            
+
             // load cookies from a file if specified in the order file.
             try {
                 loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));

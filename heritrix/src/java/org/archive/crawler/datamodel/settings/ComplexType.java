@@ -110,7 +110,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the global settings object.
      */
     public CrawlerSettings globalSettings() {
-        if (settingsHandler==null) {
+        if (settingsHandler == null) {
             return null;
         }
         return settingsHandler.getSettingsObject(null);
@@ -188,6 +188,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                 }
                 if (found) {
                     oldData.copyAttribute(t.getName(), newData);
+                    if (t instanceof ComplexType) {
+                        object.setupVariables((ComplexType) t);
+                    }
                 } else {
                     object.addElement(settings, t);
                 }
@@ -323,12 +326,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             } catch (NullPointerException e) {
                 // The URI don't know its settings
             }
-        } else if (o instanceof UURI) {
+        } else if (o instanceof UURI || o instanceof CandidateURI) {
             // Try to get settings for URI that has no references to a
             // CrawlServer
             UURI uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
                     .getUURI() : (UURI) o;
-            settings = getSettingsHandler().getSettings(uri.getHost());
+            String hostName = uri.getHost() == null ? "" : uri.getHost();
+            settings = getSettingsHandler().getSettings(hostName);
         }
 
         // if settings could not be resolved use globals.
@@ -391,7 +395,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException {
         CrawlerSettings settings;
-        if(uri==null||uri.getServer()==null) {
+        if(uri == null || uri.getServer() == null) {
             settings = globalSettings();
         } else {
             settings = uri.getServer().getSettings();
