@@ -1031,6 +1031,7 @@ public class CrawlURI extends CandidateURI
     }
 
     transient Object holder;
+    transient Object holderKey;
     /**
      * Remember a 'holder' to which some enclosing/queueing
      * facility has assigned this CrawlURI
@@ -1042,9 +1043,36 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
+     * Return the 'holder' for the convenience of 
+     * an external facility.
+     *
      * @return
      */
     public Object getHolder() {
         return holder;
+    }
+
+    /**
+     * Remember a 'holderKey' which some enclosing/queueing
+     * facility has assigned this CrawlURI
+     * .
+     * @param obj
+     */
+    public void setHolderKey(Object obj) {
+        holderKey=obj;
+    }
+    /**
+     * @return
+     */
+    public Object getHolderKey() {
+        return holderKey;
+    }
+
+    /**
+     * Get the ordinal (serial number) assigned at creation.
+     * @return
+     */
+    public long getOrdinal() {
+        return ordinal;
     }
 }
