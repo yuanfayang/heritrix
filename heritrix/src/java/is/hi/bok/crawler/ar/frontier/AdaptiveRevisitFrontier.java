@@ -53,9 +53,9 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
+import org.archive.util.ArchiveUtils;
 
 import st.ata.util.AList;
-import st.ata.util.HashtableAList;
 
 
 /**
@@ -357,6 +357,19 @@ public class AdaptiveRevisitFrontier extends ModuleType
             // Populate CURI with 'transient' variables such as server.
             curi.setServer(getServer(curi));
             logger.fine("Issuing "+curi.getURIString());
+            if(logger.isLoggable(Level.FINER)){
+                String waitI = "not set";
+                if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
+                    waitI = ArchiveUtils.formatMillisecondsToConventional(
+                            curi.getAList().getLong(A_WAIT_INTERVAL));
+                }
+                long temp = curi.getAList().getLong(A_TIME_OF_NEXT_PROCESSING);
+                long currT = System.currentTimeMillis();
+                logger.finer("Wait interval: " + waitI + 
+                        ", Time of next proc: " + temp +
+                        ", Current time: " + currT +
+                        ", Overdue by: " + (currT-temp) + "ms");
+            }
             return curi;
         } catch (IOException e) {
             // TODO: Need to handle this in an intelligent manner. 
@@ -406,8 +419,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
     protected void discardUnneededCrawlURIInfo(CrawlURI curi){
         AList a = curi.getAList();
         String[] keys = a.getKeyArray();
-        AList tmp = new HashtableAList();
-        
         
         for( int i=0 ; i < keys.length ; i ++ ){
             int type = a.getType(keys[i]);
@@ -417,6 +428,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 a.remove(keys[i]);
             }
         }
+        a.remove(A_ANNOTATIONS);
+        curi.resetFetchAttempts();
     }
     
     protected synchronized void innerFinished(CrawlURI curi) {
@@ -491,6 +504,18 @@ public class AdaptiveRevisitFrontier extends ModuleType
     protected void successDisposition(CrawlURI curi) {
         totalProcessedBytes += curi.getContentSize();
         curi.aboutToLog();
+        if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
+            curi.addAnnotation(ArchiveUtils.formatMillisecondsToConventional(
+                    (curi.getAList().getLong(A_WAIT_INTERVAL))));
+        }
+        if(curi.getAList().containsKey(A_NUMBER_OF_VISITS)){
+            curi.addAnnotation(Integer.toString(
+                    curi.getAList().getInt(A_NUMBER_OF_VISITS)) + "vis");
+        }
+        if(curi.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
+        curi.addAnnotation(Integer.toString(
+                curi.getAList().getInt(A_NUMBER_OF_VERSIONS)) + "ver");
+        }
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
@@ -513,7 +538,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
         }
         
         long waitInterval = curi.getAList().getLong(A_WAIT_INTERVAL);
-        
         // Set time of next processing
         curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+waitInterval);
@@ -787,7 +811,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
 
         }
         long ret = durationToWait > 0 ? durationToWait : 0;
-        logger.finer("Snooze time for " + curi.getURIString() + " = " + ret );
+        logger.finest("Snooze time for " + curi.getURIString() + " = " + ret );
         return ret;
     }
 
