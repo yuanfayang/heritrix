@@ -1031,7 +1031,8 @@
         page fetched is the same in each case.  For example, the page that
         is at <literal>http://www.archive.org/index.html</literal>
         is the same page as is at 
-        <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs differ. 
+        <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs differ 
+        (In this case by case only).
         Before going to the 'already included' list, Heritrix makes an effort
         at equating the likes of 
         <literal>http://www.archive.org/index.html</literal>
@@ -1059,6 +1060,51 @@
         the transform.  Set level to FINE to see the result of each 
         rule's transform.
         </para>
+        <para>Canonicalization rules can be added as an override so an added
+        rule only works in the overridden domain.
+        </para>
+        <sect3 id="urlcanonexample">
+            <title>URL Canonicalization Use Case: Stripping
+            Site-Particular Session IDs</title>
+            <para>Say site x.y.z is returning URLs with a session ID key of
+            <literal>cid</literal> as in
+            <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111'</literal>.  Say the session ID value is always 32 characters.  Say also
+            that annoyingly its a new ID on each request so the crawler
+            thinks it a new page every time it visits x.y.z, and, for 
+            simplicity's sake, that it always appears on the end of the
+            URL.
+            </para>
+            <sect4 id="urlcanonexamplesoln">
+            <title>Solution</title>
+                <para>Add a RegexRule override for the domain x.y.z.
+                To do this, pause the crawl, add an override for x.y.z by
+                clicking on the <literal>overrides</literal> tab in the
+                main menu bar and filling in the domain x.y.z.  Once in the
+                override screen, click on the <literal>URL</literal> tab
+                in the override menu bar -- the new bar that appears below
+                the main bar when in override mode -- and add a
+                <literal>RegexRule</literal> canonicalization rule.  Name it
+                <literal>cidStripper</literal>.  Adjust where you'd like
+                it to appear in the running of canonicalization rules (Towards
+                the end should be fine).  Now browse back to the
+                override settings.  The new canonicalization rule 
+                <literal>cidStripper</literal> should appear in the 
+                settings page list of canonicalization rules. Fill in
+                the RegexRule
+                <literal>matching-regex</literal> with 
+                something like the following:
+              <literal>"^(.+)(?:(?:cid)=" + "[0-9a-zA-Z]{32})(&amp;.*)?$"</literal>
+              (Match a tail of 'cid=SOME_32_CHAR_STR' grouping all that comes
+              before this tail).  Fill into the <literal>format</literal>
+              field <literal>${1}</literal> (This will copy the first
+              group from the regex if the regex matched).
+                To see the rule in operation, set the logging level for
+                <literal>org.archive.crawler.url.Canonicalizer</literal>
+                in <literal>heritrix.properties</literal> and adjust your
+                regex accordingly.
+                </para>
+            </sect4>
+        </sect3>
     </sect2>
 
     <sect2 id="filters">
