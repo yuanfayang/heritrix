@@ -71,8 +71,7 @@ public class ARCWriterTest
     }
 
     protected int writeRandomHTTPRecord(ARCWriter arcWriter, int index)
-        throws IOException
-    {
+    throws IOException {
         String indexStr = Integer.toString(index);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // Start the record with an arbitrary 14-digit date per RFC2540
@@ -95,21 +94,20 @@ public class ARCWriterTest
     }
 
     private File writeRecords(String baseName, boolean compress,
-            int maxSize, int recordCount)
-        throws IOException
-    {
+        int maxSize, int recordCount)
+    throws IOException {
         cleanUpOldFiles(baseName);
         ARCWriter arcWriter = new ARCWriter(getTmpDir(),
             baseName + '-' + PREFIX, compress, maxSize);
         assertNotNull(arcWriter);
-        for (int i = 0; i < recordCount; i++)
-        {
+        for (int i = 0; i < recordCount; i++) {
             writeRandomHTTPRecord(arcWriter, i);
         }
-        File arcFile = arcWriter.getArcFile();
-        assertTrue(arcFile.exists());
         arcWriter.close();
-        return arcFile;
+        assertTrue("Doesn't exist: " +
+                arcWriter.getArcFile().getAbsolutePath(), 
+            arcWriter.getArcFile().exists());
+        return arcWriter.getArcFile();
     }
 
     private void validate(File arcFile, int recordCount)

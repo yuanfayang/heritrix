@@ -34,6 +34,8 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import junit.framework.TestCase;
+
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.settings.ComplexType;
@@ -41,10 +43,7 @@ import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecordMetaData;
-import org.archive.io.arc.ARCWriter;
 import org.archive.util.FileUtils;
-
-import junit.framework.TestCase;
 
 
 /**
@@ -231,36 +230,12 @@ public class SelfTestCase extends TestCase
         testNonNullExists(arcDir);
         String prefix = testNonNullNonEmpty((String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PREFIX));
-        // The renaming of the ARC seems to take time.  Wait around for a little
-        // while.
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < 10; i++) {
-            File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
-            if (arcs.length != 1) {
-                throw new IOException("Expected one only arc file.  Found" +
-                    " instead " + Integer.toString(arcs.length) + " files.");
-            }
-            SelfTestCase.arcFile = arcs[0];
-            // If file is name with '.open' suffix, the rename hasn't
-            // happened yet.  Wait.
-            if (!SelfTestCase.arcFile.getName().
-                        endsWith(ARCWriter.OCCUPIED_SUFFIX)
-                    && SelfTestCase.arcFile.exists()) {
-                break;
-            }
-            Thread.sleep(1000);
+        File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
+        if (arcs.length != 1) {
+            throw new IOException("Expected one only arc file.  Found" +
+                " instead " + Integer.toString(arcs.length) + " files.");
         }
-        if (SelfTestCase.arcFile.getName().
-                endsWith(ARCWriter.OCCUPIED_SUFFIX)) {
-            throw new FileNotFoundException("Waited " +
-                (System.currentTimeMillis() - start) + " ms but no rename " +
-                SelfTestCase.arcFile.getAbsolutePath());
-        }
-        if (!SelfTestCase.arcFile.exists()) {
-            throw new FileNotFoundException("Waited " +
-                (System.currentTimeMillis() - start) + " ms but no " +
-                SelfTestCase.arcFile.getAbsolutePath());
-        }
+        SelfTestCase.arcFile = arcs[0];
         SelfTestCase.readReader = ARCReaderFactory.
             get(SelfTestCase.arcFile);
         SelfTestCase.metaDatas = SelfTestCase.readReader.validate();

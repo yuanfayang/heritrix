@@ -288,12 +288,14 @@ public class ARCWriter implements ARCConstants {
             this.out.close();
             this.out = null;
             if (this.arcFile != null && this.arcFile.exists()) {
-                String name = this.arcFile.getAbsolutePath();
-                if (name.endsWith(OCCUPIED_SUFFIX)) {
-                    if (!this.arcFile.renameTo(new File(name.substring(0,
-                            name.length() - OCCUPIED_SUFFIX.length())))) {
-                        logger.warning("Failed rename of " + name);
+                String path = this.arcFile.getAbsolutePath();
+                if (path.endsWith(OCCUPIED_SUFFIX)) {
+                    File f = new File(path.substring(0,
+                        path.length() - OCCUPIED_SUFFIX.length()));
+                    if (!this.arcFile.renameTo(f)) {
+                        logger.warning("Failed rename of " + path);
                     }
+                    this.arcFile = f;
                 }
                 logger.info("Closed " + this.arcFile.getAbsolutePath() +
                     ", size " + this.arcFile.length());
@@ -692,7 +694,8 @@ public class ARCWriter implements ARCConstants {
      * Test that the metadata line is valid before writing.
      * @throws IOException
      */
-    protected void validateMetaLine(String metaLineStr) throws IOException {
+    protected void validateMetaLine(String metaLineStr)
+    throws IOException {
         if (metaLineStr.length() > MAX_METADATA_LINE_LENGTH) {
         	throw new IOException("Metadata line length is " +
                 metaLineStr.length() + " which is > than maximum " +
@@ -709,32 +712,28 @@ public class ARCWriter implements ARCConstants {
     /**
      * @return True if we are using compression.
      */
-    public boolean isCompress()
-    {
+    public boolean isCompress() {
         return this.compress;
     }
 
     /**
      * @return Maximum file size allowed by this ARCWriter.
      */
-    public int getMaxSize()
-    {
+    public int getMaxSize() {
         return this.maxSize;
     }
 
     /**
      * @return Prefix being used by this ARCWriter.
      */
-    public String getPrefix()
-    {
+    public String getPrefix() {
         return this.prefix;
     }
 
     /**
      * @return Dir ARCare being dropped into.
      */
-    public File getArcsDir()
-    {
+    public File getArcsDir() {
         return this.arcsDir;
     }
 
@@ -745,8 +744,7 @@ public class ARCWriter implements ARCConstants {
      *
      * @return Current arcFile.
      */
-    public File getArcFile()
-    {
+    public File getArcFile() {
         return this.arcFile;
     }
 
