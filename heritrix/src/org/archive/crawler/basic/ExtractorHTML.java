@@ -86,10 +86,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processTagInto(cs.subSequence(tags.start(2),tags.end(2)),links,embeds);
 			} else if(tags.start(3)>0) {
 				// <base> match
-				processBase(curi,cs.subSequence(tags.start(3),tags.end(3)));
+				processBase(curi,cs.subSequence(tags.start(2),tags.end(2)));
 			} else if (tags.start(4)>0) {
 				// <meta> match
-				if (processMeta(curi,cs.subSequence(tags.start(4),tags.end(4)))) {
+				if (processMeta(curi,cs.subSequence(tags.start(2),tags.end(2)))) {
 					// meta tag included NOFOLLOW; abort processing
 					return;
 				}
