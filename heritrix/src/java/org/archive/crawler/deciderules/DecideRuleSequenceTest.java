@@ -24,9 +24,17 @@ package org.archive.crawler.deciderules;
 
 import java.io.File;
 
+import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
@@ -113,10 +121,91 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
             decision == DecideRule.REJECT);
     }
     
+    public void testRegex()
+    throws InvalidAttributeValueException, AttributeNotFoundException,
+    MBeanException, ReflectionException {
+        final String regexName = "REGEX";
+        DecideRule r = addDecideRule(new MatchesRegExpDecideRule(regexName));
+        // Set regex to be match anything that ends in archive.org.
+        r.setAttribute(new Attribute(MatchesRegExpDecideRule.ATTR_REGEXP,
+            "^.*\\.archive\\.org"));
+        Object decision = this.rule.decisionFor("http://google.com");
+        assertTrue("Expect PASS but got " + decision,
+            decision == DecideRule.PASS);
+        decision = this.rule.decisionFor("http://archive.org");
+        assertTrue("Expect PASS but got " + decision,
+            decision == DecideRule.PASS);
+        decision = this.rule.decisionFor("http://www.archive.org");
+        assertTrue("Expect ACCEPT but got " + decision,
+            decision == DecideRule.ACCEPT);
+    }
+    
+    public void testNotRegex()
+    throws InvalidAttributeValueException, AttributeNotFoundException,
+    MBeanException, ReflectionException {
+        final String regexName = "NOT_REGEX";
+        DecideRule r = addDecideRule(new NotMatchesRegExpDecideRule(regexName));
+        // Set regex to be match anything that ends in archive.org.
+        r.setAttribute(new Attribute(MatchesRegExpDecideRule.ATTR_REGEXP,
+            "^.*\\.archive\\.org"));
+        Object decision = this.rule.decisionFor("http://google.com");
+        assertTrue("Expect ACCEPT but got " + decision,
+            decision == DecideRule.ACCEPT);
+        decision = this.rule.decisionFor("http://www.archive.org");
+        assertTrue("Expect PASS but got " + decision,
+            decision == DecideRule.PASS);
+    }
+    
+    
+    public void testPrerequisite()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new PrerequisiteAcceptDecideRule("PREREQUISITE"));
+        UURI uuri = UURIFactory.getInstance("http://archive.org");
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect PASS but got " + decision,
+            decision == DecideRule.PASS);
+        candidate = new CandidateURI(uuri, "LLP", null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect ACCEPT but got " + decision,
+            decision == DecideRule.ACCEPT);
+    }
+    
+    public void testHops()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new TooManyHopsDecideRule("HOPS"));
+        UURI uuri = UURIFactory.getInstance("http://archive.org");
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect PASS but got " + decision,
+            decision == DecideRule.PASS);
+        StringBuffer path = new StringBuffer(
+            TooManyHopsDecideRule.DEFAULT_MAX_HOPS.intValue());
+        for (int i = 0;
+                i < (TooManyHopsDecideRule.DEFAULT_MAX_HOPS.intValue() - 1);
+                i++) {
+            path.append("L");
+        }
+        candidate = new CandidateURI(uuri, path.toString(), null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect PASS but got " + decision,
+            decision == DecideRule.PASS);
+        path.append('L');
+        candidate = new CandidateURI(uuri, path.toString(), null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect PASS but got " + decision,
+                decision == DecideRule.PASS);
+        path.append('L');
+        candidate = new CandidateURI(uuri, path.toString(), null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect ACCEPT but got " + decision,
+                decision == DecideRule.ACCEPT);
+    }
+    
     protected DecideRule addDecideRule(DecideRule dr)
     throws InvalidAttributeValueException {
         MapType rules = this.rule.getRules(null);
         rules.addElement(null, dr);
-        return this.rule;
+        return dr;
     }
 }

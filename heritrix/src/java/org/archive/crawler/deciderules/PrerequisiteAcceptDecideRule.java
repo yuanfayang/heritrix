@@ -30,7 +30,7 @@ import org.archive.crawler.extractor.Link;
 
 /**
  * Rule which ACCEPTs all 'prerequisite' URIs (those with a 'P' in
- * the last hopsPath position. Good in a late position to ensure
+ * the last hopsPath position). Good in a late position to ensure
  * other scope settings don't lock out necessary prerequisites.
  *
  * @author gojomo
@@ -46,7 +46,7 @@ public class PrerequisiteAcceptDecideRule extends AcceptDecideRule {
     public Object decisionFor(Object object) {        
         try {
             String hopsPath = ((CandidateURI)object).getPathFromSeed();
-            if (hopsPath.length() > 0 &&
+            if (hopsPath != null && hopsPath.length() > 0 &&
                     hopsPath.charAt(hopsPath.length()-1) == Link.PREREQ_HOP) {
                 return ACCEPT;
             }
