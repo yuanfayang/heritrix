@@ -943,7 +943,7 @@ public class ReplayCharSequenceFactory {
         public void close()
         {
             this.content = null;
-            deleteFile(this.decodedFile);
+            // TODO: RESTORE deleteFile(this.decodedFile);
         }
         
         protected void finalize() throws Throwable
