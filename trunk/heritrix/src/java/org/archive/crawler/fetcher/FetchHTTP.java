@@ -148,9 +148,14 @@ public class FetchHTTP extends Processor
     }
 
     protected void innerProcess(CrawlURI curi) {
-        initialize();     
+        initialize();
+        
+        // Clear any httpRecorder so subsequent processing doesn't mistakenly 
+        // think it current.
+        curi.setHttpRecorder(null);
+        
         if (!canFetch(curi)) {
-            // Cannot fetch this, due to protocol, retries, or other problems
+            // cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
@@ -177,18 +182,16 @@ public class FetchHTTP extends Processor
             rec.closeRecorders();
             get.releaseConnection();
             return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // for weird windows-only ArrayIndex exceptions from native code
+            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // treating as if it were an IOException
+            curi.addLocalizedError(this.getName(), e, "executeMethod");
+            curi.setFetchStatus(S_CONNECT_FAILED);
+            rec.closeRecorders();
+            get.releaseConnection();
+            return;
         }
-    
-//        catch (ArrayIndexOutOfBoundsException e) {
-//            // for weird windows-only ArrayIndex exceptions from native code
-//            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-//            // treating as if it were an IOException
-//            curi.addLocalizedError(this.getName(), e, "executeMethod");
-//            curi.setFetchStatus(S_CONNECT_FAILED);
-//            rec.closeRecorders();
-//            get.releaseConnection();
-//            return;
-//        }
 
         try {
             // force read-to-end, so that any socket hangs occur here,
@@ -297,10 +300,6 @@ public class FetchHTTP extends Processor
         {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-            // We use the multithreaded connection manager because, at the
-            // least, cookies will be shared across clients.  It also seems
-            // SimpleConnectionManager is unsafe run in an environment running
-            // multiple instances (to be verified).
             MultiThreadedHttpConnectionManager connectionManager =
                 new MultiThreadedHttpConnectionManager();
             // Ensure there will be as many http connections available as
@@ -313,8 +312,7 @@ public class FetchHTTP extends Processor
             {
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
                 Protocol.registerProtocol("https", new Protocol("https", 
-                  new ConfigurableTrustManagerProtocolSocketFactory(trustLevel),
-                  443));
+                    new ConfigurableTrustManagerProtocolSocketFactory(trustLevel), 443));
             }
             
             catch (Exception e)
