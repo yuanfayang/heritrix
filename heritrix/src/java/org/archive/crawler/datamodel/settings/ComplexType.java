@@ -41,8 +41,10 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 
 /** Superclass of all configurable modules.
  *
@@ -250,6 +252,12 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             } catch (NullPointerException e) {
                 // The URI don't know its settings
             }
+        } else if (o instanceof UURI) {
+            // Try to get settings for URI that has no references to a
+            // CrawlServer
+            UURI uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
+                    .getUURI() : (UURI) o;
+            settings = getSettingsHandler().getSettings(uri.getHost());
         }
 
         // if settings could not be resolved use globals.
