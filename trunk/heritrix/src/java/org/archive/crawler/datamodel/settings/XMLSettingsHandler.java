@@ -459,7 +459,9 @@ public class XMLSettingsHandler extends SettingsHandler {
         // Add CrawlOrder.
         list.add(getOrderFile().getAbsolutePath());
         // Iterate through the entire override hierarchy
-        recursiveFindFiles(getSettingsDirectory(),list);
+        if (getSettingsDirectory().exists()) {
+            recursiveFindFiles(getSettingsDirectory(),list);
+        }
         // Get files used by settings modules.
         recursiveFindSecondaryFiles(getOrder(),list);
         return list;
