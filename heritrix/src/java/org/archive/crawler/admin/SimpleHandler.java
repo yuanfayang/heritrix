@@ -199,8 +199,7 @@ public class SimpleHandler
     /**
      * @param newJob Job to add.
      * 
-     * @see org.archive.crawler.framework.CrawlJobHandler#addJob(
-     * org.archive.crawler.framework.CrawlJob)
+     * @see org.archive.crawler.framework.CrawlJobHandler#addJob(org.archive.crawler.framework.CrawlJob)
      */
     public void addJob(CrawlJob newJob)
     {
@@ -641,8 +640,7 @@ public class SimpleHandler
     /**
      * @param statusMessage Message to display.
      * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(
-     * java.lang.String)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
         currentJob.setStatus(statusMessage);
@@ -651,8 +649,7 @@ public class SimpleHandler
     /**
      * @param statusMessage Message to display.
      * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(
-     * java.lang.String)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
      */
     public void crawlPaused(String statusMessage) {
         currentJob.setStatus(statusMessage);
@@ -661,8 +658,7 @@ public class SimpleHandler
     /**
      * @param statusMessage Message to display.
      * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(
-     * java.lang.String)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
         currentJob.setStatus(statusMessage);
@@ -671,8 +667,7 @@ public class SimpleHandler
     /**
      * @param sExitMessage Exit message to display.
      * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(
-     * java.lang.String)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
      */
     public void crawlEnding(String sExitMessage)
     {
@@ -697,8 +692,7 @@ public class SimpleHandler
     /**
      * @param sExitMessage Exit message to display.
      * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded
-     * (java.lang.String)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
         // Not interested.  Once the Controller tells us that it is ending it's

@@ -52,22 +52,16 @@ public class DiskBackedByteQueue {
 		headStream = new FlipFileInputStream(tailStream);
 	}
 
-	/**
-	 * @return
-	 */
 	public InputStream getHeadStream() {
 		return headStream;
 	}
 
-	/**
-	 * @return
-	 */
 	public OutputStream getTailStream() {
 		return tailStream;
 	}
 
 	/**
-	 * 
+	 * @throws IOException
 	 */
 	public void close() throws IOException {
 		headStream.close();

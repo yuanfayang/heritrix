@@ -50,9 +50,10 @@ public interface UURISet extends Set {
 	 * full-cost contains() to be sure. 
 	 * 
 	 * @param u
-	 * @return
+	 * @return True if UURI is contained.
 	 */
 	public boolean quickContains(UURI u);
+
 	public boolean quickContains(CandidateURI curi);
 
 	public void add(UURI u);

@@ -57,6 +57,8 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 
 	/**
 	 * @param c
+	 * @param p
+	 * @param sn
 	 */
 	public ToeThread(CrawlController c, ToePool p, int sn) {
 		controller = c;
@@ -162,9 +164,6 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		return localProcessor;
 	}
 
-	/**
-	 * @return
-	 */
 	private boolean shouldCrawl() {
 		return shouldCrawl;
 	}
@@ -178,16 +177,10 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		}
 	}
 
-	/**
-	 * 
-	 */
 	public int getSerialNumber() {
 		return serialNumber;
 	}
 
-	/**
-	 * @return
-	 */
 	public HttpRecorder getHttpRecorder() {
 		return httpRecorder;
 	}
@@ -200,9 +193,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	}
 	
 	/**
-	 * Compiles and returns a report on it's status.
-	 * 
-	 * @return
+	 * @return Compiles and returns a report on it's status.
 	 */
 	public String report()
 	{

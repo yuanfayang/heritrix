@@ -89,6 +89,7 @@ public class PDFParser {
 	/** Reinitialize the object as though a new one were created, complete
 	 * with a valid pointer to a document that can be read
 	 * @param doc
+	 * @throws IOException
 	 */
 	public void resetState(String doc) throws IOException{
 		resetState();
@@ -118,7 +119,7 @@ public class PDFParser {
 	 * so we don't infinitely loop on circuits within the PDF.
 	 * @param generation
 	 * @param id
-	 * @return
+	 * @return True if already seen.
 	 */
 	protected boolean haveSeen(int generation, int id){
 		
@@ -157,6 +158,8 @@ public class PDFParser {
 	/**
 	 * Get a list of URIs retrieved from the Pdf during the
 	 * extractURIs operation.
+	 * @return A list of URIs retrieved from the Pdf during the
+	 * extractURIs operation.
 	 */
 	public ArrayList getURIs(){
 		return foundURIs;
@@ -179,6 +182,7 @@ public class PDFParser {
 	/**
 	 * Extract URIs from all objects found in a Pdf document's catalog.
 	 * Returns an array list representing all URIs found in the document catalog tree.
+	 * @return URIs from all objects found in a Pdf document's catalog.
 	 */
 	public ArrayList extractURIs(){
 		extractURIs(catalog);
@@ -188,7 +192,7 @@ public class PDFParser {
 	/**
 	 * Parse a PdfDictionary, looking for URIs recursively and adding
 	 * them to foundURIs
-	 * @param dictionary
+	 * @param entity
 	 */
 	protected void extractURIs(PdfObject entity){
 

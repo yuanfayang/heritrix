@@ -424,7 +424,8 @@ public class CrawlController extends Thread {
 		// for now do nothing
 	}
 	
-	/** Return the object this controller is using to track crawl statistics
+	/** 
+     * @return Object this controller is using to track crawl statistics
 	 */
 	public StatisticsTracking getStatistics(){
 		return statistics;
@@ -533,9 +534,6 @@ public class CrawlController extends Thread {
 		logger.fine(getName()+" finished for order CrawlController");
 	}
 
-	/**
-	 * @return
-	 */
 	private boolean shouldCrawl() {
 		if(frontier.isEmpty())
 		{
@@ -603,40 +601,27 @@ public class CrawlController extends Thread {
 		toePool = new ToePool(this,order.getMaxToes());
 	}
 
-	/**
-	 * 
-	 */
 	public CrawlOrder getOrder() {
 		return order;
 	}
 
-	/**
-	 * 
-	 */
 	public HashMap getProcessors() {
 		return processors;
 	}
 
-	/**
-	 * 
-	 */
 	public ServerCache getServerCache() {
 		return serverCache;
 	}
 
 	/**
-	 * 
+	 * @param o
 	 */
-	//public ThreadKicker getKicker() {
-	//	return kicker;
-	//}
-
-
 	public void setOrder(CrawlOrder o){
 		order = o;	
 	}
 
-	/** Print to stdout basic statistics about the crawl (for stat testing) */
+	/** Print to stdout basic statistics about the crawl (for stat testing) * @return
+	 */
 //	public void printStatistics(){
 //	
 //		//System.out.println(":");
@@ -698,25 +683,17 @@ public class CrawlController extends Thread {
 //
 //	}
 
-
 	/**
-	 * 
+	 * @return The frontier.
 	 */
 	public URIFrontier getFrontier() {
 		return frontier;
 	}
 
-
-	/**
-	 * 
-	 */
 	public CrawlScope getScope() {
 		return scope;
 	}
 
-	/**
-	 * @return
-	 */
 	public Processor getPostprocessor() {
 		return postprocessor;
 	}
@@ -728,18 +705,10 @@ public class CrawlController extends Thread {
 		postprocessor = processor;
 	}
 
-
-	/**
-	 * 
-	 */
 	public File getDisk() {
 		return disk;
 	}
 
-
-	/**
-	 * 
-	 */
 	public File getScratchDisk() {
 		return scratchDisk;
 	}
@@ -754,9 +723,8 @@ public class CrawlController extends Thread {
 	}
 
 	/**
-	 * Compiles and returns a human readable report on the ToeThreads in it's ToePool.
-	 * 
-	 * @return
+	 * @return Compiles and returns a human readable report on the
+     * ToeThreads in it's ToePool.
 	 */
 	public String reportThreads(){
 		StringBuffer rep = new StringBuffer();	

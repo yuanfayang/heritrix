@@ -44,6 +44,10 @@ public class DiskBackedQueue implements Queue {
 	String name;
 	
 	/**
+	 * @param dir
+	 * @param name
+	 * @param headMax
+	 * @throws IOException
 	 * 
 	 */
 	public DiskBackedQueue(File dir, String name, int headMax) throws IOException {

@@ -40,9 +40,6 @@ public interface URIStoreable {
 	public static final Object READY = "READY".intern();
 	public static final Object SNOOZED = "SNOOZED".intern();
 
-	/**
-	 * @return
-	 */
 	Object getClassKey();
 
 	Object getStoreState();
@@ -55,6 +52,7 @@ public interface URIStoreable {
 
 	/**
 	 * a fallback string to use when wake times are equal
+	 * @return String
 	 */
 	String getSortFallback();
 }

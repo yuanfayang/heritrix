@@ -65,6 +65,7 @@ public class IATagParser extends TagWriter {
    	
    	/** Store links to other documents that are enountered in 
    	 *  the course of parsing.
+   	 * @param link
    	 */
    	public void putLink(String link){
    		links.add(link);
@@ -75,6 +76,11 @@ public class IATagParser extends TagWriter {
 	 * Overrides super classe's method to force 
 	 * the use of IATagParser's ButtonActionWriter 
 	 * class.
+	 * @param id
+	 * @param trackAsMenu
+	 * @param buttonRecord2s
+	 * @return An SWFActions.
+	 * @throws IOException
 	 */
 	public SWFActions tagDefineButton2( int id, 
 										boolean trackAsMenu, 

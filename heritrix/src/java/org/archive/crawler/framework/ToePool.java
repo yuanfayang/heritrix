@@ -56,9 +56,6 @@ public class ToePool extends CrawlStatusAdapter {
 		setSize(count);
 	}
 
-	/**
-	 * 
-	 */
 	public synchronized ToeThread available() {	
 		while(true) {
 			for(int i=0; i < effectiveSize ; i++){
@@ -84,8 +81,6 @@ public class ToePool extends CrawlStatusAdapter {
 	}
 
 	/**
-	 * 
-	 * 
 	 * @return The number of ToeThreads that are not available
 	 */
 	public int getActiveToeCount() {
@@ -112,6 +107,7 @@ public class ToePool extends CrawlStatusAdapter {
 	 * All references in this object will be set to null to facilitate GC.
 	 * Once the CrawlController has called this method, this object should be considered
 	 * as having been destroyed.
+	 * @param statusMessage
 	 */
 	public void crawlEnding(String statusMessage) {
 		while(toes.size()>0)
@@ -132,7 +128,7 @@ public class ToePool extends CrawlStatusAdapter {
 	 * Gets a ToeThreads internal status report.
 	 * 
 	 * @param toe the number of the ToeThread to query.
-	 * @return
+	 * @return ToeThreads internal status report.
 	 */
 	public String getReport(int toe)
 	{

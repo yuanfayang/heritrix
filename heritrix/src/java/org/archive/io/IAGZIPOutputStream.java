@@ -43,7 +43,7 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 	/**
 	 * Create a custom gzip output stream, writing IA header information.
 	 * Normal gzip output streams are then used to write records to the file.
-	 * @param outputstream
+	 * @param o
 	 * @throws IOException
 	 */
 	public IAGZIPOutputStream(OutputStream o) throws IOException {
@@ -103,6 +103,7 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 	 * Call to begin a record.  This will flush anything 
 	 * left in the buffer, end the previous record, and set
 	 * us up to start writing anew.
+	 * @throws IOException
 	 */
 	public void startCompressionBlock() throws IOException{
 		if(blockWriteInProgress){
@@ -116,6 +117,7 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 	/**
 	 * Flushes output buffer and gets the output stream and deflator
 	 * ready to write a new record.
+	 * @throws IOException
 	 */
 	public void endCompressionBlock() throws IOException{
 		if(!blockWriteInProgress){
@@ -152,7 +154,9 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 		}
 	}	
 	
-	/** Tidy up and close the underlying stream */
+	/** Tidy up and close the underlying stream
+	 * @throws IOException
+	 */
 	public void close() throws IOException {
 		endCompressionBlock();
 		out.close();

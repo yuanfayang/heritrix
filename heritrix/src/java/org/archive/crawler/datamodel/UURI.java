@@ -88,9 +88,10 @@ public class UURI implements Serializable {
 	 * For example, the URI scheme is case-flattened, 
 	 * hostnames are case-flattened, default ports are
 	 * removed, and path-info is regularized. 
-	 * 
 	 * @param u
-	 * @return
+	 * @return A "normalized" String for the given String.
+	 * This is NOT the same as Alexa's canonicalization.
+	 * @throws URISyntaxException
 	 */
 	 public static URI normalize(String u) throws URISyntaxException {
 		return normalize(u,null);
@@ -103,7 +104,8 @@ public class UURI implements Serializable {
 	 * 
 	 * @param s absolute or relative URI string
 	 * @param parent URI to use for derelativizing; may be null
-	 * @return String
+	 * @return A normalized and derelativized URL.
+	 * @throws URISyntaxException
 	 */
 	public static URI normalize(String s, URI parent)
 		throws URISyntaxException {
@@ -206,7 +208,7 @@ public class UURI implements Serializable {
 	/** apply URI escaping where necessary
 	 * 
 	 * @param s
-	 * @return
+	 * @return A URI escaped string.
 	 */
 	private static String patchEscape(String s) {
 		// in a perfect world, s would already be escaped
@@ -305,9 +307,6 @@ public class UURI implements Serializable {
 		return uri.equals(((UURI)arg0).getUri());
 	}
 
-	/**
-	 * @return
-	 */
 	protected URI getUri() {
 		return uri;
 	}
@@ -322,16 +321,18 @@ public class UURI implements Serializable {
 	/**
 	 * @param string
 	 * @param uri
-	 * @return
+	 * @throws URISyntaxException
+	 * @return Created UURI.
 	 */
 	public static UURI createUURI(String string, URI uri) throws URISyntaxException {
 		return new UURI(normalize(string,uri));
 	}
 
 	static final Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
+
 	/**
 	 * @param string
-	 * @return
+	 * @return True if a useable scheme.
 	 */
 	private static boolean isUnusableScheme(String string) {
 		if (TextUtils.matches(UNUSABLE_SCHEMES, string)) {
@@ -341,21 +342,21 @@ public class UURI implements Serializable {
 	}
 
 	/**
-	 * @return
+	 * @return The uri scheme.
 	 */
 	public String getScheme() {
 		return uri.getScheme();
 	}
 
 	/**
-	 * 
+	 * @return The uri path.
 	 */
 	public String getPath() {
 		return uri.getPath();
 	}
 
 	/**
-	 * 
+	 * @return The uri as a string.
 	 */
 	public String getUriString() {
 		return uriString;
@@ -372,7 +373,7 @@ public class UURI implements Serializable {
 	}
 
 	/**
-	 * @return
+	 * @return The uri host.
 	 */
 	public String getHost() {
 		return uri.getHost();

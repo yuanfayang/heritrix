@@ -150,7 +150,7 @@ public class Scope extends CrawlScope {
 
 	/**
 	 * @param o
-	 * @return
+	 * @return True if exclude filter accepts passed object.
 	 */
 	private boolean excludeAccepts(Object o) {
 		if (excludeFilter == null) {
@@ -161,7 +161,7 @@ public class Scope extends CrawlScope {
 
 	/**
 	 * @param o
-	 * @return
+	 * @return True if transitive filter accepts passed object.
 	 */
 	private boolean transitiveAccepts(Object o) {
 		if (transitiveFilter == null) {
@@ -172,7 +172,7 @@ public class Scope extends CrawlScope {
 
 	/**
 	 * @param o
-	 * @return
+	 * @return True if focus filter accepts passed object.
 	 */
 	private boolean focusAccepts(Object o) {
 		if (focusFilter == null) {
@@ -185,23 +185,14 @@ public class Scope extends CrawlScope {
 		return o instanceof CandidateURI && ((CandidateURI)o).getIsSeed();
 	}
 
-	/**
-	 * @return
-	 */
 	public Filter getExcludeFilter() {
 		return excludeFilter;
 	}
 
-	/**
-	 * @return
-	 */
 	public Filter getFocusFilter() {
 		return focusFilter;
 	}
 
-	/**
-	 * @return
-	 */
 	public Filter getTransitiveFilter() {
 		return transitiveFilter;
 	}

@@ -74,7 +74,8 @@ public class XMLConfig {
 	 * Convenience method for reading an XML file into a Document instance
 	 * 
 	 * @param filename
-	 * @return
+	 * @return Document.
+	 * @throws IOException
 	 */
 	public static Document readDocumentFromFile(String filename) throws IOException {
 		File f = new File(filename);
@@ -112,7 +113,9 @@ public class XMLConfig {
 	 *  if the file specified has no path information (relative or abs)
 	 *  AND cannot be found in the current working directory.
 	 * @param filename
+	 * @param path
 	 * @return document
+	 * @throws IOException
 	 */
 	public static Document readDocumentFromFile(String filename, String path) throws IOException {
 		
@@ -142,7 +145,7 @@ public class XMLConfig {
 	 * inclusion of the other file, if specified.
 	 * 
 	 * @param node
-	 * @return
+	 * @return Node.
 	 */
 	public static Node nodeOrSrc(Node node) {
 		try {
@@ -186,7 +189,8 @@ public class XMLConfig {
 	 * (For example, long seed URI lists.)
 	 * 
 	 * @param xpath
-	 * @return
+	 * @return BufferedReader.
+	 * @throws IOException
 	 */
 	public BufferedReader nodeValueOrSrcReader(String xpath) throws IOException {
 		Node node = getNodeAt(xpath);
@@ -207,7 +211,7 @@ public class XMLConfig {
 	 * the local origin node. 
 	 * 
 	 * @param xpath
-	 * @return
+	 * @return Node at passed xpath.
 	 */
 	public Node getNodeAt(String xpath) {
 		Node cacheNode = null;
@@ -236,7 +240,8 @@ public class XMLConfig {
 	 * (For example, long seed URI lists.)
 	 * 
 	 * @param node
-	 * @return
+	 * @return BufferedReader.
+	 * @throws IOException
 	 */
 	public static BufferedReader nodeValueOrSrcReader(Node node) throws IOException{
 
@@ -297,7 +302,8 @@ public class XMLConfig {
 	 * return -1 if none found or other error occurs. 
 	 * 
 	 * @param xpath
-	 * @return
+	 * @param defaultValue
+	 * @return Boolean at passed xpath.
 	 */
 	public boolean getBooleanAt(String xpath, boolean defaultValue) {
 		String value = getStringAt(xpath);
@@ -316,7 +322,7 @@ public class XMLConfig {
 	 * return -1 if none found or other error occurs. 
 	 * 
 	 * @param xpath
-	 * @return
+	 * @return Int at passed xpath.
 	 */
 	public int getIntAt(String xpath) {
 		return getIntAt(xpath, -1);
@@ -328,7 +334,7 @@ public class XMLConfig {
 	 * 
 	 * @param xpath
 	 * @param defaultValue
-	 * @return
+	 * @return Int at passed xpath.
 	 */
 	public int getIntAt(String xpath, int defaultValue) {
 		Integer cacheInteger = null;
@@ -369,7 +375,7 @@ public class XMLConfig {
 	 * 
 	 * @param xpath
 	 * @param defaultValue
-	 * @return
+	 * @return Long at passed xpath.
 	 */
 	public long getLongAt(String xpath, long defaultValue) {
 		// TODO possibly mimic the caching that happens for Integers
@@ -386,7 +392,7 @@ public class XMLConfig {
 	 * 
 	 * @param xpath
 	 * @param defaultValue
-	 * @return
+	 * @return Float at passed xpath.
 	 */
 	public float getFloatAt(String xpath, float defaultValue) {
 		// TODO possibly mimic the caching that happens for Integers
@@ -404,7 +410,7 @@ public class XMLConfig {
 	 * if an element node.
 	 * 
 	 * @param node
-	 * @return
+	 * @return Text of passed node.
 	 */
 	public static String textOf(Node node) {
 		if (node == null) {
@@ -453,10 +459,8 @@ public class XMLConfig {
 	}
 
 	/**
-	 * Return the text at the specified xpath. 
-	 * 
 	 * @param xpath
-	 * @return
+	 * @return The text at the specified xpath. 
 	 */
 	public String getStringAt(String xpath) {
 		String cacheString = null;
@@ -480,9 +484,9 @@ public class XMLConfig {
 	}
 
 	/**
-	 * @param string
-	 * @param arcPrefix
-	 * @return
+	 * @param xpath
+	 * @param defaultVal
+	 * @return The text at the specified xpath. 
 	 */
 	public String getStringAt(String xpath, String defaultVal ) {
 		String retVal = getStringAt(xpath);
@@ -494,11 +498,12 @@ public class XMLConfig {
 
 	/**
 	 * Using the node at the specified xpath as a guide,
-	 * create a Java instance. The node must supply a 
-	 * 'class' attribute. 
+	 * create a Java instance. 
+     * 
+     * The node must supply a 'class' attribute. 
 	 * 
 	 * @param xpath
-	 * @return
+	 * @return Java instance made w/ passed xpath.
 	 */
 	public Object instantiate(String xpath) {
 		try {
@@ -529,7 +534,7 @@ public class XMLConfig {
 	 * XML. 
 	 * 
 	 * @param n
-	 * @return
+	 * @return Jave instance made of the passed node.
 	 */
 	public Object instantiate(Node n) {
 		try {
@@ -572,7 +577,7 @@ public class XMLConfig {
 	 * 
 	 * @param xpath
 	 * @param results
-	 * @return
+	 * @return Instantiated java object made w/ passed xpath.
 	 */
 	public Object instantiateAllInto(String xpath, Object results) {
 		

@@ -553,6 +553,8 @@ public class HttpConnection {
      * Note: This is not a connection timeout but a timeout on network traffic!
      *
      * @return the timeout value
+     * 
+     * @exception SocketException
      */
     public int getSoTimeout() throws SocketException {
         LOG.debug("HttpConnection.getSoTimeout()");

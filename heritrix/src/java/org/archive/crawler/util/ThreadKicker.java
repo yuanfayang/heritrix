@@ -125,6 +125,8 @@ class ScheduledKick implements Comparable {
 	private long when;
 
 	/**
+	 * @param th
+	 * @param time
 	 * 
 	 */
 	public ScheduledKick(Thread th, long time) {
@@ -158,16 +160,10 @@ class ScheduledKick implements Comparable {
 		}
 	}
 
-	/**
-	 * 
-	 */
 	Thread getTarget() {
 		return target;
 	}
 
-	/**
-	 * @return
-	 */
 	long getWhen() {
 		return when;
 	}

@@ -103,7 +103,7 @@ public class ConfigurationException extends InitializationException {
 	
 	/** Store the name of the configuration file that was being parsed
 	 *  when this error occured. 
-	 * @param filename
+	 * @param name
 	 */
 	public void setFile(String name){
 		file = name;

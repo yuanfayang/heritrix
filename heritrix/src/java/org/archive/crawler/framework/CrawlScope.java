@@ -73,7 +73,7 @@ public abstract class CrawlScope extends Filter {
 	 * remembers any scope version it was previously accepted by,
 	 * which helps avoid redundant scope checks. 
 	 * 
-	 * @return
+	 * @return Scope version.
 	 */
 	public int getVersion() {
 		return version;
@@ -89,7 +89,7 @@ public abstract class CrawlScope extends Filter {
 	 * input is taken from either the configuration file, or the 
 	 * external seed file it specifies.
 	 * 
-	 * @return
+	 * @return An iterator of the seeds in this scope.
 	 */
 	public Iterator getSeedsIterator() {
 		try {
@@ -119,6 +119,9 @@ public abstract class CrawlScope extends Filter {
 	 * version, so that subsequent checks are expedited. IMPORTANT NOTE: 
 	 * assumes the same CandidateURI object will not be tested  against 
 	 * different CrawlScope objects. 
+	 * @param o
+	 * @return Whether the given object (typically a CandidateURI) falls
+	 * within this scope. If so, stamps the object with the current scope.
 	 */
 	public boolean accepts(Object o) {
 		// expedited check

@@ -48,6 +48,8 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
 	/**
 	 *  Initialize this processor module.
+	 * 
+	 * @param c
 	 */
 	public void initialize(CrawlController c){
 		super.initialize(c);

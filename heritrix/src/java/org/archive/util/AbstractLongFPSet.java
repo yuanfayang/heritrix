@@ -47,7 +47,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 
 	/**
 	 * @param val
-	 * @return
+	 * @return True if contains passed value.
 	 */
 	public boolean contains(long val) {
 		long i = indexFor(val);
@@ -59,10 +59,9 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	}
 
 	/**
-	 * Returns -1 if slot is filled; nonegative if full. 
 	 * 
 	 * @param i
-	 * @return
+	 * @return -1 if slot is filled; nonegative if full. 
 	 */
 	protected abstract int getSlotState(long i);
 
@@ -76,9 +75,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	}
 
 	/**
-	 * Number of values in the set.
-	 * 
-	 * @return
+	 * @return Number of values in the set.
 	 */
 	public long count() {
 		return count;
@@ -129,17 +126,15 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	/**
 	 * Get the stored value at the given slot. 
 	 * @param i
-	 * @return
+	 * @return The stored value at the given slot. 
 	 */
 	protected abstract long getAt(long i);
 
 	/**
-	 * Get the (positive) index where the value already resides, 
+	 * @param val
+	 * @return The (positive) index where the value already resides, 
 	 * or an empty index where it could be inserted (encoded as a
 	 * negative number). 
-	 * 
-	 * @param l
-	 * @return
 	 */
 	protected long indexFor(long val) {
 		long candidateIndex = startIndexFor(val);
@@ -165,7 +160,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 * high-order bits. 
 	 * 
 	 * @param val
-	 * @return
+	 * @return The recommended storage index for the given value. 
 	 */
 	protected long startIndexFor(long val) {
 		return (val >>> (64 - capacityPowerOfTwo));
@@ -175,7 +170,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 * Remove the given value.
 	 * 
 	 * @param l
-	 * @return
+	 * @return True if we removed given value.
 	 */
 	public boolean remove(long l) {
 		long i = indexFor(l);
@@ -191,7 +186,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 * Remove the value at the given index, relocating its
 	 * successors as necessary. 
 	 * 
-	 *  @param i
+	 *  @param index
 	 */
 	protected void removeAt(long index) {
 		count--;
@@ -222,8 +217,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	protected abstract void clearAt(long index);
 
 	/**
-	 * @param index
-	 * @param newIndex
+	 * 
 	 */
 	abstract void relocate(long value, long fromIndex, long toIndex);
 

@@ -52,7 +52,7 @@ public class RecordingInputStream extends InputStream {
 	 * Create a new RecordingInputStream with the specified parameters.
 	 * 
 	 * @param bufferSize
-	 * @param backingFile
+	 * @param backingFilename
 	 * @param maxSize
 	 */
 	public RecordingInputStream(int bufferSize, String backingFilename, int maxSize) {
@@ -116,9 +116,6 @@ public class RecordingInputStream extends InputStream {
 		return recordingOutputStream.getReplayInputStream();
 	}
 
-	/**
-	 * 
-	 */
 	public ReplayInputStream getContentReplayInputStream() throws IOException {
 		return recordingOutputStream.getContentReplayInputStream();
 	}
@@ -142,6 +139,7 @@ public class RecordingInputStream extends InputStream {
 	/**
 	 * @param maxLength
 	 * @param timeout
+	 * @throws IOException
 	 */
 	public void readFullyOrUntil(long maxLength, long timeout) throws IOException {
 		long timeoutTime;
@@ -172,45 +170,30 @@ public class RecordingInputStream extends InputStream {
 		}
 	}
 
-
-	/**
-	 * @return
-	 */
 	public long getSize() {
 		// TODO Auto-generated method stub
 		return recordingOutputStream.getSize();
 	}
 
-	/**
-	 * 
-	 */
 	public void markResponseBodyStart() {
 		recordingOutputStream.markResponseBodyStart();
 	}
 
-	/**
-	 * @return
-	 */
 	public CharSequence getCharSequence() {
 		return recordingOutputStream.getCharSequence();
 	}
 
-	/**
-	 * @return
-	 */
 	public long getResponseContentLength() {
 		return recordingOutputStream.getResponseContentLength();
 	}
 
-	/**
-	 * 
-	 */
 	public void closeRecorder() throws IOException {
 		recordingOutputStream.closeRecorder();
 	}
 
 	/**
 	 * @param tempFile
+	 * @throws IOException
 	 */
 	public void copyContentBodyTo(File tempFile) throws IOException {
 		FileOutputStream fos = new FileOutputStream(tempFile);

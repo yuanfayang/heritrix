@@ -31,18 +31,12 @@ package org.archive.util;
 public interface Queue {
 
 	/**
-	 * @param caUri
+	 * @param o
 	 */
 	void enqueue(Object o);
 
-	/**
-	 * @return
-	 */
 	boolean isEmpty();
 
-	/**
-	 * @return
-	 */
 	Object dequeue();
 
 	long length();

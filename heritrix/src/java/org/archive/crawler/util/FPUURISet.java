@@ -48,9 +48,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
 	LongFPSet fpset;
 	FPGenerator fpgen = FPGenerator.std64;
 	
-	/**
-	 * 
-	 */
+	
 	public FPUURISet(LongFPSet fpset) {
 		this.fpset = fpset;
 	}

@@ -37,16 +37,11 @@ public class StringIntPair {
 		stringValue = s;
 		intValue = i;
 	}
-	/**
-	 * @return
-	 */
+
 	public int getIntValue() {
 		return intValue;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getStringValue() {
 		return stringValue;
 	}

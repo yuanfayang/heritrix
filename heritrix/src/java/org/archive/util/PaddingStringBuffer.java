@@ -45,6 +45,7 @@ public class PaddingStringBuffer {
 
 	/**
 	 * @param string
+	 * @return This wrapped buffer w/ the passed string appended.
 	 */
 	public PaddingStringBuffer append(String string) {
 		buffer += string;
@@ -54,7 +55,10 @@ public class PaddingStringBuffer {
 	/**
 	 * Append, right-aligned to the given column
 	 * 
+	 * @param col
 	 * @param string
+	 * @return This wrapped buffer w/ append string, right-aligned to the
+     * given column.
 	 */
 	public PaddingStringBuffer raAppend(int col, String string) {
 		padTo(col-string.length());
@@ -64,6 +68,7 @@ public class PaddingStringBuffer {
 
 	/**
 	 * @param i
+	 * @return This wrapped buffer w/ 'i' spaces appended.
 	 */
 	public PaddingStringBuffer padTo(int i) {
 		while(buffer.length()<i) {
@@ -74,6 +79,7 @@ public class PaddingStringBuffer {
 
 	/**
 	 * @param i
+	 * @return This wrapped buffer w/ 'i' appended.
 	 */
 	public PaddingStringBuffer append(int i) {
 		buffer += i;
@@ -84,14 +90,16 @@ public class PaddingStringBuffer {
 	/**
 	 * @param col
 	 * @param i
-	 * @return
+	 * @return This wrapped buffer w/ appended int, right-aligned to the
+     * given column.
 	 */
 	public PaddingStringBuffer raAppend(int col, int i) {
 		return raAppend(col,Integer.toString(i)); 
 	}
 
 	/**
-	 * @param i
+	 * @param lo
+	 * @return This wrapped buffer w/ appended long.
 	 */
 	public PaddingStringBuffer append(long lo) {
 		buffer += lo;
@@ -101,7 +109,8 @@ public class PaddingStringBuffer {
 	/**
 	 * @param col
 	 * @param lo
-	 * @return
+	 * @return This wrapped buffer w/ appended long, right-aligned to the
+     * given column.
 	 */
 	public PaddingStringBuffer raAppend(int col, long lo) {
 		return raAppend(col,Long.toString(lo)); 

@@ -71,6 +71,7 @@ public interface CrawlJob
 	/**
 	 * Each job needs to be assigned a ID.
 	 *
+	 * @return Job uid.
 	 */
 	public String getUID();
 	

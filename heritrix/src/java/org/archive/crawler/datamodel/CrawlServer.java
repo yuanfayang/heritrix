@@ -56,9 +56,6 @@ public class CrawlServer implements Serializable {
 		server = h;
 	}
 	
-	/**
-	 * @return
-	 */
 	public long getRobotsExpires() {
 		return robotsExpires;
 	}
@@ -70,9 +67,6 @@ public class CrawlServer implements Serializable {
 		robotsExpires = l;
 	}
 
-	/**
-	 * @return
-	 */
 	public RobotsExclusionPolicy getRobots() {
 		return robots;
 	}
@@ -93,6 +87,8 @@ public class CrawlServer implements Serializable {
 
 	/**
 	 * @param get
+	 * @param honoringPolicy
+	 * @throws IOException
 	 */
 	public void updateRobots(GetMethod get, RobotsHonoringPolicy honoringPolicy) throws IOException {
 		robotsExpires = System.currentTimeMillis()+DEFAULT_ROBOTS_VALIDITY_DURATION;
@@ -161,9 +157,6 @@ public class CrawlServer implements Serializable {
 		this.host = host;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getHostname() {
 		int colonIndex = server.indexOf(":");
 		if(colonIndex < 0) {
@@ -177,7 +170,7 @@ public class CrawlServer implements Serializable {
 	 * Refuse to be serialized, but do not halt serialization:
 	 * replace with null. 
 	 * 
-	 * @return
+	 * @return Null.
 	 * @throws ObjectStreamException
 	 */
 	protected Object writeReplace() throws ObjectStreamException {

@@ -64,16 +64,10 @@ public class CrawlHost {
 		}
 	}
 		
-		
-	/**
-	 * @return
-	 */
 	public boolean hasBeenLookedUp() {
 		return hasBeenLookedUp;
 	}
-	/**
-	 * 
-	 */
+
 	public void setHasBeenLookedUp() {
 		hasBeenLookedUp = true;
 	}

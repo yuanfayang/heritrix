@@ -176,8 +176,6 @@ class HttpMethodDirector {
     
     /**
      * Adds authentication headers if <code>authenticationPreemtive</code> has been set.
-     * 
-     * @see HttpState#isAuthenticationPreemptive()
      */
     private void addPreemtiveAuthenticationHeaders() {
         
