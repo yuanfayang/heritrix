@@ -27,6 +27,7 @@
 
 package org.archive.crawler.datamodel;
 
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +39,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
@@ -105,14 +107,14 @@ public class CrawlOrder extends ModuleType {
         e = addElementToDefinition(new SimpleType(ATTR_DISK_PATH,
                 "Directory where logs, arcs and other run time files will " +
                 "be kept. If this path is a relative path, it will be " +
-                "relative to the crawl order.", "disk"));
+                "relative to the crawl order.", ""));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_LOGS_PATH,
                 "Directory where crawler log files will be kept. If this path " +
                 "is a relative path, it will be relative to the 'disk-path'.",
-                ""));
+                "logs"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
@@ -237,6 +239,10 @@ public class CrawlOrder extends ModuleType {
         e.setExpertSetting(true);
     }
 
+    /**
+     * @param curi
+     * @return user-agent header value to use
+     */
     public String getUserAgent(CrawlURI curi) {
         if (caseFlattenedUserAgent == null) {
             try {
@@ -251,6 +257,10 @@ public class CrawlOrder extends ModuleType {
         return caseFlattenedUserAgent;
     }
 
+    /**
+     * @param curi
+     * @return from header value to use
+     */
     public String getFrom(CrawlURI curi) {
         String res = null;
         try {
@@ -335,16 +345,42 @@ public class CrawlOrder extends ModuleType {
     /**
      * Checks if the User Agent and From field are set 'correctly' in
      * the specified Crawl Order.
-     *
-     * @param order The Crawl Order to check
-     * @return true if it passes, false otherwise.
+     * 
+     * @throws FatalConfigurationException
      */
-    public boolean checkUserAgentAndFrom() {
+    public void checkUserAgentAndFrom() throws FatalConfigurationException {
         // don't start the crawl if they're using the default user-agent
         String userAgent = this.getUserAgent(null);
         String from = this.getFrom(null);
-        return userAgent.matches(ACCEPTABLE_USER_AGENT)
-            && from.matches(ACCEPTABLE_FROM);
+        if (!(userAgent.matches(ACCEPTABLE_USER_AGENT)
+            && from.matches(ACCEPTABLE_FROM))) {
+            throw new FatalConfigurationException("unacceptable user-agent or from");
+        }
     }
 
+    /**
+     * @return
+     */
+    public File getCheckpointsDirectory() {
+        try {
+            return getDirectoryRelativeToDiskPath((String) getAttribute(null, CrawlOrder.ATTR_CHECKPOINTS_PATH));
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    private File getDirectoryRelativeToDiskPath(String subpath) {
+        File disk;
+        try {
+            disk = getSettingsHandler().getPathRelativeToWorkingDirectory(
+                    (String) getAttribute(null, CrawlOrder.ATTR_DISK_PATH));
+            return new File(disk, subpath);
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
