@@ -127,7 +127,7 @@ public class RecordingOutputStream extends OutputStream {
 	public void open(OutputStream wrappedStream)
         throws IOException
    {
-        assert this.out == null;
+        assert this.out == null : "RecordingOutputStream still has old 'out' stream";
 		this.out = wrappedStream;
 		this.position = 0;
 		this.size = 0;
