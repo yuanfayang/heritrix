@@ -172,7 +172,35 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             accessingCharacters(rcs);
         }
     }
-
+    
+    public void testReplayCharSequenceByteToString() throws IOException {
+        String fileContent = "Some file content";
+        byte [] buffer = fileContent.getBytes();
+        File f = new File(getTmpDir(),
+            "testReplayCharSequenceByteToString.txt");
+        String fileName =
+            writeFile(f, buffer, buffer.length).getAbsolutePath();
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+            buffer, buffer.length, 0, fileName, null);
+        String result = rcs.toString();
+        assertTrue("Strings don't match " + result + " " + fileContent,
+            fileContent.equals(result));
+    }
+    
+    public void testReplayCharSequenceByteToStringMulti() throws IOException {
+        String fileContent = "Some file content";
+        byte [] buffer = fileContent.getBytes("UTF-8");
+        File f = new File(getTmpDir(),
+            "testReplayCharSequenceByteToStringMulti.txt");
+        String fileName =
+            writeFile(f, buffer, buffer.length).getAbsolutePath();
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+            buffer, buffer.length, 0, fileName, "UTF-8");
+        String result = rcs.toString();
+        assertTrue("Strings don't match " + result + " " + fileContent,
+                fileContent.equals(result));
+    }
+    
     /**
      * Accessing characters test.
      *
@@ -211,7 +239,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     }
 
     /**
+     * @param baseName
+     * @param buffer
      * @return Write a shiftjis file w/ japanese characters.
+     * @throws IOException
      */
     private File writeShiftjisFile(String baseName, byte [] buffer)
             throws IOException {
@@ -221,7 +252,9 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     }
 
     /**
+     * @param baseName
      * @return Regular file reference.
+     * @throws IOException
      */
     private File writeRegularFile(String baseName) throws IOException {
         // Write a single-byte file of regular content.
@@ -236,8 +269,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
      * @param file File to write.
      * @param buffer Regular content to write.
      * @param count Number of times to write the buffer.
+     * @return <code>file</code>.
+     * @throws IOException
      */
-    private void writeFile(File file, byte [] buffer, int count)
+    private File writeFile(File file, byte [] buffer, int count)
             throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -245,12 +280,12 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             bos.write(buffer);
         }
         bos.close();
+        return file;
     }
 
     /**
      * Fill a buffer w/ regular progression of characters.
-     *
-     * @para buffer Buffer to fill.
+     * @param buffer Buffer to fill.
      * @return The buffer we filled.
      */
     private byte [] fillBufferWithRegularContent(byte [] buffer) {
