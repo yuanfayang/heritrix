@@ -19,13 +19,6 @@ public class HostCache {
 	public CrawlHost getHostFor(String h) {
 		CrawlHost chost = (CrawlHost) hosts.get(h);
 		
-		// if it has expired remove it from the cache
-		if(chost != null && chost.isIpExpired() && chost.hasBeenLookedUp() ){
-			//hosts.remove(h);
-			chost.resetForIpExpire();
-			//chost = null;
-		}
-		
 		if (chost==null) {
 			chost = new CrawlHost(h);
 			hosts.put(h,chost);
@@ -39,17 +32,16 @@ public class HostCache {
 	 */
 	public CrawlHost getHostFor(CrawlURI curi) {
 		String scheme = curi.getUURI().getUri().getScheme();
-		if (scheme.equals("dns")){
-			// TODO: set crawlhost to default nameserver
+		if (scheme.equals("dns")) {
+			// set crawlhost to default nameserver
 			String primaryDns = FindServer.server();
-			
-			if(primaryDns == null){
+			if (primaryDns == null) {
 				return null;
-			}else{
-				return getHostFor(primaryDns);	
+			} else {
+				return getHostFor(primaryDns);
 			}
 		}
-		
+
 		String authorityUsuallyHost = curi.getUURI().getUri().getAuthority();
 		if (authorityUsuallyHost != null) {
 			return getHostFor(authorityUsuallyHost);
@@ -57,6 +49,6 @@ public class HostCache {
 			// where authority is not a hostname
 		} else {
 			return null;
-		} 
+		}
 	}
 }
