@@ -23,10 +23,6 @@
 package org.archive.util;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
@@ -41,14 +37,9 @@ import org.xbill.DNS.dns;
  * @version $Date$, $Revision$
  */
 public class DNSJavaUtil {
-    private static Logger logger =
-        Logger.getLogger(DNSJavaUtil.class.getName());
-    
-    /**
-     * ipv4 address.
-     */
-    public static Pattern IPV4_QUADS = Pattern.compile(
-        "([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})");
+    private DNSJavaUtil() {
+        super();
+    }
     
     /**
      * Return an InetAddress for passed <code>host</code>.
@@ -59,36 +50,23 @@ public class DNSJavaUtil {
      * @param host Host to lookup in dnsjava.
      * @return A host address or null if not found.
      */
-    static public InetAddress getHostAddress(String host) {
-        Matcher matcher = IPV4_QUADS.matcher(host);
-        InetAddress hostAddress = null;
-        if (matcher != null && matcher.matches()) {
-            try {
-                // Doing an Inet.getByAddress() avoids a lookup.
-                hostAddress = InetAddress.getByAddress(host,
-                        new byte[] {
-                        (byte)(new Integer(matcher.group(1)).intValue()),
-                        (byte)(new Integer(matcher.group(2)).intValue()),
-                        (byte)(new Integer(matcher.group(3)).intValue()),
-                        (byte)(new Integer(matcher.group(4)).intValue())});
-            } catch (NumberFormatException e) {
-                logger.warning(e.getMessage());
-            } catch (UnknownHostException e) {
-                logger.warning(e.getMessage());
-            }
-        } else {
-            // Ask dnsjava for the inetaddress.  Should be in its cache.
-            Record[] rrecordSet = dns.getRecords(host, Type.A, DClass.IN);
-            if (rrecordSet != null) {
-                // Get TTL and IP info from the first A record (there may be
-                // multiple, e.g. www.washington.edu).
-                for (int i = 0; i < rrecordSet.length; i++) {
-                    if (rrecordSet[i].getType() != Type.A) {
-                        continue;
-                    }
-                    hostAddress = ((ARecord)rrecordSet[i]).getAddress();
-                    break;
+    public static InetAddress getHostAddress(String host) {
+        InetAddress hostAddress = InetAddressUtil.getIPHostAddress(host);
+        if (hostAddress != null) {
+            return hostAddress;
+        }
+        
+        // Ask dnsjava for the inetaddress.  Should be in its cache.
+        Record[] rrecordSet = dns.getRecords(host, Type.A, DClass.IN);
+        if (rrecordSet != null) {
+            // Get TTL and IP info from the first A record (there may be
+            // multiple, e.g. www.washington.edu).
+            for (int i = 0; i < rrecordSet.length; i++) {
+                if (rrecordSet[i].getType() != Type.A) {
+                    continue;
                 }
+                hostAddress = ((ARecord)rrecordSet[i]).getAddress();
+                break;
             }
         }
         return hostAddress;
