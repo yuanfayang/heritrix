@@ -603,6 +603,14 @@ public class FetchHTTP extends Processor
             } catch (MalformedChallengeException e) {
                 logger.severe("Failed to get auth headers: " + e.toString() +
                     " " + curi.toString());
+            } catch (UnsupportedOperationException uoe) {
+                // This is probably a message like this:
+                // Authentication scheme(s) not supported:
+                // {negotiate,=Negotiate, NTLM}
+                // Log it as a warning.  Not much we can do about it.  Return
+                // null.  We'll get the 401 in the arcs and a page that says
+                // something like 'Access denied'.
+                logger.warning(curi + ": " + uoe);
             }
         }
         return result;

@@ -171,6 +171,16 @@ public class UURITest extends TestCase {
     }
     
     /**
+     * Preserve userinfo capitalization.
+     * @throws URIException
+     */
+    public final void testUserinfo() throws URIException {
+        UURI uuri = new UURI("http://stack:StAcK@www.tyopaikat.com/robots.txt");
+        assertEquals("Not equal", uuri.getAuthority(),
+            "stack:StAcK@www.tyopaikat.com");
+    }
+    
+    /**
      * Tests from rfc2396 with amendments to accomodate differences
      * intentionally added to make our URI handling like IEs.
      * 
