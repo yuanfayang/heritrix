@@ -35,6 +35,7 @@ import java.util.List;
 public abstract class ListType extends Type {
     private final List listData = new ArrayList();
     private final String description;
+    private boolean overrideable;
 
     /** Constructs a new ListType.
      * 
@@ -44,6 +45,19 @@ public abstract class ListType extends Type {
     public ListType(String name, String description) {
         super(name, null);
         this.description = description;
+        overrideable = true;
+    }
+
+    /** Constructs a new ListType.
+     * 
+     * @param name the name of the list
+     * @param description the description of the list
+     * @param Set if this setting is overrideable
+     */
+    public ListType(String name, String description, boolean isOverrideable) {
+        super(name, null);
+        this.description = description;
+        overrideable = isOverrideable;
     }
 
     /** Appends the specified element to the end of this list.
@@ -186,5 +200,12 @@ public abstract class ListType extends Type {
      */
     public Object getValue() {
         return this;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getOverrideable()
+     */
+    public boolean getOverrideable() {
+        return overrideable;
     }
 }

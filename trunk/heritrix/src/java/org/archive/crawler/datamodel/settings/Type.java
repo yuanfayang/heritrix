@@ -60,4 +60,12 @@ public abstract class Type extends Attribute {
      */
     abstract Object[] getLegalValues();
 
+    /** Is this an 'overrideable' setting. All settings are overrideable by
+     * default.
+     *  
+     * @return True if this is an an overrideable setting.
+     */
+    public boolean getOverrideable(){
+        return true;
+    }
 }

@@ -115,7 +115,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         getOrCreateDataContainer(settings).addElementType(
             type.getName(),
             type.getDescription(),
-            true,
+            type.getOverrideable(),
             type.getLegalValues(),
             type.getDefaultValue());
         if (type instanceof ComplexType) {
