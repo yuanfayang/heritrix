@@ -8,6 +8,7 @@ package org.archive.crawler.datamodel;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,6 +20,7 @@ import org.apache.xpath.XPathAPI;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.traversal.NodeIterator;
 import org.xml.sax.SAXException;
 
 /**
@@ -76,5 +78,68 @@ public class XMLConfig {
 				e.printStackTrace();
 			}
 			return -1;
+	}
+	
+	
+	/**
+	 * @param string
+	 * @return
+	 */
+	public Object instantiate(String string) {
+		try {
+			return instantiate(XPathAPI.selectSingleNode(xNode,string));
+		} catch (DOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public Object instantiate(Node n) {
+		try {
+			Class c = Class.forName(n.getAttributes().getNamedItem("class").getNodeValue());
+			return c.newInstance();
+		} catch (DOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * @param string
+	 * @param processors
+	 * @return
+	 */
+	public Object instantiateAllInto(String xpath, HashMap results) {
+		Object first = null;
+		NodeIterator iter;
+		try {
+			iter = XPathAPI.selectNodeIterator(xNode, xpath);
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		Node currentNode;
+		while ((currentNode=iter.nextNode())!=null) {
+			Object currentObject = instantiate(currentNode);
+			if (first==null) first = currentObject;
+			String name = currentNode.getAttributes().getNamedItem("name").getNodeValue();
+			results.put(name,currentNode);
+		}
+		return first;
 	}
 }
