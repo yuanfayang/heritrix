@@ -47,7 +47,7 @@ public class RobotsExclusionPolicy {
 	 * Replace existing policy with 
 	 * @param fbis
 	 */
-	public RobotsExclusionPolicy updateWith(ReadWriteVirtualBuffer fbis, long newExpires) {
+	public RobotsExclusionPolicy updateWith(VirtualBuffer fbis, long newExpires) {
 		// TODO implement
 		
 		// if immutable, don't change in place... return a fresh copy

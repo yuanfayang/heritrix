@@ -6,7 +6,7 @@
  */
 package org.archive.crawler.datamodel;
 
-import org.archive.crawler.io.ReadWriteVirtualBuffer;
+import org.archive.crawler.io.VirtualBuffer;
 
 /**
  * URI/protocol independent single "fetch" episode. 
@@ -23,7 +23,7 @@ public abstract class CrawlFetch {
 	long startTime;
 	long endTime;
 	
-	public abstract ReadWriteVirtualBuffer getRequestBuffer();
-	public abstract ReadWriteVirtualBuffer getResponseBuffer();
+	public abstract VirtualBuffer getRequestBuffer();
+	public abstract VirtualBuffer getResponseBuffer();
 	
 }

@@ -25,7 +25,7 @@ import org.archive.crawler.datamodel.*;
  * 
  * @author Gordon Mohr
  */
-public interface URIFrontier extends URISet {
+public interface URIFrontier extends UURISet {
 	/** 
 	 * Returns the next most important CrawlURI to process.
 	 * 
@@ -61,21 +61,21 @@ public interface URIFrontier extends URISet {
 	 * @param f
 	 * @see org.archive.crawler.framework.URIFrontier#next()
 	 */
-	public void addExitFilter(Filter f);
+	public void addExitFilter(UURIFilter f);
 
 	/**
 	 * Returns a URISet of all URIs waiting to be processed.
 	 * 
 	 * @return
 	 */
-	public URISet getWaiting();
+	public UURISet getWaiting();
 	
 	/**
 	 * Returns a URISet of all URIs in process. 
 	 * 
 	 * @return
 	 */
-	public URISet getInProcess();
+	public UURISet getInProcess();
 	
 	/**
 	 * Returns the URIManager associated with this URIFrontier

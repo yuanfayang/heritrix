@@ -17,5 +17,5 @@ public interface Processor {
 	public void process(CrawlURI curi);
 	public void init(Config conf);
 	
-	public void addEntryFilter(Filter f);
+	public void addEntryFilter(UURIFilter f);
 }

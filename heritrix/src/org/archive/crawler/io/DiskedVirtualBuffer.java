@@ -173,7 +173,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public long getSize() {
-    // ToDo : This needs to be dynamic. If write is in progress,
+    // TODO : This needs to be dynamic. If write is in progress,
     // then the length should be got from the output stream.
     return mLength;
   }

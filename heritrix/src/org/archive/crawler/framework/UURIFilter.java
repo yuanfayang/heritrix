@@ -1,5 +1,5 @@
 /* 
- * Filter.java
+ * UURIFilter.java
  * Created on Apr 16, 2003
  *
  * $Header$
@@ -13,7 +13,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  * 
  * @author Gordon Mohr
  */
-public interface Filter {
+public interface UURIFilter {
 	public void setName(String name);
 	public String getName();
 	public boolean accepts(CrawlURI curi);

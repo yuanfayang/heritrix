@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.archive.crawler.framework.Processor;
+
 
 /**
  * Represents a URI and the associated state it collects as
@@ -24,7 +26,8 @@ public class CrawlURI {
 	AttributeList alist;
 	UURI uuri; 
 	CrawlHost host;
-	boolean doProcess;
+	Processor nextProcessor;
+	CrawlFetch fetch;
 
 	/**
 	 * @return
@@ -32,6 +35,12 @@ public class CrawlURI {
 	public UURI getUURI() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	/**
+	 * 
+	 */
+	public Processor nextProcessor() {
+		return nextProcessor;
 	}
 	
 	
