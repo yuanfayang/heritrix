@@ -464,11 +464,10 @@ public class ReplayCharSequenceFactory {
                     advanceBuffer();
                 }
                 return charAt(index - this.contentOffset);
-            } else {
-                // Moving backward
-                recenterBuffer(index);
-                return charAt(index - this.contentOffset);
             }
+            // Moving backward
+            recenterBuffer(index);
+            return charAt(index - this.contentOffset);
         }
 
         /**
@@ -612,10 +611,9 @@ public class ReplayCharSequenceFactory {
         }
         
         public String toString() {
-            return substring(0,length());
+            return substring(0, length());
         }
     }
-
 
     /**
      * Provides a (Replay)CharSequence view on recorded streams (a prefix
@@ -663,11 +661,11 @@ public class ReplayCharSequenceFactory {
          * Name of the encoding we use writing out concatenated decoded prefix
          * buffer and decoded backing file.
          *
-         * This define is also used as suffix for the file that holds the
+         * <p>This define is also used as suffix for the file that holds the
          * decodings.  The name of the file that holds the decoding is the name
          * of the backing file w/ this encoding for a suffix.
          *
-         * @see http://java.sun.com/j2se/1.4.2/docs/guide/intl/encoding.doc.html
+         * <p>See <a ref="http://java.sun.com/j2se/1.4.2/docs/guide/intl/encoding.doc.html">Encoding</a>.
          */
         private static final String WRITE_ENCODING = "UTF-16BE";
 
@@ -743,6 +741,7 @@ public class ReplayCharSequenceFactory {
          *
          * @return A CharBuffer view on decodings of the contents of passed
          * buffer.
+         * @throws IOException
          */
         private CharBuffer decode(byte[] buffer, String backingFilename,
                 long size, long responseBodyStart, String encoding)
@@ -824,6 +823,7 @@ public class ReplayCharSequenceFactory {
          *
          * @param file File to get memory-mapped buffer on.
          * @return Read-only memory-mapped ByteBuffer view on to passed file.
+         * @throws IOException
          */
         private ByteBuffer getReadOnlyMemoryMappedBuffer(File file)
             throws IOException {
@@ -865,6 +865,7 @@ public class ReplayCharSequenceFactory {
          * @param name Name of file we decoded into.
          *
          * @return File we put unicode decoding into.
+         * @throws IOException
          */
         private File decodeToFile(ByteBuffer [] buffers, CharsetDecoder decoder,
                 String name)
@@ -983,11 +984,10 @@ public class ReplayCharSequenceFactory {
                 	    // Enough bytes for us to move on.
                     next.position(i + 1);
                     break;
-                } else {
-                	    // Go around again.  Restore cb to where it was.
-                    cb.position(cbPosition);
-                    tail.rewind();
                 }
+                // Go around again.  Restore cb to where it was.
+                cb.position(cbPosition);
+                tail.rewind();
             }
 
             return next;
@@ -1000,6 +1000,7 @@ public class ReplayCharSequenceFactory {
          *
          * @param cb A CharBuffer containing chars to be written.
          * @param writer An output stream to consume the bytes in cb.
+		 * @throws IOException
          */
         private void drainCharBuffer(CharBuffer cb, Writer writer)
             throws IOException  {
@@ -1074,9 +1075,9 @@ public class ReplayCharSequenceFactory {
             }
             return result;
         }
-
+        
         public String toString() {
-            return substring(0,length());
+            return substring(0, length());
         }
     }
 }

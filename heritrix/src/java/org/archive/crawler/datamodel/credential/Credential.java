@@ -33,6 +33,7 @@ import javax.management.InvalidAttributeValueException;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
@@ -66,8 +67,7 @@ public abstract class Credential extends ModuleType {
      * @param name Name of this credential.
      * @param description Descrtiption of this particular credential.
      */
-    public Credential(String name, String description)
-    {
+    public Credential(String name, String description) {
         super(name, description);
         Type t = addElementToDefinition(new SimpleType(ATTR_CREDENTIAL_DOMAIN,
                 "The root domain this credential goes against:" +
@@ -82,7 +82,7 @@ public abstract class Credential extends ModuleType {
      * @throws AttributeNotFoundException If attribute not found.
      */
     public String getCredentialDomain(CrawlURI context)
-            throws AttributeNotFoundException {
+    throws AttributeNotFoundException {
         return (String)getAttribute(ATTR_CREDENTIAL_DOMAIN, context);
     }
 
@@ -93,7 +93,7 @@ public abstract class Credential extends ModuleType {
      * @throws InvalidAttributeValueException
      */
     public void setCredentialDomain(CrawlerSettings context, String domain)
-            throws InvalidAttributeValueException, AttributeNotFoundException {
+    throws InvalidAttributeValueException, AttributeNotFoundException {
         setAttribute(context, new Attribute(ATTR_CREDENTIAL_DOMAIN, domain));
     }
 
@@ -102,7 +102,7 @@ public abstract class Credential extends ModuleType {
      *
      * Override if credential knows internally what it wants to attach as
      * payload.  Otherwise, if payload is external, use the below
-     * {@link #attach(CrawlURI, Object)}.
+     * {@link #attach(CrawlURI, String)}.
      *
      * @param curi CrawlURI to load with credentials.
      */
@@ -116,8 +116,7 @@ public abstract class Credential extends ModuleType {
      * @param curi CrawlURI to load with credentials.
      * @param payload Payload to carry in avatar.  Usually credentials.
      */
-    public void attach(CrawlURI curi, Object payload) {
-
+    public void attach(CrawlURI curi, String payload) {
         CredentialAvatar ca = null;
         try {
             ca = (payload == null )?
@@ -225,7 +224,7 @@ public abstract class Credential extends ModuleType {
      * @return True if added a credentials.
      */
     public abstract boolean populate(CrawlURI curi, HttpClient http,
-        HttpMethod method, Object payload);
+        HttpMethod method, String payload);
 
     /**
      * @param curi CrawlURI to look at.
@@ -237,10 +236,12 @@ public abstract class Credential extends ModuleType {
 
     /**
      * Test passed curi matches this credentials rootUri.
+     * @param controller
      * @param curi CrawlURI to test.
      * @return True if domain for credential matches that of the passed curi.
      */
-    public boolean rootUriMatch(CrawlURI curi) {
+    public boolean rootUriMatch(CrawlController controller, 
+            CrawlURI curi) {
         String cd = null;
         try {
             cd = getCredentialDomain(curi);
@@ -252,7 +253,8 @@ public abstract class Credential extends ModuleType {
 
         // TODO: Account for port.  Currently we do not distingush between
         // http and https; they both get same crawl server instance.
-        String serverName = curi.getServer().getName();
+        String serverName = controller.getServerCache().getServerFor(curi).
+            getName();
         logger.fine("RootURI: Comparing " + serverName + " " + cd);
         return cd != null && serverName != null &&
             serverName.equalsIgnoreCase(cd);

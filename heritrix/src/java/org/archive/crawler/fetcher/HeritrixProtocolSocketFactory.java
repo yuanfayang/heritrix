@@ -32,7 +32,7 @@ import java.net.UnknownHostException;
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
-import org.archive.crawler.datamodel.CrawlServer;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.util.DNSJavaUtil;
 
@@ -192,10 +192,9 @@ implements ProtocolSocketFactory {
     static InetAddress getHostAddress(String host) {
         InetAddress result = null;
         if (controller != null) {
-        	    CrawlServer cs = controller.getServerCache().
-                getServerFor(host);
-            if (cs != null) {
-            	    result = cs.getHost().getIP();
+        	CrawlHost ch = controller.getServerCache().getHostFor(host);
+            if (ch != null) {
+            	    result = ch.getIP();
             }
         }
         if (result ==  null) {
@@ -220,6 +219,8 @@ implements ProtocolSocketFactory {
 
     /**
      * All instances of DefaultProtocolSocketFactory are the same.
+     * @param obj Object to compare.
+     * @return True if equal
      */
     public boolean equals(Object obj) {
         return ((obj != null) &&
@@ -228,6 +229,7 @@ implements ProtocolSocketFactory {
 
     /**
      * All instances of DefaultProtocolSocketFactory have the same hash code.
+     * @return Hash code for this object.
      */
     public int hashCode() {
         return HeritrixProtocolSocketFactory.class.hashCode();

@@ -92,8 +92,8 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  * period of time, to either enforce politeness policies or allow
  * a configurable amount of time between error retries.
  *
- *
  * @author Gordon Mohr
+ * @deprecated As of release 1.4, replaced by {@link BdbFrontier}.
  */
 public class HostQueuesFrontier extends ModuleType
 implements Frontier, FetchStatusCodes, CoreAttributeConstants,
@@ -480,7 +480,11 @@ HasUriReceiver,  CrawlStatusListener {
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    protected void batchFlush() {
+    /**
+     * Flush pending URI queues.
+     * Used when scheduling URIs from the commandline.
+     */
+    public void batchFlush() {
         innerBatchFlush();
     }
 
@@ -613,7 +617,6 @@ HasUriReceiver,  CrawlStatusListener {
             // Now, see if any holding queues are ready with a CrawlURI
             while (!this.readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
-                curi.setServer(getServer(curi));
                 // check if curi belongs in different queue
                 String currentQueueKey = getClassKey(curi);
                 if (currentQueueKey.equals(curi.getClassKey())) {
@@ -667,7 +670,6 @@ HasUriReceiver,  CrawlStatusListener {
         } else {
             curi = CrawlURI.from(caUri,nextOrdinal++);
         }
-        curi.setServer(getServer(curi));
         curi.setClassKey(getClassKey(curi));
         return curi;
     }
@@ -680,7 +682,8 @@ HasUriReceiver,  CrawlStatusListener {
         String queueKey = (String) getUncheckedAttribute(curi,ATTR_FORCE_QUEUE);
         if("".equals(queueKey)) {
             // typical case, barring overrides
-            queueKey = queueAssignmentPolicy.getClassKey(curi);
+            queueKey =
+                queueAssignmentPolicy.getClassKey(this.controller, curi);
         }
         return queueKey;
     }
@@ -1180,7 +1183,7 @@ HasUriReceiver,  CrawlStatusListener {
                         ATTR_MAX_HOST_BANDWIDTH_USAGE, curi)).intValue();
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
-                CrawlHost host = curi.getServer().getHost();
+                CrawlHost host = controller.getServerCache().getHostFor(curi);
                 long minDurationToWait =
                     host.getEarliestNextURIEmitTime() - now;
                 float maxBandwidth = maxBandwidthKB * KILO_FACTOR;
@@ -1805,6 +1808,14 @@ HasUriReceiver,  CrawlStatusListener {
         // Clearing controller is a problem. We get
         // NPEs in #preNext.
         // this.controller = null;
+    }
+   
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
     }
 
     /* (non-Javadoc)

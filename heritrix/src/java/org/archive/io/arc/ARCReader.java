@@ -115,6 +115,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * ARC file version.
      */
     private String version = null;
+    
 
     /**
      * Array of field names.
@@ -143,6 +144,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * The file this arcreader is going against.
      */
     protected File arcFile = null;
+
+    private boolean digest = true;
     
 
     /**
@@ -249,7 +252,47 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     protected void cleanupCurrentRecord() throws IOException {
         if (this.currentRecord != null) {
             this.currentRecord.close();
+            gotoEOR(this.currentRecord);
             this.currentRecord = null;
+        }
+    }
+    
+    /**
+     * Skip over any trailing new lines at end of the record so we're lined up
+     * ready to read the next.
+     * @param record
+     * @throws IOException
+     */
+    protected void gotoEOR(ARCRecord record) throws IOException {
+        if (this.in.available() <= 0) {
+            return;
+        }
+        
+        // Remove any trailing LINE_SEPARATOR
+        int c = -1;
+        while (this.in.available() > 0) {
+            if (this.in.markSupported()) {
+                this.in.mark(1);
+            }
+            c = this.in.read();
+            if (c != -1) {
+                if (c == LINE_SEPARATOR) {
+                    continue;
+                }
+                if (this.in.markSupported()) {
+                    // We've overread.  We're probably in next record.  There is
+                    // no way of telling for sure. It may be dross at end of
+                    // current record. Backup.
+                    this.in.reset();
+                    break;
+                }
+                ARCRecordMetaData meta = (this.currentRecord != null)?
+                    record.getMetaData(): null;
+                throw new IOException("Read " + (char)c +
+                    " when only " + LINE_SEPARATOR + " expected. " + 
+                    this.arcFile + ((meta != null)?
+                        meta.getHeaderFields().toString(): ""));
+            }
         }
     }
     
@@ -274,13 +317,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @return An iterator over the total arcfile.
      */
     public Iterator iterator() {
-            // Eat up any record outstanding.
-            try {
-                    cleanupCurrentRecord();
-            } catch (IOException e) {
-                    throw new RuntimeException(e.getClass().getName() + ": " +
+        // Eat up any record outstanding.
+        try {
+            cleanupCurrentRecord();
+        } catch (IOException e) {
+            throw new RuntimeException(e.getClass().getName() + ": " +
                     e.getMessage());
-            }
+        }
         
         // Now reset stream to the start of the arc file.
         try {
@@ -296,14 +339,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @return True if we have more ARC records to read.
      */
     public boolean hasNext() {
-        if (this.currentRecord != null) {
-            // Call close on any extant record.  This will scoot us past
-            // any content not yet read.
-            try {
-                cleanupCurrentRecord();
-            } catch (IOException e) {
-                throw new NoSuchElementException(e.getMessage());
-            }
+        // Call close on any extant record.  This will scoot us past
+        // any content not yet read.
+        try {
+            cleanupCurrentRecord();
+        } catch (IOException e) {
+            throw new NoSuchElementException(e.getMessage());
         }
         
         try {
@@ -389,7 +430,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         try {
             this.currentRecord = new ARCRecord(is,
                 computeMetaData(this.headerFieldNameKeys, firstLineValues,
-                    this.version, offset), bodyOffset);
+                    this.version, offset), bodyOffset, this.digest);
         } catch (IOException e) {
             IOException newE = new IOException(e.getMessage() + " (Offset " +
                     offset + ").");
@@ -413,8 +454,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     private int getTokenizedHeaderLine(final InputStream stream,
             List list) throws IOException {
-        // Preallocate max with some padding.
-        StringBuffer buffer = new StringBuffer(MAX_HEADER_LINE_LENGTH + 20);
+        // Preallocate usual line size.
+        StringBuffer buffer = new StringBuffer(2048 + 20);
         int read = 0;
         for (int c = -1; true;) {
             c = stream.read();
@@ -589,7 +630,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     private static void usage(HelpFormatter formatter, Options options,
             int exitCode) {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
-            " [--offset=# [--nohead]] ARCFILE",  options);
+            " [--digest=true|false] [--offset=# [--nohead]] ARCFILE",
+                options);
         System.exit(exitCode);
     }
     
@@ -604,12 +646,15 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * Write the arc meta data in pseudo-CDX format.
      * 
      * @param f Arc file to read.
+     * @param digest Digest yes or no.
      * @throws IOException
      */
-    protected static void index(File f) throws IOException {
+    protected static void index(File f, boolean digest)
+    throws IOException {
         // long start = System.currentTimeMillis();
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
+        arc.setDigest(digest);
         // Get arc header record, the first record in the file.
         ARCRecord headerRecord = arc.get(0);
         String arcFileName = headerRecord.getMetaData().getArcFile().getName();
@@ -622,6 +667,11 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         // Hash is hard-coded straight SHA-1 hash of content.
         System.out.println("CDX b e a m s c " +
                 ((compressed)? "V": "v") + " n g");
+        StringBuffer buffer = null;
+        final char SPACE = ' ';
+        // Made by guessing size of each of the items to be appended.
+        final int BUFFER_SIZE = 14 + 1 + 15 + 1 + 1024 + 1 + 24 + 1 +
+            + 3 + 1 + 32 + 1 + 20 + 1 + 20 + 1 + 64;
         for (Iterator ii = arc.iterator(); ii.hasNext();) {
             ARCRecord r = (ARCRecord)ii.next();
             // Read the whole record so we get out a hash.
@@ -629,21 +679,43 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             ARCRecordMetaData meta = r.getMetaData();
             String statusCode = (meta.getStatusCode() == null)?
                     "-": meta.getStatusCode();
-            System.out.println(meta.getDate() + " " +	// 'b' date.
-                    meta.getIp() + " " +		// 'e' IP
-                    meta.getUrl() + " " +		// 'a' Original URI
-                    meta.getMimetype() + " " +	// 'm' Mimetype
-                    statusCode + " " +			// 's' Mimetype
-                    meta.getDigest() + " " +	// 'c' "Old-style" checksum
-                    meta.getOffset() + " " +	// 'V' or 'v' offset.
-                    meta.getLength() + " " +	// 'n' Arc doc length.
-                    arcFileName		 			// 'g' Arc doc length.
-            );
+            buffer = new StringBuffer(BUFFER_SIZE);
+            buffer.append(meta.getDate());
+            buffer.append(SPACE);
+            buffer.append(meta.getIp());
+            buffer.append(SPACE);
+            buffer.append(meta.getUrl());
+            buffer.append(SPACE);
+            buffer.append(meta.getMimetype());
+            buffer.append(SPACE);
+            buffer.append(statusCode);
+            buffer.append(SPACE);
+            buffer.append((meta.getDigest() == null)? "-": meta.getDigest());
+            buffer.append(SPACE);
+            buffer.append(meta.getOffset());
+            buffer.append(SPACE);
+            buffer.append(meta.getLength());
+            buffer.append(arcFileName);
+            System.out.println(buffer.toString());
         }
         System.out.flush();
         // System.out.println(System.currentTimeMillis() - start);
     }   
     
+    /**
+     * @param d True if we're to digest.
+     */
+    private void setDigest(boolean d) {
+        this.digest = d;
+    }
+    
+    /**
+     * @return True if we're digesting as we read.
+     */
+    private boolean getDigest() {
+        return this.digest;
+    }
+
     /**
      * Command-line interface to ARCReader.
      *
@@ -678,6 +750,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             "Outputs record at this offset into arc file."));
         options.addOption(new Option("n","nohead", false,
             "Do not output request header as part of record."));
+        options.addOption(new Option("d","digest", true,
+            "Calculate digest. Expensive. Default: true."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -692,6 +766,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         // Now look at options passed.
         long offset = -1;
         boolean nohead = false;
+        boolean digest = true;
         for (int i = 0; i < cmdlineOptions.length; i++) {
             switch(cmdlineOptions[i].getId()) {
                 case 'h':
@@ -699,12 +774,21 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     break;
 
                 case 'o':
-                        offset =
+                    offset =
                         Long.parseLong(cmdlineOptions[i].getValue());
-                        break;
+                    break;
 
                 case 'n':
                     nohead = true;
+                    break;
+                    
+                case 'd':
+                    String tmp = cmdlineOptions[i].getValue();
+                    if (tmp != null) {
+                        if ("false".equals(tmp.toLowerCase())) {
+                            digest = false;
+                        }
+                    }
                     break;
 
                 default:
@@ -728,14 +812,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 System.out.write(c & 0xff);
             }
             System.out.flush();
-        } else if (cmdlineOptions.length > 0) {
-            System.out.println("Error: Unexpected option.");
+        } else if (cmdlineOptions.length > 1) {
+            System.out.println("Error: Unexpected # of options.");
             usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 File f = new File((String)i.next());
                 try {
-                    index(f);
+                    index(f, digest);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
                     // debugging.  Then print stack trace and try to keep
@@ -758,10 +842,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     public class RecoverableIOException
     extends IOException {
-        private RecoverableIOException() {
+        protected RecoverableIOException() {
             super();
         }
-        private RecoverableIOException(String message) {
+        protected RecoverableIOException(String message) {
             super(message);
         }
     }

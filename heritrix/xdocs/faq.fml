@@ -86,7 +86,7 @@
     <faq id="midfetch">
       <question>I only want to download <code>text/html</code> and nothing else.  Can I do it?</question>
       <answer>Tom Emerson describes one technique here, 
-      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">Focusing on HTML</a>.</answer>
+      <a href="http://www.dreamersrealm.net/tree/blog/">Focusing on HTML</a>.</answer>
       <answer>You can also add a filter that excludes all filters that end
       in other than 'html|htm', etc., or, if you want to instead
       look at document mimetypes, you can Add a 
@@ -98,7 +98,10 @@
       Content-Type desired.  Apply the same filter at the
       writer stage of processing to eliminate recording of
       response headers in ARCs.  See the
-      <a href="articles/user_manaul.html#midfetch">User Manual</a>.</answer>
+      <a href="articles/user_manaul.html#midfetch">User Manual</a>
+      (Prerequisite URLs by-pass the midfetch filters so it is not possible
+      to filter out robots.txt using this mechanism).
+      </answer>
     </faq>
 
     <faq id="crawllogstatuscodes">
@@ -306,8 +309,26 @@
         your CLASSPATH (ensuring the heritrix.jar is found first).
         Thereafter, using HEAD (post-1.2.0), doing the following should
         get you a long ways: <programlisting>Heritrix h = new Heritrix();
-h.launch();</programlisting>
+h.launch();</programlisting>.  You'll then need to have your program
+        hangaround while the crawl runs.  See
+        <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example.
         </p>
+        </answer>
+      </faq>
+      <faq id="cmdlinecontrol">
+        <question>Can I stop/pause and get status from a running Heritrix
+        using command-line tools?
+        </question>
+        <answer>
+        <p>An experimental cmdline control utility has been added to HEAD
+(Post 1.2.0 release).  The script can be found in the scripts directory.  Its
+packaged as a jar file named <code>cmdline-jmxclient.X.X.X.jar</code>.  
+It has no dependencies on other jars being found in its classpath so it 
+can be safely moved from this location.  Its only dependency is jdk1.5.0.
+To learn more, obtain client usage by typing the following:
+<code>${PATH_TO_JDK1.5.0}/bin/java -jar cmdline-jmxclient.X.X.X.jar</code>. 
+See also <a href="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient</a>
+to learn more.</p>  
         </answer>
       </faq>
 

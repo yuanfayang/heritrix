@@ -35,6 +35,9 @@
 
     // Load display level
     String currDomain = request.getParameter("currDomain");
+    if( currDomain != null ) {
+        currDomain = currDomain.trim();
+    }
 
     // Get the settings objects.
     XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
@@ -66,9 +69,8 @@
         } else if(action.equals("edit")){
             // Edit settings.
             // First make sure the file exists (create it if it doesn't)
-            String theDomain = request.getParameter("currDomain");
-            if(theDomain != null && theDomain.length()>0){
-                settingsHandler.writeSettingsObject(settingsHandler.getOrCreateSettingsObject(theDomain));
+            if(currDomain != null && currDomain.length()>0){
+                settingsHandler.writeSettingsObject(settingsHandler.getOrCreateSettingsObject(currDomain));
                 // Then redirect to configure override.
                 response.sendRedirect(request.getContextPath() +
                     "/jobs/per/configure.jsp?job=" + theJob.getUID() +
@@ -77,11 +79,10 @@
             }
         } else if(action.equals("delete")){
             // Delete settings.
-            String theDomain = request.getParameter("currDomain");
-            if(theDomain != null && theDomain.length()>0){
-                settingsHandler.deleteSettingsObject(settingsHandler.getOrCreateSettingsObject(theDomain));
+            if(currDomain != null && currDomain.length()>0){
+                settingsHandler.deleteSettingsObject(settingsHandler.getOrCreateSettingsObject(currDomain));
                 // Then redirect to configure override.
-                message = "Override for domain '"+theDomain+"' deleted.";
+                message = "Override for domain '"+currDomain+"' deleted.";
                 currDomain = "";
             }
         } else if(action.equals("goto")){

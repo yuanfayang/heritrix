@@ -185,7 +185,7 @@ public class HtmlFormCredential extends Credential {
     }
 
     public boolean populate(CrawlURI curi, HttpClient http, HttpMethod method,
-            Object payload) {
+            String payload) {
         // http is not used.
         // payload is not used.
         boolean result = false;

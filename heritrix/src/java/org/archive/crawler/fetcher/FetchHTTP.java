@@ -67,6 +67,7 @@ import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -84,6 +85,7 @@ import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
+import org.archive.httpclient.HttpRecorderMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
@@ -168,7 +170,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * What to log if midfetch abort.
      */
     private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
-    
 
     /**
      * Constructor.
@@ -180,9 +181,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.midfetchfilters = (MapType) addElementToDefinition(
             new MapType(MIDFETCH_ATTR_FILTERS, "Filters applied after" +
                 " receipt of HTTP response headers but before we start to" +
-                " download the body.  If any filter returns" +
-                " FALSE, the fetch is aborted (Use filters to" +
-                " exclude content).", Filter.class));
+                " download the body. If any filter returns" +
+                " FALSE, the fetch is aborted. Prerequisites such as" +
+                " robots.txt by-pass filtering (i.e. they cannot be" +
+                " midfetch aborted.", Filter.class));
         this.midfetchfilters.setExpertSetting(true);
         
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
@@ -267,30 +269,29 @@ implements CoreAttributeConstants, FetchStatusCodes {
         String curiString = curi.getUURI().toString();
         HttpMethod method = null;
         if (curi.isPost()) {
-        	method = new HttpRecorderPostMethod(curiString, rec) {
-        		protected void readResponseBody(HttpState state,
-        		    HttpConnection connection)
+            method = new HttpRecorderPostMethod(curiString, rec) {
+                protected void readResponseBody(HttpState state,
+                        HttpConnection conn)
                 throws IOException, HttpException {
-                    super.readResponseBody(state, connection);
                     addResponseContent(this, curi);
-        			if(!filtersAccept(midfetchfilters, curi)) {
-                        curi.addAnnotation(MIDFETCH_ABORT_LOG);
-                        releaseConnection();
-        				abort();
-        			}
-        		}
+                    if (checkMidfetchAbort(curi, this.httpRecorderMethod, conn)) {
+                        abort();
+                    } else {
+                        super.readResponseBody(state, conn);
+                    }
+                }
             };
         } else {
-       	    method = new HttpRecorderGetMethod(curiString, rec) {
+            method = new HttpRecorderGetMethod(curiString, rec) {
                 protected void readResponseBody(HttpState state,
-                    HttpConnection connection)
+                        HttpConnection conn)
                 throws IOException, HttpException {
-                    super.readResponseBody(state, connection);
                     addResponseContent(this, curi);
-                	if(!filtersAccept(midfetchfilters, curi)) {
-                        curi.addAnnotation(MIDFETCH_ABORT_LOG);
-                        releaseConnection();
+                    if (checkMidfetchAbort(curi, this.httpRecorderMethod,
+                            conn)) {
                         abort();
+                    } else {
+                        super.readResponseBody(state, conn);
                     }
                 }
             };
@@ -303,46 +304,48 @@ implements CoreAttributeConstants, FetchStatusCodes {
         method.setDoAuthentication(addedCredentials);
         
         try {
-        	this.http.executeMethod(method);
+            this.http.executeMethod(method);
         } catch (IOException e) {
-        	failedExecuteCleanup(method, curi, e);
+        	   failedExecuteCleanup(method, curi, e);
             method.releaseConnection();
-        	return;
+        	   return;
         } catch (ArrayIndexOutOfBoundsException e) {
-        	// For weird windows-only ArrayIndex exceptions in native
-        	// code... see
-        	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-        	// treating as if it were an IOException
-        	failedExecuteCleanup(method, curi, e);
-            method.releaseConnection();
-        	return;
-        }
-
-        try {
-            // Force read-to-end, so that any socket hangs occur here,
-            // not in later modules.
-            rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
-                1000 * getTimeout(curi));
-        } catch (RecorderTimeoutException ex) {
-            curi.addAnnotation("timeTrunc");
-            method.releaseConnection();
-            method.abort();
-        } catch (RecorderLengthExceededException ex) {
-            curi.addAnnotation("lenTrunc");
-            method.releaseConnection();
-            method.abort();
-        } catch (IOException e) {
-            cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-            return;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // For weird windows-only ArrayIndex exceptions from native code
-            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // For weird windows-only ArrayIndex exceptions in native
+            // code... see
+            // http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
             // treating as if it were an IOException
-            cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+            failedExecuteCleanup(method, curi, e);
+            method.releaseConnection();
             return;
-        } finally {
-            if (!((HttpMethodBase)method).isAborted()) {
-            	method.releaseConnection();
+        }
+        
+        if (!((HttpMethodBase)method).isAborted()) {
+            try {
+                // Force read-to-end, so that any socket hangs occur here,
+                // not in later modules.
+                rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
+                        1000 * getTimeout(curi));
+            } catch (RecorderTimeoutException ex) {
+                curi.addAnnotation("timeTrunc");
+                rec.close();
+                method.abort();
+            } catch (RecorderLengthExceededException ex) {
+                curi.addAnnotation("lenTrunc");
+                rec.close();
+                method.abort();
+            } catch (IOException e) {
+                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+                return;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                // For weird windows-only ArrayIndex exceptions from native code
+                // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+                // treating as if it were an IOException
+                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+                return;
+            } finally {
+                if (!((HttpMethodBase)method).isAborted()) {
+                    method.releaseConnection();
+                }
             }
         }
 
@@ -357,7 +360,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         curi.setHttpRecorder(rec);
         
         int statusCode = method.getStatusCode();
-        long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
+        long contentSize = rec.getRecordedInput().getSize();
         curi.setContentSize(contentSize);
         curi.setContentDigest(rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.INFO)) {
@@ -391,6 +394,17 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 " been closed by method release: " +
                 Thread.currentThread().getName());
         }
+    }
+    
+    protected boolean checkMidfetchAbort(CrawlURI curi,
+            HttpRecorderMethod method, HttpConnection conn) {
+        if (curi.isPrerequisite() || filtersAccept(midfetchfilters, curi)) {
+            return false;
+        }
+        method.markContentBegin(conn);
+        method.getHttpRecorder().close();
+        curi.addAnnotation(MIDFETCH_ABORT_LOG);
+        return true;
     }
     
     /**
@@ -456,17 +470,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param status Status to set on the fetch.
      */
     private void cleanup(final HttpMethod method, final CrawlURI curi,
-            final Exception exception, final String message, final int status) {
+            final Exception exception, final String message,
+            final int status) {
         curi.addLocalizedError(this.getName(), exception, message);
         curi.setFetchStatus(status);
-    }
-
-    /**
-     * @return maximum immediate retures.
-     */
-    private int getMaxImmediateRetries() {
-        // TODO make configurable
-        return 5;
     }
 
     /**
@@ -483,16 +490,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
              // handles only plain http and https
              return false;
          }
-
-//         System.out.println(curi.toString() + " : " + curi.getFetchAttempts());
-//         if (curi.getFetchAttempts() >= getMaxFetchAttempts(curi)) {
-//             curi.setFetchStatus(S_TOO_MANY_RETRIES);
-//             return false;
-//         }
-
+         CrawlHost host = getController().getServerCache().getHostFor(curi);
          // make sure the dns lookup succeeded
-         if (curi.getServer().getHost().getIP() == null
-             && curi.getServer().getHost().hasBeenLookedUp()) {
+         if (host.getIP() == null && host.hasBeenLookedUp()) {
              curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
              return false;
          }
@@ -503,10 +503,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * Configure the HttpMethod setting options and headers.
      *
      * @param curi CrawlURI from which we pull configuration.
-     * @param get The GetMethod to configure.
+     * @param method The Method to configure.
      */
-    private void configureMethod(CrawlURI curi, HttpMethod method)
-    {
+    private void configureMethod(CrawlURI curi, HttpMethod method) {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
         
@@ -578,12 +577,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * server.
      */
     private boolean populateCredentials(CrawlURI curi, HttpMethod method) {
-
         // First look at the server avatars. Add any that are to be volunteered
         // on every request (e.g. RFC2617 credentials).  Every time creds will
         // return true when we call 'isEveryTime().
-        if (curi.getServer().hasCredentialAvatars()) {
-            Set avatars = curi.getServer().getCredentialAvatars();
+        CrawlServer server =
+            getController().getServerCache().getServerFor(curi);
+        if (server.hasCredentialAvatars()) {
+            Set avatars = server.getCredentialAvatars();
             for (Iterator i = avatars.iterator(); i.hasNext();) {
                 CredentialAvatar ca = (CredentialAvatar)i.next();
                 Credential c = ca.getCredential(getSettingsHandler(), curi);
@@ -616,7 +616,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * Promote successful credential to the server.
      *
      * @param curi CrawlURI whose credentials we are to promote.
-     * @param method Method used.
      */
     private void promoteCredentials(final CrawlURI curi) {
         if (!curi.hasCredentialAvatars()) {
@@ -696,21 +695,23 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	if (cs == null) {
         		logger.severe("No credential store for " + curi);
         	} else {
+                CrawlServer server = getController().getServerCache().
+                    getServerFor(curi);
         		Set storeRfc2617Credentials = cs.subset(curi,
-        				Rfc2617Credential.class, curi.getServer().getName());
+        		    Rfc2617Credential.class, server.getName());
         		if (storeRfc2617Credentials == null ||
         				storeRfc2617Credentials.size() <= 0) {
         			logger.info("No rfc2617 credentials for " + curi);
         		} else {
         			Rfc2617Credential found = Rfc2617Credential.
-					getByRealm(storeRfc2617Credentials, realm, curi);
+					    getByRealm(storeRfc2617Credentials, realm, curi);
         			if (found == null) {
         				logger.info("No rfc2617 credentials for realm " +
         						realm + " in " + curi);
         			} else {
-        				found.attach(curi, authscheme);
+        				found.attach(curi, authscheme.getRealm());
         				logger.info("Found credential for realm " + realm +
-        						" in store for " + curi.toString());
+        				    " in store for " + curi.toString());
         			}
         		}
         	}
@@ -839,8 +840,15 @@ implements CoreAttributeConstants, FetchStatusCodes {
         
         // Multiply toethread max by 2 in case one is occupied when
         // we go to get another (Allow some slack).
-        cm.getParams().setMaxTotalConnections(getController().
-            getOrder().getMaxToes() * 2);
+        // Also, if max total connections is less than toe threads, 
+        // then getting a connection becomes a bottleneck (See
+        // '[ 1080925 ] MultiThreadedConnectionManager bottleneck').
+        // For now, hardcode max total connections so never less that
+        // 400.  TODO: Revisit and have max total connections follow
+        // toethread count or do away with MTHCM as per a suggestion
+        // in above cited issue.
+        cm.getParams().setMaxTotalConnections(Math.
+            max(getController().getOrder().getMaxToes() * 2, 400));
         cm.getParams().setConnectionTimeout(timeout);
         cm.getParams().setStaleCheckingEnabled(true);
         // Minimizes bandwidth usage.  Setting to true disables Nagle's
@@ -1181,6 +1189,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
         coistream.registerFinishTask( new PostRestore(cookies) );
     }
     
+    /**
+     * @return Returns the http instance.
+     */
+    protected HttpClient getHttp() {
+        return this.http;
+    }
+    
     class PostRestore implements Runnable {
         Cookie cookies[];
         public PostRestore(Cookie cookies[]) {
@@ -1189,7 +1204,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     	public void run() {
             configureHttp();
             for(int i = 0; i < cookies.length; i++) {
-                FetchHTTP.this.http.getState().addCookie(cookies[i]);
+                getHttp().getState().addCookie(cookies[i]);
             }
         }
     }

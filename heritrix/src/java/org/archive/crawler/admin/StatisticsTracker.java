@@ -660,9 +660,11 @@ implements CrawlURIDispositionListener{
             incrementMapCount(hostsBytes,"dns:",curi.getContentSize());
             hostsLastFinished.put("dns:",new Long(System.currentTimeMillis()));
         } else {
-        	incrementMapCount(hostsDistribution, curi.getServer().getHostname());
-            incrementMapCount(hostsBytes,curi.getServer().getHostname(),curi.getContentSize());
-            hostsLastFinished.put(curi.getServer().getHostname(),new Long(System.currentTimeMillis()));
+            String hostname = this.controller.getServerCache().
+                getHostFor(curi).getHostName();
+        	incrementMapCount(hostsDistribution, hostname);
+            incrementMapCount(hostsBytes, hostname, curi.getContentSize());
+            hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
         }
     }
 
@@ -778,6 +780,15 @@ implements CrawlURIDispositionListener{
         super.crawlEnded(sExitMessage);
         report(c, sExitMessage);
         logger.info("Leaving crawlEnded");
+    }
+    
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
     }
     
     /**

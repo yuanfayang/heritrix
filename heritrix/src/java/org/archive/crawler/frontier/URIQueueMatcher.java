@@ -55,11 +55,10 @@ public class URIQueueMatcher implements Predicate {
      * @param delete If true then each time a match is hit, the related
      *                CandidateURI will have it's fetch status set to
      *                {@link org.archive.crawler.datamodel.FetchStatusCodes#S_DELETED_BY_USER
-     *                'Deleted by user'} and sent to the frontier's
+     *                Deleted by user} and sent to the frontier's
      *                <code>finish</code> method for final disposition.
      * @param frontier The parent frontier. This can be null if delete is false.
      *                Must be valid if delete is true.
-     * @see HostQueuesFrontier#deleted(CrawlURI)
      */
     public URIQueueMatcher(String pattern, boolean delete, Frontier frontier){
         p = Pattern.compile(pattern);

@@ -57,8 +57,11 @@
           <fileset dir="${maven.src.dir}/scripts">
             <include name="*heritrix"/>
             <include name="arcreader"/>
+            <include name="htmlextractor"/>
+            <include name="runclassmain"/>
             <include name="hoppath*"/>
             <include name="make_reports*"/>
+            <include name="cmdline-jmxclient*jar"/>
           </fileset>
         </copy>
 

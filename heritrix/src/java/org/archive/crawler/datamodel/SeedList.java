@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.util.DevUtils;
+import org.archive.util.IoUtils;
 
 
 /**
@@ -88,7 +89,6 @@ extends AbstractList implements Serializable {
      * Constructor
      *
      * @param seedfile Default seed file to use.
-     * @param controller controller to provide logging
      * @param caching True if we're to cache the seed list.
      */
     public SeedList(File seedfile, boolean caching) {
@@ -125,7 +125,7 @@ extends AbstractList implements Serializable {
         if (!getSeedfile().exists()) {
             // Is the file on the CLASSPATH?
             is = SeedIterator.class.
-                getResourceAsStream(getSeedfile().getPath());
+                getResourceAsStream(IoUtils.getClasspathPath(getSeedfile()));
         } else if(getSeedfile().canRead()) {
             is = new FileInputStream(getSeedfile());
         }
@@ -258,6 +258,13 @@ extends AbstractList implements Serializable {
         }
         return iterator;
     }
+    
+    /**
+     * @return Returns the logger.
+     */
+    protected static Logger getLogger() {
+        return logger;
+    }
 
     /**
      * Read seeds from the given BufferedReader. Any lines where the
@@ -320,9 +327,8 @@ extends AbstractList implements Serializable {
 
         /**
          * Scanning the reader, load the 'next' field with the
-         * next valid seed UURI. Return true if next is loaded,
-         * false otherwise.
-         *
+         * next valid seed UURI.
+         * @return True if next is loaded, false otherwise.
          */
         private boolean loadNext() {
             try {
@@ -347,7 +353,7 @@ extends AbstractList implements Serializable {
                             return true;
                         } catch (URIException e1) {
                             Object[] array = {null, candidate};
-                            logger.log(Level.INFO,
+                            getLogger().log(Level.INFO,
                                 "Reading seeds: " + e1.getMessage(), array);
                             this.next = null;
                             // keep reading for valid seeds
@@ -355,7 +361,7 @@ extends AbstractList implements Serializable {
                         }
                     }
                     Object[] array = {null, read};
-                    logger.log(Level.INFO, "bad seed line", array);
+                    getLogger().log(Level.INFO, "bad seed line", array);
                 }
                 close();
                 // no more seeds

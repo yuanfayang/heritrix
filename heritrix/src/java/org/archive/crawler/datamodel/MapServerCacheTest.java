@@ -22,10 +22,9 @@
 */
 package org.archive.crawler.datamodel;
 
-import java.lang.ref.SoftReference;
-import java.util.LinkedList;
-
 import junit.framework.TestCase;
+
+import org.apache.commons.httpclient.URIException;
 
 /**
  * Test the MapServerCache
@@ -33,7 +32,6 @@ import junit.framework.TestCase;
  * @author gojomo
  */
 public class MapServerCacheTest extends TestCase {
-
     public void testHolds()
     throws ClassNotFoundException, InstantiationException,
             IllegalAccessException {
@@ -41,22 +39,29 @@ public class MapServerCacheTest extends TestCase {
         String serverKey = "www.example.com:9090";
         String hostKey = "www.example.com";
         servers.getServerFor(serverKey);
-        forceScarceMemory();
+        servers.getHostFor(hostKey);
         assertTrue("cache lost server", servers.containsServer(serverKey));
         assertTrue("cache lost host", servers.containsHost(hostKey));
     }
-
-    private void forceScarceMemory() {
-        // Force soft references to be broken
-        LinkedList hog = new LinkedList();
-        long blocks = Runtime.getRuntime().maxMemory() / 1000000;
-        for(long l = 0; l <= blocks; l++) {
-            try {
-                hog.add(new SoftReference(new byte[1000000]));
-            } catch (OutOfMemoryError e) {
-                hog = null;
-                break;
-            }
-        }
+    
+    public void testCrawlURIKeys()
+    throws ClassNotFoundException, InstantiationException,
+            IllegalAccessException, URIException {
+        ServerCache servers = ServerCacheFactory.getServerCache(null);
+        testHostServer(servers, "http://www.example.com");
+        testHostServer(servers, "http://www.example.com:9090");
+        testHostServer(servers, "dns://www.example.com:9090");
+    }
+    
+    private void testHostServer(ServerCache servers, String uri)
+    throws URIException {
+        UURI uuri = UURIFactory.getInstance(uri);
+        CrawlURI curi = new CrawlURI(uuri);
+        servers.getServerFor(curi);
+        servers.getHostFor(curi);
+        assertTrue("cache lost server",
+            servers.containsServer(CrawlServer.getServerKey(curi)));
+        assertTrue("cache lost host",
+            servers.containsHost(curi.getUURI().getHost()));
     }
 }

@@ -90,7 +90,10 @@ public class ToeThread extends Thread
     // default priority; may not be meaningful in recent JVMs
     private static final int DEFAULT_PRIORITY = Thread.NORM_PRIORITY-2;
     
-
+    // indicator that a thread is now surplus based on current desired
+    // count; it should wrap up cleanly
+    private volatile boolean shouldRetire = false;
+    
     /**
      * Create a ToeThread
      * 
@@ -149,17 +152,23 @@ public class ToeThread extends Thread
                 
                 setStep(STEP_FINISHING_PROCESS);
                 lastFinishTime = System.currentTimeMillis();
+                controller.releaseContinuePermission();
+                if(shouldRetire) {
+                    break; // from while(true)
+                }
             }
         } catch (EndedException e) {
-            // crawl ended, allow thread to end
+            // crawl ended (or thread was retired), so allow thread to end
         } catch (InterruptedException e1) {
             // Thread was interrupted 
             System.err.println(getName()+" interrupted while working on "+currentCuri);
             // TODO: more?
             e1.printStackTrace();
-        } catch (Error err) {
+        } catch (OutOfMemoryError err) {
             seriousError(err);
-        } 
+        } finally {
+            controller.releaseContinuePermission();
+        }
         currentCuri = null;
         // Do cleanup so that objects can be GC.
         this.httpRecorder.closeRecorders();
@@ -189,29 +198,33 @@ public class ToeThread extends Thread
         // priority-jumbling pointless
         setPriority(DEFAULT_PRIORITY+1);  
         if (controller!=null) {
+            // hold all ToeThreads from proceeding to next processor
+            controller.singleThreadMode();
             // TODO: consider if SoftReferences would be a better way to 
             // engineer a soft-landing for low-memory conditions
             controller.freeReserveMemory();
-            // actually hold all ToeThreads
-            controller.lockMemory();
             controller.requestCrawlPause();
         }
         
         // OutOfMemory & StackOverflow & etc.
+        String extraInfo = DevUtils.extraInfo();
         System.err.println("<<<");
         System.err.println(err);
-        System.err.println(DevUtils.extraInfo());
+        System.err.println(extraInfo);
         err.printStackTrace(System.err);
         System.err.println(">>>");
 
         String context = "unknown";
 		if(currentCuri!=null) {
-			// currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+            // update fetch-status, saving original as annotation
+            currentCuri.addAnnotation("err="+err.getClass().getName());
+            currentCuri.addAnnotation("os"+currentCuri.getFetchStatus());
+			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
             context = currentCuri.getURIString();
 		}
         String title = "Serious error occured processing '" + context + "'";
         String message = "The following serious error occured when trying " +
-            "to process '" + context + "'\n";
+            "to process '" + context + "'\n\n" + extraInfo;
 		Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
         setPriority(DEFAULT_PRIORITY);
 	}
@@ -230,14 +243,10 @@ public class ToeThread extends Thread
      * @throws InterruptedException
      */
     private void continueCheck() throws InterruptedException {
-        synchronized(this) {
-            // this synchronization assures any change to shouldDie is reflected
-            // in this thread (if volatile proves unreliable)
-            if(Thread.interrupted()) {
-                throw new InterruptedException("die request detected");
-            }
+        if(Thread.interrupted()) {
+            throw new InterruptedException("die request detected");
         }
-        controller.acquireMemory();
+        controller.acquireContinuePermission();
     }
 
     /**
@@ -272,9 +281,11 @@ public class ToeThread extends Thread
             recoverableProblem(ae);
         } catch (RuntimeException e) {
             recoverableProblem(e);
+        } catch (StackOverflowError err) {
+            recoverableProblem(err);
         } catch (Error err) {
-            // OutOfMemory & StackOverflow & etc.
-            seriousError(err);
+            // OutOfMemory and any others
+            seriousError(err); 
         }
     }
 
@@ -290,6 +301,7 @@ public class ToeThread extends Thread
         e.printStackTrace(System.err);
         currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
         // store exception temporarily for logging
+        currentCuri.addAnnotation("err="+e.getClass().getName());
         currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION, e);
         String title = "Problem occured processing '"
                 + currentCuri.getURIString() + "'";
@@ -442,5 +454,23 @@ public class ToeThread extends Thread
     public boolean isActive() {
         // if alive and not waiting in/for frontier.next(), we're 'active'
         return this.isAlive() && (currentCuri != null);
+    }
+    
+    /**
+     * Request that this thread retire (exit cleanly) at the earliest
+     * opportunity.
+     */
+    public void retire() {
+        shouldRetire = true;
+    }
+
+    /**
+     * Whether this thread should cleanly retire at the earliest 
+     * opportunity. 
+     * 
+     * @return
+     */
+    public boolean shouldRetire() {
+        return shouldRetire;
     }
 }

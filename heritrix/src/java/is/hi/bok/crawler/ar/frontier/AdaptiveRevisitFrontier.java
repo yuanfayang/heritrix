@@ -48,6 +48,8 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
+import org.archive.crawler.frontier.HostnameQueueAssignmentPolicy;
+import org.archive.crawler.frontier.QueueAssignmentPolicy;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -120,6 +122,9 @@ public class AdaptiveRevisitFrontier extends ModuleType
 
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
+    /** Policy for assigning CrawlURIs to named queues */
+    protected QueueAssignmentPolicy queueAssignmentPolicy = null;
+    
     // top-level stats
     long queuedUriCount = 0;
 
@@ -193,8 +198,9 @@ public class AdaptiveRevisitFrontier extends ModuleType
     public synchronized void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
         controller = c;
+        queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
         
-        hostQueues = new ARHostQueueList(c.getStateDisk());
+        hostQueues = new ARHostQueueList(c.getBdbEnvironment());
         
         loadSeeds();
     }
@@ -236,8 +242,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
                     A_TIME_OF_NEXT_PROCESSING,System.currentTimeMillis());
             // New CrawlURIs get 'current time' as the time of next processing.
         }
-        curi.setServer(getServer(curi));
-        curi.setClassKey(curi.getServer().getHostname());
+        
+        curi.setClassKey(queueAssignmentPolicy.getClassKey(controller,curi));
 
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0){
@@ -355,7 +361,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
         try {
             CrawlURI curi = hq.next();
             // Populate CURI with 'transient' variables such as server.
-            curi.setServer(getServer(curi));
             logger.fine("Issuing "+curi.getURIString());
             long temp = curi.getAList().getLong(A_TIME_OF_NEXT_PROCESSING);
             long currT = System.currentTimeMillis();

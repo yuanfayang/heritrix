@@ -21,6 +21,8 @@
       <item name="FAQ" href="/faq.html"/>
       <item name="Wiki" 
         href="http://crawler.archive.org/cgi-bin/wiki.pl?HomePage"/>
+      <item name="Browse/Submit a Bug" 
+        href="http://sourceforge.net/tracker/?group_id=73833&amp;atid=539099"/>
     </menu>
     <footer>
         <a href="http://sourceforge.net/projects/archive-crawler/">

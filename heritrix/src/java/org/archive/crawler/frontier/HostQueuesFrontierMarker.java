@@ -31,12 +31,13 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.FrontierMarker;
 
 /**
- * An implementation of <code>URIFrontierMarker</code> suitible for the
+ * An implementation of <code>URIFrontierMarker</code> suitable for the
  * <code>URIFrontier</code> implementation in this package.
  * @author Kristinn Sigurdsson
  * @see org.archive.crawler.framework.FrontierMarker
  * @see org.archive.crawler.framework.Frontier
  * @see org.archive.crawler.frontier.HostQueuesFrontier
+ * @deprecated As of 1.4.  No replacement.
  */
 public class HostQueuesFrontierMarker implements FrontierMarker {
 

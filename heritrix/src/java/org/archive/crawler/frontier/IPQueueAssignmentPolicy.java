@@ -24,8 +24,9 @@
 */ 
 package org.archive.crawler.frontier;
 
-import org.archive.crawler.datamodel.CrawlServer;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 
 /**
  * Uses target IP as basis for queue-assignment, unless it is unavailable,
@@ -33,18 +34,15 @@ import org.archive.crawler.datamodel.CrawlURI;
  * 
  * @author gojomo
  */
-public class IPQueueAssignmentPolicy extends HostnameQueueAssignmentPolicy {
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.frontier.QueueAssignmentPolicy#getClassKey(org.archive.crawler.datamodel.CrawlURI)
-     */
-    public String getClassKey(CrawlURI curi) {
-        CrawlServer server = curi.getServer();
-        if (server == null || server.getHost().getIP()==null ) {
+public class IPQueueAssignmentPolicy
+extends HostnameQueueAssignmentPolicy {
+    public String getClassKey(CrawlController controller, CrawlURI curi) {
+        CrawlHost host = controller.getServerCache().getHostFor(curi);
+        if (host == null || host.getIP() == null) {
             // if no server or no IP, use superclass implementation
-            return super.getClassKey(curi);
+            return super.getClassKey(controller, curi);
         }
         // use dotted-decimal IP address
-        return server.getHost().getIP().getHostAddress();
+        return host.getIP().getHostAddress();
     }
 }

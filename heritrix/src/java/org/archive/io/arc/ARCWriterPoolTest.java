@@ -25,7 +25,10 @@
 package org.archive.io.arc;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.archive.util.TmpDirTestCase;
@@ -35,24 +38,20 @@ import org.archive.util.TmpDirTestCase;
  * Test ARCWriterPool
  */
 public class ARCWriterPoolTest extends TmpDirTestCase {
-    /*
-     * Class to test for void ARCWriterPool(File, int, int)
-     */
+    private static final String PREFIX = "TEST";
+    
     public void testARCWriterPool()
-        throws Exception
-    {
+    throws Exception {
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
-        cleanUpOldFiles("TEST");
-        ARCWriterPool pool = new ARCWriterPool(getTmpDir(), "TEST",
-            true, ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE,
+        cleanUpOldFiles(PREFIX);
+        ARCWriterPool pool = new ARCWriterPool(getSettings(true),
             MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
         ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
         final String CONTENT = "Any old content";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(CONTENT.getBytes());
-        for (int i = 0; i < MAX_ACTIVE; i++)
-        {
+        for (int i = 0; i < MAX_ACTIVE; i++) {
             writers[i] = pool.borrowARCWriter();
             assertEquals("Number active", i + 1, pool.getNumActive());
             writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
@@ -63,8 +62,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         // MAX_WAIT_MILLISECONDS.  Should get exception.
         long start = (new Date()).getTime();
         boolean isException = false;
-        try
-        {
+        try {
             pool.borrowARCWriter();
         }
         catch(NoSuchElementException e)
@@ -74,20 +72,48 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
             // This test can fail on a loaded machine if the wait period is
             // only MAX_WAIT_MILLISECONDS.  Up the time to wait.
             final int WAIT = MAX_WAIT_MILLISECONDS * 100;
-            if ((end - start) > (WAIT))
-            {
+            if ((end - start) > (WAIT)) {
                 fail("More than " + MAX_WAIT_MILLISECONDS + " elapsed: "
                     + WAIT);
             }
         }
         assertTrue("Did not get NoSuchElementException", isException);
 
-        for (int i = (MAX_ACTIVE - 1); i >= 0; i--)
-        {
+        for (int i = (MAX_ACTIVE - 1); i >= 0; i--) {
             pool.returnARCWriter(writers[i]);
             assertEquals("Number active", i, pool.getNumActive());
             assertEquals("Number idle", MAX_ACTIVE - pool.getNumActive(),
                     pool.getNumIdle());
         }
+        pool.close();
+    }
+    
+    private ARCWriterSettings getSettings(final boolean isCompressed) {
+        return new ARCWriterSettings() {
+            public int getArcMaxSize() {
+                return ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE;
+            }
+            
+            public String getArcPrefix() {
+                return PREFIX;
+            }
+            
+            public String getArcSuffix() {
+                return "";
+            }
+            
+            public List getOutputDirs() {
+                File [] files = {getTmpDir()};
+                return Arrays.asList(files);
+            }
+            
+            public boolean isCompressed() {
+                return isCompressed;
+            }
+            
+            public List getMetadata() {
+                return null;
+            }
+        };
     }
 }

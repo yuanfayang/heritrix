@@ -22,7 +22,6 @@
 */
 package is.hi.bok.crawler.ar.frontier;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,7 +37,6 @@ import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
@@ -81,14 +79,9 @@ public class ARHostQueueList {
         Logger.getLogger(ARHostQueueList.class.getName());
 
     
-    public ARHostQueueList(File locationDirectory) throws IOException{
+    public ARHostQueueList(Environment env) throws IOException{
         try{
-            // First, set up the BerkleyDB environment.
-            EnvironmentConfig envConfig = new EnvironmentConfig();
-            envConfig.setTransactional(true); 
-            envConfig.setAllowCreate(true);    
-            envConfig.setTxnTimeout(0); // No timeouts.
-            env = new Environment(locationDirectory,envConfig);
+            this.env = env;
             
             keyBinding = new StringBinding();
             valueBinding = new IntegerBinding();
@@ -341,12 +334,6 @@ public class ARHostQueueList {
             hostNamesDB.close();
         } catch (DatabaseException e) {
             logger.severe("IOException while closing hostNamesDB" +
-                    "\n" + e.getMessage());
-        }
-        try {
-            env.close();
-        } catch (DatabaseException e) {
-            logger.severe("IOException while closing Environment" +
                     "\n" + e.getMessage());
         }
     }

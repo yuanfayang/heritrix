@@ -27,6 +27,7 @@ package org.archive.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 
 
@@ -56,12 +57,13 @@ public class GzippedInputStream extends GZIPInputStream
      * See RFC1952 for explaination of value of 10.
      */
     public static final int MINIMAL_GZIP_HEADER_LENGTH = 10;
-   
     
     /**
      * Used to find next gzip member.
      */
     private GzipHeader gzipHeader = new GzipHeader();
+
+    private static final byte [] SKIP_BUFFER = new byte [4096];
     
     
     public GzippedInputStream(InputStream in) throws IOException {
@@ -76,55 +78,113 @@ public class GzippedInputStream extends GZIPInputStream
         }
     }
     
+    /**
+     * Exhaust current GZIP member content.
+     * Call this method when you think you're on the end of the
+     * GZIP member.  It will clean out any dross.
+     * @param ignore Character to ignore counting characters (Usually
+     * trailing new lines).
+     * @return Count of characters skipped over.
+     * @throws IOException
+     */
+    public long gotoEOR(int ignore) throws IOException {
+        long bytesSkipped = 0;
+        if (this.inf.getTotalIn() <= 0) {
+            return bytesSkipped;
+        }
+        if (!this.inf.finished()) {
+            int read = 0;
+            while ((read = read()) != -1) {
+                if ((byte)read == (byte)ignore) {
+                    continue;
+                }
+                bytesSkipped = gotoEOR() + 1;
+                break;
+            }
+        }
+        return bytesSkipped;
+    }
+    
+    /**
+     * Exhaust current GZIP member content.
+     * Call this method when you think you're on the end of the
+     * GZIP member.  It will clean out any dross.
+     * @return Count of characters skipped over.
+     * @throws IOException
+     */
+    public long gotoEOR() throws IOException {
+        long bytesSkipped = 0;
+        if (this.inf.getTotalIn() <= 0) {
+            return bytesSkipped;
+        }
+        if (!this.inf.finished()) {
+            long read = 0;
+            while ((read = read(SKIP_BUFFER)) != -1) {
+                bytesSkipped += read;
+            }
+        }
+        return bytesSkipped;
+    }
+    
     public boolean hasNext() {
-        boolean result = false;
         if (this.inf.getTotalIn() == 0) {
             // We haven't read anything yet.  Must be at start of file.
-            result = true;
-        } else {
-            // Move to the next gzip member, if there is one, positioning
-            // ourselves by backing up the stream so we reread any inflater
-            // remaining bytes.  Then add 8 bytes to get us past the GZIP
-            // CRC trailer block that ends all gzip members.
-            try {
-                PositionableStream ps = (PositionableStream)this.in;
-                ps.seek(getFilePointer() - this.inf.getRemaining() +
-                        8 /*Sizeof gzip CRC block*/);
-                // If at least MINIMAL_GZIP_HEADER_LENGTH available
-                // assume possible other gzip member. Move the
-                // stream on checking as we go to be sure of another record.
-                // We do this slow poke ahead because the calculation using
-                // this.inf.getRemaining can be off by a couple if the
-                // remaining is zero.  There seems to be
-                // nothing in gzipinputstream nor in the inflater that can be
-                // relied upon:  this.eos = false, this.inf.finished = false,
-                // this.inf.readEOF is true. I don't know why its messed up
-                // like this.  Study the core zlib and see if can figure where
-                // inflater is going wrong.
-                int read = -1;
-                while (this.in.available() > MINIMAL_GZIP_HEADER_LENGTH) {
+            return true;
+        }
+        
+        boolean result = false;
+        // Move to the next gzip member, if there is one, positioning
+        // ourselves by backing up the stream so we reread any inflater
+        // remaining bytes.  Then add 8 bytes to get us past the GZIP
+        // CRC trailer block that ends all gzip members.
+        try {
+            PositionableStream ps = (PositionableStream)this.in;
+            // 8 is sizeof gzip CRC block thats on tail of gzipped record.
+            // If remaining is < 8 then experience indicates we're seeking past
+            // the gzip header -- don't backup the stream.
+            if (this.inf.getRemaining() > 8) {
+                ps.seek(getFilePointer() - this.inf.getRemaining() + 8);
+            }
+            // If at least MINIMAL_GZIP_HEADER_LENGTH available
+            // assume possible other gzip member. Move the
+            // stream on checking as we go to be sure of another record.
+            // We do this slow poke ahead because the calculation using
+            // this.inf.getRemaining can be off by a couple if the
+            // remaining is zero.  There seems to be
+            // nothing in gzipinputstream nor in the inflater that can be
+            // relied upon:  this.eos = false, this.inf.finished = false,
+            // this.inf.readEOF is true. I don't know why its messed up
+            // like this.  Study the core zlib and see if can figure where
+            // inflater is going wrong.
+            int read = -1;
+            int headerRead = 0;
+            while (this.in.available() > MINIMAL_GZIP_HEADER_LENGTH) {
+                read = this.gzipHeader.readByte(this.in);
+                if ((byte)read == (byte)GZIPInputStream.GZIP_MAGIC) {
+                    headerRead++;
                     read = this.gzipHeader.readByte(this.in);
-                    if ((byte)read == (byte)GZIPInputStream.GZIP_MAGIC) {
-                            read = this.gzipHeader.readByte(this.in);
-                        if((byte)read == 
-                                (byte)(GZIPInputStream.GZIP_MAGIC >> 8)) {
+                    if((byte)read == (byte)(GZIPInputStream.GZIP_MAGIC >> 8)) {
+                        headerRead++;
+                        read = this.gzipHeader.readByte(this.in);
+                        if ((byte)read == Deflater.DEFLATED) {
+                            headerRead++;
                             // Found gzip header.  Backup the stream the
                             // two bytes we just found and set result true.
-                            ps.seek(getFilePointer() - 2);
+                            ps.seek(getFilePointer() - headerRead);
                             result = true;
                             break;
-                        } else {
-                            // Didn't find gzip header.  Back up stream one
-                            // byte because the byte just read might be the
-                            // actual start of the gzip header. Needs testing.
-                            ps.seek(getFilePointer() - 1);
                         }
                     }
+                    // Didn't find gzip header.  Back up stream one
+                    // byte because the byte just read might be the
+                    // actual start of the gzip header. Needs testing.
+                    ps.seek(getFilePointer() - headerRead);
+                    headerRead = 0;
                 }
-            } catch (IOException e) {
-                throw new RuntimeException("Failed i/o: " +
-                        e.getMessage());
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed i/o: " +
+                    e.getMessage());
         }
         
         return result;
@@ -134,14 +194,14 @@ public class GzippedInputStream extends GZIPInputStream
      * @return An InputStream.
      */
     public Object next() {
-            // Assume inflater has been reset.  Read in header.
-            try {
-                    readHeader();
-            } catch (IOException e) {
-                    throw new RuntimeException("Failed header read: " +
+        // Assume inflater has been reset.  Read in header.
+        try {
+            readHeader();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed header read: " +
                     e.getMessage());
-            }
-            return this;
+        }
+        return this;
     }
     
     public void remove() {

@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
@@ -52,13 +53,15 @@ public class CrawlStateUpdater extends Processor implements
 
     protected void innerProcess(CrawlURI curi) {
         String scheme = curi.getUURI().getScheme().toLowerCase();
+        CrawlServer server =
+            getController().getServerCache().getServerFor(curi);
         if (scheme.equals("http") || scheme.equals("https") &&
-                curi.getServer() != null) {
+                server != null) {
             // Update connection problems counter
             if(curi.getFetchStatus() == S_CONNECT_FAILED) {
-                curi.getServer().incrementConsecutiveConnectionErrors();
+                server.incrementConsecutiveConnectionErrors();
             } else if (curi.getFetchStatus() > 0){
-                curi.getServer().resetConsecutiveConnectionErrors();
+                server.resetConsecutiveConnectionErrors();
             }
 
             // Update robots info
@@ -67,7 +70,7 @@ public class CrawlStateUpdater extends Processor implements
                         curi.getUURI().getPath().equals("/robots.txt")) {
                     // Update host with robots info
                     try {
-                        curi.getServer().updateRobots(curi);
+                        server.updateRobots(curi);
                     } catch (IOException e) {
                         curi.addLocalizedError(getName(), e,
                             "robots.txt parsing IOException");

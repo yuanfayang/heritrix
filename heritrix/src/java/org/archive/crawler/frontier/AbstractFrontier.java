@@ -45,9 +45,9 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
@@ -122,6 +122,11 @@ CoreAttributeConstants {
     protected final static String 
         ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.]*"; // word chars, dash, period
     
+    /** whether pause, rather than finish, when crawl appears done */
+    public final static String ATTR_PAUSE_AT_FINISH = "pause-at-finish";
+    // TODO: change default to true once well-tested
+    protected final static Boolean DEFAULT_PAUSE_AT_FINISH = new Boolean(false); 
+
     // top-level stats
     private long queuedUriCount = 0;  // total URIs queued to be visited
     private long succeededFetchCount = 0; 
@@ -222,6 +227,14 @@ CoreAttributeConstants {
         t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
                 Level.WARNING, "This field must contain only alphanumeric " +
                         "characters plus period, dash, or underscore."));
+        t = addElementToDefinition(new SimpleType(ATTR_PAUSE_AT_FINISH,
+                "Whether to pause when the crawl appears finished, rather " +
+                "than immediately end the crawl. This gives the operator an " +
+                "opportunity to view crawl results, and possibly add URIs or " +
+                "adjust settings, while the crawl state is still available. " +
+                "Default is false.",
+                DEFAULT_PAUSE_AT_FINISH));
+
     }
     
     
@@ -308,6 +321,16 @@ CoreAttributeConstants {
      */
     protected synchronized void incrementQueuedUriCount() {
         queuedUriCount++;
+    }
+    
+    /**
+     * Increment the running count of queued URIs. Synchronized
+     * because operations on longs are not atomic. 
+     * 
+     * @param increment amount to increment the queued count
+     */
+    protected synchronized void incrementQueuedUriCount(long increment) {
+        queuedUriCount += increment;
     }
     
     /**
@@ -416,7 +439,6 @@ CoreAttributeConstants {
         } else {
             curi = CrawlURI.from(caUri,nextOrdinal++);
         }
-        curi.setServer(getServer(curi));
         curi.setClassKey(getClassKey(curi));
         return curi;
     }
@@ -429,15 +451,28 @@ CoreAttributeConstants {
     protected synchronized void preNext(long now) throws InterruptedException, EndedException {
         
         // check completion conditions
-        controller.checkFinish();
+        if(controller.atFinish()) {
+            if(((Boolean)getUncheckedAttribute(null,ATTR_PAUSE_AT_FINISH)).booleanValue()) {
+                controller.requestCrawlPause();
+            } else {
+                controller.beginCrawlStop();
+            }
+        }
         
         // enforce operator pause
-        while(shouldPause) {
-            controller.toePaused();
-            wait();
+        if(shouldPause) {
+            while(shouldPause) {
+                controller.toePaused();
+                wait();
+            }
+            // exitted pause; possibly finish regardless of pause-at-finish
+            if(controller.atFinish()) {
+                controller.beginCrawlStop();
+            }
         }
-        // enforce operator terminate
-        if(shouldTerminate) {
+        
+        // enforce operator terminate or thread retirement
+        if(shouldTerminate || ((ToeThread)Thread.currentThread()).shouldRetire()) {
             throw new EndedException("terminated");
         }
         
@@ -490,11 +525,10 @@ CoreAttributeConstants {
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
         curi.setHolder(q);
-        curi.setServer(getServer(curi)); // TODO: may be redundant
-        if (curi.getServer() == null) {
-            // TODO: perhaps short-circuit the emit here, 
-            // because URI will be rejected as unfetchable
-        }
+        // if (curi.getServer() == null) {
+        //    // TODO: perhaps short-circuit the emit here, 
+        //    // because URI will be rejected as unfetchable
+        // }
         doJournalEmitted(curi);
     }
 
@@ -513,8 +547,9 @@ CoreAttributeConstants {
      * @return millisecond delay before retry
      */
     protected long retryDelayFor(CrawlURI curi) {
-        if ( curi.getFetchStatus() == S_CONNECT_FAILED || 
-            curi.getFetchStatus()== S_CONNECT_LOST) {
+        int status = curi.getFetchStatus();
+        if ( status == S_CONNECT_FAILED || status == S_CONNECT_LOST 
+             || status == S_DOMAIN_UNRESOLVABLE ) {
             if(curi.getAList().containsKey(A_RETRY_DELAY)) {
                 return curi.getAList().getInt(A_RETRY_DELAY);
             }
@@ -561,7 +596,7 @@ CoreAttributeConstants {
                         ATTR_MAX_HOST_BANDWIDTH_USAGE)).intValue();
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
-                CrawlHost host = curi.getServer().getHost();
+                CrawlHost host = controller.getServerCache().getHostFor(curi);
                 long minDurationToWait =
                     host.getEarliestNextURIEmitTime() - now;
                 float maxBandwidth = maxBandwidthKB * 1.024F; // kilo factor
@@ -786,7 +821,8 @@ CoreAttributeConstants {
             (String)getUncheckedAttribute(curi, ATTR_FORCE_QUEUE);
         if("".equals(queueKey)) {
             // typical case, barring overrides
-            queueKey = queueAssignmentPolicy.getClassKey(curi);
+            queueKey =
+                queueAssignmentPolicy.getClassKey(this.controller, curi);
         }
         return queueKey;
     }
@@ -807,6 +843,14 @@ CoreAttributeConstants {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
         // TODO Auto-generated method stub
         
     }
