@@ -20,14 +20,24 @@ import org.archive.crawler.framework.CrawlListener;
 import org.archive.util.PaddingStringBuffer;
 
 /**
- * Tracks statistics that relate to the crawl in progress.  Callers should be
+ * StatisticsTracker has a reference to a CrawlController.  At specified 
+ * intevals it will extract status information about the crawl that that
+ * controller is managing.  Parts of this information will be written out
+ * in a pre-determinate way to a log file. 
+ * All of the information will be kept in memory from one update to another.
+ * Outside classes can query the StatisticsTracker for this data and receive
+ * the <i>last known</i> state.  Once the crawl controller has finished, the
+ * StatisticsTracker thus contains information about the final state of the
+ * crawl in a self contained manner.
+ * 
+ * 
+ * Callers should be
  * aware that any "current" statistics (i.e. those involving calculation of 
  * rates) are good approximations, but work by looking at recently completed
  * CrawlURIs and thus may in some (rare and degenerative) cases return
  * data that is not useful, particularly with small/narrow crawls.  
  * 
  * @author Parker Thompson
- *
  */
 public class StatisticsTracker implements Runnable, CoreAttributeConstants, CrawlListener{
 
@@ -40,29 +50,47 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 
 	protected CrawlController controller;
 
-	// keep track of the file types we see (mime type -> count)
-	protected HashMap fileTypeDistribution = new HashMap();
-
-	// keep track of fetch status codes
-	protected HashMap statusCodeDistribution = new HashMap();
-
-	protected int totalProcessedBytes = 0;
 	//protected TimedFixedSizeList recentlyCompletedFetches = new TimedFixedSizeList(60);
 
 	protected Logger periodicLogger = null;
-	protected int logInterval = 60;
+	protected int logInterval = 20; // In seconds.
 
 	protected boolean shouldrun = true;
 	
 	// default start time to the time this object was instantiated
-	protected long crawlerStartTime = System.currentTimeMillis();
+	protected long crawlerStartTime;
 	protected long crawlerEndTime = -1; // Until crawl ends, this value is -1.
 	
 	
 	// timestamp of when this logger last wrote something to the log
-	protected long lastLogPointTime = crawlerStartTime;
+	protected long lastLogPointTime;
 	protected long lastPagesFetchedCount = 0;
 	protected long lastProcessedBytesCount = 0;
+	
+	/*
+	 * Snapshot data. 
+	 */
+	protected SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");
+	protected long discoveredPages = 0;
+	protected long pendingPages = 0;
+	protected long downloadedPages = 0;
+	protected long uniquePages = 0;
+	protected int docsPerSecond = 0;
+	protected int currentDocsPerSecond = 0;
+	protected int currentKBPerSec = 0;
+	protected long totalKBPerSec = 0;
+	protected long downloadFailures = 0;
+	protected int busyThreads = 0; 
+
+	/*
+	 * Cumulative data 
+	 */
+	protected int totalProcessedBytes = 0;
+	// keep track of the file types we see (mime type -> count)
+	protected HashMap fileTypeDistribution = new HashMap();
+	// keep track of fetch status codes
+	protected HashMap statusCodeDistribution = new HashMap();
+
 	
 	public StatisticsTracker() {
 		super();
@@ -129,8 +157,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 */
 	public void stop()
 	{
-		crawlerEndTime = System.currentTimeMillis();
 		shouldrun = false;
+		crawlerEndTime = System.currentTimeMillis(); //Note the time when the crawl stops.
+		logActivity(); //Log end state		
 	}
 
 	/**
@@ -140,7 +169,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * @see org.archive.crawler.framework.CrawlListener#crawlEnding(java.lang.String)
 	 */
 	public void crawlEnding(String sExitMessage) {
-		stop();		
+		stop();
 	}
 
 
@@ -150,7 +179,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		if (periodicLogger == null) {
 			return;
 		}
-	
+		
+		crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
+		lastLogPointTime = crawlerStartTime;
 		shouldrun = true; //If we are starting, this should always be true.
 		
 		// log the legend	
@@ -174,25 +205,64 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 					"Periodic stat logger interrupted while sleeping.");
 			}
 			
-			logActivity();
-			lastLogPointTime = System.currentTimeMillis();
+			if(shouldrun) //In case stop() was invoked while the thread was sleeping.
+			{
+				logActivity();
+			}
 		}
 	}
 
 	private synchronized void logActivity() {
-		String delimiter = "-----------------------------------";
-		SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");
-		long discoveredPages = urisEncounteredCount();
-		long pendingPages = urisInFrontierCount();
-		long downloadedPages = successfulFetchAttempts();
-		long uniquePages = uniquePagesCount();
-		int docsPerSecond = processedDocsPerSec();
-		int currentDocsPerSecond = currentProcessedDocsPerSec();
-		int currentKBPerSec = currentProcessedKBPerSec();
-		long totalKBPerSec = processedKBPerSec();
-		long downloadFailures = failedFetchAttempts();
-		int busyThreads = activeThreadCount(); 
-		Date now = new Date();
+		// This method loads "snapshot" data.
+		discoveredPages = urisEncounteredCount();
+		pendingPages = urisInFrontierCount();
+		downloadedPages = successfulFetchAttempts();
+		downloadFailures = failedFetchAttempts();		
+		
+		if(totalFetchAttempts() == 0){
+			docsPerSecond = 0;
+			totalKBPerSec = 0;
+		}
+		else
+		{
+			docsPerSecond = (int)(downloadedPages / ((System.currentTimeMillis() - crawlerStartTime) / 1000) + .5); // rounded to nearest int
+			totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((System.currentTimeMillis() - crawlerStartTime)	/ 1000)) + .5 ); // round to nearest long
+		}
+		
+		busyThreads = activeThreadCount();
+		 
+		if(shouldrun || (System.currentTimeMillis() - lastLogPointTime) >= 1000)
+		{
+			// If shouldrun is false there is a chance that the time interval since
+			// last time is too small for a good sample.  We only want to update
+			// "current" data when the interval is long enough or shouldrun is true.
+			currentDocsPerSecond = 0;
+			currentKBPerSec = 0;
+			
+			// if we haven't done anyting or there isn't a reasonable sample size give up.
+			if(totalFetchAttempts() != 0)
+			{
+				// Note time.
+				long currentTime = System.currentTimeMillis();
+				long sampleTime = currentTime - lastLogPointTime;
+
+				// Update docs/sec snapshot
+				long currentPageCount = successfulFetchAttempts();
+				long samplePageCount = currentPageCount - lastPagesFetchedCount;
+			
+				currentDocsPerSecond = (int) (samplePageCount / (sampleTime / 1000) + .5);
+			
+				lastPagesFetchedCount = currentPageCount;
+
+				// Update kbytes/sec snapshot
+				long currentProcessedBytes = totalProcessedBytes;
+				long sampleProcessedBytes = currentProcessedBytes - lastProcessedBytesCount;
+
+				currentKBPerSec = (int) (((sampleProcessedBytes/1024) / (sampleTime / 1000)) + .5);
+		
+				lastProcessedBytesCount = currentProcessedBytes;
+			}
+		}
 		
 		
 		// 			mercator style log entry was
@@ -202,6 +272,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		//			[current-KB-sec] \
 		//			[download-failures] [stalled-threads] [memmory-usage]
 		
+		Date now = new Date();
 		periodicLogger.log(
 			Level.INFO,
 			new PaddingStringBuffer()
@@ -315,28 +386,21 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 					"\tNo code sistribution statistics.");
 			}
 		}
-		//periodicLogger.log(Level.INFO, delimiter);
+		lastLogPointTime = System.currentTimeMillis();
 	}
 	
-	/** Return the number of unique pages based on md5 calculations */
-	public int uniquePagesCount(){
+	/* Return the number of unique pages based on md5 calculations */
+	/*public int uniquePagesCount(){
 		//TODO implement sha1 checksum comparisions
 		return 0;
-	}
+	}*/
 	
 	/** Returns the number of documents that have been processed
-	 *  per second over the life of the crawl
+	 *  per second over the life of the crawl (as of last snapshot)
 	 * @return docsPerSec
 	 */
 	public int processedDocsPerSec(){
-		if(totalFetchAttempts() == 0){
-			return 0;
-		}
-		return (int)
-				(successfulFetchAttempts()
-					/ ((System.currentTimeMillis() - crawlerStartTime) / 1000)
-				+ .5 // round to nearest int
-		);
+		return docsPerSecond;
 	}
 	
 	/** Get the current logging level */
@@ -352,95 +416,29 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	}
 	
 	/** Returns an estimate of recent document download rates
-	 *  based on a queue of recently seen CrawlURIs.  
+	 *  based on a queue of recently seen CrawlURIs (as of last snapshot.)
 	 * @return currentDocsPerSec
 	 */
 	public int currentProcessedDocsPerSec(){
-		// if we haven't done anyting or there isn't a reasonable sample size give up
-		//if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
-		if(totalFetchAttempts() == 0){
-			return 0;
-		}
-		
-		// long sampleStartTime = ((ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst()).getStartTime();
-		//long sampleEndTime = ((CrawlURI)recentCrawlURIs.getLast()).getAList().getLong(A_FETCH_COMPLETED_TIME);
-		// long sampleEndTime = System.currentTimeMillis();
-		
-//		return (int)
-//				(recentlyCompletedFetches.size() / 
-//				 ((sampleEndTime - sampleStartTime)
-//					/ 1000 ) 
-//				+ .5 // round to nearest int
-//		);
-
-		long currentTime = System.currentTimeMillis();
-		long currentPageCount = successfulFetchAttempts();
-		long sampleTime = currentTime - lastLogPointTime;
-		long samplePageCount = currentPageCount - lastPagesFetchedCount;
-		
-		int currentDocsPerSecond = (int) (samplePageCount / (sampleTime / 1000) + .5);
-		
-		lastPagesFetchedCount = currentPageCount;
-		
 		return currentDocsPerSecond;
 	}
 	
 	/** Calculates the rate that data, in kb, has been processed
-	 *  over the life of the crawl.
+	 *  over the life of the crawl (as of last snapshot.)
 	 * @return kbPerSec
 	 */ 
 	public long processedKBPerSec(){
-		if(totalFetchAttempts() == 0){
-			return 0;
-		}
-		
-		return (long)
-				(((totalProcessedBytes / 1024)
-					/ ((System.currentTimeMillis() - crawlerStartTime)
-					/ 1000))
-				+ .5 // round to nearest long
-		);
+		return totalKBPerSec;
 	}
 	
 	/** Calculates an estimate of the rate, in kb, at which documents
 	 *  are currently being processed by the crawler.  For more 
 	 *  accurate estimates set a larger queue size, or get
-	 *  and average multiple values.
+	 *  and average multiple values (as of last snapshot).
 	 * @return
 	 */
 	public int currentProcessedKBPerSec(){
-		//if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
-		if(totalProcessedBytes == 0){
-			return 0;
-		}
-		/*
-		int totalRecentSize = 0;
-		
-		Iterator recentItr = recentlyCompletedFetches.iterator();
-		while(recentItr.hasNext()){
-			totalRecentSize += ((ProcessedCrawlURIRecord)recentItr.next()).getSize();
-		}
-		
-		long sampleStartTime = ((ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst()).getStartTime();
-		long sampleEndTime = System.currentTimeMillis();
-		long samplePeriod = (sampleEndTime - sampleStartTime)/1000;
-		int totalRecentKB = totalRecentSize / 1000;
-		
-		return (int)
-				((totalRecentKB / samplePeriod)
-				+ .5 // round to nearest int
-		);
-		*/
-		
-		long currentTime = System.currentTimeMillis();
-		long currentProcessedBytes = totalProcessedBytes;
-		long sampleTime = currentTime - lastLogPointTime;
-		long sampleProcessedBytes = currentProcessedBytes - lastProcessedBytesCount;
-		int currentProcessedKB = (int) (((sampleProcessedBytes/1024) / (sampleTime / 1000)) + .5);
-		
-		lastProcessedBytesCount = currentProcessedBytes;
-		
-		return currentProcessedKB;
+		return currentKBPerSec;
 	}
 	
 	/** Keep track of  "completed" URIs so we can caluculate 
@@ -558,7 +556,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * @return
 	 */
 	public int activeThreadCount() {
-		return controller.getActiveToeCount();
+		return shouldrun ? controller.getActiveToeCount() : busyThreads;
 	}
 
 	/**
@@ -567,7 +565,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 */
 	public long urisInFrontierCount() {
 
-		return controller.getFrontier().pendingUriCount();
+		// While shouldrun is true we can use info direct from the crawler.  
+		// After that our last snapshot will have to do.
+		return shouldrun ? controller.getFrontier().pendingUriCount() : pendingPages;
 	}
 
 	/**
@@ -575,7 +575,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * @return
 	 */
 	public long uriFetchSuccessCount() {
-		return controller.getFrontier().successfullyFetchedCount();
+		return successfulFetchAttempts();
 	}
 
 	/** This returns the number of completed URIs as a percentage of the total
@@ -597,22 +597,25 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * (unfetched pages) and fetched pages/failed fetch attempts.
 	 */
 	public long urisEncounteredCount() {
-		return controller.getFrontier().discoveredUriCount();
+		// While shouldrun is true we can use info direct from the crawler.  
+		// After that our last snapshot will have to do.
+		return shouldrun ? controller.getFrontier().discoveredUriCount() : discoveredPages;
 	}
 
 	/**
 	 * Get the total number of URIs where fetches have been attempted.
 	 */
 	public long totalFetchAttempts() {
-		return controller.getFrontier().successfullyFetchedCount()
-			+ controller.getFrontier().failedFetchCount();
+		return successfulFetchAttempts() + failedFetchAttempts();
 	}
 
 	/** Get the total number of failed fetch attempts (404s, connection failures -> give up, etc)
 	 * @return int
 	 */
 	public long failedFetchAttempts() {
-		return controller.getFrontier().failedFetchCount();
+		// While shouldrun is true we can use info direct from the crawler.  
+		// After that our last snapshot will have to do.
+		return shouldrun ? controller.getFrontier().failedFetchCount() : downloadFailures;
 	}
 
 	/** Returns the total number of successul resources (web pages, images, etc)
@@ -620,7 +623,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * @return int
 	 */
 	public long successfulFetchAttempts() {
-		return controller.getFrontier().successfullyFetchedCount();
+		// While shouldrun is true we can use info direct from the crawler.  
+		// After that our last snapshot will have to do.
+		return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedPages;
 	}
 
 	/** Returns the total number of uncompressed bytes written to disk.  This may 
