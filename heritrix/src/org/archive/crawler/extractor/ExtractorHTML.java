@@ -168,7 +168,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// will find false positives
 	// TODO: add '/' check, suppress strings being concatenated via '+'?
 	static Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
-	 "(\"|')([^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)(\\1)");
+	 "(\"|')(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)(\\1)");
 	
 	/**
 	 * @param curi
