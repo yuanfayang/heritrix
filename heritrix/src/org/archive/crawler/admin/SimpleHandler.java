@@ -3,12 +3,14 @@ package org.archive.crawler.admin;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
+import java.util.Vector;
 import java.util.Enumeration;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlJob;
+import org.archive.crawler.framework.CrawlJobHandler;
 import org.archive.crawler.framework.CrawlListener;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
@@ -31,7 +33,7 @@ import org.w3c.dom.Node;
  * all page instances.
  */
 
-public class SimpleHandler implements AdminConstants, CrawlListener
+public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlListener
 {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
 
@@ -40,8 +42,8 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 	
 	//Crawl Jobs	
 	private CrawlJob currentJob;			// Job currently being crawled
-	private ArrayList pendingCrawlJobs;		// A list of CrawlJobs
-	private ArrayList completedCrawlJobs;	// A list of CrawlJobs
+	private Vector pendingCrawlJobs;		// A list of CrawlJobs
+	private Vector completedCrawlJobs;	// A list of CrawlJobs
 	
 	private boolean shouldcrawl;
 	
@@ -53,12 +55,15 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 	private Node orderNode;
 	private CrawlController controller;
 	private OrderTransformation orderTransform;
+	
+	private int jobserial; //Unique ID for jobs.  
 
 	public SimpleHandler()
 	{
 		shouldcrawl = false;
-		pendingCrawlJobs = new ArrayList();
-		completedCrawlJobs = new ArrayList();
+		jobserial = 1;
+		pendingCrawlJobs = new Vector();
+		completedCrawlJobs = new Vector();
 		
 		// Default order file;
 		orderFile = DEFAULT_ORDER_FILE;
@@ -120,6 +125,7 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 	
 	public void addJob(CrawlJob newJob)
 	{
+		newJob.setStatus(CrawlJob.STATUS_PENDING);
 		pendingCrawlJobs.add(newJob);
 		
 		if(crawling == false && shouldcrawl)
@@ -131,9 +137,21 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 		statusMessage = "New job added " + newJob.getJobName();		
 	}
 	
-	public ArrayList getPendingJobs()
+	public Vector getPendingJobs()
 	{
 		return pendingCrawlJobs;
+	}
+	
+	public Vector getCurrentJobs()
+	{
+		Vector temp = new Vector();
+		temp.add(getCurrentJob());
+		return temp;		
+	}
+	
+	public int getNextJobSerial()
+	{
+		return jobserial++;		
 	}
 	
 	public CrawlJob getCurrentJob()
@@ -141,7 +159,7 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 		return currentJob;
 	}
 	
-	public ArrayList getCompletedJobs()
+	public Vector getCompletedJobs()
 	{
 		return completedCrawlJobs;
 	}
@@ -191,9 +209,11 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 		
 		controller = new CrawlController(); //Create new controller.
 		controller.addListener(this);		//Register as listener to get job finished notice.
+
+		currentJob.setStatus(CrawlJob.STATUS_RUNNING);
 		
 		try {
-			controller.initialize(CrawlOrder.readFromFile(currentJob.getOrderFile()));
+			controller.initialize(currentJob.getCrawlOrder());
 		} catch (InitializationException e) {
 			//TODO Report Error
 			e.printStackTrace();
@@ -202,7 +222,7 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 		}
 		controller.startCrawl();
 		currentJob.setStatus("Crawling");
-		currentJob.setStats(getStatistics());
+		currentJob.setStatisticsTracker(getStatistics());
 		crawling = true;
 		statusMessage = CRAWLER_STARTED;
 	}
@@ -300,5 +320,15 @@ public class SimpleHandler implements AdminConstants, CrawlListener
 		} catch (InitializationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}	}
+		}	
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJobHandler#removeJob(org.archive.crawler.framework.CrawlJob)
+	 */
+	public boolean removeJob(CrawlJob job) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

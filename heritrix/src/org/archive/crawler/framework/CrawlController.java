@@ -54,11 +54,6 @@ public class CrawlController extends Thread{
 	public static final String XP_FRONTIER = "//behavior/frontier";
 	public static final String XP_CRAWL_SCOPE = "//scope";
 	
-	private static final String EXIT_USER_TERMINATED = "Crawl job terminated by user";
-	private static final String EXIT_NORMAL = "Crawl job completed";
-	private static final String EXIT_ABNORMAL = "Abnormal exit";
-	private static final String EXIT_NOT_STARTED = "Crawl job not started";
-	
 	private String sExit; 
 
 	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
@@ -112,7 +107,7 @@ public class CrawlController extends Thread{
 		
 		checkUserAgentAndFrom();
 		
-		sExit = EXIT_NOT_STARTED;
+		sExit = "";
 		
 		// read from the configuration file
 		try {
@@ -294,7 +289,7 @@ public class CrawlController extends Thread{
 
 	public void run() {
 		logger.fine(getName()+" started for CrawlController");
-		sExit = EXIT_ABNORMAL; // A proper exit will change this value.
+		sExit = CrawlJob.STATUS_FINISHED_ABNORMAL; // A proper exit will change this value.
 		assert controlThread == null: "non-null control thread";
 		controlThread = Thread.currentThread();
 		controlThread.setName("crawlControl");
@@ -323,14 +318,14 @@ public class CrawlController extends Thread{
 	private boolean shouldCrawl() {
 		if(frontier.isEmpty())
 		{
-			sExit = EXIT_NORMAL;
+			sExit = CrawlJob.STATUS_FINISHED;
 		}
 		return shouldCrawl && !frontier.isEmpty();
 	}
 
 
 	public void stopCrawl() {
-		sExit = EXIT_USER_TERMINATED;
+		sExit = CrawlJob.STATUS_ABORTED;
 		shouldCrawl = false;
 	}	
 
