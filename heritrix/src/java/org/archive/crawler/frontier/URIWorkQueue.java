@@ -209,11 +209,19 @@ public interface URIWorkQueue {
     public abstract CrawlURI dequeue();
 
     /**
-     * Return, without removing, the top available item.
+     * Return the last enqueued URI; useful for
+     * assessing queue state.
      * 
-     * @return The top available item.
+     * @return
      */
-    public abstract CrawlURI peek();
+    public String getLastQueued();
+
+    /**
+     * Return the last dequeued URI; useful
+     * for assessing queue state.
+     * @return
+     */
+    public String getLastDequeued();
 
 // 
 // resource management
