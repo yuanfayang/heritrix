@@ -18,5 +18,6 @@
 	<classpathentry kind="lib" path="lib/org.mortbay.jmx-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/stataclasses-0.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
+	<classpathentry kind="lib" path="lib/ant-1.5.4.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
