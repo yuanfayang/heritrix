@@ -61,7 +61,7 @@ public class TextUtils {
      * Get a matcher object for a precompiled regex pattern.
      * This method tries to reuse Matcher objects for efficiency.
      *
-     * @param p the precompiled Pattern
+     * @param pattern the precompiled Pattern
      * @param input the character sequence the matcher should be using
      * @return a matcher object loaded with the submitted character sequence
      */
