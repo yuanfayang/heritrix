@@ -59,6 +59,7 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.MemLongFPSet;
 import org.archive.util.MemQueue;
+import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
 
@@ -1173,7 +1174,7 @@ public class Frontier
         
         // inspect PendingHighQueue
         if(mark.currentQueue==-1){
-            numberOfMatches -= inspectQueue(pendingHighQueue,list,mark,verbose, numberOfMatches);
+            numberOfMatches -= inspectQueue(pendingHighQueue,"pendingHighQueue",list,mark,verbose, numberOfMatches);
             if(numberOfMatches>0){
                 mark.nextQueue();
             }
@@ -1181,12 +1182,13 @@ public class Frontier
         
         // inspect the KeyedQueues
         while( numberOfMatches > 0 && mark.currentQueue != -2){
-            Queue keyq = (Queue)allClassQueuesMap.get(mark.keyqueues.get(mark.currentQueue));
+            String queueKey = (String)mark.keyqueues.get(mark.currentQueue);
+            Queue keyq = (Queue)allClassQueuesMap.get(queueKey);
             if(keyq==null){
                 throw new InvalidURIFrontierMarkerException();
             }
             
-            numberOfMatches -= inspectQueue(keyq,list,mark,verbose, numberOfMatches);
+            numberOfMatches -= inspectQueue(keyq,"hostQueue("+queueKey+")",list,mark,verbose, numberOfMatches);
             if(numberOfMatches>0){
                 mark.nextQueue();
             }
@@ -1194,25 +1196,33 @@ public class Frontier
         
         // inspect the PendingQueue
         if(numberOfMatches > 0 && mark.currentQueue == -2){
-            numberOfMatches =- inspectQueue(pendingQueue,list,mark,verbose, numberOfMatches);
+            numberOfMatches -= inspectQueue(pendingQueue,"pendingQueue",list,mark,verbose, numberOfMatches);
             if(numberOfMatches > 0){
                 // reached the end
                 mark.hasNext = false;
             }
         }
+
         return list;
     }
 
     /**
      * Adds any applicable URIs from a given queue to the given list.
-     * @param queue The queue to inspect
-     * @param list The list to add matched URIs to.
-     * @param marker Where to start accepting matches from.
-     * @param verbose List items are verbose
-     * @param numberOfMatches maximum number of matches to add to list
+     * 
+     * @param queue
+     *            The queue to inspect
+     * @param list
+     *            The list to add matched URIs to.
+     * @param marker
+     *            Where to start accepting matches from.
+     * @param verbose
+     *            List items are verbose
+     * @param numberOfMatches
+     *            maximum number of matches to add to list
      * @return the number of matches found
      */
     private int inspectQueue( Queue queue,
+                              String queueName,
                               ArrayList list,
                               FrontierMarker marker,
                               boolean verbose,
@@ -1241,13 +1251,25 @@ public class Frontier
                     // Found match.
                     String text;
                     if(verbose){
-                        // TODO: write verbose description
-                        text = caURI.getURIString();
+                        // A verbose description
+                        PaddingStringBuffer verb = new PaddingStringBuffer();
+                        verb.append(caURI.getURIString());
+                        verb.append(" ("+queueName+":" + itemsScanned + ")");
+                        verb.newline();
+                        verb.padTo(2);
+                        verb.append(caURI.getPathFromSeed());
+                        if(caURI.getVia() != null 
+                                && caURI.getVia() instanceof CandidateURI){
+                            verb.append(" ");
+                            verb.append(((CandidateURI)caURI.getVia()).getURIString());
+                        }
+                        text = verb.toString();
                     } else {
                         text = caURI.getURIString();
                     }
                     list.add(text);
                     foundMatches++;
+                    marker.nextItemNumber++;
                 }
             }
             itemsScanned++;
