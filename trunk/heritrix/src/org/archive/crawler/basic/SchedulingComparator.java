@@ -22,10 +22,10 @@ public class SchedulingComparator implements Comparator {
 			return 0; // for exact identity only
 		}
 		if (((URIStoreable)o1).getWakeTime() > ((URIStoreable)o2).getWakeTime()) {
-			return -1;
+			return 1;
 		} 
 		if (((URIStoreable)o1).getWakeTime() < ((URIStoreable)o2).getWakeTime()) {
-			return 1;
+			return -1;
 		} 
 		// at this point, the ordering is arbitrary, but still
 		// must be consistent/stable over time
