@@ -2740,32 +2740,52 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         </listitem>
       </orderedlist>
 
-      <sect3>
+      <sect3 id="crawllog">
         <title>crawl.log</title>
 
-        <para>For each URI that completes processing (and will not be retried)
-        will get an entry, regardless of success or failure.</para>
+        <para>For each URI tried will get an entry in the
+        <literal>crawl.log</literal> regardless of success or failure.</para>
 
-        <para>An example of two consecutive entries:</para>
+        <para>Below is a two line extract from a crawl.log:</para>
 
         <para><programlisting>20040721232940438   200        310 http://127.0.0.1:9999/selftest/Charset/charsetselftest_end.html LLLL http://127.0.0.1:9999/selftest/Charset/shiftjis.jsp text/html #000 10 -
-        20040721232940481   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 12 -</programlisting></para>
+20040721232940481   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 12 -</programlisting></para>
 
-        <para>The first column is a time stamp. Then comes the status code
-        (<xref linkend="statuscodes" />) and the size of the downloaded
-        document in bytes followed by the URI of the document
-        downloaded.</para>
+        <para>The <emphasis rule="bold">first</emphasis> column is a 14-digit
+        time stamp. 
+        The <emphasis rule="bold">second</emphasis> column is the fetch status
+        code.  Usually this is the
+        HTTP status code but it can also be a negative number if
+        URL processing was unexpectedly terminated.  
+        See <xref linkend="statuscodes" /> for a listing of possible
+        values.</para>
+        <para>The <emphasis rule="bold">third</emphasis> column is the size of
+        the downloaded
+        document in bytes.  The <emphasis rule="bold">fourth</emphasis> column
+        is the URI of the document
+        downloaded.  The <emphasis rule="bold">fifth</emphasis> column holds
+        breadcrumb codes showing
+        the trail of downloads that got us to the current URI.
+        See <xref linkend="discoverypath" /> for description of possible
+        code values.  The <emphasis rule="bold">sixth</emphasis> column
+        holds the URI that immediately referenced this URI ('referrer').
+        Both of the latter two fields -- the discovery path and the referrer
+        URL -- will be empty for such as the seed URIs.</para>
 
-        <para>Next comes the discovery path that got us to this URI (<xref
-        linkend="discoverypath" />) and then the URI that immediately
-        referenced this URI ('referrer'). Both of the latter two fields will
-        be empty for such as the seed URIs.</para>
-
-        <para>Next up is the document mime type, the id of the worker thread
-        that downloaded this document, the time in milliseconds to download
-        the document, and finally (if pertinent) the number of times the URI
-        had to be tried. If never retried (i.e. just 1 try) then this is
-        '-'.</para>
+        <para>The <emphasis rule="bold">seventh</emphasis> holds the
+        document mime type, the <emphasis rule="bold">eighth</emphasis> column
+        has the id of the worker thread that downloaded this document,
+        the <emphasis rule="bold">ninth</emphasis> holds the time in
+        milliseconds to download the document, and finally (if pertinent), 
+        the <emphasis rule="bold">tenth</emphasis> column holds 
+        <quote>annotations</quote>.  Possible annontations include:
+        The number of times the URI had to be tried (This field is '-' if 
+        the download was never retried); The literal
+        <literal>lenTrunc</literal> if the download was truncated because it
+        exceeded configured limits; <literal>timeTrunc</literal> if the
+        download was truncated because the download time exceeded configured
+        limits; or <literal>midFetchTrunc</literal> if a midfetch filter
+        determined the download should be truncated.</para>
       </sect3>
 
       <sect3>
