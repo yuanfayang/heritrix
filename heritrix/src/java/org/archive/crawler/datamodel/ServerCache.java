@@ -46,7 +46,7 @@ public class ServerCache {
         this.settingsHandler = settingsHandler;
     }
 
-    public CrawlServer getServerFor(String h) {
+    public synchronized CrawlServer getServerFor(String h) {
         CrawlServer cserver = (CrawlServer) servers.get(h);
         if (cserver==null) {
             cserver = new CrawlServer(h);
