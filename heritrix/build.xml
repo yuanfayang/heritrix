@@ -95,7 +95,8 @@
     <delete dir="${distdir}">
     </delete>
   </target>
-  <target name="dist" description="o Create a distribution" depends="jar, javadoc">
+  <target name="dist" description="o Create a distribution" 
+        depends="jar, javadoc">
     <mkdir dir="dist">
     </mkdir>
     <copy todir="dist">
@@ -116,6 +117,12 @@
             <include name="heritrix*.sh"/>
         </fileset>
    </copy>
+    <!--Set permission on scripts just copied.-->
+    <chmod perm="ugo+rx" >
+      <fileset dir="dist/bin">
+        <include name="heritrix*.sh"/>
+      </fileset>
+    </chmod>
   </target>
   <target name="test" description="o Run the test cases" if="test.failure" depends="internal-test">
     <fail message="There were test failures.">
