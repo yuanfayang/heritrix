@@ -72,10 +72,13 @@ import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.GenerationFileHandler;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.GateSync;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
+
+import EDU.oswego.cs.dl.util.concurrent.NullSync;
+import EDU.oswego.cs.dl.util.concurrent.ReentrantLock;
+import EDU.oswego.cs.dl.util.concurrent.Sync;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -125,11 +128,15 @@ public class CrawlController implements Serializable {
     private transient ServerCache serverCache;
     private SettingsHandler settingsHandler;
 
-    // used to hold all threads in place in OutOfMemory condition
-    private GateSync memoryGate = new GateSync();
+
+    // used to enable/disable single-threaded operation after OOM
+    volatile boolean singleThreadMode = false; 
+    private static final ReentrantLock SINGLE_THREAD_LOCK = new ReentrantLock();
+
+    // emergency reserve of memory to allow some progress/reporting after OOM
     private LinkedList reserveMemory;
-    private static final int RESERVE_BLOCKS = 5;
-    private static final int RESERVE_BLOCK_SIZE = 2^20; // 1MB
+    private static final int RESERVE_BLOCKS = 1;
+    private static final int RESERVE_BLOCK_SIZE = 5*2^20; // 3MB
 
     // crawl state: as requested or actual
     
@@ -899,6 +906,7 @@ public class CrawlController implements Serializable {
             // Can't resume if not been told to pause
             return;
         }
+        multiThreadMode();
         frontier.unpause();
         logger.info("Crawl resumed.");
         sendCrawlStateChangeEvent(RUNNING, CrawlJob.STATUS_RUNNING);
@@ -1271,22 +1279,64 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Close the memory gate, holding any thread that
-     * tries to acquire it in place.
+     * Go to single thread mode, where only one ToeThread may
+     * proceed at a time. Also acquires the single lock, so 
+     * no further threads will proceed past an 
+     * acquireContinuePermission. Caller mush be sure to release
+     * lock to allow other threads to proceed one at a time. 
      */
-    public void lockMemory() {
-        memoryGate.lock();
+    public void singleThreadMode() {
+        try {
+            SINGLE_THREAD_LOCK.acquire();
+            singleThreadMode = true; 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Proceed only if the memory gate has not been
-     * closed. 
+     * Go to back to regular multi thread mode, where all
+     * ToeThreads may proceed at once
+     */
+    public void multiThreadMode() {
+        try {
+            SINGLE_THREAD_LOCK.acquire();
+            singleThreadMode = false; 
+            SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Proceed only if allowed, giving CrawlController a chance
+     * to enforce single-thread mode.
+     *  
      * @throws InterruptedException
      */
-    public void acquireMemory() throws InterruptedException {
-        memoryGate.acquire();
+    public void acquireContinuePermission() throws InterruptedException {
+        if(singleThreadMode) {
+            SINGLE_THREAD_LOCK.acquire();
+            if(!singleThreadMode) {
+                // if changed while waiting, ignore
+                SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+            }
+        } // else, permission is automatic
     }
 
+    /**
+     * Relinquish continue permission at end of processing (allowing
+     * another thread to proceed if in single-thread mode). 
+     *  
+     * @throws InterruptedException
+     */
+    public void releaseContinuePermission() {
+        if(singleThreadMode) {
+            if(SINGLE_THREAD_LOCK.holds()>0) {
+                SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds()); // release all
+            }
+        } // else do nothing; 
+    }
+    
     /**
      * 
      */
@@ -1302,6 +1352,7 @@ public class CrawlController implements Serializable {
      * completing the crawl-pause. 
      */
     public synchronized void toePaused() {
+        releaseContinuePermission();
         if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
             completePause();
         }
