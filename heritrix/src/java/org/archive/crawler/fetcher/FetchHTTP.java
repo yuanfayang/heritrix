@@ -380,7 +380,7 @@ public class FetchHTTP
      */
     private void loadCookies(String cookiesFile) {
         // Do nothing if cookiesFile is not specified.
-        if (cookiesFile == null) {
+        if (cookiesFile == null || cookiesFile.length() <= 0) {
             return;
         }
         RandomAccessFile raf = null;
