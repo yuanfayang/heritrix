@@ -145,10 +145,10 @@ public class ARCSocketFactory extends SocketFactory
      */
     private static final int MAX_HEADER_SIZE = 1024 * 1024;
     
-	/**
+    /**
      * Singleton instance of ARCSocketFactory.
      */
-	private static ARCSocketFactory instance = null;
+    private static ARCSocketFactory instance = null;
 
     /**
      * Pool of ARCWriters.
@@ -172,7 +172,7 @@ public class ARCSocketFactory extends SocketFactory
         // Inaccessible constructor.
     }
     
-	/**
+    /**
      * Constructor.
      * 
      * Private so users go via {@link getInstance} to get an instance.
@@ -180,7 +180,7 @@ public class ARCSocketFactory extends SocketFactory
      * @param properties Properties to configure ARCSocketFactory.  There must
      * at least be a 'arcsocketfactory.dumpDir' property that points at a 
      * location on local disk to which arc and scratch files can be written.
-	 */
+     */
     private ARCSocketFactory(Properties properties)
         throws IOException
     {
@@ -219,50 +219,50 @@ public class ARCSocketFactory extends SocketFactory
     public static synchronized void initialize(Properties properties)
         throws IOException
     {
-    	if(instance == null)
+        if(instance == null)
         {
-    		instance = new ARCSocketFactory(properties);
+            instance = new ARCSocketFactory(properties);
         }
     }
     
-	public Socket createSocket(String host, int port)
-		throws IOException, UnknownHostException
-	{
-		return new ARCSocket(host, port);
-	}
+    public Socket createSocket(String host, int port)
+        throws IOException, UnknownHostException
+    {
+        return new ARCSocket(host, port);
+    }
     
     public Socket createSocket(InetAddress host, int port) 
         throws IOException
     {
         return new ARCSocket(host, port);
     }
-	
-	public Socket createSocket(String host, int port, InetAddress localHost, 
+    
+    public Socket createSocket(String host, int port, InetAddress localHost, 
             int localPort)
-		throws IOException, UnknownHostException
-	{
-		return new ARCSocket(host, port, localHost, localPort);
-	}
+        throws IOException, UnknownHostException
+    {
+        return new ARCSocket(host, port, localHost, localPort);
+    }
 
-	public Socket createSocket(InetAddress address, int port, InetAddress 
-			localAddress, int localPort)
-		throws IOException
-	{
-		return new ARCSocket(address, port, localAddress, localPort);
-	}
+    public Socket createSocket(InetAddress address, int port, InetAddress 
+            localAddress, int localPort)
+        throws IOException
+    {
+        return new ARCSocket(address, port, localAddress, localPort);
+    }
 
-	/**
+    /**
      * Returns singleton instance of ARCSocketFactory.
      * 
      *  @return Singleton instance of ARCSocketFactory or null if
      * {@link #initialize(java.util.Properties)} hasn't first been called.
      * Return type is SocketFactory.  No need for client to know about
      * ARCSocketFactory.
-	 */
-	public static SocketFactory getInstance()
-	{
-		return instance;
-	}
+     */
+    public static SocketFactory getInstance()
+    {
+        return instance;
+    }
     
     /**
      * Return a unique basename.
