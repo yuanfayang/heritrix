@@ -171,29 +171,38 @@ implements CoreAttributeConstants {
             CharSequence value = cs.subSequence(start, end);
             if (attr.start(2) > -1) {
                 // HREF
+                CharSequence context = Link.elementContext(element, attr.group(2));
                 if(element.toString().equalsIgnoreCase(LINK)) {
                     // <LINK> elements treated as embeds (css, ico, etc)
-                    processEmbed(curi, value);
+                    processEmbed(curi, value, context);
                 } else {
                     // other HREFs treated as links
-                    processLink(curi, value);
+                    processLink(curi, value, context);
                 }
                 if (element.toString().equalsIgnoreCase(BASE)) {
-                    curi.putString(A_HTML_BASE, value.toString());
+                    try {
+                        curi.setBaseURI(value.toString());
+                    } catch (URIException e1) {
+                        getController().logUriError(e1,curi,value.toString());
+                    }
                 }
             } else if (attr.start(3) > -1) {
                 // ACTION
-                processLink(curi, value);
+                CharSequence context = Link.elementContext(element, attr.group(3));
+                processLink(curi, value, context);
             } else if (attr.start(4) > -1) {
                 // ON____
-                processScriptCode(curi, value);
+                processScriptCode(curi, value); // TODO: context?
             } else if (attr.start(5) > -1) {
-                processEmbed(curi, value);
+                // SRC etc.
+                CharSequence context = Link.elementContext(element, attr.group(5));
+                processEmbed(curi, value, context);
             } else if (attr.start(6) > -1) {
                 // CODEBASE
                 // TODO: more HTML deescaping?
                 codebase = TextUtils.replaceAll(ESCAPED_AMP, value, AMP);
-                processEmbed(curi,codebase);
+                CharSequence context = Link.elementContext(element,attr.group(6));
+                processEmbed(curi,codebase, context);
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
                 if (resources == null) {
@@ -226,7 +235,8 @@ implements CoreAttributeConstants {
             } else if (attr.start(10) > -1) {
                 // VALUE
                 if(TextUtils.matches(LIKELY_URI_PATH, value)) {
-                    processLink(curi,value);
+                    CharSequence context = Link.elementContext(element, attr.group(10));
+                    processLink(curi,value, context);
                 }
 
             } else if (attr.start(11) > -1) {
@@ -260,7 +270,7 @@ implements CoreAttributeConstants {
                 if (codebaseURI != null) {
                     res = codebaseURI.resolve(res).toString();
                 }
-                processEmbed(curi, res);
+                processEmbed(curi, res, element); // TODO: include attribute too
             }
         } catch (URIException e) {
             curi.addLocalizedError(getName(), e, "BAD CODEBASE " + codebase);
@@ -286,7 +296,7 @@ implements CoreAttributeConstants {
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
         this.numberOfLinksExtracted +=
-            ExtractorJS.considerStrings(curi, cs, false);
+            ExtractorJS.considerStrings(curi, cs, getController(), false);
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
@@ -295,24 +305,39 @@ implements CoreAttributeConstants {
      * @param curi
      * @param value
      */
-    protected void processLink(CrawlURI curi, CharSequence value) {
+    protected void processLink(CrawlURI curi, CharSequence value, CharSequence context) {
         String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
 
         if(TextUtils.matches(JAVASCRIPT, link)) {
             processScriptCode(curi,value.subSequence(11, value.length()));
         } else {
             logger.finest("link: " + link + " from " + curi);
+            addLinkFromString(curi, link, context,'L');
             this.numberOfLinksExtracted++;
-            curi.addLinkToCollection(link, A_HTML_LINKS);
+//            curi.addLinkToCollection(link, A_HTML_LINKS);
         }
     }
 
-    protected void processEmbed(CrawlURI curi, CharSequence value) {
+    /**
+     * @param curi
+     * @param uri
+     * @param context
+     */
+    private void addLinkFromString(CrawlURI curi, String uri,
+            CharSequence context, char hopType) {
+        try {
+            curi.createAndAddLinkRelativeToBase(uri, context, hopType);
+        } catch (URIException e) {
+            getController().logUriError(e, curi, uri);
+        }
+    }
+
+    protected void processEmbed(CrawlURI curi, CharSequence value, CharSequence context) {
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
 
         logger.finest("embed: " + embed + " from " + curi);
+        addLinkFromString(curi, embed, context,Link.EMBED_HOP);
         this.numberOfLinksExtracted++;
-        curi.addLinkToCollection(embed, A_HTML_EMBEDS);
     }
 
     public void innerProcess(CrawlURI curi) {
@@ -526,8 +551,12 @@ implements CoreAttributeConstants {
                 return true;
             }
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
-            curi.addLinkToCollection(
-                content.substring(content.indexOf("=") + 1), A_HTML_LINKS);
+            String refreshUri = content.substring(content.indexOf("=") + 1);
+            try {
+                curi.createAndAddLinkRelativeToBase(refreshUri,cs,Link.REFER_HOP);
+            } catch (URIException e) {
+                getController().logUriError(e,curi,refreshUri);
+            }
         }
         return false;
     }
@@ -546,7 +575,7 @@ implements CoreAttributeConstants {
 
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-            curi, sequence.subSequence(endOfOpenTag,sequence.length()));
+            curi, sequence.subSequence(endOfOpenTag,sequence.length()), getController());
     }
 
     /* (non-Javadoc)

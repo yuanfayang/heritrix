@@ -162,12 +162,13 @@ public class PreconditionEnforcer
             // Robots expired - should be refetched even though its already
             // crawled.
             try {
-                curi.markPrerequisite(
-                    curi.getUURI().resolve("/robots.txt").toString(),
+                String prereq = curi.getUURI().resolve("/robots.txt").toString();
+                curi.markPrerequisite(prereq,
                     getController().getPostprocessorChain());
             }
             catch (URIException e1) {
                 logger.severe("Failed resolve using " + curi);
+                throw new RuntimeException(e1); // shouldn't ever happen
             }
             return true;
         }
@@ -232,8 +233,13 @@ public class PreconditionEnforcer
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
             logger.fine("Deferring processing of " + curi.toString()
                 + " for dns lookup.");
-            curi.markPrerequisite("dns:" + ch.getHostName(),
-                getController().getPostprocessorChain());
+            String preq = "dns:" + ch.getHostName();
+            try {
+                curi.markPrerequisite(preq,
+                    getController().getPostprocessorChain());
+            } catch (URIException e) {
+                throw new RuntimeException(e); // shouldn't ever happen
+            }
             return true;
         }
         
@@ -420,8 +426,14 @@ public class PreconditionEnforcer
                         + " credential(s) of type " + c + " but prereq"
                         + " is null.");
                 } else {
-                    curi.markPrerequisite(prereq,
-                        getController().getPostprocessorChain());
+                    try {
+                        curi.markPrerequisite(prereq,
+                            getController().getPostprocessorChain());
+                    } catch (URIException e) {
+                        logger.severe("unable to set credentials prerequisite "+prereq);
+                        getController().logUriError(e,curi,prereq);
+                        return false; 
+                    }
                     result = true;
                     logger.fine("Queueing prereq " + prereq + " of type " + c +
                         " for " + curi);

@@ -25,7 +25,6 @@ package org.archive.crawler.postprocessor;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -33,8 +32,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
@@ -44,6 +41,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.MapType;
@@ -151,76 +149,67 @@ implements CoreAttributeConstants, FetchStatusCodes {
             handlePrerequisites(curi);
             return;
         }
+        
+        if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
+            // do not follow links of error pages
+            return;
+        }
 
-        UURI baseUri = getBaseURI(curi);
-        // handle http headers
-        if (curi.containsKey(A_HTTP_HEADER_URIS)) {
-            handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
-                CandidateURI.MEDIUM);
-        }
-        
-        // handle embeds
-        if (curi.containsKey(A_HTML_EMBEDS)) {
-            handleLinkCollection(curi, baseUri, A_HTML_EMBEDS, 'E',
-                CandidateURI.NORMAL);
-        }
-        
-        // handle speculative embeds
-        if (curi.containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
-            handleLinkCollection(curi, baseUri,A_HTML_SPECULATIVE_EMBEDS, 'X',
-                CandidateURI.NORMAL);
-        }
-        
-        // handle links
-        if (curi.containsKey(A_HTML_LINKS)) {
-            handleLinkCollection(
-                curi, baseUri, A_HTML_LINKS, 'L', CandidateURI.NORMAL);
-        }
-        
-        // handle css links
-        if (curi.containsKey(A_CSS_LINKS)) {
-            handleLinkCollection(
-                curi, baseUri, A_CSS_LINKS, 'E', CandidateURI.NORMAL);
-        }
-        
-        // handle js file links
-        if (curi.containsKey(A_JS_FILE_LINKS)) {
-            UURI viaURI = baseUri;
-            if (curi.flattenVia() != null && curi.flattenVia().length() != 0) {
-                try {
-                    viaURI = UURIFactory.getInstance(curi.flattenVia());
-                } catch (URIException e) {
-                    Object[] array = { curi, curi.flattenVia() };
-                    getController().uriErrors.log(
-                        Level.INFO, e.getMessage(), array);
-                }
+        Iterator iter = curi.getOutLinks().iterator();
+        while(iter.hasNext()) {
+            Link wref = (Link)iter.next();
+            try {
+                boolean isSeed = considerAsSeed(curi,wref);
+                
+                CandidateURI caURI = createCandidateURI(curi,wref);
+                caURI.setSchedulingDirective(getSchedulingFor(wref));
+                caURI.setIsSeed(isSeed);
+                
+                schedule(caURI);
+            } catch (URIException e) {
+                getController().logUriError(e,curi,wref.getDestination().toString());
             }
-            handleLinkCollection( curi, viaURI,
-                A_JS_FILE_LINKS, 'X', CandidateURI.NORMAL);
+            
         }
     }
+    
+    /**
+     * @param curi
+     * @param wref
+     * @return
+     */
+    private boolean considerAsSeed(CrawlURI curi, Link wref) {
+        // Check if this is a seed with a 301 or 302.
+        if (curi.isSeed()
+                && (curi.getFetchStatus() == 301 || curi.getFetchStatus() == 302)
+                && wref.getHopType() == 'R') {
+            // Check if redirects from seeds should be treated as seeds.
+            if (((Boolean) getUncheckedAttribute(curi,
+                    ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-    private UURI getBaseURI(CrawlURI curi) {
-        if (!curi.containsKey(A_HTML_BASE)) {
-            return curi.getUURI();
+    /**
+     * @param wref
+     * @return
+     */
+    private int getSchedulingFor(Link wref) {
+        if(wref.getHopType()=='R') {
+            // treat redirects somewhat urgently
+            return CandidateURI.MEDIUM;
         }
-        String base = curi.getString(A_HTML_BASE);
-        try {
-            return UURIFactory.getInstance(base);
-        } catch (URIException e) {
-            Object[] array = { curi, base };
-            getController().uriErrors.log(Level.INFO,e.getMessage(), array);
-            // next best thing: use self
-            return curi.getUURI();
-        }
+        // everything else normal (at least for now)
+        return CandidateURI.NORMAL;
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
         try {
             // create and schedule prerequisite
-            CandidateURI caUri = createCandidateURI(curi, getBaseURI(curi),
-                (String)curi.getPrerequisiteUri(), curi.getPathFromSeed() +
-                    "P");
+            CandidateURI caUri = createCandidateURI(curi,
+                curi.getPrerequisiteUri());
             int prereqPriority = curi.getSchedulingDirective() - 1;
             if (prereqPriority < 0) {
                 prereqPriority = 0;
@@ -288,81 +277,18 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
         return result;
     }
-
-    /**
-     * Method handles links according to the collection, type and scheduling
-     * priority.
-     *
-     * @param curi CrawlURI that is origin of the links.
-     * @param baseUri URI that is used to resolve links.
-     * @param collection Collection name.
-     * @param linkType Type of links.
-     * @param directive how should URIs be scheduled
-     */
-    protected void handleLinkCollection(CrawlURI curi, UURI baseUri,
-            String collection, char linkType, int directive) {
-        if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
-            // do not follow links of error pages
-            return;
+    
+    protected CandidateURI createCandidateURI(CrawlURI curi, Link link)
+            throws URIException {
+        UURI uuri;
+        if (link.getDestination() instanceof UURI) {
+            uuri = (UURI) link.getDestination();
+        } else {
+            uuri = UURIFactory.getInstance(curi.getBaseURI(), link
+                    .getDestination().toString());
         }
-
-        // Check if this is a seed with a 301 or 302.
-        boolean seed = false;
-        if ( curi.isSeed() && (curi.getFetchStatus() == 301 ||
-                    curi.getFetchStatus() == 302)
-                && collection.equals(A_HTTP_HEADER_URIS) ) {
-            try {
-                // Check if redirects from seeds should be treated as seeds.
-                if(((Boolean) getAttribute(
-                        ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue()){
-                    // Treat any discovered URIs as seeds. Should only be 1.
-                    seed = true;
-                }
-            } catch (MBeanException e) {
-                e.printStackTrace();
-            } catch (ReflectionException e) {
-                e.printStackTrace();
-            } catch (AttributeNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-
-        Collection links = (Collection)curi.getObject(collection);
-        for (Iterator iter = links.iterator(); iter.hasNext(); ) {
-            String link = (String)iter.next();
-            if (link == null || link.length() <= 0) {
-                continue;
-            }
-            try {
-                CandidateURI caURI = createCandidateURI(curi, baseUri, link,
-                    curi.getPathFromSeed() + linkType);
-                caURI.setSchedulingDirective(directive);
-                caURI.setIsSeed(seed);
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.finest("inserting link from " + collection +
-                        " of type " + linkType + " at head " +
-                        caURI.toString());
-                }
-                schedule(caURI);
-            } catch (URIException e) {
-                Object[] array = {curi, link};
-                getController().uriErrors.log(Level.INFO, e.getMessage(),
-                    array);
-            } catch (NumberFormatException e) {
-                // UURI.createUURI will occasionally throw this error.
-                Object[] array = {curi, link};
-                getController().uriErrors.log(Level.INFO, e.getMessage(),
-                    array);
-            }
-        }
-    }
-
-    protected CandidateURI createCandidateURI(CrawlURI curi, UURI base,
-            String link, String pathFromSeed)
-    throws URIException {
-        CandidateURI caURI =
-            new CandidateURI(UURIFactory.getInstance(base, link), pathFromSeed,
-                curi);
+        CandidateURI caURI = new CandidateURI(uuri, curi.getPathFromSeed()
+                + link.getHopType(), curi.getUURI(), link.getContext());
         return caURI;
     }
 }

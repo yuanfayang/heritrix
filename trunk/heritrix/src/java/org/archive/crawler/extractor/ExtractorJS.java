@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
@@ -95,7 +97,8 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         if((contentType.indexOf("javascript")<0)
             && (contentType.indexOf("jscript")<0)
             && (contentType.indexOf("ecmascript")<0)
-            && (!curi.getURIString().toLowerCase().endsWith(".js"))) {
+            && (!curi.getURIString().toLowerCase().endsWith(".js"))
+            && (!curi.getViaContext().toString().toLowerCase().startsWith("script"))) {
             return;
         }
 
@@ -115,9 +118,9 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         }
 
         try {
-            numberOfLinksExtracted += considerStrings(curi, cs, true);
+            numberOfLinksExtracted += considerStrings(curi, cs,
+                    getController(), true);
         } catch (StackOverflowError e) {
-            // TODO Auto-generated catch block
             DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
         }
         // Set flag to indicate that link extraction is completed.
@@ -134,7 +137,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     }
 
     public static long considerStrings(CrawlURI curi, CharSequence cs,
-            boolean handlingJSFile) {
+            CrawlController controller, boolean handlingJSFile) {
         long foundLinks = 0;
         Matcher strings =
             TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
@@ -147,15 +150,18 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                 String string = uri.group();
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
                 foundLinks++;
-                if (handlingJSFile) {
-                    curi.addLinkToCollection(string, A_JS_FILE_LINKS);
-                } else {
-                    curi.addLinkToCollection(string,
-                        A_HTML_SPECULATIVE_EMBEDS);
+                try {
+                    if (handlingJSFile) {
+                        curi.createAndAddLinkRelativeToVia(string,Link.JS_MISC,Link.SPECULATIVE_HOP);
+                    } else {
+                        curi.createAndAddLinkRelativeToBase(string,Link.JS_MISC,Link.SPECULATIVE_HOP);
+                    }
+                } catch (URIException e) {
+                    controller.logUriError(e,curi,string);
                 }
             } else {
                foundLinks += considerStrings(curi, subsequence,
-                   handlingJSFile);
+                   controller, handlingJSFile);
             }
             TextUtils.freeMatcher(uri);
         }

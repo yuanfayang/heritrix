@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -58,22 +59,32 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         }
         numberOfCURIsHandled++;
         HttpMethod method = (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
-        CrawlURI curi1 = curi;
         ArrayList uris = new ArrayList();
         Header loc = method.getResponseHeader("Location");
         if ( loc != null ) {
-            uris.add(loc.getValue());
+            addHeaderLink(curi,loc);
         }
         loc = method.getResponseHeader("Content-Location");
         if ( loc != null ) {
-            uris.add(loc.getValue());
+            addHeaderLink(curi,loc);
         }
+    }
+
+    /**
+     * @param curi
+     * @param loc
+     */
+    private void addHeaderLink(CrawlURI curi, Header loc) {
         // TODO: consider possibility of multiple headers
-        if(uris.size()>0) {
-            numberOfLinksExtracted += uris.size();
-            curi1.putObject(A_HTTP_HEADER_URIS, uris);
-            logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
+        try {
+            curi.createAndAddLink(loc.getValue(),loc.getName()+":",Link.REFER_HOP);
+            numberOfLinksExtracted++;
+        } catch (URIException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            getController().logUriError(e,curi,loc.getValue());
         }
+
     }
 
     /* (non-Javadoc)
