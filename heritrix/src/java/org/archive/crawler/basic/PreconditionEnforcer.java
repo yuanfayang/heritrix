@@ -23,14 +23,10 @@
  */
 package org.archive.crawler.basic;
 
-import java.net.URISyntaxException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 
@@ -99,21 +95,9 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
                 
                 // Robots expired - should be refetched even though its already
                 // crawled.
-                String forcedURI =
-                    //curi.getServer().getServer() + "/robots.txt";
-                    curi.getUURI().getRawUri().resolve("/robots.txt").toString();
-                try {
-                    UURI uuri = UURI.createUURI(forcedURI);
-                    CandidateURI caURI = new CandidateURI(
-                        uuri, CandidateURI.FORCED_FETCH_PRIORITY);
-
-                    getController().getFrontier().batchScheduleURI(caURI);
-                } catch (URISyntaxException e) {
-                    Object[] array = { curi, forcedURI };
-                    getController().uriErrors.log(
-                        Level.INFO, e.getMessage(), array);
-                }
-             //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
+             curi.setPrerequisiteUri(
+                curi.getUURI().getRawUri().resolve("/robots.txt").toString());
+                
              curi.incrementDeferrals();
              curi.setFetchStatus(S_DEFERRED);
              curi.skipToProcessorChain(getController().getPostprocessorChain());
@@ -152,20 +136,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
                     + curi.toString()
                     + " for dns lookup.");
 
-            String hostname = curi.getServer().getHostname();
-            String dnsURI = "dns:" + hostname;
-            try {
-                UURI uuri = UURI.createUURI(dnsURI);
-                CandidateURI caURI =
-                    new CandidateURI(uuri, CandidateURI.FORCED_FETCH_PRIORITY);
-                getController().getFrontier().batchScheduleURI(caURI);
-            } catch (URISyntaxException e) {
-                Object[] array = { curi, dnsURI };
-                getController().uriErrors.log(
-                    Level.INFO, e.getMessage(), array);
-            }
-
-            //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
+            curi.setPrerequisiteUri("dns:" + curi.getServer().getHostname());
             curi.setFetchStatus(S_DEFERRED);
             curi.incrementDeferrals();
             curi.skipToProcessorChain(getController().getPostprocessorChain());

@@ -140,14 +140,28 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
                 //failureDisposition(curi);
                 return;
             }
-            // convert to UURI for convenience of Frontier
-            UURI prereq = UURI.createUURI(
-                (String)curi.getPrerequisiteUri(), getBaseURI(curi));
+            
+            // convert prerequisite to UURI for convenience of Frontier
+            UURI prereqUURI = null;
+            Object prereqObject = curi.getPrerequisiteUri();
+            if (prereqObject instanceof String){
+                prereqUURI = UURI.createUURI(
+                    (String)curi.getPrerequisiteUri(), getBaseURI(curi));
+                                    
+            } else if (prereqObject instanceof UURI){
+                prereqUURI = (UURI)prereqObject;
+            } else {
+                assert false : "Prereqisute is not String or UURI";
+            }
+
+            assert (prereqUURI != null) : "In postselector prerequisite URIs " +
+                "should not be null!";
+
+            // Schedule of prerequisites with forced-fetch priority.                
+            CandidateURI caUri = new CandidateURI(
+                prereqUURI, CandidateURI.FORCED_FETCH_PRIORITY);                
                 
-            curi.setPrerequisiteUri(prereq); 
-            CandidateURI caUri = 
-                new CandidateURI(prereq, CandidateURI.HIGH_PRIORITY);
-                
+            curi.setPrerequisiteUri(prereqUURI);
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
 
