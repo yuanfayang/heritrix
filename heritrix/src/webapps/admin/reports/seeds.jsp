@@ -2,6 +2,7 @@
 <%@include file="/include/secure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="org.archive.crawler.datamodel.UURI"%>
 
 <%
@@ -74,7 +75,7 @@
 					String UriString = (String)seeds.next();
 					String disposition = stats.getSeedDisposition(UriString);
 					int code = stats.getSeedStatusCode(UriString);
-					String statusCode = code==0 ? "" : Integer.toString(code);
+					String statusCode = CrawlURI.fetchStatusCodesToString(code).equals("0") ? "" : Integer.toString(code);
 					String statusColor = "black";
 					if(code<0 || code >=400){
 						statusColor = "red";

@@ -3,6 +3,7 @@
 
 <%@ page import="java.util.*" %>
 <%@ page import="org.archive.crawler.admin.LongWrapper"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%
 	/**
@@ -279,7 +280,7 @@
 					<tr <%=alt?"bgcolor=#EEEEFF":""%>>
 						<td nowrap>
 							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true">
-                                <%=org.archive.crawler.datamodel.CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
+                                <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
                             </a>&nbsp;
 						</td>
 						<td colspan="2" nowrap>
