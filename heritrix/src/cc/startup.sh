@@ -1,17 +1,20 @@
 #!/bin/sh
-export JAVA_HOME=$HOME/bin/j2sdk1.4.2_03
+export BUILD_HOME=/0/cruisecontrol
+export HOME=$BUILD_HOME
+export JAVA_HOME=$BUILD_HOME/bin/j2sdk1.4.2_03
 export PATH=$PATH:$JAVA_HOME/bin
 export CVS_RSH=ssh
-export MAVEN_HOME=$HOME/bin/maven-1.0-rc1
-export CCDIR=$HOME/bin/cruisecontrol-2.1.4/main
-export JETTY_HOME=$HOME/bin/Jetty-4.2.15rc0/
-export CCBUILDDIR=$HOME/cc
-if test ! -d ${CCBUILDDIR}/logs
+export MAVEN_HOME=$BUILD_HOME/bin/maven-1.0-rc1
+export CCDIR=$BUILD_HOME/bin/cruisecontrol/main
+export JETTY_HOME=$BUILD_HOME/bin/jetty
+if test ! -d ${BUILD_HOME}/logs
 then
-    mkdir ${CCBUILDDIR}/logs
+    mkdir ${BUILD_HOME}/logs
 fi
 # CC output goes into cruisecontrol.log.  No need of catching it for second
 # time into a stdout/stderr file.
-nohup $CCDIR/bin/cruisecontrol.sh -port 8081 &> /dev/null &
+nohup $CCDIR/bin/cruisecontrol.sh -port 8081 \
+    &> $BUILD_HOME/cruisecontrol_out.txt &
 cd $JETTY_HOME
-nohup $JAVA_HOME/bin/java -jar start.jar &> ${CCBUILDDIR}/logs/jetty.log &
+nohup $JAVA_HOME/bin/java -jar start.jar $BUILD_HOME/cc_jetty.xml \
+    &> ${BUILD_HOME}/logs/jetty.log &

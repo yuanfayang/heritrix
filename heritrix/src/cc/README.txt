@@ -76,10 +76,10 @@ and place into your maven respository (Had to unzip the jini zip file and
 repackage it as a jar to make maven happy).  Jini can be found here:
 http://java.sun.com/products/jimi/
 
-+ Install cruisecontrol.  This doc. was done w/ 2.1.4.  You have to build it
++ Install cruisecontrol.  This doc. was done w/ 2.1.6.  You have to build it
 after downloading.
     
-    % cd cruisecontrol-2.1.4/main
+    % cd cruisecontrol-2.1.6/main
     % chmod u+x build.sh
     % ./build.sh
 
@@ -133,18 +133,6 @@ w/ settings under the jetty etc/ dir (jetty.xml) and then did
 'java -Djetty.port=8080 -jar start.jar' under the jetty dir (Note, our crawl??
 machines only allow web access on port 8080).
 
-+ Run cruisecontrol.  Here's a sample startup script:
-    
-    #!/bin/sh
-    export JAVA_HOME=$HOME/bin/j2sdk1.4.2_03
-    export PATH=$PATH:$JAVA_HOME/bin
-    export CVS_RSH=ssh
-    export MAVEN_HOME=$HOME/bin/maven-1.0-rc1
-    export CCDIR=$HOME/bin/cruisecontrol-2.1.4/main
-    export JETTY_HOME=$HOME/bin/Jetty-4.2.15rc0/
-    nohup $CCDIR/bin/cruisecontrol.sh -port 8081 &
-    cd $JETTY_HOME
-    nohup $JAVA_HOME/bin/java -jar start.jar &
-
++ Run cruisecontrol.  See the start.sh in this directory for sample.
 Make sure its all running fine (Check the logs dir under CCBUILDDIR, 
 visit the website at HOST:8080, and visit the jmx server at HOST:8081).
