@@ -19,20 +19,23 @@
 package org.archive.util;
 
 import java.util.EmptyStackException;
-import java.util.Hashtable;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
+
 public class TextUtils {
 
     /** Reusable precompiled Pattern objects indexed on pattern string. */
-    final static Hashtable patterns = new Hashtable(50);
+    final static ConcurrentReaderHashMap patterns =
+        new ConcurrentReaderHashMap(50);
 
     /** Resuable match objects indexed on pattern string. Each element is a
      * stack of Matcher objects that can be reused.
      */
-    final static Hashtable patternMatchers = new Hashtable(50);
+    final static ConcurrentReaderHashMap patternMatchers =
+        new ConcurrentReaderHashMap(50);
 
     /**
      * Get a matcher object for a precompiled regex pattern.
