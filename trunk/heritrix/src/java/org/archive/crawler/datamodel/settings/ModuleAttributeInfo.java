@@ -32,52 +32,71 @@ import javax.management.MBeanAttributeInfo;
  */
 public class ModuleAttributeInfo extends MBeanAttributeInfo {
     private String type;
-    private final boolean overrideable;
+    private boolean isOverrideable;
+    private boolean isTransient;
     private final Object defaultValue;
     private final Object legalValueLists[];
     private boolean complexType = false;
-
-    /**
-     * @param name
-     * @param type
-     * @param description
-     * @param isOverrideable
-     * @param legalValues
-     * @param defaultValue
+    private boolean isExpertSetting;
+    
+    /** Construct a new instance of ModuleAttributeInfo.
+     * 
+     * @param name name of attribute.
+     * @param type an instance of the attributes type.
+     * @param description a description usable for the UI.
+     * @param isOverrideable should this attribute be overrideable on per settings.
+     * @param isTransient is this attribute visible for UI and serializer.
+     * @param legalValues list of legalvalues or null if no restrictions apply.
+     * @param defaultValue the default value for this attribute.
+     * @param isExpertSetting should this attribute only show up in UIs expert mode.
+     * 
      * @throws InvalidAttributeValueException
      * @throws java.lang.IllegalArgumentException
      */
-    public ModuleAttributeInfo(
-        String name,
-        Object type,
-        String description,
-        boolean isOverrideable,
-        Object[] legalValues,
-        Object defaultValue)
-        throws InvalidAttributeValueException {
+    public ModuleAttributeInfo(String name, Object type, String description,
+            boolean isOverrideable, boolean isTransient, Object[] legalValues,
+            Object defaultValue, boolean isExpertSetting)
+            throws InvalidAttributeValueException {
+
         super(name, type.getClass().getName(), description, true, true, false);
         setType(type);
-        overrideable = isOverrideable;
+        this.isOverrideable = isOverrideable;
+        this.isTransient = isTransient;
         legalValueLists = legalValues;
         this.defaultValue = checkValue(defaultValue);
         if (type instanceof ComplexType) {
             complexType = true;
         }
+        this.isExpertSetting = isExpertSetting;
     }
 
     public Object[] getLegalValues() {
         return legalValueLists;
     }
 
+    /** Returns true if this attribute refers to a ComplexType.
+     * 
+     * @return true if this attribute refers to a ComplexType.
+     */
     public boolean isComplexType() {
         return complexType;
     }
 
-    /**
+    /** Returns true if this attribute could be overridden in per settings.
+     * 
      * @return True if overrideable.
      */
     public boolean isOverrideable() {
-        return overrideable;
+        return isOverrideable;
+    }
+
+    /** Returns true if this attribute should be hidden from UI and not be
+     * serialized to persistent storage.
+     * 
+     * @return True if transient.
+     */
+    public boolean isTransient() {
+        return isTransient;
     }
 
     /**
