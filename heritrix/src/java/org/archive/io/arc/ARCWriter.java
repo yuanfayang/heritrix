@@ -40,6 +40,8 @@ import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.ReplayInputStream;
@@ -190,7 +192,12 @@ public class ARCWriter implements ARCConstants {
      * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
      */
     private static final String ENCODING = "ISO-8859-1";
-
+    
+    /**
+     * Metadata line pattern.
+     */
+    private static final Pattern METADATA_LINE_PATTERN =
+        Pattern.compile("^[^ ]+ [^ ]+ [^ ]+ [^ ]+ [^ ]+");
 
     /**
      * Constructor.
@@ -501,7 +508,7 @@ public class ARCWriter implements ARCConstants {
                         is.close();
                     }
                 }
-            } else {
+            } else if (obj != null) {
                 logger.severe("Unsupported metadata type: " + obj);
             }
         }
@@ -686,8 +693,27 @@ public class ARCWriter implements ARCConstants {
             ArchiveUtils.get14DigitDate(fetchBeginTimeStamp) +
             HEADER_FIELD_SEPARATOR + MimetypeUtils.truncate(contentType) +
             HEADER_FIELD_SEPARATOR + recordLength + LINE_SEPARATOR;
+        validateMetaLine(metaLineStr);
         this.out.write(metaLineStr.getBytes("UTF-8"));
      }
+    
+    /**
+     * Test that the metadata line is valid before writing.
+     * @throws IOException
+     */
+    protected void validateMetaLine(String metaLineStr) throws IOException {
+        if (metaLineStr.length() > MAX_METADATA_LINE_LENGTH) {
+        	throw new IOException("Metadata line length is " +
+                metaLineStr.length() + " which is > than maximum " +
+                MAX_METADATA_LINE_LENGTH);
+        }
+     	Matcher m = METADATA_LINE_PATTERN.matcher(metaLineStr);
+        if (!m.matches()) {
+        	throw new IOException("Metadata line doesn't match expected" +
+                " pattern: " + metaLineStr);
+        }
+        
+    }
 
     /**
      * @return True if we are using compression.
