@@ -23,7 +23,10 @@
  */
 package org.archive.crawler.basic;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,15 +49,19 @@ import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.MemLongFPSet;
 import org.archive.util.MemQueue;
+import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
+import org.archive.util.QueueItemMatcher;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -94,11 +101,11 @@ public class Frontier
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.Frontier");
 
-    private static String F_ADD = "\nF+ ";
-    private static String F_EMIT = "\nFe ";
-    private static String F_RESCHEDULE = "\nFr ";
-    private static String F_SUCCESS = "\nFs ";
-    private static String F_FAILURE = "\nFf ";
+    private static String F_ADD = "F+ ";
+    private static String F_EMIT = "Fe ";
+    private static String F_RESCHEDULE = "Fr ";
+    private static String F_SUCCESS = "Fs ";
+    private static String F_FAILURE = "Ff ";
 
     CrawlController controller;
 
@@ -115,7 +122,7 @@ public class Frontier
 
     // every CandidateURI not yet in process or another queue;
     // all seeds start here; may contain duplicates
-    Queue pendingHighQueue; // of CandidateURIs
+    //Queue pendingHighQueue; // of CandidateURIs
 
     // every CrawlURI handed out for processing but not yet returned
     //HashMap inProcessMap = new HashMap(); // of String (classKey) -> CrawlURI
@@ -197,8 +204,7 @@ public class Frontier
         throws FatalConfigurationException, IOException {
 
         pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
-        pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
-
+        //pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
 
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
 
@@ -217,13 +223,18 @@ public class Frontier
 
         this.controller = c;
         controller.addCrawlStatusListener(this);
+        loadSeeds(c);
+    }
+
+    private void loadSeeds(CrawlController c) {
         c.getScope().refreshSeedsIteratorCache();
         Iterator iter = c.getScope().getSeedsIterator();
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
             caUri.setIsSeed(true);
-            scheduleHigh(caUri);
+            caUri.setSchedulingDirective(CandidateURI.HIGH);
+            innerSchedule(caUri);
         }
     }
 
@@ -244,7 +255,6 @@ public class Frontier
 
     }
 
-
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
      */
@@ -254,33 +264,16 @@ public class Frontier
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#batchScheduleHigh(org.archive.crawler.datamodel.CandidateURI)
-     */
-    public void batchScheduleHigh(CandidateURI caUri) {
-        // initially just pass-through
-        //scheduleHigh(caUri);
-        threadWaitingHigh.getQueue().enqueue(caUri);
-    }
-
-
-
-    /* (non-Javadoc)
+    /** 
+     * 
      * @see org.archive.crawler.framework.URIFrontier#batchFlush()
      */
     public synchronized void batchFlush() {
-        Queue q = threadWaitingHigh.getQueue();
+        Queue q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
-            scheduleHigh((CandidateURI) q.dequeue());
-        }
-        q = threadWaiting.getQueue();
-        while(!q.isEmpty()) {
-            schedule((CandidateURI) q.dequeue());
+            innerSchedule((CandidateURI) q.dequeue());
         }
     }
-
 
     /**
      * Arrange for the given CandidateURI to be visited, if it is not
@@ -289,30 +282,28 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public synchronized void schedule(CandidateURI caUri) {
-        if(!caUri.forceFetch() && alreadyIncluded.quickContains(caUri)) {
-            logger.finer("Disregarding alreadyIncluded "+caUri);
-            return;
-        }
-        pendingQueue.enqueue(caUri);
-        incrementScheduled();
-        controller.recover.info(F_ADD+caUri.getURIString());
+        innerSchedule(caUri);
     }
 
     /**
-     * Arrange for the given CandidateURI to be visited, with top
-     * priority (before anything else), if it is not already
-     * scheduled/completed.
+     * Arrange for the given CandidateURI to be visited, if it is not
+     * already scheduled/completed.
      *
-     * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
-    public synchronized void scheduleHigh(CandidateURI caUri) {
-        if(!caUri.forceFetch() && alreadyIncluded.quickContains(caUri)) {
+    protected void innerSchedule(CandidateURI caUri) {
+        if(!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
         }
-        pendingHighQueue.enqueue(caUri);
+        if(caUri.needsImmediateScheduling()) {
+            enqueueHigh(CrawlURI.from(caUri));
+        } else {
+            pendingQueue.enqueue(caUri);
+        }
+        alreadyIncluded.add(caUri);
         incrementScheduled();
-        controller.recover.info(F_ADD+caUri.getURIString());
+        controller.recover.info("\n"+F_ADD+caUri.getURIString());
     }
 
     /**
@@ -339,34 +330,6 @@ public class Frontier
 
         // first, empty the high-priority queue
         CandidateURI caUri;
-        while ((caUri = dequeueFromPendingHigh()) != null) {
-            if( caUri instanceof CrawlURI ) {
-                curi = (CrawlURI) caUri;
-            } else {
-                if (!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
-                    // TODO: potentially up-prioritize URI
-                    logger.finer("Disregarding alreadyContained "+caUri);
-                    noteScheduledDuplicate();
-                    continue;
-                }
-                logger.finer("Scheduling "+caUri);
-                alreadyIncluded.add(caUri);
-                curi = new CrawlURI(caUri);
-            }
-
-            // If URI should be forced it has to be done
-            // before everything that might be in a queue.
-            // Since this only aplies to refetching expired robots.txt
-            // and dns lookups it should be ok to be impolite.
-            if (caUri.forceFetch()) {
-                return emitCuri(curi);
-            }
-
-            if (!enqueueIfNecessary(curi, true)) {
-                // OK to emit
-                return emitCuri(curi);
-            }
-        } // if reached, the pendingHighQueue is empty
 
         // if enough time has passed to wake any snoozing queues, do it
         wakeReadyQueues(now);
@@ -377,30 +340,10 @@ public class Frontier
             return emitCuri(curi);
         }
 
-        // if that fails, check the pending queue
+        // if that fails to find anything, check the pending queue
         while ((caUri = dequeueFromPending()) != null) {
-            if( caUri instanceof CrawlURI ) {
-                curi = (CrawlURI) caUri;
-            } else {
-                if (!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
-                    logger.finer("Disregarding alreadyContained "+caUri);
-                    noteScheduledDuplicate();
-                    continue;
-                }
-                logger.finer("Scheduling "+caUri);
-                alreadyIncluded.add(caUri);
-                curi = new CrawlURI(caUri);
-            }
-
-            // If URI should be forced it has to be done
-            // before everything that might be in a queue.
-            // Since this only aplies to refetching expired robots.txt
-            // and dns lookups it should be ok to be impolite.
-            if (caUri.forceFetch()) {
-                return emitCuri(curi);
-            }
-
-            if (!enqueueIfNecessary(curi, false)) {
+            curi = CrawlURI.from(caUri);
+            if (!enqueueIfNecessary(curi)) {
                 // OK to emit
                 return emitCuri(curi);
             }
@@ -416,6 +359,12 @@ public class Frontier
         // nothing to return, but there are still URIs
         // held for the future
 
+        waitForChange(timeout, now);
+        return null;
+    }
+
+    private void waitForChange(int timeout, long now) {
+        long waitMax;
         // block until something changes, or timeout occurs
         waitMax = Math.min(earliestWakeTime()-now,timeout);
         try {
@@ -423,15 +372,12 @@ public class Frontier
                 // ignore
                 // logger.warning("negative or zero wait "+waitMax+" ignored");
             } else {
-                synchronized(this) {
-                    wait(waitMax);
-                }
+                wait(waitMax);
             }
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return null;
     }
 
     /**
@@ -455,12 +401,10 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
-        logger.fine("Frontier.finished: "+curi.getURIString());
+        logger.fine("Frontier.finished: " + curi.getURIString());
 
-        // catch up on scheduling
+        // Catch up on scheduling
         batchFlush();
-
-        curi.incrementFetchAttempts();
 
         try {
             // update queues/snoozes as necessary
@@ -468,37 +412,41 @@ public class Frontier
 
             notify(); // new items might be available
 
-            logLocalizedErrors(curi);
 
-            // Regard any status larger then 0 as meaning success.
-            if(curi.getFetchStatus() > 0){
-                // SUCCESS: note & log
+            if(curi.getFetchStatus() > 0) {
+                // Regard any status larger then 0 as success.
                 successDisposition(curi);
-                return;
             }
-
-            // consider errors which can be retried
-            if (needsRetrying(curi)) {
+            else if (needsPromptRetry(curi)) {
+                // Consider statuses which allow nearly-immediate retry
+                // (like deferred to allow precondition to be fetched)
+                reschedule(curi);
+            }
+            else if (needsRetrying(curi)) {
+                // Consider errors which can be retried
                 scheduleForRetry(curi);
-                return;
             }
-
-            // Check for codes that mean that while we the crawler did manage to get it it
-            // must be disregarded for any reason.
-            if(isDisregarded(curi)){
+            else if(isDisregarded(curi)) {
+                // Check for codes that mean that while we the crawler did
+                // manage to get it it must be disregarded for any reason.
                 disregardDisposition(curi);
-                return;
             }
-
-            // In that case FAILURE, note & log
-            failureDisposition(curi);
+            else {
+                // In that case FAILURE, note & log
+                failureDisposition(curi);
+            }
+            
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
-            curi.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+            curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
+        }
+        
+        finally {
+            curi.processingCleanup();
         }
     }
 
@@ -518,14 +466,14 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getUriString(),
+            curi.getUURI().getURIString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
             controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().getUriString(),
+                curi.getUURI().getURIString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
@@ -547,7 +495,9 @@ public class Frontier
             case S_ROBOTS_PRECLUDED :
                  // they don't want us to have it
             case S_OUT_OF_SCOPE :
-                 // filtered out
+                 // filtered out by scope
+            case S_BLOCKED_BY_USER :
+                 // filtered out by user
             case S_TOO_MANY_EMBED_HOPS :
                  // too far from last true link
             case S_TOO_MANY_LINK_HOPS :
@@ -571,7 +521,7 @@ public class Frontier
                 Object array[] = { curi, iter.next() };
                 controller.localErrors.log(
                     Level.WARNING,
-                    curi.getUURI().getUriString(),
+                    curi.getUURI().getURIString(),
                     array);
             }
             // once logged, discard
@@ -601,7 +551,7 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getUriString(),
+            curi.getUURI().getURIString(),
             array);
 
         // note that CURI has passed out of scheduling
@@ -618,7 +568,7 @@ public class Frontier
         controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
         decrementScheduled();
-        controller.recover.info(F_SUCCESS+curi.getURIString());
+        controller.recover.info("\n"+F_SUCCESS+curi.getURIString());
     }
 
 
@@ -631,7 +581,6 @@ public class Frontier
      */
     public boolean isEmpty() {
         return pendingQueue.isEmpty()
-                && pendingHighQueue.isEmpty()
                 && allClassQueuesMap.isEmpty();
     }
 
@@ -644,7 +593,7 @@ public class Frontier
         while(!snoozeQueues.isEmpty()&&((URIStoreable)snoozeQueues.first()).getWakeTime()<=now) {
             URIStoreable awoken = (URIStoreable)snoozeQueues.first();
             if (!snoozeQueues.remove(awoken)) {
-                logger.severe("first() item couldn't be remove()d!");
+                logger.severe("first() item couldn't be remove()d! - "+awoken);
             }
             if (awoken instanceof KeyedQueue) {
                 KeyedQueue awokenKQ = (KeyedQueue)awoken;
@@ -654,11 +603,7 @@ public class Frontier
                     discardQueue(awoken);
                     return;
                 }
-                readyClassQueues.add(awoken);
-                awoken.setStoreState(URIStoreable.READY);
-            } else if (awoken instanceof CrawlURI) {
-                // TODO think about whether this is right
-                pushToPending((CrawlURI)awoken);
+                readyQueue((KeyedQueue)awoken); 
             } else {
                 assert false : "something evil has awoken!";
             }
@@ -677,7 +622,11 @@ public class Frontier
 
     private CrawlURI dequeueFromReady() {
         KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
+        assert firstReadyQueue.getStoreState() == URIStoreable.READY : "top ready queue not ready";
         CrawlURI readyCuri = (CrawlURI) firstReadyQueue.dequeue();
+        if (firstReadyQueue.isEmpty()) {
+            firstReadyQueue.setStoreState(URIStoreable.EMPTY); 
+        }
         return readyCuri;
     }
 
@@ -692,7 +641,7 @@ public class Frontier
             curi.setServer(controller.getServerCache().getServerFor(curi));
         }
         logger.finer(this+".emitCuri("+curi+")");
-        controller.recover.info(F_EMIT+curi.getURIString());
+        controller.recover.info("\n"+F_EMIT+curi.getURIString());
         return curi;
     }
 
@@ -706,8 +655,9 @@ public class Frontier
         kq.setInProcessItem(curi);
         curi.setStoreState(URIStoreable.IN_PROCESS);
  
-        assert kq.getStoreState() == URIStoreable.READY : "odd state "+ kq.getStoreState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
-        //readyClassQueues.remove(classQueue);
+        assert kq.getStoreState() == URIStoreable.READY || kq.getStoreState() == URIStoreable.EMPTY : 
+            "odd state "+ kq.getStoreState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
+        readyClassQueues.remove(kq);
         //enqueueToHeld(classQueue);
         kq.setStoreState(URIStoreable.IN_PROCESS);
         //releaseHeld(curi);
@@ -721,6 +671,7 @@ public class Frontier
         KeyedQueue kq = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
         if (kq==null) {
             kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+            kq.setStoreState(URIStoreable.EMPTY);
             allClassQueuesMap.put(kq.getClassKey(),kq);
         }
         return kq;
@@ -766,27 +717,6 @@ public class Frontier
 //    }
 
     /**
-     * @param curi
-     */
-    protected void reinsert(CrawlURI curi) {
-        if(enqueueIfNecessary(curi, false)) {
-            // added to classQueue
-            return;
-        }
-        // no classQueue
-        pushToPending(curi);
-    }
-
-    /**
-     *
-     */
-    protected CandidateURI dequeueFromPendingHigh() {
-        if (pendingHighQueue.isEmpty()) {
-            return null;
-        }
-        return (CandidateURI)pendingHighQueue.dequeue();
-    }
-    /**
      *
      */
     protected CandidateURI dequeueFromPending() {
@@ -803,20 +733,53 @@ public class Frontier
      * @param curi
      * @return true if enqueued
      */
-    protected boolean enqueueIfNecessary(CrawlURI curi, boolean high) {
+    protected boolean enqueueIfNecessary(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
+        assert kq.getStoreState() == URIStoreable.EMPTY 
+            || kq.getStoreState() == URIStoreable.READY 
+            || kq.getStoreState() == URIStoreable.SNOOZED 
+            || kq.getStoreState() == URIStoreable.IN_PROCESS 
+            : "unexpected keyedqueue state";
         if((kq.getInProcessItem()!=null)||kq.getStoreState()==URIStoreable.SNOOZED||!kq.isEmpty()) {
             // must enqueue
-            if(high) {
+            if(curi.needsImmediateScheduling()) {
                 kq.enqueueHigh(curi);
             } else {
                 kq.enqueue(curi);
             }
-            // curi.setStoreState(classQueue.getStoreState()); // TODO: restore?
+            updateQueue(kq);
             return true;
         }
-
         return false;
+    }
+
+    /**
+     * If an empty queue has become ready, add to ready queues
+     * @param kq
+     */
+    private void updateQueue(KeyedQueue kq) {
+        Object initialState = kq.getStoreState();
+        if (kq.isEmpty() && initialState!=URIStoreable.SNOOZED) {
+            // empty & ready; discard
+            discardQueue(kq);
+            return;
+        }
+        if (initialState == URIStoreable.EMPTY && !kq.isEmpty()) {
+            // has become ready
+            readyQueue(kq);
+            return;
+        } 
+        // otherwise, no need to change whatever state it's in
+        // TODO: verify this in only reached in sensible situations
+    }
+
+    private void readyQueue(KeyedQueue kq) {
+        if(kq.isEmpty()) {
+            discardQueue(kq);
+            return;
+        }
+        readyClassQueues.add(kq);
+        kq.setStoreState(URIStoreable.READY);
     }
 
     /**
@@ -825,8 +788,18 @@ public class Frontier
     private void enqueueMedium(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
         kq.enqueueMedium(curi);
+        updateQueue(kq);
     }
-    
+
+    /**
+     * @param curi
+     */
+    private void enqueueHigh(CrawlURI curi) {
+        KeyedQueue kq = keyedQueueFor(curi);
+        kq.enqueueHigh(curi);
+        updateQueue(kq);
+    }
+
     protected long earliestWakeTime() {
         if (!snoozeQueues.isEmpty()) {
             return ((URIStoreable)snoozeQueues.first()).getWakeTime();
@@ -835,30 +808,21 @@ public class Frontier
     }
 
     /**
-     * @param curi
-     */
-    private synchronized void pushToPending(CrawlURI curi) {
-        pendingHighQueue.enqueue(curi);
-        curi.setStoreState(URIStoreable.PENDING);
-    }
-
-    /**
      *
      * @param curi
      */
     protected void noteProcessingDone(CrawlURI curi) throws AttributeNotFoundException {
-        KeyedQueue kq =
-            (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
-        assert kq.getInProcessItem() == curi : "CrawlURI done wasn't inProcess";
+        curi.incrementFetchAttempts();
+        logLocalizedErrors(curi);
+
+        KeyedQueue kq = keyedQueueFor(curi);
         
+        assert kq.getInProcessItem() == curi : "CrawlURI done wasn't inProcess";
         assert kq.getStoreState()
             == URIStoreable.IN_PROCESS : "odd state for classQueue of remitted CrawlURI";
-        kq.setInProcessItem(null);
         
-        readyClassQueues.add(kq);
-        kq.setStoreState(URIStoreable.READY);
-        // TODO: since usually, queue will be snoozed, this ready-juggling is often superfluous
-        updateScheduling(curi);
+        kq.setInProcessItem(null);
+        updateScheduling(curi, kq);
     }
 
     /**
@@ -868,8 +832,9 @@ public class Frontier
      * appropriate politeness window.
      *
      * @param curi
+     * @param kq 
      */
-    protected void updateScheduling(CrawlURI curi) throws AttributeNotFoundException {
+    protected void updateScheduling(CrawlURI curi, KeyedQueue kq) throws AttributeNotFoundException {
         long durationToWait = 0;
         if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
             && curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
@@ -899,9 +864,12 @@ public class Frontier
             }
 
             if(durationToWait>0) {
-                snoozeQueueUntil(curi, completeTime + durationToWait);
-            }
+                snoozeQueueUntil(kq, completeTime + durationToWait);
+                return;
+            } 
         }
+        // otherwise, just ready
+        readyQueue(kq);
     }
 
     /**
@@ -924,14 +892,14 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getUriString(),
+            curi.getUURI().getURIString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
             controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().getUriString(),
+                curi.getUURI().getURIString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
@@ -946,7 +914,7 @@ public class Frontier
             curi.stripToMinimal();
         }
         decrementScheduled();
-        controller.recover.info(F_FAILURE+curi.getURIString());
+        controller.recover.info("\n"+F_FAILURE+curi.getURIString());
     }
 
     /**
@@ -989,6 +957,23 @@ public class Frontier
      * @param curi
      * @return True if we need to retry.
      */
+    private boolean needsPromptRetry(CrawlURI curi) throws AttributeNotFoundException {
+        //
+        if (curi.getFetchAttempts()>= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
+            return false;
+        }
+        switch (curi.getFetchStatus()) {
+            case S_DEFERRED:
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * @param curi
+     * @return True if we need to retry.
+     */
     private boolean needsRetrying(CrawlURI curi) throws AttributeNotFoundException {
         //
         if (curi.getFetchAttempts()>= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
@@ -997,8 +982,8 @@ public class Frontier
         switch (curi.getFetchStatus()) {
             case S_CONNECT_FAILED:
             case S_CONNECT_LOST:
-            case S_DEFERRED:
-            case S_TIMEOUT:
+// S_TIMEOUT may not deserve retry
+//          case S_TIMEOUT:
                 // these are all worth a retry
                 return true;
             default:
@@ -1011,15 +996,7 @@ public class Frontier
      */
     private void scheduleForRetry(CrawlURI curi) throws AttributeNotFoundException {
         long delay;
-        if(curi.getAList().containsKey(A_PREREQUISITE_URI)) {
-            // schedule as a function of other URI's progress
-            UURI prereq = (UURI) curi.getPrerequisiteUri();
-            //addAsHeld(curi,prereq);
-            enqueueMedium(curi); // will go "behind" prereq
-            curi.getAList().remove(A_PREREQUISITE_URI);
-            controller.recover.info(F_RESCHEDULE+curi.getURIString());
-            return;
-        }
+        
         if(curi.getAList().containsKey(A_RETRY_DELAY)) {
             delay = curi.getAList().getInt(A_RETRY_DELAY);
         } else {
@@ -1029,31 +1006,38 @@ public class Frontier
         if (delay>0) {
             // snooze to future
             logger.finer("inserting snoozed "+curi+" for "+delay);
-            insertSnoozed(curi,delay);
-            // TODO TODO TODO 
-            // enqueue to kq, snooze for appropriate length
-            // ****************
-            // 
-        } else {
-            // eligible for retry asap
-            pushToPending(curi);
+            KeyedQueue kq = keyedQueueFor(curi);
+            snoozeQueueUntil(kq,System.currentTimeMillis()+(delay*1000));
         }
+
+        reschedule(curi);
+        
         controller.throwCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-        controller.recover.info(F_RESCHEDULE+curi.getURIString());
+        controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
     }
 
-
+    private void reschedule(CrawlURI curi) {
+        // put near top of relevant keyedqueue (but behind anything
+        // recently scheduled 'high')
+        KeyedQueue kq = keyedQueueFor(curi);
+        curi.processingCleanup(); // eliminate state related to only prior processing passthrough
+        kq.enqueueMedium(curi);
+    }
 
     /**
      * Snoozes a queue until a fixed point in time has passed.
      *
-     * @param classKey The key (in the allClassqueuesMap) to the queue that we want to snooze
+     * @param kq A KeyedQueue that we want to snooze
      * @param wake Time (in millisec.) when we want the queue to stop snoozing.
      */
-    protected void snoozeQueueUntil(Object curi, long wake) {
-        KeyedQueue kq = keyedQueueFor((CrawlURI)curi);
-        assert kq.getStoreState() == URIStoreable.READY : "snoozing queue should have been READY";
-        readyClassQueues.remove(kq);
+    protected void snoozeQueueUntil(KeyedQueue kq, long wake) {
+        //assert kq.getStoreState() != URIStoreable.IN_PROCESS : "snoozing queue should have been READY, EMPTY, or SNOOZED";
+        if(kq.getStoreState()== URIStoreable.SNOOZED) {
+            // must be removed before time may be mutated
+            snoozeQueues.remove(kq);
+        } else if (kq.getStoreState() == URIStoreable.READY ) {
+            readyClassQueues.remove(kq);
+        }
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.setStoreState(URIStoreable.SNOOZED);
@@ -1071,6 +1055,7 @@ public class Frontier
     private boolean shouldBeForgotten(CrawlURI curi) {
         switch(curi.getFetchStatus()) {
             case S_OUT_OF_SCOPE:
+            case S_BLOCKED_BY_USER:
             case S_TOO_MANY_EMBED_HOPS:
             case S_TOO_MANY_LINK_HOPS:
                 return true;
@@ -1092,16 +1077,16 @@ public class Frontier
         curi.setStoreState(URIStoreable.FORGOTTEN);
     }
 
-    /**
-     * Revisit the CrawlURI -- but not before delay time has passed.
-     * @param curi
-     * @param retryDelay
-     */
-    protected void insertSnoozed(CrawlURI curi, long retryDelay) {
-        curi.setWakeTime(System.currentTimeMillis()+retryDelay );
-        curi.setStoreState(URIStoreable.SNOOZED);
-        snoozeQueues.add(curi);
-    }
+//    /**
+//     * Revisit the CrawlURI -- but not before delay time has passed.
+//     * @param curi
+//     * @param retryDelay
+//     */
+//    protected void insertSnoozed(CrawlURI curi, long retryDelay) {
+//        curi.setWakeTime(System.currentTimeMillis()+retryDelay );
+//        curi.setStoreState(URIStoreable.SNOOZED);
+//        snoozeQueues.add(curi);
+//    }
 
     /** Return the number of URIs successfully completed to date.
      *
@@ -1136,6 +1121,162 @@ public class Frontier
         return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
+     */
+    public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
+        ArrayList keyqueueKeys = new ArrayList();
+        if(allClassQueuesMap.size()!=0)
+        {
+            Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
+            while(q.hasNext())
+            {
+                keyqueueKeys.add(q.next());
+            }
+        }
+        return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
+     */
+    public ArrayList getPendingURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
+        if(marker instanceof FrontierMarker == false){
+            throw new InvalidURIFrontierMarkerException();
+        }
+        
+        FrontierMarker mark = (FrontierMarker)marker;
+        ArrayList list = new ArrayList(numberOfMatches);
+        
+        // inspect PendingHighQueue
+//        if(mark.currentQueue==-1){
+//            numberOfMatches -= inspectQueue(pendingHighQueue,"pendingHighQueue",list,mark,verbose, numberOfMatches);
+//            if(numberOfMatches>0){
+//                mark.nextQueue();
+//            }
+//        }
+        
+        // inspect the KeyedQueues
+        while( numberOfMatches > 0 && mark.currentQueue != -2){
+            String queueKey = (String)mark.keyqueues.get(mark.currentQueue);
+            Queue keyq = (Queue)allClassQueuesMap.get(queueKey);
+            if(keyq==null){
+                throw new InvalidURIFrontierMarkerException();
+            }
+            
+            numberOfMatches -= inspectQueue(keyq,"hostQueue("+queueKey+")",list,mark,verbose, numberOfMatches);
+            if(numberOfMatches>0){
+                mark.nextQueue();
+            }
+        }
+        
+        // inspect the PendingQueue
+        if(numberOfMatches > 0 && mark.currentQueue == -2){
+            numberOfMatches -= inspectQueue(pendingQueue,"pendingQueue",list,mark,verbose, numberOfMatches);
+            if(numberOfMatches > 0){
+                // reached the end
+                mark.hasNext = false;
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * Adds any applicable URIs from a given queue to the given list.
+     * 
+     * @param queue
+     *            The queue to inspect
+     * @param list
+     *            The list to add matched URIs to.
+     * @param marker
+     *            Where to start accepting matches from.
+     * @param verbose
+     *            List items are verbose
+     * @param numberOfMatches
+     *            maximum number of matches to add to list
+     * @return the number of matches found
+     */
+    private int inspectQueue( Queue queue,
+                              String queueName,
+                              ArrayList list,
+                              FrontierMarker marker,
+                              boolean verbose,
+                              int numberOfMatches)
+                          throws InvalidURIFrontierMarkerException{
+        if(queue.length() < marker.absolutePositionInCurrentQueue){
+            // Not good. Invalid marker.
+            throw new InvalidURIFrontierMarkerException();
+        }
+        
+        if(queue.length()==0){
+            return 0;
+        }
+        
+        Iterator it = queue.getIterator(marker.inCacheOnly);
+        int foundMatches = 0;
+        long itemsScanned = 0;
+        while(it.hasNext() && foundMatches < numberOfMatches){
+            Object o = it.next();
+            if( itemsScanned >= marker.absolutePositionInCurrentQueue
+                    && o instanceof CandidateURI ){
+                // Ignore items that are in front of current position
+                // and those that are not CandidateURIs.
+                CandidateURI caURI = (CandidateURI)o;
+                if(marker.match(caURI)){
+                    // Found match.
+                    String text;
+                    if(verbose){
+                        // A verbose description
+                        PaddingStringBuffer verb = new PaddingStringBuffer();
+                        verb.append(caURI.getURIString());
+                        verb.append(" ("+queueName+":" + itemsScanned + ")");
+                        verb.newline();
+                        verb.padTo(2);
+                        verb.append(caURI.getPathFromSeed());
+                        if(caURI.getVia() != null 
+                                && caURI.getVia() instanceof CandidateURI){
+                            verb.append(" ");
+                            verb.append(((CandidateURI)caURI.getVia()).getURIString());
+                        }
+                        text = verb.toString();
+                    } else {
+                        text = caURI.getURIString();
+                    }
+                    list.add(text);
+                    foundMatches++;
+                    marker.nextItemNumber++;
+                }
+            }
+            itemsScanned++;
+        }
+        marker.absolutePositionInCurrentQueue = itemsScanned;
+        return foundMatches;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
+     */
+    public void deleteURIsFromPending(String match) {
+        // Create QueueItemMatcher
+        QueueItemMatcher mat = new URIQueueMatcher(match,true,this);
+        // Delete from pendingHigh
+//        pendingHighQueue.deleteMatchedItems(mat);
+        // Delete from all KeyedQueues
+        if(allClassQueuesMap.size()!=0)
+        {
+            Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
+            while(q.hasNext())
+            {
+                ((KeyedQueue)allClassQueuesMap.get(q.next())).deleteMatchedItems(mat);
+            }
+        }
+        // Delete from pendingQueue
+        pendingQueue.deleteMatchedItems(mat);
+    }
+
 
 
     /**
@@ -1146,6 +1287,7 @@ public class Frontier
      */
     public synchronized String report()
     {
+        long now = System.currentTimeMillis();
         StringBuffer rep = new StringBuffer();
 
         rep.append("Frontier report - "
@@ -1154,7 +1296,7 @@ public class Frontier
                    + controller.getOrder().getCrawlOrderName() + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
-        rep.append(" Pending high queue length: " + pendingHighQueue.length() + "\n");
+//        rep.append(" Pending high queue length: " + pendingHighQueue.length() + "\n");
         rep.append("\n All class queues map size: " + allClassQueuesMap.size() + "\n");
         if(allClassQueuesMap.size()!=0)
         {
@@ -1167,6 +1309,9 @@ public class Frontier
                 rep.append("     Length:   " + kq.length() + "\n");
                 rep.append("     Is ready: " + kq.isReady() + "\n");
                 rep.append("     Status:   " + kq.state.toString() + "\n");
+                if(kq.getStoreState()==URIStoreable.SNOOZED) {
+                    rep.append("     Wakes in: "+ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now));
+                }
                 rep.append("     InProcess:" + kq.getInProcessItem() + "\n");
             }
         }
@@ -1174,10 +1319,7 @@ public class Frontier
         for(int i=0 ; i < readyClassQueues.size() ; i++)
         {
             KeyedQueue kq = (KeyedQueue)readyClassQueues.get(i);
-            rep.append("   Ready class keyqueue " + (i+1) + " - " + kq.getClassKey() + "\n");
-            rep.append("     Length:   " + kq.length() + "\n");
-            rep.append("     Is ready: " + kq.isReady() + "\n");
-            rep.append("     Status:   " + kq.state.toString() + "\n");
+            appendKeyedQueue(rep,kq,now);
         }
 //        rep.append("\n Held class queues size:    " + heldClassQueues.size() + "\n");
 //        for(int i=0 ; i < heldClassQueues.size() ; i++)
@@ -1188,7 +1330,7 @@ public class Frontier
 //            rep.append("     Is ready: " + kq.isReady() + "\n");
 //            rep.append("     Status:   " + kq.state.toString() + "\n");
 //        }
-//        rep.append("\n Snooze queues size:        " + snoozeQueues.size() + "\n");
+        rep.append("\n Snooze queues size:        " + snoozeQueues.size() + "\n");
         if(snoozeQueues.size()!=0)
         {
             Object[] q = ((TreeSet)snoozeQueues).toArray();
@@ -1197,20 +1339,16 @@ public class Frontier
                 if(q[i] instanceof KeyedQueue)
                 {
                     KeyedQueue kq = (KeyedQueue)q[i];
-                    rep.append("   Snooze item " + (i+1) + " - keyqueue " + kq.getClassKey() + "\n");
-                    rep.append("     Length:   " + kq.length() + "\n");
-                    rep.append("     Is ready: " + kq.isReady() + "\n");
-                    rep.append("     Status:   " + kq.state.toString() + "\n");
-                    rep.append("     Wakes in: " + (kq.getWakeTime()-System.currentTimeMillis()) + " msec\n");
-
+                    rep.append("   Snooze item " + (i+1)+ "\n");
+                    appendKeyedQueue(rep, kq, now);
                 }
                 else if(q[i] instanceof CrawlURI)
                 {
                     CrawlURI cu = (CrawlURI)q[i];
                     rep.append("   Snooze item " + (i+1) + " - " + "CrawlUri" + "\n");
-                    rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
+                    rep.append("     UURI:           " + cu.getUURI().getURIString() + " " + cu.getPathFromSeed() + "\n");
                     rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
-                    rep.append("     Wakes in: " + (cu.getWakeTime()-System.currentTimeMillis()) + " msec\n");
+                    rep.append("     Wakes in: " + ArchiveUtils.formatMillisecondsToConventional(cu.getWakeTime()-now));
                 }
             }
         }
@@ -1260,6 +1398,23 @@ public class Frontier
         return rep.toString();
     }
 
+
+    private void appendKeyedQueue(StringBuffer rep, KeyedQueue kq, long now) {
+        rep.append("    KeyedQueue " + kq.getClassKey() + "\n");
+        rep.append("     Length:   " + kq.length() + "\n");
+        rep.append("     Is ready: " + kq.isReady() + "\n");
+        rep.append("     Status:   " + kq.state.toString() + "\n");
+        if(kq.getStoreState()==URIStoreable.SNOOZED) {
+            rep.append("     Wakes in: " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"/n");
+        }
+        if(kq.getStoreState()==URIStoreable.IN_PROCESS) {
+            rep.append("     InProcess:" + kq.getInProcessItem() + "\n");
+        }
+        if(!kq.isEmpty()) {
+            rep.append("     Top URI:  " + ((CrawlURI)kq.peek()).getURIString()+"\n");
+
+        }
+    }
 
     public long getAllClassQueuesMap()
     {
@@ -1322,4 +1477,45 @@ public class Frontier
     public long disregardedFetchCount() {
         return disregardedCount;
     }
+    
+    public void importRecoverLog(String pathToLog) throws IOException {
+        // scan log for all 'Fs' lines: add as 'alreadyIncluded'
+        BufferedReader reader = new BufferedReader(new FileReader(pathToLog));
+        String read;
+        while((read = reader.readLine()) != null) {
+            if(read.startsWith(F_SUCCESS)) {
+                UURI u;
+                try {
+                    u = UURI.createUURI(read.substring(3));
+                    alreadyIncluded.add(u);
+                } catch (URISyntaxException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+        reader.close();
+        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for visitation
+        reader = new BufferedReader(new FileReader(pathToLog));
+        while((read = reader.readLine()) != null) {
+            if(read.startsWith(F_ADD)) {
+                UURI u;
+                try {
+                    u = UURI.createUURI(read.substring(3));
+                    if(!alreadyIncluded.contains(u)) {
+                        CandidateURI caUri = new CandidateURI(u);
+                        caUri.setVia(pathToLog);
+                        caUri.setPathFromSeed("L"); // TODO: reevaluate if this is correct
+                        schedule(caUri);
+                    }
+                } catch (URISyntaxException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+        reader.close();
+
+    }
+
 }
