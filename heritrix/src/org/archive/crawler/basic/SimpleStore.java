@@ -273,8 +273,8 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			if(curi.dontFetchYet()){
 				return;
 			} 
-			// yank URI back into scheduling
-			// TODO: ? reconstitute alist?
+			// yank URI back into scheduling if necessary
+			curi.reconstitute();
 		}
 		
 		int newDist = dist;
@@ -354,12 +354,19 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	 */
 	public void insert(UURI uuri, int dist) {
 		if(filteredOut(uuri)) return;
-		if(allCuris.get(uuri)!=null) {
+		CrawlURI curi = (CrawlURI)allCuris.get(uuri);
+		if(curi!=null) {
 			// already inserted
 			// TODO: perhaps yank to front?
-			return;
+			// if curi is still locked out, ignore request to schedule
+			if(curi.dontFetchYet()){
+				return;
+			} 
+			// yank URI back into scheduling if necessary
+			curi.reconstitute();
+		} else {
+			curi = new CrawlURI(uuri);
 		}
-		CrawlURI curi = new CrawlURI(uuri);
 		curi.getAList().putInt("distance-from-seed",dist);
 		allCuris.put(uuri,curi);
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
