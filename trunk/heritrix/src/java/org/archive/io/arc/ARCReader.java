@@ -1155,6 +1155,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     // a bunch of ARCs; just note the bad one and move
                     // on to the next.
                     System.err.println("Exception processing " + f);
+                    System.exit(1);
                     e.printStackTrace(System.err);
                 }
             }
