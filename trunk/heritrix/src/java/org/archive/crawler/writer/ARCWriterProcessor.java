@@ -392,6 +392,9 @@ public class ARCWriterProcessor extends Processor
         }
 
         ARCWriter writer = this.pool.borrowARCWriter();
+        if (writer == null) {
+            throw new IOException("Writer is null");
+        }
         try
         {
             writer.write(curi.getURIString(), curi.getContentType(),
@@ -433,14 +436,15 @@ public class ARCWriterProcessor extends Processor
         }
 
         ARCWriter writer = this.pool.borrowARCWriter();
-        try
-        {
-            writer.write(curi.getURIString(), curi.getContentType(),
-               curi.getServer().getHost().getIP().getHostAddress(),
-               curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength, baos);
+        if (writer == null) {
+            throw new IOException("Writer is null");
         }
-        finally
-        {
+        try {
+            writer.write(curi.getURIString(), curi.getContentType(),
+                    curi.getServer().getHost().getIP().getHostAddress(),
+                    curi.getAList().getLong(A_FETCH_BEGAN_TIME),
+                    recordLength, baos);
+        } finally {
             this.pool.returnARCWriter(writer);
         }
 
