@@ -45,9 +45,11 @@ import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
-/**
+/** Class that takes a CrawlerSettings object and create SAXEvents from it.
+ * 
+ * This is a helper class for XMLSettingsHandler.
+ * 
  * @author John Erik Halse
- *
  */
 public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     // for prettyprinting XML file

@@ -32,15 +32,19 @@ import javax.management.InvalidAttributeValueException;
  * @author John Erik Halse
  */
 public class CrawlerModule extends ComplexType {
-	/**
-	 * @param parent
-	 * @param name
-	 * @param description
-	 */
-	public CrawlerModule(String name, String description) {
-		super(name, description);
-	}
-    
+    /** Creates a new CrawlerModule.
+     * 
+     * This constructor is made to help implementors of subclasses. It is an
+     * requirement that subclasses at the very least implements a constructor
+     * that takes only the name as an argument.
+     * 
+     * @param name the name of the module.
+     * @param description the description of the module.
+     */
+    public CrawlerModule(String name, String description) {
+        super(name, description);
+    }
+
     /** Every subclass should implement this constructor
      * 
      * @param name of the module
@@ -48,12 +52,13 @@ public class CrawlerModule extends ComplexType {
     public CrawlerModule(String name) {
         super(name, name);
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
      */
-    public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
-        if(isInitialized()) {
+    public Type addElement(CrawlerSettings settings, Type type)
+        throws InvalidAttributeValueException {
+        if (isInitialized()) {
             throw new IllegalStateException("Not allowed to add elements to modules");
         }
         return super.addElement(settings, type);

@@ -42,7 +42,21 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 
-/**
+/** Superclass of all configurable modules.
+ * 
+ * This class is in many ways the heart of the settings framework. All modules
+ * that should be configurable extends this class or one of its subclasses.
+ * 
+ * All subclasses of this class will automatically conform to the
+ * JMX DynamicMBean. You could then use the @link #getMBeanInfo() method to
+ * investigate which attributes this module supports and then use the
+ * @link #getAttribute(String) and @link #setAttribute(Attribute) methods to
+ * alter the attributes values.
+ * 
+ * Because the settings framework supports per domain/host settings there is
+ * also available context sensitive versions of the DynamicMBean methods.
+ * If you use the non context sensitive methods, it is the global settings
+ * that will be altered.
  * 
  * @author John Erik Halse
  */
@@ -65,6 +79,11 @@ public abstract class ComplexType implements DynamicMBean, Type {
     private ComplexType() {
     }
 
+    /** Creates a new instance of ComplexType.
+     * 
+     * @param name the name of the element.
+     * @param description the description of the element.
+     */
     public ComplexType(String name, String description) {
         this.name = name;
         this.description = description;
@@ -82,6 +101,10 @@ public abstract class ComplexType implements DynamicMBean, Type {
         initializeComplexType(globalSettings());
     }
 
+    /** Get the global settings object (aka order).
+     * 
+     * @return the global settings object.
+     */
     public CrawlerSettings globalSettings() {
         return settingsHandler.getSettingsObject(null);
     }
