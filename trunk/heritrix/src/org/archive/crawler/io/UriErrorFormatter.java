@@ -28,7 +28,7 @@ public class UriErrorFormatter extends Formatter implements CoreAttributeConstan
 				
 		return ArchiveUtils.get17DigitDate()
 		+ " "
-		+ curi.getURIString()
+		+ ( (curi ==null) ? "n/a" : curi.getURIString() )
 		+ " \""
 		+ lr.getMessage()
 		+ "\" "
