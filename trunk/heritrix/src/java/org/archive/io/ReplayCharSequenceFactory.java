@@ -156,12 +156,14 @@ public class ReplayCharSequenceFactory {
         boolean isMultibyte = false;
         if (encoding != null)
         {
+            // Have seen '\n\r' appended to encoding.  Remove.
+            encoding = encoding.trim();
+            
             // TODO: Add a set here that we populate from a properties
             // file that has in it a list of charsets that we'd like to
             // be handled by the multibyte ReplayCharSequence.  Members of this
             // set would include names of charsets other than the canonical 
             // java names.
-            
             try
             {
                 "".getBytes(encoding);
