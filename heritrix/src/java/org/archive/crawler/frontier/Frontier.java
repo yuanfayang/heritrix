@@ -115,6 +115,8 @@ public class Frontier
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
     /** maximum simultaneous requests in process to a host (queue) */
     public final static String ATTR_HOST_VALENCE = "host-valence";
+    /** number of hops of embeds (ERX) to bump to front of host queue */
+    public final static String ATTR_PREFERENCE_EMBED_HOPS = "preference-embed-hops";
     /** maximum overall bandwidth usage */
     public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
         "total-bandwidth-usage-KB-sec";
@@ -138,6 +140,7 @@ public class Frontier
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
+    protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
     protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
     protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
         new Integer(0);
@@ -238,6 +241,15 @@ public class Frontier
                 DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
+        addElementToDefinition(new SimpleType(ATTR_PREFERENCE_EMBED_HOPS,
+                "Number of embedded (or redirected) hops up to which " +
+                "a URI has higher priority scheduling. For example, if set" +
+                "to 1 (the default), items such as inline images (1-hop" +
+                "embedded resources) will be scheduled ahead of all regular" +
+                "links (or many-hop resources, like nested frames). If set to" +
+                "zero, no preferencing will occur, and embeds/redirects are" +
+                "scheduled the same as regular links.",
+                DEFAULT_PREFERENCE_EMBED_HOPS));
         t = addElementToDefinition(new SimpleType(ATTR_HOST_VALENCE,
                 "Maximum number of simultaneous requests to a single" +
                 " host.",
@@ -408,9 +420,11 @@ public class Frontier
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
         }
+        CrawlURI curi = asCrawlUri(caUri);
 
-        if(caUri.isSeed() && caUri.getVia() != null
-                && caUri.flattenVia().length() > 0){
+
+        if(curi.isSeed() && curi.getVia() != null
+                && curi.flattenVia().length() > 0){
             // The only way a seed can have a non-empty via is if it is the
             // result of a seed redirect.  Add it to the seeds list.
             //
@@ -419,13 +433,26 @@ public class Frontier
             // treating the immediate redirect target as a seed.
             List seeds = this.controller.getScope().getSeedlist();
             synchronized(seeds) {
-                seeds.add(caUri.getUURI());
+                seeds.add(curi.getUURI());
             }
-            // And it needs immediate scheduling.
-            caUri.setSchedulingDirective(CandidateURI.HIGH);
+            // And it needs rapid scheduling.
+            curi.setSchedulingDirective(CandidateURI.MEDIUM);
+        }
+        
+        // optionally preferencing embeds up to MEDIUM
+        int prefHops = ((Integer) getAttributeOrDefault(
+                ATTR_PREFERENCE_EMBED_HOPS, curi, DEFAULT_PREFERENCE_EMBED_HOPS))
+                .intValue();
+        if (prefHops > 0) {
+            int embedHops = curi.getTransHops();
+            if (embedHops > 0 && embedHops <= prefHops
+                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
+                // number of embed hops falls within the preferenced range, and
+                // uri is not already MEDIUM -- so promote it
+                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+            }
         }
 
-        CrawlURI curi = asCrawlUri(caUri);
         if(enqueueToKeyed(curi)) {
             this.alreadyIncluded.add(curi);
             this.queuedCount++;
@@ -463,8 +490,8 @@ public class Frontier
             URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
             kq.activate();
             assert kq.isEmpty() == false : "empty queue was waiting for activation";
-            kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                    ,curi)).intValue());
+            kq.setMaximumMemoryLoad(((Integer) getAttributeOrDefault(ATTR_HOST_QUEUES_MEMORY_CAPACITY
+                    ,curi, DEFAULT_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
             updateQ(kq);
         }
         
