@@ -44,7 +44,13 @@ public interface UriUniqFilter {
     public long count();
     
     /**
-     * @return Count of items added not yet evaluated (TODO: Whats this mean?).
+     * Count of items added, but not yet filtered in or out. 
+     * 
+     * Some implementations may buffer up large numbers of pending
+     * items to be evaluated in a later large batch/scan/merge with 
+     * disk files. 
+     * 
+     * @return Count of items added not yet evaluated 
      */
     public long pending();
 
