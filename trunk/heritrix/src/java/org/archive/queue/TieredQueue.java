@@ -185,9 +185,9 @@ public class TieredQueue implements Queue {
      * @param tmpName
      * @throws IOException
      */
-    public void initializeDiskQueues(File scratchDir, String tmpName) throws IOException {
+    public void initializeDiskBackedQueues(File scratchDir, String tmpName) throws IOException {
         for(int i = 0; i <= lastQueue; i++) {
-            innerQueues[i] = new DiskQueue(scratchDir, tmpName+i, false);
+            innerQueues[i] = new DiskBackedQueue(scratchDir, tmpName+i, false, 100);
         }
     }
 
