@@ -667,7 +667,8 @@ public class Heritrix
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
         settings.initialize();
         return new CrawlJob(handler.getNextJobUID(), descriptor, settings,
-            CrawlJob.PRIORITY_HIGH, crawlOrderFile.getParentFile());
+            CrawlJob.PRIORITY_HIGH,
+            crawlOrderFile.getAbsoluteFile().getParentFile());
     }
 
     /**
