@@ -2,8 +2,8 @@
  <seeds src="example-seeds.txt" />
  <follow-links 
     depth="2" 
-    path-extension
-    domain-extension /> 
+    path-extension="true"
+    domain-extension="true" /> 
                              <!-- if follow-links not present, gets seeds only -->
                              <!-- if depth not present, follows indefinitely -->
                              <!-- path-extension and domain-extension mean within seeds -->

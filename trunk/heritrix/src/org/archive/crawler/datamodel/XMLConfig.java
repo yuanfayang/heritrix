@@ -44,12 +44,18 @@ public class XMLConfig {
 			return document;
 		} catch (FactoryConfigurationError e) {
 			// unable to get a document builder factory
+			e.printStackTrace();
 		} catch (ParserConfigurationException e) {
 			// parser was unable to be configured
+			e.printStackTrace();
 		} catch (SAXException e) {
 			// parsing error
+			e.printStackTrace();
+
 		} catch (IOException e) {
 			// i/o error
+			e.printStackTrace();
+
 		}
 		return null;
 	}
@@ -62,6 +68,8 @@ public class XMLConfig {
 			}
 		} catch (TransformerException te) {
 			// TODO something maybe
+			te.printStackTrace();
+
 		}
 		return node;
 
@@ -72,7 +80,7 @@ public class XMLConfig {
 	 * @return
 	 */
 	public BufferedReader nodeValueOrSrcReader(String xpath) {
-		return nodeValueOrSrcReader(getNodeAt("xpath"));
+		return nodeValueOrSrcReader(getNodeAt(xpath));
 	}
 
 	/**

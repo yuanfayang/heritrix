@@ -2,7 +2,7 @@
  <comment>
   A simple crawl for example purposes.
  </comment>
- <crawl-scope src="scope.xml" />
- <crawler-behavior src="behavior.xml" />
+ <crawl-scope src="example-scope.xml" />
+ <crawler-behavior src="example-behavior.xml" />
  <disk path="example-crawl" />
 </crawl-order>

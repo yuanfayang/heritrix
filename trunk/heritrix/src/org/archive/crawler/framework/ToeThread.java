@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.logging.Logger;
+
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
@@ -13,9 +15,13 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author Gordon Mohr
  */
 public class ToeThread extends Thread {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
+
 	private boolean paused;
 	private boolean shouldCrawl;
 	CrawlController controller;
+	int serialNumber;
+	
 	CrawlURI currentCuri;
 	// in-process/on-hold curis? not for now
 	// a queue of curis to do next? not for now
@@ -23,18 +29,21 @@ public class ToeThread extends Thread {
 	/**
 	 * @param c
 	 */
-	public ToeThread(CrawlController c) {
+	public ToeThread(CrawlController c, int sn) {
 		controller = c;
+		serialNumber = sn;
 	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
+		logger.info("ToeThread Started: "+serialNumber+" for order '"+controller.getOrder().getName()+"'");
 		while ( shouldCrawl ) {
 			processingLoop();
 		} 
 		controller.toeFinished(this);
+		logger.info("ToeThread Finished: "+serialNumber+" for order '"+controller.getOrder().getName()+"'");
 	}
 	
 	private void processingLoop() {

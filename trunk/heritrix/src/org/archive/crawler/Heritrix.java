@@ -6,6 +6,8 @@
  */
 package org.archive.crawler;
 
+import java.util.logging.Logger;
+
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
 
@@ -23,6 +25,7 @@ import org.archive.crawler.framework.CrawlController;
  *
  */
 public class Heritrix {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.Heritrix");
 
 	public static void main( String[] args ) {
 		(new Heritrix()).instanceMain( args );
@@ -35,6 +38,7 @@ public class Heritrix {
 		CrawlController controller = new CrawlController();
 		controller.initialize(order);
 		controller.startCrawl();
+		logger.info("Exitting main thread.");
 	}
 
 }

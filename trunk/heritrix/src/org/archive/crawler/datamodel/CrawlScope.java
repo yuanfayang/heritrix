@@ -32,7 +32,7 @@ public class CrawlScope extends XMLConfig {
     		return seeds;
     	}
 		seeds = new ArrayList();
-		BufferedReader reader = nodeValueOrSrcReader("seeds");
+		BufferedReader reader = nodeValueOrSrcReader("//seeds");
 		String read;
 		try {
 			while (reader != null) {
