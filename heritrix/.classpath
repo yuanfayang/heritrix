@@ -5,8 +5,7 @@
     <classpathentry kind="lib" path="lib/binaries/dnsjava.jar"/>
     <classpathentry kind="lib" path="lib/binaries/stataclasses.jar"/>
     <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-    <classpathentry kind="src" path="/httpclient"/>
-    <classpathentry kind="src" path="/junit"/>
-    <classpathentry kind="src" path="/dnsjava"/>
+    <classpathentry kind="lib" path="lib/binaries/commons-httpclient.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/junit.jar"/>
     <classpathentry kind="output" path="bin"/>
 </classpath>

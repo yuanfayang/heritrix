@@ -43,14 +43,15 @@ public class SimpleDNSFetcher extends Processor {
 				
 		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
-			// TODO this is a temp hack to make dns lookups happen here
 			
 			DnsName = curi.getUURI().getUri().getAuthority();
 			
 			// only handles dns
 			//return;
+			
+		// for now handle html as well
 		}else{	
-			DnsName = curi.getUURI().getUri().getSchemeSpecificPart();
+			DnsName = parseTargetDomain(curi);
 		}
 		
 		//TODO add support for type and class specifications in query string, for now always use defaults
@@ -69,15 +70,39 @@ public class SimpleDNSFetcher extends Processor {
 			if(rrecordSet[i].getType() != Type.A)
 				continue;
 			
-			ARecord AsA = (ARecord)rrecordSet[i];
+			ARecord AsA 	= (ARecord)rrecordSet[i];
+			CrawlHost h 		= curi.getHost();
 			
-			CrawlHost h = curi.getHost();
 			h.setIP(AsA.getAddress());
-
 			h.setIpExpires( (long)AsA.getTTL() + now);
 			
-			// only need to process one record
-			break;
+			break; 	// only need to process one record
 		}
+	}
+	
+	// TODO should throw some sort of exception if it's passed
+	// a non-dns uri.  currently assumes the caller knows what he/she is doing
+	public static String parseTargetDomain(CrawlURI curi){
+
+		// should look like "dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]
+		String uri = curi.getURIString();
+
+		// if it's not a dns uri
+		if(!uri.startsWith("dns:")){
+			return null;
+		}
+		
+		uri = uri.substring(4);						// drop "dns:" prefix
+			
+		if(uri.startsWith("//")){						// drop hostport
+			uri = uri.replaceFirst("//.+/", "");
+		}
+		
+		// drop query string
+		if(uri.indexOf("?") > -1){				
+			uri = uri.substring(0, uri.indexOf("?"));
+		}
+		
+		return uri;
 	}
 }

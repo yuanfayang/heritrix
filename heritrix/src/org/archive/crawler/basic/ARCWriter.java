@@ -32,7 +32,7 @@ public class ARCWriter extends Processor {
 	
 	private int arcMaxSize = 1000000;			// max size we want arc files to be (bytes)
 	private String arcPrefix = "archive";			// file prefix for arcs
-	private String outputDir = null;					// where should we put them?
+	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
 	private FileChannel fileChannel =null;		// manipulates file handle
 
@@ -87,7 +87,7 @@ public class ARCWriter extends Processor {
 
 	private void createNewArcFile() {
 
-		String date = get12DigitDate();
+		String date = get14DigitDate();
 		String fileName = outputDir + arcPrefix + date + ".arc";
 		try {
 			if(fileChannel != null){
