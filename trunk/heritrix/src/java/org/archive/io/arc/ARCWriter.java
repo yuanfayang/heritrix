@@ -157,7 +157,7 @@ public class ARCWriter implements ARCConstants {
      * Metadata line pattern.
      */
     private static final Pattern METADATA_LINE_PATTERN =
-        Pattern.compile("^[^ ]+ [^ ]+ [^ ]+ [^ ]+ [^ ]+");
+        Pattern.compile("^\\S+ \\S+ \\S+ \\S+ \\S+(" + LINE_SEPARATOR + "?)$");
 
     /**
      * Suffix given to files currently being written by Heritrix.
@@ -442,9 +442,10 @@ public class ARCWriter implements ARCConstants {
         if (metadataBodyLength > 0) {
             writeMetaData(metabaos);
         }
-        // Write out a couple of LINE_SEPARATORs to end this record.
-        metabaos.write(("" + LINE_SEPARATOR + LINE_SEPARATOR).
-            getBytes(DEFAULT_ENCODING));
+        
+        // Write out a LINE_SEPARATORs to end this record.
+        metabaos.write(LINE_SEPARATOR);
+        
         // Now get bytes of all just written and compress if flag set.
         byte [] bytes = metabaos.toByteArray();
         
@@ -795,7 +796,7 @@ public class ARCWriter implements ARCConstants {
         }
      	Matcher m = METADATA_LINE_PATTERN.matcher(metaLineStr);
         if (!m.matches()) {
-        	throw new IOException("Metadata line doesn't match expected" +
+        	    throw new IOException("Metadata line doesn't match expected" +
                 " pattern: " + metaLineStr);
         }
         return metaLineStr;
