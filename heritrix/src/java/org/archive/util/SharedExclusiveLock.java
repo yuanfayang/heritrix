@@ -26,9 +26,9 @@
 package org.archive.util;
 
 /**
- * Also sometimes called a ReaderWriterLock, allows either many
- * threads to have shared access ("readers"), or a single thread
- * to have exclusive access. 
+ * This lock allows either many threads to have shared access ("readers"), 
+ * or a single thread to have exclusive access. Also sometimes called a 
+ * ReaderWriterLock.
  * 
  * This implementation gives precedence to the exclusive requests.
  * 
@@ -37,22 +37,30 @@ package org.archive.util;
  *
  */
 public class SharedExclusiveLock {
-    private int sharedTotal = 0; // total of threads holding the shared lock
+    private int sharedTotal = 0; // # of threads holding shared access
     private boolean exclusiveLock = false;
-    private int exclusiveWaitingTotal = 0;
-    // total of threads holding OR WAITING FOR the exclusive lock
+    private int exclusiveWaitingTotal = 0; // # of threads waiting for exclusive access
 
-    public synchronized void acquireShared() {
+    /**
+     * Acquire part of the shared access to this lock. Any number of
+     * threads may acquired shared access at once. However, if anyone
+     * is waiting for exclusive access, no new shared-access threads
+     * join the sharing.
+     * 
+     * Should be paired with a call to releaseShared().  
+     * 
+     * @throws InterruptedException
+     */
+    public synchronized void acquireShared() throws InterruptedException {
         while (exclusiveLock || (exclusiveWaitingTotal > 0)) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                // TODO Convert to runtime exception?
-            }
+            wait();
         }
         sharedTotal++;
     }
 
+    /**
+     * Release part of the shared access to this lock. 
+     */
     public synchronized void releaseShared() {
         sharedTotal--;
         if (sharedTotal == 0) {
@@ -60,19 +68,24 @@ public class SharedExclusiveLock {
         }
     }
 
-    public synchronized void acquireExclusive() {
+    /**
+     * Acquire exclusive access to this lock. Should be paired with
+     * a call to releaseExclusive().
+     * 
+     * @throws InterruptedException
+     */
+    public synchronized void acquireExclusive() throws InterruptedException {
         exclusiveWaitingTotal++;
         while (exclusiveLock || (sharedTotal > 0)) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                // TODO Convert to runtime exception?
-            }
+            wait();
         }
         exclusiveWaitingTotal--;
         exclusiveLock = true;
     }
 
+    /**
+     * Release exclusive access to this lock. 
+     */
     public synchronized void releaseExclusive() {
         exclusiveLock = false;
         notifyAll();
