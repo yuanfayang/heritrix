@@ -37,6 +37,7 @@ import javax.management.ReflectionException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
@@ -147,22 +148,28 @@ public class ARCWriterProcessor
      */
     public ARCWriterProcessor(String name) {
         super(name, "ARCWriter processor");
-        addElementToDefinition(
+        Type e = addElementToDefinition(
             new SimpleType(ATTR_COMPRESS, "Compress arc files",
                 new Boolean(this.useCompression)));
-        addElementToDefinition(
+        e.setOverrideable(false);
+        e = addElementToDefinition(
             new SimpleType(ATTR_PREFIX, "Prefix", this.arcPrefix));
-        addElementToDefinition(
+        e.setOverrideable(false);
+        e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
                 new Integer(this.arcMaxSize)));
-        addElementToDefinition(
+        e.setOverrideable(false);
+        e = addElementToDefinition(
             new SimpleType(ATTR_PATH, "Where to store arc files", ""));
-        addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
+        e.setOverrideable(false);
+        e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
             "Maximum active ARC writers in pool",
             new Integer(this.poolMaximumActive)));
-        addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
+        e.setOverrideable(false);
+        e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
             "Maximum time to wait on ARC writer pool element (milliseconds)",
             new Integer(this.poolMaximumWait)));
+        e.setOverrideable(false);
     }
 
     public void initialize() {
