@@ -39,7 +39,8 @@ public class Filter extends CrawlerModule {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 
-    static final String ATTR_INVERTED = "inverted";
+    private static final String ATTR_INVERTED = "inverted";
+    private static final String ATTR_ENABLED = "enabled";
 
     // associated CrawlController
     protected CrawlController controller;
@@ -51,15 +52,26 @@ public class Filter extends CrawlerModule {
     public Filter(String name, String description) {
         super(name, description);
         addElementToDefinition(
-            new SimpleType(
-                ATTR_INVERTED,
-                "Filter functionality should be inverted",
-                new Boolean(false)));
+            new SimpleType(ATTR_ENABLED,
+                "Filter is enabled.", new Boolean(true)));
+        addElementToDefinition(
+            new SimpleType(ATTR_INVERTED,
+                "Filter functionality should be inverted", new Boolean(false)));
     }
 
 
     public boolean accepts(Object o) {
         CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
+
+        // Skip the evaluation if the filter is disabled
+        try {
+            if (!((Boolean) getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
+                return true;
+            }
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+
         boolean inverter = false;
         try {
             inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
