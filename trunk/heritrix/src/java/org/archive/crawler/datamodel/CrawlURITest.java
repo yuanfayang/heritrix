@@ -65,9 +65,4 @@ public class CrawlURITest extends TmpDirTestCase {
         assertTrue("Deserialized not equal to original",
             curi.toString().equals(deserializedCuri.toString()));
     }
-    
-    /**
-     * Test serialization into and out of a disk-backed queue.
-     */
-    
 }
