@@ -25,7 +25,8 @@
 package org.archive.crawler.datamodel.settings;
 
 /**
- *
+ * A type that holds a Java type.
+ * 
  * @author John Erik Halse
  *
  */
@@ -34,17 +35,31 @@ public class SimpleType extends Type {
     private Object[] legalValues = null;
 
     /**
-     * @param name
-     * @param description
-     * @param defaultValue
-     *
+     * Create a new instance of SimpleType.
+     * 
+     * @param name the name of the type.
+     * @param description a description suitable for the UI.
+     * @param defaultValue the default value for this type. This also set what
+     *            kind of Java type that this Type can hold.
      */
     public SimpleType(String name, String description, Object defaultValue) {
         super(name, defaultValue);
         this.description = description;
     }
 
-    public SimpleType(String name, String description, Object defaultValue, Object[] legalValues) {
+    /**
+     * Create a new instance of SimpleType.
+     * 
+     * @param name the name of the type.
+     * @param description a description suitable for the UI.
+     * @param defaultValue the default value for this type. This also set what
+     *            kind of Java type that this Type can hold.
+     * @param legalValues an array of legal values for this simple type. The
+     *            objects in this array must be of the same type as the default
+     *            value.
+     */
+    public SimpleType(String name, String description, Object defaultValue,
+            Object[] legalValues) {
         this(name, description, defaultValue);
         setLegalValues(legalValues);
     }
@@ -63,10 +78,21 @@ public class SimpleType extends Type {
         return getValue();
     }
 
+    /**
+     * Get the array of legal values for this Type.
+     */
     public Object[] getLegalValues() {
         return legalValues;
     }
 
+    /**
+     * Set the array of legal values for this type.
+     * <p>
+     * 
+     * The objects in this array must be of the same type as the default value.
+     * 
+     * @param legalValues
+     */
     public void setLegalValues(Object[] legalValues) {
         this.legalValues = legalValues;
         if (legalValues != null) {
