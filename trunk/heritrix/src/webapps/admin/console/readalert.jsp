@@ -31,7 +31,7 @@
                 <b>Time:</b>&nbsp;
             </td>
             <td>
-                <%=sdf.format(alert.getTimeOfAlert())%>
+                <%=sdf.format(alert.getTimeOfAlert())%> GMT
             </td>
         </tr>
         <tr>
