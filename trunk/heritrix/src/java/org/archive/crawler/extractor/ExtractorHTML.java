@@ -544,7 +544,7 @@ implements CoreAttributeConstants {
     /**
      * Process metadata tags.
      * @param curi CrawlURI we're processing.
-     * @param sequence Sequence from underlying ReplayCharSequence. This
+     * @param cs Sequence from underlying ReplayCharSequence. This
      * is TRANSIENT data. Make a copy if you want the data to live outside
      * of this extractors' lifetime.
      * @return True robots exclusion metatag.
@@ -585,7 +585,7 @@ implements CoreAttributeConstants {
                 // if 'nofollow' or 'none' is specified and the
                 // honoring policy is not IGNORE or CUSTOM, end html extraction
                 logger.fine("HTML extraction skipped due to robots meta-tag for: "
-                                + curi.getURIString());
+                                + curi.toString());
                 return true;
             }
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {

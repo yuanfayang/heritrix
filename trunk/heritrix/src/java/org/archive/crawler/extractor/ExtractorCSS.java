@@ -98,7 +98,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             return;
         }
         if ((mimeType.toLowerCase().indexOf("css") < 0) &&
-                (!curi.getURIString().toLowerCase().endsWith(".css"))) {
+                (!curi.toString().toLowerCase().endsWith(".css"))) {
             return;
         }
         this.numberOfCURIsHandled++;
@@ -141,7 +141,6 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 // Remove backslashes when used as escape character in CSS URL
                 cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri, "$1");
                 foundLinks++;
-                Link wref;
                 try {
                     curi.createAndAddLink(cssUri,Link.EMBED_MISC,Link.EMBED_HOP);
                 } catch (URIException e) {

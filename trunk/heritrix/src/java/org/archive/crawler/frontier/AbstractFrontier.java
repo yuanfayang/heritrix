@@ -805,7 +805,7 @@ CoreAttributeConstants {
     protected String conditionalCanonicalize(CandidateURI cauri) {
         if (cauri.isSeed()) {
             // Don't run canonicalization on seeds.
-            return cauri.getURIString();
+            return cauri.toString();
         }
         String c = canonicalize(cauri.getUURI());
         if (!cauri.isLocation()) {
@@ -818,11 +818,11 @@ CoreAttributeConstants {
         // version of this uri.
         boolean same = canonicalize(cauri.getVia()).equals(c);
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Result for " + cauri.getURIString() + ", " +
+            logger.fine("Result for " + cauri.toString() + ", " +
                 cauri.getVia().toString() + ", " + cauri.getPathFromSeed() +
                 " : " + same);
         }
-        return same? cauri.getURIString(): c;
+        return same? cauri.toString(): c;
     }
     
     /**

@@ -51,7 +51,7 @@ public class AntiCalendarCostAssignmentPolicy extends WagCostAssignmentPolicy {
      */
     public int costOf(CrawlURI curi) {
         int cost = super.costOf(curi);
-        Matcher m = CALENDARISH.matcher(curi.getURIString());
+        Matcher m = CALENDARISH.matcher(curi.toString());
         if (m.find()) {
             cost++;
             // TODO: consider if multiple occurences should cost more

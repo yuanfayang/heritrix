@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.TextUtils;
 
@@ -68,9 +67,8 @@ public class MatchesRegExpDecideRule extends PredicatedDecideRule {
      */
     protected boolean evaluate(Object object) {
         try {
-            CandidateURI curi = (CandidateURI)object;
             String regexp = getRegexp(object);
-            String str = asString(object);
+            String str = object.toString();
             boolean result = (regexp == null)?
                     false: TextUtils.matches(regexp, str);
             if (logger.isLoggable(Level.FINE)) {

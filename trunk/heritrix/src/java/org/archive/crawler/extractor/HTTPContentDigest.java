@@ -136,7 +136,7 @@ public class HTTPContentDigest extends Processor {
             maxsize = ((Long)getAttribute(curi,ATTR_MAX_SIZE_BYTES)).longValue();
         } catch (AttributeNotFoundException e) {
             logger.severe("Missing max-size-bytes attribute when processing " + 
-                    curi.getURIString());
+                    curi.toString());
         }
         if(maxsize < curi.getContentSize() && maxsize > -1){
             // Document too big.
@@ -150,7 +150,7 @@ public class HTTPContentDigest extends Processor {
             regexpr = (String)getAttribute(curi,ATTR_STRIP_REG_EXPR);
         } catch (AttributeNotFoundException e2) {
             logger.severe("Missing strip-reg-exp when processing " +
-                    curi.getURIString());
+                    curi.toString());
             return; // Can't do anything without it.
         }
         
@@ -197,7 +197,7 @@ public class HTTPContentDigest extends Processor {
         // Log if needed.
         if(logger.isLoggable(Level.FINEST)){
             logger.finest("Recalculated content digest for " + 
-                    curi.getURIString() + " old: " +
+                    curi.toString() + " old: " +
                     Base32.encode((byte[])curi.getContentDigest()) +
                     ", new: " + Base32.encode(newDigestValue));
         }

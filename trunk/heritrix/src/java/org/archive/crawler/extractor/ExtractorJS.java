@@ -90,7 +90,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         if((contentType.indexOf("javascript") < 0) &&
             (contentType.indexOf("jscript") < 0) &&
             (contentType.indexOf("ecmascript") < 0) &&
-            (!curi.getURIString().toLowerCase().endsWith(".js")) &&
+            (!curi.toString().toLowerCase().endsWith(".js")) &&
             (curi.getViaContext() == null || !curi.getViaContext().
                 toString().toLowerCase().startsWith("script"))) {
             return;

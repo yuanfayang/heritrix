@@ -57,28 +57,28 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
     }
     
     public void testEmptySequence() {
-        Object decision = this.rule.decisionFor(new Object());
+        Object decision = this.rule.decisionFor("test");
         assertTrue("Expect PASS but got " + decision,
             decision == DecideRule.PASS);
     }
     
     public void testSingleACCEPT() throws InvalidAttributeValueException {
         Object decision = addDecideRule(new AcceptDecideRule("ACCEPT")).
-            decisionFor(new Object());
+            decisionFor("test");
         assertTrue("Expect ACCEPT but got " + decision,
             decision == DecideRule.ACCEPT);
     }
     
     public void testSingleREJECT() throws InvalidAttributeValueException {
         Object decision = addDecideRule(new RejectDecideRule("REJECT")).
-            decisionFor(new Object());
+            decisionFor("test");
         assertTrue("Expect REJECT but got " + decision,
                 decision == DecideRule.REJECT);
     }
     
     public void testSinglePASS() throws InvalidAttributeValueException {
         Object decision = addDecideRule(new DecideRule("PASS")).
-            decisionFor(new Object());
+            decisionFor("test");
         assertTrue("Expect PASS but got " + decision,
                 decision == DecideRule.PASS);
     }
@@ -93,7 +93,7 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         addDecideRule(new DecideRule("PASS3"));
         addDecideRule(new AcceptDecideRule("ACCEPT2"));
         addDecideRule(new DecideRule("PASS4"));
-        Object decision = this.rule.decisionFor(new Object());
+        Object decision = this.rule.decisionFor("test");
         assertTrue("Expect ACCEPT but got " + decision,
             decision == DecideRule.ACCEPT);
     }
@@ -108,7 +108,7 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         addDecideRule(new AcceptDecideRule("ACCEPT2"));
         addDecideRule(new DecideRule("PASS4"));
         addDecideRule(new RejectDecideRule("REJECT3"));
-        Object decision = this.rule.decisionFor(new Object());
+        Object decision = this.rule.decisionFor("test");
         assertTrue("Expect REJECT but got " + decision,
             decision == DecideRule.REJECT);
     }

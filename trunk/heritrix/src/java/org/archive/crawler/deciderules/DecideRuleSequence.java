@@ -25,6 +25,7 @@
 package org.archive.crawler.deciderules;
 
 import java.util.Iterator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -62,10 +63,19 @@ public class DecideRuleSequence extends DecideRule {
         Object runningAnswer = PASS;
         for(Iterator iter = getRules(object).iterator(object);
                 iter.hasNext();) {
-            Object answer = ((DecideRule)iter.next()).decisionFor(object);
+            DecideRule r = (DecideRule)iter.next();
+            Object answer = r.decisionFor(object);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Rule " + r.getName() + " of " + this.getName() +
+                    " decided " + answer + " on " + object);
+            }
             if (answer != PASS) {
                 runningAnswer = answer;
             }
+        }
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Decision of " + this.getName() + " was " +
+                runningAnswer);
         }
         return runningAnswer;
     }

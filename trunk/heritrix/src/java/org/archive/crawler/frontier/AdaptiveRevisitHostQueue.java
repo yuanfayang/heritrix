@@ -272,10 +272,10 @@ implements AdaptiveRevisitAttributeConstants {
      */
     public void add(CrawlURI curi, boolean overrideSetTimeOnDups) 
             throws IOException{
-        logger.finer("Adding " + curi.getURIString());
+        logger.finer("Adding " + curi.toString());
         long oldValue = getNextReadyTime();
         try{
-            if(inProcessing(curi.getURIString())){
+            if(inProcessing(curi.toString())){
                 // If it is currently being processed, then it is already been 
                 // added and we sure as heck can't fetch it any sooner!
                 return;
@@ -293,7 +293,7 @@ implements AdaptiveRevisitAttributeConstants {
                 // and (possibly) it's time of next fetch and update if it
                 // will promote the URI to an earlier processing time.
                 boolean update = false;
-                CrawlURI curiExisting = getCrawlURI(curi.getURIString());
+                CrawlURI curiExisting = getCrawlURI(curi.toString());
                 long oldCuriProcessingTime = curiExisting.getLong(
                         A_TIME_OF_NEXT_PROCESSING);
                 if(curi.getSchedulingDirective() < 
@@ -339,7 +339,7 @@ implements AdaptiveRevisitAttributeConstants {
             } else {
                 // Something went wrong. Throw an exception.
                 throw new DatabaseException("Error on add into database for " +
-                        "CrawlURI " + curi.getURIString() + ". " + 
+                        "CrawlURI " + curi.toString() + ". " + 
                         opStatus.toString());
             }
         } catch (DatabaseException e) {
@@ -368,7 +368,7 @@ implements AdaptiveRevisitAttributeConstants {
     throws DatabaseException{
         DatabaseEntry keyEntry = new DatabaseEntry();
         DatabaseEntry dataEntry = new DatabaseEntry();
-        StringBinding.stringToEntry(curi.getURIString(), keyEntry);
+        StringBinding.stringToEntry(curi.toString(), keyEntry);
         crawlURIBinding.objectToEntry(curi, dataEntry);
         OperationStatus opStatus = null;
         if(overrideDuplicates){
@@ -403,7 +403,7 @@ implements AdaptiveRevisitAttributeConstants {
                 CrawlURI curi = 
                     (CrawlURI) crawlURIBinding.entryToObject(dataEntry);
                 // Delete it from processingUriDB
-                deleteInProcessing(curi.getURIString());
+                deleteInProcessing(curi.toString());
                 // Add to processingUriDB;
                 strictAdd(curi,false); // Ignore any duplicates. Go with the
                                        // ones already in the queue.
@@ -543,7 +543,7 @@ implements AdaptiveRevisitAttributeConstants {
         DatabaseEntry keyEntry = new DatabaseEntry();
         DatabaseEntry dataEntry = new DatabaseEntry();
 
-        StringBinding.stringToEntry(curi.getURIString(), keyEntry);
+        StringBinding.stringToEntry(curi.toString(), keyEntry);
         crawlURIBinding.objectToEntry(curi, dataEntry);
 
         OperationStatus opStatus = processingUriDB.putNoOverwrite(null,
@@ -553,10 +553,10 @@ implements AdaptiveRevisitAttributeConstants {
             if (opStatus == OperationStatus.KEYEXIST) {
                 throw new IllegalStateException("Can not insert duplicate "
                         + "URI into list of URIs being processed. " + "HQ: "
-                        + hostName + ", CrawlURI: " + curi.getURIString());
+                        + hostName + ", CrawlURI: " + curi.toString());
             }
             throw new DatabaseException("Error occured adding CrawlURI: "
-                    + curi.getURIString() + " to HQ " + hostName + " list "
+                    + curi.toString() + " to HQ " + hostName + " list "
                     + "of URIs currently being processed. "
                     + opStatus.toString());
         }
@@ -643,7 +643,7 @@ implements AdaptiveRevisitAttributeConstants {
                        boolean forgetURI) 
             throws IllegalStateException, IOException{
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Updating " + curi.getURIString());
+            logger.fine("Updating " + curi.toString());
         }
         try{
             // First add it to the regular queue (if not forgetting it).
@@ -656,7 +656,7 @@ implements AdaptiveRevisitAttributeConstants {
                             " of URIs waiting for processing. URIs currently" +
                             " being processsed can never be in that queue." +
                             " HQ: " + hostName + ", CrawlURI: " + 
-                            curi.getURIString());
+                            curi.toString());
                     }
                 }
 
@@ -672,7 +672,7 @@ implements AdaptiveRevisitAttributeConstants {
             }
             
             // Then remove from list of in processing URIs
-            deleteInProcessing(curi.getURIString());
+            deleteInProcessing(curi.toString());
             
             inProcessing--;
             
@@ -722,12 +722,12 @@ implements AdaptiveRevisitAttributeConstants {
             addInProcessing(curi);
             
             // Delete it from the primaryUriDB
-            StringBinding.stringToEntry(curi.getURIString(),keyEntry);
+            StringBinding.stringToEntry(curi.toString(),keyEntry);
             OperationStatus opStatus = primaryUriDB.delete(null,keyEntry);
             
             if(opStatus != OperationStatus.SUCCESS){
                 throw new DatabaseException("Error occured removing URI: " +
-                        curi.getURIString() + " from HQ " + hostName + 
+                        curi.toString() + " from HQ " + hostName + 
                         " priority queue for processing. " + opStatus.toString());
             }
             
@@ -740,7 +740,7 @@ implements AdaptiveRevisitAttributeConstants {
             }
             inProcessing++;
             setNextReadyTime(nextReady);
-            logger.fine("Issuing " + curi.getURIString());
+            logger.fine("Issuing " + curi.toString());
             return curi;
         } catch (DatabaseException e) {
             // Blanket catch all DBExceptions and convert to IOExceptions.
@@ -1064,7 +1064,7 @@ implements AdaptiveRevisitAttributeConstants {
         int i = 0;
         while(i<max && opStatus == OperationStatus.SUCCESS){
             CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
-            ret.append(" URI:                " + tmp.getURIString() + "\n");
+            ret.append(" URI:                " + tmp.toString() + "\n");
             switch(tmp.getSchedulingDirective()){
                 case CandidateURI.HIGHEST : 
                     ret.append("  Sched. directive:  HIGHEST\n"); break;

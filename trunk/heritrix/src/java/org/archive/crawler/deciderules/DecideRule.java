@@ -66,29 +66,17 @@ public class DecideRule extends ModuleType {
     /**
      * Respond to a settings update, refreshing any internal settings-derived
      * state.
+     * 
+     * This method gives implementors a chance to refresh internal state
+     * after a settings change. Normally new settings are picked up w/o
+     * the need of work on the part of settings' clients but some facilities
+     * -- for example, Surt classes need to sort submissions into
+     * common-prefix-coalesced collection of Surt prefixes, or,
+     * settings changes that alter external file or seeds/directives
+     * references -- need to be flagged so they can take
+     * compensatory action. 
      */
     public void kickUpdate() {
         // by default do nothing
-    }
-    
-    /**
-     * Utility method to coerce a CandidateURI or UURI to 
-     * plain string.
-     * 
-     * @param o
-     * @return Passed object as string.
-     */
-    protected String asString(Object o) {
-        String input;
-        // TODO consider changing this to ask o for its matchString.
-        if(o instanceof CandidateURI) {
-            input = ((CandidateURI)o).getURIString();
-        } else if (o instanceof UURI ){
-            input = ((UURI)o).toString();
-        } else {
-            //TODO handle other inputs
-            input = o.toString();
-        }
-        return input;
     }
 }

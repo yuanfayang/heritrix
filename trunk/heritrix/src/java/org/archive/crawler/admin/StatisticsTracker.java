@@ -665,8 +665,8 @@ implements CrawlURIDispositionListener {
      */
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
-            processedSeedsDisposition.put(curi.getURIString(),disposition);
-            processedSeedsStatusCodes.put(curi.getURIString(),
+            processedSeedsDisposition.put(curi.toString(), disposition);
+            processedSeedsStatusCodes.put(curi.toString(),
                     new Integer(curi.getFetchStatus()));
         }
     }

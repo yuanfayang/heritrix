@@ -233,21 +233,18 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * Give the 'load' associated with the given CrawlURI.
-     * Usually 1.
-     * 
-     * @param o
-     * @return
+     * @param o CrawlURI.
+     * @return The 'load' associated with the given CrawlURI (Usually '1').
      */
     private int loadFor(CrawlURI o) {
         if (o.needsImmediateScheduling()) {
             // treat anything high-prio as
             // blocking all others
             return valence;
-        } else {
-            // otherwise, it's just normal
-            return 1;
         }
+
+        // otherwise, it's just normal
+        return 1;
     }
 
     /**
@@ -315,7 +312,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     public void enqueue(CrawlURI curi) {
      
         innerQ.enqueue(curi,curi.getSchedulingDirective());
-        lastQueued = curi.getURIString();
+        lastQueued = curi.toString();
     }
 
     /**
@@ -342,7 +339,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
                  getClassKey());
             throw e;
         }
-        lastDequeued = candidate.getURIString();
+        lastDequeued = candidate.toString();
         return candidate;
     }
 

@@ -108,8 +108,8 @@ implements AdaptiveRevisitAttributeConstants {
                 System.currentTimeMillis()+20000); // in 20 sec.
         
         hq.add(curis[0],false);
-        assertEquals("First CrawlURI should be top",curis[0].getURIString(),
-                hq.peek().getURIString());
+        assertEquals("First CrawlURI should be top",curis[0].toString(),
+                hq.peek().toString());
         assertTrue("HQ should no longer be empty",
                 hq.getState()!=AdaptiveRevisitHostQueue.HQSTATE_EMPTY);
         assertEquals("Size of HQ should now be 1",1,hq.getSize());
@@ -122,7 +122,7 @@ implements AdaptiveRevisitAttributeConstants {
          */
         CrawlURI curi = hq.next(); // Should return curis[2]
         assertEquals("next() did not return 'top' URI",
-                curis[0].getURIString(),curi.getURIString());
+                curis[0].toString(),curi.toString());
         assertTrue("HQ should now be busy, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_BUSY);
         try{
@@ -136,8 +136,8 @@ implements AdaptiveRevisitAttributeConstants {
                 null,hq.peek());
         
         hq.add(curis[1],false);
-        assertEquals("Second CrawlURI should be top",curis[1].getURIString(),
-                hq.peek().getURIString());
+        assertEquals("Second CrawlURI should be top",curis[1].toString(),
+                hq.peek().toString());
         assertEquals("Size of HQ should now be 2",2,hq.getSize());
 
         // Return it with next fetch time in the future.
@@ -146,12 +146,12 @@ implements AdaptiveRevisitAttributeConstants {
                         +100000); // 100 sec behind current top.
         hq.update(curi,false,0);
         assertEquals("Second CrawlURI should be still be top",
-                curis[1].getURIString(),hq.peek().getURIString());
+                curis[1].toString(),hq.peek().toString());
         assertEquals("Size of HQ should still be 2",2,hq.getSize());
         
         hq.add(curis[2],false);
         assertEquals("Second CrawlURI should still be top",
-                curis[1].getURIString(), hq.peek().getURIString());
+                curis[1].toString(), hq.peek().toString());
         assertEquals("Size of HQ should now be 3",3,hq.getSize());
 
         /*
@@ -184,14 +184,14 @@ implements AdaptiveRevisitAttributeConstants {
         hq.add(curis[2],true);
         assertEquals("Size of HQ should still be 3",hq.getSize(),3);
         assertEquals("Third CrawlURI should be now be top",
-                curis[2].getURIString(), hq.peek().getURIString());
+                curis[2].toString(), hq.peek().toString());
         curis[2].putLong(A_TIME_OF_NEXT_PROCESSING,
                 curis[1].getLong(A_TIME_OF_NEXT_PROCESSING)
                             +10000); // 10 sec. later 
         hq.add(curis[2],true);
         assertEquals("Size of HQ should still be 3",hq.getSize(),3);
         assertEquals("Third CrawlURI should still top",
-                curis[2].getURIString(), hq.peek().getURIString());
+                curis[2].toString(), hq.peek().toString());
 
     
         /*
@@ -202,7 +202,7 @@ implements AdaptiveRevisitAttributeConstants {
          */
         curi = hq.next(); // Should return curis[2]
         assertEquals("next() did not return 'top' URI",
-                curis[2].getURIString(),curi.getURIString());
+                curis[2].toString(),curi.toString());
         assertTrue("HQ should now be busy, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_BUSY);
         try{
@@ -213,7 +213,7 @@ implements AdaptiveRevisitAttributeConstants {
             // This is supposed to happen.
         }
         assertEquals("New top URI",
-                curis[1].getURIString(),hq.peek().getURIString());
+                curis[1].toString(),hq.peek().toString());
         
         /*
          * Add a URI while HQ is busy. Check if this succeeds normally.
@@ -287,7 +287,7 @@ implements AdaptiveRevisitAttributeConstants {
          */
         curi = hq.next(); // Should return curis[2]
         assertEquals("next() did not return 'top' URI",
-                curis[2].getURIString(),curi.getURIString());
+                curis[2].toString(),curi.toString());
         assertTrue("HQ should now be busy, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_BUSY);
         hq.close();
@@ -299,7 +299,7 @@ implements AdaptiveRevisitAttributeConstants {
         assertTrue("HQ should be ready on reopen, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_READY);
         assertEquals("CrawlURI 'in processing' before should be top",
-                curi.getURIString(), hq.peek().getURIString());
+                curi.toString(), hq.peek().toString());
     
         /* Check if valence higher then 1 is properly handled.
          * 
@@ -307,7 +307,7 @@ implements AdaptiveRevisitAttributeConstants {
          */ 
         curi = hq.next(); // Should return curis[2]
         assertEquals("next() did not return 'top' URI",
-                curis[2].getURIString(),curi.getURIString());
+                curis[2].toString(),curi.toString());
         assertTrue("HQ should still be ready, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_READY);
         
@@ -315,7 +315,7 @@ implements AdaptiveRevisitAttributeConstants {
          */ 
         curi = hq.next(); // Should return curis[3]
         assertEquals("next() did not return 'top' URI",
-                curis[3].getURIString(),curi.getURIString());
+                curis[3].toString(),curi.toString());
         assertTrue("HQ should be busy, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_BUSY);
         assertEquals("Size of HQ should still be 4",
@@ -329,7 +329,7 @@ implements AdaptiveRevisitAttributeConstants {
         assertTrue("HQ should now be ready, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_READY);
         assertEquals("'updated' CrawlURI before should be top",
-                curi.getURIString(), hq.peek().getURIString());
+                curi.toString(), hq.peek().toString());
         
         
         /* Update() again, ensure proper state. URI is NOT placed at front of 
@@ -344,7 +344,7 @@ implements AdaptiveRevisitAttributeConstants {
         assertTrue("HQ should still be ready, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_READY);
         assertEquals("Top CrawlURI before should be unchanged",
-                curi.getURIString(), hq.peek().getURIString());
+                curi.toString(), hq.peek().toString());
         
 
         // TODO: Test sorting with scheduling directives.

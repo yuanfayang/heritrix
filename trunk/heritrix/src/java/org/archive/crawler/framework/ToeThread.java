@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -220,7 +219,7 @@ public class ToeThread extends Thread
             currentCuri.addAnnotation("err="+err.getClass().getName());
             currentCuri.addAnnotation("os"+currentCuri.getFetchStatus());
 			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-            context = currentCuri.getURIString() + " in " + currentProcessorName;
+            context = currentCuri.toString() + " in " + currentProcessorName;
 		}
         String title = "Serious error occured processing '" + context + "'";
         String message = "The following serious error occured when trying " +
@@ -304,10 +303,10 @@ public class ToeThread extends Thread
         currentCuri.addAnnotation("err="+e.getClass().getName());
         currentCuri.putObject(A_RUNTIME_EXCEPTION, e);
         String title = "Problem occured processing '"
-                + currentCuri.getURIString() + "'";
+                + currentCuri.toString() + "'";
         String message = "Problem " + e + 
                 " occured when trying to process '"
-                + currentCuri.getURIString()
+                + currentCuri.toString()
                 + "' at step " + previousStep 
                 + " in " + currentProcessorName +"\n";
         Heritrix.addAlert(new Alert(title, message.toString(), e,
@@ -366,7 +365,7 @@ public class ToeThread extends Thread
         // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
         CrawlURI c = currentCuri;
         if(c != null) {
-            rep.append(c.getURIString());
+            rep.append(c.toString());
             rep.append(" (" + c.getFetchAttempts() + " attempts)");
             rep.newline();
             rep.padTo(8);

@@ -292,7 +292,7 @@ implements Comparable, Serializable {
         if (peekItem == null && count > 0) {
             try {
                 peekItem = queues.get(new DatabaseEntry(origin));
-                lastPeeked = peekItem.getURIString();
+                lastPeeked = peekItem.toString();
             } catch (DatabaseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -323,7 +323,7 @@ implements Comparable, Serializable {
     protected void insert(BdbMultipleWorkQueues queues, CrawlURI curi) {
         try {
             queues.put(curi);
-            lastQueued = curi.getURIString();
+            lastQueued = curi.toString();
         } catch (DatabaseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

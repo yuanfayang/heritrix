@@ -752,7 +752,7 @@ HasUriReceiver,  CrawlStatusListener {
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public void finished(CrawlURI curi) {
-        logger.fine("Frontier.finished start: " + curi.getURIString());
+        logger.fine("Frontier.finished start: " + curi.toString());
         long start = System.currentTimeMillis();
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
@@ -765,7 +765,7 @@ HasUriReceiver,  CrawlStatusListener {
         	if(duration > 1000) {
         		logger.info("#" +
         				((ToeThread)Thread.currentThread()).getSerialNumber() +
-						" " + duration + "ms" + " finished(" + curi.getURIString() +
+						" " + duration + "ms" + " finished(" + curi.toString() +
 						") via " + curi.flattenVia());
         	}
         }

@@ -72,7 +72,7 @@ public class HostQueuesFrontierMarker implements FrontierMarker {
     }
 
     public boolean match(CandidateURI caURI){
-        return p.matcher(caURI.getURIString()).matches();
+        return p.matcher(caURI.toString()).matches();
     }
 
 	/* (non-Javadoc)

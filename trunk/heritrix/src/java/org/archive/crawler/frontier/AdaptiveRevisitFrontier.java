@@ -46,17 +46,12 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
-import org.archive.crawler.frontier.FrontierJournal;
-import org.archive.crawler.frontier.HostnameQueueAssignmentPolicy;
-import org.archive.crawler.frontier.QueueAssignmentPolicy;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
-
-import st.ata.util.AList;
 
 
 /**
@@ -269,7 +264,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 System.currentTimeMillis());
         
         try {
-            logger.finest("scheduling " + curi.getURIString());
+            logger.finest("scheduling " + curi.toString());
             AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
             if(hq == null){
                 // Need to create it.
@@ -348,7 +343,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         try {
             CrawlURI curi = hq.next();
             // Populate CURI with 'transient' variables such as server.
-            logger.fine("Issuing "+curi.getURIString());
+            logger.fine("Issuing " + curi.toString());
             long temp = curi.getLong(A_TIME_OF_NEXT_PROCESSING);
             long currT = System.currentTimeMillis();
             long overdue = (currT-temp);
@@ -365,7 +360,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             }
             if(overdue < 0){
                 // This should never happen.
-                logger.severe("Time overdue for " + curi.getURIString() + 
+                logger.severe("Time overdue for " + curi.toString() + 
                         "is negative (" + overdue + ")!");
             }
             curi.putLong(A_FETCH_OVERDUE,overdue);
@@ -399,7 +394,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
-        logger.fine(curi.getURIString()+ " " + 
+        logger.fine(curi.toString()+ " " + 
                 CrawlURI.fetchStatusCodesToString(curi.getFetchStatus()));
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
@@ -478,7 +473,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     ArchiveUtils.formatMillisecondsToConventional(
                     (curi.getLong(A_WAIT_INTERVAL))));
         } else {
-            logger.severe("Missing wait interval for " + curi.getURIString() +
+            logger.severe("Missing wait interval for " + curi.toString() +
                     " WaitEvaluator may be missing.");
         }
         if(curi.containsKey(A_NUMBER_OF_VISITS)){
@@ -529,11 +524,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     calculateSnoozeTime(curi));
         } catch (IOException e) {
             logger.severe("An IOException occured when updating " + 
-                    curi.getURIString() + "\n" + e.getMessage());
+                    curi.toString() + "\n" + e.getMessage());
             e.printStackTrace();
         } catch (AttributeNotFoundException e) {
             logger.severe("Unable to locate fetch completion time for " + 
-                    curi.getURIString());
+                    curi.toString());
         }
     }
 
@@ -794,7 +789,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
         }
         long ret = durationToWait > 0 ? durationToWait : 0;
-        logger.finest("Snooze time for " + curi.getURIString() + " = " + ret );
+        logger.finest("Snooze time for " + curi.toString() + " = " + ret );
         return ret;
     }
 
@@ -872,7 +867,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
     public synchronized FrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -929,7 +923,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#getFrontierJournal()
      */
     public FrontierJournal getFrontierJournal() {
-        // TODO Auto-generated method stub
         return null;
     }
 

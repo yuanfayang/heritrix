@@ -126,7 +126,7 @@ public class DomainSensitiveFrontier extends HostQueuesFrontier {
                 String filter = "^((https?://)?[a-zA-Z0-9\\.]*)" + host
                         + "($|/.*)";
                 logger.fine("** Adding filter: [" + filter + "] **");
-                URIRegExpFilter urf = new URIRegExpFilter(curi.getURIString(),
+                URIRegExpFilter urf = new URIRegExpFilter(curi.toString(),
                         filter);
                 or.addFilter(controller.getSettingsHandler().getSettings(null),
                         urf);
@@ -136,7 +136,7 @@ public class DomainSensitiveFrontier extends HostQueuesFrontier {
             }
         } catch (Exception e) {
             logger.severe("ERROR: checkIfSomethingFinished(), "
-                    + "while processing {" + curi.getURIString() + "}"
+                    + "while processing {" + curi.toString() + "}"
                     + e.getClass()
                     + "message: " + e.getMessage() + ".  Stack trace:");
             e.printStackTrace();
