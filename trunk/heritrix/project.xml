@@ -68,11 +68,12 @@
   <package>org.archive</package>
   <!--TODO: Make a logo for the heritrix crawler!-->
   <logo>/images/logo.gif</logo>
-  <description>The Internet Archive's web crawler.
+  <description>The Internet Archive's open-source, extensible, web-scale,
+  archival-quality web crawler project.
   </description>
   <!-- a short description of what the project does -->
   <shortDescription>
-  An open-source, extensible, web-scale, archival-quality web crawler project.
+  An open-source, extensible, web-scale crawler.
   </shortDescription>
 
   <!--TODO: the project home page.-->
