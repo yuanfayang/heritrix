@@ -63,8 +63,8 @@ import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.frontier.Frontier;
+import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.io.LocalErrorFormatter;
-import org.archive.crawler.io.PassthroughFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
@@ -212,7 +212,7 @@ public class CrawlController implements Serializable {
      *
      * Currently captures Frontier/URI transitions but recovery is unimplemented.
      */
-    transient public Logger recover;
+    transient public RecoveryJournal recover;
 
     /**
      * Logger to hold job summary report.
@@ -583,7 +583,7 @@ public class CrawlController implements Serializable {
         progressStats =
             Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." + logsPath);
         recover =
-            Logger.getLogger(LOGNAME_RECOVER + "." + logsPath);
+            new RecoveryJournal(logsPath, LOGNAME_RECOVER);
 
         fileHandlers = new HashMap();
 
@@ -617,11 +617,6 @@ public class CrawlController implements Serializable {
                 new StatisticsLogFormatter(),
                 true);
 
-        setupLogFile(
-                recover,
-                logsPath + LOGNAME_RECOVER + CURRENT_LOG_SUFFIX,
-                new PassthroughFormatter(),
-                false);
     }
 
     private void setupLogFile(Logger logger, String filename, Formatter f,
@@ -672,6 +667,7 @@ public class CrawlController implements Serializable {
                     .get(l);
             gfh.close();
         }
+        recover.close();
     }
 
 
