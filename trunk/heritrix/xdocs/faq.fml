@@ -38,6 +38,11 @@
   </part>
   <part id="problems">
     <title>Common Problems</title>
+    <faq id="html_only">
+      <question>How do I crawl html only?</question>
+      <answer>Tom Emerson describes one technique here, 
+      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">Focusing on HTML</a>.</answer>
+    </faq>
     <faq id="limitations">
       <question>Are there known limitations?</question>
       <answer>See the 
