@@ -890,7 +890,8 @@
         <para>Each URI taken off the Frontier queue runs through the
         <literal>Processing Chains</literal> listed in the diagram shown
         below. URIs are always processed in the order shown in the diagram
-        unless a particular processor throws a fatal error. In this
+        unless a particular processor throws a fatal error or decides to stop
+        the processing of the current URI for some reason. In this
         circumstance, processing skips to the end, to the Post-processing
         chain, for cleanup.</para>
 
