@@ -938,7 +938,7 @@ public class CrawlController extends Thread {
                 + toePool.getActiveToeCount()
                 + " active)\n");
         for (int i = 0; i < toePool.getToeCount(); i++) {
-            rep.append("   ToeThread #" + (i + 1) + "\n");
+            rep.append("   ToeThread #" + i + "\n");
             rep.append(toePool.getReport(i));
             rep.append("\n");
         }
