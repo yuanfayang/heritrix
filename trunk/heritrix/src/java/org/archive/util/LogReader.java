@@ -36,8 +36,8 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.io.CompositeFileReader;
 
 /**
- * This class contains a variety of methods for reading log files (or other text files containing
- * repeated lines with similar information).
+ * This class contains a variety of methods for reading log files (or other text 
+ * files containing repeated lines with similar information).
  * <p>
  * All methods are static.
  *
@@ -91,10 +91,11 @@ public class LogReader
      * first.
      *
      * @param aFileName The filename of the log/file
-     * @param lineNumber The number of the first line to get (if larger then the file an
-     *                   empty string will be returned)
-     * @param n How many lines to return (total, including the one indicated by lineNumber).
-     *                   If smaller then 1 then an empty string will be returned.
+     * @param lineNumber The number of the first line to get (if larger then the 
+     *                   file an empty string will be returned)
+     * @param n How many lines to return (total, including the one indicated by 
+     *                   lineNumber). If smaller then 1 then an empty string 
+     *                   will be returned.
      *
      * @return An array of two strings is returned. At index 0 a portion of the
      *         file starting at lineNumber and reaching lineNumber+n is located.
@@ -122,10 +123,11 @@ public class LogReader
      * first.
      *
      * @param aFileName The filename of the log/file
-     * @param lineNumber The number of the first line to get (if larger then the file an
-     *                   empty string will be returned)
-     * @param n How many lines to return (total, including the one indicated by lineNumber).
-     *                   If smaller then 1 then an empty string will be returned.
+     * @param lineNumber The number of the first line to get (if larger then the
+     *                   file an empty string will be returned)
+     * @param n How many lines to return (total, including the one indicated by 
+     *                   lineNumber). If smaller then 1 then an empty string 
+     *                   will be returned.
      *
      * @return An array of two strings is returned. At index 0 a portion of the
      *         file starting at lineNumber and reaching lineNumber+n is located.
@@ -151,10 +153,11 @@ public class LogReader
      * first.
      *
      * @param reader source to scan for lines
-     * @param lineNumber The number of the first line to get (if larger then the file an
-     *                   empty string will be returned)
-     * @param n How many lines to return (total, including the one indicated by lineNumber).
-     *                   If smaller then 1 then an empty string will be returned.
+     * @param lineNumber The number of the first line to get (if larger then the
+     *                   file an empty string will be returned)
+     * @param n How many lines to return (total, including the one indicated by
+     *                   lineNumber). If smaller then 1 then an empty string
+     *                   will be returned.
      *
      * @param logsize total size of source
      * @return An array of two strings is returned. At index 0 a portion of the
@@ -163,7 +166,10 @@ public class LogReader
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
      */
-    public static String[] get(InputStreamReader reader, int lineNumber, int n, long logsize)
+    public static String[] get(InputStreamReader reader, 
+                               int lineNumber, 
+                               int n, 
+                               long logsize)
     {
         StringBuffer ret = new StringBuffer();
         String info = null;
@@ -200,8 +206,8 @@ public class LogReader
      * @param regExpr The regular expression that is to be used
      * @return The line number (counting from 1, not zero) of the first line
      *         that matches the given regular expression. -1 is returned if no
-     *         line matches the regular expression.
-     *         -1 also is returned if errors occur (file not found, io exception etc.)
+     *         line matches the regular expression. -1 also is returned if 
+     *         errors occur (file not found, io exception etc.)
      */
     public static int findFirstLineContaining(String aFileName, String regExpr)
     {
@@ -221,10 +227,11 @@ public class LogReader
      * @param regExpr The regular expression that is to be used
      * @return The line number (counting from 1, not zero) of the first line
      *         that matches the given regular expression. -1 is returned if no
-     *         line matches the regular expression.
-     *         -1 also is returned if errors occur (file not found, io exception etc.)
+     *         line matches the regular expression. -1 also is returned if 
+     *         errors occur (file not found, io exception etc.)
      */
-    public static int findFirstLineContainingFromSeries(String aFileName, String regExpr)
+    public static int findFirstLineContainingFromSeries(String aFileName, 
+                                                        String regExpr)
     {
         try {
             return findFirstLineContaining(seriesReader(aFileName), regExpr);
@@ -242,10 +249,11 @@ public class LogReader
      * @param regExpr The regular expression that is to be used
      * @return The line number (counting from 1, not zero) of the first line
      *         that matches the given regular expression. -1 is returned if no
-     *         line matches the regular expression.
-     *         -1 also is returned if errors occur (file not found, io exception etc.)
+     *         line matches the regular expression. -1 also is returned if 
+     *         errors occur (file not found, io exception etc.)
      */
-    public static int findFirstLineContaining(InputStreamReader reader, String regExpr)
+    public static int findFirstLineContaining(InputStreamReader reader, 
+                                              String regExpr)
     {
         Pattern p = Pattern.compile(regExpr);
 
@@ -268,18 +276,25 @@ public class LogReader
     }
 
     /**
-     * Returns all lines in a log/file matching a given regular expression.  Possible to get lines
-     * immediately following the matched line.  Also possible to have each line prepended by it's
-     * line number.
+     * Returns all lines in a log/file matching a given regular expression.  
+     * Possible to get lines immediately following the matched line.  Also 
+     * possible to have each line prepended by it's line number.
      *
      * @param aFileName The filename of the log/file
      * @param regExpr The regular expression that is to be used
-     * @param addLines How many lines (in addition to the matched line) to add. A value less then 1
-     *                 will mean that only the matched line will be included. If another matched
-     *                 line is hit before we reach this limit it will be included and this counter
+     * @param addLines How many lines (in addition to the matched line) to add. 
+     *                 A value less then 1 will mean that only the matched line 
+     *                 will be included. If another matched line is hit before 
+     *                 we reach this limit it will be included and this counter
      *                 effectively reset for it.
-     * @param prependLineNumbers If true, then each line will be prepended by it's line number in
-     *                           the file.
+     * @param prependLineNumbers If true, then each line will be prepended by 
+     *                           it's line number in the file.
+     * @param skipFirstMatches The first number of matches up to this value will
+     *                         be skipped over.
+     * @param numberOfMatches Once past matches that are to be skipped this many
+     *                        matches will be added to the return value. A
+     *                        value of 0 will cause all matching lines to be
+     *                        included.
      * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
@@ -289,11 +304,21 @@ public class LogReader
      *         returned and the informational string will be empty (not null).
      */
     public static String[] getByRegExpr(String aFileName,
-                                      String regExpr,
-                                      int addLines,
-                                      boolean prependLineNumbers) {
+                                        String regExpr,
+                                        int addLines,
+                                        boolean prependLineNumbers,
+                                        int skipFirstMatches,
+                                        int numberOfMatches) {
         try {
-            return getByRegExpr(new FileReader(aFileName), regExpr, addLines, prependLineNumbers);
+            File f = new File(aFileName);
+            return getByRegExpr(
+                    new FileReader(f), 
+                    regExpr, 
+                    addLines, 
+                    prependLineNumbers,
+                    skipFirstMatches,
+                    numberOfMatches,
+                    f.length());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return null;
@@ -301,18 +326,25 @@ public class LogReader
     }
 
     /**
-     * Returns all lines in a log/file matching a given regular expression.  Possible to get lines
-     * immediately following the matched line.  Also possible to have each line prepended by it's
-     * line number.
+     * Returns all lines in a log/file matching a given regular expression.  
+     * Possible to get lines immediately following the matched line.  Also 
+     * possible to have each line prepended by it's line number.
      *
      * @param aFileName The filename of the log/file
      * @param regExpr The regular expression that is to be used
-     * @param addLines How many lines (in addition to the matched line) to add. A value less then 1
-     *                 will mean that only the matched line will be included. If another matched
-     *                 line is hit before we reach this limit it will be included and this counter
+     * @param addLines How many lines (in addition to the matched line) to add. 
+     *                 A value less then 1 will mean that only the matched line 
+     *                 will be included. If another matched line is hit before 
+     *                 we reach this limit it will be included and this counter
      *                 effectively reset for it.
-     * @param prependLineNumbers If true, then each line will be prepended by it's line number in
-     *                           the file.
+     * @param prependLineNumbers If true, then each line will be prepended by 
+     *                           it's line number in the file.
+     * @param skipFirstMatches The first number of matches up to this value will
+     *                         be skipped over.
+     * @param numberOfMatches Once past matches that are to be skipped this many
+     *                        matches will be added to the return value. A
+     *                        value of 0 will cause all matching lines to be
+     *                        included.
      * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
@@ -324,9 +356,19 @@ public class LogReader
     public static String[] getByRegExprFromSeries(String aFileName,
                                       String regExpr,
                                       int addLines,
-                                      boolean prependLineNumbers) {
+                                      boolean prependLineNumbers,
+                                      int skipFirstMatches,
+                                      int numberOfMatches) {
         try {
-            return getByRegExpr(seriesReader(aFileName), regExpr, addLines, prependLineNumbers);
+            File f = new File(aFileName);
+            return getByRegExpr(
+                    seriesReader(aFileName), 
+                    regExpr, 
+                    addLines, 
+                    prependLineNumbers,
+                    skipFirstMatches,
+                    numberOfMatches,
+                    f.length());
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -334,19 +376,27 @@ public class LogReader
     }
 
     /**
-     * Returns all lines in a log/file matching a given regular expression.  Possible to get lines
-     * immediately following the matched line.  Also possible to have each line prepended by it's
-     * line number.
+     * Returns all lines in a log/file matching a given regular expression.  
+     * Possible to get lines immediately following the matched line.  Also 
+     * possible to have each line prepended by it's line number.
      *
      * @param reader The reader of the log/file
      * @param regExpr The regular expression that is to be used
-     * @param addLines How many lines (in addition to the matched line) to add. A value less then 1
-     *                 will mean that only the matched line will be included. If another matched
-     *                 line is hit before we reach this limit it will be included and this counter
+     * @param addLines How many lines (in addition to the matched line) to add. 
+     *                 A value less then 1 will mean that only the matched line 
+     *                 will be included. If another matched line is hit before 
+     *                 we reach this limit it will be included and this counter
      *                 effectively reset for it.
-     * @param prependLineNumbers If true, then each line will be prepended by it's line number in
-     *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a
+     * @param prependLineNumbers If true, then each line will be prepended by 
+     *                           it's line number in the file.
+     * @param skipFirstMatches The first number of matches up to this value will
+     *                         be skipped over.
+     * @param numberOfMatches Once past matches that are to be skipped this many
+     *                        matches will be added to the return value. A
+     *                        value of 0 will cause all matching lines to be
+     *                        included.
+     * @param logsize Size of the log in bytes
+     * @return An array of two strings is returned. At index 0 all lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -357,7 +407,10 @@ public class LogReader
     public static String[] getByRegExpr(InputStreamReader reader,
                                       String regExpr,
                                       int addLines,
-                                      boolean prependLineNumbers) {
+                                      boolean prependLineNumbers,
+                                      int skipFirstMatches,
+                                      int numberOfMatches,
+                                      long logsize) {
         StringBuffer ret = new StringBuffer();
         String info = "";
 
@@ -369,21 +422,26 @@ public class LogReader
             int i = 1;
             boolean doAdd = false;
             int addCount = 0;
-            long lines = 0;
             long linesMatched = 0;
             while ((line = bf.readLine()) != null) {
-                lines++;
                 if(p.matcher(line).matches()){
                     // Found a match
-                    linesMatched++;
-                    if(prependLineNumbers){
-                        ret.append(i);
-                        ret.append(". ");
+                    if(numberOfMatches > 0 &&
+                            linesMatched >= skipFirstMatches + numberOfMatches){
+                        // Ok, we are done.
+                        break;
                     }
-                    ret.append(line);
-                    ret.append("\n");
-                    doAdd = true;
-                    addCount = 0;
+                    linesMatched++;
+                    if(linesMatched > skipFirstMatches){
+                        if(prependLineNumbers){
+                            ret.append(i);
+                            ret.append(". ");
+                        }
+                        ret.append(line);
+                        ret.append("\n");
+                        doAdd = true;
+                        addCount = 0;
+                    }
                 } else if(doAdd) {
                     if(addCount < addLines){
                         //Ok, still within addLines
@@ -401,7 +459,8 @@ public class LogReader
                 }
                 i++;
             }
-            info = "Displaying: " + linesMatched + " of " + lines + " total lines in file";
+            double percent = ((double)ret.length()/logsize)*100;
+            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
         }catch(FileNotFoundException e){
             return null;
         }catch(IOException e){
@@ -415,16 +474,23 @@ public class LogReader
     }
 
     /**
-     * Returns all lines in a log/file matching a given regular expression.  Possible to get lines
-     * immediately following the matched line.  Also possible to have each line prepended by it's
-     * line number.
+     * Returns all lines in a log/file matching a given regular expression.  
+     * Possible to get lines immediately following the matched line.  Also 
+     * possible to have each line prepended by it's line number.
      *
      * @param aFileName The filename of the log/file
      * @param regExpr The regular expression that is to be used
-     * @param addLines Any lines following a match that <b>begin</b> with this string will also be included.
-     *                 We will stop including new lines once we hit the first that does not match.
-     * @param prependLineNumbers If true, then each line will be prepended by it's line number in
-     *                           the file.
+     * @param addLines Any lines following a match that <b>begin</b> with this 
+     *                 string will also be included. We will stop including new 
+     *                 lines once we hit the first that does not match.
+     * @param prependLineNumbers If true, then each line will be prepended by 
+     *                           it's line number in the file.
+     * @param skipFirstMatches The first number of matches up to this value will
+     *                         be skipped over.
+     * @param numberOfMatches Once past matches that are to be skipped this many
+     *                        matches will be added to the return value. A
+     *                        value of 0 will cause all matching lines to be
+     *                        included.
      * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
@@ -433,9 +499,22 @@ public class LogReader
      *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
-    public static String[] getByRegExpr(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
+    public static String[] getByRegExpr(String aFileName, 
+                                        String regExpr, 
+                                        String addLines, 
+                                        boolean prependLineNumbers,
+                                        int skipFirstMatches,
+                                        int numberOfMatches){
         try {
-            return getByRegExpr(new FileReader(aFileName),regExpr,addLines,prependLineNumbers);
+            File f = new File(aFileName);
+            return getByRegExpr(
+                    new FileReader(f),
+                    regExpr,
+                    addLines,
+                    prependLineNumbers,
+                    skipFirstMatches,
+                    numberOfMatches,
+                    f.length());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return null;
@@ -443,16 +522,23 @@ public class LogReader
     }
 
     /**
-     * Returns all lines in a log/file matching a given regular expression.  Possible to get lines
-     * immediately following the matched line.  Also possible to have each line prepended by it's
-     * line number.
+     * Returns all lines in a log/file matching a given regular expression.  
+     * Possible to get lines immediately following the matched line.  Also 
+     * possible to have each line prepended by it's  line number.
      *
      * @param aFileName The filename of the log/file
      * @param regExpr The regular expression that is to be used
-     * @param addLines Any lines following a match that <b>begin</b> with this string will also be included.
-     *                 We will stop including new lines once we hit the first that does not match.
-     * @param prependLineNumbers If true, then each line will be prepended by it's line number in
-     *                           the file.
+     * @param addLines Any lines following a match that <b>begin</b> with this 
+     *                 string will also be included. We will stop including new 
+     *                 lines once we hit the first that does not match.
+     * @param prependLineNumbers If true, then each line will be prepended by 
+     *                           it's line number in the file.
+     * @param skipFirstMatches The first number of matches up to this value will
+     *                         be skipped over.
+     * @param numberOfMatches Once past matches that are to be skipped this many
+     *                        matches will be added to the return value. A
+     *                        value of 0 will cause all matching lines to be
+     *                        included.
      * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
@@ -461,9 +547,22 @@ public class LogReader
      *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
-    public static String[] getByRegExprFromSeries(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
+    public static String[] getByRegExprFromSeries(String aFileName, 
+                                                  String regExpr, 
+                                                  String addLines, 
+                                                  boolean prependLineNumbers,
+                                                  int skipFirstMatches,
+                                                  int numberOfMatches){
         try {
-            return getByRegExpr(seriesReader(aFileName),regExpr,addLines,prependLineNumbers);
+            File f = new File(aFileName);
+            return getByRegExpr(
+                    seriesReader(aFileName),
+                    regExpr,
+                    addLines,
+                    prependLineNumbers,
+                    skipFirstMatches,
+                    numberOfMatches,
+                    f.length());
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -471,16 +570,24 @@ public class LogReader
     }
 
     /**
-     * Returns all lines in a log/file matching a given regular expression.  Possible to get lines
-     * immediately following the matched line.  Also possible to have each line prepended by it's
-     * line number.
+     * Returns all lines in a log/file matching a given regular expression.  
+     * Possible to get lines immediately following the matched line.  Also 
+     * possible to have each line prepended by it's line number.
      *
      * @param reader The reader of the log/file
      * @param regExpr The regular expression that is to be used
-     * @param addLines Any lines following a match that <b>begin</b> with this string will also be included.
-     *                 We will stop including new lines once we hit the first that does not match.
-     * @param prependLineNumbers If true, then each line will be prepended by it's line number in
-     *                           the file.
+     * @param addLines Any lines following a match that <b>begin</b> with this 
+     *                 string will also be included. We will stop including new 
+     *                 lines once we hit the first that does not match.
+     * @param prependLineNumbers If true, then each line will be prepended by 
+     *                           it's line number in the file.
+     * @param skipFirstMatches The first number of matches up to this value will
+     *                         be skipped over.
+     * @param numberOfMatches Once past matches that are to be skipped this many
+     *                        matches will be added to the return value. A
+     *                        value of 0 will cause all matching lines to be
+     *                        included.
+     * @param logsize Size of the log in bytes
      * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
@@ -489,7 +596,13 @@ public class LogReader
      *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
-    public static String[] getByRegExpr(InputStreamReader reader, String regExpr, String addLines, boolean prependLineNumbers){
+    public static String[] getByRegExpr(InputStreamReader reader, 
+                                        String regExpr, 
+                                        String addLines, 
+                                        boolean prependLineNumbers,
+                                        int skipFirstMatches,
+                                        int numberOfMatches,
+                                        long logsize) {
         StringBuffer ret = new StringBuffer();
         String info = "";
         try{
@@ -499,21 +612,26 @@ public class LogReader
             String line = null;
             int i = 1;
             boolean doAdd = false;
-            long lines = 0;
             long linesMatched = 0;
             while ((line = bf.readLine()) != null) {
-                lines++;
                 m.reset(line);
                 if(m.matches()){
-                    linesMatched++;
                     // Found a match
-                    if(prependLineNumbers){
-                        ret.append(i);
-                        ret.append(". ");
+                    if(numberOfMatches > 0 && 
+                            linesMatched >= skipFirstMatches + numberOfMatches){
+                        // Ok, we are done.
+                        break;
                     }
-                    ret.append(line);
-                    ret.append("\n");
-                    doAdd = true;
+                    linesMatched++;
+                    if(linesMatched > skipFirstMatches){
+                        if(prependLineNumbers){
+                            ret.append(i);
+                            ret.append(". ");
+                        }
+                        ret.append(line);
+                        ret.append("\n");
+                        doAdd = true;
+                    }
                 } else if(doAdd) {
                     if(line.indexOf(addLines)==0){
                         linesMatched++;
@@ -530,7 +648,8 @@ public class LogReader
                 }
                 i++;
             }
-            info = "Displaying: " + linesMatched + " of " + lines + " total lines in file";
+            double percent = ((double)ret.length()/logsize)*100;
+            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
         }catch(FileNotFoundException e){
             return null;
         }catch(IOException e){
