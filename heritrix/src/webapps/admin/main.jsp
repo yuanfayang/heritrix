@@ -35,11 +35,6 @@
 			// Tell handler to resume crawl job
 			handler.resumeJob();
 		}
-		else if(sAction.equalsIgnoreCase("gc"))
-		{
-			// Tell handler to stop crawl job
-			System.gc();
-		}
 		
 	}	
 
