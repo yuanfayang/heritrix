@@ -809,6 +809,20 @@
             full where as a host whose only seed is
             <literal>www.sample2.com/path/index.html</literal> will be limited
             to URIs under <literal>/path/</literal>.</para>
+
+            <note>Internally Heritrix defines everything up to the right most
+            slash as the <literal>path</literal> when doing path scope so 
+            for example, the URLs 
+            <literal>http://members.aol.com/bigbird</literal> and 
+            <literal>http://members.aol.com/~bigbird</literal> will treat
+            as in scope any URL that begins 
+            <literal>members.aol.com</literal>.  If your intent is to only
+            include all below the path <literal>bigbird</literal>, add a
+            slash on the end, using a form such as
+            <literal>http://members.aol.com/bigbird/</literal> or 
+            <literal>http://members.aol.com/bigbird/index.html</literal>
+            instead.
+            </note>
           </listitem>
 
           <listitem>
