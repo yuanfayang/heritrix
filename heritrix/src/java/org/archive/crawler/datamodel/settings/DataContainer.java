@@ -58,6 +58,7 @@ public class DataContainer extends HashMap {
 
     /** Create a data container for a module.
      * 
+     * @param settings Settings to use.
      * @param module the module to create the data container for.
      */
     public DataContainer(CrawlerSettings settings, ComplexType module) {

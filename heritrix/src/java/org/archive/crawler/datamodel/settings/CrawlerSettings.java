@@ -76,17 +76,13 @@ public class CrawlerSettings {
      * Application code should not call the constructor directly, but use the
      * methods in SettingsHandler instead.
      * 
-     * @param settingsHandler The SettingsHandler this object belongs to.
-     * @param parent The parent of this settings object or null if this is the
-     *               order.
+     * @param handler The SettingsHandler this object belongs to.
      * @param scope The scope of this settings object (ie. host or domain).
      * 
      * @see SettingsHandler#getSettings(String)
      * @see SettingsHandler#getSettingsObject(String)
      */
-    public CrawlerSettings(
-        SettingsHandler handler,
-        String scope) {
+    public CrawlerSettings(SettingsHandler handler, String scope) {
         this.settingsHandler = handler;
         this.scope = scope;
     }
