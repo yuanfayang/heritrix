@@ -523,8 +523,12 @@ public class StatisticsTracker extends AbstractTracker{
     	incrementMapCount(mimeTypeDistribution, mime);
 
     	// Save hosts
-    	incrementMapCount(hostsDistribution, curi.getServer().getHostname());
-
+        if(curi.getFetchStatus()==1){
+            // DNS Lookup, handle it differently.
+            incrementMapCount(hostsDistribution, "dns:");
+        } else {
+            incrementMapCount(hostsDistribution, curi.getServer().getHostname());
+        }
     }
 
     /* (non-Javadoc)
