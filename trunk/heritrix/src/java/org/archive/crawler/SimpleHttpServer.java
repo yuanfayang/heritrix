@@ -26,8 +26,12 @@
 package org.archive.crawler;
 
 import java.io.File;
-import org.mortbay.http.*;
+import java.util.NoSuchElementException;
+
+import org.mortbay.http.HttpServer;
+import org.mortbay.http.SocketListener;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.servlet.WebApplicationContext;
 
 
 /**
@@ -51,6 +55,11 @@ public class SimpleHttpServer
      */
     private static final String ADMIN_WEBAPP_NAME = "admin";
     
+    /**
+     * Webapp contexts returned out of a server start.
+     */
+    private WebApplicationContext [] contexts = null;
+    
 
     public SimpleHttpServer() throws Exception
     {
@@ -65,19 +74,17 @@ public class SimpleHttpServer
         listener.setPort(port);
         server.addListener(listener);
         server.setRootWebApp("root");
-        server.addWebApplications(null, getWebappsPath(), true);
+        this.contexts = server.addWebApplications(null, getWARSPath(), true);
     }
     
     /**
-     * Return the webapp path.
-     * 
-     * Looks at system properties to see if default has been overridden.
+     * Return the directory that holds the WARs we're to deploy.
      * 
      * @return Return webapp path (Path returned has a trailing '/').
      */
-    private static String getWebappsPath()
+    private static String getWARSPath()
     {
-        String webappsPath = Heritrix.getWebappsdir().getAbsolutePath();
+        String webappsPath = Heritrix.getWarsdir().getAbsolutePath();
         if (!webappsPath.endsWith(File.separator))
         {
             webappsPath = webappsPath + File.separator;
@@ -93,17 +100,19 @@ public class SimpleHttpServer
      * 
      * @return Return admin webapp path (Path returned has a trailing '/').
      */
-    public static String getAdminWebappPath()
+    public String getAdminWebappPath()
     {
-        return getWebappsPath() + ADMIN_WEBAPP_NAME + File.separator;
+        return getWebappPath(ADMIN_WEBAPP_NAME).getAbsolutePath() +
+            File.separator;
     }
     
     /**
      * Start the server.
      * 
-     * @throws Exception
+     * @throws Exception if problem starting server or if server already
+     * started.
      */
-    public void startServer()
+    public synchronized void startServer()
         throws Exception
     {
         this.server.start();
@@ -114,7 +123,7 @@ public class SimpleHttpServer
      * 
      * @throws Exception
      */
-    public void stopServer()
+    public synchronized void stopServer()
         throws Exception
     {
         if (this.server != null)
@@ -147,5 +156,56 @@ public class SimpleHttpServer
     public HttpServer getServer()
     {
         return this.server;
+    }
+    
+    /**
+     * @param contextName Name of context to look for.  Possible names would be 
+     * '/admin', '/', or '/garden'.
+     * 
+     * @return named context.
+     */
+    private WebApplicationContext getContext(String contextName)
+    {
+        WebApplicationContext context = null;
+        
+        if (this.contexts == null)
+        {
+            throw new NullPointerException("No contexts available.");
+        }
+        
+        for (int i = 0; i < contexts.length; i++)
+        {
+            if (contexts[i].getHttpContextName().equals(contextName))
+            {
+                context = contexts[i];
+                break;
+            }
+        }
+        
+        if (context == null)
+        {
+            throw new NoSuchElementException("Unknown webapp: " + contextName);
+        }
+        
+        return context;
+    }
+    
+    /**
+     * Get path to named webapp.
+     * 
+     * @param name Name of webpp.  Possible names are 'admin' or 'garden'.
+     * 
+     * @return Path to deployed webapp.
+     */
+    public File getWebappPath(String name)
+    {
+        if (this.server == null)
+        {
+            throw new NullPointerException("Server does not exist");
+        }
+        String contextName =
+            (name.equals(this.server.getRootWebApp()))? "/": "/" + name;
+        return new
+            File(getContext(contextName).getServletHandler().getRealPath("/"));
     }
 }

@@ -41,6 +41,8 @@ public class AllGardenSelfTests
      * 
      * Each unit test to run as part of selftest needs to be added here.
      * 
+     * @param selftestURL Base url to selftest garden.
+     * @param webappDir Expanded webapp directory location.
      * @param jobDir Job output directory.  Has the seed file, the order file
      * and logs.  
      * @param jobName Name of job.  The logs are kept in jobdir/jobname.
@@ -49,8 +51,9 @@ public class AllGardenSelfTests
      * 
      * @return Suite of all selftests.
      */
-    public static Test suite(final File jobDir, final String jobName,
-            final File arcDir, final String prefix)
+    public static Test suite(final String selftestURL, final File webappDir,
+            final File jobDir, final String jobName, final File arcDir,
+            final String prefix)
     {
         TestSuite suite = new TestSuite("Test for org.archive.crawler.garden");
         //$JUnit-BEGIN$
@@ -64,9 +67,17 @@ public class AllGardenSelfTests
             {
                 protected void setUp() throws Exception
                 {
-                    GardenSelfTestCase.initialize(jobDir, jobName, arcDir,
-                        prefix);
+                    GardenSelfTestCase.initialize(selftestURL, webappDir, 
+                        jobDir, jobName, arcDir, prefix);
                 }
             };
+    }
+ 
+    public static void main(String[] args)
+        throws Exception
+    {
+        junit.textui.TestRunner.
+            run(AllGardenSelfTests.suite(args[0], new File(args[1]),
+                new File(args[2]), args[3], new File(args[4]), "IAH"));
     }
 }

@@ -44,11 +44,11 @@ import javax.management.InvalidAttributeValueException;
 import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.admin.SelftestCrawlJobHandler;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
+import org.archive.crawler.garden.SelftestCrawlJobHandler;
 
 
 /**
@@ -110,8 +110,12 @@ public class Heritrix
     private static File heritrixHome = null;
     
     private static File confdir = null;
-    private static File webappsdir = null;
     private static File jobsdir = null;
+    
+    /**
+     * Where to find WAR files to deploy under servlet container.
+     */
+    private static File warsdir = null;
     
     /**
      * Instance of web server if one was started.
@@ -153,6 +157,11 @@ public class Heritrix
      * Name of the file to which heritrix logs stdout and stderr.
      */
     private static final String HERITRIX_OUT_FILE = "heritrix_out.log";
+
+    /**
+     * When running selftest, we set in here the URL for the selftest garden.
+     */
+    private static String getSelftestURL = null;
     
 
     /**
@@ -205,7 +214,7 @@ public class Heritrix
         confdir = getSubDir("conf");
         loadProperties();
         patchLogging();
-        webappsdir = getSubDir("webapps");
+        warsdir = getSubDir("webapps");
         String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
         jobsdir =
             (jobsdirStr.startsWith(File.separator) || heritrixHome == null)?
@@ -494,13 +503,15 @@ public class Heritrix
         // selftest output to show under the jobs directory. 
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
-        String seed = "http://localhost:" + Integer.toString(port) + "/garden";
-        job = jobHandler.newJob(job, "selftest", "Integration self test", seed);
+        getSelftestURL =
+            "http://localhost:" + Integer.toString(port) + "/garden";
+        job = jobHandler.newJob(job, "selftest", "Integration self test",
+                getSelftestURL);
         jobHandler.addJob(job);
         jobHandler.startCrawler();
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
             " selftest started.");
-        out.println("Selftest first crawls " + seed +
+        out.println("Selftest first crawls " + getSelftestURL +
             " and then runs an analysis.");
         out.println("Result of analysis printed to " + HERITRIX_OUT_FILE +
             " when done.");
@@ -640,14 +651,6 @@ public class Heritrix
     }
     
     /**
-     * @return The webapps directory under HERITRIX_HOME.
-     */
-    public static File getWebappsdir()
-    {
-        return webappsdir;
-    }
-    
-    /**
      * @return The directory into which we put jobs.
      */
     public static File getJobsdir()
@@ -661,5 +664,25 @@ public class Heritrix
     public static SimpleHttpServer getHttpServer()
     {
         return httpServer;
+    }
+    
+    /**
+     * Returns the selftest URL.
+     * 
+     * @return Returns the selftestWebappURL.  This method returns null if 
+     * we are not in selftest.
+     */
+    public static String getSelftestURL()
+    {
+        return getSelftestURL;
+    }
+    
+    /**
+     * @return Returns the directory under which reside the WAR files 
+     * we're to load into the servlet container.
+     */
+    public static File getWarsdir()
+    {
+        return warsdir;
     }
 }
