@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.collections.StoredMap;
@@ -111,13 +110,9 @@ public class CachedBdbMap extends AbstractMap implements Map {
      * Simple structure to keep needed information about a DB Environment.
      */
     protected class DbEnvironmentEntry {
-
-        Environment dbEnvironment;
-
+        Environment environment;
         StoredClassCatalog classCatalog;
-
         int openDbCount = 0;
-
         File dbDir;
     }
 
@@ -140,8 +135,39 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public CachedBdbMap(File dbDir, String dbName, Class keyClass,
             Class valueClass) throws DatabaseException {
         super();
-
-        // We need access to the referent field in the PhantomReference
+        initialization();
+        dbEnvironment = getDbEnvironment(dbDir);
+        this.db = openDatabase(dbEnvironment.environment, dbName);
+        dbEnvironment.openDbCount++;
+        this.diskMap = createDiskMap(this.db, dbEnvironment.classCatalog,
+            keyClass, valueClass);
+    }
+    
+    /**
+     * Constructor that takes ready-made environment and class catalog.
+     * @param environment
+     * @param classCatalog
+     * @param dbName The name of the database to back this map by.
+     * @param keyClass The class of the objects allowed as keys.
+     * @param valueClass The class of the objects allowed as values.
+     * @throws DatabaseException is thrown if the underlying BDB JE database
+     *             throws an exception.
+     */
+    public CachedBdbMap(Environment environment, StoredClassCatalog classCatalog,
+            String dbName, Class keyClass, Class valueClass)
+    throws DatabaseException {
+        super();
+        initialization();
+        this.db = openDatabase(environment, dbName);
+        this.diskMap = createDiskMap(this.db, classCatalog, keyClass, valueClass);
+    }
+    
+    private void initialization() {
+        // We need access to the referent field in the PhantomReference.
+        // For more on this trick, see
+        // http://www.javaspecialists.co.za/archive/Issue098.html and for
+        // discussion:
+        // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
         try {
             referent = Reference.class.getDeclaredField("referent");
             referent.setAccessible(true);
@@ -151,16 +177,14 @@ public class CachedBdbMap extends AbstractMap implements Map {
             throw new RuntimeException(e);
         }
 
-        // setup memory cache
-        cache = Collections.synchronizedMap(new HashMap());
-
-        dbEnvironment = getDbEnvironment(dbDir);
-        openDatabase(dbEnvironment, dbName);
-        EntryBinding keyBinding = new SerialBinding(dbEnvironment.classCatalog,
-                keyClass);
-        EntryBinding valueBinding = new SerialBinding(
-                dbEnvironment.classCatalog, valueClass);
-        diskMap = new StoredMap(this.db, keyBinding, valueBinding, true);
+        // Setup memory cache
+        this.cache = Collections.synchronizedMap(new HashMap());
+    }
+    
+    protected StoredMap createDiskMap(Database database,
+            StoredClassCatalog classCatalog, Class keyClass, Class valueClass) {
+        return new StoredMap(database, new SerialBinding(classCatalog, keyClass),
+                new SerialBinding(classCatalog, valueClass), true);
     }
 
     public CachedBdbMap(File dbDir, String dbName, Map map, Class keyClass,
@@ -184,64 +208,64 @@ public class CachedBdbMap extends AbstractMap implements Map {
         if (dbEnvironmentMap.containsKey(dbDir.getAbsolutePath())) {
             return (DbEnvironmentEntry) dbEnvironmentMap.get(dbDir
                     .getAbsolutePath());
-        } else {
-            EnvironmentConfig envConfig = new EnvironmentConfig();
-            envConfig.setAllowCreate(true);
-            envConfig.setTransactional(false);
-
-            //We're doing the caching ourselves so setting these at the lowest
-            //possible level.
-            envConfig.setCacheSize(1024);
-            envConfig.setCachePercent(1);
-
-            DbEnvironmentEntry env = new DbEnvironmentEntry();
-            try {
-                env.dbEnvironment = new Environment(dbDir, envConfig);
-                env.dbDir = dbDir;
-                dbEnvironmentMap.put(dbDir.getAbsolutePath(), env);
-
-                DatabaseConfig dbConfig = new DatabaseConfig();
-                dbConfig.setTransactional(false);
-                dbConfig.setAllowCreate(true);
-
-                Database catalogDb = env.dbEnvironment.openDatabase(null,
-                        CLASS_CATALOG, dbConfig);
-
-                env.classCatalog = new StoredClassCatalog(catalogDb);
-
-                if (logger.isLoggable(Level.INFO)) {
-                    // Write out the bdb configuration.
-                    envConfig = env.dbEnvironment.getConfig();
-                    logger.info("BdbConfiguration: Cache percentage "
-                            + envConfig.getCachePercent() + ", cache size "
-                            + envConfig.getCacheSize() + ", Map size: "
-                            + size());
-                }
-            } catch (DatabaseException e) {
-                e.printStackTrace();
-                //throw new FatalConfigurationException(e.getMessage());
-            }
-            return env;
         }
+        EnvironmentConfig envConfig = new EnvironmentConfig();
+        envConfig.setAllowCreate(true);
+        envConfig.setTransactional(false);
+        
+        //We're doing the caching ourselves so setting these at the lowest
+        //possible level.
+        envConfig.setCacheSize(1024);
+        envConfig.setCachePercent(1);
+        
+        DbEnvironmentEntry env = new DbEnvironmentEntry();
+        try {
+            env.environment = new Environment(dbDir, envConfig);
+            env.dbDir = dbDir;
+            dbEnvironmentMap.put(dbDir.getAbsolutePath(), env);
+            
+            DatabaseConfig dbConfig = new DatabaseConfig();
+            dbConfig.setTransactional(false);
+            dbConfig.setAllowCreate(true);
+            
+            Database catalogDb = env.environment.openDatabase(null,
+                    CLASS_CATALOG, dbConfig);
+            
+            env.classCatalog = new StoredClassCatalog(catalogDb);
+            
+            if (logger.isLoggable(Level.INFO)) {
+                // Write out the bdb configuration.
+                envConfig = env.environment.getConfig();
+                logger.info("BdbConfiguration: Cache percentage "
+                        + envConfig.getCachePercent() + ", cache size "
+                        + envConfig.getCacheSize() + ", Map size: "
+                        + size());
+            }
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            //throw new FatalConfigurationException(e.getMessage());
+        }
+        return env;
     }
 
-    private synchronized void openDatabase(DbEnvironmentEntry envEntry,
+    protected synchronized Database openDatabase(Environment environment,
             String dbName) throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
-        this.db = envEntry.dbEnvironment.openDatabase(null, dbName, dbConfig);
-        envEntry.openDbCount++;
+        return environment.openDatabase(null, dbName, dbConfig);
     }
 
     public synchronized void close() throws DatabaseException {
         db.close();
-        dbEnvironment.openDbCount--;
-        if (dbEnvironment.openDbCount <= 0) {
-            dbEnvironment.classCatalog.close();
-            dbEnvironment.dbEnvironment.close();
-            dbEnvironmentMap.remove(dbEnvironment.dbDir.getAbsolutePath());
-            dbEnvironment = null;
+        if (dbEnvironment != null) {
+            dbEnvironment.openDbCount--;
+            if (dbEnvironment.openDbCount <= 0) {
+                dbEnvironment.classCatalog.close();
+                dbEnvironment.environment.close();
+                dbEnvironmentMap.remove(dbEnvironment.dbDir.getAbsolutePath());
+                dbEnvironment = null;
+            }
         }
     }
 
@@ -286,16 +310,15 @@ public class CachedBdbMap extends AbstractMap implements Map {
         if (tmp != null && tmp.get() != null) {
             cacheHit++;
             return tmp.get();
-        } else {
-            Object o = diskMap.get(key);
-            if (o != null) {
-                diskHit++;
-                tmp = new SoftEntry(key, o, refQueue);
-                tmp.phantom.onDisk = true;
-                cache.put(key, tmp);
-            }
-            return o;
         }
+        Object o = diskMap.get(key);
+        if (o != null) {
+            diskHit++;
+            tmp = new SoftEntry(key, o, refQueue);
+            tmp.phantom.onDisk = true;
+            cache.put(key, tmp);
+        }
+        return o;
     }
 
     /*
