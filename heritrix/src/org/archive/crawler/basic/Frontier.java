@@ -120,7 +120,7 @@ public class Frontier
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
 	 */
-	public void scheduleHigh(CandidateURI caUri) {
+	public synchronized void scheduleHigh(CandidateURI caUri) {
 		pendingHighQueue.addLast(caUri);
 	}
 
@@ -417,7 +417,7 @@ public class Frontier
 	/**
 	 * @param curi
 	 */
-	public void reinsert(CrawlURI curi) {
+	protected void reinsert(CrawlURI curi) {
 
 		if(enqueueIfNecessary(curi)) {
 			// added to classQueue
@@ -451,7 +451,7 @@ public class Frontier
 	 * @param curi
 	 * @return true if enqueued
 	 */
-	public boolean enqueueIfNecessary(CrawlURI curi) {
+	protected boolean enqueueIfNecessary(CrawlURI curi) {
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if (classQueue != null) {
 			// must enqueue
@@ -476,7 +476,7 @@ public class Frontier
 	/**
 	 * @return
 	 */
-	public long earliestWakeTime() {
+	protected long earliestWakeTime() {
 		if (!snoozeQueues.isEmpty()) {
 			return ((URIStoreable)snoozeQueues.first()).getWakeTime();
 		}
@@ -495,7 +495,7 @@ public class Frontier
 	 * 
 	 * @return
 	 */
-	public void noteProcessingDone(CrawlURI curi) {
+	protected void noteProcessingDone(CrawlURI curi) {
 		assert inProcessMap.get(curi.getClassKey())
 			== curi : "CrawlURI returned not in process";
 
@@ -666,7 +666,7 @@ public class Frontier
 	 * @param object
 	 * @param l
 	 */
-	public void snoozeQueueUntil(Object classKey, long wake) {
+	protected void snoozeQueueUntil(Object classKey, long wake) {
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(classKey);
 		if ( classQueue == null ) {
 			classQueue = new KeyedQueue(classKey);
@@ -701,7 +701,7 @@ public class Frontier
 	 * 
 	 * @param curi
 	 */
-	public void forget(CrawlURI curi) {
+	protected void forget(CrawlURI curi) {
 		alreadyIncluded.remove(curi.getUURI());
 		curi.setStoreState(URIStoreable.FORGOTTEN);
 	}
@@ -711,7 +711,7 @@ public class Frontier
 	 * @param curi
 	 * @param retryDelay
 	 */
-	public void insertSnoozed(CrawlURI curi, long retryDelay) {
+	protected void insertSnoozed(CrawlURI curi, long retryDelay) {
 		curi.setWakeTime(System.currentTimeMillis()+retryDelay );
 		curi.setStoreState(URIStoreable.SNOOZED);
 		snoozeQueues.add(curi);
