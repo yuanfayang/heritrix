@@ -1,0 +1,319 @@
+<?xml version="1.0"?>
+
+<!--
+##################################################################
+##                                                              ##
+## In general you should not need to modify this file to        ##
+## modify this file to build Heritrix.  But, you should         ##
+## modify build.properties and startbuild.sh, each of which     ##
+## have instructions about how and where to adapt them to your  ##
+## local build environment.                                     ##
+##                                                              ##
+##################################################################
+-->
+
+    
+<project name="archive-open-crawler" default="all" basedir=".">
+
+    <!-- All the inputs are read from build.properties file --> 
+    <property file="build.properties" />
+
+    <!-- This is link to access all the environment variables -->
+    <property environment="env" />
+
+    <target name="init">
+    
+        <description>
+            This target creates the build structure 
+        </description> 
+
+        <mkdir dir="${repository}" /> 
+        <mkdir dir="${packageBaseDir}" />
+        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}" />
+        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${src}" /> 
+        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}" />
+        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${javadocs}" />
+        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${build}" />
+        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${bin}"/> 
+        <mkdir dir="${buildDir}" />
+	<mkdir dir="${unitTestDir}" />
+
+        <mkdir dir="junit/${junitclasses}" />
+        <mkdir dir="junit/${junitjavadocs}" />
+        <mkdir dir="junit/${junitreports}" />
+
+	<mkdir dir="bin" />
+
+	<mkdir dir="NightlyBuilds" />
+
+        <!-- <echo message="Classpath setting is ${classpath}" /> -->
+
+	<mkdir dir="RunThis" />
+	<mkdir dir="RunThis/test-config" />
+        <mkdir dir="RunThis/lib" />
+        <mkdir dir="RunThis/bin" />
+    </target>
+
+
+
+    <target name="checkout-core" depends="init">
+    
+        <description> 
+            This target checks out all the source files and third party binaries from CVS.
+        </description> 
+       
+	<!-- NOTE: YOU'LL PROBABLY NEED TO CHANGE THESE VARS IN build.properties --> 
+        <cvs cvsRoot="${cvsroot}" dest="${repository}" package="${module-name}" failonerror="yes" />
+        
+    </target>
+
+
+
+    <target name="compile-core" depends="init">
+    
+        <description> 
+            This target compiles the core sources files (not the unit test sources) 
+        </description> 
+
+        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
+              includeEmptyDirs="false" >
+            <fileset dir="${repository}/ArchiveOpenCrawler/src" >
+                <include name="**/*.java" />
+            </fileset>
+        </copy>
+
+        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}">
+            <fileset dir="${repository}/ArchiveOpenCrawler/lib/binaries">
+                <include name="**/*.jar"/>
+                <include name="**/*.zip"/>
+            </fileset>
+        </copy>     
+      
+        <depend srcdir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
+                destdir="${buildDir}"  
+                cache="dependencycache" 
+                closure="yes"> 
+                
+             <classpath>
+                  <pathelement path="${classpath}"/>
+                  <pathelement location="${buildDir}"/> 
+             </classpath> 
+             
+        </depend>
+      
+        <javac srcdir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
+               destdir="${buildDir}" 
+               debug="${debug}" 
+               optimize="${optimize}" 
+               nowarn="${nowarn}" 
+	       source="1.4"
+               compiler="${compiler}"> 
+      
+             <classpath>
+                  <pathelement path="${classpath}"/>
+                  <pathelement location="${buildDir}"/> 
+             </classpath> 
+             
+        </javac> 
+
+    </target>
+
+
+
+    <target name="javadoc" depends="init,compile-core"
+	>
+    
+         <description> 
+              This target generates the javadocs for the compiled classes 
+         </description> 
+
+         <javadoc packagenames="*.*" 
+                  sourcepath="${packageBaseDir}/archive-open-crawler-${version}/${src}"
+                  classpath="${classpath}"
+                  destdir="${packageBaseDir}/archive-open-crawler-${version}/${javadocs}"
+		  source="1.4" >
+         </javadoc> 
+         
+    </target> 
+
+
+
+    <target name="package" depends="init,compile-core,javadoc">
+    
+        <description> 
+            This target packages all the source files,classfiles and javadocs. 
+        </description> 
+        
+        <copy todir="${packageBaseDir}/archive-open-crawler-${version}">
+            <fileset dir="${repository}/ArchiveOpenCrawler">
+                <exclude name="**/*.java" />
+            </fileset>
+        </copy>
+        
+        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${bin}">
+            <fileset dir="${repository}/ArchiveOpenCrawler/bin">
+                <include name="**/*" />
+            </fileset>
+        </copy>
+
+        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${build}">
+            <fileset dir="${repository}/ArchiveOpenCrawler/build">
+                <include name="**/*" />
+            </fileset>
+        </copy> 
+        
+        <jar destfile="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}/crawlerclasses.jar" 
+                      basedir="${buildDir}">
+        </jar>
+
+
+
+        <tstamp>
+            <format property="currentdate" pattern="MMddyyyy" />
+        </tstamp>
+
+        <tar tarfile="${basedir}/archive-open-crawler-${version}-${currentdate}.tar" 
+             basedir="${packageBaseDir}"
+             longfile="gnu">  
+             <tarfileset dir="${bin}" 
+                         prefix="archive-open-crawler-${version}/${bin}"
+                         mode="755">
+                 <include name="**/*.sh" />             
+             </tarfileset> 
+        </tar>     
+        
+        <gzip zipfile="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
+              src="${basedir}/archive-open-crawler-${version}-${currentdate}.tar"/> 
+              
+	<!-- now put stuff somewhere we can run a crawl from -->
+
+	<copy todir="RunThis">
+		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}">
+			<include name="crawlerclasses.jar" />
+		</fileset>
+        </copy>
+	
+	<copy todir="RunThis/test-config/">
+		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/test-config">
+			<include name="**/*" />
+		</fileset>
+	</copy>
+
+	<copy todir="RunThis/lib/">
+		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/lib">
+			<include name="**/*" />
+		</fileset>
+	</copy>
+
+	<!-- clean up packaging (like christmas day at noon) -->
+        <delete file="${basedir}/archive-open-crawler-${version}-${currentdate}.tar">
+        </delete>
+
+    </target>
+    
+    <target name="nightly" depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,package">
+    
+        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
+                      todir="${basedir}/${NightlyBuildsDir}" /> 
+
+	<delete dir="${basedir}/${NightlyBuildsDir}/latest" />
+        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
+                      todir="${basedir}/${NightlyBuildsDir}/latest" /> 
+        
+        <!-- This is presently disabled as there is no uploading to sourceforge.net -->
+        <!-- <move file="archive-open-crawler-${version}-${currentdate}.tar.gz"
+              tofile="latest-archive-open-crawler-${version}.tar.gz" /> -->
+              
+        <delete file="${basedir}/archive-open-crawler-${version}-${currentdate}.tar.gz" />      
+              
+        <echo message="" />
+        <echo message="*****************************************************" />
+	<echo message="Latest build available here: ${basedir}/NightlyBuilds" />
+        <echo message="*****************************************************" />
+        
+    </target>
+
+    <target name="all" depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,javadoc,package"/>
+
+    <target name="clean">
+        <description> 
+            This target cleans up all the resources created during build time. 
+        </description> 
+        
+        <delete dir="${packageBaseDir}" />
+        <delete dir="junit" />
+        
+    </target>
+
+    <target name="localbuild" depends="init,compile-core,javadoc,package">
+        <description> 
+            This target is given for user convenience to make a build locally 
+        </description> 
+    </target>
+
+    <target name="compile-unit-testsrc" depends="init,compile-core">
+        <description> 
+            This target compiles all the junit test sources. 
+        </description> 
+
+        <javac srcdir="${repository}/${module-name}/testsrc" 
+               destdir="${unitTestDir}" 
+               debug="${debug}" 
+               optimize="${optimize}" 
+	       source="1.4"
+               nowarn="${nowarn}" 
+               compiler="${compiler}"> 
+
+             <classpath>
+                  <pathelement path="${classpath}"/>
+                  <pathelement location="${buildDir}"/> 
+                  <pathelement location="${unitTestDir}"/> 
+             </classpath> 
+        </javac> 
+
+
+    </target>
+
+
+    <target name="run-unit-testcases" depends="compile-unit-testsrc">
+        <description> 
+            This target runs all the JUnit test cases 
+        </description> 
+        
+
+        <!-- <junit printsummary="withOutAndErr" showoutput="true"> -->
+        <junit printsummary="yes" showoutput="true">
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <pathelement location="${basedir}/${buildDir}"/> 
+                <pathelement location="${basedir}/${unitTestDir}"/> 
+            </classpath> 
+       
+            <formatter type="plain" /> 
+        
+            <batchtest fork="yes" haltonfailure="no" todir="junit/${junitreports}">
+
+		<fileset dir="${basedir}/${unitTestDir}">
+		  <include name="**/*Test.class" />
+		</fileset>
+              </batchtest>
+            </junit>
+	
+	<delete>
+		<fileset dir="${basedir}" includes="*.arc.gz" />
+	</delete>
+
+    </target>
+    
+    <target name="javadoc-unit-testcases" depends="init,compile-core,compile-unit-testsrc">
+        <description> 
+            <!-- This target generates javadocs for all the unit test classes -->
+        </description> 
+        
+        <javadoc packagenames="*.*" 
+                 sourcepath="${repository}/testsrc" 
+                 destdir="junit/${junitjavadocs}">
+        </javadoc> 
+    </target>
+
+</project>
