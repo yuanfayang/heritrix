@@ -14,6 +14,12 @@ import java.net.SocketTimeoutException;
 
 
 /**
+ * Stream which records all data read from it, which
+ * it acquires from a wrapped input stream.
+ * 
+ * Makes use of a RecordingOutputStream (with a dummy
+ * wrapped stream) for recording.
+ * 
  * @author gojomo
  *
  */
@@ -38,7 +44,7 @@ public class RecordingInputStream extends InputStream {
 
 	public void open(InputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
-		recordingOutputStream.open(new NullOutputStream());
+		recordingOutputStream.open(new NullOutputStream()); 
 //		if (timeout>0) {
 //			timeoutTime = System.currentTimeMillis() + timeout;
 //		} else {

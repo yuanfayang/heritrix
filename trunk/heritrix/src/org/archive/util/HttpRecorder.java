@@ -16,6 +16,9 @@ import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
 
 /**
+ * Pairs together a RecordingInputStream and RecordingOutputStream
+ * to capture exactly a single HTTP transaction.
+ * 
  * Initially only supports HTTP/1.0 (one request, one response per stream)
  * 
  * @author gojomo
@@ -39,6 +42,8 @@ public class HttpRecorder {
 	}
 
 	/**
+	 * Wrap the provided stream with the internal RecordingInputStream
+	 * 
 	 * @param is
 	 * @return
 	 */
@@ -48,6 +53,7 @@ public class HttpRecorder {
 	}
 
 	/**
+	 * Wrap the provided stream with the internal RecordingOutputStream
 	 * @param outputStream
 	 * @return
 	 */
@@ -57,7 +63,7 @@ public class HttpRecorder {
 	}
 
 	/**
-	 * 
+	 * Close all streams.
 	 */
 	public void close() {
 		try {
@@ -76,13 +82,14 @@ public class HttpRecorder {
 	}
 
 	/**
-	 * 
+	 * Return the internal RecordingInputStream
 	 */
 	public RecordingInputStream getRecordedInput() {
 		return ris;
 	}
 
 	/**
+	 * Mark the point where the HTTP headers end. 
 	 * 
 	 */
 	public void markResponseBodyStart() {
