@@ -100,8 +100,9 @@ public class CrawlController {
 			return null;
 		}
 		CrawlURI curi = scheduler.curiFor(thread);
-		// TODO consider possible case where curi is null
-		curi.setNextProcessor(firstProcessor);
+		if (curi != null) {
+			curi.setNextProcessor(firstProcessor);
+		}
 		return curi;
 	}
 	/**

@@ -32,27 +32,34 @@ public class SimpleScheduler implements URIScheduler {
 		long now = System.currentTimeMillis();
 		long waitMax = 0;
 		synchronized (store) {
-			store.wakeReadyQueues(now);
-			CrawlURI curi = null;
-			if (!store.getReadyClassQueues().isEmpty()) {
-				curi = store.dequeueFromReady();
-				return emitCuri(curi);
-			}
-			while ((curi = store.dequeueFromPending()) != null) {
-				if (!store.enqueueIfNecessary(curi)) {
-					// OK to emit
+			while(true) {
+				store.wakeReadyQueues(now);
+				CrawlURI curi = null;
+				if (!store.getReadyClassQueues().isEmpty()) {
+					curi = store.dequeueFromReady();
 					return emitCuri(curi);
 				}
+				while ((curi = store.dequeueFromPending()) != null) {
+					if (!store.enqueueIfNecessary(curi)) {
+						// OK to emit
+						return emitCuri(curi);
+					}
+				}
+				if(store.getHeldClassQueues().isEmpty() && store.getSnoozeQueues().isEmpty()) {
+					// nothing left to crawl
+					logger.info("nothing left to crawl");
+					return null;
+				}
+				waitMax = store.earliestWakeTime()-now;
+				
+				try {
+					store.wait(waitMax);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-			waitMax = store.earliestWakeTime()-now;
 		}
-		try {
-			store.ReadyChangeSemaphore.wait(waitMax);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	/**

@@ -1,1 +1,6 @@
 http://www.yahoo.com
+http://www.msn.com
+http://www.archive.org
+http://www.google.com
+http://www.aol.com
+http://www.lycos.com

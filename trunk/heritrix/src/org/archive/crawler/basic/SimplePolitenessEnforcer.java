@@ -23,7 +23,7 @@ public class SimplePolitenessEnforcer extends Processor {
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
-		logger.info("exit");
+		//logger.info("exit");
 	}
 
 }
