@@ -67,18 +67,14 @@ implements CoreAttributeConstants {
     }
 
     protected void innerProcess(CrawlURI curi) {
-        if (curi.hasBeenLinkExtracted()) {
-            // Some other extractor already handled this one. We'll pass on it.
-            return;
-        }
-        if (!curi.isHttpTransaction()) {
-            return;
-        }
-        if ((curi.getContentType() == null)) {
+        if (!isHtmlTransactionContentToProcess(curi)) {
             return;
         }
 
         String contentType = curi.getContentType();
+        if (contentType == null) {
+            return;
+        }
         if ((contentType.toLowerCase().indexOf("x-shockwave-flash") < 0)
                 && (!curi.getURIString().toLowerCase().endsWith(".swf"))) {
             return;

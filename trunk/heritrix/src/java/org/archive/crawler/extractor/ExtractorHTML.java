@@ -316,12 +316,8 @@ implements CoreAttributeConstants {
     }
 
     public void innerProcess(CrawlURI curi) {
-        if (curi.hasBeenLinkExtracted()) {
-            // Some other extractor already handled this one. We'll pass on it.
-            return;
-        }
-        
-        if (!curi.isHttpTransaction()) {
+        if (!isHtmlTransactionContentToProcess(curi) ||
+                !isExpectedMimeType(curi.getContentType(), "text/html")) {
             return;
         }
 
@@ -335,12 +331,6 @@ implements CoreAttributeConstants {
             } catch (URIException e) {
                 logger.severe("Failed expectedHTML test: " + e.getMessage());
             }
-        }
-
-        String contentType = curi.getContentType();
-        if ((contentType == null) || (!contentType.startsWith("text/html"))) {
-            // nothing to extract for other types here
-            return;
         }
 
         this.numberOfCURIsHandled++;

@@ -52,7 +52,8 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
     }
 
     public void innerProcess(CrawlURI curi) {
-        if (!curi.isHttpTransaction()) {
+        if (!curi.isHttpTransaction() || curi.getFetchStatus() <= 0) {
+            // If not http or if an error status code, skip.
             return;
         }
         numberOfCURIsHandled++;

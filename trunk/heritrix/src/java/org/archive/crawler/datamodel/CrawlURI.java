@@ -748,7 +748,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
     /**
      * Get the http recorder associated with this uri.
      *
-     * @return Returns the httpRecorder.  May be null.
+     * @return Returns the httpRecorder.  May be null but its set early in
+     * FetchHttp so there is an issue if its null.
      */
     public HttpRecorder getHttpRecorder() {
         return httpRecorder;
@@ -885,8 +886,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @return True if ths URI has been successfully processed.
      */
-    public boolean isSuccess()
-    {
+    public boolean isSuccess() {
         boolean result = false;
         int statusCode = this.fetchStatus;
         if (statusCode == HttpStatus.SC_UNAUTHORIZED &&

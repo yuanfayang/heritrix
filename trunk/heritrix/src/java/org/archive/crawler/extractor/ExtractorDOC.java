@@ -41,8 +41,8 @@ import org.archive.crawler.framework.Processor;
  */
 public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
-    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
-
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
     private long numberOfCURIsHandled = 0;
     private long numberOfLinksExtracted = 0;
 
@@ -58,32 +58,22 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      *  Processes a word document and extracts any hyperlinks from it.
      *  This only extracts href style links, and does not examine the actual
      *  text for valid URIs.
+     * @param curi CrawlURI to process.
      */
     protected void innerProcess(CrawlURI curi){
-        if (curi.hasBeenLinkExtracted()) {
-            // Some other extractor already handled this one. We'll pass on it.
+        // Assumes docs will be coming in through http.
+        // TODO make this more general (currently we're only fetching via http
+        // so it doesn't matter)
+        if (!isHtmlTransactionContentToProcess(curi) ||
+                !isExpectedMimeType(curi.getContentType(),
+                    "application/msword")) {
             return;
         }
+        
         ArrayList links  = new ArrayList();
         InputStream documentStream = null;
         Writer out = null;
-
-        // Assumes docs will be coming in through http
-        // TODO make htis more general (currently we're only fetching via http
-        // so it doesn't matter)
-        if (!curi.isHttpTransaction())
-        {
-            return;
-        }
-
-        String contentType = curi.getContentType();
-        if ((contentType==null) ||
-            (!contentType.startsWith("application/msword")))
-        {
-            // nothing to extract for other types here
-            return;
-        }
-
+        
         numberOfCURIsHandled++;
 
         // Get the doc as a File

@@ -282,7 +282,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 throws IOException, HttpException {
                     addResponseContent(this, curi);
                     if (checkMidfetchAbort(curi, this.httpRecorderMethod, conn)) {
-                        abort();
+                        doAbort(curi, this, MIDFETCH_ABORT_LOG);
                     } else {
                         super.readResponseBody(state, conn);
                     }
@@ -296,7 +296,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                     addResponseContent(this, curi);
                     if (checkMidfetchAbort(curi, this.httpRecorderMethod,
                             conn)) {
-                        abort();
+                        doAbort(curi, this, MIDFETCH_ABORT_LOG);
                     } else {
                         super.readResponseBody(state, conn);
                     }
@@ -306,7 +306,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
         configureMethod(curi, method);
         
-        // Set httpRecorder into curi for convenience of subsequent processors.
+        // Set httpRecorder into curi. Subsequent code both here and later
+        // in extractors expects to find the HttpRecorder in the CrawlURI.
         curi.setHttpRecorder(rec);
         
         // Populate credentials. Set config so auth. is not automatic.
@@ -317,7 +318,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             this.http.executeMethod(method);
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
-            method.releaseConnection();
         	return;
         } catch (ArrayIndexOutOfBoundsException e) {
             // For weird windows-only ArrayIndex exceptions in native
@@ -325,54 +325,46 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
             // treating as if it were an IOException
             failedExecuteCleanup(method, curi, e);
-            method.releaseConnection();
             return;
         }
         
-        if (!((HttpMethodBase)method).isAborted()) {
-            try {
+        try {
+            if (!((HttpMethodBase)method).isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
                 rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
                         1000 * getTimeout(curi));
-            } catch (RecorderTimeoutException ex) {
-                curi.addAnnotation("timeTrunc");
-                rec.close();
-                method.abort();
-            } catch (RecorderLengthExceededException ex) {
-                curi.addAnnotation("lenTrunc");
-                rec.close();
-                method.abort();
-            } catch (IOException e) {
-                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-                return;
-            } catch (ArrayIndexOutOfBoundsException e) {
-                // For weird windows-only ArrayIndex exceptions from native code
-                // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-                // treating as if it were an IOException
-                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-                return;
-            } finally {
-                if (!((HttpMethodBase)method).isAborted()) {
-                    method.releaseConnection();
-                }
             }
+        } catch (RecorderTimeoutException ex) {
+            doAbort(curi, method, "timeTrunc");
+        } catch (RecorderLengthExceededException ex) {
+            doAbort(curi, method, "lenTrunc");
+        } catch (IOException e) {
+            cleanup(curi, e, "readFully", S_CONNECT_LOST);
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // For weird windows-only ArrayIndex exceptions from native code
+            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // treating as if it were an IOException
+            cleanup(curi, e, "readFully", S_CONNECT_LOST);
+            return;
+        } finally {
+            if (!((HttpMethodBase)method).isAborted()) {
+                method.releaseConnection();
+            }
+            // Note completion time
+            curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+            // Set the response charset into the HttpRecord if available.
+            setCharacterEncoding(rec, method);
+            curi.setContentSize(rec.getRecordedInput().getSize());
         }
-
-        // Note completion time
-        curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
-
-        // Set the response charset into the HttpRecord if available.
-        setCharacterEncoding(rec, method);
         
-        int statusCode = method.getStatusCode();
-        long contentSize = rec.getRecordedInput().getSize();
-        curi.setContentSize(contentSize);
         curi.setContentDigest(rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.INFO)) {
             logger.info((curi.isPost()? "POST": "GET") + " " +
-                curi.getUURI().toString() + " " + statusCode + " " +
-                contentSize + " " + curi.getContentType());
+                curi.getUURI().toString() + " " + method.getStatusCode() +
+                " " + rec.getRecordedInput().getSize() + " " +
+                curi.getContentType());
         }
 
         if (curi.isSuccess() && addedCredentials) {
@@ -387,7 +379,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                     logger.fine(setCookie.toString().trim());
                 }
             }
-        } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+        } else if (method.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
             // 401 is not 'success'.
             handle401(method, curi);
         }
@@ -399,14 +391,19 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
     }
     
+    protected void doAbort(CrawlURI curi, HttpMethod method,
+            String annotation) {
+        curi.addAnnotation(annotation);
+        curi.getHttpRecorder().close();
+        method.abort();
+    }
+    
     protected boolean checkMidfetchAbort(CrawlURI curi,
             HttpRecorderMethod method, HttpConnection conn) {
         if (curi.isPrerequisite() || filtersAccept(midfetchfilters, curi)) {
             return false;
         }
         method.markContentBegin(conn);
-        method.getHttpRecorder().close();
-        curi.addAnnotation(MIDFETCH_ABORT_LOG);
         return true;
     }
     
@@ -464,22 +461,22 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     private void failedExecuteCleanup(final HttpMethod method,
             final CrawlURI curi, final Exception exception) {
-        cleanup(method, curi, exception, "executeMethod", S_CONNECT_FAILED);
+        cleanup(curi, exception, "executeMethod", S_CONNECT_FAILED);
+        method.releaseConnection();
     }
     
     /**
      * Cleanup after a failed method execute.
      * @param curi CrawlURI we failed on.
-     * @param method Method we failed on.
      * @param exception Exception we failed with.
      * @param message Message to log with failure.
      * @param status Status to set on the fetch.
      */
-    private void cleanup(final HttpMethod method, final CrawlURI curi,
-            final Exception exception, final String message,
-            final int status) {
+    private void cleanup(final CrawlURI curi, final Exception exception,
+            final String message, final int status) {
         curi.addLocalizedError(this.getName(), exception, message);
         curi.setFetchStatus(status);
+        curi.getHttpRecorder().close();
     }
 
     /**

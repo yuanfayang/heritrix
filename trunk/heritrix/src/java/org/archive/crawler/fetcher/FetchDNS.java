@@ -115,7 +115,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         if (matcher != null && matcher.matches()) {
             // Ideally this branch would never be reached: no CrawlURI
             // would be created for numerical IPs
-            logger.warning("unnecessary DNS CrawlURI created: " + curi);
+            logger.warning("Unnecessary DNS CrawlURI created: " + curi);
             try {
                 targetHost.setIP(
                     InetAddress.getByAddress(dnsName,
@@ -138,7 +138,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         now = System.currentTimeMillis();
         curi.putLong(A_FETCH_BEGAN_TIME, now);
 
-        // try to get the records for this host (assume domain name)
+        // Try to get the records for this host (assume domain name)
         // TODO: Bug #935119 concerns potential hang here
         rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
 

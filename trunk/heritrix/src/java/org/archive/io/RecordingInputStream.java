@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.security.MessageDigest;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -125,8 +126,10 @@ public class RecordingInputStream
     }
 
     public void close() throws IOException {
-        logger.fine(Thread.currentThread().getName() + " closing " +
-            this.in + ", " + Thread.currentThread().getName());
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(Thread.currentThread().getName() + " closing " +
+                    this.in + ", " + Thread.currentThread().getName());
+        }
         if (this.in != null) {
             this.in.close();
             this.in = null;
