@@ -24,6 +24,7 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
@@ -106,20 +107,20 @@ public class HostScope extends CrawlScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        UURI u = null;
-        if (o instanceof UURI) {
-            u = (UURI) o;
-        } else if (o instanceof CandidateURI) {
-            u = ((CandidateURI) o).getUURI();
-        }
+        UURI u = getUURI(o);
         if (u == null) {
             return false;
         }
-        Iterator iter = getSeedsIterator();
-        while (iter.hasNext()) {
-            UURI s = (UURI) iter.next();
-            if (isSameHost(s, u)) {
-                return true;
+        // Get the seeds to refresh and then get an iterator inside a 
+        // synchronization block.  The seeds list may get updated during our
+        // iteration. This will throw a concurrentmodificationexception unless
+        // we synchronize.
+        List seeds = getSeedlist();
+        synchronized(seeds) {
+            for (Iterator i = seeds.iterator(); i.hasNext();) {
+                if (isSameHost((UURI)i.next(), u)) {
+                    return true;
+                }
             }
         }
         // if none found, fail
