@@ -52,9 +52,8 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      * @param name
      * @param description
      */
-    public ExtractorDOC(String name, String description) {
-        super(name, description);
-        // TODO Auto-generated constructor stub
+    public ExtractorDOC(String name) {
+        super(name, "DOC Extractor");
     }
 
 	/**
