@@ -191,9 +191,9 @@ public class RobotsExclusionPolicy {
 		
 		// Are we supposed to masquerade as the user agent to which restrictions
 		// we follow?
-		if(honoringPolicy.shouldMasquerade() && !ua.equals("")) {
+		if(honoringPolicy.shouldMasquerade() && ua != null && !ua.equals("")) {
 			curi.setUserAgent(ua);
-		} 
+		}
 		return disallow;
 	}
  
