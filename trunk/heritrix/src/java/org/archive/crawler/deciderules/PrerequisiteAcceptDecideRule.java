@@ -54,7 +54,8 @@ public class PrerequisiteAcceptDecideRule extends AcceptDecideRule {
         
         try {
             String hopsPath = ((CandidateURI)object).getPathFromSeed();
-            if (hopsPath.charAt(hopsPath.length())==Link.PREREQ_HOP) {
+            if (hopsPath.length() > 0
+                    && hopsPath.charAt(hopsPath.length()-1) == Link.PREREQ_HOP) {
                 return ACCEPT;
             }
         } catch (ClassCastException e) {

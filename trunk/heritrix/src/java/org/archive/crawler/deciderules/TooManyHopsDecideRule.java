@@ -24,13 +24,7 @@
 */
 package org.archive.crawler.deciderules;
 
-import javax.management.Attribute;
-import javax.management.AttributeNotFoundException;
-import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
-
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.settings.SimpleType;
 
 
@@ -53,27 +47,14 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
      */
     public TooManyHopsDecideRule(String name) {
         super(name);
-        setDescription("TooManyHopsDecideRule: Applies the configured" +
+        setDescription("TooManyHopsDecideRule: Applies the configured " +
                 "decision to URIs discovered after too many hops (followed " +
                 "links of any type) from seed.");
         addElementToDefinition(new SimpleType(ATTR_MAX_HOPS, "Max path" +
                 " depth for which this filter will match", DEFAULT_MAX_HOPS));
-        // make default REJECT
-        try {
-            setAttribute(new Attribute(ConfiguredDecideRule.ATTR_DECISION, REJECT));
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InvalidAttributeValueException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (MBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        // make default REJECT (replacing entry from superclass)
+        addElementToDefinition(new SimpleType(ATTR_DECISION,
+                "Decision to be applied", ACCEPT, ALLOWED_TYPES));
     }
 
     /**
@@ -81,11 +62,11 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
      * hops.
      * 
      * @param object
-     * @return
+     * @return true if the mx-hops is exceeded
      */
     protected boolean evaluate(Object object) {
         try {
-            CrawlURI curi = (CrawlURI)object;
+            CandidateURI curi = (CandidateURI)object;
             return curi.getPathFromSeed().length() > getThresholdHops(object);
         } catch (ClassCastException e) {
             // if not CrawlURI, always disregard
