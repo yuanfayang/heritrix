@@ -31,7 +31,7 @@ public class ARCWriterTest extends TestCase implements CoreAttributeConstants{
 	CrawlController controller;
 	String orderFile;
 	CrawlOrder order;
-	CrawlHost crawlhost;
+	CrawlServer crawlserver;
 	
 	public static void main(String[] args) {	
 		ARCWriterTest a = new ARCWriterTest("testHttpWrite");
@@ -42,7 +42,7 @@ public class ARCWriterTest extends TestCase implements CoreAttributeConstants{
 		
 		writer 		= new ARCWriter();
 		curi 			= new CrawlURI("http://parkert.com");
-		crawlhost	= new CrawlHost("parkert.com");
+		crawlserver	= new CrawlServer("parkert.com");
 		
 		writer.setArcMaxSize(10000);
 		writer.setArcPrefix("prefix");
@@ -54,14 +54,14 @@ public class ARCWriterTest extends TestCase implements CoreAttributeConstants{
 		}catch(IOException e){}
 		
 		try{
-		crawlhost.setIP(InetAddress.getByName("parkert.com"));
+		crawlserver.getHost().setIP(InetAddress.getByName("parkert.com"));
 		}catch(UnknownHostException e){}
 		
-		crawlhost.setHasBeenLookedUp();
+		crawlserver.getHost().setHasBeenLookedUp();
 		
 		try {
-			crawlhost.setIP( InetAddress.getByName("parkert.com") );
-			curi.setHost(crawlhost);
+			crawlserver.getHost().setIP( InetAddress.getByName("parkert.com") );
+			curi.setServer(crawlserver);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

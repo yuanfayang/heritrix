@@ -13,7 +13,7 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.extractor.ExtractorDOC;
 import org.archive.crawler.framework.CrawlController;
@@ -31,7 +31,7 @@ public class ExtractorDOCTest
 		protected ExtractorDOC extractor = null;
 		protected CrawlController controller = null;
 		protected CrawlURI curi = null;
-		protected CrawlHost crawlhost = null;
+		protected CrawlServer crawlhost = null;
 		protected OfflineGet get = null;
 		HttpClient http = new HttpClient();
 		
