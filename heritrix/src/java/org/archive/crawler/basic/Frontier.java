@@ -394,15 +394,6 @@ public class Frontier
             return;
         }
         
-        if(caUri.isSeed() && caUri.getVia() != null 
-                && caUri.getVia().toString().length()>0){
-            // The only way a seed can have a non empty via is if it is the 
-            // result of a seed redirect. Add it to the seeds list.
-            controller.getScope().addSeed(caUri.getUURI());
-            // And it needs immediate scheduling.
-            caUri.setSchedulingDirective(CandidateURI.HIGH);
-        }
-        
         if(caUri.needsImmediateScheduling()) {
             enqueueHigh(CrawlURI.from(caUri));
         } else {
