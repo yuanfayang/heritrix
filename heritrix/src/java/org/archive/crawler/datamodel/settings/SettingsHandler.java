@@ -324,7 +324,7 @@ public abstract class SettingsHandler {
      * @return settings object for the host/domain or null if no
      *         settings exist for the host/domain.
      * @return CrawlerSettings object for a host/domain and a particular
-     * refinement.
+     * refinement or null if no settings exist for the host/domain.
      */
     public CrawlerSettings getSettingsObject(String scope, String refinement) {
         CrawlerSettings settings = settingsCache.getSettingsObject(scope, refinement);
