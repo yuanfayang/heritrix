@@ -31,8 +31,8 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 	public String format(LogRecord lr) {
 		CrawlURI curi = (CrawlURI) lr.getParameters()[0];
 
-		String length = "-";
-		String mime = "-";
+		String length = ".";
+		String mime = ".";
 		String uri = curi.getUURI().getUri().toASCIIString();
 		if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
