@@ -175,7 +175,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
      */
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
-        CrawlerSettings settings = uri.getServer().getHost().getSettings();
+        CrawlerSettings settings = uri.getServer().getSettings();
         return getAttribute(settings, name);
     }
 

@@ -36,10 +36,11 @@ import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
+ * Processes Javascript files for strings that are likely to be
+ * crawlable URIs. 
+ * 
  * @author gojomo
  *
- * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
  */
 public class ExtractorJS extends Processor implements CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
@@ -47,13 +48,25 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 	static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
 	static final Pattern WHITESPACE = Pattern.compile("\\s");
 
+    // finds strings in Javascript
+    // (areas between paired ' or " characters, possibly backslash-quoted
+    // on the ends, but not in the middle)
+    static final Pattern JAVASCRIPT_STRING_EXTRACTOR = Pattern.compile(
+     "(\\\\*(?:\"|\'))((?:[^\\n\\r]*?[^\\n\\r\\\\])??)(?:\\1)");
+
+    // determines whether a string is likely URI
+    // (no whitespace or '<' '>',  has an internal dot or some slash,
+    // begins and ends with either '/' or a word-char)
+    static final Pattern STRING_URI_EXTRACTOR = Pattern.compile(
+     "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)");
+
 	// finds strings in javascript likely to be URIs/paths
 	// guessing based on '.' in string, so if highly likely to 
 	// get gifs/etc, unable to get many other paths
 	// will find false positives
 	// TODO: add '/' check, suppress strings being concatenated via '+'?
 	static final Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
-	 "(\"|\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*((\\.|[^<]/)[^\\.\\n\\r\\s\"\']+)+)(\\1)");	
+	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");	
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -84,16 +97,27 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 		}
 		
 		try {
-			Matcher likelyUris = TextUtils.getMatcher(JAVASCRIPT_LIKELY_URI_EXTRACTOR, cs);
-			while(likelyUris.find()) {
-				String code = likelyUris.group(2);
-				code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-				curi.addSpeculativeEmbed(code);
-			}
-			TextUtils.freeMatcher(likelyUris);
+            considerStrings(curi, cs);
 		} catch (StackOverflowError e) {
 			// TODO Auto-generated catch block
 			DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
 		}
 	}
+    
+    public static void considerStrings(CrawlURI curi, CharSequence cs) {
+        Matcher strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
+        while(strings.find()) {
+        	CharSequence subsequence = cs.subSequence(strings.start(2), strings.end(2));
+            Matcher uri = TextUtils.getMatcher(STRING_URI_EXTRACTOR, subsequence);
+        	if(uri.matches()) {
+                String string = uri.group();
+                string = TextUtils.replaceAll(ESCAPED_AMP, string, "&");
+        	    curi.addSpeculativeEmbed(string);
+            } else {
+               considerStrings(curi,subsequence);
+            }
+            TextUtils.freeMatcher(uri);
+        }
+        TextUtils.freeMatcher(strings);
+    }
 }

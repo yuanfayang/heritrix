@@ -62,6 +62,35 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Stop crawl after</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Maximum time (sec):
+				</td>
+				<td>
+					<input name="<%=SimpleHandler.XP_MAX_TIME%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_TIME)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Maximum bytes to download:
+				</td>
+				<td>
+					<input name="<%=SimpleHandler.XP_MAX_BYTES_DOWNLOAD%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_BYTES_DOWNLOAD)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Maximum documents to download:
+				</td>
+				<td>
+					<input name="<%=SimpleHandler.XP_MAX_DOCUMENT_DOWNLOAD%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_DOCUMENT_DOWNLOAD)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
 					<b>Politeness</b>
 				</td>
 			</tr>
@@ -99,6 +128,23 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Robots.txt</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Honoring policy:
+				</td>
+				<td>
+					<select name="<%=SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME%>">
+						<option value="classic" <%=crawlOrder.getStringAt(SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME).equals("classic")?"selected":""%>>Classic</option>
+						<option value="ignore" <%=crawlOrder.getStringAt(SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME).equals("ignore")?"selected":""%>>Ignore</option>
+						<option value="most-favored" <%=crawlOrder.getStringAt(SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME).equals("most-favored")?"selected":""%>>Most favored</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>
 					<b>HTTP Fetch</b>
 				</td>
 			</tr>
@@ -128,7 +174,7 @@
 			</tr>
 			<tr>
 				<td>
-					Max lenght (bytes):
+					Max length (bytes):
 				</td>
 				<td>
 					<input name="<%=SimpleHandler.XP_HTTPFETCH_MAX_LENGTH_BYTES%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_HTTPFETCH_MAX_LENGTH_BYTES)%>" size="<%=iInputSize%>">

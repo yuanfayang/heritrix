@@ -20,6 +20,7 @@
 	int iInputSize = 50;
 
 	String title = "Default crawl order";
+	int tab = 2;
 %>
 
 <%@include file="/include/head.jsp"%>
