@@ -6,18 +6,21 @@
  */
 package org.archive.crawler.basic;
 
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.datamodel.CrawlHost;
-import org.xbill.DNS.*;
-import org.xbill.DNS.FindServer;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.HostCache;
-import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.Processor;
+import org.xbill.DNS.ARecord;
+import org.xbill.DNS.DClass;
+import org.xbill.DNS.FindServer;
+import org.xbill.DNS.Record;
+import org.xbill.DNS.Type;
+import org.xbill.DNS.dns;
 
 
 /**

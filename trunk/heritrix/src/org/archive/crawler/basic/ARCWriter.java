@@ -141,11 +141,11 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		if (true){	
 			
 			// figure out content type, truncate at delimiter ';'
-			String contentType;
-			if(curi.getContentType().indexOf(';') >= 0 ){
-				contentType = curi.getContentType().substring(0,curi.getContentType().indexOf(';'));
-			}else{
-				contentType = curi.getContentType();
+			String contentType = curi.getContentType();
+			if(contentType==null) {
+				contentType = "no-type"; // per ARC spec
+			} else if(curi.getContentType().indexOf(';') >= 0 ){
+				contentType = contentType.substring(0,contentType.indexOf(';'));
 			}
 			
 			String hostIP = curi.getHost().getIP().getHostAddress();
