@@ -1,4 +1,4 @@
-/* ConfigurableX509TrustSSLProtocolSocketFactory
+/* HttpRecorderSSLProtocolSocketFactory
  * 
  * Created on Feb 18, 2004
  *
@@ -30,27 +30,46 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.archive.util.ConfigurableX509TrustManager;
 
 
 /**
- * Implementation of the commons-httpclient SecureProtocolSocketFactory so we 
- * can insert our own configurable trust manager. 
+ * Implementation of the commons-httpclient SSLProtocolSocketFactory so we 
+ * can return SSLSockets whose streams are wrapped in HttpRecorders and
+ * whose trust manager is {@link org.archive.util.ConfigurableX509TrustManager}.
  * 
- * Based on suggestions found up on commons-httpclient: 
- * <a href="http://jakarta.apache.org/commons/httpclient/sslguide.html">SSL
- * Guide</a>.
+ * Implementation is done by getting insecure sockets from a 
+ * {@link org.archive.httpclient.HttpRecorderSocketFactory} and then wrapping
+ * these in ssl using the SSLSocketFactory#createSocket method that takes 
+ * an insecure socket.
  * 
- * <p>Should be only one instance of this factory per JVM.
+ * <p>Alternate implementations were awkward and different from the pattern used
+ * for insecure sockets because SSLSockets and SSLSocketFactories are not
+ * overrideable.  SSLSocket is an abstract type which means
+ * need to keep around an instance of SSLSocket so have means for
+ * realizing the abstract methods.  SSLSocketFactory is also awkward for same
+ * reason in that it has abstract methods that need implementations.
+ * 
+ * <p>In an alternate implementation we first made our own SSLContext w/ an
+ * amended TrustManger installed.  From here we then got a SSLSocketFactory.
+ * Then, on each socket returned out of this factory, we wrapped it w/ a new
+ * socket class wherein we had to implement every method adapting all calls to
+ * our new socket so they made it through to the wrapped socket just so we could 
+ * intercept the getting of socket input/output streams.  Putting this
+ * implementation under httpclient generated complaints from its socket
+ * pooling on close; it was saying the socket had never been opened by the pool.
  * 
  * @author stack
  * @version $Id$
+ * @see org.archive.httpclient.HttpRecorderSocketFactory
  */
-public class ConfigurableX509TrustSSLProtocolSocketFactory
+public class HttpRecorderSSLProtocolSocketFactory
     implements SecureProtocolSocketFactory
 {   
     /**
@@ -60,10 +79,23 @@ public class ConfigurableX509TrustSSLProtocolSocketFactory
      * to be used -- one instance out of which all sockets are given or
      * do we get a factory each time we need sockets?
      */
-    private SSLSocketFactory factory = null;
+    private SSLSocketFactory sslfactory = null;
+    
+    /**
+     * An insecure socket factory that gives out sockets that records all 
+     * reads and writes via a HttpRecorder.
+     */
+    private SocketFactory factory = HttpRecorderSocketFactory.getDefault();
+    
+    /**
+     * Autoclose setting.
+     * 
+     * Set it to true for now.
+     */
+    private static final boolean AUTOCLOSE = true;
     
     
-    public ConfigurableX509TrustSSLProtocolSocketFactory()
+    public HttpRecorderSSLProtocolSocketFactory()
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -79,7 +111,7 @@ public class ConfigurableX509TrustSSLProtocolSocketFactory
      * @throws KeyStoreException
      * @see ConfigurableX509TrustManager
      */
-    public ConfigurableX509TrustSSLProtocolSocketFactory(String level)
+    public HttpRecorderSSLProtocolSocketFactory(String level)
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -87,37 +119,35 @@ public class ConfigurableX509TrustSSLProtocolSocketFactory
         
         // Get an SSL context and initialize it.
         SSLContext context = SSLContext.getInstance("SSL");
-        // I tried to get the default KeyManagers but below doesn't work, at 
-        // least on IBM JVM.  Passing in null seems to do the right thing so 
-        // we'll go w/ that.
-        //  KeyManagerFactory kmf = KeyManagerFactory.
-        //      getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        //  // Get default KeyStore.  Assume empty string password.
-        // kmf.init(KeyStore.getInstance(KeyStore.getDefaultType()), 
-        //      "".toCharArray());
+        
+        // I tried to get the default KeyManagers but doesn't work unless you 
+        // point at a physical keystore. Passing null seems to do the right
+        // thing so we'll go w/ that.
         context.init(null,
             new TrustManager[] {new ConfigurableX509TrustManager(level)}, null);
-        this.factory = context.getSocketFactory();
+        this.sslfactory = context.getSocketFactory();
     }
 
     public Socket createSocket(String host, int port, InetAddress clientHost,
             int clientPort)
         throws IOException, UnknownHostException
     {
-        return this.factory.createSocket(host, port,
-            clientHost, clientPort);
+        return createSocket(
+            this.factory.createSocket(host, port, clientHost, clientPort),
+                host, port, AUTOCLOSE);
     }
 
     public Socket createSocket(String host, int port)
         throws IOException, UnknownHostException
     {
-        return this.factory.createSocket(host, port);
+        return createSocket(this.factory.createSocket(host, port), host, port,
+            AUTOCLOSE);
     }
 
     public Socket createSocket(Socket socket, String host, int port,
             boolean autoClose)
         throws IOException, UnknownHostException
     {
-        return this.factory.createSocket(socket, host, port, autoClose);
+        return this.sslfactory.createSocket(socket, host, port, autoClose);
     }
 }

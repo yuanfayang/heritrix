@@ -24,7 +24,6 @@ package org.archive.crawler.basic;
 
 import java.io.IOException;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -82,7 +81,7 @@ public class CrawlStateUpdater
 
 
                 // if we've tried too many times give up
-                if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+                if (curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
                     curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
                 }
             }
@@ -95,13 +94,11 @@ public class CrawlStateUpdater
                     curi.getUURI().getPath().equals("/robots.txt"))
             {
                 // Update host with robots info
-                if(curi.getAList().containsKey(A_HTTP_TRANSACTION))
+                if(curi.isHttpTransaction())
                 {
-                    GetMethod get = (GetMethod)curi.getAList().
-                        getObject(A_HTTP_TRANSACTION);
                     try
                     {
-                        curi.getServer().updateRobots(get);
+                        curi.getServer().updateRobots(curi);
                     }
                     catch (IOException e)
                     {

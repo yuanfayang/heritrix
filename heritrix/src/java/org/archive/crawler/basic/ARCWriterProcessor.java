@@ -34,7 +34,6 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -248,18 +247,9 @@ public class ARCWriterProcessor
     protected void writeHttp(CrawlURI curi)
         throws IOException
     {
-        if (curi.getFetchStatus() <= 0)
+        if (curi.getFetchStatus() <= 0 && curi.isHttpTransaction())
         {
             // Error; do not write to ARC (for now)
-            return;
-        }
-
-        GetMethod get = (GetMethod) curi.getAList().
-            getObject("http-transaction");
-        if (get == null)
-        {
-            // Some error occurred; nothing to write.
-            // TODO: capture some network errors in the ARC file for posterity
             return;
         }
 
@@ -276,7 +266,8 @@ public class ARCWriterProcessor
             writer.write(curi.getURIString(), curi.getContentType(),
                curi.getServer().getHost().getIP().getHostAddress(),
                curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
-               get.getHttpRecorder().getRecordedInput().getReplayInputStream());
+               curi.getHttpRecorder().getRecordedInput().
+                   getReplayInputStream());
         }
         finally
         {

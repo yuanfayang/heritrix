@@ -3,14 +3,22 @@
 <head>
 <title>org.archive.httpclient package</title>
 </head>
-<body>Provides heritrix specializations on the 
+<body>Provides specializations on
 	apache <a href="http://jakarta.apache.org/commons/httpclient/">jakarta
 	commons httpclient</a>.
+	
+	<h3>HttpRecorderProtocolSocketFactory</h3>
+	<p>Returns sockets that have their streams wrapped by 
+	{@link org.archive.util.HttpRecorder}.</p>
+
+	<h3>HttpRecorderSSLProtocolSocketFactory</h3>
+	<p>Returns sockets that have their streams wrapped by 
+	{@link org.archive.util.HttpRecorder} AND they have configurable
+    TrustManager.  Built upon HttpRecorderProtocolSocketFactory.</p>
 
     <h3>References</h3>
-    <p><a 
-href="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html"
->JavaTM Secure Socket Extension (JSSE): Reference Guide</a></p>
+    <p><a
+    href="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html">JavaTM Secure Socket Extension (JSSE): Reference Guide</a></p>
 
 </body>
 </html>
