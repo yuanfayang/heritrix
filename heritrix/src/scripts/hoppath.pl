@@ -11,7 +11,7 @@ use strict;
 my $crawllog = shift;
 my $urlprefix = shift;
 my $flatcrawllog = "flat.crawl.log";
-my $sort = "~brad/bin/av_sort_good_buffer_size -k5,5 -S 90%";
+my $sort = "~brad/bin/av_sort_good_buffer_size -k5,5 -S 70%";
 my $bin_search = "/alexa/bin/bin_search";
 my @stack;
 my $cmd;
@@ -19,10 +19,31 @@ my $cmd;
 # make flat and sorted crawl.log if needed.
 # todo: add some smarts to it.
 if ( ! -f $flatcrawllog ) {
-    $cmd = "cat $crawllog | tr -d \\\\\\n  | perl -pe 's/(200(3|4)[0-9]{13} )/\n\$1/g' | tr -s ' ' | $sort > $flatcrawllog";
+    open (FH, "< $crawllog")
+	or die "Coudn't open file $crawllog: ($!)\n";
+    open (FLATLOG, "| $sort > $flatcrawllog")
+	or die "Couldn't open filehandle to $flatcrawllog: ($!)\n";
     print STDOUT "Sorting crawl log file... please wait. This may take a several minutes and it is done only once!\n"; 
-    !system($cmd)
-	or die "Command ($cmd) Failed: ($!)\n";
+    my $line = "";
+    while (<FH>) {
+	chomp;
+	if (/^200[34]/) {
+	    if ($line) {
+		$line =~ tr/ //s;
+		print FLATLOG "$line\n";
+	    }
+	    $line = "";
+	    $line = $_;
+	} else {
+	    if (/^  /) {
+		$line .= $_;
+	    } else {
+		$line .= "\n";
+	    }
+	}
+    }
+    close(FH);
+    close(FLATLOG);
 
 }
 
