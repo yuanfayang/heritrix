@@ -48,8 +48,8 @@ public class TimedFixedSizeList extends FixedSizeList implements CoreAttributeCo
 		
 		long expireIfBefore = now - expireAfterMili;
 		
-		while ( (size() > 0)
-			     && ((TimedItem) getFirst()).getTime() < expireIfBefore) {
+		while ( (super.size() > 0)
+			     && ((TimedItem) super.getFirst()).getTime() < expireIfBefore) {
 			removeFirst();
 		}
 	}
@@ -75,7 +75,7 @@ public class TimedFixedSizeList extends FixedSizeList implements CoreAttributeCo
 	
 	public int size(){
 		cleanUp();
-		return size();
+		return super.size();
 	}
 	
 	public interface TimedItem {
