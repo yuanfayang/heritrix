@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import it.unimi.dsi.mg4j.util.MutableString;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -216,10 +218,12 @@ public class UURIFactory extends URI {
      */
     private UURIFactory() {
         super();
-        String schemes = System.getProperty(this.getClass().getName() +
+        String s = System.getProperty(this.getClass().getName() +
             SCHEMES_KEY);
-        if (schemes != null && schemes.length() > 0) {
-        	String [] candidates = schemes.split(",| ");
+        s = System.getProperty(this.getClass().getName() +
+            SCHEMES_KEY);
+        if (s != null && s.length() > 0) {
+        	String [] candidates = s.split(",| ");
             for (int i = 0; i < candidates.length; i++) {
             	if (candidates[i] != null && candidates[i].length() > 0) {
             		if (this.schemes == null) {
@@ -278,13 +282,13 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(String uri, String charset) throws URIException {
-        boolean escaped = isEscaped(uri);
-        UURI uuri  = new UURIImpl(fixup(uri, null, escaped),
-            escaped, charset);
+        boolean e = isEscaped(uri);
+        UURI uuri  = new UURIImpl(fixup(uri, null, e),
+            e, charset);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("URI " + uri +
                 " PRODUCT " + uuri.toString() +
-                " ESCAPED " + escaped +
+                " ESCAPED " + e +
                 " CHARSET " + charset);
         }
         return validityCheck(uuri);
@@ -297,13 +301,13 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(UURI base, String relative) throws URIException {
-        boolean escaped = isEscaped(relative);
-        UURI uuri = new UURIImpl(base, new UURI(fixup(relative, base, escaped),
-            escaped, base.getProtocolCharset()));
+        boolean e = isEscaped(relative);
+        UURI uuri = new UURIImpl(base, new UURI(fixup(relative, base, e),
+            e, base.getProtocolCharset()));
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(" URI " + relative +
                 " PRODUCT " + uuri.toString() +
-                " ESCAPED " + escaped +
+                " ESCAPED " + e +
                 " CHARSET " + base.getProtocolCharset() +
                 " BASE " + base);
         }
@@ -348,11 +352,11 @@ public class UURIFactory extends URI {
      *
      * @param uri URI as string.
      * @param base May be null.
-     * @param escaped True if the uri is already escaped.
+     * @param e True if the uri is already escaped.
      * @return A fixed up URI string.
      * @throws URIException
      */
-    private String fixup(String uri, final URI base, final boolean escaped)
+    private String fixup(String uri, final URI base, final boolean e)
     throws URIException {
         if (uri == null) {
             throw new NullPointerException();
@@ -390,7 +394,7 @@ public class UURIFactory extends URI {
         // Replace with two slashes as mozilla does if found.
         // See [ 788219 ] URI Syntax Errors stop page parsing.
         Matcher matcher = HTTP_SCHEME_SLASHES.matcher(uri);
-        if (matcher.matches()){
+        if (matcher.matches()) {
             uri = matcher.group(1) + matcher.group(2);
         }
         
@@ -409,29 +413,28 @@ public class UURIFactory extends URI {
         
         // If a scheme, is it a supported scheme?
         if (uriScheme != null && uriScheme.length() > 0 &&
-        		this.schemes != null) {
-        	if (!this.schemes.contains(uriScheme)) {
-        		throw new URIException(
-                "Unsupported scheme: " + uriScheme);
+                this.schemes != null) {
+            if (!this.schemes.contains(uriScheme)) {
+                throw new URIException("Unsupported scheme: " + uriScheme);
             }
         }
         
-        // Test if relative URI.  If so, need a base to resolve against.
+        // Test if relative URI. If so, need a base to resolve against.
         if (uriScheme == null || uriScheme.length() <= 0) {
-        	if (base == null) {
-        		throw new URIException("Relative URI but no base: " + uri);
+            if (base == null) {
+                throw new URIException("Relative URI but no base: " + uri);
             }
-        	if (uriPath != null) {
-        		// The parent class has a bug in that if dbl-slashes in a
+            if (uriPath != null) {
+                // The parent class has a bug in that if dbl-slashes in a
                 // relative path, then it thinks all before the dbl-slashes
-                // a scheme -- it doesn't look for a colon.  Remove
+                // a scheme -- it doesn't look for a colon. Remove
                 // dbl-slashes in relative paths. Here is an example of what
-                // it does.  With a base of "http://www.archive.org/index.html"
+                // it does. With a base of "http://www.archive.org/index.html"
                 // and a relative uri of "JIGOU//KYC//INDEX.HTM", its making
                 // a product of "http://KYC/INDEX.HTM".
-        		matcher = MULTIPLE_SLASHES.matcher(uriPath);
-        		uriPath = matcher.replaceAll("/");
-        	}
+                matcher = MULTIPLE_SLASHES.matcher(uriPath);
+                uriPath = matcher.replaceAll("/");
+            }
         }
         
         // Lowercase the host part of the uriAuthority; don't destroy any
@@ -507,18 +510,17 @@ public class UURIFactory extends URI {
         // above.  TODO: Look out for cases where we fail other than for the
         // above given reason which will be fixed when we address
         // '[ 913687 ] Make extractors interrogate for charset'.
-        if (escaped) {
+        if (e) {
             validateEscaping(uriPath);
         }
 
         // Preallocate big.
-        StringBuffer buffer = new StringBuffer(1024 * 4);
-        appendNonNull(buffer, uriScheme, ":", true);
-        appendNonNull(buffer, uriAuthority, "//", false);
-        appendNonNull(buffer, uriPath, "", false);
-        appendNonNull(buffer, uriQuery, "?", false);
-        return (escaped)?
-            escapeWhitespace(buffer.toString()): buffer.toString();
+        MutableString s = new MutableString(UURI.MAX_URL_LENGTH);
+        appendNonNull(s, uriScheme, ":", true);
+        appendNonNull(s, uriAuthority, "//", false);
+        appendNonNull(s, uriPath, "", false);
+        appendNonNull(s, uriQuery, "?", false);
+        return (e)? escapeWhitespace(s.toString()): s.toString();
     }
     
     /**
@@ -532,9 +534,8 @@ public class UURIFactory extends URI {
         if (component == null) {
             return;
         }
-        byte[] rawdata = null;
         try { 
-            rawdata = URLCodec.decodeUrl(EncodingUtil.getAsciiBytes(component));
+            URLCodec.decodeUrl(EncodingUtil.getAsciiBytes(component));
         } catch (DecoderException e) {
             throw new URIException(e.getMessage() + "; Component: " +
                 component);
@@ -561,28 +562,28 @@ public class UURIFactory extends URI {
         // write some awkward regex, just go through the string
         // a character at a time.  Only create buffer first time
         // we find a space.
-    	StringBuffer buffer = null;
-    	for(int i = 0; i < uri.length(); i++) {
-    		char c = uri.charAt(i);
-    		if (Character.isWhitespace(c)) {
+        MutableString buffer = null;
+        for(int i = 0; i < uri.length(); i++) {
+            char c = uri.charAt(i);
+            if (Character.isWhitespace(c)) {
                 if (buffer == null) {
-                	buffer = new StringBuffer(2 * uri.length());
+                    buffer = new MutableString(2 * uri.length());
                     buffer.append(uri.substring(0, i));
                 }
-    			buffer.append("%");
-    			String hexStr = Integer.toHexString(c);
-    			if ((hexStr.length() % 2) > 0) {
-    				buffer.append("0");
-    			}
-    			buffer.append(hexStr);
-    			
-    		} else {
-                if (buffer != null) {
-                	buffer.append(c);
+                buffer.append("%");
+                String hexStr = Integer.toHexString(c);
+                if ((hexStr.length() % 2) > 0) {
+                    buffer.append("0");
                 }
-    		}
-    	}
-    	return (buffer !=  null)? buffer.toString(): uri;
+                buffer.append(hexStr);
+                
+            } else {
+                if (buffer != null) {
+                    buffer.append(c);
+                }
+            }
+        }
+        return (buffer !=  null)? buffer.toString(): uri;
     }
     
     /**
@@ -595,7 +596,7 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private String checkDomainlabel(String label)
-    		throws URIException {
+    throws URIException {
         if (!TextUtils.matches(LEGAL_DOMAINLABEL_REGEX, label)) {
             throw new URIException("Illegal domain label: " + label);
         }
@@ -643,7 +644,7 @@ public class UURIFactory extends URI {
      * @param substr Suffix or prefix to use if <code>str</code> is not null.
      * @param suffix True if <code>substr</code> is a suffix.
      */
-    private void appendNonNull(StringBuffer b, String str, String substr,
+    private void appendNonNull(MutableString b, String str, String substr,
             boolean suffix) {
         if (str != null && str.length() > 0) {
             if (!suffix) {
