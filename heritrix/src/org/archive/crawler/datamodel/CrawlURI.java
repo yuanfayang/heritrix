@@ -35,6 +35,7 @@ public class CrawlURI implements URIStoreable {
 	private UURI baseUri;
 	private AList alist = new HashtableAList();
 	private UURI uuri; 
+	Processor nextProcessor;
 	CrawlHost host;
 	CrawlFetch fetch;
 
@@ -52,6 +53,19 @@ public class CrawlURI implements URIStoreable {
 	public UURI getUURI() {
 		return uuri;
 	}
+
+	/** 
+	  *   
+	  */   
+	 public Processor nextProcessor() {   
+			 return nextProcessor;   
+	 }   
+	 /**   
+	  * @param processor   
+	  */   
+	 public void setNextProcessor(Processor processor) {   
+			 nextProcessor = processor;   
+	 } 
 
 	/**
 	 * @return
