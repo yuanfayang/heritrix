@@ -61,6 +61,7 @@
             <include name="runclassmain"/>
             <include name="hoppath*"/>
             <include name="make_reports*"/>
+            <include name="cmdline-jmxclient*jar"/>
           </fileset>
         </copy>
 
