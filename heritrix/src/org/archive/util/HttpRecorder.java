@@ -75,5 +75,12 @@ public class HttpRecorder {
 	public void markResponseBodyStart() {
 		ris.markResponseBodyStart();
 	}
+
+	/**
+	 * @return
+	 */
+	public long getResponseContentLength() {
+		return ris.getResponseContentLength();
+	}
 	
 }

@@ -38,15 +38,24 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 		String uri = curi.getUURI().getUri().toASCIIString();
 		if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
-			// allow get to be GC'd
-			curi.getAList().remove(A_HTTP_TRANSACTION);
 				
-			if (get.getResponseHeader("Content-Length")!=null) {
-				length = get.getResponseHeader("Content-Length").getValue();
+			if(curi.getContentLength()>=0) {
+				length = Long.toString(curi.getContentLength());
+			} else if (curi.getContentSize()>0) {
+				length = Long.toString(curi.getContentSize());
 			}
+			
 			if (get.getResponseHeader("Content-Type")!=null) {
 				mime = get.getResponseHeader("Content-Type").getValue();
 			}
+		} else {
+			if (curi.getContentSize()>0) {
+				length = Long.toString(curi.getContentSize());
+ 
+			}
+			if (curi.getContentType() != null) {
+				mime = curi.getContentType();
+			} 
 		}
 		long time;
 		if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
@@ -63,6 +72,9 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			via = ((UURI)via).getUri().toASCIIString();
 		}
 		
+		// allow get to be GC'd
+		curi.getAList().remove(A_HTTP_TRANSACTION);
+
 		return ArchiveUtils.get17DigitDate(time)
 			+ " "
 			+ ArchiveUtils.padTo(curi.getFetchStatus(),4)

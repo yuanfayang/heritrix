@@ -39,9 +39,11 @@ public class Frontier
 	extends XMLConfig 
 	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants {
 	private static String XP_DELAY_FACTOR = "@delay-factor";
-	private static String XP_MINIMUM_DELAY = "@minimum-delay";
+	private static String XP_MIN_DELAY = "@min-delay";
+	private static String XP_MAX_DELAY = "@max-delay";
 	private static int DEFAULT_DELAY_FACTOR = 5;
-	private static int DEFAULT_MINIMUM_DELAY = 2000;
+	private static int DEFAULT_MIN_DELAY = 1000;
+	private static int DEFAULT_MAX_DELAY = 5000;
 
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.basic.SimpleFrontier");
@@ -83,8 +85,9 @@ public class Frontier
     // limits on retries TODO: separate into retryPolicy? 
 	private int maxRetries = 3;
 	private int retryDelay = 15000;
-	private long minimumDelay;
+	private long minDelay;
 	private long delayFactor;
+	private long maxDelay;
 
 	// top-level stats
 	int completionCount = 0;
@@ -97,7 +100,8 @@ public class Frontier
 		throws FatalConfigurationException {
 		
 		delayFactor = getIntAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
-		minimumDelay = getIntAt(XP_MINIMUM_DELAY,DEFAULT_MINIMUM_DELAY);
+		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
+		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
 		
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();
@@ -129,7 +133,7 @@ public class Frontier
 	 * 
 	 * @see org.archive.crawler.framework.URIFrontier#next(int)
 	 */
-	public CrawlURI next(int timeout) {
+	public synchronized CrawlURI next(int timeout) {
 		
 		long now = System.currentTimeMillis();
 		long waitMax = 0;
@@ -538,10 +542,12 @@ public class Frontier
 					* (completeTime
 						- curi.getAList().getLong(A_FETCH_BEGAN_TIME));
 
-			if (minimumDelay > durationToWait) {
-				durationToWait = minimumDelay;
+			if (minDelay > durationToWait) {
+				durationToWait = minDelay;
 			}
-			// TODO: maximum delay? 
+			if (durationToWait > maxDelay) {
+				durationToWait = maxDelay;
+			}
 			
 			if(durationToWait>0) {
 				snoozeQueueUntil(curi.getClassKey(), completeTime + durationToWait);

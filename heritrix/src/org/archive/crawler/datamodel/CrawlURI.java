@@ -9,6 +9,7 @@ package org.archive.crawler.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.fetcher.FetcherDNS;
 import org.archive.crawler.framework.Processor;
@@ -61,7 +62,8 @@ public class CrawlURI extends CandidateURI
 ////////////////////////////////////////////////////////////////////
 	CrawlServer server;
 
-	private int contentSize = -1;
+	private long contentSize = -1;
+	private long contentLength = -1;
 	
 	/**
 	 * @param uuri
@@ -330,17 +332,12 @@ public class CrawlURI extends CandidateURI
 		setDontRetryBefore(-1);
 	}
 	
-	/** Set the size of this URI's content in bytes for reporting */
-	public void setContentSize(int size){
-		contentSize = size;
-	}
-	
 	/** Get the size in bytes of this URI's content.  This may be set
 	 *  at any time by any class and therefor should not be trusted.  Primarily
 	 *  it exists to ease the calculation of statistics.
 	 * @return contentSize
 	 */
-	public int getContentSize(){
+	public long getContentSize(){
 		return contentSize;
 	}
 	
@@ -429,5 +426,30 @@ public class CrawlURI extends CandidateURI
 	 */
 	public void skipToProcessor(Processor processor) {
 		setNextProcessor(processor);
+	}
+
+	/**
+	 * For completed HTTP transactions, the length of the content-body
+	 * (as given by the header or calculated)
+	 * 
+	 * @return
+	 */
+	public long getContentLength() {
+		if (contentLength<0) {
+			GetMethod get = (GetMethod) getAList().getObject(A_HTTP_TRANSACTION);
+			if (get.getResponseHeader("Content-Length")!=null) {
+				contentLength = Integer.parseInt(get.getResponseHeader("Content-Length").getValue());
+			} else {
+				contentLength = get.getHttpRecorder().getResponseContentLength();
+			}
+		}
+		return contentLength;
+	}
+
+	/**
+	 * @param l
+	 */
+	public void setContentSize(long l) {
+		contentSize = l;
 	}
 }
