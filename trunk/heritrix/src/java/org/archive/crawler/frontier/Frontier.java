@@ -25,13 +25,11 @@ package org.archive.crawler.frontier;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,7 +45,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
