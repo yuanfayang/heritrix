@@ -200,17 +200,17 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		//				o.getStringAt("//crawl-order/comment/")));
 		sb.append(
 			genHtmlTextField(
-				"//http-headers/User-Agent",
+				"/behavior/http-headers/@User-Agent",
 				"USER AGENT",
 				o.getUserAgent()));
 		sb.append(
 			genHtmlTextField(
-				"//http-headers/From",
+				"/behavior/http-headers/@From",
 				" FROM",
 				o.getFrom()));
 		sb.append(
 			genHtmlTextField(
-				"//limits/max-toe-threads/@value",
+				"/behavior/@max-toe-threads",
 				"MAX NUMBER OF THREADS",
 				String.valueOf(o.getMaxToes())));
 //		sb.append(
@@ -220,27 +220,27 @@ public class CrawlerHandler extends AbstractHttpHandler {
 //				String.valueOf(o.getMaxLinkDepth())));
 		sb.append(
 			genHtmlTextField(
-				"/crawl-order/arc-file/@prefix",
+				"/behavior/processors/processor[Archiver]/@prefix",
 				"ARC FILE PREFIX",
-				o.getNodeAt("/crawl-order/arc-file/@prefix").getNodeValue()));
+				o.getNodeAt("/behavior/processors/processor[Archiver]/@prefix").getNodeValue()));
 		sb.append(
 			genHtmlTextField(
-				"//processors/processor/arc-files/@max-size-bytes",
+				"/behavior/processors/processor[Archiver]/@max-size-bytes",
 				"MAX ARC FILE SIZE",
 				o
-					.getNodeAt("//processors/processor/arc-files/@max-size-bytes")
+					.getNodeAt("/behavior/processors/processor[Archiver]/@max-size-bytes")
 					.getNodeValue()));
 		sb.append(
 			genHtmlTextField(
-				"//disk/@path",
+				"/behavior/@disk-path",
 				"DISK PATH",
-				o.getNodeAt("//disk/@path").getNodeValue()));
+				o.getNodeAt("/behavior/@disk-path").getNodeValue()));
 		sb.append(
 			genHtmlTextField(
-				"//processors/processor/compression/@use",
+				"/behavior/processors/processor[Archiver]/@compress",
 				"COMPRESS ARC FILES",
 				o
-					.getNodeAt("//processors/processor/compression/@use")
+					.getNodeAt("/behavior/processors/processor[Archiver]/@compress")
 					.getNodeValue()));
 
 //		sb.append(

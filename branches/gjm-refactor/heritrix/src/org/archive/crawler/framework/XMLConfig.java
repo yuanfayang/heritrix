@@ -572,9 +572,9 @@ public class XMLConfig {
 	}
 
 	public void clearCaches() {
-		cachedPathNodes = new HashMap();
-		cachedIntegers = new HashMap();
-		cachedStrings = new HashMap();
+		cachedPathNodes.clear();
+		cachedIntegers.clear(); 
+		cachedStrings.clear();
 	}
 	
 	public void setParentConfig(XMLConfig x){
