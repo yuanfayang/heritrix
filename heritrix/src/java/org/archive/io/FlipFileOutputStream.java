@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
 /**
  * An output stream that uses a pair of files on disk. One file is used for  
@@ -45,6 +46,10 @@ import java.io.OutputStream;
  * @see org.archive.io.DiskBackedByteQueue
  */
 public class FlipFileOutputStream extends OutputStream {
+    
+    private static final Logger logger
+        = Logger.getLogger(FlipFileOutputStream.class.getName());
+    
     BufferedOutputStream outStream;
     FileOutputStream fileStream;
     String pathPrefix;
@@ -125,8 +130,14 @@ public class FlipFileOutputStream extends OutputStream {
      * Deletes both files associated with this class and it's partner.
      */
     public void discard() {
-        file0.delete();
-        file1.delete();
+        try {
+            close();
+        } catch(IOException ioe) {
+            logger.severe("Failed close of " + this.file0 + " and/or " +
+                this.file1);
+        }
+        this.file0.delete();
+        this.file1.delete();
     }
 
     /* (non-Javadoc)
