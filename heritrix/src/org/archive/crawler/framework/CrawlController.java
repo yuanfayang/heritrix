@@ -6,28 +6,32 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.HostCache;
-import org.archive.crawler.io.FetchFormatter;
+import org.archive.crawler.io.CrawlErrorFormatter;
+import org.archive.crawler.io.UriErrorFormatter;
+import org.archive.crawler.io.UriProcessingFormatter;
 
 /**
  * 
  * @author Gordon Mohr
  */
 public class CrawlController {
-	public Logger successLogger = Logger.getLogger("successLogger");
-	public Logger failureLogger = Logger.getLogger("failureLogger");
-	
+	public Logger uriProcessing = Logger.getLogger("uri-processing");
+	public Logger crawlErrors = Logger.getLogger("crawl-errors");
+	public Logger uriErrors = Logger.getLogger("uri-errors");
+
 	CrawlOrder order;
 	
 	URIScheduler scheduler;
@@ -70,10 +74,25 @@ public class CrawlController {
 			p.initialize(this);
 		}
 		
-		ConsoleHandler ch = new ConsoleHandler();
-		ch.setFormatter(new FetchFormatter());
-		successLogger.addHandler(ch);
-		successLogger.setUseParentHandlers(false);
+		try {
+			FileHandler up = new FileHandler("uri-processing.log");
+			up.setFormatter(new UriProcessingFormatter());
+			uriProcessing.addHandler(up);
+			uriProcessing.setUseParentHandlers(false);
+			
+			FileHandler cerr = new FileHandler("crawl-errors.log");
+			cerr.setFormatter(new CrawlErrorFormatter());
+			crawlErrors.addHandler(cerr);
+			crawlErrors.setUseParentHandlers(false);
+			
+			FileHandler uerr = new FileHandler("uri-errors.log");
+			uerr.setFormatter(new UriErrorFormatter());
+			uriErrors.addHandler(uerr);
+			uriErrors.setUseParentHandlers(false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -119,6 +138,7 @@ public class CrawlController {
 		if (curi != null) {
 			curi.setNextProcessor(firstProcessor);
 			curi.setThreadNumber(thread.getSerialNumber());
+			curi.setController(this);
 		}
 		return curi;
 	}
