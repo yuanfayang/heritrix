@@ -35,6 +35,14 @@ import java.nio.MappedByteBuffer;
  * {@link #getFilePointer()} to get current location and then mark and reset to
  * move about in the stream.
  * 
+ * <p>This class is no longer used but its kept around because it documents
+ * experience using nio for ARCReader.  In summary, minor performance
+ * improvementwhen iterating over ARC Records.  Was replaced by RandomAccess
+ * io implementation because each instance, if the size of an ARC file, took
+ * up too much system memory preventing our being able to open tens of
+ * instances concurrently. Maybe JVM 1.5 makes big improvements in nio and
+ * we'll then use this class again.
+ * 
  * <p>This class was made because I wanted to use java.nio memory-mapped
  * files rather than old-school java.io reading arcs because:
  *
