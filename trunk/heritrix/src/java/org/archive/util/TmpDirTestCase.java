@@ -131,9 +131,12 @@ public class TmpDirTestCase
     public void cleanUpOldFiles(File basedir, String basename)
     {
         File [] files = getListOfFiles(basedir, basename);
-        for (int i = 0; i < files.length; i++)
+        if (files != null)
         {
-            files[i].delete();
+            for (int i = 0; i < files.length; i++)
+            {
+                files[i].delete();
+            }
         }
     }
     
