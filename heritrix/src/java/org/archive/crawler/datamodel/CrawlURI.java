@@ -831,6 +831,9 @@ public class CrawlURI extends CandidateURI
     /**
      * Return true if this is a http transaction.
      * 
+     * TODO: Compound this and {@link #isPost()} method so that there is one
+     * place to go to find out if get http, post http, ftp, dns.
+     * 
      * @return True if this is a http transaction.
      */
     public boolean isHttpTransaction() {
@@ -992,6 +995,10 @@ public class CrawlURI extends CandidateURI
     
     /**
      * Returns true if this URI should be fetched by sending a HTTP POST request.
+     * 
+     * 
+     * TODO: Compound this and {@link #isHttpTransaction()} method so that there
+     * is one place to go to find out if get http, post http, ftp, dns.
      * 
      * @return Returns is this CrawlURI instance is to be posted.
      */
