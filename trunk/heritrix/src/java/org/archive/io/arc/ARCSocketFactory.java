@@ -78,9 +78,11 @@ import org.archive.util.HttpRecorder;
  * chance to chat on it w/ Nutch folks (Their SocketFactory will have to do
  * initialize too if they go w/ this pattern).
  * 
- * <p>This factory is also a singleton to ensure only a single instance of an
- * ARCWriter shared by all ARCSockets.
- * 
+ * <p>This factory is a singleton to ensure only a single instance of an
+ * ARCWriter shared by all ARCSockets.  Means no public constructor as per 
+ * original description of how the ARCSocketFactory was to look on delivery.
+ * This could be changed if caller could guarantee only one SocketFactory per
+ * JVM.
  * 
  * <p>Internet Archive ARC files are described here: 
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
