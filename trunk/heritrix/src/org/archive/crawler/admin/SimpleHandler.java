@@ -3,6 +3,7 @@ package org.archive.crawler.admin;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Date;
 import java.util.Vector;
 import java.util.Enumeration;
 import java.util.logging.Logger;
@@ -57,7 +58,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	private OrderTransformation orderTransform;
 	
 	private int jobserial; //Unique ID for jobs.  
-
+	
 	public SimpleHandler()
 	{
 		shouldcrawl = false;
@@ -155,9 +156,9 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		return temp;		
 	}
 	
-	public int getNextJobUID()
+	public String getNextJobUID()
 	{
-		return jobserial++;		
+		return ArchiveUtils.TIMESTAMP17.format(new Date());		
 	}
 	
 	public CrawlJob getCurrentJob()
@@ -281,37 +282,92 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	
 	public void updateDefaultCrawlOrder(HttpServletRequest req) 
 	{
-		createCrawlOrderFile(req, orderFile);	
+		createCrawlOrderFile(req, WEB_APP_PATH+orderFile);	
 
-		statusMessage = CRAWL_ORDER_UPDATED;
+		try {
+			loadCrawlOrder();
+			statusMessage = CRAWL_ORDER_UPDATED;
+		} catch (InitializationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+	}
+
+	/**
+	 * Same as createCrawlOrderFile(req, filename, null, false)
+	 * 
+	 * @param req Containing a form with parameters named for the relevant XPaths in a crawl order and values that are appropriate for every given XPath.  Any XPath not found in the request will have values equal to the default crawl order.
+	 * @param filename Filename (including path) for where this new crawl order file is to be created.
+	 */
+	public void createCrawlOrderFile(HttpServletRequest req, String filename)
+	{
+		createCrawlOrderFile(req, filename, null,false);
 	}
 	
-	public void createCrawlOrderFile(HttpServletRequest req, String filename)
+	/**
+	 * Builds a new crawl order based on a form in a HttpServletRequest. (Presumably posted from a webpage)
+	 * 
+	 * @param req Containing a form with parameters named for the relevant XPaths in a crawl order and values that are appropriate for every given XPath.  Any XPath not found in the request will have values equal to the default crawl order.
+	 * @param filename Filename (including path) for where this new crawl order file is to be created.
+	 * @param seedsFileName if not null, this will supercede any seedfile declared in the req. Should NOT include path.  Seed file will be stored in the same path as the crawl order (filename)
+	 * @param writeSeedsToFile if true the seeds in the req will be written to the seedfile rather then the new crawl order xml.  If false and req contains seeds they will be written to the crawl order xml and the seedfilename (in req or otherwise) will be discarded.
+	 */
+	public void createCrawlOrderFile(HttpServletRequest req, String filename, String seedsFileName, boolean writeSeedsToFile)
 	{
 		Enumeration it = req.getParameterNames();
 		String name;
-		String seedsFileName = null;
 		String seeds = null;
 
-		while (it.hasMoreElements()) {
+		if(seedsFileName!=null)
+		{
+			// If seedsFileName provided we will ignore that in the request.
+			// Write it now to get it out of the way.
+			orderTransform.setNodeValue(XP_SEEDS_FILE,ArchiveUtils.getFilePath(filename)+seedsFileName);
+		}
+
+		// Now go through the request and write to the new crawl order.
+		while (it.hasMoreElements()) 
+		{
 			name = it.nextElement().toString();
 			String value = req.getParameter(name);
-			if (name.equals("//seeds")) {
-				seeds = value;
-			} else {
-				if (name != null && value != null) {
-					if (name.equals("//seeds/@src")) {
-						seedsFileName = value;
-					}
+			
+			if(name.equals(XP_SEEDS)) // Is this seeds? 
+			{
+				if(writeSeedsToFile)
+				{
+					seeds = value; //This will be written to the seeds file.
+				}
+				else
+				{
+					// Write the seeds to the crawl order XML
+					orderTransform.setNodeValue(name,value);
+				}
+			}
+			else if(name.equals(XP_SEEDS_FILE)) // Is this seed file?
+			{
+				if(seedsFileName == null)
+				{
+					seedsFileName = value;
+					value = ArchiveUtils.getFilePath(filename)+ value;
 					orderTransform.setNodeValue(name, value);
 				}
 			}
+			else if (name != null && value != null)
+			{
+				// Any other XPath that has a non null value just gets written
+				orderTransform.setNodeValue(name, value);
+			}
 		}
+		
+		// Write the new crawl order to disk
+		orderTransform.serializeToXMLFile(filename);
+
+		// Write the seed file if needed.
 		if (seeds != null && seedsFileName != null) {
 			try {
 				BufferedWriter writer =
 					new BufferedWriter(
-						new FileWriter(ArchiveUtils.getFilePath(orderFile) + seedsFileName));
+						new FileWriter(ArchiveUtils.getFilePath(filename) + seedsFileName));
 				if (writer != null) {
 					writer.write(seeds);
 					writer.close();
@@ -321,25 +377,17 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 				e.printStackTrace();
 			}
 		}
-		orderTransform.serializeToXMLFile(WEB_APP_PATH + filename);
-		
-		try {
-			loadCrawlOrder();
-		} catch (InitializationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
 	}
 
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlJobHandler#removeJob(org.archive.crawler.framework.CrawlJob)
 	 */
-	public boolean removeJob(int jobUID) {
+	public boolean removeJob(String jobUID) {
 		for(int i=0 ; i<pendingCrawlJobs.size() ; i++)
 		{
 			CrawlJob cj = (CrawlJob)pendingCrawlJobs.get(i);
-			if(cj.getUID()==jobUID)
+			if(cj.getUID().equals(jobUID))
 			{
 				// Found the one to remove.	
 				pendingCrawlJobs.remove(i);
