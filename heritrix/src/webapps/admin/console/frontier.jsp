@@ -38,6 +38,8 @@
         }
         
         boolean verbose = request.getParameter("verbose") != null && request.getParameter("verbose").equals("true");
+
+        boolean grep = request.getParameter("grep") != null && request.getParameter("grep").equals("true");
 %>
     <script type="text/javascript">
         function doDisplayInitial(){
@@ -64,7 +66,7 @@
             <td nowrap>
                 Regular expression:
             </td>
-            <td>
+            <td colspan="3">
                 <input name="match" size="33" value="<%=regexpr%>">
             </td>
             <td nowrap>
@@ -80,7 +82,7 @@
             <td nowrap>
                 Display matches:
             </td>
-            <td>
+            <td colspan="4">
                 <input name="numberOfMatches" size="6" value="<%=numberOfMatches%>">
             </td>
         </tr>
@@ -91,11 +93,17 @@
             <td>
                 <input type="checkbox" value="true" name="verbose" <%=verbose?"checked":""%>>
             </td>
+            <td align="right">
+                Grep style:
+            </td>
+            <td align="right" width="20">
+                <input type="checkbox" value="true" name="grep" <%=grep?"checked":""%>>
+            </td>
             <td></td>
         </tr>
         <tr><td height="5"></td></tr>
         <tr bgColor="black">
-            <td bgcolor="#000000" height="1" colspan="5">
+            <td bgcolor="#000000" height="1" colspan="7">
             </td>
         </tr>
 <%        
@@ -104,6 +112,13 @@
                 if ( action != null ) {
                     
                     URIFrontierMarker marker = null;
+			        if(grep){
+			            if(regexpr.length() > 0){
+			                regexpr = ".*" + regexpr + ".*";
+			            } else {
+			                regexpr = ".*";
+			            }
+			        }
 	                
 	                if(action.equals("initial")){
                        // Get initial marker.
@@ -112,11 +127,12 @@
 	                } else if(action.equals("next")) {
 	                   // Reuse old marker.
 	                   marker = (URIFrontierMarker)session.getAttribute("marker");
+	                   regexpr = marker.getMatchExpression();
 	                } else if(action.equals("delete")){
 	                   // Delete based on regexpr.
 	                   handler.deleteURIsFromPending(regexpr);
                        out.println("<tr><td height='5'></td></tr>");
-	                   out.println("<tr><td colspan='5'><b>All URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
+	                   out.println("<tr><td colspan='7'><b>All URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
                        out.println("<tr><td height='5'></td></tr>");
 	                }
 	                
@@ -145,28 +161,28 @@
 %>
 				        <tr><td height="5"></td></tr>
 				        <tr>
-				            <td colspan="5">
-				                Displaying URIs <%=from%> - <%=to%> for expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
+				            <td colspan="7">
+                                <% if(to>0) { %> Displaying URIs <%=from%> - <%=to%> matching <% } else { %> No URIs found matching <% } %> expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
 				            </td>
 				        </tr>
 				        <tr><td height="5"></td></tr>
 				        <tr bgColor="black">
-				            <td bgcolor="#000000" height="1" colspan="5">
+				            <td bgcolor="#000000" height="1" colspan="7">
 				            </td>
 				        </tr>
 				        <tr><td height="5"></td></tr>
 				        <tr>
-				            <td colspan="5"><pre><%=outputString.toString()%></pre></td>
+				            <td colspan="7"><pre><%=outputString.toString()%></pre></td>
 				        </tr>
 				        <tr><td height="5"></td></tr>
 				        <tr bgColor="black">
-				            <td bgcolor="#000000" height="1" colspan="5">
+				            <td bgcolor="#000000" height="1" colspan="7">
 				            </td>
 				        </tr>
 				        <tr><td height="5"></td></tr>
 				        <tr>
-				            <td colspan="5">
-                                Displaying URIs <%=from%> - <%=to%> for expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
+				            <td colspan="7">
+                                <% if(to>0) { %> Displaying URIs <%=from%> - <%=to%> matching <% } else { %> No URIs found matching <% } %> expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
 				            </td>
 				        </tr>
 				        <tr><td height="5"></td></tr>
@@ -176,7 +192,7 @@
 			    }
 %>
         <tr bgColor="black">
-            <td bgcolor="#000000" height="1" colspan="5">
+            <td bgcolor="#000000" height="1" colspan="7">
             </td>
         </tr>
         <tr><td height="5"></td></tr>
