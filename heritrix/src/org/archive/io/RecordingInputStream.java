@@ -93,6 +93,13 @@ public class RecordingInputStream extends InputStream {
 		return recordingOutputStream.getReplayInputStream();
 	}
 
+	/**
+	 * 
+	 */
+	public ReplayInputStream getContentReplayInputStream() throws IOException {
+		return recordingOutputStream.getContentReplayInputStream();
+	}
+
 	public long readFully() throws IOException {
 		byte[] buf = new byte[4096];
 		while(read(buf)!=-1) {
@@ -184,15 +191,18 @@ public class RecordingInputStream extends InputStream {
 	 */
 	public void copyContentBodyTo(File tempFile) throws IOException {
 		FileOutputStream fos = new FileOutputStream(tempFile);
-		getContentReplayInputStream().readFullyTo(fos);
+		ReplayInputStream ris = getContentReplayInputStream();
+		ris.readFullyTo(fos);
 		fos.close();
+		ris.close();
 	}
 
 	/**
 	 * 
 	 */
-	private ReplayInputStream getContentReplayInputStream() throws IOException {
-		return recordingOutputStream.getContentReplayInputStream();
+	public void verify() {
+		recordingOutputStream.verify();
 	}
+
 
 }
