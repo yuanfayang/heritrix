@@ -49,8 +49,7 @@ public class ToePool extends ThreadGroup {
     protected int targetSize = 0; 
 
     /**
-     * Constructor. Creates a pool of ToeThreads. Threads start in a paused
-     * state.
+     * Constructor. Creates a pool of ToeThreads. 
      *
      * @param c A reference to the CrawlController for the current crawl.
      */
@@ -66,10 +65,8 @@ public class ToePool extends ThreadGroup {
         Thread[] toes = getToes();
         int count = 0;
         for (int i = 0; i<toes.length; i++) {
-            if(! (toes[i] instanceof ToeThread)) {
-                continue;
-            }
-            if(((ToeThread)toes[i]).isActive()) {
+            if((toes[i] instanceof ToeThread) &&
+                    ((ToeThread)toes[i]).isActive()) {
                 count++;
             }
         }
@@ -81,9 +78,14 @@ public class ToePool extends ThreadGroup {
      *         that were not replaced.
      */
     public int getToeCount() {
-        // TODO: only count true ToeThreads, not any stray
-        // other threads that found their way into this group
-        return this.activeCount() > targetSize ? targetSize : this.activeCount();
+        Thread[] toes = getToes();
+        int count = 0;
+        for (int i = 0; i<toes.length; i++) {
+            if((toes[i] instanceof ToeThread)) {
+                count++;
+            }
+        }
+        return count; 
     }
     
     /**
@@ -105,7 +107,7 @@ public class ToePool extends ThreadGroup {
             }
         }
         TreeSet sorted = ht.getSorted();
-        rep.append(toes.length+" threads: ");        
+        rep.append(getToeCount()+" threads: ");        
         rep.append(Histotable.entryString(sorted.first()));
         if(sorted.size()>1) {
         	Iterator iter = sorted.iterator();
@@ -118,11 +120,8 @@ public class ToePool extends ThreadGroup {
     	return rep.toString();
     }
     
-    /**
-     * @return
-     */
     private Thread[] getToes() {
-        Thread[] toes = new Thread[getToeCount()];
+        Thread[] toes = new Thread[activeCount()+10];
         this.enumerate(toes);
         return toes;
     }
@@ -159,15 +158,16 @@ public class ToePool extends ThreadGroup {
     }
 
     /**
-     * Change the number of availible ToeThreads.
+     * Change the number of ToeThreads.
      *
-     * @param newsize The new number of availible ToeThreads.
+     * @param newsize The new number of ToeThreads.
      */
     public void setSize(int newsize)
     {
         targetSize = newsize;
-        while(newsize > getToeCount()) {
-            startNewThread(nextSerialNumber++);
+        int toSpawn = newsize - getToeCount(); 
+        for(int i = 1; i <= toSpawn; i++) {
+            startNewThread();
         }
     }
 
@@ -192,18 +192,18 @@ public class ToePool extends ThreadGroup {
             }
             ToeThread toe = (ToeThread) toes[i];
             if(toe.getSerialNumber()==threadNumber) {
-                toe.kill(-1);
+                toe.kill();
             }
         }
 
         if(replace){
             // Create a new toe thread to take its place. Replace toe
-            startNewThread(nextSerialNumber++);
+            startNewThread();
         }
     }
 
-    private void startNewThread(int threadNo) {
-        ToeThread newThread = new ToeThread(this, threadNo);
+    private synchronized void startNewThread() {
+        ToeThread newThread = new ToeThread(this, nextSerialNumber++);
         newThread.setPriority(DEFAULT_TOE_PRIORITY);
         newThread.start();
     }

@@ -292,10 +292,6 @@ public class ToeThread extends Thread
                 Level.SEVERE));
     }
 
-    /**
-     * @param processor
-     * @return
-     */
     private Processor getProcessor(Processor processor) {
         if(!(processor instanceof InstancePerThread)) {
             // just use the shared Processor
@@ -411,13 +407,10 @@ public class ToeThread extends Thread
      * running (ever). But once evoked it will not try and communicate with
      * other parts of crawler and will terminate as soon as control is
      * established.
-     *
-     * @param newSerial New serial (id) for the thread.
      */
-    protected void kill(int newSerial){
+    protected void kill(){
         this.interrupt();
         synchronized(this) {
-            this.serialNumber = newSerial;
             if (currentCuri!=null) {
                 currentCuri.setFetchStatus(S_PROCESSING_THREAD_KILLED);
                 controller.getFrontier().finished(currentCuri);
@@ -435,7 +428,7 @@ public class ToeThread extends Thread
 
     /**
      * Is this thread processing a URI, not paused or waiting for a URI?
-     * @return
+     * @return whether thread is actively processing a URI
      */
     public boolean isActive() {
         // if alive and not waiting in/for frontier.next(), we're 'active'
