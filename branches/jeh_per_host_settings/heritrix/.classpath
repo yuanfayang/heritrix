@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/commons-logging-1.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dnsjava-1.5.0.jar"/>
-	<classpathentry kind="lib" path="lib/httpclient-20031002.jar"/>
 	<classpathentry kind="lib" path="lib/itext-1.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/jasper-compiler-tomcat-4.1.24.jar"/>
 	<classpathentry kind="lib" path="lib/jasper-runtime-tomcat-4.1.24.jar"/>
@@ -13,11 +13,14 @@
 	<classpathentry kind="lib" path="lib/poi-scratchpad-2.0-RC1-20031102.jar"/>
 	<classpathentry kind="lib" path="lib/jmxri-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/jmxtools-4.2.15rc0.jar"/>
-	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/org.mortbay.jetty-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/org.mortbay.jmx-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/stataclasses-0.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="lib/ant-1.5.4.jar"/>
+	<classpathentry kind="lib" path="src/conf"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-20031002.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
