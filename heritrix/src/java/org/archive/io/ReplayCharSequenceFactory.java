@@ -994,14 +994,16 @@ public class ReplayCharSequenceFactory {
             }
             
             String result = null;
-            if (offset == 0 && length == this.content.limit()) {
+            if (offset == 0 && (length == this.content.limit())) {
                 result = this.content.toString();
             } else {
                 int originalPosition = this.content.position();
-                // Move position to offest.
-                this.content.position(offset);
-                result = this.content.subSequence(0, length).toString();
+                int originalLimit = this.content.limit();
+                // Set position to offset and limit to offset+length.
+                this.content.position(offset).limit(offset + length);
+                result = this.content.slice().toString();
                 this.content.position(originalPosition);
+                this.content.limit(originalLimit);
             }
             return result;
         }
