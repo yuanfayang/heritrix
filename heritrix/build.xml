@@ -13,7 +13,7 @@
 -->
 
     
-<project name="archive-open-crawler" default="all" basedir=".">
+<project name="archive-open-crawler" default="localbuild" basedir=".">
 
     <!-- All the inputs are read from build.properties file --> 
     <property file="build.properties" />
