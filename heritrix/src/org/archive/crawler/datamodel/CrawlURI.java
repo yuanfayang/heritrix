@@ -45,6 +45,7 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	CrawlHost host;
 
 	private int fetchStatus = 0;	// default to unattempted
+	private int deferrals = 0;
 	private int numberOfFetchAttempts = 0;	// the number of fetch attempts that have been made
 
 	private int threadNumber;
@@ -286,6 +287,20 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	 */
 	public void setController(CrawlController c) {
 		controller = c;
+	}
+
+	/**
+	 * 
+	 */
+	public void incrementDeferrals() {
+		deferrals++;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getDeferrals() {
+		return deferrals;
 	}
 	
 /*	public boolean isFubared(){
