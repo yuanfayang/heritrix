@@ -27,8 +27,8 @@
         <p>To run Heritrix, first do the following:
         <source>% export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</source></p>
 <p>...where <em>$HERITRIX_HOME</em> is the location of your built Heritrix
-(i.e.  under the <em>dist</em> dir if you built w/ Ant, or under the untarred
-<em>target/distribution/heritrix.?.?.?.tar.gz</em> dir if you built w/ Maven,
+(i.e.  under the <em>dist</em> dir if you built with Ant, or under the untarred
+<em>target/distribution/heritrix.?.?.?.tar.gz</em> dir if you built with Maven,
 or under the untarred 
 <em>heritrix.?.?.?.tar.gz</em> if you pulled a packaged binary).</p>
                                                                                 
@@ -36,7 +36,7 @@ or under the untarred
 <source>
     % cd $HERITRIX_HOME
     % chmod u+x $HERITRIX_HOME/bin/heritrix.sh
-    % $HERITRIX_HOME/bin/heritrix --help
+    % $HERITRIX_HOME/bin/heritrix.sh --help
 </source></p>
 
 <p>This should give you usage output like the following:
@@ -58,7 +58,7 @@ Arguments:
  ORDER_FILE     Crawl order to run.</source>
 </p>
 
-<p>Launch the crawler w/ the UI enabled by doing the following:
+<p>Launch the crawler with the UI enabled by doing the following:
 <source>% $HERITRIX_HOME/bin/heritrix.sh</source></p>
 <p>This will start up heritrix printing out a startup message that looks like
 the following:
@@ -304,7 +304,7 @@ show on the console.
     includes a file named <em>heritrix.properties</em>.  A 
     section of this file specifies the default heritrix logging configuration.
     To override, point
-    <em>java.util.logging.config.file</em> at a properties file w/ an
+    <em>java.util.logging.config.file</em> at a properties file with an
     alternate logging configuration.  Below we reproduce the default for
     reference:
     <source># Basic logging setup; to console, all levels
