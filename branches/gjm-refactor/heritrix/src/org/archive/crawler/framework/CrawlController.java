@@ -204,7 +204,7 @@ public class CrawlController {
 		
 		FileHandler lerr = new FileHandler(diskPath+LOGNAME_LOCAL_ERRORS+".log");
 		lerr.setFormatter(new LocalErrorFormatter());
-		localErrors.addHandler(cerr);
+		localErrors.addHandler(lerr);
 		localErrors.setUseParentHandlers(false);
 		
 		FileHandler uerr = new FileHandler(diskPath+LOGNAME_URI_ERRORS+".log");
