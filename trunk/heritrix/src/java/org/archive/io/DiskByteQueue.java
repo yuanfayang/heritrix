@@ -66,6 +66,7 @@ public class DiskByteQueue implements Serializable {
     File inFile; // file from which bytes are read
     File outFile; // file to which bytes are written
     transient FlipFileInputStream headStream;   // read stream
+    long rememberedPosition = -1;
     transient FlipFileOutputStream tailStream;  // write stream
     
     /**
@@ -183,7 +184,10 @@ public class DiskByteQueue implements Serializable {
      */
     public void close() throws IOException {
         headStream.close();
+        rememberedPosition = headStream.position;
+        headStream = null;
         tailStream.close();
+        tailStream = null;
     }
     
     /**
@@ -194,6 +198,20 @@ public class DiskByteQueue implements Serializable {
         close();
         inFile.delete();
         outFile.delete();
+    }
+    
+    /**
+     * @throws IOException
+     */
+    public void disconnect() throws IOException {
+        close();
+    }
+    
+    /**
+     * @throws IOException
+     */
+    public void connect() throws IOException {
+        initializeStreams(rememberedPosition);
     }
     
     // custom serialization

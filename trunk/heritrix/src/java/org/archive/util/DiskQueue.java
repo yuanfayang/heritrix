@@ -203,8 +203,7 @@ public class DiskQueue implements Queue, Serializable {
     public void release() {
         if (bytes != null) {
             try {
-                if(headStream != null) headStream.close();
-                if(tailStream != null) tailStream.close();
+                releaseStreams();
                 //bytes.close();
                 bytes.discard();
             } catch (IOException e) {
@@ -217,6 +216,45 @@ public class DiskQueue implements Queue, Serializable {
         // If this object is used again after this method is invoked, the 
         // late initialization will be reinvoked aquiring these resources
         // again.
+    }
+    
+    private void releaseStreams() throws IOException {
+        if(testStream != null) {
+            testStream.close();
+            testStream = null;
+        }
+        if(headStream != null) {
+            headStream.close();
+            headStream = null;
+        }
+        if(tailStream != null) {
+            tailStream.close();
+            tailStream = null;
+        }
+    }
+
+    /**
+     * Disconnect from any backing files, without deleting those
+     * files, allowing reattachment later. 
+     * 
+     */
+    public void disconnect() {
+        try {
+            releaseStreams();
+            bytes.disconnect();
+            isInitialized = false;
+        } catch (IOException e) {
+            // TODO convert to runtime exception?
+            DevUtils.logger.log(Level.SEVERE,"disconnect()" +
+                DevUtils.extraInfo(),e);
+        } 
+    }
+    
+    /**
+     * Reconnect to disk-based backing
+     */
+    public void connect() {
+        // do nothing -- allow lazy initialization to connect when necessary
     }
 
     /**

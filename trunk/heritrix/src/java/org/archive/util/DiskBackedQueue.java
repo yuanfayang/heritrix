@@ -35,6 +35,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 
 
+
 /**
  * Queue which uses a DiskQueue ('tailQ') for spillover entries once a
  * in-memory LinkedList ('headQ') reaches a maximum size.
@@ -126,6 +127,13 @@ public class DiskBackedQueue implements Queue, Serializable {
         if(tailQ.isEmpty()){
             tailQ.release();
         }
+    }
+    
+    /**
+     * Release any file-handles in arecoverable way.
+     */
+    public void disconnect() {
+        tailQ.disconnect();
     }
 
     /**
