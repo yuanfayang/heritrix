@@ -7,6 +7,9 @@
 package org.archive.crawler.framework;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
+
+import org.archive.util.DevUtils;
 
 /**
  * A collection of ToeThreads.
@@ -50,7 +53,7 @@ public class ToePool implements CrawlListener {
 				wait(200);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				DevUtils.logger.log(Level.SEVERE,"available()"+DevUtils.extraInfo(),e);
 			}
 		}
 	}
