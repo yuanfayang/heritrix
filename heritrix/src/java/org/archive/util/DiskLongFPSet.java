@@ -24,8 +24,11 @@
  */
 package org.archive.util;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Level;
@@ -70,11 +73,17 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
         if(disk.exists()) {
             disk.delete();
         }
-        rawRafile = new RandomAccessFile(disk,"rw");
-        for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
-            rawRafile.writeByte(EMPTY);
-            rawRafile.writeLong(0);
+        DataOutputStream os = new DataOutputStream(
+        		new BufferedOutputStream(new FileOutputStream(disk)));
+        try {
+        	for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
+	            os.writeByte(EMPTY);
+	            os.writeLong(0);
+        	}
+        } finally {
+        	os.close();
         }
+        rawRafile = new RandomAccessFile(disk,"rw");
     }
 
     /**
