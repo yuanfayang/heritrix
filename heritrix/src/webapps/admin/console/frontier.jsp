@@ -1,8 +1,8 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="org.archive.crawler.framework.URIFrontierMarker"%>
-<%@ page import="org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException"%>
+<%@ page import="org.archive.crawler.framework.FrontierMarker"%>
+<%@ page import="org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException"%>
 
 <%@ page import="java.util.ArrayList"%>
 
@@ -171,7 +171,7 @@
                 StringBuffer outputString = new StringBuffer();
                 if ( action != null ) {
                     
-                    URIFrontierMarker marker = null;
+                    FrontierMarker marker = null;
 			        if(grep){
 			            if(regexpr.length() > 0){
 			                regexpr = ".*" + regexpr + ".*";
@@ -186,7 +186,7 @@
                        session.setAttribute("marker",marker);
 	                } else if(action.equals("next")) {
 	                   // Reuse old marker.
-	                   marker = (URIFrontierMarker)session.getAttribute("marker");
+	                   marker = (FrontierMarker)session.getAttribute("marker");
 	                   regexpr = marker.getMatchExpression();
 	                } else if(action.equals("delete")){
 	                   // Delete based on regexpr.
@@ -205,7 +205,7 @@
                             for(int i=0 ; i < list.size() ; i++){
                                 outputString.append((String)list.get(i)+"\n");
                             }
-                        } catch ( InvalidURIFrontierMarkerException e ) {
+                        } catch ( InvalidFrontierMarkerException e ) {
                             session.removeAttribute("marker");
                             outputString.append("Invalid marker");
                         }
