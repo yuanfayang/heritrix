@@ -781,8 +781,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.httpRecorder = null;
         this.fetchStatus = S_UNATTEMPTED;
         this.setPrerequisite(false);
-        this.contentSize = 0;
-        this.contentLength = 0;
+        this.contentSize = UNCALCULATED;
+        this.contentLength = UNCALCULATED;
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
         // Clean the alist of all but registered permanent members.
