@@ -36,44 +36,33 @@ import org.archive.util.HttpRecorder;
  * Override of PostMethod that marks the passed HttpRecorder w/ the transition
  * from HTTP head to body and that forces a close on the responseConnection.
  *
- * Copy of {@link HttpRecorderGetMethod}.
+ * This is a copy of {@link HttpRecorderGetMethod}.  Only difference is the
+ * parent subclass.
  *
  * @author stack
  * @version $Date$ $Revision$
  */
 public class HttpRecorderPostMethod extends PostMethod
-{
+        implements CloseConnectionMarker {
     /**
-     * Instance of http recorder we're using recording this http get.
+     * Instance of http recorder method.
      */
-    private HttpRecorder httpRecorder = null;
+    private HttpRecorderMethod httpRecorderMethod = null;
+    
 
-    /**
-     * Save around so can force close.
-     *
-     * See [ 922080 ] IllegalArgumentException (size is wrong).
-     * https://sourceforge.net/tracker/?func=detail&aid=922080&group_id=73833&atid=539099
-     */
-    private HttpConnection connection = null;
+    public HttpRecorderPostMethod(String uri, HttpRecorder recorder) {
+        super(uri);
+        this.httpRecorderMethod = new HttpRecorderMethod(recorder);
+    }
 
+    protected void readResponseBody(HttpState state, HttpConnection connection)
+            throws IOException, HttpException {
+        // We're about to read the body.  Mark transition in http recorder.
+        this.httpRecorderMethod.markContentBegin();
+        super.readResponseBody(state, connection);
+    }
 
-	public HttpRecorderPostMethod(String uri, HttpRecorder recorder)
-    {
-		super(uri);
-        this.httpRecorder = recorder;
-	}
-
-	protected void readResponseBody(HttpState state, HttpConnection connection)
-		throws IOException, HttpException
-    {
-        // We're about to read the body.  Mark http recorder.
-		this.httpRecorder.markContentBegin();
-		super.readResponseBody(state, connection);
-	}
-
-
-    protected boolean shouldCloseConnection(HttpConnection conn)
-    {
+    protected boolean shouldCloseConnection(HttpConnection conn) {
         // Save off the connection so we can close it on our way out in case
         // httpclient fails to (We're not supposed to have access to the
         // underlying connection object; am only violating contract because
@@ -84,8 +73,8 @@ public class HttpRecorderPostMethod extends PostMethod
         // If there's been a shortcircuit of the connection close, this method
         // most likely won't be called and I won't get a connection to close.
         // Means this bit of code is of little use but leaving it here anyways.
-        if (conn != this.connection) {
-            this.connection = conn;
+        if (conn != this.httpRecorderMethod.getConnection()) {
+            this.httpRecorderMethod.setConnection(conn);
         }
 
         // Always close connection after each request. As best I can tell, this
@@ -93,37 +82,32 @@ public class HttpRecorderPostMethod extends PostMethod
         // out of paranoia.
         return true;
     }
+    
+    public void closeConnection() {
+        this.httpRecorderMethod.closeConnection();
+    }
 
     public void releaseConnection()
     {
         try {
             super.releaseConnection();
-        }
-
-        finally {
-            // Calling isOpen, makes httpclient do a lookup on the connection.
+        } finally {
             // If something bad happened during the releaseConnection above,
-            /// it will usually call close itself inside in the isOpen --
+            // it will usually call close itself inside in an isOpen --
             // the close() won't get called but the wished-for effect will
-            // have occurred.
-            if (this.connection != null) {
-                if (this.connection.isOpen()) {
-                    this.connection.close();
-                }
-                this.connection = null;
-            }
+            // have occurred.  This may not be necessary.
+            this.httpRecorderMethod.closeConnection();
         }
     }
 
     public int execute(HttpState state, HttpConnection conn)
-            throws HttpException, HttpRecoverableException, IOException
-    {
+            throws HttpException, HttpRecoverableException, IOException {
         // Save off the connection so we can close it on our way out in case
         // httpclient fails to (We're not supposed to have access to the
         // underlying connection object; am only violating contract because
         // see cases where httpclient is skipping out w/o cleaning up
         // after itself).
-        this.connection = conn;
+        this.httpRecorderMethod.setConnection(conn);
         return super.execute(state, conn);
     }
 }
