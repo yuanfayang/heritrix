@@ -695,7 +695,7 @@ public class LogReader
                 fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length()) 
                 + fmt.format(seriesNumber);
         }
-        filenames.add(fileName); // add current file
+        filenames.add(new File(fileName)); // add current file
         return new CompositeFileReader(filenames);
     }
 }
