@@ -12,12 +12,12 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
@@ -28,7 +28,9 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  *
  */
-public class FetcherHTTPSimple extends Processor implements InstancePerThread, CoreAttributeConstants, FetchStatusCodes {
+public class FetcherHTTPSimple
+	extends Processor
+	implements CoreAttributeConstants, FetchStatusCodes {
 	private static String XP_TIMEOUT_SECONDS = "//params/@timeout-seconds";
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
 	public static int MAX_HTTP_FETCH_ATTEMPTS = 3;
@@ -123,6 +125,7 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		} finally {
 			//controller.getKicker().cancelKick(Thread.currentThread());
+			get.releaseConnection();
 		}
 	}
 
@@ -133,7 +136,9 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 		super.initialize(c);
 		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
 		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-		http = new HttpClient();
+		MultiThreadedHttpConnectionManager connectionManager = 
+					new MultiThreadedHttpConnectionManager();
+		http = new HttpClient(connectionManager);
 	}
 
 }
