@@ -353,8 +353,8 @@ public class CrawlerHandler extends AbstractHttpHandler {
 
 	public String genProgressBar(
 		String description,
-		int start,
-		int end,
+		long start,
+		long end,
 		String color1,
 		String color2) {
 

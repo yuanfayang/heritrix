@@ -96,10 +96,20 @@ public class Frontier
 	private long maxDelay;
 
 	// top-level stats
-	int completionCount = 0;
-	int failedCount = 0;
+	long completionCount = 0;
+	long failedCount = 0;
+	// increments for every URI ever queued up (even dups)
+	long totalUrisScheduled = 0;
+	// increments for every URI ever queued up (even dups); decrements when retired
+	long netUrisScheduled = 0; 
+	// increments for every URI that turned out to be alreadyIncluded after queuing
+	// scheduledDuplicates/totalUrisScheduled is running estimate of rate to discount pendingQueues
+	long scheduledDuplicates = 0;
 
-	/* (non-Javadoc)
+
+	/**
+	 * Initializes the Frontier, given the supplied CrawlController. 
+	 * 
 	 * @see org.archive.crawler.framework.URIFrontier#initialize(org.archive.crawler.framework.CrawlController)
 	 */
 	public void initialize(CrawlController c)
@@ -111,6 +121,8 @@ public class Frontier
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
+		
+		
 		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
 		
 		// alternative: pure disk-based set 
@@ -121,9 +133,9 @@ public class Frontier
 //			new CachingDiskLongFPSet(
 //				c.getScratchDisk(),
 //				"alreadyIncluded",
-//				20,
+//				23, // 8 million slots on disk (for start)
 //				0.75f,
-//				20,
+//				20, // 1 million slots in cache (always)
 //				0.75f));
 		
 		this.controller = c;
@@ -143,10 +155,22 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void schedule(CandidateURI caUri) {
-		// TODO: where practical, do a quickie alreadyIncluded test
+		if(alreadyIncluded.quickContains(caUri)) {
+			logger.finer("Disregarding alreadyIncluded "+caUri);
+			return;
+		}
 		pendingQueue.enqueue(caUri);
+		incrementScheduled();
 	}
 	
+	/**
+	 * 
+	 */
+	private void incrementScheduled() {
+		totalUrisScheduled++;
+		netUrisScheduled++;
+	}
+
 	/** 
 	 * Arrange for the given CandidateURI to be visited, with top
 	 * priority (before anything else), if it is not already 
@@ -155,8 +179,12 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void scheduleHigh(CandidateURI caUri) {
-		// TODO: where practical, do a quickie alreadyIncluded test
+		if(alreadyIncluded.quickContains(caUri)) {
+			logger.finer("Disregarding alreadyIncluded "+caUri);
+			return;
+		}
 		pendingHighQueue.enqueue(caUri);
+		incrementScheduled();
 	}
 
 
@@ -183,7 +211,8 @@ public class Frontier
 			} else {
 				if (alreadyIncluded.contains(caUri)) {
 					// TODO: potentially up-prioritize URI
-					logger.finer("Disregarding duplicate"+caUri);
+					logger.finer("Disregarding alreadyContained "+caUri);
+					noteScheduledDuplicate();
 					continue;
 				}
 				logger.finer("Scheduling "+caUri);
@@ -211,7 +240,8 @@ public class Frontier
 				curi = (CrawlURI) caUri;
 			} else {
 				if (alreadyIncluded.contains(caUri)) {
-					logger.finer("Disregarding duplicate"+caUri);
+					logger.finer("Disregarding alreadyContained "+caUri);
+					noteScheduledDuplicate();
 					continue;
 				}
 				logger.finer("Scheduling "+caUri);
@@ -250,6 +280,15 @@ public class Frontier
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * Note that a URI that was queued up turned out to be a 
+	 * duplicate. 
+	 */
+	private void noteScheduledDuplicate() {
+		netUrisScheduled--;
+		scheduledDuplicates++;
 	}
 
 	/**
@@ -339,12 +378,18 @@ public class Frontier
 			array);
 		
 		// note that CURI has passed out of scheduling
-		curi.setStoreState(URIStoreable.FINISHED);
-		if (curi.getDontRetryBefore()<0) {
-			// if not otherwise set, retire this URI forever
-			curi.setDontRetryBefore(Long.MAX_VALUE);
+		if (shouldBeForgotten(curi)) {
+			// curi is dismissed without prejudice: it can be reconstituted
+			forget(curi);
+		} else {
+			curi.setStoreState(URIStoreable.FINISHED);
+			if (curi.getDontRetryBefore() < 0) {
+				// if not otherwise set, retire this URI forever
+				curi.setDontRetryBefore(Long.MAX_VALUE);
+			}
 		}
 		curi.stripToMinimal();
+		decrementScheduled();
 	}
 
 
@@ -640,6 +685,14 @@ public class Frontier
 			}
 			curi.stripToMinimal();
 		}
+		decrementScheduled();
+	}
+
+	/**
+	 * 
+	 */
+	private void decrementScheduled() {
+		netUrisScheduled--;
 	}
 
 	/**
@@ -655,18 +708,20 @@ public class Frontier
 			case S_DOMAIN_UNRESOLVABLE :
 				// network errors; perhaps some of these 
 				// should be scheduled for retries
-			case S_ROBOTS_PRECLUDED :
-				// they don't want us to have it	
 			case S_INTERNAL_ERROR :
 				// something unexpectedly bad happened
 			case S_UNFETCHABLE_URI :
 				// no chance to fetch
-			case S_OUT_OF_SCOPE :
-				// filtered out
-			case S_TOO_MANY_EMBED_HOPS :
-				// too far from last true link
-			case S_TOO_MANY_LINK_HOPS :
-				// too far from seeds
+
+// THESE NEXT FOUR AREN'T TRULY FAILURES
+//			case S_ROBOTS_PRECLUDED :
+//				// they don't want us to have it	
+//			case S_OUT_OF_SCOPE :
+//				// filtered out
+//			case S_TOO_MANY_EMBED_HOPS :
+//				// too far from last true link
+//			case S_TOO_MANY_LINK_HOPS :
+//				// too far from seeds
 				return true;
 
 			case S_UNATTEMPTED :
@@ -737,11 +792,17 @@ public class Frontier
 	}
 
 	/**
+	 * Some URIs, if they recur,  deserve another
+	 * chance at consideration: they might not be too
+	 * many hops away via another path, or the scope
+	 * may have been updated to allow them passage.
+	 * 
 	 * @param curi
 	 * @return
 	 */
 	private boolean shouldBeForgotten(CrawlURI curi) {
 		switch(curi.getFetchStatus()) {
+			case S_OUT_OF_SCOPE:
 			case S_TOO_MANY_EMBED_HOPS:
 			case S_TOO_MANY_LINK_HOPS:
 				return true;
@@ -778,7 +839,7 @@ public class Frontier
 	 * 
 	 * @return
 	 */
-	public int successfullyFetchedCount(){
+	public long successfullyFetchedCount(){
 		return completionCount;
 	}
 	
@@ -786,15 +847,26 @@ public class Frontier
 	 * 
 	 * @return
 	 */
-	public int failedFetchCount(){
+	public long failedFetchCount(){
 		return failedCount;
 	}
 	
 	/** Return the size of the URI store.
 	 * @return storeSize
 	 */
-	public int discoveredUriCount(){
+	public long discoveredUriCount(){
 		return alreadyIncluded.size();	
+	}
+
+	/** 
+	 * Estimate of the number of URIs waiting to be fetched.
+	 * scheduled
+	 * 
+	 * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
+	 */
+	public long pendingUriCount() {
+		float duplicatesInPendingEstimate = (totalUrisScheduled == 0) ? 0 : scheduledDuplicates / totalUrisScheduled;
+		return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
 	}
 
 
