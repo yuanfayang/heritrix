@@ -100,12 +100,28 @@ public class UURI {
 			if (u.getScheme().equals("http")) {
 				// case-flatten host, remove default port
 				canonizedAuthority = canonizedAuthority.toLowerCase();
+				// strip default port
 				if (canonizedAuthority.endsWith(":80")) {
 					canonizedAuthority =
 						canonizedAuthority.substring(
 							0,
 							canonizedAuthority.length() - 3);
 				}
+				// chop trailing '.'
+				if (canonizedAuthority.endsWith(".")) {
+					canonizedAuthority =
+						canonizedAuthority.substring(
+							0,
+							canonizedAuthority.length() - 1);
+				}
+				// chop leading '.'
+				if (canonizedAuthority.startsWith(".")) {
+					canonizedAuthority =
+						canonizedAuthority.substring(
+							1,
+							canonizedAuthority.length());
+				}
+
 			} else if (u.getScheme().equals("https")) {
 				// case-flatten host, remove default port
 				canonizedAuthority = canonizedAuthority.toLowerCase();
