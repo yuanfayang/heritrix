@@ -47,7 +47,7 @@
 
        TODO: Point to versioning scheme.
     -->
-  <currentVersion>0.1.0</currentVersion>
+  <currentVersion>0.2.0</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
@@ -91,13 +91,10 @@
         the connection element has the form:
         scm:<system>:<system specific connection string> 
      -->
-     <!--TODO
     <repository>
-        <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/archive-crawler</connection>
-        <connection>scm:cvs:ext:SOURCEFORGE_ID@cvs.sourceforge.net:/cvsroot/archive-crawler</connection>
+       <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/archive-crawler:ArchiveOpenCrawler</connection>
         <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/</url>
     </repository>
-     -->
   
 
     <!-- any mailing lists for the project -->
