@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<faqs title="Frequently Asked Questions">
+
+  <part id="general">
+    <title>General</title>
+
+
+    <faq id="heritrix">
+      <question>
+            What does "Heritrix" mean?
+      </question>
+      <answer>
+        <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>) is an archaic word for <em>inheritess</em>. Since our crawler seeks to collect the digital artifacts of our culture for the benefit of future researchers and generations, this name seemed apt.</p>
+      </answer>
+    </faq>
+
+    <faq id="developer">
+      <question>
+    I'm a developer, can I help?
+      </question>
+      <answer>
+        <p>Yes -- especially if you have experience with Java, open-source projects, and web protocols! Drop us a message or join our <a href="mailing-lists.html">mailing lists</a> for more details.
+        </p>
+      </answer>
+    </faq>
+
+    <faq id="user-heritrix">
+      <question>
+    I need to crawl/archive a set of websites, can I use Heritrix?
+      </question>
+      <answer>
+        <p>
+Eventually. For now, the crawler is still in early development, and only if you are comfortable grabbing code directly from CVS, wrestling with incomplete documentation, and running into undocumented limitations, would you want to use the current software.
+        </p>
+      </answer>
+    </faq>
+
+  </part>
+
+  <part id="references">
+    <title>References</title>
+
+    <faq id="archive_data">
+      <question>Where can I learn more about what is stored at 
+      the Internet Archive, the ARC file format, and tools for manipulating
+      ARC files?
+      </question>
+      <answer>
+        <p>You need a free website login, but once made, a collection of
+        useful overview links of formats/tools appears on the left column
+        <a href="http://www.archive.org/web/researcher/researcher.php">here</a>
+        at the Internet Archive.
+        </p>
+      </answer>
+    </faq>
+   
+    <faq id="where_refs">
+      <question>Where can I get more background on Heritrix and 
+        learn more about "crawling" in general?
+      </question>
+      <answer>
+        <p>The following are all worth at least a quick skim:
+    <ol>
+    <li><a href="http://citeseer.nj.nec.com/heydon99mercator.html">Mercator: A 
+    Scalable, Extensible Web Crawler</a> is an overview of the original
+    Mercator design, which the Heritrix crawler parallels in many ways.</li>
+    <li><a href="http://citeseer.nj.nec.com/najork01highperformance.html">High-performance Web Crawling</a> is info on experience scaling Mercator.</li>
+
+    <li><a 
+    href="http://citeseer.nj.nec.com/heydon00performance.html">Performance 
+    Limitations of the Java Core Libraries</a> is info on Mercator's
+    experience working around Java problems and bottlenecks. 
+    Fortunately, many of these issues have been improved for us by later JVMs
+    and Java core API updates -- but some of these are still issues, and in
+    any case it gives a good flavor for the kinds of
+    problems and profiling one might need to do.
+    </li>
+
+    <li><a href="http://citeseer.nj.nec.com/leung01towards.html">Towards
+    Web-Scale Web Archeaology</a> is a higher-level view, not as focused on
+    crawling details, but rather the post-crawl needs that motivate crawling
+    in the first place.</li>
+   <li>A number of other potentially interesting papers are linked off
+   the "crawl-links.html" file in the <a 
+    href="http://groups.yahoo.com/group/archive-crawler/files/">YahooGroups
+        files section...</a>
+    </li>
+    </ol>
+    </p>
+      </answer>
+    </faq>
+  </part>  
+</faqs>
