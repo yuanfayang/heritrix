@@ -159,7 +159,7 @@ public class SurtPrefixSet extends TreeSet {
     private static String asPrefix(String s) {
         // Strip last path-segment, if more than 3 slashes
         s = s.replaceAll("^(.*//.*/)[^/]*","$1");
-        // Strip trailing ",)", if present and NO path (no 3rd slash).
+        // Strip trailing ")", if present and NO path (no 3rd slash).
         if (!s.endsWith("/")) {
             s = s.replaceAll("^(.*)\\)","$1");
         }
