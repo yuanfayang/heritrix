@@ -272,7 +272,7 @@ implements AdaptiveRevisitAttributeConstants {
      */
     public void add(CrawlURI curi, boolean overrideSetTimeOnDups) 
             throws IOException{
-        logger.finer("Addding " + curi.getURIString());
+        logger.finer("Adding " + curi.getURIString());
         long oldValue = getNextReadyTime();
         try{
             if(inProcessing(curi.getURIString())){
@@ -305,10 +305,11 @@ implements AdaptiveRevisitAttributeConstants {
                     update = true;
                 }
                 if( (curiProcessingTime < oldCuriProcessingTime)
-                        && overrideSetTimeOnDups){
-                    // The new processing time is eariler then the 
-                    // existing processing time. Will promote URI, so we
-                    // update
+                        && (overrideSetTimeOnDups) || update){
+                    // We update the processing time if it is earlier then 
+                    // the original and either overrideSetTimeOnDups was set
+                    // or update is true, meaning a higher priority scheduling
+                    // directive for this URI.
                     curiExisting.putLong(
                             A_TIME_OF_NEXT_PROCESSING,
                             curiProcessingTime);
