@@ -264,6 +264,15 @@ public class MapType extends ComplexType {
     Type getDefinition(Attribute attribute) {
         return definition;
     }
+    
+    /**
+     * Get the content type allowed for this map.
+     * 
+     * @return the content type allowed for this map.
+     */
+    public Class getContentType() {
+        return this.definition.getLegalValueType();
+    }
 
     FailedCheck checkValue(Type definition, Attribute attribute) {
         FailedCheck res = super.checkValue(definition, attribute);
