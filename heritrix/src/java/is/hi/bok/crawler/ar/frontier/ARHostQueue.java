@@ -317,7 +317,7 @@ public class ARHostQueue implements ARAttributeConstants {
                             curi.getSchedulingDirective());
                     update = true;
                 }
-                if( curiProcessingTime < oldCuriProcessingTime
+                if( (curiProcessingTime < oldCuriProcessingTime)
                         && overrideSetTimeOnDups){
                     // The new processing time is eariler then the 
                     // existing processing time. Will promote URI, so we
@@ -325,9 +325,12 @@ public class ARHostQueue implements ARAttributeConstants {
                     curiExisting.putLong(
                             A_TIME_OF_NEXT_PROCESSING,
                             curiProcessingTime);
+                    update = true;
                 }
                 if(update){
                     opStatus = strictAdd(curiExisting,true); //Override
+                } else {
+                    return;
                 }
             } else if(opStatus == OperationStatus.SUCCESS) {
                 // Just inserted a brand new CrawlURI into the queue.
