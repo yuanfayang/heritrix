@@ -68,6 +68,7 @@ public interface CoreAttributeConstants {
 	public static String A_HTML_SPECULATIVE_EMBEDS = "html-speculativeembeds";
 	public static String A_DISTANCE_FROM_SEED = "distance-from-seed";
 	public static String A_HTML_LINKS = "html-links";
+	public static String A_CSS_LINKS = "css-links";
 	public static String A_HTML_BASE = "html-base-href";
 	public static String A_RETRY_DELAY = "retry-delay";
 
