@@ -67,11 +67,8 @@ public class URIRegExpFilter extends Filter {
     }
 
     protected boolean innerAccepts(Object o) {
-        String input = null;
-        input = asString(o);
         String regexp = getRegexp(o);
-        return (regexp == null)?  
-            false: TextUtils.matches(getRegexp(o), input);
+        return (regexp == null)? false: TextUtils.matches(regexp, asString(o));
     }
 
     /** 

@@ -54,14 +54,13 @@ public class Filter extends ModuleType {
     protected static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 
-//    private static final String ATTR_INVERTED = "inverted";
     public static final String ATTR_ENABLED = "enabled";
 
-    /** Creates a new 'null' filter.
-     *
+    /**
+     * Creates a new 'null' filter.
      * @param name the name of the filter.
      * @param description an description of the filter suitable for showing in
-     *        the user interface.
+     * the user interface.
      */
     public Filter(String name, String description) {
         super(name, description);
@@ -70,8 +69,8 @@ public class Filter extends ModuleType {
                 "Filter is enabled.", new Boolean(true)));
     }
 
-    /** Creates a new 'null' filter.
-     *
+    /**
+     * Creates a new 'null' filter.
      * @param name the name of the filter.
      */
     public Filter(String name) {
@@ -83,15 +82,14 @@ public class Filter extends ModuleType {
 
         // Skip the evaluation if the filter is disabled
         try {
-            if (!((Boolean) getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
-                return true;
+            if (!((Boolean)getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
+                return getFilterOffPosition(curi);
             }
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
 
         boolean accept = returnTrueIfMatches(curi) == innerAccepts(o);
-
         if (accept && logger.isLoggable(Level.FINEST)) {
             // Log if filter returns true
             ComplexType p = this.getParent();
@@ -99,11 +97,23 @@ public class Filter extends ModuleType {
                 p = p.getParent();
             }
             String msg = this.toString() + " belonging to " + p.toString()
-                         + " accepted " + o.toString();
+                + " accepted " + o.toString();
             logger.finest(msg);
         }
-
         return accept;
+    }
+    
+    /**
+     * If the filter is disabled, the value returned by this method is
+     * what filters return as their disabled setting.
+     * Default is that we return 'true', continue processing, but some
+     * filters -- the exclude filters for example -- will want to return
+     * false if disabled so processing can continue.
+     * @param curi CrawlURI to use as context. Passed curi can be null.
+     * @return This filters 'off' position.
+     */
+    protected boolean getFilterOffPosition(CrawlURI curi) {
+        return true;
     }
 
     /**
@@ -135,9 +145,6 @@ public class Filter extends ModuleType {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     public String toString() {
         return "Filter<" + getName() + ">";
     }
@@ -151,7 +158,7 @@ public class Filter extends ModuleType {
      */
     protected String asString(Object o) {
         String input;
-        // TODO consider changing this to ask o for its matchString
+        // TODO consider changing this to ask o for its matchString.
         if(o instanceof CandidateURI) {
             input = ((CandidateURI)o).getURIString();
         } else if (o instanceof UURI ){
@@ -163,9 +170,6 @@ public class Filter extends ModuleType {
         return input;
     }
 
-    /**
-     * 
-     */
     public void kickUpdate() {
         // by default, do nothing
     }
