@@ -47,7 +47,7 @@
 
        TODO: Point to versioning scheme.
     -->
-  <currentVersion>0.1.0-dev</currentVersion>
+  <currentVersion>0.1.0</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
