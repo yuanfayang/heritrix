@@ -1,10 +1,11 @@
 #!/bin/sh
+#
 export BUILD_HOME=/0/cruisecontrol
 export HOME=$BUILD_HOME
 export JAVA_HOME=$BUILD_HOME/bin/j2sdk1.4.2_03
 export PATH=$PATH:$JAVA_HOME/bin
 export CVS_RSH=ssh
-export MAVEN_HOME=$BUILD_HOME/bin/maven-1.0-rc1
+export MAVEN_HOME=$BUILD_HOME/bin/maven
 export CCDIR=$BUILD_HOME/bin/cruisecontrol/main
 export JETTY_HOME=$BUILD_HOME/bin/jetty
 if test ! -d ${BUILD_HOME}/logs

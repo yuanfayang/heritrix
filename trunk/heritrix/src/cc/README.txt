@@ -65,8 +65,12 @@ path:
 + Install maven.  Set MAVEN_HOME.  You also have to add the maven bin to your
 path:
 
-    % export PATH=$PATH:$MAVEN_HOME/bin
-    
+    % export PATH=$PATH:$MAVEN_HOME/bin 
+
+Later we set an alternate location for plugin and jar repository -- a location
+other than default user-particular location.  Watch out for it below when we
+set build.properties for our project.
+
 + In addition to the base maven build, you will need to add the maven sdocbook
 plugin which can be found on this page: 
 http://sourceforge.net/projects/maven-plugins/.  This plugin is responsible for
@@ -85,7 +89,7 @@ after downloading.
 
 + After installing java and cruisecontrol, checkout the 'heritrix/src/cc', This
 is the checked-in cruisecontrol directory structure  (This README.txt is in the
-root of the 'heritrix/src/cc' submodule).  Check it out to a location that can
+root of the 'heritrix/src/cc' subodule).  Check it out to a location that can
 tolerate large files accumulating over time (The below checks out 
 'heritrix/src/cc' to a directory named 'cc'):
 
@@ -114,13 +118,14 @@ a sample:
     #Updated by build-ArchiveOpenCrawler.xml
     #Mon Apr 26 16:58:33 PDT 2004
     version.build.suffix=-${version.build.timestamp}
-    maven.username=stack-sf
-    maven.repo.local=/0/cruisecontrol/maven_repository
     version.build.timestamp=200404261658
+    maven.username=stack-sf
+    maven.home.local=/0/cruisecontrol/maven.home.local
 
 This file is updated by the continuous build as it runs.  It has the name of
 the user who's key is up at sourceforge and it has location of the maven
-repository.  When done, there should be a file named 
+local directory into which it will download jars and in which it expects to
+find plugins.  When done, there should be a file named 
 $CCBUILDDIR/checkout/ArchiveOpenCrawler/build.properties.
 
 + Now set up the continuous build webserver. See item 6, "Building the web app",
