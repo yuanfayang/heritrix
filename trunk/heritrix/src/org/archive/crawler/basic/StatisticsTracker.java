@@ -4,376 +4,571 @@
  */
 package org.archive.crawler.basic;
 
-import java.util.HashMap;
-import java.util.Iterator;
-
-import org.archive.crawler.framework.CrawlController;
-import org.archive.util.DiskWrite;
-import org.archive.util.Queue;
-
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.util.TimedQueue;
+
 
 /**
- * Tracks statistics that relate to the crawl in progress.
+ * Tracks statistics that relate to the crawl in progress.  Callers should be
+ * aware that any "current" statistics (i.e. those involving calculation of 
+ * rates) are good approximations, but work by looking at recently completed
+ * CrawlURIs and thus may in some (rare and degenerative) cases return
+ * data that is not useful, particularly with small/narrow crawls.  
  * 
  * @author Parker Thompson
  *
  */
-public class StatisticsTracker implements Runnable {
+public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 
 	protected CrawlController controller;
 
 	// keep track of the file types we see (mime type -> count)
 	protected HashMap fileTypeDistribution = new HashMap();
-	
+
 	// keep track of fetch status codes
 	protected HashMap statusCodeDistribution = new HashMap();
 
-	protected Queue recentDiskWrites = new Queue(10);
-	protected int totalBytesToDisk = 0;
-
+	protected int totalProcessedBytes = 0;
+	protected TimedQueue recentCrawlURIs = new TimedQueue(60);
 
 	protected Logger periodicLogger = null;
 	protected int logInterval = 60;
 
+	// default start time to the time this object was instantiated
+	protected long crawlerStartTime = System.currentTimeMillis();
+
 	public StatisticsTracker() {
 		super();
 	}
-	
+
 	/** Construct a StatisticsTracker object by giving it a reference
 	 *  to a controller it can query for statistics.
 	 * 
 	 * @param controller
 	 */
-	public StatisticsTracker(CrawlController c){
+	public StatisticsTracker(CrawlController c) {
 		controller = c;
 		periodicLogger = c.progressStats;
 	}
 	
-	public void setLogInterval(int interval){
+	public StatisticsTracker(CrawlController c, int interval){
+		controller = c;
+		periodicLogger = c.progressStats;
 		logInterval = interval;
 	}
-	public int getLogInterval(){
-		return logInterval;
-	}
 	
-	/** This object can be run as a thread to enable periodic loggin */
-	public void run(){
-		// don't start logging if we have no logger
-		if(periodicLogger==null){
+	public void setCrawlStartTime(long mili){
+		crawlerStartTime = mili;
+	}
+	public long getCrawlStartTime(){
+		return crawlerStartTime;
+	}
+
+	public void setLogWriteInterval(int interval) {
+		if(interval < 0){
+			logInterval = 0;
 			return;
 		}
 		
+		logInterval = interval;
+	}
+	public int getLogWriteInterval() {
+		return logInterval;
+	}
+
+	/** This object can be run as a thread to enable periodic loggin */
+	public void run() {
+		// don't start logging if we have no logger
+		if (periodicLogger == null) {
+			return;
+		}
+	
+		// log the legend	
+		periodicLogger.log(Level.INFO,
+				"[timestamp] [discovered-pages] [pending-pages] [downloaded-pages]"
+					+ " [unique-pages] [overall-docs-per-sec] [current-docs-per-sec] [overall-KB-sec]"
+					+ " [current-KB-sec] [download-failures] [stalled-threads] [memory-usage]"
+			);
+
 		// keep logging as long as this thang is running
-		while(true){
-			
-			int kPerSec = approximateDiskWriteRate()/1000;
+		while (true) {
 			
 			String delimiter = "-----------------------------------";
 			SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");
-			
-			periodicLogger.log(Level.INFO,timestamp.format(new Date()));
-			periodicLogger.log(Level.INFO,"\tURIs Completed:\t" + percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
-			periodicLogger.log(Level.INFO,"\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
-			periodicLogger.log(Level.INFO,"\tDiscovered URIs:\t" + urisEncounteredCount());
-			periodicLogger.log(Level.INFO,"\tFrontier (unfetched):\t" + urisInFrontierCount());
-			periodicLogger.log(Level.INFO,"\tFetch Attempts:\t" + totalFetchAttempts());
-			periodicLogger.log(Level.INFO,"\tSuccesses:\t" + successfulFetchAttempts());
-			periodicLogger.log(Level.INFO,"\tThreads:");
-			periodicLogger.log(Level.INFO,"\t\tTotal:\t" + threadCount());
-			periodicLogger.log(Level.INFO,"\t\tActive:\t" + activeThreadCount());
+			int discoveredPages = urisEncounteredCount();
+			int pendingPages = urisInFrontierCount();
+			int downloadedPages = successfulFetchAttempts();
+			int uniquePages = uniquePagesCount();
+			int docsPerSecond = processedDocsPerSec();
+			int currentDocsPerSecond = currentProcessedDocsPerSec();
+			int currentKBPerSec = currentProcessedKBPerSec();
+			int totalKBPerSec = processedKBPerSec();
+			int downloadFailures = totalFetchAttempts() - successfulFetchAttempts();
+			int pausedThreads = threadCount() - activeThreadCount(); 
+			Date now = new Date();
 
+			// pause before writing the first entry (so we have real numbers)
+			// and then pause between entries 
+			try {
+				Thread.sleep(logInterval * 1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				controller.crawlErrors.log(
+					Level.INFO,
+					"Periodic stat logger interrupted while sleeping.");
+			}
+
+			// 			mercator style log entry
+			//			[timestamp] [discovered-pages] [pending-pages] [downloaded-pages]
+			//			[unique-pages] \
+			//			[overall-docs-per-sec] [current-docs-per-sec] [overall-KB-sec]
+			//			[current-KB-sec] \
+			//			[download-failures] [stalled-threads] [memory-usage]
+			periodicLogger.log(
+				Level.INFO,
+				timestamp.format(now)
+				+ " " + discoveredPages
+				+ " " + pendingPages
+				+ " " + downloadedPages
+				+ " " + uniquePages
+				+ " " + docsPerSecond
+				+ " " + currentDocsPerSecond
+				+ " " + totalKBPerSec
+				+ " " + currentKBPerSec
+				+ " " + downloadFailures
+				+ " " + pausedThreads
+				+ " " + Runtime.getRuntime().totalMemory()
+			);
+
+			// some human readable stuff, in case we want to look at the log file
+			periodicLogger.log(Level.INFO, now.toString());
+			periodicLogger.log(
+				Level.INFO,
+				"\tURIs Completed:\t"
+					+ percentOfDiscoveredUrisCompleted()
+					+ "% (fetched/discovered)");
+			periodicLogger.log(
+				Level.INFO,
+				"\tDocument Processing Rate:\t" + currentKBPerSec + " kb/sec.");
+			periodicLogger.log(
+				Level.INFO,
+				"\tDocument Processing Rate:\t" + docsPerSecond + " documents/sec.");
+			periodicLogger.log(
+				Level.INFO,
+				"\tTotal Processed Bytes:\t" +(totalProcessedBytes/1000000) + " mb");
+			periodicLogger.log(
+				Level.INFO,
+				"\tDiscovered URIs:\t" + urisEncounteredCount());
+			periodicLogger.log(
+				Level.INFO,
+				"\tFrontier (unfetched):\t" + urisInFrontierCount());
+			periodicLogger.log(
+				Level.INFO,
+				"\tFetch Attempts:\t" + totalFetchAttempts());
+			periodicLogger.log(
+				Level.INFO,
+				"\tSuccesses:\t" + successfulFetchAttempts());
+			periodicLogger.log(Level.INFO, "\tThreads:");
+			periodicLogger.log(Level.INFO, "\t\tTotal:\t" + threadCount());
+			periodicLogger.log(
+				Level.INFO,
+				"\t\tActive:\t" + activeThreadCount());
+
+			// print file type distribution (mime types)
 			HashMap dist = getFileDistribution();
-		
-			if(dist.size() > 0){
+			if (dist.size() > 0) {
 				Iterator keyIterator = dist.keySet().iterator();
 
-				periodicLogger.log(Level.INFO,"\tFetched Resources MIME Distribution:");
-	
-				while(keyIterator.hasNext()){
-					String key = (String)keyIterator.next();
-					String val = ((Integer)dist.get(key)).toString();
-				
-					periodicLogger.log(Level.INFO,"\t\t" + val + "\t" + key);	
+				periodicLogger.log(
+					Level.INFO,
+					"\tFetched Resources MIME Distribution:");
+
+				while (keyIterator.hasNext()) {
+					String key = (String) keyIterator.next();
+					String val = ((Integer) dist.get(key)).toString();
+					periodicLogger.log(Level.INFO, "\t\t" + val + "\t" + key);
 				}
-			}else{
-				periodicLogger.log(Level.INFO,"\tNo mime statistics currently available.");
+				
+			} else {
+				periodicLogger.log(
+					Level.INFO,
+					"\tNo mime statistics currently available.");
 			}
-		
+
+			// print status code distributions (e.g. 404, 200, etc)
 			HashMap codeDist = getStatusCodeDistribution();
-		
-			if(codeDist.size() > 0){
+			if (codeDist.size() > 0) {
 				Iterator keyIterator = codeDist.keySet().iterator();
 
-				periodicLogger.log(Level.INFO,"\tStatus Code Distribution:");
-	
-				while(keyIterator.hasNext()){
-					String key = (String)keyIterator.next();
-					String val = ((Integer)codeDist.get(key)).toString();
-				
-					periodicLogger.log(Level.INFO,"\t\t" + val + "\t" + key);
+				periodicLogger.log(Level.INFO, "\tStatus Code Distribution:");
+
+				while (keyIterator.hasNext()) {
+					String key = (String) keyIterator.next();
+					String val = ((Integer) codeDist.get(key)).toString();
+
+					periodicLogger.log(Level.INFO, "\t\t" + val + "\t" + key);
 				}
-			}else{
-				periodicLogger.log(Level.INFO,"\tNo code sistribution statistics.");
+			} else {
+				periodicLogger.log(
+					Level.INFO,
+					"\tNo code sistribution statistics.");
 			}
-			
-			try{
-				Thread.sleep(logInterval*1000);
-			}catch(InterruptedException e){
-				e.printStackTrace();
-				controller.crawlErrors.log(Level.INFO, "Periodic stat logger interrupted while sleeping.");
-			}
-			
-			periodicLogger.log(Level.INFO,delimiter);
-		}	
+
+			//periodicLogger.log(Level.INFO, delimiter);
+		}
 	}
 	
+	/** Return the number of unique pages based on md5 calculations */
+	public int uniquePagesCount(){
+		//TODO implement md5 checksum comparisions
+		return 0;
+	}
 	
+	/** Returns the number of documents that have been processed
+	 *  per second over the life of the crawl
+	 * @return docsPerSec
+	 */
+	public int processedDocsPerSec(){
+		if(totalFetchAttempts() == 0){
+			return 0;
+		}
+		return (int)
+				(successfulFetchAttempts()
+					/ ((System.currentTimeMillis() - crawlerStartTime) / 1000)
+				+ .5 // round to nearest int
+		);
+	}
+	
+	/** Returns an estimate of recent document download rates
+	 *  based on a queue of recently seen CrawlURIs.  
+	 * @return currentDocsPerSec
+	 */
+	public int currentProcessedDocsPerSec(){
+		// if we haven't done anyting or there isn't a reasonable sample size give up
+		if(totalFetchAttempts() == 0 || recentCrawlURIs.size() < 2){
+			return 0;
+		}
+		
+		long sampleStartTime = ((CrawlURI)recentCrawlURIs.getFirst()).getAList().getLong(A_FETCH_BEGAN_TIME);
+		//long sampleEndTime = ((CrawlURI)recentCrawlURIs.getLast()).getAList().getLong(A_FETCH_COMPLETED_TIME);
+		long sampleEndTime = System.currentTimeMillis();
+		
+		return (int)
+				(recentCrawlURIs.size() / 
+				 ((sampleEndTime - sampleStartTime)
+					/ 1000 ) 
+				+ .5 // round to nearest int
+		);
+	}
+	
+	/** Calculates the rate that data, in kb, has been processed
+	 *  over the life of the crawl.
+	 * @return kbPerSec
+	 */ 
+	public int processedKBPerSec(){
+		if(totalFetchAttempts() == 0){
+			return 0;
+		}
+		
+		return (int)
+				(((totalProcessedBytes / 1000)
+					/ ((System.currentTimeMillis() - crawlerStartTime)
+					/ 1000))
+				+ .5 // round to nearest int
+		);
+	}
+	
+	/** Calculates an estimate of the rate, in kb, at which documents
+	 *  are currently being processed by the crawler.  For more 
+	 *  accurate estimates set a larger queue size, or get
+	 *  and average multiple values.
+	 * @return
+	 */
+	public int currentProcessedKBPerSec(){
+		if(totalFetchAttempts() == 0 || recentCrawlURIs.size() < 2){
+			return 0;
+		}
+		
+		int totalRecentSize = 0;
+		
+		Iterator recentItr = recentCrawlURIs.iterator();
+		while(recentItr.hasNext()){
+			totalRecentSize += getCrawlURISize((CrawlURI)recentItr.next());
+		}
+		
+		long sampleStartTime = ((CrawlURI)recentCrawlURIs.getFirst()).getAList().getLong(A_FETCH_BEGAN_TIME);
+		//long sampleEndTime = ((CrawlURI)recentCrawlURIs.getLast()).getAList().getLong(A_FETCH_COMPLETED_TIME);
+		long sampleEndTime = System.currentTimeMillis();
+		long samplePeriod = (sampleEndTime - sampleStartTime)/1000;
+		int totalRecentKB = totalRecentSize / 1000;
+		
+		return (int)
+				((totalRecentKB / samplePeriod)
+				+ .5 // round to nearest int
+		);
+	}
+	
+	/** Keep track of  "completed" URIs so we can caluculate 
+	 *  statistics based on when they were completed.
+	 * @param CrawlURI
+	 */
+	public void completedProcessing(CrawlURI curi){
+		
+		// make sure it has the attributes we need for processing
+		if(! curi.getAList().containsKey(A_FETCH_BEGAN_TIME)){
+			return;
+		}
+		if(! curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)){
+			// fake end times, which should be good enough for our calculations
+			curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+		}
+		
+		// the selector is going to strip the original of its' alist, 
+		// so let's keep a copy instead with just what we need
+		CrawlURI copy= (CrawlURI)curi.clone();
+		
+		// store in the queue
+		recentCrawlURIs.add(copy);
+
+		totalProcessedBytes += getCrawlURISize(copy);
+	}
+	
+	/** Determine the size of a URIs content by either 
+	 *  asking it to self-report, or calculating the size
+	 *  (if it reports a wonky value like -1)
+	 * 
+	 * @param CrawlURI
+	 * @return the size of the CrawlURI's content
+	 */
+	protected int getCrawlURISize(CrawlURI curi){
+		int size = 0;
+		
+		// try to let the uri self-report
+		size = curi.getContentSize();
+		if(size >= 0){
+			return size;
+		}
+		
+		// TODO do this the hard way
+		return 0;
+	}
+	
+
 	/** Returns a HashMap that contains information about distributions of 
 	 *  encountered mime types.  Key/value pairs represent 
 	 *  mime type -> count.
 	 * @return fileTypeDistribution
 	 */
-	public HashMap getFileDistribution(){
+	public HashMap getFileDistribution() {
 		return fileTypeDistribution;
 	}
-	
-	
+
 	/** Let modules store statistics about mime types they've
 	 *  encountered.  Note: these statistics are only as accurate
 	 *  as the logic concerned with storing them to this object.
 	 * @param mime
 	 */
-	public void incrementTypeCount(String mime){
+	public void incrementTypeCount(String mime) {
 
-		if(mime == null){
+		if (mime == null) {
 			mime = "unknown";
 		}
-		
+
 		// strip things like charset (e.g. text/html; charset=iso-blah-blah)	
-		int semicolonLoc = mime.indexOf(';'); 
-		if(semicolonLoc >= 0){
+		int semicolonLoc = mime.indexOf(';');
+		if (semicolonLoc >= 0) {
 			mime = mime.substring(0, semicolonLoc);
 		}
 
-		if(fileTypeDistribution.containsKey(mime)){
+		if (fileTypeDistribution.containsKey(mime)) {
 
-			Integer matchValue = (Integer)fileTypeDistribution.get(mime);
+			Integer matchValue = (Integer) fileTypeDistribution.get(mime);
 			matchValue = new Integer(matchValue.intValue() + 1);
 			fileTypeDistribution.put(mime, matchValue);
 
-		}else{
+		} else {
 			// if we didn't find this mime type add it
 			fileTypeDistribution.put(mime, new Integer(1));
 		}
 	}
 
-
 	/** Keeps a count of processed uri's status codes so that we can
 	 *  generate histograms.
 	 * @param code
 	 */
-	public void incrementStatusCodeCount(int code){
-		incrementStatusCodeCount( (new Integer(code)).toString());
+	public void incrementStatusCodeCount(int code) {
+		incrementStatusCodeCount((new Integer(code)).toString());
 	}
-	
+
 	/** Keeps a count of processed uri's status codes so that we can
 	 *  generate histograms.
 	 * @param code
 	 */
-	public void incrementStatusCodeCount(String code){
+	public void incrementStatusCodeCount(String code) {
 
-		if(code == null){
+		if (code == null) {
 			code = "unknown";
 		}
-		
-		if(statusCodeDistribution.containsKey(code)){
 
-			Integer matchValue = (Integer)statusCodeDistribution.get(code);
+		if (statusCodeDistribution.containsKey(code)) {
+
+			Integer matchValue = (Integer) statusCodeDistribution.get(code);
 			matchValue = new Integer(matchValue.intValue() + 1);
 			statusCodeDistribution.put(code, matchValue);
 
-		}else{
+		} else {
 			// if we didn't find this mime type add it
 			statusCodeDistribution.put(code, new Integer(1));
 		}
 	}
-	
-	
+
 	/** Return a HashMap representing the distribution of status codes for
 	 *  successfully fetched curis, as represented by a hashmap where
 	 *  key -> val represents (string)code -> (integer)count
 	 * @return statusCodeDistribution
 	 */
-	public HashMap getStatusCodeDistribution(){
+	public HashMap getStatusCodeDistribution() {
 		return statusCodeDistribution;
 	}
-	
-	
-	
+
 	/**
 	 * Get the number of threads in process (sleeping and active)
 	 * @return
 	 */
-	public int threadCount(){
+	public int threadCount() {
 		return controller.getToeCount();
 	}
-	
+
 	/**
 	 * Get the number of active (non-paused) threads.
 	 * @return
 	 */
-	public int activeThreadCount(){
+	public int activeThreadCount() {
 		return controller.getActiveToeCount();
 	}
-	
+
 	/**
 	 * Get the number of URIs in the frontier (found but not fetched)
 	 * @return
 	 */
-	public int urisInFrontierCount(){
-			
-			return urisEncounteredCount() - totalFetchAttempts();
+	public int urisInFrontierCount() {
+
+		return urisEncounteredCount() - totalFetchAttempts();
 	}
-	
+
 	/**
 	 * Get the number of successul page fetches.
 	 * @return
 	 */
-	public int uriFetchSuccessCount(){
+	public int uriFetchSuccessCount() {
 		return controller.getSelector().successfullyFetchedCount();
 	}
-	
+
 	/** This returns the number of completed URIs as a percentage of the total
 	 *   number of URIs encountered (should be inverse to the discovery curve)
 	 * @return
 	 */
-	public int percentOfDiscoveredUrisCompleted(){
+	public int percentOfDiscoveredUrisCompleted() {
 		int completed = totalFetchAttempts();
 		int total = urisEncounteredCount();
-		
-		if(total == 0){ return 0; }
-		
-		return (int)(100*completed/total);
+
+		if (total == 0) {
+			return 0;
+		}
+
+		return (int) (100 * completed / total);
 	}
-	
+
 	/** Returns a count of all uris encountered.  This includes both the frontier 
 	 * (unfetched pages) and fetched pages/failed fetch attempts.
 	 */
-		public int urisEncounteredCount(){
+	public int urisEncounteredCount() {
 		return controller.getStore().discoveredUriCount();
 	}
-	
+
 	/**
 	 * Get the total number of URIs where fetches have been attempted.
 	 */
-	public int totalFetchAttempts(){
-		return controller.getSelector().successfullyFetchedCount() + controller.getSelector().failedFetchCount();
+	public int totalFetchAttempts() {
+		return controller.getSelector().successfullyFetchedCount()
+			+ controller.getSelector().failedFetchCount();
 	}
-	
+
 	/** Get the total number of failed fetch attempts (404s, connection failures -> give up, etc)
 	 * @return int
 	 */
-	public int failedFetchAttempts(){
+	public int failedFetchAttempts() {
 		return controller.getSelector().failedFetchCount();
 	}
-	
+
 	/** Returns the total number of successul resources (web pages, images, etc)
 	 *  that have been fetched to date.
 	 * @return int
 	 */
-	public int successfulFetchAttempts(){
+	public int successfulFetchAttempts() {
 		return controller.getSelector().successfullyFetchedCount();
 	}
-	
-	/** Keep a record of how many bytes we think we're writing to disk. 
-	 *  and stores descretely a certain number of the latest writes for 
-	 *  relatively "real time" statistic calculation.
-	 * @param bytes
-	 */
-	public void sentToDisk(DiskWrite latest){
-		recentDiskWrites.add(latest);
-		totalBytesToDisk += latest.getByteCount();
-	}
-	
+
 	/** Returns the total number of uncompressed bytes written to disk.  This may 
 	 *  be different from the actual number if you are using compression.
 	 * @return byteCount
 	 */
-	public int getTotalBytesWritten(){
-		return totalBytesToDisk;
+	public int getTotalBytesWritten() {
+		return totalProcessedBytes;
 	}
-	
+
 	/** Returns the approximate rate at which we are writing uncompressed data
 	 *  to disk as calculated using a finite set (see declaration of recentDiskWrites)
-	 *  of recent disk writes.
+	 *  of recent disk writes.  THIS FUNCTION IS DEPRECIATED use 
+	 *  currentProcessedKBPerSec()
 	 */
-	public int approximateDiskWriteRate(){
-		
-		if(recentDiskWrites.size() < 2){
+	public int approximateDiskWriteRate() {
+		return currentProcessedKBPerSec();
+	}
+
+	/** Returns the approximate rate at which we are writing uncompressed data
+	 *  to disk.
+	 */
+	public int approximateCompletionRate() {
+
+		if (recentCrawlURIs.size() < 2) {
 			return 0;
 		}
-		
-		long startTime = ((DiskWrite)recentDiskWrites.getFirst()).getTime();
-		long endTime = ((DiskWrite)recentDiskWrites.getLast()).getTime();
+
+		CrawlURI oldest = (CrawlURI)recentCrawlURIs.getFirst();
+		CrawlURI newest = (CrawlURI)recentCrawlURIs.getLast();
+
+		long startTime = getCrawlURIStartTime(oldest);
+		long endTime = getCrawlURIEndTime(newest);
+
 		long period = endTime - startTime;
-		
+
 		int totalRecentBytes = 0;
-		
-		Iterator recentWriteItr = recentDiskWrites.iterator();
-		
-		while(recentWriteItr.hasNext() ){
-			DiskWrite current = (DiskWrite)recentWriteItr.next();
-			
-			// don't add the last value, since timestamps are *before* writes
-			// adding the bytes from the last write would inflate our rate
-			if(!recentWriteItr.hasNext()){
-				break;
-			}
-			totalRecentBytes += current.getByteCount();
+
+		Iterator recentURIs = recentCrawlURIs.iterator();
+
+		while (recentURIs.hasNext()) {
+			CrawlURI current = (CrawlURI) recentURIs.next();
+			totalRecentBytes += getCrawlURISize(current);
 		}
-		
+
 		// return bytes/sec
-		return (int)(1000*totalRecentBytes/period);
+		return (int) (1000 * totalRecentBytes / period);
 	}
-	
-	
 
-	
-	
-//	/** Note the last X urls we've seen so we can use them
-//	 *  to make estimates about what's happening right now (e.g. download rates)
-//	 * @param crawluri
-//	 */
-//	public void noteLatestFetchedURI(CrawlURI c){
-//		
-//		if(latestFetchedCuris.size() <= MAX_LATEST_TO_TRACK){
-//			latestFetchedCuris.add(c);
-//		
-//		}else{
-//			latestFetchedCuris.add(latestIFetchedItem, c);
-//			latestIFetchedItem++;
-//		}
-//		
-//		if(latestIFetchedItem >= MAX_LATEST_TO_TRACK ){
-//			latestIFetchedItem = 0;
-//		}
-//	}
-//	
-//	/** Look at our buffer of latest uris and attempt to estimate a
-//	 *  download rate (in bytes) for those resources
-//	 * @return rateBytes
-//	 */
-//	public int calculateRecentFetchRate(){
-//		
-//		int startTime = 
-//		
-//		
-//		
-//	}
-
+	public long getCrawlURIStartTime(CrawlURI curi){
+		return curi.getAList().getLong(A_FETCH_BEGAN_TIME);
+	}
+	public long getCrawlURIEndTime(CrawlURI curi){
+		return curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+	}
 }

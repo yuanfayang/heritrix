@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.Iterator;
 
 import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
@@ -55,7 +56,7 @@ public class CrawlURI
 
 	private int threadNumber;
 	
-	private int contentSize;
+	private int contentSize = -1;
 	
 	private long dontRetryBefore = -1;
 
@@ -64,6 +65,25 @@ public class CrawlURI
 	 */
 	public CrawlURI(UURI u) {
 		uuri=u;
+	}
+	
+	/** creates a minimal (this means incomplete) copy */
+	//TODO: make this copy do more (currently only does enough to support statistics)
+	public Object clone(){
+		CrawlURI copy = new CrawlURI(uuri);
+		
+		// alist.clone throws a "not implemented yet" exception		
+		//copy.setAList((AList)this.alist.clone());
+		
+		Iterator alistKeys = alist.getKeys();
+		while(alistKeys.hasNext()){
+			String current = (String)alistKeys.next();
+			copy.getAList().putObject(current, alist.getObject(current));
+		}
+		
+		copy.setContentSize(contentSize);
+		
+		return copy;
 	}
 	
 	/**
@@ -409,6 +429,9 @@ public class CrawlURI
 		return contentSize;
 	}
 	
+	public void setAList(AList a){
+		alist = a;
+	}
 	
 /*	public boolean isFubared(){
 		return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);

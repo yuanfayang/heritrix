@@ -64,7 +64,7 @@
     class="org.archive.crawler.basic.ARCWriter"
     next="Cacher">
     	<compression use="true"/>
-    	<arc-files max-size-bytes="20000000"/>
+    	<arc-files max-size-bytes="100000000"/>
     	<!-- 
     	<filter 
     	 name="http-only"
@@ -84,15 +84,15 @@
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
-  <max-toe-threads value="4" />
-  <max-link-depth value="3" />
+  <max-toe-threads value="10" />
+  <max-link-depth value="1" />
  </limits>
 
 </crawler-behavior>
 
 <loggers>
   <crawl-statistics>
-    <interval>30</interval>
+    <interval>10</interval>
   </crawl-statistics>
 </loggers>
 
