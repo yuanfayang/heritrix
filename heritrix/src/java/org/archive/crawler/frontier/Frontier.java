@@ -24,7 +24,6 @@
 package org.archive.crawler.frontier;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -1522,6 +1521,8 @@ public class Frontier
                     this.alreadyIncluded.add(u);
                 } catch (URIException e) {
                     e.printStackTrace();
+                } catch (NullPointerException e){
+                	e.printStackTrace();
                 }
             }
         }
@@ -1543,6 +1544,8 @@ public class Frontier
                     }
                 } catch (URIException e) {
                     e.printStackTrace();
+                } catch (NullPointerException e){
+                	e.printStackTrace();
                 }
             }
         }
