@@ -64,6 +64,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void clear() {
 		try {
+			// diskStream.flush(); // redundant
 			diskStream.close();
 		} catch (IOException e) {
 			// nothing
@@ -134,8 +135,10 @@ public class RecordingOutputStream extends OutputStream {
 	public void close() throws IOException {
 		super.close();
 		wrappedStream.close();
-		diskStream.flush();
-		diskStream.close();
+		// diskStream.flush(); // redundant
+		if (diskStream != null) {
+			diskStream.close();
+		} 
 		this.size = position;
 	}
 
@@ -144,7 +147,9 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void flush() throws IOException {
 		super.flush();
-		diskStream.flush();
+		if (diskStream != null) {
+			diskStream.flush();
+		}
 		wrappedStream.flush();
 	}
 	
@@ -194,8 +199,10 @@ public class RecordingOutputStream extends OutputStream {
 	 * 
 	 */
 	public void closeRecorder() throws IOException {
-		diskStream.flush();
-		diskStream.close();
+		// diskStream.flush(); // redundant, close includes flush
+		if (diskStream != null) {
+			diskStream.close();
+		}
 		this.size = position;
 	}
 
@@ -204,7 +211,9 @@ public class RecordingOutputStream extends OutputStream {
 	 * @see java.lang.Object#finalize()
 	 */
 	protected void finalize() throws Throwable {
-		assert !fileStream.getFD().valid() : "valid fileStream reached finalize";
+		if (fileStream != null) {
+			assert !fileStream.getFD().valid() : "valid fileStream reached finalize";
+		}
 		super.finalize();
 	}
 

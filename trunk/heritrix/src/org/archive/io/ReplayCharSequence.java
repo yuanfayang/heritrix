@@ -193,7 +193,9 @@ public class ReplayCharSequence implements CharSequence {
 //		if(raFile.getFD().valid()) {
 //			System.out.println("finalize-closing raFile");
 //		}
-		raFile.close();
+		if (raFile!=null) {
+			raFile.close();
+		} 
 	}
 
 }
