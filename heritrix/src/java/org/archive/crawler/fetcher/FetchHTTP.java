@@ -79,22 +79,13 @@ public class FetchHTTP
 			// only handles plain http for now
 			return;
 		}
-
-// WRONG PLACE TO DO THIS; is a scheduling matter		
-//		// make sure there are not restrictions on when we should fetch this
-//		if(curi.dontFetchYet()){
-//			return;
-//		}
 		
 		// only try so many times...
 		if(curi.getFetchAttempts() >= getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)){
 			curi.setFetchStatus(S_TOO_MANY_RETRIES);
 			return; 
 		}
-		
-		// give it a go
-		//curi.incrementFetchAttempts();
-		
+				
 		// make sure the dns lookup succeeded
 		if (curi.getServer().getHost().getIP() == null
 			&& curi.getServer().getHost().hasBeenLookedUp()) {
@@ -102,15 +93,15 @@ public class FetchHTTP
 			return;
 		}
 				
-		// attempt to get the page
-		long now = System.currentTimeMillis();
-		
+		// note begin time
+		long now = System.currentTimeMillis();	
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+        
+        // set up GET
 		GetMethod get = new GetMethod(curi.getUURI().getUriString());
 		get.setFollowRedirects(false); // don't auto-follow redirects
-		get.getParams().setVersion(HttpVersion.HTTP_1_0);
+		get.getParams().setVersion(HttpVersion.HTTP_1_0); // use only HTTP/1.0 (to avoid receiving chunked responses)
 		get.getParams().makeLenient();
-		// use only HTTP/1.0 (to avoid receiving chunked responses)
 		String userAgent = curi.getUserAgent();
 		if(userAgent == null) {
 			userAgent = controller.getOrder().getUserAgent();
@@ -121,15 +112,14 @@ public class FetchHTTP
 		get.setRequestHeader(
 			"From",
 			controller.getOrder().getFrom());
-		
+		// set up recording of data -- for subsequent processor modules
 		HttpRecorder rec = ((ToeThread)Thread.currentThread()).getHttpRecorder();
 		get.setHttpRecorder(rec);
 		
-		long executeRead = 0;
-		long readFullyRead = 0;
+		long executeRead = 0; // for debug output
+		long readFullyRead = 0; // for debug output
 		
 		try {
-
 			// TODO: make this initial reading subject to the same
 			// length/timeout limits; currently only the soTimeout
 			// is effective here, once the connection succeeds
