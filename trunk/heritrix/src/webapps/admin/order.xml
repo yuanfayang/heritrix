@@ -61,7 +61,7 @@
     	name="HTTP" 
     	next="ExtractorHTTP" 
     	sotimeout-ms="10000" 
-    	timeout-seconds="600"/>
+    	timeout-seconds="1200"/>
     
     <processor 
     	class="org.archive.crawler.extractor.ExtractorHTTP" 
@@ -71,11 +71,6 @@
     <processor 
     	class="org.archive.crawler.extractor.ExtractorHTML" 
     	name="ExtractorHTML" 
-    	next="ExtractorSWF"/>
-
-    <processor 
-    	class="org.archive.crawler.extractor.ExtractorSWF" 
-    	name="ExtractorSWF" 
     	next="ExtractorJS"/>
 
     <processor 
@@ -83,9 +78,14 @@
     	name="ExtractorJS" 
     	next="Archiver"/>
 
-	<!-- ExtractorPDF, ExtractorDOC disabled for now:
+	<!-- ExtractorSWF, ExtractorPDF, ExtractorDOC disabled for now:
 		 prone to runaway memory use conditions
-		 
+
+    <processor 
+    	class="org.archive.crawler.extractor.ExtractorSWF" 
+    	name="ExtractorSWF" 
+    	next="ExtractorPDF"/>
+ 
     <processor 
     	class="org.archive.crawler.extractor.ExtractorPDF" 
     	name="ExtractorPDF" 
