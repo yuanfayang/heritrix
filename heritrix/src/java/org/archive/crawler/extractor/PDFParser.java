@@ -209,7 +209,8 @@ public class PDFParser {
                     PdfObject value = dictionary.get(key);
 
                     // see if it's the key is a UR[I,L]
-                    if( key.toString().equals("/URI") || key.toString().equals("/URI") ){
+                    if( key.toString().equals("/URI") ||
+		            key.toString().equals("/URL") ) {
                         foundURIs.add(dictionary.get(key).toString());
 
                     }else{
