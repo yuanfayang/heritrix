@@ -347,6 +347,20 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /**
+     * Reset fetchAttempts counter.
+     */
+    public void resetFetchAttempts() {
+        this.fetchAttempts = 0;
+    }
+
+    /**
+     * Reset deferrals counter.
+     */
+    public void resetDeferrals() {
+        this.deferrals = 0;
+    }
+
+    /**
      * Get the next processor to process this URI.
      *
      * @return the processor that should process this URI next.
