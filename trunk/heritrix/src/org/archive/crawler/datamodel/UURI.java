@@ -119,7 +119,11 @@ public class UURI {
 		                null); // drop fragment
 		}
 
-		return u.toASCIIString();
+		try {
+			return u.toASCIIString();
+		} catch (NullPointerException npe) {
+			throw new URISyntaxException(u.toString(),npe.toString());
+		}
 	}
 	
 	/** apply URI escaping where necessary
