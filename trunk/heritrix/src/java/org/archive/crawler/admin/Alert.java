@@ -24,7 +24,9 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.StringWriter;
 import java.util.Date;
+import java.util.logging.Level;
 
 import org.archive.util.ArchiveUtils;
 
@@ -45,6 +47,8 @@ public class Alert {
     private String ID;
     private Date time;
     
+    private Level level;
+    
     private static int nextID = 0;
     
     /**
@@ -52,42 +56,45 @@ public class Alert {
      * @param title short descriptive string that represents a title for the alert
      * @param body the alert message
      */
-    public Alert(String title, String body){
+    public Alert(String title, String body, Level level){
         alertTitle = title;
         alertBody = body;
         newAlert = true;
         ID = ArchiveUtils.get17DigitDate()+(nextID++); //Gurantee uniqueness.
         time = new Date();
+        this.level = level;
     }
+
 
     /**
      * Create a new alert
-     * @param title short descriptive string that represents a title for the alert
-     * @param body the alert message
-     * @param an error associated with the alert. It's content will be written to the body
+     * 
+     * @param title
+     *            short descriptive string that represents a title for the alert
+     * @param body
+     *            the alert message
+     * @param an
+     *            error associated with the alert. It's content will be written
+     *            to the body
      */
-    public Alert(String title, String body, Throwable error){
-        alertTitle = title;
-        newAlert = true;
-        ID = ArchiveUtils.get17DigitDate(); //Auto create ID using timestamp
-        time = new Date();
-        
-        StringBuffer message = new StringBuffer();
-        message.append(body+"\n\n");
-        message.append("Associated Throwable: " + error + "\n\n");
-        message.append("  Message:\n");
-        message.append("    " + error.getMessage()+"\n\n");
-        message.append("  Cause:\n");
-        message.append("    " + error.getCause()+"\n\n");
-        message.append("  Stacktrace:\n");
-        StackTraceElement[] stack = error.getStackTrace();
-        for(int i = 0 ; i < stack.length ; i++){
-        	message.append("    at " + stack[i].getClassName() + "." + stack[i].getMethodName());
-        	message.append(" (" + stack[i].getFileName()+":"+stack[i].getLineNumber()+")\n");
+    public Alert(String title, String body, Throwable error, Level level) {
+        this(title, body, level);
+        StringWriter message = new StringWriter();
+        message.write("\n\n");
+        message.write("Associated Throwable: " + error + "\n\n");
+        if (error.getMessage() != null) {
+            message.write("  Message:\n");
+            message.write("    " + error.getMessage() + "\n\n");
         }
-        alertBody = message.toString();
-        
+        if (error.getCause() != null) {
+            message.write("  Cause:\n");
+            message.write("    " + error.getCause() + "\n\n");
+        }
+        message.write("  Stacktrace:\n");
+        error.printStackTrace(new java.io.PrintWriter(message));
+        alertBody = alertBody + message.toString();
     }
+
     /**
      * A string containing the alert message.
      * @return the alert message
@@ -138,4 +145,10 @@ public class Alert {
         return time;
     }
 
+    /**
+     * @return Returns the level.
+     */
+    public Level getLevel() {
+        return level;
+    }
 }

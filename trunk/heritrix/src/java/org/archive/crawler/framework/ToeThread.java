@@ -24,6 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.util.HashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
@@ -142,7 +143,7 @@ public class ToeThread extends Thread
                 String title = "RuntimeException occured processing '" + currentCuri.getURIString() + "'";
                 String message = "The following RuntimeException occure when trying " +
                 		"to process '" + currentCuri.getURIString() + "'\n";
-                Heritrix.addAlert(new Alert(title,message.toString(),e));
+                Heritrix.addAlert(new Alert(title,message.toString(),e, Level.SEVERE));
             } catch (Error err) {
                 // OutOfMemory & StackOverflow & etc.
                 System.err.println(err);
@@ -152,7 +153,7 @@ public class ToeThread extends Thread
                 String title = "Serious error occured processing '" + currentCuri.getURIString() + "'";
                 String message = "The following serious error occure when trying " +
                 		"to process '" + currentCuri.getURIString() + "'\n";
-                Heritrix.addAlert(new Alert(title,message.toString(),err));
+                Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
             }
 
             controller.getFrontier().finished(currentCuri);

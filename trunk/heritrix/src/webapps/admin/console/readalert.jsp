@@ -3,6 +3,8 @@
 
 <%@ page import="org.archive.crawler.admin.Alert" %>
 
+<%@ page import="java.util.logging.Level" %>
+
 <%
 	Alert alert = Heritrix.getAlert(request.getParameter("alert"));
 	alert.setAlertSeen();
@@ -24,14 +26,22 @@
 				<%=alert.getTitle()%>
 			</td>
 		</tr>
-		<tr>
-			<td>
-				<b>Time:</b>&nbsp;
-			</td>
-			<td>
-				<%=sdf.format(alert.getTimeOfAlert())%>
-			</td>
-		</tr>
+        <tr>
+            <td>
+                <b>Time:</b>&nbsp;
+            </td>
+            <td>
+                <%=sdf.format(alert.getTimeOfAlert())%>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <b>Level:</b>&nbsp;
+            </td>
+            <td>
+                <%=alert.getLevel().getName()%>
+            </td>
+        </tr>
 		<tr>
 			<td valign="top">
 				<b>Message:</b>&nbsp;
@@ -44,6 +54,6 @@
 <% } %>
 	<p>
 		<a href="/admin/console/alerts.jsp">Back to alerts</a>
-		&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;
-		<a href="/admin/console/alerts.jsp?alertIDs=<%=alert.getID()%>&action=delete">Delete this alert</a>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<a href="/admin/console/alerts.jsp?alerts=<%=alert.getID()%>&action=delete">Delete this alert</a>
 <%@include file="/include/foot.jsp"%>

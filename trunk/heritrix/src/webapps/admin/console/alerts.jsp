@@ -1,10 +1,20 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="java.util.Vector" %>
+<%@ page import="java.util.Vector,java.util.HashMap" %>
+<%@ page import="java.util.logging.Level"%>
 <%@ page import="org.archive.crawler.admin.Alert"%>
 
 <%
+    HashMap levelColors = new HashMap(7);
+    levelColors.put(Level.SEVERE,"#da9090");
+    levelColors.put(Level.WARNING,"#daaaaa");
+    levelColors.put(Level.INFO,"#dab0b0");
+    levelColors.put(Level.CONFIG,"#dababa");
+    levelColors.put(Level.FINE,"#dac0c0");
+    levelColors.put(Level.FINER,"#dacaca");
+    levelColors.put(Level.FINEST,"#dad0d0");
+
 	String action = request.getParameter("action");
 	if(action != null){
 		String alertIDs[] = request.getParameterValues("alerts");
@@ -47,7 +57,7 @@
 <% } else { %>
 	<form name="frmAlerts" method="post" action="alerts.jsp">
 	<input type="hidden" name="action">
-	<table cellspacing="0" cellpadding="0" border="0">
+	<table cellspacing="1" cellpadding="0" border="0">
 		<tr>
 			<th>
 			</th>
@@ -55,28 +65,31 @@
 				&nbsp;Time of alert&nbsp;
 			</th>
 			<th>
+                &nbsp;Level&nbsp;
+			<th>
 				&nbsp;Alert title&nbsp;
 			</th>
 		</tr>
 		<%
-			boolean alt = true;
 			for(int i = alerts.size()-1 ; i >= 0 ; i--)
 			{
 				Alert alert = (Alert)alerts.get(i);
 		%>
-				<tr <%=alt?"bgcolor='#EEEEFF'":""%> <%=alert.isNew()?"style='font-weight: bold'":""%>>
+				<tr bgcolor="<%=levelColors.get(alert.getLevel())%>" <%=alert.isNew()?"style='font-weight: bold'":""%>>
 					<td nowrap>
 						&nbsp;<input name="alerts" value="<%=alert.getID()%>" type="checkbox">&nbsp;
 					</td>
+                    <td nowrap>
+                        &nbsp;<a style="color: #003399; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=sdf.format(alert.getTimeOfAlert())%> GMT</a>&nbsp;
+                    </td>
+                    <td nowrap>
+                        &nbsp;<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getLevel().getName()%></a>&nbsp;
+                    </td>
 					<td nowrap>
-						<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=sdf.format(alert.getTimeOfAlert())%> GMT</a>&nbsp;&nbsp;
-					</td>
-					<td nowrap>
-						<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a>
+						&nbsp;<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a>&nbsp;
 					</td>
 				</tr>
 		<%
-				alt = !alt;
 			}
 		%>
 	</table>
