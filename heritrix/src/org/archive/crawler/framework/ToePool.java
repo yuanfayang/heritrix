@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * @author gojomo
  *
  */
-public class ToePool {
+public class ToePool implements CrawlListener {
 	public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
 	
 	protected CrawlController controller;
@@ -24,6 +24,7 @@ public class ToePool {
 	 */
 	public ToePool(CrawlController c, int count) {
 		controller = c;
+		controller.addListener(this);
 		toes = new ArrayList(count);
 		// TODO make number of threads self-optimizing
 		for(int i = 0; i<count; i++) {
@@ -82,6 +83,24 @@ public class ToePool {
 	 */
 	public int getToeCount() {
 		return toes.size();
+	}
+
+	/**
+	 * The crawl controller uses this method to notify the pool that the crawl has ended.
+	 * All toe threads will be ordered to stop after current.
+	 * All references in this object will be set to null to facilitate GC.
+	 * Once the CrawlController has called this method, this object should be considered
+	 * as having been destroyed.
+	 */
+	public void crawlEnding(String sExitMessage) {
+		while(toes.size()>0)
+		{
+			ToeThread t = (ToeThread)toes.get(0);
+			t.stopAfterCurrent();
+			toes.remove(0);
+		}
+		controller = null;
+		toes = null;
 	}
 
 }

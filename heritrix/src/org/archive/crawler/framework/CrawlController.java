@@ -66,7 +66,6 @@ public class CrawlController extends Thread{
 	private URIFrontier frontier;
 	private boolean shouldCrawl;
 
-
 	private File disk;
 	private File scratchDisk;
 	public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
@@ -304,11 +303,27 @@ public class CrawlController extends Thread{
 		controlThread = null;
 		logger.info("exitting run");
 		
-		for(int i=0 ; i<registeredListeners.size() ; i++)
+		//Do cleanup to facilitate GC.
+		while(registeredListeners.size()>0)
 		{
 			// Let the listeners know that the crawler is finished.
-			((CrawlListener)registeredListeners.get(i)).crawlEnding(sExit);
+			((CrawlListener)registeredListeners.get(0)).crawlEnding(sExit);
+			registeredListeners.remove(0);
 		}
+
+		frontier = null;
+		disk = null;
+		scratchDisk = null;
+		
+		toePool = null;
+		registeredListeners = null;
+		order = null;
+		scope = null;
+		firstProcessor = null;
+		postprocessor = null;
+		processors = null; 
+		serverCache = null;
+
 		logger.fine(getName()+" finished for order CrawlController");
 	}
 

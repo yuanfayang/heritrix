@@ -64,7 +64,8 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		logger.fine(getName()+" started for order '"+controller.getOrder().getName()+"'");
+		String name = controller.getOrder().getName();
+		logger.fine(getName()+" started for order '"+name+"'");
 		try {
 			while ( shouldCrawl ) {
 				processingLoop();
@@ -75,7 +76,15 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 			logger.warning(getName()+" exitting: out of memory error");
 			shouldCrawl = false;
 		}
-		logger.fine(getName()+" finished for order '"+controller.getOrder().getName()+"'");
+		
+		// Do cleanup so that objects can be GC.
+		pool = null;
+		controller = null;
+		httpRecorder.closeRecorders();
+		httpRecorder = null;
+		localProcessors = null;
+		
+		logger.fine(getName()+" finished for order '"+name+"'");
 	}
 	
 	private synchronized void processingLoop() {
@@ -133,8 +142,11 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		return shouldCrawl;
 	}
 	
-	public void stopAfterCurrent() {
+	public synchronized void stopAfterCurrent() {
+		logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
 		shouldCrawl = false;
+		if(isAvailable())
+			notify();
 	}
 
 	/**
