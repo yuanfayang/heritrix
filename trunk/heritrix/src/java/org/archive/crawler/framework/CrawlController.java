@@ -472,6 +472,17 @@ public class CrawlController extends Thread {
         //scope.initialize(this);
         try {
             frontier.initialize(this);
+            
+            String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
+            if(recoverPath.length()>0) {
+                try {
+                    frontier.importRecoverLog(recoverPath);
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                    throw new FatalConfigurationException("Recover.log problem: "+e1);
+                }
+            }
         } catch (IOException e) {
             throw new FatalConfigurationException(
                 "unable to initialize frontier: " + e);
