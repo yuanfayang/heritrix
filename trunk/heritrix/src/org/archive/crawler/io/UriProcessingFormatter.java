@@ -24,6 +24,7 @@ import org.archive.util.ArchiveUtils;
  *
  */
 public class UriProcessingFormatter extends Formatter implements CoreAttributeConstants {
+	static String NA = ".";
 	static DecimalFormat STATUS_FORMAT = new DecimalFormat("-####");
 	static DecimalFormat LENGTH_FORMAT = new DecimalFormat("#,##0");
 	
@@ -33,8 +34,8 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 	public String format(LogRecord lr) {
 		CrawlURI curi = (CrawlURI) lr.getParameters()[0];
 
-		String length = ".";
-		String mime = ".";
+		String length = NA;
+		String mime = NA;
 		String uri = curi.getUURI().getUriString();
 		if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
@@ -58,11 +59,15 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			} 
 		}
 		long time;
+		String duration;
 		if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
 			time = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+			duration = Long.toString(time-curi.getAList().getLong(A_FETCH_BEGAN_TIME));
 		} else {
 			time = System.currentTimeMillis();
+			duration = NA;
 		}
+		
 		
 		Object via = curi.getVia();
 		if (via instanceof CandidateURI) {
@@ -85,6 +90,8 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			+ curi.getThreadNumber()
 			+ " "
 			+ uri
+			+ " "
+			+ duration
 			+ " "
 			+ mime
 			+ "\n"
