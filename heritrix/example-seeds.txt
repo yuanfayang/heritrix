@@ -1,9 +1,10 @@
 http://www.yahoo.com
+# http://dmoz.org
+http://www.google.com/dirhp
 # http://www.msn.com
 # http://www.archive.org
 # http://www.google.com
 # http://www.aol.com
 # http://www.lycos.com
-# http://dmoz.org
 # http://www.excite.com
 # http://www.cnn.com
