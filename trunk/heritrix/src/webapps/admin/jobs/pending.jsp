@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.List" %>
 
 <%
 	String sAction = request.getParameter("action");
@@ -11,7 +11,7 @@
 		}
 	}	
 
-	Vector jobs = handler.getPendingJobs();
+	List jobs = handler.getPendingJobs();
 	String title = "Pending crawl jobs";
 	int tab = 1;
 %>

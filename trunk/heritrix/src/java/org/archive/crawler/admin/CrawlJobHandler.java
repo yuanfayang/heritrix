@@ -32,8 +32,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
-import java.util.Vector;
 import java.util.logging.Level;
 
 import javax.management.Attribute;
@@ -142,7 +142,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * A list of profile CrawlJobs.
      */
-    private Vector profileJobs = new Vector();
+    private TreeSet profileJobs;
     // The UIDs of profiles should be NOT be timestamps. A descriptive name is ideal.
     private String defaultProfile = null;
 
@@ -191,6 +191,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         };
         pendingCrawlJobs = new TreeSet(comp);
         completedCrawlJobs = new TreeSet(comp);
+        // Profiles always have the same priority so it will be sorted by name
+        profileJobs = new TreeSet(comp);
         if(loadProfiles){
             loadProfiles();
         }
@@ -221,13 +223,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     }
                 }
             }
-        }
-        // Look to see if a default profile system property has been
-        // supplied. If so, use it instead.
-        // TODO: Make changes to default profile durable across restarts.
-        defaultProfile = System.getProperty(DEFAULT_PROFILE_NAME);
-        if (defaultProfile == null) {
-            defaultProfile = DEFAULT_PROFILE;
         }
     }
 
@@ -268,6 +263,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         } else if( cjob.getStatus().equals(CrawlJob.STATUS_PENDING) ){
             // Was a pending job.
             pendingCrawlJobs.add(cjob);
+        } else if( cjob.getStatus().equals(CrawlJob.STATUS_CREATED)
+                || cjob.getStatus().equals(CrawlJob.STATUS_DELETED) ){
+            // Ignore for now. TODO: Add to 'recycle bin'
         } else {
             // Must have been completed.
             completedCrawlJobs.add(cjob);
@@ -328,11 +326,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Returns all known profiles.
-     * @return a Vector of all known profiles.
+     * Returns a List of all known profiles.
+     * @return a List of all known profiles.
      */
-    public Vector getProfiles(){
-        return profileJobs;
+    public List getProfiles(){
+        ArrayList tmp = new ArrayList(profileJobs.size());
+        tmp.addAll(profileJobs);
+        return tmp;
     }
 
     /**
@@ -367,8 +367,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public CrawlJob getDefaultProfile(){
         if(defaultProfile!=null){
-            for(int i=0 ; i<profileJobs.size() ; i++){
-                CrawlJob item = (CrawlJob)profileJobs.get(i);
+            Iterator it = profileJobs.iterator();
+            while( it.hasNext() ){
+                CrawlJob item = (CrawlJob)it.next();
                 if(item.getJobName().equals(defaultProfile)){
                     // Found it.
                     return item;
@@ -376,7 +377,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             }
         }
         if(profileJobs.size()>0){
-            return (CrawlJob)profileJobs.get(0);
+            return (CrawlJob)profileJobs.first();
         }
         return null;
     }
@@ -392,13 +393,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * A list of all pending jobs
+     * A List of all pending jobs
      *
-     * @return A list of all pending jobs in an ArrayList.
+     * @return A List of all pending jobs.
      * No promises are made about the order of the list
      */
-    public Vector getPendingJobs() {
-        Vector tmp = new Vector(pendingCrawlJobs.size());
+    public List getPendingJobs() {
+        ArrayList tmp = new ArrayList(pendingCrawlJobs.size());
         tmp.addAll(pendingCrawlJobs);
         return tmp;
     }
@@ -413,12 +414,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * A list of all finished jobs
+     * A List of all finished jobs
      *
-     * @return A list of all finished jobs as a Vector.
+     * @return A List of all finished jobs.
      */
-    public Vector getCompletedJobs() {
-        Vector tmp = new Vector(completedCrawlJobs.size());
+    public List getCompletedJobs() {
+        ArrayList tmp = new ArrayList(completedCrawlJobs.size());
         tmp.addAll(completedCrawlJobs);
         return tmp;
     }

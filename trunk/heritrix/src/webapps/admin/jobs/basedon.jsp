@@ -2,10 +2,10 @@
 <%@include file="/include/secure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
-<%@ page import="java.util.Vector" %>
+<%@ page import="java.util.List" %>
 
 <%!
-	public String printJobList(Vector jobs, boolean isJobs){
+	public String printJobList(List jobs, boolean isJobs){
 		if(jobs==null){
 			return null;
 		}

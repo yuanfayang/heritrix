@@ -1,6 +1,6 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,java.util.List" %>
 
 <%
 	String title = "Reports";
@@ -11,7 +11,7 @@
 
 <%
 	boolean crawling = handler.isCrawling();
-	Vector jobs = handler.getCompletedJobs();
+	List jobs = handler.getCompletedJobs();
 %>
 
 <p>
