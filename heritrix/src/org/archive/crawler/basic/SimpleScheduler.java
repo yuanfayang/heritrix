@@ -73,6 +73,11 @@ public class SimpleScheduler implements URIScheduler {
 	 */
 	private CrawlURI emitCuri(CrawlURI curi) {
 		if(curi != null) {
+			if (curi.getStoreState() == URIStoreable.FINISHED) {
+				System.out.println("break here");
+			}
+			assert curi.getStoreState() != URIStoreable.FINISHED : "state "+curi.getStoreState()+" instead of ready for "+ curi; 
+			//assert curi.getAList() != null : "null alist in curi " + curi + " state "+ curi.getStoreState();
 			store.noteInProcess(curi);
 			curi.setHost(controller.getHostCache().getHostFor(curi));
 		}

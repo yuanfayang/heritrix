@@ -99,6 +99,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	 * @param curi
 	 */
 	private void scheduleForRetry(CrawlURI curi) {
+		logger.fine("inserting snoozed "+curi+" for "+retryDelay);
 		store.insertSnoozed(curi,retryDelay);
 	}
 
@@ -164,6 +165,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			try {
 				UURI u = UURI.createUURI(e,curi.getBaseUri());
 				if(filtersAccept(u)) {
+					logger.fine("inserting header at head "+u);
 					store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
 				}
 			} catch (URISyntaxException ex) {
@@ -263,9 +265,10 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		while(iter.hasNext()) {
 			String l = (String)iter.next();
 			try {
-				UURI embed = UURI.createUURI(l,curi.getBaseUri());
-				if(filtersAccept(embed)) {
-					store.insert(embed,curi.getAList().getInt("distance-from-seed")+1);
+				UURI link = UURI.createUURI(l,curi.getBaseUri());
+				if(filtersAccept(link)) {
+					logger.fine("inserting link "+link+" "+curi.getStoreState());
+					store.insert(link,curi.getAList().getInt("distance-from-seed")+1);
 				} 
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, l };
@@ -283,6 +286,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			try {
 				UURI embed = UURI.createUURI(e,curi.getBaseUri());
 				//if(filtersAccept(embed)) {
+					logger.fine("inserting embed at head "+embed);
 					store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
 				//}
 			} catch (URISyntaxException ex) {
@@ -309,6 +313,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			}
 			curi.getAList().remove("prerequisite-uri");
 			store.reinsert(curi);
+			logger.fine("inserting prereq at head "+prereq);
 			store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
 		} catch (URISyntaxException ex) {
 			Object[] array = { curi, curi.getPrerequisiteUri() };
