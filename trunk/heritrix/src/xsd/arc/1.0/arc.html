@@ -4,7 +4,7 @@
   PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:html="http://www.w3.org/1999/xhtml">
    <head>
-      <title>Internet Archive ARC XML Schema</title>
+      <title>Internet Archive ARC file metadata XML Schema</title>
       <meta http-equiv="Content-Type" content="text/xml; charset=iso-8859-1"/>
       <style type="text/css">
 	  /* General */
@@ -257,9 +257,9 @@
       <script type="text/javascript">
 <!--
 /* IDs of XML Instance Representation boxes */
-var xiBoxes = new Array('element_robots-honored_xibox', 'element_http-header-from_xibox', 'element_http-header-user-agent_xibox', 'element_software_xibox', 'element_hostname_xibox', 'element_ip_xibox', 'element_operator_xibox', 'element_arcmetadata_xibox');
+var xiBoxes = new Array('element_robots_xibox', 'element_http-header-from_xibox', 'element_http-header-user-agent_xibox', 'element_software_xibox', 'element_hostname_xibox', 'element_ip_xibox', 'element_operator_xibox', 'element_arcmetadata_xibox');
 /* IDs of Schema Component Representation boxes */
-var scBoxes = new Array('schema_scbox', 'element_robots-honored_scbox', 'element_http-header-from_scbox', 'element_http-header-user-agent_scbox', 'element_software_scbox', 'element_hostname_scbox', 'element_ip_scbox', 'element_operator_scbox', 'element_arcmetadata_scbox');
+var scBoxes = new Array('schema_scbox', 'element_robots_scbox', 'element_http-header-from_scbox', 'element_http-header-user-agent_scbox', 'element_software_scbox', 'element_hostname_scbox', 'element_ip_scbox', 'element_operator_scbox', 'element_arcmetadata_scbox');
 
 /**
  * Can get the ID of the button controlling
@@ -562,7 +562,7 @@ function viewDocumentation(compDesc, compName, docTextArray) {
    </head>
    <body>
       <h1>
-         <a name="top">Internet Archive ARC XML Schema</a>
+         <a name="top">Internet Archive ARC file metadata XML Schema</a>
       </h1>
       <div id="printerControls" style="display:none;">
          <input type="checkbox" onclick="displayMode(this.checked)"/>Printer-friendly Version</div>
@@ -631,7 +631,7 @@ function viewDocumentation(compDesc, compName, docTextArray) {
                   </a>
                </li>
                <li>
-                  <a href="#element_robots-honored">Element: <strong>robots-honored</strong>
+                  <a href="#element_robots">Element: <strong>robots</strong>
                   </a>
                </li>
                <li>
@@ -1310,7 +1310,7 @@ setState('element_operator_scbox', false);
          <a href="#top">top</a>
       </div>
       <hr/>
-      <h3>Element: <a name="element_robots-honored" class="name">robots-honored</a>
+      <h3>Element: <a name="element_robots" class="name">robots</a>
       </h3>
       <table class="hierarchy">
          <tr>
@@ -1331,7 +1331,7 @@ setState('element_operator_scbox', false);
       <table class="properties">
          <tr>
             <th>Name</th>
-            <td>robots-honored</td>
+            <td>robots</td>
          </tr>
          <tr>
             <th>Type</th>
@@ -1361,16 +1361,16 @@ setState('element_operator_scbox', false);
       <table class="sample">
          <tr>
             <th>
-               <input type="button" id="element_robots-honored_xibox_button" class="boxControl" onclick="switchState('element_robots-honored_xibox'); return false;" style="display: none"/> XML Instance Representation</th>
+               <input type="button" id="element_robots_xibox_button" class="boxControl" onclick="switchState('element_robots_xibox'); return false;" style="display: none"/> XML Instance Representation</th>
          </tr>
          <tr>
             <td>
-               <div id="element_robots-honored_xibox" class="box">
-                  <div style="margin-left: 0em">&lt;robots-honored&gt; ... &lt;/robots-honored&gt;</div>
+               <div id="element_robots_xibox" class="box">
+                  <div style="margin-left: 0em">&lt;robots&gt; ... &lt;/robots&gt;</div>
                </div>
                <script type="text/javascript">
 <!--
-setState('element_robots-honored_xibox', true);
+setState('element_robots_xibox', true);
 // -->
 </script>
             </td>
@@ -1379,17 +1379,17 @@ setState('element_robots-honored_xibox', true);
       <table class="schemaComponent">
          <tr>
             <th>
-               <input type="button" id="element_robots-honored_scbox_button" class="boxControl" onclick="switchState('element_robots-honored_scbox'); return false;" style="display: none"/> Schema Component Representation</th>
+               <input type="button" id="element_robots_scbox_button" class="boxControl" onclick="switchState('element_robots_scbox'); return false;" style="display: none"/> Schema Component Representation</th>
          </tr>
          <tr>
             <td>
-               <div id="element_robots-honored_scbox" class="box">
+               <div id="element_robots_scbox" class="box">
                   <div style="margin-left: 0em">&lt;<span class="scTag">xs:element</span> 
-                     <span class="scTag">name</span>="<span class="scContent">robots-honored</span>" <span class="scTag">substitutionGroup</span>="<span class="scContent">dc:coverage</span>"/&gt;</div>
+                     <span class="scTag">name</span>="<span class="scContent">robots</span>" <span class="scTag">substitutionGroup</span>="<span class="scContent">dc:coverage</span>"/&gt;</div>
                </div>
                <script type="text/javascript">
 <!--
-setState('element_robots-honored_scbox', false);
+setState('element_robots_scbox', false);
 // -->
 </script>
             </td>
