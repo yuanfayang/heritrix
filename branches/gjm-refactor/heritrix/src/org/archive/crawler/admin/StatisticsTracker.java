@@ -2,7 +2,7 @@
  * Created on Jul 16, 2003
  *
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.admin;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -12,6 +12,9 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.util.TimedFixedSizeList;
 
