@@ -20,8 +20,14 @@
 
 <%@include file="/include/head.jsp"%>
 <%
-    if( handler.getCurrentJob() != null && handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) ){
-        // Have a paused job.
+    if( handler.getCurrentJob() != null) {
+    
+        if ( !handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) ) {
+%>
+<b style="color:red">MODIFYING THE FRONTIER OF A RUNNING CRAWL IS HIGHLY LIKELY TO CORRUPT THE CRAWL!</b>
+<hr>
+<% 
+        }
 
         String regexpr = "";
         if(request.getParameter("match") != null ){
@@ -261,7 +267,7 @@
 <%
     } else { 
 %>
-        <b>You can only inspect and manipulate the URIs list of a paused job.</b>
+        <b>No current job.</b>
 <%  
     } 
 %>
