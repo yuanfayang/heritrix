@@ -194,10 +194,12 @@ public class DataContainer extends HashMap {
 
         if (localAttrInfo == null) {
             value = attrInfo.checkValue(value);
+            attrInfo.setType(value);
             attributes.add(attrInfo);
             attributeNames.put(key, attrInfo);
         } else {
             value = localAttrInfo.checkValue(value);
+            attrInfo.setType(value);
         }
 
         return super.put(key, value);
@@ -271,7 +273,7 @@ public class DataContainer extends HashMap {
      * @throws AttributeNotFoundException is thrown if there is no attribute
      *         with the submitted key.
      */
-    public Type removeElement(String key) throws AttributeNotFoundException {
+    protected Type removeElement(String key) throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);
         if (element == null) {
             throw new AttributeNotFoundException(key);
