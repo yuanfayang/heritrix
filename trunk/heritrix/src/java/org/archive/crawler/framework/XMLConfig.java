@@ -298,8 +298,8 @@ public class XMLConfig {
 	}
 	
 	/**
-	 * Retrieve a (positive) integer value from the given xpath;
-	 * return -1 if none found or other error occurs. 
+	 * Retrieve a boolean value from the given xpath;
+	 * return defaultValue if none found or other error occurs. 
 	 * 
 	 * @param xpath
 	 * @param defaultValue
@@ -318,7 +318,7 @@ public class XMLConfig {
 
 
 	/**
-	 * Retrieve a (positive) integer value from the given xpath;
+	 * Retrieve a (nonnegative) integer value from the given xpath;
 	 * return -1 if none found or other error occurs. 
 	 * 
 	 * @param xpath
@@ -329,7 +329,7 @@ public class XMLConfig {
 	}
 
 	/**
-	 * Retrieve a (positive) integer value from the given xpath;
+	 * Retrieve a (nonnegative) integer value from the given xpath;
 	 * return the supplied default if none found or other error occurs. 
 	 * 
 	 * @param xpath
@@ -343,9 +343,11 @@ public class XMLConfig {
 				String n = getStringAt(xpath);
 				if (n != null) {
 					cacheInteger = new Integer(getStringAt(xpath));
-//				} else {
-//					cacheInteger = new Integer(defaultValue);
-				}
+                    if (cacheInteger.intValue()<0) {
+                        // nonpositive numbers discarded (let default take hold)
+                        cacheInteger = null;
+                    }
+ 				}
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -370,7 +372,7 @@ public class XMLConfig {
 	}
 
 	/**
-	 * Retrieve a (positive) long  value from the given xpath;
+	 * Retrieve a (nonnegative) long  value from the given xpath;
 	 * return the supplied default if none found or other error occurs. 
 	 * 
 	 * @param xpath
@@ -379,15 +381,20 @@ public class XMLConfig {
 	 */
 	public long getLongAt(String xpath, long defaultValue) {
 		// TODO possibly mimic the caching that happens for Integers
-		String n = getStringAt(xpath);
+		long value = 0;
+        String n = getStringAt(xpath);
 		if (n != null) {
-			return Long.parseLong(n);
+            value = Long.parseLong(n);
 		}
-		return defaultValue;
+		if(value >= 0) {
+            return value;
+        } else {
+            return defaultValue;
+        } 
 	}
 	
 	/**
-	 * Retrieve a float value from the given xpath;
+	 * Retrieve a (nonnegative) float value from the given xpath;
 	 * return the supplied default if none found or other error occurs. 
 	 * 
 	 * @param xpath
@@ -396,11 +403,16 @@ public class XMLConfig {
 	 */
 	public float getFloatAt(String xpath, float defaultValue) {
 		// TODO possibly mimic the caching that happens for Integers
-		String n = getStringAt(xpath);
+		float value = 0;
+        String n = getStringAt(xpath);
 		if (n != null) {
-			return Float.parseFloat(n);
+			value = Float.parseFloat(n);
 		}
-		return defaultValue;
+        if(value >= 0) {
+            return value;
+        } else {
+            return defaultValue;
+        } 
 	}
 
 
