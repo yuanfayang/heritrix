@@ -3,8 +3,8 @@
 
 <%
 	/**
-	 * This page enables changes to the default crawl job settings.
-	 * (order.xml is rewritten)
+	 * This page enables customized jobs to be scheduled.
+	 * (order.xml is used for default values)
 	 */
 
 	if(request.getParameter(handler.XP_CRAWL_ORDER_NAME) != null)
@@ -31,7 +31,7 @@
 	</head>
 	<body>
 		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="newjob.jsp">
-		<strong>New job</strong>
+		<h2>New job</h2>
 
 		<%@include file="/include/jobconfig.jsp"%>
 		
