@@ -50,7 +50,7 @@ public class WagCostAssignmentPolicy extends CostAssignmentPolicy {
             // has query string
             cost++;
             int qIndex = uuri.toString().indexOf('?');
-            if (curi.flattenVia().startsWith(uuri.toString().substring(qIndex))) {
+            if (curi.flattenVia().startsWith(uuri.toString().substring(0,qIndex))) {
                 // non-query-string portion of URI is same as previous
                 cost++;
             }
