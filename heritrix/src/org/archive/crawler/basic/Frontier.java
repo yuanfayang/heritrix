@@ -47,7 +47,7 @@ import org.archive.util.Queue;
 public class Frontier
 	extends XMLConfig 
 	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlListener {
-	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 5;
+	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
 	private static String XP_DELAY_FACTOR = "@delay-factor";
 	private static String XP_MIN_DELAY = "@min-delay-ms";
 	private static String XP_MAX_DELAY = "@max-delay-ms";
@@ -129,7 +129,7 @@ public class Frontier
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
 		
 		
-		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
+		alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
 		
 		// alternative: pure disk-based set 
 //		alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
@@ -330,7 +330,8 @@ public class Frontier
 		waitMax = Math.min(earliestWakeTime()-now,timeout);
 		try {
 			if(waitMax<1) {
-				logger.warning("negative or zero wait "+waitMax+" ignored");
+				// ignore
+				// logger.warning("negative or zero wait "+waitMax+" ignored");
 			} else {
 				synchronized(this) {
 					wait(waitMax);
@@ -505,6 +506,7 @@ public class Frontier
 	private void discardQueue(URIStoreable q) {
 		allClassQueuesMap.remove(((KeyedQueue)q).getClassKey());
 		q.setStoreState(URIStoreable.FINISHED);
+		((KeyedQueue)q).release();
 		assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
 		assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q";
 		assert !snoozeQueues.contains(q) : "snoozeQueues holding dead q";
