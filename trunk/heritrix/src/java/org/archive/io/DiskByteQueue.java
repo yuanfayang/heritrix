@@ -58,6 +58,7 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
  * @author Gordon Mohr
  */
 public class DiskByteQueue implements Serializable {
+    private static final int BUFF_SIZE = 16*1024; // 16K TODO: allow larger
     private static final String IN_FILE_EXTENSION = ".qin";
     private static final String OUT_FILE_EXTENSION = ".qout";
 
@@ -162,7 +163,7 @@ public class DiskByteQueue implements Serializable {
             FileInputStream tmpFileStream1 = new FileInputStream(inFile);
             tmpFileStream1.getChannel().position(
                     headStream.getReadPosition());
-            inStream1 = new BufferedInputStream(tmpFileStream1, 4096);
+            inStream1 = new BufferedInputStream(tmpFileStream1, BUFF_SIZE);
         }
 
         // Get the tail file, alright to read it from start. Wrap it up.
@@ -170,7 +171,7 @@ public class DiskByteQueue implements Serializable {
         FileInputStream tmpFileStream2 = new FileInputStream(
                 outFile);
         BufferedInputStream inStream2 = new BufferedInputStream(tmpFileStream2,
-                4096);
+                BUFF_SIZE);
 
         // Create input stream with object stream header and then wrap it up
         // along with the two input streams in a SequenceInputStream and return it.
@@ -281,7 +282,7 @@ public class DiskByteQueue implements Serializable {
 
         protected void setupStreams() throws FileNotFoundException {
             fileStream = new FileOutputStream(outFile,true);
-            outStream = new BufferedOutputStream(fileStream, 4096);
+            outStream = new BufferedOutputStream(fileStream, BUFF_SIZE);
         }
 
         /** (non-Javadoc)
@@ -405,7 +406,7 @@ public class DiskByteQueue implements Serializable {
         private void setupStreams(long readPosition) throws IOException {
             inFile.createNewFile(); // if does not already exist
             fileStream = new FileInputStream(inFile);
-            inStream = new BufferedInputStream(fileStream,4096);
+            inStream = new BufferedInputStream(fileStream,BUFF_SIZE);
             inStream.skip(readPosition);
             position = readPosition;
         }
