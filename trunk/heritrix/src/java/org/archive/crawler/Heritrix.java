@@ -176,7 +176,9 @@ public class Heritrix {
                     }
                     else if(arg.equals("--admin")){
                     	// Overwriting the default admin login options.
-                    	if(args[i+1].indexOf("-") != 0 && args[i+1].indexOf(":")>0 && args[i+1].indexOf(":") < args[i+1].length()){
+                    	if(args[i+1].indexOf("-") != 0 
+                    	   && args[i+1].indexOf(":")>0 
+                    	   && args[i+1].indexOf(":") < args[i+1].length()){
 							// Ok everything looks right. Increment i and overwrite admin login.
 							admin = args[++i];
                     	} else {
@@ -189,15 +191,17 @@ public class Heritrix {
                     }
 					else if(arg.equals("--user")){
 						// Overwriting the default user login options.
-						if(args[i+1].indexOf("-") != 0 && args[i+1].indexOf(":")>0 && args[i+1].indexOf(":") < args[i+1].length()){
+						if(args[i+1].indexOf("-") != 0 
+						   && args[i+1].indexOf(":")>0 
+						   && args[i+1].indexOf(":") < args[i+1].length()){
+							// Ok everything looks right. Increment i and overwrite user login.
+							admin = args[++i];
+					    } else {
 							// The next argument sould be the new login info but it doesn't look right.
 							// Should not start with "-" and must contain ":" somewhere (but not at the 
 							// front of the string or at the end.
 							usage();
 							return;
-						} else {
-							// Ok everything looks right. Increment i and overwrite user login.
-							admin = args[++i];
 						}
 					}
                     else{
