@@ -84,7 +84,8 @@ public class LegalValueTypeConstraint extends Constraint {
         // Check that the value is of right type
         if (!definition.getLegalValueType().isInstance(value)) {
             res = new FailedCheck(settings, owner, definition, value);
-            res.messageArguments.add(value.getClass().getName());
+            res.messageArguments.add((value != null)?
+                value.getClass().getName(): "null");
             res.messageArguments.add(definition.getLegalValueType().getName());
         }
         return res;
