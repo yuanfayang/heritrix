@@ -41,33 +41,38 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     
     /** Construct a new instance of ModuleAttributeInfo.
      * 
-     * @param name name of attribute.
-     * @param type an instance of the attributes type.
-     * @param description a description usable for the UI.
-     * @param isOverrideable should this attribute be overrideable on per settings.
-     * @param isTransient is this attribute visible for UI and serializer.
-     * @param legalValues list of legalvalues or null if no restrictions apply.
-     * @param defaultValue the default value for this attribute.
-     * @param isExpertSetting should this attribute only show up in UIs expert mode.
+     * @param type the element to create info for.
      * 
      * @throws InvalidAttributeValueException
      * @throws java.lang.IllegalArgumentException
      */
-    public ModuleAttributeInfo(String name, Object type, String description,
-            boolean isOverrideable, boolean isTransient, Object[] legalValues,
-            Object defaultValue, boolean isExpertSetting)
+    public ModuleAttributeInfo(Type type)
             throws InvalidAttributeValueException {
 
-        super(name, type.getClass().getName(), description, true, true, false);
-        setType(type);
-        this.isOverrideable = isOverrideable;
-        this.isTransient = isTransient;
-        legalValueLists = legalValues;
-        this.defaultValue = checkValue(defaultValue);
-        if (type instanceof ComplexType) {
+        super(type.getName(), type.getClass().getName(), type.getDescription(),
+                true, true, false);
+        setType(type.getDefaultValue());
+        this.isOverrideable = type.isOverrideable();
+        this.isTransient = type.isTransient();
+        this.legalValueLists = type.getLegalValues();
+        this.isExpertSetting = type.isExpertSetting();
+        //this.defaultValue = checkValue(type.getValue());
+        this.defaultValue = type.getValue();
+        if (type.getDefaultValue() instanceof ComplexType) {
             complexType = true;
         }
-        this.isExpertSetting = isExpertSetting;
+    }
+
+    public ModuleAttributeInfo(ModuleAttributeInfo attr) {
+        super(attr.getName(), attr.getType(), attr.getDescription(),
+                true, true, false);
+        setType(attr.getDefaultValue());
+        this.isOverrideable = attr.isOverrideable();
+        this.isTransient = attr.isTransient();
+        this.legalValueLists = attr.getLegalValues();
+        this.isExpertSetting = attr.isExpertSetting();
+        this.defaultValue = attr.getDefaultValue();
+        this.complexType = attr.complexType;
     }
 
     public Object[] getLegalValues() {
@@ -112,56 +117,6 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
      */
     public Object getDefaultValue() {
         return defaultValue;
-    }
-
-    public Object checkValue(Object value) throws InvalidAttributeValueException {
-        // Check if value is of correct type. If not, see if it is
-        // a string and try to turn it into right type
-        Class typeClass;
-        try {
-            typeClass = defaultValue == null ? Class.forName(type) : defaultValue.getClass();
-            if (!(typeClass.isInstance(value)) && value instanceof String) {
-                value = SettingsHandler.StringToType(
-                   (String) value, SettingsHandler.getTypeName(getType()));
-            }
-        } catch (Exception e) {
-            throw new InvalidAttributeValueException(
-                "Unable to decode string '" + value
-                    + "' into type '" + getType() + "'");
-        }
-
-        // If it still isn't a legal type throw an error
-        try {
-            if (!typeClass.isInstance(value)) {
-                throw new InvalidAttributeValueException();
-            }
-        } catch (Exception e) {
-            throw new InvalidAttributeValueException(
-                "Value of illegal type: '"
-                    + value.getClass().getName()
-                    + "', '"
-                    + getType()
-                    + "' was expected");
-        }
-
-        // If this attribute is constrained by a list of legal values,
-        // check that the value is in that list
-        Object legalValues[] = getLegalValues();
-        if (legalValues != null) {
-            boolean found = false;
-            for (int i = 0; i < legalValues.length; i++) {
-                if (legalValues[i].equals(value)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                throw new InvalidAttributeValueException(
-                    "Value '" + value + "' not in legal values list");
-            }
-        }
-
-        return value;
     }
 
     /* (non-Javadoc)

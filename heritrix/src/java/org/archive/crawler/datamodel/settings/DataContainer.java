@@ -73,36 +73,28 @@ public class DataContainer extends HashMap {
 
     /** Add a new element to the data container.
      *
-     * @param name name of the element to add.
-     * @param description description ef the element to add.
-     * @param isOverrideable should this element be overrideable.
-     * @param legalValues an array of legal values for this element or null if
-     *                    there are no constraints.
-     * @param defaultValue the default value for this element.
+     * @param type the element to add.
      * @param index index at which the specified element is to be inserted.
      * @throws InvalidAttributeValueException
      */
-    public void addElementType(String name, String description,
-            boolean isOverrideable, boolean isTransient, Object[] legalValues,
-            Object defaultValue, boolean isExpertSetting, int index)
+    public void addElementType(Type type, int index)
             throws InvalidAttributeValueException {
         
-        if (attributeNames.containsKey(name)) {
-            throw new IllegalArgumentException("Duplicate field: " + name);
+        if (attributeNames.containsKey(type.getName())) {
+            throw new IllegalArgumentException(
+                    "Duplicate field: " + type.getName());
         }
-        if (defaultValue == null) {
+        if (type.getDefaultValue() == null) {
             throw new InvalidAttributeValueException(
                     "null is not allowed as default value for attribute '"
-                            + name + "' in class '"
+                            + type.getName() + "' in class '"
                             + complexType.getClass().getName() + "'");
         }
-        MBeanAttributeInfo attribute = new ModuleAttributeInfo(name,
-                defaultValue, description, isOverrideable, isTransient,
-                legalValues, defaultValue, isExpertSetting);
+        MBeanAttributeInfo attribute = new ModuleAttributeInfo(type);
         attributes.add(index, attribute);
-        attributeNames.put(name, attribute);
+        //attributeNames.put(type.getName(), attribute);
         try {
-            put(name, defaultValue);
+            put(type.getName(), attribute, type.getDefaultValue());
         } catch (InvalidAttributeValueException e) {
             e.printStackTrace();
         } catch (AttributeNotFoundException e) {
@@ -112,21 +104,12 @@ public class DataContainer extends HashMap {
 
     /** Appends the specified element to the end of this data container.
      *
-     * @param name name of the element to add.
-     * @param description description ef the element to add.
-     * @param isOverrideable should this element be overrideable.
-     * @param legalValues an array of legal values for this element or null if
-     *                    there are no constraints.
-     * @param defaultValue the default value for this element.
+     * @param type the element to add.
      * @throws InvalidAttributeValueException
      */
-    public void addElementType(String name, String description,
-            boolean isOverrideable, boolean isTransient, Object[] legalValues,
-            Object defaultValue, boolean isExpertSetting)
-            throws InvalidAttributeValueException {
+    public void addElementType(Type type) throws InvalidAttributeValueException {
 
-        addElementType(name, description, isOverrideable, isTransient,
-                legalValues, defaultValue, isExpertSetting, attributes.size());
+        addElementType(type, attributes.size());
     }
 
     public MBeanInfo getMBeanInfo() {
@@ -155,22 +138,29 @@ public class DataContainer extends HashMap {
 
     protected void copyAttributeInfo(String name, DataContainer destination) {
         if (this != destination) {
-            Object attribute = attributeNames.get(name);
-            destination.attributeNames.put(name, attribute);
+            ModuleAttributeInfo attribute = (ModuleAttributeInfo) attributeNames.get(name);
+            destination.attributeNames.put(name, new ModuleAttributeInfo(attribute));
         }
     }
 
-    protected void copyAttribute(String name, DataContainer destination) throws InvalidAttributeValueException, AttributeNotFoundException {
+    protected boolean copyAttribute(String name, DataContainer destination)
+            throws InvalidAttributeValueException, AttributeNotFoundException {
         if (this != destination) {
-            MBeanAttributeInfo attribute = (MBeanAttributeInfo) attributeNames.get(name);
-            destination.attributeNames.put(name, attribute);
-            
-            int index = attributes.indexOf(attribute);
-            if (index != -1 && !destination.attributes.contains(attribute)) {
-                destination.attributes.add(index, attribute);
+            ModuleAttributeInfo attribute = (ModuleAttributeInfo) attributeNames
+                    .get(name);
+
+            if (attribute == null) {
+                return false;
+            } else {
+                int index = attributes.indexOf(attribute);
+                if (index != -1 && !destination.attributes.contains(attribute)) {
+                    destination.attributes.add(index, attribute);
+                }
+                destination.put(attribute.getName(), attribute, get(attribute
+                        .getName()));
             }
-            destination.put(attribute.getName(), get(attribute.getName()));
         }
+        return true;
     }
 
     public Object put(Object key, Object value) {
@@ -184,29 +174,9 @@ public class DataContainer extends HashMap {
     /* (non-Javadoc)
      * @see java.util.Map#put(java.lang.Object, java.lang.Object)
      */
-    protected Object put(String key, Object value)
+    protected Object put(String key, MBeanAttributeInfo info, Object value)
         throws InvalidAttributeValueException, AttributeNotFoundException {
-
-        ModuleAttributeInfo attrInfo = (ModuleAttributeInfo) complexType
-                .getAttributeInfo(getSettings().getParent(), (String) key);
-
-        ModuleAttributeInfo localAttrInfo =
-            (ModuleAttributeInfo) getAttributeInfo((String) key);
-
-        if (attrInfo == null && localAttrInfo == null) {
-            throw new AttributeNotFoundException(key);
-        }
-
-        if (localAttrInfo == null) {
-            value = attrInfo.checkValue(value);
-            attrInfo.setType(value);
-            //attributes.add(attrInfo);
-            attributeNames.put(key, attrInfo);
-        } else {
-            value = localAttrInfo.checkValue(value);
-            localAttrInfo.setType(value);
-        }
-
+        attributeNames.put(key, info);
         return super.put(key, value);
     }
 
@@ -229,7 +199,8 @@ public class DataContainer extends HashMap {
      * @throws AttributeNotFoundException is thrown if there is no attribute
      *         with the submitted key.
      */
-    protected boolean moveElementUp(String key) throws AttributeNotFoundException {
+    protected boolean moveElementUp(String key)
+            throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);
         if (element == null) {
             throw new AttributeNotFoundException(key);
@@ -254,29 +225,27 @@ public class DataContainer extends HashMap {
      * @throws AttributeNotFoundException is thrown if there is no attribute
      *         with the submitted key.
      */
-    protected boolean moveElementDown(String key) throws AttributeNotFoundException {
+    protected boolean moveElementDown(String key)
+            throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);
-        if (element == null) {
-            throw new AttributeNotFoundException(key);
-        }
+        if (element == null) { throw new AttributeNotFoundException(key); }
 
         int prevIndex = attributes.indexOf(element);
-        if (prevIndex == attributes.size()-1) {
-            return false;
-        }
+        if (prevIndex == attributes.size() - 1) { return false; }
 
         attributes.remove(prevIndex);
-        attributes.add(prevIndex+1, element);
+        attributes.add(prevIndex + 1, element);
 
         return true;
     }
 
-    /** Remove an attribute from the DataContainer.
-     *
+    /**
+     * Remove an attribute from the DataContainer.
+     * 
      * @param key name of the attribute to remove.
      * @return the element that was removed.
      * @throws AttributeNotFoundException is thrown if there is no attribute
-     *         with the submitted key.
+     *             with the submitted key.
      */
     protected Object removeElement(String key) throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);

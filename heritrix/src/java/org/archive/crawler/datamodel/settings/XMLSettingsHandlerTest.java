@@ -77,6 +77,8 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         // Write a crawl order file
         CrawlerSettings settings = getGlobalSettings();
         XMLSettingsHandler handler = getSettingsHandler();
+        handler.registerValueErrorHandler(this);
+        handler.getOrder().setAttribute(new CrawlScope());
         handler.writeSettingsObject(settings);
         assertTrue("Order file was not written", getOrderFile().exists());
 
@@ -86,10 +88,10 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
 
         // Alter two settings in a per host file
         CrawlerSettings perHost = getPerHostSettings();
-        String newSeeds = "newseed.txt";
+        Integer newHops = new Integer(500);
         String newFrom = "newfrom";
-        scope.setAttribute(perHost, new Attribute(CrawlScope.ATTR_SEEDS,
-                newSeeds));
+        scope.setAttribute(perHost, new Attribute(CrawlScope.ATTR_MAX_LINK_HOPS,
+                newHops));
         CrawlOrder order = handler.getOrder();
         ComplexType httpHeaders = (ComplexType) order
                 .getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
@@ -112,17 +114,17 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
 
         ComplexType newScope = newHandler.getModule(CrawlScope.ATTR_NAME);
         assertNotNull(newScope);
-        String result = (String) newScope.getAttribute(newPerHost,
-                CrawlScope.ATTR_SEEDS);
-        assertEquals(result, newSeeds);
+        Integer r1 = (Integer) newScope.getAttribute(newPerHost,
+                CrawlScope.ATTR_MAX_LINK_HOPS);
+        assertEquals(newHops, r1);
 
         ComplexType newHttpHeaders = (ComplexType) newHandler.getOrder()
                 .getAttribute(newPerHost, CrawlOrder.ATTR_HTTP_HEADERS);
         assertNotNull(newHttpHeaders);
 
-        result = (String) newHttpHeaders.getAttribute(newPerHost,
+        String r2 = (String) newHttpHeaders.getAttribute(newPerHost,
                 CrawlOrder.ATTR_FROM);
-        assertEquals(result, newFrom);
+        assertEquals(newFrom, r2);
     }
 
     /**

@@ -49,18 +49,6 @@ public abstract class ListType extends Type implements List {
         this.description = description;
     }
 
-    /** Constructs a new ListType.
-     *
-     * @param name the name of the list
-     * @param description the description of the list
-     * @param isOverrideable Set if this setting is overrideable
-     */
-/*    public ListType(String name, String description, boolean isOverrideable) {
-        super(name, null);
-        this.description = description;
-        setOverrideable(isOverrideable);
-    }
-*/
     /** Appends the specified element to the end of this list.
      *
      * @param element element to be appended to this list.

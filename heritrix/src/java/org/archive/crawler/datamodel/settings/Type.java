@@ -24,6 +24,10 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.management.Attribute;
 
 /** Interface implemented by all element types.
@@ -37,6 +41,12 @@ public abstract class Type extends Attribute {
     private boolean overrideable = true;
     /** True if this Type should only show up in expert mode in UI */
     private boolean isExpertSetting = false;
+    /** List of constraint that apply for the values of this type */
+    private List constraints;
+    /** The class the value of this type must be an instance of (or instance of
+     * a subclass.
+     */
+    private Class legalValueType;
 
     /** Creates a new instance of Type.
      * 
@@ -45,6 +55,7 @@ public abstract class Type extends Attribute {
      */
     public Type(String name, Object value) {
         super(name.intern(), value);
+        legalValueType = value != null ? value.getClass() : this.getClass();
     }
 
     /** Get the description of this type
@@ -118,5 +129,39 @@ public abstract class Type extends Attribute {
      */
     public void setExpertSetting(boolean isExpertSetting) {
         this.isExpertSetting = isExpertSetting;
+    }
+    
+    /** Returns a list of constraints for the value of this type.
+     * 
+     * @return Returns the constraints or null if there aren't any.
+     */
+    public List getConstraints() {
+        return constraints;
+    }
+
+    /** Add a constraint to this type.
+     * 
+     * Every constraint must be fulfilled for a value of this type to be valid.
+     * 
+     * @param constraint the constraint to add.
+     */
+    public void addConstraint(Constraint constraint) {
+        if (constraints == null) constraints = new ArrayList();
+        constraints.add(constraint);
+        Collections.sort(constraints);
+    }
+    
+    /**
+     * @return Returns the legalValueType.
+     */
+    public Class getLegalValueType() {
+        return legalValueType;
+    }
+    
+    /**
+     * @param legalValueType The legalValueType to set.
+     */
+    public void setLegalValueType(Class legalValueType) {
+        this.legalValueType = legalValueType;
     }
 }

@@ -44,23 +44,11 @@ public class SimpleType extends Type {
         this.description = description;
     }
 
-/*    public SimpleType(String name, String description, Object defaultValue, boolean isOverrideable) {
-        super(name, defaultValue);
-        this.description = description;
-        setOverrideable(isOverrideable);
-    }
-*/
     public SimpleType(String name, String description, Object defaultValue, Object[] legalValues) {
         this(name, description, defaultValue);
-        this.legalValues = legalValues;
+        setLegalValues(legalValues);
     }
 
-/*    public SimpleType(String name, String description, Object defaultValue, Object[] legalValues, boolean isOverrideable) {
-        this(name, description, defaultValue);
-        this.legalValues = legalValues;
-        setOverrideable(isOverrideable);
-    }
-*/
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.Type#getDescription()
      */
@@ -79,4 +67,10 @@ public class SimpleType extends Type {
         return legalValues;
     }
 
+    public void setLegalValues(Object[] legalValues) {
+        this.legalValues = legalValues;
+        if (legalValues != null) {
+            addConstraint(new LegalValueListConstraint());
+        }
+    }
 }
