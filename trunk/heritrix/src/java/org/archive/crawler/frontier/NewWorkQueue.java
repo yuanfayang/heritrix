@@ -37,6 +37,9 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * Ordered collection of work items with the same "classKey".
+ * 
+ * Simplified version of URIWorkQueue/KeyedQueue, leaving
+ * queue 'state' up to the enclosing/using Frontier.
  *
  * @author gojomo
  * @version $Date$ $Revision$
@@ -80,9 +83,7 @@ public class NewWorkQueue implements Serializable  {
         this.crawlServer = server;
         String tmpName = key;
         this.innerQ = new TieredQueue(3);
-        // SETTING TO -1 SO ITS OBVIOUSLY BROKEN.  SOMETHING
-        // MISSING HERE.  MAKING THIS COMMIT SO BUILD SUCCEEDS.
-        this.innerQ.initializeDiskBackedQueues(scratchDir, tmpName, -1);
+        this.innerQ.initializeDiskBackedQueues(scratchDir,tmpName,300);
     }
 
     /**
