@@ -64,7 +64,11 @@
             <para>In addition to the base maven build, you will need to add the
                 maven sdocbook plugin which can be found on <ulink
                     url="http://sourceforge.net/projects/maven-plugins/">this
-                page</ulink>. This plugin is responsible for generating the user
+                page</ulink>. Be careful.  Do not confuse the 'sdocbook' plugin
+                with the similarly named 'docbook' plugin.  This latter
+                converts docbook to xdocs where what's wanted is the former,
+                which converts docbook xml to html.
+                This 'sdocbook' plugin is used to generate the user
                 and developer documentation. The sdocbook plugin has a
                 dependency on the <ulink
                     url="http://java.sun.com/products/jimi/">jimi jar from
@@ -2017,6 +2021,14 @@ public class SimpleExtractor extends Processor
         <para>Tom Emerson of Basis Technology has put up a project on
             sourceforge to host a BSD-Licensed C++ ARC reader called <ulink
             url="http://sourceforge.net/projects/libarc/">libarc</ulink>. </para>
+            </sect2>
+            <sect2 id="arcwriter">
+                <title>Writing arc files</title>
+                <para>Here is an example arc writer application:
+                <ulink 
+                url="http://nwatoolset.sourceforge.net/docs/NedlibToARC/">Nedlib To ARC conversion</ulink>.  It rewrites <ulink
+                url="http://www.csc.fi/sovellus/nedlib/index.phtml.en">nedlib</ulink> files as arcs.
+                </para>
             </sect2>
     </sect1>
     <appendix>
