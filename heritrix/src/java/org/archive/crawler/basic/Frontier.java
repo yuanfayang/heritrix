@@ -1145,8 +1145,10 @@ public class Frontier
 	{
 		StringBuffer rep = new StringBuffer();
 		
-		rep.append("Frontier report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-		rep.append(" Job being crawled:         " + controller.getOrder().getName() + "\n");
+		rep.append("Frontier report - "
+                   + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+		rep.append(" Job being crawled:         "
+                   + controller.getOrder().getCrawlOrderName() + "\n");
 		rep.append("\n -----===== QUEUES =====-----\n");
 		rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
 		rep.append(" Pending high queue length: " + pendingHighQueue.length() + "\n");

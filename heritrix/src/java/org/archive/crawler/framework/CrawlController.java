@@ -923,7 +923,8 @@ public class CrawlController extends Thread {
                 + ArchiveUtils.TIMESTAMP12.format(new Date())
                 + "\n");
         rep.append(
-            " Job being crawled:         " + getOrder().getName() + "\n");
+            " Job being crawled:         " + getOrder().getCrawlOrderName()
+            + "\n");
 
         rep.append(
             " Number of toe threads in pool: "
@@ -952,7 +953,8 @@ public class CrawlController extends Thread {
             "Processors report - "
                 + ArchiveUtils.TIMESTAMP12.format(new Date())
                 + "\n");
-        rep.append("  Job being crawled:    " + getOrder().getName() + "\n");
+        rep.append("  Job being crawled:    " + getOrder().getCrawlOrderName()
+                   + "\n");
 
         rep.append("  Number of Processors: " + processors.size(null) + "\n");
         rep.append("  NOTE: Some processors may not return a report!\n\n");
