@@ -34,18 +34,23 @@ import java.net.UnknownHostException;
  * @author gojomo
  */
 public class CrawlHost {
+    public static final long IP_NEVER_EXPIRES = -1;
+    public static final long IP_NEVER_LOOKED_UP = -2;
     String name;
     InetAddress ip;
-    long ipExpires = -1;
+    private long ipFetched = IP_NEVER_LOOKED_UP;
+    private long ipTTL = IP_NEVER_LOOKED_UP;
     private boolean hasBeenLookedUp = false;
 
 
-    /**
-     * @param hostname
+    /** Create a new CrawlHost object.
+     * 
+     * @param hostname the host name for this host.
      */
     public CrawlHost(String hostname) {
         name = hostname;
-        if (hostname.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+        if (hostname.matches(
+                "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
             try {
                 String[] octets = hostname.split("\\.");
 
@@ -56,56 +61,65 @@ public class CrawlHost {
                             (byte) (new Integer(octets[0])).intValue(),
                             (byte) (new Integer(octets[1])).intValue(),
                             (byte) (new Integer(octets[2])).intValue(),
-                            (byte) (new Integer(octets[3])).intValue()})
-                );
+                            (byte) (new Integer(octets[3])).intValue()}),
+                IP_NEVER_EXPIRES);  // never expire numeric IPs
             } catch (UnknownHostException e) {
                 // this should never happen as a dns lookup is not made
                 e.printStackTrace();
             }
-            // never expire numeric IPs
-            setIpExpires(Long.MAX_VALUE);
         }
     }
 
+    /** Return true if the IP for this host has been looked up.
+     * 
+     * Returns true even if the lookup failed.
+     * 
+     * @return true if the IP for this host has been looked up.
+     */
     public boolean hasBeenLookedUp() {
-        return hasBeenLookedUp;
+        return ipFetched != IP_NEVER_LOOKED_UP;
     }
 
-    public void setHasBeenLookedUp() {
-        hasBeenLookedUp = true;
-    }
-    /**
+    /** Set the IP address for this host.
+     * 
      * @param address
+     * @param ttl the TTL from the dns record or -1 if it should live forever
+     *            (is a numeric IP).
      */
-    public void setIP(InetAddress address) {
+    public synchronized void setIP(InetAddress address, long ttl) {
         ip = address;
         // assume that a lookup as occurred by the time
         // a caller decides to set this (even to null)
-        setHasBeenLookedUp();
+        ipFetched = System.currentTimeMillis();
+        ipTTL = ttl;
     }
 
-    /**
-     * @param expires
+    /** Get the IP address for this host.
+     * 
+     * @return the IP address for this host.
      */
-    public void setIpExpires(long expires) {
-        //ipExpires = System.currentTimeMillis() + 10000;
-        ipExpires = expires;
-    }
-
-    public boolean isIpExpired() {
-        if (ipExpires >= 0 && ipExpires < System.currentTimeMillis()) {
-            return true;
-        }
-        return false;
-    }
-
     public InetAddress getIP() {
         return ip;
     }
 
-    public long getIpExpires() {
-        return ipExpires;
+    /** Get the time when the IP address for this host was last looked up.
+     * 
+     * @return the time when the IP address for this host was last looked up.
+     */
+    public long getIpFetched() {
+        return ipFetched;
     }
 
+    /** Get the TTL value from the dns record for this host.
+     * 
+     * @return the TTL value from the dns record for this host or -1 if this
+     *         lookup should be valid forever (numeric ip).
+     */
+    public long getIpTTL() {
+        return ipTTL;
+    }
 
+    public String toString() {
+        return "CrawlHost<" + name + "(ip:" + ip + ")>";
+    }
 }
