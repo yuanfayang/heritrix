@@ -56,13 +56,7 @@ extends TmpDirTestCase implements ARCConstants {
      */
     private static final String PREFIX = DEFAULT_ARC_FILE_PREFIX;
     
-    private static final String SOME_PAGE =
-        "HTTP/1.1 200 OK\r\n" +
-        "Content-Type: text/html\r\n\r\n" +
-        "<html><head><title>Some Page" +
-        "</title></head>" +
-        "<body>Some Page" +
-        "</body></html>";
+    private static final String SOME_URL = "http://www.archive.org/test/";
 
 
     /*
@@ -78,6 +72,20 @@ extends TmpDirTestCase implements ARCConstants {
     protected void tearDown() throws Exception {
         super.tearDown();
     }
+    
+    protected String getContent() {
+        return getContent(null);
+    }
+    
+    protected String getContent(String indexStr) {
+        String page = (indexStr != null)? "Page #" + indexStr: "Some Page";
+        return "HTTP/1.1 200 OK\r\n" +
+        "Content-Type: text/html\r\n\r\n" +
+        "<html><head><title>" + page +
+        "</title></head>" +
+        "<body>" + page +
+        "</body></html>";
+    }
 
     protected int writeRandomHTTPRecord(ARCWriter arcWriter, int index)
     throws IOException {
@@ -86,12 +94,7 @@ extends TmpDirTestCase implements ARCConstants {
         // Start the record with an arbitrary 14-digit date per RFC2540
         String now = ArchiveUtils.get14DigitDate();
         int recordLength = 0;
-        byte[] record = ("HTTP/1.1 200 OK\r\n" +
-            "Content-Type: text/html\r\n\r\n" +
-            "<html><head><title>Page #" + indexStr +
-            "</title></head>" +
-            "<body>Page #" + indexStr +
-            "</body></html>").getBytes();
+        byte[] record = (getContent(indexStr)).getBytes();
         recordLength += record.length;
         baos.write(record);
         // Add the newline between records back in
@@ -207,88 +210,167 @@ extends TmpDirTestCase implements ARCConstants {
             baos);
     }
     
-    public void testLengthTooShortCompressed() throws IOException {
-        final String NAME = "testLengthTooShortCompressed-" + PREFIX;
-        ARCWriter writer = createARCWriter(NAME, true);
-        ByteArrayOutputStream baos = getBaos(SOME_PAGE);
-        // Add some bytes on the end to mess up the record.
-        baos.write("SOME TRAILING BYTES".getBytes());
-        writeRecord(writer, "http://one.two.three", "text/html",
-            SOME_PAGE.length(), baos);
-        writeRecord(writer, "http://one.two.three", "text/html",
-            SOME_PAGE.length(), getBaos(SOME_PAGE));
-        writer.close();
-        // Catch System.err.
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(os));
-        ARCReader r = ARCReaderFactory.get(writer.getArcFile());
+    protected int iterateRecords(ARCReader r)
+    throws IOException {
         int count = 0;
-        for(Iterator i = r.iterator(); i.hasNext();) {
-            count++;
+        for (Iterator i = r.iterator(); i.hasNext();) {
             ARCRecord rec = (ARCRecord)i.next();
             rec.close();
+            if (count != 0) {
+                assertTrue("Unexpected URL " + rec.getMetaData().getUrl(),
+                    rec.getMetaData().getUrl().equals(SOME_URL));
+            }
+            count++;
         }
+        return count;
+    }
+    
+    protected ARCWriter createArcWithOneRecord(String name,
+        boolean compressed)
+    throws IOException {
+        ARCWriter writer = createARCWriter(name, compressed);
+        String content = getContent();
+        writeRecord(writer, SOME_URL, "text/html",
+            content.length(), getBaos(content));
+        return writer;
+    }
+    
+    public void testSpaceInURL() {
+        String eMessage = null;
+        try {
+            holeyUrl("testSpaceInURL-" + PREFIX, false, " ");
+        } catch (IOException e) {
+            eMessage = e.getMessage();
+        }
+        assertTrue("Didn't get expected exception: " + eMessage,
+            eMessage.startsWith("Metadata line doesn't match"));
+    }
+
+    public void testTabInURL() {        
+        String eMessage = null;
+        try {
+            holeyUrl("testTabInURL-" + PREFIX, false, "\t");
+        } catch (IOException e) {
+            eMessage = e.getMessage();
+        }
+        assertTrue("Didn't get expected exception: " + eMessage,
+            eMessage.startsWith("Metadata line doesn't match"));
+    }
+    
+    protected void holeyUrl(String name, boolean compress, String urlInsert)
+    throws IOException {
+        ARCWriter writer = createArcWithOneRecord(name, compress);
+        // Add some bytes on the end to mess up the record.
+        String content = getContent();
+        ByteArrayOutputStream baos = getBaos(content);
+        writeRecord(writer, SOME_URL + urlInsert + "/index.html", "text/html",
+            content.length(), baos);
+        writer.close();
+    }
+    
+// If uncompressed, length has to be right or parse will fail.
+//
+//    public void testLengthTooShort() throws IOException {
+//        lengthTooShort("testLengthTooShort-" + PREFIX, false);
+//    }
+    
+    public void testLengthTooShortCompressed() throws IOException {
+        lengthTooShort("testLengthTooShortCompressed-" + PREFIX, true, false);
+    }
+    
+    public void testLengthTooShortCompressedStrict()
+    throws IOException {      
+        String eMessage = null;
+        try {
+            lengthTooShort("testLengthTooShortCompressedStrict-" + PREFIX,
+                true, true);
+        } catch (NoSuchElementException e) {
+            eMessage = e.getMessage();
+        }
+        assertTrue("Didn't get expected exception: " + eMessage,
+            eMessage.startsWith("Record ENDING at"));
+    }
+     
+    protected void lengthTooShort(String name, boolean compress, boolean strict)
+    throws IOException {
+        ARCWriter writer = createArcWithOneRecord(name, compress);
+        // Add some bytes on the end to mess up the record.
+        String content = getContent();
+        ByteArrayOutputStream baos = getBaos(content);
+        baos.write("SOME TRAILING BYTES".getBytes());
+        writeRecord(writer, SOME_URL, "text/html",
+            content.length(), baos);
+        writeRecord(writer, SOME_URL, "text/html",
+            content.length(), getBaos(content));
+        writer.close();
+        
+        // Catch System.err into a byte stream.
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(os));
+     
+        ARCReader r = ARCReaderFactory.get(writer.getArcFile());
+        r.setStrict(strict);
+        int count = iterateRecords(r);
+        assertTrue("Count wrong " + count, count == 4);
+
         // Make sure we get the warning string which complains about the
         // trailing bytes.
         String err = os.toString();
         assertTrue("No message " + err, err.startsWith("WARNING") &&
             (err.indexOf("Record ENDING at") > 0));
-        assertTrue("Count wrong " + count, count == 3);
     }
     
-    public void testLengthTooShortCompressedStrict()
+//  If uncompressed, length has to be right or parse will fail.
+//
+//    public void testLengthTooLong()
+//    throws IOException {
+//        lengthTooLong("testLengthTooLongCompressed-" + PREFIX,
+//            false, false);
+//    }
+    
+    public void testLengthTooLongCompressed()
     throws IOException {
-        final String NAME = "testLengthTooShortCompressedStrict-" + PREFIX;
-        ARCWriter writer = createARCWriter(NAME, true);
-        ByteArrayOutputStream baos = getBaos(SOME_PAGE);
-        // Add some bytes on the end to mess up the record.
-        baos.write("SOME TRAILING BYTES".getBytes());
-        writeRecord(writer, "http://one.two.three", "text/html",
-            SOME_PAGE.length(), baos);
-        writeRecord(writer, "http://one.two.three", "text/html",
-            SOME_PAGE.length(), getBaos(SOME_PAGE));
-        writer.close();
-        ARCReader r = ARCReaderFactory.get(writer.getArcFile());
-        // Make the reader strict.
-        r.setStrict(true);
+        lengthTooLong("testLengthTooLongCompressed-" + PREFIX,
+            true, false);
+    }
+    
+    public void testLengthTooLongCompressedStrict() {
         String eMessage = null;
         try {
-            for(Iterator i = r.iterator(); i.hasNext();) {
-                ARCRecord rec = (ARCRecord)i.next();
-                rec.close();
-            }
-        } catch (NoSuchElementException e) {
+            lengthTooLong("testLengthTooLongCompressed-" + PREFIX,
+                true, true);
+        } catch (IOException e) {
             eMessage = e.getMessage();
         }
         assertTrue("Didn't get expected exception: " + eMessage,
-                eMessage.indexOf("Record ENDING at") > 0);
+            eMessage.startsWith("Premature EOF before end-of-record"));
     }
     
-    public void testLengthTooLongCompressed() throws IOException {
-        final String NAME = "testLengthTooLongCompressed-" + PREFIX;
-        ARCWriter writer = createARCWriter(NAME, true);
-        ByteArrayOutputStream baos = getBaos(SOME_PAGE);
-        // Pass in a length that is too long (+10).
-        writeRecord(writer, "http://one.two.three", "text/html",
-            SOME_PAGE.length() + 10, baos);
-        writeRecord(writer, "http://one.two.three", "text/html",
-            SOME_PAGE.length(), getBaos(SOME_PAGE));
+    protected void lengthTooLong(String name, boolean compress,
+            boolean strict)
+    throws IOException {
+        ARCWriter writer = createArcWithOneRecord(name, compress);
+        // Add a record with a length that is too long.
+        String content = getContent();
+        writeRecord(writer, SOME_URL, "text/html",
+            content.length() + 10, getBaos(content));
+        writeRecord(writer, SOME_URL, "text/html",
+            content.length(), getBaos(content));
         writer.close();
+        
         // Catch System.err.
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         System.setErr(new PrintStream(os));
+        
         ARCReader r = ARCReaderFactory.get(writer.getArcFile());
-        int count = 0;
-        for (Iterator i = r.iterator(); i.hasNext();) {
-            count++;
-            ARCRecord rec = (ARCRecord)i.next();
-            rec.close();
-        }
+        r.setStrict(strict);
+        int count = iterateRecords(r);
+        assertTrue("Count wrong " + count, count == 4);
+        
         // Make sure we get the warning string which complains about the
         // trailing bytes.
         String err = os.toString();
         assertTrue("No message " + err, 
             err.startsWith("WARNING Premature EOF before end-of-record"));
-        assertTrue("Count wrong " + count, count == 3);
     }
 }

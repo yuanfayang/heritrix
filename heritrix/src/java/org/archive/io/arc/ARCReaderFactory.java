@@ -247,10 +247,10 @@ public class ARCReaderFactory implements ARCConstants {
             // at the end of this record.
             ARCRecordMetaData meta = (this.currentRecord != null)?
                     rec.getMetaData(): null;
-            String message = this.arcFile + ": Record ENDING at " +
+            String message = "Record ENDING at " +
                 ((GzippedInputStream)this.in).getFilePointer() +
                 " has " + skipped + " trailing byte(s): " +
-                ((meta != null)? meta.getHeaderFields().toString(): "");
+                ((meta != null)? meta.toString(): "");
             if (isStrict()) {
                 throw new IOException(message);
             }

@@ -189,8 +189,7 @@ public class ARCRecordMetaData
     /**
      * @return Map of header fields.
      */
-    public Map getHeaderFields()
-    {
+    public Map getHeaderFields() {
         return this.headerFields;
     }
     
@@ -227,5 +226,11 @@ public class ARCRecordMetaData
      */
     public void setStatusCode(String statusCode) {
         this.statusCode = statusCode;
+    }
+    
+    public String toString() {
+        return ((this.arcFile != null)? this.arcFile.getAbsolutePath(): "") +
+           ": " +
+           ((this.headerFields != null)? this.headerFields.toString():  "");
     }
 }
