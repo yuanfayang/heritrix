@@ -55,7 +55,7 @@ public class ServerCache {
 
 	/**
 	 * @param curi
-	 * @return
+	 * @return CrawlServer
 	 */
 	public CrawlServer getServerFor(CrawlURI curi) {
 		String scheme = curi.getUURI().getUri().getScheme();

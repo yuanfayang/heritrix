@@ -63,16 +63,10 @@ public class User
 		return INVALID_USER;
 	}
 
-  /**
-   * @return
-   */
   public static String getOperatorPassword() {
     return OPERATOR_PASSWORD;
   }
-
-  /**
-   * @return
-   */
+ 
   public static String getOperatorUsername() {
     return OPERATOR_USERNAME;
   }

@@ -93,7 +93,7 @@ public class CandidateURI implements Serializable, Lineable {
 	}
 
 	/**
-	 * 
+	 * @return UURI
 	 */
 	public UURI getUURI() {
 		return uuri;
@@ -107,13 +107,14 @@ public class CandidateURI implements Serializable, Lineable {
 	}
 
 	/**
-	 * @return
+	 * @return Whether seeded.
 	 */
 	public boolean getIsSeed() {
 		return isSeed;
 	}
 	
 	/**
+	 * @return Scope version.
 	 * 
 	 */
 	public int getScopeVersion() {
@@ -126,16 +127,11 @@ public class CandidateURI implements Serializable, Lineable {
 	public void setScopeVersion(int i) {
 		inScopeVersion = i;
 	}
-	/**
-	 * @return
-	 */
+
 	public String getPathFromSeed() {
 		return pathFromSeed;
 	}
 
-	/**
-	 * @return
-	 */
 	public Object getVia() {
 		return via;
 	}
@@ -196,8 +192,8 @@ public class CandidateURI implements Serializable, Lineable {
 	}
 
 	/**
-		 * @return URI String
-		 */
+     * @return URI String
+     */
 	public String getURIString() {
 		return getUURI().getUriString();
 	}

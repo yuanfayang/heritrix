@@ -59,6 +59,8 @@ public class DiskQueue implements Queue {
 	ObjectInputStream headStream;
 	
 	/**
+	 * @param dir
+	 * @param name
 	 * 
 	 */
 	public DiskQueue(File dir, String name) {

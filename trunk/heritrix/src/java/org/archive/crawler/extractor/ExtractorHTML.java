@@ -116,10 +116,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	static final Pattern WHITESPACE = Pattern.compile("\\s");
 	
 	/**
-	 * @param tags
-	 * @param i
-	 * @param links
-	 * @param embeds
 	 */
 	private void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
 		Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
@@ -233,7 +229,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	
 	/**
 	 * @param curi
-	 * @param value
+	 * @param cs
 	 */
 	private void processScriptCode(CrawlURI curi, CharSequence cs) {
 		String code = cs.toString();
@@ -346,9 +342,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	static final Pattern NON_HTML_PATH_EXTENSION = Pattern.compile(
 		"(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
 		"|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)");
+
 	/**
 	 * @param curi
-	 * @return
+	 * @return True if HTML.
 	 */
 	private boolean expectedHTML(CrawlURI curi) {
 		String path = curi.getUURI().getPath();
@@ -384,8 +381,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
 
 	/**
-	 * @param curi
-	 * @param sequence
 	 */
 	private boolean processMeta(CrawlURI curi, CharSequence cs) {
 		Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);

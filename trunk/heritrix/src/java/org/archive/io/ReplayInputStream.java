@@ -50,6 +50,7 @@ public class ReplayInputStream extends InputStream {
 	 * @param size
 	 * @param responseBodyStart
 	 * @param backingFilename
+	 * @throws IOException
 	 */
 	public ReplayInputStream(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
 		this(buffer,size,backingFilename);
@@ -60,6 +61,7 @@ public class ReplayInputStream extends InputStream {
 	 * @param buffer
 	 * @param size
 	 * @param backingFilename
+	 * @throws IOException
 	 */
 	public ReplayInputStream(byte[] buffer, long size, String backingFilename) throws IOException {
 		this.buffer = buffer;

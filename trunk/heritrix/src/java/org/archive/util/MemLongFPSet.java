@@ -43,7 +43,8 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	}
 
 	/**
-	 * @param i
+	 * @param capacityPowerOfTwo
+	 * @param loadFactor
 	 */
 	public MemLongFPSet(int capacityPowerOfTwo, float loadFactor) {
 		this.capacityPowerOfTwo = capacityPowerOfTwo;

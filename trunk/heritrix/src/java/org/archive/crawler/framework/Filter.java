@@ -46,7 +46,7 @@ public abstract class Filter extends XMLConfig {
 	
 	/**
 	 * @param o
-	 * @return
+	 * @return If it accepts.
 	 */
 	protected abstract boolean innerAccepts(Object o);
 	
@@ -58,15 +58,17 @@ public abstract class Filter extends XMLConfig {
 			}
 		}
 	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
 		return "Filter<"+name+">";
 	}
+
 	/**
-	 * @param optionalExclude
-	 * @return
+	 * @param other
+	 * @return Filter.
 	 */
 	public Filter orWith(Filter other) {
 		OrFilter orF = new OrFilter();

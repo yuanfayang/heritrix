@@ -48,6 +48,8 @@ public class HttpRecorder {
 	protected RecordingOutputStream ros;
 	
 	/**
+	 * @param tempDir
+	 * @param backingFilenamePrefix
 	 * 
 	 */
 	public HttpRecorder(File tempDir, String backingFilenamePrefix) {
@@ -62,7 +64,8 @@ public class HttpRecorder {
 	 * Wrap the provided stream with the internal RecordingInputStream
 	 * 
 	 * @param is
-	 * @return
+	 * @return An inputstream.
+	 * @throws IOException
 	 */
 	public InputStream inputWrap(InputStream is) throws IOException {
 		ris.open(is);
@@ -71,8 +74,9 @@ public class HttpRecorder {
 
 	/**
 	 * Wrap the provided stream with the internal RecordingOutputStream
-	 * @param outputStream
-	 * @return
+	 * @param os
+	 * @return An output stream.
+	 * @throws IOException
 	 */
 	public OutputStream outputWrap(OutputStream os) throws IOException {
 		ros.open(os);
@@ -100,6 +104,7 @@ public class HttpRecorder {
 
 	/**
 	 * Return the internal RecordingInputStream
+	 * @return A RIS.
 	 */
 	public RecordingInputStream getRecordedInput() {
 		return ris;
@@ -113,9 +118,6 @@ public class HttpRecorder {
 		ris.markResponseBodyStart();
 	}
 
-	/**
-	 * @return
-	 */
 	public long getResponseContentLength() {
 		return ris.getResponseContentLength();
 	}

@@ -62,6 +62,10 @@ public class ActionURLExtractor extends ActionWriter {
 	
 	/**
 	 * Extract URIs from the swf and store them.
+	 * 
+	 * @param url
+	 * @param target
+	 * @throws IOException
 	 */
 	public void getURL( String url, String target ) throws IOException
 	{

@@ -97,7 +97,6 @@ public class TextUtils {
 	 * Utility method using a precompiled pattern instead of using the replaceAll method of
 	 * the String class. This method will also be reusing Matcher objects.
 	 * 
-	 * @see java.lang.String#replaceAll
 	 * @see java.util.regex.Pattern
 	 * @param p precompiled Pattern to match against
 	 * @param input the character sequence to check
@@ -126,7 +125,6 @@ public class TextUtils {
 	 * Utility method using a precompiled pattern instead of using the replaceFirst method of
 	 * the String class. This method will also be reusing Matcher objects.
 	 * 
-	 * @see java.lang.String#replaceFirst
 	 * @see java.util.regex.Pattern
 	 * @param p precompiled Pattern to match against
 	 * @param input the character sequence to check
@@ -155,7 +153,6 @@ public class TextUtils {
 	 * Utility method using a precompiled pattern instead of using the matches method of
 	 * the String class. This method will also be reusing Matcher objects.
 	 * 
-	 * @see java.lang.String#matches
 	 * @see java.util.regex.Pattern
 	 * @param p precompiled Pattern to match against
 	 * @param input the character sequence to check
@@ -183,7 +180,6 @@ public class TextUtils {
 	 * Utility method using a precompiled pattern instead of using the split method of
 	 * the String class.
 	 * 
-	 * @see java.lang.String#split
 	 * @see java.util.regex.Pattern
 	 * @param p precompiled Pattern to split by
 	 * @param input the character sequence to split

@@ -97,9 +97,6 @@ public class TimedFixedSizeList extends FixedSizeList implements CoreAttributeCo
 	
 	public interface TimedItem {
 
-		/**
-		 * @return
-		 */
 		long getTime();
 	
 	}

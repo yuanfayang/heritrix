@@ -62,7 +62,7 @@ public class RecordingOutputStream extends OutputStream {
 	 * Create a new RecordingPutputStream with the specified parameters.
 	 * 
 	 * @param bufferSize
-	 * @param backingFile
+	 * @param backingFilename
 	 * @param maxSize
 	 */
 	public RecordingOutputStream(int bufferSize, String backingFilename, int maxSize) {
@@ -198,6 +198,8 @@ public class RecordingOutputStream extends OutputStream {
 
 	/**
 	 * Return a replay stream, cued up to beginning of content
+	 * @throws IOException
+	 * @return An RIS.
 	 */
 	public ReplayInputStream getContentReplayInputStream() throws IOException {
 		ReplayInputStream replay = getReplayInputStream();
@@ -205,25 +207,15 @@ public class RecordingOutputStream extends OutputStream {
 		return replay;
 	}
 
-	/**
-	 * @return
-	 */
 	public long getSize() {
 		return size;
 	}
 
 
-	/**
-	 * 
-	 */
 	public void markResponseBodyStart() {
 		responseBodyStart = position;
 	}
 
-
-	/**
-	 * @return
-	 */
 	public CharSequence getCharSequence() {
 		try {
 			return new ReplayCharSequence(buffer,size,responseBodyStart,backingFilename);
@@ -234,17 +226,10 @@ public class RecordingOutputStream extends OutputStream {
 		return null;
 	}
 
-
-	/**
-	 * @return
-	 */
 	public long getResponseContentLength() {
 		return size-responseBodyStart;
 	}
 
-	/**
-	 * 
-	 */
 	public void closeRecorder() throws IOException {
 		// diskStream.flush(); // redundant, close includes flush
 		if (diskStream != null) {

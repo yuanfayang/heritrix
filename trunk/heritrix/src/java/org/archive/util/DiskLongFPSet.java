@@ -42,6 +42,9 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	RandomAccessFile rawRafile;
 	
 	/**
+	 * @param dir
+	 * @param name
+	 * @throws IOException
 	 * 
 	 */
 	public DiskLongFPSet(File dir, String name) throws IOException {
@@ -49,7 +52,11 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	}
 
 	/**
-	 * @param i
+	 * @param dir
+	 * @param name
+	 * @param capacityPowerOfTwo
+	 * @param loadFactor
+	 * @throws IOException
 	 */
 	public DiskLongFPSet(File dir, String name, int capacityPowerOfTwo, float loadFactor) throws IOException {
 		this.capacityPowerOfTwo = capacityPowerOfTwo;

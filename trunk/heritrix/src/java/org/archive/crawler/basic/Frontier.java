@@ -202,7 +202,7 @@ public class Frontier
 		}
 
 		/**
-		 * 
+		 * @return Queue
 		 */
 		public Queue getQueue() {
 			return (Queue)super.get();
@@ -506,12 +506,6 @@ public class Frontier
 		decrementScheduled();
 	}
 
-
-
-	/**
-	 * @param curi
-	 * @return
-	 */
 	private boolean isDisregarded(CrawlURI curi) {
 		switch (curi.getFetchStatus()) {
 			case S_ROBOTS_PRECLUDED :
@@ -527,8 +521,6 @@ public class Frontier
 				return false;
 		}
 	}
-
-
 
 	/**
 	 * Take note of any processor-local errors that have
@@ -597,7 +589,7 @@ public class Frontier
 	 * Store is empty only if all queues are empty and 
 	 * no URIs are in-process
 	 * 
-	 * @return
+	 * @return True if queues are empty.
 	 */
 	public boolean isEmpty() {
 		return pendingQueue.isEmpty()
@@ -647,19 +639,12 @@ public class Frontier
 		//assert heldClassQueues.size()+readyClassQueues.size()+snoozeQueues.size() <= allClassQueuesMap.size() : "allClassQueuesMap discrepancy";
 	}
 	
-	/**
-	 * @return
-	 */
 	private CrawlURI dequeueFromReady() {
 		KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
 		CrawlURI readyCuri = (CrawlURI) firstReadyQueue.dequeue();
 		return readyCuri;
 	}
 
-	/**
-	 * @param curi
-	 * @return
-	 */
 	private CrawlURI emitCuri(CrawlURI curi) {
 		if(curi != null) {
 			if (curi.getStoreState() == URIStoreable.FINISHED) {
@@ -794,9 +779,6 @@ public class Frontier
 		return false;	
 	}
 
-	/**
-	 * @return
-	 */
 	protected long earliestWakeTime() {
 		if (!snoozeQueues.isEmpty()) {
 			return ((URIStoreable)snoozeQueues.first()).getWakeTime();
@@ -814,7 +796,7 @@ public class Frontier
 	
 	/**
 	 * 
-	 * @return
+	 * @param curi
 	 */
 	protected void noteProcessingDone(CrawlURI curi) {
 		assert inProcessMap.get(curi.getClassKey())
@@ -939,7 +921,7 @@ public class Frontier
 	 * its processing?
 	 * 
 	 * @param curi
-	 * @return
+	 * @return True if failure.
 	 */
 	private boolean isDispositiveFailure(CrawlURI curi) {
 		switch (curi.getFetchStatus()) {
@@ -965,7 +947,7 @@ public class Frontier
 	
 	/**
 	 * @param curi
-	 * @return
+	 * @return True if we need to retry.
 	 */
 	private boolean needsRetrying(CrawlURI curi) {
 		//
@@ -1042,7 +1024,7 @@ public class Frontier
 	 * may have been updated to allow them passage.
 	 * 
 	 * @param curi
-	 * @return
+	 * @return True if curi should be forgotten.
 	 */
 	private boolean shouldBeForgotten(CrawlURI curi) {
 		switch(curi.getFetchStatus()) {
@@ -1087,9 +1069,8 @@ public class Frontier
 		return completionCount;
 	}
 	
-	/** Return the number of URIs that failed to date.
-	 * 
-	 * @return
+	/** 
+     * @return Return the number of URIs that failed to date.
 	 */
 	public long failedFetchCount(){
 		return failedCount;

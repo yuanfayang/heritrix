@@ -42,7 +42,7 @@ public interface LongFPSet {
 	 * full-cost contains() to be sure. 
 	 * 
 	 * @param fp
-	 * @return
+	 * @return True if contains passed long.
 	 */
 	boolean quickContains(long fp);
 }

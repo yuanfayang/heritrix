@@ -75,7 +75,7 @@ public class Processor extends XMLConfig {
 	 * Do all specified filters (if any) accept this CrawlURI? 
 	 *  
 	 * @param curi
-	 * @return
+	 * @return True if all filters accept this CrawlURI.
 	 */
 	protected boolean filtersAccept(CrawlURI curi) {
 		if (filters.isEmpty()) {
@@ -93,7 +93,7 @@ public class Processor extends XMLConfig {
 	}
 
 	/**
-	 * @return
+	 * @return Name of processor.
 	 */
 	protected String getName() {
 		return name;

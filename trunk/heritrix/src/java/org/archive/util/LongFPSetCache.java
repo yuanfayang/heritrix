@@ -44,6 +44,7 @@ public class LongFPSetCache extends MemLongFPSet {
 
 	/**
 	 * @param capacityPowerOfTwo
+	 * @param loadFactor
 	 */
 	public LongFPSetCache(int capacityPowerOfTwo, float loadFactor) {
 		super(capacityPowerOfTwo, loadFactor);

@@ -528,6 +528,8 @@ public interface HttpMethod {
      * @since 2.1
      * 
      * @see HttpMethodParams
+     * 
+     * @return HttpMethodParams
      */
     public HttpMethodParams getParams();
 

@@ -44,6 +44,7 @@ public class FlipFileOutputStream extends OutputStream {
 	/**
 	 * @param tempDir
 	 * @param backingFilenamePrefix
+	 * @throws FileNotFoundException
 	 */
 	public FlipFileOutputStream(File tempDir, String backingFilenamePrefix) throws FileNotFoundException {
 		tempDir.mkdirs();

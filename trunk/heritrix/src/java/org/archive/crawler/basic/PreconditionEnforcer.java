@@ -76,9 +76,6 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 		return;
 	}
 
-	/**
-	 * @return
-	 */
 	private boolean considerRobotsPreconditions(CrawlURI curi) {
 		// treat /robots.txt fetches specially
 		if (curi.getUURI().getPath().equals("/robots.txt")) {

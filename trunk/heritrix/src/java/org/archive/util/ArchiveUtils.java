@@ -158,8 +158,8 @@ public class ArchiveUtils {
 	
 	/**
 	 * @param i
-	 * @param j
-	 * @return
+	 * @param pad
+	 * @return String w/ padding.
 	 */
 	public static String padTo(int i, int pad) {
 		String n = Integer.toString(i);
@@ -167,9 +167,9 @@ public class ArchiveUtils {
 	}
 	
 	/**
-	 * @param length
-	 * @param i
-	 * @return
+	 * @param s
+	 * @param pad
+	 * @return String w/ padding.
 	 */
 	public static String padTo(String s, int pad) {
 		int l = s.length();

@@ -121,7 +121,7 @@ public class CrawlURI extends CandidateURI
 	 * Returns a boolean representing the status of the content in terms 
 	 * of expiration date.  If the content is considered expired dontFetchYet()
 	 * returns false.
-	 * @return
+	 * @return A boolean representing the status of the content in terms 
 	 */
 	public boolean dontFetchYet(){
 		if(dontRetryBefore > System.currentTimeMillis()){
@@ -150,9 +150,6 @@ public class CrawlURI extends CandidateURI
 		return fetchAttempts++;
 	}
 
-	/** 
-	  *   
-	  */   
 	 public Processor nextProcessor() {   
 			 return nextProcessor;   
 	 }   
@@ -164,13 +161,11 @@ public class CrawlURI extends CandidateURI
 	 } 
 
 	/**
-	 * Return a token (usually the hostname) which indicates
+	 * @return Token (usually the hostname) which indicates
 	 * what "class" this CrawlURI should br grouped with,
 	 * for the purposes of ensuring only one item of the
 	 * class is processed at once, all items of the class
 	 * are held for a politeness period, etc.
-	 * 
-	 * @return
 	 */
 	public Object getClassKey() {
 		//return host.getHostname();
@@ -212,9 +207,6 @@ public class CrawlURI extends CandidateURI
 		wakeTime = w;
 	}
 
-	/**
-	 * 
-	 */
 	public AList getAList() {
 		return alist;
 	}
@@ -244,15 +236,12 @@ public class CrawlURI extends CandidateURI
 //	}
 
 	/**
-	 * @param string
+	 * @param stringOrUURI
 	 */
 	public void setPrerequisiteUri(Object stringOrUURI) {
 		alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
 	}
 
-	/**
-	 * 
-	 */
 	public Object getPrerequisiteUri() {
 		return alist.getObject(A_PREREQUISITE_URI);
 	}
@@ -265,7 +254,8 @@ public class CrawlURI extends CandidateURI
 	 * 
 	 * This method is used to refetch any expired robots.txt or dns-lookups.
 	 * 
-	 * @param string the URI that is a prerequisite for this URI to be fetched
+	 * @param stringOrUURI The URI that is a prerequisite for this URI to be
+	 * fetched
 	 */
 	public void setForcedPrerequisiteUri(Object stringOrUURI) {
 		alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
@@ -305,30 +295,18 @@ public class CrawlURI extends CandidateURI
 		threadNumber = i;
 	}
 
-	/**
-	 * 
-	 */
 	public int getThreadNumber() {
 		return threadNumber;
 	}
 
-	/**
-	 * 
-	 */
 	public void incrementDeferrals() {
 		deferrals++;
 	}
 
-	/**
-	 * @return
-	 */
 	public int getDeferrals() {
 		return deferrals;
 	}
 
-	/**
-	 * 
-	 */
 	public void stripToMinimal() {
 		alist = null;
 	}
@@ -341,7 +319,7 @@ public class CrawlURI extends CandidateURI
 	}
 
 	/**
-	 * @param value
+	 * @param u
 	 */
 	public void addEmbed(String u) {
 		addToNamedSet(A_HTML_EMBEDS, u);
@@ -359,7 +337,7 @@ public class CrawlURI extends CandidateURI
 	}
 
 	/**
-	 * @param value
+	 * @param u
 	 */
 	public void addLink(String u) {
 		addToNamedSet(A_HTML_LINKS, u);
@@ -392,8 +370,9 @@ public class CrawlURI extends CandidateURI
 	 * Make note of a non-fatal error, local to a particular Processor,
 	 * which should be logged somewhere, but allows processing to continue.
 	 * 
-	 * @param string
-	 * @param e
+	 * @param processorName
+	 * @param ex
+	 * @param message
 	 */
 	public void addLocalizedError(String processorName, Exception ex, String message) {
 		List localizedErrors;
@@ -449,23 +428,14 @@ public class CrawlURI extends CandidateURI
 	}*/
 
 	
-	/**
-	 * @return
-	 */
 	public int getEmbedHopCount() {
 		return embedHopCount;
 	}
 
-	/**
-	 * @return
-	 */
 	public int getLinkHopCount() {
 		return linkHopCount;
 	}
 
-	/**
-	 * 
-	 */
 	public void markAsSeed() {
 		linkHopCount = 0;
 		embedHopCount = 0;
@@ -504,7 +474,9 @@ public class CrawlURI extends CandidateURI
 	 * For completed HTTP transactions, the length of the content-body
 	 * (as given by the header or calculated)
 	 * 
-	 * @return
+	 * @return The length of the content-body (as given by the header or
+     * calculated).
+	 * 
 	 */
 	public long getContentLength() {
 		if (contentLength<0) {

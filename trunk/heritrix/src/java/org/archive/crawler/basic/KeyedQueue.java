@@ -48,7 +48,9 @@ public class KeyedQueue implements Queue, URIStoreable {
 	Queue innerQ;
 	
 	/**
-	 * 
+	 * @param key
+	 * @param scratchDir
+	 * @param headMax
 	 */
 	public KeyedQueue(Object key, File scratchDir, int headMax) {
 		super();
@@ -66,15 +68,12 @@ public class KeyedQueue implements Queue, URIStoreable {
 		}
 	}
 	
-	/**
-	 * @return
-	 */
 	public boolean isReady() {
 		return System.currentTimeMillis() > wakeTime;
 	}
 
 	/**
-	 * 
+	 * @return Object
 	 */
 	public Object getClassKey() {
 		return classKey;

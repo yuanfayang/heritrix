@@ -43,6 +43,8 @@ public class CachingDiskLongFPSet extends DiskLongFPSet {
 	 * @param name
 	 * @param capacityPowerOfTwo
 	 * @param loadFactor
+	 * @param cacheCapacityPowerOfTwo
+	 * @param cacheLoadFactor
 	 * @throws IOException
 	 */
 	public CachingDiskLongFPSet(

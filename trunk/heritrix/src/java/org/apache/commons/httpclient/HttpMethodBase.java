@@ -1313,8 +1313,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      *                     can be recovered from.
      * @throws HttpException  if a protocol exception occurs. Usually protocol exceptions 
      *                    cannot be recovered from.
-     *
-     * @see #writeRequestHeaders
      */
     protected void addRequestHeaders(HttpState state, HttpConnection conn)
     throws IOException, HttpException {
@@ -1455,9 +1453,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      * @param state the {@link HttpState state} information associated with this method
      * @param conn the {@link HttpConnection connection} used to execute
      *        this HTTP method
-     *
-     * @see #readResponse
-     * @see #readResponseBody
      */
     protected void processResponseBody(HttpState state, HttpConnection conn) {
     }
@@ -1476,9 +1471,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      * @param state the {@link HttpState state} information associated with this method
      * @param conn the {@link HttpConnection connection} used to execute
      *        this HTTP method
-     *
-     * @see #readResponse
-     * @see #readResponseHeaders
      */
     protected void processResponseHeaders(HttpState state,
         HttpConnection conn) {
@@ -1544,9 +1536,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      * @param state the {@link HttpState state} information associated with this method
      * @param conn the {@link HttpConnection connection} used to execute
      *        this HTTP method
-     *
-     * @see #readResponse
-     * @see #readStatusLine
      */
     protected void processStatusLine(HttpState state, HttpConnection conn) {
     }
@@ -1649,9 +1638,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      *                     can be recovered from.
      * @throws HttpException  if a protocol exception occurs. Usually protocol exceptions 
      *                    cannot be recovered from.
-     *
-     * @see #readResponse
-     * @see #processResponseBody
      */
     protected void readResponseBody(HttpState state, HttpConnection conn)
     throws IOException, HttpException {
@@ -1675,9 +1661,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      * <tt>Transfer-Encoding</tt> headers. If no response body is available
      * returns <tt>null</tt>.
      * <p>
-     *
-     * @see #readResponse
-     * @see #processResponseBody
      *
      * @param conn the {@link HttpConnection connection} used to execute
      *        this HTTP method
@@ -1787,9 +1770,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      *                     can be recovered from.
      * @throws HttpException  if a protocol exception occurs. Usually protocol exceptions 
      *                    cannot be recovered from.
-     *
-     * @see #readResponse
-     * @see #processResponseHeaders
      */
     protected void readResponseHeaders(HttpState state, HttpConnection conn)
     throws IOException, HttpException {
@@ -2020,9 +2000,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      *                     can be recovered from.
      * @throws HttpException  if a protocol exception occurs. Usually protocol exceptions 
      *                    cannot be recovered from.
-     *
-     * @see #addRequestHeaders
-     * @see #getRequestHeaders
      */
     protected void writeRequestHeaders(HttpState state, HttpConnection conn)
     throws IOException, HttpException {
@@ -2056,8 +2033,6 @@ public abstract class HttpMethodBase implements HttpMethod {
      *                     can be recovered from.
      * @throws HttpException  if a protocol exception occurs. Usually protocol exceptions 
      *                    cannot be recovered from.
-     *
-     * @see #generateRequestLine
      */
     protected void writeRequestLine(HttpState state, HttpConnection conn)
     throws IOException, HttpException {

@@ -52,7 +52,10 @@ public class RobotsExclusionPolicy {
 	private List userAgentsToTest = null;
 	
 	/**
-	 * @param vb
+	 * @param reader
+	 * @param honoringPolicy
+	 * @return Robot exclusion policy.
+	 * @throws IOException
 	 */
 	public static RobotsExclusionPolicy policyFor(BufferedReader reader, RobotsHonoringPolicy honoringPolicy) throws IOException {
 		String read;
@@ -122,6 +125,7 @@ public class RobotsExclusionPolicy {
 	 * @param u
 	 * @param d
 	 * @param errs
+	 * @param honoringPolicy
 	 */
 	public RobotsExclusionPolicy(LinkedList u, HashMap d, boolean errs, RobotsHonoringPolicy honoringPolicy) {
 		userAgents = u;

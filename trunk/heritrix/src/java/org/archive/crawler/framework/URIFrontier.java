@@ -50,26 +50,15 @@ public interface URIFrontier {
 	 */
 	void scheduleHigh(CandidateURI caUri);
 
-	/**
-	 * @return
-	 */
 	long successfullyFetchedCount();
 
-	/**
-	 * @return
-	 */
 	long discoveredUriCount();
 
 	/**
-	 * Estimated number of URIs scheduled for prcoessing..
-	 *  
-	 * @return
+	 * @return Estimated number of URIs scheduled for prcoessing..
 	 */
 	long pendingUriCount();
 
-	/**
-	 * @return
-	 */
 	long failedFetchCount();
 
 	/**

@@ -70,6 +70,7 @@ public class ReplayCharSequence implements CharSequence {
 	 * @param size
 	 * @param responseBodyStart
 	 * @param backingFilename
+	 * @throws IOException
 	 */
 	public ReplayCharSequence(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
 		this(buffer,size,backingFilename);
@@ -80,6 +81,7 @@ public class ReplayCharSequence implements CharSequence {
 	 * @param buffer
 	 * @param size
 	 * @param backingFilename
+	 * @throws IOException
 	 */
 	public ReplayCharSequence(byte[] buffer, long size, String backingFilename) throws IOException {
 		this.prefixBuffer = buffer;
@@ -132,7 +134,7 @@ public class ReplayCharSequence implements CharSequence {
 	 * index
 	 * 
 	 * @param index
-	 * @return
+	 * @return A character that's outside the current buffers
 	 */
 	private char faultCharAt(int index) {
 		if(index>=wrapOrigin+wraparoundBuffer.length) {

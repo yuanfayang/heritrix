@@ -32,9 +32,6 @@ public class CharSubSequence implements CharSequence {
 	int start;
 	int end;
 
-	/**
-	 * 
-	 */
 	public CharSubSequence(CharSequence inner, int start, int end) {
 		// TODO bounds check 
 		super();

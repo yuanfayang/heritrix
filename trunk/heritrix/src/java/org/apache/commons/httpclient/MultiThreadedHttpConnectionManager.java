@@ -273,7 +273,7 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
      *
      * @return HttpConnection an available connection
      *
-     * @throws HttpException if a connection does not become available in
+     * @throws ConnectTimeoutException if a connection does not become available in
      * 'timeout' milliseconds
      */
     private HttpConnection doGetConnection(HostConfiguration hostConfiguration, 
@@ -589,7 +589,6 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
          * Notifies a waiting thread that a connection for the given configuration is 
          * available.
          * @param configuration the host config to use for notifying
-         * @see #notifyWaitingThread(HostConnectionPool)
          */
         public synchronized void notifyWaitingThread(HostConfiguration configuration) {
             notifyWaitingThread(getHostPool(configuration));

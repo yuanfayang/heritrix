@@ -40,6 +40,7 @@ public class HashtableAList implements MutableAList, Serializable {
 
     /**
      * Deep Clone: very limited implementation
+     * @return
      */
     public Object clone() {
         HashtableAList copy = new HashtableAList();
@@ -80,7 +81,9 @@ public class HashtableAList implements MutableAList, Serializable {
         return copy;
     }
 
-    /** Shallow copy of fields of <code>other</code> into <code>this</code>. */
+    /** Shallow copy of fields of <code>other</code> into <code>this</code>.
+     * * @param other
+     */
     public void copyFrom(AList other) {
         Iterator keys = other.getKeys();
         while (keys.hasNext()) {
@@ -286,7 +289,10 @@ public class HashtableAList implements MutableAList, Serializable {
 
 
     /** Deep equals.  Arrays need to have same values in same order to
-     *  be considered equal. */
+     *  be considered equal.
+     * @param obj
+     * @return
+     */
     public boolean equals(Object obj) {
         if (! (obj instanceof HashtableAList)) return false;
         HashtableAList o = (HashtableAList)obj;

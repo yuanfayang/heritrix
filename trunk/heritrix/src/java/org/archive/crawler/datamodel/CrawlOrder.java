@@ -54,6 +54,7 @@ public class CrawlOrder extends XMLConfig {
 	 * 
 	 * @param crawlOrderFile
 	 * @return the created CrawlOrder
+	 * @throws InitializationException
 	 */
 	public static CrawlOrder readFromFile(String crawlOrderFile) throws InitializationException {
 		
@@ -82,7 +83,10 @@ public class CrawlOrder extends XMLConfig {
 		return co;
 	}
 	
-	/** Construct a CrawlOrder instance given a Document */
+	/** Construct a CrawlOrder instance given a Document.
+	 * @param doc
+	 * @throws InitializationException
+	 */
 	public CrawlOrder(Document doc) throws InitializationException {
 		this(doc, ".");
 	}
@@ -143,9 +147,6 @@ public class CrawlOrder extends XMLConfig {
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	public String getName() {
 		// if this node doesn't have it but we have a parent conf file check that
 		if(name == null && parentConfigurationFile != null){
@@ -161,9 +162,6 @@ public class CrawlOrder extends XMLConfig {
 		return outputLocation;
 	}
 	
-	/**
-	 * @return
-	 */
 	public String getUserAgent() {
 		if (caseFlattenedUserAgent==null) {
 			caseFlattenedUserAgent =  getStringAt(XP_HTTP_USER_AGENT).toLowerCase();
@@ -171,23 +169,14 @@ public class CrawlOrder extends XMLConfig {
 		return caseFlattenedUserAgent;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getFrom() {
 		return getStringAt(XP_HTTP_FROM);
 	}
 	
-	/**
-		 * @return
-	*/
 	public int getMaxToes() {
 		return getIntAt(XP_MAX_TOE_THREADS);
 	}
 
-	/**
-	 * 
-	 */
 	public String getCrawlOrderFilename() {
 		return crawlOrderFilename;
 	}
