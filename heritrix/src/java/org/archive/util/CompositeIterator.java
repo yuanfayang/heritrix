@@ -24,36 +24,32 @@
 */ 
 package org.archive.util;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 /**
+ * An iterator that's built up out of any number of other iterators.
  * @author gojomo
- *
- * To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
  */
 public class CompositeIterator implements Iterator {
-    LinkedList iterators = new LinkedList();
-    Iterator innerIterator; // of Iterators;
+    ArrayList iterators = new ArrayList(); 
     Iterator currentIterator;
-    
+    int indexOfCurrentIterator = -1;
     
     /**
-     * Sets up internal interators; must be called before using
-     * CompositeIterator instance
+     * Moves to the next (non empty) iterator. Returns false if there are no
+     * more (non empty) iterators, true otherwise.
+     * @return false if there are no more (non empty) iterators, true otherwise.
      */
-    public void begin() {
-        innerIterator = iterators.iterator();
-        cueIterator();
-    }
-    
-    private void cueIterator() {
-        if (innerIterator.hasNext()) {
-            currentIterator = (Iterator) innerIterator.next();
+    private boolean nextIterator() {
+        if (++indexOfCurrentIterator < iterators.size()) {
+            currentIterator = (Iterator) iterators.get(indexOfCurrentIterator);
+            // If the new iterator was empty this will move us to the next one.
+            return hasNext(); 
         } else {
             currentIterator = null;
+            return false;
         }
     }
 
@@ -61,15 +57,12 @@ public class CompositeIterator implements Iterator {
      * @see java.util.Iterator#hasNext()
      */
     public boolean hasNext() {
-        if(currentIterator!=null) {
-            if(currentIterator.hasNext()) {
-                return true;
-            } else {
-                cueIterator();
-                return hasNext();
-            }
+        if(currentIterator!=null && currentIterator.hasNext()) {
+            // Got more
+            return true;
         } else {
-            return false;
+            // Have got more if we can queue up a new iterator.
+            return nextIterator();
         }
     }
     
@@ -77,7 +70,7 @@ public class CompositeIterator implements Iterator {
      * @see java.util.Iterator#next()
      */
     public Object next() {
-        if(currentIterator!=null) {
+        if(hasNext()) {
             return currentIterator.next();
         } else {
             throw new NoSuchElementException();
@@ -112,7 +105,7 @@ public class CompositeIterator implements Iterator {
     /**
      * Add an iterator to the internal chain. 
      * 
-     * @param i
+     * @param i an iterator to add.
      */
     private void add(Iterator i) {
         iterators.add(i);
