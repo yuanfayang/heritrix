@@ -6,7 +6,9 @@
 <%
 	/* Various settings with default values (where applicable) */
 	String mode = request.getParameter("mode");
+    String[] log = null;
 	String logText = "";
+	String logInfo = "";
 	int linesToShow = 50;
 	int iTime = -1;
 	int linenumber = 1;
@@ -63,8 +65,8 @@
 				linenumber = Integer.parseInt(request.getParameter("linenumber"));
 			}
 			catch(Exception e){/*Ignore*/}
-		
-			logText = LogReader.get(diskPath + fileName,linenumber,linesToShow).replaceAll(" ","&nbsp;");
+		  
+		    log = LogReader.get(diskPath + fileName,linenumber,linesToShow);
 		}
 		else if(mode != null && mode.equalsIgnoreCase("time"))
 		{
@@ -79,7 +81,7 @@
 			else
 			{
 				int timestampLinenumber = LogReader.findFirstLineContaining(diskPath+fileName,timestamp+".*");
-				logText = LogReader.get(diskPath + fileName,timestampLinenumber,linesToShow).replaceAll(" ","&nbsp;");
+				log = LogReader.get(diskPath + fileName,timestampLinenumber,linesToShow);
 			}
 		}
 		else if(mode != null && mode.equalsIgnoreCase("regexpr"))
@@ -103,11 +105,11 @@
 				
 				if(indent)
 				{
-					logText = LogReader.getByRegExpr(diskPath + fileName, regexpr, " ", ln);
+					log = LogReader.getByRegExpr(diskPath + fileName, regexpr, " ", ln);
 				}
 				else
 				{
-					logText = LogReader.getByRegExpr(diskPath + fileName, regexpr, 0, ln);
+					log = LogReader.getByRegExpr(diskPath + fileName, regexpr, 0, ln);
 				}
 			}
 		}
@@ -122,14 +124,23 @@
 			}
 			catch(Exception e){/* Ignore - default value will do */}
 			
-			logText = LogReader.tail(diskPath + fileName,linesToShow).replaceAll(" ","&nbsp;");
+			log = LogReader.tail(diskPath + fileName,linesToShow);
 		}
 	} 
 	else 
 	{
 		mode = "tail";
-		logText = "Invalid or missing crawl order";
+		log = new String[]{"Invalid or missing crawl order",""};
 	}
+	
+	if(log != null && log.length>=2){
+	    logText = log[0];
+	    logInfo = log[1];
+	} else {
+	    logText = "";
+	    logInfo = "";
+	}
+	
 	
 	String title = "View logs";
 	int tab = 3;
@@ -327,31 +338,36 @@
 			<td rowspan="5" width="3" nowrap >
 			<td rowspan="5" width="1" nowrap bgcolor="#0c0c0c">
 			</td>
-			<td height="1" colspan="3" bgcolor="#0c0c0c">
+			<td height="1" colspan="4" bgcolor="#0c0c0c">
 			</td>
 			<td rowspan="5" width="1" nowrap bgcolor="#0c0c0c">
 			<td rowspan="5" width="3" nowrap >
 		</tr>
 		<tr>
-			<td colspan="3">
+			<td colspan="2">
 				&nbsp;<%=fileName%> for <%=theJob.getJobName()%>
+            </td>
+            <td colspan="1" align="right">
+				<%=logInfo%>
+			</td>
+			<td>&nbsp;
 			</td>
 		</tr>
 		<tr>
-			<td height="1" colspan="3" bgcolor="#0c0c0c">
+			<td height="1" colspan="4" bgcolor="#0c0c0c">
 			</td>
 		</tr>
 		<tr>
-			<td colspan="3" class="main" width="400" height="100" valign="top">
+			<td colspan="4" class="main" width="400" height="100" valign="top">
 					<pre><%=logText%></pre>
 			</td>
 		</tr>
 		<tr>
-			<td height="1" colspan="3" bgcolor="#0c0c0c">
+			<td height="1" colspan="4" bgcolor="#0c0c0c">
 			</td>
 		</tr>
 		<tr>
-			<td height="5" colspan="3">
+			<td height="5" colspan="4">
 			</td>
 		</tr>
 	</table>
