@@ -3112,6 +3112,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       The submission will hang a long time as the recover.gz file is
       read by the frontier.  Eventually the submit should complete.
       The crawl should pick up from close to where the crash occurred.
+      There is no marking in the logs that this crawl was started
+      by reading a recover log (Be sure to mark this was done in the
+      crawl journal).
       </para>
       <para>The recovery log is gzipped because it gets very large
       otherwise and because of the reptition of terms, it compresses
