@@ -69,7 +69,7 @@ public class SurtPrefixScope extends RefinedScope {
                         ""));
         addElementToDefinition(
                 new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES, 
-                        "Should seeds also be intepreted as SURT prefixes.", 
+                        "Should seeds also be interpreted as SURT prefixes.", 
                         DEFAULT_SEEDS_AS_SURT_PREFIXES));
         
         Type t = addElementToDefinition(
