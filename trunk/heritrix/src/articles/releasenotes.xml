@@ -69,6 +69,14 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
 
         </sect3>
 
+        <sect3 id="ibmjvmredux"><title>IBM JVM Redux</title>
+            <para>Testing with <literal>IBM JVM 1.4.2 (Classic VM
+            (build 1.4.2, J2RE 1.4.2 IBM build cxia32142sr1a-20050209
+            (JIT enabled: jitc)))</literal> using Heritrix 1.4.0, the SSL
+            problem described in <xref linkend="ibmjvm" /> is no longer
+            present.</para>
+        </sect3>
+
     </sect2>
     <sect2 id="1_4_0_limitations">
       <title>Known Limitations/Issues</title>
