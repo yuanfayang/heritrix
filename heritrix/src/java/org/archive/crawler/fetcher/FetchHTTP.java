@@ -48,19 +48,21 @@ import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.HttpVersion;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.auth.AuthChallengeParser;
 import org.apache.commons.httpclient.auth.AuthScheme;
 import org.apache.commons.httpclient.auth.BasicScheme;
 import org.apache.commons.httpclient.auth.DigestScheme;
 import org.apache.commons.httpclient.auth.MalformedChallengeException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.params.HttpClientParams;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
@@ -88,6 +90,8 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
+import org.archive.httpclient.SingleHttpConnectionManager;
+import org.archive.httpclient.ThreadLocalHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ArchiveUtils;
@@ -177,6 +181,18 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * What to log if midfetch abort.
      */
     private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
+    
+    public static final String ATTR_SEND_CONNECTION_CLOSE =
+        "send-connection-close";
+    private static final Header HEADER_SEND_CONNECTION_CLOSE =
+        new Header("Connection", "close");
+    public static final String ATTR_SEND_REFERER = "send-referer";
+    public static final String ATTR_SEND_RANGE = "send-range";
+    public static final String REFERER = "Referer";
+    public static final String RANGE = "Range";
+    public static final String RANGE_PREFIX = "bytes=0-";
+    public static final String HTTP_SCHEME = "http";
+    public static final String HTTPS_SCHEME = "https";
 
     /**
      * Constructor.
@@ -243,7 +259,38 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 "Whether or not to perform an on-the-fly SHA1 hash of" +
                 "retrieved content-bodies.",
                 DEFAULT_SHA1_CONTENT));
-            e.setExpertSetting(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_SEND_CONNECTION_CLOSE,
+            "Send 'Connection: close' header with every request.",
+             new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_SEND_REFERER,
+             "Send 'Referer' header with every request.\n" +
+             "The 'Referer' header contans the location the crawler came " +
+             " from, " +
+             "the page the current URI was discovered in. The 'Referer' " +
+             "usually is " +
+             "logged on the remote server and can be of assistance to " +
+             "webmasters trying to figure how a crawler got to a " +
+             "particular area on a site.",
+             new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_SEND_RANGE,
+              "Send 'Range' header when a limit (" + ATTR_MAX_LENGTH_BYTES +
+              ") on document size.\n" +
+              "Be polite to the HTTP servers and send the 'Range' header," +
+              "stating that you are only interested in the first n bytes. " +
+              "Only pertinent if " + ATTR_MAX_LENGTH_BYTES + " > 0. " +
+              "Sending the 'Range' header results in a " +
+              "'206 Partial Content' status response, which is better than " +
+              "just cutting the response mid-download. On rare occasion, " +
+              " sending 'Range' will " +
+              "generate '416 Request Range Not Satisfiable' response.",
+              new Boolean(false)));
+           e.setOverrideable(true);
+           e.setExpertSetting(true); 
     }
 
     protected void innerProcess(final CrawlURI curi)
@@ -558,7 +605,34 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
             new HeritrixHttpMethodRetryHandler());
         
-        maybeSetAcceptHeaders(curi, method);
+        final long maxLength = getMaxLength(curi);
+        if(maxLength > 0 &&
+                ((Boolean)getUncheckedAttribute(curi, ATTR_SEND_RANGE)).
+                    booleanValue()) {
+            method.addRequestHeader(RANGE,
+                RANGE_PREFIX.concat(Long.toString(maxLength - 1)));
+        }
+        
+        if (((Boolean)getUncheckedAttribute(curi,
+                ATTR_SEND_CONNECTION_CLOSE)).booleanValue()) {
+            method.addRequestHeader(HEADER_SEND_CONNECTION_CLOSE);
+        }
+        
+        if (((Boolean)getUncheckedAttribute(curi,
+                ATTR_SEND_REFERER)).booleanValue()) {
+            // RFC2616 says no referer header if referer is https and the url
+            // is not
+            String via = curi.flattenVia();
+            if (via != null && via.length() > 0 &&
+                !(via.startsWith(HTTPS_SCHEME) &&
+                    curi.getUURI().getScheme().equals(HTTP_SCHEME))) {
+                method.setRequestHeader(REFERER, via);
+            }
+        }
+        
+        // TODO: What happens if below method adds a header already
+        // added above: e.g. Connection, Range, or Referer?
+        setAcceptHeaders(curi, method);
     }
 
     /**
@@ -836,36 +910,25 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Get timeout.  Use it for socket and for connection timeout.
         int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
         
-        MultiThreadedHttpConnectionManager cm =
-            new MultiThreadedHttpConnectionManager();
-        // TODO: Tie this to host valence in frontier (When its made
-        // work properly).
-        cm.getParams().setDefaultMaxConnectionsPerHost(10);
+        // HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
+        HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
         
-        // Multiply toethread max by 2 in case one is occupied when
-        // we go to get another (Allow some slack).
-        // Also, if max total connections is less than toe threads, 
-        // then getting a connection becomes a bottleneck (See
-        // '[ 1080925 ] MultiThreadedConnectionManager bottleneck').
-        // For now, hardcode max total connections so never less that
-        // 400.  TODO: Revisit and have max total connections follow
-        // toethread count or do away with MTHCM as per a suggestion
-        // in above cited issue.
-        cm.getParams().setMaxTotalConnections(Math.
-            max(getController().getOrder().getMaxToes() * 2, 400));
-        cm.getParams().setConnectionTimeout(timeout);
-        cm.getParams().setStaleCheckingEnabled(true);
+        // TODO: The following settings should be made in the corresponding
+        // HttpConnectionManager, not here.
+        HttpConnectionManagerParams hcmp = cm.getParams();
+        hcmp.setConnectionTimeout(timeout);
+        hcmp.setStaleCheckingEnabled(true);
         // Minimizes bandwidth usage.  Setting to true disables Nagle's
-        // alogarthim.  IBM JVMs < 142 give an NPE setting this boolean
+        // algorithm.  IBM JVMs < 142 give an NPE setting this boolean
         // on ssl sockets.
-        cm.getParams().setTcpNoDelay(false);
-        this.http = new HttpClient(cm);
+        hcmp.setTcpNoDelay(false);
         
+        this.http = new HttpClient(cm);
+        HttpClientParams hcp = this.http.getParams();
         // Set default socket timeout.
-        this.http.getParams().setSoTimeout(timeout);
-
+        hcp.setSoTimeout(timeout);
         // Set client to be version 1.0.
-        this.http.getParams().setVersion(HttpVersion.HTTP_1_0);
+        hcp.setVersion(HttpVersion.HTTP_1_0);
         
         // Use our own protocol factory, one that gets IP to use from
         // heritrix cache (They're cached in CrawlHost instances).
@@ -1161,7 +1224,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
     }
     
-    private void maybeSetAcceptHeaders(CrawlURI curi, HttpMethod get) {
+    private void setAcceptHeaders(CrawlURI curi, HttpMethod get) {
         try {
             StringList accept_headers = (StringList) getAttribute(ATTR_ACCEPT_HEADERS, curi);
             if (!accept_headers.isEmpty()) {
