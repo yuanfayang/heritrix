@@ -8,6 +8,7 @@ package org.archive.crawler.admin;
  */
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -17,8 +18,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.admin.AdminConstants;
-import org.archive.crawler.admin.OrderTransformation;
 import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.InitializationException;
@@ -33,7 +32,7 @@ import org.w3c.dom.Node;
  */
 public class AdminController extends HttpServlet implements AdminConstants {
 
-	private String orderFile = "order.xml";
+	private String orderFile;
 	private boolean crawling = false;
 	private String statusMessage = "Welcome";
 	private int crawlerAction = -1;
@@ -43,15 +42,29 @@ public class AdminController extends HttpServlet implements AdminConstants {
 	private OrderTransformation orderTransform;
 
 	public AdminController() {
+		// Default order file;
+		orderFile  = WEB_APP_PATH + DEFAULT_ORDER_FILE;
+		
+		String aOrderFile = System.getProperty("OrderFile"); 
+		if ( aOrderFile != null){
+			File f = new File(aOrderFile);
+			if(!f.isAbsolute()){
+				orderFile = System.getProperty("user.dir") + "/" + aOrderFile;				
+			}else{
+				orderFile = aOrderFile;
+			}
+			System.out.println(orderFile);
+		}
 		controller = new CrawlController();
 		orderTransform = new OrderTransformation();
 		try {
 			orderNode =
-				OrderTransformation.readDocumentFromFile(
-					WEB_APP_PATH + orderFile);
+				OrderTransformation.readDocumentFromFile(orderFile);
 			orderTransform.setNode(orderNode);
-			orderTransform.transformXMLToHTML(
-				WEB_APP_PATH + ORDER_HTML_FORM_PAGE);
+			orderTransform.transformXMLtoHTML(
+				WEB_APP_PATH + ORDER_HTML_FORM_PAGE,
+				orderFile,
+				WEB_APP_PATH + XSL_STYLE);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace(System.out);
@@ -124,7 +137,7 @@ public class AdminController extends HttpServlet implements AdminConstants {
 	public void startCrawling() {
 		try {
 			CrawlOrder order =
-				CrawlOrder.readFromFile(WEB_APP_PATH + orderFile);
+				CrawlOrder.readFromFile(orderFile);
 			controller.initialize(order);
 		} catch (InitializationException e) {
 			//TODO Report Error
@@ -191,11 +204,11 @@ public class AdminController extends HttpServlet implements AdminConstants {
 				e.printStackTrace();
 			}
 		}
-		orderFile = "order.tmp.xml";
-		orderTransform.serializeToXMLFile(WEB_APP_PATH + orderFile);
-		orderTransform.transformXMLToHTML(
+		orderFile = WEB_APP_PATH + "order.tmp.xml";
+		orderTransform.serializeToXMLFile(orderFile);
+		orderTransform.transformXMLtoHTML(
 			WEB_APP_PATH + ORDER_HTML_FORM_PAGE,
-			WEB_APP_PATH + orderFile,
+			orderFile,
 			WEB_APP_PATH + XSL_STYLE);
 		setStatusMessage(CRAWL_ORDER_UPDATED);
 	}
