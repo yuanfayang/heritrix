@@ -53,8 +53,9 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
     private final static Integer DEFAULT_ROBOTS_VALIDITY_DURATION =
         new Integer(3*(60*24)); // three days
 
-    public final static String ATTR_IP_VALIDITY_DURATION =
-        "ip-validity-duration-m";
+    /** minutes to keep IP information for */
+    public final static String ATTR_IP_VALIDITY_DURATION = "ip-validity-duration-m";
+    /** minutes to cache robots info */ 
     public final static String ATTR_ROBOTS_VALIDITY_DURATION = "robot-validity-duration-m";
 
     /**
@@ -158,6 +159,21 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             return true;
         }
         
+        // if we've done a dns lookup and it didn't resolve a host
+        // cancel further fetch-processing of this URI, because
+        // the domain is unresolvable
+        if (curi.getServer().getHost().hasBeenLookedUp()
+            && curi.getServer().getHost().getIP() == null) {
+            logger.fine(
+                "no dns for "
+                    + curi.getServer().toString()
+                    + " cancelling processing for "
+                    + curi.toString());
+            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            return true;
+        }
+        
         // if we haven't done a dns lookup  and this isn't a dns uri
         // shoot that off and defer further processing
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
@@ -173,24 +189,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             return true;
         }
 
-        // if we've done a dns lookup and it didn't resolve a host
-        // cancel all processing of this URI
-        if (curi.getServer().getHost().hasBeenLookedUp()
-            && curi.getServer().getHost().getIP() == null) {
-            logger.fine(
-                "no dns for "
-                    + curi.getServer().toString()
-                    + " cancelling processing for "
-                    + curi.toString());
-
-            //TODO currently we're using FetchAttempts to denote both fetch attempts and
-            // the choice to not attempt (here).  Eventually these will probably have to be treated seperately
-            // to allow us to treat dns failures and connections failures (downed hosts, route failures, etc) seperately.
-            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-            //curi.incrementFetchAttempts();
-            curi.skipToProcessorChain(getController().getPostprocessorChain());
-            return true;
-        }
+        // DNS preconditions OK
         return false;
     }
 
@@ -243,7 +242,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 
     /** Get the maximum time a robots.txt is valid.
      * 
-     * @param settings the settings object this time is valid for.
+     * @param curi
      * @return the time a robots.txt is valid in milliseconds.
      */
     public long getRobotsValidityDuration(CrawlURI curi) {
@@ -264,7 +263,8 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
     * This method will also return true if we haven't tried to get the
     * robots.txt for this server. 
     * 
-    * @return true if the robots policy is expired.
+    * @param curi
+     * @return true if the robots policy is expired.
     */
    public boolean isRobotsExpired(CrawlURI curi) {
        long robotsFetched = curi.getServer().getRobotsFetchedTime();
