@@ -29,12 +29,13 @@
         obvious explaination when running with NPTL threading on linux.
         Doing a thread dump on the hung crawler, one version of the hung
         crawler has threads waiting to obtain a lock that no one apparently
-        holds.  Our reading has these rare, odd hangs as a problem in glbc2.3.2
+        holds.  Our reading has these rare, crawl-killing, hangs as a problem
+        in glbc2.3.2
         when running with NPTL (NPTL 0.60) (We used to hang frequently but
-        workarounds have gotten mitigated the frequency of lockup).
-        An upgrade to glibc2.3.3 seems to
-        do away with these hangs (Glibc2.3.3 has NPTL 0.61, at least on recent
-        fedora core releases). If an upgrade is not possible -- for example,
+        workarounds seem to have mitigated the frequency of lockup making it
+        extremely rare).  An upgrade to glibc2.3.3+ seems to do away with
+        these hangs.  Glibc2.3.3 has NPTL 0.61.  Fedora3 has glibc2.3.4.
+        If an upgrade is not possible -- for example,
         the new glibc is not currently available for debian -- you can
         disable NPTL and run with old threads by setting the environment
         variable <literal>LD_ASSUME_KERNEL=2.4.1</literal> (You can 
@@ -51,7 +52,11 @@
         <literal>PATH_TO_GLIBC/lib.so.6</literal>, usually
         <literal>/lib/lib.so.6</literal>, will list details on glibc. Look in
         the listing for either 'nptl' or 'linuxthreads'.  On debian systems,
-        lib.so.6 is not executable but you can make it so.
+        lib.so.6 is not executable but you can make it so.  You can also do
+        the following to determine library versions and which threading you
+        are using: <literal>% getconf GNU_LIBC_VERSION</literal> and
+        <literal>% getconf GNU_LIBPTHREAD_VERSION</literal>.
+        
         </para>
         <para>See <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1086554&amp;group_id=73833&amp;atid=539099">[ 1086554 ] glibc 2.3.2 NPTL hang (Was bdbfrontier stall in...)</ulink> for more on the issue.</para>
       </sect3>
