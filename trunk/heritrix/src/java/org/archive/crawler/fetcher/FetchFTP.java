@@ -107,6 +107,7 @@ public class FetchFTP extends Processor {
 
     /**
      * Verifies if the specified curi should be fetched by this processor.
+     * @param curi
      * @return true if this processor should fetch the specified curi.
      */
     private boolean shouldFetch(CrawlURI curi) {
