@@ -61,7 +61,6 @@ import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
 import st.ata.util.FPGenerator;
-import EDU.oswego.cs.dl.util.concurrent.ClockDaemon;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -150,16 +149,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     /** 'retired' queues, no longer considered for activation */
     protected LinkedQueue retiredQueues = new LinkedQueue();
-
-    /** moves waking items from snoozedClassQueues to readyClassQueues */
-    protected ClockDaemon wakeDaemon = new ClockDaemon();
-    
-    /** runnable task to wake snoozed queues */
-    protected Runnable waker = new Runnable() {
-        public void run() {
-            BdbFrontier.this.wakeQueues();
-        }
-    };
     
     /** shared bdb Environment for Frontier subcomponents */
     // TODO: investigate using multiple environments to split disk accesses
@@ -171,6 +160,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     /** a policy for assigning 'cost' values to CrawlURIs */
     private CostAssignmentPolicy costAssignmentPolicy;
+    
+    /**
+     * A snoozed queue will be available at this time.
+     * Gets updated when queues are snoozed.
+     */
+    private volatile long nextWakeupTime = -1;
+    
     
     /** all policies available to be chosen */
     String[] AVAILABLE_COST_POLICIES = new String[] {
@@ -322,10 +318,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             this.pendingUris = null;
         }
         this.snoozedClassQueues = null;
-        if (this.wakeDaemon != null) {
-            this.wakeDaemon.shutDown();
-            this.wakeDaemon = null;
-        }
         this.queueAssignmentPolicy = null;
         this.readyClassQueues = null;
         this.dbEnvironment = null;
@@ -540,14 +532,20 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         while (true) { // loop left only by explicit return or exception
             long now = System.currentTimeMillis();
 
-            // do common checks for pause, terminate, bandwidth-hold
+            // Do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             
-            // don't wait if there are items buffered in alreadyIncluded or
-            // inactive queues
+            // If time, wake any snoozed queues.
+            long timeTilWake = this.nextWakeupTime - now;
+            if (timeTilWake <= 0) {
+                this.wakeQueues();
+                timeTilWake = this.nextWakeupTime - now;
+            }
+            // Don't wait if there are items buffered in alreadyIncluded or
+            // inactive queues, or wait any longer than interval to next wake
             long wait = (alreadyIncluded.pending() > 0)
-                    || (!inactiveQueues.isEmpty()) ? 0 : DEFAULT_WAIT;
-            
+                    || (!inactiveQueues.isEmpty()) ? 0 : Math.min(DEFAULT_WAIT,timeTilWake);
+
             BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
             if (readyQ != null) {
                 while(true) { // loop left by explicit return or break on empty
@@ -635,7 +633,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private void activateInactiveQueue() throws InterruptedException {
         BdbWorkQueue candidateQ = (BdbWorkQueue) inactiveQueues.poll(0);
-        if(candidateQ!=null) {
+        if(candidateQ != null) {
             synchronized(candidateQ) {
                 replenishSessionBalance(candidateQ);
                 if(candidateQ.isOverBudget()){
@@ -687,55 +685,29 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     void wakeQueues() {
         long now = System.currentTimeMillis();
-        int tasksCompleted = 0;
-        long interval = -1;
+        // Set default next wake time to be in one millisecond in case nothing
+        // to wake.
+        long nextWakeTime = now + DEFAULT_WAIT;
+        int wokenQueuesCount = 0;
         synchronized (snoozedClassQueues) {
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
                     break;
                 }
                 BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
-                interval = peek.getWakeTime() - now;
-                if (interval <= 0) {
+                nextWakeTime = peek.getWakeTime();
+                if ((nextWakeTime - now) <= 0) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
-                    tasksCompleted++;
+                    wokenQueuesCount++;
                 } else {
                     break;
                 }
             }
         }
-        if (tasksCompleted <= 0 && (interval > 0)){
-            final long maxSleepTime = 100;
-            // We've done no work. Go to sleep to stop wait/notify trashing.
-            // We trash because without the below sleep, we leave here and
-            // go into a wait.  In times of high concurrency we're
-            // continually notified out of the ClockDaemon#restart method
-            // everytime a new task is added to the queue.  I've logged
-            // this happening on occasion at over 100 times a second.  Adding
-            // in this damping effect because its possible to hang this thread
-            // inside ClockDaemon#wait such that it is not even
-            // interruptable on jdk1.5.0. This addition does not eliminate the
-            // hang.  It does postpone it (Hang happens after 8 hours of
-            // highspeed crawling rather than after 30mins-2hrs).
-            //
-            // Don't sleep more than 100 milliseconds in case something
-            // gets scheduled ahead of current head of queue while
-            // we're asleep (Items are scheduled at now + politeness or
-            // now + retry interval; the latter could get scheduled first.
-            // Could make for some takeup lag if politeness is off or
-            // retries are on a dime.
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("Sleeping for " + Math.min(interval,
-                    maxSleepTime));
-            }
-            try {
-                Thread.sleep(Math.min(interval, maxSleepTime));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        
+        this.nextWakeupTime = Math.max(now, nextWakeTime);
     }
 
     /**
@@ -838,10 +810,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @param delay_ms time to snooze in ms
      */
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
-        wq.setWakeTime(now+delay_ms);
+        long nextTime = now + delay_ms;
+        wq.setWakeTime(nextTime);
         snoozedClassQueues.add(wq);
-//        logger.info("executeAfterDelay("+delay_ms+" for "+wq.getClassKey()+")");
-        wakeDaemon.executeAfterDelay(delay_ms, waker);
+        // Update nextWakeupTime if we're supposed to wake up even sooner.
+        if (nextTime < this.nextWakeupTime) {
+            this.nextWakeupTime = nextTime;
+        }
     }
 
     /**
