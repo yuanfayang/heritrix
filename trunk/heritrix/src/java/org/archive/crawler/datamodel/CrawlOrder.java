@@ -55,6 +55,7 @@ public class CrawlOrder extends CrawlerModule {
     public static final String ATTR_NAME = "crawl-order";
     public static final String ATTR_SETTINGS_DIRECTORY = "settings-directory";
     public static final String ATTR_DISK_PATH = "disk-path";
+    public static final String ATTR_RECOVER_PATH = "recover-path";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
     public static final String ATTR_MAX_DOCUMENT_DOWNLOAD = "max-document-download";
     public static final String ATTR_MAX_TIME_SEC = "max-time-sec";
@@ -130,6 +131,11 @@ public class CrawlOrder extends CrawlerModule {
 
         loggers = (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
                 "Loggers"));
+        
+        e = addElementToDefinition(new SimpleType(ATTR_RECOVER_PATH,
+                "Optional recover.log to preload Frontier", ""));
+        e.setOverrideable(false);
+
     }
 
     public String getUserAgent(CrawlURI curi) {
