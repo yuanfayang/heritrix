@@ -140,7 +140,7 @@ public class CrawlOrder extends ModuleType {
                 ATTR_HTTP_HEADERS, "HTTP headers. \nInformation that will " +
                         "be used when constructing the HTTP headers of " +
                         "the crawler's HTTP requests."));
-        
+       
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
                 "User agent to act as. \nThis field must contain a valid " +
                 "URL leading to the website of the person or organization " +
@@ -162,8 +162,9 @@ public class CrawlOrder extends ModuleType {
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
-        addElementToDefinition(new ModuleType(
+        e = addElementToDefinition(new ModuleType(
                 URIFrontier.ATTR_NAME, "Frontier"));
+        e.setLegalValueType(URIFrontier.class);
 
         e = addElementToDefinition(new MapType(
                 ATTR_PRE_FETCH_PROCESSORS, "Processors to be run prior to" +
