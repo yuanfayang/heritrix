@@ -55,12 +55,6 @@ public class TmpDirTestCase extends TestCase
      */
     private File tmpDir = null;
 
-    /**
-     * Store in here the file prefix for filefiltering done by some of the
-     * unit tests.
-     */
-    private String fileFilterPrefix = null;
-
 
     public TmpDirTestCase()
     {
@@ -80,15 +74,15 @@ public class TmpDirTestCase extends TestCase
         super.setUp();
         String tmpDirStr = System.getProperty(TEST_TMP_SYSTEM_PROPERTY_NAME);
         tmpDirStr = (tmpDirStr == null)? DEFAULT_TEST_TMP_DIR: tmpDirStr;
-        tmpDir = new File(tmpDirStr);
-        if (!tmpDir.exists())
+        this.tmpDir = new File(tmpDirStr);
+        if (!this.tmpDir.exists())
         {
-            tmpDir.mkdirs();
+            this.tmpDir.mkdirs();
         }
 
-        if (!tmpDir.canWrite())
+        if (!this.tmpDir.canWrite())
         {
-            throw new IOException(tmpDir.getAbsolutePath() +
+            throw new IOException(this.tmpDir.getAbsolutePath() +
                  " is unwriteable.");
         }
     }
@@ -106,7 +100,7 @@ public class TmpDirTestCase extends TestCase
      */
     public File getTmpDir()
     {
-        return tmpDir;
+        return this.tmpDir;
     }
 
     /**
