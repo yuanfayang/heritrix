@@ -78,7 +78,7 @@ public class FloatList extends ListType {
         addAll(l);
     }
 
-    /** Add a new @link java.lang.Float at the specified index to this list.
+    /** Add a new {@link java.lang.Float} at the specified index to this list.
      * 
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
@@ -96,7 +96,7 @@ public class FloatList extends ListType {
         super.add(index, new Float(element));
     }
 
-    /** Add a new @link java.lang.Float at the end of this list.
+    /** Add a new {@link java.lang.Float} at the end of this list.
      * 
      * @param element the value to be added.
      */

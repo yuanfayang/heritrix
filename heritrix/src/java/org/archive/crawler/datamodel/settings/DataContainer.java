@@ -297,15 +297,17 @@ public class DataContainer extends HashMap {
         return (Type) super.remove(element.getName()); 
     }
     
-    /**
-     * @return
+    /** Get the ComplexType for which this DataContainer keeps data.
+     * 
+     * @return the ComplexType for which this DataContainer keeps data.
      */
     protected ComplexType getComplexType() {
         return complexType;
     }
 
-    /**
-     * @return
+    /** Get the settings object for which this DataContainers data are valid.
+     * 
+     * @return the settings object for which this DataContainers data are valid.
      */
     protected CrawlerSettings getSettings() {
         return settings;

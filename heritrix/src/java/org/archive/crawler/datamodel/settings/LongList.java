@@ -53,7 +53,7 @@ public class LongList extends ListType {
     }
 
     /** Creates a new LongList and initializes it with the values from
-     * an array of @link java.lang.Long.
+     * an array of {@link java.lang.Long}.
      * 
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
@@ -78,7 +78,7 @@ public class LongList extends ListType {
         addAll(l);
     }
 
-    /** Add a new @link java.lang.Long at the specified index to this list.
+    /** Add a new {@link java.lang.Long} at the specified index to this list.
      * 
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
@@ -96,7 +96,7 @@ public class LongList extends ListType {
         super.add(index, new Long(element));
     }
 
-    /** Add a new @link java.lang.Long at the end of this list.
+    /** Add a new {@link java.lang.Long} at the end of this list.
      * 
      * @param element the value to be added.
      */

@@ -170,7 +170,7 @@ public class XMLSettingsHandler extends SettingsHandler {
 
     /** Write a CrawlerSettings object to a specified file.
      * 
-     * This method is similar to @link #writeSettingsObject(CrawlerSettings)
+     * This method is similar to {@link #writeSettingsObject(CrawlerSettings)}
      * except that it uses the submitted File object instead of trying to
      * resolve where the file should be written.
      * 

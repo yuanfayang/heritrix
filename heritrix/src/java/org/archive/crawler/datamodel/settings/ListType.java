@@ -179,7 +179,7 @@ public abstract class ListType extends Type {
     /** Returns this object.
      * 
      * This method is implemented to be able to treat the ListType as an
-     * subclass of @link javax.management.Attribute.
+     * subclass of {@link javax.management.Attribute}.
      * 
      * @return this object.
      * @see javax.management.Attribute#getValue()

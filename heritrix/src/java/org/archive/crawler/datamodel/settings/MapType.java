@@ -44,7 +44,8 @@ import javax.management.MBeanAttributeInfo;
  *   <li>You can not remove elements from the map it overrides. If it is
  *       necessary to be able to remove an element, this has to be done by
  *       adding some disable feature to the modules referenced by the map. An
- *       example of this is the enabled attribute on the @link Filter class. 
+ *       example of this is the enabled attribute on the
+ *       {@link org.archive.crawler.framework.Filter} class. 
  *   <li>All elements defined in maps that this map overrides might have their
  *       settings changed, but the order can not be changed.
  * </ul>
@@ -52,6 +53,7 @@ import javax.management.MBeanAttributeInfo;
  * @author John Erik Halse
  */
 public class MapType extends ComplexType {
+    /** The content type allowed for this map. */
     private final Class contentType;
 
     /** Construct a new MapType object.

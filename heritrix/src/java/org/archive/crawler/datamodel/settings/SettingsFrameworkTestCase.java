@@ -96,63 +96,63 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase {
     }
 
     /**
-     * @return
+     * @return global settings
      */
     public CrawlerSettings getGlobalSettings() {
         return globalSettings;
     }
 
     /**
-     * @return
+     * @return per domain settings
      */
     public CrawlerSettings getPerDomainSettings() {
         return perDomainSettings;
     }
 
     /**
-     * @return
+     * @return per host settings
      */
     public CrawlerSettings getPerHostSettings() {
         return perHostSettings;
     }
 
     /**
-     * @return
+     * @return settings handler
      */
     public XMLSettingsHandler getSettingsHandler() {
         return settingsHandler;
     }
 
     /**
-     * @return
+     * @return the order file
      */
     public File getOrderFile() {
         return orderFile;
     }
 
     /**
-     * @return
+     * @return the settings directory
      */
     public File getSettingsDir() {
         return settingsDir;
     }
 
     /**
-     * @return
+     * @return a uri matching the domain settings
      */
     public CrawlURI getMatchDomainURI() {
         return matchDomainURI;
     }
 
     /**
-     * @return
+     * @return a uri matching the per host settings
      */
     public CrawlURI getMatchHostURI() {
         return matchHostURI;
     }
 
     /**
-     * @return
+     * @return a uri that doesn't match any settings object except globals.
      */
     public CrawlURI getUnMatchedURI() {
         return unMatchedURI;
