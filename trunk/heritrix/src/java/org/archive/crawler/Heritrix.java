@@ -182,7 +182,12 @@ public class Heritrix {
      * startup script directs stderr/stdout here. This is a DEPENDENCY the shell
      * wrapper has on this here java heritrix.
      */
-    static final String HERITRIX_OUT_FILE = "heritrix_out.log";
+    static String HERITRIX_OUT_FILE = "heritrix_out.log";
+    
+    /**
+     * Key used to get name of the HERITRIX_OUT_FILE from system properties.
+     */
+    private static final String HERITRIX_OUT_FILE_KEY = "heritrix.out";
 
     /**
      * Where to write this classes startup output.
@@ -240,6 +245,10 @@ public class Heritrix {
     public static void main(String[] args)
     throws Exception {
         Heritrix.commandLine = true;
+        String tmp = System.getProperty(HERITRIX_OUT_FILE_KEY);
+        if (tmp != null && tmp.length() > 0) {
+            Heritrix.HERITRIX_OUT_FILE = tmp;
+        }
         File startLog = new File(getHeritrixHome(), STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? 
             System.out:
