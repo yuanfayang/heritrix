@@ -84,7 +84,6 @@ import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.ConfigurableX509TrustManager;
-import org.archive.httpclient.DNSJavaProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
 import org.archive.io.RecorderLengthExceededException;
@@ -103,7 +102,7 @@ import org.archive.util.HttpRecorder;
  * @version $Id$
  */
 public class FetchHTTP extends Processor
-    	implements CoreAttributeConstants, FetchStatusCodes {
+implements CoreAttributeConstants, FetchStatusCodes {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
@@ -810,8 +809,15 @@ public class FetchHTTP extends Processor
         // load cookies from a file if specified in the order file.
         loadCookies();
     }
+    
+    public void finalTasks() {
+        // Release all associated resources.
+        HeritrixProtocolSocketFactory.cleanup();
+        // At the end save cookies to the file specified in the order file.
+        saveCookies();
+    }
 
-    void configureHttp() throws RuntimeException {
+    protected void configureHttp() throws RuntimeException {
         // Get timeout.  Use it for socket and for connection timeout.
         int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
         
@@ -837,12 +843,11 @@ public class FetchHTTP extends Processor
         // Set client to be version 1.0.
         this.http.getParams().setVersion(HttpVersion.HTTP_1_0);
         
-        // Use our own protocol factory, one that goes to 
-        // dnsjava to do lookups rather than to native InetAddress
-        // lookup.  Without this factory, dnsjava does one lookup
-        // and then the native InetAddress does its own lookup.
+        // Use our own protocol factory, one that gets IP to use from
+        // heritrix cache (They're cached in CrawlHost instances).
         Protocol.registerProtocol("http", new Protocol("http",
-            DNSJavaProtocolSocketFactory.getSocketFactory(), 80));
+            HeritrixProtocolSocketFactory.getSocketFactory(), 80));
+        HeritrixProtocolSocketFactory.initialize(getController());
 
         // Put in place a configurable trustmanager as well as go
         // by dnsjava to lookup remote hosts.
@@ -1094,14 +1099,6 @@ public class FetchHTTP extends Processor
                 e.printStackTrace();
             }
         }
-    }
-    /**
-     * At the end save cookies to the file specified in the order file.
-     *
-     * @see org.archive.crawler.framework.Processor#finalTasks()
-     */
-    public void finalTasks() {
-        saveCookies();
     }
 
     /* (non-Javadoc)
