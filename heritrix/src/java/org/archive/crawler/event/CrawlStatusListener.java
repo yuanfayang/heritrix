@@ -62,7 +62,7 @@ public interface CrawlStatusListener
      * Called when a CrawlController is actually paused (all threads are idle).
      *
      * @param statusMessage Should be {@link org.archive.crawler.admin.CrawlJob#STATUS_PAUSED}.
-     * 						Passed for convenience
+     *                         Passed for convenience
      */
     public void crawlPaused(String statusMessage);
 
@@ -70,7 +70,7 @@ public interface CrawlStatusListener
      * Called when a CrawlController is resuming a crawl that had been paused.
      *
      * @param statusMessage Should be {@link org.archive.crawler.admin.CrawlJob#STATUS_RUNNING}.
-     * 						Passed for convenience
+     *                         Passed for convenience
      */
     public void crawlResuming(String statusMessage);
 }

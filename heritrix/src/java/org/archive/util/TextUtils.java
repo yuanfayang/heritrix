@@ -34,7 +34,7 @@ public class TextUtils {
 //     * @deprecated Use @link LogReader#tail(String) instead.
 //     */
 //    public static String tail(String aFileName) {
-//    	return LogReader.tail(aFileName, 10);
+//        return LogReader.tail(aFileName, 10);
 //    }
 
 //    /**
@@ -46,7 +46,7 @@ public class TextUtils {
 //     * @deprecated Use @link LogReader#tail(String, int) instead.
 //     */
 //    public static String tail(String aFileName, int n) {
-//    	return LogReader.tail(aFileName, n);
+//        return LogReader.tail(aFileName, n);
 //    }
 
     /** Reusable precompiled Pattern objects indexed on pattern string. */
@@ -93,14 +93,14 @@ public class TextUtils {
      * @param m the Matcher object that is no longer needed.
      */
     public static void freeMatcher(Matcher m) {
-    	Stack matchers;
-    	if((matchers = (Stack) patternMatchers.get(m.pattern().pattern()))
+        Stack matchers;
+        if((matchers = (Stack) patternMatchers.get(m.pattern().pattern()))
             == null) {
 
-    		// This matcher wasn't created by any pattern in the map, throw it away
-    		return;
-    	}
-    	matchers.push(m);
+            // This matcher wasn't created by any pattern in the map, throw it away
+            return;
+        }
+        matchers.push(m);
     }
 
     /**
@@ -116,9 +116,9 @@ public class TextUtils {
     public static String replaceAll(
             String pattern, CharSequence input, String replacement) {
         Matcher m = getMatcher(pattern, input);
-    	String res = m.replaceAll(replacement);
+        String res = m.replaceAll(replacement);
         freeMatcher(m);
-    	return res;
+        return res;
     }
 
     /**

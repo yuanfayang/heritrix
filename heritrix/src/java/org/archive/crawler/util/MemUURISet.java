@@ -39,63 +39,63 @@ public class MemUURISet extends HashSet implements UURISet {
      * @see org.archive.crawler.datamodel.UURISet#size()
      */
     public long count() {
-    	return size();
+        return size();
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.UURI)
      */
     public boolean contains(UURI u) {
-    	return contains((Object)u);
+        return contains((Object)u);
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.CrawlURI)
      */
     public boolean contains(CandidateURI curi) {
-    	return contains((Object)curi.getUURI());
+        return contains((Object)curi.getUURI());
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.UURI)
      */
     public void add(UURI u) {
-    	add((Object)u);
+        add((Object)u);
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.UURI)
      */
     public void remove(UURI u) {
-    	remove((Object)u);
+        remove((Object)u);
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CrawlURI)
      */
     public void add(CandidateURI curi) {
-    	add(curi.getUURI());
+        add(curi.getUURI());
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CrawlURI)
      */
     public void remove(CandidateURI curi) {
-    	remove(curi.getUURI());
+        remove(curi.getUURI());
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
      */
     public boolean quickContains(UURI u) {
-    	return contains(u);
+        return contains(u);
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.CandidateURI)
      */
     public boolean quickContains(CandidateURI curi) {
-    	return contains(curi);
+        return contains(curi);
     }
 
 }

@@ -47,23 +47,23 @@ public class LogReader
      *         Null is returned if errors occur (file not found or io exception)
      */
     public static String get(String aFileName){
-    	StringBuffer ret = new StringBuffer();
-    	try{
-    		BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
+        StringBuffer ret = new StringBuffer();
+        try{
+            BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
 
-    		String line = null;
-    		while ((line = bf.readLine()) != null) {
-    			ret.append(line);
-    			ret.append("\n");
-    		}
-    	}catch(FileNotFoundException e){
-    		e.printStackTrace();
-    		return null;
-    	}catch(IOException e){
-    		e.printStackTrace();
-    		return null;
-    	}
-    	return ret.toString();
+            String line = null;
+            while ((line = bf.readLine()) != null) {
+                ret.append(line);
+                ret.append("\n");
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }catch(IOException e){
+            e.printStackTrace();
+            return null;
+        }
+        return ret.toString();
     }
 
     /**
@@ -81,30 +81,30 @@ public class LogReader
      */
     public static String get(String aFileName, int lineNumber, int n)
     {
-    	StringBuffer ret = new StringBuffer();
-    	try{
-    		BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
+        StringBuffer ret = new StringBuffer();
+        try{
+            BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
 
-    		String line = null;
-    		int i=1;
-    		while ((line = bf.readLine()) != null) {
-    			if(i >= lineNumber && i < (lineNumber+n))
-    			{
-    				ret.append(line);
-    				ret.append("\n");
-    			} else if( i >= (lineNumber+n)){
-    				break;
-    			}
-    			i++;
-    		}
-    	}catch(FileNotFoundException e){
-    		e.printStackTrace();
-    		return null;
-    	}catch(IOException e){
-    		e.printStackTrace();
-    		return null;
-    	}
-    	return ret.toString();
+            String line = null;
+            int i=1;
+            while ((line = bf.readLine()) != null) {
+                if(i >= lineNumber && i < (lineNumber+n))
+                {
+                    ret.append(line);
+                    ret.append("\n");
+                } else if( i >= (lineNumber+n)){
+                    break;
+                }
+                i++;
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }catch(IOException e){
+            e.printStackTrace();
+            return null;
+        }
+        return ret.toString();
     }
 
     /**
@@ -120,26 +120,26 @@ public class LogReader
      */
     public static int findFirstLineContaining(String aFileName, String regExpr)
     {
-    	Pattern p = Pattern.compile(regExpr);
+        Pattern p = Pattern.compile(regExpr);
 
-    	try{
-    		BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
+        try{
+            BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
 
-    		String line = null;
-    		int i = 1;
-    		while ((line = bf.readLine()) != null) {
-    			if(p.matcher(line).matches()){
-    				// Found a match
-    				return i;
-    			}
-    			i++;
-    		}
-    	}catch(FileNotFoundException e){
-    		e.printStackTrace();
-    	}catch(IOException e){
-    		e.printStackTrace();
-    	}
-    	return -1;
+            String line = null;
+            int i = 1;
+            while ((line = bf.readLine()) != null) {
+                if(p.matcher(line).matches()){
+                    // Found a match
+                    return i;
+                }
+                i++;
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     /**
@@ -161,54 +161,54 @@ public class LogReader
      */
     public static String getByRegExpr(String aFileName, String regExpr, int addLines, boolean prependLineNumbers)
     {
-    	// TODO: Optimize how this is done?
-    	StringBuffer ret = new StringBuffer();
+        // TODO: Optimize how this is done?
+        StringBuffer ret = new StringBuffer();
 
-    	try{
-    		Pattern p = Pattern.compile(regExpr);
-    		BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
+        try{
+            Pattern p = Pattern.compile(regExpr);
+            BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
 
-    		String line = null;
-    		int i = 1;
-    		boolean doAdd = false;
-    		int addCount = 0;
-    		while ((line = bf.readLine()) != null) {
-    			if(p.matcher(line).matches()){
-    				// Found a match
-    				if(prependLineNumbers){
-    					ret.append(i);
-    					ret.append(". ");
-    				}
-    				ret.append(line);
-    				ret.append("\n");
-    				doAdd = true;
-    				addCount = 0;
-    			} else if(doAdd) {
-    				if(addCount < addLines){
-    					//Ok, still within addLines
-    					if(prependLineNumbers){
-    						ret.append(i);
-    						ret.append(". ");
-    					}
-    					ret.append(line);
-    					ret.append("\n");
-    				}else{
-    					doAdd = false;
-    					addCount = 0;
-    				}
-    			}
-    			i++;
-    		}
-    	}catch(FileNotFoundException e){
-    		e.printStackTrace();
-    		return null;
-    	}catch(IOException e){
-    		e.printStackTrace();
-    		return null;
-    	}catch(PatternSyntaxException e){
-    		return e.getMessage();
-    	}
-    	return ret.toString();
+            String line = null;
+            int i = 1;
+            boolean doAdd = false;
+            int addCount = 0;
+            while ((line = bf.readLine()) != null) {
+                if(p.matcher(line).matches()){
+                    // Found a match
+                    if(prependLineNumbers){
+                        ret.append(i);
+                        ret.append(". ");
+                    }
+                    ret.append(line);
+                    ret.append("\n");
+                    doAdd = true;
+                    addCount = 0;
+                } else if(doAdd) {
+                    if(addCount < addLines){
+                        //Ok, still within addLines
+                        if(prependLineNumbers){
+                            ret.append(i);
+                            ret.append(". ");
+                        }
+                        ret.append(line);
+                        ret.append("\n");
+                    }else{
+                        doAdd = false;
+                        addCount = 0;
+                    }
+                }
+                i++;
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }catch(IOException e){
+            e.printStackTrace();
+            return null;
+        }catch(PatternSyntaxException e){
+            return e.getMessage();
+        }
+        return ret.toString();
     }
 
     /**
@@ -227,51 +227,51 @@ public class LogReader
      *         occurs, it's error message will be returned.
      */
     public static String getByRegExpr(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
-    	StringBuffer ret = new StringBuffer();
+        StringBuffer ret = new StringBuffer();
 
-    	try{
-    		Matcher m = Pattern.compile(regExpr).matcher("");
-    		BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
+        try{
+            Matcher m = Pattern.compile(regExpr).matcher("");
+            BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
 
-    		String line = null;
-    		int i = 1;
-    		boolean doAdd = false;
-    		while ((line = bf.readLine()) != null) {
+            String line = null;
+            int i = 1;
+            boolean doAdd = false;
+            while ((line = bf.readLine()) != null) {
                 m.reset(line);
-    			if(m.matches()){
-    				// Found a match
-    				if(prependLineNumbers){
-    					ret.append(i);
-    					ret.append(". ");
-    				}
-    				ret.append(line);
-    				ret.append("\n");
-    				doAdd = true;
-    			} else if(doAdd) {
-    				if(line.indexOf(addLines)==0){
-    					//Ok, line begins with 'addLines'
-    					if(prependLineNumbers){
-    						ret.append(i);
-    						ret.append(". ");
-    					}
-    					ret.append(line);
-    					ret.append("\n");
-    				}else{
-    					doAdd = false;
-    				}
-    			}
-    			i++;
-    		}
-    	}catch(FileNotFoundException e){
-    		e.printStackTrace();
-    		return null;
-    	}catch(IOException e){
-    		e.printStackTrace();
-    		return null;
-    	}catch(PatternSyntaxException e){
-    		return e.getMessage();
-    	}
-    	return ret.toString();
+                if(m.matches()){
+                    // Found a match
+                    if(prependLineNumbers){
+                        ret.append(i);
+                        ret.append(". ");
+                    }
+                    ret.append(line);
+                    ret.append("\n");
+                    doAdd = true;
+                } else if(doAdd) {
+                    if(line.indexOf(addLines)==0){
+                        //Ok, line begins with 'addLines'
+                        if(prependLineNumbers){
+                            ret.append(i);
+                            ret.append(". ");
+                        }
+                        ret.append(line);
+                        ret.append("\n");
+                    }else{
+                        doAdd = false;
+                    }
+                }
+                i++;
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }catch(IOException e){
+            e.printStackTrace();
+            return null;
+        }catch(PatternSyntaxException e){
+            return e.getMessage();
+        }
+        return ret.toString();
     }
 
     /**
@@ -281,7 +281,7 @@ public class LogReader
      * @return the String representation of at most 10 last lines
      */
     public static String tail(String aFileName) {
-    	return tail(aFileName, 10);
+        return tail(aFileName, 10);
     }
 
     /**
@@ -292,80 +292,80 @@ public class LogReader
      * @return the String representation of at most n last lines
      */
     public static String tail(String aFileName, int n) {
-    	int BUFFERSIZE = 1024;
-    	long pos;
-    	long endPos;
-    	long lastPos;
-    	int numOfLines = 0;
-    	byte[] buffer = new byte[BUFFERSIZE];
-    	StringBuffer sb = new StringBuffer();
-    	RandomAccessFile raf = null;
-    	try {
-    		raf = new RandomAccessFile(new File(aFileName), "r");
-    		endPos = raf.length();
-    		lastPos = endPos;
+        int BUFFERSIZE = 1024;
+        long pos;
+        long endPos;
+        long lastPos;
+        int numOfLines = 0;
+        byte[] buffer = new byte[BUFFERSIZE];
+        StringBuffer sb = new StringBuffer();
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(new File(aFileName), "r");
+            endPos = raf.length();
+            lastPos = endPos;
 
-    		// Check for non-empty file
-    		// Check for newline at EOF
-    		if (endPos > 0) {
-    			byte[] oneByte = new byte[1];
-    			raf.seek(endPos - 1);
-    			raf.read(oneByte);
-    			if ((char) oneByte[0] != '\n') {
-    				numOfLines++;
-    			}
-    		}
+            // Check for non-empty file
+            // Check for newline at EOF
+            if (endPos > 0) {
+                byte[] oneByte = new byte[1];
+                raf.seek(endPos - 1);
+                raf.read(oneByte);
+                if ((char) oneByte[0] != '\n') {
+                    numOfLines++;
+                }
+            }
 
-    		do {
-    			// seek back BUFFERSIZE bytes
-    			// if length of the file if less then BUFFERSIZE start from BOF
-    			pos = 0;
-    			if ((lastPos - BUFFERSIZE) > 0) {
-    				pos = lastPos - BUFFERSIZE;
-    			}
-    			raf.seek(pos);
-    			// If less then BUFFERSIZE avaliable read the remaining bytes
-    			if ((lastPos - pos) < BUFFERSIZE) {
-    				int remainer = (int) (lastPos - pos);
-    				buffer = new byte[remainer];
-    			}
-    			raf.readFully(buffer);
-    			// in the buffer seek back for newlines
-    			for (int i = buffer.length - 1; i >= 0; i--) {
-    				if ((char) buffer[i] == '\n') {
-    					numOfLines++;
-    					// break if we have last n lines
-    					if (numOfLines > n) {
-    						pos += (i + 1);
-    						break;
-    					}
-    				}
-    			}
-    			// reset last postion
-    			lastPos = pos;
-    		} while ((numOfLines <= n) && (pos != 0));
+            do {
+                // seek back BUFFERSIZE bytes
+                // if length of the file if less then BUFFERSIZE start from BOF
+                pos = 0;
+                if ((lastPos - BUFFERSIZE) > 0) {
+                    pos = lastPos - BUFFERSIZE;
+                }
+                raf.seek(pos);
+                // If less then BUFFERSIZE avaliable read the remaining bytes
+                if ((lastPos - pos) < BUFFERSIZE) {
+                    int remainer = (int) (lastPos - pos);
+                    buffer = new byte[remainer];
+                }
+                raf.readFully(buffer);
+                // in the buffer seek back for newlines
+                for (int i = buffer.length - 1; i >= 0; i--) {
+                    if ((char) buffer[i] == '\n') {
+                        numOfLines++;
+                        // break if we have last n lines
+                        if (numOfLines > n) {
+                            pos += (i + 1);
+                            break;
+                        }
+                    }
+                }
+                // reset last postion
+                lastPos = pos;
+            } while ((numOfLines <= n) && (pos != 0));
 
-    		// print last n line starting from last postion
-    		for (pos = lastPos; pos < endPos; pos += buffer.length) {
-    			raf.seek(pos);
-    			if ((endPos - pos) < BUFFERSIZE) {
-    				int remainer = (int) (endPos - pos);
-    				buffer = new byte[remainer];
-    			}
-    			raf.readFully(buffer);
-    			sb.append(new String(buffer));
-    		}
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	} finally {
-    		try {
-    			if (raf != null) {
-    				raf.close();
-    			}
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
+            // print last n line starting from last postion
+            for (pos = lastPos; pos < endPos; pos += buffer.length) {
+                raf.seek(pos);
+                if ((endPos - pos) < BUFFERSIZE) {
+                    int remainer = (int) (endPos - pos);
+                    buffer = new byte[remainer];
+                }
+                raf.readFully(buffer);
+                sb.append(new String(buffer));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (raf != null) {
+                    raf.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         return sb.toString();
     }
 }

@@ -40,13 +40,13 @@ public class RuntimeErrorFormatter extends UriProcessingFormatter implements Cor
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
      */
     public String format(LogRecord lr) {
-    	CrawlURI curi = (CrawlURI) lr.getParameters()[0];
-    	RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
-    	assert e != null : "null exception";
-    	StringWriter sw = new StringWriter();
-    	e.printStackTrace(new PrintWriter(sw));
+        CrawlURI curi = (CrawlURI) lr.getParameters()[0];
+        RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
+        assert e != null : "null exception";
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
 
-    	return super.format(lr) + " " + sw.toString();
+        return super.format(lr) + " " + sw.toString();
     }
 }
 

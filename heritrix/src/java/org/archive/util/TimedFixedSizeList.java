@@ -38,11 +38,11 @@ public class TimedFixedSizeList extends FixedSizeList implements CoreAttributeCo
     long expireAfterMili = 60*1000;
 
     public TimedFixedSizeList() {
-    	super();
+        super();
     }
 
     public TimedFixedSizeList(int size) {
-    	super(size);
+        super(size);
     }
 
     /** Constuctor for TimedQueue
@@ -50,54 +50,54 @@ public class TimedFixedSizeList extends FixedSizeList implements CoreAttributeCo
      *  @param expire - the number of miliseconds after which to expire an entry
      */
     public TimedFixedSizeList(int size, long expire){
-    	super(size);
-    	expireAfterMili = expire;
+        super(size);
+        expireAfterMili = expire;
     }
 
     /** Remove expired items from the queue */
     protected void cleanUp(){
-    	long now = System.currentTimeMillis();
-    	cleanUp(now);
+        long now = System.currentTimeMillis();
+        cleanUp(now);
     }
 
     /** Remove expired items from the queue */
     protected void cleanUp(long now){
 
-    	long expireIfBefore = now - expireAfterMili;
+        long expireIfBefore = now - expireAfterMili;
 
-    	while ( (super.size() > 0)
-    		     && ((TimedItem) super.getFirst()).getTime() < expireIfBefore) {
-    		removeFirst();
-    	}
+        while ( (super.size() > 0)
+                 && ((TimedItem) super.getFirst()).getTime() < expireIfBefore) {
+            removeFirst();
+        }
     }
 
     public void setExpireAfter(long miliseconds){
-    	expireAfterMili = miliseconds;
+        expireAfterMili = miliseconds;
     }
 
     public Iterator iterator(){
-    	cleanUp();
-    	return super.iterator();
+        cleanUp();
+        return super.iterator();
     }
 
     public Object getFirst(){
-    	cleanUp();
-    	return super.getFirst();
+        cleanUp();
+        return super.getFirst();
     }
 
     public Object getLast(){
-    	cleanUp();
-    	return super.getLast();
+        cleanUp();
+        return super.getLast();
     }
 
     public int size(){
-    	cleanUp();
-    	return super.size();
+        cleanUp();
+        return super.size();
     }
 
     public interface TimedItem {
 
-    	long getTime();
+        long getTime();
 
     }
 }

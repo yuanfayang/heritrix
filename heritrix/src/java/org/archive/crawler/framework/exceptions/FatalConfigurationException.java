@@ -31,14 +31,14 @@ import org.archive.crawler.framework.exceptions.ConfigurationException;
 public class FatalConfigurationException extends ConfigurationException {
 
     public FatalConfigurationException(String explanation) {
-    	super(explanation);
+        super(explanation);
     }
 
     public FatalConfigurationException() {
-    	super();
+        super();
     }
 
     public FatalConfigurationException(String message, String file, String element){
-    	super(message,file,element);
+        super(message,file,element);
     }
 }

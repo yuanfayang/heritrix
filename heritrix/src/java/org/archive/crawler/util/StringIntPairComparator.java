@@ -33,18 +33,18 @@ import java.util.Comparator;
 public class StringIntPairComparator implements Comparator {
 
     public StringIntPairComparator (){
-    	super();
+        super();
     }
 
     public int compare(Object o1, Object o2) {
-    	StringIntPair p1 = (StringIntPair) o1;
-    	StringIntPair p2 = (StringIntPair) o2;
-    	if (p1.getIntValue() < p2.getIntValue())
-    		return -1;
-    	if (p1.getIntValue() > p2.getIntValue())
-    		return 1;
+        StringIntPair p1 = (StringIntPair) o1;
+        StringIntPair p2 = (StringIntPair) o2;
+        if (p1.getIntValue() < p2.getIntValue())
+            return -1;
+        if (p1.getIntValue() > p2.getIntValue())
+            return 1;
 
-    	return 0;
+        return 0;
     }
 
 }

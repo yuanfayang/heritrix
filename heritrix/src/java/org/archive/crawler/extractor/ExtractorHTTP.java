@@ -54,29 +54,29 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-    	if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+        if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             numberOfCURIsHandled++;
             GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-    		CrawlURI curi1 = curi;
-    		GetMethod get1 = get;
+            CrawlURI curi1 = curi;
+            GetMethod get1 = get;
 
-    		ArrayList uris = new ArrayList();
-    		Header loc = get1.getResponseHeader("Location");
-    		if ( loc != null ) {
-    			uris.add(loc.getValue());
-    		}
-    		loc = get1.getResponseHeader("Content-Location");
-    		if ( loc != null ) {
-    			uris.add(loc.getValue());
-    		}
-    		// TODO: consider possibility of multiple headers
-    		if(uris.size()>0) {
+            ArrayList uris = new ArrayList();
+            Header loc = get1.getResponseHeader("Location");
+            if ( loc != null ) {
+                uris.add(loc.getValue());
+            }
+            loc = get1.getResponseHeader("Content-Location");
+            if ( loc != null ) {
+                uris.add(loc.getValue());
+            }
+            // TODO: consider possibility of multiple headers
+            if(uris.size()>0) {
                 numberOfLinksExtracted += uris.size();
-    			curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
-    			logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
+                curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
+                logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
 
-    		}
-    	}
+            }
+        }
     }
 
     /* (non-Javadoc)

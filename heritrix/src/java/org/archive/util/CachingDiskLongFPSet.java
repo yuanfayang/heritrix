@@ -48,15 +48,15 @@ public class CachingDiskLongFPSet extends DiskLongFPSet {
      * @throws IOException
      */
     public CachingDiskLongFPSet(
-    	File dir,
-    	String name,
-    	int capacityPowerOfTwo,
-    	float loadFactor,
-    	int cacheCapacityPowerOfTwo,
-    	float cacheLoadFactor)
-    	throws IOException {
-    	super(dir, name, capacityPowerOfTwo, loadFactor);
-    	cache = new LongFPSetCache(cacheCapacityPowerOfTwo, cacheLoadFactor);
+        File dir,
+        String name,
+        int capacityPowerOfTwo,
+        float loadFactor,
+        int cacheCapacityPowerOfTwo,
+        float cacheLoadFactor)
+        throws IOException {
+        super(dir, name, capacityPowerOfTwo, loadFactor);
+        cache = new LongFPSetCache(cacheCapacityPowerOfTwo, cacheLoadFactor);
     }
 
     /**
@@ -65,48 +65,48 @@ public class CachingDiskLongFPSet extends DiskLongFPSet {
      * @throws IOException
      */
     public CachingDiskLongFPSet(File dir, String name) throws IOException {
-    	super(dir, name);
-    	cache = new LongFPSetCache();
+        super(dir, name);
+        cache = new LongFPSetCache();
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#add(long)
      */
     public boolean add(long val) {
-    	cache.add(val);
-    	return super.add(val);
+        cache.add(val);
+        return super.add(val);
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#contains(long)
      */
     public boolean contains(long val) {
-    	if(cache.contains(val)) {
-    		return true;
-    	}
-    	if(super.contains(val)) {
-    		cache.add(val);
-    		return true;
-    	}
-    	return false;
+        if(cache.contains(val)) {
+            return true;
+        }
+        if(super.contains(val)) {
+            cache.add(val);
+            return true;
+        }
+        return false;
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#remove(long)
      */
     public boolean remove(long val) {
-    	cache.remove(val);
-    	return super.remove(val);
+        cache.remove(val);
+        return super.remove(val);
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.LongFPSet#quickContains(long)
      */
     public boolean quickContains(long fp) {
-    	if(cache.contains(fp)) {
-    		return true;
-    	}
-    	return false;
+        if(cache.contains(fp)) {
+            return true;
+        }
+        return false;
     }
 
 }

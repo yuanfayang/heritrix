@@ -104,7 +104,7 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
                 logger.severe(e.getMessage());
             }
         }
-    	return null;
+        return null;
     }
 
     /**
@@ -138,7 +138,7 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
                 logger.severe(e.getMessage());
             }
         }
-    	return null;
+        return null;
     }
 
     /**
@@ -172,7 +172,7 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-    	return type;
+        return type;
     }
 
     /**

@@ -51,7 +51,7 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
      *
      */
     public DiskLongFPSet(File dir, String name) throws IOException {
-    	this(dir, name, DEFAULT_CAPACITY_POWER_OF_TWO,DEFAULT_LOAD_FACTOR);
+        this(dir, name, DEFAULT_CAPACITY_POWER_OF_TWO,DEFAULT_LOAD_FACTOR);
     }
 
     /**
@@ -65,129 +65,129 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
                 float loadFactor)
         throws IOException
     {
-    	super(capacityPowerOfTwo, loadFactor);
-    	disk = new File(dir, name+".fps");
-    	if(disk.exists()) {
-    		disk.delete();
-    	}
-    	rawRafile = new RandomAccessFile(disk,"rw");
-    	for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
-    		rawRafile.writeByte(EMPTY);
-    		rawRafile.writeLong(0);
-    	}
+        super(capacityPowerOfTwo, loadFactor);
+        disk = new File(dir, name+".fps");
+        if(disk.exists()) {
+            disk.delete();
+        }
+        rawRafile = new RandomAccessFile(disk,"rw");
+        for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
+            rawRafile.writeByte(EMPTY);
+            rawRafile.writeLong(0);
+        }
     }
 
     /**
      *
      */
     protected void makeSpace() {
-    	grow();
+        grow();
     }
 
     private void grow() {
-    	try {
-    		RandomAccessFile oldRaw = rawRafile;
-    		capacityPowerOfTwo++;
-    		File tmpDisk = new File(disk.getAbsolutePath()+".tmp");
-    		if(tmpDisk.exists()) {
-    			tmpDisk.delete();
-    		}
-    		rawRafile = new RandomAccessFile(tmpDisk,"rw");
-    		for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
-    			rawRafile.writeByte(EMPTY);
-    			rawRafile.writeLong(0);
-    		}
-    		count=0;
-    		oldRaw.seek(0);
-    		while(true) {
-    			try {
-    				byte slot = oldRaw.readByte();
-    				long val = oldRaw.readLong();
-    				if (slot!=EMPTY) {
-    					add(val);
-    				}
-    			} catch (EOFException e) {
-    				break;
-    			}
-    		}
-    		oldRaw.close();
-    		rawRafile.close();
-    		disk.delete();
-    		if(!tmpDisk.renameTo(disk)) {
-    			logger.warning("unable to switch to expanded disk file");
-    		} else {
-    			logger.warning("RENAME SUCCESSFUL");
-    		}
-    		// disk = new File(disk.getAbsolutePath());
-    		rawRafile=new RandomAccessFile(disk,"rw");
-    	} catch (IOException e) {
-    		// TODO Convert to runtime exception
-    		e.printStackTrace();
-    	}
+        try {
+            RandomAccessFile oldRaw = rawRafile;
+            capacityPowerOfTwo++;
+            File tmpDisk = new File(disk.getAbsolutePath()+".tmp");
+            if(tmpDisk.exists()) {
+                tmpDisk.delete();
+            }
+            rawRafile = new RandomAccessFile(tmpDisk,"rw");
+            for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
+                rawRafile.writeByte(EMPTY);
+                rawRafile.writeLong(0);
+            }
+            count=0;
+            oldRaw.seek(0);
+            while(true) {
+                try {
+                    byte slot = oldRaw.readByte();
+                    long val = oldRaw.readLong();
+                    if (slot!=EMPTY) {
+                        add(val);
+                    }
+                } catch (EOFException e) {
+                    break;
+                }
+            }
+            oldRaw.close();
+            rawRafile.close();
+            disk.delete();
+            if(!tmpDisk.renameTo(disk)) {
+                logger.warning("unable to switch to expanded disk file");
+            } else {
+                logger.warning("RENAME SUCCESSFUL");
+            }
+            // disk = new File(disk.getAbsolutePath());
+            rawRafile=new RandomAccessFile(disk,"rw");
+        } catch (IOException e) {
+            // TODO Convert to runtime exception
+            e.printStackTrace();
+        }
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#setAt(long, long)
      */
     protected void setAt(long i, long val) {
-    	try {
-    		rawRafile.seek(i*(1+8));
-    		rawRafile.writeByte(0); // non-empty
-    		rawRafile.writeLong(val);
-    	} catch (IOException e) {
-    		// TODO Convert to runtime exception
-    		e.printStackTrace();
-    	}
+        try {
+            rawRafile.seek(i*(1+8));
+            rawRafile.writeByte(0); // non-empty
+            rawRafile.writeLong(val);
+        } catch (IOException e) {
+            // TODO Convert to runtime exception
+            e.printStackTrace();
+        }
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#getAt(long)
      */
     protected long getAt(long i) {
-    	try {
-    		rawRafile.seek((i*(1+8))+1);
-    		return rawRafile.readLong();
-    	} catch (IOException e) {
-    		// TODO Convert to runtime exception
-    		e.printStackTrace();
-    		return 0;
-    	}
+        try {
+            rawRafile.seek((i*(1+8))+1);
+            return rawRafile.readLong();
+        } catch (IOException e) {
+            // TODO Convert to runtime exception
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#relocate(long, long, long)
      */
     protected void relocate(long value, long fromIndex, long toIndex) {
-    	clearAt(fromIndex);
-    	setAt(toIndex,value);
+        clearAt(fromIndex);
+        setAt(toIndex,value);
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#getSlotState(long)
      */
     protected int getSlotState(long i) {
-    	try {
-    		rawRafile.seek(i*(1+8));
-    		return rawRafile.readByte();
-    	} catch (IOException e) {
-    		// TODO convert to runtime exception
-    		e.printStackTrace();
-    		return 0;
-    	}
+        try {
+            rawRafile.seek(i*(1+8));
+            return rawRafile.readByte();
+        } catch (IOException e) {
+            // TODO convert to runtime exception
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#clearAt(long)
      */
     protected void clearAt(long index) {
-    	try {
-    		rawRafile.seek(index*(1+8));
-    		rawRafile.writeByte(EMPTY);
-    	} catch (IOException e) {
-    		// TODO convert to runtime exception
-    		DevUtils.logger.log(Level.SEVERE,"clearAt("+index+")" +
+        try {
+            rawRafile.seek(index*(1+8));
+            rawRafile.writeByte(EMPTY);
+        } catch (IOException e) {
+            // TODO convert to runtime exception
+            DevUtils.logger.log(Level.SEVERE,"clearAt("+index+")" +
                  DevUtils.extraInfo(),e);
-    	}
+        }
     }
 
 

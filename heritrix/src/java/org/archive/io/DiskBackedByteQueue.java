@@ -52,8 +52,8 @@ public class DiskBackedByteQueue implements Savable {
     FlipFileOutputStream tailStream;
 
     public DiskBackedByteQueue(File tempDir, String backingFilenamePrefix) throws FileNotFoundException {
-    	super();
-    	this.tempDir = tempDir;
+        super();
+        this.tempDir = tempDir;
         this.backingFilenamePrefix=backingFilenamePrefix;
      }
 
@@ -62,23 +62,23 @@ public class DiskBackedByteQueue implements Savable {
         headStream = new FlipFileInputStream(tailStream);
     }
     public InputStream getHeadStream() {
-    	return headStream;
+        return headStream;
     }
 
     public OutputStream getTailStream() {
-    	return tailStream;
+        return tailStream;
     }
 
     /**
      * @throws IOException
      */
     public void close() throws IOException {
-    	headStream.close();
-    	tailStream.close();
+        headStream.close();
+        tailStream.close();
     }
 
     public void discard() {
-    	tailStream.discard();
+        tailStream.discard();
     }
 
     /* (non-Javadoc)

@@ -32,14 +32,14 @@ package org.archive.crawler.framework.exceptions;
 public class InitializationException extends Exception {
 
     public InitializationException() {
-    	super();
+        super();
     }
 
     /**
      * @param message
      */
     public InitializationException(String message) {
-    	super(message);
+        super(message);
     }
 
     /**
@@ -47,14 +47,14 @@ public class InitializationException extends Exception {
      * @param cause
      */
     public InitializationException(String message, Throwable cause) {
-    	super(message, cause);
+        super(message, cause);
     }
 
     /**
      * @param cause
      */
     public InitializationException(Throwable cause) {
-    	super(cause);
+        super(cause);
     }
 
 }

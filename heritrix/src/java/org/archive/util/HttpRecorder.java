@@ -78,13 +78,13 @@ public class HttpRecorder
      * <code>ros</code> for recorded output stream.
      */
     public HttpRecorder(File tempDir, String backingFilenameBase) {
-    	tempDir.mkdirs();
+        tempDir.mkdirs();
         this.backingFileBasename =
             (new File(tempDir.getPath(), backingFilenameBase))
                 .getAbsolutePath();
-    	this.ris = new RecordingInputStream(DEFAULT_INPUT_BUFFER_SIZE,
+        this.ris = new RecordingInputStream(DEFAULT_INPUT_BUFFER_SIZE,
             this.backingFileBasename + RECORDING_INPUT_STREAM_SUFFIX);
-    	this.ros = new RecordingOutputStream(DEFAULT_OUTPUT_BUFFER_SIZE,
+        this.ros = new RecordingOutputStream(DEFAULT_OUTPUT_BUFFER_SIZE,
             this.backingFileBasename + RECORDING_OUTPUT_STREAM_SUFFIX);
     }
 
@@ -99,8 +99,8 @@ public class HttpRecorder
      * @throws IOException
      */
     public InputStream inputWrap(InputStream is) throws IOException {
-    	ris.open(is);
-    	return ris;
+        ris.open(is);
+        return ris;
     }
 
     /**
@@ -114,28 +114,28 @@ public class HttpRecorder
      * @throws IOException
      */
     public OutputStream outputWrap(OutputStream os) throws IOException {
-    	ros.open(os);
-    	return ros;
+        ros.open(os);
+        return ros;
     }
 
     /**
      * Close all streams.
      */
     public void close() {
-    	try {
-    		ris.close();
-    	} catch (IOException e) {
+        try {
+            ris.close();
+        } catch (IOException e) {
             // TODO: Can we not let the exception out of here and report it
             // higher up in the caller?
-    		DevUtils.logger.log(Level.SEVERE, "close() ris" +
+            DevUtils.logger.log(Level.SEVERE, "close() ris" +
                 DevUtils.extraInfo(), e);
-    	}
-    	try {
-    		ros.close();
-    	} catch (IOException e) {
-    		DevUtils.logger.log(Level.SEVERE, "close() ros" +
+        }
+        try {
+            ros.close();
+        } catch (IOException e) {
+            DevUtils.logger.log(Level.SEVERE, "close() ros" +
                 DevUtils.extraInfo(), e);
-    	}
+        }
     }
 
     /**
@@ -144,7 +144,7 @@ public class HttpRecorder
      * @return A RIS.
      */
     public RecordingInputStream getRecordedInput() {
-    	return this.ris;
+        return this.ris;
     }
 
     /**
@@ -158,11 +158,11 @@ public class HttpRecorder
      * Mark current position as the point where the HTTP headers end.
      */
     public void markContentBegin() {
-    	ris.markContentBegin();
+        ris.markContentBegin();
     }
 
     public long getResponseContentLength() {
-    	return ris.getResponseContentLength();
+        return ris.getResponseContentLength();
     }
 
     /**
@@ -173,12 +173,12 @@ public class HttpRecorder
      * recorder. This method explicitly closes the recorder only.
      */
     public void closeRecorders() {
-    	try {
-    		ris.closeRecorder();
-    		ros.closeRecorder();
-    	} catch (IOException e) {
-    		DevUtils.warnHandle(e, "Convert to runtime exception?");
-    	}
+        try {
+            ris.closeRecorder();
+            ros.closeRecorder();
+        } catch (IOException e) {
+            DevUtils.warnHandle(e, "Convert to runtime exception?");
+        }
     }
 
     /**

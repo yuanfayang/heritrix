@@ -36,27 +36,27 @@ public class FixedSizeList extends LinkedList {
     protected int maxSize = 10;
 
     public FixedSizeList(int size){
-    	maxSize = size;
+        maxSize = size;
     }
 
     public boolean add(Object item){
-    	makeSpace();
-    	return super.add(item);
+        makeSpace();
+        return super.add(item);
     }
 
     public void add(int index, Object element) {
-    	makeSpace();
-    	super.add(index, element);
+        makeSpace();
+        super.add(index, element);
     }
 
     public void addLast(Object o) {
-    	makeSpace();
-    	super.addLast(o);
+        makeSpace();
+        super.addLast(o);
     }
 
     private void makeSpace() {
-    	if(size() >= maxSize){
-    		removeFirst();
-    	}
+        if(size() >= maxSize){
+            removeFirst();
+        }
     }
 }

@@ -86,7 +86,7 @@ public class ARCSocketFactoryTest
      */
     protected void setUp() throws Exception
     {
-    	super.setUp();
+        super.setUp();
         Properties properties = new Properties();
         properties.setProperty(ARCSocketFactory.DUMPDIR_KEY,
             getTmpDir().getAbsolutePath());
@@ -99,7 +99,7 @@ public class ARCSocketFactoryTest
      */
     protected void tearDown() throws Exception
     {
-    	super.tearDown();
+        super.tearDown();
     }
 
     /**

@@ -54,7 +54,7 @@ public interface CoreAttributeConstants {
     public static String A_MINIMUM_DELAY = "minimum-delay";
 
     public static String A_RRECORD_SET_LABEL = "dns-records";
-    public static String A_DNS_FETCH_TIME	= "dns-fetch-time";
+    public static String A_DNS_FETCH_TIME    = "dns-fetch-time";
     public static String A_FETCH_BEGAN_TIME= "fetch-began-time";
     public static String A_FETCH_COMPLETED_TIME = "fetch-completed-time";
     public static String A_HTTP_TRANSACTION = "http-transaction";

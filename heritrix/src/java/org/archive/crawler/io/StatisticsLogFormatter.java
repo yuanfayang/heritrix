@@ -35,14 +35,14 @@ public class StatisticsLogFormatter extends Formatter {
      *
      */
     public StatisticsLogFormatter() {
-    	super();
-    	// TODO Auto-generated constructor stub
+        super();
+        // TODO Auto-generated constructor stub
     }
 
     /* (non-Javadoc)
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
      */
     public String format(LogRecord record) {
-    	return record.getMessage() + "\n";
+        return record.getMessage() + "\n";
     }
 }

@@ -51,28 +51,28 @@ public class PDFParser {
     PdfDictionary catalog;
 
     public PDFParser(String doc) throws IOException {
-    	resetState();
-    	getInFromFile(doc);
-    	initialize();
+        resetState();
+        getInFromFile(doc);
+        initialize();
     }
      public PDFParser(byte[] doc) throws IOException{
-    	resetState();
-    	document = doc;
-    	initialize();
+        resetState();
+        document = doc;
+        initialize();
     }
 
     /** Reinitialize the object as though a new one were created.
      */
     protected void resetState(){
-    	foundURIs = new ArrayList();
-    	encounteredReferences = new ArrayList();
-    	documentReader = null;
-    	document = null;
-    	catalog = null;
+        foundURIs = new ArrayList();
+        encounteredReferences = new ArrayList();
+        documentReader = null;
+        document = null;
+        catalog = null;
 
-    	for(int i=0; i < encounteredReferences.size(); i++){
-    		encounteredReferences.add(new ArrayList());
-    	}
+        for(int i=0; i < encounteredReferences.size(); i++){
+            encounteredReferences.add(new ArrayList());
+        }
     }
 
     /**
@@ -81,9 +81,9 @@ public class PDFParser {
      * @throws IOException
      */
     public void resetState(byte[] doc) throws IOException{
-    	resetState();
-    	document = doc;
-    	initialize();
+        resetState();
+        document = doc;
+        initialize();
     }
 
     /** Reinitialize the object as though a new one were created, complete
@@ -92,9 +92,9 @@ public class PDFParser {
      * @throws IOException
      */
     public void resetState(String doc) throws IOException{
-    	resetState();
-    	getInFromFile(doc);
-    	initialize();
+        resetState();
+        getInFromFile(doc);
+        initialize();
     }
 
     /**
@@ -103,14 +103,14 @@ public class PDFParser {
      * @throws IOException
      */
     protected void getInFromFile(String doc) throws IOException{
-    	File documentOnDisk = new File(doc);
+        File documentOnDisk = new File(doc);
 
-    	long length = documentOnDisk.length();
-    	document = new byte[(int)length];
+        long length = documentOnDisk.length();
+        document = new byte[(int)length];
 
-    	FileInputStream inStream = new FileInputStream(documentOnDisk);
+        FileInputStream inStream = new FileInputStream(documentOnDisk);
 
-    	inStream.read(document);
+        inStream.read(document);
     }
 
     /**
@@ -123,25 +123,25 @@ public class PDFParser {
      */
     protected boolean haveSeen(int generation, int id){
 
-    	// if we can't store this generation grow our list until we can
-    	if(generation >= encounteredReferences.size()){
-    		for(int i=encounteredReferences.size(); i <= generation; i++){
-    			encounteredReferences.add(new ArrayList());
-    		}
+        // if we can't store this generation grow our list until we can
+        if(generation >= encounteredReferences.size()){
+            for(int i=encounteredReferences.size(); i <= generation; i++){
+                encounteredReferences.add(new ArrayList());
+            }
 
-    		// clearly we haven't seen it
-    		return false;
-    	}
+            // clearly we haven't seen it
+            return false;
+        }
 
-    	ArrayList generationList = (ArrayList)encounteredReferences.get(generation);
+        ArrayList generationList = (ArrayList)encounteredReferences.get(generation);
 
-    	Iterator scanList = generationList.iterator();
-    	while(scanList.hasNext()){
-    		if( ((Integer)scanList.next()).intValue() == id){
-    			return true;
-    		}
-    	}
-    	return false;
+        Iterator scanList = generationList.iterator();
+        while(scanList.hasNext()){
+            if( ((Integer)scanList.next()).intValue() == id){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -151,8 +151,8 @@ public class PDFParser {
      * @param id
      */
     protected void markAsSeen(int generation, int id){
-    	ArrayList objectIds = (ArrayList)encounteredReferences.get(generation);
-    	objectIds.add( new Integer(id));
+        ArrayList objectIds = (ArrayList)encounteredReferences.get(generation);
+        objectIds.add( new Integer(id));
     }
 
     /**
@@ -162,7 +162,7 @@ public class PDFParser {
      * extractURIs operation.
      */
     public ArrayList getURIs(){
-    	return foundURIs;
+        return foundURIs;
     }
 
     /**
@@ -172,11 +172,11 @@ public class PDFParser {
      * @throws IOException
      */
     protected void initialize() throws IOException{
-    	if(document != null){
-    		documentReader = new PdfReader(document);
-    	}
+        if(document != null){
+            documentReader = new PdfReader(document);
+        }
 
-    	catalog = documentReader.getCatalog();
+        catalog = documentReader.getCatalog();
     }
 
     /**
@@ -185,8 +185,8 @@ public class PDFParser {
      * @return URIs from all objects found in a Pdf document's catalog.
      */
     public ArrayList extractURIs(){
-    	extractURIs(catalog);
-    	return getURIs();
+        extractURIs(catalog);
+        return getURIs();
     }
 
     /**
@@ -196,77 +196,77 @@ public class PDFParser {
      */
     protected void extractURIs(PdfObject entity){
 
-    		// deal with dictionaries
-    		if(entity.isDictionary()){
+            // deal with dictionaries
+            if(entity.isDictionary()){
 
-    			PdfDictionary dictionary= (PdfDictionary)entity;
+                PdfDictionary dictionary= (PdfDictionary)entity;
 
-    			Set allkeys = dictionary.getKeys();
-    			Iterator iterator = allkeys.iterator();
+                Set allkeys = dictionary.getKeys();
+                Iterator iterator = allkeys.iterator();
 
-    			while(iterator.hasNext()){
-    				PdfName key = (PdfName)iterator.next();
-    				PdfObject value = dictionary.get(key);
+                while(iterator.hasNext()){
+                    PdfName key = (PdfName)iterator.next();
+                    PdfObject value = dictionary.get(key);
 
-    				// see if it's the key is a UR[I,L]
-    				if( key.toString().equals("/URI") || key.toString().equals("/URI") ){
-    					foundURIs.add(dictionary.get(key).toString());
+                    // see if it's the key is a UR[I,L]
+                    if( key.toString().equals("/URI") || key.toString().equals("/URI") ){
+                        foundURIs.add(dictionary.get(key).toString());
 
-    				}else{
-    					this.extractURIs( dictionary.get( key ) );
-    				}
+                    }else{
+                        this.extractURIs( dictionary.get( key ) );
+                    }
 
-    			}
+                }
 
-    		// deal with arrays
-    		}else if(entity.isArray()){
+            // deal with arrays
+            }else if(entity.isArray()){
 
-    			PdfArray array = (PdfArray)entity;
-    			ArrayList arrayObjects = array.getArrayList();
-    			Iterator objectList = arrayObjects.iterator();
+                PdfArray array = (PdfArray)entity;
+                ArrayList arrayObjects = array.getArrayList();
+                Iterator objectList = arrayObjects.iterator();
 
-    			while(objectList.hasNext()){
-    				this.extractURIs( (PdfObject)objectList.next());
-    			}
+                while(objectList.hasNext()){
+                    this.extractURIs( (PdfObject)objectList.next());
+                }
 
-    		// deal with indirect references
-    		}else if(entity.getClass() == PRIndirectReference.class){
+            // deal with indirect references
+            }else if(entity.getClass() == PRIndirectReference.class){
 
-    				PRIndirectReference indirect = (PRIndirectReference)entity;
+                    PRIndirectReference indirect = (PRIndirectReference)entity;
 
-    				// if we've already seen a reference to this object
-    				if( haveSeen( indirect.getGeneration(), indirect.getNumber()) ){
-    					return;
+                    // if we've already seen a reference to this object
+                    if( haveSeen( indirect.getGeneration(), indirect.getNumber()) ){
+                        return;
 
-    				// note that we've seen it if it's new
-    				}else{
-    					markAsSeen(indirect.getGeneration(), indirect.getNumber() );
-    				}
+                    // note that we've seen it if it's new
+                    }else{
+                        markAsSeen(indirect.getGeneration(), indirect.getNumber() );
+                    }
 
-    				// dereference the "pointer" and process the object
-    				PdfReader reader = indirect.getReader();
-    				PdfObject direct = PdfReader.getPdfObject(indirect);
+                    // dereference the "pointer" and process the object
+                    PdfReader reader = indirect.getReader();
+                    PdfObject direct = PdfReader.getPdfObject(indirect);
 
-    				this.extractURIs(direct);
-    		}
+                    this.extractURIs(direct);
+            }
     }
 
     public static void main(String[] argv){
 
-    	try{
-    		PDFParser parser = new PDFParser("/home/parkert/files/pdfspec.pdf");
+        try{
+            PDFParser parser = new PDFParser("/home/parkert/files/pdfspec.pdf");
 
-    		ArrayList uris = parser.extractURIs();
+            ArrayList uris = parser.extractURIs();
 
-    		Iterator i = uris.iterator();
+            Iterator i = uris.iterator();
 
-    		while(i.hasNext()){
-    			String uri = (String)i.next();
-    			System.out.println("got uri: " + uri);
-    		}
+            while(i.hasNext()){
+                String uri = (String)i.next();
+                System.out.println("got uri: " + uri);
+            }
 
-    	}catch(IOException e){
-    		e.printStackTrace();
-    	}
+        }catch(IOException e){
+            e.printStackTrace();
+        }
     }
 }

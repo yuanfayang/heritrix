@@ -47,7 +47,7 @@ public class ActionURLExtractor extends ActionWriter {
      * @return linksArrayList
      */
     public ArrayList getLinks(){
-    	return links;
+        return links;
     }
 
     /** See superclass definition.
@@ -55,9 +55,9 @@ public class ActionURLExtractor extends ActionWriter {
      * @param flashVersion
      */
     public ActionURLExtractor(IATagParser tagWriter, int flashVersion) {
-    	super(tagWriter, flashVersion);
+        super(tagWriter, flashVersion);
 
-    	this.tagWriter = tagWriter;
+        this.tagWriter = tagWriter;
     }
 
     /**
@@ -69,16 +69,16 @@ public class ActionURLExtractor extends ActionWriter {
      */
     public void getURL( String url, String target ) throws IOException
     {
-    	// report uri back to tag parser
-    	tagWriter.putLink(url);
-    	links.add(url);
+        // report uri back to tag parser
+        tagWriter.putLink(url);
+        links.add(url);
 
     }
 
     // override to prevent test from actually being written
     protected void writeBytes( byte[] bytes ) throws IOException
     {
-    	// do a whole lotta nothin'
+        // do a whole lotta nothin'
     }
 
 }

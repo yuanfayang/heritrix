@@ -54,8 +54,8 @@ import org.archive.util.DevUtils;
 public class SeedsInputIterator implements Iterator {
     //  regexp for identifying URIs in seed input data
     public static final Pattern DEFAULT_SEED_EXTRACTOR =
-    	Pattern.compile("(?i:((https?://[a-zA-Z0-9-]+)|([a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+))(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
-    	// pattern to extract seeds
+        Pattern.compile("(?i:((https?://[a-zA-Z0-9-]+)|([a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+))(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
+        // pattern to extract seeds
     Pattern seedExtractor = DEFAULT_SEED_EXTRACTOR;
 
     CrawlController controller;
@@ -67,40 +67,40 @@ public class SeedsInputIterator implements Iterator {
      * @param controller
      */
     public SeedsInputIterator(BufferedReader reader, CrawlController controller) {
-    	this.reader = reader;
-    	this.controller = controller;
+        this.reader = reader;
+        this.controller = controller;
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#remove()
      */
     public void remove() {
-    	throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#hasNext()
      */
     public boolean hasNext() {
-    	if(next!=null) {
-    		return true;
-    	}
-    	return loadNext();
+        if(next!=null) {
+            return true;
+        }
+        return loadNext();
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#next()
      */
     public Object next() {
-    	if(next==null) {
-    		if (!loadNext()) {
-    			throw new NoSuchElementException();
-    		}
-    	}
-    	// next is guaranteed set by a loadNext which returned true
-    	UURI retVal = next;
-    	next = null;
-    	return retVal;
+        if(next==null) {
+            if (!loadNext()) {
+                throw new NoSuchElementException();
+            }
+        }
+        // next is guaranteed set by a loadNext which returned true
+        UURI retVal = next;
+        next = null;
+        return retVal;
     }
 
     /**
@@ -110,52 +110,52 @@ public class SeedsInputIterator implements Iterator {
      *
      */
     private boolean loadNext() {
-    	try {
-    		String read;
-    		while ((read = reader.readLine()) != null) {
-    			read = read.trim();
-    			if (read.length() == 0 || read.startsWith("#")) {
-    				continue;
-    			}
-    			Matcher m = seedExtractor.matcher(read);
-    			while(m.find()) {
-    				String candidate = m.group();
-    				if(m.group(2)==null) {
-    					// naked hostname without scheme
-    					candidate = "http://" + candidate;
-    				}
-    				try {
-    					next = UURI.createUURI(candidate);
-    					// next loaded with next seed
-    					return true;
-    				} catch (URISyntaxException e1) {
-    					Object[] array = { null, candidate };
-    					controller.uriErrors.log(Level.INFO,"reading seeds: "+e1.getMessage(), array );
-    					next = null;
-    					// keep reading for valid seeds
-    					continue;
-    				}
-    			}
-    			Object[] array = { null, read };
-    			controller.uriErrors.log(Level.INFO, "bad seed line", array);
-    		}
-    		reader.close();
-    		// no more seeds
-    		return false;
-    	} catch (IOException e) {
-    		DevUtils.warnHandle(e, "throw runtime error? log something?");
-    		return false;
-    	}
+        try {
+            String read;
+            while ((read = reader.readLine()) != null) {
+                read = read.trim();
+                if (read.length() == 0 || read.startsWith("#")) {
+                    continue;
+                }
+                Matcher m = seedExtractor.matcher(read);
+                while(m.find()) {
+                    String candidate = m.group();
+                    if(m.group(2)==null) {
+                        // naked hostname without scheme
+                        candidate = "http://" + candidate;
+                    }
+                    try {
+                        next = UURI.createUURI(candidate);
+                        // next loaded with next seed
+                        return true;
+                    } catch (URISyntaxException e1) {
+                        Object[] array = { null, candidate };
+                        controller.uriErrors.log(Level.INFO,"reading seeds: "+e1.getMessage(), array );
+                        next = null;
+                        // keep reading for valid seeds
+                        continue;
+                    }
+                }
+                Object[] array = { null, read };
+                controller.uriErrors.log(Level.INFO, "bad seed line", array);
+            }
+            reader.close();
+            // no more seeds
+            return false;
+        } catch (IOException e) {
+            DevUtils.warnHandle(e, "throw runtime error? log something?");
+            return false;
+        }
     }
 
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
-    	super.finalize();
-    	if(reader!=null) {
-    		reader.close();
-    	}
+        super.finalize();
+        if(reader!=null) {
+            reader.close();
+        }
     }
 
 }

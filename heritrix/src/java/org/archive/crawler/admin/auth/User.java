@@ -61,24 +61,24 @@ public class User
      */
     public User(String name, String password)
     {
-    	sUsername = name;
-    	sPassword = password;
+        sUsername = name;
+        sPassword = password;
 
-    	if(sUsername!=null && sPassword != null)
-    	{
-    		for(int i=0; i<logins.size(); i++)
-    		{
-    			Login login = (Login)logins.get(i);
-    			if(login.username.equalsIgnoreCase(sUsername))
-    			{
-    				if(login.password.equalsIgnoreCase(sPassword))
-    				{
-    					iRole = login.role;
-    				}
-    				return;
-    			}
-    		}
-    	}
+        if(sUsername!=null && sPassword != null)
+        {
+            for(int i=0; i<logins.size(); i++)
+            {
+                Login login = (Login)logins.get(i);
+                if(login.username.equalsIgnoreCase(sUsername))
+                {
+                    if(login.password.equalsIgnoreCase(sPassword))
+                    {
+                        iRole = login.role;
+                    }
+                    return;
+                }
+            }
+        }
     }
 
     /**
@@ -87,7 +87,7 @@ public class User
      */
     public int authenticate()
     {
-    	return iRole;
+        return iRole;
     }
 
     /**
@@ -104,8 +104,8 @@ public class User
      */
     public static void addLogin(String username, String password, int role)
     {
-    	removeLogin(username); // In case it already exist.
-    	logins.add(new Login(username, password, role));
+        removeLogin(username); // In case it already exist.
+        logins.add(new Login(username, password, role));
     }
 
     /**
@@ -115,15 +115,15 @@ public class User
      */
     public static void removeLogin(String username)
     {
-    	for(int i=0; i<logins.size(); i++)
-    	{
-    		Login login = (Login)logins.get(i);
-    		if(login.username.equalsIgnoreCase(username))
-    		{
-    			logins.remove(i);
-    			return;
-    		}
-    	}
+        for(int i=0; i<logins.size(); i++)
+        {
+            Login login = (Login)logins.get(i);
+            if(login.username.equalsIgnoreCase(username))
+            {
+                logins.remove(i);
+                return;
+            }
+        }
     }
 }
 
@@ -150,8 +150,8 @@ class Login
      */
     public Login(String username, String password, int role)
     {
-    	this.username =username;
-    	this.password = password;
-    	this.role = role;
+        this.username =username;
+        this.password = password;
+        this.role = role;
     }
 }

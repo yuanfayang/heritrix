@@ -62,81 +62,81 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      */
     protected void innerProcess(CrawlURI curi){
 
-    	ArrayList links  = new ArrayList();
-    	GetMethod get = null;
-    	InputStream documentStream = null;
-    	Writer out = null;
+        ArrayList links  = new ArrayList();
+        GetMethod get = null;
+        InputStream documentStream = null;
+        Writer out = null;
 
-    	// assumes docs will be coming in through http
-    	//TODO make htis more general (currently we're only fetching via http so it doesn't matter)
-    	if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-    		return;
-    	}
-    	 get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+        // assumes docs will be coming in through http
+        //TODO make htis more general (currently we're only fetching via http so it doesn't matter)
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+            return;
+        }
+         get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 
-    	Header contentType = get.getResponseHeader("Content-Type");
-    	if ((contentType==null)||(!contentType.getValue().startsWith("application/msword"))) {
-    		// nothing to extract for other types here
-    		return;
-    	}
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)||(!contentType.getValue().startsWith("application/msword"))) {
+            // nothing to extract for other types here
+            return;
+        }
 
         numberOfCURIsHandled++;
 
         // get the doc as a File
-    	try{
-    	  	documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
+        try{
+              documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 
-    		if (documentStream==null) {
-    			// TODO: note problem
-    			return;
-    		}
-    		// extract the text from the doc and write it to a stream we
-    		// can then process
-    		out = new StringWriter();
-    		WordDocument w = null;
+            if (documentStream==null) {
+                // TODO: note problem
+                return;
+            }
+            // extract the text from the doc and write it to a stream we
+            // can then process
+            out = new StringWriter();
+            WordDocument w = null;
 
-    		w = new WordDocument( documentStream );
-    		w.writeAllText(out);
-    	}catch(Exception e){
-    		curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
-    		return;
-    	} finally {
-    		try {
-    			documentStream.close();
-    		} catch (IOException ignored) {
+            w = new WordDocument( documentStream );
+            w.writeAllText(out);
+        }catch(Exception e){
+            curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
+            return;
+        } finally {
+            try {
+                documentStream.close();
+            } catch (IOException ignored) {
 
-    		}
-    	}
+            }
+        }
 
-    	// get doc text out of stream
-    	String page = out.toString();
+        // get doc text out of stream
+        String page = out.toString();
 
-    	// find HYPERLINKs
-    	int currentPos = -1;
-    	int linkStart = -1;
-    	int linkEnd = -1;
-    	char quote = '\"';
+        // find HYPERLINKs
+        int currentPos = -1;
+        int linkStart = -1;
+        int linkEnd = -1;
+        char quote = '\"';
 
-    	currentPos = page.indexOf("HYPERLINK");
-    	while(currentPos >= 0){
+        currentPos = page.indexOf("HYPERLINK");
+        while(currentPos >= 0){
 
-    		linkStart = page.indexOf(quote, currentPos) + 1;
-    		linkEnd = page.indexOf(quote, linkStart);
+            linkStart = page.indexOf(quote, currentPos) + 1;
+            linkEnd = page.indexOf(quote, linkStart);
 
-    		String hyperlink = page.substring(linkStart, linkEnd);
+            String hyperlink = page.substring(linkStart, linkEnd);
 
-    		//System.out.println("link: '" + hyperlink + "'");
-    		links.add(hyperlink);
-    		currentPos = page.indexOf("HYPERLINK", linkEnd + 1);
-    	}
+            //System.out.println("link: '" + hyperlink + "'");
+            links.add(hyperlink);
+            currentPos = page.indexOf("HYPERLINK", linkEnd + 1);
+        }
 
-    	// if we found any links add them to the curi for later processing
-    	if(links.size()>0) {
+        // if we found any links add them to the curi for later processing
+        if(links.size()>0) {
             numberOfLinksExtracted += links.size();
             curi.getAList().putObject(A_HTML_LINKS, links);
-    	}
-    	curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-    	logger.fine(curi + " has " + links.size() + " links.");
+        }
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
+        logger.fine(curi + " has " + links.size() + " links.");
     }
 
     /* (non-Javadoc)

@@ -41,7 +41,7 @@ public class PassthroughFormatter extends Formatter {
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
      */
     public String format(LogRecord record) {
-    	return record.getMessage();
+        return record.getMessage();
     }
 
 }

@@ -65,47 +65,47 @@ public class RecordingInputStream
      */
     public RecordingInputStream(int bufferSize, String backingFilename)
     {
-    	recordingOutputStream = new RecordingOutputStream(bufferSize,
+        recordingOutputStream = new RecordingOutputStream(bufferSize,
             backingFilename);
     }
 
     public void open(InputStream wrappedStream) throws IOException {
         assert this.in == null;
-    	this.in = wrappedStream;
-    	recordingOutputStream.open();
+        this.in = wrappedStream;
+        recordingOutputStream.open();
     }
 
     /* (non-Javadoc)
      * @see java.io.InputStream#read()
      */
     public int read() throws IOException {
-    	int b = this.in.read();
-    	if (b != -1) {
-    		recordingOutputStream.write(b);
-    	}
-    	return b;
+        int b = this.in.read();
+        if (b != -1) {
+            recordingOutputStream.write(b);
+        }
+        return b;
     }
 
     /* (non-Javadoc)
      * @see java.io.InputStream#read(byte[], int, int)
      */
     public int read(byte[] b, int off, int len) throws IOException {
-    	int count = this.in.read(b,off,len);
-    	if (count > 0) {
-    		recordingOutputStream.write(b,off,count);
-    	}
-    	return count;
+        int count = this.in.read(b,off,len);
+        if (count > 0) {
+            recordingOutputStream.write(b,off,count);
+        }
+        return count;
     }
 
     /* (non-Javadoc)
      * @see java.io.InputStream#read(byte[])
      */
     public int read(byte[] b) throws IOException {
-    	int count = this.in.read(b);
-    	if (count > 0) {
-    		recordingOutputStream.write(b,0,count);
-    	}
-    	return count;
+        int count = this.in.read(b);
+        if (count > 0) {
+            recordingOutputStream.write(b,0,count);
+        }
+        return count;
     }
 
     /* (non-Javadoc)
@@ -117,22 +117,22 @@ public class RecordingInputStream
             this.in.close();
             this.in = null;
         }
-    	recordingOutputStream.close();
+        recordingOutputStream.close();
     }
 
     public ReplayInputStream getReplayInputStream() throws IOException {
-    	return recordingOutputStream.getReplayInputStream();
+        return recordingOutputStream.getReplayInputStream();
     }
 
     public ReplayInputStream getContentReplayInputStream() throws IOException {
-    	return recordingOutputStream.getContentReplayInputStream();
+        return recordingOutputStream.getContentReplayInputStream();
     }
 
     public long readFully() throws IOException {
-    	byte[] buf = new byte[4096];
-    	while(read(buf)!=-1) {
-    	}
-    	return recordingOutputStream.getSize();
+        byte[] buf = new byte[4096];
+        while(read(buf)!=-1) {
+        }
+        return recordingOutputStream.getSize();
     }
 
     /**
@@ -147,32 +147,32 @@ public class RecordingInputStream
         throws IOException, RecorderLengthExceededException,
             RecorderTimeoutException
     {
-    	long timeoutTime;
-    	long totalBytes = 0;
+        long timeoutTime;
+        long totalBytes = 0;
         
-    	if(timeout > 0) {
-    		timeoutTime = System.currentTimeMillis() + timeout;
-    	} else {
-    		timeoutTime = Long.MAX_VALUE;
-    	}
+        if(timeout > 0) {
+            timeoutTime = System.currentTimeMillis() + timeout;
+        } else {
+            timeoutTime = Long.MAX_VALUE;
+        }
         
-    	byte[] buf = new byte[4096];
-    	long bytesRead = -1;
-    	while (true) {
-    		try {
-    			bytesRead = read(buf);
-    			if (bytesRead == -1) {
-    				break;
-    			}
-    			totalBytes += bytesRead;
-    		} catch (SocketTimeoutException e) {
+        byte[] buf = new byte[4096];
+        long bytesRead = -1;
+        while (true) {
+            try {
+                bytesRead = read(buf);
+                if (bytesRead == -1) {
+                    break;
+                }
+                totalBytes += bytesRead;
+            } catch (SocketTimeoutException e) {
                 // Socket timed out. If we  haven't exceeded the timeout, throw
                 // an IOException.  If we have, it'll be picked up on by test
                 // done below.
                 if (System.currentTimeMillis() < timeoutTime) {
                     throw new IOException("Socket timedout: " + e.getMessage());
                 }
-    		} catch (NullPointerException e) {
+            } catch (NullPointerException e) {
                 // [ 896757 ] NPEs in Andy's Th-Fri Crawl.
                 // A crawl was showing NPE's in this part of the code but can
                 // not reproduce.  Adding this rethrowing catch block w/
@@ -182,21 +182,21 @@ public class RecordingInputStream
                     e.getMessage());
             }
             
-    		if (totalBytes > maxLength) {
-    			throw new RecorderLengthExceededException();
-    		}
-    		if (System.currentTimeMillis() > timeoutTime) {
-    			throw new RecorderTimeoutException();
-    		}
-    	}
+            if (totalBytes > maxLength) {
+                throw new RecorderLengthExceededException();
+            }
+            if (System.currentTimeMillis() > timeoutTime) {
+                throw new RecorderTimeoutException();
+            }
+        }
     }
 
     public long getSize() {
-    	return recordingOutputStream.getSize();
+        return recordingOutputStream.getSize();
     }
 
     public void markContentBegin() {
-    	recordingOutputStream.markContentBegin();
+        recordingOutputStream.markContentBegin();
     }
 
     public void startDigest() {
@@ -234,15 +234,15 @@ public class RecordingInputStream
     }
 
     public CharSequence getCharSequence() {
-    	return recordingOutputStream.getReplayCharSequence();
+        return recordingOutputStream.getReplayCharSequence();
     }
 
     public long getResponseContentLength() {
-    	return recordingOutputStream.getResponseContentLength();
+        return recordingOutputStream.getResponseContentLength();
     }
 
     public void closeRecorder() throws IOException {
-    	recordingOutputStream.closeRecorder();
+        recordingOutputStream.closeRecorder();
     }
 
     /**
@@ -250,10 +250,10 @@ public class RecordingInputStream
      * @throws IOException
      */
     public void copyContentBodyTo(File tempFile) throws IOException {
-    	FileOutputStream fos = new FileOutputStream(tempFile);
-    	ReplayInputStream ris = getContentReplayInputStream();
-    	ris.readFullyTo(fos);
-    	fos.close();
-    	ris.close();
+        FileOutputStream fos = new FileOutputStream(tempFile);
+        ReplayInputStream ris = getContentReplayInputStream();
+        ris.readFullyTo(fos);
+        fos.close();
+        ris.close();
     }
 }

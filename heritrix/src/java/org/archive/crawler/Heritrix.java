@@ -572,7 +572,7 @@ public class Heritrix
             adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
-    	User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
+        User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
 
         String status = null;
 

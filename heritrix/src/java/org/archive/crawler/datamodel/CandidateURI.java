@@ -68,18 +68,18 @@ public class CandidateURI implements Serializable, Lineable {
      * @param u
      */
     public CandidateURI(UURI u) {
-    	uuri = u;
+        uuri = u;
     }
 
     /**
      * @param uriString
      */
 //    public CandidateURI(String s){
-//    	try{
-//    		setUURI(UURI.createUURI(s));
-//    	}catch(Exception e){
-//    		setUURI(null);
-//    	}
+//        try{
+//            setUURI(UURI.createUURI(s));
+//        }catch(Exception e){
+//            setUURI(null);
+//        }
 //    }
 
 
@@ -87,30 +87,30 @@ public class CandidateURI implements Serializable, Lineable {
      * @param b
      */
     public void setIsSeed(boolean b) {
-    	isSeed=b;
-    	setPathFromSeed("");
-    	setVia("");
+        isSeed=b;
+        setPathFromSeed("");
+        setVia("");
     }
 
     /**
      * @return UURI
      */
     public UURI getUURI() {
-    	return uuri;
+        return uuri;
     }
 
     /**
      * @param u
      */
     private void setUURI(UURI u) {
-    	uuri=u;
+        uuri=u;
     }
 
     /**
      * @return Whether seeded.
      */
     public boolean getIsSeed() {
-    	return isSeed;
+        return isSeed;
     }
 
     /**
@@ -118,84 +118,84 @@ public class CandidateURI implements Serializable, Lineable {
      *
      */
     public int getScopeVersion() {
-    	return inScopeVersion;
+        return inScopeVersion;
     }
 
     /**
      * @param i
      */
     public void setScopeVersion(int i) {
-    	inScopeVersion = i;
+        inScopeVersion = i;
     }
 
     public String getPathFromSeed() {
-    	return pathFromSeed;
+        return pathFromSeed;
     }
 
     public Object getVia() {
-    	return via;
+        return via;
     }
 
     /**
      * @param string
      */
     public void setPathFromSeed(String string) {
-    	pathFromSeed = string;
+        pathFromSeed = string;
     }
 
     /**
      * @param object
      */
     public void setVia(Object object) {
-    	via = object;
+        via = object;
     }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     public String toString() {
-    	return "CandidateURI("+getUURI()+")";
+        return "CandidateURI("+getUURI()+")";
     }
 
 
     private void writeObject(java.io.ObjectOutputStream out)
-    	 throws IOException {
-    	 via = flattenVia();
-    	 out.defaultWriteObject();
+         throws IOException {
+         via = flattenVia();
+         out.defaultWriteObject();
     }
 
     /**
      *
      */
     private String flattenVia() {
-    	if (via instanceof String) {
-    		// already OK
-    		return (String) via;
-    	}
-    	if (via instanceof UURI) {
-    		return ((UURI)via).getUriString();
-    	}
-    	if (via instanceof CandidateURI) {
-    		return ((CandidateURI)via).getUURI().getUriString();
-    	}
-    	return via.toString();
+        if (via instanceof String) {
+            // already OK
+            return (String) via;
+        }
+        if (via instanceof UURI) {
+            return ((UURI)via).getUriString();
+        }
+        if (via instanceof CandidateURI) {
+            return ((CandidateURI)via).getUURI().getUriString();
+        }
+        return via.toString();
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Lineable#getLine()
      */
     public String getLine() {
-    	return this.getClass().getName()
-    	        +" "+getUURI().getUriString()
-    	        +" "+pathFromSeed
-    	        +" "+flattenVia();
+        return this.getClass().getName()
+                +" "+getUURI().getUriString()
+                +" "+pathFromSeed
+                +" "+flattenVia();
     }
 
     /**
      * @return URI String
      */
     public String getURIString() {
-    	return getUURI().getUriString();
+        return getUURI().getUriString();
     }
 
     /**
@@ -206,16 +206,16 @@ public class CandidateURI implements Serializable, Lineable {
      * @return True if both are in the same domain, false otherwise.
      */
     public boolean sameDomainAs(CandidateURI other) {
-    	String domain = getUURI().getHost();
-    	if (domain==null) return false;
-    	while(domain.lastIndexOf('.')>domain.indexOf('.')) {
-    		// while has more than one dot, lop off first segment
-    		domain = domain.substring(domain.indexOf('.')+1);
-    	}
-    	if(other.getUURI().getHost()==null ) {
-    		return false;
-    	}
-    	return other.getUURI().getHost().endsWith(domain);
+        String domain = getUURI().getHost();
+        if (domain==null) return false;
+        while(domain.lastIndexOf('.')>domain.indexOf('.')) {
+            // while has more than one dot, lop off first segment
+            domain = domain.substring(domain.indexOf('.')+1);
+        }
+        if(other.getUURI().getHost()==null ) {
+            return false;
+        }
+        return other.getUURI().getHost().endsWith(domain);
     }
 
     /**
@@ -229,7 +229,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return true if crawling of this URI should be forced
      */
     public boolean forceFetch() {
-    	return forceFetch;
+        return forceFetch;
     }
 
     /**
@@ -243,6 +243,6 @@ public class CandidateURI implements Serializable, Lineable {
      * @param b set to true to enforce the crawling of this URI
      */
     public void setForceFetch(boolean b) {
-    	forceFetch = b;
+        forceFetch = b;
     }
 }

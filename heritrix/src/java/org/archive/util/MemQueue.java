@@ -41,28 +41,28 @@ public class MemQueue extends LinkedList implements Queue {
 
      */
     public void enqueue(Object o) {
-    	add(o);
+        add(o);
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
-    	return removeFirst();
+        return removeFirst();
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-    	return (long)size();
+        return (long)size();
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#release()
      */
     public void release() {
-    	// nothing to release
+        // nothing to release
     }
 
 }

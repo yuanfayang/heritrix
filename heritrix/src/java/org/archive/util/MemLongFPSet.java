@@ -40,7 +40,7 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
      *
      */
     public MemLongFPSet() {
-    	this(DEFAULT_CAPACITY_POWER_OF_TWO, DEFAULT_LOAD_FACTOR);
+        this(DEFAULT_CAPACITY_POWER_OF_TWO, DEFAULT_LOAD_FACTOR);
     }
 
     /**
@@ -49,64 +49,64 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
      */
     public MemLongFPSet(int capacityPowerOfTwo, float loadFactor) {
         super(capacityPowerOfTwo, loadFactor);
-    	slots = new byte[1<<capacityPowerOfTwo];
-    	for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
-    		slots[i]=EMPTY; // flag value for unused
-    	}
-    	values = new long[1<<capacityPowerOfTwo];
+        slots = new byte[1<<capacityPowerOfTwo];
+        for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
+            slots[i]=EMPTY; // flag value for unused
+        }
+        values = new long[1<<capacityPowerOfTwo];
     }
 
     protected void setAt(long i, long val) {
-    	slots[(int)i]=1;
-    	values[(int)i]=val;
+        slots[(int)i]=1;
+        values[(int)i]=val;
     }
 
     protected long getAt(long i) {
-    	return values[(int)i];
+        return values[(int)i];
     }
 
     /**
      *
      */
     protected void makeSpace() {
-    	grow();
+        grow();
     }
 
     private void grow() {
-    	long[] oldValues = values;
-    	byte[] oldSlots = slots;
-    	capacityPowerOfTwo++;
-    	values = new long[1<<capacityPowerOfTwo];
-    	slots = new byte[1<<capacityPowerOfTwo];
-    	for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
-    		slots[i]=EMPTY; // flag value for unused
-    	}
-    	count=0;
-    	for(int i = 0; i< oldValues.length; i++) {
-    		if(oldSlots[i]>=0) {
-    			add(oldValues[i]);
-    		}
-    	}
+        long[] oldValues = values;
+        byte[] oldSlots = slots;
+        capacityPowerOfTwo++;
+        values = new long[1<<capacityPowerOfTwo];
+        slots = new byte[1<<capacityPowerOfTwo];
+        for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
+            slots[i]=EMPTY; // flag value for unused
+        }
+        count=0;
+        for(int i = 0; i< oldValues.length; i++) {
+            if(oldSlots[i]>=0) {
+                add(oldValues[i]);
+            }
+        }
     }
 
     protected void relocate(long val, long oldIndex, long newIndex) {
-    	values[(int)newIndex] = values[(int)oldIndex];
-    	slots[(int)newIndex] = slots[(int)oldIndex];
-    	slots[(int)oldIndex] = EMPTY;
+        values[(int)newIndex] = values[(int)oldIndex];
+        slots[(int)newIndex] = slots[(int)oldIndex];
+        slots[(int)oldIndex] = EMPTY;
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#getSlotState(long)
      */
     protected int getSlotState(long i) {
-    	return slots[(int)i];
+        return slots[(int)i];
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.AbstractLongFPSet#clearAt(long)
      */
     protected void clearAt(long index) {
-    	slots[(int)index]=EMPTY;
-    	values[(int)index]=0;
+        slots[(int)index]=EMPTY;
+        values[(int)index]=0;
     }
 }

@@ -73,8 +73,8 @@ public class ReplayCharSequence implements CharSequence {
      * @throws IOException
      */
     public ReplayCharSequence(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
-    	this(buffer,size,backingFilename);
-    	this.responseBodyStart = responseBodyStart;
+        this(buffer,size,backingFilename);
+        this.responseBodyStart = responseBodyStart;
     }
 
     /**
@@ -84,39 +84,39 @@ public class ReplayCharSequence implements CharSequence {
      * @throws IOException
      */
     public ReplayCharSequence(byte[] buffer, long size, String backingFilename) throws IOException {
-    	this.prefixBuffer = buffer;
-    	this.size = size;
-    	if (size>buffer.length) {
-    		this.backingFilename = backingFilename;
-    		raFile = new RandomAccessFile(backingFilename,"r");
-    		wraparoundBuffer = new byte[buffer.length];
-    		wrapOrigin = prefixBuffer.length;
-    		wrapOffset = 0;
-    		loadBuffer();
-    	}
+        this.prefixBuffer = buffer;
+        this.size = size;
+        if (size>buffer.length) {
+            this.backingFilename = backingFilename;
+            raFile = new RandomAccessFile(backingFilename,"r");
+            wraparoundBuffer = new byte[buffer.length];
+            wrapOrigin = prefixBuffer.length;
+            wrapOffset = 0;
+            loadBuffer();
+        }
     }
 
     /* (non-Javadoc)
      * @see java.lang.CharSequence#length()
      */
     public int length() {
-    	return (int) size;
+        return (int) size;
     }
 
     /* (non-Javadoc)
      * @see java.lang.CharSequence#charAt(int)
      */
     public char charAt(int index) {
-//    	if(index>size) {
-//    		throw new IndexOutOfBoundsException();
-//    	}
-    	if(index < prefixBuffer.length) {
-    		return (char) ((int)prefixBuffer[index]&0xFF); // mask to unsigned
-    	}
-    	if(index >= wrapOrigin && index-wrapOrigin < wraparoundBuffer.length) {
-    		return (char) ((int)wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length]&0xFF); // mask to unsigned
-    	}
-    	return faultCharAt(index);
+//        if(index>size) {
+//            throw new IndexOutOfBoundsException();
+//        }
+        if(index < prefixBuffer.length) {
+            return (char) ((int)prefixBuffer[index]&0xFF); // mask to unsigned
+        }
+        if(index >= wrapOrigin && index-wrapOrigin < wraparoundBuffer.length) {
+            return (char) ((int)wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length]&0xFF); // mask to unsigned
+        }
+        return faultCharAt(index);
     }
 
     /**
@@ -137,47 +137,47 @@ public class ReplayCharSequence implements CharSequence {
      * @return A character that's outside the current buffers
      */
     private char faultCharAt(int index) {
-    	if(index>=wrapOrigin+wraparoundBuffer.length) {
-    		// moving forward
-    		while (index>=wrapOrigin+wraparoundBuffer.length){
-    			// TODO optimize this
-    			advanceBuffer();
-    		}
-    		return charAt(index);
-    	} else {
-    		// moving backward
-    		recenterBuffer(index);
-    		return charAt(index);
-    	}
+        if(index>=wrapOrigin+wraparoundBuffer.length) {
+            // moving forward
+            while (index>=wrapOrigin+wraparoundBuffer.length){
+                // TODO optimize this
+                advanceBuffer();
+            }
+            return charAt(index);
+        } else {
+            // moving backward
+            recenterBuffer(index);
+            return charAt(index);
+        }
     }
 
 
     private void recenterBuffer(int index) {
-    	System.out.println("recentering around "+index+" in "+ backingFilename);
-    	wrapOrigin = index - (wraparoundBuffer.length/2);
-    	if(wrapOrigin<prefixBuffer.length) {
-    		wrapOrigin = prefixBuffer.length;
-    	}
-    	wrapOffset = 0;
-    	loadBuffer();
+        System.out.println("recentering around "+index+" in "+ backingFilename);
+        wrapOrigin = index - (wraparoundBuffer.length/2);
+        if(wrapOrigin<prefixBuffer.length) {
+            wrapOrigin = prefixBuffer.length;
+        }
+        wrapOffset = 0;
+        loadBuffer();
     }
 
     private void loadBuffer() {
-    	long len = -1;
-    	try {
-    		len=raFile.length();
-    		raFile.seek(wrapOrigin-prefixBuffer.length);
-    		raFile.readFully(wraparoundBuffer,0,(int)Math.min(wraparoundBuffer.length, size-wrapOrigin ));
-    	} catch (IOException e) {
-    		// TODO convert this to a runtime error?
-    		DevUtils.logger.log(
-    			Level.SEVERE,
-    			"raFile.seek("+(wrapOrigin-prefixBuffer.length)+")\n"+
-    			"raFile.readFully(wraparoundBuffer,0,"+((int)Math.min(wraparoundBuffer.length, size-wrapOrigin ))+")\n"+
-    			"raFile.length()"+len+"\n"+
-    			DevUtils.extraInfo(),
-    			e);
-    	}
+        long len = -1;
+        try {
+            len=raFile.length();
+            raFile.seek(wrapOrigin-prefixBuffer.length);
+            raFile.readFully(wraparoundBuffer,0,(int)Math.min(wraparoundBuffer.length, size-wrapOrigin ));
+        } catch (IOException e) {
+            // TODO convert this to a runtime error?
+            DevUtils.logger.log(
+                Level.SEVERE,
+                "raFile.seek("+(wrapOrigin-prefixBuffer.length)+")\n"+
+                "raFile.readFully(wraparoundBuffer,0,"+((int)Math.min(wraparoundBuffer.length, size-wrapOrigin ))+")\n"+
+                "raFile.length()"+len+"\n"+
+                DevUtils.extraInfo(),
+                e);
+        }
     }
 
     /**
@@ -185,15 +185,15 @@ public class ReplayCharSequence implements CharSequence {
      *
      */
     private void advanceBuffer() {
-    	try {
-    		wraparoundBuffer[wrapOffset] = (byte)raFile.read();
-    		wrapOffset++;
-    		wrapOffset %= wraparoundBuffer.length;
-    		wrapOrigin++;
-    	} catch (IOException e) {
-    		// TODO convert this to a runtime error?
-    		DevUtils.logger.log(Level.SEVERE,"advanceBuffer()"+DevUtils.extraInfo(),e);
-    	}
+        try {
+            wraparoundBuffer[wrapOffset] = (byte)raFile.read();
+            wrapOffset++;
+            wrapOffset %= wraparoundBuffer.length;
+            wrapOrigin++;
+        } catch (IOException e) {
+            // TODO convert this to a runtime error?
+            DevUtils.logger.log(Level.SEVERE,"advanceBuffer()"+DevUtils.extraInfo(),e);
+        }
 
     }
 
@@ -201,7 +201,7 @@ public class ReplayCharSequence implements CharSequence {
      * @see java.lang.CharSequence#subSequence(int, int)
      */
     public CharSequence subSequence(int start, int end) {
-    	return new CharSubSequence(this,start,end);
+        return new CharSubSequence(this,start,end);
     }
 
 
@@ -209,24 +209,24 @@ public class ReplayCharSequence implements CharSequence {
 //     * @see java.lang.Object#toString()
 //     */
 //    public String toString() {
-//    	StringBuffer sb = new StringBuffer((int)size);
-//    	for(int i=0; i<size; i++) {
-//    		sb.append(charAt(i));
-//    	}
-//    	return sb.toString();
+//        StringBuffer sb = new StringBuffer((int)size);
+//        for(int i=0; i<size; i++) {
+//            sb.append(charAt(i));
+//        }
+//        return sb.toString();
 //    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
-    	super.finalize();
-//    	if(raFile.getFD().valid()) {
-//    		System.out.println("finalize-closing raFile");
-//    	}
-    	if (raFile!=null) {
-    		raFile.close();
-    	}
+        super.finalize();
+//        if(raFile.getFD().valid()) {
+//            System.out.println("finalize-closing raFile");
+//        }
+        if (raFile!=null) {
+            raFile.close();
+        }
     }
 
 }

@@ -88,22 +88,22 @@ public class DiskQueue implements Queue, Savable {
      * @throws FileNotFoundException if we cannot create an appropriate file
      */
     public DiskQueue(File dir, String prefix) throws FileNotFoundException {
-    	if(dir == null || prefix == null) {
+        if(dir == null || prefix == null) {
             throw new FileNotFoundException("null arguments not accepted");
         }
 
         length = 0;
-    	this.prefix = prefix;
-    	this.scratchDir = dir;
+        this.prefix = prefix;
+        this.scratchDir = dir;
         bytes = new DiskBackedByteQueue(scratchDir, this.prefix);
         bytes.initializeStreams();
-    	// TODO someday: enable queue to already be filled
+        // TODO someday: enable queue to already be filled
     }
 
     private void lateInitialize() throws FileNotFoundException, IOException {
-    	testStream = new ObjectOutputStream(new NullOutputStream());
-    	tailStream = new ObjectOutputStream(bytes.getTailStream());
-    	headStream = new ObjectInputStream(bytes.getHeadStream());
+        testStream = new ObjectOutputStream(new NullOutputStream());
+        tailStream = new ObjectOutputStream(bytes.getTailStream());
+        headStream = new ObjectInputStream(bytes.getHeadStream());
         isInitialized = true;
     }
 
@@ -111,75 +111,75 @@ public class DiskQueue implements Queue, Savable {
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o){
-    	//logger.finest(name+"("+length+"): "+o);
-    	try {
-    		if(!isInitialized) {
-    			lateInitialize();
-    		}
-    		// TODO: optimize this, for example by serializing to buffer, then
+        //logger.finest(name+"("+length+"): "+o);
+        try {
+            if(!isInitialized) {
+                lateInitialize();
+            }
+            // TODO: optimize this, for example by serializing to buffer, then
             // writing to disk on success
-    		testStream.writeObject(o);
-    		testStream.reset();
-    		tailStream.writeObject(o);
-    		tailStream.reset(); // forget state with each enqueue
-    		length++;
-    	} catch (IOException e) {
-    		// TODO convert to runtime exception?
-    		DevUtils.logger.log(Level.SEVERE,"enqueue("+o+")" +
-    		    DevUtils.extraInfo(),e);
-    	}
+            testStream.writeObject(o);
+            testStream.reset();
+            tailStream.writeObject(o);
+            tailStream.reset(); // forget state with each enqueue
+            length++;
+        } catch (IOException e) {
+            // TODO convert to runtime exception?
+            DevUtils.logger.log(Level.SEVERE,"enqueue("+o+")" +
+                DevUtils.extraInfo(),e);
+        }
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
-    	return length==0;
+        return length==0;
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
-    	if (isEmpty()) {
-    		throw new NoSuchElementException();
-    	}
-    	Object o;
-    	try {
-    		o = headStream.readObject();
-    	} catch (IOException e) {
-    		e.printStackTrace();
-    		throw new NoSuchElementException();
-    	} catch (ClassNotFoundException e) {
-    		e.printStackTrace();
-    		throw new NoSuchElementException();
-    	}
-    	// logger.finest(name+"("+length+"): "+o);
-    	length--;
-    	return o;
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        Object o;
+        try {
+            o = headStream.readObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new NoSuchElementException();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new NoSuchElementException();
+        }
+        // logger.finest(name+"("+length+"): "+o);
+        length--;
+        return o;
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-    	return length;
+        return length;
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#release()
      */
     public void release() {
-    	if (bytes != null) {
-    		try {
-    			if(headStream != null) headStream.close();
-    			if(tailStream != null) tailStream.close();
-    			bytes.discard();
-    		} catch (IOException e) {
-    			// TODO: convert to runtime?
-    			e.printStackTrace();
-    		}
-    	}
+        if (bytes != null) {
+            try {
+                if(headStream != null) headStream.close();
+                if(tailStream != null) tailStream.close();
+                bytes.discard();
+            } catch (IOException e) {
+                // TODO: convert to runtime?
+                e.printStackTrace();
+            }
+        }
     }
 
     /* (non-Javadoc)

@@ -111,10 +111,10 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             Matcher uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
             while (uris.find()) {
                 String cssUri = uris.group(1);
-    			// Decode HTML entities
-    			// TODO: decode more than just '&amp;' entity
-    			cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
-    			// Remove backslash(s), an escape character used in CSS URL
+                // Decode HTML entities
+                // TODO: decode more than just '&amp;' entity
+                cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
+                // Remove backslash(s), an escape character used in CSS URL
                 cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
                 numberOfLinksExtracted++;
                 curi.addCSSLink(cssUri);
