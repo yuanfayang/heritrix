@@ -83,7 +83,7 @@ import org.apache.commons.logging.LogFactory;
  * @author <a href="mailto:rwaldhoff@apache.org">Rodney Waldhoff</a>
  * @author Sean C. Sullivan
  * @author <a href="mailto:dion@apache.org">dIon Gillard</a>
- * @author Ortwin Glück
+ * @author Ortwin Gluck
  * @author <a href="mailto:becke@u.washington.edu">Michael Becke</a>
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
  * @author Sam Maloney
