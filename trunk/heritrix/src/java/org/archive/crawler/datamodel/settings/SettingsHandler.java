@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -500,4 +501,18 @@ public abstract class SettingsHandler {
     public void setErrorReportingLevel(Level level) {
         errorReportingLevel = level.intValue();
     }
+    
+    /**
+     * Creates and returns a <tt>List</tt> of all files comprising the current 
+     * settings framework.
+     * 
+     * <p>The List contains the absolute String path of each file. 
+     * 
+     * <p>The list should contain any configurable files, including such files
+     * as seed file and any other files use by the various settings modules.
+     * 
+     * <p>Implementations of the SettingsHandler that do not use files for 
+     * permanent storage should return an empty list.
+     */
+    public abstract List getListOfAllFiles();
 }

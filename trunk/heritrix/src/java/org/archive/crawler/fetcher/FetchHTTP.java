@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -633,5 +634,36 @@ public class FetchHTTP extends Processor
      */
     public void finalTasks() {
         saveCookies();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.ModuleType#listUsedFiles(java.util.List)
+     */
+    protected void listUsedFiles(List list) {
+        // List the cookies files
+        // Add seed file
+        try {
+            String tmp = (String)getAttribute(ATTR_LOAD_COOKIES);
+            if(tmp != null && tmp.length() > 0){
+                File file = getSettingsHandler().
+                        getPathRelativeToWorkingDirectory(tmp);
+                list.add(file.getAbsolutePath());
+            }
+            tmp = (String)getAttribute(ATTR_SAVE_COOKIES);
+            if(tmp != null && tmp.length() > 0){
+                File file = getSettingsHandler().
+                        getPathRelativeToWorkingDirectory(tmp);
+                list.add(file.getAbsolutePath());
+            }
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }

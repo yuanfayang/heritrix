@@ -32,12 +32,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
+import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -421,6 +424,85 @@ public class XMLSettingsHandler extends SettingsHandler {
         while (settingsFile.isDirectory() && settingsFile.list().length == 0 && !settingsFile.equals(settingsDirectory)) {
             settingsFile.delete();
             settingsFile = settingsFile.getParentFile();
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.SettingsHandler#getListOfAllFiles()
+     */
+    public List getListOfAllFiles() {
+        ArrayList list = new ArrayList();
+        // Add CrawlOrder.
+        list.add(getOrderFile().getAbsolutePath());
+        // Iterate through the entire override hierarchy
+        recursiveFindFiles(getSettingsDirectory(),list);
+        // Get files used by settings modules.
+        recursiveFindSecondaryFiles(getOrder(),list);
+        return list;
+    }
+    
+    /**
+     * Add any files being used by any of the Modules making up the settings to
+     * the list.
+     * 
+     * @param mbean A ModuleType to interrogate for files. Any child modules 
+     *           will be recursively interrogated.
+     * @param list The list to add found files to.
+     */
+    private void recursiveFindSecondaryFiles(ComplexType mbean, ArrayList list) {
+        MBeanInfo info = mbean.getMBeanInfo();
+        MBeanAttributeInfo[] a = info.getAttributes();
+        // Interrogate the current module
+        if(mbean instanceof ModuleType){
+            ((ModuleType)mbean).listUsedFiles(list);
+        }
+        
+        // Recursively interrogate all sub modules that are of ModuleType
+        for(int n=0; n<a.length; n++) {
+            if(a[n] == null) {
+                // Error null attribute.
+            } else {
+                ModuleAttributeInfo att = (ModuleAttributeInfo)a[n];
+                Object currentAttribute;
+                try {
+                    currentAttribute = mbean.getAttribute(att.getName());
+                    if(currentAttribute instanceof ComplexType) {
+                        recursiveFindSecondaryFiles((ComplexType)currentAttribute,list);
+                    }
+                } catch (AttributeNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (MBeanException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (ReflectionException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }       
+    }
+
+    /**
+     * Starting at the specific directory this method will iterate through all
+     * sub directories and add each file (as absolute name, with path as a 
+     * string) to the provided ArrayList. Any file found under the settings
+     * directory with the proper suffix will be considered valid and added to 
+     * the list.
+     * @param dir Starting directory
+     * @param list The list to add to
+     */
+    private void recursiveFindFiles(File dir, ArrayList list){
+        File[] subs = dir.listFiles();
+        for(int i=0 ; i < subs.length ; i++){
+            if(subs[i].isDirectory()){
+                recursiveFindFiles(subs[i],list);
+            } else {
+                if(subs[i].getName().endsWith(settingsFilenameSuffix)){
+                    // Add it to list
+                    list.add(subs[i].getAbsolutePath());
+                }
+            }
         }
     }
 }

@@ -353,4 +353,25 @@ public class CrawlScope extends Filter {
             DevUtils.warnHandle(e, "problem writing new seed");
         }
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.ModuleType#listUsedFiles(java.util.List)
+     */
+    public void listUsedFiles(List list){
+        // Add seed file
+        try {
+            File file = getSettingsHandler().getPathRelativeToWorkingDirectory(
+                    (String)getAttribute(ATTR_SEEDS));
+            list.add(file.getAbsolutePath());
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }

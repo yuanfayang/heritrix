@@ -47,7 +47,6 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
-import org.archive.crawler.datamodel.settings.ValueErrorHandler;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;

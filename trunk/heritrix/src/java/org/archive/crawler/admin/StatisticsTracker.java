@@ -804,6 +804,8 @@ public class StatisticsTracker extends AbstractTracker
             fw.write(rep.toString());
             fw.flush();
             fw.close();
+            controller.addToManifest(directory+File.separator+"seeds-report.txt",
+                    CrawlController.MANIFEST_REPORT_FILE,true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write seeds-report.txt",
                     "Unable to write seeds-report.txt at the end of crawl.",e,
@@ -847,6 +849,8 @@ public class StatisticsTracker extends AbstractTracker
             fw.write(rep.toString());
             fw.flush();
             fw.close();
+            controller.addToManifest(directory+File.separator+"hosts-report.txt",
+                    CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write hosts-report.txt",
                     "Unable to write hosts-report.txt at the end of crawl.",e,
@@ -891,6 +895,8 @@ public class StatisticsTracker extends AbstractTracker
             fw.write(rep.toString());
             fw.flush();
             fw.close();
+            controller.addToManifest(directory+File.separator+"mimetype-report.txt",
+                    CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write mimetype-report.txt",
                     "Unable to write mimetype-report.txt at the end of crawl.",e,
@@ -925,6 +931,8 @@ public class StatisticsTracker extends AbstractTracker
             fw.write(rep.toString());
             fw.flush();
             fw.close();
+            controller.addToManifest(directory+File.separator+"responsecode-report.txt",
+                    CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write responsecode-report.txt",
                     "Unable to write responsecode-report.txt at the end of crawl.",e,
@@ -965,6 +973,8 @@ public class StatisticsTracker extends AbstractTracker
             fw.write(rep.toString());
             fw.flush();
             fw.close();
+            controller.addToManifest(directory+File.separator+"crawl-report.txt",
+                    CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write crawl-report.txt",
                     "Unable to write crawl-report.txt at the end of crawl.",e,
