@@ -914,7 +914,7 @@ public class Foo extends ModuleType {
   </sect1>
 
   <sect1>
-    <title> Writing a Frontier</title>
+    <title>Writing a Frontier</title>
 
     <para>As mentioned before the URIFrontier is a pluggable module
     responsible for deciding which URI to process next, and when. The Frontier
@@ -969,7 +969,66 @@ public class Foo extends ModuleType {
   <sect1>
     <title>Writing a Statistics Tracker</title>
 
-    <para></para>
+    <para>A Statistics Tracker is a module that monitors the crawl and records
+    statistics of interest to it.</para>
+
+    <para>Statistics Trackers must implement the <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/StatisticsTracking.html">StatisticsTracking
+    interface</ulink>. The interface imposes very little on the module.</para>
+
+    <para>It's initialization method provides the new statistics tracker with
+    a reference to the CrawlController and thus the module has access to any
+    part of the crawl.</para>
+
+    <para>Generally statistics trackers gather information by either querying
+    the data exposed by the URIFrontier or by listening for <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlURIDispositionListener.html">CrawlURI
+    disposition events</ulink> and <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlStatusListener.html">crawl
+    status events</ulink>.</para>
+
+    <para>The interface extends Runnable. This is based on the assumptions
+    that statistics tracker are proactive in gathering their information. The
+    CrawlController will start each statistics tracker once the crawl begins.
+    If this facility is not needed in a statistics tracker (i.e. all
+    information is gathered passively) simply implement the run() method as an
+    empty method.<note>
+        <para>For new statistics tracking modules to be available in the web
+        user interface their class name must be added to the tracker.options
+        file under the conf/modules directory. The classes' full name (with
+        package info) should be written in it's own line, followed by a '|'
+        and a descriptive name (containing only [a-z,A-z]).</para>
+      </note></para>
+
+    <sect2>
+      <title>AbstractTracker</title>
+
+      <para>A partial implementation of a StatisticsTracker is provided in the
+      frameworks package. The <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/AbstractTracker.html">AbstractTracker</ulink>
+      implements the StatisticsTracking interface and adds the needed
+      infrastructure for doing snapshots of the crawler status.</para>
+
+      <para>This is done implementing the thread aspects of the statistics
+      tracker. This means that classes extending the AbstractTracker need not
+      worry about thread handling, implementing the logActivity() method
+      allows them to poll any information at fixed intervals. </para>
+
+      <para>AbstractTracker also listens for crawl status events and pauses
+      and stops it's activity based on them.</para>
+    </sect2>
+
+    <sect2>
+      <title>Provided StatisticsTracker</title>
+
+      <para>The admin package contains the only provided implementation of the
+      statistics tracking interface. The <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/admin/StatisticsTracker.html">StatisticsTracker</ulink>
+      is designed to write progress information to the progress-statistics.log
+      as well as providing the web user interface with information about
+      ongoing and completed crawls. It also dumps various reports at the end
+      of each crawl.</para>
+    </sect2>
   </sect1>
 
   <appendix>
