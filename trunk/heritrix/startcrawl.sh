@@ -26,6 +26,6 @@ echo "script needs to be run from the directory"
 echo "in which it lives."
 
 ## run this sucker
-$JAVA_HOME/bin/java -cp "lib/crawlerclasses.jar:lib/commons-httpclient.jar:lib/dnsjava.jar:lib/stataclasses.jar:lib/junit.jar:lib/commons-logging.jar" org.archive.crawler.Heritrix test-config/order.xml
+$JAVA_HOME/bin/java -cp "lib/crawlerclasses.jar:lib/commons-httpclient.jar:lib/dnsjava.jar:lib/stataclasses.jar:lib/junit.jar:lib/commons-logging.jar" org.archive.crawler.Heritrix -no-wui test-config/order.xml
 
 
