@@ -26,22 +26,16 @@ package org.archive.crawler.frontier;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.queue.DiskBackedDeque;
-import org.archive.queue.Queue;
+import org.archive.queue.TieredQueue;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.CompositeIterator;
-import org.archive.util.Inverter;
 
 /**
  * Ordered collection of work items with the same "classKey".
@@ -103,14 +97,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     ArrayList inProcessItems = new ArrayList();
     int inProcessLoad = 0;
     
-    DiskBackedDeque innerQ; // rest of eligible items
-    LinkedList unqueued; // held batch of items to be queued
-    int maxMemoryLoad; // total number of items to hold in RAM
-    
-    /**
-     * Put-to-side items; not returned from normal accessors.
-     */
-    Queue frozenQ = null;
+    TieredQueue innerQ;
 
     // useful for reporting
     private String lastQueued; // last URI enqueued
@@ -136,9 +123,8 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
         }
         this.crawlServer = server;
         String tmpName = key;
-        this.maxMemoryLoad = maxMemLoad;
-        this.innerQ = new DiskBackedDeque(scratchDir,tmpName,false,maxMemLoad);    
-        this.unqueued = new LinkedList();
+        this.innerQ = new TieredQueue(3);
+        this.innerQ.initializeDiskBackedQueues(scratchDir,tmpName,300);
         this.state = INACTIVE;
     }
 
@@ -291,6 +277,9 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
+     * Should take care not to mutate this value while
+     * queue is inside a sorted queue.
+     * 
      * @param w time to wake, when snoozed
      */
     public void setWakeTime(long w) {
@@ -325,59 +314,13 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     public void enqueue(CrawlURI curi) {
      
         if(curi.needsImmediateScheduling()) {
-            enqueueHigh(curi);
+            innerQ.enqueue(curi,0);
         } else if (curi.needsSoonScheduling()) {
-            enqueueMedium(curi);
+            innerQ.enqueue(curi,1);
         } else {
-            if(state!=INACTIVE) {
-                this.innerQ.enqueue(curi);
-            } else {
-                // hold until connected
-                this.unqueued.addLast(curi);
-            } 
+            innerQ.enqueue(curi,2);
         }
         lastQueued = curi.getURIString();
-        enforceMemoryLoad();
-    }
-
-    /**
-     * Ensure the total 
-     */
-    private void enforceMemoryLoad() {
-        if(memoryLoad()>maxMemoryLoad) {
-            // empty unqueued
-            enqueueUnqueued(); 
-            if(state==INACTIVE) {
-                // release any filehandles queueing may have opened
-                innerQ.disconnect();
-            }
-        }
-    }
-
-    /**
-     * @return Unqueued size plus inner queue memory load.
-     */
-    public int memoryLoad() {
-        return unqueued.size()+innerQ.memoryLoad();
-    }
-
-    /**
-     * enqueue at a middle location (ahead of 'most'
-     * items, but behind any recent 'enqueueHigh's
-     *
-     * @param curi
-     */
-    private void enqueueMedium(CrawlURI curi) {
-        this.unqueued.addLast(curi);
-    }
-
-    /**
-     * enqueue ahead of everything else
-     *
-     * @param curi
-     */
-    private void enqueueHigh(CrawlURI curi) {
-        this.unqueued.addFirst(curi);
     }
 
     /**
@@ -386,9 +329,8 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * still have 'frozen' off-to-side URIs.)
      */
     public boolean isEmpty() {
-        return this.unqueued.isEmpty() && this.innerQ.isEmpty();
-        // return innerStack.isEmpty() && innerQ.isEmpty() && frozenQ.isEmpty();
-    }
+        return this.innerQ.isEmpty();
+   }
 
     /**
      * Remove an item in the default manner
@@ -397,73 +339,18 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @return A crawl uri.
      */
     public CrawlURI dequeue() {
-        CrawlURI candidate = null;
-        // first try 'unqueued' buffer
-        if(!this.unqueued.isEmpty()) {
-            candidate = dequeueFromUnqueued();
-        }
-        if (candidate == null) {
-            // otherwise consult innerQ
-            candidate = (CrawlURI) this.innerQ.dequeue();
-        }
-        if (candidate != null) {
-            lastDequeued = candidate.getURIString();
-        }
+        CrawlURI candidate = (CrawlURI) this.innerQ.dequeue();
+        lastDequeued = candidate.getURIString();
         return candidate;
     }
 
-    /**
-     * Consult the unqueued buffer for any CrawlURIs to 
-     * dequeue. Buffer is consulted front-to-back, ensuring
-     * high priority items are released first. Any normal
-     * items discovered in the buffer are simply put at the
-     * back of the main queue.
-     * 
-     * @return an eligible CrawlURI
-     */
-    private CrawlURI dequeueFromUnqueued() {
-        CrawlURI candidate;
-        while(!unqueued.isEmpty()) {
-            candidate = (CrawlURI) unqueued.removeFirst();
-            if(candidate.needsImmediateScheduling()|| candidate.needsSoonScheduling()) {
-                return candidate; 
-            } else {
-                // was a normal item buffered up; just put at end of queue
-                innerQ.enqueue(candidate);
-            }
-        }
-        return null;
-    }
-    
-    private void enqueueUnqueued() {
-        CrawlURI candidate;
-        while(!unqueued.isEmpty()) {
-            candidate = (CrawlURI) unqueued.removeLast();
-            if(candidate.needsImmediateScheduling()|| candidate.needsSoonScheduling()) {
-                // push to top
-                innerQ.push(candidate);
-            } else {
-                // enqueue to back
-                innerQ.enqueue(candidate);
-            }
-        }
-    }
-
-    
     /** 
      * @see org.archive.queue.Queue#length()
      * @return Total number of available items. (Does not include
      * any 'frozen' items.)
      */
     public long length() {
-        return this.innerQ.length() + this.unqueued.size();
-    }
-
-    /**
-     * @return Total number of 'frozen' items.
-     */
-    public long frozenLength() {
-        return this.innerQ.length() + this.unqueued.size();
+        return this.innerQ.length();
     }
     
     /** 
@@ -475,8 +362,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      */
     public Iterator getIterator(boolean inCacheOnly) {
         // TODO: consider pushing all unqueued to deque to simplify
-        return new CompositeIterator(this.unqueued.iterator(),
-            this.innerQ.getIterator(inCacheOnly));
+        return this.innerQ.getIterator(inCacheOnly);
     }
 
     /**
@@ -489,11 +375,6 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     public long deleteMatchedItems(Predicate matcher) {
         // Delete from inner queue
         long numberOfDeletes = this.innerQ.deleteMatchedItems(matcher);
-        // TODO: consider pushing all unqueued to deque to simplify
-        // Then delete from inner stack
-        int presize = unqueued.size();
-        CollectionUtils.filter(unqueued,new Inverter(matcher));
-        numberOfDeletes += (presize - unqueued.size());
         // return total deleted
         return numberOfDeletes;
     }
@@ -503,19 +384,6 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      */
     public List getInProcessItems() {
        return inProcessItems;
-    }
-
-    /**
-     * enqueue to the 'frozen' set-aside queue,
-     * which holds items indefinitely (only
-     * operator action returns them to availability)
-     *
-     * @param curi
-     */
-    public void enqueueFrozen(CrawlURI curi) {
-        if (this.frozenQ != null) {
-            this.frozenQ.enqueue(curi);
-        }
     }
 
     /**
@@ -531,30 +399,11 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
         return isEmpty() && this.state == EMPTY && inProcessItems.isEmpty();
     }
 
-    // custom serialization
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        // ensure object identities of state value match
-        this.state = ((String) this.state).intern();
-    }
-
     /**
      * @param v
      */
     public void setValence(int v) {
         valence = v;
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.frontier.URIWorkQueue#setMaximumMemoryLoad(int)
-     */
-    public void setMaximumMemoryLoad(int load) {
-        maxMemoryLoad = load;
-        if(state==INACTIVE) {
-            innerQ.setHeadMax(0);
-        } else {
-            innerQ.setHeadMax(load);
-        }
     }
 
     /**
@@ -570,7 +419,27 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * for assessing queue state.
      */
     public String getLastDequeued() {
-        // TODO Auto-generated method stub
         return lastDequeued;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.URIWorkQueue#peek()
+     */
+    public CrawlURI peek() {
+        return (CrawlURI) innerQ.peek();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.URIWorkQueue#unpeek()
+     */
+    public void unpeek() {
+        innerQ.unpeek();
+    }
+
+    /**
+     * @param i
+     */
+    public void setMaximumMemoryLoad(int i) {
+        innerQ.setMemoryResidentQueueCap(i);
     }
 }
