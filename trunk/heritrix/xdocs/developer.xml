@@ -79,12 +79,16 @@ name of the Class they are testing w/ a Test suffix.
 
 <section name="Coding Conventions">
 <p>Heritrix baselines on SUN's <a 
-href="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Code Conventions for the JavaTM Programming Language</a>.  It'd be hard not to they 
+href="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Code
+Conventions for the JavaTM Programming Language</a>.  It'd be hard not to they 
 say so little.  They at least say 
 <a href="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum
-line length of 80 characters</a>.  Below are explicit tightenings on the SUN 
-conventions used in Heritrix.
+line length of 80 characters</a>.  Below are tightenings on the SUN conventions
+used in Heritrix.
 </p>
+<p>We also will favor much of what is written in this document, 
+<a href="http://geosoft.no/javastyle.html">Java Programming Style
+Guidelines</a>.</p>
 
 <subsection name="No Tabs">
     <p>No tabs in source code.  Set you editor to indent w/ spaces.</p>
