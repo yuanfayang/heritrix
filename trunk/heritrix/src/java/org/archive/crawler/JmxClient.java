@@ -51,24 +51,45 @@ import org.archive.util.OneLineSimpleLogger;
 /**
  * Heritrix JMX Client.
  * Used to control Heritrix remotely.
+ * Connects to the JDK 1.5.0 JMX Agent.
+ * This client doesn't currently do security.
+ * See {@link Heritrix#registerHeritrixMBean(Heritrix)} to see
+ * how to start the remote JMX Agent and to learn more about how
+ * this JMX client/server interaction works.  Because this client
+ * doesn't yet do security, start the remote MBean with SSL
+ * and authentication disabled: e.g. Pass the following on
+ * command line: <code>-Dcom.sun.management.jmxremote.authenticate=false
+ * -Dcom.sun.management.jmxremote.ssl=false</code>.
+ * <p>TODO: Move this out of Heritrix package.  Has no real dependency
+ * on Heritrix.  Just packaged it with Heritrix for convenience.
  * @author stack
  */
 public class JmxClient {
     /**
-     * Heritrix logging instance.
+     * Logging instance.
      */
     private static final Logger logger =
         Logger.getLogger(JmxClient.class.getName());
     
-    private static final String STOP = "stop";
-    private static final String START = "start";
-    private static final String STARTED = "started";
-    private static final String STATUS = "status";
-    private static final String [] CMDS_ARRAY = {START, STOP};
-    private static final List CMDS = new ArrayList(Arrays.asList(CMDS_ARRAY));
+    // Attributes.
+    private static final String STARTED = "Started";
+    private static final String STATUS = "State";
     private static final String [] ATTRS_ARRAY = {STARTED, STATUS};
     private static final List ATTRS =
         new ArrayList(Arrays.asList(ATTRS_ARRAY));
+    
+    // Operations.
+    private static final String STOP = "stop";
+    private static final String START = "start";
+    private static final String [] CMDS_ARRAY = {START, STOP};
+    private static final List CMDS = new ArrayList(Arrays.asList(CMDS_ARRAY));
+    
+    /**
+     * Default port to connect to.
+     */
+    private static final int DEFAULT_PORT = 8081;
+    
+    
 	public static void main(String[] args) throws Exception {
         JmxClient client = new JmxClient();
         OneLineSimpleLogger.setConsoleHandler();
@@ -79,7 +100,7 @@ public class JmxClient {
     throws Exception {
         String cmd = null;
         String hostname = "localhost";
-        int port = Heritrix.DEFAULT_JMX_SERVER_PORT;
+        int port = DEFAULT_PORT;
         JmxClientCommandLineParser clp =
             client.new JmxClientCommandLineParser(args,
                 new PrintWriter(System.out));
@@ -138,12 +159,13 @@ public class JmxClient {
     protected void doCommand(String hostname, int port, String cmd)
     throws Exception {
         JMXServiceURL url = 
-            new JMXServiceURL("service:jmx:jmxmp://" + hostname + ":" + port); 
+            new JMXServiceURL("service:jmx:rmi://" + hostname +
+                "/jndi/rmi://" + hostname + ":" + port + "/jmxrmi"); 
         JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
         try {
             MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
             ObjectInstance instance = mbsc.
-                getObjectInstance(new ObjectName(Heritrix.HERITRIX_JMX_NAME));
+                getObjectInstance(new ObjectName(Heritrix.getJmxName()));
             Object result = null;
             if (ATTRS.contains(cmd)) {
                 result = mbsc.getAttribute(instance.getObjectName(), cmd);
@@ -175,11 +197,17 @@ public class JmxClient {
 		
 		/**
 		 * Block default construction.
-		 *
 		 */
 		private JmxClientCommandLineParser() {
 			super();
 		}
+        
+        /**
+         * @return Return version of this client.
+         */
+        public String getVersion() {
+            return this.version;
+        }
 
         /**
          * @param args Command-line arguments to process.
@@ -213,10 +241,10 @@ public class JmxClient {
 			    "Prints this message and exits."));
 			this.options.addOption(new Option("p","hostport", true,
 			    "'Hostname:port' to use connecting to Heritrix jmxserver." +
-				" Default: localhost:" + Heritrix.DEFAULT_JMX_SERVER_PORT +
+				" Default: localhost:" + DEFAULT_PORT +
                 "."));
 			this.options.addOption(new Option("c", "command", true,
-			    "Command to send Heritrix: start | stop | started"));
+			    "Command to send Heritrix: start | stop | etc."));
 			
 			PosixParser parser = new PosixParser();
 			try {
@@ -284,9 +312,9 @@ public class JmxClient {
 			
 			if (doUsage) {
 				HeritrixHelpFormatter formatter =
-					new HeritrixHelpFormatter(this.version);
-				formatter.printHelp(this.out, 80, NAME, "Options:", this.options,
-						1, 2, "", false);
+					new HeritrixHelpFormatter();
+				formatter.printHelp(this.out, 80, NAME, "Options:",
+                    this.options, 1, 2, "", false);
 			}
 			
 			// Close printwriter so stream gets flushed.
@@ -323,19 +351,16 @@ public class JmxClient {
 		 */
 		public class HeritrixHelpFormatter
 		extends HelpFormatter {
-			private String version = null;
-			
-			public HeritrixHelpFormatter(String version) {
+			public HeritrixHelpFormatter() {
 				super();
-				this.version = version;
 			}
 			
 			public void printUsage(PrintWriter pw, int width,
                     String cmdLineSyntax) {
 				out.println(USAGE + NAME + " --help");
 				out.println(USAGE + NAME + " [--hostport=HOST:PORT] --command=CMD");
-                if (this.version != null) {
-                	    out.println("Version: " + this.version);
+                if (getVersion() != null) {
+                	    out.println("Version: " + getVersion());
                 }
 			}
 			

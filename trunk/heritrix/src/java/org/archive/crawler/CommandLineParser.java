@@ -1,4 +1,4 @@
-/* HeritrixUsage
+/* CommandLineParser
  *
  * Created on Feb 2, 2004
  *
@@ -40,8 +40,7 @@ import org.apache.commons.cli.UnrecognizedOptionException;
  * @author stack
  * @version $Id$
  */
-public class CommandLineParser
-{
+public class CommandLineParser {
     private static final String USAGE = "Usage: ";
     private static final String NAME = "heritrix";
     private Options options = null;
@@ -53,8 +52,7 @@ public class CommandLineParser
      * Block default construction.
      *
      */
-    private CommandLineParser()
-    {
+    private CommandLineParser() {
         super();
     }
 
@@ -68,8 +66,7 @@ public class CommandLineParser
      * @throws ParseException Failied parse of command line.
      */
     public CommandLineParser(String [] args, PrintWriter out, String version)
-        throws ParseException
-    {
+    throws ParseException {
         super();
 
         this.out = out;
@@ -93,19 +90,11 @@ public class CommandLineParser
             " (Case sensitive: E.g. pass 'Charset' to run charset selftest).");
         option.setOptionalArg(true);
         this.options.addOption(option);
-        option = new Option("j", "jmx", true,
-             "Start JMX. Allows remote control. Default jmxmp port 8081.");
-        option.setOptionalArg(true);
-        this.options.addOption(option);
 
         PosixParser parser = new PosixParser();
-        try
-        {
+        try {
             this.commandLine = parser.parse(this.options, args, false);
-        }
-
-        catch (UnrecognizedOptionException e)
-        {
+        } catch (UnrecognizedOptionException e) {
             usage(e.getMessage(), 1);
         }
     }
@@ -113,8 +102,7 @@ public class CommandLineParser
     /**
      * Print usage then exit.
      */
-    public void usage()
-    {
+    public void usage() {
         usage(0);
     }
 
@@ -123,8 +111,7 @@ public class CommandLineParser
      *
      * @param exitCode
      */
-    public void usage(int exitCode)
-    {
+    public void usage(int exitCode) {
         usage(null, exitCode);
     }
 
@@ -136,8 +123,7 @@ public class CommandLineParser
      * @param message Message to print before we do usage.
      * @param exitCode Exit code to use in call to System.exit.
      */
-    public void usage(String message, int exitCode)
-    {
+    public void usage(String message, int exitCode) {
         outputAndExit(message, true, exitCode);
     }
 
@@ -149,8 +135,7 @@ public class CommandLineParser
      * @param message Message to print before we do usage.
      * @param exitCode Exit code to use in call to System.exit.
      */
-    public void message(String message, int exitCode)
-    {
+    public void message(String message, int exitCode) {
         outputAndExit(message, false, exitCode);
     }
 
@@ -163,17 +148,14 @@ public class CommandLineParser
      * @param doUsage True if we are to print out the usage message.
      * @param exitCode Exit code to use in call to System.exit.
      */
-    private void outputAndExit(String message, boolean doUsage, int exitCode)
-    {
-        if (message !=  null)
-        {
+    private void outputAndExit(String message, boolean doUsage, int exitCode) {
+        if (message !=  null) {
             this.out.println(message);
         }
 
-        if (doUsage)
-        {
+        if (doUsage) {
             HeritrixHelpFormatter formatter =
-                new HeritrixHelpFormatter(this.version);
+                new HeritrixHelpFormatter();
             formatter.printHelp(this.out, 80, NAME, "Options:", this.options,
                 1, 2, "Arguments:", false);
             this.out.println(" ORDER.XML       Crawl order to run.\n");
@@ -187,27 +169,31 @@ public class CommandLineParser
     /**
      * @return Options passed on the command line.
      */
-    public Option [] getCommandLineOptions()
-    {
+    public Option [] getCommandLineOptions() {
         return this.commandLine.getOptions();
     }
 
     /**
      * @return Arguments passed on the command line.
      */
-    public List getCommandLineArguments()
-    {
+    public List getCommandLineArguments() {
         return this.commandLine.getArgList();
     }
 
     /**
      * @return Command line.
      */
-    public CommandLine getCommandLine()
-    {
+    public CommandLine getCommandLine() {
         return this.commandLine;
     }
 
+    /**
+     * @return Returns the version.
+     */
+    public String getVersion() {
+        return this.version;
+    }
+    
     /**
      * Override so can customize usage output.
      *
@@ -216,27 +202,22 @@ public class CommandLineParser
      */
     public class HeritrixHelpFormatter
     extends HelpFormatter {
-        private String version = null;
-
-        public HeritrixHelpFormatter(String version)
-        {
+        public HeritrixHelpFormatter() {
             super();
-            this.version = version;
-        }
-
-        public void printUsage(PrintWriter pw, int width, String cmdLineSyntax)
-        {
-            out.println(USAGE + NAME + " --help");
-            out.println(USAGE + NAME + " --nowui ORDER.XML");
-            out.println(USAGE + NAME + " [--port=#]" +
-                " [--admin=LOGIN:PWRD] [--jmx[=#]] [--run] [ORDER.XML]");
-            out.println(USAGE + NAME + " [--port=#] --selftest[=TESTNAME]");
-            out.println("Version: " + this.version);
         }
 
         public void printUsage(PrintWriter pw, int width,
-            String app, Options options)
-        {
+                String cmdLineSyntax) {
+            out.println(USAGE + NAME + " --help");
+            out.println(USAGE + NAME + " --nowui ORDER.XML");
+            out.println(USAGE + NAME + " [--port=#]" +
+                " [--admin=LOGIN:PASSWORD] [--run] [ORDER.XML]");
+            out.println(USAGE + NAME + " [--port=#] --selftest[=TESTNAME]");
+            out.println("Version: " + getVersion());
+        }
+
+        public void printUsage(PrintWriter pw, int width,
+            String app, Options options) {
             this.printUsage(pw, width, app);
         }
     }
