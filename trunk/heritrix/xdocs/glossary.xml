@@ -8,6 +8,8 @@
 
   <body>
     <section name="Glossary">
+
+
     <subsection name="Checkpointing">
         <p>Heritrix currently has no checkpointing facility. However, our
         conception of what we need is heavily influenced by what Mercator
@@ -24,6 +26,14 @@ checkpoint is lost, but none of the work up to the most recent checkpoint. In
 Mercator, the frequency with which the background thread performs a checkpoint
 is user-configurable; we typically checkpoint anywhere from 1 to 4 times per
 day.</source></p>
+    </subsection>
+
+    <subsection name="Frontier">
+        <p>A Frontier is a plug-able module in Heritrix that maintains the
+        internal state of the crawl.  See
+        the <a href="http://crawler.archive.org/apidocs/index.html">URIFrontier
+        Interface</a> javadoc comments for more on what a frontier does.
+        </p>
     </subsection>
 
 
