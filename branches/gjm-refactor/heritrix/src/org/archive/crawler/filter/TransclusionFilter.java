@@ -20,7 +20,7 @@ import org.archive.crawler.framework.Filter;
 public class TransclusionFilter extends Filter {
 	int maxTransHops = 0;
 	
-	// 1-3 trailing P(recondition)/R(eferral)/E(mbed) hops
+	// 1-3 trailing P(recondition)/R(eferral)/E(mbed)/X(speculative-embed) hops
 	private static final String TRANSCLUSION_PATH = ".*[PREX][PREX]?[PREX]?$";
 	
 	/* (non-Javadoc)

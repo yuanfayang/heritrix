@@ -21,7 +21,7 @@
  
  <behavior
    disk-path="disk"
-   max-toe-threads="25"
+   max-toe-threads="3"
    >
    
   <http-headers
@@ -60,8 +60,10 @@
       name="HTTP" 
       class="org.archive.crawler.fetcher.FetchHTTP"
       next="ExtractorHTTP"
-      
+
       timeout-seconds="10"
+      max-length-bytes="65536"
+      max-fetch-attempts="5"
      />
     
     <processor 

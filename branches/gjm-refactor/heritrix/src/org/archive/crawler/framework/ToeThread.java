@@ -64,12 +64,12 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		logger.info(getName()+" started for order '"+controller.getOrder().getName()+"'");
+		logger.fine(getName()+" started for order '"+controller.getOrder().getName()+"'");
 		while ( shouldCrawl ) {
 			processingLoop();
 		} 
 		controller.toeFinished(this);
-		logger.info(getName()+" finished for order '"+controller.getOrder().getName()+"'");
+		logger.fine(getName()+" finished for order '"+controller.getOrder().getName()+"'");
 	}
 	
 	private synchronized void processingLoop() {

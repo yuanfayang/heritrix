@@ -8,6 +8,7 @@ package org.archive.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 
 
 /**
@@ -94,13 +95,29 @@ public class RecordingInputStream extends InputStream {
 	 * @param timeout
 	 */
 	public boolean readFullyOrUntil(long maxLength, long timeout) throws IOException {
-		long startTime;
+		long timeoutTime;
+		long totalBytes = 0;
 		if(timeout>0) {
-			startTime = System.currentTimeMillis();
+			timeoutTime = System.currentTimeMillis() + timeout;
+		} else {
+			timeoutTime = Long.MAX_VALUE;
 		}
 		byte[] buf = new byte[4096];
-		while(read(buf)!=-1) {
-			// TODO check length and time limits
+		long bytesRead;
+		while(true) {
+			try {
+				bytesRead = read(buf);
+				if (bytesRead==-1) {
+					break;
+				}
+				totalBytes += bytesRead;
+			} catch (SocketTimeoutException e) {
+				// DO NOTHING; just want to check overall timeout
+			}
+			if (totalBytes>maxLength || System.currentTimeMillis() > timeoutTime) {
+				// exceeded maxes
+				return true;
+			}
 		}
 		return false; // did not timeout or overflow
 	}
