@@ -36,6 +36,11 @@ import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
+ * Base class for URI processing classes.
+ * <p>
+ * Each URI is processed be a user defined series of processors. This class
+ * provides the basic infrastructure for these but does not actually do 
+ * anything. New processors can be easily created by subclassing this class.
  * 
  * @author Gordon Mohr
  */
@@ -103,7 +108,10 @@ public class Processor extends CrawlerModule {
 	}
 
 	/**
-	 * @param curi
+     * Classes subclassing this one should override this method to perfrom
+     * their custom actions on the CrawlURI.
+     * 
+	 * @param curi The CrawlURI being processed.
 	 */
 	protected void innerProcess(CrawlURI curi) {
 		// by default do nothing
@@ -132,7 +140,9 @@ public class Processor extends CrawlerModule {
 	}
 
 	/**
-	 * 
+	 * Returns the next processor for the given CrawlURI in the processor chain.
+     * @param curi The CrawlURI that we want to find the next processor for.
+     * @return The next processor for the given CrawlURI in the processor chain.
 	 */
 	private Processor getDefaultNext(CrawlURI curi) {
         return defaultNextProcessor;

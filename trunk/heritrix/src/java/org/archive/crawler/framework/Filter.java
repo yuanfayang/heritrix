@@ -32,8 +32,18 @@ import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
+ * Base class for filter classes.
+ * <p>
+ * Several classes allow 'filters' to be applied to them. Filters are classes
+ * that, based on an arbitrary object passed to them, return a boolean stating
+ * if if passes the filter. Thus applying filters can affect the behavior of
+ * those classes. This class provides the basic framework for filters. All 
+ * detailed implementation of filters inherit from it and it is considered to
+ * be a 'null' filter (always returns true).
  * 
  * @author Gordon Mohr
+ * 
+ * @see org.archive.crawler.framework.Processor
  */
 public class Filter extends CrawlerModule {
     private static Logger logger =
@@ -81,10 +91,12 @@ public class Filter extends CrawlerModule {
         return inverter ^ innerAccepts(o);
     }
     
-    /** Do nothing default implementation.
+    /**
+     * Classes subclassing this one should override this method to perfrom
+     * their custom determination of whether or not the object given to it.
      * 
-     * @param o
-     * @return If it accepts.
+     * @param o The object 
+     * @return True if it passes the filter.
      */
     protected boolean innerAccepts(Object o) {
         return true;
