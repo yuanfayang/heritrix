@@ -42,6 +42,8 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.refinements.Refinement;
 import org.archive.util.ArchiveUtils;
 
 /** An instance of this class holds a hierarchy of settings.
@@ -54,12 +56,9 @@ import org.archive.util.ArchiveUtils;
  * @author John Erik Halse
  */
 public abstract class SettingsHandler {
-    /** Settings object referencing order file */
-    private final CrawlerSettings globalSettings =
-        new CrawlerSettings(this, null);
-
     /** Cached CrawlerSettings objects */
-    private final SettingsCache settingsCache = new SettingsCache();
+    private final SettingsCache settingsCache = new SettingsCache(
+            new CrawlerSettings(this, null));
 
     /** Reference to the order module */
     private final CrawlOrder order;
@@ -123,7 +122,7 @@ public abstract class SettingsHandler {
      * This method reads the default settings from the persistent storage.
      */
     public void initialize() {
-        readSettingsObject(globalSettings);
+        readSettingsObject(settingsCache.getGlobalSettings());
     }
 
     /** Strip off the leftmost part of a domain name.
@@ -149,7 +148,7 @@ public abstract class SettingsHandler {
      * @return the module the name references.
      */
     public ModuleType getModule(String name) {
-        return (ModuleType) globalSettings.getModule(name);
+        return (ModuleType) settingsCache.getGlobalSettings().getModule(name);
     }
 
     /** Get a complex type by its absolute name.
@@ -168,7 +167,7 @@ public abstract class SettingsHandler {
             CrawlerSettings settings, String absoluteName)
             throws AttributeNotFoundException {
 
-        settings = settings == null ? globalSettings : settings;
+        settings = settings == null ? settingsCache.getGlobalSettings() : settings;
 
         DataContainer data = settings.getData(absoluteName);
         if (data == null) {
@@ -241,27 +240,6 @@ public abstract class SettingsHandler {
      *
      * If there is no specific settings for the host/domain, it will recursively
      * go up the hierarchy to find the settings object that should be used for
-     * this host/domain.<p>
-     *
-     * This method will also check if there are different settings for servers
-     * on different port numbers on the same host. (Not implemented yet)
-     *
-     * @param host the host or domain to get the settings for.
-     * @param port the port of the server to get settings for.
-     * @return settings object in effect for the host/domain.
-     * @see #getSettings(String)
-     * @see #getSettingsObject(String)
-     * @see #getOrCreateSettingsObject(String)
-     */
-    public CrawlerSettings getSettings(String host, int port) {
-        // TODO: Doesn't honor port numbers yet.
-        return getSettings(host);
-    }
-
-    /** Get CrawlerSettings object in effect for a host or domain.
-     *
-     * If there is no specific settings for the host/domain, it will recursively
-     * go up the hierarchy to find the settings object that should be used for
      * this host/domain.
      *
      * @param host the host or domain to get the settings for.
@@ -270,14 +248,28 @@ public abstract class SettingsHandler {
      * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettings(String host) {
-        if (host == null || host.equals("")) {
-            // No scopestring, return global settings
-            return globalSettings;
-        } else {
-            host = host.intern();
-        }
-        
-        CrawlerSettings settings = settingsCache.getSettings(host);
+        return getRefinementsForSettings(getSettingsForHost(host), null);
+    }
+    
+    /** Get CrawlerSettings object in effect for a host or domain.
+    *
+    * If there is no specific settings for the host/domain, it will recursively
+    * go up the hierarchy to find the settings object that should be used for
+    * this host/domain.
+    * <p/>
+    * This method passes around a URI that refinement are checked against.
+    *
+    * @param host the host or domain to get the settings for.
+    * @return settings object in effect for the host/domain.
+    * @see #getSettingsObject(String)
+    * @see #getOrCreateSettingsObject(String)
+    */
+    public CrawlerSettings getSettings(String host, UURI uri) {
+        return getRefinementsForSettings(getSettingsForHost(host), uri);
+    }
+    
+    protected CrawlerSettings getSettingsForHost(String host) {
+        CrawlerSettings settings = settingsCache.getSettings(host, null);
 
         if (settings == null) {
             String tmpHost = host;
@@ -288,6 +280,21 @@ public abstract class SettingsHandler {
             }
             
             settingsCache.putSettings(host, settings);
+        }
+        
+        return settings;
+    }
+
+    private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings, UURI uri) {
+        if (settings.hasRefinements()) {
+            Iterator it = settings.refinementsIterator();
+            while(it.hasNext()) {
+                Refinement refinement = (Refinement) it.next();
+                if (refinement.isWithinRefinementBounds(uri)) {
+                    settings = getSettingsObject(settings.getScope(),
+                            refinement.getReference());
+                }
+            }
         }
 
         return settings;
@@ -306,18 +313,24 @@ public abstract class SettingsHandler {
      * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettingsObject(String scope) {
-        CrawlerSettings settings = null;
-        if (scope == null || scope.equals("")) {
-            // No scopestring, return global settings
-            settings = globalSettings;
-        } else {
-            scope = scope.intern();
-            settings = settingsCache.getSettingsObject(scope);
-        }
+        return getSettingsObject(scope, null);
+    }
+    
+    /**
+     * Get CrawlerSettings object for a host/domain and a particular refinement.
+     * 
+     * @param scope the host or domain to get the settings for.
+     * @param refinement the refinement reference to get.
+     * @return settings object for the host/domain or null if no
+     *         settings exist for the host/domain.
+     * @return
+     */
+    public CrawlerSettings getSettingsObject(String scope, String refinement) {
+        CrawlerSettings settings = settingsCache.getSettingsObject(scope, refinement);
         
         if (settings == null) {
             // Reference not found
-            settings = new CrawlerSettings(this, scope);
+            settings = new CrawlerSettings(this, scope, refinement);
             // Try to read settings from persisten storage. If its not there
             // it will be set to null.
             settings = readSettingsObject(settings);
@@ -340,13 +353,18 @@ public abstract class SettingsHandler {
      * @see #getSettingsObject(String)
      */
     public CrawlerSettings getOrCreateSettingsObject(String scope) {
+        return getOrCreateSettingsObject(scope, null);
+    }
+
+    public CrawlerSettings getOrCreateSettingsObject(String scope,
+            String refinement) {
         CrawlerSettings settings;
-        settings = getSettingsObject(scope);
+        settings = getSettingsObject(scope, refinement);
         if (settings == null) {
             scope = scope.intern();
             
             // No existing settings object found, create one
-            settings = new CrawlerSettings(this, scope);
+            settings = new CrawlerSettings(this, scope, refinement);
             settingsCache.refreshHostToSettings();
             settingsCache.putSettings(scope, settings);
         }

@@ -33,6 +33,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.xml.transform.sax.SAXSource;
 
+import org.archive.crawler.datamodel.settings.refinements.*;
 import org.archive.util.ArchiveUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -185,57 +186,21 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             nsu,
             XMLSettingsHandler.XML_SCHEMA);
         String rootElement;
-        if (orderFile) {
+        if (settings.isRefinement()) {
+            rootElement = XMLSettingsHandler.XML_ROOT_REFINEMENT;
+        } else if (orderFile) {
             rootElement = XMLSettingsHandler.XML_ROOT_ORDER;
         } else {
             rootElement = XMLSettingsHandler.XML_ROOT_HOST_SETTINGS;
         }
-        Attributes nullAtts = new AttributesImpl();
         handler.startElement(nsu, rootElement, rootElement, atts);
 
-        // Write meta information
-        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
-        handler.startElement(
-            nsu,
-            XMLSettingsHandler.XML_ELEMENT_META,
-            XMLSettingsHandler.XML_ELEMENT_META,
-            nullAtts);
+        parseMetaData(1 + indentAmount);
 
-        // Write settings name
-        writeSimpleElement(
-            XMLSettingsHandler.XML_ELEMENT_NAME,
-            settings.getName(),
-            null,
-            1 + indentAmount * 2);
-
-        // Write settings description
-        writeSimpleElement(
-            XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
-            settings.getDescription(),
-            null,
-            1 + indentAmount * 2);
-
-        // Write file date
-        String dateStamp = ArchiveUtils.get14DigitDate();
-        writeSimpleElement(
-            XMLSettingsHandler.XML_ELEMENT_DATE,
-            dateStamp,
-            null,
-            1 + indentAmount * 2);
-        try {
-            settings.setLastSavedTime(ArchiveUtils.parse14DigitDate(dateStamp));
-        } catch (ParseException e) {
-            // Should never happen since we just created it. If this exception
-            // is thrown, then there is a bug in ArchiveUtils.
-            e.printStackTrace();
+        if (settings.hasRefinements()) {
+            parseRefinements(1 + indentAmount);
         }
-
-        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
-        handler.endElement(
-            nsu,
-            XMLSettingsHandler.XML_ELEMENT_META,
-            XMLSettingsHandler.XML_ELEMENT_META);
-
+        
         // Write the modules
         Iterator modules = settings.topLevelModules();
         while (modules.hasNext()) {
@@ -249,8 +214,116 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endDocument();
     }
 
-    /** Create SAX events from a {@link ComplexType}.
-     *
+    private void parseRefinements(int indent) throws SAXException {
+        Attributes nullAtts = new AttributesImpl();
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.startElement(nsu,
+                XMLSettingsHandler.XML_ELEMENT_REFINEMENTLIST,
+                XMLSettingsHandler.XML_ELEMENT_REFINEMENTLIST, nullAtts);
+
+        Iterator it = settings.refinementsIterator();
+        while (it.hasNext()) {
+            Refinement refinement = (Refinement) it.next();
+            handler.ignorableWhitespace(indentArray, 0, indent + indentAmount);
+            AttributesImpl reference = new AttributesImpl();
+            reference.addAttribute(nsu,
+                    XMLSettingsHandler.XML_ELEMENT_REFERENCE,
+                    XMLSettingsHandler.XML_ELEMENT_REFERENCE, nsu, refinement
+                            .getReference());
+            handler.startElement(nsu,
+                    XMLSettingsHandler.XML_ELEMENT_REFINEMENT,
+                    XMLSettingsHandler.XML_ELEMENT_REFINEMENT, reference);
+
+            writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
+                    refinement.getDescription(), nullAtts, indent + 2
+                            * indentAmount);
+
+            parseRefinementLimits(refinement, indent + 2 * indentAmount);
+
+            handler.ignorableWhitespace(indentArray, 0, indent + indentAmount);
+            handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_REFINEMENT,
+                    XMLSettingsHandler.XML_ELEMENT_REFINEMENT);
+        }
+
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_REFINEMENTLIST,
+                XMLSettingsHandler.XML_ELEMENT_REFINEMENTLIST);
+    }
+
+    private void parseRefinementLimits(Refinement refinement, int indent)
+            throws SAXException {
+        Attributes nullAtts = new AttributesImpl();
+
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.startElement(nsu, XMLSettingsHandler.XML_ELEMENT_LIMITS,
+                XMLSettingsHandler.XML_ELEMENT_LIMITS, nullAtts);
+
+        Iterator it = refinement.criteriaIterator();
+        while (it.hasNext()) {
+            Object limit = it.next();
+            if (limit instanceof TimespanCriteria) {
+                AttributesImpl timeSpan = new AttributesImpl();
+                timeSpan.addAttribute(nsu,
+                        XMLSettingsHandler.XML_ATTRIBUTE_FROM,
+                        XMLSettingsHandler.XML_ATTRIBUTE_FROM, nsu,
+                        ((TimespanCriteria) limit).getFrom());
+                timeSpan.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_TO,
+                        XMLSettingsHandler.XML_ATTRIBUTE_TO, nsu,
+                        ((TimespanCriteria) limit).getTo());
+                writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_TIMESPAN, "",
+                        timeSpan, indent + 2 * indentAmount);
+            } else if (limit instanceof PortnumberCriteria) {
+                writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_PORTNUMBER,
+                        ((PortnumberCriteria) limit).getPortNumber(), nullAtts,
+                        indent + 2 * indentAmount);
+            } else if (limit instanceof RegularExpressionCriteria) {
+                writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_URIMATCHES,
+                        ((RegularExpressionCriteria) limit).getRegexp(), nullAtts,
+                        indent + 2 * indentAmount);
+            }
+        }
+
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_LIMITS,
+                XMLSettingsHandler.XML_ELEMENT_LIMITS);
+
+    }
+
+    private void parseMetaData(int indent) throws SAXException {
+        // Write meta information
+        Attributes nullAtts = new AttributesImpl();
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.startElement(nsu, XMLSettingsHandler.XML_ELEMENT_META,
+                XMLSettingsHandler.XML_ELEMENT_META, nullAtts);
+
+        // Write settings name
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_NAME, settings
+                .getName(), null, indent + indentAmount);
+
+        // Write settings description
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION, settings
+                .getDescription(), null, indent + indentAmount);
+
+        // Write file date
+        String dateStamp = ArchiveUtils.get14DigitDate();
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DATE, dateStamp,
+                null, indent + indentAmount);
+        try {
+            settings.setLastSavedTime(ArchiveUtils.parse14DigitDate(dateStamp));
+        } catch (ParseException e) {
+            // Should never happen since we just created it. If this exception
+            // is thrown, then there is a bug in ArchiveUtils.
+            e.printStackTrace();
+        }
+
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_META,
+                XMLSettingsHandler.XML_ELEMENT_META);
+    }
+    
+    /**
+     * Create SAX events from a {@link ComplexType}.
+     * 
      * @param complexType the object to creat SAX events from.
      * @param indent the indentation amount for prettyprinting XML.
      * @throws SAXException is thrown if an error occurs.
@@ -369,7 +442,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
                 // Top level controller element
                 elementName = XMLSettingsHandler.XML_ELEMENT_CONTROLLER;
             } else if (
-                settings.getParent() != null
+                !orderFile
                     && complexType.globalSettings().getModule(
                         complexType.getName())
                         != null) {

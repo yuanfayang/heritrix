@@ -114,7 +114,7 @@ public class CrawlServer implements Serializable {
 
         robotsFetched = System.currentTimeMillis();
         if (curi.getFetchStatus() != 200 ||
-                honoringPolicy.getType(getSettings()) ==
+                honoringPolicy.getType(getSettings(curi.getUURI())) ==
                     RobotsHonoringPolicy.IGNORE)
         {
             // not found or other errors == all ok for now
@@ -133,12 +133,10 @@ public class CrawlServer implements Serializable {
         ReplayInputStream contentBodyStream = null;
         try {
             BufferedReader reader;
-            if (honoringPolicy.getType(getSettings())
+            if (honoringPolicy.getType(getSettings(curi.getUURI()))
                 == RobotsHonoringPolicy.CUSTOM) {
-                reader =
-                    new BufferedReader(
-                        new StringReader(
-                            honoringPolicy.getCustomRobots(getSettings())));
+                reader = new BufferedReader(new StringReader(honoringPolicy
+                        .getCustomRobots(getSettings(curi.getUURI()))));
             }
             else
             {
@@ -150,7 +148,7 @@ public class CrawlServer implements Serializable {
                     new InputStreamReader(contentBodyStream));
             }
             robots = RobotsExclusionPolicy.policyFor(
-                    getSettings(),
+                    getSettings(curi.getUURI()),
                     reader,
                     honoringPolicy);
 
@@ -251,8 +249,8 @@ public class CrawlServer implements Serializable {
      *
      * @return the settings object in effect for this server.
      */
-    public CrawlerSettings getSettings() {
-        return settingsHandler.getSettings(getHost().getHostName(), getPort());
+    private CrawlerSettings getSettings(UURI uri) {
+        return settingsHandler.getSettings(uri.getHost(), uri);
     }
 
     /** Set the settings handler to be used by this server.

@@ -71,19 +71,30 @@ public class XMLSettingsHandler extends SettingsHandler {
     protected static final String XML_SCHEMA = "heritrix_settings.xsd";
     protected static final String XML_ROOT_ORDER = "crawl-order";
     protected static final String XML_ROOT_HOST_SETTINGS = "crawl-settings";
+    protected static final String XML_ROOT_REFINEMENT = "crawl-refinement";
     protected static final String XML_ELEMENT_CONTROLLER = "controller";
     protected static final String XML_ELEMENT_META = "meta";
     protected static final String XML_ELEMENT_NAME = "name";
     protected static final String XML_ELEMENT_DESCRIPTION = "description";
     protected static final String XML_ELEMENT_DATE = "date";
+    protected static final String XML_ELEMENT_REFINEMENTLIST = "refinement-list";
+    protected static final String XML_ELEMENT_REFINEMENT = "refinement";
+    protected static final String XML_ELEMENT_REFERENCE = "reference";
+    protected static final String XML_ELEMENT_LIMITS = "limits";
+    protected static final String XML_ELEMENT_TIMESPAN = "timespan";
+    protected static final String XML_ELEMENT_PORTNUMBER = "portnumber";
+    protected static final String XML_ELEMENT_URIMATCHES = "uri-matches";
     protected static final String XML_ELEMENT_OBJECT = "object";
     protected static final String XML_ELEMENT_NEW_OBJECT = "newObject";
     protected static final String XML_ATTRIBUTE_NAME = "name";
     protected static final String XML_ATTRIBUTE_CLASS = "class";
+    protected static final String XML_ATTRIBUTE_FROM = "from";
+    protected static final String XML_ATTRIBUTE_TO = "to";
 
     private File orderFile;
     private final static String settingsFilename = "settings";
     private final static String settingsFilenameSuffix = "xml";
+    private final static String REFINEMENT_DIR = "_refinements";
 
     /** Create a new XMLSettingsHandler object.
      *
@@ -137,22 +148,28 @@ public class XMLSettingsHandler extends SettingsHandler {
         return getPathRelativeToWorkingDirectory(settingsDirectoryName);
     }
 
-    /** Resolves a scope (host/domain) into a file path.
+    /** Resolves the filename for a settings object into a file path.
      *
      * It will also create the directory structure leading to this file
      * if it doesn't exist.
      *
-     * @param scope the host or domain to get file path for.
-     * @return the file path for this scope.
+     * @param settings the settings object to get file path for.
+     * @return the file path for this settings object.
      */
-    protected final File scopeToFile(String scope) {
+    protected final File settingsToFilename(CrawlerSettings settings) {
         File settingsDirectory = getSettingsDirectory();
         File file;
 
-        if (scope == null || scope.equals("")) {
-            return orderFile;
+        if (settings.getScope() == null || settings.getScope().equals("")) {
+            if (settings.isRefinement()) {
+                file = new File(getSettingsDirectory(), File.separatorChar
+                        + REFINEMENT_DIR + File.separatorChar
+                        + settings.getName() + '.' + settingsFilenameSuffix);
+            } else {
+                file = orderFile;
+            }
         } else {
-            String elements[] = scope.split("\\.");
+            String elements[] = settings.getScope().split("\\.");
             if (elements.length == 0) {
                 return orderFile;
             }
@@ -163,10 +180,18 @@ public class XMLSettingsHandler extends SettingsHandler {
                 path.append(File.separatorChar);
             }
             path.append(elements[0]);
-            file = new File(settingsDirectory, path.toString());
-        }
 
-        file = new File(file, settingsFilename + "." + settingsFilenameSuffix);
+            if (settings.isRefinement()) {
+                file = new File(getSettingsDirectory(), path.toString()
+                        + File.separatorChar + REFINEMENT_DIR
+                        + File.separatorChar + settings.getName() + '.'
+                        + settingsFilenameSuffix);
+            } else {
+                file = new File(getSettingsDirectory(), path.toString()
+                        + File.separatorChar + settingsFilename + "."
+                        + settingsFilenameSuffix);
+            }
+        }
         return file;
     }
 
@@ -174,7 +199,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @see org.archive.crawler.datamodel.settings.SettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
      */
     public final void writeSettingsObject(CrawlerSettings settings) {
-        File filename = scopeToFile(settings.getScope());
+        File filename = settingsToFilename(settings);
         writeSettingsObject(settings, filename);
     }
 
@@ -198,7 +223,11 @@ public class XMLSettingsHandler extends SettingsHandler {
                 // The crawler is running and file exists - make backup first.
                 String name = filename.getName();
                 //name = name.substring(0, name.lastIndexOf('.'));
-                name = name.substring(0, name.lastIndexOf('.')) + '_' + ArchiveUtils.get14DigitDate(settings.getLastSavedTime().getTime()) + "." + settingsFilenameSuffix;
+                name = name.substring(0, name.lastIndexOf('.'))
+                        + '_'
+                        + ArchiveUtils.get14DigitDate(settings
+                                .getLastSavedTime().getTime()) + "."
+                        + settingsFilenameSuffix;
                 File backup = new File(filename.getParentFile(), name);
                 FileUtils.copyFiles(filename, backup);
             }
@@ -224,43 +253,34 @@ public class XMLSettingsHandler extends SettingsHandler {
      *         in the persistent storage.
      */
     protected final CrawlerSettings readSettingsObject(
-        CrawlerSettings settings,
-        File filename) {
+            CrawlerSettings settings, File filename) {
         if (filename.exists()) {
             logger.fine("Reading " + filename.getAbsolutePath());
             try {
-                XMLReader parser =
-                    SAXParserFactory
-                        .newInstance()
-                        .newSAXParser()
-                        .getXMLReader();
-                InputStream file =
-                    new BufferedInputStream(new FileInputStream(filename));
+                XMLReader parser = SAXParserFactory.newInstance()
+                        .newSAXParser().getXMLReader();
+                InputStream file = new BufferedInputStream(new FileInputStream(
+                        filename));
                 parser.setContentHandler(new CrawlSettingsSAXHandler(settings));
                 InputSource source = new InputSource(file);
                 source.setSystemId(filename.toURL().toExternalForm());
                 parser.parse(source);
             } catch (SAXParseException e) {
-                logger.warning(
-                    e.getMessage()
-                        + " in '"
-                        + e.getSystemId()
-                        + "', line: "
-                        + e.getLineNumber()
-                        + ", column: "
+                logger.warning(e.getMessage() + " in '" + e.getSystemId()
+                        + "', line: " + e.getLineNumber() + ", column: "
                         + e.getColumnNumber());
             } catch (SAXException e) {
                 logger.warning(e.getMessage() + ": "
-                         + e.getException().getMessage());
+                        + e.getException().getMessage());
             } catch (ParserConfigurationException e) {
                 logger.warning(e.getMessage() + ": "
-                         + e.getCause().getMessage());
+                        + e.getCause().getMessage());
             } catch (FactoryConfigurationError e) {
                 logger.warning(e.getMessage() + ": "
-                         + e.getException().getMessage());
+                        + e.getException().getMessage());
             } catch (IOException e) {
                 logger.warning("Could not access file '"
-                         + filename.getAbsolutePath() + "': " + e.getMessage());
+                        + filename.getAbsolutePath() + "': " + e.getMessage());
             }
         } else {
             // File doesn't exist, return null to inidcate this.
@@ -269,11 +289,14 @@ public class XMLSettingsHandler extends SettingsHandler {
         return settings;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings,
+     *      java.lang.String)
      */
     protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
-        File filename = scopeToFile(settings.getScope());
+        File filename = settingsToFilename(settings);
         return readSettingsObject(settings, filename);
     }
 
@@ -417,11 +440,12 @@ public class XMLSettingsHandler extends SettingsHandler {
     public void deleteSettingsObject(CrawlerSettings settings) {
         super.deleteSettingsObject(settings);
         File settingsDirectory = getSettingsDirectory();
-        File settingsFile = scopeToFile(settings.getScope());
+        File settingsFile = settingsToFilename(settings);
 
         settingsFile.delete();
         settingsFile = settingsFile.getParentFile();
-        while (settingsFile.isDirectory() && settingsFile.list().length == 0 && !settingsFile.equals(settingsDirectory)) {
+        while (settingsFile.isDirectory() && settingsFile.list().length == 0
+                && !settingsFile.equals(settingsDirectory)) {
             settingsFile.delete();
             settingsFile = settingsFile.getParentFile();
         }

@@ -155,6 +155,11 @@ public class MapType extends ComplexType {
         return settings.getData(this).moveElementDown(name);
     }
 
+    /**
+     * Iterator over all elements in a MapType.
+     * 
+     * @author John Erik Halse
+     */
     private class It implements Iterator {
         CrawlerSettings settings;
         Stack attributeStack = new Stack();
@@ -163,12 +168,12 @@ public class MapType extends ComplexType {
         public It(CrawlerSettings settings) {
             this.settings = settings;
 
-            DataContainer data = getDataContainerRecursive(settings);
+            DataContainer data = getDataContainerRecursive(settings, null, -1);
             while (data != null) {
                 this.attributeStack.push(data.getLocalAttributeInfoList().
                     iterator());
                 data = getDataContainerRecursive(data.getSettings().
-                    getParent());
+                    getParent(), null, -1);
             }
 
             this.currentIterator = (Iterator) this.attributeStack.pop();
@@ -226,16 +231,16 @@ public class MapType extends ComplexType {
     public boolean isEmpty(CrawlerSettings settings) {
         settings = settings == null ? globalSettings() : settings;
 
-        DataContainer data = getDataContainerRecursive(settings);
+        DataContainer data = getDataContainerRecursive(settings, null, -1);
         while (data != null) {
             if (data.hasAttributes()) {
                 return false;
             }
-            data = getDataContainerRecursive(data.getSettings().getParent());
+            data = getDataContainerRecursive(data.getSettings().getParent(), null, -1);
         }
         return true;
     }
-
+    
     /** Get the number of elements in this map.
      *
      * @param settings the settings object for which this set of elements
@@ -246,10 +251,10 @@ public class MapType extends ComplexType {
         settings = settings == null ? globalSettings() : settings;
 
         int size = 0;
-        DataContainer data = getDataContainerRecursive(settings);
+        DataContainer data = getDataContainerRecursive(settings, null, -1);
         while (data != null) {
             size += data.size();
-            data = getDataContainerRecursive(data.getSettings().getParent());
+            data = getDataContainerRecursive(data.getSettings().getParent(), null, -1);
         }
         return size;
     }

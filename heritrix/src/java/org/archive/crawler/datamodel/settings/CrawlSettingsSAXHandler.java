@@ -1,26 +1,25 @@
-/* CrawlSettingsSAXHandler
- *
+/*
+ * CrawlSettingsSAXHandler
+ * 
  * $Id$
- *
+ * 
  * Created on Dec 8, 2003
- *
+ * 
  * Copyright (C) 2004 Internet Archive.
- *
+ * 
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ * Heritrix is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser Public License as published by the Free Software
+ * Foundation; either version 2.1 of the License, or any later version.
+ * 
+ * Heritrix is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser Public License along with
+ * Heritrix; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
  */
 package org.archive.crawler.datamodel.settings;
 
@@ -39,6 +38,10 @@ import javax.management.InvalidAttributeValueException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
+import org.archive.crawler.datamodel.settings.refinements.PortnumberCriteria;
+import org.archive.crawler.datamodel.settings.refinements.Refinement;
+import org.archive.crawler.datamodel.settings.refinements.RegularExpressionCriteria;
+import org.archive.crawler.datamodel.settings.refinements.TimespanCriteria;
 import org.archive.util.ArchiveUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -46,56 +49,62 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/** An SAX element handler that updates a CrawlerSettings object.
- *
+/**
+ * An SAX element handler that updates a CrawlerSettings object.
+ * 
  * This is a helper class for the XMLSettingsHandler.
- *
+ * 
  * @author John Erik Halse
  */
-public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErrorHandler {
-    private static Logger logger =
-        Logger.getLogger(
-            "org.archive.crawler.datamodel.settings.XMLSettingsHandler");
+public class CrawlSettingsSAXHandler extends DefaultHandler implements
+        ValueErrorHandler {
+
+    private static Logger logger = Logger
+            .getLogger("org.archive.crawler.datamodel.settings.XMLSettingsHandler");
 
     private Locator locator;
+
     private CrawlerSettings settings;
+
     private SettingsHandler settingsHandler;
+
     private Map handlers = new HashMap();
+
     private Stack handlerStack = new Stack();
+
     private Stack stack = new Stack();
 
     /** Keeps track of elements which subelements should be skipped. */
     private Stack skip = new Stack();
+
     private StringBuffer buffer = new StringBuffer();
+
     private String value;
 
-    /** Creates a new CrawlSettingsSAXHandler.
-     *
-     * @param settings the settings object that should be updated from
-     *        this handler.
+    /**
+     * Creates a new CrawlSettingsSAXHandler.
+     * 
+     * @param settings the settings object that should be updated from this
+     *            handler.
      */
     public CrawlSettingsSAXHandler(CrawlerSettings settings) {
         super();
         this.settings = settings;
         this.settingsHandler = settings.getSettingsHandler();
         handlers.put(XMLSettingsHandler.XML_ROOT_ORDER, new RootHandler());
-        handlers.put(
-            XMLSettingsHandler.XML_ROOT_HOST_SETTINGS,
-            new RootHandler());
-        handlers.put(
-            XMLSettingsHandler.XML_ELEMENT_CONTROLLER,
-            new ModuleHandler());
-        handlers.put(
-            XMLSettingsHandler.XML_ELEMENT_OBJECT,
-            new ModuleHandler());
-        handlers.put(
-            XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT,
-            new NewModuleHandler());
+        handlers.put(XMLSettingsHandler.XML_ROOT_HOST_SETTINGS,
+                new RootHandler());
+        handlers.put(XMLSettingsHandler.XML_ROOT_REFINEMENT, new RootHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_CONTROLLER,
+                new ModuleHandler());
+        handlers
+                .put(XMLSettingsHandler.XML_ELEMENT_OBJECT, new ModuleHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT,
+                new NewModuleHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_META, new MetaHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_NAME, new NameHandler());
-        handlers.put(
-            XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
-            new DescriptionHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
+                new DescriptionHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_DATE, new DateHandler());
         handlers.put(SettingsHandler.MAP, new MapHandler());
         handlers.put(SettingsHandler.INTEGER_LIST, new ListHandler());
@@ -110,9 +119,26 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
         handlers.put(SettingsHandler.LONG, new SimpleElementHandler());
         handlers.put(SettingsHandler.BOOLEAN, new SimpleElementHandler());
         handlers.put(SettingsHandler.DOUBLE, new SimpleElementHandler());
+
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_REFINEMENTLIST,
+                new RefinementListHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_REFINEMENT,
+                new RefinementHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_REFERENCE,
+                new ReferenceHandler());
+        handlers
+                .put(XMLSettingsHandler.XML_ELEMENT_LIMITS, new LimitsHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_TIMESPAN,
+                new TimespanHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_PORTNUMBER,
+                new PortnumberHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_URIMATCHES,
+                new URIMatcherHandler());
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
      */
     public void setDocumentLocator(Locator locator) {
@@ -120,7 +146,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
         this.locator = locator;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.xml.sax.ContentHandler#startDocument()
      */
     public void startDocument() throws SAXException {
@@ -129,37 +157,38 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
         super.startDocument();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.xml.sax.ContentHandler#endDocument()
      */
     public void endDocument() throws SAXException {
         settingsHandler.unregisterValueErrorHandler(this);
         super.endDocument();
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
     public void characters(char[] ch, int start, int length)
-        throws SAXException {
+            throws SAXException {
         super.characters(ch, start, length);
         buffer.append(ch, start, length);
     }
 
     /**
-    * Start of an element. Decide what handler to use, and call it.
-    * @param uri
+     * Start of an element. Decide what handler to use, and call it.
+     * 
+     * @param uri
      * @param localName
      * @param qName
      * @param attributes
      * @throws SAXException
      */
-    public void startElement(
-        String uri,
-        String localName,
-        String qName,
-        Attributes attributes)
-            throws SAXException {
+    public void startElement(String uri, String localName, String qName,
+            Attributes attributes) throws SAXException {
 
         ElementHandler handler = ((ElementHandler) handlers.get(qName));
         if (handler != null) {
@@ -167,8 +196,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
 
             if (((Boolean) skip.peek()).booleanValue()) {
                 skip.push(new Boolean(true));
-                String moduleName =
-                    attributes.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+                String moduleName = attributes
+                        .getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
                 logger.fine("Skipping: " + qName + " " + moduleName);
             } else {
                 try {
@@ -176,8 +205,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
                     skip.push(new Boolean(false));
                 } catch (SAXException e) {
                     if (e.getException() instanceof InvocationTargetException
-                            || e.getException()
-                            instanceof AttributeNotFoundException) {
+                            || e.getException() instanceof AttributeNotFoundException) {
                         skip.push(new Boolean(true));
                     } else {
                         skip.push(new Boolean(false));
@@ -191,16 +219,17 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
                             + locator.getSystemId() + "', line: "
                             + locator.getLineNumber() + ", column: "
                             + locator.getColumnNumber(), Level.CONFIG));
-            logger.warning("Unknown element '" + qName
-               + "' in '" + locator.getSystemId()
-               + "', line: " + locator.getLineNumber()
-               + ", column: " + locator.getColumnNumber());
+            logger.warning("Unknown element '" + qName + "' in '"
+                    + locator.getSystemId() + "', line: "
+                    + locator.getLineNumber() + ", column: "
+                    + locator.getColumnNumber());
         }
     }
 
     /**
-    * End of an element.
-    * @param uri
+     * End of an element.
+     * 
+     * @param uri
      * @param localName
      * @param qName
      * @throws SAXException
@@ -218,67 +247,193 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
     }
 
     public void illegalElementError(String name) throws SAXParseException {
-        throw new SAXParseException(
-            "Element '" + name + "' not allowed here",
-            locator);
+        throw new SAXParseException("Element '" + name + "' not allowed here",
+                locator);
     }
 
-    /** Superclass of all the elementhandlers.
-     *
+    /**
+     * Superclass of all the elementhandlers.
+     * 
      * This class should be subclassed for the different XML-elements.
-     *
+     * 
      * @author John Erik Halse
      */
     private class ElementHandler {
+
         /**
          * Start of an element
+         * 
          * @param name
          * @param atts
          * @throws SAXException
          */
         public void startElement(String name, Attributes atts)
-            throws SAXException {
+                throws SAXException {
         }
 
         /**
-        * End of an element
-        * @param name
+         * End of an element
+         * 
+         * @param name
          * @throws SAXException
          */
         public void endElement(String name) throws SAXException {
         }
     }
 
-    /** Handle the root element.
-     *
+    /**
+     * Handle the root element.
+     * 
      * This class checks that the root element is of the right type.
-     *
+     * 
      * @author John Erik Halse
      */
     private class RootHandler extends ElementHandler {
+
         public void startElement(String name, Attributes atts)
-            throws SAXException {
+                throws SAXException {
             //  Check filetype
-            if ((name.equals(XMLSettingsHandler.XML_ROOT_ORDER)
-                && settings.getScope() != null)
-                || (name.equals(XMLSettingsHandler.XML_ROOT_HOST_SETTINGS)
-                    && settings.getScope() == null)) {
-                throw new SAXParseException(
-                    "Wrong document type '" + name + "'",
-                    locator);
+            if ((name.equals(XMLSettingsHandler.XML_ROOT_ORDER) && settings
+                    .getScope() != null)
+                    || (name.equals(XMLSettingsHandler.XML_ROOT_HOST_SETTINGS) && settings
+                            .getScope() == null)
+                    || (name.equals(XMLSettingsHandler.XML_ROOT_REFINEMENT) && !settings
+                            .isRefinement())) {
+                throw new SAXParseException("Wrong document type '" + name
+                        + "'", locator);
             }
         }
     }
 
-    private class ModuleHandler extends ElementHandler {
+    // Meta handlers
+    private class MetaHandler extends ElementHandler {
+    }
+
+    private class NameHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                settings.setName(value);
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class DescriptionHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                settings.setDescription(value);
+            } else if (handlerStack.peek() instanceof RefinementHandler) {
+                ((Refinement) stack.peek()).setDescription(value);
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class DateHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                try {
+                    settings.setLastSavedTime(ArchiveUtils
+                            .parse14DigitDate(value));
+                } catch (ParseException e) {
+                    throw new SAXException(e);
+                }
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    // Refinement handlers
+    private class RefinementListHandler extends ElementHandler {
+
+        public void startElement(String name) throws SAXException {
+            if (!(handlerStack.peek() instanceof RootHandler)) {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class RefinementHandler extends ElementHandler {
         public void startElement(String name, Attributes atts)
-            throws SAXException {
+                throws SAXException {
+            stack.push(new Refinement(settings, atts
+                    .getValue(XMLSettingsHandler.XML_ELEMENT_REFERENCE)));
+        }
+    }
+
+    private class ReferenceHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof RefinementHandler) {
+                ((Refinement) stack.peek()).setReference(value);
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class LimitsHandler extends ElementHandler {
+    }
+
+    private class TimespanHandler extends ElementHandler {
+
+        public void startElement(String name, Attributes atts)
+                throws SAXException {
+            if (stack.peek() instanceof Refinement) {
+                String from = atts
+                        .getValue(XMLSettingsHandler.XML_ATTRIBUTE_FROM);
+                String to = atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_TO);
+                try {
+                    TimespanCriteria timespan = new TimespanCriteria(from, to);
+                    ((Refinement) stack.peek()).addCriteria(timespan);
+                } catch (ParseException e) {
+                    throw new SAXException(e);
+                }
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class PortnumberHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof LimitsHandler) {
+                ((Refinement) stack.peek()).addCriteria(new PortnumberCriteria(value));
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class URIMatcherHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof LimitsHandler) {
+                ((Refinement) stack.peek()).addCriteria(new RegularExpressionCriteria(value));
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    // Handlers for objects and attributes
+    private class ModuleHandler extends ElementHandler {
+
+        public void startElement(String name, Attributes atts)
+                throws SAXException {
             ModuleType module;
             if (name.equals(XMLSettingsHandler.XML_ELEMENT_CONTROLLER)) {
                 module = settingsHandler.getOrder();
             } else {
-                module = settingsHandler.getSettingsObject(null)
-                .getModule(atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME));
+                module = settingsHandler.getSettingsObject(null).getModule(
+                        atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME));
             }
             stack.push(module);
         }
@@ -289,17 +444,18 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
     }
 
     private class NewModuleHandler extends ElementHandler {
+
         public void startElement(String name, Attributes atts)
-            throws SAXException {
+                throws SAXException {
             ComplexType parentModule = (ComplexType) stack.peek();
-            String moduleName =
-                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
-            String moduleClass =
-                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
+            String moduleName = atts
+                    .getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+            String moduleClass = atts
+                    .getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
             try {
-                ModuleType module =
-                    SettingsHandler.instantiateModuleTypeFromClassName(
-                        moduleName, moduleClass);
+                ModuleType module = SettingsHandler
+                        .instantiateModuleTypeFromClassName(moduleName,
+                                moduleClass);
                 try {
                     parentModule.setAttribute(settings, module);
                 } catch (AttributeNotFoundException e) {
@@ -308,23 +464,23 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
                     } catch (IllegalStateException ise) {
                         // An attribute in the settings file is not in the
                         // ComplexType's definition, log and skip.
-                        logger.warning("Module '" + moduleName
-                                + "' in '" + locator.getSystemId()
-                                + "', line: " + locator.getLineNumber()
-                                + ", column: " + locator.getColumnNumber()
+                        logger.warning("Module '" + moduleName + "' in '"
+                                + locator.getSystemId() + "', line: "
+                                + locator.getLineNumber() + ", column: "
+                                + locator.getColumnNumber()
                                 + " is not defined in '"
                                 + parentModule.getName() + "'.");
-                        throw new SAXException(
-                              new AttributeNotFoundException(ise.getMessage()));
+                        throw new SAXException(new AttributeNotFoundException(
+                                ise.getMessage()));
                     }
                 }
                 stack.push(module);
             } catch (InvocationTargetException e) {
                 logger.warning("Couldn't instantiate " + moduleName
-                   + ", from class: " + moduleClass
-                   + "' in '" + locator.getSystemId()
-                   + "', line: " + locator.getLineNumber()
-                   + ", column: " + locator.getColumnNumber());
+                        + ", from class: " + moduleClass + "' in '"
+                        + locator.getSystemId() + "', line: "
+                        + locator.getLineNumber() + ", column: "
+                        + locator.getColumnNumber());
                 throw new SAXException(e);
             } catch (InvalidAttributeValueException e) {
                 throw new SAXException(e);
@@ -337,10 +493,11 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
     }
 
     private class MapHandler extends ElementHandler {
+
         public void startElement(String name, Attributes atts)
-            throws SAXException {
-            String mapName =
-                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+                throws SAXException {
+            String mapName = atts
+                    .getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
             ComplexType parentModule = (ComplexType) stack.peek();
             try {
                 stack.push(parentModule.getAttribute(settings, mapName));
@@ -354,46 +511,10 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
         }
     }
 
-    private class MetaHandler extends ElementHandler {
-    }
-
-    private class NameHandler extends ElementHandler {
-        public void endElement(String name) throws SAXException {
-            if (handlerStack.peek() instanceof MetaHandler) {
-                settings.setName(value);
-            } else {
-                illegalElementError(name);
-            }
-        }
-    }
-
-    private class DescriptionHandler extends ElementHandler {
-        public void endElement(String name) throws SAXException {
-            if (handlerStack.peek() instanceof MetaHandler) {
-                settings.setDescription(value);
-            } else {
-                illegalElementError(name);
-            }
-        }
-    }
-
-    private class DateHandler extends ElementHandler {
-        public void endElement(String name) throws SAXException {
-            if (handlerStack.peek() instanceof MetaHandler) {
-                try {
-                    settings.setLastSavedTime(ArchiveUtils.parse14DigitDate(value));
-                } catch (ParseException e) {
-                    throw new SAXException(e);
-                }
-            } else {
-                illegalElementError(name);
-            }
-        }
-    }
-
     private class SimpleElementHandler extends ElementHandler {
+
         public void startElement(String name, Attributes atts)
-            throws SAXException {
+                throws SAXException {
             stack.push(atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME));
         }
 
@@ -402,14 +523,13 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
             Object container = stack.peek();
             if (container instanceof ComplexType) {
                 try {
-                    ((ComplexType) container).setAttribute(
-                        settings,
-                        new Attribute(elementName, value));
+                    ((ComplexType) container).setAttribute(settings,
+                            new Attribute(elementName, value));
                 } catch (AttributeNotFoundException e) {
                     logger.warning("Unknown attribute '" + elementName
-                       + "' in '" + locator.getSystemId()
-                       + "', line: " + locator.getLineNumber()
-                       + ", column: " + locator.getColumnNumber());
+                            + "' in '" + locator.getSystemId() + "', line: "
+                            + locator.getLineNumber() + ", column: "
+                            + locator.getColumnNumber());
                 } catch (InvalidAttributeValueException e) {
                     try {
                         logger.warning("Illegal value '"
@@ -436,10 +556,11 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
     }
 
     private class ListHandler extends ElementHandler {
+
         public void startElement(String name, Attributes atts)
-            throws SAXException {
-            String listName =
-                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+                throws SAXException {
+            String listName = atts
+                    .getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
             ComplexType parentModule = (ComplexType) stack.peek();
             ListType list;
             try {
@@ -456,7 +577,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.datamodel.settings.ValueErrorHandler#handleValueError(org.archive.crawler.datamodel.settings.Constraint.FailedCheck)
      */
     public void handleValueError(FailedCheck error) {

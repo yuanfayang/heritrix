@@ -42,9 +42,12 @@ public class SettingsCache {
     /** Maps hostname to effective settings object */
     private final SoftSettingsHash hostToSettings = new SoftSettingsHash(4000);
 
+    private final CrawlerSettings globalSettings;
+    
     /** Creates a new instance of the settings cache
      */
-    public SettingsCache() {
+    public SettingsCache(CrawlerSettings globalSettings) {
+        this.globalSettings = globalSettings;
     }
 
     /** Get the effective settings for a host.
@@ -52,9 +55,12 @@ public class SettingsCache {
      * @param host the host to get settings for. 
      * @return the settings or null if not in cache.
      */
-    public CrawlerSettings getSettings(String host) {
-        host = host == null ? "" : host;
-        CrawlerSettings settings = hostToSettings.get(host);
+    public CrawlerSettings getSettings(String host, String refinement) {
+        String key = computeKey(host, refinement);
+        if (key == "") {
+            return globalSettings;
+        }
+        CrawlerSettings settings = hostToSettings.get(key);
         return settings;
     }
     
@@ -63,9 +69,12 @@ public class SettingsCache {
      * @param scope the scope of the settings object to get.
      * @return the settings object or null if not in cache.
      */
-    public CrawlerSettings getSettingsObject(String scope) {
-        scope = scope == null ? "" : scope;
-        CrawlerSettings settings = settingsCache.get(scope);
+    public CrawlerSettings getSettingsObject(String scope, String refinement) {
+        String key = computeKey(scope, refinement);
+        if (key == "") {
+            return globalSettings;
+        }
+        CrawlerSettings settings = settingsCache.get(key);
         return settings;
     }
 
@@ -75,10 +84,11 @@ public class SettingsCache {
      * @param settings the settings object.
      */
     public synchronized void putSettings(String host, CrawlerSettings settings) {
-        host = host == null ? "" : host;
-        hostToSettings.put(host, settings);
-        String scope = settings.getScope() == null ? "" : settings.getScope();
-        settingsCache.put(scope, settings);
+        String refinement = settings.isRefinement() ? settings.getName() : null;
+        String key = computeKey(host, refinement);
+        hostToSettings.put(key, settings);
+        key = computeKey(settings.getScope(), refinement);
+        settingsCache.put(key, settings);
     }
     
     /** Delete a settings object from the cache.
@@ -86,7 +96,8 @@ public class SettingsCache {
      * @param settings the settings object to remove.
      */
     public synchronized void deleteSettingsObject(CrawlerSettings settings) {
-        settingsCache.remove(settings.getScope());
+        String refinement = settings.isRefinement() ? settings.getName() : null;
+        settingsCache.remove(computeKey(settings.getScope(), refinement));
 
         // Find all references to this settings object in the hostToSettings
         // cache and remove them.
@@ -110,5 +121,14 @@ public class SettingsCache {
             hostToSettings.put(entry);
         }
     }
+    
+    public CrawlerSettings getGlobalSettings() {
+        return globalSettings;
+    }
 
+    private String computeKey(String host, String refinement) {
+        host = host == null ? "" : host;
+        return (refinement == null) || refinement.equals("") ? host : host
+                + '#' + refinement;
+    }
 }
