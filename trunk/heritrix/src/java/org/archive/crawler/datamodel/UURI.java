@@ -350,13 +350,14 @@ public class UURI implements Serializable {
     }
 
     /**
-     * @param string
-     * @param uri
+     * @param s absolute or relative URI string
+     * @param parent URI to use for derelativizing; may be null
+     * @return A normalized and derelativized URL.
      * @throws URISyntaxException
-     * @return Created UURI.
      */
-    public static UURI createUURI(String string, URI uri) throws URISyntaxException {
-        return new UURI(normalize(string,uri));
+    public static UURI createUURI(String string, URI uri)
+            throws URISyntaxException {
+        return new UURI(normalize(string, uri));
     }
 
     static final String UNUSABLE_SCHEMES = "(?i)^(javascript:)|(aim:)";
