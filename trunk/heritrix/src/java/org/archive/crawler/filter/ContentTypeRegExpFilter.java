@@ -56,7 +56,7 @@ public class ContentTypeRegExpFilter extends URIRegExpFilter {
         }
         String content_type = ((CrawlURI)o).getContentType();
         String regexp = getRegexp(o);
-        return (regexp == null)?  
+        return (content_type == null || regexp == null)?  
             false: TextUtils.matches(getRegexp(o), content_type);
     }
 }
