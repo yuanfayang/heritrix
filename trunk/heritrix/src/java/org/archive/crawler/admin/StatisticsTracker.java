@@ -32,12 +32,13 @@ import java.util.logging.Level;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
 /**
- * This is an implementation of the Abstra  ctTracker. It is designed to function
+ * This is an implementation of the AbstractTracker. It is designed to function
  * with the WUI as well as performing various logging activity.
  * <p>
  * At the end of each snapshot a line is written to the 
@@ -45,7 +46,7 @@ import org.archive.util.PaddingStringBuffer;
  * <p>
  * The header of that file is as follows:
  * <pre> [timestamp] [discovered]    [queued] [downloaded] [doc/s(avg)]  [KB/s(avg)] [dl-failures] [busy-thread] [mem-use-KB]</pre>
- * First there is a time stamp, accurate down to 1 second.
+ * First there is a <b>timestamp</b>, accurate down to 1 second.
  * <p>
  * <b>discovered</b>, <b>queued</b>, <b>downloaded</b> and <b>dl-failures</b> 
  * are (respectively) the discovered URI count, pending URI count, successfully 
@@ -86,7 +87,8 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.AbstractTracker
  */
-public class StatisticsTracker extends AbstractTracker{
+public class StatisticsTracker extends AbstractTracker 
+                    implements CrawlURIDispositionListener{
 
     // TODO: Class needs to be serializable.
     // TODO: Need to be able to specify file where the object will be written once the CrawlEnded event occurs
@@ -148,9 +150,10 @@ public class StatisticsTracker extends AbstractTracker{
         "Seed has not been processed";
 
     public StatisticsTracker(String name) {
-        super(
-            name,
-            "A statistics tracker that's been designed to work well with the web UI and creates the progress-statistics log.");
+        super( name,
+                "A statistics tracker that's been designed to work well " +
+                "with the web UI and creates the progress-statistics log.");
+        controller.addCrawlURIDispositionListener(this);
     }
 
     /* (non-Javadoc)
