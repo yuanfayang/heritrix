@@ -42,6 +42,10 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
             there was no recording of the dnsserver IP.
             </para>
         </sect3>
+        <sect3 id="arf" ><title>AdaptiveRevisitFrontier</title>
+            <para>A new, experimental Frontier with configurable revisiting
+            policy and tools for noticing page change, etc.</para>
+        </sect3>
         <sect3 id="mem_improvements">
             <title>Crawl Size Upper Bounds Update</title>
         <para>Memory usage has been improved in this release.
