@@ -28,13 +28,14 @@ import st.ata.util.HashtableAList;
  * 
  * @author Gordon Mohr
  */
-public class CrawlURI implements URIStoreable {
+public class CrawlURI implements URIStoreable, CoreAttributeConstants {
 	
 	public static final String CONTENT_TYPE_LABEL = "content-type";
 	
 	private UURI baseUri;
 	private AList alist = new HashtableAList();
 	private UURI uuri; 
+	private Object state;
 	Processor nextProcessor;
 	CrawlHost host;
 	CrawlFetch fetch;
@@ -96,15 +97,13 @@ public class CrawlURI implements URIStoreable {
 	 * @see org.archive.crawler.basic.URIStoreable#getStoreState()
 	 */
 	public Object getStoreState() {
-		// TODO Auto-generated method stub
-		return null;
+		return state;
 	}
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
 	 */
 	public void setStoreState(Object s) {
-		// TODO Auto-generated method stub
-		
+		state = s;
 	}
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
@@ -201,15 +200,11 @@ public class CrawlURI implements URIStoreable {
 	}
 	
 	public String getContentType(){
-		String ct;
-		
-		try{
-			ct = getAList().getString(CrawlURI.CONTENT_TYPE_LABEL);
-			return ct;
-		}catch(Exception e){
-			return "unknown";
+		if (getAList().containsKey(A_CONTENT_TYPE)) {
+		 	return getAList().getString(A_CONTENT_TYPE);
+		} else {
+			return null;
 		}
-
 	}
 
 }
