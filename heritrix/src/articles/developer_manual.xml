@@ -2212,6 +2212,18 @@ public class SimpleExtractor extends Processor
     url="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc File
     Format</ulink>. Heritrix writes version 1 ARC files.</para>
 
+    <para>By default, Heritrix writes <emphasis>compressed</emphasis>
+    version 1 ARC files.  The compression is done with gzip, but rather
+    compress the ARC as a whole, instead, each ARC Record is in turn
+    gzipped.  All gzipped records are concatenated together to make up
+    a file of multiple gzipped members.  This concatenation, it turns out,
+    is a legal gzip file; you can give it to gzip and it will undo each
+    compressed record in turn.  Its an amenable compression technique
+    because it allows random seek to a single record and the undoing of
+    that record only. Otherwise, first the total ARC would have to be
+    uncompressed to get any one record.
+    </para>
+
     <para>Pre-release of Heritrix 1.0, an amendment was made to the ARC file
     version 1 format to allow writing of extra metadata into first record of
     an ARC file. This extra metadata is written as XML. The XML Schema used by
