@@ -1,0 +1,7 @@
+# This robots.txt is used by the RobotsExclusion heritrix integration self test.
+# Browse to the /garden webapp on this server or see 
+# ArchiveOpenCrawler/src/java/org/archive/crawler/garden/package.html
+# for more on the heritrix self test.
+User-agent: heritrix_selftest(+http://localhost.localdomain)
+Disallow: /garden/RobotsExclusion/excluded.html
+Disallow: /garden/RobotsExclusion/excluded/

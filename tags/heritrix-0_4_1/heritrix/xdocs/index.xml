@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<document>
+  <properties>
+    <title>Home Page</title>
+    <author email="stack at archive dot org">St.Ack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+    <section name="Introduction">
+        <p>Heritrix is the Internet Archive's open-source, extensible, 
+        	web-scale, archival-quality web crawler project.</p>
+        	
+        <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>, or 
+        misspelled or missaid as <em>heratrix</em>/<em>heritix</em>/
+        <em>heretix</em>/<em>heratix</em>) is an 
+        archaic word for <em>heiress</em> (woman who inherits). Since our 
+        crawler seeks to collect the digital artifacts of our culture for 
+        the benefit of future researchers and generations, this name 
+        seemed apt.</p>
+    </section>
+    <section name="Webmasters!">
+        <p>Heritrix is designed to respect the
+        <a href="http://www.robotstxt.org/wc/robots.html">robots.txt</a>
+        exclusion directives and 
+        <a href="http://www.robotstxt.org/wc/exclusion.html#meta">META robots
+        tags</a>.  If you notice our crawler behaving poorly, please send us
+        email at archive-crawler-agent *at* lists *dot* sourceforge *dot* net.
+        </p>
+    </section>
+    <section name="Getting Started">
+        <p>See the <a href="user.html">User Manual</a>.</p>
+    </section>
+    <section name="News and Status">
+
+    <subsection name="Release 0.4.0 02/10/2004">
+        <p>See <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.4.0</a>.</p>
+    </subsection>
+
+    <subsection name="First Release 01/05/2004">
+        <p>Today we made our first 'official' heritrix release,
+         <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.2.0</a>.</p>
+    </subsection>
+
+    </section>
+  </body>
+</document>
