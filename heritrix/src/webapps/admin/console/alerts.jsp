@@ -9,11 +9,11 @@
     HashMap levelColors = new HashMap(7);
     levelColors.put(Level.SEVERE,"#da9090");
     levelColors.put(Level.WARNING,"#daaaaa");
-    levelColors.put(Level.INFO,"#dab0b0");
-    levelColors.put(Level.CONFIG,"#dababa");
-    levelColors.put(Level.FINE,"#dac0c0");
-    levelColors.put(Level.FINER,"#dacaca");
-    levelColors.put(Level.FINEST,"#dad0d0");
+    levelColors.put(Level.INFO,"#dababa");
+    levelColors.put(Level.CONFIG,"#dac0c0");
+    levelColors.put(Level.FINE,"#dacaca");
+    levelColors.put(Level.FINER,"#dad0d0");
+    levelColors.put(Level.FINEST,"#dadada");
 
 	String action = request.getParameter("action");
 	if(action != null){
@@ -55,10 +55,6 @@
             boxes[i].checked = val;
         }
 	}
-	
-	function clearAll(){
-	
-	}
 </script>
 
 <p>
@@ -92,13 +88,13 @@
 						&nbsp;<input name="alerts" value="<%=alert.getID()%>" type="checkbox">&nbsp;
                     </td>
                     <td nowrap>
-                        &nbsp;&nbsp;<code><a style="color: #003399; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=sdf.format(alert.getTimeOfAlert())%> GMT</a></code>&nbsp;
+                        &nbsp;&nbsp;<code><%=sdf.format(alert.getTimeOfAlert())%> GMT</code>&nbsp;
                     </td>
                     <td nowrap>
-                        &nbsp;<code><a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getLevel().getName()%></a></code>&nbsp;
+                        &nbsp;<code><%=alert.getLevel().getName()%></code>&nbsp;
                     </td>
 					<td nowrap>
-						&nbsp;<code><a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a></code>&nbsp;
+						&nbsp;<code><a style="color: #003399;" class="underLineOnHover" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a></code>&nbsp;
 					</td>
 				</tr>
 		<%
