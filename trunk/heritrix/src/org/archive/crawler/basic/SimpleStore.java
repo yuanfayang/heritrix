@@ -28,8 +28,6 @@ import java.util.logging.Logger;
  */
 public class SimpleStore implements URIStore, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleStore");
-
-	protected final Object ReadyChangeSemaphore = new Object();
 	
 	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
 	
@@ -91,8 +89,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 				assert inProcessMap.get(awoken.getClassKey()) == null : "false ready: class peer still in process";
 				if(((KeyedQueue)awoken).isEmpty()) {
 					// just drop queue
-					allClassQueuesMap.remove(((KeyedQueue)awoken).getClassKey());
-					awoken.setStoreState(URIStoreable.FINISHED);
+					discardQueue(awoken);
 					return;
 				}
 				readyClassQueues.add(awoken);
@@ -105,6 +102,11 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 				assert false : "something evil has awoken!";
 			}
 		}
+	}
+
+	private void discardQueue(URIStoreable awoken) {
+		allClassQueuesMap.remove(((KeyedQueue)awoken).getClassKey());
+		awoken.setStoreState(URIStoreable.FINISHED);
 	}
 
 	/**
@@ -138,8 +140,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		}
 		assert classQueue.getStoreState() == URIStoreable.READY : "odd state for classQueue of to-be-emitted CrawlURI";
 		readyClassQueues.remove(classQueue);
-		heldClassQueues.add(classQueue);
-		classQueue.setStoreState(URIStoreable.HELD);
+		enqueueToHeld(classQueue);
 	}
 
 	/**
@@ -159,7 +160,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		heldClassQueues.remove(classQueue);
 		if(classQueue.isEmpty()) {
 			// just drop it
-			allClassQueuesMap.remove(classQueue.getClassKey());
+			discardQueue(classQueue);
 			return; 
 		}
 		readyClassQueues.add(classQueue);
@@ -220,20 +221,6 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 			return ((URIStoreable)snoozeQueues.first()).getWakeTime();
 		}
 		return Long.MAX_VALUE;
-	}
-
-	/**
-	 * 
-	 */
-	public SortedSet getSnoozeQueues() {
-		return snoozeQueues;
-	}
-
-	/**
-	 * 
-	 */
-	public LinkedList getHeldClassQueues() {
-		return heldClassQueues;
 	}
 
 	/**
@@ -361,5 +348,13 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		        && heldClassQueues.isEmpty() 
 				&& snoozeQueues.isEmpty()
 				&& inProcessMap.isEmpty();
+	}
+
+	/**
+	 * @param u
+	 * @return
+	 */
+	public CrawlURI getExistingCrawlURI(UURI u) {
+		return (CrawlURI) allCuris.get(u);
 	}
 }
