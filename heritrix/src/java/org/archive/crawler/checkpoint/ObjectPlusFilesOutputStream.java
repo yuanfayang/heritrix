@@ -113,7 +113,9 @@ public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
     
 	/**
      * Create a backup of this given file, first by trying a "hard 
-     * link", then by using a copy if hard linking is unavailable.
+     * link", then by using a copy if hard linking is unavailable
+     * (either because it is unsupported or the origin and checkpoint
+     * directories are on different volumes).
      * 
 	 * @param file
 	 * @param destination
