@@ -1,3 +1,5 @@
+<%@page import="org.archive.crawler.admin.auth.User" %>
+
 <%
 		User user = (User)session.getAttribute("user");
 		
