@@ -230,8 +230,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             return null;
         }
         DataContainer data = context.settings.getData(this);
-        if (data == null && context.settings.getParent(context.uri) != null) {
-            context.settings = context.settings.getParent(context.uri);
+        if (data == null && context.settings.getParent(context.curi) != null) {
+            context.settings = context.settings.getParent(context.curi);
             data = getDataContainerRecursive(context);
         }
         return data;
@@ -255,14 +255,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      */
     protected DataContainer getDataContainerRecursive(Context context,
             String key) throws AttributeNotFoundException {
-
-        Context c = new Context(context.settings, context.uri);
+        Context c = new Context(context.settings, context.curi);
         DataContainer data = getDataContainerRecursive(c);
         while (data != null) {
             if (data.containsKey(key)) {
                 return data;
             }
-            c.settings = data.getSettings().getParent(c.uri);
+            c.settings = data.getSettings().getParent(c.curi);
             data = getDataContainerRecursive(c);
         }
         throw new AttributeNotFoundException(key);
@@ -300,7 +299,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * Get settings object valid for a URI.
      * <p/>
      * This method takes an object,
-     * try to convert it into a {@link CrawlURI}and then tries to get the
+     * try to convert it into a {@link CandidateURI} and then tries to get the
      * settings object from it. If this fails, then the global settings object
      * is returned.
      * <p/>
@@ -309,7 +308,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * attribute is set is found. If nothing is found, global settings is
      * returned.
      *
-     * @param o possible {@link CrawlURI}.
+     * @param o possible {@link CandidateURI}.
      * @param attributeName the attribute that should have a value set on the
      *            returned settings object.
      * @return the settings object valid for the URI.
@@ -321,16 +320,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         } else if (o instanceof Context) {
             context = (Context) o;
         } else if (o instanceof CrawlerSettings) {
-            context = new Context((CrawlerSettings) o, null);
+            context = new Context((CrawlerSettings)o, null);
         } else if (o instanceof UURI || o instanceof CandidateURI) {
             // Try to get settings for URI that has no references to a
-            // CrawlServer [SIC - CrawlURI may have CrawlServer -gjm]
+            // CrawlServer [SIC - CrawlURI may have CrawlServer -gjm].
             context = new Context();
-            context.uri = (o instanceof CandidateURI)?
-                ((CandidateURI) o).getUURI() : (UURI)o;
+            context.curi = getCandidateURI(o);
             try {
                 context.settings = getSettingsHandler().
-                    getSettings(context.uri.getReferencedHost(), context.uri);
+                    getSettings(context.curi.getUURI().getReferencedHost(),
+                        context.curi);
             }
             catch (URIException e1) {
                 logger.severe("Failed to get host");
@@ -356,14 +355,37 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
         return context;
     }
+    
+    /**
+     * @param obj Object to examine. Assumed UURI or CandidateURI
+     * else we throw exception.
+     * @return A CandidateURI instance.
+     */
+    protected CandidateURI getCandidateURI(Object obj) {
+        if (obj instanceof CandidateURI) {
+            return (CandidateURI)obj;
+        }
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("NOT a CandidateURI instance.");
+        }
+        // TODO: THIS HAPPENS WAY TOO OFTEN IN GENERAL
+        // CRAWL. NEEDS TO BE ADDRESSED.  CANONICALIZATION
+        // NEEDS TO PASS IN CANDIDATEURI!!!!
+        if (obj instanceof UURI) {
+            return new CandidateURI((UURI)obj);
+        }
+        throw new IllegalArgumentException("Unknown object type " +
+            "(Not UURI, nor CandidateURI).");
+    }
 
     /** Get settings object valid for a URI.
     *
-    * This method takes an object, try to convert it into a {@link CrawlURI}
+    * This method takes an object, try to convert it into a
+    * {@link CandidateURI}
     * and then tries to get the settings object from it. If this fails, then
     * the global settings object is returned.
     *
-    * @param o possible {@link CrawlURI}.
+    * @param o possible {@link CandidateURI}.
     * @return the settings object valid for the URI.
     */
     Context getSettingsFromObject(Object o) {
@@ -952,17 +974,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     class Context {
-        CrawlerSettings settings;
-        UURI uri;
-
+        CrawlerSettings settings = null;
+        CandidateURI curi = null;
+        
         Context() {
-            settings = null;
-            uri = null;
+            super();
         }
-
-        Context(CrawlerSettings settings, UURI uri) {
+        
+        Context(CrawlerSettings settings, CandidateURI curi) {
             this.settings = settings;
-            this.uri = uri;
+            this.curi = curi;
         }
     }
 
@@ -996,7 +1017,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
        public AttributeIterator(Object ctxt) {
            this.context = getSettingsFromObject(ctxt);
-           Context c = new Context(context.settings, context.uri);
+           Context c = new Context(context.settings, context.curi);
            DataContainer data = getDataContainerRecursive(c);
            while (data != null) {
                this.attributeStack.push(data.getLocalAttributeInfoList().

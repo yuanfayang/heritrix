@@ -47,9 +47,12 @@ public class TimespanCriteriaTest extends TestCase {
         Date now = timeFormat.parse(timeFormat.format(new Date()));
 
         String nowTime = timeFormat.format(now);
-        String beforeTime1 = timeFormat.format(new Date(now.getTime() - 1000 * 60 * 2));
-        String beforeTime2 = timeFormat.format(new Date(now.getTime() - 1000 * 60 * 1));
-        String afterTime1 = timeFormat.format(new Date(now.getTime() + 1000 * 60 * 1));
+        String beforeTime1 = timeFormat.format(new Date(now.getTime() -
+            1000 * 60 * 2));
+        String beforeTime2 = timeFormat.format(new Date(now.getTime() -
+            1000 * 60 * 1));
+        String afterTime1 = timeFormat.format(new Date(now.getTime() +
+            1000 * 60 * 1));
 
         // now is inside and before is less than after
         TimespanCriteria c = new TimespanCriteria(beforeTime1, afterTime1);

@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CandidateURI;
 
 /**
  * A refinement criteria that checks if a URI is requested within a specific
@@ -44,7 +44,6 @@ import org.archive.crawler.datamodel.UURI;
  * @author John Erik Halse
  */
 public class TimespanCriteria implements Criteria {
-
     private static DateFormat timeFormat;
     static {
         final TimeZone TZ = TimeZone.getTimeZone("GMT");
@@ -68,7 +67,7 @@ public class TimespanCriteria implements Criteria {
         setTo(to);
     }
 
-    public boolean isWithinRefinementBounds(UURI uri) {
+    public boolean isWithinRefinementBounds(CandidateURI curi) {
         try {
             Date now = timeFormat.parse(timeFormat.format(new Date()));
             if (from.before(to)) {
@@ -139,18 +138,12 @@ public class TimespanCriteria implements Criteria {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.refinements.Criteria#getName()
-     */
     public String getName() {
         return "Time of day criteria";
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.refinements.Criteria#getDescription()
-     */
     public String getDescription() {
-        return "Accept any URIs between the hours of " + getFrom() + "(GMT) and "
-            + getTo() + "(GMT) each day.";
+        return "Accept any URIs between the hours of " + getFrom() +
+            "(GMT) and " + getTo() + "(GMT) each day.";
     }
 }
