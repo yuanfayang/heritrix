@@ -110,7 +110,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		
 		// if we found any links add them to the curi for later processing
 		if(links.size()>0) {
-			curi.getAList().putObject("html-links", links);
+			curi.getAList().putObject(A_HTML_LINKS, links);
 		}
 		
 		logger.fine(curi + " has " + links.size() + " links.");
