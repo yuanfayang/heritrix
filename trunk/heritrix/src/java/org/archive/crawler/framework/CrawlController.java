@@ -27,8 +27,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -72,6 +74,15 @@ import org.archive.util.ArchiveUtils;
  * @author Gordon Mohr
  */
 public class CrawlController {
+    
+    /**
+     * Messges from the crawlcontroller.
+     *
+     * They appear on console.
+     */
+    private final static Logger logger =
+        Logger.getLogger(CrawlController.class.getName());
+    
     // manifest support
     /** abbrieviation label for config files in manifest */
     public static final char MANIFEST_CONFIG_FILE = 'C';
@@ -127,14 +138,6 @@ public class CrawlController {
     private StringBuffer manifest;
 
     /**
-     * Messges from the crawlcontroller.
-     *
-     * They appear on console.
-     */
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.framework.CrawlController");
-
-    /**
      * Crawl progress logger.
      *
      * No exceptions.  Logs summary result of each url processing.
@@ -185,7 +188,15 @@ public class CrawlController {
     // create a statistic tracking object and have it write to the log every
     protected StatisticsTracking statistics = null;
 
-    protected ArrayList registeredCrawlStatusListeners;
+    /**
+     * List of crawl status listeners.
+     * 
+     * All iterations need to synchronize on this object if they're to avoid
+     * concurrent modification exceptions.
+     * See {@link java.util.Collections#synchronizedList(List)}.
+     */
+    private final List registeredCrawlStatusListeners;
+    
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
     CrawlURIDispositionListener registeredCrawlURIDispositionListener;
@@ -200,6 +211,8 @@ public class CrawlController {
      */
     public CrawlController() {
         super();
+        this.registeredCrawlStatusListeners =
+            Collections.synchronizedList(new ArrayList());
     }
 
     /**
@@ -331,10 +344,9 @@ public class CrawlController {
      * @see CrawlStatusListener
      */
     public void addCrawlStatusListener(CrawlStatusListener cl) {
-        if (registeredCrawlStatusListeners == null) {
-            registeredCrawlStatusListeners = new ArrayList();
+        synchronized (this.registeredCrawlStatusListeners) {
+            this.registeredCrawlStatusListeners.add(cl);
         }
-        registeredCrawlStatusListeners.add(cl);
     }
 
     /**
@@ -652,13 +664,17 @@ public class CrawlController {
     }
 
     private void completeStop() {
-        // Ok, now we are ready to exit.
-        state = FINISHED;
-        while (registeredCrawlStatusListeners.size() > 0) {
-            // Let the listeners know that the crawler is finished.
-            ((CrawlStatusListener)
-                registeredCrawlStatusListeners.get(0)).crawlEnded(sExit);
-            registeredCrawlStatusListeners.remove(0);
+        synchronized (this.registeredCrawlStatusListeners) {
+            // Ok, now we are ready to exit.
+            this.state = FINISHED;
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                i.hasNext();) {
+                // Let the listeners know that the crawler is finished.
+                ((CrawlStatusListener)i.next()).crawlEnded(this.sExit);
+            }
+            // Remove all listeners now we're done with them.
+            this.registeredCrawlStatusListeners.
+                removeAll(this.registeredCrawlStatusListeners);
         }
 
         finishProcessors();
@@ -667,14 +683,13 @@ public class CrawlController {
         logger.info("exiting a crawl run");
 
         // Do cleanup to facilitate GC.
-        frontier = null;
-        disk = null;
-        scratchDisk = null;
-        toePool = null;
-        registeredCrawlStatusListeners = null;
-        order = null;
-        scope = null;
-        serverCache = null;
+        this.frontier = null;
+        this.disk = null;
+        this.scratchDisk = null;
+        this.toePool = null;
+        this.order = null;
+        this.scope = null;
+        this.serverCache = null;
     }
 
     private void writeManifest() {
@@ -723,16 +738,15 @@ public class CrawlController {
         runProcessorFinalTasks();
     }
 
-    private synchronized void completePause() {   
-        Iterator iterator;
-
-        state = PAUSED;
-        // Tell everyone that we have paused
+    private void completePause() {   
         logger.info("Crawl job paused");
-        iterator = registeredCrawlStatusListeners.iterator();
-        while (iterator.hasNext()) {
-            ((CrawlStatusListener) iterator.next()).crawlPaused(
-                    CrawlJob.STATUS_PAUSED);
+        synchronized (this.registeredCrawlStatusListeners) {
+            this.state = PAUSED;
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                    i.hasNext(); ) {
+                ((CrawlStatusListener)i.next()).
+                    crawlPaused(CrawlJob.STATUS_PAUSED);
+            }
         }
     }
     
@@ -782,11 +796,12 @@ public class CrawlController {
     }
 
     private void beginCrawlStop() {
-        state = STOPPING; 
-        // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
-        Iterator iterator = registeredCrawlStatusListeners.iterator();
-        while (iterator.hasNext()) {
-            ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
+        synchronized (this.registeredCrawlStatusListeners) {
+            this.state = STOPPING;
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                    i.hasNext();) {
+                ((CrawlStatusListener)i.next()).crawlEnding(sExit);
+            }
         }
     }
 
@@ -799,14 +814,14 @@ public class CrawlController {
             return;
         }
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
-        state = PAUSING;
 
         logger.info("Pausing crawl job ...");
-
-        // Notify listeners that we are going to pause
-        Iterator it = registeredCrawlStatusListeners.iterator();
-        while (it.hasNext()) {
-            ((CrawlStatusListener) it.next()).crawlPausing(sExit);
+        synchronized (this.registeredCrawlStatusListeners) {
+            this.state = PAUSING;
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                    i.hasNext();) {
+                ((CrawlStatusListener)i.next()).crawlPausing(sExit);
+            }
         }
     }
 
@@ -834,10 +849,12 @@ public class CrawlController {
         
         Iterator iterator;
         // Tell everyone that we have resumed from pause
-        iterator = registeredCrawlStatusListeners.iterator();
-        while (iterator.hasNext()) {
-            ((CrawlStatusListener) iterator.next()).crawlResuming(
-                    CrawlJob.STATUS_RUNNING);
+        synchronized (this.registeredCrawlStatusListeners) {
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                    i.hasNext();) {
+                ((CrawlStatusListener)i.next()).
+                    crawlResuming(CrawlJob.STATUS_RUNNING);
+            }
         }
     }
 
@@ -1098,9 +1115,6 @@ public class CrawlController {
         }
     }
 
-    /**
-     * 
-     */
     public void checkFinish() {
         if(state == RUNNING && !shouldContinueCrawling()) {
             beginCrawlStop();
