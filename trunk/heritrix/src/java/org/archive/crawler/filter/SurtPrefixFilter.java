@@ -24,15 +24,14 @@
 */ 
 package org.archive.crawler.filter;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.util.SurtPrefixSet;
 import org.archive.util.SURT;
-
 /**
  * A filter which tests a URI against a set of SURT 
  * prefixes, and if the URI's prefix is in the set,
@@ -44,7 +43,7 @@ public class SurtPrefixFilter extends Filter {
     public static final String ATTR_SOURCE_FILE = "source-file";
     public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 
-    SortedSet surtPrefixes = null;
+    SurtPrefixSet surtPrefixes = null;
     
     /**
      * @param name
@@ -66,24 +65,25 @@ public class SurtPrefixFilter extends Filter {
         if (surtPrefixes == null) {
             readPrefixes();
         }
-        String s = asString(o);
-        SortedSet subset = surtPrefixes.headSet(s);
-        return s.startsWith((String) subset.last());
+        String s = SURT.fromURI(asString(o));
+        // TODO: collapse https to http; consider other cases of scheme-indifference
+        return surtPrefixes.containsPrefixOf(s);
     }
 
-    /**
-     * 
-     */
     private void readPrefixes() {
+        surtPrefixes = new SurtPrefixSet(); 
+        FileReader fr = null;
         try {
-            surtPrefixes = SURT.importPrefixSetFrom((String)getAttributeOrNull(ATTR_SOURCE_FILE,(CrawlURI)null));
+      		// TODO: make sure paths are calculated properly from job home directory
+            fr = new FileReader((String)getAttributeOrNull(ATTR_SOURCE_FILE,(CrawlURI)null));
+            try {
+                surtPrefixes.importFrom(fr);
+            } finally {
+                fr.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            // use empty set
-            surtPrefixes = new TreeSet(); 
             throw new RuntimeException(e);
-        }
+        } 
     }
-    
-    
 }
