@@ -68,6 +68,26 @@ public class UURIFactoryTest extends TestCase {
 		assertTrue(ESCAPED_URISTR.equals(uuriStr));
 	}
     
+    public final void testBadPath() {
+        String message = null;
+        UURI uuri = null;
+        try {
+            uuri = UURIFactory.getInstance("http://ads.as4x.tmcs.net/" +
+            "html.ng/site=cs&pagepos=102&page=home&adsize=1x1&context=" +
+            "generic&Params.richmedia=yes%26city%3Dseattle%26" +
+            "rstid%3D2415%26market_id%3D86%26brand%3Dcitysearch%6state%3DWA");
+        } catch (URIException e) {
+            message = e.getMessage();
+        }
+        assertNotNull("Didn't get expected exception.", message);
+    }   
+    
+    public final void testEscapeEncoding() throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://www.y1y1.com/" +
+            "albums/userpics/11111/normal_%E3%E4%EC%EC%EC.jpg", "windows-1256");
+        String u = uuri.getPath();
+    }   
+    
     public final void testTooLongAfterEscaping() {
         StringBuffer buffer = new StringBuffer("http://www.archive.org/a/");
         // Append bunch of spaces.  When escaped, they'll triple in size.

@@ -32,8 +32,11 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.util.TextUtils;
 
 
@@ -281,8 +284,9 @@ public class UURIFactory extends URI {
     private UURI create(String uri, String charset) throws URIException {
         boolean escaped = isEscaped(uri);
         UURI uuri  = (escaped)?
-            new UURIImpl(escapeWhitespace(fixup(uri, null)), escaped, charset):
-            new UURIImpl(fixup(uri, null), escaped, charset);
+            new UURIImpl(escapeWhitespace(fixup(uri, null, escaped)),
+                escaped, charset):
+            new UURIImpl(fixup(uri, null, escaped), escaped, charset);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("URI " + uri +
                 " PRODUCT " + uuri.toString() +
@@ -299,8 +303,9 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(UURI base, String relative) throws URIException {
-        UURI uuri = new UURIImpl(base,  new UURI(fixup(relative, base),
-            isEscaped(relative), base.getProtocolCharset()));
+        boolean escaped = isEscaped(relative);
+        UURI uuri = new UURIImpl(base, new UURI(fixup(relative, base, escaped),
+            escaped, base.getProtocolCharset()));
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(" URI " + relative +
                 " PRODUCT " + uuri.toString() +
@@ -349,11 +354,12 @@ public class UURIFactory extends URI {
      *
      * @param uri URI as string.
      * @param base May be null.
-     * @return An URI escaped string.
+     * @param escaped True if the uri is already escaped.
+     * @return A fixed up URI string.
      * @throws URIException
      */
-    private String fixup(String uri, URI base)
-            throws URIException {
+    private String fixup(String uri, final URI base, final boolean escaped)
+    throws URIException {
         if (uri == null) {
             throw new NullPointerException();
         } else if (uri.length() == 0 && base == null){
@@ -478,6 +484,25 @@ public class UURIFactory extends URI {
             uriAuthority = stripTail(uriAuthority, DOT);
             uriAuthority = stripPrefix(uriAuthority, DOT);
         }
+        
+        // If already URI escaped, make sure escaping was done properly.
+        // Do it here now in the fixup so if improperly escaped, we throw
+        // an exception not letting a URI out.  Otherwise, we make a URI
+        // and its fine till a processor does a getPath on it; the getPath
+        // forces the parent to decode the escaping, failing if the escaping
+        // was improperly done.  The resultant exception happens at an
+        // inconvenient time midprocessing.
+        //
+        // This fixup may cause us to miss content. This is to be seen.
+        // A fix would require fixing or avoiding the parent class.  TODO:
+        // review crawl logs for URIs that fail this test to see if the
+        // rejected URIs are fetchable (What we've seen to date is that
+        // the URIs with bad escaping are not fetchable; midprocessing
+        // we fail on them in PathDepthFilter for instance when it does
+        // a getPath and fails).
+        if (escaped) {
+            validateEscaping(uriPath);
+        }
 
         // Preallocate big.
         StringBuffer buffer = new StringBuffer(1024 * 4);
@@ -486,6 +511,23 @@ public class UURIFactory extends URI {
         appendNonNull(buffer, uriPath, "", false);
         appendNonNull(buffer, uriQuery, "?", false);
         return buffer.toString();
+    }
+    
+    /**
+     * Validate URL escaping is properly done.
+     * The below is what the parent class does when UURI#getPath is called.
+     * @param component Snippet of URI to validate.
+     * @throws URIException if escaping incorrectly done.
+     */
+    protected void validateEscaping(String component)
+    throws URIException {
+        byte[] rawdata = null;
+        try { 
+            rawdata = URLCodec.decodeUrl(EncodingUtil.getAsciiBytes(component));
+        } catch (DecoderException e) {
+            throw new URIException(e.getMessage() + "; Component: " +
+                component);
+        }
     }
 
     /**
