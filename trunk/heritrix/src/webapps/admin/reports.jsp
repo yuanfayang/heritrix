@@ -20,14 +20,24 @@
 		&nbsp;No crawl jobs have been started
 <% } else { %>
 	<ul>
-		<% if(crawling){ %>
-				<li><a href="/admin/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>"><%=handler.getCurrentJob().getJobName()%></a> <i><%=handler.getCurrentJob().getStatus()%></i>
+		<%  if(crawling){ %>
+				<li>
+					<%=handler.getCurrentJob().getJobName()%>
+					<i><%=handler.getCurrentJob().getStatus()%></i> 
+					-
+					<a href="/admin/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a>
+					<a href="/admin/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a>
 		<% 
 			}
 			for(int i=jobs.size()-1; i>=0; i--){ 
 				CrawlJob job = (CrawlJob)jobs.get(i);
 		%>
-				<li><a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>"><%=job.getJobName()%></a> <i><%=job.getStatus()%></i>
+				<li>
+					<%=job.getJobName()%>
+					<i><%=job.getStatus()%></i> 
+					-
+					<a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>">Crawl report</a>
+					<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>">Seed report</a>
 		<% 
 			} 
 		%>

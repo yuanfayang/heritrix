@@ -23,13 +23,15 @@ package org.archive.crawler.admin;
 
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
@@ -95,9 +97,36 @@ public class StatisticsTracker extends AbstractTracker{
     protected Hashtable statusCodeDistribution = new Hashtable();
     /** Keep track of hosts */
     protected Hashtable hostsDistribution = new Hashtable();
+    
+    /** Keep track of processed seeds disposition*/
+    protected Hashtable processedSeedsDisposition = new Hashtable();
+    
+    /** Keep track of processed seeds status codes*/
+    protected Hashtable processedSeedsStatusCodes = new Hashtable();
+
+    /** Cache seed list */
+    protected Vector allSeeds = new Vector();
+
+    /** Seed successfully crawled */
+    public static final String SEED_DISPOSITION_SUCCESS =
+        "Seed successfully crawled";
+    /** Failed to crawl seed */
+    public static final String SEED_DISPOSITION_FAILURE =
+        "Failed to crawl seed";
+    /** Failed to crawl seed, will retry */
+    public static final String SEED_DISPOSITION_RETRY =
+        "Failed to crawl seed, will retry";
+    /** Seed was disregarded */
+    public static final String SEED_DISPOSITION_DISREGARD =
+        "Seed was disregarded";
+    /** Seed has not been processed */
+    public static final String SEED_DISPOSITION_NOT_PROCESSED =
+        "Seed has not been processed";
 
     public StatisticsTracker(String name) {
-    	super(name, "A statistics tracker that's been designed to work well with the web UI and creates the progress-statistics log.");
+        super(
+            name,
+            "A statistics tracker that's been designed to work well with the web UI and creates the progress-statistics log.");
     }
 
     /* (non-Javadoc)
@@ -159,29 +188,20 @@ public class StatisticsTracker extends AbstractTracker{
     		}
     	}
 
-
-    	// 			mercator style log entry was
-    	//			[timestamp] [discovered-pages] [pending-pages] [downloaded-pages]
-    	//			[unique-pages] \
-    	//			[overall-docs-per-sec] [current-docs-per-sec] [overall-KB-sec]
-    	//			[current-KB-sec] \
-    	//			[download-failures] [stalled-threads] [memmory-usage]
-
     	Date now = new Date();
-    	periodicLogger.log(
-    		Level.INFO,
-    		new PaddingStringBuffer()
-    			 .append(ArchiveUtils.TIMESTAMP14.format(now))
-    			 .raAppend(26,discoveredPages)
-    		 .raAppend(38,pendingPages)
-    		 .raAppend(51,downloadedPages)
-    		 .raAppend(64,currentDocsPerSecond+"("+docsPerSecond+")")
-    		 .raAppend(77,currentKBPerSec+"("+totalKBPerSec+")")
-    		 .raAppend(91,downloadFailures)
-    		 .raAppend(105,busyThreads)
-    		 .raAppend(118,Runtime.getRuntime().totalMemory()/1024)
-    		 .toString()
-    	);
+        periodicLogger.log(
+            Level.INFO,
+            new PaddingStringBuffer()
+                .append(ArchiveUtils.TIMESTAMP14.format(now))
+                .raAppend(26, discoveredPages)
+                .raAppend(38, pendingPages)
+                .raAppend(51, downloadedPages)
+                .raAppend(64, currentDocsPerSecond + "(" + docsPerSecond + ")")
+                .raAppend(77, currentKBPerSec + "(" + totalKBPerSec + ")")
+                .raAppend(91, downloadFailures)
+                .raAppend(105, busyThreads)
+                .raAppend(118, Runtime.getRuntime().totalMemory() / 1024)
+                .toString());
 
 
     	lastLogPointTime = System.currentTimeMillis();
@@ -432,12 +452,60 @@ public class StatisticsTracker extends AbstractTracker{
     public long getTotalBytesWritten() {
     	return shouldrun ? controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
+    
+    /**
+     * Returns the disposition of any seed. If the supplied URL is not a seed
+     * it will always return 'not processed'
+     * @param UriString The URI of the seed
+     * @return the disposition of the seed
+     * 
+     * @see #SEED_DISPOSITION_NOT_PROCESSED
+     * @see #SEED_DISPOSITION_SUCCESS
+     * @see #SEED_DISPOSITION_FAILURE
+     * @see #SEED_DISPOSITION_DISREGARD
+     * @see #SEED_DISPOSITION_RETRY
+     */
+    public String getSeedDisposition(String UriString){
+        String ret = SEED_DISPOSITION_NOT_PROCESSED;
+        if(processedSeedsDisposition.containsKey(UriString)){
+            ret = (String)processedSeedsDisposition.get(UriString);
+        }
+        return ret;
+    }
 
+    /**
+     * Returns the status code of any seed. If the supplied URL is not a seed
+     * or a seed that has not been crawled it will return zero.
+     * @param UriString The URI of the seed
+     * @return the disposition of the seed
+     * 
+     */
+    public int getSeedStatusCode(String UriString){
+        int ret = 0;
+        if(processedSeedsStatusCodes.containsKey(UriString)){
+            ret = ((Integer)processedSeedsStatusCodes.get(UriString)).intValue();
+        }
+        return ret;
+    }
 
+    /**
+     * If the curi is a seed, we update the processedSeeds table.
+     * 
+     * @param curi The CrawlURI that may be a seed.
+     * @param disposition The dispositino of the CrawlURI.
+     */
+    private void handleSeed(CrawlURI curi, String disposition) {
+        if(curi.getIsSeed()){
+            processedSeedsDisposition.put(curi.getURIString(),disposition);
+            processedSeedsStatusCodes.put(curi.getURIString(),new Integer(curi.getFetchStatus()));
+        }
+    }
+    
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURISuccessful(org.archive.crawler.datamodel.CrawlURI)
      */
     public void crawledURISuccessful(CrawlURI curi) {
+        handleSeed(curi,SEED_DISPOSITION_SUCCESS);
     	// Save status codes
     	incrementMapCount(statusCodeDistribution,Integer.toString(curi.getFetchStatus()));
 
@@ -463,21 +531,155 @@ public class StatisticsTracker extends AbstractTracker{
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURINeedRetry(org.archive.crawler.datamodel.CrawlURI)
      */
     public void crawledURINeedRetry(CrawlURI curi) {
-    	// Not keeping track of this at the moment
+        handleSeed(curi,SEED_DISPOSITION_RETRY);
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIDisregard(org.archive.crawler.datamodel.CrawlURI)
      */
     public void crawledURIDisregard(CrawlURI curi) {
-    	// Not keeping track of this at the moment
+        handleSeed(curi,SEED_DISPOSITION_DISREGARD);
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIFailure(org.archive.crawler.datamodel.CrawlURI)
      */
     public void crawledURIFailure(CrawlURI curi) {
-    	// Not keeping track of this at the moment
+    	handleSeed(curi,SEED_DISPOSITION_FAILURE);
+    }
+
+    /**
+     * Get a seed iterator for the job being monitored. If job is no longer 
+     * running, stored values will be returned. If job is running, current 
+     * seed iterator will be fetched and stored values will be updated.
+     * <p>
+     * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
+     * UURIs like the Scope seed iterator. The strings are equal to the URIs' 
+     * getURIString() values.
+     * @return the seed iterator
+     */
+    public Iterator getSeeds(){
+        if(shouldrun){
+            Iterator tmp = controller.getScope().getSeedsIterator();
+            allSeeds = new Vector();
+            while(tmp.hasNext()){
+                String s = ((UURI)tmp.next()).getUriString();
+                allSeeds.add(s);
+            }
+        } 
+        return allSeeds.iterator();
+    }
+    
+    /**
+     * Get a seed iterator for the job being monitored. If job is no longer 
+     * running, stored values will be returned. If job is running, current 
+     * seed iterator will be fetched and stored values will be updated.
+     * <p>
+     * Sort order is:<br>
+     * No status code (not processed)<br>
+     * Status codes smaller then 0 (largest to smallest)<br>
+     * Status codes larger then 0 (largest to smallest)<br>
+     * <p>
+     * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
+     * UURIs like the Scope seed iterator. The strings are equal to the URIs' 
+     * getURIString() values.
+     * @return the seed iterator
+     */
+    public Iterator getSeedsSortedByStatusCode() {
+        Iterator tmp = getSeeds();
+        TreeSet sortedSet = new TreeSet(new Comparator() {
+            public int compare(Object e1, Object e2) {
+                int firstCode = getSeedStatusCode((String) e1);
+                int secondCode = getSeedStatusCode((String) e2);
+                int ret = 0;
+                
+                if (firstCode == secondCode) {
+                    // If the values are equal, sort by URIs.
+                    String firstURI = (String) e1;
+                    String secondURI = (String) e2;
+                    ret = firstURI.compareTo(secondURI);
+                } else if ( (firstCode > 0 && secondCode > 0)
+                          ||(firstCode < 0 && secondCode < 0) ){
+                    // Both are either positve or negative, 
+                    // sort from largest to smallest
+                    if (firstCode < secondCode) {
+                        ret = 1;
+                    } else {
+                        ret = -1;
+                    }
+                } else {
+                    // Negative or zero come before positive status codes.
+                    if(firstCode > 0 || (firstCode < 0 && secondCode == 0 )) {
+                        ret = 1;
+                    } else {
+                        ret = -1;
+                    }
+                }
+                return ret;
+            }
+        });
+        while (tmp.hasNext()) {
+            sortedSet.add(tmp.next());
+        }
+        return sortedSet.iterator();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        Iterator tmp = getSeeds(); //Make sure to save the seeds list.
+        
+        // Save seed report to reports.log
+        int maxURILenght = 0;
+        while(tmp.hasNext()){
+            String tmpString = (String)tmp.next();
+            if(tmpString.length()>maxURILenght){
+                maxURILenght = tmpString.length();
+            }
+        }
+        
+        //Ok, we now know how much space to allocate the seed name colum
+        //now build the report.
+        PaddingStringBuffer rep = new PaddingStringBuffer();
+        rep.append("----=== Seed disposition report ===----");
+        rep.newline();
+        rep.append("Seeds");
+        rep.padTo(maxURILenght+2);
+        rep.raAppend(maxURILenght+8,"Code");
+        rep.padTo(maxURILenght+9);
+        rep.append("Disposition");
+        rep.newline();
+        rep.append("-------------");
+        rep.padTo(maxURILenght+2);
+        rep.raAppend(maxURILenght+8,"-----");
+        rep.padTo(maxURILenght+9);
+        rep.append("-------------");
+        rep.newline();
+        
+        tmp = getSeedsSortedByStatusCode();
+        while(tmp.hasNext()){
+            String UriString = (String)tmp.next();
+            String disposition = getSeedDisposition(UriString);
+            int code = getSeedStatusCode(UriString);
+            String statusCode = "";
+            if(code != 0){
+                statusCode = Integer.toString(code);
+            }
+            rep.append(UriString);
+            rep.padTo(maxURILenght+2);
+            rep.raAppend(maxURILenght+8,code);
+            rep.padTo(maxURILenght+9);
+            rep.append(disposition);
+            rep.newline();
+        }
+        rep.append("----=== End seed disposition report ===----");
+        rep.newline();
+        rep.newline();
+        rep.newline();
+        controller.reports.info(rep.toString()); //Write report to file.
+        
+        super.crawlEnded(sExitMessage);
     }
 
 }
