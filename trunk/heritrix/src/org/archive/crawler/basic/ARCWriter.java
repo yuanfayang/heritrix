@@ -15,14 +15,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
-
-//import org.apache.commons.*;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.archive.crawler.datamodel.CrawlOrder;
 
 /**
  * @author Parker Thompson
@@ -30,7 +28,7 @@ import java.util.Date;
  */
 public class ARCWriter extends Processor {
 	
-	private int arcMaxSize = 1000000;			// max size we want arc files to be (bytes)
+	private int arcMaxSize = 10000000;		// max size we want arc files to be (bytes)
 	private String arcPrefix = "archive";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
@@ -39,7 +37,11 @@ public class ARCWriter extends Processor {
 
   	public void initialize(CrawlController c){
   		super.initialize(c);
-
+  		
+  		// set up output directory
+  		CrawlOrder order = c.getOrder();
+  		setOutputDir(order.getOutputLocation());
+  		
 		createNewArcFile();		  		
   	}
   	
@@ -113,21 +115,6 @@ public class ARCWriter extends Processor {
 	private boolean isNewArcNeeded(){
 		
 		try{
-			System.out.println("filechannel size " + new String(	(new Integer((int)fileChannel.size())).toString()
-																						)
-										);
-			System.out.println("file size " + new String(	(new Integer(
-																					(int)file.length()
-																				).toString()
-																			)
-									));
-			System.out.println("max size " + new String( (new Integer(arcMaxSize)).toString()   ));
-			
-		}catch(Exception e){
-			System.out.println("can't read file size");
-			
-		}
-		try{
 			if (fileChannel.size() > arcMaxSize)
 				return true;
 		}catch(IOException e){
@@ -194,8 +181,26 @@ public class ARCWriter extends Processor {
 	}
 
 	public void setOutputDir(String buffer) {
-		outputDir = buffer;
+
+				
+		// make sure it's got a trailing file.seperator so the
+		// dir is not treated as a file prefix
+		if(! buffer.endsWith(file.separator)){
+			buffer = new String(buffer + file.separator);
+		}
+			
+		File newDir = new File(buffer);
 		
+		if(!newDir.exists()){
+			try{
+				newDir.mkdirs();
+				outputDir = buffer;
+					
+			}catch(Exception e){
+				e.printStackTrace();
+			}		
+		}
+			
 		// start writing files to the new dir
 		createNewArcFile();
 	}
