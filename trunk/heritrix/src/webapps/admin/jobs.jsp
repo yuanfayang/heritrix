@@ -1,6 +1,15 @@
 <%@include file="/include/handler.jsp"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.List" %>
 
 <%
+    String sAction = request.getParameter("action");
+    if(sAction != null){
+        // Need to handle an action    
+        if(sAction.equalsIgnoreCase("delete")){
+            handler.deleteJob(request.getParameter("job"));
+        }
+    }    
+
     String title = "Crawl jobs";
     int tab = 1;
 %>
@@ -14,38 +23,154 @@
     <p>
         <font color="red"><b><%=request.getParameter("message")%></b></font>
 <% } %>
-<p>
-<b>New jobs</b><br>
-<ul>
-    <li><a href="<%=request.getContextPath()%>/jobs/new.jsp">Create new crawl
-        job</a>
-    <li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp">Create new
-        crawl job based on a profile</a>
-    <li><a 
-        href="<%=request.getContextPath()%>/jobs/basedon.jsp?type=jobs">Create
-        new crawl job based on an existing job</a>
-<%-- // DISABLED FOR NOW
-    <li><a href="/admin/jobs/resumefromjob.jsp">Resume an existing job from a checkpoint</a>
---%>
-</ul>
 
 <% if(handler.isCrawling()){ %>
-    <p>
-    <b>Current job</b> - <i><%=handler.getCurrentJob().getJobName()%></i>
+    <h2>Active Job - <i><%=handler.getCurrentJob().getJobName()%></i></h2>
     <ul>
-        <li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp">View
-            crawl report</a>
-        <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp">View
-            seeds report</a>
-        <li><a href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=handler.getCurrentJob().getUID()%>">Journal</a>
-        <li><a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">View crawl order (xml file)</a>
-        <li><a href="<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=handler.getCurrentJob().getUID()%>">Edit configuration</a>
+        <li><a href="<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=handler.getCurrentJob().getUID()%>">
+        edit configuration</a>
+        
+        <li><a href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=handler.getCurrentJob().getUID()%>">
+        journal</a>
+        
+        <li>View:<br> 
+        &raquo; <a href="<%=request.getContextPath()%>/reports/crawljob.jsp">
+            crawl report</a>&nbsp;&nbsp;&nbsp;
+        &raquo; <a href="<%=request.getContextPath()%>/reports/seeds.jsp">
+            seeds report</a>&nbsp;&nbsp;&nbsp;
+        &raquo; <a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">
+            crawl order (raw xml)</a>
     </ul>
 <% } %>
 
-<p>
-<b><a href="<%=request.getContextPath()%>/jobs/pending.jsp">View pending jobs</a></b> (<%=handler.getPendingJobs().size()%>)<br>
-<b><a href="<%=request.getContextPath()%>/jobs/completed.jsp">View completed jobs</a></b> (<%=handler.getCompletedJobs().size()%>)<br>
+<h2>Create New Job</h2>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	&raquo; <a href="<%=request.getContextPath()%>/jobs/basedon.jsp?type=jobs">
+	based on existing job</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	
+	&raquo; <a href="<%=request.getContextPath()%>/jobs/basedon.jsp">
+	based on a profile</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	
+	&raquo; <a href="<%=request.getContextPath()%>/jobs/new.jsp">
+	with defaults</a>
+	
+<h2>Pending Jobs (<%=handler.getPendingJobs().size()%>)</h2>
+
+<%  
+    List jobs = handler.getPendingJobs();
+%>
+        <table border="0" cellspacing="0" cellpadding="1">
+            <tr>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Status
+                </th>
+                <th>
+                    Options
+                </th>
+            </tr>
+            <%
+                boolean alt = true;
+                for(int i=0 ; i    < jobs.size() ; i++)
+                {
+                    CrawlJob job = (CrawlJob)jobs.get(i);
+            %>        
+                    <tr bgcolor='<%=alt?"#DDDDFF":"#EEEEFF"%>'>
+                        <td>
+                            <%=job.getJobName()%>&nbsp;&nbsp;
+                        </td>
+                        <td>
+                            <i><%=job.getStatus()%></i>&nbsp;&nbsp;
+                        </td>
+                        <td>
+                            <a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
+                            &nbsp;
+                            <a href="<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=job.getUID()%>">Edit configuration</a>
+                            &nbsp;
+                            <a href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
+                            &nbsp;
+                            <a href="?action=delete&job=<%=job.getUID()%>">Delete</a>
+                            &nbsp;
+                        </td>
+                    </tr>
+            <%
+                    alt = !alt;
+                }
+            %>
+        </table>
+
+
+
+
+<h2>Completed Jobs (<%=handler.getCompletedJobs().size()%>)</h2>
+
+<%  
+    jobs = handler.getCompletedJobs();
+%>
+        <table border="0" cellspacing="0" cellpadding="1"> 
+            <tr>
+                <th>
+                    UID
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Status
+                </th>
+                <th>
+                    Options
+                </th>
+            </tr>
+            <%
+                alt = true;
+                for(int i=jobs.size()-1 ; i >= 0  ; i--)
+                {
+                    CrawlJob job = (CrawlJob)jobs.get(i);
+            %>        
+                    <tr bgcolor='<%=alt?"#DDDDFF":"#EEEEFF"%>'>
+                        <td>
+                            <code><%=job.getUID()%></code>&nbsp;&nbsp;
+                        </td>
+                        <td>
+                            <%=job.getJobName()%>&nbsp;&nbsp;
+                        </td>
+                        <td>
+                            <i><%=job.getStatus()%></i>&nbsp;&nbsp;&nbsp;
+                        </td>
+                        <td>
+                            <a style="color: #003399;" target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
+                            &nbsp;
+                            <a style="color: #003399;" href="<%=request.getContextPath()%>/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
+                            &nbsp;
+                            <a style="color: #003399;" href="<%=request.getContextPath()%>/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
+                            &nbsp;
+                            <a style="color: #003399;" href="<%=request.getContextPath()%>/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
+                            &nbsp;
+                            <a style="color: #003399;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
+                            &nbsp;
+                            <a style="color: #003399;" href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
+                            &nbsp;
+                            <a style="color: #003399;" href="?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <% if(job.getErrorMessage()!=null){ %>
+                    <tr bgcolor='<%=alt?"#DDDDFF":"#EEEEFF"%>'>
+                        <td></td>
+                        <td colspan="3">
+                            <pre><font color="red"><%=job.getErrorMessage()%></font></pre>
+                        </td>
+                    </tr>
+                    <% } %>
+            <%
+                    alt = !alt;
+                }
+            %>
+        </table>
 
 
 <%@include file="/include/foot.jsp"%>

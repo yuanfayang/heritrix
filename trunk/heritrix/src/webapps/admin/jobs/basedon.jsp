@@ -11,7 +11,7 @@
             return null;
         }
         StringBuffer ret = new StringBuffer();
-        for(int i = 0 ; i < jobs.size(); i++) {
+        for(int i = jobs.size()-1 ; i >= 0 ; i--) {
             CrawlJob tmp = (CrawlJob)jobs.get(i);
             ret.append("<li><a href=\"");
             ret.append(request.getContextPath());
