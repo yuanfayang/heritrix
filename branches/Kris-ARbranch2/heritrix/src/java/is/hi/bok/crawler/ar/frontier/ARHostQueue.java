@@ -1026,64 +1026,89 @@ public class ARHostQueue implements ARAttributeConstants {
             ret.append("ARHostQueue: " + hostName + "\n");
             ret.append("Size:       " + size + "\n");
             ret.append("State:      " + getStateByName() + "\n");
-            ret.append("Next ready: " + (getState()==HQSTATE_BUSY ? "N/A" :
-                    ArchiveUtils.formatMillisecondsToConventional(
-                            getNextReadyTime() - System.currentTimeMillis())) + 
+            if(getState()==HQSTATE_BUSY){
+                ret.append("Processing URIs: \n");
+                Cursor processingCursor = processingUriDB.openCursor(null,null);
+                reportURIs(ret, processingCursor, valence);
+                processingCursor.close();
+            } else {
+                ret.append("Next ready: " + 
+                        ArchiveUtils.formatMillisecondsToConventional(
+                            getNextReadyTime() - System.currentTimeMillis()) + 
                             "\n");
-            ret.append("Top URIs: " + "\n");
+            }
+            ret.append("Top URIs: \n");
             
             Cursor secondaryCursor = secondaryUriDB.openCursor(null,null);
-            
-            DatabaseEntry keyEntry = new DatabaseEntry();
-            DatabaseEntry dataEntry = new DatabaseEntry();
-            
-            OperationStatus opStatus = secondaryCursor.getFirst(keyEntry,dataEntry,LockMode.DEFAULT);
-            int i = 0;
-            while(i<10 && opStatus == OperationStatus.SUCCESS){
-            
-                CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
-                ret.append("  URI:              " + tmp.getURIString() + "\n");
-                switch(tmp.getSchedulingDirective()){
-                    case CandidateURI.HIGHEST : 
-                        ret.append("  Sched. directive: HIGHEST\n"); break;
-                    case CandidateURI.HIGH : 
-                        ret.append("  Sched. directive: HIGH\n"); break;
-                    case CandidateURI.MEDIUM : 
-                        ret.append("  Sched. directive: MEDIUM\n"); break;
-                    case CandidateURI.NORMAL : 
-                        ret.append("  Sched. directive: NORMAL\n"); break;
-                }
-                ret.append("  Next processing:  ");
-                long nextProcessing = 
-                    tmp.getLong(A_TIME_OF_NEXT_PROCESSING) - 
-                    System.currentTimeMillis();
-                if(nextProcessing < 0){
-                    ret.append("Overdue ");
-                    nextProcessing = nextProcessing*-1;
-                } 
-                ret.append(ArchiveUtils.formatMillisecondsToConventional(
-                        nextProcessing) + "\n");
-                if(tmp.containsKey(A_WAIT_INTERVAL)){
-                    ret.append("  Wait interval:    " + 
-                            ArchiveUtils.formatMillisecondsToConventional(
-                                    tmp.getLong(A_WAIT_INTERVAL)) + "\n");
-                }
-                if(tmp.containsKey(A_NUMBER_OF_VISITS)){
-                    ret.append("  Visits:           " + tmp.getInt(
-                            A_NUMBER_OF_VISITS) + "\n");
-                }
-                if(tmp.containsKey(A_NUMBER_OF_VERSIONS)){
-                    ret.append("  Versions:         " + tmp.getInt(
-                            A_NUMBER_OF_VERSIONS) + "\n");
-                }
-                
-                opStatus = secondaryCursor.getNext(keyEntry,dataEntry,LockMode.DEFAULT);
-                i++;
-            }
+            reportURIs(ret,secondaryCursor,10);
             secondaryCursor.close();
             return ret.toString();
         } catch( DatabaseException e ){
             return "Exception occured compiling report:\n" + e.getMessage();
+        }
+    }
+    
+    /**
+     * Adds a report of the first <code>max</code> URIs that the cursor points
+     * to to the stringbuffer object. 
+     * 
+     * @param ret The stringbuffer to append to
+     * @param cursor The cursor pointing at a URI database
+     * @param max Maximum number of URIs to report on. If fewer URIs are in the
+     *            database, all URIs are shown
+     * @throws DatabaseException if an error occurs
+     */
+    private void reportURIs(StringBuffer ret, Cursor cursor, int max) 
+            throws DatabaseException{
+        DatabaseEntry keyEntry = new DatabaseEntry();
+        DatabaseEntry dataEntry = new DatabaseEntry();
+        OperationStatus opStatus = 
+            cursor.getFirst(keyEntry,dataEntry,LockMode.DEFAULT);
+        
+        int i = 0;
+        while(i<max && opStatus == OperationStatus.SUCCESS){
+            CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
+            ret.append(" URI:                " + tmp.getURIString() + "\n");
+            switch(tmp.getSchedulingDirective()){
+                case CandidateURI.HIGHEST : 
+                    ret.append("  Sched. directive:  HIGHEST\n"); break;
+                case CandidateURI.HIGH : 
+                    ret.append("  Sched. directive:  HIGH\n"); break;
+                case CandidateURI.MEDIUM : 
+                    ret.append("  Sched. directive:  MEDIUM\n"); break;
+                case CandidateURI.NORMAL : 
+                    ret.append("  Sched. directive:  NORMAL\n"); break;
+            }
+            ret.append("  Next processing:   ");
+            long nextProcessing = 
+                tmp.getLong(A_TIME_OF_NEXT_PROCESSING) - 
+                System.currentTimeMillis();
+            if(nextProcessing < 0){
+                ret.append("Overdue  ");
+                nextProcessing = nextProcessing*-1;
+            } 
+            ret.append(ArchiveUtils.formatMillisecondsToConventional(
+                    nextProcessing) + "\n");
+            if(tmp.getFetchStatus()!=0){
+                ret.append("  Last fetch status: " + 
+                        tmp.getFetchStatus() + "\n");
+            }
+            if(tmp.containsKey(A_WAIT_INTERVAL)){
+                ret.append("  Wait interval:     " + 
+                        ArchiveUtils.formatMillisecondsToConventional(
+                                tmp.getLong(A_WAIT_INTERVAL)) + "\n");
+            }
+            if(tmp.containsKey(A_NUMBER_OF_VISITS)){
+                ret.append("  Visits:            " + tmp.getInt(
+                        A_NUMBER_OF_VISITS) + "\n");
+            }
+            if(tmp.containsKey(A_NUMBER_OF_VERSIONS)){
+                ret.append("  Versions:          " + tmp.getInt(
+                        A_NUMBER_OF_VERSIONS) + "\n");
+            }
+            
+            opStatus = cursor.getNext(keyEntry,dataEntry,LockMode.DEFAULT);
+            i++;
         }
     }
     
