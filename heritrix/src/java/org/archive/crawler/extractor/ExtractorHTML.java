@@ -338,15 +338,18 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         this.numberOfCURIsHandled++;
 
         ReplayCharSequence cs = null;
+        
         try {
 	       cs = curi.getHttpRecorder().getReplayCharSequence();
         } catch(Exception e) {
             curi.addLocalizedError(this.getName(), e,
-                "Failed get of replay char sequence.");
+                "Failed get of replay char sequence " + curi.toString() +
+                    " " + e.getMessage());
+            logger.warning("Failed get of replay char sequence " +
+                curi.toString() + " " + e.getMessage() + " " +
+                Thread.currentThread().getName());
         }
         if (cs == null) {
-            logger.warning("Failed getting ReplayCharSequence: " +
-                curi.toString());
             return;
         }
 
