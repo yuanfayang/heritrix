@@ -54,7 +54,14 @@ public class ARCRecordMetaData
      * Only available after the record has been read in totality.
      */
     private String digest = null;
-
+    
+    /**
+     * Status for this request.
+     * 
+     * There may be no status.
+     */
+    private String statusCode = null;
+    
 
     /**
      * Constructor.
@@ -178,5 +185,19 @@ public class ARCRecordMetaData
      */
     public void setDigest(String d) {
         this.digest = d;
+    }
+    
+    /**
+     * @return Returns the statusCode.  May be null.
+     */
+    public String getStatusCode() {
+        return this.statusCode;
+    }
+    
+    /**
+     * @param statusCode The statusCode to set.
+     */
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
     }
 }

@@ -24,11 +24,16 @@
  */
 package org.archive.io.arc;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.httpclient.HttpConstants;
+import org.apache.commons.httpclient.HttpParser;
+import org.apache.commons.httpclient.StatusLine;
 import org.archive.util.Base32;
 
 
@@ -86,6 +91,21 @@ public class ARCRecord extends InputStream implements ARCConstants {
     private MessageDigest digest = null;
 
     /**
+     * Http status line object.
+     * 
+     * May be null if record is not http.
+     */
+    private StatusLine httpStatus = null;
+
+    /**
+     * Http header bytes.
+     * 
+     * If non-null and bytes available, give out its contents before we
+     * go back to the underlying stream.
+     */
+    private InputStream httpHeaderStream = null;;
+
+    /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
@@ -120,8 +140,67 @@ public class ARCRecord extends InputStream implements ARCConstants {
             // -- they are dealing with it anyways.
             throw new IOException(e.getMessage());
         }
+        
+        this.httpHeaderStream = readHttpHeader();
     }
-
+    
+    /**
+     * Read http header if present.
+     * @return ByteArrayInputStream with the http header in it or null if no
+     * http header.
+     * @throws IOException
+     */
+    private InputStream readHttpHeader() throws IOException {
+        // If judged a record that doesn't have an http header, return
+        // immediately.
+        if(!metaData.getUrl().startsWith("http")) {
+            return null;
+        }
+        byte [] statusBytes = HttpParser.readRawLine(this.in);
+        if (statusBytes == null || statusBytes.length <= 0 ||
+                !isCrNl(statusBytes)) {
+            throw new IOException("Failed to read http status where one " +
+                " was expected.");
+        }
+        String statusLine = HttpConstants.getString(statusBytes, 0,
+                statusBytes.length - 2 /*crnl*/);
+        if ((statusLine == null) ||
+                !StatusLine.startsWithHTTP(statusLine)) {
+            throw new IOException("Failed parse of http status line.");
+        }
+        this.httpStatus = new StatusLine(statusLine);
+        
+        // Save off the bytes read.
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(4 * 1024);
+        baos.write(statusBytes);
+        for (byte [] lineBytes = null; true;) {
+            lineBytes = HttpParser.readRawLine(this.in);
+            if (lineBytes == null || lineBytes.length <= 0 ||
+                    !isCrNl(lineBytes)) {
+                throw new IOException("Failed reading http headers.");
+            }
+            String line = HttpConstants.getString(lineBytes, 0, lineBytes.length - 2);
+            // Save the bytes read.
+            baos.write(lineBytes);
+            if ((lineBytes.length - 2) <= 0) {
+                // We've finished reading the http header.
+                break;
+            }
+        }
+        
+        return new ByteArrayInputStream(baos.toByteArray());
+    }
+    
+    /**
+     * @return True if line has '\r\n' on the end.
+     */
+    private boolean isCrNl (byte [] bytes) {
+        return (bytes != null &&
+            bytes.length >= 2 &&
+            bytes[bytes.length - 1] == '\n' &&
+            bytes[bytes.length -2] == '\r');
+    }
+    
     public boolean markSupported() {
         return false;
     }
@@ -155,6 +234,13 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * @throws IOException
      */
     public int read() throws IOException {
+        // If http header, return bytes from it before we go to underlying
+        // stream.
+        if (this.httpHeaderStream != null &&
+                this.httpHeaderStream.available() > 0) {
+            return this.httpHeaderStream.read();
+        }
+        
         int c = -1;
         if (available() > 0) {
             c = this.in.read();
@@ -169,6 +255,14 @@ public class ARCRecord extends InputStream implements ARCConstants {
     }
 
     public int read(byte [] b, int offset, int length) throws IOException {
+        // If http header, return bytes from it before we go to underlying
+        // stream.
+        if (this.httpHeaderStream != null &&
+                this.httpHeaderStream.available() > 0) {
+            int read = Math.min(length - offset, available());
+            return this.httpHeaderStream.read(b, offset, read);
+        }
+        
         int read = Math.min(length - offset, available());
         if (read == 0) {
             read = -1;
@@ -184,15 +278,16 @@ public class ARCRecord extends InputStream implements ARCConstants {
     }
 
     /**
+     * This available is not the stream's available.  Its an available
+     * based on what the stated ARC record length is minus what we've
+     * read to date.
+     * 
      * @return True if bytes remaining in record content.
      */
     public int available() {
         return (int)(this.metaData.getLength() - this.position);
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#skip(long)
-     */
     public long skip(long n) throws IOException {
         final int SKIP_BUFFERSIZE = 1024 * 4;
         byte [] b = new byte[SKIP_BUFFERSIZE];
@@ -225,6 +320,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
             if (available() > 0) {
                 skip(available());
             }
+            // The available here is different from the above available.
+            // The one here is the stream's available.  We're looking to see
+            // if anything in stream after the arc content.... and we're
+            // trying to move past it.  Important is that we not count
+            // bytes read below here as part of the arc content.
             if (this.in.available() > 0) {
                 // If there's still stuff on the line, its the LINE_SEPARATOR
                 // that lies between records.  Lets read it so we're cue'd up
@@ -248,11 +348,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
                     c = this.in.read();
                     if (c != -1) {
                         if (c == LINE_SEPARATOR) {
-                            // Update digest.
-                            this.digest.update((byte)c);
                             continue;
                         }
                         if (this.in.markSupported()) {
+                            // We've overread.  We're in next record. Backup
+                            // break.
                             this.in.reset();
                             break;
                         } else {
@@ -267,6 +367,10 @@ public class ARCRecord extends InputStream implements ARCConstants {
             // Set the metadata digest as base32 string.
             this.metaData.
             	setDigest(Base32.encode((byte[])this.digest.digest()));
+            if (this.httpStatus != null) {
+                int statusCode = this.httpStatus.getStatusCode();
+                this.metaData.setStatusCode(Integer.toString(statusCode));
+            }
         }
     }
 }
