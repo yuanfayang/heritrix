@@ -33,7 +33,7 @@ public class URIRegExpFilter extends Filter {
 		if(o instanceof CrawlURI) {
 			input = ((CrawlURI)o).getURIString();
 		} else if (o instanceof UURI ){
-			input = ((UURI)o).getUri().toString();
+			input = ((UURI)o).getUriString();
 		} else {
 			//TODO handle other inputs
 			

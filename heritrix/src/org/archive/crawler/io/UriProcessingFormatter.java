@@ -35,7 +35,7 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 
 		String length = ".";
 		String mime = ".";
-		String uri = curi.getUURI().getUri().toASCIIString();
+		String uri = curi.getUURI().getUriString();
 		if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
 				
@@ -66,10 +66,10 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 		
 		Object via = curi.getVia();
 		if (via instanceof CandidateURI) {
-			via = ((CandidateURI)via).getUURI().getUri().toASCIIString();
+			via = ((CandidateURI)via).getUURI().getUriString();
 		}
 		if (via instanceof UURI) {
-			via = ((UURI)via).getUri().toASCIIString();
+			via = ((UURI)via).getUriString();
 		}
 		
 		// allow get to be GC'd

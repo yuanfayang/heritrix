@@ -73,7 +73,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
 		CrawlServer targetServer = null;
 		String dnsName = parseTargetDomain(curi);	
 			
-		if (!curi.getUURI().getUri().getScheme().equals("dns")) {
+		if (!curi.getUURI().getScheme().equals("dns")) {
 			// only handles dns
 			return;
 		}
