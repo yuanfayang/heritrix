@@ -55,10 +55,10 @@ public class PathDepthFilter extends Filter {
         addElementToDefinition(
             new SimpleType(
                 ATTR_INVERTED,
-                "Allow only paths deeper then max path depth. \nNormally max path" +
-                "depth means that only URIs with shorter paths are accepted," +
-                "setting this to true means that max path depth becomes (in" +
-                "effect) minimum path depth.",
+                "Allow only paths deeper then max path depth. \nNormally max path"
+                    + "depth means that only URIs with shorter paths are accepted,"
+                    + "setting this to true means that max path depth becomes (in "
+                    + "effect) minimum path depth.",
                 new Boolean(false)));
     }
 
