@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.collections.Predicate;
+import org.archive.util.CompositeIterator;
 
 /**
  * A queue with multiple internal queues, numbered 0 to n.
@@ -154,13 +155,19 @@ public class TieredQueue implements Queue {
     }
 
     public Iterator getIterator(boolean inCacheOnly) {
-        // TODO Auto-generated method stub
-        return null;
+        CompositeIterator iter = new CompositeIterator();
+        for (int i = 0; i <= lastQueue; i++) {
+            iter.add(innerQueues[i].getIterator(inCacheOnly));
+        }
+        return iter;
     }
 
     public long deleteMatchedItems(Predicate matcher) {
-        // TODO Auto-generated method stub
-        return 0;
+        long count = 0;
+        for (int i = 0; i <= lastQueue; i++) {
+            count += innerQueues[i].deleteMatchedItems(matcher);
+        }
+        return count;
     }
 
     /**
