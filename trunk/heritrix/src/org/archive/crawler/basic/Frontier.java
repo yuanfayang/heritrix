@@ -31,6 +31,7 @@ import org.archive.util.CachingDiskLongFPSet;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.DiskLongFPSet;
 import org.archive.util.MemLongFPSet;
+import org.archive.util.MemQueue;
 import org.archive.util.Queue;
 
 /**
@@ -60,6 +61,10 @@ public class Frontier
 	// thus should not be rescheduled	
 	UURISet alreadyIncluded;
 	
+	
+	private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
+	private ThreadLocalQueue threadWaitingHigh = new ThreadLocalQueue();
+
 	// every CandidateURI not yet in process or another queue; 
 	// all seeds start here; may contain duplicates
 	Queue pendingQueue; // of CandidateURIs 
@@ -148,6 +153,61 @@ public class Frontier
 		}
 	}
 
+	private static class ThreadLocalQueue extends ThreadLocal {
+		/* (non-Javadoc)
+		 * @see java.lang.ThreadLocal#initialValue()
+		 */
+		protected Object initialValue() {
+			return new MemQueue();
+		}
+
+		/**
+		 * 
+		 */
+		public Queue getQueue() {
+			return (Queue)super.get();
+		}
+
+}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	public void batchSchedule(CandidateURI caUri) {
+		// initially just pass-through
+		schedule(caUri);
+		threadWaiting.getQueue().enqueue(caUri);
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#batchScheduleHigh(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	public void batchScheduleHigh(CandidateURI caUri) {
+		// initially just pass-through
+		//scheduleHigh(caUri);
+		threadWaitingHigh.getQueue().enqueue(caUri);
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#batchFlush()
+	 */
+	public synchronized void batchFlush() {
+		Queue q = threadWaiting.getQueue();
+		while(!q.isEmpty()) {
+			schedule((CandidateURI) q.dequeue());
+		}
+		q = threadWaitingHigh.getQueue();
+		while(!q.isEmpty()) {
+			scheduleHigh((CandidateURI) q.dequeue());
+		}
+	}
+
+
 	/** 
 	 * Arrange for the given CandidateURI to be visited, if it is not
 	 * already scheduled/completed. 
@@ -163,14 +223,6 @@ public class Frontier
 		incrementScheduled();
 	}
 	
-	/**
-	 * 
-	 */
-	private void incrementScheduled() {
-		totalUrisScheduled++;
-		netUrisScheduled++;
-	}
-
 	/** 
 	 * Arrange for the given CandidateURI to be visited, with top
 	 * priority (before anything else), if it is not already 
@@ -187,6 +239,13 @@ public class Frontier
 		incrementScheduled();
 	}
 
+	/**
+	 * 
+	 */
+	private void incrementScheduled() {
+		totalUrisScheduled++;
+		netUrisScheduled++;
+	}
 
 	/** 
 	 * Return the next CrawlURI to be processed (and presumably
@@ -305,6 +364,9 @@ public class Frontier
 	public synchronized void finished(CrawlURI curi) {
 		logger.fine(this+".finished("+curi+")");
 		
+		// catch up on scheduling
+		batchFlush();
+		
 		curi.incrementFetchAttempts();
 		
 		try {
@@ -350,7 +412,7 @@ public class Frontier
 				Object array[] = { curi, iter.next() };
 				controller.localErrors.log(
 					Level.WARNING,
-					curi.getUURI().getUri().toString(),
+					curi.getUURI().getUriString(),
 					array);
 			}
 			// once logged, discard
@@ -374,7 +436,7 @@ public class Frontier
 		Object array[] = { curi };
 		controller.uriProcessing.log(
 			Level.INFO,
-			curi.getUURI().getUri().toString(),
+			curi.getUURI().getUriString(),
 			array);
 		
 		// note that CURI has passed out of scheduling
@@ -664,14 +726,14 @@ public class Frontier
 		Object array[] = { curi };
 		controller.uriProcessing.log(
 			Level.INFO,
-			curi.getUURI().getUri().toString(),
+			curi.getUURI().getUriString(),
 			array);
 
 		// if exception, also send to crawlErrors
 		if (curi.getFetchStatus() == S_INTERNAL_ERROR) {
 			controller.runtimeErrors.log(
 				Level.WARNING,
-				curi.getUURI().getUri().toString(),
+				curi.getUURI().getUriString(),
 				array);
 		}
 		if (shouldBeForgotten(curi)) {
@@ -868,6 +930,5 @@ public class Frontier
 		float duplicatesInPendingEstimate = (totalUrisScheduled == 0) ? 0 : scheduledDuplicates / totalUrisScheduled;
 		return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
 	}
-
 
 }
