@@ -178,7 +178,7 @@ public class ARCWriterProcessor
      * 
      * @param curi CrawlURI to process.
      */
-    protected synchronized void innerProcess(CrawlURI curi)
+    protected void innerProcess(CrawlURI curi)
     {
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
