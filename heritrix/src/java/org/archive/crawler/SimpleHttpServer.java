@@ -37,6 +37,7 @@ import java.util.NoSuchElementException;
 import org.mortbay.http.HashUserRealm;
 import org.mortbay.http.HttpServer;
 import org.mortbay.http.NCSARequestLog;
+import org.mortbay.http.RequestLog;
 import org.mortbay.http.SocketListener;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.WebApplicationContext;
@@ -89,6 +90,23 @@ public class SimpleHttpServer
     throws Exception {
         this(SimpleHttpServer.webapps, port, expandWebapps);
     }
+    
+    /**
+     * @param name Name of webapp to load.
+     * @param context Where to mount the webapp.  If passed context is
+     * null or empty string, we'll use '/' + <code>name</code> else if
+     * passed '/' then we'll add the webapp as the root webapp.
+     * @param port Port to run on.
+     * @param expandWebapps True if we're to expand the webapp passed.
+     * @throws Exception
+     */
+    public SimpleHttpServer(String name, String context, int port,
+        boolean expandWebapps)
+    throws Exception {
+        initialize(port);
+        addWebapp(name, context, expandWebapps);
+        this.server.setRequestLog(getServerLogging());
+    }
 
     /**
      * @param webapps List of webapps to load.
@@ -98,39 +116,68 @@ public class SimpleHttpServer
      */
     public SimpleHttpServer(List webapps, int port, boolean expandWebapps)
     throws Exception {
-        this.server = new Server();
-        this.port = port;
-        SocketListener listener = new SocketListener();
-        listener.setPort(port);
-        // Bumpt UI thread priority up 1 above the normal
-        listener.setThreadsPriority(Thread.NORM_PRIORITY);
-        this.server.addListener(listener);
+        initialize(port);
+        
         // Add each of the webapps in turn. If we're passed the root webapp,
         // give it special handling -- assume its meant to be server root and
         // its meant to be mounted on '/'.  The below also favors the war file
         // if its present.
         for (Iterator i = webapps.iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            File ptr = new File(getWARSPath(), name + ".war");
-            if (!ptr.exists()) {
-                ptr = new File(getWARSPath(), name);
-                if (!ptr.exists()) {
-                    throw new FileNotFoundException(ptr.getAbsolutePath());
-                }
-            }
-            // If webapp name is for root, mount it on '/', else '/WEBAPP_NAME'.
-            String context = "/" + ((name.equals(ROOT_WEBAPP))? "": name);
-            WebApplicationContext c =
-                this.server. addWebApplication(context, ptr.getAbsolutePath());
-            if (name.equals(ROOT_WEBAPP)) {
-                // If we've just mounted the root webapp, make it the root.
-                this.server.setRootWebApp(name);
-            }
-            // Selftest depends on finding the extracted WARs. TODO: Fix.
-            c.setExtractWAR(expandWebapps);
-            this.contexts.add(c);
+            addWebapp((String)i.next(), null, expandWebapps);
         }
-
+        this.server.setRequestLog(getServerLogging());
+    }
+    
+    /**
+     * Add a webapp.
+     * @param name Name of webapp to add.
+     * @param context Context to add the webapp on.
+     * @throws IOException
+     * @Param expand True if we're to expand the webapp.
+     */
+    protected void addWebapp(String name, String context, boolean expand)
+    throws IOException {
+        File ptr = new File(getWARSPath(), name + ".war");
+        if (!ptr.exists()) {
+            ptr = new File(getWARSPath(), name);
+            if (!ptr.exists()) {
+                throw new FileNotFoundException(ptr.getAbsolutePath());
+            }
+        }
+        // If webapp name is for root, mount it on '/', else '/WEBAPP_NAME'.
+        if (context == null || context.length() <= 0) {
+            context = "/" + ((name.equals(ROOT_WEBAPP))? "": name);
+        }
+        WebApplicationContext c =
+            this.server. addWebApplication(context, ptr.getAbsolutePath());
+        if (context.equals("/")) {
+            // If we've just mounted the root webapp, make it the root.
+            this.server.setRootWebApp(name);
+        }
+        // Selftest depends on finding the extracted WARs. TODO: Fix.
+        c.setExtractWAR(expand);
+        this.contexts.add(c);
+    }
+    
+    /**
+     * Initialize the server.
+     * Called from constructors.
+     * @return Returns a server instance.
+     */
+    protected void initialize(int port) {
+        this.server = new Server();
+        this.port = port;
+        SocketListener listener = new SocketListener();
+        listener.setPort(port);
+        this.server.addListener(listener);
+    }
+    
+    /**
+     * Setup log files.
+     * @return RequestLog instance to add to a server. 
+     * @throws Exception
+     */
+    protected RequestLog getServerLogging() throws Exception {
         // Have accesses go into the stdout/stderr log for now.  Later, if
         // demand, we'll have accesses go into their own file.
         NCSARequestLog a = new NCSARequestLog(Heritrix.HERITRIX_OUT_FILE);
@@ -140,7 +187,7 @@ public class SimpleHttpServer
         a.setBuffered(false);
         a.setLogTimeZone("GMT");
         a.start();
-        this.server.setRequestLog(a);
+        return a;
     }
 
     /**

@@ -706,7 +706,6 @@ public class ARCWriter implements ARCConstants {
         	throw new IOException("Metadata line doesn't match expected" +
                 " pattern: " + metaLineStr);
         }
-        
     }
 
     /**
