@@ -306,7 +306,6 @@ public class FetchHTTP
             connectionManager.setMaxTotalConnections(getController().
                 getToeCount());
             this.http = new HttpClient(connectionManager);
-            
             try
             {
                 // Register our heritrix sslsocketfactory.
@@ -324,7 +323,7 @@ public class FetchHTTP
                 throw new RuntimeException("Failed setting SSL Protocol: " +
                     e.getMessage());
             }
-
+            
             // load cookies from a file if specified in the order file.
             try {
                 loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));

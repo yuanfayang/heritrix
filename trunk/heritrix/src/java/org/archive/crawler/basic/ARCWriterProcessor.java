@@ -226,13 +226,16 @@ public class ARCWriterProcessor
         }
 
         // Find the write protocol and write this sucker
-        String scheme = curi.getUURI().getScheme();
+        String scheme = curi.getUURI().getScheme().toLowerCase();
 
         try
         {
-            if (scheme.equals("dns")) {
+            if (scheme.equals("dns"))
+            {
                 writeDns(curi);
-            } else if (scheme.equals("http")) {
+            }
+            else if (scheme.equals("http") || scheme.equals("https"))
+            {
                 writeHttp(curi);
             }
         }
