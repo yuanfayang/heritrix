@@ -16,6 +16,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.util.PaddingStringBuffer;
 import org.archive.util.TimedFixedSizeList;
 
 /**
@@ -102,9 +103,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	
 		// log the legend	
 		periodicLogger.log(Level.INFO,
-				"[timestamp]\t\t[discovered-pages]\t[pending-pages]\t[downloaded-pages]"
-					+ "\t[unique-pages]\t[overall-docs-per-sec]\t[current-docs-per-sec]\t[overall-KB-sec]"
-					+ "\t[current-KB-sec]\t[download-failures]\t[stalled-threads]\t[memory-usage]"
+				"[timestamp]   [discovered] [pending]    [downloaded] "
+					+ "[unique]     [overall-docs/s] [current-docs/s]  [overall-KB/s] "
+					+ "[current-KB/s] [download-failures] [stalled-threads] [memory-usage]"
 			);
 
 		// keep logging as long as this thang is running
@@ -148,18 +149,20 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 		//			[download-failures] [stalled-threads] [memory-usage]
 		periodicLogger.log(
 			Level.INFO,
-			timestamp.format(now)
-			+ "\t\t" + discoveredPages
-			+ "\t\t\t" + pendingPages
-			+ "\t\t" + downloadedPages
-			+ "\t\t\t" + uniquePages
-			+ "\t\t" + docsPerSecond
-			+ "\t\t\t" + currentDocsPerSecond
-			+ "\t\t\t" + totalKBPerSec
-			+ "\t\t\t" + currentKBPerSec
-			+ "\t\t\t" + downloadFailures
-			+ "\t\t\t" + pausedThreads
-			+ "\t\t\t" + Runtime.getRuntime().totalMemory()
+			new PaddingStringBuffer()
+             .append(timestamp.format(now))
+             .padTo(15).append(discoveredPages)
+			 .padTo(28).append(pendingPages)
+			 .padTo(41).append(downloadedPages)
+			 .padTo(54).append(uniquePages)
+			 .padTo(67).append(docsPerSecond)
+			 .padTo(84).append(currentDocsPerSecond)
+			 .padTo(102).append(totalKBPerSec)
+			 .padTo(117).append(currentKBPerSec)
+			 .padTo(132).append(downloadFailures)
+			 .padTo(152).append(pausedThreads)
+			 .padTo(170).append(Runtime.getRuntime().totalMemory())
+			 .toString()
 		);
 		
 		if (logLevel >= HUMAN_LOGGING) {
