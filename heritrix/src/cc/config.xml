@@ -19,14 +19,11 @@
         <!--Configures the actual build loop, how often and which build 
             file/target.
          -->
-        <schedule interval="600">
-            <!--Looks like you can only do a maven target and nothing else so 
-                put all of the maven targets here on the one invocation.
-             -->
-            <maven mavenscript="/home/stack/bin/maven-1.0-rc1/bin/maven"
-                projectfile="checkout/ArchiveOpenCrawler/project.xml"
-                goal="scm:update-project build-properties clean dist
-                    site:generate site:update-sourceforge" />
+        <schedule interval="310">
+            <ant buildfile="build-ArchiveOpenCrawler.xml" 
+                target="build"
+                uselogger="true" 
+                usedebug="false"/>
         </schedule>
 
         <!--Directory to write build logs to.-->

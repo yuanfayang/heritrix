@@ -3,7 +3,8 @@ $Id$
 _______________________________________________________________________________
 
 This directory contains the cruisecontrol (cc) config file for the running of
-the Internet Archive ArchiveOpenCrawler (heritrix) continuous integration build.
+the Internet Archive ArchiveOpenCrawler (heritrix) continuous integration build
+as well as supporting ant files and this README.
 
 See http://cruisecontrol.sourceforge.net to learn about CruiseControl.
 See http://crawler.archive.org to learn about the Internet Archive heritrix
@@ -64,7 +65,8 @@ path:
     % export PATH=$PATH:$MAVEN_HOME/bin
     
 + Install cruisecontrol.  This doc. was done w/ 2.1.4.  You have to build it
-after downloading.
+after downloading (This is the best doc. I found on cruisecontrol setup:
+http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl).
     
     % cd cruisecontrol-2.1.4/main
     % chmod u+x build.sh
@@ -114,9 +116,13 @@ machines only allow web access on port 8080).
     export MAVEN_HOME=$HOME/bin/maven-1.0-rc1
     export CCDIR=$HOME/bin/cruisecontrol-2.1.4/main
     export JETTY_HOME=$HOME/bin/Jetty-4.2.15rc0/
-    nohup $CCDIR/bin/cruisecontrol.sh -port 8081 &
+    export CCBUILDDIR=$HOME/cc
+    mkdir ${CCBUILDDIR}/logs
+    nohup $CCDIR/bin/cruisecontrol.sh -port 8081 \
+        &> ${CCBUILDDIR}/logs/stdout_err.log &
     cd $JETTY_HOME
-    nohup $JAVA_HOME/bin/java -jar start.jar &
+    nohup $JAVA_HOME/bin/java -jar start.jar &>
+    ${CCBUILDDIR}/logs/jetty.log &
 
 Make sure its all running fine (Check the logs dir under CCBUILDDIR, 
 visit the website at HOST:8080, and visit the jmx server at HOST:8081).
