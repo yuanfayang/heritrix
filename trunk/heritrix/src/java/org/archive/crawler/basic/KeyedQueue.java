@@ -179,8 +179,8 @@ public class KeyedQueue implements Queue, URIStoreable {
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public void deleteMatchedItems(QueueItemMatcher matcher) {
-        innerQ.deleteMatchedItems(matcher);
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
+        return innerQ.deleteMatchedItems(matcher);
     }
 
 }
