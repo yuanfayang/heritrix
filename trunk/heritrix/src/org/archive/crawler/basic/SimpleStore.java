@@ -15,6 +15,8 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIStore;
 
+import java.util.logging.Logger;
+
 /**
  * A minimal in-memory URIStore. Keeps "full" CrawlURI instances
  * around, because it can. 
@@ -23,6 +25,8 @@ import org.archive.crawler.framework.URIStore;
  *
  */
 public class SimpleStore implements URIStore {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleStore");
+
 	protected final Object ReadyChangeSemaphore = new Object();
 	
 	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
@@ -231,7 +235,13 @@ public class SimpleStore implements URIStore {
 	 * @param prereq
 	 */
 	public void insertAtHead(UURI uuri, int dist) {
-		if(filteredOut(uuri)) return;
+		if(filteredOut(uuri)){
+			if(uuri != null){
+				logger.info("filtering " + uuri.toString() );
+			}
+			return; 
+		}
+		
 		CrawlURI curi = null;
 		if((curi=(CrawlURI) allCuris.get(uuri))!=null) {
 			// already inserted
@@ -259,9 +269,11 @@ public class SimpleStore implements URIStore {
 	 * @return
 	 */
 	private boolean filteredOut(UURI uuri) {
-		// for now discard all non-http
+		// for now discard all non-http non-dns schemes
 		if (uuri==null) return true;
-		return !uuri.getUri().getScheme().equals("http");
+		
+		return !(uuri.getUri().getScheme().equals("http")
+						|| uuri.getUri().getScheme().equals("dns"));
 	}
 
 	/**

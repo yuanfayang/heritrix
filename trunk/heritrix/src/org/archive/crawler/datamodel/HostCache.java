@@ -7,6 +7,7 @@
 package org.archive.crawler.datamodel;
 
 import java.util.HashMap;
+import org.xbill.DNS.FindServer;
 
 /**
  * @author gojomo
@@ -32,8 +33,16 @@ public class HostCache {
 		String scheme = curi.getUURI().getUri().getScheme();
 		if (scheme.equals("dns")){
 			// TODO: set crawlhost to default nameserver
-			return null;
+			String primaryDns = FindServer.server();
+			
+			if(primaryDns == null){
+				return null;
+	
+			}else{
+				return getHostFor(primaryDns);	
+			}
 		}
+		
 		String authorityUsuallyHost = curi.getUURI().getUri().getAuthority();
 		if (authorityUsuallyHost != null) {
 			return getHostFor(authorityUsuallyHost);

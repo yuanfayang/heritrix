@@ -28,11 +28,18 @@ public class CrawlHost {
 	RobotsExclusionPolicy robots;
 	long robotsExpires = -1;
 	Checksum robotstxtChecksum;
+	private boolean hasBeenLookedUp = false;
 	
 	/**
 	 * @param h
 	 */
 	public CrawlHost(String h) {
+		// did they give us a dotted quad?
+		// don't set the host or do the lookup
+		if( h.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") ){
+			return;
+		}
+		
 		hostname = h;
 	}
 	
@@ -47,6 +54,12 @@ public class CrawlHost {
 //		robots = RobotsExclusionPolicy.policyFor(vb);
 //	}
 	
+	public boolean getHasBeenLookedUp(){
+		return hasBeenLookedUp;
+	}
+	public void setHasBeenLookedup(boolean status){
+		hasBeenLookedUp = status;
+	}
 	
 	/**
 	 * @return
@@ -118,6 +131,10 @@ public class CrawlHost {
 	 */
 	public void setIP(InetAddress address){
 		ip = address; 
+		
+		// assume that a lookup as occurred by the time
+		// a caller decides to set this (even to null)
+		setHasBeenLookedup(true);
 	}
 	
 	/**
@@ -134,6 +151,10 @@ public class CrawlHost {
 	 
 	 public InetAddress getIP(){
 	 	return ip;
+	 }
+	 
+	 public String getHostname(){
+	 	return hostname;
 	 }
 	 
 	 public long getIpExpires(){ 

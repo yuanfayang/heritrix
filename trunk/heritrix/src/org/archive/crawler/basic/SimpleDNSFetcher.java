@@ -10,13 +10,19 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.xbill.DNS.*;
+import org.xbill.DNS.FindServer;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.HostCache;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 
 /**
  * @author gojomo
  *
  */
-public class SimpleDNSFetcher extends Processor implements org.archive.crawler.datamodel.CoreAttributeConstants {
+public class SimpleDNSFetcher extends Processor implements CoreAttributeConstants {
  	
  	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
 	public static final boolean DO_CLASS_TYPE_CHECKING = true;
@@ -25,56 +31,71 @@ public class SimpleDNSFetcher extends Processor implements org.archive.crawler.d
  	private short ClassType = DClass.IN;
  	private short TypeType = Type.A;
 
-	String DnsName = null;		// store the name of the host we wish to look up
-
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
 		
-		Record[] rrecordSet = null; 						// store retrieved dns records
-		long now; 													// the time this operation happened
+		String DnsName = null;				// store the name of the host we wish to look up		
+		Record[] rrecordSet = null; 		// store retrieved dns records
+		long now; 									// the time this operation happened
 				
 				
 		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
-			
-			DnsName = curi.getUURI().getUri().getAuthority();
-			
 			// only handles dns
-			//return;
-			// for now handle html as well
-
-		}else{	
-			DnsName = parseTargetDomain(curi);
+			return;
 		}
-		
+
 		//TODO add support for type and class specifications in query string, for now always use defaults
 		/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
 		} */
 
+		// if the dns server hasn't been looked up yet populate it's crawlhost
+		if( ! curi.getHost().getHasBeenLookedUp() ){
+			
+			String nameServer = FindServer.server();
+			InetAddress serverInetAddr = null;
+			
+			try{
+				serverInetAddr = InetAddress.getByName(nameServer);
+			
+			}catch(UnknownHostException e){
+				e.printStackTrace();
+			}
+			
+			curi.getHost().setIP(serverInetAddr);
+		}
+
 		// do the lookup and store the results back to the curi
 		now = System.currentTimeMillis();
+		DnsName = parseTargetDomain(curi);
 		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
 		curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
-		curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+		
+		if(rrecordSet != null){
 
-		// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
-		// then update the CrawlHost
-		for(int i=0;i < rrecordSet.length; i++){
+			curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 
-			if(rrecordSet[i].getType() != Type.A)
-				continue;
+			// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
+			// then update the CrawlHost
+			for(int i=0;i < rrecordSet.length; i++){
+
+				if(rrecordSet[i].getType() != Type.A)
+					continue;
 			
-			ARecord AsA 	= (ARecord)rrecordSet[i];
-			CrawlHost h 		= curi.getHost();
+				ARecord AsA 	= (ARecord)rrecordSet[i];
+				
+				// get the CrawlHost object for the host we're looking up (not this curi's host, which is the nameserver)
+				CrawlHost targetHost = controller.getHostCache().getHostFor(parseTargetDomain(curi));
 			
-			h.setIP(AsA.getAddress());
-			h.setIpExpires( (long)AsA.getTTL() + now);
+				targetHost.setIP(AsA.getAddress());
+				targetHost.setIpExpires( (long)AsA.getTTL() + now);
 			
-			break; 	// only need to process one record
+				break; 	// only need to process one record
+			}
 		}
 	}
 	
@@ -103,4 +124,5 @@ public class SimpleDNSFetcher extends Processor implements org.archive.crawler.d
 		
 		return uri;
 	}
+	
 }

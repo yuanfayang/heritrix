@@ -28,6 +28,12 @@ public class HostInfoUpdater extends Processor {
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
+		
+		// make sure we only process schemes we understand (i.e. not dns)
+		if(!curi.getUURI().getUri().getScheme().equals("http")){
+			return;
+		}
+		
 		if (curi.getUURI().getUri().getPath().equals("/robots.txt")) {
 			// update host with robots info
 			if(curi.getAList().containsKey("http-transaction")) {
