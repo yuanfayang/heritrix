@@ -72,7 +72,7 @@ public class ThreadKicker extends Thread {
 				while (top!=null && top.getWhen()<now) {
 					scheduledKicks.remove(top);
 					pendingKicks.remove(top);
-					logger.info("kicking "+top.getTarget());
+					logger.warning("kicking "+top.getTarget());
 					top.getTarget().interrupt();
 					top = scheduledKicks.isEmpty() ? null : (ScheduledKick)scheduledKicks.first();
 				}
