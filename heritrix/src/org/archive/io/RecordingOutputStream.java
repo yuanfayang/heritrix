@@ -217,4 +217,14 @@ public class RecordingOutputStream extends OutputStream {
 		super.finalize();
 	}
 
+
+	/**
+	 * Return a replay stream, cued up to beginning of 
+	 */
+	public ReplayInputStream getContentReplayInputStream() throws IOException {
+		ReplayInputStream replay = getReplayInputStream();
+		replay.skip(responseBodyStart);
+		return replay;
+	}
+
 }

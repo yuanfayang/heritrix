@@ -6,6 +6,8 @@
  */
 package org.archive.io;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
@@ -175,6 +177,22 @@ public class RecordingInputStream extends InputStream {
 	 */
 	public void closeRecorder() throws IOException {
 		recordingOutputStream.closeRecorder();
+	}
+
+	/**
+	 * @param tempFile
+	 */
+	public void copyContentBodyTo(File tempFile) throws IOException {
+		FileOutputStream fos = new FileOutputStream(tempFile);
+		getContentReplayInputStream().readFullyTo(fos);
+		fos.close();
+	}
+
+	/**
+	 * 
+	 */
+	private ReplayInputStream getContentReplayInputStream() throws IOException {
+		return recordingOutputStream.getContentReplayInputStream();
 	}
 
 }
