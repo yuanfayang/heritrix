@@ -69,17 +69,14 @@ class MemoryArea {
    * For example, if you have completed 2 chunks and written 20 bytes in the 
    * 3rd chunk, then the value would be (2 * 4K + 20) where 4k is 
    * assumed to be the chunk size.
-   * 
-   * ToDo: Problem -- mLength here is more of a position rather than a size.
-   * So, if it is size, it has to one greater than the position. Take care.
-   * This influences a lot of code.
    */
   private int mLength;
 
   /**
-   * Just to signify that no more bytes could be accomodated into this
-   * memory area. This could be because the MAX_BLOCKS is reached or the
-   * manager's data pool isn't free for further allocation.
+   * Flag to signify during the process of writing, that no more bytes 
+   * could be accomodated into this memory area. This could be because 
+   * the MAX_BLOCKS is reached or the manager's data pool isn't free 
+   * for further allocation.
    */
   private boolean mExhausted;
 
@@ -169,7 +166,18 @@ class MemoryArea {
   }
   
   /**
+   * Writes the given data byte into its allocated memory area.
+   * It uses the mAllocationSequence and the mLength value to 
+   * locate the right index at which to write the data byte 
+   * into the manager's data pool.
+   * If there isn't enough space, it would try to get another
+   * free block if it hadn't reached its MAX_BLOCKS quota already.
    * 
+   * Returns true if the given byte is successfully written into 
+   * the memory area.
+   * 
+   * This method is not thread-safe. Assumes that there will be
+   * one writer only.
    */
   boolean write(int b) {
     int numBlocks = mAllocationSequence.size();
@@ -213,7 +221,7 @@ class MemoryArea {
     if (pos >= mLength) return -1;
     int blockNum = pos / mMgr.upperBlockSize;
     if (blockNum >= mAllocationSequence.size()) {
-      System.err.println("Ooops !! Bug in Memory Area detected in read(pos).");
+      System.err.println("Ooops !! Problems in Memory Area detected in read(pos).");
       return -1;
     }
     int blockIndex = ((Integer)mAllocationSequence.get(blockNum)).intValue();
@@ -247,17 +255,46 @@ class MemoryArea {
     if (pos + len > mLength) {
       len = mLength - pos;
     }
-    if (len <= 0) return 0;
+    if (len <= 0) return -1;
+    int lengthRead = 0;
     
     int blockNum = pos / mMgr.upperBlockSize;
     if (blockNum >= mAllocationSequence.size()) {
-      System.err.println("Ooops !! Bug in Memory Area detected in read(args).");
+      System.err.println("Ooops !! Problems in Memory Area detected in read(args).");
       return -1;
     }
     int blockIndex = ((Integer)mAllocationSequence.get(blockNum)).intValue();
-    System.arraycopy(mMgr.mDataPool, blockIndex * mMgr.upperBlockSize + 
-        (pos % mMgr.upperBlockSize), b, off, len);
-    return len;
+    
+    while (len != 0) {
+      int spaceInCurrentBlock = (blockNum + 1) * mMgr.upperBlockSize - pos;
+      if ( spaceInCurrentBlock >= len ) {
+        // do array copy..
+        System.arraycopy(mMgr.mDataPool,
+            (blockIndex * mMgr.upperBlockSize +
+            pos % mMgr.upperBlockSize), b, off, len);
+        pos += len;
+        lengthRead += len;
+        len = 0;
+      } else {
+        if (spaceInCurrentBlock > 0) {
+          // do array copy..
+          System.arraycopy(mMgr.mDataPool,
+              (blockIndex * mMgr.upperBlockSize +
+              pos % mMgr.upperBlockSize), b, off, spaceInCurrentBlock);
+          len -= spaceInCurrentBlock;
+          off += spaceInCurrentBlock;
+          pos += spaceInCurrentBlock;
+          lengthRead += spaceInCurrentBlock;
+        }
+        if ( (blockNum + 1) < MAX_BLOCKS ) {
+          blockNum++;
+          blockIndex = ((Integer)mAllocationSequence.get(blockNum)).intValue();
+          continue;
+        }
+        break;
+      }
+    }
+    return lengthRead;
   }
   
  

@@ -74,9 +74,10 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   File mSpillFile;
   
   /**
-   * The single output stream used to write data into this buffer.
+   * A flag to indicate that the single output stream was 
+   * created by the user.
    */
-  private OutputStream mOutStream;
+  private boolean mOutStreamCreated;
 
   /**
    * The total length or size of this virtual buffer.
@@ -95,14 +96,15 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   
   /**
   * Returns an OutputStream to write into the buffer. Only
-  * one such stream is maintained. Once this stream
-  * is closed, no further writing is possible. 
+  * one such stream can be requested. Any subsequent requests
+  * will throw a RuntimeException. Once this stream
+  * is closed, no further writing is possible.
   * @return
   */
   public OutputStream getOutputStream() {
-    if (mOutStream == null)
-      mOutStream = new SpreadOutputStream(mMgr, this);
-    return mOutStream;
+    if ( mOutStreamCreated )
+      throw new RuntimeException("OutputStream already created.");
+    return new SpreadOutputStream(mMgr, this);
   }
   
   /**
@@ -207,10 +209,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * and not the memory from the manager's data pool.
   */
   boolean isAugmented() {
-    if (mAugmentedDataArray != null)
-      return true;
-    else
-      return false;
+    return (mAugmentedDataArray != null);
   }
 
  
