@@ -36,7 +36,7 @@ public interface AdminConstants {
 	public static final String CRAWLER_TERMINATED =
 		"===>Crawling Stopped!<===<br>\nShutting Down the Server!";
     public static final String WEBAPP_BASE_DIR = "./";
-	public static final String WEBAPP_PATH = "webapps/admin/";
+	public static final String WEBAPP_PATH = "src/webapps/admin/";
 	public static final String DEFAULT_ORDER_FILE = "order.xml";
 	public static final String CRAWLING_IN_PROGRESS = "Crawling In Progress";
 	public static final String NO_CRAWLING = "No Crawling in Progress";
