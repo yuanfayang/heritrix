@@ -47,7 +47,7 @@
 				<td width="600">
 					<fieldset style="width: 600px">
 						<legend>Status</legend>
-						<iframe name="frmStatus" src="/admin/status.jsp?time=<%=iTime%>" width="730" height="165" frameborder="0" ></iframe>
+						<iframe name="frmStatus" src="/admin/status.jsp?time=<%=iTime%>" width="730" height="185" frameborder="0" ></iframe>
 					</fieldset>
 				</td>
 			</tr>
