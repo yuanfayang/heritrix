@@ -1306,27 +1306,21 @@ HasUriReceiver,  CrawlStatusListener {
 
     protected void scheduleForRetry(CrawlURI curi) 
             throws AttributeNotFoundException {
-        long delay;
-
-        if(curi.containsKey(A_RETRY_DELAY)) {
-            delay = curi.getInt(A_RETRY_DELAY);
-        } else {
-            // use overall default
-            delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
-        }
-        if (delay>0) {
+        long delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
+        if (delay > 0) {
             // snooze to future
-            logger.finer("inserting snoozed "+curi+" for "+delay);
+            logger.finer("Inserting snoozed " + curi + " for " + delay);
             URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
-            if(kq!=null){
-                snoozeQueueUntil(kq,System.currentTimeMillis()+(delay*1000));
+            if(kq != null) {
+                snoozeQueueUntil(kq, System.currentTimeMillis() + (delay * 1000));
             }
         }
 
         // now, reinsert CrawlURI in relevant queue
         reschedule(curi);
 
-        controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
+        // Let everyone interested know that it will be retried.
+        controller.fireCrawledURINeedRetryEvent(curi); 
         if (this.recover != null) {
             this.recover.rescheduled(curi);
         }

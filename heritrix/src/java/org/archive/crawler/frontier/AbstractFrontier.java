@@ -547,15 +547,10 @@ CoreAttributeConstants {
      */
     protected long retryDelayFor(CrawlURI curi) {
         int status = curi.getFetchStatus();
-        if ( status == S_CONNECT_FAILED || status == S_CONNECT_LOST 
-             || status == S_DOMAIN_UNRESOLVABLE ) {
-            if(curi.containsKey(A_RETRY_DELAY)) {
-                return curi.getInt(A_RETRY_DELAY);
-            }
-            return ((Long)getUncheckedAttribute(curi,ATTR_RETRY_DELAY)).
-                longValue();
-        }
-        return 0; // no delay for most 
+        return ( status == S_CONNECT_FAILED || status == S_CONNECT_LOST 
+                || status == S_DOMAIN_UNRESOLVABLE )?
+            ((Long)getUncheckedAttribute(curi, ATTR_RETRY_DELAY)).longValue():
+            0; // no delay for most 
     }
     
     /**
