@@ -73,7 +73,7 @@
     
     
     String title = "Job journal";
-    int tab = 2;
+    int tab = 1;
 %>
 
 <%@include file="/include/head.jsp"%>
