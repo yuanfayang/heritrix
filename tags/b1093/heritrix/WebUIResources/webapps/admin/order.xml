@@ -1,0 +1,101 @@
+<crawl-order name="GardenCrawl">
+ <comment>
+  A simple crawl to test the crawler's features.
+ </comment>
+ 
+<crawler-behavior>
+
+ <http-headers>
+ <User-Agent>heritrix-aoc/alpha (+http://crawler.archive.org)</User-Agent>
+ <From>archive-crawler-agent@lists.sourceforge.net</From>
+ </http-headers>
+ 
+ <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
+ <store class="org.archive.crawler.basic.SimpleStore" />
+ <selector class="org.archive.crawler.basic.SimpleSelector">
+  <seeds src="WebUIresources/webapps/admin/seeds.txt" />
+ </selector>
+ 
+ <processors>
+  <processor 
+    name="Preprocessor" 
+    class="org.archive.crawler.basic.SimplePreconditionEnforcer"
+    next="DNS">
+   <params delay-factor="1" />
+  </processor>
+  <processor 
+    name="DNS" 
+    class="org.archive.crawler.basic.FetcherDNS"
+    next="HTTP">
+  </processor>
+  <processor 
+    name="HTTP" 
+    class="org.archive.crawler.basic.FetcherHTTPSimple"
+    next="ExtractorHTTP">
+  </processor>
+  <processor 
+    name="ExtractorHTTP" 
+    class="org.archive.crawler.extractor.ExtractorHTTP"
+    next="ExtractorHTML">
+  </processor>
+  <processor 
+    name="ExtractorHTML" 
+    class="org.archive.crawler.extractor.ExtractorHTML"
+     next="ExtractorDOC">
+  </processor>
+  <processor
+  	name="ExtractorDOC"
+  	class="org.archive.crawler.extractor.ExtractorDOC"
+  	next="ExtractorSWF">
+  </processor>
+  <processor
+    name="ExtractorSWF"
+    class="org.archive.crawler.extractor.ExtractorSWF"
+    next="ExtractorPDF"
+    >
+ </processor>
+ <processor
+   	name="ExtractorPDF"
+   	class="org.archive.crawler.extractor.ExtractorPDF"
+    next="Archiver">
+  </processor>
+  <processor 
+    name="Archiver" 
+    class="org.archive.crawler.basic.ARCWriter"
+    next="Cacher">
+    	<compression use="true"/>
+    	<arc-files max-size-bytes="100000000"/>
+    	<!-- 
+    	<filter 
+    	 name="http-only"
+    	 class="org.archive.crawler.util.URIRegExpFilter"
+    	 regexp="^http://" />
+    	 -->
+  </processor>
+  <processor 
+    name="Cacher" 
+    class="org.archive.crawler.basic.CrawlStateUpdater">
+  </processor>
+ </processors>
+ 
+ <limits>
+  <!-- actual enforcement of these limits may depend on choice 
+       of processors that read and respect these limits -->
+  <max-pages value="1000" />
+  <max-duration value="1h" />
+  <max-resources-per-site value="1000" />
+  <max-toe-threads value="1" />
+  <max-link-depth value="5" />
+ </limits>
+
+</crawler-behavior>
+
+<loggers>
+  <crawl-statistics>
+    <interval>10</interval>
+  </crawl-statistics>
+</loggers>
+
+ <disk path="arcs/" />
+ <arc-file prefix="archive-" />
+</crawl-order>
