@@ -30,76 +30,93 @@ import javax.management.MBeanAttributeInfo;
  * @author John Erik Halse
  */
 public class ModuleAttributeInfo extends MBeanAttributeInfo {
-	private final boolean overridable;
-	private final Object defaultValue;
-	private final Object legalValueLists[];
-	private final ComplexType complexType;
+    private final boolean overridable;
+    private final Object defaultValue;
+    private final Object legalValueLists[];
+    private final ComplexType complexType;
 
-	/**
-	 * @param name
-	 * @param type
-	 * @param description
-	 * @param isOverrideable
+    /**
+     * @param name
+     * @param type
+     * @param description
+     * @param isOverrideable
      * @param legalValues
      * @param defaultValue
-	 * @throws java.lang.IllegalArgumentException
-	 */
-	public ModuleAttributeInfo(
-		String name,
-		Object type,
-		String description,
-		boolean isOverrideable,
-		Object[] legalValues,
-		Object defaultValue)
-		throws IllegalArgumentException {
-		super(name, type.getClass().getName(), description, true, true, false);
-		overridable = isOverrideable;
-		legalValueLists = legalValues;
-        checkValue(defaultValue);
-		this.defaultValue = defaultValue;
-		if(type instanceof ComplexType) {
-			complexType = (ComplexType) type;
-		} else {
-			complexType = null;
-		}
-	}
-
-	public Object[] getLegalValues() {
-		return legalValueLists;
-	}
-
-	public ComplexType getComplexType() {
-		return complexType;
-	}
-	
-	/**
-	 * @return
-	 */
-	public boolean isOverridable() {
-		return overridable;
-	}
-	
-	/**
-	 * @return
-	 */
-	public Object getDefaultValue() {
-		return defaultValue;
-	}
-
-    public boolean checkValue(Object value) {
-        if (value.getClass().getName().equals(getType())) {
-            Object legalValues[] = getLegalValues();
-            if (legalValues != null) {
-                for (int i = 0; i < legalValues.length; i++) {
-                    if (legalValues[i].equals(value)) {
-                        return true;
-                    }
-                }
-                throw new IllegalArgumentException("Illegal value: " + value);
-            } else {
-                return true; // No defaults defined
-            }
+     * @throws java.lang.IllegalArgumentException
+     */
+    public ModuleAttributeInfo(
+        String name,
+        Object type,
+        String description,
+        boolean isOverrideable,
+        Object[] legalValues,
+        Object defaultValue)
+        throws IllegalArgumentException {
+        super(name, type.getClass().getName(), description, true, true, false);
+        overridable = isOverrideable;
+        legalValueLists = legalValues;
+        this.defaultValue = checkValue(defaultValue);
+        if (type instanceof ComplexType) {
+            complexType = (ComplexType) type;
         } else {
+            complexType = null;
+        }
+    }
+
+    public Object[] getLegalValues() {
+        return legalValueLists;
+    }
+
+    public ComplexType getComplexType() {
+        return complexType;
+    }
+
+    /**
+     * @return
+     */
+    public boolean isOverridable() {
+        return overridable;
+    }
+
+    /**
+     * @return
+     */
+    public Object getDefaultValue() {
+        return defaultValue;
+    }
+
+    public Object checkValue(Object value) {
+        // Check if value is of correct type. If not, see if it is
+        // a string and try to turn it into right type
+        if (!value.getClass().getName().equals(getType())
+            && value instanceof String) {
+            try {
+                String type = AbstractSettingsHandler.getTypeName(getType());
+                if (type == AbstractSettingsHandler.INTEGER) {
+                    value = Integer.decode((String) value);
+                } else if (type == AbstractSettingsHandler.LONG) {
+                    value = Long.decode((String) value);
+                    // TODO: Add more convertions
+                } else {
+                    throw new IllegalArgumentException(
+                        "Unable to decode string '"
+                            + value
+                            + "' into type '"
+                            + getType()
+                            + "'");
+                }
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                    "Unable to decode string '"
+                        + value
+                        + "' into type '"
+                        + getType()
+                        + "'");
+            }
+        }
+
+        // If it still isn't a legal type throw an error
+        if (!value.getClass().getName().equals(getType())) {
             throw new IllegalArgumentException(
                 "Value of illegal type: '"
                     + value.getClass().getName()
@@ -107,5 +124,24 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
                     + getType()
                     + "' was expected");
         }
+
+        // If this attribute is constrained by a list of legal values,
+        // check that the value is in that list
+        Object legalValues[] = getLegalValues();
+        if (legalValues != null) {
+            boolean found = false;
+            for (int i = 0; i < legalValues.length; i++) {
+                if (legalValues[i].equals(value)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalArgumentException(
+                    "Value '" + value + "' not in legal values list");
+            }
+        }
+
+        return value;
     }
 }
