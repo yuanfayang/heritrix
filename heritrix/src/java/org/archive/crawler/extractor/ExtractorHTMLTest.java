@@ -83,7 +83,7 @@ implements CoreAttributeConstants {
             fos.flush();
             fos.close();
         }
-        this.recorder = setupRecorder(url, this.ARCHIVE_DOT_ORG);
+        this.recorder = setupRecorder(url, this.ARCHIVE_DOT_ORG, null);
     }
 
     /*
@@ -116,12 +116,17 @@ implements CoreAttributeConstants {
 	 * Record the download for later playback by the extractor.
 	 * @param url URL to record.
 	 * @param basename of what we're recording.
+	 * @param encoding Encoding.
 	 * @throws IOException
 	 * @return An httprecorder.
 	 */
-    private HttpRecorder setupRecorder(URL url, String basename)
-    		throws IOException {
+    private HttpRecorder setupRecorder(URL url, String basename,
+            String encoding)
+    throws IOException {
         HttpRecorder rec = new HttpRecorder(getTmpDir(), basename);
+        if (encoding != null && encoding.length() > 0) {
+            rec.setCharacterEncoding(encoding);
+        }
         InputStream is = rec.inputWrap(new BufferedInputStream(
             url.openStream()));
         final int BUFFER_SIZE = 1024 * 4;
@@ -182,13 +187,19 @@ implements CoreAttributeConstants {
     }
     
     protected void runExtractor(UURI baseUURI) throws IOException {
+        runExtractor(baseUURI, null);
+    }
+    
+    protected void runExtractor(UURI baseUURI, String encoding)
+    throws IOException {
         if (baseUURI == null) {
         	return;
         }
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
         extractor.earlyInitialize(this.globalSettings);
         URL url = new URL(baseUURI.toString());
-        this.recorder = setupRecorder(url, this.getClass().getName());
+        this.recorder = setupRecorder(url, this.getClass().getName(),
+            encoding);
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
         extractor.innerProcess(curi);
         System.out.println("+" + extractor.report());
@@ -261,15 +272,16 @@ implements CoreAttributeConstants {
     }
     
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
+        if (args.length != 1 && args.length != 2) {
             System.err.println("Usage: " + ExtractorHTMLTest.class.getName() +
-                " URL|PATH");
+                " URL|PATH [ENCODING]");
             System.exit(1);
         }
         ExtractorHTMLTest testCase = new ExtractorHTMLTest();
         testCase.setUp();
         try {
-            testCase.runExtractor(testCase.getUURI(args[0]));
+            testCase.runExtractor(testCase.getUURI(args[0]),
+                (args.length == 2)? args[1]: null);
         } finally {
             testCase.tearDown();
         }
