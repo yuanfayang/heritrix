@@ -171,7 +171,8 @@ public abstract class ComplexType implements DynamicMBean, Type {
      * This method will try to get the attribute from the host settings
      * valid for the CrawlURI. If it is not found it will traverse the
      * settings up to the order and as a last resort deliver the default
-     * value.
+     * value. This is also the case if the CrawlURI is null or if the CrawlURI
+     * hasn't been assigned a CrawlServer.
      * 
      * @param name the name of the attribute to be retrieved.
      * @param uri the CrawlURI that this attribute should be valid for.
@@ -179,8 +180,13 @@ public abstract class ComplexType implements DynamicMBean, Type {
      * @see #getAttribute(CrawlerSettings settings, String name)
      */
     public Object getAttribute(String name, CrawlURI uri)
-        throws AttributeNotFoundException, MBeanException, ReflectionException {
-        CrawlerSettings settings = uri.getServer().getSettings();
+        throws AttributeNotFoundException {
+        CrawlerSettings settings;
+        try {
+            settings = uri.getServer().getSettings();
+        } catch (NullPointerException e) {
+            settings = globalSettings();
+        }
         return getAttribute(settings, name);
     }
 
@@ -279,7 +285,8 @@ public abstract class ComplexType implements DynamicMBean, Type {
         if (value instanceof ComplexType && value != oldValue) {
             ComplexType object = (ComplexType) value;
             setupVaiables((ComplexType) value);
-            object.initializeComplexType(settings);
+            //object.initializeComplexType(settings);
+            addComplexType(settings, object);
         }
 
     }
