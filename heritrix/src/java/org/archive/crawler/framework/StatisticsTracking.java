@@ -32,9 +32,19 @@ package org.archive.crawler.framework;
  * then create and initialize a copy of it and call it's start() 
  * method.
  * <p>
- * It is recommended that it register for {@link org.archive.crawler.event.CrawlStatusListener CrawlStatus} events and
- * {@link org.archive.crawler.event.CrawlURIDispositionListener CrawlURIDisposition} events to be able to properly monitor a
- * crawl. Both are registered with the CrawlController.
+ * This interface also specifies several methods to access data that
+ * the CrawlController or the URIFrontier may be interested in at
+ * run time but do not want to have keep track of for themselves.
+ * {@link org.archive.crawler.framework.AbstractTracker AbstractTracker}
+ * implements these. If there are more then one StatisticsTracking
+ * classes defined in the crawl order only the first one will be
+ * used to access this data.
+ * <p>
+ * It is recommended that it register for 
+ * {@link org.archive.crawler.event.CrawlStatusListener CrawlStatus} events and
+ * {@link org.archive.crawler.event.CrawlURIDispositionListener CrawlURIDisposition} 
+ * events to be able to properly monitor a crawl. Both are registered with the 
+ * CrawlController.
  * 
  * @author Kristinn Sigurdsson
  * 
@@ -53,4 +63,11 @@ public interface StatisticsTracking extends Runnable
 	 */
 	public void initalize(CrawlController c);
 	
+	/**
+	 * Returns how long the current crawl has been running (excluding any time spent 
+	 * paused/suspended/stopped) since it was begin.
+	 * 
+	 * @return The length of time - in msec - that this crawl has been running.
+	 */
+	public long crawlDuration();
 }
