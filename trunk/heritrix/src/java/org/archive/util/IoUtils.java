@@ -47,7 +47,7 @@ public class IoUtils {
             path = path.replace(File.separatorChar, '/');
             int index = path.indexOf(':');
             if (index > 0 && index < 3) {
-                path.substring(index + 1);
+                path = path.substring(index + 1);
             }
         }
         return path;
