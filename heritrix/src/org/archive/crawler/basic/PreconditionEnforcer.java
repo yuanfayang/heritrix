@@ -81,7 +81,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 		}
 		// test against robots.txt if available
 		String ua = controller.getOrder().getUserAgent();
-		if( curi.getServer().getRobots().disallows(curi.getUURI().getUri().getPath(),ua)) {
+		if( curi.getServer().getRobots().disallows(curi, ua)) {
 			// don't fetch
 			curi.skipToProcessor(controller.getPostprocessor());  // turn off later stages
 			curi.setFetchStatus(S_ROBOTS_PRECLUDED);
