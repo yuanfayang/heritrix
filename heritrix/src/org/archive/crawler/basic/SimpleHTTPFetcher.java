@@ -38,8 +38,6 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			return;
 		}
 		
-
-		
 		// attempt to get the page
 		curi.incrementFetchAttempts();
 		
