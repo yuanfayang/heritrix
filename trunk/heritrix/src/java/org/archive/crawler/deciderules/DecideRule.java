@@ -24,8 +24,6 @@
 */
 package org.archive.crawler.deciderules;
 
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.ModuleType;
 
 

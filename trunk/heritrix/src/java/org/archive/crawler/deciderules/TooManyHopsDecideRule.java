@@ -38,7 +38,11 @@ import org.archive.crawler.settings.SimpleType;
  */
 public class TooManyHopsDecideRule extends PredicatedDecideRule {
     private static final String ATTR_MAX_HOPS = "max-hops";
-    private static final Integer DEFAULT_MAX_HOPS = new Integer(20);
+    
+    /**
+     * Default access so available to test code.
+     */
+    static final Integer DEFAULT_MAX_HOPS = new Integer(20);
 
     /**
      * Usual constructor. 
@@ -66,7 +70,8 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
     protected boolean evaluate(Object object) {
         try {
             CandidateURI curi = (CandidateURI)object;
-            return curi.getPathFromSeed().length() > getThresholdHops(object);
+            return curi.getPathFromSeed() != null &&
+                curi.getPathFromSeed().length() > getThresholdHops(object);
         } catch (ClassCastException e) {
             // if not CrawlURI, always disregard
             return false; 

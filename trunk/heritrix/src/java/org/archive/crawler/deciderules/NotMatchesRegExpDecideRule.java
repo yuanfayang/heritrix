@@ -24,14 +24,7 @@
 */
 package org.archive.crawler.deciderules;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.management.AttributeNotFoundException;
-
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.util.TextUtils;
 
 
 
@@ -58,7 +51,7 @@ public class NotMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
      * Evaluate whether given object's string version does not match 
      * configured regexp (by reversing the superclass's answer).
      * 
-     * @param object
+     * @param object Object to make decision about.
      * @return true if the regexp is not matched
      */
     protected boolean evaluate(Object object) {
