@@ -237,6 +237,29 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
             decision == DecideRule.REJECT);
     }
     
+    public void testTooManyPathSegments()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new TooManyPathSegmentsDecideRule("SEGMENTS"));
+        final int max =
+            TooManyPathSegmentsDecideRule.DEFAULT_MAX_PATH_DEPTH.intValue();
+        StringBuffer baseUri = new StringBuffer("http://archive.org");
+        for (int i = 0; i < max; i++) {
+            baseUri.append('/');
+            baseUri.append(Integer.toString(i + 1));
+        }
+        UURI uuri = UURIFactory.getInstance(baseUri.toString());
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+            decision == DecideRule.PASS);
+        baseUri.append("/x");
+        uuri = UURIFactory.getInstance(baseUri.toString());
+        candidate = new CandidateURI(uuri);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.REJECT + " but got " + decision,
+            decision == DecideRule.REJECT);
+    }
+    
     protected void testHopLimit(final int max, final char pathExpansion,
         final String defaultDecision, final String overLimitDecision)
     throws URIException {

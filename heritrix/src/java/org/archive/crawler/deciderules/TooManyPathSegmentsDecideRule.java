@@ -39,7 +39,12 @@ import org.archive.crawler.settings.Type;
  */
 public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
     public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
-    private static final Integer DEFAULT_MAX_PATH_DEPTH = new Integer(20);
+    
+    /**
+     * Default maximum value.
+     * Default access so available to unit test.
+     */
+    static final Integer DEFAULT_MAX_PATH_DEPTH = new Integer(20);
 
     /**
      * Usual constructor. 
@@ -49,7 +54,7 @@ public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
         super(name);
         setDescription("TooManyPathSegmentsDecideRule: REJECTs URIs with " +
                 "more total path-segments (as indicated by '/' characters) " +
-                "than the configured '"+ATTR_MAX_PATH_DEPTH+"'.");
+                "than the configured '" + ATTR_MAX_PATH_DEPTH + "'.");
         
         // make default REJECT (overriding superclass) & always-default
         Type type = addElementToDefinition(new SimpleType(ATTR_DECISION,
@@ -70,26 +75,31 @@ public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
      * @return true if the path-segments is exceeded
      */
     protected boolean evaluate(Object object) {
+        boolean result = false;
+        CandidateURI curi = null;
         try {
-            CandidateURI curi = (CandidateURI) object;
-            String uri = curi.toString();
-            int count = 3;
-            int threshold = getThresholdSegments(object);
-            for (int i = 0; i < uri.length(); i++) {
-                if (uri.charAt(i) == '/') {
-                    count++;
-                }
-                if (count > threshold) {
-                    return true;
-                }
-            }
+            curi = (CandidateURI)object;
         } catch (ClassCastException e) {
             // if not CrawlURI, always disregard
+            return result;
         }
-        return false;
+        String uri = curi.toString();
+        int count = 0;
+        int threshold = getThresholdSegments(object);
+        for (int i = 0; i < uri.length(); i++) {
+            if (uri.charAt(i) == '/') {
+                count++;
+            }
+            if (count > threshold) {
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 
     /**
+     * @param obj
      * @return path-segments cutoff threshold
      */
     private int getThresholdSegments(Object obj) {
