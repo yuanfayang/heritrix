@@ -1,0 +1,45 @@
+http://www.xavvy.com:9090/
+# http://www.xavvy.com
+
+# http://crawl08.archive.org/links/formtags.html
+# http://www.archive.org
+
+# http://www.comcast.net
+
+# http://crawl08.archive.org/links/javascript.html
+
+# http://www.arts.gov
+
+# http://www.copyright.gov/newsnet/past_issues.html
+# http://www.exploratorium.edu/xref/exhibits/glow_wheel.html
+# http://www.comcast.net
+# http://crawl08.archive.org/meta/refresh.html
+
+# http://www.yahoo.com
+# http://www.google.com/dirhp
+# http://www.lycos.com
+# http://www.msn.com
+# http://www.cnn.com
+# http://www.drudgereport.com
+# http://www.aol.com
+# http://www.msnbc.com
+
+# http://www.archive.org
+# http://www.google.com
+# http://www.excite.com
+# http://dmoz.org
+
+# test garden
+# http://crawl08.archive.org/
+
+# chunked
+# http://enterprise.lycos.com
+
+#http://java.sun.com
+
+#http://www.loc.gov
+
+#http://www.discovery.com
+
+#http://www.disneyland.com
+
