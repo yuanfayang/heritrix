@@ -31,6 +31,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
@@ -70,8 +71,7 @@ public class Processor extends CrawlerModule {
                 return;
             }
         } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.severe(e.getMessage());
         }
         
 		// by default, simply forward curi along
@@ -104,10 +104,11 @@ public class Processor extends CrawlerModule {
 	 * @return True if all filters accept this CrawlURI.
 	 */
 	protected boolean filtersAccept(CrawlURI curi) {
-		if (filters.isEmpty(curi)) {
+        CrawlerSettings settings = getSettingsFromUri(curi);
+		if (filters.isEmpty(settings)) {
 			return true;
 		}
-		Iterator iter = filters.iterator(curi);
+		Iterator iter = filters.iterator(settings);
 		while(iter.hasNext()) {
 			Filter f = (Filter)iter.next();
 			if( !f.accepts(curi) ) {
@@ -117,13 +118,6 @@ public class Processor extends CrawlerModule {
 		}
 		return true;
 	}
-
-	/**
-	 * @return Name of processor.
-	protected String getName() {
-		return name;
-	}
-     */
 
 	/**
 	 * 
