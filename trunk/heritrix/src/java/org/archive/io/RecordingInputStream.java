@@ -82,12 +82,11 @@ public class RecordingInputStream
         this.recordingOutputStream.open();
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#read()
-     */
     public int read() throws IOException {
-        assert this.in != null: "Inputstream is null: " +
-            Thread.currentThread().getName();
+        if (!isOpen()) {
+        	    throw new IOException("Stream closed " +
+                Thread.currentThread().getName());
+        }
         int b = this.in.read();
         if (b != -1) {
             assert this.recordingOutputStream != null: "ROS is null " +
@@ -97,12 +96,11 @@ public class RecordingInputStream
         return b;
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#read(byte[], int, int)
-     */
     public int read(byte[] b, int off, int len) throws IOException {
-        assert this.in != null: "Inputstream is null: " +
-            Thread.currentThread().getName();
+        if (!isOpen()) {
+            throw new IOException("Stream closed " +
+                Thread.currentThread().getName());
+        }
         int count = this.in.read(b,off,len);
         if (count > 0) {
             assert this.recordingOutputStream != null: "ROS is null " +
@@ -112,13 +110,12 @@ public class RecordingInputStream
         return count;
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#read(byte[])
-     */
     public int read(byte[] b) throws IOException {
-        assert this.in != null: "Inputstream is null: " +
-            Thread.currentThread().getName();
-        int count = this.in.read(b);
+    	    if (!isOpen()) {
+    	    	    throw new IOException("Stream closed " +
+    			    Thread.currentThread().getName());
+    	    }
+    	    int count = this.in.read(b);
         if (count > 0) {
             assert this.recordingOutputStream != null: "ROS is null " +
                 Thread.currentThread().getName();

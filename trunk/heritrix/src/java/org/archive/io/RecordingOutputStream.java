@@ -230,7 +230,9 @@ public class RecordingOutputStream extends OutputStream {
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Lets protect ourselves against this.
-            assert this.diskStream != null: "Diskstream is null.";
+            if (this.diskStream == null) {
+            	    throw new IOException("diskstream is null");
+            }
             this.diskStream.write(b, off, len);
             this.position += len;
         } else {
