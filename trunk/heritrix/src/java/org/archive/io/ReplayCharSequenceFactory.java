@@ -385,11 +385,11 @@ public class ReplayCharSequenceFactory {
             return this.length;
         }
 
-        public char charAt(int index) {
-            // Add to index start-of-content offset to get us over HTTP header
-            // if present.
-            return charAtAbsolute(index + this.contentOffset);
-        }
+//        public char charAt(int index) {
+//            // Add to index start-of-content offset to get us over HTTP header
+//            // if present.
+//            return charAtAbsolute(index + this.contentOffset);
+//        }
         
         /**
          * Get character at passed absolute position.
@@ -403,9 +403,12 @@ public class ReplayCharSequenceFactory {
          * 
          * @return Characater at offset <code>index</code>.
          */
-        private char charAtAbsolute(int index)
+        public char charAt(int index)
         {
             char c;
+            // Add to index start-of-content offset to get us over HTTP header
+            // if present.
+            index += this.contentOffset;
             if (index < this.prefixBuffer.length) {
             
                 // If index is into our prefix buffer.
@@ -454,11 +457,11 @@ public class ReplayCharSequenceFactory {
                     // TODO optimize this
                     advanceBuffer();
                 }
-                return charAtAbsolute(index);
+                return charAt(index-this.contentOffset);
             } else {
                 // Moving backward
                 recenterBuffer(index);
-                return charAtAbsolute(index);
+                return charAt(index-this.contentOffset);
             }
         }
 
@@ -584,7 +587,7 @@ public class ReplayCharSequenceFactory {
                 //       blocks from files.
                 int to=offset+length;
                 for(int i=offset ; i<to ; i++){
-                    ret.append(charAtAbsolute(i));
+                    ret.append(charAt(i)-this.contentOffset);
                 }
             }
             
