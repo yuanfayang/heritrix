@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -70,6 +71,9 @@ public class CrawlerSettings {
 
     /** Description of this collection of settings */
     private String description = "";
+    
+    /** Time when this collection was last saved to persistent storage */
+    private Date lastSaved = null;
 
     /** Constructs a new CrawlerSettings object.
      *
@@ -125,6 +129,28 @@ public class CrawlerSettings {
      */
     public void setName(String string) {
         name = string;
+    }
+    
+    /**
+     * Get the time when this CrawlerSettings was last saved to persistent
+     * storage.
+     * 
+     * @return the time when this CrawlerSettings was last saved to persistent
+     * storage. Null if it has not been saved.
+     */
+    public Date getLastSavedTime() {
+        return lastSaved;
+    }
+
+    /**
+     * Set the time when this CrawlerSettings was last saved to persistent
+     * storage.
+     * 
+     * @param lastSaved the time when this CrawlerSettings was last saved to
+     * persistent storage.
+     */
+    protected void setLastSavedTime(Date lastSaved) {
+        this.lastSaved = lastSaved;
     }
 
     protected void addTopLevelModule(ModuleType module) {
