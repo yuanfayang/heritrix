@@ -9,6 +9,8 @@ package org.archive.crawler.io;
 import java.io.InputStream;
 
 /**
+ * An InputStream that is completely RandomAccess, as might be
+ * the case if it is backed by a VirtualBuffer.
  * 
  * @author Gordon Mohr
  */
