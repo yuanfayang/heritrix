@@ -647,10 +647,10 @@
         </includes>
     </resource>
     <resource>
-        <directory>${basedir}/src/conf/</directory>
+        <directory>${maven.build.dir}/conf/</directory>
         <includes>
             <include>heritrix.properties</include>
-            <include>profiles/**</include>
+            <include>profiles/default/**</include>
             <include>modules/**</include>
             <include>selftest/**</include>
         </includes>
