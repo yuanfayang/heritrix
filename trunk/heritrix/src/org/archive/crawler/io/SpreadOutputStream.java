@@ -88,7 +88,7 @@ public class SpreadOutputStream extends OutputStream {
     else {
       /* ToDo: This local memory allocation could also fail.
       So, we might have to switch to disk IO straight-away. */
-      mAugmentedDataArray = new byte[mDBuff.MAX_AUGMENT_SIZE];
+      mAugmentedDataArray = new byte[DiskedVirtualBuffer.MAX_AUGMENT_SIZE];
     }
   }
  

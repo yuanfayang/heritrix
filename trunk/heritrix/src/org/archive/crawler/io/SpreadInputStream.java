@@ -5,8 +5,8 @@
 
 package org.archive.crawler.io;
 
-import java.util.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 /**
  * This is the counterpart of the SpreadOutputStream. The in-memory 

@@ -6,12 +6,10 @@
  */
 package org.archive.crawler.io;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.zip.Checksum;
-import java.nio.ByteOrder;
 
 
 /**
