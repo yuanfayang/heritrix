@@ -681,26 +681,59 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             readyQueue(wq);
         }
     }
+    
     /**
-     * Wake any queues sitting in the snoozed queue whose time has come
+     * Wake any queues sitting in the snoozed queue whose time has come.
      */
     void wakeQueues() {
         long now = System.currentTimeMillis();
-//        logger.info("wakeReadyQueues() at "+now);
+        int tasksCompleted = 0;
+        long interval = -1;
         synchronized (snoozedClassQueues) {
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
-                    return;
+                    break;
                 }
                 BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
-                if (peek.getWakeTime() <= now) {
+                interval = peek.getWakeTime() - now;
+                if (interval <= 0) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
+                    tasksCompleted++;
                 } else {
-//                    logger.info("declining to wake "+peek.getClassKey()+"("+peek.getWakeTime()+") at "+now);
-                    return;
+                    break;
                 }
+            }
+        }
+        if (tasksCompleted <= 0 && (interval > 0)){
+            final long maxSleepTime = 100;
+            // We've done no work. Go to sleep to stop wait/notify trashing.
+            // We trash because without the below sleep, we leave here and
+            // go into a wait.  In times of high concurrency we're
+            // continually notified out of the ClockDaemon#restart method
+            // everytime a new task is added to the queue.  I've logged
+            // this happening on occasion at over 100 times a second.  Adding
+            // in this damping effect because its possible to hang this thread
+            // inside ClockDaemon#wait such that it is not even
+            // interruptable on jdk1.5.0. This addition does not eliminate the
+            // hang.  It does postpone it (Hang happens after 8 hours of
+            // highspeed crawling rather than after 30mins-2hrs).
+            //
+            // Don't sleep more than 100 milliseconds in case something
+            // gets scheduled ahead of current head of queue while
+            // we're asleep (Items are scheduled at now + politeness or
+            // now + retry interval; the latter could get scheduled first.
+            // Could make for some takeup lag if politeness is off or
+            // retries are on a dime.
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("Sleeping for " + Math.min(interval,
+                    maxSleepTime));
+            }
+            try {
+                Thread.sleep(Math.min(interval, maxSleepTime));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
