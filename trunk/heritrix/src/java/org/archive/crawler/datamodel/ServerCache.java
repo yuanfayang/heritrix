@@ -22,56 +22,142 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.Map;
+import java.util.logging.Logger;
+
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
  * @author stack
  * @version $Date$, $Revision$
  */
-public interface ServerCache {
+public abstract class ServerCache {
+    private static Logger logger =
+        Logger.getLogger(ServerCache.class.getName());
+    
+    protected SettingsHandler settingsHandler = null;
+    
+    /**
+     * hostname[:port] -> CrawlServer.
+     * Set in the initialization.
+     */
+    protected Map servers = null;
+    
+    /**
+     * hostname -> CrawlHost.
+     * Set in the initialization.
+     */
+    protected Map hosts = null;
+    
     /**
      * Initialization called after initial instantiation.
-     * @param settingsHandler Settings handler to use.
+     * @param handler Settings handler to use.
      */
-    public abstract void initialize(SettingsHandler settingsHandler);
+    public abstract void initialize(SettingsHandler handler);
     
     /**
      * Get the {@link CrawlServer} associated with <code>name</code>.
      * @param serverKey Server name we're to return server for.
      * @return CrawlServer instance that matches the passed server name.
      */
-    public abstract CrawlServer getServerFor(String serverKey);
+    public CrawlServer getServerFor(String serverKey) {
+        CrawlServer cserver = (CrawlServer)this.servers.get(serverKey);
+        return (cserver != null)? cserver: createServerFor(serverKey);
+    }
+    
+    private synchronized CrawlServer createServerFor(String s) {
+        CrawlServer cserver = (CrawlServer)this.servers.get(s);
+        if (cserver != null) {
+            return cserver;
+        }
+        // Ensure key is private object
+        String skey = new String(s);
+        cserver = new CrawlServer(skey);
+        cserver.setSettingsHandler(settingsHandler);
+        servers.put(skey,cserver);
+        return cserver;
+    }
 
     /**
      * Get the {@link CrawlServer} associated with <code>curi</code>.
      * @param curi CrawlURI we're to get server from.
      * @return CrawlServer instance that matches the passed CrawlURI.
      */
-    public abstract CrawlServer getServerFor(CrawlURI curi);
+    public CrawlServer getServerFor(CrawlURI curi) {
+        CrawlServer cs = null;
+        try {
+            String key = CrawlServer.getServerKey(curi);
+            // TODOSOMEDAY: make this robust against those rare cases
+            // where authority is not a hostname.
+            if (key != null) {
+                cs = getServerFor(key);
+            }
+        } catch (URIException e) {
+            logger.severe(e.getMessage() + ": " + curi);
+            e.printStackTrace();
+        } catch (NullPointerException npe) {
+            logger.severe(npe.getMessage() + ": " + curi);
+            npe.printStackTrace();
+        }
+        return cs;
+    }
     
     /**
      * Get the {@link CrawlHost} associated with <code>name</code>.
      * @param hostname Host name we're to return Host for.
      * @return CrawlHost instance that matches the passed Host name.
      */
-    public abstract CrawlHost getHostFor(String hostname);
+    public CrawlHost getHostFor(String hostname) {
+        if (hostname == null || hostname.length() == 0) {
+            return null;
+        }
+        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
+        return (host != null)? host: createHostFor(hostname);
+    }
+    
+    public synchronized CrawlHost createHostFor(String hostname) {
+        if (hostname == null || hostname.length() == 0) {
+            return null;
+        }
+        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
+        if (host != null) {
+            return host;
+        }
+        String hkey = new String(hostname); 
+        host = new CrawlHost(hkey);
+        this.hosts.put(hkey, host);
+        return host;
+    }
     
     /**
      * Get the {@link CrawlHost} associated with <code>curi</code>.
      * @param curi CrawlURI we're to return Host for.
      * @return CrawlHost instance that matches the passed Host name.
      */
-    public abstract CrawlHost getHostFor(CrawlURI curi);
+    public CrawlHost getHostFor(CrawlURI curi) {
+        CrawlHost h = null;
+        try {
+            h = getHostFor(curi.getUURI().getReferencedHost());
+        } catch (URIException e) {
+            e.printStackTrace();
+        }
+        return h;
+    }
 
     /**
      * @param serverKey Key to use doing lookup.
      * @return True if a server instance exists.
      */
-    public abstract boolean containsServer(String serverKey);
+    public boolean containsServer(String serverKey) {
+        return (CrawlServer) servers.get(serverKey) != null; 
+    }
 
     /**
      * @param hostKey Key to use doing lookup.
      * @return True if a host instance exists.
      */
-    public abstract boolean containsHost(String hostKey);
+    public boolean containsHost(String hostKey) {
+        return (CrawlHost) hosts.get(hostKey) != null; 
+    }
 }

@@ -24,10 +24,8 @@
 package org.archive.crawler.datamodel;
 
 import java.io.File;
-import java.util.Map;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.util.CachedBdbMap;
@@ -41,69 +39,14 @@ import com.sleepycat.je.DatabaseException;
  * @author gojomo
  *  
  */
-public class BdbServerCache implements ServerCache {
+public class BdbServerCache extends ServerCache {
 
-    private static final Logger logger = Logger.getLogger(BdbServerCache.class
-            .getName());
-
-    private SettingsHandler settingsHandler;
-
-    private Map servers;
-
-    private Map hosts;
+    private static final Logger logger =
+        Logger.getLogger(BdbServerCache.class.getName());
 
     BdbServerCache() {
         super();
         logger.info("Instantiating BdbServerCache");
-    }
-
-    public CrawlServer getServerFor(String h) {
-        CrawlServer cserver = null;
-        cserver = (CrawlServer) servers.get(h);
-        if (cserver == null) {
-            cserver = new CrawlServer(h);
-            cserver.setSettingsHandler(settingsHandler);
-            servers.put(h, cserver);
-        }
-        return cserver;
-    }
-
-    public CrawlServer getServerFor(CrawlURI curi) {
-        CrawlServer hostOrAuthority = null;
-        try {
-            String key = CrawlServer.getServerKey(curi);
-            // TODOSOMEDAY: make this robust against those rare cases
-            // where authority is not a hostname.
-            if (key != null) {
-                hostOrAuthority = getServerFor(key);
-            }
-        } catch (URIException e) {
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            logger.severe("NullPointerException with " + curi);
-            npe.printStackTrace();
-        }
-        return hostOrAuthority;
-    }
-    
-    public CrawlHost getHostFor(String hostname) {
-        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-        if (host == null) {
-            String hkey = new String(hostname); 
-            host = new CrawlHost(hkey);
-            hosts.put(hkey, host);
-        }
-        return host;
-    }
-    
-    public CrawlHost getHostFor(CrawlURI curi) {
-        CrawlHost h = null;
-        try {
-            h = getHostFor(curi.getUURI().getHost());
-        } catch (URIException e) {
-            e.printStackTrace();
-        }
-        return h;
     }
 
     public void initialize(SettingsHandler settings) {
@@ -121,15 +64,5 @@ public class BdbServerCache implements ServerCache {
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public boolean containsServer(String serverKey) {
-        CrawlServer cserver = (CrawlServer) servers.get(serverKey);
-        return cserver != null;
-    }
-
-    public boolean containsHost(String hostKey) {
-        CrawlHost chost = (CrawlHost) hosts.get(hostKey);
-        return chost != null;
     }
 }
