@@ -37,8 +37,8 @@ import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
-import org.archive.util.HttpRecorderMarker;
 import org.archive.util.HttpRecorder;
+import org.archive.util.HttpRecorderMarker;
 import org.archive.util.PaddingStringBuffer;
 
 /**
@@ -67,7 +67,14 @@ public class ToeThread extends Thread
     private CrawlController controller;
     private int serialNumber;
     
-    private HttpRecorder httpRecorder;
+    /**
+     * Each ToeThead has an instance of HttpRecord that gets used
+     * over and over by each request.
+     * 
+     * @see org.archive.util.HttpRecorderMarker
+     */
+    private HttpRecorder httpRecorder = null;
+    
     private HashMap localProcessors = new HashMap();
     private String currentProcessorName = "";
 
@@ -81,6 +88,7 @@ public class ToeThread extends Thread
     
     // default priority; may not be meaningful in recent JVMs
     private static final int DEFAULT_PRIORITY = Thread.NORM_PRIORITY-2;
+    
 
     /**
      * Create a ToeThread
@@ -94,7 +102,8 @@ public class ToeThread extends Thread
         controller = g.getController();
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
-        httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
+        httpRecorder = new HttpRecorder(controller.getScratchDisk(),
+            "tt" + sn + "http");
         lastFinishTime = System.currentTimeMillis();
     }
 
@@ -140,8 +149,8 @@ public class ToeThread extends Thread
         } 
         currentCuri = null;
         // Do cleanup so that objects can be GC.
-        httpRecorder.closeRecorders();
-        httpRecorder = null;
+        this.httpRecorder.closeRecorders();
+        this.httpRecorder = null;
         localProcessors = null;
 
         logger.fine(getName()+" finished for order '"+name+"'");
@@ -306,21 +315,13 @@ public class ToeThread extends Thread
     }
 
     /**
+     * Used to get current threads HttpRecorder instance.
+     * Implementation of the HttpRecorderMarker interface.
+     * @return Returns instance of HttpRecorder carried by this thread.
      * @see org.archive.util.HttpRecorderMarker#getHttpRecorder()
      */
     public HttpRecorder getHttpRecorder() {
-        return httpRecorder;
-    }
-
-    /**
-     * TODO: This is a really bad way of doing this. Better to maintain
-     * a hash of objects that the processors wish to share. This limits
-     * the plugability of the processors since a part of the implementation
-     * relies the implementation of the ToeThread.
-     * @param recorder
-     */
-    public void setHttpRecorder(HttpRecorder recorder) {
-        httpRecorder = recorder;
+        return this.httpRecorder;
     }
 
     /**
