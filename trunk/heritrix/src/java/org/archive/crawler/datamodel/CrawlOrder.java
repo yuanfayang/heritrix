@@ -188,9 +188,8 @@ public class CrawlOrder extends ModuleType {
                 "is Library of Congress, a valid user agent would be:" +
                 "'Mozilla/5.0 (compatible; loc-crawler/0.11.0 " +
                 "+http://loc.gov)'. " +
-                "Note, you must preserve the '+' before 'http' " +
-                "and if present, '@VERSION@' is replaced by version.",
-                "Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)"));
+                "Note, you must preserve the '+' before the 'http'.",
+          "Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)"));
         e.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_USER_AGENT,
                 Level.WARNING,
                 "This field must contain a valid URL leading to the website " +
