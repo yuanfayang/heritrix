@@ -240,6 +240,19 @@ public class RecordingOutputStream extends OutputStream {
             assert this.digest != null: "Digest is null.";
             this.digest.update(b, off, len);
         }
+        tailRecord(b, off, len);
+    }
+
+    /**
+     * Record without digesting.
+     * 
+     * @param b Buffer to record.
+     * @param off Offset into buffer at which to start recording.
+     * @param len Length of buffer to record.
+     *
+     * @exception IOException Failed write to backing file.
+     */
+    private void tailRecord(byte[] b, int off, int len) throws IOException {
         if(this.position >= this.buffer.length){
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
@@ -257,7 +270,7 @@ public class RecordingOutputStream extends OutputStream {
             this.position += toCopy;
             // TODO verify these are +1 -1 right
             if (toCopy < len) {
-                record(b, off + toCopy, len - toCopy);
+                tailRecord(b, off + toCopy, len - toCopy);
             }
         }
     }
