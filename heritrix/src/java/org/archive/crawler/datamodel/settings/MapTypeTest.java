@@ -113,8 +113,8 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         ModuleType module2 = new Preselector("testModule2");
         ModuleType module3 = new Preselector("testModule3");
 
-        assertSame("Did not return added element",
-            map.addElement(getGlobalSettings(), module1), module1);
+        assertSame("Did not return added element", module1,
+            map.addElement(getGlobalSettings(), module1));
 
         assertSame("Did not return added element", module2,
             map.addElement(getPerHostSettings(), module2));
@@ -225,7 +225,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         Iterator it = map.iterator(settings);
         int i = 0;
         while(it.hasNext()) {
-            assertEquals("Iterator in wrong order", it.next(), modules[i].getValue());
+            assertEquals("Iterator in wrong order", modules[i].getValue(), it.next());
             i++;
         }
         assertEquals("Iterator wrong length", modules.length, i);

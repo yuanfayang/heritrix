@@ -161,19 +161,20 @@ public class MapType extends ComplexType {
      * @author John Erik Halse
      */
     private class It implements Iterator {
-        CrawlerSettings settings;
+        Context context;
         Stack attributeStack = new Stack();
         Iterator currentIterator;
 
-        public It(CrawlerSettings settings) {
-            this.settings = settings;
+        public It(Object ctxt) {
+            this.context = getSettingsFromObject(ctxt);
 
-            DataContainer data = getDataContainerRecursive(settings, null, -1);
+            Context c = new Context(context.settings, context.uri);
+            DataContainer data = getDataContainerRecursive(c);
             while (data != null) {
                 this.attributeStack.push(data.getLocalAttributeInfoList().
                     iterator());
-                data = getDataContainerRecursive(data.getSettings().
-                    getParent(), null, -1);
+                c.settings = data.getSettings().getParent();
+                data = getDataContainerRecursive(c);
             }
 
             this.currentIterator = (Iterator) this.attributeStack.pop();
@@ -195,10 +196,8 @@ public class MapType extends ComplexType {
         public Object next() {
             hasNext();
             try {
-                return getAttribute(
-                    this.settings,
-                    ((MBeanAttributeInfo) this.currentIterator.next()).
-                        getName());
+                MBeanAttributeInfo attInfo = (MBeanAttributeInfo) this.currentIterator.next();
+                return getAttribute(this.context, attInfo.getName());
             } catch (AttributeNotFoundException e) {
                 // This should never happen
                 e.printStackTrace();
@@ -218,8 +217,7 @@ public class MapType extends ComplexType {
      * @return an iterator over all the elements in this map.
      */
     public Iterator iterator(Object context) {
-        CrawlerSettings settings = getSettingsFromObject(context);
-        return new It(settings);
+        return new It(context);
     }
 
     /** Returns true if this map is empty.
@@ -229,14 +227,15 @@ public class MapType extends ComplexType {
      * @return true if this map is empty.
      */
     public boolean isEmpty(Object context) {
-        CrawlerSettings settings = getSettingsFromObject(context);
+        Context ctxt = getSettingsFromObject(context);
 
-        DataContainer data = getDataContainerRecursive(settings, null, -1);
+        DataContainer data = getDataContainerRecursive(ctxt);
         while (data != null) {
             if (data.hasAttributes()) {
                 return false;
             }
-            data = getDataContainerRecursive(data.getSettings().getParent(), null, -1);
+            ctxt.settings = data.getSettings().getParent();
+            data = getDataContainerRecursive(ctxt);
         }
         return true;
     }
@@ -248,13 +247,14 @@ public class MapType extends ComplexType {
      * @return the number of elements in this map.
      */
     public int size(Object context) {
-        CrawlerSettings settings = getSettingsFromObject(context);
+        Context ctxt = getSettingsFromObject(context);
 
         int size = 0;
-        DataContainer data = getDataContainerRecursive(settings, null, -1);
+        DataContainer data = getDataContainerRecursive(ctxt);
         while (data != null) {
             size += data.size();
-            data = getDataContainerRecursive(data.getSettings().getParent(), null, -1);
+            ctxt.settings = data.getSettings().getParent();
+            data = getDataContainerRecursive(ctxt);
         }
         return size;
     }
