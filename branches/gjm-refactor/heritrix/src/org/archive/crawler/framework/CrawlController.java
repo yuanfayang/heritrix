@@ -58,6 +58,7 @@ public class CrawlController {
 	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
 
 	private File disk;
+	private File scratchDisk;
 	public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
 	public Logger crawlErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
 	public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
@@ -129,21 +130,13 @@ public class CrawlController {
 		firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
 		
 		// try to initialize each scope and frontier from the config file
-		try {
-			scope.initialize(this);
-		} catch (NullPointerException e) {
-			throw new FatalConfigurationException(
-				"Can't initialize scope, class specified in configuration file not found",
-				order.getCrawlOrderFilename(),
-				XP_CRAWL_SCOPE);
-		}
+
+		
+		scope.initialize(this);
 		try {
 			frontier.initialize(this);
-		} catch (NullPointerException e) {
-			throw new FatalConfigurationException(
-				"Can't initialize frontier, class specified in configuration file not found",
-				order.getCrawlOrderFilename(),
-				XP_FRONTIER);
+		} catch (IOException e) {
+			throw new FatalConfigurationException("unable to initialize frontier: "+e);
 		}
 			
 		serverCache = new ServerCache();
@@ -172,6 +165,8 @@ public class CrawlController {
 		}
 		disk = new File(diskPath);
 		disk.mkdirs();
+		scratchDisk = new File(diskPath,"scratch");
+		scratchDisk.mkdirs();
 	}
 
 
@@ -431,6 +426,14 @@ public class CrawlController {
 	 */
 	public File getDisk() {
 		return disk;
+	}
+
+
+	/**
+	 * 
+	 */
+	public File getScratchDisk() {
+		return scratchDisk;
 	}
 
 }
