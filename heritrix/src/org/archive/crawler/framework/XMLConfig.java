@@ -367,7 +367,7 @@ public class XMLConfig {
 				}
 			} else if (results instanceof Collection){
 				// otherwise, just add to results
-				((Collection)results).add(currentNode);
+				((Collection)results).add(currentObject);
 			}
 		}
 		return first;
