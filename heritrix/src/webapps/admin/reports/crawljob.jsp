@@ -1,7 +1,8 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
+<%@ page import="java.util.*" %>
+<%@ page import="org.archive.crawler.admin.LongWrapper"%>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%
 	/**
@@ -162,10 +163,10 @@
 								</tr>
 								<tr>
 									<td>
-										<b>Total megabytes written:</b>&nbsp;
+										<b>Total data written:</b>&nbsp;
 									</td>
 									<td>
-										<%=(stats.getTotalBytesWritten()/1048576)%>
+										<%=ArchiveUtils.formatBytesForDisplay(stats.getTotalBytesWritten())%>
 									</td>
 								</tr>
 							</table>
@@ -227,7 +228,7 @@
 							Documents
 						</th>
 						<th>
-                            Kilobytes
+                            Data
 						</th>
 					</tr>
 					<%
@@ -256,7 +257,7 @@
 									</table>
 								</td>
 								<td align="right">
-								    <%=(stats.getBytesPerFileType((String)file.getKey())/1024)%> Kb
+								    <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerFileType((String)file.getKey()))%>
 								</td>
 							</tr>
 					<%
@@ -272,7 +273,7 @@
 					Documents&nbsp;
 				</th>
 				<th>
-				    Kilobytes
+				    Data
 				</th>
 			</tr>
 			<%
@@ -290,7 +291,7 @@
 							<%=((LongWrapper)host.getValue()).longValue%>
 						</td>
 						<td align="right">
-                            <%=(stats.getBytesPerHost((String)host.getKey())/1024)%> Kb
+                            <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)host.getKey()))%>
 						</td>
 					</tr>
 			<%
