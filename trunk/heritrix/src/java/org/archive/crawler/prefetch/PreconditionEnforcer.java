@@ -190,33 +190,29 @@ public class PreconditionEnforcer
     }
 
     /**
-     * @param curi
+     * @param curi CrawlURI whose dns prerequisite we're to check.
      * @return true if no further processing in this module should occur
      */
     private boolean considerDnsPreconditions(CrawlURI curi) {
-
         if(curi.getServer()==null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
 
-        // if we've done a dns lookup and it didn't resolve a host
+        // If we've done a dns lookup and it didn't resolve a host
         // cancel further fetch-processing of this URI, because
         // the domain is unresolvable
         if (curi.getServer().getHost().hasBeenLookedUp()
-            && curi.getServer().getHost().getIP() == null) {
-            logger.fine(
-                "no dns for "
-                    + curi.getServer().toString()
-                    + " cancelling processing for "
-                    + curi.toString());
+                && curi.getServer().getHost().getIP() == null) {
+            logger.fine( "no dns for " + curi.getServer().toString()
+                + " cancelling processing for " + curi.toString());
             curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
 
-        // if we haven't done a dns lookup  and this isn't a dns uri
+        // If we haven't done a dns lookup  and this isn't a dns uri
         // shoot that off and defer further processing
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
             logger.fine("Deferring processing of " + curi.toString()
@@ -225,6 +221,7 @@ public class PreconditionEnforcer
                 getController().getPostprocessorChain());
             return true;
         }
+
         if(curi.getUURI().getScheme().equals("dns")){
             curi.setPrerequisite(true);
         }
