@@ -23,9 +23,14 @@
  */
 package org.archive.crawler.scope;
 
-import java.util.TreeSet;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.util.SurtPrefixSet;
 
 /**
  * A specialized CrawlScope suitable for the most common crawl needs.
@@ -42,7 +47,8 @@ import org.archive.crawler.datamodel.UURI;
  *  
  */
 public class SurtPrefixScope extends RefinedScope {
-    TreeSet surts = new TreeSet();
+    public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
+    SurtPrefixSet surtPrefixes = null;
 
     public SurtPrefixScope(String name) {
         super(name);
@@ -51,6 +57,10 @@ public class SurtPrefixScope extends RefinedScope {
                 + "a set of SURT prefixes. (The SURT form of a URI has had its"
                 + "hostname reordered to ease sorting and grouping by domain"
                 + "hierarchies.)");
+        addElementToDefinition(
+                new SimpleType(ATTR_SURTS_SOURCE_FILE, "Source file from which to " +
+                        "read SURT prefixes.", ""));
+
     }
 
     /**
@@ -61,6 +71,10 @@ public class SurtPrefixScope extends RefinedScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
+        if (surtPrefixes == null) {
+            readPrefixes();
+        }
+        
         UURI u = getUURI(o);
         if (u == null) {
             return false;
@@ -70,7 +84,31 @@ public class SurtPrefixScope extends RefinedScope {
         if(candidateSurt.startsWith("https:")) {
             candidateSurt = "http:"+candidateSurt.substring(6);
         }
-        String precedent = (String) surts.subSet("",candidateSurt).last();
-        return candidateSurt.startsWith(precedent);
+        return surtPrefixes.containsPrefixOf(candidateSurt);
     }
+    
+    private void readPrefixes() {
+        surtPrefixes = new SurtPrefixSet(); 
+        String sourcePath = (String) getAttributeOrNull(ATTR_SURTS_SOURCE_FILE,
+                (CrawlURI) null);
+        File source = new File(sourcePath);
+        if (!source.isAbsolute()) {
+            source = new File(getSettingsHandler().getOrder()
+                    .getController().getDisk(), sourcePath);
+        }
+        FileReader fr = null;
+        try {
+
+            fr = new FileReader(source);
+            try {
+                surtPrefixes.importFrom(fr);
+            } finally {
+                fr.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        } 
+    }
+
 }
