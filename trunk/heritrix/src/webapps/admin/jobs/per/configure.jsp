@@ -99,7 +99,7 @@
 						// Create override
 						p.append("<td valign='top'>");
 						if (att.isOverrideable()) {
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true' onChange='setUpdate()'");
+							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true' onChange='setUpdate()'");
 							if(localAttribute != null){
 								 p.append(" checked");
 							}
@@ -128,45 +128,50 @@
 						p.append(TextUtils.escapeForJavascript(att.getDescription()));
 						p.append("')\">?</a>&nbsp;</td><td valign='top'>\n");
 	
+                        String fullName = mbean.getAbsoluteName() + "/" + att.getName();
+                        
 						// Create override
 						if (att.isOverrideable()) {
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true' onChange='setUpdate()'");
+							p.append("<input name='" + fullName + ".override' id='" + fullName + ".override' type='checkbox' value='true' onChange='setUpdate()'");
 							if(localAttribute != null){
 								 p.append(" checked");
 							}
 							p.append(">");
-						}
-						p.append("</td>\n<td width='100%'>");
-	
-						if(legalValues != null && legalValues.length > 0){
-							//Have legal values. Build combobox.
-							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' onChange='setUpdate()'>\n");
-							for(int i=0 ; i < legalValues.length ; i++){
-								p.append("<option value='"+legalValues[i]+"'");
-								if(currentAttribute.equals(legalValues[i])){
-									p.append(" selected");
+							p.append("</td>\n<td width='100%'>");
+		
+							if(legalValues != null && legalValues.length > 0){
+								//Have legal values. Build combobox.
+								p.append("<select name='" + fullName + "' style='width: 320px' onChange=\"setEdited('" + fullName + "')\">\n");
+								for(int i=0 ; i < legalValues.length ; i++){
+									p.append("<option value='"+legalValues[i]+"'");
+									if(currentAttribute.equals(legalValues[i])){
+										p.append(" selected");
+									}
+									p.append(">"+legalValues[i]+"</option>\n");
 								}
-								p.append(">"+legalValues[i]+"</option>\n");
+								p.append("</select>\n");
 							}
-							p.append("</select>\n");
-						}
-						else if(currentAttribute instanceof Boolean){
-							// Boolean value
-							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' onChange='setUpdate()'>\n");
-							p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
-							p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
-							p.append("</select>\n");
-						}
-						else if(currentAttribute instanceof TextField){
-							// Text area
-							p.append("<textarea name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' rows='4' onChange='setUpdate()'>");
-							p.append(currentAttribute);
-							p.append("</textarea>\n");
-						}
-						else{
-							//Input box
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px' onChange='setUpdate()'>\n");
-						}
+							else if(currentAttribute instanceof Boolean){
+								// Boolean value
+								p.append("<select name='" + fullName + "' style='width: 320px' onChange=\"setEdited('" + fullName + "')\">\n");
+								p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
+								p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
+								p.append("</select>\n");
+							}
+							else if(currentAttribute instanceof TextField){
+								// Text area
+								p.append("<textarea name='" + fullName + "' style='width: 320px' rows='4' onChange=\"setEdited('" + fullName + "')\">");
+								p.append(currentAttribute);
+								p.append("</textarea>\n");
+							}
+							else{
+								//Input box
+								p.append("<input name='" + fullName + "' value='" + currentAttribute + "' style='width: 320px' onChange=\"setEdited('" + fullName + "')\">\n");
+							}
+                        } else {
+                            // Can not be overridden. Just print out the value.
+                            p.append("</td><td>"+currentAttribute);                        
+                        }
 						
 						p.append("</td></tr>\n");
 					}
@@ -333,13 +338,13 @@
 				theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
 				newItem.value = "";
 			}
-			setUpdate();
+			setEdited(listName);
 		}
 		
 		function doDeleteList(listName){
 			theList = document.getElementById(listName);
 			theList.options[theList.selectedIndex] = null;
-			setUpdate();
+			setEdited(listName);
 		}
 		
 		function doSubmit(){
@@ -375,6 +380,12 @@
         function setUpdate(){
             document.frmConfig.update.value = "true";
         }
+        
+        function setEdited(name){
+            checkbox = document.getElementById(name+".override");
+            checkbox.checked = true;
+            setUpdate();
+        }
 	</script>
 
 	<p>
@@ -393,8 +404,8 @@
 		<p>	
 			<b>Instructions:</b> To override a setting, check the box in front of it and input new settings.<br>
 			Unchecked settings are inherited settings from super domain. Changes to settings that<br>
-			do not have a checked box will be discarded. If no checkbox is provided then that<br>
-			setting is not overrideable. It is displayed for information only.
+			do not have a checked box will be discarded. Settings that can not be overridden will not<br>
+			have a checkbox and will be displayed in a read only manner.
 		<p>		
 	        <% if(expert){ %>
 	            <a href="javascript:setExpert('false')">Hide expert settings</a>
