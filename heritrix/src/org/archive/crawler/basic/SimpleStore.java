@@ -14,6 +14,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIStore;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 
 import java.util.logging.Logger;
 
@@ -24,10 +25,12 @@ import java.util.logging.Logger;
  * @author gojomo
  *
  */
-public class SimpleStore implements URIStore {
+public class SimpleStore implements URIStore, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleStore");
 
 	protected final Object ReadyChangeSemaphore = new Object();
+	
+	public static final int MAX_FETCH_ATTEMPTS = 3;
 	
 	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
 	
@@ -280,6 +283,35 @@ public class SimpleStore implements URIStore {
 	 * @param curi
 	 */
 	public void reinsert(CrawlURI curi) {
+
+		int status = curi.getFetchStatus();
+		int fetchAttempts = curi.getNumberOfFetchAttempts();
+			
+		// check the status code of the uri
+		switch(status){
+			// this uri is virgin, let it carry on
+			case S_UNATTEMPTED:					
+				break;
+
+			// fail cases
+			case S_CONNECT_FAILED:					
+			case S_CONNECT_LOST:
+			case S_DOMAIN_UNRESOLVABLE:
+				if(fetchAttempts >= SimpleStore.MAX_FETCH_ATTEMPTS){
+					// don't let the madness continue
+					return;
+				}else{
+					curi.setNumberOfFetchAttempts(fetchAttempts + 1);
+				}
+				break;
+
+			// they don't want us to have it
+			case S_ROBOTS_PRECLUDED:
+				return;
+			
+		}
+		
+		
 		if(enqueueIfNecessary(curi)) {
 			// added to classQueue
 			return;

@@ -29,7 +29,7 @@ import st.ata.util.HashtableAList;
  * 
  * @author Gordon Mohr
  */
-public class CrawlURI implements URIStoreable, CoreAttributeConstants {
+public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchStatusCodes{
 	
 	public static final String CONTENT_TYPE_LABEL = "content-type";
 	
@@ -40,6 +40,8 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants {
 	Processor nextProcessor;
 	CrawlHost host;
 	CrawlFetch fetch;
+	private int fetchStatus = 0;	// default to unattempted
+	private int numberOfFetchAttempts = 0;	// the number of fetch attempts that have been made
 
 
 	/**
@@ -55,6 +57,27 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants {
 	 */
 	public CrawlURI(URI u){
 		uuri = new UURI(u);
+	}
+	
+	
+	public int getFetchStatus(){
+		return fetchStatus;
+	}
+	
+	public void setFetchStatus(int newstatus){
+		fetchStatus = newstatus;
+	}
+	
+	public int getNumberOfFetchAttempts(){
+		return numberOfFetchAttempts;
+	}
+	
+	public void setNumberOfFetchAttempts(int newnum){
+		numberOfFetchAttempts = newnum;
+	}
+	
+	public int incrementFetchAttempts(){
+		return numberOfFetchAttempts++;
 	}
 	
 	/**

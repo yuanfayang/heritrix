@@ -10,12 +10,13 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 
 /**
  * @author gojomo
  *
  */
-public class SimplePolitenessEnforcer extends Processor {
+public class SimplePolitenessEnforcer extends Processor implements FetchStatusCodes {
 	private static String XP_DELAY_FACTOR = "//params/@delay-factor";
 	private static String XP_MINIMUM_DELAY = "//params/@minimum-delay";
 	private static int DEFAULT_DELAY_FACTOR = 10;
@@ -28,6 +29,31 @@ public class SimplePolitenessEnforcer extends Processor {
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
+		
+		// if we haven't done a dns lookup  and this isn't a dns uri 
+		// shoot that off and defer further processing
+		if( !curi.getHost().hasBeenLookedUp() && 
+			!curi.getUURI().getUri().getScheme().equals("dns")
+		){
+			logger.info("deferring processing of " + curi.toString() + " for dns lookup." );
+			
+			curi.setPrerequisiteUri("dns:" + curi.getHost().getHostname());
+			curi.cancelFurtherProcessing();			
+			return;
+		}
+		
+		// if we've done a dns lookup and it didn't resolve a host
+		// cancel all processing of this URI
+		if(curi.getHost().hasBeenLookedUp() && curi.getHost().getIP() == null){
+			logger.info("no dns for " + curi.getHost().toString() + " cancelling processing for " + curi.toString() );
+
+			//TODO currently we're using FetchAttempts to denote both fetch attempts and
+			// the choice to not attempt (here).  Eventually these will probably have to be treated seperately
+			// to allow us to treat dns failures and connections failures (downed hosts, route failures, etc) seperately.
+			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+			curi.incrementFetchAttempts();
+			curi.cancelFurtherProcessing();
+		}
 		
 		// make sure we only process schemes we understand (i.e. not dns)
 		if(!curi.getUURI().getUri().getScheme().equals("http")){
