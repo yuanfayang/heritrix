@@ -94,7 +94,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             ){
             logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
             if(curi.getServer().getRobotsExpires()<0) {
-                curi.setPrerequisiteUri("/robots.txt");
+                curi.setForcedPrerequisiteUri("/robots.txt");
              } else {
                  // Robots expired - should be refetched even though its already crawled
                  curi.setForcedPrerequisiteUri("/robots.txt");
@@ -139,7 +139,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
                     + " for dns lookup.");
 
             String hostname = curi.getServer().getHostname();
-            curi.setPrerequisiteUri("dns:" + hostname);
+            curi.setForcedPrerequisiteUri("dns:" + hostname);
             //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
             curi.setFetchStatus(S_DEFERRED);
             curi.incrementDeferrals();
