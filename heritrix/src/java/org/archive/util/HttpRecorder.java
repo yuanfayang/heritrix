@@ -90,6 +90,8 @@ public class HttpRecorder
 
     /**
      * Wrap the provided stream with the internal RecordingInputStream
+     * 
+     * Its safe to call multiple times.  We only wrap on first call.
      *
      * @param is InputStream to wrap.
      *
@@ -98,13 +100,19 @@ public class HttpRecorder
      *
      * @throws IOException
      */
-    public InputStream inputWrap(InputStream is) throws IOException {
-        ris.open(is);
-        return ris;
+    public InputStream inputWrap(InputStream is) throws IOException
+    {
+        if (!this.ris.isOpen())
+        {
+            this.ris.open(is);
+        }
+        return this.ris;
     }
 
     /**
      * Wrap the provided stream with the internal RecordingOutputStream
+     * 
+     * Its safe to call multiple times.  We only wrap on first call.
      *
      * @param os The output stream to wrap.
      *
@@ -113,9 +121,13 @@ public class HttpRecorder
      *
      * @throws IOException
      */
-    public OutputStream outputWrap(OutputStream os) throws IOException {
-        ros.open(os);
-        return ros;
+    public OutputStream outputWrap(OutputStream os) throws IOException
+    {
+        if (!this.ros.isOpen())
+        {
+            this.ros.open(os);
+        }
+        return this.ros;
     }
 
     /**
@@ -123,7 +135,7 @@ public class HttpRecorder
      */
     public void close() {
         try {
-            ris.close();
+            this.ris.close();
         } catch (IOException e) {
             // TODO: Can we not let the exception out of here and report it
             // higher up in the caller?
@@ -131,7 +143,7 @@ public class HttpRecorder
                 DevUtils.extraInfo(), e);
         }
         try {
-            ros.close();
+            this.ros.close();
         } catch (IOException e) {
             DevUtils.logger.log(Level.SEVERE, "close() ros" +
                 DevUtils.extraInfo(), e);
@@ -158,11 +170,11 @@ public class HttpRecorder
      * Mark current position as the point where the HTTP headers end.
      */
     public void markContentBegin() {
-        ris.markContentBegin();
+        this.ris.markContentBegin();
     }
 
     public long getResponseContentLength() {
-        return ris.getResponseContentLength();
+        return this.ris.getResponseContentLength();
     }
 
     /**
@@ -174,8 +186,8 @@ public class HttpRecorder
      */
     public void closeRecorders() {
         try {
-            ris.closeRecorder();
-            ros.closeRecorder();
+            this.ris.closeRecorder();
+            this.ros.closeRecorder();
         } catch (IOException e) {
             DevUtils.warnHandle(e, "Convert to runtime exception?");
         }
@@ -228,5 +240,23 @@ public class HttpRecorder
         {
             f.delete();
         }
+    }
+    
+    /**
+     * Get the current threads' HttpRecorder.
+     * 
+     * @return This threads' HttpRecorder.  Returns null if can't find a 
+     * HttpRecorder in current instance.
+     */
+    public static HttpRecorder getHttpRecorder()
+    {
+        HttpRecorder recorder = null;
+        Thread thread = Thread.currentThread();
+        if (thread instanceof HttpRecorderMarker)
+        {
+            recorder = ((HttpRecorderMarker)thread).getHttpRecorder();
+        }
+        
+        return recorder;
     }
 }

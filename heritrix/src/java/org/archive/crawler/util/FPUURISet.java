@@ -64,7 +64,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
      * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.UURI)
      */
     public boolean contains(UURI u) {
-        long fp = fpgen.fp(u.getUriString());
+        long fp = fpgen.fp(u.getURIString());
         boolean retVal = fpset.contains(fp);
         if(retVal) {
             logger.finest("Already contains "+fp+" "+u);
@@ -83,7 +83,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
      * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.UURI)
      */
     public void add(UURI u) {
-        long fp = fpgen.fp(u.getUriString());
+        long fp = fpgen.fp(u.getURIString());
         logger.finest("Adding "+fp+" "+u);
         fpset.add(fp);
     }
@@ -92,7 +92,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
      * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.UURI)
      */
     public void remove(UURI u) {
-        fpset.remove(fpgen.fp(u.getUriString()));
+        fpset.remove(fpgen.fp(u.getURIString()));
     }
 
     /* (non-Javadoc)
@@ -128,7 +128,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
      * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
      */
     public boolean quickContains(UURI u) {
-        long fp = fpgen.fp(u.getUriString());
+        long fp = fpgen.fp(u.getURIString());
         boolean retVal = fpset.quickContains(fp);
         if(retVal) {
             logger.finest("Already quickContains "+fp+" "+u);
