@@ -3,6 +3,7 @@ package org.archive.crawler.admin;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -386,6 +387,28 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	public StatisticsTracking getStatistics()
 	{
 		return controller.getStatistics();
+	}
+	
+	/**
+	 * Set the default crawl order.
+	 * @param filename The filename (with path) of the new default crawl order;
+	 */
+	public void setDefaultCrawlOrder(String filename)
+	{
+		try{
+			// Take the new default crawl order and use it to overwrite the old one.
+			orderTransform.setNode(OrderTransformation.readDocumentFromFile(filename));
+			orderTransform.serializeToXMLFile(WEB_APP_PATH+orderFile); 
+			// And then reload the old one (now overwritten)
+			loadCrawlOrder();
+		} 
+		catch(IOException e){
+			e.printStackTrace();	
+		}
+		catch (InitializationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
 	}
 	
 	public void updateDefaultCrawlOrder(HttpServletRequest req) 

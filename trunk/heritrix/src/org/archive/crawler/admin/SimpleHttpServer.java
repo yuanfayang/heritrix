@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.IOException;
+
 import org.mortbay.http.*;
 import org.mortbay.jetty.Server;
 
@@ -19,7 +21,7 @@ public class SimpleHttpServer {
 
 	private int _port;
 	private Server _server = null;
-	private static int DEFAULT_PORT = 8080;
+	public static final int DEFAULT_PORT = 8080;
 	private static String _contextPath = "/";
 	private static String _resourceBase = "./WebUIResources/";
 	private HttpContext _context = new HttpContext();
@@ -30,7 +32,7 @@ public class SimpleHttpServer {
 		initialize(port);
 	}
 
-	private void initialize(int port) throws Exception {
+	private void initialize(int port) throws IOException {
 		if (_server == null) {
 			_server = new Server();
 			SocketListener listener = new SocketListener();
