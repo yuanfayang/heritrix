@@ -48,7 +48,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	protected HashMap statusCodeDistribution = new HashMap();
 
 	protected int totalProcessedBytes = 0;
-	protected TimedFixedSizeList recentlyCompletedFetches = new TimedFixedSizeList(60);
+	//protected TimedFixedSizeList recentlyCompletedFetches = new TimedFixedSizeList(60);
 
 	protected Logger periodicLogger = null;
 	protected int logInterval = 60;
@@ -57,7 +57,13 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	
 	// default start time to the time this object was instantiated
 	protected long crawlerStartTime = System.currentTimeMillis();
-
+	
+	
+	// timestamp of when this logger last wrote something to the log
+	protected long lastLogPointTime = crawlerStartTime;
+	protected long lastPagesFetchedCount = 0;
+	protected long lastProcessedBytesCount = 0;
+	
 	public StatisticsTracker() {
 		super();
 	}
@@ -150,6 +156,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 			}
 			
 			logActivity();
+			lastLogPointTime = System.currentTimeMillis();
 		}
 	}
 
@@ -331,20 +338,32 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 */
 	public int currentProcessedDocsPerSec(){
 		// if we haven't done anyting or there isn't a reasonable sample size give up
-		if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
+		//if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
+		if(totalFetchAttempts() == 0){
 			return 0;
 		}
 		
-		long sampleStartTime = ((ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst()).getStartTime();
+		// long sampleStartTime = ((ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst()).getStartTime();
 		//long sampleEndTime = ((CrawlURI)recentCrawlURIs.getLast()).getAList().getLong(A_FETCH_COMPLETED_TIME);
-		long sampleEndTime = System.currentTimeMillis();
+		// long sampleEndTime = System.currentTimeMillis();
 		
-		return (int)
-				(recentlyCompletedFetches.size() / 
-				 ((sampleEndTime - sampleStartTime)
-					/ 1000 ) 
-				+ .5 // round to nearest int
-		);
+//		return (int)
+//				(recentlyCompletedFetches.size() / 
+//				 ((sampleEndTime - sampleStartTime)
+//					/ 1000 ) 
+//				+ .5 // round to nearest int
+//		);
+
+		long currentTime = System.currentTimeMillis();
+		long currentPageCount = successfulFetchAttempts();
+		long sampleTime = currentTime - lastLogPointTime;
+		long samplePageCount = currentPageCount - lastPagesFetchedCount;
+		
+		int currentDocsPerSecond = (int) (samplePageCount / (sampleTime / 1000) + .5);
+		
+		lastPagesFetchedCount = currentPageCount;
+		
+		return currentDocsPerSecond;
 	}
 	
 	/** Calculates the rate that data, in kb, has been processed
@@ -357,7 +376,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		}
 		
 		return (int)
-				(((totalProcessedBytes / 1000)
+				(((totalProcessedBytes / 1024)
 					/ ((System.currentTimeMillis() - crawlerStartTime)
 					/ 1000))
 				+ .5 // round to nearest int
@@ -371,10 +390,11 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * @return
 	 */
 	public int currentProcessedKBPerSec(){
-		if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
+		//if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
+		if(totalProcessedBytes == 0){
 			return 0;
 		}
-		
+		/*
 		int totalRecentSize = 0;
 		
 		Iterator recentItr = recentlyCompletedFetches.iterator();
@@ -391,6 +411,17 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 				((totalRecentKB / samplePeriod)
 				+ .5 // round to nearest int
 		);
+		*/
+		
+		long currentTime = System.currentTimeMillis();
+		long currentProcessedBytes = totalProcessedBytes;
+		long sampleTime = currentTime - lastLogPointTime;
+		long sampleProcessedBytes = currentProcessedBytes - lastProcessedBytesCount;
+		int currentProcessedKB = (int) (((sampleProcessedBytes/1024) / (sampleTime / 1000)) + .5);
+		
+		lastProcessedBytesCount = currentProcessedBytes;
+		
+		return currentProcessedKB;
 	}
 	
 	/** Keep track of  "completed" URIs so we can caluculate 
@@ -412,7 +443,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		ProcessedCrawlURIRecord record = new ProcessedCrawlURIRecord(curi);
 		
 		// store in the queue
-		recentlyCompletedFetches.add(record);
+		//recentlyCompletedFetches.add(record);
 
 		totalProcessedBytes += curiSize;
 	}
@@ -593,6 +624,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	/** Returns the approximate rate at which we are writing uncompressed data
 	 *  to disk.
 	 */
+	 /*
 	public int approximateCompletionRate() {
 
 		if (recentlyCompletedFetches.size() < 2) {
@@ -616,6 +648,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		// return bytes/sec
 		return (int) (1000 * totalRecentBytes / period);
 	}
+*/
 
 
 //	public long getCrawlURIStartTime(CrawlURI curi){
