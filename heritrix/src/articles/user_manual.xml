@@ -777,7 +777,6 @@
         </para>
         </sect4>
         <sect4 id="dsf"><title>DomainSensitveFrontier</title>
-            <para>
           <para>A subclass of the <xref linkend="hqf" /> written by 
           Oskar Grenholm. 
           The DSF
@@ -802,7 +801,7 @@
         </note>
         </para>
         <para>The AR Frontier has many of the same settings for politeness an
-        etc. as the <xref linkend="hqf" /i>  -- it also keeps its queues
+        etc. as the <xref linkend="hqf" />  -- it also keeps its queues
         in memory as HostQueuesFrontier does --
         but implements an entirely different
         strategy in issuing URIs and consequently in keeping a record of
@@ -848,6 +847,7 @@
         <para>By setting the 'state' directory to the same location that
         another AR crawl used, it should resume that crawl (minus some
         stats).</para>
+        </para>
         </sect4>
 
 
