@@ -68,6 +68,20 @@ public class UURITest extends TestCase {
             uuriTgt.toString().equals(uuri.toString()));
     }
     
+    /**
+     * Test that an empty uuri does the right thing -- that we get back the 
+     * base.
+     * 
+     * @throws URIException
+     */
+    public final void testRelativeEmpty() throws URIException {
+        UURI uuriTgt = new UURI("http://archive.org:83/one/two/three.html");
+        UURI uri = new UURI("http://archive.org:83/one/two/three.html");
+        UURI uuri = new UURI(uri, "");
+        assertTrue("Empty length don't work",
+            uuriTgt.toString().equals(uuri.toString()));
+    }
+    
     public final void testAbsolute() throws URIException {
         UURI uuriTgt = new UURI("http://archive.org:83/home.html");
         UURI uri = new UURI("http://archive.org:83/one/two/three.html");
