@@ -481,6 +481,7 @@ public class Frontier
         while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
             URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
             kq.activate();
+            assert kq.isEmpty() == false : "empty queue was waiting for activation";
             kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
                     ,curi)).intValue());
             updateQ(kq);
@@ -856,7 +857,7 @@ public class Frontier
                         // leave inactive, add to inactive collection
                         this.inactiveClassQueues.add(kq);
                     } else {
-                        // make eligible for READY status immediatele
+                        // make eligible for READY status immediately
                         kq.activate();
                     }
                 } catch (AttributeNotFoundException e2) {
@@ -1208,6 +1209,7 @@ public class Frontier
             }
         }
 
+        // now, reinsert CrawlURI in relevant queue
         reschedule(curi);
 
         controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
@@ -1238,12 +1240,17 @@ public class Frontier
      * @param wake Time (in millisec.) when we want the queue to stop snoozing.
      */
     protected void snoozeQueueUntil(URIWorkQueue kq, long wake) {
-        //assert kq.getStoreState() != KeyedQueue.IN_PROCESS : "snoozing queue should have been READY, EMPTY, or SNOOZED";
-        if(kq.getState()==URIWorkQueue.FROZEN) {
-            // only explicit operator action my unfreeze a queue
-            return;
-        }
-        if(kq.getState()== URIWorkQueue.SNOOZED) {
+//      // FROZEN not yet implemented
+//        if(kq.getState()==URIWorkQueue.FROZEN) {
+//            // only explicit operator action my unfreeze a queue
+//            return;
+//        }
+        if(kq.getState()== URIWorkQueue.INACTIVE) {
+            // likely a brand new queue under a site-first mode of operation
+            // must activate before snoozing
+            inactiveClassQueues.remove(kq);
+            kq.activate();
+        } else if(kq.getState()== URIWorkQueue.SNOOZED) {
             // must be removed before time may be mutated
             snoozeQueues.remove(kq);
         } else if (kq.getState() == URIWorkQueue.READY ) {
