@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -36,7 +37,7 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void innerProcess(CrawlURI curi) {
+	protected void innerProcess(CrawlURI curi) {
 
 		ArrayList links  = new ArrayList();
 		GetMethod get = null;
@@ -87,10 +88,8 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 		try{
 			reader.readFile();		
 		}catch(IOException e){
-			// TODO: this should logged somehow, so that if it
-			// a bug or crawler limitation, rather than true
-			// network/io problem, it can be noted and/or corrected
-			e.printStackTrace();	
+			Object array[] = { curi };
+			controller.crawlErrors.log(Level.INFO, curi.getUURI().getUri().toString(), array);
 		}
 		
 		links = iatp.getLinks();
