@@ -196,7 +196,6 @@ public class Postselector extends Processor implements CoreAttributeConstants,
     private boolean schedule(CandidateURI caUri) {
         if(getController().getScope().accepts(caUri)) {
             logger.finer("URI accepted: "+caUri);
-            //getController().getFrontier().batchSchedule(caUri);
             getController().getFrontier().schedule(caUri);
             return true;
         }
