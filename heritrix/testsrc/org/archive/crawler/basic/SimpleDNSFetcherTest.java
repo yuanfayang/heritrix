@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
-import org.archive.crawler.basic.SimpleDNSFetcher;
+import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -22,7 +22,7 @@ import org.xbill.DNS.Record;
  */
 public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConstants {
 
-	SimpleDNSFetcher fetcher;
+	FetcherDNS fetcher;
 	CrawlURI curiBasic;
 	CrawlURI curiWithHostPort;
 	CrawlURI curiWithQuery;
@@ -53,7 +53,7 @@ public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConst
 
 	public void setUp(){
 		
-		fetcher 	= new SimpleDNSFetcher();
+		fetcher 	= new FetcherDNS();
 		
 		curiBasic 				= new CrawlURI( UURI.createUURI("dns:parkert.com") );
 		curiWithHostPort 	= new CrawlURI( UURI.createUURI("dns://ns1.archive.org/parkert.com"));
@@ -67,9 +67,9 @@ public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConst
 	
 	// test the dns module's ability to parse different forms of dns uris
 	public void testParsing(){
-			String curiBasicStr 				= SimpleDNSFetcher.parseTargetDomain(curiBasic);
-			String curiWithHostPortStr 	= SimpleDNSFetcher.parseTargetDomain(curiWithHostPort);
-			String curiWithQueryStr	 		= SimpleDNSFetcher.parseTargetDomain(curiWithQuery);
+			String curiBasicStr 				= FetcherDNS.parseTargetDomain(curiBasic);
+			String curiWithHostPortStr 	= FetcherDNS.parseTargetDomain(curiWithHostPort);
+			String curiWithQueryStr	 		= FetcherDNS.parseTargetDomain(curiWithQuery);
 			
 			// make sure everything came out ok
 		assertEquals(curiBasicStr, "parkert.com");
