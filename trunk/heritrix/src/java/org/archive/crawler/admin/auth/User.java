@@ -20,6 +20,9 @@ package org.archive.crawler.admin.auth;
 
 import java.util.Vector;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * A simple class for user authentication.  The class also defines the availible user roles.
  * On startup, all valid logins should be added using the {@link #addLogin(String, String, int) addLogin()}
@@ -36,11 +39,10 @@ import java.util.Vector;
  *
  * @author Kristinn Sigurdsson
  */
-public class User
-{
+public class User {
     // Defined roles
-      /** A failed login */
-      public static final int INVALID_USER = -1;
+    /** A failed login */
+    public static final int INVALID_USER = -1;
     /** Super user, full permissions */
     public static final int ADMINISTRATOR = 0;
     /** General user, minimum permissions */
@@ -124,6 +126,30 @@ public class User
                 return;
             }
         }
+    }
+    
+    public static String getCookieValue(Cookie[] cookies, String cookieName,
+            String defaultValue) {
+        if(cookies != null) {
+            for(int i = 0; i < cookies.length; i++) {
+                Cookie cookie = cookies[i];
+                if(cookieName.equals(cookie.getName())) {
+                    return(cookie.getValue());
+                }
+            }
+        }
+        return(defaultValue);
+    }
+    
+    /**
+     * @param u User if we have one.  Else we'll go look in cookies.
+     * @param request Current http request.
+     * @return User from session or user made from cookies.
+     */
+    public static User getUser(User u, HttpServletRequest request) {
+        return (u != null)? u:
+            new User(getCookieValue(request.getCookies(), "username", null),
+                getCookieValue(request.getCookies(), "password", null));
     }
 }
 

@@ -4,5 +4,8 @@
 
 <web-app>
 	<display-name>Admin</display-name>
-    <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
+    <description>Heritrix Administration Console</description>
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
 </web-app>

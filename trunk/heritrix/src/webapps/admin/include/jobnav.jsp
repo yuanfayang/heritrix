@@ -37,38 +37,38 @@
 							</td>
 						<% } else { %>
 							<td class="tab<%=jobtab==0?"_selected":""%>" nowrap>
-								<a href="javascript:doGoto('/admin/jobs/modules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==0?"_selected":""%>">Modules</a>
+								<a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/modules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==0?"_selected":""%>">Modules</a>
 							</td>
 						<% } %>
 						<td class="tab_seperator">
 						</td>
                         <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==6?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/url-canonicalization-rules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==6?"_selected":""%>">URL</a>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/url-canonicalization-rules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==6?"_selected":""%>">URL</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==4?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
 						<td class="tab<%=jobtab==2?"_selected":""%>" nowrap>
-							<a href="javascript:doGoto('/admin/jobs/configure.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
+							<a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
 						</td>
 						<td class="tab_seperator">
 						</td>
                         <td class="tab<%=jobtab==3?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/per/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==3?"_selected":""%>">Overrides</a>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/per/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==3?"_selected":""%>">Overrides</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==5?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/refinements/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==5?"_selected":""%>">Refinements</a>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==5?"_selected":""%>">Refinements</a>
                         </td>
                         <td class="tab_seperator">
                         </td>

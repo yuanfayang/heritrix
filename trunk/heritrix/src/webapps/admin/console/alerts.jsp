@@ -95,7 +95,7 @@
                         &nbsp;<code><%=alert.getLevel().getName()%></code>&nbsp;
                     </td>
                     <td nowrap>
-                        &nbsp;<code><a style="color: #003399;" class="underLineOnHover" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a></code>&nbsp;
+                        &nbsp;<code><a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a></code>&nbsp;
                     </td>
                 </tr>
         <%
