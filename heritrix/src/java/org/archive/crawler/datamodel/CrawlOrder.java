@@ -66,6 +66,7 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_STATE_PATH = "state-path";
     public static final String ATTR_SCRATCH_PATH = "scratch-path";
     public static final String ATTR_RECOVER_PATH = "recover-path";
+    public static final String ATTR_RECOVER_RETAIN_FAILURES = "recover-retain-failures";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
     public static final String ATTR_MAX_DOCUMENT_DOWNLOAD = "max-document-download";
     public static final String ATTR_MAX_TIME_SEC = "max-time-sec";
@@ -264,6 +265,16 @@ public class CrawlOrder extends ModuleType {
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
+        e = addElementToDefinition(new SimpleType(ATTR_RECOVER_RETAIN_FAILURES,
+                "When recovering via the recover.log, should failures" +
+                "in the log be retained in the recovered crawl, " +
+                "preventing the corresponding URIs from being retried. " +
+                "Default is false, meaning failures are forgotten, and " +
+                "the corresponding URIs will be retried in the recovered " +
+                "crawl.", Boolean.FALSE));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+        
         e = addElementToDefinition(
            new CredentialStore(CredentialStore.ATTR_NAME));
         e.setOverrideable(true);
