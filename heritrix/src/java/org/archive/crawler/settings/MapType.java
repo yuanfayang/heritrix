@@ -24,14 +24,11 @@
  */
 package org.archive.crawler.settings;
 
-import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanAttributeInfo;
 
 import org.archive.crawler.settings.Constraint.FailedCheck;
 
@@ -152,71 +149,6 @@ public class MapType extends ComplexType {
       throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).moveElementDown(name);
-    }
-
-    /**
-     * Iterator over all elements in a MapType.
-     * 
-     * @author John Erik Halse
-     */
-    private class It implements Iterator {
-        Context context;
-        Stack attributeStack = new Stack();
-        Iterator currentIterator;
-
-        public It(Object ctxt) {
-            this.context = getSettingsFromObject(ctxt);
-
-            Context c = new Context(context.settings, context.uri);
-            DataContainer data = getDataContainerRecursive(c);
-            while (data != null) {
-                this.attributeStack.push(data.getLocalAttributeInfoList().
-                    iterator());
-                c.settings = data.getSettings().getParent();
-                data = getDataContainerRecursive(c);
-            }
-
-            this.currentIterator = (Iterator) this.attributeStack.pop();
-        }
-
-        public boolean hasNext() {
-            if (this.currentIterator.hasNext()) {
-                return true;
-            } else {
-                try {
-                    this.currentIterator = (Iterator) this.attributeStack.pop();
-                } catch (EmptyStackException e) {
-                    return false;
-                }
-            }
-            return this.currentIterator.hasNext();
-        }
-
-        public Object next() {
-            hasNext();
-            try {
-                MBeanAttributeInfo attInfo = (MBeanAttributeInfo) this.currentIterator.next();
-                return getAttribute(this.context, attInfo.getName());
-            } catch (AttributeNotFoundException e) {
-                // This should never happen
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    /** Get an Iterator over all the elements in this map.
-     *
-     * @param settings the settings object for which this set of elements
-     *                 are valid.
-     * @return an iterator over all the elements in this map.
-     */
-    public Iterator iterator(Object context) {
-        return new It(context);
     }
 
     /** Returns true if this map is empty.

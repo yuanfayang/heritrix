@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
@@ -225,7 +226,8 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         Iterator it = map.iterator(settings);
         int i = 0;
         while(it.hasNext()) {
-            assertEquals("Iterator in wrong order", modules[i].getValue(), it.next());
+            assertEquals("Iterator in wrong order", modules[i].getValue(),
+                    ((Attribute) it.next()).getValue());
             i++;
         }
         assertEquals("Iterator wrong length", modules.length, i);
@@ -289,7 +291,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
 
         List atts = new ArrayList();
         for (Iterator it = map.iterator(null); it.hasNext();) {
-            atts.add(new SimpleType("", "", it.next()));
+            atts.add(new SimpleType("", "", ((Attribute) it.next()).getValue()));
         }
         
         SimpleType type1 = new SimpleType("testType1", "description", "value");
