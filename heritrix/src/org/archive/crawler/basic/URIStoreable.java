@@ -31,4 +31,9 @@ public interface URIStoreable {
 	long getWakeTime();
 	
 	void setWakeTime(long w);
+
+	/**
+	 * a fallback string to use when wake times are equal
+	 */
+	String getSortFallback();
 }
