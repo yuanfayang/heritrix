@@ -34,7 +34,7 @@ public interface AdminConstants {
 	public static final String CRAWL_ORDER_JSP = "crawlorder.jsp";
 	public static final String ORDER_HTML_FORM_PAGE = "orderform.html";
 	public static final String STATS_JSP = "stats.jsp";
-	public static final String DEFAULT_ORDER_FILE = "test-config/order.xml";
+	public static final String DEFAULT_ORDER_FILE = "order.xml";
 	public static final String CRAWLING_IN_PROGRESS = "Crawling In Progress";
 	public static final String NO_CRAWLING = "No Crawling in Progress";
 	public static final String NO_ACTIVE_THREADS = "All threads are idle";

@@ -90,27 +90,6 @@ public class OrderTransformation extends XMLConfig {
 		}
 	}
 
-	public void transformXMLToHTML(
-		String outputHTMLfile,
-		String orderFile,
-		String xslFile) {
-		transformXMLtoHTML(outputHTMLfile, orderFile, xslFile);
-	}
-
-	public void transformXMLToHTML(String outputHTMLfile) {
-		// TODO: Default xml and xslt files should be constants
-		transformXMLtoHTML(
-			outputHTMLfile,
-			"WebUIResources/webapps/admin/order.xml",
-			"WebUIResources/webapps/admin/order-conf.xsl");
-	}
-
-	public String transformXMLToString() {
-		// TODO: Default xml and xslt files should be constants
-		return transformXMLToString(
-			"WebUIResources/webapps/admin/order.xml",
-			"WebUIResources/webapps/admin/order-conf.xsl");
-	}
 
 	public String transformXMLToString(String aXMLFile, String aXSLTemplate) {
 		try {
@@ -130,7 +109,7 @@ public class OrderTransformation extends XMLConfig {
 	}
 
 	public void transformXMLtoHTML(
-		String outputHTMLfile,
+		String outputHTMLFile,
 		String aXMLFile,
 		String aXSLTemplate) {
 		try {
@@ -139,26 +118,11 @@ public class OrderTransformation extends XMLConfig {
 					new StreamSource(aXSLTemplate));
 			xsltTransformer.transform(
 				new StreamSource(new FileReader(aXMLFile)),
-				new StreamResult(new File(outputHTMLfile)));
+				new StreamResult(new File(outputHTMLFile)));
 
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 			// TODO: handle exception
-		}
-
-	}
-	public static void main(String[] args) {
-		OrderTransformation test = new OrderTransformation();
-		try {
-			test.setNode(
-				readDocumentFromFile("WebUIresources/webapps/admin/order.xml"));
-			test.setNodeValue("//limits/max-link-depth/@value", "103");
-			test.serializeToXMLFile("WebUIresources/webapps/admin/test.xml");
-			test.transformXMLToHTML("c:/test.html");
-			System.out.println(test.transformXMLToString());
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace(System.out);
 		}
 
 	}
