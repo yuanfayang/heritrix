@@ -64,10 +64,16 @@ public class DomainSensitiveFrontier extends HostQueuesFrontier {
         		"Overrides default Frontier to add" +
         	    " specification of number of documents to download" +
 			" per host or domain (Useful for case of revisiting" +
-			" a site that changes frequently).");
+			" a site that changes frequently).  Requires creation" +
+            " of an override per domain (The override holds" +
+            " the domain-specific counter).");
 
         Type e = addElementToDefinition(new SimpleType(ATTR_COUNTER,
-            "A simple counter for documents", new Long(0)));
+            "A simple counter for documents.\n" +
+            "Leave this field empty.  You must create an override" +
+            " per domain so this counter applies to a single-domain" +
+            " only.  Without an override, the counter counts all" +
+            " downloads across all domains.", new Long(0)));
         e.setOverrideable(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_DOCS,
