@@ -217,17 +217,17 @@ public class CrawlController extends Thread {
                 new Alert(
                     "FatalConfigurationException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                    "Unable to setup disk: \n" + e.toString()));
+                    "Unable to setup disk: \n" + e.toString(),e));
             throw new InitializationException(
-                "Unable to setup disk: " + e.toString(), e);
+                "Unable to setup disk\n", e);
         } catch (AttributeNotFoundException e) {
             Heritrix.addAlert(
                 new Alert(
                     "AttributeNotFoundException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                    "Unable to setup disk: \n" + e.toString()));
+                    "Unable to setup disk\n",e));
             throw new InitializationException(
-                "Unable to setup disk: " + e.toString(), e);
+                "Unable to setup disk\n", e);
         }
 
         try {
@@ -237,7 +237,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "IOException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to create log file(s): \n" + e.toString()));
+                     "Unable to create log file(s)\n",e));
             throw new InitializationException(
                 "Unable to create log file(s): " + e.toString(),
                 e);
@@ -250,7 +250,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "InvalidAttributeValueException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup statistics: \n" + e.toString()));
+                     "Unable to setup statistics \n",e));
             throw new InitializationException(
                 "Unable to setup statistics: " + e.toString(), e);
         }
@@ -264,7 +264,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "FatalConfigurationException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules: \n" + e.toString()));
+                     "Unable to setup crawl modules \n", e));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (AttributeNotFoundException e) {
@@ -272,7 +272,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "AttributeNotFoundException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules: \n" + e.toString()));
+                     "Unable to setup crawl modules \n", e));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (InvalidAttributeValueException e) {
@@ -280,7 +280,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "InvalidAttributeValueException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules: \n" + e.toString()));
+                     "Unable to setup crawl modules \n",e));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (MBeanException e) {
@@ -288,7 +288,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "MBeanException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules: \n" + e.toString()));
+                     "Unable to setup crawl modules \n", e));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (ReflectionException e) {
@@ -296,7 +296,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "ReflectionException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules: \n" + e.toString()));
+                     "Unable to setup crawl modules \n", e));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         }
