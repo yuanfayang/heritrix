@@ -9,15 +9,14 @@ package org.archive.crawler.datamodel;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.Iterator;
 
 import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
@@ -431,6 +430,18 @@ public class CrawlURI
 	
 	public void setAList(AList a){
 		alist = a;
+	}
+
+	/**
+	 * Make note of a non-fatal error which should be logged
+	 * somewhere, but allows processing to continue.
+	 * 
+	 * @param string
+	 * @param e
+	 */
+	public void addLocalizedError(String processorName, Exception ex) {
+		// TODO implement
+		
 	}
 	
 /*	public boolean isFubared(){
