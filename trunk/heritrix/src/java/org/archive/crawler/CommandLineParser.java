@@ -82,7 +82,7 @@ public class CommandLineParser
             "Port to run web user interface on.  Default: 8080."));
         this.options.addOption(new Option("a", "admin", true,
             "Login and password for web user interface administration." +
-            " Default: admin/letmenin."));
+            " Default: admin/letmein."));
         this.options.addOption(new Option("r", "run", false,
             "Put heritrix into run mode. If ORDER_FILE begin crawl."));
         this.options.addOption(new Option("n", "nowui", false,
