@@ -1674,7 +1674,12 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
      */
     public void importRecoverLog(String pathToLog) throws IOException {
-        RecoveryJournal.importRecoverLog(pathToLog,this);
+        File source = new File(pathToLog);
+        if (!source.isAbsolute()) {
+            source = new File(getSettingsHandler().getOrder()
+                    .getController().getDisk(), pathToLog);
+        }
+        RecoveryJournal.importRecoverLog(source,this);
     }
 
     /* (non-Javadoc)
