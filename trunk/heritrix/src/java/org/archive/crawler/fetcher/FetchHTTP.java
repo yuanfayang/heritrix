@@ -306,6 +306,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	this.http.executeMethod(method);
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
+            method.releaseConnection();
         	return;
         } catch (ArrayIndexOutOfBoundsException e) {
         	// For weird windows-only ArrayIndex exceptions in native
@@ -313,11 +314,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
         	// treating as if it were an IOException
         	failedExecuteCleanup(method, curi, e);
+            method.releaseConnection();
         	return;
-        } finally {
-            if (!((HttpMethodBase)method).isAborted()) {
-                method.releaseConnection();
-            }
         }
 
         try {
