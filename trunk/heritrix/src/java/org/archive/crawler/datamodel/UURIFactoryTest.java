@@ -40,7 +40,6 @@ import org.apache.commons.httpclient.URIException;
 public class UURIFactoryTest extends TestCase {
 	
 	public final void testEscaping() throws URIException {
-		
 		// Note: single quote is not being escaped by URI class.
 		final String ESCAPED_URISTR = "http://archive.org/" +
 		UURIFactory.ESCAPED_SPACE +
