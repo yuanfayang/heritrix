@@ -449,6 +449,22 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Obtain the value of a specific attribute that is valid for a
+     * specific CrawlURI, or return the given default if the attribute 
+     * does not exist.
+     * 
+     * @param name
+     * @param curi
+     * @return
+     */
+    public Object getAttributeOrDefault(String name, CrawlURI curi, Object def) {
+        try {
+            return getAttribute(name,curi);   
+        } catch (AttributeNotFoundException anfe) {
+            return def;
+        }
+    }
+
+    /** Obtain the value of a specific attribute that is valid for a
      * specific CrawlerSettings object.
      *
      * This method will try to get the attribute from the supplied host
