@@ -706,6 +706,7 @@ implements Frontier,
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
         wq.setWakeTime(now+delay_ms);
         snoozedClassQueues.add(wq);
+        logger.fine("executeAfterDelay("+delay_ms+" for "+wq.getClassKey()+")");
         wakeDaemon.executeAfterDelay(delay_ms, waker);
     }
 
