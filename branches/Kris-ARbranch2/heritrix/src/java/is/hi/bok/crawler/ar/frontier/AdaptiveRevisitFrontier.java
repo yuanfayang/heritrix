@@ -221,7 +221,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI u = (UURI)i.next();
                 CandidateURI caUri = new CandidateURI(u);
-                caUri.setSeed();
+                caUri.setIsSeed(true);
                 caUri.setSchedulingDirective(CandidateURI.MEDIUM);
                 innerSchedule(caUri);
             }
@@ -238,7 +238,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
             curi = (CrawlURI) caUri;
         } else {
             curi = CrawlURI.from(caUri,System.currentTimeMillis());
-            curi.getAList().putLong(
+            curi.putLong(
                     A_TIME_OF_NEXT_PROCESSING,System.currentTimeMillis());
             // New CrawlURIs get 'current time' as the time of next processing.
         }
@@ -278,7 +278,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
 
         // Finally, allow curi to be fetched right now 
         // (while not overriding overdue items)
-        curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,
+        curi.putLong(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis());
         
         try {
@@ -362,14 +362,14 @@ public class AdaptiveRevisitFrontier extends ModuleType
             CrawlURI curi = hq.next();
             // Populate CURI with 'transient' variables such as server.
             logger.fine("Issuing "+curi.getURIString());
-            long temp = curi.getAList().getLong(A_TIME_OF_NEXT_PROCESSING);
+            long temp = curi.getLong(A_TIME_OF_NEXT_PROCESSING);
             long currT = System.currentTimeMillis();
             long overdue = (currT-temp);
             if(logger.isLoggable(Level.FINER)){
                 String waitI = "not set";
-                if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
+                if(curi.containsKey(A_WAIT_INTERVAL)){
                     waitI = ArchiveUtils.formatMillisecondsToConventional(
-                            curi.getAList().getLong(A_WAIT_INTERVAL));
+                            curi.getLong(A_WAIT_INTERVAL));
                 }
                 logger.finer("Wait interval: " + waitI + 
                         ", Time of next proc: " + temp +
@@ -381,7 +381,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 logger.severe("Time overdue for " + curi.getURIString() + 
                         "is negative (" + overdue + ")!");
             }
-            curi.getAList().putLong(A_FETCH_OVERDUE,overdue);
+            curi.putLong(A_FETCH_OVERDUE,overdue);
             return curi;
         } catch (IOException e) {
             // TODO: Need to handle this in an intelligent manner. 
@@ -481,7 +481,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
 
             System.out.println("RTE in innerFinished() " + e.getMessage());
             e.printStackTrace();
-            curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
+            curi.putObject(A_RUNTIME_EXCEPTION, e);
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
@@ -494,9 +494,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @param curi CrawlURI with errors.
      */
     private void logLocalizedErrors(CrawlURI curi) {
-        if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
-            List localErrors = (List)curi.getAList().
-                getObject(A_LOCALIZED_ERRORS);
+        if(curi.containsKey(A_LOCALIZED_ERRORS)) {
+            List localErrors = (List)curi.getObject(A_LOCALIZED_ERRORS);
             Iterator iter = localErrors.iterator();
             while(iter.hasNext()) {
                 Object array[] = {curi, iter.next()};
@@ -504,7 +503,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
                     curi.getUURI().toString(), array);
             }
             // once logged, discard
-            curi.getAList().remove(A_LOCALIZED_ERRORS);
+            curi.remove(A_LOCALIZED_ERRORS);
         }
     }
     
@@ -517,26 +516,24 @@ public class AdaptiveRevisitFrontier extends ModuleType
         totalProcessedBytes += curi.getContentSize();
         curi.aboutToLog();
         
-        if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
+        if(curi.containsKey(A_WAIT_INTERVAL)){
             curi.addAnnotation("wt:" + 
                     ArchiveUtils.formatMillisecondsToConventional(
-                    (curi.getAList().getLong(A_WAIT_INTERVAL))));
+                    (curi.getLong(A_WAIT_INTERVAL))));
         } else {
             logger.severe("Missing wait interval for " + curi.getURIString() +
                     " WaitEvaluator may be missing.");
         }
-        if(curi.getAList().containsKey(A_NUMBER_OF_VISITS)){
-            curi.addAnnotation(Integer.toString(
-                    curi.getAList().getInt(A_NUMBER_OF_VISITS)) + "vis");
+        if(curi.containsKey(A_NUMBER_OF_VISITS)){
+            curi.addAnnotation(curi.getInt(A_NUMBER_OF_VISITS) + "vis");
         }
-        if(curi.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
-            curi.addAnnotation(Integer.toString(
-                    curi.getAList().getInt(A_NUMBER_OF_VERSIONS)) + "ver");
+        if(curi.containsKey(A_NUMBER_OF_VERSIONS)){
+            curi.addAnnotation(curi.getInt(A_NUMBER_OF_VERSIONS) + "ver");
         }
-        if(curi.getAList().containsKey(A_FETCH_OVERDUE)){
+        if(curi.containsKey(A_FETCH_OVERDUE)){
             curi.addAnnotation("ov:" +
                     ArchiveUtils.formatMillisecondsToConventional(
-                    (curi.getAList().getLong(A_FETCH_OVERDUE))));
+                    (curi.getLong(A_FETCH_OVERDUE))));
         }
         
         Object array[] = { curi };
@@ -554,10 +551,10 @@ public class AdaptiveRevisitFrontier extends ModuleType
         
         curi.setSchedulingDirective(CrawlURI.NORMAL);
 
-        long waitInterval = curi.getAList().getLong(A_WAIT_INTERVAL);
+        long waitInterval = curi.getLong(A_WAIT_INTERVAL);
 
         // Set time of next processing
-        curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,
+        curi.putLong(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+waitInterval);
         
         
@@ -566,7 +563,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
         discardUnneededCrawlURIInfo(curi);
         try {
             hq.update(curi,true,
-                    curi.getAList().getLong(A_FETCH_COMPLETED_TIME) + 
+                    curi.getLong(A_FETCH_COMPLETED_TIME) + 
                     calculateSnoozeTime(curi));
         } catch (IOException e) {
             logger.severe("An IOException occured when updating " + 
@@ -593,8 +590,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
         
         long delay = 0;
         if(errorWait){
-            if(curi.getAList().containsKey(A_RETRY_DELAY)) {
-                delay = curi.getAList().getInt(A_RETRY_DELAY);
+            if(curi.containsKey(A_RETRY_DELAY)) {
+                delay = curi.getLong(A_RETRY_DELAY);
             } else {
                 // use overall default
                 delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
@@ -643,7 +640,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
         
         // Put the failed URI at the very back of the queue.
         curi.setSchedulingDirective(CrawlURI.NORMAL);
-        curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); // TODO: reconsider this
+        curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); // TODO: reconsider this
         discardUnneededCrawlURIInfo(curi);
 
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
@@ -677,7 +674,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
         }
         disregardedUriCount++;
         
-        curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); //Todo: consider timout before retrying disregarded elements.
+        curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); //Todo: consider timout before retrying disregarded elements.
         curi.setSchedulingDirective(CrawlURI.NORMAL);
         discardUnneededCrawlURIInfo(curi);
 
@@ -802,12 +799,12 @@ public class AdaptiveRevisitFrontier extends ModuleType
     protected long calculateSnoozeTime(CrawlURI curi)
     throws AttributeNotFoundException {
         long durationToWait = 0;
-        if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
-            && curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
+        if (curi.containsKey(A_FETCH_BEGAN_TIME)
+            && curi.containsKey(A_FETCH_COMPLETED_TIME)) {
 
-            long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+            long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
             long durationTaken = 
-                (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+                (completeTime - curi.getLong(A_FETCH_BEGAN_TIME));
             
             durationToWait = (long)(
                     ((Float) getAttribute(ATTR_DELAY_FACTOR, curi))

@@ -179,7 +179,7 @@ public class PreconditionEnforcer
                 // Don't fetch and turn off later stages of processing.
                 curi.skipToProcessorChain(getController().getPostprocessorChain());
                 curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-                curi.getAList().putString("error","robots.txt exclusion");
+                curi.putString("error","robots.txt exclusion");
                 logger.fine("robots.txt precluded " + curi);
                 return true;
             }
@@ -188,7 +188,7 @@ public class PreconditionEnforcer
         // No valid robots found => Attempt to get robots.txt failed
         curi.skipToProcessorChain(getController().getPostprocessorChain());
         curi.setFetchStatus(S_ROBOTS_PREREQUISITE_FAILURE);
-        curi.getAList().putString("error","robots.txt prerequisite failed");
+        curi.putString("error","robots.txt prerequisite failed");
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("robots.txt prerequisite failed " + curi);
         }

@@ -99,12 +99,12 @@ public class UURIFactoryTest extends TestCase {
     
     public final void testBadPath() {
         String message = null;
-        UURI uuri = null;
         try {
-            uuri = UURIFactory.getInstance("http://ads.as4x.tmcs.net/" +
-            "html.ng/site=cs&pagepos=102&page=home&adsize=1x1&context=" +
-            "generic&Params.richmedia=yes%26city%3Dseattle%26" +
-            "rstid%3D2415%26market_id%3D86%26brand%3Dcitysearch%6state%3DWA");
+            UURIFactory.getInstance("http://ads.as4x.tmcs.net/" +
+                "html.ng/site=cs&pagepos=102&page=home&adsize=1x1&context=" +
+                "generic&Params.richmedia=yes%26city%3Dseattle%26" +
+                "rstid%3D2415%26market_id%3D86%26brand%3Dcitysearch" +
+                "%6state%3DWA");
         } catch (URIException e) {
             message = e.getMessage();
         }
@@ -114,7 +114,7 @@ public class UURIFactoryTest extends TestCase {
     public final void testEscapeEncoding() throws URIException {
         UURI uuri = UURIFactory.getInstance("http://www.y1y1.com/" +
             "albums/userpics/11111/normal_%E3%E4%EC%EC%EC.jpg", "windows-1256");
-        String u = uuri.getPath();
+        uuri.getPath();
     }   
     
     public final void testTooLongAfterEscaping() {
@@ -126,7 +126,7 @@ public class UURIFactoryTest extends TestCase {
         buffer.append("/index.html");
         String message = null;
         try {
-        	UURI uuri = UURIFactory.getInstance(buffer.toString());
+        	UURIFactory.getInstance(buffer.toString());
         } catch (URIException e) {
             message = e.getMessage();
         }
@@ -222,8 +222,7 @@ public class UURIFactoryTest extends TestCase {
             "etc_board_list.asp?board_name=new_main&b_type=&nPage=" +
             "2&category=G&lic_id=70&site=changeup&g_page=changeup&g_sPage=" +
             "notice&gate=02");
-        UURI uuri = UURIFactory.getInstance(base, "http://www.changeup.com/...</a");
-        int i = 0;
+        UURIFactory.getInstance(base, "http://www.changeup.com/...</a");
     }
     
 	public final void testTrimSpaceNBSP() throws URIException {
@@ -238,7 +237,7 @@ public class UURIFactoryTest extends TestCase {
 	
 	/**
 	 * Test space plus encoding ([ 1010966 ] crawl.log has URIs with spaces in them).
-	 * @see <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=1010966&group_id=73833&atid=539099">[ 1010966 ] crawl.log has URIs with spaces in them</a>.
+	 * See <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=1010966&group_id=73833&atid=539099">[ 1010966 ] crawl.log has URIs with spaces in them</a>.
 	 * @throws URIException
 	 */
 	public final void testSpaceDoubleEncoding() throws URIException {
@@ -252,7 +251,7 @@ public class UURIFactoryTest extends TestCase {
 	
 	/**
 	 * Test for doubly-encoded sequences.
-	 * @see <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=966219&group_id=73833&atid=539099">[ 966219 ] UURI doubly-encodes %XX sequences</a>.
+	 * See <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=966219&group_id=73833&atid=539099">[ 966219 ] UURI doubly-encodes %XX sequences</a>.
 	 * @throws URIException
 	 */
 	public final void testDoubleEncoding() throws URIException {
@@ -372,6 +371,7 @@ public class UURIFactoryTest extends TestCase {
 	
 	/**
 	 * Test for [ 1012520 ] UURI.length() &gt; 2k.
+	 * @throws URIException
 	 * @see <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=1012520&group_id=73833&atid=539099">[ 1012520 ] UURI.length() &gt; 2k</a>
 	 */
 	public final void test2kURI() throws URIException {
@@ -438,8 +438,7 @@ public class UURIFactoryTest extends TestCase {
 	/**
 	 * Test for java.net.URI parses %20 but getHost null
 	 *
-	 * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=927940&group_id=73833&atid=539099">[ 927940 ] java.net.URI parses %20 but getHost null</a>
-	 * @throws URIException If fail to get host.
+	 * See <a href="https://sourceforge.net/tracker/?func=detail&aid=927940&group_id=73833&atid=539099">[ 927940 ] java.net.URI parses %20 but getHost null</a>
 	 */
 	public final void testSpaceInHost() {
 		boolean expectedException = false;
@@ -539,10 +538,15 @@ public class UURIFactoryTest extends TestCase {
 	 * @throws URIException
 	 */
 	public final void testUserinfo() throws URIException {
-		UURI uuri = UURIFactory.
-		getInstance("http://stack:StAcK@www.tyopaikat.com/robots.txt");
-		assertEquals("Not equal", uuri.getAuthority(),
-		"stack:StAcK@www.tyopaikat.com");
+        final String authority = "stack:StAcK@www.tyopaikat.com";
+        final String uri = "http://" + authority + "/robots.txt";
+		UURI uuri = UURIFactory.getInstance(uri);
+		assertEquals("Authority not equal", uuri.getAuthority(),
+            authority);
+        /*
+        String tmp = uuri.toString();
+        assertTrue("URI not equal", tmp.equals(uri));
+        */
 	}
 	
 	/**

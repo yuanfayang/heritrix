@@ -24,6 +24,7 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -117,5 +118,21 @@ public class IoUtils {
         }
 
         return dir;
+    }
+
+    /**
+     * Read the entire stream to EOF, returning what's read as a String.
+     * 
+     * @param inputStream
+     * @return String of the whole inputStream's contents
+     * @throws IOException
+     */
+    public static String readFullyAsString(InputStream inputStream) throws IOException {
+        StringBuffer sb = new StringBuffer();
+        int c;
+        while((c = inputStream.read()) > -1) {
+            sb.append((char)c);
+        }
+        return sb.toString();
     }
 }

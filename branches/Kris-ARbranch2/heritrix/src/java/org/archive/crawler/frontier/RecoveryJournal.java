@@ -108,7 +108,15 @@ implements FrontierJournal {
     }
 
     public void finishedFailure(CrawlURI curi) {
-        write("\n" + F_FAILURE + curi.getURIString());
+        finishedFailure(curi.getURIString());
+    }
+    
+    public void finishedFailure(UURI uuri) {
+        finishedFailure(uuri.toString());
+    }
+    
+    public void finishedFailure(String u) {
+        write("\n" + F_FAILURE + u);
     }
 
     public void rescheduled(CrawlURI curi) {
@@ -129,11 +137,14 @@ implements FrontierJournal {
      * 
      * @param source Recover log path.
      * @param frontier Frontier reference.
+     * @param retainFailures
+     * @throws IOException
      * 
-     * @see org.archive.crawler.framework.Frontier#importRecoverLog(java.lang.String)
+     * @see org.archive.crawler.framework.Frontier#importRecoverLog(String, boolean)
      */
-    public static void importRecoverLog(File source, Frontier frontier, boolean retainFailures)
-            throws IOException {
+    public static void importRecoverLog(File source, Frontier frontier,
+            boolean retainFailures)
+    throws IOException {
         if (source == null) {
             throw new IllegalArgumentException("Passed source file is null.");
         }
@@ -142,13 +153,20 @@ implements FrontierJournal {
         String read;
         try {
             while ((read = reader.readLine()) != null) {
-                if (read.startsWith(F_SUCCESS)
+                boolean wasSuccess = read.startsWith(F_SUCCESS);
+                if (wasSuccess
 						|| (retainFailures && read.startsWith(F_FAILURE))) {
                     String args[] = read.split("\\s+");
                     try {
                         UURI u = UURIFactory.getInstance(args[1]);
                         frontier.considerIncluded(u);
-                        frontier.getFrontierJournal().finishedSuccess(u);
+                        if(wasSuccess) {
+                            frontier.getFrontierJournal().finishedSuccess(u);
+                        } else {
+                            // carryforward failure, in case future recovery
+                            // wants to no retain them as finished  
+                            frontier.getFrontierJournal().finishedFailure(u);
+                        }
                     } catch (URIException e) {
                         e.printStackTrace();
                     }
@@ -170,18 +188,12 @@ implements FrontierJournal {
                     String args[] = read.split("\\s+");
                     try {
                         u = UURIFactory.getInstance(args[1]);
-                        CandidateURI caUri = new CandidateURI(u);
-                        if (args.length > 2) {
-                            caUri.setPathFromSeed(args[2]);
-                        } else {
-                            caUri.setPathFromSeed("");
-                        }
-                        if (args.length > 3) {
-                            caUri.setVia(args[3]);
-                        } else {
-                            // filler
-                            caUri.setVia(source.getPath());
-                        }
+                        String pathFromSeed = (args.length > 2)?
+                            args[2]: "";
+                        String via = (args.length > 3)?
+                            args[3]: source.getPath();
+                        CandidateURI caUri = new CandidateURI(u, pathFromSeed,
+                            via);
                         frontier.schedule(caUri);
                     } catch (URIException e) {
                         e.printStackTrace();
@@ -196,6 +208,7 @@ implements FrontierJournal {
     }
     
     /**
+     * @param source
      * @return Recover log buffered reader.
      * @throws IOException
      */

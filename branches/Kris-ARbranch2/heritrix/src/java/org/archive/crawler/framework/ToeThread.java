@@ -302,7 +302,7 @@ public class ToeThread extends Thread
         currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
         // store exception temporarily for logging
         currentCuri.addAnnotation("err="+e.getClass().getName());
-        currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION, e);
+        currentCuri.putObject(A_RUNTIME_EXCEPTION, e);
         String title = "Problem occured processing '"
                 + currentCuri.getURIString() + "'";
         String message = "Problem " + e + 

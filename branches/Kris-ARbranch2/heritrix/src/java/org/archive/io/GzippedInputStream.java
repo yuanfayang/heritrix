@@ -62,12 +62,15 @@ public class GzippedInputStream extends GZIPInputStream
      * Used to find next gzip member.
      */
     private GzipHeader gzipHeader = new GzipHeader();
+    
+    private static final int LINUX_PAGE_SIZE = 4 * 1024;
 
-    private static final byte [] SKIP_BUFFER = new byte [4096];
+    private static final byte [] SKIP_BUFFER = new byte [LINUX_PAGE_SIZE];
     
     
     public GzippedInputStream(InputStream in) throws IOException {
-        this(in, 512);
+        // Have buffer match linux page size.
+        this(in, LINUX_PAGE_SIZE);
     }
     
     public GzippedInputStream(InputStream in, int size) throws IOException {

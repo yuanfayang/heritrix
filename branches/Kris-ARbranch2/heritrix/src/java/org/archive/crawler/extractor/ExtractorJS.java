@@ -59,7 +59,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     // (no whitespace or '<' '>',  has an internal dot or some slash,
     // begins and ends with either '/' or a word-char)
     static final String STRING_URI_EXTRACTOR =
-        "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)";
+        "(?:\\w|[\\.]{0,2}/)[\\S&&[^<>]]*(?:\\.|/)[\\S&&[^<>]]*(?:\\w|/)";
 
     // finds strings in javascript likely to be URIs/paths
     // guessing based on '.' in string, so if highly likely to
@@ -84,7 +84,10 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     public void innerProcess(CrawlURI curi) {
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!curi.isHttpTransaction())
         {
             return;
@@ -95,8 +98,9 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
             return;
         }
         if((contentType.indexOf("javascript")<0)
-            &&(contentType.indexOf("jscript")<0)
-            &&(contentType.indexOf("ecmascript")<0)) {
+            && (contentType.indexOf("jscript")<0)
+            && (contentType.indexOf("ecmascript")<0)
+            && (!curi.getURIString().toLowerCase().endsWith(".js"))) {
             return;
         }
 

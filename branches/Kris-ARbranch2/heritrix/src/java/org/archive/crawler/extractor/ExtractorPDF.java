@@ -59,7 +59,10 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
     }
 
     protected void innerProcess(CrawlURI curi){
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!(curi.isHttpTransaction() && curi.getFetchStatus() == 200))
         {
             // TODO: generalize for when codes other than 200 might have good
@@ -108,7 +111,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
 
         if(uris!=null && uris.size()>0) {
             numberOfLinksExtracted += uris.size();
-            curi.getAList().putObject("html-links", uris);
+            curi.putObject("html-links", uris);
         }
 
         logger.fine(curi+" has "+uris.size()+" links.");

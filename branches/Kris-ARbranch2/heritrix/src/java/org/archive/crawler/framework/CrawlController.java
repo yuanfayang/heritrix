@@ -57,7 +57,6 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
-import org.archive.crawler.datamodel.ServerCacheFactory;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -171,7 +170,7 @@ public class CrawlController implements Serializable {
     private File scratchDisk; // for discardable temp files (eg fetch buffers)
 
     // checkpoint support
-    CheckpointContext cpContext;
+    private CheckpointContext cpContext;
 
     // crawl limits
     private long maxBytes;
@@ -364,6 +363,7 @@ public class CrawlController implements Serializable {
             // je.properties value
             envConfig.setCachePercent(bdbCachePercent);
         }
+        envConfig.setLockTimeout(5000000); // 5 seconds
         try {
             this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
             if (logger.isLoggable(Level.INFO)) {
@@ -540,15 +540,17 @@ public class CrawlController implements Serializable {
 
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
-             MBeanException, ReflectionException, ClassNotFoundException,
-             InstantiationException, IllegalAccessException {
+             MBeanException, ReflectionException {
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
         }
-        
-        this.serverCache =
-            ServerCacheFactory.getServerCache(getSettingsHandler());
+        try {
+            this.serverCache = new ServerCache(getSettingsHandler());
+        } catch (Exception e) {
+            throw new FatalConfigurationException("Unable to" +
+               " initialize frontier (Failed setup of ServerCache) " + e);
+        }
         
         if (frontier == null) {
             Object o = order.getAttribute(Frontier.ATTR_NAME);
@@ -643,8 +645,10 @@ public class CrawlController implements Serializable {
      * Do it here now so that when modules retrieve the object from the
      * controller during initialization (which some do), its in place.
      * @throws InvalidAttributeValueException
+     * @throws FatalConfigurationException
      */
-    private void setupStatTracking() throws InvalidAttributeValueException {
+    private void setupStatTracking()
+    throws InvalidAttributeValueException, FatalConfigurationException {
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
             // set up a default tracker
@@ -655,7 +659,7 @@ public class CrawlController implements Serializable {
         }
         Iterator it = loggers.iterator(null);
         while (it.hasNext()) {
-            StatisticsTracking tracker = (StatisticsTracking) it.next();
+            StatisticsTracking tracker = (StatisticsTracking)it.next();
             tracker.initialize(this);
             if (statistics == null) {
                 statistics = tracker;
@@ -665,19 +669,15 @@ public class CrawlController implements Serializable {
 
     private void setupLogs() throws IOException {
         String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+        uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
+        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
+            logsPath);
+        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
+        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
+        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." +
+            logsPath);
 
-        uriProcessing =
-            Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
-        runtimeErrors =
-            Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." + logsPath);
-        localErrors =
-            Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
-        uriErrors =
-            Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
-        progressStats =
-            Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." + logsPath);
-
-        fileHandlers = new HashMap();
+        this.fileHandlers = new HashMap();
 
         setupLogFile(
                 uriProcessing,
@@ -714,12 +714,12 @@ public class CrawlController implements Serializable {
     private void setupLogFile(Logger logger, String filename, Formatter f,
             boolean shouldManifest) throws IOException, SecurityException {
         GenerationFileHandler fh = new GenerationFileHandler(filename, true,
-                shouldManifest);
+            shouldManifest);
         fh.setFormatter(f);
         logger.addHandler(fh);
         addToManifest(filename, MANIFEST_LOG_FILE, shouldManifest);
         logger.setUseParentHandlers(false);
-        fileHandlers.put(logger, fh);
+        this.fileHandlers.put(logger, fh);
     }
 
     /**
@@ -749,7 +749,7 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Close all log files.
+     * Close all log files and remove handlers from loggers.
      */
     public void closeLogFiles() {
         Iterator iter = fileHandlers.keySet().iterator();
@@ -758,6 +758,7 @@ public class CrawlController implements Serializable {
             GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
                     .get(l);
             gfh.close();
+            l.removeHandler(gfh);
         }
     }
 
@@ -865,17 +866,28 @@ public class CrawlController implements Serializable {
         }
         
         closeLogFiles();
+        
+        // Release reference to logger file handler instances.
+        this.fileHandlers = null;
+        this.uriErrors = null;
+        this.uriProcessing = null;
+        this.localErrors = null;
+        this.runtimeErrors = null;
+        this.progressStats = null;
 
-        logger.info("Finished crawl.");
-
-        // Do cleanup to facilitate GC.
+        // Do cleanup.
+        this.statistics = null;
         this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;
         this.toePool = null;
         this.order = null;
         this.scope = null;
-        this.serverCache = null;
+        if (this.serverCache != null) {
+            this.serverCache.cleanup();
+            this.serverCache = null;
+        }
+        this.cpContext = null;
         if (this.classCatalogDB != null) {
             try {
                 this.classCatalogDB.close();
@@ -884,7 +896,16 @@ public class CrawlController implements Serializable {
             }
             this.classCatalogDB = null;
         }
-        this.bdbEnvironment = null;
+        if (this.bdbEnvironment != null) {
+            try {
+                this.bdbEnvironment.close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            }
+            this.bdbEnvironment = null;
+        }
+
+        logger.info("Finished crawl.");
     }
 
     private void completePause() {

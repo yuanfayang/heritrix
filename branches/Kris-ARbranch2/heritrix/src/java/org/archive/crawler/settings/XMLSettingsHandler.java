@@ -357,8 +357,10 @@ public class XMLSettingsHandler extends SettingsHandler {
 
         File newDir = getPathRelativeToWorkingDirectory(newSettingsDirectory);
 
-        // Copy the per host files
-        FileUtils.copyFiles(oldSettingsDirectory, newDir);
+        // Copy the per host files if src and dest directories are different.
+        if (oldSettingsDirectory.compareTo(newDir) != 0) {
+            FileUtils.copyFiles(oldSettingsDirectory, newDir);
+        }
     }
 
     /**

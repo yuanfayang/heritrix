@@ -155,8 +155,8 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
             /* Calculate curi's time of next processing */ 
             waitInterval = DEFAULT_INITIAL_WAIT_INTERVAL.longValue()*1000;
             // Retrieve wait interval
-            if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
-                waitInterval =  curi.getAList().getLong(A_WAIT_INTERVAL); 
+            if(curi.containsKey(A_WAIT_INTERVAL)){
+                waitInterval =  curi.getLong(A_WAIT_INTERVAL); 
                 // Revise the wait interval
                 if(curi.getContentState() == CrawlURI.CONTENT_CHANGED){
                     // Had changed. Decrease wait interval time.
@@ -206,6 +206,6 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
                 curi.getContentState() + " new wait interval: " + waitInterval);
                
         // Update wait interval
-        curi.getAList().putLong(A_WAIT_INTERVAL,waitInterval);    
+        curi.putLong(A_WAIT_INTERVAL,waitInterval);    
     }
 }

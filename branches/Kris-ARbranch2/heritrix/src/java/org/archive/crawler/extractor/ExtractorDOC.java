@@ -60,7 +60,10 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      *  text for valid URIs.
      */
     protected void innerProcess(CrawlURI curi){
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         ArrayList links  = new ArrayList();
         InputStream documentStream = null;
         Writer out = null;
@@ -136,7 +139,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
         // if we found any links add them to the curi for later processing
         if(links.size()>0) {
             numberOfLinksExtracted += links.size();
-            curi.getAList().putObject(A_HTML_LINKS, links);
+            curi.putObject(A_HTML_LINKS, links);
         }
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
         logger.fine(curi + " has " + links.size() + " links.");

@@ -56,10 +56,9 @@ import org.archive.crawler.settings.Type;
  * Could in the future also control whether current URI is retried.
  *
  * @author gojomo
- *
  */
-public class Postselector extends Processor implements CoreAttributeConstants,
-        FetchStatusCodes {
+public class Postselector extends Processor
+implements CoreAttributeConstants, FetchStatusCodes {
 
     private static Logger logger =
         Logger.getLogger(Postselector.class.getName());
@@ -79,10 +78,6 @@ public class Postselector extends Processor implements CoreAttributeConstants,
      */
     private MapType rejectLogFilters = null;
     
-
-    // limits on retries TODO: separate into retryPolicy?
-    //private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
-
     /**
      * @param name Name of this filter.
      */
@@ -148,51 +143,48 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
-     */
     protected void innerProcess(CrawlURI curi) {
-        logger.finest(getName()+" processing "+curi);
+        logger.finest(getName() + " processing " + curi);
 
         // handle any prerequisites
-        if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
+        if (curi.containsKey(A_PREREQUISITE_URI)) {
             handlePrerequisites(curi);
             return;
         }
 
         UURI baseUri = getBaseURI(curi);
         // handle http headers
-        if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
+        if (curi.containsKey(A_HTTP_HEADER_URIS)) {
             handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
                 CandidateURI.MEDIUM);
         }
         
         // handle embeds
-        if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+        if (curi.containsKey(A_HTML_EMBEDS)) {
             handleLinkCollection(curi, baseUri, A_HTML_EMBEDS, 'E',
                 CandidateURI.NORMAL);
         }
         
         // handle speculative embeds
-        if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
+        if (curi.containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
             handleLinkCollection(curi, baseUri,A_HTML_SPECULATIVE_EMBEDS, 'X',
                 CandidateURI.NORMAL);
         }
         
         // handle links
-        if (curi.getAList().containsKey(A_HTML_LINKS)) {
+        if (curi.containsKey(A_HTML_LINKS)) {
             handleLinkCollection(
                 curi, baseUri, A_HTML_LINKS, 'L', CandidateURI.NORMAL);
         }
         
         // handle css links
-        if (curi.getAList().containsKey(A_CSS_LINKS)) {
+        if (curi.containsKey(A_CSS_LINKS)) {
             handleLinkCollection(
                 curi, baseUri, A_CSS_LINKS, 'E', CandidateURI.NORMAL);
         }
         
         // handle js file links
-        if (curi.getAList().containsKey(A_JS_FILE_LINKS)) {
+        if (curi.containsKey(A_JS_FILE_LINKS)) {
             UURI viaURI = baseUri;
             if (curi.flattenVia() != null && curi.flattenVia().length() != 0) {
                 try {
@@ -209,10 +201,10 @@ public class Postselector extends Processor implements CoreAttributeConstants,
     }
 
     private UURI getBaseURI(CrawlURI curi) {
-        if (!curi.getAList().containsKey(A_HTML_BASE)) {
+        if (!curi.containsKey(A_HTML_BASE)) {
             return curi.getUURI();
         }
-        String base = curi.getAList().getString(A_HTML_BASE);
+        String base = curi.getString(A_HTML_BASE);
         try {
             return UURIFactory.getInstance(base);
         } catch (URIException e) {
@@ -226,19 +218,17 @@ public class Postselector extends Processor implements CoreAttributeConstants,
     protected void handlePrerequisites(CrawlURI curi) {
         try {
             // create and schedule prerequisite
-            UURI prereq = UURIFactory.getInstance(getBaseURI(curi),
-                (String)curi.getPrerequisiteUri());
-            CandidateURI caUri = new CandidateURI(prereq);
-            int prereqPriority = curi.getSchedulingDirective()-1;
+            CandidateURI caUri = createCandidateURI(curi, getBaseURI(curi),
+                (String)curi.getPrerequisiteUri(), curi.getPathFromSeed() +
+                    "P");
+            int prereqPriority = curi.getSchedulingDirective() - 1;
             if (prereqPriority < 0) {
                 prereqPriority = 0;
                 logger.severe("unable to promote prerequisite " + caUri +
                     " above " + curi);
             }
-            caUri.setSchedulingDirective(curi.getSchedulingDirective()-1);
+            caUri.setSchedulingDirective(curi.getSchedulingDirective() - 1);
             caUri.setForceFetch(true);
-            caUri.setVia(curi);
-            caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
             if (!schedule(caUri)) {
                 // prerequisite cannot be scheduled (perhaps excluded by scope)
                 // must give up on
@@ -246,26 +236,23 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 return;
             }
             // leave PREREQ in place so frontier can properly defer this curi
-        } catch (URIException ex) {
-            Object[] array = { curi, curi.getPrerequisiteUri() };
+       } catch (URIException ex) {
+            Object[] array = {curi, curi.getPrerequisiteUri()};
             getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
         } catch (NumberFormatException e) {
             // UURI.createUURI will occasionally throw this error.
-            Object[] array = { curi, curi.getPrerequisiteUri() };
-            getController().uriErrors.log(
-                Level.INFO,e.getMessage(), array);
+            Object[] array = {curi, curi.getPrerequisiteUri()};
+            getController().uriErrors.log(Level.INFO,e.getMessage(), array);
         }
     }
 
-
     /**
      * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
-     *
-     * @param caUri The CandidateURI to be scheduled
-     *
-     * @return true if CandidateURI was accepted by crawl scope, false otherwise
+     * @param caUri The CandidateURI to be scheduled.
+     * @return true if CandidateURI was accepted by crawl scope, false
+     * otherwise.
      */
-    private boolean schedule(CandidateURI caUri) {
+    protected boolean schedule(CandidateURI caUri) {
         if(getController().getScope().accepts(caUri)) {
             if (logger.isLoggable(Level.FINER)) {
                 logger.finer("Accepted: " + caUri);
@@ -312,9 +299,8 @@ public class Postselector extends Processor implements CoreAttributeConstants,
      * @param linkType Type of links.
      * @param directive how should URIs be scheduled
      */
-    private void handleLinkCollection(CrawlURI curi, UURI baseUri,
-            String collection, char linkType, int directive)
-    {
+    protected void handleLinkCollection(CrawlURI curi, UURI baseUri,
+            String collection, char linkType, int directive) {
         if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
             // do not follow links of error pages
             return;
@@ -322,8 +308,8 @@ public class Postselector extends Processor implements CoreAttributeConstants,
 
         // Check if this is a seed with a 301 or 302.
         boolean seed = false;
-        if ( curi.isSeed()
-                && (curi.getFetchStatus()==301 || curi.getFetchStatus()==302)
+        if ( curi.isSeed() && (curi.getFetchStatus() == 301 ||
+                    curi.getFetchStatus() == 302)
                 && collection.equals(A_HTTP_HEADER_URIS) ) {
             try {
                 // Check if redirects from seeds should be treated as seeds.
@@ -332,44 +318,51 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                     // Treat any discovered URIs as seeds. Should only be 1.
                     seed = true;
                 }
-            } catch (MBeanException e1) {
-                e1.printStackTrace();
-            } catch (ReflectionException e1) {
-                e1.printStackTrace();
+            } catch (MBeanException e) {
+                e.printStackTrace();
+            } catch (ReflectionException e) {
+                e.printStackTrace();
             } catch (AttributeNotFoundException e) {
                 e.printStackTrace();
             }
         }
 
-        Collection links = (Collection)curi.getAList().getObject(collection);
+        Collection links = (Collection)curi.getObject(collection);
         for (Iterator iter = links.iterator(); iter.hasNext(); ) {
             String link = (String)iter.next();
             if (link == null || link.length() <= 0) {
                 continue;
             }
             try {
-                UURI uuri = UURIFactory.getInstance(baseUri, link);
-                CandidateURI caURI = new CandidateURI(uuri);
+                CandidateURI caURI = createCandidateURI(curi, baseUri, link,
+                    curi.getPathFromSeed() + linkType);
                 caURI.setSchedulingDirective(directive);
                 caURI.setIsSeed(seed);
-                caURI.setVia(curi);
-                caURI.setPathFromSeed(curi.getPathFromSeed()+ linkType);
                 if (logger.isLoggable(Level.FINEST)) {
                     logger.finest("inserting link from " + collection +
-                        " of type " + linkType + " at head " + uuri);
+                        " of type " + linkType + " at head " +
+                        caURI.toString());
                 }
                 schedule(caURI);
-            } catch (URIException ex) {
-                Object[] array = { curi, link };
-                getController().uriErrors.log(
-                    Level.INFO,ex.getMessage(), array);
+            } catch (URIException e) {
+                Object[] array = {curi, link};
+                getController().uriErrors.log(Level.INFO, e.getMessage(),
+                    array);
             } catch (NumberFormatException e) {
                 // UURI.createUURI will occasionally throw this error.
-                Object[] array = { curi, link };
-                getController().uriErrors.log(
-                    Level.INFO,e.getMessage(), array);
+                Object[] array = {curi, link};
+                getController().uriErrors.log(Level.INFO, e.getMessage(),
+                    array);
             }
         }
     }
 
+    protected CandidateURI createCandidateURI(CrawlURI curi, UURI base,
+            String link, String pathFromSeed)
+    throws URIException {
+        CandidateURI caURI =
+            new CandidateURI(UURIFactory.getInstance(base, link), pathFromSeed,
+                curi);
+        return caURI;
+    }
 }

@@ -805,8 +805,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         File newFile = new File(newSettingsDir.getAbsolutePath(), filename);
 
         try {
-            newHandler.copySettings(newFile, (String) newHandler.getOrder()
-                    .getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
+            newHandler.copySettings(newFile, (String)newHandler.getOrder()
+                .getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
         } catch (IOException e3) {
             throw new FatalConfigurationException(
                     "IOException occured while writing new settings files" +

@@ -76,6 +76,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.MapType;
@@ -103,7 +104,7 @@ import org.archive.util.HttpRecorder;
  * @version $Id$
  */
 public class FetchHTTP extends Processor
-implements CoreAttributeConstants, FetchStatusCodes {
+implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
@@ -249,7 +250,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.curisHandled++;
 
         // Note begin time
-        curi.getAList().putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
+        curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
 
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
@@ -306,9 +307,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
         try {
             this.http.executeMethod(method);
         } catch (IOException e) {
-        	   failedExecuteCleanup(method, curi, e);
+        	failedExecuteCleanup(method, curi, e);
             method.releaseConnection();
-        	   return;
+        	return;
         } catch (ArrayIndexOutOfBoundsException e) {
             // For weird windows-only ArrayIndex exceptions in native
             // code... see
@@ -350,7 +351,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         // Note completion time
-        curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
+        curi.putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
         // Set the response charset into the HttpRecord if available.
@@ -385,9 +386,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
             // 401 is not 'success'.
             handle401(method, curi);
         }
-
-        // Save off the GetMethod just in case needed by subsequent processors.
-        curi.getAList().putObject(A_HTTP_TRANSACTION, method);
         
         if (rec.getRecordedInput().isOpen()) {
             logger.severe(curi.toString() + " RIS still open. Should have" +
@@ -417,6 +415,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
         curi.setFetchStatus(method.getStatusCode());
         Header ct = method.getResponseHeader("content-type");
         curi.setContentType((ct == null)? null: ct.getValue());
+        // Save method into curi too.  Midfetch filters may want to leverage
+        // info in here.
+        curi.putObject(A_HTTP_TRANSACTION, method);
     }
 
     /**
@@ -814,6 +815,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
     public void initialTasks() {
         super.initialTasks();
+        this.getController().addCrawlStatusListener(this);
         configureHttp();
 
         // load cookies from a file if specified in the order file.
@@ -1207,5 +1209,48 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 getHttp().getState().addCookie(cookies[i]);
             }
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
+     */
+    public void crawlEnding(String sExitMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        this.http = null;
+        this.midfetchfilters = null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+     */
+    public void crawlPaused(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        // TODO Auto-generated method stub
     }
 }

@@ -141,7 +141,7 @@ public class SurtPrefixSetTest extends TestCase {
                 equals("http://(com,blogspot,timmknibbs4senate,)/"));
         seed = "https://one.two.three";
         assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).equals("http://(three,two,one"));
+            makeSurtPrefix(seed).equals("http://(three,two,one,"));
         seed = "https://xone.two.three/a/b/c/";
         assertTrue("Convert failed " + seed,
             makeSurtPrefix(seed).

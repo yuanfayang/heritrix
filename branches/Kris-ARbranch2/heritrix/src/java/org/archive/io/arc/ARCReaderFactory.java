@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
 
 import org.archive.io.GzipHeader;
 import org.archive.io.GzippedInputStream;
@@ -185,7 +186,7 @@ public class ARCReaderFactory implements ARCConstants {
         
         /**
          * Constructor.
-         * @param arcfile Uncompressed arcfile to read.
+         * @param arcFile Uncompressed arcfile to read.
          * @throws IOException
          */
         public UncompressedARCReader(File arcFile) throws IOException {
@@ -244,7 +245,7 @@ public class ARCReaderFactory implements ARCConstants {
                 // at the end of this record.
                 ARCRecordMetaData meta = (this.currentRecord != null)?
                     rec.getMetaData(): null;
-                System.err.println("ERROR in " + this.arcFile +
+                logStdErr(Level.SEVERE, this.arcFile +
                     ": Record ENDING at " +
                     ((GzippedInputStream)this.in).getFilePointer() +
                     " has " + skipped + " trailing byte(s): " +

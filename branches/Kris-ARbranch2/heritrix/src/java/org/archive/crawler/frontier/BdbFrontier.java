@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +40,7 @@ import java.util.logging.Logger;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
+import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -66,11 +66,8 @@ import com.sleepycat.je.DatabaseException;
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
  * known hosts (queues), and pending URIs. 
  * 
- * EXPERIMENTAL 
- * CURRENT STATE: uses in-memory map of all known 'queues' inside a 
- * single BDB database. Round-robins between all queues. Encounters
- * BDB lock timeout exceptions if more than a tiny crawl; these seem
- * to be harmless. 
+ * Uses in-memory map of all known 'queues' inside a single BDB database.
+ * Round-robins between all queues.
  *
  * @author Gordon Mohr
  */
@@ -83,16 +80,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     /** truncate reporting of queues at some large but not unbounded number */
     private static final int REPORT_MAX_QUEUES = 5000;
 
-    private static final Logger logger = Logger.getLogger(BdbFrontier.class
-            .getName());
+    private static final Logger logger =
+        Logger.getLogger(BdbFrontier.class.getName());
     
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
 
     /** whether to hold queues INACTIVE until needed for throughput */
-    public final static String ATTR_BALANCE_REPLENISH_AMOUNT = "balance-replenish-amount";
-    protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT = new Integer(3000);
+    public final static String ATTR_BALANCE_REPLENISH_AMOUNT =
+        "balance-replenish-amount";
+    protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT =
+        new Integer(3000);
 
     /** total expenditure to allow a queue before 'retiring' it  */
     public final static String ATTR_QUEUE_TOTAL_BUDGET = "queue-total-budget";
@@ -100,7 +99,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     /** cost assignment policy to use (by class name) */
     public final static String ATTR_COST_POLICY = "cost-policy";
-    protected final static String DEFAULT_COST_POLICY = ZeroCostAssignmentPolicy.class.getName();
+    protected final static String DEFAULT_COST_POLICY =
+        ZeroCostAssignmentPolicy.class.getName();
 
     /** all URIs scheduled to be crawled */
     protected BdbMultipleWorkQueues pendingUris;
@@ -110,22 +110,32 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     protected UriUniqFilter alreadyIncluded;
 
     /** all known queues */
-    protected Map allQueues = new HashMap(); // of classKey -> BDBWorkQueue
+    protected Map allQueues = null; // of classKey -> BDBWorkQueue
 
-    /** all per-class queues whose first item may be handed out */
-    protected LinkedQueue readyClassQueues = new LinkedQueue(); // of BDBWorkQueue
+    /**
+     * All per-class queues whose first item may be handed out.
+     * Linked-list of keys for the queues.
+     */
+    protected LinkedQueue readyClassQueues = new LinkedQueue();
 
+    /** 
+     * All 'inactive' queues, not yet in active rotation.
+     * Linked-list of keys for the queues.
+     */
+    protected LinkedQueue inactiveQueues = new LinkedQueue();
+
+    /**
+     * 'retired' queues, no longer considered for activation.
+     * Linked-list of keys for queues.
+     */
+    protected LinkedQueue retiredQueues = new LinkedQueue();
+    
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = BagUtils.synchronizedBag(new HashBag()); // of BDBWorkQueue
 
     /** all per-class queues held in snoozed state, sorted by wake time */
-    protected SortedSet snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet());
-
-    /** all 'inactive' queues, not yet in active rotation */
-    protected LinkedQueue inactiveQueues = new LinkedQueue();
-
-    /** 'retired' queues, no longer considered for activation */
-    protected LinkedQueue retiredQueues = new LinkedQueue();
+    protected SortedSet snoozedClassQueues =
+        Collections.synchronizedSortedSet(new TreeSet());
 
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
@@ -213,12 +223,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         super.initialize(c);
         this.controller = c;
         try {
+            this.allQueues = BigMapFactory.getBigMap(this.getSettingsHandler(),
+               "allqueues", String.class, BdbWorkQueue.class);
             pendingUris = createMultipleWorkQueues();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
         }
+        
         try {
             costAssignmentPolicy = (CostAssignmentPolicy) Class.forName(
                     (String) getUncheckedAttribute(null, ATTR_COST_POLICY))
@@ -240,6 +256,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // all references because frontier instances stick around
         // betweeen crawls so the UI can build new jobs based off
         // the old and so old jobs can be looked at.
+        this.allQueues.clear();
         this.allQueues = null;
         this.inProcessQueues = null;
         if (this.alreadyIncluded != null) {
@@ -253,6 +270,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         this.snoozedClassQueues = null;
         this.queueAssignmentPolicy = null;
         this.readyClassQueues = null;
+        this.costAssignmentPolicy = null;
         // Clearing controller is a problem. We get
         // NPEs in #preNext.
         // this.controller = null;
@@ -356,7 +374,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private void readyQueue(BdbWorkQueue wq) {
         try {
-            readyClassQueues.put(wq);
+            readyClassQueues.put(wq.getClassKey());
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.err.println("unable to ready queue "+wq);
@@ -372,7 +390,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private void deactivateQueue(BdbWorkQueue wq) {
         try {
             wq.setSessionBalance(0); // zero out session balance
-            inactiveQueues.put(wq);
+            inactiveQueues.put(wq.getClassKey());
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.err.println("unable to deactivate queue "+wq);
@@ -387,7 +405,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private void retireQueue(BdbWorkQueue wq) {
         try {
-            retiredQueues.put(wq);
+            retiredQueues.put(wq.getClassKey());
             decrementQueuedCount(wq.getCount());
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -410,10 +428,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             // as retired/overbudget next time they come up, they'll
             // be re-retired; if not, they'll get a chance to become
             // active under the new rules.
-            BdbWorkQueue q = (BdbWorkQueue) retiredQueues.poll(0);
-            while(q != null) {
-                unretireQueue(q);
-                q = (BdbWorkQueue) retiredQueues.poll(0);
+            Object key = this.retiredQueues.poll(0);
+            if (key != null) {
+                BdbWorkQueue q = (BdbWorkQueue) retiredQueues.poll(0);
+                while(q != null) {
+                    unretireQueue(q);
+                    q = (BdbWorkQueue) retiredQueues.poll(0);
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -464,7 +485,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      *
      * @see org.archive.crawler.framework.Frontier#next()
      */
-    public CrawlURI next() throws InterruptedException, EndedException {
+    public CrawlURI next()
+    throws InterruptedException, EndedException {
         while (true) { // loop left only by explicit return or exception
             long now = System.currentTimeMillis();
 
@@ -479,10 +501,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             }
             // Don't wait if there are items buffered in alreadyIncluded or
             // inactive queues, or wait any longer than interval to next wake
-            long wait = (alreadyIncluded.pending() > 0)
-                    || (!inactiveQueues.isEmpty()) ? 0 : Math.min(DEFAULT_WAIT,timeTilWake);
-
-            BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
+            long wait = (alreadyIncluded.pending() > 0) ||
+                (!inactiveQueues.isEmpty())?
+                    0 :Math.min(DEFAULT_WAIT, timeTilWake);
+            BdbWorkQueue readyQ = null;
+            Object key = readyClassQueues.poll(wait);
+            if (key != null) {
+                readyQ = (BdbWorkQueue)this.allQueues.get(key);
+            }
             if (readyQ != null) {
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
@@ -503,13 +529,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                             curi.setClassKey(currentQueueKey);
                             readyQ.dequeue(this.pendingUris);
                             curi.setHolderKey(null);
-                            sendToQueue(curi);
+                            // curi will be sent to true queue after lock
+                            //  on readyQ is released, to prevent deadlock
                         } else {
                             // readyQ is empty and ready: release held, allowing
                             // subsequent enqueues to ready
                             readyQ.clearHeld();
                             break;
                         }
+                    }
+                    if(curi!=null) {
+                        // complete the requeuing begun earlier
+                        sendToQueue(curi);
                     }
                 }
             }
@@ -578,7 +609,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @throws InterruptedException
      */
     private void activateInactiveQueue() throws InterruptedException {
-        BdbWorkQueue candidateQ = (BdbWorkQueue) inactiveQueues.poll(0);
+        Object key = this.inactiveQueues.poll(0);
+        if (key == null) {
+            return;
+        }
+        BdbWorkQueue candidateQ = (BdbWorkQueue)this.allQueues.get(key);
         if(candidateQ != null) {
             synchronized(candidateQ) {
                 replenishSessionBalance(candidateQ);
@@ -606,7 +641,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this.pendingUris); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
-        queue.incrementSessionBalance(((Integer) getUncheckedAttribute(contextUri,
+        queue.setSessionBalance(((Integer) getUncheckedAttribute(contextUri,
                 ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
         queue.unpeek(); // don't insist on that URI being next released
     }
@@ -877,7 +912,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
         int retiredCount = retiredQueues.getCount();
-        StringBuffer rep = new StringBuffer();
+        StringBuffer rep =
+            new StringBuffer(10 * 1024 /*SWAG at final report size.*/);
 
         rep.append("Frontier report - "
                 + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
@@ -900,62 +936,54 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         rep.append(  "                       Snoozed: " + snoozedCount + "\n");
         rep.append(  "           Inactive queues: " + inactiveCount + "\n");
         rep.append(  "            Retired queues: " + retiredCount + "\n");
+        
         rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
-        Iterator iter = inProcessQueues.iterator();
-        int count = 0; 
-        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
-            BdbWorkQueue q = (BdbWorkQueue) iter.next();
-            count++;
-            rep.append(q.report());
-        }
-        if(inProcessQueues.size()>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(inProcessQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
-        }
+        appendQueueReports(rep, this.inProcessQueues.iterator(),
+            this.inProcessQueues.size(), REPORT_MAX_QUEUES);
+        
         rep.append("\n -----===== READY QUEUES =====-----\n");
-        iter = readyClassQueues.iterator();
-        count = 0; 
-        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
-            BdbWorkQueue q = (BdbWorkQueue) iter.next();
-            count++;
-            rep.append(q.report());
-        }
-        if(readyClassQueues.getCount()>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(readyClassQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
-        }
+        appendQueueReports(rep, this.readyClassQueues.iterator(),
+            this.readyClassQueues.getCount(), REPORT_MAX_QUEUES);
+
         rep.append("\n -----===== SNOOZED QUEUES =====-----\n");
-        count = 0;
-        iter = snoozedClassQueues.iterator();
-        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
-            BdbWorkQueue q = (BdbWorkQueue) iter.next();
-            count++;
-            rep.append(q.report());
-        }
-        if(snoozedClassQueues.size()>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(snoozedClassQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
-        }
+        appendQueueReports(rep, this.snoozedClassQueues.iterator(),
+            this.snoozedClassQueues.size(), REPORT_MAX_QUEUES);
+        
         rep.append("\n -----===== INACTIVE QUEUES =====-----\n");
-        iter = inactiveQueues.iterator();
-        count = 0; 
-        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
-            BdbWorkQueue q = (BdbWorkQueue) iter.next();
-            count++;
-            rep.append(q.report());
-        }
-        if(inactiveQueues.getCount()>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(inactiveQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
-        }
+        appendQueueReports(rep, this.inactiveQueues.iterator(),
+            this.inactiveQueues.getCount(), REPORT_MAX_QUEUES);
+        
         rep.append("\n -----===== RETIRED QUEUES =====-----\n");
-        iter = retiredQueues.iterator();
-        count = 0; 
-        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
-            BdbWorkQueue q = (BdbWorkQueue) iter.next();
-            count++;
-            rep.append(q.report());
-        }
-        if(retiredQueues.getCount()>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(retiredQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
-        }
+        appendQueueReports(rep, this.retiredQueues.iterator(),
+            this.retiredQueues.getCount(), REPORT_MAX_QUEUES);
+
         return rep.toString();
+    }
+    
+    /**
+     * Append queue report to general Frontier report.
+     * @param report StringBuffer to append to.
+     * @param iterator An iterator over 
+     * @param total
+     * @param max
+     */
+    protected void appendQueueReports(StringBuffer report, Iterator iterator,
+            int total, int max) {
+        Object obj;
+        BdbWorkQueue q;
+        for(int count = 0; iterator.hasNext() && (count < max); count++) {
+            obj = iterator.next();
+            if (obj ==  null) {
+                continue;
+            }
+            q = (obj instanceof BdbWorkQueue)?
+                (BdbWorkQueue)obj:
+                (BdbWorkQueue)this.allQueues.get(obj);
+            report.append(q.report());
+        }
+        if(total > max) {
+            report.append("...and " + (total - max) + " more.\n");
+        }
     }
 
     /**
@@ -974,6 +1002,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
+        CrawlURI temp = new CrawlURI(u);
+        temp.setClassKey(getClassKey(temp));
+        getQueueFor(temp).expend(getCost(temp));
     }
 }
 
