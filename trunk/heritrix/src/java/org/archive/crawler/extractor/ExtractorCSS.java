@@ -101,7 +101,13 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             // TODO: note problem
             return;
         }
+        numberOfLinksExtracted += processStyleCode(curi, cs);
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 
+    }
+
+    public static long processStyleCode (CrawlURI curi, CharSequence cs) {
+        long foundLinks = 0;
         try {
             Matcher uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
             while (uris.find()) {
@@ -111,16 +117,17 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
                 // Remove backslash(s), an escape character used in CSS URL
                 cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
-                numberOfLinksExtracted++;
+                foundLinks++;
                 curi.addLinkToCollection(cssUri, A_CSS_LINKS);
             }
             TextUtils.freeMatcher(uris);
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "ExtractorCSS StackOverflowError");
         }
-        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-    }
 
+        return foundLinks;
+        
+    }
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorCSS\n");
