@@ -514,7 +514,8 @@ public class Frontier
 		controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of disregard disposition.
 
 		// send to basic log 
-		Object array[] = { curi };
+        curi.aboutToLog();
+        Object array[] = { curi };
 		controller.uriProcessing.log(
 			Level.INFO,
 			curi.getUURI().getUriString(),
@@ -595,8 +596,9 @@ public class Frontier
 		
 		// release any other curis that were waiting for this to finish
 		releaseHeld(curi);	
-		
-		Object array[] = { curi };
+        
+		curi.aboutToLog();
+        Object array[] = { curi };
 		controller.uriProcessing.log(
 			Level.INFO,
 			curi.getUURI().getUriString(),
@@ -917,7 +919,8 @@ public class Frontier
 		controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
 		
 		// send to basic log 
-		Object array[] = { curi };
+        curi.aboutToLog();
+        Object array[] = { curi };
 		controller.uriProcessing.log(
 			Level.INFO,
 			curi.getUURI().getUriString(),

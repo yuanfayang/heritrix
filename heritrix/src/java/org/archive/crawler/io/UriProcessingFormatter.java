@@ -111,6 +111,8 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			+ duration
 			+ " "
 			+ mime
+            + " "
+            + curi.getAnnotations()
 			+ "\n"
 			+ "  "
 			+ curi.getPathFromSeed()
