@@ -270,11 +270,10 @@ public class CrawlerSettings {
      * @return Returns an iterator over the refinements.
      */
     public ListIterator refinementsIterator() {
-        if (hasRefinements()) {
-            return refinements.listIterator();
-        } else {
-            return null;
+        if (refinements == null) {
+            refinements = new ArrayList();
         }
+        return refinements.listIterator();
     }
     
     /**
@@ -334,7 +333,7 @@ public class CrawlerSettings {
      * @return true if this settings object has refinements attached to it.
      */
     public boolean hasRefinements() {
-        return refinements != null;
+        return refinements != null && !refinements.isEmpty();
     }
     
     /**
