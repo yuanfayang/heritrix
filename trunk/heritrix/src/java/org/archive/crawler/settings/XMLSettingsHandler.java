@@ -107,7 +107,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     public XMLSettingsHandler(File orderFile)
         throws InvalidAttributeValueException {
         super();
-        this.orderFile = orderFile;
+        this.orderFile = orderFile.getAbsoluteFile();
     }
 
     /** Initialize the SettingsHandler.
@@ -129,7 +129,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      */
     public void initialize(File source) {
         File tmpOrderFile = orderFile;
-        orderFile = source;
+        orderFile = source.getAbsoluteFile();
         this.initialize();
         orderFile = tmpOrderFile;
     }
