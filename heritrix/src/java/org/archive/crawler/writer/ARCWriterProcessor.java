@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -166,7 +167,7 @@ public class ARCWriterProcessor extends Processor
     /**
      * Reference to an ARCWriter.
      */
-    private ARCWriterPool pool = null;
+    transient private ARCWriterPool pool = null;
 
     /**
      * @param name
@@ -189,7 +190,7 @@ public class ARCWriterProcessor extends Processor
                 new Integer(this.arcMaxSize)));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new SimpleType(ATTR_PATH, "Where to store arc files", ""));
+            new SimpleType(ATTR_PATH, "Where to store arc files", "arcs"));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
             "Maximum active ARC writers in pool",
@@ -218,8 +219,16 @@ public class ARCWriterProcessor extends Processor
         }
         
         try {
-            // Set up the pool of ARCWriters.
-            this.pool =
+            setupPool();
+            
+        } catch (IOException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+    }
+
+    private void setupPool() throws IOException {
+		// Set up the pool of ARCWriters.
+		this.pool =
                 new ARCWriterPool(this.outputDir,
                     this.arcPrefix,
                     this.arcSuffix,
@@ -228,10 +237,6 @@ public class ARCWriterProcessor extends Processor
                     getMetadata(),
                     this.poolMaximumActive,
                     this.poolMaximumWait);
-            
-        } catch (IOException e) {
-            logger.warning(e.getLocalizedMessage());
-        }
     }
     
     /**
@@ -329,7 +334,7 @@ public class ARCWriterProcessor extends Processor
         return result;
     }
 
-    protected void readConfiguration()
+	protected void readConfiguration()
         throws AttributeNotFoundException, MBeanException, ReflectionException {
 
         // set up output directory
@@ -559,4 +564,10 @@ public class ARCWriterProcessor extends Processor
 	public void crawlResuming(String statusMessage) {
         // sExitMessage is unused.
 	}
+	
+    // custom serialization
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        setupPool();
+    }
 }
