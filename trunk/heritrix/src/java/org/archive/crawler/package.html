@@ -79,12 +79,16 @@
         supporting classes.
     
     <h3>Processor</h3>
+<img src="doc-files/processing_steps.png" 
+    alt="Processing Steps" style="width: 198px; height: 470px;" 
+    align="right" />
     <p>
         When a URI is crawled, a {@link org.archive.crawler.framework.ToeThread
         ToeThread} will execute a series of <tt>processors</tt> on it.
     <p>
         The processors are split into 5 distinct chains that are exectued in sequence:
-        <ol>
+       
+                       <ol>
             <li>Pre-fetch processing chain
             <li>Fetch processing chain
             <li>Extractor processing chain
@@ -154,6 +158,5 @@
         information it has gathered in the course of the crawl.<br>
         It is highly recommended that it always be used when running crawls via the UI.
         
-    	
 </body>
 </html>

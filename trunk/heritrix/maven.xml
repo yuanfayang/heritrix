@@ -2,12 +2,16 @@
 <project 
     default="dist"
     xmlns:j="jelly:core" 
-    xmlns:u="jelly:util" 
+    xmlns:define="jelly:define" 
+    xmlns:doc="doc" 
+    xmlns:artifact="artifact" 
+    xmlns:util="jelly:util" 
     xmlns:maven="jelly:maven"
     xmlns:ant="jelly:ant">
 
     <preGoal name="xdoc:jelly-transform">
         <attainGoal name="faq"/>
+        <attainGoal name="heritrix-javadoc"/>
     </preGoal> 
 
     <preGoal name="java:jar-resources"> 
@@ -112,11 +116,6 @@
         </copy>
     </postGoal>
 
-    <goal name="testing" >
-        <property name="webapp" value="XXXXXXXX" />
-        <attainGoal name="makewebapp" />
-    </goal>
-
     <goal name="jspc">
         <!--Compile down to servlets all in the ${webapp.name} webapp
             (Set this ant property before calling this goal).  Compile the 
@@ -201,4 +200,89 @@
             <arg value="${maven.username}@crawler.archive.org:/home/groups/a/ar/archive-crawler/htdocs/" />
         </exec>
     </goal>
+
+  <!--Below we override two goals out of the default javadoc plugin.
+      Override is because default tool does not copy doc-files nor
+      package.html.  The below is ugly but there is other means left
+      to us when the plugin only passes java files to the javadoc
+      ant task.
+    -->
+  <goal name="heritrix-javadoc"
+        prereqs="xdoc:init"
+        description="Generate API documentation (Override of the default
+        maven task because default leaves out package.html and doc-files)">
+                                                                                
+    <j:if test="${sourcesPresent == 'true'}">
+      <ant:mkdir dir="${maven.javadoc.destdir}"/>
+                                                                                
+      <!-- Get the year to display in the Javadocs -->
+      <ant:tstamp>
+         <ant:format property="currentYear" pattern="yyyy"/>
+      </ant:tstamp>
+      <ant:tstamp>
+        <j:choose>
+          <j:when test="${pom.inceptionYear.equals(currentYear)}">
+            <ant:format property="year" pattern="yyyy"/>
+          </j:when>
+          <j:otherwise>
+            <ant:format property="year" pattern="${pom.inceptionYear}-yyyy"/>
+          </j:otherwise>
+        </j:choose>
+      </ant:tstamp>
+                                                                                
+      <ant:property name="copyright"
+        value="Copyright &amp;copy; ${year} ${pom.organization.name}. All Rights Reserved." />
+                                                                                
+      <!-- calculate online/offline mode -->
+      <j:set var="online" value="${maven.javadoc.mode.online}"/>
+      <j:if test="${empty(online)}">
+        <j:set var="online" value="${maven.mode.online}"/>
+      </j:if>
+                                                                                
+      <j:choose>
+        <j:when test="${online}">
+          <util:tokenize var="links" delim="," trim="true">${maven.javadoc.links}</util:tokenize>
+          <j:forEach var="link" items="${links}">
+            <ant:echo>Linking with API information from ${link.trim()} ...</ant:echo>
+          </j:forEach>
+        </j:when>
+        <j:otherwise>
+          <util:tokenize var="links" delim="," trim="true">${maven.javadoc.offlineLinks}</util:tokenize>
+          <j:forEach var="link" items="${links}">
+            <ant:echo>Linking offline API information from ${link.trim()} ...</ant:echo>
+          </j:forEach>
+        </j:otherwise>
+      </j:choose>
+                                                                                
+      <j:set var="maxMemory" value="${maven.javadoc.maxmemory}" />
+                                                                                
+      <ant:mkdir dir="${maven.build.dir}/javadoc/" />
+      <ant:record name="${maven.build.dir}/javadoc/report.txt" action="start" /> 
+      <ant:javadoc
+        packagenames="${pom.package}.*"
+        destdir="${maven.javadoc.destdir}"
+        author="${maven.javadoc.author}"
+        public="${maven.javadoc.public}"
+        package="${maven.javadoc.package}"
+        private="${maven.javadoc.private}"
+        version="${maven.javadoc.version}"
+        use="${maven.javadoc.use}"
+        windowtitle="${maven.javadoc.windowtitle}"
+        doctitle="${maven.javadoc.windowtitle}"
+        bottom="${copyright}"
+        additionalparam="${maven.javadoc.additionalparam}"
+        useexternalfile="${maven.javadoc.useexternalfile}"
+            sourcepath="${pom.build.sourceDirectory}" 
+            source="${maven.javadoc.source}" >
+                                                                                
+        <ant:classpath>
+          <ant:path refid="maven.dependency.classpath"/>
+          <ant:path location="${maven.build.dest}"/>
+        </ant:classpath>
+     </ant:javadoc>
+
+      <ant:record name="${maven.build.dir}/javadoc/report.txt" action="stop" />
+    </j:if>
+                                                                                
+  </goal>
 </project>
