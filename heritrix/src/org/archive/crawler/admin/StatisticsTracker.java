@@ -79,16 +79,16 @@ public class StatisticsTracker extends AbstractTracker{
 	protected long totalKBPerSec = 0;
 	protected long downloadFailures = 0;
 	protected int busyThreads = 0; 
+	protected long totalProcessedBytes = 0;
 
 	/*
 	 * Cumulative data 
 	 */
-	protected long totalProcessedBytes = 0;
-	/** keep track of the file types we see (mime type -> count) */
+	/** Keep track of the file types we see (mime type -> count) */
 	protected HashMap mimeTypeDistribution = new HashMap();
-	// keep track of fetch status codes
+	/** Keep track of fetch status codes */
 	protected HashMap statusCodeDistribution = new HashMap();
-	// keep track of hosts
+	/** Keep track of hosts */
 	protected HashMap hostsDistribution = new HashMap();
 	
 	public StatisticsTracker() {
@@ -104,6 +104,7 @@ public class StatisticsTracker extends AbstractTracker{
 		pendingPages = urisInFrontierCount();
 		downloadedPages = successfulFetchAttempts();
 		downloadFailures = failedFetchAttempts();		
+		totalProcessedBytes = getTotalBytesWritten();
 		
 		if(totalFetchAttempts() == 0){
 			docsPerSecond = 0;
@@ -390,7 +391,7 @@ public class StatisticsTracker extends AbstractTracker{
 	 * @return The total number of uncompressed bytes written to disk
 	 */
 	public long getTotalBytesWritten() {
-		return totalProcessedBytes;
+		return shouldrun ? controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
 	}
 
 
@@ -417,8 +418,6 @@ public class StatisticsTracker extends AbstractTracker{
 		// Save hosts
 		incrementMapCount(hostsDistribution, curi.getServer().getHostname());
 		
-		// Save bytes
-		totalProcessedBytes += curi.getContentSize();
 	}
 
 	/* (non-Javadoc)

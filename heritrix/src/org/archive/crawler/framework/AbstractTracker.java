@@ -279,4 +279,11 @@ public abstract class AbstractTracker implements StatisticsTracking,
 		shouldrun = false;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.StatisticsTracking#crawlDuration()
+	 */
+	public long crawlDuration() {
+		return getCrawlerTotalElapsedTime();
+	}
+
 }

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <crawl-order comment="A simple crawl for development/example purposes" name="default-crawl">
 
- <scope class="org.archive.crawler.basic.Scope" max-link-hops="25" max-trans-hops="5" mode="domain">
+ <scope class="org.archive.crawler.basic.Scope" max-link-hops="25" max-trans-hops="5" mode="broad">
    
   <seeds src="jobs\20031211184317828\seeds-default-crawl.txt">http://www.archive.org</seeds>
  
  </scope>
  
- <behavior disk-path="disk" max-toe-threads="70">
+ <behavior disk-path="disk" max-bytes-download="0" max-document-download="0" max-time-sec="0" max-toe-threads="70">
    
   <http-headers From="archive-crawler-agent@lists.sourceforge.net" User-Agent="heritrix-aoc/alpha (+http://crawler.archive.org)"/>
 

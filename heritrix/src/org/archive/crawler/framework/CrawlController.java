@@ -79,6 +79,9 @@ public class CrawlController extends Thread {
 	public static final String XP_PROCESSORS = "//behavior/processors/processor";
 	public static final String XP_FRONTIER = "//behavior/frontier";
 	public static final String XP_CRAWL_SCOPE = "//scope";
+	public static final String XP_MAX_BYTES_DOWNLOAD = "//behavior/@max-bytes-download";
+	public static final String XP_MAX_DOCUMENT_DOWNLOAD = "//behavior/@max-document-download";
+	public static final String XP_MAX_TIME = "//behavior/@max-time-sec";
 	
 	protected String sExit; 
 
@@ -540,6 +543,24 @@ public class CrawlController extends Thread {
 		if(frontier.isEmpty())
 		{
 			sExit = CrawlJob.STATUS_FINISHED;
+		}
+		if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0))
+		{
+			// Hit the max byte download limit!
+			sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
+			shouldCrawl = false;
+		}
+		else if(order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0) > 0 && frontier.successfullyFetchedCount()>= order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0))
+		{
+			// Hit the max document download limit!
+			sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
+			shouldCrawl = false;
+		}
+		else if(order.getLongAt(XP_MAX_TIME,0) > 0 && statistics.crawlDuration()>= order.getLongAt(XP_MAX_TIME,0)*1000)
+		{
+			// Hit the max byte download limit!
+			sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
+			shouldCrawl = false;
 		}
 		return shouldCrawl && !frontier.isEmpty();
 	}

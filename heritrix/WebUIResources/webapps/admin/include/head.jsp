@@ -77,7 +77,6 @@
 			  return -1;
 			}
 
-			//document.write('<style> .menu{position: absolute;}</style>');
 			var timeOn = null
 			numMenus = 4;
 			document.onmouseover = hideAllMenus;
