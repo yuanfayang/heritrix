@@ -22,6 +22,7 @@
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.BufferedWriter" %>
 <%@ page import="java.io.IOException" %>
+<%@ page import="java.util.regex.*"%>
 <%@ page import="javax.management.MBeanInfo"%>
 <%@ page import="javax.management.Attribute"%>
 <%@ page import="javax.management.MBeanAttributeInfo"%>
@@ -55,7 +56,17 @@
 		p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td>\n");
 		p.append("<td><a class='help' href=\"javascript:doPop('");
 		p.append(TextUtils.escapeForJavascript(mbean.getDescription()));
-		p.append("')\">?</a></td></tr>\n");
+		p.append("')\">?</a></td>\n");
+
+		String shortDescription = mbean.getDescription();
+		// Need to cut off everything after the first sentance.
+		Pattern firstSentance = Pattern.compile("^[^\\.)]*\\.\\s");
+ 		Matcher m = firstSentance.matcher(mbean.getDescription());
+ 		if(m.find()){
+	 		shortDescription = m.group(0);
+		}
+ 		
+		p.append("<td colspan='2'><font size='-2'>" + shortDescription + "</font></td></tr>\n");
 
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
@@ -96,7 +107,7 @@
 					}
 					p.append("</td>\n");
 					
-					p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
+					p.append("<td width='100%'><table border='0' cellspacing='0' cellpadding='0'>\n");
 					p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
 					for(int i=0 ; i<list.size() ; i++){
 						p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
@@ -125,7 +136,7 @@
 						}
 						p.append(">");
 					}
-					p.append("</td>\n<td>");
+					p.append("</td>\n<td width='100%'>");
 
 					if(legalValues != null && legalValues.length > 0){
 						//Have legal values. Build combobox.
