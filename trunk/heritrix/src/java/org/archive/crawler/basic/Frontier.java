@@ -1197,6 +1197,8 @@ public class Frontier
 					rep.append("     Length:   " + kq.length() + "\n");
 					rep.append("     Is ready: " + kq.isReady() + "\n");
 					rep.append("     Status:   " + kq.state.toString() + "\n");
+                    rep.append("     Wakes in: " + (kq.getWakeTime()-System.currentTimeMillis()) + " msec\n"); 
+                    
 				}
 				else if(q[i] instanceof CrawlURI)
 				{
@@ -1204,6 +1206,7 @@ public class Frontier
 					rep.append("   Snooze item " + (i+1) + " - " + "CrawlUri" + "\n");
 					rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
 					rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
+                    rep.append("     Wakes in: " + (cu.getWakeTime()-System.currentTimeMillis()) + " msec\n"); 
 				}
 			}
 		}
