@@ -705,4 +705,12 @@ public class Heritrix
     {
         return warsdir;
     }
+    
+    /**
+     * @return Returns the HERITRIX_OUT_FILE.
+     */
+    public static String getHERITRIX_OUT_FILE()
+    {
+        return HERITRIX_OUT_FILE;
+    }
 }

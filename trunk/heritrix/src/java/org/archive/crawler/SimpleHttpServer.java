@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.NoSuchElementException;
 
 import org.mortbay.http.HttpServer;
+import org.mortbay.http.NCSARequestLog;
 import org.mortbay.http.SocketListener;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.WebApplicationContext;
@@ -67,9 +68,20 @@ public class SimpleHttpServer
         this.port = port;
         SocketListener listener = new SocketListener();
         listener.setPort(port);
-        server.addListener(listener);
-        server.setRootWebApp("root");
+        this.server.addListener(listener);
+        this.server.setRootWebApp("root");
         this.contexts = server.addWebApplications(null, getWARSPath(), true);
+        
+        // Have accesses go into the stdout/stderr log for now.  Later, if
+        // demand, we'll have accesses go into their own file.
+        NCSARequestLog a = new NCSARequestLog(Heritrix.getHERITRIX_OUT_FILE());
+        a.setRetainDays(90);
+        a.setAppend(true);
+        a.setExtended(false);
+        a.setBuffered(false);
+        a.setLogTimeZone("GMT");
+        a.start();
+        this.server.setRequestLog(a);
     }
     
     /**
