@@ -24,6 +24,14 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class SimpleLinkExtractor extends Processor implements CoreAttributeConstants {
+	static Pattern BASE_EXTRACTOR = Pattern.compile(
+		"(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>");
+	static Pattern LINK_EXTRACTOR = Pattern.compile(
+	 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+	);
+	static Pattern EMBED_EXTRACTOR = Pattern.compile(
+	 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+	);
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -60,9 +68,7 @@ public class SimpleLinkExtractor extends Processor implements CoreAttributeConst
 			return;
 		}
 		// extract BASE HREF
-		Pattern baseExtractor = Pattern.compile(
-			"(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|([\\S&&[^>]]*))(?:[^>]+)*>");
-		Matcher b = baseExtractor.matcher(cb);
+		Matcher b = BASE_EXTRACTOR.matcher(cb);
 		if(b.find()) {
 			String baseHref;
 			if (b.group(1)!=null) {
@@ -79,10 +85,7 @@ public class SimpleLinkExtractor extends Processor implements CoreAttributeConst
 		}
 		
 		// extract links
-		Pattern linkExtractor = Pattern.compile(
-		 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|([\\S&&[^>]]*))(?:[^>]+)*>"
-		);
-		Matcher l = linkExtractor.matcher(cb);
+		Matcher l = LINK_EXTRACTOR.matcher(cb);
 		while(l.find()) {
 			String match;
 			if (l.group(1)!=null) {
@@ -103,10 +106,7 @@ public class SimpleLinkExtractor extends Processor implements CoreAttributeConst
 		}
 
 		// extract embeds
-		Pattern embedExtractor = Pattern.compile(
-		 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|([\\S&&[^>]]*))(?:[^>]+)*>"
-		);
-		Matcher e = embedExtractor.matcher(cb);
+		Matcher e = EMBED_EXTRACTOR.matcher(cb);
 		while(e.find()) {
 			String match;
 			if (e.group(1)!=null) {
