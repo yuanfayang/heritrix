@@ -28,12 +28,11 @@
 
 <%!
     /**
-     * Builds the HTML to edit a map of modules
+     * Builds the HTML to edit a map of Credentials
      *
      * @param map The map to edit
      * @param availibleOptions List of availible modules that can be added to the map
      *                         (full class names as Strings)
-     * @param name A short name for the map (only alphanumeric chars.)
      *
      * @return the HTML to edit the specified modules map
      */

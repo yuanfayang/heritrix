@@ -10,222 +10,17 @@
 %>
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
+<%@include file="/include/jobconfigure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
-<%@ page import="org.archive.crawler.admin.CrawlJobErrorHandler" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.datamodel.settings.*" %>
-<%@ page import="org.archive.util.TextUtils" %>
 <%@ page import="java.io.FileReader" %>
 <%@ page import="java.io.FileWriter" %>
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.BufferedWriter" %>
 <%@ page import="java.io.IOException" %>
-<%@ page import="java.util.regex.*"%>
-<%@ page import="javax.management.MBeanInfo"%>
-<%@ page import="javax.management.Attribute"%>
-<%@ page import="javax.management.MBeanAttributeInfo"%>
 
-<%!
-	/**
-	 * Builds up the the HTML code to display any ComplexType attribute
-	 * of the settings in an editable form. Uses recursion.
-	 *
-	 * @param mbean The ComplexType to build a display
-	 * @param indent A string that will be added in front to indent the
-	 *               current type.
-	 * @param lists All 'lists' encountered will have their name added	 
-	 *              to this StringBuffer followed by a comma.
-	 * @param expert if true then expert settings will be included, else
-	 *               they will be hidden.
-	 * @param errorHandler the error handler for the current job
-	 * @returns The HTML code described above.
-	 */
-	public String printMBean(ComplexType mbean, 
-	                         String indent, 
-	                         StringBuffer lists, 
-	                         boolean expert,
-	                         CrawlJobErrorHandler errorHandler) 
-	                     throws Exception {
-		if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
-			return "";
-		}
-		StringBuffer p = new StringBuffer();
-		MBeanInfo info = mbean.getMBeanInfo();
-        MBeanAttributeInfo[] a = info.getAttributes();
-        
-        if( mbean instanceof MapType && a.length ==0 ){
-            // Empty map, ignore it.
-            return "";
-        }
-        
-		p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td>\n");
-		p.append("<td><a class='help' href=\"javascript:doPop('");
-		p.append(TextUtils.escapeForJavascript(mbean.getDescription()));
-		p.append("')\">?</a></td>");
-
-		String shortDescription = mbean.getDescription();
-		// Need to cut off everything after the first sentance.
-		Pattern firstSentance = Pattern.compile("^[^\\.)]*\\.\\s");
- 		Matcher m = firstSentance.matcher(mbean.getDescription());
- 		if(m.find()){
-	 		shortDescription = m.group(0);
-		}
- 		
-		p.append("<td><font size='-2'>" + shortDescription + "</font></td></tr>\n");
-
-		for(int n=0; n<a.length; n++) {
-	        if(a[n] == null) {
-                p.append("  ERROR: null attribute");
-            } else {
-	            Object currentAttribute = null;
-				ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
-
-                if(att.isTransient()==false && (att.isExpertSetting()==false || expert)){
-					try {
-						currentAttribute = mbean.getAttribute(att.getName());
-					} catch (Exception e1) {
-						String error = e1.toString() + " " + e1.getMessage();
-						return error;
-					}
-	
-
-					if(currentAttribute instanceof ComplexType) {
-					    // Recursive call for complex types (contain other nodes and leaves)
-				    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",lists,expert,errorHandler));
-					} else {
-					    // Print out interface for simple types (leaves)
-                        String attAbsoluteName = mbean.getAbsoluteName() + "/" + att.getName();
-	                    if(currentAttribute instanceof ListType){
-							// Some type of list.
-							ListType list = (ListType)currentAttribute;
-							p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-							p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-							p.append(TextUtils.escapeForJavascript(att.getDescription()));
-							p.append("')\">?</a>&nbsp;</td>\n");
-							p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
-							p.append("<tr><td><select multiple name='" + attAbsoluteName + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
-							for(int i=0 ; i<list.size() ; i++){
-								p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
-							}
-							p.append("</select>");
-	                        p.append(checkError(attAbsoluteName,errorHandler));
-							p.append("</td>\n");
-							p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-							p.append("<tr><td><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
-							p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-							p.append("</table></td></tr>\n");
-		
-							lists.append("'"+mbean.getAbsoluteName() + "/" + att.getName()+"',");
-						} else {
-							Object[] legalValues = att.getLegalValues();
-							
-							p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-							p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-							p.append(TextUtils.escapeForJavascript(att.getDescription()));
-							p.append("')\">?</a>&nbsp;</td><td>\n");
-							
-							if(legalValues != null && legalValues.length > 0){
-								//Have legal values. Build combobox.
-								p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange='setUpdate()'>\n");
-								for(int i=0 ; i < legalValues.length ; i++){
-									p.append("<option value='"+legalValues[i]+"'");
-									if(currentAttribute.equals(legalValues[i])){
-										p.append(" selected");
-									}
-									p.append(">"+legalValues[i]+"</option>\n");
-								}
-								p.append("</select>\n");
-							} else if (currentAttribute instanceof Boolean){
-								// Boolean value
-								p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange='setUpdate()'>\n");
-								p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
-								p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
-								p.append("</select>\n");
-							} else if (currentAttribute instanceof TextField){
-								// Text area
-								p.append("<textarea name='" + attAbsoluteName + "' style='width: 320px' rows='4' onChange='setUpdate()'>");
-								p.append(currentAttribute + "\n");
-								p.append("</textarea>\n");
-							} else {
-								//Input box
-								p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 320px' onChange='setUpdate()'>\n");
-							}
-							
-							p.append(checkError(attAbsoluteName,errorHandler));
-							
-							p.append("</td></tr>\n");
-						}
-					}
-				}
-		    }
-		}
-		return p.toString();
-	}
-	
-	public String checkError(String key, CrawlJobErrorHandler errorHandler){
-        Constraint.FailedCheck failedCheck = (Constraint.FailedCheck)errorHandler.getError(key);
-        if(failedCheck!=null){
-	        return "<a class='help' style='color: red' href=\"javascript:doPop('" + 
-	            TextUtils.escapeForJavascript(failedCheck.getMessage()) + "')\">*</a>";
-	    } else {
-	       return "";
-	    }
-	}
-	
-	/**
-	 * This methods updates a ComplexType with information passed to it
-	 * by a HttpServletRequest. It assumes that for every 'simple' type
-	 * there is a corrisponding parameter in the request. A recursive
-	 * call will be made for any nested ComplexTypes.
-	 * 
-	 * @param mbean The ComplexType to update
-	 * @param request The HttpServletRequest to use to update the 
-	 *                ComplexType
-     * @param expert if true then expert settings are included, else
-     *               they should be ignored
-	 */
-	public void writeNewOrderFile(ComplexType mbean, HttpServletRequest request, boolean expert){
-		if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
-			return;
-		}
-		MBeanInfo info = mbean.getMBeanInfo();
-		MBeanAttributeInfo a[] = info.getAttributes();
-		for(int n=0; n<a.length; n++) {
-            Object currentAttribute = null;
-			ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
-			try {
-				currentAttribute = mbean.getAttribute(att.getName());
-			} catch (Exception e1) {
-				return;
-			}
-
-            if (att.isTransient() == false && (att.isExpertSetting()==false || expert)) {
-				if(currentAttribute instanceof ComplexType) {
-			    	writeNewOrderFile((ComplexType)currentAttribute, request, expert);
-				}
-				else if(currentAttribute instanceof ListType){
-					ListType list = (ListType)currentAttribute;
-					list.clear();
-					String[] elems = request.getParameterValues(mbean.getAbsoluteName() + "/" + att.getName());
-					for(int i=0 ; elems != null && i < elems.length ; i++){
-						list.add(elems[i]);
-					}
-				}
-				else{
-				    try{
-				       Attribute arr = new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName()));
-					   mbean.setAttribute(arr);
-    				} catch (Exception e1) {
-	   				    e1.printStackTrace();
-					   return;
-				    }
-				}
-			}
-		}
-	}
-%>
-<%
+<% 
 	// Load the job to configure.
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
     CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
@@ -256,7 +51,7 @@
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
 		errorHandler.clearErrors();
-		writeNewOrderFile(crawlOrder,request,expert);
+		writeNewOrderFile(crawlOrder,null,request,expert);
 		orderfile.setDescription(request.getParameter("meta/description"));
 		
 		settingsHandler.writeSettingsObject(orderfile);
@@ -316,7 +111,7 @@
 
 	// Get the HTML code to display the settigns.
 	StringBuffer listsBuffer = new StringBuffer();
-	String inputForm=printMBean(crawlOrder,"",listsBuffer,expert,errorHandler);
+	String inputForm=printMBean(crawlOrder,null,"",listsBuffer,expert,errorHandler);
 	// The listsBuffer will have a trailing comma if not empty. Strip it off.
 	String lists = listsBuffer.toString().substring(0,(listsBuffer.toString().length()>0?listsBuffer.toString().length()-1:0));
 
@@ -330,7 +125,7 @@
 
 	<script type="text/javascript">
 		function doAddList(listName){
-			newItem = document.getElementById(listName+"/add");
+			newItem = document.getElementById(listName+".add");
 			theList = document.getElementById(listName);
 			
 			if(newItem.value.length > 0){
@@ -377,9 +172,13 @@
             doSubmit();
 		}
 		
-		function setUpdate(){
+        function setUpdate(){
             document.frmConfig.update.value = "true";
-		}
+        }
+
+        function setEdited(name){
+            setUpdate();
+        }
 	</script>
 
 	<p>
@@ -425,7 +224,7 @@
 				<td valign="top">
 					Seeds:
 				</td>
-				<td></td>
+                <td></td>
 				<td>
 					<textarea name="seeds" style="width: 320px" rows="8" onChange="setUpdate()"><%
 						BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
