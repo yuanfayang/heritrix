@@ -94,7 +94,7 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	protected void setAt(long i, long val) {
 		try {
 			rawRafile.seek(i*(1+8));
-			rawRafile.write(0); // non-empty
+			rawRafile.writeByte(0); // non-empty
 			rawRafile.writeLong(val);
 		} catch (IOException e) {
 			// TODO Convert to runtime exception

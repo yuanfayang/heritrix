@@ -6,6 +6,8 @@
  */
 package org.archive.util;
 
+import java.util.logging.Logger;
+
 /**
  * Shell of functionality for a Set of primitive long fingerprints.
  * 
@@ -17,6 +19,7 @@ package org.archive.util;
  *
  */
 public abstract class AbstractLongFPSet {
+	private static Logger logger = Logger.getLogger("org.archive.util.AbstractLongFPSet");
 	// slot states
 	protected static byte EMPTY = -1;
 	// zero or positive means slot is filled
@@ -71,6 +74,7 @@ public abstract class AbstractLongFPSet {
 	 * @return true if set has changed
 	 */
 	public boolean add(long val) {
+		logger.fine("Adding "+val);
 		long i = indexFor(val);
 		if (i>=0) {
 			// positive index indicates already in set
@@ -132,6 +136,9 @@ public abstract class AbstractLongFPSet {
 				return candidateIndex;
 			}
 			candidateIndex++;
+			if (candidateIndex==1<<capacityPowerOfTwo) {
+				candidateIndex = 0; // wraparound
+			}
 		}
 	}
 
@@ -174,7 +181,7 @@ public abstract class AbstractLongFPSet {
 		clearAt(index);
 		long probeIndex = index+1;
 		while(true) {
-			if (probeIndex>=count) {
+			if (probeIndex==1<<capacityPowerOfTwo) {
 				probeIndex=0; //wraparound
 			}
 			if(getSlotState(probeIndex)<0) {
