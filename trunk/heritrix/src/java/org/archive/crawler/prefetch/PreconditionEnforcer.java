@@ -61,14 +61,14 @@ public class PreconditionEnforcer
 
     private final static Integer DEFAULT_IP_VALIDITY_DURATION = new Integer(-1);
     private final static Integer DEFAULT_ROBOTS_VALIDITY_DURATION =
-        new Integer(3*(60*24)); // three days
+        new Integer(60*60*24); // one day
 
-    /** minutes to keep IP information for */
+    /** seconds to keep IP information for */
     public final static String ATTR_IP_VALIDITY_DURATION
         = "ip-validity-duration-seconds";
     /** minutes to cache robots info */
     public final static String ATTR_ROBOTS_VALIDITY_DURATION
-        = "robot-validity-duration-m";
+        = "robot-validity-duration-seconds";
 
     /**
      * @param name
