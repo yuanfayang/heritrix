@@ -113,12 +113,13 @@ public class DiskQueue implements Queue, Serializable {
      * given directory, with a given prefix. 
      * @param file
      * @param file_prefix
+     * @throws IOException
      */
     public DiskQueue(File file, String file_prefix) throws IOException {
         this(file,file_prefix,false);
     }
 
-    private void lateInitialize() throws FileNotFoundException, IOException {
+    private void lazyInitialize() throws FileNotFoundException, IOException {
         if(bytes==null) {
             bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
             bytes.initializeStreams(0);
@@ -141,7 +142,7 @@ public class DiskQueue implements Queue, Serializable {
         //logger.finest(name+"("+length+"): "+o);
         try {
             if(!isInitialized) {
-                lateInitialize();
+                lazyInitialize();
             }
             // TODO: optimize this, for example by serializing to buffer, then
             // writing to disk on success
@@ -174,7 +175,7 @@ public class DiskQueue implements Queue, Serializable {
         Object o;
         try {
              if(!isInitialized) {
-                lateInitialize();
+                lazyInitialize();
             }
             o = headStream.readObject();
         } catch (IOException e) {
