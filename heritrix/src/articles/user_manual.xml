@@ -3312,7 +3312,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       |- filters</programlisting></para>
       </sect3>
 
-      <sect3>
+      <sect3 id="hoppath">
         <title>hoppath.pl</title>
 
         <para>This perl script, found in $HERITRIX_HOME/bin recreates the hop
@@ -3334,6 +3334,19 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>The L in the above example refers to the type of link followed
         (see <xref linkend="discoverypath" />).</para>
       </sect3>
+    <sect3 id="recoverylogmapper"><title>RecoverLogMapper</title>
+        <para><literal>org.archive.crawler.util.RecoveryLogMapper</literal>
+        is similar to <xref linkend="hoppath" />.  It was contributed by
+        Mike Schwartz. RecoverLogMapper parses a Heritrix recovery log file,
+(See <xref linkend="recover" />), and builds maps that allow a caller to look
+up any seed URL and get back an Iterator of all URLs successfully crawled from
+given seed.
+It also allows lookup on any crawled URL to find the seed URL from which the
+crawler reached that URL (through 1 or more discovered URL hops, which are
+collapsed in this lookup).</para>
+    </sect3>
+
+
     <sect3 id="jmxclient"><title>cmdline-jmxclient</title>
         <para>This jar file is checked in as a script.  It enables command-line
         control of Heritrix if Heritrix has been started up inside of a
@@ -3343,6 +3356,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         See also <xref linkend="mon_con" />.
         </para>
     </sect3>
+
     </sect2>
 
     <sect2 id="recover">
