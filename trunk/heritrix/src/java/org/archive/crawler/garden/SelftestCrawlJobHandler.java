@@ -61,11 +61,20 @@ public class SelftestCrawlJobHandler
         super();
     }
     
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.admin.CrawlJobHandler#startNextJob()
+     */
+    protected void startNextJob()
+    {
+        super.startNextJob();
+        logger.info("Selftest started.");
+    }
+
     public void crawlEnded(String sExitMessage)
     {
         // Output test results to stdout.
-        System.out.println((new Date()).toString() + " Running selftest" +
-             " postcrawl analysis unit tests.");  
+        logger.info("Running selftest postcrawl analysis unit tests.");  
         TestResult result = null;
         
         try
@@ -109,7 +118,7 @@ public class SelftestCrawlJobHandler
         
         finally
         {
-            System.out.println((new Date()).toString() + " Selftest " +
+            logger.info((new Date()).toString() + " Selftest " +
                 (result != null && result.wasSuccessful()? "PASSED": "FAILED"));
             SimpleHttpServer server = Heritrix.getHttpServer();
             if (server != null)

@@ -73,9 +73,6 @@ import org.archive.util.ArchiveUtils;
  * @author Gordon Mohr
  */
 public class CrawlController extends Thread {
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.framework.CrawlController");
-
     private static final String LOGNAME_PROGRESS_STATISTICS =
         "progress-statistics";
     private static final String LOGNAME_URI_ERRORS = "uri-errors";
@@ -102,13 +99,61 @@ public class CrawlController extends Thread {
 
     private File disk;
     private File scratchDisk;
+    
+    /**
+     * Messges from the crawlcontroller.
+     * 
+     * They appear on console.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.framework.CrawlController");
+    
+    /**
+     * Crawl progress logger.
+     * 
+     * No exceptions.  Logs summary result of each url processing. 
+     */
     public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
+    
+    /**
+     * This logger contains errors that we cannot manage w/i the scope of a job.
+     * 
+     * Would contain errors trying to set up a job or job general failure.
+     */
     public Logger runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
+    
+    /**
+     * This logger is for job-scoped logging.
+     * 
+     * Examples would be socket timeouts, exceptions thrown by extractors, etc.
+     */
     public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
+    
+    /**
+     * Unknown.
+     */
     public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
+    
+    /**
+     * Statistics tracker writes here at regular intervals.
+     */
     public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
+    
+    /**
+     * Crawl replay logger. 
+     * 
+     * Currently unimplemented.
+     */
     public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
+    
+    /**
+     * Logger to hold job summary report.
+     * 
+     * Large state reports made at infrequent intervals (e.g. job ending) go 
+     * here.
+     */
     public Logger reports = Logger.getLogger(LOGNAME_REPORTS);
+    
 
     // create a statistic tracking object and have it write to the log every 
     protected StatisticsTracking statistics = null;
@@ -151,11 +196,12 @@ public class CrawlController extends Thread {
         order.setController(this);
 
         if (checkUserAgentAndFrom(order) == false) {
-            throw new FatalConfigurationException(
-                "You must set the User-Agent and From HTTP header values "
-                    + "to acceptable strings before proceeding. \n"
-                    + " User-Agent: [software-name](+[info-url])[misc]\n"
-                    + " From: [email-address]");
+            String message = "You must set the User-Agent and From HTTP" +
+                " header values to acceptable strings before proceeding. \n" +
+                " User-Agent: [software-name](+[info-url])[misc]\n" +
+                " From: [email-address]";
+            runtimeErrors.severe(message);
+            throw new FatalConfigurationException(message);
         }
 
         sExit = "";
@@ -549,6 +595,8 @@ public class CrawlController extends Thread {
         controlThread.setName("crawlControl");
         controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
 
+        Iterator iterator = null;
+        
         // start periodic background logging of crawl statistics
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
@@ -566,9 +614,9 @@ public class CrawlController extends Thread {
 
                         // Tell everyone that we have paused
                         logger.info("Crawl job paused");
-                        Iterator it = registeredCrawlStatusListeners.iterator();
-                        while (it.hasNext()) {
-                            ((CrawlStatusListener) it.next()).crawlPaused(
+                        iterator = registeredCrawlStatusListeners.iterator();
+                        while (iterator.hasNext()) {
+                            ((CrawlStatusListener) iterator.next()).crawlPaused(
                                 CrawlJob.STATUS_PAUSED);
                         }
 
@@ -581,9 +629,9 @@ public class CrawlController extends Thread {
                     logger.info("Crawl job resumed");
 
                     // Tell everyone that we have resumed from pause
-                    Iterator it = registeredCrawlStatusListeners.iterator();
-                    while (it.hasNext()) {
-                        ((CrawlStatusListener) it.next()).crawlResuming(
+                    iterator = registeredCrawlStatusListeners.iterator();
+                    while (iterator.hasNext()) {
+                        ((CrawlStatusListener) iterator.next()).crawlResuming(
                             CrawlJob.STATUS_RUNNING);
                     }
                 }
@@ -601,9 +649,9 @@ public class CrawlController extends Thread {
         }
 
         // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
-        Iterator it = registeredCrawlStatusListeners.iterator();
-        while (it.hasNext()) {
-            ((CrawlStatusListener) it.next()).crawlEnding(sExit);
+        iterator = registeredCrawlStatusListeners.iterator();
+        while (iterator.hasNext()) {
+            ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
         }
 
         // Ok, now we are ready to exit.		
