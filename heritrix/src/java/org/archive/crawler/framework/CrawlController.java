@@ -62,7 +62,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.frontier.Frontier;
+import org.archive.crawler.frontier.HostQueuesFrontier;
 import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
@@ -122,7 +122,7 @@ public class CrawlController implements Serializable {
     private CrawlScope scope;
     private ProcessorChainList processorChains;
     transient ToePool toePool;
-    private URIFrontier frontier;
+    private Frontier frontier;
     transient private ServerCache serverCache;
     private SettingsHandler settingsHandler;
 
@@ -479,12 +479,12 @@ public class CrawlController implements Serializable {
         	scope.initialize(this);
         }
         if (frontier == null) {
-            Object o = order.getAttribute(URIFrontier.ATTR_NAME);
-            if (o instanceof URIFrontier) {
-                frontier = (URIFrontier) o;
+            Object o = order.getAttribute(Frontier.ATTR_NAME);
+            if (o instanceof Frontier) {
+                frontier = (Frontier) o;
             } else {
-                frontier = new Frontier(URIFrontier.ATTR_NAME);
-                order.setAttribute((Frontier) frontier);
+                frontier = new HostQueuesFrontier(Frontier.ATTR_NAME);
+                order.setAttribute((HostQueuesFrontier) frontier);
             }
 
             // try to initialize frontier from the config file
@@ -980,7 +980,7 @@ public class CrawlController implements Serializable {
     /**
      * @return The frontier.
      */
-    public URIFrontier getFrontier() {
+    public Frontier getFrontier() {
         return frontier;
     }
 

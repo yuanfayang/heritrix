@@ -34,7 +34,7 @@ package org.archive.crawler.framework;
  *
  * @author Kristinn Sigurdsson
  */
-public interface URIFrontierMarker {
+public interface FrontierMarker {
 
     /**
      * Returns the regular expression that this marker uses.

@@ -104,10 +104,10 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  * @see org.archive.crawler.framework.CrawlController#fireCrawledURISuccessfulEvent(CrawlURI)
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.ToeThread
- * @see org.archive.crawler.framework.URIFrontierHostStatistics
+ * @see org.archive.crawler.framework.FrontierHostStatistics
  * @see org.archive.crawler.settings.ModuleType
  */
-public interface URIFrontier {
+public interface Frontier {
 
     /**
      * All URI Frontiers should have the same 'name' attribute. This constant
@@ -323,7 +323,7 @@ public interface URIFrontier {
      * @return A URIFrontierMarker that is set for the 'start' of the frontier's
      *                URI list.
      */
-    public URIFrontierMarker getInitialMarker(String regexpr,
+    public FrontierMarker getInitialMarker(String regexpr,
                                               boolean inCacheOnly);
 
     /**
@@ -365,10 +365,10 @@ public interface URIFrontier {
      *            <code>URIFronterMarker</code> does not match the internal
      *            state of the frontier. Tolerance for this can vary
      *            considerably from one URIFrontier implementation to the next.
-     * @see URIFrontierMarker
+     * @see FrontierMarker
      * @see #getInitialMarker(String, boolean)
      */
-    public ArrayList getURIsList(URIFrontierMarker marker,
+    public ArrayList getURIsList(FrontierMarker marker,
                                  int numberOfMatches,
                                  boolean verbose)
                              throws InvalidURIFrontierMarkerException;

@@ -38,7 +38,7 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
 /**
- * Behaves like {@link Frontier} (i.e., a basic mostly breadth-first frontier),
+ * Behaves like {@link HostQueuesFrontier} (i.e., a basic mostly breadth-first frontier),
  * but with the addition that you can override the number of documents to
  * download for a specific host or domain.  Useful for case of frequent
  * revisits of a site of frequent changes.
@@ -50,7 +50,7 @@ import org.archive.crawler.settings.Type;
  * 
  * @author Oskar Grenholm <oskar at kb dot se>
  */
-public class DomainSensitiveFrontier extends Frontier {
+public class DomainSensitiveFrontier extends HostQueuesFrontier {
 
     public static final String ATTR_COUNTER = "counter";
 
@@ -80,7 +80,7 @@ public class DomainSensitiveFrontier extends Frontier {
      * Override that checks if we've reached download limits.
      * The only thing changed here is an added call to checkFinished
      * at the end of the method. Other than that it is identical to the one in
-     * {@link Frontier}.
+     * {@link HostQueuesFrontier}.
      */
     public synchronized void finished(CrawlURI curi) {
         super.finished(curi);

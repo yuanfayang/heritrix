@@ -31,7 +31,7 @@ import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.Frontier;
 
 
 /**
@@ -40,13 +40,13 @@ import org.archive.crawler.framework.URIFrontier;
  * @author Kristinn Sigurdsson
  *
  * @see org.apache.commons.collections.Predicate
- * @see org.archive.crawler.frontier.Frontier
+ * @see org.archive.crawler.frontier.HostQueuesFrontier
  */
 public class URIQueueMatcher implements Predicate {
 
     private Pattern p;
     private boolean delete = false;
-    private URIFrontier frontier;
+    private Frontier frontier;
 
     /**
      * Constructor.
@@ -59,9 +59,9 @@ public class URIQueueMatcher implements Predicate {
      *                <code>finish</code> method for final disposition.
      * @param frontier The parent frontier. This can be null if delete is false.
      *                Must be valid if delete is true.
-     * @see Frontier#deleted(CrawlURI)
+     * @see HostQueuesFrontier#deleted(CrawlURI)
      */
-    public URIQueueMatcher(String pattern, boolean delete, URIFrontier frontier){
+    public URIQueueMatcher(String pattern, boolean delete, Frontier frontier){
         p = Pattern.compile(pattern);
         this.delete = delete;
         this.frontier = frontier;

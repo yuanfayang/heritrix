@@ -48,8 +48,8 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.URIFrontier;
-import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
@@ -82,7 +82,7 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  */
 public class NewFrontier
     extends AbstractFrontier
-    implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
+    implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         HasUriReceiver {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(NewFrontier.class,1);
@@ -127,13 +127,13 @@ public class NewFrontier
     public NewFrontier(String name, String description) {
         // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         // therefore we'll ignore the supplied parameter.
-        super(URIFrontier.ATTR_NAME, description);
+        super(Frontier.ATTR_NAME, description);
     }
 
     /**
      * Initializes the Frontier, given the supplied CrawlController.
      *
-     * @see org.archive.crawler.framework.URIFrontier#initialize(org.archive.crawler.framework.CrawlController)
+     * @see org.archive.crawler.framework.Frontier#initialize(org.archive.crawler.framework.CrawlController)
      */
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
@@ -193,7 +193,7 @@ public class NewFrontier
      * Arrange for the given CandidateURI to be visited, if it is not
      * already scheduled/completed.
      *
-     * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void schedule(CandidateURI caUri) {
         synchronized(alreadyIncluded) {
@@ -267,7 +267,7 @@ public class NewFrontier
      *
      * @return next CrawlURI to be processed. Or null if none is available.
      *
-     * @see org.archive.crawler.framework.URIFrontier#next(int)
+     * @see org.archive.crawler.framework.Frontier#next(int)
      */
     public CrawlURI next() throws InterruptedException, EndedException {
         while(true) {
@@ -404,7 +404,7 @@ public class NewFrontier
      * via the next next() call, as a result of finished().
      *
      *  (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
+     * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public void finished(CrawlURI curi) {
         long now = System.currentTimeMillis();
@@ -620,7 +620,7 @@ public class NewFrontier
     }
 
     /**  (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
+     * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
         return alreadyIncluded.count();
@@ -629,9 +629,9 @@ public class NewFrontier
 
     
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
+     * @see org.archive.crawler.framework.Frontier#getInitialMarker(java.lang.String, boolean)
      */
-    public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
+    public FrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
         ArrayList keyqueueKeys = new ArrayList();
         if(allClassQueuesMap.size()!=0)
         {
@@ -641,7 +641,7 @@ public class NewFrontier
                 keyqueueKeys.add(q.next());
             }
         }
-        return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
+        return new HostQueuesFrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
     }
 
     /** (non-Javadoc)
@@ -652,13 +652,13 @@ public class NewFrontier
      * @return List of URIS.
      * @throws InvalidURIFrontierMarkerException
      */
-    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches,
+    public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
             boolean verbose) throws InvalidURIFrontierMarkerException {
-        if(marker instanceof FrontierMarker == false){
+        if(marker instanceof HostQueuesFrontierMarker == false){
             throw new InvalidURIFrontierMarkerException();
         }
 
-        FrontierMarker mark = (FrontierMarker)marker;
+        HostQueuesFrontierMarker mark = (HostQueuesFrontierMarker)marker;
         ArrayList list = new ArrayList(numberOfMatches);
 
         // inspect the KeyedQueues
@@ -698,7 +698,7 @@ public class NewFrontier
     private int inspectQueue( KeyedQueue queue,
                               String queueName,
                               ArrayList list,
-                              FrontierMarker marker,
+                              HostQueuesFrontierMarker marker,
                               boolean verbose,
                               int numberOfMatches)
                           throws InvalidURIFrontierMarkerException{
@@ -880,7 +880,7 @@ public class NewFrontier
 
     /**
      * Force logging, etc. of operator- deleted CrawlURIs
-     * @see org.archive.crawler.framework.URIFrontier#deleted(org.archive.crawler.datamodel.CrawlURI)
+     * @see org.archive.crawler.framework.Frontier#deleted(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void deleted(CrawlURI curi) {
         //treat as disregarded

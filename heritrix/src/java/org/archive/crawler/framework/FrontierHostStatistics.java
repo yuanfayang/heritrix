@@ -46,9 +46,9 @@ package org.archive.crawler.framework;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.URIFrontier
+ * @see org.archive.crawler.framework.Frontier
  */
-public interface URIFrontierHostStatistics {
+public interface FrontierHostStatistics {
 
     /**
      * Host has not been encountered by the Frontier, or has been encountered

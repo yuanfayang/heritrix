@@ -42,7 +42,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
@@ -51,7 +51,7 @@ import org.archive.crawler.settings.Type;
 /**
  * @author gojomo
  */
-public abstract class AbstractFrontier extends ModuleType implements URIFrontier,
+public abstract class AbstractFrontier extends ModuleType implements Frontier,
         FetchStatusCodes, CoreAttributeConstants {
     private static final Logger logger =
         Logger.getLogger(AbstractFrontier.class.getName());
@@ -167,42 +167,42 @@ public abstract class AbstractFrontier extends ModuleType implements URIFrontier
     }
     
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
+     * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount(){
         return queuedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
+     * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
         return successCount+failedCount+disregardedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
      */
     public long successfullyFetchedCount(){
         return successCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#failedFetchCount()
+     * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount(){
        return failedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#disregardedFetchCount()
+     * @see org.archive.crawler.framework.Frontier#disregardedFetchCount()
      */
     public long disregardedFetchCount() {
         return disregardedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#totalBytesWritten()
+     * @see org.archive.crawler.framework.Frontier#totalBytesWritten()
      */
     public long totalBytesWritten() {
         return totalProcessedBytes;
