@@ -233,7 +233,7 @@ public class Frontier
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
 
-        pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
+        pendingQueue = new DiskBackedQueue(c.getStateDisk(),"pendingQ",10000);
 
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
         //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
@@ -722,7 +722,7 @@ public class Frontier
         KeyedQueue kq = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
         if (kq==null) {
             try {
-                kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+                kq = new KeyedQueue(curi.getClassKey(),controller.getStateDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
                 kq.activate(); // TODO: have only a subset of queues by active at any one time
                 allClassQueuesMap.put(kq.getClassKey(),kq);
             } catch (IOException e) {
