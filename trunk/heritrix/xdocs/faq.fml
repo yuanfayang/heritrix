@@ -92,7 +92,12 @@ Eventually. For now, the crawler is still in early development, and only if you 
         Traps may be as innocent as a calendar that returns pages years into
         the future or not-so-innocent 
         <a href="http://spiders.must.die.net/">http://spiders.must.die.net/</a>.
+        Traps are created by CGIs/server-side code that dynamically conjures
+        'nonsense' pages or else exploits combination of soft and relative links
+        to generate URI paths of infinite variety and depth.
+        Once identified, use filters to guard against falling in.
         </p>
+
         <p>Another trap that works by feeding documents of infinite sizes
         to the crawler is
         http://yahoo.domain.com.au/tools/spiderbait.aspx* as in
