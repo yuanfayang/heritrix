@@ -144,7 +144,7 @@
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="currDomain" value="<%=currDomain%>">
         <input type="hidden" name="reference" value="<%=reference%>">
-        <table border="0" cellpadding="1" cellspacing="0" width="450">
+        <table border="0" cellpadding="1" cellspacing="0" width="600">
             <tr>
                 <td colspan="2" style="background-color: #0000FF; color: #FFFFFF">
                     &nbsp;<b>Existing criteria</b>
@@ -192,7 +192,7 @@
         
         <p>
           
-        <table border="0" cellpadding="1" cellspacing="0" width="450">
+        <table border="0" cellpadding="1" cellspacing="0" width="600">
             <tr>
                 <td colspan="6" style="background-color: #0000FF; color: #FFFFFF">
                     &nbsp;<b>Add Criteria</b>
@@ -200,13 +200,13 @@
             </tr>
             <tr>
                 <td>
-                    <b>Port number</b>:
+                    <b>Port number:</b>:
                 </td>
-                <td>
-                    Port: 
-                </td>
+                <td />
                 <td colspan="3">
                     <input name="port" style="width: 50px">
+                    <a class='help' href="javascript:alert('Triggered on URLs with specified port number.')">?</a>
+                </td>
                 </td>
                 <td>
                     <input type="button" value="Add" onClick="doAdd('port')">
@@ -220,14 +220,14 @@
                     From: 
                 </td>
                 <td>
-                    <input name="todFrom" style="width: 40px" maxlength="4">
+                    <input name="todFrom" style="width: 50px" maxlength="4">
                     <a class='help' href="javascript:alert('Time format is HHMM (hours and minutes). All times are GMT')">?</a>
                 </td>
                 <td>
                     To: 
                 </td>
-                <td width="140">
-                    <input name="todTo" style="width: 40px" maxlength="4">
+                <td width="100">
+                    <input name="todTo" style="width: 50px" maxlength="4">
                     <a class='help' href="javascript:alert('Time format is HHMM (hours and minutes). All times are GMT')">?</a>
                 </td>
                 <td>
@@ -236,13 +236,13 @@
             </tr>
             <tr>
                 <td>
-                    <b>Regular expr.</b>:&nbsp;
+                    <b>Regular expression</b>:&nbsp;
                 </td>
-                <td>
-                    Reg.expr: 
-                </td>
+                <td />
                 <td colspan="3">    
                     <input name="regexpr" style="width: 230px">
+                    <a class='help' href="javascript:alert('When URL matches specified regex, the refinement is triggered.')">?</a>
+                </td>
                 </td>
                 <td>
                     <input type="button" value="Add" onClick="doAdd('regExpr')">
@@ -253,11 +253,11 @@
                     <b>Content type</b>:&nbsp;
                 </td>
                 <td>
-                    Reg.expr: 
+                    Regex.
                 </td>
                 <td colspan="3">    
-                    <input name="ctregexpr" style="width: 216px">
-                    <a class='help' href="javascript:alert('NOTE: When using content type refinement, changes to settings that are checked prior to fetch completion will have no effect!\nThat is, if either no CrawlURI is specified when looking up the refinement, or one with no set mime type, this refinement will not match.')">?</a>
+                    <input name="ctregexpr" style="width: 230px">
+                    <a class='help' href="javascript:alert('When the content-type matches the specified regex, the refinement is triggered. NOTE: When using content type refinement, changes to settings that are checked prior to fetch completion will have no effect!\nThat is, if either no CrawlURI is specified when looking up the refinement, or one with no set mime type, this refinement will not match.')">?</a>
                 </td>
                 <td>
                     <input type="button" value="Add" onClick="doAdd('ContentType')">
