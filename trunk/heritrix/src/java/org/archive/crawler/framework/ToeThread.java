@@ -138,8 +138,8 @@ public class ToeThread extends Thread
                     try {
                         processCrawlUri();
                         step = STEP_ABOUT_TO_RETURN_URI;
+                        continueCheck();
                         synchronized(this) {
-                            continueCheck();
                             controller.getFrontier().finished(currentCuri);
                             currentCuri = null;
                         }
@@ -222,8 +222,12 @@ public class ToeThread extends Thread
      * @throws InterruptedException
      */
     private void continueCheck() throws InterruptedException {
-        if(Thread.interrupted()) {
-            throw new InterruptedException("die request detected");
+        synchronized(this) {
+            // this synchronization assures any change to shouldDie is reflected
+            // in this thread (if volatile proves unreliable)
+            if(Thread.interrupted()) {
+                throw new InterruptedException("die request detected");
+            }
         }
         controller.acquireMemory();
     }
