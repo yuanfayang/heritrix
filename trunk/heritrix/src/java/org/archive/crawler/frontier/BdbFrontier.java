@@ -172,6 +172,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     /** a policy for assigning 'cost' values to CrawlURIs */
     private CostAssignmentPolicy costAssignmentPolicy;
     
+    /** all policies available to be chosen */
+    String[] AVAILABLE_COST_POLICIES = new String[] {
+            DEFAULT_COST_POLICY,
+            UnitCostAssignmentPolicy.class.getName(),
+            WagCostAssignmentPolicy.class.getName(),
+            AntiCalendarCostAssignmentPolicy.class.getName()};
     /**
      * Create the BdbFrontier
      * 
@@ -241,15 +247,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         t.setExpertSetting(true);
         t.setOverrideable(true);
 
-        String[] availableCostPolicies = new String[] {
-                DEFAULT_COST_POLICY,
-                UnitCostAssignmentPolicy.class.getName(),
-                WagCostAssignmentPolicy.class.getName()};
-
         addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
                 "Policy for calculating the cost of each URI attempted. " +
                 "The default UnitCostAssignmentPolicy considers the cost of " +
-                "each URI to be '1'.", DEFAULT_COST_POLICY, availableCostPolicies));
+                "each URI to be '1'.", DEFAULT_COST_POLICY, AVAILABLE_COST_POLICIES));
         t.setExpertSetting(true);
     }
 
