@@ -997,7 +997,7 @@ public class CrawlController extends Thread {
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
-            caUri.setIsSeed(true);
+            caUri.setSeed();
             caUri.setSchedulingDirective(CandidateURI.HIGH);
             frontier.schedule(caUri);
         }

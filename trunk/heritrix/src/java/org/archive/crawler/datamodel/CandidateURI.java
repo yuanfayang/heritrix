@@ -74,10 +74,25 @@ public class CandidateURI implements Serializable, Lineable {
     }
     
     /**
-     * @param b
+     * Set the <tt>isSeed</tt> attribute of this URI. 
+     * @param b Is this URI a seed, true or false.
      */
     public void setIsSeed(boolean b) {
         isSeed=b;
+    }
+    
+    /**
+     * A quick way to mark this URI as being a seed. 
+     * 
+     * <p>Equal to calling:
+     * <code>
+     *   setIsSeed(true);
+     *   setPathFromSeed("");
+     *   setVia("")
+     * </code>
+     */
+    public void setSeed(){
+        isSeed=true;
         setPathFromSeed("");
         setVia("");
     }
@@ -99,7 +114,7 @@ public class CandidateURI implements Serializable, Lineable {
     /**
      * @return Whether seeded.
      */
-    public boolean getIsSeed() {
+    public boolean isSeed() {
         return isSeed;
     }
 
