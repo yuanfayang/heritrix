@@ -59,7 +59,8 @@ public class PreconditionEnforcer
     private static final Logger logger =
         Logger.getLogger(PreconditionEnforcer.class.getName());
 
-    private final static Integer DEFAULT_IP_VALIDITY_DURATION = new Integer(-1);
+    private final static Integer DEFAULT_IP_VALIDITY_DURATION = 
+        new Integer(60*60*6); // six hours 
     private final static Integer DEFAULT_ROBOTS_VALIDITY_DURATION =
         new Integer(60*60*24); // one day
 
@@ -79,15 +80,15 @@ public class PreconditionEnforcer
         Type e;
 
         e = addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
-                "How long a dns-record is considered valid (in seconds). \n" +
-                "If the value is set to '-1', then the dns-record's ttl-value" +
-                " will be used. If value is greater than the proffered" +
-                " dns-record's TTL, again, we will use the dns-record ttl.",
+                "The minimum interval for which a dns-record will be considered " +
+                "valid (in seconds). \n" +
+                "If the record's DNS TTL is larger, that will be used instead.",
                 DEFAULT_IP_VALIDITY_DURATION));
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_ROBOTS_VALIDITY_DURATION,
-                "The time in minutes, between refreshes of robots.txt.\n" +
+                "The time in seconds that fetched robots.txt information is " +
+                "considered to be valid.\n" +
                 "If the value is set to '0', then the robots.txt information" +
                 " will never expire.",
                 DEFAULT_ROBOTS_VALIDITY_DURATION));
@@ -275,10 +276,15 @@ public class PreconditionEnforcer
         }
 
         long ttl = host.getIpTTL();
-        if (duration < 0 || duration > ttl) {
-            // If duration is negative dns record's ttl should be used or if
-            // the specified duration is longer than the dns ttl.
+        if (ttl > duration) {
+            // Use the larger of the operator-set minimum duration 
+            // or the DNS record TTL
             duration = ttl;
+        }
+        
+        // catch old "default" settings that are now problematic
+        if (duration <= 0) {
+            duration = DEFAULT_IP_VALIDITY_DURATION.intValue();
         }
 
         // Duration and ttl are in seconds.  Convert to millis.
