@@ -55,9 +55,40 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 		if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
 			handleEmbeds(curi, baseUri);
 		}
+		// handle speculative embeds 
+		if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
+			handleSpeculativeEmbeds(curi, baseUri);
+		}
 		// handle links
 		if (curi.getAList().containsKey(A_HTML_LINKS)) {
 			handleLinks(curi, baseUri);
+		}
+	}
+
+	/**
+	 * @param curi
+	 * @param baseUri
+	 */
+	private void handleSpeculativeEmbeds(CrawlURI curi, URI baseUri) {
+		if (curi.getFetchStatus() >= 400) {
+			// do not follow links of error pages
+			return;
+		}
+		Collection embeds = (Collection)curi.getAList().getObject(A_HTML_SPECULATIVE_EMBEDS);
+		Iterator iter = embeds.iterator();
+		while(iter.hasNext()) {
+			String e = (String)iter.next();
+			try {
+				UURI embed = UURI.createUURI(e,baseUri);
+				CandidateURI caUri = new CandidateURI(embed);
+				caUri.setVia(curi);
+				caUri.setPathFromSeed(curi.getPathFromSeed()+"X");
+				logger.finest("inserting speculative embed at head "+embed);
+				schedule(caUri);
+			} catch (URISyntaxException ex) {
+				Object[] array = { curi, e };
+				controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
+			}
 		}
 	}
 

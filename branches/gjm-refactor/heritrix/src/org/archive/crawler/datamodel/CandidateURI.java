@@ -30,6 +30,7 @@ public class CandidateURI implements Serializable {
 	// P precondition
 	// R redirection
 	// E embedded (as frame, src, link, codebase, etc.)
+	// X speculative embed (as from javascript, some alternate-format extractors
 	// L link
 	// for example LLLE (an embedded image on a page 3 links from seed)
 	String pathFromSeed; 

@@ -206,7 +206,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		Matcher candidates = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(code);
 		while (candidates.find()) {
 			logger.finest("script: "+candidates.group(2)+ " from "+curi);
-			curi.addEmbed(candidates.group(2));
+			curi.addSpeculativeEmbed(candidates.group(2));
 			// TODO: treat "looks like" html URIs as links?
 		}
 	}
