@@ -81,7 +81,8 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 				
 				try {
 					while ( currentCuri.nextProcessor() != null ) {
-						getProcessor(currentCuri.nextProcessor()).process(currentCuri);
+						Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+						currentProcessor.process(currentCuri);
 					}
 				} catch (RuntimeException e) {
 					currentCuri.setFetchStatus(S_INTERNAL_ERROR);
