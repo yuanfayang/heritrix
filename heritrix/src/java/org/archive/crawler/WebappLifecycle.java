@@ -20,17 +20,16 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.admin.ui;
+package org.archive.crawler;
 
 import java.io.IOException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.archive.crawler.Heritrix;
 
 /**
- * Used to start and stop Heritrix when Heritrix is bundled as a webapp.
+ * Calls start and stop of Heritrix when Heritrix is bundled as a webapp.
  * @author stack
  * @version $Date$, $Revision$
  */
