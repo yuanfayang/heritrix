@@ -17,9 +17,9 @@ $Id$
 Heritrix is the Internet Archive's open-source, extensible, web-scale,
 archival-quality web crawler project. Heritrix (sometimes spelled heretrix, or
 misspelled or missaid as heratrix/heritix/heretix/heratix) is an archaic word
-for heiress (woman who inherits). Since our crawler seeks to collect the digital
-artifacts of our culture for the benefit of future researchers and generations,
-this name seemed apt. 
+for heiress (woman who inherits). Since our crawler seeks to collect and
+preserve the digital artifacts of our culture for the benefit of future
+researchers and generations, this name seemed apt. 
 
 2.0 Webmasters!
 Heritrix is designed to respect the robots.txt 
@@ -39,9 +39,8 @@ libraries necessary to run Heritrix in the distribution package.  They are
 listed along with pointers to their licenses in Section 8. Dependencies below.
 
 3.2. Hardware
-We recommend assigning at least 256MB RAM to the Java heap (via the
-"-Xmx256MB" VM argument), which is usually suitable for crawls that range over
-hundreds of hosts. 
+Default heap size is 256MB RAM.  This should be suitable for crawls that range
+over hundreds of hosts. 
 
 3.3. Linux
 The Heritrix crawler has been built and tested primarily on Linux. It has seen
@@ -61,6 +60,24 @@ See ./docs/articles/developer_manual.html or
 
 +---------------------------------------------------------------------+
 | Version |    Date    |                 Description                  |
+|---------+------------+----------------------------------------------|
+|         |            | Added new prefix ('SURT') scope and filter,  |
+|         |            | compression of recovery log, mass adding of  |
+| 1.0.0   | 2004-08-06 | URIs to running crawler, crawling via a http |
+|         |            | proxy, adding of headers to request, improved|
+|         |            | out-of-the-box defaults, hash of content to  |
+|         |            | crawl log and to arcreader output, and many  |
+|         |            | bug fixes.                                   |
+|---------+------------+----------------------------------------------|
+|         |            | Release for second heritrix workshop,        |
+|         |            | Copenhagen 06/2004 (1.0.0 first release      |
+|         |            | candidate). Added site-first prioritization, |
+|         |            | fixed link extraction of multibyte URIs,     |
+| 1.0.0   | 2004-08-06 | added metadata to arcs as xml, changed arc   |
+|         |            | naming template, new user and developer      |
+|         |            | manuals, added basic/digest auth and http    |
+|         |            | post/get login facility, and added help to   |
+|         |            | UI. Bug fixes.                               |
 |---------+------------+----------------------------------------------|
 |         |            | Release for second heritrix workshop,        |
 |         |            | Copenhagen 06/2004 (1.0.0 first release      |
@@ -118,6 +135,147 @@ See ./docs/articles/developer_manual.html or
 |---------+------------+----------------------------------------------|
 | 0.1.0   | 2003-12-31 | Mavenized build                              |
 +---------------------------------------------------------------------+
+
+Release 1.0.0 - 2004-08-06
+
++---------------------------------------------------------------------+
+| Type |                  Changes                   |       By        |
+|------+--------------------------------------------+-----------------|
+| add  | Mass-add URIs to running crawl and force   | gojomo          |
+|      | reconsideration                            |                 |
+|------+--------------------------------------------+-----------------|
+| add  | SurtPrefix scope (and filter)              | gojomo          |
+|------+--------------------------------------------+-----------------|
+| add  | Specification of default CharSequence      | stack-sf        |
+|      | charset                                    |                 |
+|------+--------------------------------------------+-----------------|
+| add  | crawl.log entries all on one line          | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| add  | Hash content-bodies, show in logs (and     | gojomo          |
+|      | future ARCs)                               |                 |
+|------+--------------------------------------------+-----------------|
+| add  | option to preference (quick-get) embeds    | gojomo          |
+|------+--------------------------------------------+-----------------|
+| add  | Compress recover.log                       | gojomo          |
+|------+--------------------------------------------+-----------------|
+| add  | [UURI ] 'http:///...' converted to         | gojomo          |
+|      | 'http://...'                               |                 |
+|------+--------------------------------------------+-----------------|
+| add  | enable use through HTTP proxy              | mark williamson |
+|------+--------------------------------------------+-----------------|
+| add  | Allow adding (subtracting?) http headers   | tom emerson     |
+|------+--------------------------------------------+-----------------|
+| add  | Improved out-of-the-box defaults           | andy boyko      | 
+|------+--------------------------------------------+-----------------|
+| add  | ARCWriter makes FAT gzip header            | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| add  | exponential backoff URI/host retries       | gojomo          |
+|------+--------------------------------------------+-----------------|
+| add  | Add in a nedlib harvest file writing       | stack-sf        |
+|      | processor                                  |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Total data "written" isn't necessarily     | gojomo          |
+|      | written (wording)                          |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | embeds within scope problem                | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | NPE clearing alerts                        | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | arcmetadata repeated once for every domain | stack-sf        |
+|      | config                                     |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | CCE deserializing diskqueue [Was:          | stack-sf        |
+|      | IllegalArgumentExcepti... ]                |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | no docs for recovery-journal feature       | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | Pause/Terminate ignored on 2.6 kernel 1.5  | stack-sf        |
+|      | JVM                                        |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Investigate "Relative URI but no base"     | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | User-Agent should be able to mimic Mozilla | stack-sf        |
+|      | (as does Google)                           |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | referral URL should be stored in           | gojomo          |
+|      | recover.log                                |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | ToeThreads hung in FetchDNS after Pause    | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | robots.txt lookup for different ports on   | stack-sf        |
+|      | same host                                  |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Empty log percentages displayed as NaN%    | Tom Emerson     | 
+|------+--------------------------------------------+-----------------|
+| fix  | UURI doubly-encodes %XX sequences          | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | Single settings change causes two version  | johnerik        |
+|      | to be created                              |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | New IA debian image is 2.6 (Was: Build     | stack-sf        |
+|      |  fails: JVM and ...)                       |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | NPE in PathDepthFilter                     | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | [investigate & rule out ] Thread report    | stack-sf        |
+|      | deadlock risks                             |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | jetty susceptible to DoS attack            | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | 'ignore' robots does not ignore meta       | johnerik        |
+|      | nofollow                                   |                 | 
+|------+--------------------------------------------+-----------------|
+| fix  | URI Syntax Errors stop page parsing.       | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | NPE in ExtractorHTML/TextUtils.getMatcher()| johnerik        |
+|------+--------------------------------------------+-----------------|
+| fix  | ARCReader: Failed to find GZIP MAGIC       | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | javascript embedded URLs                   | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | NoClassDefFoundError when starting a job   | ia_igor         |
+|------+--------------------------------------------+-----------------|
+| fix  | Max number of deferrals hard-coded to 10.  | ia_igor         |
+|------+--------------------------------------------+-----------------|
+| fix  | Frontier report thread safety problems?    | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | ARCReader hanging                          | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | log-browsing by regexp outofmemoryerror    | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | Deferred URLs due the DNS problem --       | gojomo          |
+|      | Heritrix(-50)-Deferred                     |                 | 
+|------+--------------------------------------------+-----------------|
+| fix  | Assertion failures shouldn't be more fatal | gojomo          |
+|      | than Runtime Exc.                          |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | min-interval is superfluous; remove        | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | crawl doesn't end when using valence > 1   | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | Giant (in # of files) state directory      | gojomo          |
+|      | problematic                                |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | robots-expiration units, default wrong     | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | NoSuchElementException in URI queues halts | gojomo          |
+|      | crawling                                   |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | #anchor links not trimmed, and thus        | gojomo          |
+|      | recrawled                                  |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | arc's filedesc file name includes .gz      | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | [denmark-workshop ] Cookie mangling        | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | HttpException: Unable to parse header      | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | bogus ARC-header when no Content-type      | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | paths when crawling without UI             | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | domain scope leakage                       | ia_igor         |
+|------+--------------------------------------------+-----------------|
 
 Release 0.10.0 - 2004-06-04
                  

@@ -28,9 +28,8 @@
 	</subsection>
    
     <subsection name="Hardware">
-		<p>We recommend assigning at least 256MB RAM to the Java heap (via the
-		"-Xmx256MB" VM argument), which is usually suitable for crawls that range 
-		over hundreds of hosts.</p>
+		<p>Default heap size is 256MB RAM.  This should be suitable for crawls
+        that range over hundreds of hosts.</p>
 	</subsection>
     
     <subsection name="Linux">
