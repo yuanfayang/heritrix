@@ -84,13 +84,8 @@ public class ARHostQueueTest extends TestCase {
                 Long.MAX_VALUE,hq.getNextReadyTime());
         assertEquals("Initial size of HQ should be 0",0,hq.getSize());
         
-        try{
-            hq.peek();
-            assertTrue("Peek did not throw an IllegalStateException when " +
-                    "trying to access empty queue",false);
-        } catch(IllegalStateException e){
-            // This is supposed to happen if queue is empty.
-        }
+        assertEquals("Peek should return null when 'ready queue' is empty", 
+                null, hq.peek());
     
         /*
          * Add three CrawlURIs and ensures that the correct one is reported by 
@@ -99,10 +94,10 @@ public class ARHostQueueTest extends TestCase {
 
         curis[0].getAList().putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis()+10000); // in 10 sec.
+                System.currentTimeMillis()); // now
         curis[1].getAList().putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis()+2000); // in 5 sec
+                System.currentTimeMillis()+5000); // in 5 sec
         curis[2].getAList().putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+20000); // in 20 sec.
@@ -113,10 +108,44 @@ public class ARHostQueueTest extends TestCase {
         assertTrue("HQ should no longer be empty",
                 hq.getState()!=ARHostQueue.HQSTATE_EMPTY);
         assertEquals("Size of HQ should now be 1",1,hq.getSize());
+        
+        /*
+         * Invoke next and ensure that the HQ is now busy (initial valence was
+         * set to 1). Also check for proper errors for a busy HQ. Such as when
+         * trying to reinvoke next().
+         *
+         */
+        CrawlURI curi = hq.next(); // Should return curis[2]
+        assertEquals("next() did not return 'top' URI",
+                curis[0].getURIString(),curi.getURIString());
+        assertTrue("HQ should now be busy, is " + hq.getStateByName(),
+                hq.getState()==ARHostQueue.HQSTATE_BUSY);
+        try{
+            hq.next();
+            assertTrue("next() should throw an IllegalStateException if HQ " +
+                    "not ready",false);
+        } catch(IllegalStateException e){
+            // This is supposed to happen.
+        }
+        assertEquals("New top URI should be null",
+                null,hq.peek());
+        
         hq.add(curis[1],false);
         assertEquals("Second CrawlURI should be top",curis[1].getURIString(),
                 hq.peek().getURIString());
         assertEquals("Size of HQ should now be 2",2,hq.getSize());
+
+        // Return it with next fetch time in the future.
+        curi.getAList().putLong(
+                AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
+                hq.peek().getAList().getLong(
+                        AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING)
+                        +100000); // 100 sec behind current top.
+        hq.update(curi,false,0);
+        assertEquals("Second CrawlURI should be still be top",
+                curis[1].getURIString(),hq.peek().getURIString());
+        assertEquals("Size of HQ should still be 2",2,hq.getSize());
+        
         hq.add(curis[2],false);
         assertEquals("Second CrawlURI should still be top",
                 curis[1].getURIString(), hq.peek().getURIString());
@@ -171,7 +200,7 @@ public class ARHostQueueTest extends TestCase {
          * trying to reinvoke next().
          *
          */
-        CrawlURI curi = hq.next(); // Should return curis[2]
+        curi = hq.next(); // Should return curis[2]
         assertEquals("next() did not return 'top' URI",
                 curis[2].getURIString(),curi.getURIString());
         assertTrue("HQ should now be busy, is " + hq.getStateByName(),

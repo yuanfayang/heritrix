@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import org.archive.crawler.datamodel.CrawlServer;
+
 import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.tuple.IntegerBinding;
 import com.sleepycat.bind.tuple.StringBinding;
@@ -158,19 +160,21 @@ public class ARHostQueueList {
             // Ok, the HQ does not already exist. (Had to make sure) 
             // Create it, save it and return it.
             hq = new ARHostQueue(hostName,env,valence);
-        }
-        try{
-            DatabaseEntry keyEntry = new DatabaseEntry();
-            DatabaseEntry dataEntry = new DatabaseEntry();
-            keyBinding.objectToEntry(hostName,keyEntry);
-            valueBinding.objectToEntry(new Integer(valence),dataEntry);
-            hostNamesDB.put(null,keyEntry,dataEntry);
-            hostQueues.put(hostName,hq);
-            sortedHostQueues.add(new ARHostQueueReference(hq));
-        } catch (DatabaseException e) {
-            IOException e2 = new IOException(e.getMessage());
-            e2.setStackTrace(e.getStackTrace());
-            throw e2; 
+            hq.setOwner(this);
+            
+            try{
+                DatabaseEntry keyEntry = new DatabaseEntry();
+                DatabaseEntry dataEntry = new DatabaseEntry();
+                keyBinding.objectToEntry(hostName,keyEntry);
+                valueBinding.objectToEntry(new Integer(valence),dataEntry);
+                hostNamesDB.put(null,keyEntry,dataEntry);
+                hostQueues.put(hostName,hq);
+                sortedHostQueues.add(new ARHostQueueReference(hq));
+            } catch (DatabaseException e) {
+                IOException e2 = new IOException(e.getMessage());
+                e2.setStackTrace(e.getStackTrace());
+                throw e2; 
+            }
         }
         return hq;
     }
@@ -194,11 +198,13 @@ public class ARHostQueueList {
      *                 now been overwritten. 
      */
     protected void reorder(ARHostQueue hq, long oldvalue){
+System.err.println("HQlist.reorder(" + hq.getHostName() + ")");
+        // FIXME: This isn't working. Write Unit test maybe.
         // Create a 'comparably equal to the old value' ref.
         ARHostQueueReference ref = 
             new ARHostQueueReference(hq.getHostName(),oldvalue);
         // Remove it from the sorted list
-        sortedHostQueues.remove(ref);
+        System.err.println(sortedHostQueues.remove(ref));
         // Update the time on the ref.
         ref.nextReadyTime = hq.getNextReadyTime();
         // Readd to the list
@@ -214,21 +220,35 @@ public class ARHostQueueList {
         Iterator it = hostQueues.keySet().iterator();
         long count = 0;
         while(it.hasNext()){
-            ARHostQueue tmp = (ARHostQueue)hostQueues.get(it.next());
+            ARHostQueueReference hqref = (ARHostQueueReference)it.next();
+            ARHostQueue tmp = (ARHostQueue)hostQueues.get(hqref.hostName);
             count += tmp.getSize();
         }
         return count;
     }
     
     public String report(){
-        // TODO: Implement report()
-        // Sort into list and iterate over it I suppose
-        return "not implemented";
+        StringBuffer ret = new StringBuffer(256);
+        Iterator it = sortedHostQueues.iterator();
+        while(it.hasNext()){
+            ARHostQueueReference hqref = (ARHostQueueReference)it.next();
+            ARHostQueue tmp = (ARHostQueue)hostQueues.get(hqref.hostName);
+          
+            ret.append(tmp.report());
+            ret.append("\n\n");
+        }
+        return ret.toString();
     }
     
     public String oneLineReport(){
-        // TODO: Implmement one line report
-        return "not implemented";
+        StringBuffer ret = new StringBuffer(256);
+        Iterator it = sortedHostQueues.iterator();
+        while(it.hasNext()){
+            ARHostQueueReference hqref = (ARHostQueueReference)it.next();
+            ret.append(hqref.hostName + " - " + (hqref.nextReadyTime - System.currentTimeMillis()));
+            ret.append(", ");
+        }
+        return ret.toString();
     }
     
     /**
