@@ -45,6 +45,8 @@ public class Alert {
     private String ID;
     private Date time;
     
+    private static int nextID = 0;
+    
     /**
      * Create a new alert
      * @param title short descriptive string that represents a title for the alert
@@ -54,8 +56,37 @@ public class Alert {
         alertTitle = title;
         alertBody = body;
         newAlert = true;
+        ID = ArchiveUtils.get17DigitDate()+(nextID++); //Gurantee uniqueness.
+        time = new Date();
+    }
+
+    /**
+     * Create a new alert
+     * @param title short descriptive string that represents a title for the alert
+     * @param body the alert message
+     * @param an error associated with the alert. It's content will be written to the body
+     */
+    public Alert(String title, String body, Throwable error){
+        alertTitle = title;
+        newAlert = true;
         ID = ArchiveUtils.get17DigitDate(); //Auto create ID using timestamp
         time = new Date();
+        
+        StringBuffer message = new StringBuffer();
+        message.append(body+"\n\n");
+        message.append("Associated Throwable: " + error + "\n\n");
+        message.append("  Message:\n");
+        message.append("    " + error.getMessage()+"\n\n");
+        message.append("  Cause:\n");
+        message.append("    " + error.getCause()+"\n\n");
+        message.append("  Stacktrace:\n");
+        StackTraceElement[] stack = error.getStackTrace();
+        for(int i = 0 ; i < stack.length ; i++){
+        	message.append("    at " + stack[i].getClassName() + "." + stack[i].getMethodName());
+        	message.append(" (" + stack[i].getFileName()+":"+stack[i].getLineNumber()+")\n");
+        }
+        alertBody = message.toString();
+        
     }
     /**
      * A string containing the alert message.
