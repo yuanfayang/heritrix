@@ -43,4 +43,9 @@ public interface CoreAttributeConstants {
 	public static String A_HTTP_TRANSACTION = "http-transaction";
 
 	public static String A_RUNTIME_EXCEPTION = "runtime-exception";
+	
+	public static String A_PREREQUISITE_URI = "prerequisite-uri";
+	public static String A_HTML_EMBEDS = "html-embeds";
+	public static String A_DISTANCE_FROM_SEED = "distance-from-seed";
+	public static String A_HTML_LINKS = "html-links";
 }
