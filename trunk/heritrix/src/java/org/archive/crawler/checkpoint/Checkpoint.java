@@ -139,8 +139,8 @@ public class Checkpoint {
         ObjectPlusFilesInputStream in = 
             new ObjectPlusFilesInputStream(
                     new FileInputStream(
-                            new File(this.directory,filename)));
-        in.pushAuxiliaryDirectory(new File(this.directory, filename+".aux"));
+                            new File(this.directory,filename)),
+                    new File(this.directory, filename+".aux"));
         Object o = null;
         try {
             o = in.readObject();

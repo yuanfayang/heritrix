@@ -82,6 +82,12 @@ public class CheckpointContext implements Serializable {
     private boolean checkpointErrors = false;
         
     /**
+     * @return Returns the nextCheckpoint.
+     */
+    public int getNextCheckpoint() {
+        return nextCheckpoint;
+    }
+    /**
      * Create a new CheckpointContext with the given store directory
      * 
      * @param checkpointDirectory
