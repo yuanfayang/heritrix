@@ -164,4 +164,10 @@ public abstract class Type extends Attribute {
     public void setLegalValueType(Class legalValueType) {
         this.legalValueType = legalValueType;
     }
+    
+    public boolean equals(Object o) {
+        return this == o
+                || (o instanceof Type && this.getValue().equals(
+                        ((Type) o).getValue()));
+    }
 }
