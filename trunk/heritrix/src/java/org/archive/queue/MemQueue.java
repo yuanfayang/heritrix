@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.util;
+package org.archive.queue;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -41,35 +41,35 @@ public class MemQueue extends LinkedList implements Queue {
     }
 
     /**
-     * @see org.archive.util.Queue#enqueue(Object)
+     * @see org.archive.queue.Queue#enqueue(Object)
      */
     public void enqueue(Object o) {
         add(o);
     }
 
     /**
-     * @see org.archive.util.Queue#dequeue()
+     * @see org.archive.queue.Queue#dequeue()
      */
     public Object dequeue() {
         return removeFirst();
     }
 
     /**
-     * @see org.archive.util.Queue#length()
+     * @see org.archive.queue.Queue#length()
      */
     public long length() {
         return size();
     }
 
     /**
-     * @see org.archive.util.Queue#release()
+     * @see org.archive.queue.Queue#release()
      */
     public void release() {
         // nothing to release
     }
 
     /**
-     * @see org.archive.util.Queue#peek()
+     * @see org.archive.queue.Queue#peek()
      */
     public Object peek() {
         return getFirst();
@@ -77,14 +77,14 @@ public class MemQueue extends LinkedList implements Queue {
 
 
     /**
-     * @see org.archive.util.Queue#getIterator(boolean)
+     * @see org.archive.queue.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return listIterator();
     }
 
     /**
-     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
     public long deleteMatchedItems(Predicate matcher) {
         Iterator it = listIterator();

@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.util;
+package org.archive.queue;
 
 import java.io.File;
 import java.io.IOException;

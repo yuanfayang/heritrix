@@ -16,22 +16,51 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Deque.java
+ * Stack.java
  * Created on May 21, 2004
  *
  * $Header$
  */
 
-package org.archive.util;
+package org.archive.queue;
 
 
 /**
- * Double-ended queue which supports add at either end,
- * remove from only the 'head' end.
+ * Simple Stack: supports add and remove at top.
  *
  * @author gojomo
- *
  */
-public interface Deque extends Queue, Stack {
-    /** combines queue and stack */
+public interface Stack {
+    /**
+     * Add object to top of Stack
+     *
+     * @param object
+     */
+    public void push(Object object);
+
+    /**
+     * Remove and return item from top of Stack
+     * @return Item removed from top of Stack
+     */
+    public Object pop();
+
+    /**
+     * @return Return item from top of Stack without removing it.
+     */
+    public Object peek();
+
+    /**
+     * Number of items in the Stack.
+     */
+    public long height();
+
+    /**
+     * Release any OS resources, if necessary.
+     */
+    public void release();
+
+    /**
+     * @return True if empty.
+     */
+    public boolean isEmpty();
 }

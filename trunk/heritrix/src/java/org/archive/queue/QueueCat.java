@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.util;
+package org.archive.queue;
 
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.SequenceInputStream;
+
+import org.archive.util.ArchiveUtils;
+import org.archive.util.Lineable;
 
 /**
  * Allows display of serialized object streams in a line-oriented format.

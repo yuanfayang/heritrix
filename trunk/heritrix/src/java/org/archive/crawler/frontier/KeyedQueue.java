@@ -37,11 +37,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.queue.DiskBackedDeque;
+import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CompositeIterator;
-import org.archive.util.DiskBackedDeque;
 import org.archive.util.Inverter;
-import org.archive.util.Queue;
 
 /**
  * Ordered collection of work items with the same "classKey".
@@ -320,7 +320,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Add an item in the default manner
      *
      * @param curi
-     * @see org.archive.util.Queue#enqueue(java.lang.Object)
+     * @see org.archive.queue.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(CrawlURI curi) {
      
@@ -381,7 +381,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * @see org.archive.util.Queue#isEmpty()
+     * @see org.archive.queue.Queue#isEmpty()
      * @return Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
      * still have 'frozen' off-to-side URIs.)
      */
@@ -393,7 +393,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     /**
      * Remove an item in the default manner
      *
-     * @see org.archive.util.Queue#dequeue()
+     * @see org.archive.queue.Queue#dequeue()
      * @return A crawl uri.
      */
     public CrawlURI dequeue() {
@@ -451,7 +451,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
 
     
     /** 
-     * @see org.archive.util.Queue#length()
+     * @see org.archive.queue.Queue#length()
      * @return Total number of available items. (Does not include
      * any 'frozen' items.)
      */
@@ -470,7 +470,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Iterate over all available (non-frozen) items. 
      * 
      * @param inCacheOnly
-     * @see org.archive.util.Queue#getIterator(boolean)
+     * @see org.archive.queue.Queue#getIterator(boolean)
      * @return Iterator.
      */
     public Iterator getIterator(boolean inCacheOnly) {
@@ -483,7 +483,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Delete items matching the supplied criterion.
      *
      * @param matcher
-     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      * @return Number of deletes.
      */
     public long deleteMatchedItems(Predicate matcher) {

@@ -66,11 +66,11 @@ import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.FPUURISet;
+import org.archive.queue.MemQueue;
+import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.MemLongFPSet;
-import org.archive.util.MemQueue;
 import org.archive.util.PaddingStringBuffer;
-import org.archive.util.Queue;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
