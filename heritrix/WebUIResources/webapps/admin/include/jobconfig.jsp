@@ -17,6 +17,11 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Crawl scope</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
 					Maximum link hops:
 				</td>
 				<td>
@@ -42,6 +47,48 @@
 						<option value="host" <%=crawlOrder.getStringAt(handler.XP_CRAWL_MODE).equals("host")?"selected":""%>>Host</option>
 						<option value="path" <%=crawlOrder.getStringAt(handler.XP_CRAWL_MODE).equals("path")?"selected":""%>>Path</option>
 					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<b>Politeness</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Delay factor:
+				</td>
+				<td>
+					<input name="<%="//frontier/@delay-factor"%>" value="<%=crawlOrder.getStringAt("//frontier/@delay-factor")%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Min delay (ms):
+				</td>
+				<td>
+					<input name="<%="//frontier/@min-delay-ms"%>" value="<%=crawlOrder.getStringAt("//frontier/@min-delay-ms")%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Max delay (ms):
+				</td>
+				<td>
+					<input name="<%="//frontier/@max-delay-ms"%>" value="<%=crawlOrder.getStringAt("//frontier/@max-delay-ms")%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Min interval (ms):
+				</td>
+				<td>
+					<input name="<%="//frontier/@min-interval-ms"%>" value="<%=crawlOrder.getStringAt("//frontier/@min-interval-ms")%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<b>File configurations</b>
 				</td>
 			</tr>
 			<tr>
@@ -78,6 +125,11 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Request headers</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
 					User agent:
 				</td>
 				<td>
@@ -94,6 +146,11 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Crawler internal settings</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
 					Maximum number of toe threads:
 				</td>
 				<td>
@@ -102,12 +159,17 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Seeds</b>
+				</td>
+			</tr>
+			<!--tr>
+				<td>
 					Seeds file:
 				</td>
 				<td>
 					<input name="<%=handler.XP_SEEDS_FILE%>" value="<%=crawlOrder.getStringAt(handler.XP_SEEDS_FILE)%>" size="<%=iInputSize%>">
 				</td>
-			</tr>
+			</tr-->
 			<tr>
 				<td valign="top">
 					Seeds:
