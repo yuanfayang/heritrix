@@ -92,6 +92,7 @@ public class FetchFTP extends Processor {
             ftpc.setSoTimeout(getSocketTimeout(curi));
             ftpc.setFileTransferMode(FTP.BINARY_FILE_TYPE); //TODO: Is this ok?
             // TODO: How to handle inputstreams????
+            // TODO: Path may be null.  Handle it.
             ftpc.retrieveFileStream(curi.getUURI().getPath());
             // TODO: Maybe we should 'listNames()' and store them somewhere
             //       for the FTPDirectoryExtractor to manage?

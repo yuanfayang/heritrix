@@ -421,14 +421,17 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         "|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
 
     /**
-     * @param curi
+     * @param curi CrawlURI to examine.
      * @return True if HTML.
      * @throws URIException
      */
     protected boolean expectedHTML(CrawlURI curi) throws URIException {
         String path = curi.getUURI().getPath();
+        if (path == null) {
+            return false;
+        }
         int dot = path.lastIndexOf('.');
-        if (dot<0) {
+        if (dot < 0) {
             // no path extension, HTML is fine
             return true;
         }

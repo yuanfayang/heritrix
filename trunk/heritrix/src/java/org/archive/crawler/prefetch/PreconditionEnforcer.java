@@ -36,6 +36,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.framework.Processor;
@@ -134,8 +135,10 @@ public class PreconditionEnforcer
      */
     private boolean considerRobotsPreconditions(CrawlURI curi) {
         // treat /robots.txt fetches specially
+        UURI uuri = curi.getUURI();
         try {
-            if (curi.getUURI().getPath().equals("/robots.txt")) {
+            if (uuri != null && uuri.getPath() != null &&
+                    curi.getUURI().getPath().equals("/robots.txt")) {
                 // allow processing to continue
                 curi.setPrerequisite(true);
                 return false;
