@@ -366,9 +366,8 @@ public class ExtractorUniversal extends Processor
     }
 
     protected void innerProcess(CrawlURI curi) {
-
-        if(curi.hasBeenLinkExtracted()){
-            //Some other extractor already handled this one. We'll pass on it.
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
             return;
         }
 
@@ -380,8 +379,7 @@ public class ExtractorUniversal extends Processor
 
         numberOfCURIsHandled++;
 
-        try
-        {
+        try {
             InputStream instream = curi.getHttpRecorder().getRecordedInput().
                 getContentReplayInputStream();
             int ch = instream.read();
@@ -395,8 +393,7 @@ public class ExtractorUniversal extends Processor
             long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH,curi)).
                 longValue();
             boolean foundDot = false;
-            while(ch != -1 && ++counter <= maxdepth){
-
+            while(ch != -1 && ++counter <= maxdepth) {
                 if(lookat.length()>maxURLLength){
                     //Exceeded maximum length of a URL. Start fresh.
                     lookat = new StringBuffer();
@@ -453,7 +450,8 @@ public class ExtractorUniversal extends Processor
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
+        // Set flag to indicate that link extraction is completed.
+        curi.linkExtractorFinished();
     }
 
     /**

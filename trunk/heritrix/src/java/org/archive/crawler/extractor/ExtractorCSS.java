@@ -88,7 +88,10 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      * @param curi Crawl URI to process.
      */
     public void innerProcess(CrawlURI curi) {
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!curi.isHttpTransaction()) {
             return;
         }
