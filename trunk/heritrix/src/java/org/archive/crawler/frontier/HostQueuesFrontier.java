@@ -334,7 +334,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         t = addElementToDefinition(
             new SimpleType(ATTR_USE_BDB_ALREADY_INCLUDED,
             "Use disk-based Berkeley DB to hold the set of Already Included" +
-            "URIs. \n" +
+            "URIs.\n" +
             "The Already Included URI set is by-default kept in memory." +
             " The continuous growth of this URI set in memory is one" +
             " cause of out of memory exceptions.  Enabling this option," +
