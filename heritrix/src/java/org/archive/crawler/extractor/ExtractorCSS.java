@@ -96,7 +96,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         }
         String mimeType = contentType.getValue();
         if ((mimeType.toLowerCase().indexOf("css") < 0)
-            && (!curi.toString().toLowerCase().endsWith(".css"))) {
+            && (!curi.getURIString().toLowerCase().endsWith(".css"))) {
             return;
         }
         numberOfCURIsHandled++;
