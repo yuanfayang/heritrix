@@ -1,19 +1,15 @@
 Recently done:
-CrawlURI instantiation
-import AList
-basic politeness
-simple http fetcher
-simple link extractor
 make HTTPfetcher threadsafe (perhaps by having an instance per thread)
 integrate ARCwriter (HTTP + DNS)
+improved handling of HTTPClient "Recoverable exceptions" 
+begun document of Alist keys/conventions, in class CoreAttributesConstants
 
 Next few things to do:
 respect inline robots-directives (noarchive, nofollow, etc.)
-get to the bottom of HTTPClient "Recoverable exceptions" 
 implement Filters (RegExp, seed-extensions)
+implement an explicit configurable retry policy (or policies) / document oob errors
 collect better stats on system state (pending URIs, etc.) and progress (raw bytes, URI results)
 mercator-style progress log ("timings"?)
-create document of Alist keys/conventions
 ToeThread start/pause/stop cleanup
 VirtualBuffer (chained buffer, etc.) impl & cleanup
 link markup conventions
