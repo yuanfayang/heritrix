@@ -41,6 +41,7 @@
     
     String error = null;
     String metaName = request.getParameter("meta/name");
+    String jobDescription = request.getParameter("meta/description");
     
     if(request.getParameter("action") != null) {
         // Make new job.
@@ -62,7 +63,7 @@
                 if(test == null) {
                     // unique name
                     newJob = handler.newProfile(theJob, metaName,
-                        request.getParameter("meta/description"),
+                        jobDescription,
                         request.getParameter("seeds"));
                 } else {
                     // Need a unique name!
@@ -70,13 +71,21 @@
                 }
             } else {
                 newJob = handler.newJob(theJob, metaName, 
-                    request.getParameter("meta/description"),
+                    jobDescription,
                     request.getParameter("seeds"),
                     CrawlJob.PRIORITY_AVERAGE);
             }
         }
         
         if(error == null && newJob != null) {
+            // Ensure order file with new name/desc is written
+            // [ 1066573 ] sometimes job based-on other job uses older job name
+            settingsHandler = newJob.getSettingsHandler();
+            orderfile = settingsHandler.getSettingsObject(null);
+            orderfile.setName(metaName);
+            orderfile.setDescription(jobDescription);
+            // JobConfigureUtils.writeNewOrderFile(crawlOrder, null, request, true);
+            settingsHandler.writeSettingsObject(orderfile);
             if(request.getParameter("action").equals("configure")){
                 response.sendRedirect(request.getContextPath() +
                     "/jobs/configure.jsp?job="+newJob.getUID());
