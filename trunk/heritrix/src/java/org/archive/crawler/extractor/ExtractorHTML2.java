@@ -1,4 +1,11 @@
-/* Copyright (C) 2003 Internet Archive.
+/* 
+ * ExtractorHTML2
+ * 
+ * $Id$
+ * 
+ * Created on Jan 6, 2004
+ *
+ * Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,9 +22,8 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *
  */
+
 package org.archive.crawler.extractor;
 
 import java.util.logging.Logger;
@@ -30,7 +36,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.TextUtils;
 
 /**
- * Extended version of ExtractorHTML that handle HTML STYLE tags
+ * Extended version of ExtractorHTML that handles HTML STYLE tags
  * and has a more aggressive javascript link extraction where
  * javascript code is parsed first with general HTML tags regexp,
  * than by javascript speculative link regexp. 
@@ -41,27 +47,34 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorHTML2 extends ExtractorHTML {
 	static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
-    static final Pattern BACKSLAH = Pattern.compile("\\\\");
-    // Regular expression that parses URIs for the CSS URL syntax
-    static final Pattern CSS_URI_EXTRACTOR =
-        Pattern.compile(
-            "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
+	static final Pattern BACKSLAH = Pattern.compile("\\\\");
+	/** Regular expression that parses URIs for the CSS URL syntax */
+	static final Pattern CSS_URI_EXTRACTOR =
+		Pattern.compile(
+			"url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
-    static final Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
-     "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>");
-    // groups:
-    // 1: SCRIPT SRC=blah>blah</SCRIPT 
-    // 2: just script open tag 
-    // 3: STYLE TYPE=blah>blah</STYLE 
-    // 4: just style open tag
-    // 5: entire other tag, without '<' '>'
-    // 6: element 
-    // 7: META
-    // 8: !-- blahcomment -- 
+	/**
+	 * <p> This pattern extracts either:<br>
+	 * (1) whole &lt;script&gt;...&lt;/script&gt; or<br> 
+	 * (2) &lt;style&gt;...&lt;/style&gt; or<br>
+	 * (3) &lt;meta ...&gt; or<br>
+	 * (3) any other open-tag with at least one attribute<br>
+	 * (eg matches "&lt;a href='boo'&gt;" but not "&lt;/a&gt;" or "&lt;br&gt;")<br>
+	 * groups:<br>
+	 * 1: SCRIPT SRC=foo&gt;boo&lt;/SCRIPT<br> 
+	 * 2: just script open tag<br>
+	 * 3: STYLE TYPE=moo&gt;zoo&lt;/STYLE<br> 
+	 * 4: just style open tag<br>
+	 * 5: entire other tag, without '<' '>'<br>
+	 * 6: element<br>
+	 * 7: META<br>
+	 * 8: !-- comment --<br>
+	 */
+	static final Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
+	 "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>");
 
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+	/** 
+	 * @param curi
 	 */
 	public void innerProcess(CrawlURI curi) {
 
@@ -114,8 +127,8 @@ public class ExtractorHTML2 extends ExtractorHTML {
 				// <script> match
 				processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
 			} else if (tags.start(3) > 0){
-                // <style... match
-                processStyle(curi, cs.subSequence(tags.start(3), tags.end(3)), tags.end(4)-tags.start(3));
+				// <style... match
+				processStyle(curi, cs.subSequence(tags.start(3), tags.end(3)), tags.end(4)-tags.start(3));
                 
 			}
 		}
@@ -134,45 +147,43 @@ public class ExtractorHTML2 extends ExtractorHTML {
 		// first, get attributes of script-open tag
 		// as per any other tag
 		processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
-        // then, proccess entire javascript code as html code
-        // this may cause a lot of false positves 
-        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(endOfOpenTag,sequence.length()));		
+		// then, proccess entire javascript code as html code
+		// this may cause a lot of false positves 
+		processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(endOfOpenTag,sequence.length()));		
 		// finally, apply best-effort string-analysis heuristics 
 		// against any code present (false positives are OK)
 		processScriptCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
 	}
 
-    /**
-     * @param curi
-     * @param sequence
-     * @param endOfOpenTag
-     */
-    protected void processStyle(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
-        // first, get attributes of script-open tag
-        // as per any other tag
-        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
+	/**
+	 * @param curi
+	 * @param sequence
+	 * @param endOfOpenTag
+	 */
+	protected void processStyle(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
+		// first, get attributes of script-open tag
+		// as per any other tag
+		processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
         
-        // then, parse for URI
-        processStyleCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
-    }
-    /**
-     * @param curi
-     * @param cs
-     */
-    protected void processStyleCode(CrawlURI curi, CharSequence cs) {
-        String code = cs.toString();
-        Matcher candidates = TextUtils.getMatcher(CSS_URI_EXTRACTOR, code);
-        String caUri = ""; // candidate uri
-        while (candidates.find()) {
-            caUri = candidates.group(1);
-            caUri = TextUtils.replaceAll(ESCAPED_AMP, caUri, "&"); // TODO: more HTML deescaping?
-            caUri = TextUtils.replaceAll(BACKSLAH, caUri, "");
-            logger.finest("stlye: " + caUri + " from " + curi);
-            curi.addCSSLink(caUri);
-        }
-        TextUtils.freeMatcher(candidates);
+		// then, parse for URI
+		processStyleCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
+	}
+	/**
+	 * @param curi
+	 * @param cs
+	 */
+	protected void processStyleCode(CrawlURI curi, CharSequence cs) {
+		String code = cs.toString();
+		Matcher candidates = TextUtils.getMatcher(CSS_URI_EXTRACTOR, code);
+		String caUri = ""; // candidate uri
+		while (candidates.find()) {
+			caUri = candidates.group(1);
+			caUri = TextUtils.replaceAll(ESCAPED_AMP, caUri, "&"); // TODO: more HTML deescaping?
+			caUri = TextUtils.replaceAll(BACKSLAH, caUri, "");
+			logger.finest("stlye: " + caUri + " from " + curi);
+			curi.addCSSLink(caUri);
+		}
+		TextUtils.freeMatcher(candidates);
         
-    }
-
+	}
 }
-
