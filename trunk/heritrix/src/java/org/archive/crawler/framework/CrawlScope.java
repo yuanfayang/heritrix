@@ -36,6 +36,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.OrFilter;
+import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.util.DevUtils;
@@ -118,6 +119,36 @@ public class CrawlScope extends Filter {
     public CrawlScope() {
         this(ATTR_NAME);
     }
+    
+    /**
+     * Initialize is called just before the crawler starts to run.  
+     * 
+     * The settings system is up and initialized so can be used.  This
+     * initialize happens after {@link #earlyInitialize(CrawlerSettings)}.
+     * 
+     * @param controller Controller object.
+     */
+    public void initialize(CrawlController controller) {
+        createSeedlist(getSeedfile(), getSettingsHandler().
+            getOrder().getController().uriErrors, true);
+    }
+    
+    /**
+     * Create seedlist.
+     * 
+     * Always creates a caching SeedList.  Override if you want different 
+     * behavior.
+     * 
+     * @param seedfile Seedfile to use as seed source.
+     * @param l Logger to use internally.
+     * @param caching True if seed list created is to cache seeds.
+     */
+    protected synchronized void createSeedlist(File seedfile, Logger l,
+            boolean caching) {
+        if (this.seedlist == null) {
+            this.seedlist = new SeedList(seedfile, l, caching);
+        }
+    }
 
     public String toString() {
         return "CrawlScope<" + getName() + ">";
@@ -153,33 +184,18 @@ public class CrawlScope extends Filter {
      * @return Returns a seedlist.
      */
     public List getSeedlist() {
-        if (this.seedlist == null) {
-            createSeedlist(getSeedfile(), getSettingsHandler().
-                getOrder().getController().uriErrors);
-        }
         return this.seedlist;
     }
     
-    /** 
-     * Refreshes the list of seeds cached.
+    /**
+     * Refresh seeds.
      * 
-     * This method could safely be overridden by a null implementation for
-     * scopes that don't need the seeds to be cached. For example, there is
-     * no reason for the BroadScope to cache seeds since it doesn't have to
-     * check the seeds to see if a URI is inside the scope.
+     * If caching, this will reread the seed file. If not, this will just update
+     * the seed file reference so all subsequent iterators will be against new
+     * file reference.
      */
     public void refreshSeeds() {
-        if (this.seedlist == null) {
-            createSeedlist(getSeedfile(), getSettingsHandler().
-                getOrder().getController().uriErrors);
-        }
         this.seedlist.refresh(getSeedfile());
-    }
-    
-    protected synchronized void createSeedlist(File seedfile, Logger l) {
-        if (this.seedlist == null) {
-            this.seedlist = new SeedList(seedfile, l);
-        }
     }
     
     /**
