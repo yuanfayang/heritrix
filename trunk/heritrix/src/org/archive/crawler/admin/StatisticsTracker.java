@@ -18,7 +18,6 @@ import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlListener;
 import org.archive.util.PaddingStringBuffer;
-import org.archive.util.TimedFixedSizeList;
 
 /**
  * Tracks statistics that relate to the crawl in progress.  Callers should be
