@@ -192,6 +192,14 @@ public class XMLSettingsHandler extends SettingsHandler {
         }
     }
 
+    /** Read the CrawlerSettings object from a specific file.
+     * 
+     * @param settings the settings object to be updated with data from the
+     *                 persistent storage.
+     * @param filename the file to read from.
+     * @return the updated settings object or null if there was no data for this
+     *         in the persistent storage.
+     */
     protected final CrawlerSettings readSettingsObject(
         CrawlerSettings settings,
         File filename) {
@@ -295,6 +303,12 @@ public class XMLSettingsHandler extends SettingsHandler {
         copyFiles(oldSettingsDirectory, newDir);
     }
     
+    /** Recursively copy all files in the per settings directory.
+     * 
+     * @param src file or directory to copy from.
+     * @param dest file or directory to copy to.
+     * @throws IOException
+     */
     private void copyFiles(File src, File dest) throws IOException {
         if (!src.exists()) {
             return;
