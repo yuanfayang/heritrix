@@ -37,11 +37,24 @@
 <b><font color=red><%=message%></font></b>
 <%}%>
 </p>
+<% if(crawling) { %>
+<p>
+<b>Reports on ongoing crawl</b><br>
+<ul>
+    <li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a></li>
+    <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a></li>
+    <li><a href="<%=request.getContextPath()%>/reports/processors.jsp">Processors report</a></li>
+    <li><a href="<%=request.getContextPath()%>/reports/frontier.jsp">Frontier report</a> <%= handler.getFrontierOneLine() %></li>
+    <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">Thread report</a> <%= handler.getThreadOneLine() %></li>
+</ul>
+<p>The crawler generates reports when its done crawling.  Clicking here on <a href="<%=request.getContextPath()%>/reports.jsp?<%=ACTION%>=<%=FORCE%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
+<% } %>
+
 
 <table border="0" cellspacing="0" cellpadding="1">
     <tr>
         <td colspan="3">
-            <b>Reports on ongoing and finished crawl jobs</b> (newest to oldest)
+            <b>Finished crawl jobs</b> (newest to oldest)
         </td>
     <% if (crawling == false && jobs.size() == 0) { %>
         <tr>
@@ -77,20 +90,5 @@
         %>
     <% } %>
 </table>
-
-<% if(crawling) { %>
-<p>
-<b>Internal reports on ongoing crawl</b><br>
-<ul>
-    <li><a href="<%=request.getContextPath()%>/reports/frontier.jsp">Frontier report</a><br>
-        <tt><%= handler.getFrontierOneLine() %></tt>
-    <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">Thread report</a><br>
-        <tt><%= handler.getThreadOneLine() %></tt>
-    <li><a href="<%=request.getContextPath()%>/reports/processors.jsp">Processors report</a>
-    <li><a href="/admin/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a></li>
-    <li><a href="/admin/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a></li>
-</ul>
-<p>The crawler generates reports when its done crawling.  Clicking here on <a href="<%=request.getContextPath()%>/reports.jsp?<%=ACTION%>=<%=FORCE%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
-<% } %>
 
 <%@include file="/include/foot.jsp"%>
