@@ -27,6 +27,7 @@
 
 package org.archive.crawler.datamodel;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -35,6 +36,7 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.RegularExpressionConstraint;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.CrawlController;
@@ -138,16 +140,24 @@ public class CrawlOrder extends ModuleType {
                         "be used when constructing the HTTP headers of " +
                         "the crawler's HTTP requests."));
         
-        httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
+        e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
                 "User agent to act as. \nThis field must contain a valid " +
                 "URL leading to the website of the person or organization " +
                 "responsible for this crawl.",
                 "os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"));
+        e.addConstraint(new RegularExpressionConstraint(
+                "\\S+.*\\(\\+http://\\S*\\).*", Level.WARNING,
+                "This field must contain a valid URL leading to the website " +
+                "of the person or organization responsible for this crawl."));
         
-        httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
+        e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
                 "Contact information. \nThis field must contain a valid" +
                 "e-mail address for the person or organization responsible" +
                 "for this crawl.", "CONTACT_EMAIL_ADDRESS_HERE"));
+        e.addConstraint(new RegularExpressionConstraint("\\S+@\\S+\\.\\S+",
+                Level.WARNING, "This field must contain a valid e-mail " +
+                        "address for the person or organization responsible " +
+                        "for this crawl."));
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
