@@ -27,7 +27,6 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -105,6 +104,7 @@ public class DiskStackTest extends TmpDirTestCase {
          try {
             File storeFile = new File("/foo/boo/doo/");
             DiskStack stack = new DiskStack(storeFile);
+            stack.height(); // suppress never-accessed warning
         } catch(IOException e) {
             return;
         }
