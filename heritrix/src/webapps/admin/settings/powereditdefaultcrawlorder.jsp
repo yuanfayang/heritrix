@@ -25,8 +25,8 @@
 		    // TODO: handle exception
 		    e.printStackTrace();
 		}
-		
-		handler.loadCrawlOrder();
+				
+		handler.setDefaultCrawlOrder(handler.getDefaultOrderFileName()); //Causes the handler to reload the default order file from disk.
 		response.sendRedirect("/admin/settings.jsp");
 		return;
 	}

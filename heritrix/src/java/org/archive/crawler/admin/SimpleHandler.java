@@ -137,7 +137,7 @@ public class SimpleHandler
             Node orderNode
                 = OrderTransformation.readDocumentFromFile(orderFile);
             orderTransform.setNode(orderNode);
-            loadCrawlOrder(); // Finally load the crawlorder to memory 
+            crawlOrder = CrawlOrder.readFromFile(orderFile);
         } catch (Exception e) {
             // TODO: handle exception
             e.printStackTrace(System.out);
@@ -150,16 +150,6 @@ public class SimpleHandler
     public CrawlOrder getDefaultCrawlOrder()
     {
         return crawlOrder;
-    }
-    
-    /** 
-     * Loads the default crawl order file (as specified by the orderFile attribute) from disk
-     * as a crawlOrder. Useful if it has changed on disk.  Also used at startup.
-     * @throws InitializationException
-     */
-    public void loadCrawlOrder() throws InitializationException
-    { 
-        crawlOrder = CrawlOrder.readFromFile(orderFile);
     }
     
     /**
@@ -508,7 +498,7 @@ public class SimpleHandler
                 (OrderTransformation.readDocumentFromFile(filename));
             orderTransform.serializeToXMLFile(orderFile); 
             // And then reload the old one (now overwritten)
-            loadCrawlOrder();
+            crawlOrder = CrawlOrder.readFromFile(orderFile);
         } 
         catch(IOException e){
             e.printStackTrace();    
@@ -526,13 +516,8 @@ public class SimpleHandler
     {
         createCrawlOrderFile(req, orderFile);    
 
-        try {
-            loadCrawlOrder();
-            statusMessage = CRAWL_ORDER_UPDATED;
-        } catch (InitializationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }    
+        setDefaultCrawlOrder(orderFile);
+        statusMessage = CRAWL_ORDER_UPDATED;
     }
 
     /**
