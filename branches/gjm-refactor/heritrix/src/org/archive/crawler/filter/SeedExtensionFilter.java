@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.util;
+package org.archive.crawler.filter;
 
 import java.util.Iterator;
 

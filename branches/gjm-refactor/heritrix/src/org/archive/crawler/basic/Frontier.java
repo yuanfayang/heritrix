@@ -1,0 +1,724 @@
+/*
+ * SimpleFrontier.java
+ * Created on Oct 1, 2003
+ *
+ * $Header$
+ */
+package org.archive.crawler.basic;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.MemUURISet;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURISet;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.XMLConfig;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+
+/**
+ * A basic in-memory mostly breadth-first frontier, which 
+ * refrains from emitting more than one CrawlURI of the same 
+ * 'key' (host) at once, and respects minimum-delay and 
+ * delay-factor specifications for politeness
+ * 
+ * @author gojomo
+ *
+ */
+public class Frontier
+	extends XMLConfig 
+	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants {
+	private static String XP_DELAY_FACTOR = "@delay-factor";
+	private static String XP_MINIMUM_DELAY = "@minimum-delay";
+	private static int DEFAULT_DELAY_FACTOR = 5;
+	private static int DEFAULT_MINIMUM_DELAY = 2000;
+
+	private static Logger logger =
+		Logger.getLogger("org.archive.crawler.basic.SimpleFrontier");
+	CrawlController controller;
+	
+	// HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
+	
+	// TODO update to use fingerprints only
+	UURISet alreadyIncluded = new MemUURISet();
+	
+	// every CandidateURI not yet in process or another queue; 
+	// all seeds start here; may contain duplicates
+	LinkedList pendingQueue = new LinkedList(); // of CandidateURIs 
+	
+	// every CandidateURI not yet in process or another queue; 
+	// all seeds start here; may contain duplicates
+	LinkedList pendingHighQueue = new LinkedList(); // of CandidateURIs 
+
+	// every CrawlURI handed out for processing but not yet returned
+	HashMap inProcessMap = new HashMap(); // of String (classKey) -> CrawlURI
+	
+	// all active per-class queues
+	HashMap allClassQueuesMap = new HashMap(); // of String (classKey) -> KeyedQueue
+	
+	// all per-class queues whose first item may be handed out (that is, no CrawlURI
+	// of the same class is currently in-process)
+	LinkedList readyClassQueues = new LinkedList(); // of String (queueKey) -> KeyedQueue 
+	
+	// all per-class queues who are on hold because a CrawlURI of their class
+	// is already in process 
+	LinkedList heldClassQueues = new LinkedList(); // of String (queueKey) -> KeyedQueue 
+
+	// all per-class queues who are on hold until a certain time
+	SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime
+
+	// CrawlURIs held until some specific other CrawlURI is emitted
+	HashMap heldCuris = new HashMap(); // of UURI -> CrawlURI
+
+    // limits on retries TODO: separate into retryPolicy? 
+	private int maxRetries = 3;
+	private int retryDelay = 15000;
+	private long minimumDelay;
+	private long delayFactor;
+
+	// top-level stats
+	int completionCount = 0;
+	int failedCount = 0;
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#initialize(org.archive.crawler.framework.CrawlController)
+	 */
+	public void initialize(CrawlController c)
+		throws FatalConfigurationException {
+		
+		delayFactor = getIntAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
+		minimumDelay = getIntAt(XP_MINIMUM_DELAY,DEFAULT_MINIMUM_DELAY);
+		
+		this.controller = c;
+		Iterator iter = c.getScope().getSeeds().iterator();
+		while (iter.hasNext()) {
+			UURI u = (UURI) iter.next();
+			CandidateURI caUri = new CandidateURI(u);
+			caUri.setIsSeed(true);
+			schedule(caUri);
+		}
+	}
+
+	/** 
+	 * 
+	 * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	public synchronized void schedule(CandidateURI caUri) {
+		pendingQueue.addLast(caUri);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	public void scheduleHigh(CandidateURI caUri) {
+		pendingHighQueue.addLast(caUri);
+	}
+
+
+	/** 
+	 * 
+	 * @see org.archive.crawler.framework.URIFrontier#next(int)
+	 */
+	public CrawlURI next(int timeout) {
+		
+		long now = System.currentTimeMillis();
+		long waitMax = 0;
+		CrawlURI curi = null;
+
+		// first, empty the high-priority queue
+		CandidateURI caUri; 
+		while ((caUri = dequeueFromPendingHigh()) != null) {
+			if(alreadyIncluded.contains(caUri)) {
+				continue;
+			}
+			curi = new CrawlURI(caUri);
+			if (!enqueueIfNecessary(curi)) {
+				// OK to emit
+				return emitCuri(curi);
+			}
+		} // if reached, the pendingHighQueue is empty
+
+		// if enough time has passed to wake any snoozing queues, do it
+		wakeReadyQueues(now);
+		
+		// first, see if any holding queues are ready with a CrawlURI
+		if (!readyClassQueues.isEmpty()) {
+			curi = dequeueFromReady();
+			return emitCuri(curi);
+		}
+		
+		// if that fails, check the pending queue
+		while ((caUri = dequeueFromPending()) != null) {
+			if(alreadyIncluded.contains(caUri)) {
+				continue;
+			}
+			curi = new CrawlURI(caUri);
+			if (!enqueueIfNecessary(curi)) {
+				// OK to emit
+				return emitCuri(curi);
+			}
+		}
+		
+		// consider if URIs exhausted
+		if(isEmpty()) {
+			// nothing left to crawl
+			logger.info("nothing left to crawl");
+			// TODO halt/spread the word???
+			return null;
+		}
+		
+		// nothing to return, but there are still URIs
+		// held for the future
+		
+		// block until something changes, or timeout occurs
+		waitMax = Math.min(earliestWakeTime()-now,timeout);
+		try {
+			if(waitMax<0) {
+				logger.warning("negative wait "+waitMax+" ignored");
+			} else {
+				synchronized(this) {
+					wait(waitMax);
+				}
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
+	 */
+	public synchronized void finished(CrawlURI curi) {
+		logger.fine(this+".finished("+curi+")");
+		
+		try {
+			noteProcessingDone(curi);
+			// snooze queues as necessary
+			updateScheduling(curi);
+			notify(); // new items might be available
+			
+			// consider errors which halt further processing
+			if (isDispositiveFailure(curi)) {
+				failureDisposition(curi);
+				return;
+			}
+				
+// NOW HANDLED BY POSTSELECTOR
+//			// handle any prerequisites
+//			if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
+//				handlePrerequisites(curi);
+//				return;
+//			}
+				
+			// consider errors which can be retried
+			if (needsRetrying(curi)) {
+				scheduleForRetry(curi);
+				return;
+			}
+				
+				
+// NOW HANDLED BY POSTSELECTOR
+//			URI baseUri = getBaseURI(curi);
+//				
+//			// handle http headers 
+//			if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
+//				handleHttpHeaders(curi, baseUri);
+//			}
+//			// handle embeds 
+//			if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+//				handleEmbeds(curi, baseUri);
+//			}
+//			// handle links
+//			if (curi.getAList().containsKey(A_HTML_LINKS)) {
+//				handleLinks(curi, baseUri);
+//			}
+				
+			// SUCCESS: note & log
+			successDisposition(curi);
+		} catch (RuntimeException e) {
+			curi.setFetchStatus(S_INTERNAL_ERROR);
+			// store exception temporarily for logging
+			curi.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+			failureDisposition(curi);
+		}	
+	} 
+			
+	/**
+	 * The CrawlURI has been successfully crawled, and will be
+	 * attempted no more. 
+	 * 
+	 * @param curi
+	 */
+	protected void successDisposition(CrawlURI curi) {
+		completionCount++;
+		if ( (completionCount % 500) == 0) {
+			logger.info("==========> " +
+				completionCount+" <========== HTTP URIs completed");
+		}
+				
+		Object array[] = { curi };
+		controller.uriProcessing.log(
+			Level.INFO,
+			curi.getUURI().getUri().toString(),
+			array);
+		
+		// note that CURI has passed out of scheduling
+		curi.setStoreState(URIStoreable.FINISHED);
+		if (curi.getDontRetryBefore()<0) {
+			// if not otherwise set, retire this URI forever
+			curi.setDontRetryBefore(Long.MAX_VALUE);
+		}
+		curi.stripToMinimal();
+	}
+
+
+
+	/**
+	 * Store is empty only if all queues are empty and 
+	 * no URIs are in-process
+	 * 
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return pendingQueue.isEmpty()
+				&& readyClassQueues.isEmpty()
+				&& heldClassQueues.isEmpty() 
+				&& snoozeQueues.isEmpty()
+				&& inProcessMap.isEmpty();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#size()
+	 */
+	public long size() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+	
+	
+	/**
+	 * 
+	 */
+	protected void wakeReadyQueues(long now) {
+		while(!snoozeQueues.isEmpty()&&((URIStoreable)snoozeQueues.first()).getWakeTime()<=now) {
+			URIStoreable awoken = (URIStoreable)snoozeQueues.first();
+			if (!snoozeQueues.remove(awoken)) {
+				logger.severe("first() item couldn't be remove()d!");
+			}
+			if (awoken instanceof KeyedQueue) {
+				assert inProcessMap.get(awoken.getClassKey()) == null : "false ready: class peer still in process";
+				if(((KeyedQueue)awoken).isEmpty()) {
+					// just drop queue
+					discardQueue(awoken);
+					return;
+				}
+				readyClassQueues.add(awoken);
+				awoken.setStoreState(URIStoreable.READY);
+			} else if (awoken instanceof CrawlURI) {
+				// TODO think about whether this is right
+				pushToPending((CrawlURI)awoken);
+			} else {
+				assert false : "something evil has awoken!";
+			}
+		}
+	}
+
+	private void discardQueue(URIStoreable awoken) {
+		allClassQueuesMap.remove(((KeyedQueue)awoken).getClassKey());
+		awoken.setStoreState(URIStoreable.FINISHED);
+	}
+	
+	/**
+	 * @return
+	 */
+	private CrawlURI dequeueFromReady() {
+		KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
+		CrawlURI readyCuri = (CrawlURI) firstReadyQueue.removeFirst();
+		return readyCuri;
+	}
+
+	/**
+	 * @param crawlURI
+	 * @return
+	 */
+	private CrawlURI emitCuri(CrawlURI curi) {
+		if(curi != null) {
+			if (curi.getStoreState() == URIStoreable.FINISHED) {
+				System.out.println("break here");
+			}
+			assert curi.getStoreState() != URIStoreable.FINISHED : "state "+curi.getStoreState()+" instead of ready for "+ curi; 
+			//assert curi.getAList() != null : "null alist in curi " + curi + " state "+ curi.getStoreState();
+			noteInProcess(curi);
+			curi.setServer(controller.getHostCache().getServerFor(curi));
+		}
+		logger.fine(this+".emitCuri("+curi+")");
+		return curi;
+	}
+
+	/**
+	 * @param curi
+	 */
+	protected void noteInProcess(CrawlURI curi) {
+		assert inProcessMap.get(curi.getClassKey()) == null : "two CrawlURIs with same classKey in process";
+		
+		inProcessMap.put(curi.getClassKey(), curi);
+		curi.setStoreState(URIStoreable.IN_PROCESS);
+		
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+		if (classQueue == null) {
+			releaseHeld(curi); 
+			return;
+		}
+		assert classQueue.getStoreState() == URIStoreable.READY : "odd state "+ classQueue.getStoreState() + " for classQueue "+ classQueue + "of to-be-emitted CrawlURI";
+		readyClassQueues.remove(classQueue);
+		enqueueToHeld(classQueue);
+		releaseHeld(curi);
+	}
+
+	/**
+	 * @param classQueue
+	 */
+	private void enqueueToHeld(KeyedQueue classQueue) {
+		heldClassQueues.add(classQueue);
+		classQueue.setStoreState(URIStoreable.HELD);
+	}
+
+	/**
+	 * @param curi
+	 */
+	private void releaseHeld(CrawlURI curi) {
+		CrawlURI released = (CrawlURI) heldCuris.get(curi.getUURI());
+		if(released!=null) {
+			heldCuris.remove(curi.getUURI());
+			reinsert(released);
+		}
+	}
+
+	/**
+	 * @param curi
+	 */
+	public void reinsert(CrawlURI curi) {
+
+		if(enqueueIfNecessary(curi)) {
+			// added to classQueue
+			return;
+		}
+		// no classQueue
+		pushToPending(curi);
+	}
+	
+	/**
+	 * 
+	 */
+	protected CandidateURI dequeueFromPendingHigh() {
+		if (pendingHighQueue.isEmpty()) {
+			return null;
+		}
+		return (CandidateURI)pendingHighQueue.removeFirst();
+	}
+	/**
+	 * 
+	 */
+	protected CandidateURI dequeueFromPending() {
+		if (pendingQueue.isEmpty()) {
+			return null;
+		}
+		return (CandidateURI)pendingQueue.removeFirst();
+	}
+
+	/**
+	 * 
+	 * @param curi
+	 * @return true if enqueued
+	 */
+	public boolean enqueueIfNecessary(CrawlURI curi) {
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+		if (classQueue != null) {
+			// must enqueue
+			classQueue.add(curi);
+			curi.setStoreState(classQueue.getStoreState());
+			return true;
+		}
+		CrawlURI classmateInProgress = (CrawlURI) inProcessMap.get(curi.getClassKey());
+		if (classmateInProgress != null) {
+			// must create queue, and enqueue
+			classQueue = new KeyedQueue(curi.getClassKey());
+			allClassQueuesMap.put(classQueue.getClassKey(), classQueue);
+			enqueueToHeld(classQueue);
+			classQueue.add(curi);
+			curi.setStoreState(classQueue.getStoreState());
+			return true;
+		}
+		
+		return false;	
+	}
+
+	/**
+	 * @return
+	 */
+	public long earliestWakeTime() {
+		if (!snoozeQueues.isEmpty()) {
+			return ((URIStoreable)snoozeQueues.first()).getWakeTime();
+		}
+		return Long.MAX_VALUE;
+	}
+
+	/**
+	 * @param curi
+	 */
+	private synchronized void pushToPending(CrawlURI curi) {
+		pendingQueue.addFirst(curi);
+		curi.setStoreState(URIStoreable.PENDING);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
+	 */
+	public int discoveredUriCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
+	 */
+	public int successfullyFetchedCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#failedFetchCount()
+	 */
+	public int failedFetchCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public void noteProcessingDone(CrawlURI curi) {
+		assert inProcessMap.get(curi.getClassKey())
+			== curi : "CrawlURI returned not in process";
+
+		inProcessMap.remove(curi.getClassKey());
+
+		KeyedQueue classQueue =
+			(KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+		if (classQueue == null) {
+			return;
+		}
+		assert classQueue.getStoreState()
+			== URIStoreable.HELD : "odd state for classQueue of remitted CrawlURI";
+		heldClassQueues.remove(classQueue);
+		if (classQueue.isEmpty()) {
+			// just drop it
+			discardQueue(classQueue);
+			return;
+		}
+		readyClassQueues.add(classQueue);
+		classQueue.setStoreState(URIStoreable.READY);
+		// TODO: since usually, queue will be snoozed, this juggling is often superfluous
+	}
+
+	/**
+	 * Update any scheduling structures with the new information
+	 * in this CrawlURI. Chiefly means make necessary arrangements
+	 * for no other URIs at the same host to be visited within the
+	 * appropriate politeness window. 
+	 * 
+	 * @param curi
+	 */
+	protected void updateScheduling(CrawlURI curi) {
+		long durationToWait = 0;
+		if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
+			&& curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
+				
+			long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+			durationToWait =
+				delayFactor
+					* (completeTime
+						- curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+
+			if (minimumDelay > durationToWait) {
+				durationToWait = minimumDelay;
+			}
+			// TODO: maximum delay? 
+			
+			if(durationToWait>0) {
+				snoozeQueueUntil(curi.getClassKey(), completeTime + durationToWait);
+			} 
+		}
+	}
+	
+	/**
+	 * The CrawlURI has encountered a problem, and will not
+	 * be retried. 
+	 * 
+	 * @param curi
+	 */
+	protected void failureDisposition(CrawlURI curi) {
+
+		failedCount++;
+
+		// send to basic log 
+		Object array[] = { curi };
+		controller.uriProcessing.log(
+			Level.INFO,
+			curi.getUURI().getUri().toString(),
+			array);
+
+		// if exception, also send to crawlErrors
+		if (curi.getFetchStatus() == S_INTERNAL_ERROR) {
+			controller.crawlErrors.log(
+				Level.INFO,
+				curi.getUURI().getUri().toString(),
+				array);
+		}
+		if (shouldBeForgotten(curi)) {
+			// curi is dismissed without prejudice: it can be reconstituted
+			forget(curi);
+		} else {
+			curi.setStoreState(URIStoreable.FINISHED);
+			if (curi.getDontRetryBefore() < 0) {
+				// if not otherwise set, retire this URI forever
+				curi.setDontRetryBefore(Long.MAX_VALUE);
+			}
+			curi.stripToMinimal();
+		}
+	}
+
+	/**
+	 * Has the CrawlURI suffered a failure which completes
+	 * its processing?
+	 * 
+	 * @param curi
+	 * @return
+	 */
+	private boolean isDispositiveFailure(CrawlURI curi) {
+		switch (curi.getFetchStatus()) {
+
+			case S_DOMAIN_UNRESOLVABLE :
+				// network errors; perhaps some of these 
+				// should be scheduled for retries
+			case S_ROBOTS_PRECLUDED :
+				// they don't want us to have it	
+			case S_INTERNAL_ERROR :
+				// something unexpectedly bad happened
+			case S_UNFETCHABLE_URI :
+				// no chance to fetch
+			case S_OUT_OF_SCOPE :
+				// filtered out
+			case S_TOO_MANY_EMBED_HOPS :
+				// too far from last true link
+			case S_TOO_MANY_LINK_HOPS :
+				// too far from seeds
+				return true;
+
+			case S_UNATTEMPTED :
+				// this uri is virgin, let it carry on
+			default :
+				return false;
+		}
+	}
+	
+	/**
+	 * @param curi
+	 * @return
+	 */
+	private boolean needsRetrying(CrawlURI curi) {
+		//
+		if (curi.getFetchAttempts()>=maxRetries) {
+			return false;
+		}
+		switch (curi.getFetchStatus()) {
+			case S_CONNECT_FAILED:					
+			case S_CONNECT_LOST:
+			case S_UNATTEMPTED:
+			case S_TIMEOUT:
+				// these are all worth a retry
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * @param curi
+	 */
+	private void scheduleForRetry(CrawlURI curi) {
+		logger.fine("inserting snoozed "+curi+" for "+retryDelay);
+		insertSnoozed(curi,retryDelay);
+	}
+	
+	/**
+	 * @param object
+	 * @param l
+	 */
+	public void snoozeQueueUntil(Object classKey, long wake) {
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(classKey);
+		if ( classQueue == null ) {
+			classQueue = new KeyedQueue(classKey);
+			allClassQueuesMap.put(classQueue.getClassKey(),classQueue);
+		} else {
+			assert classQueue.getStoreState() == URIStoreable.READY : "snoozing queue should have been READY";
+			readyClassQueues.remove(classQueue);
+		}
+		classQueue.setWakeTime(wake);
+		snoozeQueues.add(classQueue);
+		classQueue.setStoreState(URIStoreable.SNOOZED);
+	}
+
+	/**
+	 * @param curi
+	 * @return
+	 */
+	private boolean shouldBeForgotten(CrawlURI curi) {
+		switch(curi.getFetchStatus()) {
+			case S_TOO_MANY_EMBED_HOPS:
+			case S_TOO_MANY_LINK_HOPS:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * Forget the given CrawlURI. This allows a new instance
+	 * to be created in the future, if it is reencountered under 
+	 * different circumstances. 
+	 * 
+	 * @param curi
+	 */
+	public void forget(CrawlURI curi) {
+		alreadyIncluded.remove(curi.getUURI());
+		curi.setStoreState(URIStoreable.FORGOTTEN);
+	}
+
+	/**
+	 * Revisit the CrawlURI -- but not before delay time has passed.
+	 * @param curi
+	 * @param retryDelay
+	 */
+	public void insertSnoozed(CrawlURI curi, long retryDelay) {
+		curi.setWakeTime(System.currentTimeMillis()+retryDelay );
+		curi.setStoreState(URIStoreable.SNOOZED);
+		snoozeQueues.add(curi);
+	}
+
+}

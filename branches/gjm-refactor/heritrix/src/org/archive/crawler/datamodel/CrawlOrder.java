@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.archive.crawler.framework.XMLConfig;
+import org.archive.crawler.framework.exceptions.*;
 import org.w3c.dom.Document;
 
 /** Read and manipulate configuration (order) file.

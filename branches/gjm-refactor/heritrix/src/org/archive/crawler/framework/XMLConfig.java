@@ -404,6 +404,19 @@ public class XMLConfig {
 	}
 
 	/**
+	 * @param string
+	 * @param arcPrefix
+	 * @return
+	 */
+	public String getStringAt(String xpath, String defaultVal ) {
+		String retVal = getStringAt(xpath);
+		if (retVal==null) {
+			retVal = defaultVal;
+		}
+		return retVal;
+	}
+
+	/**
 	 * Using the node at the specified xpath as a guide,
 	 * create a Java instance. The node must supply a 
 	 * 'class' attribute. 

@@ -35,7 +35,7 @@ import org.archive.crawler.datamodel.UURI;
  *
  */
 public abstract class CrawlScope extends Filter {
-	private static final String XP_SEEDS = "/seeds";
+	private static final String XP_SEEDS = "seeds";
 	int version;
 	List seeds;
 	CrawlController controller;
@@ -114,5 +114,20 @@ public abstract class CrawlScope extends Filter {
 		CandidateURI caUri = new CandidateURI(u);
 		caUri.setIsSeed(true);
 		controller.getFrontier().schedule(caUri);
+	}
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
+	 */
+	public boolean accepts(Object o) {
+		// expedited check
+		if (o instanceof CandidateURI && ((CandidateURI)o).getScopeVersion()==version) {
+			return true;
+		}
+		boolean result = super.accepts(o);
+		// stamp with version for expedited check
+		if(result==true && o instanceof CandidateURI ) {
+			((CandidateURI)o).setScopeVersion(version);
+		}
+		return result;
 	}
 }

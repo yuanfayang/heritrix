@@ -23,7 +23,7 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  *
  */
-public class SimplePreselector extends Processor implements FetchStatusCodes {
+public class Preselector extends Processor implements FetchStatusCodes {
 	private boolean recheckScope;
 
 	private static String XP_RECHECK_SCOPE="@scope";
@@ -49,7 +49,7 @@ public class SimplePreselector extends Processor implements FetchStatusCodes {
 			}
 			// scope rejected
 			curi.setFetchStatus(S_OUT_OF_SCOPE);
-			curi.cancelFurtherProcessing();
+			curi.skipToProcessor(controller.getPostprocessor());
 		}
 		
 		

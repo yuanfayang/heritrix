@@ -21,7 +21,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
  * @author gojomo
  *
  */
-public class SimplePreconditionEnforcer extends Processor implements FetchStatusCodes {
+public class PreconditionEnforcer extends Processor implements FetchStatusCodes {
 	private static String XP_DELAY_FACTOR = "params/@delay-factor";
 	private static String XP_MINIMUM_DELAY = "params/@minimum-delay";
 	private static int DEFAULT_DELAY_FACTOR = 10;
@@ -74,14 +74,14 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
 			curi.setPrerequisiteUri("/robots.txt");
 			curi.incrementDeferrals();
-			curi.cancelFurtherProcessing();
+			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
 		}
 		// test against robots.txt if available
 		String ua = controller.getOrder().getUserAgent();
 		if( curi.getServer().getRobots().disallows(curi.getUURI().getUri().getPath(),ua)) {
 			// don't fetch
-			curi.cancelFurtherProcessing();  // turn off later stages
+			curi.skipToProcessor(controller.getPostprocessor());  // turn off later stages
 			curi.setFetchStatus(S_ROBOTS_PRECLUDED);
 			curi.getAList().putString("error","robots.txt exclusion");
 			logger.fine("robots.txt precluded "+curi);
@@ -98,7 +98,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		
 		if(curi.getServer()==null) {
 			curi.setFetchStatus(S_UNFETCHABLE_URI);
-			curi.cancelFurtherProcessing();
+			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
 		}
 		// if we haven't done a dns lookup  and this isn't a dns uri 
@@ -113,7 +113,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			String hostname = curi.getServer().getHostname();
 			curi.setPrerequisiteUri("dns:" + hostname);
 			curi.incrementDeferrals();
-			curi.cancelFurtherProcessing();
+			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
 		}
 
@@ -132,7 +132,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			// to allow us to treat dns failures and connections failures (downed hosts, route failures, etc) seperately.
 			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 			curi.incrementFetchAttempts();
-			curi.cancelFurtherProcessing();
+			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
 		}
 		return false;

@@ -8,7 +8,7 @@ package org.archive.crawler.framework;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 
 /**
  * @author gojomo
@@ -38,4 +38,12 @@ public interface URIFrontier {
 	 * 
 	 */
 	int failedFetchCount();
+
+	/**
+	 * Schedule at top priority (for example, before any
+	 * subsequently finished() items that must be retried) 
+	 * 
+	 * @param caUri
+	 */
+	void scheduleHigh(CandidateURI caUri);
 }

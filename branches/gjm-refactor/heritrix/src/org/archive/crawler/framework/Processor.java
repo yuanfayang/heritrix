@@ -97,6 +97,10 @@ public class Processor extends XMLConfig {
 		if ((n=xNode.getAttributes().getNamedItem("next"))!=null) {
 			defaultNext = (Processor)c.getProcessors().get(n.getNodeValue());
 		}
+		if ((n=xNode.getAttributes().getNamedItem("postprocessor"))!=null) {
+			// I am the distinguished postprocessor earlier stage can skip to
+			controller.setPostprocessor(this);
+		}
 		instantiateAllInto(XP_FILTERS,filters);
 		Iterator iter = filters.iterator();
 		while(iter.hasNext()) {

@@ -9,8 +9,8 @@ package org.archive.crawler.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
+import org.archive.crawler.fetcher.FetcherDNS;
 import org.archive.crawler.framework.Processor;
 
 import st.ata.util.AList;
@@ -76,6 +76,8 @@ public class CrawlURI extends CandidateURI
 	public CrawlURI(CandidateURI caUri) {
 		super(caUri.getUuri());
 		setIsSeed(caUri.getIsSeed());
+		setPathFromSeed(caUri.getPathFromSeed());
+		setVia(caUri.getVia());
 	}
 
 	/**
@@ -215,25 +217,25 @@ public class CrawlURI extends CandidateURI
 		this.server = host;
 	}
 
-	/**
-	 * 
-	 */
-	public void cancelFurtherProcessing() {
-		nextProcessor = null;
-	}
+//	/**
+//	 * 
+//	 */
+//	public void cancelFurtherProcessing() {
+//		nextProcessor = null;
+//	}
 
 	/**
 	 * @param string
 	 */
 	public void setPrerequisiteUri(String string) {
-		alist.putString("prerequisite-uri",string);
+		alist.putString(A_PREREQUISITE_URI,string);
 	}
 
 	/**
 	 * 
 	 */
 	public String getPrerequisiteUri() {
-		return alist.getString("prerequisite-uri");
+		return alist.getString(A_PREREQUISITE_URI);
 	}
 
 	/* (non-Javadoc)
@@ -427,5 +429,12 @@ public class CrawlURI extends CandidateURI
 	public void markAsSeed() {
 		linkHopCount = 0;
 		embedHopCount = 0;
+	}
+
+	/**
+	 * @param processor
+	 */
+	public void skipToProcessor(Processor processor) {
+		setNextProcessor(processor);
 	}
 }

@@ -16,11 +16,11 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.StatisticsTracker;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IAGZIPOutputStream;
-import org.w3c.dom.Node;
 import org.xbill.DNS.Record;
 
 /**
@@ -35,7 +35,7 @@ import org.xbill.DNS.Record;
 public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 	private int arcMaxSize = 100000000;		// max size we want arc files to be (bytes)
-	private String arcPrefix = "archive";			// file prefix for arcs
+	private String arcPrefix = "IAH";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
 	private OutputStream arcOut = null;		// for writing to files
@@ -66,31 +66,14 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		// set up output directory
 		CrawlOrder order = controller.getOrder();
 		
-		// retrieve any nodes we think we need from the dom(s)
-		Node filePrefix = order.getNodeAt("/crawl-order/arc-file/@prefix");
-		Node maxSize = getNodeAt("./arc-files/@max-size-bytes");
-		Node path = order.getNodeAt("//disk/@path");
-		Node compression = getNodeAt("./compression/@use");
-		
-		setUseCompression(
-			( (compression==null) ? true : compression.getNodeValue().equals("true"))
-		); 
-		
-		setArcPrefix( 
-			( (filePrefix==null) ? arcPrefix : filePrefix.getNodeValue() )
-		);
-		
-		setArcMaxSize(
-			( (maxSize==null) ? arcMaxSize : (new Integer(maxSize.getNodeValue())).intValue() )
-		);
-		
-		setOutputDir(
-			( (path==null) ? outputDir : path.getNodeValue() )
-		);
+		setUseCompression(getBooleanAt("@compression",false));
+		setArcPrefix(getStringAt("@prefix",arcPrefix));
+		setArcMaxSize(getIntAt("@max-size-bytes",arcMaxSize));
+		setOutputDir(getStringAt("@path",outputDir));
 
   	}
-  	
-  	/**
+
+	/**
   	 * Takes a CrawlURI and generates an arc record, writing it
   	 * to disk.  Currently
   	 * this method understands the following uri types: dns, http
