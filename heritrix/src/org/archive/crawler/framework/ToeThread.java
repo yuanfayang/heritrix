@@ -65,40 +65,42 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	 */
 	public void run() {
 		logger.fine(getName()+" started for order '"+controller.getOrder().getName()+"'");
-		while ( shouldCrawl ) {
-			processingLoop();
-		} 
-		controller.toeFinished(this);
+		try {
+			while ( shouldCrawl ) {
+				processingLoop();
+			} 
+			controller.toeFinished(this);
+		} catch (OutOfMemoryError e) {
+			e.printStackTrace();
+			logger.warning(getName()+" pausing: out of memory error");
+			shouldCrawl = false;
+		}
 		logger.fine(getName()+" finished for order '"+controller.getOrder().getName()+"'");
 	}
 	
 	private synchronized void processingLoop() {
+		if ( currentCuri != null ) {
+			lastStartTime = System.currentTimeMillis();
+			
+			try {
+				while ( currentCuri.nextProcessor() != null ) {
+					Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+					currentProcessor.process(currentCuri);
+				}
+			} catch (RuntimeException e) {
+				currentCuri.setFetchStatus(S_INTERNAL_ERROR);
+				// store exception temporarily for logging
+				currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+			}
+		
+			controller.getFrontier().finished(currentCuri);
+			currentCuri = null;
+			lastFinishTime = System.currentTimeMillis();
+		}
+		pool.noteAvailable(this);
 		
 		try {
-			if ( currentCuri != null ) {
-				lastStartTime = System.currentTimeMillis();
-				
-				try {
-					while ( currentCuri.nextProcessor() != null ) {
-						Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-						currentProcessor.process(currentCuri);
-					}
-				} catch (RuntimeException e) {
-					currentCuri.setFetchStatus(S_INTERNAL_ERROR);
-					// store exception temporarily for logging
-					currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
-				}
-			
-				controller.getFrontier().finished(currentCuri);
-				currentCuri = null;
-				lastFinishTime = System.currentTimeMillis();
-			}
-			pool.noteAvailable(this);
 			wait();
-		} catch (OutOfMemoryError e) {
-			e.printStackTrace();
-			logger.warning(getName()+" pausing: out of memory error");
-			// TODO: hard stop? notify elsewhere?
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			logger.warning(getName()+" interrupted");
