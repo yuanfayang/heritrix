@@ -139,8 +139,11 @@ public class ARCWriter
 
     /**
      * A running sequence used making unique ARC file names.
+     * 
+     * Access via a synchronized method to guarantee no two files get the 
+     * same sequence suffix.
      */
-    private int id = 0;    
+    private static int id = 0;    
     
     
     /**

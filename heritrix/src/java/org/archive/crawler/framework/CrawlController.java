@@ -195,20 +195,16 @@ public class CrawlController extends Thread {
         this.settingsHandler = settingsHandler;
         order = settingsHandler.getOrder();
         order.setController(this);
-
+        sExit = "";
+        
         if (checkUserAgentAndFrom(order) == false) {
             String message = "You must set the User-Agent and From HTTP" +
-                " header values to acceptable strings before proceeding. \n" +
-                " User-Agent: [software-name](+[info-url])[misc]\n" +
-                " From: [email-address]";
-            runtimeErrors.severe(message);
+            " header values to acceptable strings before proceeding. \n" +
+            " User-Agent: [software-name](+[info-url])[misc]\n" +
+            " From: [email-address]";
             throw new FatalConfigurationException(message);
         }
-
-        sExit = "";
-
-        // read from the configuration file
-
+        
         try {
             setupDisk();
         } catch (FatalConfigurationException e) {
@@ -226,7 +222,7 @@ public class CrawlController extends Thread {
                 "Unable to create log file(s): " + e.toString(),
                 e);
         }
-
+        
         try {
             setupStatTracking();
         } catch (InvalidAttributeValueException e) {
