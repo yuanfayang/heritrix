@@ -52,10 +52,46 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
         
         CredentialStore store = (CredentialStore)this.settingsHandler.
             getOrder().getAttribute(CredentialStore.ATTR_NAME);
+        writeCrendentials(store, this.getGlobalSettings(), "global");
+        writeCrendentials(store, this.getPerDomainSettings(), "domain");
+        writeCrendentials(store, this.getPerHostSettings(), "host");
+        List types = CredentialStore.getCredentialTypes();
+        List globalNames = checkContextNames(store.iterator(
+            this.getGlobalSettings()), types.size());
+        checkContextNames(store.iterator(this.getPerDomainSettings()),
+            types.size() * 2 /*This should be global + domain*/);
+        checkContextNames(store.iterator(this.getPerHostSettings()),
+            types.size() * 3 /*This should be global + domain + host*/);
+        for (Iterator i = globalNames.iterator();
+                i.hasNext();) {
+            store.remove(this.getGlobalSettings(),(String)i.next());
+        }
+        // Should be only host and domain objects at deepest scope.
+        checkContextNames(store.iterator(this.getPerHostSettings()),
+           types.size() * 2);
+    }
+
+    private List checkContextNames(Iterator i, int size) {
+        List names = new ArrayList(size);
+        for (; i.hasNext();) {
+            String name = ((Credential)i.next()).getName();
+            names.add(name);
+        }
+        logger.info("Added: " + names.toString());
+        assertTrue("Not enough names, size " + size, size == names.size());
+        return names;
+    }
+    
+    private void writeCrendentials(CredentialStore store, Object context,
+                String prefix)
+        throws InvalidAttributeValueException, AttributeNotFoundException,
+        IllegalArgumentException, InvocationTargetException {
+        
         List types = CredentialStore.getCredentialTypes();
         for (Iterator i = types.iterator(); i.hasNext();) {
             Class cl = (Class)i.next();
-            Credential c = store.create(null, cl.getName(), cl);
+            Credential c = store.create(context, prefix + "." + cl.getName(),
+                cl);
             assertNotNull("Failed create of " + cl, c);
             logger.info("Created " + c.getName());
         }
@@ -63,19 +99,6 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
         for (Iterator i = store.iterator(null); i.hasNext();) {
             names.add(((Credential)i.next()).getName());
         }
-        
-        // Write out the file so can get a look at it.
-        getSettingsHandler().writeSettingsObject(getGlobalSettings());
-        
-        assertTrue("Creds are empty", names.size() > 0);
-        assertTrue("Creds and types don't match", names.size() == types.size());
-        for (Iterator i = names.iterator(); i.hasNext();) {
-            store.remove(null, (String)i.next());
-        }
-        int count = 0;
-        for (Iterator i = store.iterator(null); i.hasNext(); count++) {
-            i.next();
-        }
-        assertTrue("Creds not empty", count == 0);
+        getSettingsHandler().writeSettingsObject((CrawlerSettings)context);
     }
 }
