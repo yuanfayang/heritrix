@@ -301,39 +301,40 @@
         <dependency>
             <id>servlet</id>
             <version>2.3</version>
-            <url>http://jetty.mortbay.com/jetty/</url>
+            <url>http://jakarta.apache.org/tomcat/</url>
             <properties>
-                <description>This jar came w/ Jetty.  Assumption is that its
-                2.3 servlet and that its Sun License.  TODO: Fix license and 
-                source.
+                <description>
+                Taken from tomcat.
                 </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
+                <license>
+                    http://jakarta.apache.org/site/legal.html
                 </license>
             </properties>
         </dependency>
         <dependency>
             <id>jasper-runtime</id>
-            <version />
-            <url>http://jetty.mortbay.com/jetty/</url>
+            <version>4.1.30</version>
+            <url>http://jakarta.apache.org/tomcat/</url>
             <properties>
-                <description>This jar came w/ Jetty. Its the jakarta 
-                jasper jsp runtime.  According to Jetty VERSION.TXT was taken
-                from tomcat 4.1.24.
+                <description>
+                Taken from tomcat.
                 </description>
-                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+                <license>
+                    http://jakarta.apache.org/site/legal.html
+                </license>
             </properties>
         </dependency>
         <dependency>
             <id>jasper-compiler</id>
-            <version />
-            <url>http://jetty.mortbay.com/jetty/</url>
+            <version>4.1.30</version>
+            <url>http://jakarta.apache.org/tomcat/</url>
             <properties>
-                <description>This jar came w/ Jetty. Its the jakarta 
-                jasper jsp runtime.  According to Jetty VERSION.TXT was taken
-                from tomcat 4.1.24.
+                <description>
+                Taken from tomcat.
                 </description>
-                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+                <license>
+                    http://jakarta.apache.org/site/legal.html
+                </license>
             </properties>
         </dependency>
         <dependency>
