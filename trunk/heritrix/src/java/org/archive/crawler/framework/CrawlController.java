@@ -1218,12 +1218,14 @@ public class CrawlController implements Serializable {
 
     /**
      * @param resumeFrom
-     * @return
+     * @return A CrawlController instance. 
      * @throws InitializationException
      */
-    public static CrawlController readFrom(Checkpoint resumeFrom) throws InitializationException {
+    public static CrawlController readFrom(Checkpoint resumeFrom)
+            throws InitializationException {
         try {
-            return (CrawlController) resumeFrom.readObjectFromFile(DISTINGUISHED_FILENAME);
+            return 
+                (CrawlController)resumeFrom.readObjectFromFile(DISTINGUISHED_FILENAME);
         } catch (IOException e) {
             e.printStackTrace();
             throw new InitializationException("unable to read controller", e);
