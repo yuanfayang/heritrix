@@ -53,11 +53,16 @@ extends Formatter implements CoreAttributeConstants {
         17 + 1 + 3 + 1 + 10 + 128 + + 1 + 10 + 1 + 128 + 1 + 10 + 1 + 3 +
         14 + 1 + 32 + 4 + 1;
     
+    /**
+     * Reuseable assembly buffer.
+     */
+    private final MutableString buffer =
+        new MutableString(GUESS_AT_LOG_LENGTH);
+    
     public String format(LogRecord lr) {
         CrawlURI curi = (CrawlURI)lr.getParameters()[0];
         String length = NA;
         String mime = null;
-        MutableString uri = new MutableString(curi.getUURI());
         if (curi.isHttpTransaction()) {
             if(curi.getContentLength() >= 0) {
                 length = Long.toString(curi.getContentLength());
@@ -91,15 +96,14 @@ extends Formatter implements CoreAttributeConstants {
             digest = Base32.encode((byte [])digest);
         }
 
-        
-        MutableString sm = new MutableString(GUESS_AT_LOG_LENGTH);
-        return sm.append(ArchiveUtils.getLog17Date(time))
+        this.buffer.length(0);
+        return this.buffer.append(ArchiveUtils.getLog17Date(time))
             .append(" ")
             .append(ArchiveUtils.padTo(curi.getFetchStatus(), 5))
             .append(" ")
             .append(ArchiveUtils.padTo(length, 10))
             .append(" ")
-            .append(uri)
+            .append(curi.getUURI().toString())
             .append(" ")
             .append(checkForNull(curi.getPathFromSeed()))
             .append(" ")
