@@ -56,7 +56,7 @@ class MemoryArea {
   /**
    * Holds the indices of the blocks which are currently 
    * occupied by this memory area. It is the sequence 
-   * of the allocation in the global data pool.
+   * of the allocation in the manager's data pool.
    */
   private LinkedList mAllocationSequence;
   
@@ -69,6 +69,7 @@ class MemoryArea {
    * For example, if you have completed 2 chunks and written 20 bytes in the 
    * 3rd chunk, then the value would be (2 * 4K + 20) where 4k is 
    * assumed to be the chunk size.
+   * 
    */
   private int mLength;
 
@@ -117,8 +118,8 @@ class MemoryArea {
    * one writer only.
    */
   int write(byte[] data, int off, int len) {
-    if ((off < 0) || (off > b.length) || (len < 0) ||
-              ((off + len) > b.length) || ((off + len) < 0)) {
+    if ((off < 0) || (off > data.length) || (len < 0) ||
+              ((off + len) > data.length) || ((off + len) < 0)) {
         throw new IndexOutOfBoundsException();
     } else if (len == 0) {
         return 0;
@@ -132,7 +133,7 @@ class MemoryArea {
       // take in as much as possible..
       if ( freeSpaceInCurrentBlock >= len ) {
         // do array copy..
-        System.arraycopy(data, off, mMgr.dataPool,
+        System.arraycopy(data, off, mMgr.mDataPool,
             (lastBlockIndex * mMgr.upperBlockSize +
             mLength % mMgr.upperBlockSize), len);
         mLength += len;
@@ -140,7 +141,7 @@ class MemoryArea {
       } else {
         if (freeSpaceInCurrentBlock > 0) {
           // do array copy..
-          System.arraycopy(data, off, mMgr.dataPool,
+          System.arraycopy(data, off, mMgr.mDataPool,
               (lastBlockIndex * mMgr.upperBlockSize +
               mLength % mMgr.upperBlockSize), freeSpaceInCurrentBlock);
           len -= freeSpaceInCurrentBlock;
@@ -154,19 +155,49 @@ class MemoryArea {
             mAllocationSequence.addAll(newBlock);
             numBlocks++;
             lastBlockIndex = ((Integer)newBlock.getFirst()).intValue();
-          }
-          else {
-            mExhausted = true;
-            break;
+            continue;
           }
         }
-        else {
-            mExhausted = true;
-            break;
-        }
+        mExhausted = true;
+        break;
       }
     }
     return (mLength - lengthB4Write);
+  }
+  
+  /**
+   * 
+   */
+  boolean write(int b) {
+    int numBlocks = mAllocationSequence.size();
+    int lastBlockIndex = ((Integer)mAllocationSequence.getLast()).intValue();
+
+    int freeSpaceInCurrentBlock = numBlocks * mMgr.upperBlockSize - mLength;
+    if (freeSpaceInCurrentBlock > 0) {
+      int index = lastBlockIndex * mMgr.upperBlockSize +
+            mLength % mMgr.upperBlockSize;
+      mMgr.mDataPool[index] = (byte)b;
+      mLength++;
+      return true;
+    }
+    else {
+      if ( numBlocks < MAX_BLOCKS ) {
+        // allocate new block..
+        LinkedList newBlock = mMgr.allocateBlocks(1);
+        if (newBlock != null) {
+          mAllocationSequence.addAll(newBlock);
+          numBlocks++;
+          lastBlockIndex = ((Integer)newBlock.getFirst()).intValue();
+          int index = lastBlockIndex * mMgr.upperBlockSize +
+            mLength % mMgr.upperBlockSize;
+          mMgr.mDataPool[index] = (byte)b;
+          mLength++;
+          return true;
+        }
+      }
+      mExhausted = true;
+      return false;
+    }
   }
   
   /**
@@ -183,7 +214,7 @@ class MemoryArea {
       return -1;
     }
     int blockIndex = ((Integer)mAllocationSequence.get(blockNum)).intValue();
-    return ( mMgr.dataPool[blockIndex * mMgr.upperBlockSize + 
+    return ( mMgr.mDataPool[blockIndex * mMgr.upperBlockSize + 
         (pos % mMgr.upperBlockSize)] & 0xff );
   }
   
@@ -221,7 +252,7 @@ class MemoryArea {
       return -1;
     }
     int blockIndex = ((Integer)mAllocationSequence.get(blockNum)).intValue();
-    System.arraycopy(mMgr.dataPool, blockIndex * mMgr.upperBlockSize + 
+    System.arraycopy(mMgr.mDataPool, blockIndex * mMgr.upperBlockSize + 
         (pos % mMgr.upperBlockSize), b, off, len);
     return len;
   }

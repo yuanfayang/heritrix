@@ -20,25 +20,26 @@ public class SpreadInputStream extends SeekableInputStream {
   /**
    * The manager to which the associated virtual buffer corresponds to.
    */
-  private MemPoolManager mgr;
+  private MemPoolManager mMgr;
   
   /**
    * The virtual buffer to which this stream is working for.
    * 
    */
-  private DiskedVirtualBuffer dBuff;
+  private DiskedVirtualBuffer mDBuff;
   
   /**
    * To track the current read position.
    */
-  private int position;
+  private int mPosition;
   
   /**
    * The random access file opened on the temporary file to provide
    * the seek/rewind functionalities.
    */
-  private RandomAccessFile rAccessfile;
+  private RandomAccessFile mRAccessfile;
   
+
   /**
    * Constructs an input stream for the given virtual buffer.
    * The virtual buffers memory area, augmented memory and the temp
@@ -46,28 +47,28 @@ public class SpreadInputStream extends SeekableInputStream {
    * stream capabilities.
    */
   SpreadInputStream(MemPoolManager mgr, DiskedVirtualBuffer dBuff) {
-    this.mgr = mgr;
-    this.dBuff = dBuff;
+    mMgr = mgr;
+    mDBuff = dBuff;
   }
   
   /**
    * Reads from the memory area/augmented memory or the temporary file
    * depending on the current position.
    */
-  public int read() throws IOException {
+  public synchronized int read() throws IOException {
   
   }
   
-  public int read(byte b[], int off, int len) throws IOException {
+  public synchronized int read(byte b[], int off, int len) throws IOException {
   
   }
 
-  public void seek(long loc) throws IOException {
+  public synchronized void seek(long loc) throws IOException {
   
   }
   
   public long getPosition() {
-    return position;
+    return mPosition;
   }
   
   public int available() throws IOException {
@@ -75,11 +76,11 @@ public class SpreadInputStream extends SeekableInputStream {
   }
   
   /**
-   * Closes the temporary file stream if it had been created.
+   * Closes the temporary file if it had been created.
    */
   public void close() throws IOException {
-    if (fileStream != null)
-      fileStream.close();
+    if (mRAccessfile != null)
+      mRAccessfile.close();
   }
 
 }
