@@ -54,7 +54,7 @@ public class ARCRecord implements ARCConstants {
      * <p>Streams can be markable or not.  If they are, we'll be able to roll
      * back when we've read too far.  If not markable, assumption is that
      * the underlying stream is managing our not reading too much (This pertains
-     * to the skipping over the end of the ARCRecord.  See {@link skip()}.
+     * to the skipping over the end of the ARCRecord.  See {@link #skip()}.
      */
     private InputStream in = null;
 
@@ -77,11 +77,8 @@ public class ARCRecord implements ARCConstants {
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
      * @param metaData Meta data.
-     *
-     * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData)
-            throws IOException {
+    public ARCRecord(InputStream in, ARCRecordMetaData metaData) {
         this(in, metaData, false);
     }
     
@@ -95,16 +92,13 @@ public class ARCRecord implements ARCConstants {
      * making of this arc record.  Update the body position so it points to end
      * of the record.  This flag is only needed creating the arcfile meta data
      * record.  It has not content.  Its all meta info.
-     *
-     * @throws IOException
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData,
-                boolean contentRead)
-            throws IOException {
+                boolean contentRead) {
         this.in = in;
         this.metaData = metaData;
         if (contentRead) {
-        	    this.position = metaData.getLength();
+            this.position = metaData.getLength();
         }
     }
 
@@ -165,7 +159,7 @@ public class ARCRecord implements ARCConstants {
         if (!this.eor) {
             // Read to the end of the body of the record.
             while(read() != -1) {
-            	    continue;
+                continue;
             }
             if (this.in.available() > 0) {
                 // If there's still stuff on the line, its the LINE_SEPARATOR

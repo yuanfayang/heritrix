@@ -69,6 +69,9 @@ public class ARCRecordMetaData
     /**
      * Test required field is present in hash.
      *
+     * @param fields Map of fields.
+     * @param requiredField Field to test for.
+     * 
      * @exception IOException If required field is not present.
      */
     protected void testRequiredField(Map fields, String requiredField)
@@ -127,8 +130,8 @@ public class ARCRecordMetaData
     /**
      * @return Offse into arcfile at which this record begins.
      */
-    public int getOffset() {
-        return ((Integer)this.headerFields.get(ABSOLUTE_OFFSET_KEY)).intValue();
+    public long getOffset() {
+        return ((Long)this.headerFields.get(ABSOLUTE_OFFSET_KEY)).longValue();
     }
 
     /**
