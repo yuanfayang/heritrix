@@ -29,13 +29,13 @@ package org.archive.io;
  * @author gojomo
  * @version $Revision$, $Date$
  */
-public class CharSubSequence implements EnhancedCharSequence {
+public class CharSubSequence implements UnstableCharSequence {
 
-    EnhancedCharSequence inner;
+    CharSequence inner;
     int start;
     int end;
 
-    public CharSubSequence(EnhancedCharSequence inner, int start, int end) {
+    public CharSubSequence(CharSequence inner, int start, int end) {
         if (end < start) {
             throw new IllegalArgumentException("Start " + start + " is > " +
                 " than end " + end);
@@ -84,16 +84,27 @@ public class CharSubSequence implements EnhancedCharSequence {
      * @see java.lang.CharSequence#toString()
      */
     public String toString() {
-        return inner.substring(this.start,length());
+        return new StringBuffer(length()).append(this).toString();
     }
 
     /* (non-Javadoc)
-     * @see org.archive.io.EnhancedCharSequence#subtring(int, int)
+     * @see org.archive.io.UnstableCharSequence#isUnstable()
      */
-    public String substring(int offset, int length) {
-        if(offset < 0 || length < 0 || offset+length>this.length()){
-            throw new IndexOutOfBoundsException();
-        }
-        return inner.substring(this.start+offset,length);
+    public boolean isUnstable() {
+        if (inner instanceof UnstableCharSequence) {
+            return ((UnstableCharSequence)inner).isUnstable();
+        }                              
+        return false;
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.io.UnstableCharSequence#stabilize()
+     */
+    public CharSequence stabilize() {
+        if(isUnstable()) {
+            return toString();
+        }
+        return this;
+    }
+
 }

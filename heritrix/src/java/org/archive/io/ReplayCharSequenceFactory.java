@@ -43,7 +43,6 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import org.archive.util.DevUtils;
 
@@ -580,6 +579,20 @@ public class ReplayCharSequenceFactory {
         public String toString() {
             return substring(0, length());
         }
+
+        /* (non-Javadoc)
+         * @see org.archive.io.UnstableCharSequence#isUnstable()
+         */
+        public boolean isUnstable() {
+            return true;
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.io.UnstableCharSequence#stabilize()
+         */
+        public CharSequence stabilize() {
+            return toString();
+        }
     }
 
     /**
@@ -1017,34 +1030,48 @@ public class ReplayCharSequenceFactory {
             return new CharSubSequence(this, start, end);
         }
 
-        /* (non-Javadoc)
-         * @see org.archive.io.EnhancedCharSequence#substring(int, int)
-         */
-        public String substring(int offset, int length) {
-
-            if ((offset + length) > this.content.limit()) {
-                throw new IllegalArgumentException("Limit is " +
-                    this.content.limit() + " but " + " offset is " + offset +
-                    " and length is " + length);
-            }
-
-            String result = null;
-            if (offset == 0 && (length == this.content.limit())) {
-                result = this.content.toString();
-            } else {
-                int originalPosition = this.content.position();
-                int originalLimit = this.content.limit();
-                // Set position to offset and limit to offset+length.
-                this.content.position(offset).limit(offset + length);
-                result = this.content.slice().toString();
-                this.content.position(originalPosition);
-                this.content.limit(originalLimit);
-            }
-            return result;
-        }
+//        /* (non-Javadoc)
+//         * @see org.archive.io.EnhancedCharSequence#substring(int, int)
+//         */
+//        public String substring(int offset, int length) {
+//
+//            if ((offset + length) > this.content.limit()) {
+//                throw new IllegalArgumentException("Limit is " +
+//                    this.content.limit() + " but " + " offset is " + offset +
+//                    " and length is " + length);
+//            }
+//
+//            String result = null;
+//            if (offset == 0 && (length == this.content.limit())) {
+//                result = this.content.toString();
+//            } else {
+//                int originalPosition = this.content.position();
+//                int originalLimit = this.content.limit();
+//                // Set position to offset and limit to offset+length.
+//                this.content.position(offset).limit(offset + length);
+//                result = this.content.slice().toString();
+//                this.content.position(originalPosition);
+//                this.content.limit(originalLimit);
+//            }
+//            return result;
+//        }
         
         public String toString() {
-            return substring(0, length());
+            return new StringBuffer(length()).append(this).toString();
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.io.UnstableCharSequence#isUnstable()
+         */
+        public boolean isUnstable() {
+            return true;
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.io.UnstableCharSequence#stabilize()
+         */
+        public CharSequence stabilize() {
+            return toString();
         }
     }
 }

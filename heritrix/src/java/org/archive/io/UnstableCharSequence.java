@@ -26,24 +26,21 @@ package org.archive.io;
 
 
 /**
- * Extends the <tt>java.lang.CharSequence</tt> to provide additional methods
- * to improve the performance of implementing classes.
+ * Marker interface for CharSequences which may depend on unstable backing
+ * (eg a large buffer that could go away or be reused). 
  *
- * @author Kristinn Sigurdsson
+ * @author gojomo
  * @see java.lang.CharSequence
  */
-public interface EnhancedCharSequence extends CharSequence {
+public interface UnstableCharSequence extends CharSequence {
 
     /**
-     * Returns the string representation of a part of the character sequence.
-     * @param offset Index of first char to include. Must be larger then or
-     *           equal to 0 and smaller then the length of the character
-     *           sequence.
-     * @param length How many chars after the first to include. offset + length
-     *           must be smaller then the length of the character sequence.
-     *           length must be non negative.
-     * @return a string consisting of exactly this sequence of characters from
-     *           <code>offset</code> to <code>offset + length</code>
+     * @return whether or not charsequence is actually unstable
      */
-    public String substring(int offset, int length);
+    public boolean isUnstable();
+    
+    /**
+     * @return CharSequence that is definitely stable
+     */
+    public CharSequence stabilize();
 }
