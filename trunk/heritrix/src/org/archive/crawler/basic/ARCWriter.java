@@ -75,7 +75,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		Node maxSize = getNodeAt("./arc-files/@max-size-bytes");
 		Node path = order.getNodeAt("//disk/@path");
 		Node compression = getNodeAt("./compression/@use");
-		
 		setUseCompression(
 			( (compression==null) ? true : compression.getNodeValue().equals("true"))
 		); 
@@ -373,12 +372,22 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 
 	public void setOutputDir(String buffer) {
 				
+
+		String crawlOrderDirecetory = controller.getOrder().getBehavior().getDefaultFileLocation();
+		// trim white spaces
+		crawlOrderDirecetory.trim();	
+		// insure a trailing 'File.separator'
+		if(! crawlOrderDirecetory.endsWith(File.separator)){
+			crawlOrderDirecetory = new String(crawlOrderDirecetory + File.separator);
+		}
+
 		// make sure it's got a trailing file.seperator so the
 		// dir is not treated as a file prefix
 		if(! buffer.endsWith(File.separator)){
 			buffer = new String(buffer + File.separator);
 		}
-			
+		
+		buffer = crawlOrderDirecetory + buffer; 
 		File newDir = new File(buffer);
 		
 		if(!newDir.exists()){

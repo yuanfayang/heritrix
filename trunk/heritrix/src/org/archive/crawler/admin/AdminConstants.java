@@ -20,6 +20,7 @@ public interface AdminConstants {
 	public static final int STATS = 4;
 	public static final int TERMINATE = 5;
 	public static final int MAINMENU = 6;
+	public static final int UPDATEWM = 7;
 	public static final String CRAWLER_STARTED = "Crawler Started!";
 	public static final String CRAWLER_STOPPED = "Crawler Stopped!";
 	public static final String CRAWLER_RUNNING_ERR =

@@ -5,6 +5,8 @@
 	xmlns:java="java" >
 
 <xsl:output method="html" />
+<xsl:param name="orderFilePath" />
+
 <xsl:template match="/">
 
 <xsl:variable name="width" select="48" />
@@ -69,7 +71,7 @@
 	type="text" 
 	size="{$width}" 
 	name="//arc-file/@prefix" 
-	value="{//arc-file/@prefix}" />
+	value="{//arc-files/@prefix}" />
 </td>
 </tr>
 
@@ -95,6 +97,28 @@
 </td>
 </tr>
 
+<tr>
+<td>
+<strong>MAX-LINK-DEPTH :</strong></td>
+<td><input 
+	type="text" 
+	size="{$width}" 
+	name="//params/@max-link-depth" 
+	value="{//params/@max-link-depth}" />
+</td>
+</tr>
+
+<tr>
+<td>
+<strong>MAX-EMBED-DEPTH :</strong></td>
+<td><input 
+	type="text" 
+	size="{$width}" 
+	name="//params/@max-embed-depth" 
+	value="{//params/@max-embed-depth}" />
+</td>
+</tr>
+
 <xsl:for-each select="//limits/*">
 <tr>
 <td>
@@ -107,6 +131,17 @@
 </td>
 </tr>
 </xsl:for-each>
+
+<tr>
+<td>
+<strong>FILTER MODE :</strong></td>
+<td><input 
+	type="text" 
+	size="{$width}" 
+	name="//@mode" 
+	value="{//@mode}" />
+</td>
+</tr>
 
 <tr>
 <td>
@@ -126,7 +161,8 @@
 	cols="{$width}" 
 	wrap="off"
 	name="seeds" >
-<xsl:value-of select="ext:getText('WebUIResources/webapps/admin/seeds.txt')"/>
+<xsl:variable name="seedsFile" select="concat($orderFilePath, //selector/seeds/@src)" />
+<xsl:value-of select="ext:getText($seedsFile)" />
 </textarea>
  <input 
 	type="submit"

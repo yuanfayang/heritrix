@@ -22,6 +22,7 @@ import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.util.ArchiveUtils;
 import org.w3c.dom.Node;
 
 /**
@@ -37,34 +38,39 @@ public class AdminController extends HttpServlet implements AdminConstants {
 	private String statusMessage = "Welcome";
 	private int crawlerAction = -1;
 	private String diskPath;
+	private String workingDirectory;
 	private Node orderNode;
 	private CrawlController controller;
 	private OrderTransformation orderTransform;
 
 	public AdminController() {
 		// Default order file;
-		orderFile  = WEB_APP_PATH + DEFAULT_ORDER_FILE;
-		
-		String aOrderFile = System.getProperty("OrderFile"); 
-		if ( aOrderFile != null){
+		orderFile = WEB_APP_PATH + DEFAULT_ORDER_FILE;
+
+		String aOrderFile = System.getProperty("OrderFile");
+		if (aOrderFile != null) {
 			File f = new File(aOrderFile);
-			if(!f.isAbsolute()){
-				orderFile = System.getProperty("user.dir") + "/" + aOrderFile;				
-			}else{
+			if (!f.isAbsolute()) {
+				orderFile =
+					System.getProperty("user.dir")
+						+ File.separator
+						+ aOrderFile;
+			} else {
 				orderFile = aOrderFile;
 			}
-			System.out.println(orderFile);
 		}
+
 		controller = new CrawlController();
 		orderTransform = new OrderTransformation();
+
 		try {
-			orderNode =
-				OrderTransformation.readDocumentFromFile(orderFile);
+			orderNode = OrderTransformation.readDocumentFromFile(orderFile);
 			orderTransform.setNode(orderNode);
 			orderTransform.transformXMLtoHTML(
 				WEB_APP_PATH + ORDER_HTML_FORM_PAGE,
 				orderFile,
-				WEB_APP_PATH + XSL_STYLE);
+				WEB_APP_PATH + XSL_STYLE,
+				ArchiveUtils.getFilePath(orderFile));
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace(System.out);
@@ -86,6 +92,13 @@ public class AdminController extends HttpServlet implements AdminConstants {
 			setStatusMessage(NO_ACTIVE_THREADS);
 		}
 		switch (crawlerAction) {
+			case UPDATEWM :
+				File f = new File(controller.getOrder().getDefaultFileLocation() + File.separator + controller.getOrder().getStringAt("//disk/@path"));
+				Runtime.getRuntime().exec("/home/igor/tools/wuiUpdateWM.sh " + f.getAbsolutePath());
+				setStatusMessage("Wayback Machine Update Started");
+				request.setAttribute("message", getStatusMessage());
+				forwardToJsp(MAINMENU_JSP, request, response);
+			break;
 			case UPDATE :
 				updateCrawlOrder(request);
 				// Go to ORDER to show new order HTML page
@@ -112,8 +125,10 @@ public class AdminController extends HttpServlet implements AdminConstants {
 				forwardToJsp(MAINMENU_JSP, request, response);
 				break;
 			case STATS :
-				if (controller.getStatistics() == null){
-					request.setAttribute("message", "No Stats Availabe (no crawling in progress)");
+				if (controller.getStatistics() == null) {
+					request.setAttribute(
+						"message",
+						"No Stats Availabe (no crawling in progress)");
 					forwardToJsp(MAINMENU_JSP, request, response);
 					return;
 				}
@@ -136,8 +151,7 @@ public class AdminController extends HttpServlet implements AdminConstants {
 	}
 	public void startCrawling() {
 		try {
-			CrawlOrder order =
-				CrawlOrder.readFromFile(orderFile);
+			CrawlOrder order = CrawlOrder.readFromFile(orderFile);
 			controller.initialize(order);
 		} catch (InitializationException e) {
 			//TODO Report Error
@@ -148,7 +162,8 @@ public class AdminController extends HttpServlet implements AdminConstants {
 		controller.startCrawl();
 		setCrawling(true);
 		statusMessage = CRAWLER_STARTED;
-		diskPath = controller.getOrder().getNodeAt("//disk/@path").getNodeValue();
+		diskPath =
+			controller.getOrder().getNodeAt("//disk/@path").getNodeValue();
 	}
 
 	public void stopCrawling() {
@@ -194,7 +209,8 @@ public class AdminController extends HttpServlet implements AdminConstants {
 		if (seeds != null && seedsFileName != null) {
 			try {
 				BufferedWriter writer =
-					new BufferedWriter(new FileWriter(seedsFileName));
+					new BufferedWriter(
+						new FileWriter(ArchiveUtils.getFilePath(orderFile) + seedsFileName));
 				if (writer != null) {
 					writer.write(seeds);
 					writer.close();
@@ -209,7 +225,8 @@ public class AdminController extends HttpServlet implements AdminConstants {
 		orderTransform.transformXMLtoHTML(
 			WEB_APP_PATH + ORDER_HTML_FORM_PAGE,
 			orderFile,
-			WEB_APP_PATH + XSL_STYLE);
+			WEB_APP_PATH + XSL_STYLE,
+			ArchiveUtils.getFilePath(orderFile));
 		setStatusMessage(CRAWL_ORDER_UPDATED);
 	}
 
