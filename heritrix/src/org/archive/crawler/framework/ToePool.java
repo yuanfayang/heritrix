@@ -9,6 +9,8 @@ package org.archive.crawler.framework;
 import java.util.ArrayList;
 
 /**
+ * A collection of ToeThreads.
+ * 
  * @author gojomo
  *
  */
@@ -36,19 +38,20 @@ public class ToePool {
 	 * 
 	 */
 	public synchronized ToeThread available() {	
-		for(int i=0; i < toes.size();i++){
-			if(((ToeThread)toes.get(i)).isAvailable()) {
-				return (ToeThread) toes.get(i);
+		while(true) {
+			for(int i=0; i < toes.size();i++){
+				if(((ToeThread)toes.get(i)).isAvailable()) {
+					return (ToeThread) toes.get(i);
+				}
+			}
+			// nothing available
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-		// nothing available
-		try {
-			wait();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return available();
 	}
 
 	/**
@@ -59,13 +62,15 @@ public class ToePool {
 	}
 
 	/**
+	 * 
+	 * 
 	 * @return
 	 */
 	public int getActiveToeCount() {
 		int count = 0; 
 		// will be an approximation
 		for(int i=0; i < toes.size();i++){
-			if(((ToeThread)toes.get(i)).isAvailable()) {
+			if(!((ToeThread)toes.get(i)).isAvailable()) {
 				count++;
 			}
 		}
