@@ -29,6 +29,18 @@ public class HostCache {
 	 * @return
 	 */
 	public CrawlHost getHostFor(CrawlURI curi) {
-		return getHostFor(curi.getUURI().getUri().getAuthority());
+		String scheme = curi.getUURI().getUri().getScheme();
+		if (scheme.equals("dns")){
+			// TODO: set crawlhost to default nameserver
+			return null;
+		}
+		String authorityUsuallyHost = curi.getUURI().getUri().getAuthority();
+		if (authorityUsuallyHost != null) {
+			return getHostFor(authorityUsuallyHost);
+			// TODOSOMEDAY: make this robust against those rare cases
+			// where authority is not a hostname
+		} else {
+			return null;
+		} 
 	}
 }
