@@ -69,8 +69,11 @@ public class ReplayInputStream extends InputStream {
 		if (position<buffer.length) {
 			return buffer[(int)position++];
 		} else {
-			position++;
-			return diskStream.read();
+			int c = diskStream.read();
+			if(c>=0) {
+				position++;
+			}
+			return c;
 		}
 	}
 	
@@ -84,12 +87,16 @@ public class ReplayInputStream extends InputStream {
 		if (position<buffer.length) {
 			int toCopy = (int) Math.min(size-position,Math.min(len,buffer.length-position));
 			System.arraycopy(buffer,(int)position,b,off,toCopy);
-			position += toCopy;
+			if(toCopy>0) {
+				position += toCopy;
+			} 
 			return toCopy;
 		}
 		// into disk zone
 		int read = diskStream.read(b,off,len);
-		position += read;
+		if(read>0) {
+			position += read;
+		}
 		return read;
 	}
 
@@ -111,6 +118,11 @@ public class ReplayInputStream extends InputStream {
 		if(diskStream!=null) {
 			diskStream.close();
 		} 
+	}
+	
+	public long remaining() {
+		// amount THEORETICALLY remaining; 
+		return size-position;
 	}
 
 }
