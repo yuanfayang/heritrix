@@ -24,7 +24,6 @@
 package org.archive.crawler.scope;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -57,8 +56,7 @@ public class SeedCachingScope extends CrawlScope {
             // failed
             return false;
         }
-        List newSeeds = new ArrayList(seeds.size()+1);
-        Collections.copy(newSeeds,seeds);
+        List newSeeds = new ArrayList(seeds);
         newSeeds.add(uuri);
         seeds = newSeeds;
         return true;
@@ -82,7 +80,7 @@ public class SeedCachingScope extends CrawlScope {
     }
 
     /**
-     * 
+     * Ensure seeds cache is created/filled
      */
     protected synchronized void fillSeedsCache() {
         if (seeds==null) {
