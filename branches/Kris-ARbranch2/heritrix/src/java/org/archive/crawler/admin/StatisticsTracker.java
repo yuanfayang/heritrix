@@ -384,13 +384,13 @@ implements CrawlURIDispositionListener {
         if (key == null) {
             key = "unknown";
         }
-
-        if (map.containsKey(key)) {
-            ((LongWrapper)map.get(key)).longValue += increment;
-        } else {
-            // if we didn't find this key add it
-            synchronized (map) {
+        // TODO: Check this synchronized block is not a bottleneck.
+        synchronized (map) {
+            LongWrapper lw = (LongWrapper)map.get(key);
+            if(lw == null) {
                 map.put(key, new LongWrapper(1));
+            } else {
+                lw.longValue += increment;
             }
         }
     }

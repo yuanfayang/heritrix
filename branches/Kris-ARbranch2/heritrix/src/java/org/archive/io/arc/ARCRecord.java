@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpParser;
@@ -127,6 +128,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * Offset at which the body begins.
      */
     private int bodyOffset = -1;
+
+    private boolean strict = false;
     
 
     /**
@@ -139,7 +142,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData)
     		throws IOException {
-        this(in, metaData, 0, true);
+        this(in, metaData, 0, true, false, true);
     }
 
     /**
@@ -149,12 +152,18 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * is to represent.
      * @param metaData Meta data.
      * @param bodyOffset Offset into the body.  Usually 0.
-     * @param digest True if we're to calculate digest for this record.
+     * @param digest True if we're to calculate digest for this record.  Not
+     * digesting saves about ~15% of cpu during an ARC parse.
+     * @param strict Be strict parsing (Parsing stops if ARC inproperly
+     * formatted).
+     * @param parseHttpHeaders True if we are to parse HTTP headers.  Costs
+     * about ~20% of CPU during an ARC parse.
      * @throws IOException
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData,
-                int bodyOffset, boolean digest) 
-    		throws IOException {
+        int bodyOffset, boolean digest, boolean strict,
+        final boolean parseHttpHeaders) 
+    throws IOException {
         this.in = in;
         this.metaData = metaData;
         this.position = bodyOffset;
@@ -167,8 +176,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 throw new IOException(e.getMessage());
             }
         }
+        this.strict = strict;
         
-        this.httpHeaderStream = readHttpHeader();
+        if (parseHttpHeaders) {
+            this.httpHeaderStream = readHttpHeader();
+        }
     }
     
     /**
@@ -397,9 +409,17 @@ public class ARCRecord extends InputStream implements ARCConstants {
             } else {
                 read = this.in.read(b, offset, read);
                 if (read == -1) {
-                    throw new IOException("Premature EOF before end-of-record.");
+                    String msg = "Premature EOF before end-of-record: " +
+                        getMetaData().getHeaderFields();
+                    if (isStrict()) {
+                        throw new IOException(msg);
+                    }
+                    // Set read == 0 rather than -1 so rest of this method
+                    // will work.  Caller treats 0 as EOS.
+                    read = 0;
+                    ARCReader.logStdErr(Level.WARNING, msg);
                 }
-                if (this.digest != null) {
+                if (this.digest != null && read >= 0) {
                     this.digest.update(b, offset, read);
                 }
             }
@@ -464,5 +484,18 @@ public class ARCRecord extends InputStream implements ARCConstants {
             int statusCode = this.httpStatus.getStatusCode();
             this.metaData.setStatusCode(Integer.toString(statusCode));
         }
+    }
+    
+    /**
+     * @return Returns the strict.
+     */
+    public boolean isStrict() {
+        return this.strict;
+    }
+    /**
+     * @param strict The strict to set.
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
     }
 }

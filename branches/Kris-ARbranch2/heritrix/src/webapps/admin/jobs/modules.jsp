@@ -37,7 +37,7 @@
         ret.append("<tr><td></td><td width='100' colspan='2'><i>" + currentDescription + "</i></td>");
         
         if(unusedOptions.size()>0){ 
-            ret.append("<tr><td>&nbsp;Availible alternatives:</td><td>");
+            ret.append("<tr><td>&nbsp;Available alternatives:</td><td>");
             ret.append("<select name='cbo" + name + "'>");
             for(int i=0 ; i<unusedOptions.size() ; i++){
                 ret.append("<option value='"+unusedOptions.get(i)+"'>");
@@ -130,7 +130,14 @@
             ret.append("<select name='cboAdd" + name + "'>");
             for(int i=0 ; i<unusedOptions.size() ; i++){
                 String curr = (String)unusedOptions.get(i);
-                ret.append("<option value='"+curr+"'>"+curr.substring(0,curr.indexOf("|"))+"</option>");
+                int index = curr.indexOf("|");
+                if (index < 0) {
+                    throw new RuntimeException("Failed to find '|' required" +
+                        " divider in : " + curr + ". Repair modules file.");
+
+                }
+                ret.append("<option value='" + curr + "'>" +
+                    curr.substring(0, index) + "</option>");
             }
             ret.append("</select>");
             ret.append("</td><td>");

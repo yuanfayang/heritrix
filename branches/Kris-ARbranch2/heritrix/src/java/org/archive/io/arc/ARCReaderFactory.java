@@ -36,7 +36,9 @@ import org.archive.io.GzippedInputStream;
 
 
 /**
- * Return an ARCReader.
+ * Factory that returns an ARCReader.
+ * 
+ * Can handle compressed and uncompressed ARCs.
  *
  * @author stack
  */
@@ -54,6 +56,11 @@ public class ARCReaderFactory implements ARCConstants {
         super();
     }
     
+    /**
+     * @param arcFile File to test.
+     * @return True if <code>arcFile</code> is compressed ARC.
+     * @throws IOException
+     */
     public static boolean isCompressed(File arcFile) throws IOException {
         return ARCReaderFactory.factory.testCompressedARCFile(arcFile);
     }
@@ -63,7 +70,8 @@ public class ARCReaderFactory implements ARCConstants {
      * @return An ARCReader.
      * @throws IOException
      */
-    public static ARCReader get(File arcFile) throws IOException {
+    public static ARCReader get(File arcFile)
+    throws IOException {
         boolean compressed = isCompressed(arcFile);
         if (!compressed) {
             if (!ARCReaderFactory.factory.testUncompressedARCFile(arcFile)) {
@@ -90,7 +98,8 @@ public class ARCReaderFactory implements ARCConstants {
      *
      * @exception IOException If file does not exist or is not unreadable.
      */
-    public boolean testCompressedARCFile(File arcFile) throws IOException {
+    public boolean testCompressedARCFile(File arcFile)
+    throws IOException {
         boolean compressedARCFile = false;
         isReadable(arcFile);
         if(arcFile.getName().toLowerCase()
@@ -127,9 +136,7 @@ public class ARCReaderFactory implements ARCConstants {
      * @param arcFile File to test if its Internet Archive ARC file
      * uncompressed.
      *
-     * @return True if this is an Internet Archive GZIP'd ARC file (It begins
-     * w/ the Internet Archive GZIP header and has the
-     * COMPRESSED_ARC_FILE_EXTENSION suffix).
+     * @return True if this is an Internet Archive ARC file.
      *
      * @exception IOException If file does not exist or is not unreadable.
      */
@@ -144,7 +151,7 @@ public class ARCReaderFactory implements ARCConstants {
                 fis.close();
                 if (read == ARC_MAGIC_NUMBER.length()) {
                     StringBuffer beginStr
-                    = new StringBuffer(ARC_MAGIC_NUMBER.length());
+                        = new StringBuffer(ARC_MAGIC_NUMBER.length());
                     for (int i = 0; i < ARC_MAGIC_NUMBER.length(); i++) {
                         beginStr.append((char)b[i]);
                     }
@@ -183,13 +190,13 @@ public class ARCReaderFactory implements ARCConstants {
      * @author stack
      */
     private class UncompressedARCReader extends ARCReader {
-        
         /**
          * Constructor.
          * @param arcFile Uncompressed arcfile to read.
          * @throws IOException
          */
-        public UncompressedARCReader(File arcFile) throws IOException {
+        public UncompressedARCReader(File arcFile)
+        throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = getInputStream(arcFile);
@@ -202,13 +209,13 @@ public class ARCReaderFactory implements ARCConstants {
      * @author stack
      */
     private class CompressedARCReader extends ARCReader {
-
         /**
          * Constructor.
          * @param arcFile Compressed arcfile to read.
          * @throws IOException
          */
-        public CompressedARCReader(File arcFile) throws IOException {
+        public CompressedARCReader(File arcFile)
+        throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = new GzippedInputStream(getInputStream(arcFile));
@@ -239,19 +246,23 @@ public class ARCReaderFactory implements ARCConstants {
         }
         
         protected void gotoEOR(ARCRecord rec) throws IOException {
-            long skipped = ((GzippedInputStream)this.in).gotoEOR(LINE_SEPARATOR);
-            if (skipped > 0) {
-                // Report on system error the number of unexpected characters
-                // at the end of this record.
-                ARCRecordMetaData meta = (this.currentRecord != null)?
-                    rec.getMetaData(): null;
-                logStdErr(Level.SEVERE, this.arcFile +
-                    ": Record ENDING at " +
-                    ((GzippedInputStream)this.in).getFilePointer() +
-                    " has " + skipped + " trailing byte(s): " +
-                    ((meta != null)?
-                        meta.getHeaderFields().toString(): ""));
+            long skipped = ((GzippedInputStream)this.in).
+                gotoEOR(LINE_SEPARATOR);
+            if (skipped <= 0) {
+                return;
             }
+            // Report on system error the number of unexpected characters
+            // at the end of this record.
+            ARCRecordMetaData meta = (this.currentRecord != null)?
+                rec.getMetaData(): null;
+            String message = "Record ENDING at " +
+                ((GzippedInputStream)this.in).getFilePointer() +
+                " has " + skipped + " trailing byte(s): " +
+                ((meta != null)? meta.toString(): "");
+            if (isStrict()) {
+                throw new IOException(message);
+            }
+            logStdErr(Level.WARNING, message);
         }
     }
 }

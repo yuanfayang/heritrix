@@ -65,7 +65,6 @@ public class MimetypeUtils {
      * running it through a set of rules.
      */
     public static String truncate(String contentType) {
-        
         if (contentType == null) {
             contentType = NO_TYPE_MIMETYPE;
         } else {

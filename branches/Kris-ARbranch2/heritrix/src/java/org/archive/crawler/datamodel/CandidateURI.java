@@ -33,9 +33,16 @@ import st.ata.util.AList;
 import st.ata.util.HashtableAList;
 
 /**
- * A URI, discovered or passed-in, that may be scheduled (and
- * thus become a CrawlURI). Contains just the fields necessary
- * to perform quick in-scope analysis.
+ * A URI, discovered or passed-in, that may be scheduled.
+ * When scheduled, a CandidateURI becomes a {@link CrawlURI}
+ * made with the data contained herein. A CandidateURI
+ * contains just the fields necessary to perform quick in-scope analysis.
+ * 
+ * <p>Has a flexible attribute list that will be promoted into
+ * any {@list CrawlURI} created from this CandidateURI.  Use it
+ * to add custom data or state needed later doing custom processing.
+ * See accessors/setters {@link #putString(String, String)},
+ * {@link #getString(String)}, etc. 
  *
  * @author Gordon Mohr
  */
@@ -99,7 +106,9 @@ implements Serializable, Lineable {
      * The attribute list is a flexible map of key/value pairs for storing
      * status of this URI for use by other processors. By convention the
      * attribute list is keyed by constants found in the
-     * {@link CoreAttributeConstants} interface.
+     * {@link CoreAttributeConstants} interface.  Use this list to carry
+     * data or state produced by custom processors rather change the
+     * classes {@link CrawlURI} or this class, CandidateURI.
      */
     private AList alist;
     
@@ -401,11 +410,13 @@ implements Serializable, Lineable {
     }
     
     /**
-     * Assumption is that only one at a thread will ever be accessing
-     * a CandidateURI.
+     * Assumption is that only one thread at a time will ever be accessing
+     * a particular CandidateURI.
      * 
-     * @deprecated Public access will be deprecated.  This methods access
-     * will change in next release.
+     * @deprecated Public access will be deprecated. This methods access
+     * will change in next release.  Use specialized accessors instead such
+     * as {@link #getString(String)}.
+     * 
      * @return the attribute list.
      */
     public AList getAList() {

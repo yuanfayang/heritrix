@@ -34,6 +34,7 @@ import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SimpleType;
 import org.archive.util.InetAddressUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
@@ -59,6 +60,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
      private short TypeType = Type.A;
 
      protected InetAddress serverInetAddr = null;
+
+    private static final String ATTR_ACCEPT_NON_DNS_RESOLVES = "accept-non-dns-resolves";
+    private static final Boolean DEFAULT_ACCEPT_NON_DNS_RESOLVES = Boolean.FALSE;
+    private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES = 6*60*60; // 6 hrs
+    
      // protected CrawlServer dnsServer = null;
 
     /** Create a new instance of FetchDNS.
@@ -67,6 +73,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public FetchDNS(String name) {
         super(name, "DNS Fetcher. \nHandles DNS lookups.");
+        org.archive.crawler.settings.Type e = addElementToDefinition(new SimpleType(
+                ATTR_ACCEPT_NON_DNS_RESOLVES,
+                "If a DNS lookup fails, whether or not to fallback to "
+                        + "InetAddress resolution, which may use local 'hosts' files "
+                        + "or other mechanisms.",
+                DEFAULT_ACCEPT_NON_DNS_RESOLVES));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) {
@@ -148,7 +161,23 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 break; // only need to process one record
             }
         } else {
-            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+            if (((Boolean) getUncheckedAttribute(null,
+                    ATTR_ACCEPT_NON_DNS_RESOLVES)).booleanValue()) {
+                InetAddress address = null;
+                try {
+                    address = InetAddress.getByName(dnsName);
+                } catch (UnknownHostException e1) {
+                    address = null;
+                }
+                if (address != null) {
+                    targetHost.setIP(address, DEFAULT_TTL_FOR_NON_DNS_RESOLVES);
+                    curi.setFetchStatus(S_GETBYNAME_SUCCESS);
+                } else {
+                    curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+                }
+            } else {
+                curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+            }
         }
 
         curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());

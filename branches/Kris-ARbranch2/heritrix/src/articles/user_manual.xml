@@ -39,11 +39,12 @@
     <para>This document explains how to create, configure and run crawls using
     Heritrix. It is intended for users of the software and presumes that they
     possess at least a general familiarity with the concept of web
-    crawling.</para>
-
-    <para>For a general overview on Heritrix, see <ulink
-    url="/An Introduction to Heritrix.pdf">An Introduction to
-    Heritrix</ulink>.</para>
+    crawling.</para>  
+    
+    <para>For a general overview on Heritrix, see
+    <ulink url="/An Introduction to Heritrix.pdf">An Introduction to
+    Heritrix</ulink>.
+    </para>
 
     <para>If you want to build Heritrix from source or if you'd like to make
     contributions and would like to know about contribution conventions, etc.,
@@ -654,7 +655,7 @@
 
         <para>Add/remove/set configurable modules</para>
       </listitem>
-
+      
       <listitem>
         <para>URL (<xref linkend="urlcanon" />)</para>
 
@@ -726,9 +727,8 @@
 
       <para><note>
           <para>Modules are referred to by their Java class names
-          (org.archive.crawler.frontier.HostQueuesFrontier). This is done
-          because these are the only names we can be assured of being
-          unique.</para>
+          (org.archive.crawler.frontier.BdbFrontier). This is done because these
+          are the only names we can be assured of being unique.</para>
         </note>See <ulink
       url="http://crawler.archive.org/articles/developer_manual.html">Developer's
       Manual</ulink> for information about creating and adding custom modules
@@ -737,8 +737,8 @@
       <sect3 id="frontier">
         <title>Frontier</title>
 
-        <para>The Frontier is a module that maintains the internal state of
-        the crawl. What URIs have been discovered, crawled etc. As such its
+        <para>The Frontier is a module that maintains the internal state
+        of the crawl. What URIs have been discovered, crawled etc. As such its
         selection greatly affects for instance the order in which discovered
         URIs are crawled.</para>
 
@@ -892,6 +892,20 @@
             full where as a host whose only seed is
             <literal>www.sample2.com/path/index.html</literal> will be limited
             to URIs under <literal>/path/</literal>.</para>
+
+            <note>Internally Heritrix defines everything up to the right most
+            slash as the <literal>path</literal> when doing path scope so 
+            for example, the URLs 
+            <literal>http://members.aol.com/bigbird</literal> and 
+            <literal>http://members.aol.com/~bigbird</literal> will treat
+            as in scope any URL that begins 
+            <literal>members.aol.com</literal>.  If your intent is to only
+            include all below the path <literal>bigbird</literal>, add a
+            slash on the end, using a form such as
+            <literal>http://members.aol.com/bigbird/</literal> or 
+            <literal>http://members.aol.com/bigbird/index.html</literal>
+            instead.
+            </note>
           </listitem>
 
           <listitem>
@@ -919,15 +933,23 @@
             when specifying your scope filter).</para>
           </listitem>
 
-          <listitem>
+          <listitem id="surtprefixscope">
             <para><emphasis role="bold">SurtPrefixScope</emphasis></para>
 
             <para>A highly flexible scope which can mix the Domain, Host, and
             Path scope behavior in a single crawl. The operator may supply an
             external file of <xref linkend="surt" /> prefixes defining URIs to
             consider in-scope. Seeds may also be considered to imply SURT
-            prefixes.</para>
             prefixes. </para>
+            <para>When you use this scope, it adds 3 hard-to-find-in-the-UI
+            attributes -- <literal>surts-source-file</literal>, 
+            <literal>seeds-as-surt-prefixes</literal>, and
+            <literal>surts-dump-file</literal> -- to the end of the scope
+            section, just after
+            <literal>transitiveFilter</literal> but before
+            <literal>http-headers</literal>.  Use these attributes
+            to configure the SURT scope.
+            </para>
             <para>See also the crawler wiki on 
             <ulink 
             url="http://crawler.archive.org/cgi-bin/wiki.pl?SurtScope">SurtScope</ulink>.</para>
@@ -974,9 +996,10 @@
           DomainScope, BroadScope -- all could be thought of as fitting a
           specific pattern: A URI is included if and only if:</para>
 
-          <para><programlisting>    ( ( focusFilter.accepts(u)
-        || transitiveFilter.accepts(u) )
-      &amp;&amp; exclusionFilter.accepts(u) == false )</programlisting></para>
+    <para><programlisting>protected final boolean innerAccepts(Object o) {
+    return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
+            transitiveAccepts(o)) &amp;&amp; !excludeAccepts(o);
+}</programlisting></para>
 
           <para>More generally, the <emphasis>focus</emphasis> filter was
           meant to rule things in by prima facia/regexp-pattern analysis; the
@@ -1139,86 +1162,88 @@
         running with the WUI use this module.</para>
       </sect3>
     </sect2>
-
     <sect2 id="urlcanon">
-      <title>URL Canonicalization Rules</title>
-
-      <para>Heritrix keeps a list of already seen URLs and before fetching,
-      does a look up into this 'already seen' or 'already included' list to
-      see if the URL has already been crawled. Often an URL can be written in
-      multiple ways but the page fetched is the same in each case. For
-      example, the page that is at
-      <literal>http://www.archive.org/index.html</literal> is the same page as
-      is at <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs differ
-      (In this case by case only). Before going to the 'already included'
-      list, Heritrix makes an effort at equating the likes of
-      <literal>http://www.archive.org/index.html</literal> and
-      <literal>http://ARCHIVE.ORG/</literal> by running each URL through a set
-      of canonicalization rules. Heritrix uses the result of this
-      canonicalization process when it goes to test if an URL has already been
-      seen.</para>
-
-      <para>An example of a canonicalization rule would lowercase all URLs.
-      Another might strip the 'www' prefix from domains.</para>
-
-      <para>The <literal>URL Canonicalization Rules</literal> screen allows
-      you to specify canonicalization rules and the order in which they are
-      run. A default set lowercases, strips wwws, removes sessionids and does
-      other types of fixup such as removal of any userinfo. The URL page works
-      in the same manner as the <xref linkend="filters" /> page.</para>
-
-      <para>To watch the canonicalization process, enable
-      <literal>org.archive.crawler.url.Canonicalizer</literal> logging in
-      <literal>heritrix.properties</literal> (There should already be a
-      commented out directive in the properties file. Search for it). Output
-      will show in <literal>heritrix_out.log</literal>. Set the logging level
-      to INFO to see just before and after the transform. Set level to FINE to
-      see the result of each rule's transform.</para>
-
-      <para>Canonicalization rules can be added as an override so an added
-      rule only works in the overridden domain.</para>
-
-      <sect3 id="urlcanonexample">
-        <title>URL Canonicalization Use Case: Stripping Site-Particular
-        Session IDs</title>
-
-        <para>Say site x.y.z is returning URLs with a session ID key of
-        <literal>cid</literal> as in
-        <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111</literal>.
-        Say the session ID value is always 32 characters. Say also, for
-        simplicity's sake, that it always appears on the end of the
-        URL.</para>
-
-        <sect4 id="urlcanonexamplesoln">
-          <title>Solution</title>
-
-          <para>Add a RegexRule override for the domain x.y.z. To do this,
-          pause the crawl, add an override for x.y.z by clicking on the
-          <literal>overrides</literal> tab in the main menu bar and filling in
-          the domain x.y.z. Once in the override screen, click on the
-          <literal>URL</literal> tab in the override menu bar -- the new bar
-          that appears below the main bar when in override mode -- and add a
-          <literal>RegexRule</literal> canonicalization rule. Name it
-          <literal>cidStripper</literal>. Adjust where you'd like it to appear
-          in the running of canonicalization rules (Towards the end should be
-          fine). Now browse back to the override settings. The new
-          canonicalization rule <literal>cidStripper</literal> should appear
-          in the settings page list of canonicalization rules. Fill in the
-          RegexRule <literal>matching-regex</literal> with something like the
-          following: <literal>"^(.+)(?:(?:cid)=" +
-          "[0-9a-zA-Z]{32})(&amp;.*)?$"</literal> (Match a tail of
-          'cid=SOME_32_CHAR_STR' grouping all that comes before this tail).
-          Fill into the <literal>format</literal> field
-          <literal>${1}</literal> (This will copy the first group from the
-          regex if the regex matched). To see the rule in operation, set the
-          logging level for
-          <literal>org.archive.crawler.url.Canonicalizer</literal> in
-          <literal>heritrix.properties</literal> (Try uncommenting the line
-          <literal>org.archive.crawler.url.Canonicalizer.level =
-          INFO</literal>). Study the output and adjust your regex
-          accordingly.</para>
-        </sect4>
-      </sect3>
+        <title>URL Canonicalization Rules</title>
+        <para>Heritrix keeps a list of already seen URLs and before
+        fetching, does a look up into this 'already seen' or
+        'already included' list to see if the URL has already been crawled.  
+        Often an URL can be written in multiple ways but the
+        page fetched is the same in each case.  For example, the page that
+        is at <literal>http://www.archive.org/index.html</literal>
+        is the same page as is at 
+        <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs differ 
+        (In this case by case only).
+        Before going to the 'already included' list, Heritrix makes an effort
+        at equating the likes of 
+        <literal>http://www.archive.org/index.html</literal>
+        and <literal>http://ARCHIVE.ORG/</literal> by running each URL through
+        a set of canonicalization rules.  Heritrix uses the result of this
+        canonicalization process when it goes to test if an URL has already
+        been seen.</para>  
+        <para>An example of a canonicalization
+            rule would lowercase all URLs.  Another might strip the
+            'www' prefix from domains.</para>
+        <para>The <literal>URL Canonicalization Rules</literal> screen allows
+        you to specify canonicalization rules and the order in which they are
+        run.  A default set lowercases, strips wwws, removes sessionids and
+        does other types of fixup such as removal of any userinfo.
+        The URL page works in the same manner as the 
+        <xref linkend="filters" /> page.
+        </para>
+        <para>To watch the canonicalization process, enable
+        <literal>org.archive.crawler.url.Canonicalizer</literal>
+        logging in <literal>heritrix.properties</literal> (There should
+        already be a commented out directive in the properties file.  
+        Search for it).   Output
+        will show in <literal>heritrix_out.log</literal>.
+        Set the logging level to INFO to see just before and after
+        the transform.  Set level to FINE to see the result of each 
+        rule's transform.
+        </para>
+        <para>Canonicalization rules can be added as an override so an added
+        rule only works in the overridden domain.
+        </para>
+        <sect3 id="urlcanonexample">
+            <title>URL Canonicalization Use Case: Stripping
+            Site-Particular Session IDs</title>
+            <para>Say site x.y.z is returning URLs with a session ID key of
+            <literal>cid</literal> as in
+            <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111</literal>.  Say the session ID value is always 32 characters.  Say also, 
+            for simplicity's sake, that it always appears on the end of the
+            URL.
+            </para>
+            <sect4 id="urlcanonexamplesoln">
+            <title>Solution</title>
+                <para>Add a RegexRule override for the domain x.y.z.
+                To do this, pause the crawl, add an override for x.y.z by
+                clicking on the <literal>overrides</literal> tab in the
+                main menu bar and filling in the domain x.y.z.  Once in the
+                override screen, click on the <literal>URL</literal> tab
+                in the override menu bar -- the new bar that appears below
+                the main bar when in override mode -- and add a
+                <literal>RegexRule</literal> canonicalization rule.  Name it
+                <literal>cidStripper</literal>.  Adjust where you'd like
+                it to appear in the running of canonicalization rules (Towards
+                the end should be fine).  Now browse back to the
+                override settings.  The new canonicalization rule 
+                <literal>cidStripper</literal> should appear in the 
+                settings page list of canonicalization rules. Fill in
+                the RegexRule
+                <literal>matching-regex</literal> with 
+                something like the following:
+              <literal>"^(.+)(?:(?:cid)=" + "[0-9a-zA-Z]{32})(&amp;.*)?$"</literal>
+              (Match a tail of 'cid=SOME_32_CHAR_STR' grouping all that comes
+              before this tail).  Fill into the <literal>format</literal>
+              field <literal>${1}</literal> (This will copy the first
+              group from the regex if the regex matched).
+                To see the rule in operation, set the logging level for
+                <literal>org.archive.crawler.url.Canonicalizer</literal>
+                in <literal>heritrix.properties</literal> (Try 
+                uncommenting the line <literal>org.archive.crawler.url.Canonicalizer.level = INFO</literal>). Study the output and adjust your
+                regex accordingly.
+                </para>
+            </sect4>
+        </sect3>
     </sect2>
 
     <sect2 id="filters">
@@ -1281,29 +1306,29 @@
 
         <sect4>
           <title>org.archive.crawler.filter.URIRegExpFilter</title>
-
           <para>Returns true if a URI matches the regular expression set for
           it. See <xref linkend="regexpr" /> for more about regular
           expressions in Heritrix.</para>
         </sect4>
-
         <sect4>
           <title>org.archive.crawler.filter.ContentTypeRegExpFilter</title>
-
-          <para>This filter runs a regular expression against the response
-          <literal>Content-Type</literal> header. Returns true if content type
-          matches the regular expression. ContentType regexp filter cannot be
-          used until after fetcher processors have run. Only then is the
-          Content-Type of the response known. A good place for this filter is
-          the writer step in processing. See <xref linkend="regexpr" /> for
-          more about regular expressions in Heritrix.</para>
+          <para>
+          This filter runs a regular expression against the
+          response <literal>Content-Type</literal> header.
+          Returns true if content type  matches the regular expression.
+          ContentType regexp filter cannot be used until after fetcher
+          processors have run.  Only then is the
+          Content-Type of the response known. A good place for this filter
+          is the writer step in processing.
+          See <xref linkend="regexpr" /> for more about regular
+          expressions in Heritrix.</para>
         </sect4>
 
         <sect4>
           <title>org.archive.crawler.filter.SurtPrefixFilter</title>
 
           <para>Returns true if a URI is prefixed by one of the <xref
-          linkend="surt" /> prefixes supplied by an external file.</para>
+          linkend="surt" /> prefixes supplied by an external file. </para>
         </sect4>
 
         <sect4>
@@ -1349,14 +1374,13 @@
 
         <sect4>
           <title>org.archive.crawler.filter.TransclusionFilter</title>
-
           <para>Filter which returns true for <xref linkend="crawluri" />
           instances which contain more than zero but fewer than
           <literal>max-trans-hops</literal> embed entries at the end of their
           <xref linkend="discoverypath" />.</para>
-
           <para>Generally only used in scopes.</para>
         </sect4>
+
       </sect3>
     </sect2>
 
@@ -1426,8 +1450,8 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           <para>This equates to the canonical root URI of RFC2617;
           effectively, in our case, its the CrawlServer name or <ulink
           url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
-          authority</ulink> (domain plus port if other than port 80). Examples
-          of credential-domain would be: 'www.archive.org' or
+          authority</ulink> (domain plus port if other than port 80).
+          Examples of credential-domain would be: 'www.archive.org' or
           'www.archive.org:8080', etc.</para>
         </sect4>
 
@@ -1959,16 +1983,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               practice.</para>
             </listitem>
           </itemizedlist>
-
           <para id="midfetch">Its also possible to add in filters that are
-          checked after the download of the HTTP response headers but before
-          the response content is read. Use
-          <literal>midfetch-filters</literal> to abort the download of
-          content-types other than those wanted (Aborted fetches have an
-          annotation <literal>midFetchAbort</literal> appended to the
-          <literal>crawl.log</literal> entry). Note that unless the same
-          filters are applied at the writer processing step, the response
-          headers -- but not the content -- will show in ARC files.</para>
+          checked after
+          the download of the HTTP response headers but before the response
+          content is read.  Use <literal>midfetch-filters</literal> to
+          abort the download of content-types other than those wanted (Aborted
+          fetches have an annotation <literal>midFetchAbort</literal>
+          appended to the <literal>crawl.log</literal> entry).  Note
+          that unless the same filters are applied at the writer processing
+          step, the response headers -- but not the content -- will show in
+          ARC files.</para>
         </sect4>
 
         <sect4>
@@ -2083,11 +2107,13 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <listitem>
           <para><emphasis role="bold">URL</emphasis></para>
 
-          <para>Add URL Canonicalization Rules to the override. It is not
-          possible to remove inherited filters or interject new filters among
-          them. New filters will be added after existing filters.</para>
-        </listitem>
+          <para>Add URL Canonicalization Rules to the override. 
+          It is not possible to remove
+          inherited filters or interject new filters among them. New filters
+          will be added after existing filters. 
+          </para>
 
+        </listitem>
         <listitem>
           <para><emphasis role="bold">Filters</emphasis></para>
 
@@ -2471,7 +2497,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>Takes the user to a page that allows him to lookup URIs in the
           frontier and to delete them by using a regular expression, or add
           URIs to the crawl from an external file (even URIs that have already
-          been processed).</para>
+          been processed). </para>
         </sect4>
 
         <sect4>
@@ -2911,22 +2937,14 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 20040721232940481   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 12 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -</programlisting></para>
 
         <para>The <emphasis rule="bold">first</emphasis> column is a 14-digit
-        time stamp. The <emphasis rule="bold">second</emphasis> column is the
-        fetch status code. Usually this is the HTTP status code but it can
-        also be a negative number if URL processing was unexpectedly
-        terminated. See <xref linkend="statuscodes" /> for a listing of
-        possible values.</para>
-
+        time stamp. 
+        The <emphasis rule="bold">second</emphasis> column is the fetch status
+        code.  Usually this is the
+        HTTP status code but it can also be a negative number if
+        URL processing was unexpectedly terminated.  
+        See <xref linkend="statuscodes" /> for a listing of possible
+        values.</para>
         <para>The <emphasis rule="bold">third</emphasis> column is the size of
-        the downloaded document in bytes. The <emphasis
-        rule="bold">fourth</emphasis> column is the URI of the document
-        downloaded. The <emphasis rule="bold">fifth</emphasis> column holds
-        breadcrumb codes showing the trail of downloads that got us to the
-        current URI. See <xref linkend="discoverypath" /> for description of
-        possible code values. The <emphasis rule="bold">sixth</emphasis>
-        column holds the URI that immediately referenced this URI
-        ('referrer'). Both of the latter two fields -- the discovery path and
-        the referrer URL -- will be empty for such as the seed URIs.</para>
         the downloaded
         document in bytes.  For HTTP, Size is the size of the content-only.
         It excludes the size of the HTTP response headers. For DNS, its
@@ -2942,19 +2960,6 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         Both of the latter two fields -- the discovery path and the referrer
         URL -- will be empty for such as the seed URIs.</para>
 
-        <para>The <emphasis rule="bold">seventh</emphasis> holds the document
-        mime type, the <emphasis rule="bold">eighth</emphasis> column has the
-        id of the worker thread that downloaded this document, the <emphasis
-        rule="bold">ninth</emphasis> holds the time in milliseconds to
-        download the document, and finally (if pertinent), the <emphasis
-        rule="bold">tenth</emphasis> column holds <quote>annotations</quote>.
-        Possible annontations include: The number of times the URI had to be
-        tried (This field is '-' if the download was never retried); The
-        literal <literal>lenTrunc</literal> if the download was truncated
-        because it exceeded configured limits; <literal>timeTrunc</literal> if
-        the download was truncated because the download time exceeded
-        configured limits; or <literal>midFetchTrunc</literal> if a midfetch
-        filter determined the download should be truncated.</para>
         <para>The <emphasis rule="bold">seventh</emphasis> holds the
         document mime type, the <emphasis rule="bold">eighth</emphasis> column
         has the id of the worker thread that downloaded this document,
@@ -3325,10 +3330,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>The <literal>prefix</literal> is set by the user when he
         configures the ARCWriter processor. By default it is IAH.</para>
-
         <para>If you see an ARC file with an extra <literal>.open</literal>
-        suffix, this means the ARC is currently in use being written to by
-        Heritrix (It usually has more than one ARC open at a time).</para>
+        suffix, this means the ARC is currently in use being written to
+        by Heritrix (It usually has more than one ARC open at a time).</para>
 
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
@@ -3648,9 +3652,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>Number of URIs that are awaiting detailed processing.</para>
 
           <para>Number of discovered URIs that have not been inspected for
-          scope or duplicates. Depending on the implementation of the Frontier
-          this might always be zero. It may also be an adjusted number that
-          tries to account for duplicates by estimation.</para>
+          scope or duplicates. Depending on the implementation of the
+          Frontier this might always be zero. It may also be an adjusted
+          number that tries to account for duplicates by estimation.</para>
         </glossdef>
       </glossentry>
 

@@ -26,6 +26,7 @@ package org.archive.io.arc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -64,9 +65,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         boolean isException = false;
         try {
             pool.borrowARCWriter();
-        }
-        catch(NoSuchElementException e)
-        {
+        } catch(NoSuchElementException e) {
             isException = true;
             long end = (new Date()).getTime();
             // This test can fail on a loaded machine if the wait period is
@@ -79,6 +78,48 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         }
         assertTrue("Did not get NoSuchElementException", isException);
 
+        for (int i = (MAX_ACTIVE - 1); i >= 0; i--) {
+            pool.returnARCWriter(writers[i]);
+            assertEquals("Number active", i, pool.getNumActive());
+            assertEquals("Number idle", MAX_ACTIVE - pool.getNumActive(),
+                    pool.getNumIdle());
+        }
+        pool.close();
+    }
+    
+    public void testInvalidate() throws Exception {
+        final int MAX_ACTIVE = 3;
+        final int MAX_WAIT_MILLISECONDS = 100;
+        cleanUpOldFiles(PREFIX);
+        ARCWriterPool pool = new ARCWriterPool(getSettings(true),
+            MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
+        ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
+        final String CONTENT = "Any old content";
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(CONTENT.getBytes());
+        for (int i = 0; i < MAX_ACTIVE; i++) {
+            writers[i] = pool.borrowARCWriter();
+            assertEquals("Number active", i + 1, pool.getNumActive());
+            writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
+                1234567890, CONTENT.length(), baos);
+        }
+     
+        ARCWriter writer2Invalidate = writers[pool.getNumActive() - 1];
+        writers[pool.getNumActive() - 1] = null;
+        pool.invalidateARCWriter(writer2Invalidate);
+        for (int i = 0; i < (MAX_ACTIVE - 1); i++) {
+            if (writers[i] == null) {
+                continue;
+            }
+            pool.returnARCWriter(writers[i]);
+        }
+        
+        for (int i = 0; i < MAX_ACTIVE; i++) {
+            writers[i] = pool.borrowARCWriter();
+            assertEquals("Number active", i + 1, pool.getNumActive());
+            writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
+                1234567890, CONTENT.length(), baos);
+        }
         for (int i = (MAX_ACTIVE - 1); i >= 0; i--) {
             pool.returnARCWriter(writers[i]);
             assertEquals("Number active", i, pool.getNumActive());

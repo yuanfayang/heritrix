@@ -22,11 +22,9 @@
  */
 package org.archive.crawler.extractor;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -83,7 +81,8 @@ implements CoreAttributeConstants {
             fos.flush();
             fos.close();
         }
-        this.recorder = setupRecorder(url, this.ARCHIVE_DOT_ORG, null);
+        this.recorder = HttpRecorder.wrapInputStreamWithHttpRecord(getTmpDir(),
+            this.getClass().getName(), url.openStream(), null);
     }
 
     /*
@@ -109,32 +108,6 @@ implements CoreAttributeConstants {
             }
         }
         assertTrue("Did not find gif url", foundLinkToHewlettFoundation);
-    }
-    
-	/**
-	 * Record the download for later playback by the extractor.
-	 * @param url URL to record.
-	 * @param basename of what we're recording.
-	 * @param encoding Encoding.
-	 * @throws IOException
-	 * @return An httprecorder.
-	 */
-    private HttpRecorder setupRecorder(URL url, String basename,
-            String encoding)
-    throws IOException {
-        HttpRecorder rec = new HttpRecorder(getTmpDir(), basename);
-        if (encoding != null && encoding.length() > 0) {
-            rec.setCharacterEncoding(encoding);
-        }
-        InputStream is = rec.inputWrap(new BufferedInputStream(
-            url.openStream()));
-        final int BUFFER_SIZE = 1024 * 4;
-        byte [] buffer = new byte[BUFFER_SIZE];
-        while(is.read(buffer) != -1) {
-            // Just read it all down.
-        }
-        is.close();
-        return rec;
     }
     
     private CrawlURI setupCrawlURI(HttpRecorder rec, String url)
@@ -197,8 +170,9 @@ implements CoreAttributeConstants {
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
         extractor.earlyInitialize(this.globalSettings);
         URL url = new URL(baseUURI.toString());
-        this.recorder = setupRecorder(url, this.getClass().getName(),
-            encoding);
+        this.recorder = HttpRecorder.
+            wrapInputStreamWithHttpRecord(getTmpDir(),
+            this.getClass().getName(), url.openStream(), encoding);
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
         extractor.innerProcess(curi);
         System.out.println("+" + extractor.report());

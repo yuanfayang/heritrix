@@ -37,8 +37,8 @@ import com.anotherbigidea.flash.writers.SWFActionsImpl;
  *
  * @author Igor Ranitovic
  */
-public class CrawlUriSWFAction extends SWFActionsImpl {
-
+public class CrawlUriSWFAction
+extends SWFActionsImpl {
     CrawlURI curi;
 
     private long linkCount;
@@ -61,7 +61,8 @@ public class CrawlUriSWFAction extends SWFActionsImpl {
      * @param target Discovered target (currently not being used.)
      * @throws IOException
      */
-    public void getURL(String url, String target) throws IOException {
+    public void getURL(String url, String target)
+    throws IOException {
         // I have done tests on a few tens of swf files and have not seen a need
         // to use 'target.' Most of the time 'target' is not set, or it is set
         // to '_self' or '_blank'.
@@ -72,11 +73,11 @@ public class CrawlUriSWFAction extends SWFActionsImpl {
             linkCount++;
         }
     }
+    
     /**
      * @return Total number of links extracted from a swf file.
      */
     public long getLinkCount() {
         return linkCount;
     }
-
 }
