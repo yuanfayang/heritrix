@@ -82,10 +82,10 @@ public class CrawlJob
     /** Job was deleted by user, will not be displayed in UI. */
     public static final String STATUS_DELETED = "Deleted";
     /** Job was terminted by user input while crawling */
-    public static final String STATUS_ABORTED = "Aborted by user";
+    public static final String STATUS_ABORTED = "Ended by operator";
     /** Something went very wrong */
     public static final String STATUS_FINISHED_ABNORMAL = "Abnormal exit from crawling";
-    /** Job finished normally having completed it's crawl. */
+    /** Job finished normally having completed its crawl. */
     public static final String STATUS_FINISHED = "Finished";
     /** Job finished normally when the specified timelimit was hit. */
     public static final String STATUS_FINISHED_TIME_LIMIT = "Finished - Timelimit hit";
