@@ -25,6 +25,10 @@ package org.archive.crawler.datamodel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,18 +43,23 @@ import org.archive.crawler.datamodel.settings.CrawlerSettings;
  * @author gojomo
  *
  */
-public class RobotsExclusionPolicy {
+public class RobotsExclusionPolicy implements Serializable {
     private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.RobotsExclusionPolicy");
 
+    private final static int NORMAL_TYPE = 0;
+    private final static int ALLOWALL_TYPE = 1;
+    private final static int DENYALL_TYPE = 2;
+    private transient int type = NORMAL_TYPE;
+
     public static RobotsExclusionPolicy ALLOWALL =
-        new RobotsExclusionPolicy(null, null, null, false, null);
+        new RobotsExclusionPolicy(ALLOWALL_TYPE);
     public static RobotsExclusionPolicy DENYALL =
-        new RobotsExclusionPolicy(null, null, null, false, null);
+        new RobotsExclusionPolicy(DENYALL_TYPE);
 
     private LinkedList userAgents = null;
     private HashMap disallows = null; // of (String -> List)
     private boolean hasErrors = false; // flag for flawed bu workable robots.txts
-    private RobotsHonoringPolicy honoringPolicy = null;
+    transient RobotsHonoringPolicy honoringPolicy = null;
 
     private String lastUsedUserAgent = null;
     private List userAgentsToTest = null;
@@ -71,7 +80,6 @@ public class RobotsExclusionPolicy {
         HashMap disallows = new HashMap();
          boolean hasErrors = false;
          String catchall = null;
-
         while (reader != null) {
             do {read = reader.readLine();}
             while (
@@ -166,6 +174,11 @@ public class RobotsExclusionPolicy {
             }
         }
     }
+    
+    public RobotsExclusionPolicy(int type) {
+        this(null, null, null, false, null);
+        this.type = type;
+    }
 
     public boolean disallows(CrawlURI curi, String userAgent) {
         if (this == ALLOWALL)
@@ -230,4 +243,45 @@ public class RobotsExclusionPolicy {
         return disallow;
     }
 
+    // Methods for object serialization.
+    
+    /** If object is DENYALL or ALLOWALL, only the object identity and type
+     * is written in the serialization stream.
+     * 
+     * @param stream the serialization stream.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.writeInt(type);
+        if (type == NORMAL_TYPE) {
+            stream.defaultWriteObject();
+        }
+    }
+
+    /** If object is DENYALL or ALLOWALL, only the object identity and type
+     * is read from the serialization stream.
+     * 
+     * @param stream the serialization stream.
+     */
+    private void readObject(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        type = stream.readInt();
+        if (type == NORMAL_TYPE) {
+            stream.defaultReadObject();
+        }
+    }
+
+    /** If object is DENYALL or ALLOWALL, the object is replaced by constants
+     * so that check for object equality works.
+     */
+    private Object readResolve() throws ObjectStreamException {
+        if (type == NORMAL_TYPE) {
+            return this;
+        } else if (type == ALLOWALL_TYPE) {
+            return ALLOWALL;
+        } else if (type == DENYALL_TYPE) {
+            return DENYALL;
+        }
+        return null;
+    }
+    
 }

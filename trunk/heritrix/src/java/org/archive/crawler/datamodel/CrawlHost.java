@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -33,24 +34,24 @@ import java.net.UnknownHostException;
  *
  * @author gojomo
  */
-public class CrawlHost {
+public class CrawlHost implements Serializable {
     public static final long IP_NEVER_EXPIRES = -1;
     public static final long IP_NEVER_LOOKED_UP = -2;
-    String name;
-    InetAddress ip;
+    private String hostname;
+    private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
     private long ipTTL = IP_NEVER_LOOKED_UP;
     private boolean hasBeenLookedUp = false;
 
     // Used when bandwith constraint are used
-    long earliestNextURIEmitTime = 0;
+    private long earliestNextURIEmitTime = 0;
     
     /** Create a new CrawlHost object.
      * 
      * @param hostname the host name for this host.
      */
     public CrawlHost(String hostname) {
-        name = hostname;
+        this.hostname = hostname;
         if (hostname.matches(
                 "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
             try {
@@ -122,7 +123,15 @@ public class CrawlHost {
     }
 
     public String toString() {
-        return "CrawlHost<" + name + "(ip:" + ip + ")>";
+        return "CrawlHost<" + hostname + "(ip:" + ip + ")>";
+    }
+    
+    /** Get the host name.
+     * 
+     * @return Returns the host name.
+     */
+    public String getHostName() {
+        return hostname;
     }
     
     /** Get the earliest time a URI for this host could be emitted.
@@ -142,5 +151,5 @@ public class CrawlHost {
     public void setEarliestNextURIEmitTime(long earliestNextURIEmitTime) {
         this.earliestNextURIEmitTime = earliestNextURIEmitTime;
     }
-    
+
 }
