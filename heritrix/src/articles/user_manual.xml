@@ -3416,7 +3416,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           url="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">World
           Wide Web consortium's web page</ulink>.</para>
 
-          <para>Other status codes used by Heritrix:<programlisting>   Code Meaning
+          <para>Other status codes used by Heritrix (From <ulink
+          url="http://crawler.archive.org/xref/org/archive/crawler/datamodel/FetchStatusCodes.html#38">org.archive.crawler.datamodel.FetchStatusCodes</ulink>):<programlisting>   Code Meaning
       1 Successful DNS lookup
       0 Fetch never tried (perhaps protocol unsupported or illegal URI)
      -1 DNS lookup failed
@@ -3425,7 +3426,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
      -4 HTTP timeout (before any meaningful response received)
      -5 Unexpected runtime exception; see runtime-errors.log
      -6 Prerequisite (DNS, robots etc.) failed, precluding fetch attempt
-     -7 URI recognized as unsupported or illegal)
+     -7 URI recognized as unsupported or illegal
      -8 Multiple retries all failed, retry limit reached
     -50 Temporary status assigned URIs awaiting preconditions; appearance in
         logs may be a bug.
