@@ -680,6 +680,18 @@
           <imagedata fileref="credentials.gif" />
         </imageobject>
       </mediaobject>
+
+      <note>
+        <title>Implementation looks nothing like the above</title>
+
+        <para>Ignore the above design. The implementation turned out to be
+        something else altogether. The model was effectively inverted
+        (credentials hold domains) and notions of going via a
+        CredentialManager/CredentialStore to do all operations on the store
+        were removed. While the resultant implementation is not a good OOM,
+        its amenable to UI manipulation (and sits easily atop the heritrix
+        settings system).</para>
+      </note>
     </sect2>
   </sect1>
 
