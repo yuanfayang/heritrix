@@ -140,7 +140,7 @@ public class Heritrix
     /**
      * Heritrix logging instance.
      */
-    protected static Logger logger
+    private static Logger logger
         = Logger.getLogger("org.archive.crawler.Heritrix");
 
     /**
@@ -148,17 +148,17 @@ public class Heritrix
      *
      * Read from properties file on startup and cached thereafter.
      */
-    protected static Properties properties = null;
+    private static Properties properties = null;
 
     /**
      * CrawlJob handler. Manages multiple crawl jobs at runtime.
      */
-    protected static CrawlJobHandler jobHandler = null;
+    private static CrawlJobHandler jobHandler = null;
 
     /**
      * CrawlController, used when running jobs without a WUI.
      */
-    protected static CrawlController controller = null;
+    private static CrawlController controller = null;
 
     /**
      * Heritrix start log file.
@@ -200,7 +200,7 @@ public class Heritrix
      * 
      * This must be defined somewhere in JSSE but can't find reference.
      */
-    private  static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
+    private static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
 
     
     /**
@@ -247,7 +247,7 @@ public class Heritrix
      * Exploit <code>-Dheritrix.home</code> if available to us.
      * @throws IOException
      */
-    private static void calculateHome() throws IOException {
+    protected static void calculateHome() throws IOException {
         String home = System.getProperty(HOME_KEY);
         if (home != null && home.length() > 0) {
             heritrixHome = new File(home);
@@ -258,7 +258,7 @@ public class Heritrix
         }
     }
 
-    private static void initialize()
+    protected static void initialize()
         throws IOException
     {
         confdir = getSubDir("conf");
@@ -281,7 +281,7 @@ public class Heritrix
      * @return The extant subdir.
      * @throws IOException if unable to find expected subdir.
      */
-    private static File getSubDir(String subdirName)
+    protected static File getSubDir(String subdirName)
         throws IOException
     {
         String path = isDevelopment()?
@@ -295,7 +295,7 @@ public class Heritrix
         return dir;
     }
 
-    private static void doStart(String [] args)
+    protected static void doStart(String [] args)
         throws Exception
     {
         int port = SimpleHttpServer.DEFAULT_PORT;
@@ -437,7 +437,7 @@ public class Heritrix
      * @param str String to test.
      * @return True if valid password/login string.
      */
-    private static boolean isValidLoginPasswordString(String str)
+    protected static boolean isValidLoginPasswordString(String str)
     {
         boolean isValid = false;
         StringTokenizer tokenizer = new StringTokenizer(str,  ":");
@@ -453,12 +453,12 @@ public class Heritrix
         return isValid;
     }
 
-    private static boolean isDevelopment()
+    protected static boolean isDevelopment()
     {
         return System.getProperty(DEVELOPMENT_KEY) != null;
     }
 
-    private static void loadProperties()
+    protected static void loadProperties()
         throws IOException
     {
         InputStream is =
@@ -470,7 +470,7 @@ public class Heritrix
         }
     }
     
-    private static File getPropertiesFile() throws FileNotFoundException {
+    protected static File getPropertiesFile() throws FileNotFoundException {
         File result = null;
         String alternateProperties = System.getProperty(PROPERTIES_KEY);
         if (alternateProperties != null && alternateProperties.length() > 0) {
@@ -493,7 +493,7 @@ public class Heritrix
      * @throws IOException
      * @throws SecurityException
      */
-    private static void patchLogging()
+    protected static void patchLogging()
         throws SecurityException, IOException
     {
         if (System.getProperty("java.util.logging.config.class") != null)
@@ -521,7 +521,7 @@ public class Heritrix
      * If system property is defined, then use it for our truststore.  Otherwise
      * use the heritrix truststore under conf directory if it exists.
      */
-    private static void configureTrustStore()
+    protected static void configureTrustStore()
     {
         String value = getProperty(TRUSTSTORE_KEY);
         if (value == null || value.length() <= 0)
@@ -549,7 +549,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    private static String getProperty(String key)
+    protected static String getProperty(String key)
     {
         return getProperty(key, null);
     }
@@ -564,7 +564,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    private static String getProperty(String key, String fallback)
+    protected static String getProperty(String key, String fallback)
     {
         String value = System.getProperty(key);
         if (value == null && properties !=  null)
@@ -583,7 +583,7 @@ public class Heritrix
      *
      * @exception Exception
      */
-    private static void selftest(String oneSelfTestName, int port)
+    protected static void selftest(String oneSelfTestName, int port)
         throws Exception {
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
@@ -637,7 +637,7 @@ public class Heritrix
      * @throws InitializationException
      * @throws InvalidAttributeValueException
      */
-    private static void launch(String crawlOrderFile)
+    protected static void launch(String crawlOrderFile)
         throws InitializationException, InvalidAttributeValueException
     {
         XMLSettingsHandler handler =
@@ -661,7 +661,7 @@ public class Heritrix
      * @exception Exception
      *
      */
-    private static void launch(String crawlOrderFile, boolean runMode,
+    protected static void launch(String crawlOrderFile, boolean runMode,
             int port, String adminLoginPassword)
         throws Exception
     {
@@ -714,7 +714,7 @@ public class Heritrix
         }
     }
 
-    private static CrawlJob createCrawlJob(CrawlJobHandler handler,
+    protected static CrawlJob createCrawlJob(CrawlJobHandler handler,
             File crawlOrderFile, String descriptor)
         throws InvalidAttributeValueException, FileNotFoundException
     {
