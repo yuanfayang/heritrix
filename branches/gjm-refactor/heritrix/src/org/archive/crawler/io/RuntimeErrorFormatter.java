@@ -17,7 +17,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author gojomo
  *
  */
-public class CrawlErrorFormatter extends UriProcessingFormatter implements CoreAttributeConstants {
+public class RuntimeErrorFormatter extends UriProcessingFormatter implements CoreAttributeConstants {
 	
 	/* (non-Javadoc)
 	 * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
@@ -28,7 +28,7 @@ public class CrawlErrorFormatter extends UriProcessingFormatter implements CoreA
 		StringWriter sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw));
 		
-		return super.format(lr) + sw.toString();
+		return super.format(lr) + " " + sw.toString();
 	}
 }
 
