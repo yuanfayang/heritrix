@@ -49,15 +49,15 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeConstants {
-
+public class ExtractorHTMLTest
+extends TmpDirTestCase
+implements CoreAttributeConstants {
     private File orderFile = null;
     private CrawlerSettings globalSettings = null;
     private XMLSettingsHandler settingsHandler = null;
     private final String ARCHIVE_DOT_ORG = "archive.org";
     private final String LINK_TO_FIND = "http://www.hewlett.org";
     private HttpRecorder recorder = null;
-
 
     /*
      * @see TestCase#setUp()
@@ -126,7 +126,7 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
             url.openStream()));
         final int BUFFER_SIZE = 1024 * 4;
         byte [] buffer = new byte[BUFFER_SIZE];
-        for (int read = -1; (read = is.read(buffer)) != -1;) {
+        while(is.read(buffer) != -1) {
             // Just read it all down.
         }
         is.close();
@@ -165,9 +165,20 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
 //        	uuri = UURIFactory.getInstance("file://" +
 //        			f.getAbsolutePath());
 //        }
+// OR 
+//      uuri = getUURI(URL or PATH)
+//
+// OR 
+//      Use the main method below and pass this class an argument.
+//     
         if (uuri != null) {
         	runExtractor(uuri);
         }
+    }
+    
+    protected UURI getUURI(String url) throws URIException {
+        url = (url.indexOf("://") > 0)? url: "file://" + url;
+        return UURIFactory.getInstance(url);
     }
     
     protected void runExtractor(UURI baseUURI) throws IOException {
@@ -180,15 +191,16 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
         this.recorder = setupRecorder(url, this.getClass().getName());
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
         extractor.innerProcess(curi);
+        System.out.println("+" + extractor.report());
         Set links = (Set)curi.getAList().
             getObject(CoreAttributeConstants.A_HTML_LINKS);
-        System.out.println("A_HTML_LINKS");
+        System.out.println("+HTML Links (A_HTML_LINKS):");
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
                 System.out.println((String)i.next());
             }
         }
-        System.out.println("A_HTML_EMBEDS");
+        System.out.println("+HTML Embeds (A_HTML_EMBEDS):");
         links = (Set)curi.getAList().
 			  getObject(CoreAttributeConstants.A_HTML_EMBEDS);
         if (links != null) {
@@ -196,17 +208,13 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
                 System.out.println((String)i.next());
             }
         }
-        System.out.println("A_HTML_SPECULATIVE_EMBEDS");
+        System.out.
+            println("+HTML Speculative Embeds (A_HTML_SPECULATIVE_EMBEDS):");
         links = (Set)curi.getAList().
               getObject(CoreAttributeConstants.A_HTML_SPECULATIVE_EMBEDS);
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
                 String u = (String)i.next();
-                if (u.indexOf(".HTM") > 0) {
-                	int l = u.length();
-                    byte [] c = u.getBytes();
-                    int xx = 0;
-                }
                 System.out.println(u + " " + curi.getUURI() + " " +
                     UURIFactory.getInstance(curi.getUURI(), u));
             }
@@ -249,6 +257,21 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
             UURI uuri = UURIFactory.getInstance((String)i.next());
             assertTrue("Not stripping new lines",
                 uuri.toString().equals("http://www.carsound.dk/"));
+        }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.err.println("Usage: " + ExtractorHTMLTest.class.getName() +
+                " URL|PATH");
+            System.exit(1);
+        }
+        ExtractorHTMLTest testCase = new ExtractorHTMLTest();
+        testCase.setUp();
+        try {
+            testCase.runExtractor(testCase.getUURI(args[0]));
+        } finally {
+            testCase.tearDown();
         }
     }
 }
