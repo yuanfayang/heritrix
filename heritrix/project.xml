@@ -308,21 +308,10 @@
         </dependency>
         <dependency>
             <id>poi</id>
-            <version />
+            <version>2.0-RC1-20031102</version>
             <url>http://jakarta.apache.org/poi/</url>
             <properties>
                 <description>For parsing PDFs.
-                </description>
-                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
-            </properties>
-        </dependency>
-        <dependency>
-            <id>poi-scratchpad</id>
-            <version />
-            <url>http://jakarta.apache.org/poi/</url>
-            <properties>
-                <description>For parsing PDFs. Has the WordDocument extractor 
-                class.
                 </description>
                 <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
