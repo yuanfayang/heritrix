@@ -73,7 +73,12 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 				|| curi.getServer().getRobotsExpires()<System.currentTimeMillis()
 			){
 			logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
-			curi.setPrerequisiteUri("/robots.txt");
+			if(curi.getServer().getRobotsExpires()<0) {
+				curi.setPrerequisiteUri("/robots.txt");
+			} else {
+				// Robots expired - should be refetched even though its already crawled
+				curi.setForcedPrerequisiteUri("/robots.txt");
+			}
 			//curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
 			curi.incrementDeferrals();
 			curi.setFetchStatus(S_DEFERRED);

@@ -125,6 +125,12 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 			CandidateURI caUri = new CandidateURI(prereq);
 			caUri.setVia(curi);
 			caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
+
+			if(curi.hasForcedPrerequisiteUri()) {
+				// This URI should be fetched even though it is in the
+				// alreadyIncluded map.
+				caUri.setForceFetch(true);
+			}
 			
 			if (!scheduleHigh(caUri)) {
 				// prerequisite cannot be scheduled (perhaps excluded by scope)
