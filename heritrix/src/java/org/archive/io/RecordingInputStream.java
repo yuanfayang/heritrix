@@ -136,33 +136,53 @@ public class RecordingInputStream
     }
 
     /**
-     * @param maxLength
-     * @param timeout
-     * @throws IOException
+     * Read all of a stream (Or read until we timeout or have read to the max).
+     * @param maxLength Maximum length to read.
+     * @param timeout Timeout in milliseconds.
+     * @throws IOException failed read.
+     * @throws RecorderLengthExceededException
+     * @throws RecorderTimeoutException
      */
     public void readFullyOrUntil(long maxLength, long timeout)
-        throws IOException
+        throws IOException, RecorderLengthExceededException,
+            RecorderTimeoutException
     {
     	long timeoutTime;
     	long totalBytes = 0;
-    	if(timeout>0) {
+        
+    	if(timeout > 0) {
     		timeoutTime = System.currentTimeMillis() + timeout;
     	} else {
     		timeoutTime = Long.MAX_VALUE;
     	}
+        
     	byte[] buf = new byte[4096];
-    	long bytesRead;
-    	while(true) {
+    	long bytesRead = -1;
+    	while (true) {
     		try {
     			bytesRead = read(buf);
-    			if (bytesRead==-1) {
+    			if (bytesRead == -1) {
     				break;
     			}
     			totalBytes += bytesRead;
     		} catch (SocketTimeoutException e) {
-    			// DO NOTHING; just want to check overall timeout
-    		}
-    		if (totalBytes>maxLength) {
+                // Socket timed out. If we  haven't exceeded the timeout, throw
+                // an IOException.  If we have, it'll be picked up on by test
+                // done below.
+                if (System.currentTimeMillis() < timeoutTime) {
+                    throw new IOException("Socket timedout: " + e.getMessage());
+                }
+    		} catch (NullPointerException e) {
+                // [ 896757 ] NPEs in Andy's Th-Fri Crawl.
+                // A crawl was showing NPE's in this part of the code but can
+                // not reproduce.  Adding this rethrowing catch block w/
+                // diagnostics to help should we come across the problem in the
+                // future.
+                throw new NullPointerException("Stream " + this.in + ", " +
+                    e.getMessage());
+            }
+            
+    		if (totalBytes > maxLength) {
     			throw new RecorderLengthExceededException();
     		}
     		if (System.currentTimeMillis() > timeoutTime) {
