@@ -100,6 +100,14 @@ public class DiskQueue implements Queue, Serializable {
         this.prefix = prefix;
         this.scratchDir = dir;
         this.reuse = reuse;
+        // test minimally if supplied disk paths are sensible
+        if(dir.exists()==false) {
+            if(dir.mkdirs()==false) {
+                throw new FileNotFoundException("unable to create scratch directory");
+            }
+        }
+        // TODO: test more extensively, given lazy disk use, if queue
+        // will be be viable?
     }
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
@@ -119,7 +127,7 @@ public class DiskQueue implements Queue, Serializable {
         testStream = new ObjectOutputStream(new DevNull());        
         tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
         headStream = new HeaderlessObjectInputStream(bytes.getHeadStream());
-        tailStream.flush(); // ??
+        // tailStream.flush(); // ??
         isInitialized = true;
     }
 
