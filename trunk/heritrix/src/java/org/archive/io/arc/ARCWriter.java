@@ -335,7 +335,7 @@ public class ARCWriter implements ARCConstants {
             ARCWriter.roundRobinIndex++;
         }
         if (d == null) {
-            throw new IOException("None of these directories are usable.");
+            throw new IOException("ARC directorie(s) unusable.");
         }
         return d;
     }
