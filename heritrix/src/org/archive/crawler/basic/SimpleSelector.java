@@ -6,15 +6,13 @@
  */
 package org.archive.crawler.basic;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -61,6 +59,10 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				handlePrerequisites(curi);
 				return;
 			}
+			// handle http headers 
+			if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
+				handleHttpHeaders(curi);
+			}
 			// handle embeds 
 			if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
 				handleEmbeds(curi);
@@ -83,6 +85,28 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 
 
 	/**
+	 * @param curi
+	 */
+	private void handleHttpHeaders(CrawlURI curi) {
+		// treat roughly the same as embeds, with same distance-from-seed
+		Collection uris = (Collection)curi.getAList().getObject(A_HTTP_HEADER_URIS);
+		Iterator iter = uris.iterator();
+		while(iter.hasNext()) {
+			String e = (String)iter.next();
+			try {
+				UURI u = UURI.createUURI(e,curi.getBaseUri());
+				if(filtersAccept(u)) {
+					store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
+				}
+			} catch (URISyntaxException ex) {
+				Object[] array = { curi, e };
+				controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
+			}
+		}
+	}
+
+
+	/**
 	 * The CrawlURI has been successfully crawled, and will be
 	 * attempted no more. 
 	 * 
@@ -94,19 +118,12 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			logger.info("==========> " +
 				completionCount+" <========== HTTP URIs completed");
 		}
-		
-		String length = "n/a";
-		if ( curi.getAList().containsKey("http-transaction")) {
-			GetMethod get = (GetMethod) curi.getAList().getObject("http-transaction");
-			// allow get to be GC'd
-			curi.getAList().remove("http-transaction");
 				
-			if (get.getResponseHeader("Content-Length")!=null) {
-				length = get.getResponseHeader("Content-Length").getValue();
-			}
-		}
-		Object array[] = { new Integer(curi.getThreadNumber()), new Integer(curi.getFetchStatus()), length, curi.getUURI().getUri() };
-		controller.successLogger.log(Level.INFO,curi.getUURI().getUri().toString(),array);
+		Object array[] = { curi };
+		controller.uriProcessing.log(
+			Level.INFO,
+			curi.getUURI().getUri().toString(),
+			array);
 		
 		// note that CURI has passed out of scheduling
 		curi.setStoreState(URIStoreable.FINISHED);
@@ -184,10 +201,15 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		Iterator iter = links.iterator();
 		while(iter.hasNext()) {
 			String l = (String)iter.next();
-			UURI embed = UURI.createUURI(l,curi.getBaseUri());
-			if(filtersAccept(embed)) {
-				store.insert(embed,curi.getAList().getInt("distance-from-seed")+1);
-			} 
+			try {
+				UURI embed = UURI.createUURI(l,curi.getBaseUri());
+				if(filtersAccept(embed)) {
+					store.insert(embed,curi.getAList().getInt("distance-from-seed")+1);
+				} 
+			} catch (URISyntaxException ex) {
+				Object[] array = { curi, l };
+				controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
+			}
 		}
 	}
 
@@ -197,19 +219,29 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		Iterator iter = embeds.iterator();
 		while(iter.hasNext()) {
 			String e = (String)iter.next();
-			UURI embed = UURI.createUURI(e,curi.getBaseUri());
-			if(filtersAccept(embed)) {
-				store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
+			try {
+				UURI embed = UURI.createUURI(e,curi.getBaseUri());
+				if(filtersAccept(embed)) {
+					store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
+				}
+			} catch (URISyntaxException ex) {
+				Object[] array = { curi, e };
+				controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
 			}
 		}
 	}
 
 
 	protected void handlePrerequisites(CrawlURI curi) {
-		UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),curi.getUURI().getUri());
-		curi.getAList().remove("prerequisite-uri");
-		store.reinsert(curi);
-		store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
+		try {
+			UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),curi.getUURI().getUri());
+			curi.getAList().remove("prerequisite-uri");
+			store.reinsert(curi);
+			store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
+		} catch (URISyntaxException ex) {
+			Object[] array = { curi, curi.getPrerequisiteUri() };
+			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
+		}
 	}
 	
 	
@@ -220,15 +252,19 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	 * @param curi
 	 */
 	protected void failureDisposition(CrawlURI curi) {
+		// send to basic log 
+		Object array[] = { curi };
+		controller.uriProcessing.log(
+			Level.INFO,
+			curi.getUURI().getUri().toString(),
+			array);
+
+         // if exception, also send to crawlErrors
 		if(curi.getFetchStatus()==S_INTERNAL_ERROR) {
-			RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
-			StringWriter sw = new StringWriter();
-			e.printStackTrace(new PrintWriter(sw));
-			controller.failureLogger.info("Finished with "+curi+": "+
-				e+"\n"+sw.toString());
-		} else {
-			controller.failureLogger.info("Finished with "+curi+ ": error status "+curi.getFetchStatus());
-			// don't let the madness continue
+			controller.crawlErrors.log(
+			    Level.INFO,
+			    curi.getUURI().getUri().toString(),
+				array);
 		}
 	}
 
