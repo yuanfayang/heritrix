@@ -42,7 +42,7 @@ public class URIRegExpFilter extends Filter {
     public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 
     /**
-     * @param name
+     * @param name Filter name.
      */
     public URIRegExpFilter(String name) {
         super(name, "URI regexp filter.");
@@ -53,9 +53,15 @@ public class URIRegExpFilter extends Filter {
                 new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
-     */
+	public URIRegExpFilter(String name, String regexp) {
+		super(name, "URI regexp filter.");
+		addElementToDefinition(new SimpleType(ATTR_MATCH_RETURN_VALUE,
+	        "What to return when" + " regular expression matches. \n",
+		    new Boolean(true)));
+		addElementToDefinition(new SimpleType(ATTR_REGEXP,
+		    "Java regular expression.", regexp)); 
+	}
+
     protected boolean innerAccepts(Object o) {
         String input = null;
         input = asString(o);
