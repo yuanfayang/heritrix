@@ -7,21 +7,27 @@
 package org.archive.crawler.framework;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.HostCache;
+import org.archive.crawler.io.FetchFormatter;
 
 /**
  * 
  * @author Gordon Mohr
  */
 public class CrawlController {
+	public Logger successLogger = Logger.getLogger("successLogger");
+	public Logger failureLogger = Logger.getLogger("failureLogger");
+	
 	CrawlOrder order;
 	
 	URIScheduler scheduler;
@@ -63,6 +69,11 @@ public class CrawlController {
 			Processor p = (Processor) ((Map.Entry)obj).getValue();
 			p.initialize(this);
 		}
+		
+		ConsoleHandler ch = new ConsoleHandler();
+		ch.setFormatter(new FetchFormatter());
+		successLogger.addHandler(ch);
+		successLogger.setUseParentHandlers(false);
 	}
 	
 	/**
