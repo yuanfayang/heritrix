@@ -21,7 +21,7 @@ import org.w3c.dom.Node;
  */
 public class CrawlerBehavior extends XMLConfig {
 	List seeds = null;
-
+	String caseFlattenedUserAgent = null;
 
 	/**
 	 * @param node
@@ -46,7 +46,10 @@ public class CrawlerBehavior extends XMLConfig {
 	 * @return
 	 */
 	public String getUserAgent() {
-		return getStringAt("//http-headers/User-Agent");
+		if (caseFlattenedUserAgent==null) {
+			caseFlattenedUserAgent =  getStringAt("//http-headers/User-Agent").toLowerCase();
+		}
+		return caseFlattenedUserAgent;
 	}
 
 	/**
