@@ -79,6 +79,9 @@ public class Refinement {
      * @return true if within bounds.
      */
     public boolean isWithinRefinementBounds(UURI uri) {
+        if (uri == null) {
+            return false;
+        }
         for (Iterator it = criteria.iterator(); it.hasNext();) {
             if (!((Criteria) it.next()).isWithinRefinementBounds(uri)) {
                 return false;
