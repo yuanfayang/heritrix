@@ -837,7 +837,10 @@ public class ReplayCharSequenceFactory {
                     assert bb.hasRemaining(): "Buffer has nought in it: " + i;
                     while((result = decoder.decode(bb, cb, false))
                             == CoderResult.UNDERFLOW && bb.hasRemaining()) {
-                        drainCharBuffer(cb, writer);
+                        if (drainCharBuffer(cb, writer)) {
+                            assert unicode.exists(): "No file: " +
+                                unicode.getAbsolutePath();
+                        }
                     }
                     
                     if (result != CoderResult.UNDERFLOW) {
@@ -847,17 +850,26 @@ public class ReplayCharSequenceFactory {
                 
                 if ((result = decoder.decode(bb, cb, true)) ==
                         CoderResult.OVERFLOW) {
-                    drainCharBuffer(cb, writer);
+                    if(drainCharBuffer(cb, writer)) {
+                        assert unicode.exists(): "No file: " +
+                            unicode.getAbsolutePath();
+                    }
                 }
             
                 // Flush any remaining state from the decoder, being careful
                 // to detect output buffer overflow(s)
                 while (decoder.flush(cb) == CoderResult.OVERFLOW) {
-                    drainCharBuffer(cb, writer);
+                    if (drainCharBuffer(cb, writer)) {
+                        assert unicode.exists(): "No file: " +
+                            unicode.getAbsolutePath();
+                    }
                 }
             
                 // Drain any chars remaining in the output buffer
-                drainCharBuffer(cb, writer);
+                if (drainCharBuffer(cb, writer)) {
+                    assert unicode.exists(): "No file: " +
+                        unicode.getAbsolutePath();
+                }
             }
             
             catch (IOException e) {
@@ -885,8 +897,10 @@ public class ReplayCharSequenceFactory {
          * @param cb A CharBuffer containing chars to be written.
          * @param out An output stream to consume the bytes in cb.
          */
-        private void drainCharBuffer(CharBuffer cb, Writer writer)
+        private boolean drainCharBuffer(CharBuffer cb, Writer writer)
             throws IOException  {
+            
+            boolean wrote = false;
             
             // Prepare buffer for draining
             cb.flip();
@@ -895,10 +909,18 @@ public class ReplayCharSequenceFactory {
             // actually modify the state of the buffer. If the char buffer was
             // being drained by calls to get(), a loop might be needed here.
             if (cb.hasRemaining()) {
+                // REMOVE
+                System.out.println("WRITE " + cb.arrayOffset() + ", " +
+                    cb.limit());
+                assert cb.limit() > cb.arrayOffset(): cb.limit() + ", " +
+                    cb.arrayOffset();
+                wrote = cb.limit() > cb.arrayOffset();
                 writer.write (cb.array(), cb.arrayOffset(), cb.limit());
             }
         
             cb.clear();        // Prepare buffer to be filled again
+            
+            return wrote;
         }
         
         private void deleteFile(File fileToDelete) {
