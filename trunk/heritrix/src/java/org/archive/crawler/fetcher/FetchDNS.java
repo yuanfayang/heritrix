@@ -55,40 +55,40 @@ implements CoreAttributeConstants, FetchStatusCodes {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
 
-    // defaults
-     private short ClassType = DClass.IN;
-     private short TypeType = Type.A;
-
-     protected InetAddress serverInetAddr = null;
-
-    private static final String ATTR_ACCEPT_NON_DNS_RESOLVES = "accept-non-dns-resolves";
-    private static final Boolean DEFAULT_ACCEPT_NON_DNS_RESOLVES = Boolean.FALSE;
-    private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES = 6*60*60; // 6 hrs
+    // Defaults.
+    private short ClassType = DClass.IN;
+    private short TypeType = Type.A;
+    protected InetAddress serverInetAddr = null;
     
-     // protected CrawlServer dnsServer = null;
+    private static final String ATTR_ACCEPT_NON_DNS_RESOLVES =
+        "accept-non-dns-resolves";
+    private static final Boolean DEFAULT_ACCEPT_NON_DNS_RESOLVES =
+        Boolean.FALSE;
+    private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
+        = 6*60*60; // 6 hrs
 
-    /** Create a new instance of FetchDNS.
+    /** 
+     * Create a new instance of FetchDNS.
      *
      * @param name the name of this attribute.
      */
     public FetchDNS(String name) {
         super(name, "DNS Fetcher. \nHandles DNS lookups.");
-        org.archive.crawler.settings.Type e = addElementToDefinition(new SimpleType(
-                ATTR_ACCEPT_NON_DNS_RESOLVES,
-                "If a DNS lookup fails, whether or not to fallback to "
-                        + "InetAddress resolution, which may use local 'hosts' files "
-                        + "or other mechanisms.",
-                DEFAULT_ACCEPT_NON_DNS_RESOLVES));
+        org.archive.crawler.settings.Type e =
+            addElementToDefinition(new SimpleType(ATTR_ACCEPT_NON_DNS_RESOLVES,
+                "If a DNS lookup fails, whether or not to fallback to " +
+                "InetAddress resolution, which may use local 'hosts' files " +
+                "or other mechanisms.", DEFAULT_ACCEPT_NON_DNS_RESOLVES));
         e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) {
         if (!curi.getUURI().getScheme().equals("dns")) {
-            // only handles dns
+            // Only handles dns
             return;
         }
-        Record[] rrecordSet = null;         // store retrieved dns records
-        long now;                           // the time this operation happened
+        Record[] rrecordSet = null; // Store retrieved dns records
+        long now; // The time this operation happened
         String dnsName = null;
         try {
             dnsName = curi.getUURI().getReferencedHost();
@@ -99,7 +99,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         // Make sure we're in "normal operating mode", e.g. a cache +
-        // controller exist to assist us
+        // controller exist to assist us.
         CrawlHost targetHost = null;
         if (getController() != null &&
                 getController().getServerCache() != null) {
@@ -111,14 +111,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
         
         Matcher matcher = InetAddressUtil.IPV4_QUADS.matcher(dnsName);
-        // if it's an ip no need to do a lookup
+        // If it's an ip no need to do a lookup
         if (matcher != null && matcher.matches()) {
             // Ideally this branch would never be reached: no CrawlURI
             // would be created for numerical IPs
             logger.warning("Unnecessary DNS CrawlURI created: " + curi);
             try {
-                targetHost.setIP(
-                    InetAddress.getByAddress(dnsName,
+                targetHost.setIP(InetAddress.getByAddress(dnsName,
                         new byte[] {
                             (byte)(new Integer(matcher.group(1)).intValue()),
                             (byte)(new Integer(matcher.group(2)).intValue()),
@@ -155,7 +154,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 if (rrecordSet[i].getType() != Type.A) {
                     continue;
                 }
-
                 ARecord AsA = (ARecord) rrecordSet[i];
                 targetHost.setIP(AsA.getAddress(), AsA.getTTL());
                 break; // only need to process one record
