@@ -50,7 +50,7 @@ import org.archive.util.HttpRecorder;
  * Basic class for using the Apache Jakarta HTTPClient library
  * for fetching an HTTP URI. 
  * 
- * @author gojomo
+ * @author gojomo, igor, others
  *
  */
 public class FetchHTTP
@@ -69,81 +69,45 @@ public class FetchHTTP
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 	HttpClient http;
-	//	private long timeout;
 	private int soTimeout;
-	//	private long maxLength;
-	//	private int maxTries;
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	protected void innerProcess(CrawlURI curi) {
 
-		String scheme = curi.getUURI().getScheme();
-		if (!(scheme.equals("http") || scheme.equals("https"))) {
-			// only handles plain http for now
-			return;
-		}
-
-		// only try so many times...
-		if (curi.getFetchAttempts()
-			>= getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)) {
-			curi.setFetchStatus(S_TOO_MANY_RETRIES);
-			return;
-		}
-
-		// make sure the dns lookup succeeded
-		if (curi.getServer().getHost().getIP() == null
-			&& curi.getServer().getHost().hasBeenLookedUp()) {
-			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-			return;
-		}
-
+		if (!canFetch(curi)) {
+            // cannot fetch this, due to protocol, retries, or other problems
+            return;
+        }
+ 
 		// note begin time
 		long now = System.currentTimeMillis();
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
-		// set up GET
+		// setup GET
 		GetMethod get = new GetMethod(curi.getUURI().getUriString());
-		get.setFollowRedirects(false); // don't auto-follow redirects
-		get.getParams().setVersion(HttpVersion.HTTP_1_0);
-		// use only HTTP/1.0 (to avoid receiving chunked responses)
-		get.getParams().makeLenient();
-		String userAgent = curi.getUserAgent();
-		if (userAgent == null) {
-			userAgent = controller.getOrder().getUserAgent();
-		}
-		get.setRequestHeader("User-Agent", userAgent);
-		get.setRequestHeader("From", controller.getOrder().getFrom());
-		// set up recording of data -- for subsequent processor modules
+        setupGet(curi, get);
+        
+		// setup recording of data -- for subsequent processor modules
 		HttpRecorder rec =
 			((ToeThread) Thread.currentThread()).getHttpRecorder();
 		get.setHttpRecorder(rec);
-
-		long executeRead = 0; // for debug output
-		long readFullyRead = 0; // for debug output
 
 		try {
 			// TODO: make this initial reading subject to the same
 			// length/timeout limits; currently only the soTimeout
 			// is effective here, once the connection succeeds
 			http.executeMethod(get);
-			executeRead = rec.getRecordedInput().getSize();
 		} catch (IOException e) {
-			curi.addLocalizedError(
-				this.getName(),
-				e,
-				"executeMethod " + executeRead + ":" + readFullyRead);
+			curi.addLocalizedError(this.getName(), e, "executeMethod");
 			curi.setFetchStatus(S_CONNECT_FAILED);
 			rec.closeRecorders();
 			get.releaseConnection();
 			return;
 		} catch (IllegalArgumentException e) {
 			// httpclient may throw this for bad cookies
-			curi.addLocalizedError(
-				this.getName(),
-				e,
-				"executeMethod " + executeRead + ":" + readFullyRead);
+			curi.addLocalizedError(this.getName(), e, "executeMethod");
 			curi.setFetchStatus(S_CONNECT_FAILED);
 			rec.closeRecorders();
 			get.releaseConnection();
@@ -152,10 +116,7 @@ public class FetchHTTP
 			// for weird windows-only ArrayIndex exceptions from native code
 			// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
 			// treating as if it were an IOException
-			curi.addLocalizedError(
-				this.getName(),
-				e,
-				"executeMethod " + executeRead + ":" + readFullyRead);
+			curi.addLocalizedError(this.getName(), e, "executeMethod");
 			curi.setFetchStatus(S_CONNECT_FAILED);
 			rec.closeRecorders();
 			get.releaseConnection();
@@ -169,67 +130,95 @@ public class FetchHTTP
 				getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES),
 				1000 * getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
 		} catch (RecorderTimeoutException ex) {
-			logger.warning(
-				curi.getUURI().getUriString() + ": time limit exceeded");
-			// but, continue processing whatever was retrieved
-			// TODO: set indicator in curi and/or otherwise log
+			curi.addAnnotation("timeTrunc");
 		} catch (RecorderLengthExceededException ex) {
-			logger.warning(
-				curi.getUURI().getUriString() + ": length limit exceeded");
-			// but, continue processing whatever was retrieved
-			// TODO: set indicator in curi and/or otherwise log
+			curi.addAnnotation("lengthTrunc");
 		} catch (IOException e) {
-			curi.addLocalizedError(
-				this.getName(),
-				e,
-				"readFully " + executeRead + ":" + readFullyRead);
+			curi.addLocalizedError(this.getName(), e, "readFully");
 			curi.setFetchStatus(S_CONNECT_LOST);
-			rec.closeRecorders();
-			get.releaseConnection();
 			return;
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// for weird windows-only ArrayIndex exceptions from native code
 			// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
 			// treating as if it were an IOException
-			readFullyRead = rec.getRecordedInput().getSize();
-			curi.addLocalizedError(
-				this.getName(),
-				e,
-				"readFully " + executeRead + ":" + readFullyRead);
+			curi.addLocalizedError(this.getName(),e,"readFully");
 			curi.setFetchStatus(S_CONNECT_LOST);
-			rec.closeRecorders();
-			get.releaseConnection();
 			return;
 		} finally {
 			rec.closeRecorders();
 			get.releaseConnection();
-			//			readFullyRead = rec.getRecordedInput().getSize();
-			//			curi.getAList().putLong("readFullyRead",readFullyRead);
-			//			rec.getRecordedInput().verify();
 		}
 
-		Header contentLength = get.getResponseHeader("Content-Length");
-		logger.fine(
-			curi.getUURI().getUriString()
-				+ ": "
-				+ get.getStatusCode()
-				+ " "
-				+ (contentLength == null ? "na" : contentLength.getValue()));
+        // note completion time
+        curi.getAList().putLong(
+            A_FETCH_COMPLETED_TIME,
+            System.currentTimeMillis());
 
-		// TODO consider errors more carefully
+		long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
+		logger.fine(
+			curi.getUURI().getUriString()+": "+ get.getStatusCode()+" "+ contentSize);
+
 		curi.setFetchStatus(get.getStatusCode());
-		curi.setContentSize(get.getHttpRecorder().getRecordedInput().getSize());
+		curi.setContentSize(contentSize);
 		curi.getAList().putObject(A_HTTP_TRANSACTION, get);
-		curi.getAList().putLong(
-			A_FETCH_COMPLETED_TIME,
-			System.currentTimeMillis());
 		Header ct = get.getResponseHeader("content-type");
 		if (ct != null) {
 			curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
 		}
-		//rec.closeRecorders();
-		//get.releaseConnection();
 	}
+    
+    
+    /**
+     * Can this processor fetch the given CrawlURI? May set a fetch
+     * status if this processor would usually handle the CrawlURI,
+     * but cannot in this instance. 
+     * 
+     * @param curi
+     * @return
+     */
+    private boolean canFetch(CrawlURI curi) {
+        String scheme = curi.getUURI().getScheme();
+         if (!(scheme.equals("http") || scheme.equals("https"))) {
+             // only handles plain http for now
+             return false;
+         }
+
+         // only try so many times...
+         if (curi.getFetchAttempts()
+             >= getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)) {
+             curi.setFetchStatus(S_TOO_MANY_RETRIES);
+             return false;
+         }
+
+         // make sure the dns lookup succeeded
+         if (curi.getServer().getHost().getIP() == null
+             && curi.getServer().getHost().hasBeenLookedUp()) {
+             curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+             return false;
+         }
+        return true;
+    }
+
+
+    /**
+     * Configure the GetMethod as necessary, setting options and headers.
+     * 
+     * @param curi
+     * @param get
+     */
+    private void setupGet(CrawlURI curi, GetMethod get) {
+        // don't auto-follow redirects
+        get.setFollowRedirects(false); 
+        // use only HTTP/1.0 (to avoid receiving chunked responses)
+        get.getParams().setVersion(HttpVersion.HTTP_1_0);
+        get.getParams().makeLenient();
+        String userAgent = curi.getUserAgent();
+        if (userAgent == null) {
+        	userAgent = controller.getOrder().getUserAgent();
+        }
+        get.setRequestHeader("User-Agent", userAgent);
+        get.setRequestHeader("From", controller.getOrder().getFrom());
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
