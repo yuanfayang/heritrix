@@ -1,0 +1,21 @@
+<document>
+  <properties>
+    <title>Change Log</title>
+    <author email="stack at archive dot org">Michael Stack</author>
+  </properties>
+  <body>
+
+    <release version="0.1.0" date="2003-12-31">
+      <action dev="vmassol" type="add">
+        Added blah blah.
+      </action>              
+      <action dev="vmassol" type="fix">
+        Corrected bug blah blah.
+      </action>              
+      <action dev="vmassol" type="remove">
+        Removed blah blah.
+      </action>              
+    </release>
+
+  </body>
+</document>
