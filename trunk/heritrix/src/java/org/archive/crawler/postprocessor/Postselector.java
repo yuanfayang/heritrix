@@ -221,9 +221,9 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         
         // Check if this is a seed with a 301 or 302.
         boolean seed = false;
-        if(curi.isSeed() 
-                && (curi.getFetchStatus()==301 
-                        || curi.getFetchStatus()==302)){
+        if ( curi.isSeed() 
+                && (curi.getFetchStatus()==301 || curi.getFetchStatus()==302)
+                && collection.equals(A_HTTP_HEADER_URIS) ) {
             try {
                 // Check if redirects from seeds should be treated as seeds.
                 if(((Boolean) getAttribute(
