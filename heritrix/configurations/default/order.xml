@@ -1,10 +1,10 @@
 <!-- This is a generic configuration file that can be used to start a Heritrix crawl -->
 <crawl-order name="GardenCrawl">
  <comment>
-  For information on the Heritrix open source crawler project please see http://crawler.arcive.org/.
+  For information on the Heritrix open source crawler project please see http://crawler.archive.org/.
  </comment>
  
-<!-- The following elements determinethe directory to which ouptut files (arcs, logs, etc)
+<!-- The following elements determine the directory to which ouptut files (arcs, logs, etc)
  		are written, and the prefix given to arc files (disk and arc-file elements, respectively).
 -->
   <disk path="output/" />
@@ -22,8 +22,8 @@
 		causes problems.  The crawler will not run if you leave this value as the default.
 -->
  <http-headers>
-  <User-Agent>Heritrix pre-Alpha (contact gojomo@archive.org)</User-Agent>
-  <From>crawler-devel@archive.org</From>
+  <User-Agent>Heritrix pre-Alpha (See http://crawler.archive.org)</User-Agent>
+  <From>archive-crawler-agent@lists.sourceforge.net</From>
  </http-headers>
  
 <!-- 	Following is a list of artifical limits that may be placed on the crawler.
@@ -81,15 +81,17 @@
     next="HTTP">
   </processor>
   
-<!-- The following modules, Extractor* extract URIs from various
-  		types of documents.  These cannot currently be configured, 
-  		though you may remove modules that don't apply to your crawl.
--->  
   <processor 
     name="HTTP" 
     class="org.archive.crawler.basic.FetcherHTTPSimple"
     next="ExtractorHTTP">
   </processor>
+  
+<!-- The following modules, Extractor* extract URIs from various
+  		types of documents.  These cannot currently be configured, 
+  		though you may remove modules that don't apply to your crawl.
+-->  
+
   <processor 
     name="ExtractorHTTP" 
     class="org.archive.crawler.extractor.ExtractorHTTP"
@@ -135,7 +137,7 @@
   <processor 
     name="Archiver" 
     class="org.archive.crawler.basic.ARCWriter"
-    next="Cacher">
+    next="Updater">
     	<compression use="true"/>
     	<arc-files max-size-bytes="100000000"/>
     	<!-- 
@@ -152,7 +154,7 @@
 		cannot be configured and should generally not need to be considered
 -->
   <processor 
-    name="Cacher" 
+    name="Updater" 
     class="org.archive.crawler.basic.CrawlStateUpdater">
   </processor>
  </processors>
