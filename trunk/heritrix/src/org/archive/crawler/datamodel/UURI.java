@@ -154,11 +154,12 @@ public class UURI {
 		// and escape them, as well as other special 
 		// handling of '%' and '+'
 
+		s = s.trim();
 		if (s.indexOf(" ") >= 0) {
 			s = s.replaceAll(" ", "%20");
 		}
 		if (s.indexOf("|") >= 0) {
-			s = s.replaceAll("|","%7C");
+			s = s.replaceAll("\\|","%7C");
 		}
 		return s; 
 	}
