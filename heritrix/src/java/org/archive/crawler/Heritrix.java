@@ -369,7 +369,8 @@ public class Heritrix {
 
         if (crawllaunch == 3) {
             // Set crawl order file as new default 
-            jobHandler.setDefaultSettingsFilename(crawlOrderFile);
+            // TODO: Allow this via profiles.
+            //jobHandler.setDefaultSettingsFilename(crawlOrderFile);
             status =
                 "\t- default crawl order updated to match: " + crawlOrderFile;
         } else if (crawllaunch == 1 || crawllaunch == 2) {
