@@ -132,6 +132,7 @@ public class StatisticsTracker extends AbstractTracker
     /** Keep track of hosts */
     protected Hashtable hostsDistribution = new Hashtable();
     protected Hashtable hostsBytes = new Hashtable();
+    protected Hashtable hostsLastFinished = new Hashtable();
 
     /** Keep track of processed seeds disposition*/
     protected Hashtable processedSeedsDisposition = new Hashtable();
@@ -409,6 +410,24 @@ public class StatisticsTracker extends AbstractTracker
     public Hashtable getHostsDistribution() {
         return hostsDistribution;
     }
+    
+    /**
+     * Returns the time (in millisec) when a URI belonging to a given host was
+     * last finished processing. 
+     * 
+     * @param host The host to look up time of last completed URI.
+     * @return Returns the time (in millisec) when a URI belonging to a given 
+     * host was last finished processing. If no URI has been completed for host
+     * -1 will be returned. 
+     */
+    public long getHostLastFinished(String host){
+    	Long l = (Long)hostsLastFinished.get(host);
+        if(l != null){
+            return l.longValue();   
+        } else {
+            return -1;
+        }
+    }
 
     /**
      * Returns the accumulated number of bytes downloaded from a given host.
@@ -651,9 +670,11 @@ public class StatisticsTracker extends AbstractTracker
             // DNS Lookup, handle it differently.
             incrementMapCount(hostsDistribution, "dns:");
             incrementMapCount(hostsBytes,"dns:",curi.getContentSize());
+            hostsLastFinished.put("dns:",new Long(System.currentTimeMillis()));
         } else {
         	incrementMapCount(hostsDistribution, curi.getServer().getHostname());
             incrementMapCount(hostsBytes,curi.getServer().getHostname(),curi.getContentSize());
+            hostsLastFinished.put(curi.getServer().getHostname(),new Long(System.currentTimeMillis()));
         }
     }
 
