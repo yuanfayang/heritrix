@@ -193,7 +193,8 @@ public class Frontier
             "immediately; it constrains starts not off-cycles.",
             DEFAULT_MIN_INTERVAL));
         addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
-            "How often to retry fetching a URI that failed to be retrieved. ",
+            "How often to retry fetching a URI that failed to be retrieved.\n" +
+            "If zero, the crawler will get the robots.txt only.",
             DEFAULT_MAX_RETRIES));
         addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
                 "How long to wait by default until we retry fetching a URI that " +
