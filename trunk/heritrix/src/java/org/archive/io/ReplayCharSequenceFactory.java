@@ -770,6 +770,7 @@ public class ReplayCharSequenceFactory {
             ByteBuffer bb = null;
             FileInputStream in = null;
             FileChannel c = null;
+            assert file.exists(): "No file " + file.getAbsolutePath();
             
             try {
                 in = new FileInputStream(file);
@@ -868,6 +869,7 @@ public class ReplayCharSequenceFactory {
                     deleteFile(unicode);
                 }
             }
+            assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
             return unicode;
         }
             

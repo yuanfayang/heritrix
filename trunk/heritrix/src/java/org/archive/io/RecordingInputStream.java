@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.security.MessageDigest;
+import java.util.logging.Logger;
 
 
 /**
@@ -44,8 +45,11 @@ import java.security.MessageDigest;
  *
  */
 public class RecordingInputStream
-    extends InputStream
-{
+    extends InputStream {
+    
+    protected static Logger logger =
+        Logger.getLogger("org.archive.io.RecordingInputStream");
+    
     /**
      * Where we are recording to.
      */
@@ -70,7 +74,11 @@ public class RecordingInputStream
     }
 
     public void open(InputStream wrappedStream) throws IOException {
-        assert this.in == null;
+        logger.fine(Thread.currentThread().getName() + " opening " +
+            wrappedStream + ", this.in " + this.in + ", " +
+            Thread.currentThread().getName());
+        assert this.in == null: "Inputstream is not null: " +
+            Thread.currentThread().getName();
         this.in = wrappedStream;
         this.recordingOutputStream.open();
     }
@@ -79,7 +87,8 @@ public class RecordingInputStream
      * @see java.io.InputStream#read()
      */
     public int read() throws IOException {
-        assert this.in != null: "Inputstream is null.";
+        assert this.in != null: "Inputstream is null: " +
+            Thread.currentThread().getName();
         int b = this.in.read();
         if (b != -1) {
             this.recordingOutputStream.write(b);
@@ -91,7 +100,8 @@ public class RecordingInputStream
      * @see java.io.InputStream#read(byte[], int, int)
      */
     public int read(byte[] b, int off, int len) throws IOException {
-        assert this.in != null: "Inputstream is null.";
+        assert this.in != null: "Inputstream is null: " +
+            Thread.currentThread().getName();
         int count = this.in.read(b,off,len);
         if (count > 0) {
             this.recordingOutputStream.write(b,off,count);
@@ -103,7 +113,8 @@ public class RecordingInputStream
      * @see java.io.InputStream#read(byte[])
      */
     public int read(byte[] b) throws IOException {
-        assert this.in != null: "Inputstream is null.";
+        assert this.in != null: "Inputstream is null: " +
+            Thread.currentThread().getName();
         int count = this.in.read(b);
         if (count > 0) {
             this.recordingOutputStream.write(b,0,count);
@@ -115,6 +126,8 @@ public class RecordingInputStream
      * @see java.io.OutputStream#close()
      */
     public void close() throws IOException {
+        logger.fine(Thread.currentThread().getName() + " closing " +
+            this.in + ", " + Thread.currentThread().getName());
         if (this.in != null)
         {
             this.in.close();
@@ -183,7 +196,7 @@ public class RecordingInputStream
                 // diagnostics to help should we come across the problem in the
                 // future.
                 throw new NullPointerException("Stream " + this.in + ", " +
-                    e.getMessage());
+                    e.getMessage() + " " + Thread.currentThread().getName());
             }
             
             if (totalBytes > maxLength) {
