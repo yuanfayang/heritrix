@@ -348,7 +348,6 @@ implements CoreAttributeConstants {
         ReplayCharSequence cs = null;
         
         try {
-	       cs = curi.getHttpRecorder().getReplayCharSequence();
            HttpRecorder hr = curi.getHttpRecorder();
            if (hr == null) {
                throw new IOException("Why is recorder null here?");
