@@ -1,4 +1,4 @@
-<%@ page import="org.archive.crawler.admin.SimpleHandler" %>
+<%@ page import="org.archive.crawler.admin.SimpleHandler, org.archive.crawler.Heritrix" %>
 
 <%
 	/**
@@ -11,7 +11,15 @@
 	// since the server came online.  In that case create the handler.
 	if(handler == null)
 	{
-		handler = new SimpleHandler();
+		if(Heritrix.getHandler() != null)
+		{
+			// TODO: Once the selection of a CrawlJobHandler is configurable a typecast will be needed here.
+			handler = Heritrix.getHandler();
+		}
+		else
+		{
+			handler = new SimpleHandler();
+		}
 		application.setAttribute("handler",handler);
 	}
 %>

@@ -21,7 +21,7 @@
     
     <processor class="org.archive.crawler.fetcher.FetchDNS" name="DNS" next="HTTP"/>
     
-    <processor class="org.archive.crawler.fetcher.FetchHTTP" max-fetch-attempts="5" max-length-bytes="1048576" name="HTTP" next="ExtractorHTTP" sotimeout-ms="10000" timeout-seconds="20"/>
+    <processor class="org.archive.crawler.fetcher.FetchHTTP" max-fetch-attempts="5" max-length-bytes="5242880" name="HTTP" next="ExtractorHTTP" sotimeout-ms="10000" timeout-seconds="180"/>
     
     <processor class="org.archive.crawler.extractor.ExtractorHTTP" name="ExtractorHTTP" next="ExtractorHTML"/>
 

@@ -1,8 +1,11 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<html>
-	<body>
+<%
+	String title = "Frontier report";
+	int navigation = 72;
+%>
+
+<%@include file="/include/head.jsp"%>
 		<pre><%=handler.getFrontierReport().replaceAll(" ","&nbsp;")%></pre>
-	</body>
-</html>
+<%@include file="/include/foot.jsp"%>

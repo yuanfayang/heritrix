@@ -19,20 +19,27 @@
 		response.sendRedirect("/admin/main.jsp");
 		return;
 	}
-
-
-	CrawlOrder crawlOrder = job.getCrawlOrder();
-	BufferedReader seeds = new BufferedReader(new FileReader(new File(crawlOrder.getStringAt(SimpleHandler.XP_SEEDS_FILE))));
+	
+	CrawlOrder crawlOrder = null;
+	BufferedReader seeds = null;
 	int iInputSize = 50;
+
+	if(job != null)
+	{	
+		crawlOrder = job.getCrawlOrder();
+		seeds = new BufferedReader(new FileReader(new File(crawlOrder.getStringAt(SimpleHandler.XP_SEEDS_FILE))));
+	}
+
+	String title = "Update current job";
 %>
 
-<html>
-	<head>
-		<title>Update job</title>
-	</head>
-	<body>
+<%@include file="/include/head.jsp"%>
+	
+	<% if(job == null) { %>
+		No current job
+	<% } else { %>
+
 		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="updatejob.jsp">
-		<h2>Update job</h2>
 
 		<table border="0">
 			<tr>
@@ -284,7 +291,6 @@
 		
 		</form>
 		
-		<a href="/admin/main.jsp">Back to main page</a>
-		
-	</body>
-</html>
+	<% } %>
+	
+<%@include file="/include/foot.jsp"%>

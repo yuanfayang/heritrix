@@ -153,7 +153,7 @@
 			<%
 				if(handler.isCrawling())
 				{
-					long begin = stats.uriFetchSuccessCount();
+					long begin = stats.successfulFetchAttempts();
 					long end = stats.urisEncounteredCount();
 					if(end < 1)
 						end = 1; 

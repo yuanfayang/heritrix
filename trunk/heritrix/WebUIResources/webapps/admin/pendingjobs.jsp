@@ -20,14 +20,11 @@
 	}	
 
 	Vector jobs = handler.getPendingJobs();
+	String title = "Pending jobs";
+	int navigation = 2;
 %>
 
-<html>
-	<head>
-		<title>Pending jobs</title>
-	</head>
-	<body>
-		<strong>Pending jobs</strong>
+<%@include file="/include/head.jsp"%>
 		<table border="0">
 			<tr>
 				<th>
@@ -52,7 +49,7 @@
 							<%=job.getStatus()%>
 						</td>
 						<td>
-							<a href="editjob.jsp?job=<%=job.getJobName()%>">Edit</a>
+							<a target="_blank" href="viewjob.jsp?job=<%=job.getUID()%>">View</a>
 							<a href="pendingjobs.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
 						</td>
 					</tr>
@@ -61,9 +58,4 @@
 			%>
 		</table>
 		
-		<p>
-			<a href="newjob.jsp">New job</a>
-		<p>
-			<a href="main.jsp">Main page</a>
-	</body>
-</html>
+<%@include file="/include/foot.jsp"%>

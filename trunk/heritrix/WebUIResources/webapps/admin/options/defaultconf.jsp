@@ -18,15 +18,13 @@
 
 	CrawlOrder crawlOrder = handler.getDefaultCrawlOrder();
 	int iInputSize = 50;
+
+	String title = "Default crawl order";
 %>
 
-<html>
-	<head>
-		<title>Heritrix: Default configuration</title>
-	</head>
-	<body>
+<%@include file="/include/head.jsp"%>
+
 		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="defaultconf.jsp">
-		<strong>Heritrix: Default configurations for a crawl job</strong>
 
 		<%@include file="/include/jobconfig.jsp"%>
 		
@@ -34,7 +32,4 @@
 		
 		</form>
 		
-		<a href="/admin/main.jsp">Back to main page</a>
-		
-	</body>
-</html>
+<%@include file="/include/foot.jsp"%>

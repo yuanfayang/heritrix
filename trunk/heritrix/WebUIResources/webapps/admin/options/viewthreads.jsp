@@ -1,8 +1,13 @@
-<%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
-<html>
-	<body>
+<%
+	String title = "Threads report";
+	int navigation = 73;
+%>
+
+<%@include file="/include/head.jsp"%>
+
 	<pre><%=handler.getThreadsReport().replaceAll(" ","&nbsp;")%></pre>
-	</body>
-</html>
+
+<%@include file="/include/foot.jsp"%>
