@@ -2764,6 +2764,15 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         caused by erroneous URIs. Generally only of interest to advanced users
         trying to explain unexpected crawl behavior.</para>
       </sect3>
+
+      <sect3 id="recover_gz">
+        <title>recover.gz</title>
+        <para>The recover.gz file is a gzipped journal of Frontier events.
+        It can be used to restore the Frontier after a crash
+        to roughly the state it had before the crash.
+        See <xref linkend="recover" /> to learn more.
+        </para>
+      </sect3>
     </sect2>
 
     <sect2 id="reports">
@@ -2881,7 +2890,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
   L+ /Heritrix/jobs/quickbroad-20040420191411593/disk/local-errors.log
   L+ /Heritrix/jobs/quickbroad-20040420191411593/disk/uri-errors.log
   L+ /Heritrix/jobs/quickbroad-20040420191411593/disk/progress-statistics.log
-  L- /Heritrix/jobs/quickbroad-20040420191411593/disk/recover.log
+  L- /Heritrix/jobs/quickbroad-20040420191411593/disk/recover.gz
   R+ /Heritrix/jobs/quickbroad-20040420191411593/disk/seeds-report.txt
   R+ /Heritrix/jobs/quickbroad-20040420191411593/disk/hosts-report.txt
   R+ /Heritrix/jobs/quickbroad-20040420191411593/disk/mimetype-report.txt
@@ -2898,9 +2907,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>The second character - a plus or minus sign - indicates if the
         file should be included in a standard bundle of the job (see <xref
         linkend="manifest_bundle.pl" />). In the example above the
-        <literal>recover.log</literal> is marked for exclusion because it is
+        <literal>recover.gz</literal> is marked for exclusion because it is
         generally only of interest if the job crashes and must be restarted.
-        It has negligible value once the job is completed.</para>
+        It has negligible value once the job is completed (See
+        <xref linkend="recover" />).</para>
 
         <para>After this initial legend the filename with full path
         follows.</para>
@@ -3005,7 +3015,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
-        Javadoc</ulink>.</para>
+        Javadoc</ulink> and to the 
+        <ulink 
+        url="http://crawler.archive.org/articles/user_manual.html#logs">ARC
+        Writer developer documentation</ulink>.</para>
       </sect3>
     </sect2>
 
@@ -3079,6 +3092,39 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
       </sect3>
     </sect2>
+
+      <sect2 id="recover">
+      <title>Recovery of Frontier State and recover.gz</title>
+      <para>During normal running, the Heritrix Frontier keeps a journal.
+      The journal is kept in the jobs logs directory.  Its named
+      <literal>recover.gz</literal>.  If a crawl crashes, the recover.gz
+      journal can be used to recreate approximately the status of the
+      crawler at the time of the crash.  Recovery can take a long
+      time in some cases, but is usually much quicker then 
+      repeating a crawl.</para>
+      <para>To run the recovery process, relaunch the crashed crawler.
+      Create a new crawl order job based on the crawl that crashed. Make
+      any adjustments.  Before submitting the job, browse to the 
+      settings panel of the crawl order job configuration.  Towards the
+      end of the list of settings options, there is a
+      <literal>recover-path</literal> option.  Fill in the full path to
+      the recover.gz journal file that you want replayed.  Submit the job.
+      The submission will hang a long time as the recover.gz file is
+      read by the frontier.  Eventually the submit should complete.
+      The crawl should pick up from close to where the crash occurred.
+      </para>
+      <para>The recovery log is gzipped because it gets very large
+      otherwise and because of the reptition of terms, it compresses
+      very well. On abnormal termination of the crawl job, if you look
+      at the recover.gz file with gzip, gzip will
+      report <literal>unexpected end of file</literal> if you try to
+      ungzip it.  Gzip is complaining that the file write was
+      abnormally terminated.  But the recover.gz file will be of
+      use restoring the frontier at least to where the gzip file
+      went bad (Gzip zips in 32k blocks; the worst loss would
+      be the last 32k of gzipped data).
+      </para>
+      </sect2>
   </sect1>
 
   <glossary id="glossary">
