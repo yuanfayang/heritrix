@@ -92,9 +92,16 @@ public class CrawlServer implements Serializable {
 	 * @param honoringPolicy
 	 * @throws IOException
 	 */
-	public void updateRobots(GetMethod get, RobotsHonoringPolicy honoringPolicy) throws IOException {
-		robotsExpires = System.currentTimeMillis()+DEFAULT_ROBOTS_VALIDITY_DURATION;
-		if (get.getStatusCode()!=200 || honoringPolicy.getType() == RobotsHonoringPolicy.IGNORE) {
+	public void updateRobots(GetMethod get)
+            throws IOException {
+
+        RobotsHonoringPolicy honoringPolicy =
+            settings.getSettingsHandler().getOrder().getRobotsHonoringPolicy();
+
+		robotsExpires = System.currentTimeMillis()
+            + DEFAULT_ROBOTS_VALIDITY_DURATION;
+		if (get.getStatusCode()!=200 || honoringPolicy.getType(settings)
+            == RobotsHonoringPolicy.IGNORE) {
 			// not found or other errors == all ok for now
 			// TODO: consider handling server errors, redirects differently
 			robots = RobotsExclusionPolicy.ALLOWALL;
@@ -111,15 +118,15 @@ public class CrawlServer implements Serializable {
 		ReplayInputStream contentBodyStream = null;
 		try {
 			BufferedReader reader;
-			if(honoringPolicy.getType() == RobotsHonoringPolicy.CUSTOM) {
-				reader = new BufferedReader(new StringReader(honoringPolicy.getCustomRobots()));
+			if(honoringPolicy.getType(settings) == RobotsHonoringPolicy.CUSTOM) {
+				reader = new BufferedReader(new StringReader(honoringPolicy.getCustomRobots(settings)));
 			} else {
 				contentBodyStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 				contentBodyStream.setToResponseBodyStart();
 				reader = new BufferedReader(
 					new InputStreamReader(contentBodyStream));
 			}
-			robots = RobotsExclusionPolicy.policyFor(reader, honoringPolicy);
+			robots = RobotsExclusionPolicy.policyFor(settings, reader, honoringPolicy);
 		} catch (IOException e) {
 			robots = RobotsExclusionPolicy.ALLOWALL;
 			throw e; // rethrow

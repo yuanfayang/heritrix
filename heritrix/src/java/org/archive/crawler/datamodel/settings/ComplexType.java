@@ -240,15 +240,21 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param o possible {@link CrawlURI}.
      * @return the settings object valid for the URI.
      */
-    public CrawlerSettings getSettingsFromUri(Object o) {
-        CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
-        CrawlerSettings settings;
-        try {
-            settings = curi.getServer().getSettings();
-        } catch (NullPointerException e) {
-            // The URI don't know its settings, use globals
-            settings = globalSettings();
+    public CrawlerSettings getSettingsFromObject(Object o) {
+        CrawlerSettings settings = null;
+
+        if (o instanceof CrawlerSettings) {
+            settings = (CrawlerSettings) o;
+        } else if (o instanceof CrawlURI) {
+            try {
+                settings = ((CrawlURI) o).getServer().getSettings();
+            } catch (NullPointerException e) {
+                // The URI don't know its settings
+            }
         }
+
+        // if settings could not be resolved use globals.
+        settings = settings == null ? globalSettings() : settings;
         return settings;
     }
     

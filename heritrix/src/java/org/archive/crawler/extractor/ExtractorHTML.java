@@ -417,10 +417,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		
 		if("robots".equalsIgnoreCase(name) && content != null ) {
 			curi.getAList().putString(A_META_ROBOTS,content);
-			RobotsHonoringPolicy policy = controller.getOrder().getRobotsHonoringPolicy(curi);
+			RobotsHonoringPolicy policy = controller.getOrder().getRobotsHonoringPolicy();
 			if ((policy == null
-				|| (!policy.isType(RobotsHonoringPolicy.IGNORE)
-					&& !policy.isType(RobotsHonoringPolicy.CUSTOM)))
+				|| (!policy.isType(curi, RobotsHonoringPolicy.IGNORE)
+					&& !policy.isType(curi, RobotsHonoringPolicy.CUSTOM)))
 				&& (content.indexOf("nofollow") >= 0
 					|| content.indexOf("none") >= 0)) {
 				// if 'nofollow' or 'none' is specified and the 

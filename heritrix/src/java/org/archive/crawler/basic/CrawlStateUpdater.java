@@ -97,7 +97,7 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 				if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 					GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 					try {
-						curi.getServer().updateRobots(get, controller.getOrder().getRobotsHonoringPolicy(curi));
+						curi.getServer().updateRobots(get);
 					} catch (IOException e) {
 						curi.addLocalizedError(getName(),e,"robots.txt parsing IOException");
 					}

@@ -124,7 +124,7 @@ public class Processor extends CrawlerModule {
 	 * @return True if all filters accept this CrawlURI.
 	 */
 	protected boolean filtersAccept(CrawlURI curi) {
-        CrawlerSettings settings = getSettingsFromUri(curi);
+        CrawlerSettings settings = getSettingsFromObject(curi);
 		if (filters.isEmpty(settings)) {
 			return true;
 		}
