@@ -87,6 +87,7 @@
             <exclude name="**/*.gif"/>
             <exclude name="**/*.jpg"/>
             <exclude name="**/*.png"/>
+            <exclude name="**/*.swf"/>
             <exclude name="**/jetty-web.xml"/>
           </fileset>
         </copy>
@@ -95,6 +96,7 @@
             <include name="**/*.gif"/>
             <include name="**/*.jpg"/>
             <include name="**/*.png"/>
+            <exclude name="**/*.swf"/>
           </fileset>
         </copy>
 
