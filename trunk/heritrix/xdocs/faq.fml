@@ -105,7 +105,8 @@
 
     <faq id="toomanyopenfiles">
       <question>Why do I get
-      <i>java.io.FileNotFoundException...(Too many open files)</i>?
+      <i>java.io.FileNotFoundException...(Too many open files)</i> or
+      <i>java.io.IOException...(Too many open files)</i>?
       </question>
       <answer>
       <p>On linux, a usual upper bound is 1024 file descriptors per
