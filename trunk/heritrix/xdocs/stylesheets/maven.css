@@ -29,12 +29,12 @@ body {
  }
 
 div#banner {
- border-top: 1px solid #9999FF;
- border-bottom: 1px solid #9999FF;
+ border-top: 1px solid #FFFFFF;
+ border-bottom: 1px solid #FFFFFF;
  }
 
 #banner, #banner td { 
- background: #9999FF;
+ background: #FFFFFF;
  color: #ffffff;
  }
 
