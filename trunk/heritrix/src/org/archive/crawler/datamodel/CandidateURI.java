@@ -50,13 +50,13 @@ public class CandidateURI implements Serializable {
 	/**
 	 * @param uriString
 	 */
-	public CandidateURI(String s){
-		try{
-			setUURI(UURI.createUURI(s));
-		}catch(Exception e){
-			setUURI(null);
-		}
-	}
+//	public CandidateURI(String s){
+//		try{
+//			setUURI(UURI.createUURI(s));
+//		}catch(Exception e){
+//			setUURI(null);
+//		}
+//	}
 
 	
 	/**
