@@ -2,6 +2,22 @@
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
 
 <%
+	String sAction = request.getParameter("action");
+
+	if(sAction != null)
+	{
+		// Need to handle an action	
+		if(sAction.equalsIgnoreCase("delete"))
+		{
+			try
+			{
+				handler.removeJob(Integer.parseInt(request.getParameter("job")));
+			}
+			catch(java.lang.NumberFormatException e){}
+		}
+		
+	}	
+
 	Vector jobs = handler.getPendingJobs();
 %>
 
@@ -35,8 +51,8 @@
 							<%=job.getStatus()%>
 						</td>
 						<td>
-							<a href="editjob.jsp?name=<%=job.getJobName()%>">Edit</a>
-							<a href="pendingjobs.jsp?action=delete&name=<%=job.getJobName()%>">Delete</a>
+							<a href="editjob.jsp?job=<%=job.getJobName()%>">Edit</a>
+							<a href="pendingjobs.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
 						</td>
 					</tr>
 			<%

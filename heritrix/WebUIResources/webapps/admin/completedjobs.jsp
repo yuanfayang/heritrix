@@ -35,8 +35,8 @@
 							<%=job.getStatus()%>
 						</td>
 						<td>
-							<a href="viewjob.jsp?name=<%=job.getJobName()%>">View order</a>
-							<a href="viewstatistics.jsp?name=<%=job.getJobName()%>">View statistics</a>
+							<a href="viewjob.jsp?job=<%=job.getUID()%>">View order</a>
+							<a href="viewstatistics.jsp?job=<%=job.getUID()%>">View statistics</a>
 						</td>
 					</tr>
 			<%

@@ -21,6 +21,11 @@
 			// Tell handler to stop crawl job
 			handler.terminateJob();
 		}
+		else if(sAction.equalsIgnoreCase("gc"))
+		{
+			// Tell handler to stop crawl job
+			System.gc();
+		}
 		
 	}	
 %>
@@ -58,6 +63,7 @@
 		<a href="newjob.jsp">New job</a>
 		| <a href="pendingjobs.jsp">View pending jobs</a> 
 		| <a href="completedjobs.jsp">View completed jobs</a>
+		| <a href="main.jsp?action=gc">Garbage collect</a>
 	<p> OPTIONS
 	
 		<ul>

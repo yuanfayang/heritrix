@@ -10,9 +10,10 @@
 	if(request.getParameter(handler.XP_CRAWL_ORDER_NAME) != null)
 	{
 		// Got something in the request.  Let's update!
-		String filename = "job-"+handler.getNextJobSerial()+"-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
+		int newUID = handler.getNextJobUID();
+		String filename = "job-"+newUID+"-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
 		handler.createCrawlOrderFile(request,filename);
-		handler.addJob(new SimpleCrawlJob(request.getParameter(handler.XP_CRAWL_ORDER_NAME),handler.WEB_APP_PATH+filename,SimpleCrawlJob.PRIORITY_AVERAGE));
+		handler.addJob(new SimpleCrawlJob(newUID, request.getParameter(handler.XP_CRAWL_ORDER_NAME),handler.WEB_APP_PATH+filename,SimpleCrawlJob.PRIORITY_AVERAGE));
 		response.sendRedirect("/admin/main.jsp");
 	}
 
