@@ -317,7 +317,7 @@ public class ARCSocketFactory extends SocketFactory
      * 
      * ARCSockets tee all that was read from the socket to ARC files.
      * ARCSockets do not support keep-alive, only do the http protocol, assume
-     * a new socket per request and the  {@link ARCSocket#close()} MUST be
+     * a new socket per request and the  <code>ARCSocket#close()</code> MUST be
      * called at end of each request (Its the call to socket close that signals
      * end-of-response and its then that ARCSocket goes to work writing the
      * response to the ARC file).

@@ -193,7 +193,7 @@ public class CrawlServer implements Serializable {
 //	 }
 
     /**
-     * @return
+     * @return Crawler settings.
      */
     public CrawlerSettings getSettings() {
         return settings;

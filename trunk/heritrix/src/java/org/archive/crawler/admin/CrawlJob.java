@@ -260,14 +260,14 @@ public class CrawlJob
         return settingsHandler;
     }
     /**
-     * @return
+     * @return True if is new.
      */
     public boolean isNew() {
         return isNew;
     }
 
     /**
-     * @return
+     * @return True if is a profile.
      */
     public boolean isProfile() {
         return isProfile;

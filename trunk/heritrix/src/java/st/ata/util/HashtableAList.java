@@ -39,8 +39,10 @@ public class HashtableAList implements MutableAList, Serializable {
     }
 
     /**
-     * Deep Clone: very limited implementation
-     * @return
+     * Deep Clone.
+     * 
+     * Limited implementation
+     * @return The cloned object.
      */
     public Object clone() {
         HashtableAList copy = new HashtableAList();
@@ -291,7 +293,7 @@ public class HashtableAList implements MutableAList, Serializable {
     /** Deep equals.  Arrays need to have same values in same order to
      *  be considered equal.
      * @param obj
-     * @return
+     * @return True if equals.
      */
     public boolean equals(Object obj) {
         if (! (obj instanceof HashtableAList)) return false;

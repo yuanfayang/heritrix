@@ -543,7 +543,7 @@ public interface HttpMethod {
 	/**
 	 * Retreive the previously-supplied HttpRecorder
 	 * 
-	 * @return
+	 * @return The http recorder.
 	 */
 	public HttpRecorder getHttpRecorder();
 }

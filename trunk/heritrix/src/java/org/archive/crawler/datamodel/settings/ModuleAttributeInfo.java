@@ -74,14 +74,14 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     }
     
     /**
-     * @return
+     * @return True if overrideable.
      */
     public boolean isOverrideable() {
         return overrideable;
     }
 
     /**
-     * @return
+     * @return Default value.
      */
     public Object getDefaultValue() {
         return defaultValue;
