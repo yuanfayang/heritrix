@@ -88,64 +88,48 @@
 					if(currentAttribute instanceof ComplexType) {
 				    	p.append(printMBean((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",lists,expert));
 					}
-					else if(currentAttribute instanceof ListType){
-						// Some type of list.
-						ListType list = (ListType)currentAttribute;
-						p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-						p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-						p.append(TextUtils.escapeForJavascript(att.getDescription()));
-						p.append("')\">?</a>&nbsp;</td>\n");
-						
-						// Create override
-						p.append("<td valign='top'>");
-						if (att.isOverrideable()) {
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true' onChange='setUpdate()'");
-							if(localAttribute != null){
-								 p.append(" checked");
-							}
-							p.append(">");
-						}
-						p.append("</td>\n");
-						
-						p.append("<td width='100%'><table border='0' cellspacing='0' cellpadding='0'>\n");
-						p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
-						for(int i=0 ; i<list.size() ; i++){
-							p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
-						}
-						p.append("</select></td>\n");
-						p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-						p.append("<tr><td><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
-						p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-						p.append("</table></td></tr>\n");
-	
-						lists.append("'"+mbean.getAbsoluteName() + "/" + att.getName()+"',");
-					}
-					else{
-						Object[] legalValues = att.getLegalValues();
-						
-						p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-						p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-						p.append(TextUtils.escapeForJavascript(att.getDescription()));
-						p.append("')\">?</a>&nbsp;</td><td valign='top'>\n");
-	
+					else {
+                        Object[] legalValues = att.getLegalValues();
+                        
+                        p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
+                        p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
+                        p.append(TextUtils.escapeForJavascript(att.getDescription()));
+                        p.append("')\">?</a>&nbsp;</td><td valign='top'>\n");
+    
                         String fullName = mbean.getAbsoluteName() + "/" + att.getName();
                         
-						// Create override
-						if (att.isOverrideable() || localAttribute!=null) {
-							p.append("<input name='" + fullName + ".override' id='" + fullName + ".override' value='true' onChange='setUpdate()'");
-							if(localAttribute != null){
-								 p.append(" checked");
-							}
-							if(att.isOverrideable() == false){
+                        // Create override
+                        if (att.isOverrideable() || localAttribute!=null) {
+                            p.append("<input name='" + fullName + ".override' id='" + fullName + ".override' value='true' onChange='setUpdate()'");
+                            if(localAttribute != null){
+                                 p.append(" checked");
+                            }
+                            if(att.isOverrideable() == false){
                                 // Have a non overrideable setting set at the current level. Hide checkbox
                                 p.append(" type='hidden'");
-							} else {
+                            } else {
                                 p.append(" type='checkbox'");
-							}
-							p.append(">");
-							p.append("</td>\n<td width='100%'>");
-		
-							if(legalValues != null && legalValues.length > 0){
+                            }
+                            p.append(">");
+                            p.append("</td>\n<td width='100%'>");
+
+	                        if(currentAttribute instanceof ListType){
+								// Some type of list.
+								ListType list = (ListType)currentAttribute;
+								
+								p.append("<table border='0' cellspacing='0' cellpadding='0'>\n");
+								p.append("<tr><td><select multiple name='" + fullName + "' id='" + fullName + "' size='4' style='width: 320px'>\n");
+								for(int i=0 ; i<list.size() ; i++){
+									p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
+								}
+								p.append("</select></td>\n");
+								p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + fullName + "')\"></td></tr>\n");
+								p.append("<tr><td><input name='" + fullName + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
+								p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + fullName + "')\"></td></tr>\n");
+								p.append("</table>\n");
+			
+								lists.append("'" + fullName + "',");
+	    					} else if(legalValues != null && legalValues.length > 0){
 								//Have legal values. Build combobox.
 								p.append("<select name='" + fullName + "' style='width: 320px' onChange=\"setEdited('" + fullName + "')\">\n");
 								for(int i=0 ; i < legalValues.length ; i++){
@@ -156,21 +140,18 @@
 									p.append(">"+legalValues[i]+"</option>\n");
 								}
 								p.append("</select>\n");
-							}
-							else if(currentAttribute instanceof Boolean){
+							} else if(currentAttribute instanceof Boolean){
 								// Boolean value
 								p.append("<select name='" + fullName + "' style='width: 320px' onChange=\"setEdited('" + fullName + "')\">\n");
 								p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
 								p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
 								p.append("</select>\n");
-							}
-							else if(currentAttribute instanceof TextField){
+							} else if(currentAttribute instanceof TextField){
 								// Text area
 								p.append("<textarea name='" + fullName + "' style='width: 320px' rows='4' onChange=\"setEdited('" + fullName + "')\">");
 								p.append(currentAttribute);
 								p.append("</textarea>\n");
-							}
-							else{
+							} else{
 								//Input box
 								p.append("<input name='" + fullName + "' value='" + currentAttribute + "' style='width: 320px' onChange=\"setEdited('" + fullName + "')\">\n");
 							}
