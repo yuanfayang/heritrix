@@ -27,6 +27,7 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Iterator;
 
 import junit.framework.Test;
@@ -75,8 +76,8 @@ public class DiskQueueTest extends QueueTestBase {
     protected Queue makeQueue() {
         try {
             return new DiskQueue(getTmpDir(), FILE_PREFIX);
-        } catch (FileNotFoundException e) {
-            fail("file not found : " + e.getMessage());
+        } catch (IOException e) {
+            fail("IOException: " + e.getMessage());
             // never gets here
             return null;
         }
@@ -90,7 +91,7 @@ public class DiskQueueTest extends QueueTestBase {
     public void testCtorBadDir() {
          try {
             DiskQueue queue = new DiskQueue(new File("/foo"), "bar");
-        } catch(FileNotFoundException e) {
+        } catch(IOException e) {
             return;
         }
     }
@@ -101,7 +102,7 @@ public class DiskQueueTest extends QueueTestBase {
     public void testCtorNullDir() {
         try {
             DiskQueue queue = new DiskQueue(null, "bar");
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             return;
         }
     }
@@ -112,7 +113,7 @@ public class DiskQueueTest extends QueueTestBase {
     public void testCtorNullPrefix() {
         try {
             DiskQueue queue = new DiskQueue(new File("/foo"), null);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             return;
         }
     }
@@ -136,7 +137,7 @@ public class DiskQueueTest extends QueueTestBase {
             assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());
             assertEquals("disk queue iterator checking item 4","Item 5",(String)it.next());
             assertFalse("disk queue iterator ends correctly",it.hasNext());
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             return;
         }
     }
