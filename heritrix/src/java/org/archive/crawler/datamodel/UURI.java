@@ -251,12 +251,18 @@ public class UURI extends URI {
         }
         String uriScheme = checkUriElementAndLowerCase(matcher.group(2));
         String uriSchemeSpecificPart = checkUriElement(matcher.group(3));
-        // TODO: fix the fact that this might clobber case-sensitive
-        // 'user-info'.
-        String uriAuthority = checkUriElementAndLowerCase(matcher.group(5));
+        String uriAuthority = checkUriElement(matcher.group(5));
         String uriPath = checkUriElement(matcher.group(6));
         String uriQuery = checkUriElement(matcher.group(8));
         String uriFragment = checkUriElement(matcher.group(10));
+        
+        // Lowercase the host part of the uriAuthority; don't destroy any
+        // userinfo capitalizations.
+        int index = (uriAuthority != null)? uriAuthority.indexOf('@'): -1;
+        if (index > 0) {
+            uriAuthority = uriAuthority.substring(0, index) +
+                uriAuthority.substring(index).toLowerCase();
+        }
         
         // Test if relative URI.  If so, need a base to resolve against.
         if (uriScheme == null && base == null) {
@@ -265,7 +271,6 @@ public class UURI extends URI {
         
         // Do some checks if absolute path.
         if (uriSchemeSpecificPart.startsWith(SLASH)) {
-            
             if (uriPath != null) {
 
                 // Eliminate '..' if its first thing in the path.  IE does this.
@@ -330,20 +335,12 @@ public class UURI extends URI {
      * throws URIException
      */
     private static String reassemble(String uriScheme, String uriAuthority,
-                String uriPath, String uriQuery, String uriFragment)
-            throws URIException {
+                String uriPath, String uriQuery, String uriFragment) {
         // Put the URI back together for return as a string.
         StringBuffer buffer = new StringBuffer();
         appendNonNull(buffer, uriScheme, ":", true);
         appendNonNull(buffer, uriAuthority, "//", false);
-        if (uriPath != null) {
-            if ((uriScheme != null || uriAuthority != null)
-                    && !uriPath.startsWith(SLASH)) {
-                throw new URIException("abs_path requested: " + uriPath + " " +
-                    uriAuthority);
-            }
-            buffer.append(uriPath);
-        }
+        appendNonNull(buffer, uriPath, "", false);
         appendNonNull(buffer, uriQuery, "?", false);
         appendNonNull(buffer, uriFragment, "#", false);
         return buffer.toString();
