@@ -76,7 +76,6 @@
   An open-source, extensible, web-scale crawler.
   </shortDescription>
 
-  <!--TODO: the project home page.-->
   <url>http://crawler.archive.org</url>
   <issueTrackingUrl>http://sourceforge.net/tracker/?group_id=73833
 	</issueTrackingUrl>
