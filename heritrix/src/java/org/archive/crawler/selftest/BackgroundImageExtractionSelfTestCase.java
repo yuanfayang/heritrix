@@ -53,7 +53,7 @@ public class BackgroundImageExtractionSelfTestCase
     {
         String relativePath = getTestName() + '/' + IMAGE_NAME;
         String url = getSelftestURLWithTrailingSlash() + relativePath;
-        File image = new File(getWebappDir(), relativePath);
+        File image = new File(getHtdocs(), relativePath);
         assertTrue("Image exists", image.exists());
         List metaDatas = getReadReader().getMetaDatas();
         boolean found = false;

@@ -49,7 +49,7 @@ public class FramesSelfTestCase extends SelfTestCase
     public void testFramesSelfTest()
     {
         String frameDirURL = getSelftestURLWithTrailingSlash() + getTestName();
-        File frameDir = new File(getWebappDir(), getTestName());
+        File frameDir = new File(getHtdocs(), getTestName());
         Map files = new HashMap(FILES.length);
         // If file exits on disk, set it into our map w/ a FALSE flag.
         for (int i = 0; i < FILES.length; i++)

@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.File;
 import java.util.Date;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -34,8 +33,6 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.SimpleHttpServer;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.basic.ARCWriterProcessor;
-import org.archive.crawler.datamodel.settings.ComplexType;
 
 /**
  * An override to gain access to end-of-crawljob message.
@@ -84,29 +81,17 @@ public class SelfTestCrawlJobHandler
             // At crawlEnded time, there is no current job.  Get the selftest
             // job by pulling from the completedCrawlJobs queue.
             Vector completedCrawlJobs = getCompletedJobs();
-            if (completedCrawlJobs != null && completedCrawlJobs.size() > 0)
+            if (completedCrawlJobs == null || completedCrawlJobs.size() <= 0)
+            {
+            	logger.severe("Selftest job did not complete.");
+            }
+            else
             {
                 CrawlJob job = (CrawlJob)completedCrawlJobs.lastElement();
-                File jobDir = getJobdir(job);
-                String jobName = job.getJobName();
-                ComplexType arcWriterProcessor =
-                    (ComplexType)job.getSettingsHandler().getOrder().
-                        getProcessors().getAttribute("Archiver");
-                String arcDirStr = (String)arcWriterProcessor.
-                    getAttribute(ARCWriterProcessor.ATTR_PATH);
-                String prefix = (String)arcWriterProcessor.
-                    getAttribute(ARCWriterProcessor.ATTR_PREFIX);
-                // If the path does not begin w/ File.separator, assume arcs
-                // are in the job directory.
-                File arcDir = (arcDirStr.startsWith(File.separator))?
-                    new File(arcDirStr):
-                    new File(new File(jobDir, jobName), arcDirStr);
-                // Get the expanded webapp dir from the server.
-                File webappDir =
-                    Heritrix.getHttpServer().getWebappPath(SELFTEST_WEBAPP);
-                Test test =
-                    AllSelfTestCases.suite(Heritrix.getSelftestURL(),
-                        webappDir, jobDir, jobName, arcDir, prefix);
+            	Test test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
+                		job, getJobdir(job),
+                		Heritrix.getHttpServer().
+                            getWebappPath(SELFTEST_WEBAPP));
                 result = junit.textui.TestRunner.run(test);
             }
         }
