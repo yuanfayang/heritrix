@@ -72,7 +72,7 @@
 			}
 			catch(Exception e){/*Ignore*/}
 		  
-		    log = LogReader.get(diskPath + fileName,linenumber,linesToShow);
+		    log = LogReader.getFromSeries(diskPath + fileName,linenumber,linesToShow);
 		}
 		else if(mode != null && mode.equalsIgnoreCase("time"))
 		{
@@ -86,8 +86,8 @@
 			}	
 			else
 			{
-				int timestampLinenumber = LogReader.findFirstLineContaining(diskPath+fileName,timestamp+".*");
-				log = LogReader.get(diskPath + fileName,timestampLinenumber,linesToShow);
+				int timestampLinenumber = LogReader.findFirstLineContainingFromSeries(diskPath+fileName,timestamp+".*");
+				log = LogReader.getFromSeries(diskPath + fileName,timestampLinenumber,linesToShow);
 			}
 		}
 		else if(mode != null && mode.equalsIgnoreCase("regexpr"))
@@ -111,11 +111,11 @@
 				
 				if(indent)
 				{
-					log = LogReader.getByRegExpr(diskPath + fileName, regexpr, " ", ln);
+					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, " ", ln);
 				}
 				else
 				{
-					log = LogReader.getByRegExpr(diskPath + fileName, regexpr, 0, ln);
+					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, 0, ln);
 				}
 			}
 		}

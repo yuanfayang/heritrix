@@ -250,6 +250,10 @@
 	            if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED))
 	            {
                     out.println(" | <a href='/admin/console/frontier.jsp'>Inspect frontier URIs</a> ");
+
+// DISABLED FOR NOW
+//                   out.println(" | <a href='/admin/console/action.jsp?action=checkpoint'>Checkpoint Crawl</a> ");
+//
                 }
 			}
 			else
