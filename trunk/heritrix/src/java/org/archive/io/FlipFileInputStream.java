@@ -24,25 +24,39 @@
 package org.archive.io;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * @author gojomo
- *
+ * An input stream that uses a pair of files on disk. One file is used for reading 
+ * and one for writing. Once the file being read from is exhausted it switches
+ * to the other causing the writer (a <code>FlipFileOutputStream</code>) to
+ * switch to the other file (overwriting it).
+ * <p>
+ * The files are named xxx.ff0 and xxx.ff1 (with xxx being user configureable).
+ * <p>
+ * This structure is ideally suited for implementing disk based queues.
+ * @author Gordon Mohr.
+ * @see org.archive.io.FlipFileOutputStream
+ * @see org.archive.io.DiskBackedByteQueue
  */
 public class FlipFileInputStream extends InputStream {
     FlipFileOutputStream source;
     FileInputStream fileStream;
     InputStream inStream;
-
+    File currentFile;
+    long position;
+    
     /**
-     * @param tailStream
+     * Constructor.
+     * @param tailStream The partner output stream.
      */
     public FlipFileInputStream(FlipFileOutputStream tailStream) {
         source = tailStream;
+        position = 0;
     }
 
     /* (non-Javadoc)
@@ -56,6 +70,9 @@ public class FlipFileInputStream extends InputStream {
                 // if both old and new streams were exhausted, return EOF
                 return -1;
             }
+        }
+        if(c!=-1){
+            position++;
         }
         return c;
     }
@@ -71,6 +88,9 @@ public class FlipFileInputStream extends InputStream {
                 // if both old and new stream were exhausted, return EOF
                 return -1;
             }
+        }
+        if( count != -1 ){
+            position += count; //just read that many bytes.
         }
         return count;
     }
@@ -88,19 +108,25 @@ public class FlipFileInputStream extends InputStream {
                 return -1;
             }
         }
+        if( count != -1 ){
+            position += count; //just read that many bytes.
+        }
         return count;
     }
 
 
     /**
-     *
+     * Once the current file is exhausted, this method is called to flip files
+     * for both input and output streams.
      */
     private void getNewInStream() throws FileNotFoundException, IOException {
         if(inStream!=null) {
             inStream.close();
         }
-        fileStream = new FileInputStream(source.getInputFile());
+        currentFile = source.getInputFile();
+        fileStream = new FileInputStream(currentFile);
         inStream = new BufferedInputStream(fileStream,4096);
+        position = 0;
     }
 
     /* (non-Javadoc)
@@ -112,10 +138,12 @@ public class FlipFileInputStream extends InputStream {
     }
 
     /**
-     * @return Stream position.
+     * Returns the current position of the input stream in the current file
+     * (since last flip).
+     * @return number of bytes that have been read from the current file.
      * @throws IOException
      */
     public long getReadPosition() throws IOException {
-        return fileStream.getChannel().position();
+        return position;
     }
 }

@@ -23,6 +23,7 @@
  */
 package org.archive.util;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 
@@ -60,4 +61,30 @@ public interface Queue {
      * release any OS/IO resources associated with Queue
      */
     void release();
+    
+    /**
+     * Returns an iterator for the queue.
+     * <p>
+     * The returned iterator's <code>remove</code> method is considered 
+     * unsafe.
+     * <p>
+     * Editing the queue while using the iterator is not safe.
+     * @param limit the iterator to items in quick access cache (as opposed to
+     *              slow access mediums such as disks). What constitutes a
+     *              cache varies according to the implementation of each queue.
+     *              Queues that do not have multiple storage mediums should
+     *              always return all items. 
+     * @return an iterator for the queue
+     */
+    Iterator getIterator(boolean inCacheOnly);
+
+    /**
+     * All objects in the queue where <code>matcher.match(object)</code> 
+     * returns true will be deleted from the queue.
+     * <p>
+     * Making other changes to the queue while this method is being 
+     * processed is not safe. 
+     * @param matcher a queue item matcher
+     */
+    void deleteMatchedItems(QueueItemMatcher matcher);
 }

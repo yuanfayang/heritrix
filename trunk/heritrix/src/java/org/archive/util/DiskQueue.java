@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -101,9 +102,10 @@ public class DiskQueue implements Queue, Savable {
     }
 
     private void lateInitialize() throws FileNotFoundException, IOException {
-        testStream = new ObjectOutputStream(new NullOutputStream());
+        testStream = new ObjectOutputStream(new NullOutputStream());        
         tailStream = new ObjectOutputStream(bytes.getTailStream());
         headStream = new ObjectInputStream(bytes.getHeadStream());
+        tailStream.flush();
         isInitialized = true;
     }
 
@@ -195,6 +197,46 @@ public class DiskQueue implements Queue, Savable {
     public void restore(File directory, String key) throws IOException {
         // TODO Auto-generated method stub
 
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#getIterator(boolean)
+     */
+    public Iterator getIterator(boolean inCacheOnly) {
+        // There are no levels of storage so we will return all items.
+        Iterator it = null;
+        
+        try {
+            it = new DiskQueueIterator(bytes.getReadAllInputStream(),length);
+        } catch (IOException e) {
+            e.printStackTrace();
+            it = new Iterator(){
+                public void remove() { ; }
+                public boolean hasNext() { return false; }
+                public Object next() { throw new NoSuchElementException(); }
+            };        
+        }
+        
+        return it;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     */
+    public void deleteMatchedItems(QueueItemMatcher matcher) {
+        // While not processed as many items as there currently are in the queue
+        //  dequeue item
+        //  if it does not match, requeue it.
+        //  else discard it
+        // end loop
+        long itemsInQueue = length();
+        for ( int i = 0 ; i < itemsInQueue ; i++ ){
+            Object o = dequeue();
+            if(matcher.match(o)==false){
+                // Not supposed to delete this one, put it back
+                enqueue(o);
+            }
+        }
     }
 
 }

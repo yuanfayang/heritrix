@@ -27,6 +27,7 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Iterator;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -110,7 +111,28 @@ public class DiskQueueTest extends QueueTestBase {
      */
     public void testCtorNullPrefix() {
         try {
-            DiskQueue queue = new DiskQueue(null, "bar");
+            DiskQueue queue = new DiskQueue(new File("/foo"), null);
+        } catch (FileNotFoundException e) {
+            return;
+        }
+    }
+    
+    public void testIterator(){
+        try {
+            DiskQueue queue = new DiskQueue(new File("/foo"), "bar");
+            queue.enqueue("Item 1");
+            queue.enqueue("Item 2");
+            queue.enqueue("Item 3");
+            assertEquals("dequeue from disk","Item 1",(String)queue.dequeue());
+            queue.enqueue("Item 4");
+            queue.enqueue("Item 5");
+            assertEquals("dequeue from disk","Item 2",(String)queue.dequeue());
+            Iterator it = queue.getIterator(false);
+            assertTrue("disk queue iterator has first item",it.hasNext());
+            assertEquals("disk queue iterator checking item 3","Item 3",(String)it.next());
+            assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());
+            assertEquals("disk queue iterator checking item 4","Item 5",(String)it.next());
+            assertFalse("disk queue iterator ends correctly",it.hasNext());
         } catch (FileNotFoundException e) {
             return;
         }
