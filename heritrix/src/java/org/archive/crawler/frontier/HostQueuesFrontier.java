@@ -316,7 +316,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 "beyond this size additional items will be written to a file " +
                 "on disk. Default value " + DEFAULT_HOST_QUEUES_MEMORY_CAPACITY+
                 ". A high value means more RAM used per host queue while a low"+
-                " value will require more disk I/O.",
+                " value will require more disk I/O. Lowest legal value is one "
+                +"(1).",
                 DEFAULT_HOST_QUEUES_MEMORY_CAPACITY));
         t.setExpertSetting(true);
     }
