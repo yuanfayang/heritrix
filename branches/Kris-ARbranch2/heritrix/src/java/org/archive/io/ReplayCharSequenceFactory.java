@@ -610,6 +610,10 @@ public class ReplayCharSequenceFactory {
 
             return ret.toString();
         }
+        
+        public String toString() {
+            return substring(0,length());
+        }
     }
 
 
@@ -1069,6 +1073,10 @@ public class ReplayCharSequenceFactory {
                 this.content.limit(originalLimit);
             }
             return result;
+        }
+
+        public String toString() {
+            return substring(0,length());
         }
     }
 }
