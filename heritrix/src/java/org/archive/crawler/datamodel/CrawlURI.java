@@ -1030,9 +1030,12 @@ public class CrawlURI extends CandidateURI
 
     transient Object holder;
     /**
-     * @param q
+     * Remember a 'holder' to which some enclosing/queueing
+     * facility has assigned this CrawlURI
+     * .
+     * @param obj
      */
-    public void noteHolder(Object obj) {
+    public void setHolder(Object obj) {
         holder=obj;
     }
 
