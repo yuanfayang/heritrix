@@ -99,7 +99,7 @@ public class FrontierMarker implements URIFrontierMarker {
      * @see org.archive.crawler.framework.URIFrontierMarker#hasNext()
      */
     public boolean hasNext() {
-        return true;
+        return hasNext;
     }
 
 }
