@@ -41,6 +41,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 
 /** Superclass of all configurable modules.
@@ -93,9 +94,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     protected void setAsOrder(SettingsHandler settingsHandler)
         throws InvalidAttributeValueException {
         this.settingsHandler = settingsHandler;
-        this.parent = null;
         this.absoluteName = "";
+        globalSettings().addTopLevelModule((CrawlOrder) this);
         addComplexType(settingsHandler.getSettingsObject(null), this);
+        this.parent = null;
     }
 
     /** Get the global settings object (aka order).
