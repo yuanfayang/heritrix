@@ -47,7 +47,7 @@ public class CrawlController {
 	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
 	private static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
-	private static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval";
+	private static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval-seconds";
 	private static final String XP_DISK_PATH = "//behavior/@disk-path";
 	private static final String XP_PROCESSORS = "//behavior/processors/processor";
 	private static final String XP_FRONTIER = "//behavior/frontier";
