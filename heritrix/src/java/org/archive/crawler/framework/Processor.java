@@ -37,12 +37,19 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
  * Base class for URI processing classes.
- * <p>
- * Each URI is processed be a user defined series of processors. This class
+ * 
+ * <p> Each URI is processed be a user defined series of processors. This class
  * provides the basic infrastructure for these but does not actually do
  * anything. New processors can be easily created by subclassing this class.
- *
+ * 
+ * <p> Classes subclassing this one should not trap InterruptedExceptions.
+ * They should be allowed to propagate to the ToeThread executing the processor.
+ * Also they should immediately exit their main method (<tt>innerProcess()</tt>)
+ * if the <tt>interrupted</tt> flag is set.
+ * 
  * @author Gordon Mohr
+ * 
+ * @see org.archive.crawler.framework.ToeThread
  */
 public class Processor extends CrawlerModule {
     /**
@@ -77,7 +84,7 @@ public class Processor extends CrawlerModule {
             "Filters applied to this processor", Filter.class));
     }
 
-    public final void process(CrawlURI curi) {
+    public final void process(CrawlURI curi) throws InterruptedException {
         // by default, arrange for curi to proceed to next processor
         curi.setNextProcessor(getDefaultNextProcessor(curi));
 
@@ -100,7 +107,7 @@ public class Processor extends CrawlerModule {
     /**
      * @param curi
      */
-    protected void innerRejectProcess(CrawlURI curi) {
+    protected void innerRejectProcess(CrawlURI curi) throws InterruptedException {
         // by default do nothing
     }
 
@@ -110,7 +117,7 @@ public class Processor extends CrawlerModule {
      *
      * @param curi The CrawlURI being processed.
      */
-    protected void innerProcess(CrawlURI curi) {
+    protected void innerProcess(CrawlURI curi) throws InterruptedException {
         // by default do nothing
     }
 

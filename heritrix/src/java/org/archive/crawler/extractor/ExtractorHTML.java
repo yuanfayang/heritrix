@@ -350,6 +350,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
         while(tags.find()) {
+            if(Thread.interrupted()){
+                return;
+            }
             if (tags.start(8) > 0) {
                 // comment match
                 // for now do nothing

@@ -55,6 +55,12 @@ public class ToeThread extends Thread
     private ToePool pool;
     private volatile boolean shouldCrawl = true;
     private volatile boolean shouldPause = false;
+    
+    /** 
+     * If set then this thread was 'killed' by an outside agent it should 
+     * then terminate itself as quickly as possible.
+     */
+    private volatile boolean shouldDie = false;
 
     CrawlController controller;
     int serialNumber;
@@ -68,7 +74,7 @@ public class ToeThread extends Thread
     // in-process/on-hold curis? not for now
     // a queue of curis to do next? not for now
 
-    // debugging
+    // debugging + used by kill() to know what state the toe is in.
     int where = 0;
     
     /**
@@ -86,10 +92,11 @@ public class ToeThread extends Thread
     }
 
     /**
-     * @return
+     * @return If true then this thread is idle and ready to start work on 
+     *         another URI. Otherwise it is either busy or has been killed. 
      */
     public boolean isAvailable() {
-        return currentCuri == null;
+        return currentCuri == null && shouldDie == false;
     }
 
     /** (non-Javadoc)
@@ -100,22 +107,35 @@ public class ToeThread extends Thread
         logger.fine(getName()+" started for order '"+name+"'");
 
         while ( shouldCrawl ) {
-            while ( shouldPause ) {
-                pause();
-            }
             try {
-//                currentCuri = (CrawlURI) controller.getFrontier().newNext(DEFAULT_TAKE_TIMEOUT);
+                while ( shouldPause ) {
+                    synchronized(this){
+                        wait();
+                    }
+                }
+                if(shouldDie){ 
+                    return; 
+                }
                 currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
+                if ( currentCuri != null ) {
+                    if(shouldDie){ 
+                        return; 
+                    }
+                    processCrawlUri();
+                }
+                where = 16;
             } catch (InterruptedException e1) {
                 currentCuri = null;
+                if(shouldDie){ 
+                    return;
+                } else {
+                    // Thread was interrupted for unknown reasons.
+                    e1.printStackTrace();
+                }
             }
-            if ( currentCuri != null ) {
-                processCrawlUri();
-            }
-            where = 16;
         }
         where = 17;
-        controller.toeFinished(this);
+//        controller.toeFinished(this);
 
         // Do cleanup so that objects can be GC.
         pool = null;
@@ -127,20 +147,7 @@ public class ToeThread extends Thread
         logger.fine(getName()+" finished for order '"+name+"'");
     }
 
-    /**
-     * 
-     */
-    private synchronized void pause() {
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-
-    private void processCrawlUri() {
+    private void processCrawlUri() throws InterruptedException {
         currentCuri.setThreadNumber(serialNumber);
         currentCuri.setNextProcessorChain(controller.getFirstProcessorChain());
         lastStartTime = System.currentTimeMillis();
@@ -154,6 +161,9 @@ public class ToeThread extends Thread
 
                 while (currentCuri.nextProcessor() != null) {
                     where = 5;
+                    if (shouldDie){
+                        return;
+                    }
                     Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
                     currentProcessorName = currentProcessor.getName();
                     currentProcessor.process(currentCuri);
@@ -182,8 +192,15 @@ public class ToeThread extends Thread
             		"to process '" + currentCuri.getURIString() + "'\n";
             Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
         }
-        where = 9;
+        where = 9; // Not just a debug statement. Used to determine if we
+                   // are ready to report back.
+        if(shouldDie){
+            return;
+        }
         controller.getFrontier().finished(currentCuri);
+        if(shouldDie){
+            return;
+        }
         where = 10;
         currentCuri = null;
         lastFinishTime = System.currentTimeMillis();
@@ -240,6 +257,10 @@ public class ToeThread extends Thread
     }
 
     /**
+     * TODO: This is a really bad way of doing this. Better to maintain
+     * a hash of objects that the processors wish to share. This limits
+     * the plugability of the processors since a part of the implementation
+     * relies the implementation of the ToeThread.
      * @param recorder
      */
     public void setHttpRecorder(HttpRecorder recorder) {
@@ -253,7 +274,8 @@ public class ToeThread extends Thread
     {
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
-        rep.append("     #"+serialNumber);
+        rep.padTo(5);
+        rep.append("#"+serialNumber);
         rep.padTo(11);
 
         if(currentCuri!=null)
@@ -303,6 +325,16 @@ public class ToeThread extends Thread
         rep.padTo(8);
         rep.append("Where: "+where);
         rep.newline();
+        if(shouldDie){
+            rep.padTo(8);
+            if(isAlive()){
+                rep.append("THREAD HAS BEEN ISSUED A KILL INSTRUCTION - " +
+                        "shouldDie == true - IS HUNG\n");
+            } else {
+                rep.append("THREAD HAS BEEN KILLED - shouldDie == true - " +
+                        "HAS EXITED\n");
+            }
+        }
 
         return rep.toString();
     }
@@ -317,4 +349,41 @@ public class ToeThread extends Thread
             notifyAll();
         }
     }
+    
+    /**
+     * Terminates a thread.
+     * 
+     * <p> Calling this method will ensure that the current thread will stop
+     * processing as soon as possible (note: this may be never). Meant to 
+     * 'short circuit' hung threads.
+     * 
+     * <p> Current crawl uri will have it's fetch status set accordingly and
+     * will be immediately returned to the frontier.
+     * 
+     * <p> As noted before, this does not ensure that the thread will stop 
+     * running (ever). But once evoked it will not try and communicate with
+     * other parts of crawler and will terminate as soon as control is 
+     * established.
+     * 
+     * <p> Method should only be invoked by it's ToePool. Otherwise the pool
+     * will become out of sync with the threads currently alive.
+     * 
+     * @param newSerial New serial (id) for the thread.
+     */
+    protected void kill(int newSerial){
+        shouldDie = true;
+        shouldCrawl = false;
+        shouldPause = false;
+        serialNumber = newSerial;
+        if(currentCuri != null){
+            currentCuri.setFetchStatus(S_PROCESSING_THREAD_KILLED);
+            if(where!=9 && where!=10){
+                controller.getFrontier().finished(currentCuri);
+            } //else we are either waiting for a lock on the frontier, in the
+              //process of calling finished() or have already called finished(). 
+              //In any case we don't want another extrenous call.
+        }
+        this.interrupt();
+    }
+    
 }

@@ -604,9 +604,9 @@ public class CrawlController extends Thread {
     /**
      * @param thread
      */
-    public void toeFinished(ToeThread thread) {
-        // for now do nothing
-    }
+//    public void toeFinished(ToeThread thread) {
+//        // for now do nothing
+//    }
 
     /**
      * @return Object this controller is using to track crawl statistics
@@ -952,29 +952,7 @@ public class CrawlController extends Thread {
      * ToeThreads in it's ToePool.
      */
     public String reportThreads() {
-        StringBuffer rep = new StringBuffer();
-
-        rep.append(
-            "Toe threads report - "
-                + ArchiveUtils.TIMESTAMP12.format(new Date())
-                + "\n");
-        rep.append(
-            " Job being crawled:         " + getOrder().getCrawlOrderName()
-            + "\n");
-
-        rep.append(
-            " Number of toe threads in pool: "
-                + toePool.getToeCount()
-                + " ("
-                + toePool.getActiveToeCount()
-                + " active)\n");
-        for (int i = 0; i < toePool.getToeCount(); i++) {
-            rep.append("   ToeThread #" + i + "\n");
-            rep.append(toePool.getReport(i));
-            rep.append("\n");
-        }
-
-        return rep.toString();
+        return toePool.report();
     }
 
     /**
@@ -1043,5 +1021,17 @@ public class CrawlController extends Thread {
                 ((Processor) ip.next()).finalTasks();
             }
         }
+    }
+
+    /**
+     * Kills a thread. For details see 
+     * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)
+     * ToePool.killThread(int, boolean)}.
+     * @param threadNumber Thread to kill.
+     * @param replace Should thread be replaced.
+     * @see org.archive.crawler.framework.ToePool#killThread(int, boolean)
+     */
+    public void killThread(int threadNumber, boolean replace){
+        toePool.killThread(threadNumber, replace);
     }
 }
