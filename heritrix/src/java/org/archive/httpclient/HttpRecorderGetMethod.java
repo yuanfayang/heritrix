@@ -83,7 +83,7 @@ public class HttpRecorderGetMethod extends GetMethod {
     /**
      * Instance of http recorder method.
      */
-    private HttpRecorderMethod httpRecorderMethod = null;
+    protected HttpRecorderMethod httpRecorderMethod = null;
     
 
 	public HttpRecorderGetMethod(String uri, HttpRecorder recorder) {
