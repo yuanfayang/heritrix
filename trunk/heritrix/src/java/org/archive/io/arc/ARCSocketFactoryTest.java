@@ -124,10 +124,24 @@ public class ARCSocketFactoryTest
         // Register our version of http protocol in place of the default
         // used by httpclient.
         Protocol.registerProtocol("http", httpProtocol);
+        // Clean up arc files.
+        cleanUpOldFiles(((ARCSocketFactory)this.factory).getDumpDir(),
+            ARCSocketFactory.DEFAULT_PREFIX);
         // Now use httpclient to fetch an url.
-        getURLContent("http://www.google.com");
-        getURLContent("http://directory.google.com/Top/Society/");
-        getURLContent("http://www.google.com/images/logo.gif");
+        String [] urls = {"http://www.google.com",
+            "http://directory.google.com/Top/Society/",
+            "http://www.google.com/images/logo.gif"};
+        for (int i = 0; i < urls.length; i++)
+        {
+            getURLContent(urls[i]);
+        }
+        File [] f =
+            getListOfFiles(((ARCSocketFactory)this.factory).getDumpDir(),
+                ARCSocketFactory.DEFAULT_PREFIX);
+        for (int i = 0; i < f.length; i++)
+        {
+            (new ARCReader(f[i])).validate(urls.length);
+        }
     }
 
     /* (non-Javadoc)
