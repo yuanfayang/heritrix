@@ -73,7 +73,7 @@
 				<td class="dataheader" nowrap>
 					Crawler running:
 				</td>
-				<td width="50">
+				<td width="25" nowrap>
 					<%=handler.shouldcrawl()?"Yes":"No"%>
 				</td>
 				<td>

@@ -24,7 +24,7 @@
 
 <%@include file="/include/head.jsp"%>
 
-		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="defaultconf.jsp">
+		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="defaultcrawlorder.jsp">
 
 		<%@include file="/include/jobconfig.jsp"%>
 		

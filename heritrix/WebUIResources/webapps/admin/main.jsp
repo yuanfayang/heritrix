@@ -11,7 +11,7 @@
 					<p>
 						<fieldset style="width: 600px">
 							<legend>Crawler status</legend>
-							<iframe name="frmStatus" src="/admin/status.jsp?time=5" width="730" height="185" frameborder="0" ></iframe>
+							<iframe name="frmStatus" src="/admin/iframes/status.jsp?time=5" width="730" height="185" frameborder="0" ></iframe>
 						</fieldset><br>
 
 <%@include file="/include/foot.jsp"%>

@@ -231,7 +231,7 @@
 									<table border=0 cellpadding=2 cellspacing=0 width="100%">
 										<tr id="1b" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menuitem" href="/admin/newjob.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">New job</a>
+												<a class="menuitem" href="/admin/jobs/new.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">New job</a>
 											</td>
 										</tr>
 										<tr id="1a" class="menu">
@@ -241,22 +241,22 @@
 										</tr>
 										<tr id="1aa" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/updatejob.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Update</a>
+												<a class="menusubitem" href="/admin/jobs/updatecurrent.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Update</a>
 											</td>
 										</tr>
 										<tr id="1ab" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/viewstatistics.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">View statistics</a>
+												<a class="menusubitem" href="/admin/jobs/viewstatistics.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">View statistics</a>
 											</td>
 										</tr>
 										<tr id="1c" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menuitem" href="/admin/pendingjobs.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Pending jobs</a>
+												<a class="menuitem" href="/admin/jobs/pending.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Pending jobs</a>
 											</td>
 										</tr>
 										<tr id="1d" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menuitem" href="/admin/completedjobs.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Completed jobs</a>
+												<a class="menuitem" href="/admin/jobs/completed.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Completed jobs</a>
 											</td>
 										</tr>
 									</table>
@@ -271,7 +271,7 @@
 									<table border=0 cellpadding=2 cellspacing=0 width="100%">
 										<tr id="1b" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menuitem" href="/admin/options/defaultconf.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Default crawl order</a>
+												<a class="menuitem" href="/admin/settings/defaultcrawlorder.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Default crawl order</a>
 											</td>
 										</tr>
 										<tr id="1c" class="menu">
@@ -296,37 +296,37 @@
 										</tr>
 										<tr id="1aa" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/options/viewlogs.jsp?log=crawl.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">crawl.log</a>
+												<a class="menusubitem" href="/admin/reports/logs.jsp?log=crawl.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">crawl.log</a>
 											</td>
 										</tr>
 										<tr id="1aa" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/options/viewlogs.jsp?log=local-errors.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">local-errors.log</a>
+												<a class="menusubitem" href="/admin/reports/logs.jsp?log=local-errors.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">local-errors.log</a>
 											</td>
 										</tr>
 										<tr id="1aa" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/options/viewlogs.jsp?log=progress-statistics.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">progress-statistics.log</a>
+												<a class="menusubitem" href="/admin/reports/logs.jsp?log=progress-statistics.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">progress-statistics.log</a>
 											</td>
 										</tr>
 										<tr id="1aa" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/options/viewlogs.jsp?log=runtime-errors.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">runtime-errors.log</a>
+												<a class="menusubitem" href="/admin/reports/logs.jsp?log=runtime-errors.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">runtime-errors.log</a>
 											</td>
 										</tr>
 										<tr id="1aa" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menusubitem" href="/admin/options/viewlogs.jsp?log=uri-errors.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">uri-errors.log</a>
+												<a class="menusubitem" href="/admin/reports/logs.jsp?log=uri-errors.log" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">uri-errors.log</a>
 											</td>
 										</tr>
 										<tr id="1b" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menuitem" href="/admin/options/viewfrontier.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Frontier report</a>
+												<a class="menuitem" href="/admin/reports/frontier.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Frontier report</a>
 											</td>
 										</tr>
 										<tr id="1c" class="menu">
 											<td onMouseover="this.style.backgroundColor = '#0000FF';" onMouseout =" this.style.backgroundColor = '#5555FF';" width="100%">
-												<a class="menuitem" href="/admin/options/viewthreads.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Threads report</a>
+												<a class="menuitem" href="/admin/reports/threads.jsp" onMouseOut="menuOut('rollimg2');" onMouseOver="menuOver('rollimg2');"><img src="/admin/images/blank.gif" width="5" height="2" border="0">Threads report</a>
 											</td>
 										</tr>
 									</table>

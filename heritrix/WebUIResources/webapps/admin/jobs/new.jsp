@@ -8,16 +8,16 @@
 	 * (order.xml is used for default values)
 	 */
 
-	if(request.getParameter(handler.XP_CRAWL_ORDER_NAME) != null)
+	if(request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME) != null)
 	{
 		// Got something in the request.  Let's update!
 		String newUID = handler.getNextJobUID();
-		String filename = "jobs"+File.separator+newUID+File.separator+"job-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+"-1.xml";
-		String seedfile = "seeds-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".txt";
+		String filename = "jobs"+File.separator+newUID+File.separator+"job-"+request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME)+"-1.xml";
+		String seedfile = "seeds-"+request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME)+".txt";
 		File f = new File("jobs"+File.separator+newUID);
 		f.mkdirs();
 		handler.createCrawlOrderFile(request,filename,seedfile,true);
-		handler.addJob(new SimpleCrawlJob(newUID, request.getParameter(handler.XP_CRAWL_ORDER_NAME),filename,SimpleCrawlJob.PRIORITY_AVERAGE));
+		handler.addJob(new SimpleCrawlJob(newUID, request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME),filename,SimpleCrawlJob.PRIORITY_AVERAGE));
 		response.sendRedirect("/admin/main.jsp");
 	}
 
@@ -30,7 +30,7 @@
 
 <%@include file="/include/head.jsp"%>
 
-		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="newjob.jsp">
+		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="new.jsp">
 
 		<%@include file="/include/jobconfig.jsp"%>
 		

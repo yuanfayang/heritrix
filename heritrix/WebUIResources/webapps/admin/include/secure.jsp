@@ -1,6 +1,13 @@
-<%@page import="org.archive.crawler.admin.auth.User" %>
+<%@page import="org.archive.crawler.admin.auth.User" %><%  
+	
+		/**
+		 * Access control include
+		 *
+		 * One page (/iframes/xml.jsp) breaks in certain browsers (Mozilla) if
+		 * there are any empty lines before it's content.  Since it includes
+		 * this file it is important that it create no empty lines.
+		 */
 
-<%
 		User user = (User)session.getAttribute("user");
 		
 		if(user == null || user.authenticate() != User.ADMINISTRATOR)
