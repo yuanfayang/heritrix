@@ -139,7 +139,7 @@ public class CrawlOrder extends ModuleType {
         httpHeaders = (MapType) addElementToDefinition(new MapType(
                 ATTR_HTTP_HEADERS, "HTTP headers. \nInformation that will " +
                         "be used when constructing the HTTP headers of " +
-                        "the crawler's HTTP requests."));
+                        "the crawler's HTTP requests.", String.class));
         
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
                 "User agent to act as. \nThis field must contain a valid " +
