@@ -24,6 +24,8 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
+import java.util.List;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
@@ -101,46 +103,43 @@ public class DomainScope extends CrawlScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        UURI u = null;
-        if (o instanceof UURI) {
-            u = (UURI) o;
-        } else if (o instanceof CandidateURI) {
-            u = ((CandidateURI) o).getUURI();
-        }
+        UURI u = getUURI(o);
         if (u == null) {
             return false;
         }
-        Iterator iter = getSeedsIterator();
-        assert iter != null: "Iterator is null.";
-        while (iter.hasNext()) {
-            UURI s = (UURI) iter.next();
-            if(isSameHost(s, u)) {
-                return true;
-            }
-
-            // might be a close-enough match
-            String seedDomain = s.getHost();
-            if (seedDomain == null) {
-                // getHost can come back null.  See
-                // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-                continue;
-            }
-            // strip www[#]
-            seedDomain = seedDomain.replaceFirst("^www\\d*", "");
-            String candidateDomain = u.getHost();
-            if (candidateDomain == null) {
-                // either an opaque, unfetchable, or unparseable URI
-                continue;
-            }
-            if (seedDomain
-                .regionMatches(
-                    0,
-                    candidateDomain,
+        // Get the seeds to refresh and then get an iterator inside a 
+        // synchronization block.  The seeds list may get updated during our
+        // iteration. This will throw a concurrentmodificationexception unless
+        // we synchronize.
+        List seeds = getSeedlist();
+        synchronized(seeds) {
+            for (Iterator i = seeds.iterator(); i.hasNext();) {
+                UURI s = (UURI)i.next();
+                if(isSameHost(s, u)) {
+                    return true;
+                }
+                
+                // Might be a close-enough match
+                String seedDomain = s.getHost();
+                if (seedDomain == null) {
+                    // GetHost can come back null.  See
+                    // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+                    continue;
+                }
+                // Strip www[#]
+                seedDomain = seedDomain.replaceFirst("^www\\d*", "");
+                String candidateDomain = u.getHost();
+                if (candidateDomain == null) {
+                    // either an opaque, unfetchable, or unparseable URI
+                    continue;
+                }
+                if (seedDomain.regionMatches(0, candidateDomain,
                     candidateDomain.length() - seedDomain.length(),
                     seedDomain.length())) {
-                // domain suffix congruence
-                return true;
-            } // else keep trying other seeds
+                    // Domain suffix congruence
+                    return true;
+                } // Else keep trying other seeds
+            }
         }
         // if none found, fail
         return false;

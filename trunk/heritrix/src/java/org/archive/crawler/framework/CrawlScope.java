@@ -39,11 +39,12 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.OrFilter;
+import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
 
 /**
@@ -76,10 +77,21 @@ public class CrawlScope extends Filter {
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
-    private List seeds = null;
-    private boolean seedsCached = false;
+    /**
+     * List of seeds.
+     * 
+     * This list is wrapped with the synchronized list whenever its
+     * instantiated.  This means, to iterate over this list, you'll need to 
+     * synchronize on the list itself first.  See 
+     * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List).
+     * Call getSeedList() to get the list to synchronize on.
+     */
+    private SeedList seedlist = null;
+    
+    
     private OrFilter excludeFilter;
-
+    
+    
     /** Constructs a new CrawlScope.
      * 
      * @param name the name is ignored since it always have to be the value of
@@ -116,74 +128,87 @@ public class CrawlScope extends Filter {
     public String toString() {
         return "CrawlScope<" + getName() + ">";
     }
+    
+    /**
+     * @param o An instance of UURI or of CandidateURI.
+     * @return Make into a UURI.
+     */
+    protected UURI getUURI(Object o) {
+        UURI u = null;
+        if (o instanceof UURI) {
+            u = (UURI)o;
+        } else if (o instanceof CandidateURI) {
+            u = ((CandidateURI) o).getUURI();
+        } else {
+            if (o != null) {
+                throw new IllegalArgumentException("Passed wrong type: " + o);
+            }
+        }
+        return u;
+    }
+    
+    /**
+     * Use this method to get a reference to the seedlist.
+     * 
+     * Use it to get an iterator.  You must synchronize on it as you iterate
+     * over it as per
+     * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List)
+     * to prevent concurrentmodificationexceptions.  Same is case if you want
+     * to add seeds.
+     * 
+     * @return Returns a seedlist.
+     */
+    public synchronized List getSeedlist() {
+        if (this.seedlist == null) {
+            this.seedlist = new SeedList(getSeedfile(), getSettingsHandler().
+                getOrder().getController().uriErrors);
+        }
+        return this.seedlist;
+    }
+    
+    /**
+     * @return Seed list file or null if problem getting settings file.
+     */
+    protected File getSeedfile() {
+        File file = null;
+        try {
+            file = getSettingsHandler().getPathRelativeToWorkingDirectory(
+                (String)getAttribute(ATTR_SEEDS));
+            if (!file.exists() || !file.canRead()) {
+                throw new IOException("Seeds file " +
+                    file.getAbsolutePath() + " does not exist or unreadable.");
+            }
+        } catch (IOException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+        } catch (AttributeNotFoundException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+        } catch (MBeanException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+            e.printStackTrace();
+        }
 
-    /** Refreshes the seeds cache.
+        return file;
+    }
+    
+    /** 
+     * Refreshes the list of seeds cached.
      * 
      * This method could safely be overridden by a null implementation for
-     * scopes that doesn't need the seeds to be cached. For example is there
+     * scopes that don't need the seeds to be cached. For example, there is
      * no reason for the BroadScope to cache seeds since it doesn't have to
      * check the seeds to see if a URI is inside the scope.
+     * 
+     * <p>While the above statement is true, our 
      */
-    public void refreshSeedsIteratorCache() {
-        // seeds should be in memory for scope tests
-        if (seeds == null) {
-            seeds = Collections.synchronizedList(new ArrayList());
-        } else {
-            seeds.clear();
+    public synchronized void refreshSeeds() {
+        if (this.seedlist == null) {
+            this.seedlist = new SeedList(getSeedfile(), getSettingsHandler().
+                getOrder().getController().uriErrors);
         }
-        synchronized (seeds) {
-            seedsCached = false;
-            Iterator iter = getSeedsIterator();
-            while (iter.hasNext()) {
-                seeds.add(iter.next());
-            }
-            seedsCached = true;
-        }
-    }
-
-    /**
-     * Return an iterator of the seeds in this scope. The seed
-     * input is taken from either the configuration file, or the
-     * external seed file it specifies.
-     *
-     * @return An iterator of the seeds in this scope.
-     */
-    public Iterator getSeedsIterator() {
-        Iterator seedIterator;
-
-        if (seedsCached) {
-            seedIterator = seeds.iterator();
-        } else {
-            try {
-                File file = getSettingsHandler()
-                    .getPathRelativeToWorkingDirectory(
-                        (String)getAttribute(ATTR_SEEDS));
-                if (!file.exists())
-                {
-                    throw new FileNotFoundException("Seeds file " +
-                       file.getAbsolutePath() + " does not exist.");
-                }
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                seedIterator = new SeedsInputIterator(reader,
-                        getSettingsHandler().getOrder().getController());
-            } catch (IOException e) {
-                DevUtils.warnHandle(e, "problem reading seeds");
-                seedIterator = null;
-            } catch (AttributeNotFoundException e) {
-                DevUtils.warnHandle(e, "problem reading seeds");
-                seedIterator = null;
-            } catch (MBeanException e) {
-                DevUtils.warnHandle(e, "problem reading seeds");
-                e.printStackTrace();
-                seedIterator = null;
-            } catch (ReflectionException e) {
-                DevUtils.warnHandle(e, "problem reading seeds");
-                e.printStackTrace();
-                seedIterator = null;
-            }
-        }
-
-        return seedIterator;
+        this.seedlist.refresh(getSeedfile());
     }
 
     /**
@@ -312,44 +337,6 @@ public class CrawlScope extends Filter {
      */
     protected boolean additionalFocusAccepts(Object o){
         return false; 
-    }
-    
-    /**
-     * Add a URI to the list of seeds. Includes adding the URI to the seed file.
-     * @param newSeed The new seed.
-     */
-    public void addSeed(UURI newSeed){
-        // Add to cached list if exists.
-        if(seedsCached){
-            synchronized(seeds){
-                seeds.add(newSeed);
-            }
-        }
-        // TODO: Write to seedfile.
-        try{
-            File file = getSettingsHandler().getPathRelativeToWorkingDirectory(
-                    (String)getAttribute(ATTR_SEEDS));
-            if (!file.exists())
-            {
-                throw new FileNotFoundException("Seeds file " +
-                   file.getAbsolutePath() + " does not exist.");
-            }
-            // Open file for reading (append)
-            FileWriter fw = new FileWriter(file,true);
-            // Write to new (last) line the URL.
-            fw.write("\n");
-            fw.write(newSeed.getURIString());
-            fw.flush();
-            fw.close();
-        } catch (IOException e) {
-            DevUtils.warnHandle(e, "problem writing new seed");
-        } catch (AttributeNotFoundException e) {
-            DevUtils.warnHandle(e, "problem writing new seed");
-        } catch (MBeanException e) {
-            DevUtils.warnHandle(e, "problem writing new seed");
-        } catch (ReflectionException e) {
-            DevUtils.warnHandle(e, "problem writing new seed");
-        }
     }
     
     /* (non-Javadoc)

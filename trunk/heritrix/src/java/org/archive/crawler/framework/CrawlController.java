@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -990,14 +991,8 @@ public class CrawlController {
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-        getScope().refreshSeedsIteratorCache();
-        Iterator iter = getScope().getSeedsIterator();
-        while (iter.hasNext()) {
-            UURI u = (UURI) iter.next();
-            CandidateURI caUri = new CandidateURI(u);
-            caUri.setSeed();
-            caUri.setSchedulingDirective(CandidateURI.HIGH);
-            frontier.schedule(caUri);
+        if (this.frontier instanceof Frontier) {
+            ((Frontier)this.frontier).loadSeeds();
         }
         // update thresholds
         try {
