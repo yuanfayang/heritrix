@@ -6,8 +6,8 @@
 <crawler-behavior>
 
  <http-headers>
-  <User-Agent>Heritrix pre-Alpha (contact gojomo@archive.org)</User-Agent>
-  <From>gojomo@archive.org</From>
+ <User-Agent>heritrix-aoc/alpha (+http://crawler.archive.org)</User-Agent>
+ <From>archive-crawler-agent@lists.sourceforge.net</From>
  </http-headers>
  
  <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
