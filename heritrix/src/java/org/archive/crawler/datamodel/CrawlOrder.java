@@ -81,8 +81,10 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_POST_PROCESSORS = "post-processors";
     public static final String ATTR_LOGGERS = "loggers";
     public static final String ATTR_RULES = "uri-canonicalization-rules";
-    public static final String ATTR_RECORDER_OUT_BUFFER = "recorder-out-buffer-bytes";
-    public static final String ATTR_RECORDER_IN_BUFFER = "recorde-in-buffer-bytes";
+    public static final String ATTR_RECORDER_OUT_BUFFER =
+        "recorder-out-buffer-bytes";
+    public static final String ATTR_RECORDER_IN_BUFFER =
+        "recorder-in-buffer-bytes";
 
     String caseFlattenedUserAgent;
 
@@ -189,7 +191,7 @@ public class CrawlOrder extends ModuleType {
         e.setOverrideable(false);
         e.setExpertSetting(true);
         
-        e = addElementToDefinition(new SimpleType(ATTR_RECORDER_OUT_BUFFER,
+        e = addElementToDefinition(new SimpleType(ATTR_RECORDER_IN_BUFFER,
                 "Size in bytes of in-memory buffer to record inbound " +
                 "traffic. One such buffer is reserved for every ToeThread.",
                 new Integer(65536)));
