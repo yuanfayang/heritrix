@@ -31,8 +31,6 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
  	
  	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
 	public static final boolean DO_CLASS_TYPE_CHECKING = true;
-	
-	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 
 	// defaults
  	private short ClassType = DClass.IN;
@@ -72,6 +70,11 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
 			// only handles dns
+			return;
+		}
+		
+		// make sure there are not restrictions on when we should fetch this
+		if(curi.dontFetchYet()){
 			return;
 		}
 		
@@ -119,9 +122,10 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 			return;
 		}
 		
-		if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
-			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-		}
+//		if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+//			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+//			return;
+//		}
 					
 		// give it a go    
 		curi.incrementFetchAttempts();
@@ -161,7 +165,8 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 				ARecord AsA 	= (ARecord)rrecordSet[i];
 							
 				targetHost.setIP(AsA.getAddress());
-				targetHost.setIpExpires( (long)AsA.getTTL() + now);
+				
+				targetHost.setIpExpires( 1000*(long)AsA.getTTL() + System.currentTimeMillis());
 
 				break; 	// only need to process one record
 			}		

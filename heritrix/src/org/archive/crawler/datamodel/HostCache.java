@@ -18,6 +18,14 @@ public class HostCache {
 		
 	public CrawlHost getHostFor(String h) {
 		CrawlHost chost = (CrawlHost) hosts.get(h);
+		
+		// if it has expired remove it from the cache
+		if(chost != null && chost.isIpExpired() && chost.hasBeenLookedUp() ){
+			//hosts.remove(h);
+			chost.resetForIpExpire();
+			//chost = null;
+		}
+		
 		if (chost==null) {
 			chost = new CrawlHost(h);
 			hosts.put(h,chost);
@@ -37,7 +45,6 @@ public class HostCache {
 			
 			if(primaryDns == null){
 				return null;
-	
 			}else{
 				return getHostFor(primaryDns);	
 			}

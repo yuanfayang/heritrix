@@ -14,14 +14,13 @@ import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 
-
 /**
  * Represents a 
  * @author gojomo
  *
  */
 public class CrawlHost {
-	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day
+	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day 
 	String hostname;
 	InetAddress ip;
 	long ipExpires = -1;
@@ -44,16 +43,17 @@ public class CrawlHost {
 		hostname = h;
 	}
 	
-//	public void updateRobots(VirtualBuffer vb, long newExpires) {
-//		robotsExpires = newExpires;
-//		if ((robotstxtChecksum != null)
-//			&& robotstxtChecksum.getValue() == vb.getChecksum().getValue()) {
-//			// unchanged
-//			return;
-//		}
-//		robotstxtChecksum = vb.getChecksum();
-//		robots = RobotsExclusionPolicy.policyFor(vb);
-//	}
+	public void resetForRobotsExpire(){
+		ipExpires = -1;
+		robots = null;
+		robotsExpires = -1;
+		robotstxtChecksum = null;
+	}
+	public void resetForIpExpire(){
+		hasBeenLookedUp = false;
+		hostname = null;
+		ip = null;
+	}
 	
 	public boolean hasBeenLookedUp(){
 		return hasBeenLookedUp;
@@ -75,34 +75,6 @@ public class CrawlHost {
 	public void setRobotsExpires(long l) {
 		robotsExpires = l;
 	}
-	
-/*	public boolean isRobotsExpired(){
-		
-		// -1 denotes a robots.txt we haven't fetched
-		// so ignore that as a special case
-		if( getRobotsExpires() < System.currentTimeMillis()
-			&& getRobotsExpires() > 0
-		){
-			return true;
-		}
-
-		return false;
-	}
-	
-	public boolean isExpired(){
-		// -1 denotes an ip we haven't fetched
-		// so ignore that as a special case
-		if( getRobotsExpires() < System.currentTimeMillis()
-			&& getRobotsExpires() > 0
-		){
-			return true;
-		}
-
-		return false;
-	}
-	*/
-	
-	
 
 	/**
 	 * @return
@@ -170,7 +142,26 @@ public class CrawlHost {
 	 * @param expires
 	 */
 	 public void setIpExpires(long expires){
-	 	ipExpires = expires;
+	 	ipExpires = System.currentTimeMillis() + 10000;
+	 	//ipExpires = expires;
+	 }
+	 
+	 public boolean isIpExpired(){
+	 	if(	ipExpires >= 0 && 
+	 			ipExpires < System.currentTimeMillis()
+	 	){
+
+	 		resetForIpExpire();
+	 		return true;
+	 	}
+	 	return false;
+	 }
+	 public boolean isRobotsExpired(){
+	 	if(robotsExpires >= 0 && robotsExpires < System.currentTimeMillis()){
+	 		resetForRobotsExpire();
+	 		return true;
+	 	}
+	 	return false;
 	 }
 	 
 	 public void setIpExpiresFromTTL(long ttl){

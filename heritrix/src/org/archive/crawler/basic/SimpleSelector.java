@@ -273,8 +273,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			}
 		}
 	}
-
-
+	
 	protected void handlePrerequisites(CrawlURI curi) {
 		try {
 			UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),curi.getUURI().getUri());
@@ -313,8 +312,15 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			// can always try scheduling a new CrawlURI
 			return true;
 		}
+		
 		if (curi.getStoreState()==URIStoreable.FINISHED) {
-			// it's retired
+			
+			// is it finished but expired (if so don't regret it, reget it, hehe)
+			if(!curi.dontFetchYet()){
+				return true;
+			}
+			
+			// nope, it's retired
 			return false;
 		}
 		// otherwise, OK
