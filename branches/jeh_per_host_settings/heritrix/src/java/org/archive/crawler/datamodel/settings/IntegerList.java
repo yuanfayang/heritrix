@@ -33,21 +33,25 @@ public class IntegerList extends ListType {
 	/**
 	 * 
 	 */
-	public IntegerList() {
+	public IntegerList(String name, String description) {
+        super(name, description);
 	}
 
 	/**
 	 * @param c
 	 */
-	public IntegerList(IntegerList l) {
+	public IntegerList(String name, String description, IntegerList l) {
+        super(name, description);
         addAll(l);
 	}
 
-	public IntegerList(Integer[] l) {
+	public IntegerList(String name, String description, Integer[] l) {
+        super(name, description);
         addAll(l);
 	}
 	
-    public IntegerList(int[] l) {
+    public IntegerList(String name, String description, int[] l) {
+        super(name, description);
         addAll(l);
     }
 
