@@ -1,4 +1,8 @@
-/* Copyright (C) 2003 Internet Archive.
+/* FetchHTTP.java
+ * 
+ * Created on Jun 5, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +19,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * FetchHTTP.java
- * Created on Jun 5, 2003
- *
- * $Header$
  */
 package org.archive.crawler.fetcher;
 
@@ -38,28 +37,33 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.protocol.Protocol;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
+import org.archive.httpclient.HeritrixSSLProtocolSocketFactory;
+import org.archive.httpclient.HeritrixX509TrustManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.HttpRecorder;
 
 /**
- * Basic class for using the Apache Jakarta HTTPClient library
- * for fetching an HTTP URI.
+ * HTTP fetcher that uses <a 
+ * href="http://jakarta.apache.org/commons/httpclient/">Apache Jakarta Commons
+ * HttpClient</a> library.
  *
  * @author Gordon Mohr
  * @author Igor Ranitovic
  * @author others
- *
+ * @version $Id$
  */
 public class FetchHTTP
     extends Processor
-    implements CoreAttributeConstants, FetchStatusCodes {
+    implements CoreAttributeConstants, FetchStatusCodes
+{
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
@@ -87,7 +91,12 @@ public class FetchHTTP
      * Setting for protocol strictness.
      */
     private boolean strict = DEFAULT_STRICT;
-
+    
+    /**
+     * SSL trust level setting attribute name.
+     */
+    public static final String ATTR_TRUST = "trust-level";
+    
 
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
@@ -95,25 +104,48 @@ public class FetchHTTP
     HttpClient http = null;
 
     private int soTimeout;
-
+    
     /**
-     * @param name
+     * If this processor has been initialized.
+     */
+    private boolean initialized = false;
+
+    
+    /**
+     * Constructor.
+     * 
+     * @param name Name of this processor.
      */
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
-            "If the fetch is not completed in this number of seconds, give up", DEFAULT_TIMEOUT_SECONDS));
+            "If the fetch is not completed in this number of seconds,"
+            + " give up", DEFAULT_TIMEOUT_SECONDS));
         addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
-            "If the socket is unresponsive for this number of seconds, give up (and retry)", DEFAULT_SOTIMEOUT_MS));
+            "If the socket is unresponsive for this number of seconds, give up"
+            + " (and retry)", DEFAULT_SOTIMEOUT_MS));
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
-            "Max length in bytes to fetch (truncate at this length)", DEFAULT_MAX_LENGTH_BYTES));
+            "Max length in bytes to fetch (truncate at this length)", 
+            DEFAULT_MAX_LENGTH_BYTES));
         addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS,
             "Max number of fetches to attempt", DEFAULT_MAX_FETCH_ATTEMPTS));
         addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
         addElementToDefinition(new SimpleType(ATTR_STRICT,
-                "Strict adherence to HTTP protocol",
-                new Boolean(strict)));
+                "Strict adherence to HTTP protocol.  At a minimum all cookies"
+                + " will be served on one line only",
+                new Boolean(this.strict)));
+        SimpleType trustLevel = new SimpleType(ATTR_TRUST,
+            "SSL certificate trust level.  Range is from the default 'open'"
+            + " (trust all certs including expired, selfsigned, and those for"
+            + " which we do not have a CA) through 'loose' (trust all valid"
+            + " certificates including selfsigned), 'normal' (all valid"
+            + " certificates not including selfsigned) to 'strict' (Cert is"
+            + " valid and DN must match servername)",
+            HeritrixX509TrustManager.DEFAULT,
+            HeritrixX509TrustManager.LEVELS_AS_ARRAY);
+        trustLevel.setOverrideable(false);
+        addElementToDefinition(trustLevel);
     }
 
     /* (non-Javadoc)
@@ -143,7 +175,7 @@ public class FetchHTTP
             // TODO: make this initial reading subject to the same
             // length/timeout limits; currently only the soTimeout
             // is effective here, once the connection succeeds
-            http.executeMethod(get);
+            this.http.executeMethod(get);
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "executeMethod");
             curi.setFetchStatus(S_CONNECT_FAILED);
@@ -193,8 +225,8 @@ public class FetchHTTP
             System.currentTimeMillis());
 
         long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
-        logger.fine(
-            curi.getUURI().getUriString()+": "+ get.getStatusCode()+" "+ contentSize);
+        logger.fine(curi.getUURI().getUriString() + ": " +
+            get.getStatusCode() + " " + contentSize);
 
         curi.setFetchStatus(get.getStatusCode());
         curi.setContentSize(contentSize);
@@ -204,7 +236,6 @@ public class FetchHTTP
             curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
         }
     }
-
 
     /**
      * Can this processor fetch the given CrawlURI. May set a fetch
@@ -236,7 +267,6 @@ public class FetchHTTP
         return true;
     }
 
-
     /**
      * Configure the GetMethod as necessary, setting options and headers.
      *
@@ -250,31 +280,50 @@ public class FetchHTTP
         get.setHttp11(false);
         // Set strict on the client; whatever the client's mode overrides
         // the methods mode inside in the depths of executeMethod.
-        http.setStrictMode(getStrict(curi));
+        this.http.setStrictMode(getStrict(curi));
 
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
             userAgent = getSettingsHandler().getOrder().getUserAgent(curi);
         }
         get.setRequestHeader("User-Agent", userAgent);
-        get.setRequestHeader("From", getSettingsHandler().getOrder().getFrom(curi));
+        get.setRequestHeader("From",
+            getSettingsHandler().getOrder().getFrom(curi));
     }
-
-    private boolean initialized = false;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
      */
-    public void initialize() {
-        if (!initialized) {
-            soTimeout = getSoTimeout(null);
+    public void initialize()
+    {
+        if (!this.initialized) {
+            this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
             MultiThreadedHttpConnectionManager connectionManager =
                 new MultiThreadedHttpConnectionManager();
             // ensure there will be as many http connections available as
             // worker threads
-            connectionManager.setMaxTotalConnections(getController().getToeCount());
-            http = new HttpClient(connectionManager);
+            connectionManager.setMaxTotalConnections(getController().
+                getToeCount());
+            this.http = new HttpClient(connectionManager);
+            
+            try
+            {
+                // Register our heritrix sslsocketfactory.
+                String trustLevel = (String)getAttribute(ATTR_TRUST);
+                Protocol.registerProtocol("https", 
+                    new Protocol("https", 
+                        new HeritrixSSLProtocolSocketFactory(trustLevel),
+                    443));
+            }
+            
+            catch (Exception e)
+            {
+                // Convert all to RuntimeException so get an exception out if
+                // initialization fails.
+                throw new RuntimeException("Failed setting SSL Protocol: " +
+                    e.getMessage());
+            }
 
             // load cookies from a file if specified in the order file.
             try {
@@ -286,33 +335,31 @@ public class FetchHTTP
             } catch (AttributeNotFoundException e) {
                 logger.warning(e.getLocalizedMessage());
             }
-        // TODO: When HTTPClient stops using a monitor 'waitingThread' thread to
 
-            // Set connection timeout. Considered same as overall timeout, for
-            // now.
+            // Considered same as overall timeout, for now.
             // TODO: When HTTPClient stops using a monitor 'waitingThread'
-            // thread to
-            // watch over the getting of the socket from socket factory
-            // and instead supports the java.net.Socket#connect timeout.
+            // thread to watch over the getting of the socket from socket
+            // factory and instead supports the java.net.Socket#connect timeout.
             // http.setConnectionTimeout((int)timeout);
             // set per-read() timeout: overall timeout will be checked at least
             // this
             // frequently
-            http.setTimeout(soTimeout);
-            initialized = true;
+            this.http.setTimeout(this.soTimeout);
+            this.initialized = true;
         }
     }
 
     private boolean getStrict(CrawlURI curi) {
-        Boolean strict = null;
-        try {
-           strict  = (Boolean)getAttribute(ATTR_STRICT, curi);
+        Boolean isStrict = null;
+        try
+        {
+            isStrict  = (Boolean)getAttribute(ATTR_STRICT, curi);
         }
         catch (Exception e)
         {
-            strict = new Boolean(DEFAULT_STRICT);
+            isStrict = new Boolean(DEFAULT_STRICT);
         }
-        return strict.booleanValue();
+        return isStrict.booleanValue();
     }
 
     private int getSoTimeout(CrawlURI curi) {
