@@ -32,6 +32,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+
 /**
  * expiry handled outside, in CrawlServer
  * @author gojomo
@@ -40,8 +42,10 @@ import java.util.logging.Logger;
 public class RobotsExclusionPolicy {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.RobotsExclusionPolicy");
 
-	public static RobotsExclusionPolicy ALLOWALL = new RobotsExclusionPolicy(null, null, false, null);
-	public static RobotsExclusionPolicy DENYALL = new RobotsExclusionPolicy(null, null, false, null);
+	public static RobotsExclusionPolicy ALLOWALL =
+        new RobotsExclusionPolicy(null, null, null, false, null);
+	public static RobotsExclusionPolicy DENYALL =
+        new RobotsExclusionPolicy(null, null, null, false, null);
 	
 	private LinkedList userAgents = null;
 	private HashMap disallows = null; // of (String -> List)
@@ -57,7 +61,10 @@ public class RobotsExclusionPolicy {
 	 * @return Robot exclusion policy.
 	 * @throws IOException
 	 */
-	public static RobotsExclusionPolicy policyFor(BufferedReader reader, RobotsHonoringPolicy honoringPolicy) throws IOException {
+	public static RobotsExclusionPolicy policyFor(CrawlerSettings settings,
+            BufferedReader reader, RobotsHonoringPolicy honoringPolicy)
+            throws IOException {
+
 		String read;
 		ArrayList current = null;
 		LinkedList userAgents = new LinkedList();
@@ -117,7 +124,8 @@ public class RobotsExclusionPolicy {
 		}
 		
 		if(disallows.isEmpty()) return ALLOWALL;
-		return new RobotsExclusionPolicy(userAgents, disallows, hasErrors, honoringPolicy);
+		return new RobotsExclusionPolicy(
+            settings, userAgents, disallows, hasErrors, honoringPolicy);
 	}
 	
 	
@@ -127,7 +135,8 @@ public class RobotsExclusionPolicy {
 	 * @param errs
 	 * @param honoringPolicy
 	 */
-	public RobotsExclusionPolicy(LinkedList u, HashMap d, boolean errs, RobotsHonoringPolicy honoringPolicy) {
+	public RobotsExclusionPolicy(CrawlerSettings settings, LinkedList u,
+            HashMap d, boolean errs, RobotsHonoringPolicy honoringPolicy) {
 		userAgents = u;
 		disallows = d;
 		hasErrors = errs;
@@ -135,14 +144,14 @@ public class RobotsExclusionPolicy {
 		
 		if(honoringPolicy == null) return;
 		
-		// If honoring policy is most favored user agent, all rules should be shecked
-		if(honoringPolicy.isType(RobotsHonoringPolicy.MOST_FAVORED)) {
+		// If honoring policy is most favored user agent, all rules should be checked
+		if(honoringPolicy.isType(settings, RobotsHonoringPolicy.MOST_FAVORED)) {
 			userAgentsToTest = userAgents;
 
 		// IF honoring policy is most favored of set, then make a list with only the set as members
-		} else if(honoringPolicy.isType(RobotsHonoringPolicy.MOST_FAVORED_SET)) {
+		} else if(honoringPolicy.isType(settings, RobotsHonoringPolicy.MOST_FAVORED_SET)) {
 			userAgentsToTest = new ArrayList();
-			Iterator userAgentSet = honoringPolicy.getUserAgents().iterator();
+			Iterator userAgentSet = honoringPolicy.getUserAgents(settings).iterator();
 			while(userAgentSet.hasNext()) {
 				String userAgent = (String) userAgentSet.next();
 				
@@ -166,7 +175,10 @@ public class RobotsExclusionPolicy {
 		
 		// In the common case with policy=Classic, the useragent is remembered from uri to uri on
 		// the same server
-		if(honoringPolicy.isType(RobotsHonoringPolicy.CLASSIC) && (lastUsedUserAgent == null || !lastUsedUserAgent.equals(userAgent))) {
+		if(honoringPolicy.isType(curi, RobotsHonoringPolicy.CLASSIC)
+            && (lastUsedUserAgent == null
+            || !lastUsedUserAgent.equals(userAgent))) {
+
 			lastUsedUserAgent = userAgent; 
 			userAgentsToTest = new ArrayList();
 			Iterator iter = userAgents.iterator();
@@ -212,7 +224,7 @@ public class RobotsExclusionPolicy {
 		
 		// Are we supposed to masquerade as the user agent to which restrictions
 		// we follow?
-		if(honoringPolicy.shouldMasquerade() && ua != null && !ua.equals("")) {
+		if(honoringPolicy.shouldMasquerade(curi) && ua != null && !ua.equals("")) {
 			curi.setUserAgent(ua);
 		}
 		return disallow;

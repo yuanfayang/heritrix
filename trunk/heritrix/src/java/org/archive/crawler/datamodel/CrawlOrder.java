@@ -30,6 +30,8 @@ package org.archive.crawler.datamodel;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
 import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
@@ -180,17 +182,20 @@ public class CrawlOrder extends CrawlerModule {
     }
 
     /**
-     * This method constructs a new RobotsHonoringPolicy object from the orders file.
+     * This method gets the RobotsHonoringPolicy object from the orders file.
      * 
-     * If this method is called repeatedly it will return the same instance each time.
-     * 
-     * @param curi
      * @return the new RobotsHonoringPolicy
      */
-    public RobotsHonoringPolicy getRobotsHonoringPolicy(CrawlURI curi) {
+    public RobotsHonoringPolicy getRobotsHonoringPolicy() {
         try {
-            return (RobotsHonoringPolicy) getAttribute(RobotsHonoringPolicy.ATTR_NAME, curi);
+            return (RobotsHonoringPolicy) getAttribute(RobotsHonoringPolicy.ATTR_NAME);
         } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+            return null;
+        } catch (MBeanException e) {
+            logger.severe(e.getMessage());
+            return null;
+        } catch (ReflectionException e) {
             logger.severe(e.getMessage());
             return null;
         }

@@ -96,10 +96,10 @@ public class OrFilter extends Filter {
 	}
     
     public boolean isEmpty(Object o) {
-        return filters.isEmpty(getSettingsFromUri(o));
+        return filters.isEmpty(getSettingsFromObject(o));
     }
     
     public Iterator iterator(Object o) {
-        return filters.iterator(getSettingsFromUri(o));
+        return filters.iterator(getSettingsFromObject(o));
     }
 }

@@ -55,9 +55,11 @@ public class Filter extends CrawlerModule {
     // associated CrawlController
     protected CrawlController controller;
 
-    /**
-     * @param name
-     * @param description
+    /** Creates a new 'null' filter.
+     * 
+     * @param name the name of the filter.
+     * @param description an description of the filter suitable for showing in
+     *        the user interface.
      */
     public Filter(String name, String description) {
         super(name, description);
@@ -69,6 +71,13 @@ public class Filter extends CrawlerModule {
                 "Filter functionality should be inverted", new Boolean(false)));
     }
 
+    /** Creates a new 'null' filter.
+     * 
+     * @param name the name of the filter.
+     */
+    public Filter(String name) {
+        this(name, "Null filter - accepts everything.");
+    }
 
     public boolean accepts(Object o) {
         CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
