@@ -131,7 +131,10 @@ public class CrawlURI extends CandidateURI
     private boolean post = false;
 
     /** monotonically increasing number within a crawl;
-     * useful for tending towards breadth-first ordering */
+     * useful for tending towards breadth-first ordering.
+     * will sometimes be truncated to 56 bits, so behavior
+     * over 72 quadrillion instantiated CrawlURIs may be 
+     * buggy */
     protected long ordinal;
 
     /**
@@ -1049,7 +1052,8 @@ public class CrawlURI extends CandidateURI
         return ordinal;
     }
 
-    /** spot for an integer cost to be placed by external facility (frontier) */
+    /** spot for an integer cost to be placed by external facility (frontier).
+     *  cost is truncated to 8 bits at times, so should not exceed 255 */
     int holderCost = UNCALCULATED;
     /**
      * Return the 'holderCost' for convenience of external facility (frontier)
