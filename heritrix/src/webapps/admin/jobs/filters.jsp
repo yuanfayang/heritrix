@@ -1,3 +1,11 @@
+<%
+  /**
+   * This pages allows the user to select what filters
+   * are applied to what modules in the crawl order.
+   *
+   * @author Kristinn Sigurdsson
+   */
+%>
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
@@ -7,8 +15,13 @@
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.crawler.framework.Filter" %>
 
-<%@ page import="java.lang.Boolean,java.util.Vector" %>
-<%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
+<%@ page import="java.util.Vector" %>
+<%@ page import="javax.management.MBeanInfo"%>
+<%@ page import="javax.management.Attribute"%>
+<%@ page import="javax.management.MBeanAttributeInfo"%>
+<%@ page import="javax.management.AttributeNotFoundException"%>
+<%@ page import="javax.management.MBeanException"%>
+<%@ page import="javax.management.ReflectionException"%>
 
 <%!
 	String[] availibleFilters = {"org.archive.crawler.filter.HopsFilter",
@@ -17,8 +30,28 @@
 								 "org.archive.crawler.filter.SeedExtensionFilter",
 								 "org.archive.crawler.filter.TransclusionFilter",
 								 "org.archive.crawler.filter.URIRegExpFilter"};
-
-	public String printFilters(ComplexType mbean, String indent, boolean possible, boolean first, boolean last, String parent) throws Exception {
+	/**
+	 * Generates the HTML code to display and allow manipulation of which
+	 * filters are attached to the crawl order. Will work it's way 
+	 * recursively down the crawlorder.
+	 *
+	 * @param mbean The ComplexType representing the crawl order or one 
+	 *              of it's subcomponents.
+	 * @param indent A string to prefix to the current ComplexType to 
+	 *               visually indent it.
+	 * @param possible If true then the current ComplexType MAY be a 
+	 *                 configurable filter. (Generally this means that
+	 *                 the current ComplexType belongs to a Map)
+	 * @param first True if mbean is the first element of a Map.
+	 * @param last True if mbean is the last element of a Map.
+	 * @parent The absolute name of the ComplexType that contains the
+	 *         current ComplexType (i.e. parent).
+	 * @alt If true and mbean is a filter then an alternate background color
+	 *      is used for displaying it.
+	 *
+	 * @return The variable part of the HTML code for selecting filters.
+	 */
+	public String printFilters(ComplexType mbean, String indent, boolean possible, boolean first, boolean last, String parent, boolean alt) throws Exception {
 		if(mbean.isTransient()){
 			return "";
 		}
@@ -28,7 +61,12 @@
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
 		if(possible && mbean instanceof Filter){
-			p.append("<tr><td nowrap>" + indent + mbean.getName() + "</td><td nowrap>");
+			p.append("<tr");
+			if(alt){
+				p.append(" bgcolor='#EEEEFF'");
+			}
+			alt = !alt;
+			p.append("><td nowrap>" + indent + mbean.getName() + "</td><td nowrap>");
 			if(first==false){
 				p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Move up</a>");
 			}
@@ -36,13 +74,14 @@
 			if(last==false){
 				p.append("<a href=\"javascript:doMoveDown('"+mbean.getName()+"','"+parent+"')\">Move down</a>");
 			}
-			p.append("</td><td width='100%'><a href=\"javascript:doRemove('"+mbean.getName()+"','"+parent+"')\">Remove</a></td></tr>\n");
+			p.append("</td><td><a href=\"javascript:doRemove('"+mbean.getName()+"','"+parent+"')\">Remove</a></td>");
+			p.append("<td><i>"+mbean.getClass().getName()+"</i></td></tr>\n");
 		} else {
-			p.append("<tr><td colspan='4'><b>" + indent + mbean.getName() + "</b></td></tr>\n");
+			p.append("<tr><td colspan='5'><b>" + indent + mbean.getName() + "</b></td></tr>\n");
 		}
 		
 		possible = mbean instanceof MapType;
-		
+		alt=false;
 		for(int n=0; n<a.length; n++) {
 	        if(a[n] == null) {
                 p.append("  ERROR: null attribute");
@@ -57,12 +96,12 @@
 				}
 
 				if(currentAttribute instanceof ComplexType) {
-			    	p.append(printFilters((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",possible,n==0,n==a.length-1,mbean.getAbsoluteName()));
+			    	p.append(printFilters((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",possible,n==0,n==a.length-1,mbean.getAbsoluteName(),alt));
 			    	if(currentAttribute instanceof MapType)
 			    	{
 			    		MapType thisMap = (MapType)currentAttribute;
 			    		if(thisMap.getContentType().getName().equals(Filter.class.getName())){
-				    		p.append("<tr><td colspan='4'>\n"+indent+"&nbsp;&nbsp;");
+				    		p.append("<tr><td colspan='5'>\n"+indent+"&nbsp;&nbsp;");
 				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
 				    		p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
 				    		for(int i=0 ; i<availibleFilters.length ; i++){
@@ -74,6 +113,7 @@
 			    		}
 			    	}
 				}
+				alt = !alt;
 		    }
 		}
 		return p.toString();
@@ -81,7 +121,7 @@
 %>
 
 <%
-	
+	// Load the job to manipulate	
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
 	
 	if(theJob == null)
@@ -97,6 +137,7 @@
 
 	XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob.getSettingsHandler();
 
+	// See if we need to take any action
 	if(request.getParameter("action") != null){
 		// Need to take some action.
 		String action = request.getParameter("action");
@@ -130,6 +171,7 @@
 					}
 				}
 			}
+			// Finally save the changes to disk
 			settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
 		}else if(action.equals("done")){
 			// Ok, done editing.
@@ -158,6 +200,7 @@
 		}
 	}
 
+	// Set page header.
 	String title = "Adjust modules";
 	int tab = theJob.isProfile()?2:1;
 %>
@@ -222,7 +265,7 @@
 
 <p>
 <table>
-	<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null)%>
+	<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false)%>
 </table>
 <p>	
 	<input type="button" value="Adjust modules" onClick="doGotoModules()">
