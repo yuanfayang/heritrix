@@ -6,13 +6,13 @@
  <scope 
    class="org.archive.crawler.basic.Scope"
    mode="broad"
-   max-link-hops="10"
+   max-link-hops="1"
    max-trans-hops="4">
    
   <seeds>
  #  http://www.archive.org/movies/movies.php
-   http://www.drudgereport.com
-   http://www.yahoo.com
+ # http://www.drudgereport.com
+ # http://www.yahoo.com
    http://www.google.com/dirhp
    
   </seeds>
@@ -21,7 +21,7 @@
  
  <behavior
    disk-path="disk"
-   max-toe-threads="50"
+   max-toe-threads="2"
    >
    
   <http-headers
