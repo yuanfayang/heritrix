@@ -38,7 +38,8 @@
 #http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
 #http://directory.google.com/Top/Games/
 # http://www3.google.com/help/customize.html
-http://dmoz.org
+# http://www.yahoo.com
+http://www.archive.org/movies/movies.php
 
    </seeds>
    <!--
@@ -83,7 +84,7 @@ http://dmoz.org
      name="Preselector" 
      class="org.archive.crawler.basic.SimplePreselector"
      next="Preprocessor">
-    <params max-link-depth="1" max-embed-depth="2" />
+    <params max-link-depth="0" max-embed-depth="2" />
     <filter
      name="focus"
      class="org.archive.crawler.util.SeedExtensionFilter"
@@ -154,13 +155,11 @@ http://dmoz.org
   <limits>
    <!-- actual enforcement of these limits may depend on choice 
         of SSS/processor instances that read and respect these limits -->
-   <max-link-depth value="100" /> <!-- zero means crawl seeds only -->
-   <max-embed-depth value="5" /> <!-- extra hops that can be taken for embeds -->
-   <max-toe-threads value="20" />
+   <max-toe-threads value="2" />
   </limits>
 
  </crawler-behavior>
- <disk path="example-crawl" />
+ <disk path="disk" />
  
  <loggers>
   <crawl-statistics>
