@@ -74,7 +74,7 @@ public class RecordingOutputStream extends OutputStream {
     private long size = 0;
 
     private String backingFilename;
-    private BufferedOutputStream diskStream;
+    private BufferedOutputStream diskStream = null;
     
     /**
      * Buffer we write recordings to.
@@ -204,6 +204,7 @@ public class RecordingOutputStream extends OutputStream {
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Protect ourselves against this.
+            assert this.diskStream != null: "Diskstream is null";
             this.diskStream.write(b);
         } else {
             this.buffer[(int) this.position] = (byte) b;
@@ -222,16 +223,20 @@ public class RecordingOutputStream extends OutputStream {
      */
     private void record(byte[] b, int off, int len) throws IOException {
         if(this.shouldDigest) {
+            assert this.digest != null: "Digest is null.";
             this.digest.update(b, off, len);
         }
         if(this.position >= this.buffer.length){
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Lets protect ourselves against this.
+            assert this.diskStream != null: "Diskstream is null.";
             this.diskStream.write(b, off, len);
             this.position += len;
         } else {
+            assert this.buffer != null: "Buffer is null";
             int toCopy = (int)Math.min(this.buffer.length - this.position, len);
+            assert b != null: "Passed buffer is null";
             System.arraycopy(b, off, this.buffer, (int)this.position, toCopy);
             this.position += toCopy;
             // TODO verify these are +1 -1 right

@@ -1,4 +1,4 @@
-/* HeritrixSSLProtocolSocketFactory
+/* HeritrixGetMethod
  * 
  * Created on Feb 24, 2004
  * 
@@ -29,6 +29,7 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.util.HttpRecorder;
+
 
 /**
  * Override of GetMethod that marks the passed HttpRecorder w/ the transition
@@ -69,7 +70,7 @@ import org.archive.util.HttpRecorder;
  * @author stack
  * @version $Id$
  */
-public class HttpRecorderGetMethod extends GetMethod 
+public class HeritrixGetMethod extends GetMethod 
 {   
     /**
      * Instance of http recorder we're using recording this http get.
@@ -77,7 +78,7 @@ public class HttpRecorderGetMethod extends GetMethod
     private HttpRecorder httpRecorder = null;
     
     
-	public HttpRecorderGetMethod(String uri, HttpRecorder recorder)
+	public HeritrixGetMethod(String uri, HttpRecorder recorder)
     {
 		super(uri);
         this.httpRecorder = recorder;
@@ -90,4 +91,17 @@ public class HttpRecorderGetMethod extends GetMethod
 		this.httpRecorder.markContentBegin();
 		super.readResponseBody(state, connection);
 	}
+    
+    protected boolean shouldCloseConnection(HttpConnection conn)
+    {
+        // Always close connection after each request. As best I can tell, this
+        // is superfluous -- we've set our client to be HTTP/1.0.  Doing this
+        // out of paranoia.
+        return true;
+    }
+    
+    public void releaseConnection()
+    {
+        super.releaseConnection();
+    }
 }

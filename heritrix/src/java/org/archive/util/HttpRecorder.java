@@ -118,6 +118,8 @@ public class HttpRecorder {
         if (!this.ris.isOpen()) {
             logger.fine(Thread.currentThread().getName() + " wrapping input");
             this.ris.open(is);
+        } else {
+            logger.fine(Thread.currentThread().getName() + " already open");
         }
         return this.ris;
     }
