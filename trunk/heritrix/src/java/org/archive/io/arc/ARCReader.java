@@ -24,6 +24,8 @@
  */
 package org.archive.io.arc;
 
+import it.unimi.dsi.mg4j.io.RepositionableStream;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +50,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.archive.io.PositionableStream;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
@@ -200,9 +201,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     protected void rewind() throws IOException {
         cleanupCurrentRecord();
-        if (this.in instanceof PositionableStream) {
+        if (this.in instanceof RepositionableStream) {
             try {
-                ((PositionableStream)this.in).seek(0);
+                ((RepositionableStream)this.in).position(0);
             } catch (IOException e) {
                 throw new RuntimeException(e.getClass().getName() + ": " +
                     e.getMessage());
@@ -221,11 +222,11 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     public ARCRecord get(long offset) throws IOException {
         cleanupCurrentRecord();
-        PositionableStream ps = (PositionableStream)this.in;
-        long currentOffset = ps.getFilePointer();
+        RepositionableStream ps = (RepositionableStream)this.in;
+        long currentOffset = ps.position();
         if (currentOffset != offset) {
             currentOffset = offset;
-            ps.seek(offset);
+            ps.position(offset);
         }
         return createARCRecord(this.in, currentOffset);
     }
@@ -239,47 +240,47 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * mapped byte buffer on file.
      */
     protected InputStream getInputStream(File arcfile) throws IOException {
-        return new PositionableBufferedInputStream(
+        return new RepositionableBufferedInputStream(
             new RandomAccessInputStream(arcfile));
     }
 
     /**
      * Class that adds PositionableStream methods to a BufferedInputStream.
      */
-    private class PositionableBufferedInputStream extends BufferedInputStream
-    		implements PositionableStream {
+    private class RepositionableBufferedInputStream extends BufferedInputStream
+    		implements RepositionableStream {
 
-        public PositionableBufferedInputStream(InputStream in)
+        public RepositionableBufferedInputStream(InputStream in)
         		throws IOException {
             super(in);
             doStreamCheck();
         }
 
-        public PositionableBufferedInputStream(InputStream in, int size)
+        public RepositionableBufferedInputStream(InputStream in, int size)
         		throws IOException {
             super(in, size);
             doStreamCheck();
         }
         
         private void doStreamCheck() throws IOException {
-            if (!(this.in instanceof PositionableStream)) {
+            if (!(this.in instanceof RepositionableStream)) {
                 throw new IOException(
                     "Passed stream must implement PositionableStream");
             }
         }
 
-        public long getFilePointer() throws IOException {
+        public long position() throws IOException {
             // Current position is the underlying files position
             // minus the amount thats in the buffer yet to be read.
-            return ((PositionableStream)this.in).getFilePointer() -
+            return ((RepositionableStream)this.in).position() -
             	(this.count - this.pos);
         }
 
-        public void seek(long position) throws IOException {
+        public void position(long position) throws IOException {
             // Force refill of buffer whenever there's been a seek.
             this.pos = 0;
             this.count = 0;
-            ((PositionableStream)this.in).seek(position);
+            ((RepositionableStream)this.in).position(position);
         }
     }
     
@@ -403,7 +404,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     public Object next() {
         try {
-            return get(((PositionableStream)this.in).getFilePointer());
+            return get(((RepositionableStream)this.in).position());
         } catch (RecoverableIOException e) {
             logger.warning("Recoverable error: " + e.getMessage());
             if (hasNext()) {

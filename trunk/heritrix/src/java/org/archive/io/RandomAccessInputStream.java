@@ -22,6 +22,8 @@
 */
 package org.archive.io;
 
+import it.unimi.dsi.mg4j.io.RepositionableStream;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,7 +37,7 @@ import java.io.RandomAccessFile;
  * @author gojomo
  */
 public class RandomAccessInputStream extends InputStream
-		implements PositionableStream {
+		implements RepositionableStream {
     
     /**
      * Reference to the random access file this stream is reading from.
@@ -72,8 +74,6 @@ public class RandomAccessInputStream extends InputStream
      * 
      * @param file File to get RAFIS on.  Creates an RAF from passed file.
      * Closes the created RAF when this stream is closed.
-     * 
-     * @param file File to wrap.
      */
     public RandomAccessInputStream(File file) throws FileNotFoundException {
         this(new RandomAccessFile(file, "r"), true);
@@ -120,16 +120,16 @@ public class RandomAccessInputStream extends InputStream
         return n;
     }
 
-	public long getFilePointer() throws IOException {
+	public long position() throws IOException {
 		return this.raf.getFilePointer();
 	}
 
-	public void seek(long position) throws IOException {
+	public void position(long position) throws IOException {
 		this.raf.seek(position);
 	}
     
 	public int available() throws IOException {
-        long amount = this.raf.length() - this.getFilePointer();
+        long amount = this.raf.length() - this.position();
         return (amount >= Integer.MAX_VALUE)? Integer.MAX_VALUE: (int)amount;
 	}
 	
@@ -139,7 +139,7 @@ public class RandomAccessInputStream extends InputStream
     
     public synchronized void mark(int readlimit) {
         try {
-            this.markpos = getFilePointer();
+            this.markpos = position();
         } catch (IOException e) {
             // Set markpos to -1. Will cause exception reset.
             this.markpos = -1;
@@ -150,7 +150,7 @@ public class RandomAccessInputStream extends InputStream
         if (this.markpos == -1) {
             throw new IOException("Mark has not been set.");
         }
-        seek(this.markpos);
+        position(this.markpos);
     }
     
     public void close() throws IOException {
