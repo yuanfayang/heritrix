@@ -189,7 +189,6 @@
 								<a href="javascript:viewLog('crawl.log')" <%=fileName.equalsIgnoreCase("crawl.log")?"style='text-decoration: none; color: #000000'":""%>>crawl.log</a><br>
 								<a href="javascript:viewLog('local-errors.log')" <%=fileName.equalsIgnoreCase("local-errors.log")?"style='text-decoration: none; color: #000000'":""%>>local-errors.log</a><br>
 								<a href="javascript:viewLog('progress-statistics.log')" <%=fileName.equalsIgnoreCase("progress-statistics.log")?"style='text-decoration: none; color: #000000'":""%>>progress-statistics.log</a><br>
-								<a href="javascript:viewLog('reports.log')" <%=fileName.equalsIgnoreCase("reports.log")?"style='text-decoration: none; color: #000000'":""%>>reports.log</a><br>
 								<a href="javascript:viewLog('runtime-errors.log')" <%=fileName.equalsIgnoreCase("runtime-errors.log")?"style='text-decoration: none; color: #000000'":""%>>runtime-errors.log</a><br>
 								<a href="javascript:viewLog('uri-errors.log')" <%=fileName.equalsIgnoreCase("uri-errors.log")?"style='text-decoration: none; color: #000000'":""%>>uri-errors.log</a><br>
 								<input type="hidden" name="log" value="<%=fileName%>">

@@ -33,6 +33,7 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.logging.Level;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -753,79 +754,229 @@ public class StatisticsTracker extends AbstractTracker
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        Iterator tmp = getSeeds(); //Make sure to save the seeds list.
-
-        // Save seed report to reports.log
-        int maxURILenght = 0;
+        // Need to write some reports at the end of the crawl.
+        String directory = controller.getDisk().getPath();
+        // seeds-report.txt
+        Iterator tmp = getSeeds(); 
+        
+        int maxURILength = 0;
         while(tmp.hasNext()){
             String tmpString = (String)tmp.next();
-            if(tmpString.length()>maxURILenght){
-                maxURILenght = tmpString.length();
+            if(tmpString.length()>maxURILength){
+                maxURILength = tmpString.length();
             }
         }
-
+        
         //Ok, we now know how much space to allocate the seed name colum
-        //now build the report.
         PaddingStringBuffer rep = new PaddingStringBuffer();
-        rep.append("----=== Seed disposition report ===----");
-        rep.newline();
-        rep.append("Seeds");
-        rep.padTo(maxURILenght+2);
-        rep.raAppend(maxURILenght+8,"Code");
-        rep.padTo(maxURILenght+9);
-        rep.append("Disposition");
-        rep.newline();
-        rep.append("-------------");
-        rep.padTo(maxURILenght+2);
-        rep.raAppend(maxURILenght+8,"-----");
-        rep.padTo(maxURILenght+9);
-        rep.append("-------------");
+
+        //Build header.
+        rep.append("[seeds]");
+        rep.raAppend(maxURILength+11, "[res-code]");
+        rep.append(" [status]");
         rep.newline();
 
+        int seedsCrawled = 0;
+        int seedsNotCrawled = 0;
+        
         tmp = getSeedsSortedByStatusCode();
         while(tmp.hasNext()){
             String UriString = (String)tmp.next();
-            String disposition = getSeedDisposition(UriString);
             int code = getSeedStatusCode(UriString);
             String statusCode = "";
             if(code != 0){
                 statusCode = Integer.toString(code);
             }
             rep.append(UriString);
-            rep.padTo(maxURILenght+2);
-            rep.raAppend(maxURILenght+8,code);
-            rep.padTo(maxURILenght+9);
-            rep.append(disposition);
+            rep.raAppend(maxURILength+11,code);
+            if(code>0){
+                rep.append(" CRAWLED");
+                seedsCrawled++;
+            } else {
+                rep.append(" NOTCRAWLED");
+                seedsNotCrawled++;
+            }
             rep.newline();
         }
-        rep.append("----=== End seed disposition report ===----");
-        rep.newline();
-        rep.newline();
-        rep.newline();
-        controller.reports.info(rep.toString()); //Write report to file.
 
+        try {
+            FileWriter fw = new FileWriter(directory+File.separator+"seeds-report.txt");
+            fw.write(rep.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write seeds-report.txt",
+                    "Unable to write seeds-report.txt at the end of crawl.",e,
+                    Level.SEVERE));
+            e.printStackTrace();
+        }
+        
+        // hosts-report.txt
+        tmp = getHostsDistribution().entrySet().iterator(); 
+        
+        int maxHostLength = 0;
+        while(tmp.hasNext()){
+            Map.Entry tmpEntry = (Map.Entry)tmp.next();
+            if(tmpEntry.getKey().toString().length()>maxHostLength){
+                maxHostLength = tmpEntry.getKey().toString().length();
+            }
+        }
+        
+        //Ok, we now know how much space to allocate the seed name colum
+        rep = new PaddingStringBuffer();
+
+        //Build header.
+        rep.append("[host]");
+        rep.raAppend(maxHostLength+13, "[#urls]");
+        rep.raAppend(maxHostLength+26, "[#bytes]");
+        rep.newline();
+
+        TreeSet hostsDistribution = getSortedByValue(getHostsDistribution());
+        tmp = hostsDistribution.iterator();;
+        while(tmp.hasNext()){
+            Map.Entry host = (Map.Entry)tmp.next();
+            rep.append(host.getKey().toString());
+            rep.raAppend(maxHostLength+13,((LongWrapper)host.getValue()).longValue);
+            rep.raAppend(maxHostLength+26,getBytesPerHost((String)host.getKey()));
+
+            rep.newline();
+        }
+        
+        try {
+            FileWriter fw = new FileWriter(directory+File.separator+"hosts-report.txt");
+            fw.write(rep.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write hosts-report.txt",
+                    "Unable to write hosts-report.txt at the end of crawl.",e,
+                    Level.SEVERE));
+            e.printStackTrace();
+        }
+        
+        
+        // mimetype-report.txt
+        tmp = getFileDistribution().entrySet().iterator(); 
+        
+        int maxMimeLength = 0;
+        while(tmp.hasNext()){
+            Map.Entry tmpEntry = (Map.Entry)tmp.next();
+            if(tmpEntry.getKey().toString().length()>maxMimeLength){
+                maxMimeLength = tmpEntry.getKey().toString().length();
+            }
+        }
+        
+        //Ok, we now know how much space to allocate the seed name colum
+        rep = new PaddingStringBuffer();
+
+        //Build header.
+        rep.append("[mime-types]");
+        rep.raAppend(maxMimeLength+13, "[#urls]");
+        rep.raAppend(maxMimeLength+26, "[#bytes]");
+        rep.newline();
+
+        TreeSet filesDistribution = getSortedByValue(getFileDistribution());
+        tmp = filesDistribution.iterator();;
+        while(tmp.hasNext()){
+            Map.Entry host = (Map.Entry)tmp.next();
+            rep.append(host.getKey().toString());
+            rep.raAppend(maxMimeLength+13,((LongWrapper)host.getValue()).longValue);
+            rep.raAppend(maxMimeLength+26,getBytesPerFileType((String)host.getKey()));
+
+            rep.newline();
+        }
+        
+        try {
+            FileWriter fw = new FileWriter(directory+File.separator+"mimetype-report.txt");
+            fw.write(rep.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write mimetype-report.txt",
+                    "Unable to write mimetype-report.txt at the end of crawl.",e,
+                    Level.SEVERE));
+            e.printStackTrace();
+        }
+        
+        // responsecode-report.txt
+        tmp = getFileDistribution().entrySet().iterator(); 
+        
+        int maxCodeLength = 10;
+
+        rep = new PaddingStringBuffer();
+
+        //Build header.
+        rep.append("[rescode]");
+        rep.raAppend(maxCodeLength+13, "[#urls]");
+        rep.newline();
+
+        TreeSet statusCodeDistribution = getSortedByValue(getStatusCodeDistribution());
+        tmp = filesDistribution.iterator();;
+        while(tmp.hasNext()){
+            Map.Entry host = (Map.Entry)tmp.next();
+            rep.append(host.getKey().toString());
+            rep.raAppend(maxCodeLength+13,((LongWrapper)host.getValue()).longValue);
+
+            rep.newline();
+        }
+        
+        try {
+            FileWriter fw = new FileWriter(directory+File.separator+"responsecode-report.txt");
+            fw.write(rep.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write responsecode-report.txt",
+                    "Unable to write responsecode-report.txt at the end of crawl.",e,
+                    Level.SEVERE));
+            e.printStackTrace();
+        }
+      
+        // crawl-report.txt
+        rep = new PaddingStringBuffer();
+        rep.append("Crawl Name: " + controller.getOrder().getCrawlOrderName());
+        rep.newline();
+        rep.append("Crawl Status: " + sExitMessage);
+        rep.newline();
+        rep.append("Duration Time: " + 
+                ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));
+        rep.newline();
+        rep.append("Total Seeds Crawled: " + seedsCrawled);
+        rep.newline();
+        rep.append("Total Seeds not Crawled: " + seedsNotCrawled);
+        rep.newline();
+        // hostsDistribution contains all hosts crawled plus an entry for dns.
+        rep.append("Total Hosts Crawled: " + (hostsDistribution.size()-1)); 
+        rep.newline();
+        rep.append("Total Documents Crawled: " + finishedUriCount);
+        rep.newline();
+        rep.append("Processed docs/sec: " + 
+                ArchiveUtils.doubleToString(docsPerSecond,2));
+        rep.newline();
+        rep.append("Bandwidth in Kbytes/sec: " + totalKBPerSec);
+        rep.newline();
+        rep.append("Total Raw Data Size in Bytes: " + totalProcessedBytes + 
+                " (" + ArchiveUtils.formatBytesForDisplay(totalProcessedBytes) + 
+                ") ");
+        rep.newline();
+        
+        try {
+            FileWriter fw = new FileWriter(directory+File.separator+"crawl-report.txt");
+            fw.write(rep.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write crawl-report.txt",
+                    "Unable to write crawl-report.txt at the end of crawl.",e,
+                    Level.SEVERE));
+            e.printStackTrace();
+        }
+        
         super.crawlEnded(sExitMessage);
         
-        // TODO: Save object to disk.
+        // TODO: Save object to disk?
     }
 
-    /**
-     * Write the content of the statistics tracker to an XML file.
-     * 
-     * @param file The file to write to.
-     * 
-     * @throws IOException If problems occur writing file
-     */
-    public void writeToXML(File file) throws IOException{
-        PaddingStringBuffer xml = new PaddingStringBuffer();
-        // Construct XML
-        
-        // Write XML to file
-        FileWriter writer = new FileWriter(file,false);
-        writer.write(xml.toString());
-        writer.flush();
-        writer.close();
-    }
 }
 
 

@@ -24,6 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -80,7 +81,6 @@ public class CrawlController extends Thread {
     private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
     private static final String LOGNAME_CRAWL = "crawl";
     private static final String LOGNAME_RECOVER = "recover";
-    private static final String LOGNAME_REPORTS = "reports";
 
     private SettingsHandler settingsHandler;
 
@@ -537,7 +537,6 @@ public class CrawlController extends Thread {
         uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS+"."+diskPath);
         progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS+"."+diskPath);
         recover = Logger.getLogger(LOGNAME_RECOVER+"."+diskPath);
-        reports = Logger.getLogger(LOGNAME_REPORTS+"."+diskPath);
 
         FileHandler up = new FileHandler(diskPath + LOGNAME_CRAWL + ".log");
         up.setFormatter(new UriProcessingFormatter());
@@ -573,11 +572,6 @@ public class CrawlController extends Thread {
         recover.addHandler(reco);
         recover.setUseParentHandlers(false);
 
-        FileHandler rep = new FileHandler(diskPath + LOGNAME_REPORTS + ".log");
-        rep.setFormatter(new PassthroughFormatter());
-        reports.addHandler(rep);
-        reports.setUseParentHandlers(false);
-        reports.setLevel(Level.INFO);
     }
 
     // must include a bot name and info URL
@@ -685,7 +679,18 @@ public class CrawlController extends Thread {
         }
 
         // Save processors report to file
-        reports.info(reportProcessors());
+        try {
+            FileWriter fw = new FileWriter(getDisk().getPath()+
+                    File.separator+"processors-report.txt");
+            fw.write(reportProcessors());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write processors-report.txt",
+                    "Unable to write processors-report.txt at the end of crawl.",
+                    e,Level.SEVERE));
+            e.printStackTrace();
+        }
 
         // Run processors' final tasks
         runProcessorFinalTasks();
@@ -929,7 +934,8 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * @return
+     * Get the 'working' directory of the current crawl.
+     * @return the 'working' directory of the current crawl.
      */
     public File getDisk() {
         return disk;
