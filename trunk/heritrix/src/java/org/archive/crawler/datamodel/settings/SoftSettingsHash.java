@@ -97,25 +97,6 @@ public class SoftSettingsHash {
     }
 
     /**
-     * Value representing null keys inside tables.
-     */
-    private static final String NULL_KEY = "";
-
-    /**
-     * Use NULL_KEY for key if it is null.
-     */
-    private static String maskNull(String key) {
-        return (key == null ? NULL_KEY : key);
-    }
-
-    /**
-     * Return internal representation of null key back to caller as null
-     */
-    private static String unmaskNull(String key) {
-        return (key == NULL_KEY ? null : key);
-    }
-
-    /**
      * Check for equality of non-null reference x and possibly-null y.  By
      * default uses Object.equals.
      */
@@ -183,13 +164,15 @@ public class SoftSettingsHash {
      * @see #put(Object, Object)
      */
     public CrawlerSettings get(String key) {
-        String k = maskNull(key);
-        int h = hash(k);
+        if (key == null) {
+            throw new NullPointerException("Null key");
+        }
+        int hash = hash(key);
         expungeStaleEntries();
-        int index = indexFor(h, table.length);
+        int index = indexFor(hash, table.length);
         SettingsEntry e = table[index]; 
         while (e != null) {
-            if (e.hash == h && eq(k, e.get()))
+            if (e.hash == hash && eq(key, e.get()))
                 return e.settings;
             e = e.next;
         }
@@ -213,7 +196,9 @@ public class SoftSettingsHash {
         if (settings == null) {
             throw new NullPointerException("Settings object was null");
         }
-        key = maskNull(key);
+        if (key == null) {
+            throw new NullPointerException("Null key");
+        }
         int hash = hash(key);
         expungeStaleEntries();
         int i = indexFor(hash, table.length);
@@ -307,7 +292,9 @@ public class SoftSettingsHash {
      *         if there was no mapping for key.
      */
     public Object remove(String key) {
-        key = maskNull(key);
+        if (key == null) {
+            throw new NullPointerException("Null key");
+        }
         int hash = hash(key);
         expungeStaleEntries();
         int i = indexFor(hash, table.length);
@@ -375,7 +362,7 @@ public class SoftSettingsHash {
         }
 
         public String getKey() {
-            return (String) unmaskNull((String) this.get());
+            return (String) this.get();
         }
 
         public CrawlerSettings getValue() {
