@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.GzippedInputStream;
+import org.archive.io.PositionableStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
@@ -170,6 +171,8 @@ public class ARCWriter implements ARCConstants {
      * Buffer to reuse writing streams.
      */
     private byte [] readbuffer = new byte[4 * 1024];
+    
+    private FileOutputStream fos = null;
 
     
     /**
@@ -256,6 +259,7 @@ public class ARCWriter implements ARCConstants {
         }
         this.out.close();
         this.out = null;
+        this.fos = null;
         if (this.arcFile != null && this.arcFile.exists()) {
             String path = this.arcFile.getAbsolutePath();
             if (path.endsWith(OCCUPIED_SUFFIX)) {
@@ -280,7 +284,7 @@ public class ARCWriter implements ARCConstants {
      *
      * @exception IOException
      */
-    private void checkARCFileSize() throws IOException {
+    public void checkARCFileSize() throws IOException {
         if (this.out == null ||
                 (this.settings.getArcMaxSize() != -1 &&
                    (this.arcFile.length() > this.settings.getArcMaxSize()))) {
@@ -307,7 +311,8 @@ public class ARCWriter implements ARCConstants {
             OCCUPIED_SUFFIX;
         File dir = getNextDirectory(this.settings.getOutputDirs());
         this.arcFile = new File(dir, name);
-        this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
+        this.fos = new FileOutputStream(this.arcFile);
+        this.out = new BufferedOutputStream(this.fos);
         this.out.write(generateARCFileMetaData(tsn.getNow()));
         logger.info("Opened " + this.arcFile.getAbsolutePath());
     }
@@ -899,5 +904,15 @@ public class ARCWriter implements ARCConstants {
         public int getSerialNumber() {
             return this.serialNumber;
         }
+    }
+    
+    /**
+     * @return Position in underlying file. Returns 0 if underlying stream
+     * does not support getting position.  Position returned cannot always
+     * be trusted.  Call before or after writing records only to be safe.
+     * @throws IOException
+     */
+    public long getPosition() throws IOException {
+        return this.fos != null? this.fos.getChannel().position(): 0;
     }
 }
