@@ -32,6 +32,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
+import org.archive.util.PaddingStringBuffer;
 
 /**
  * One "worker thread"; asks for CrawlURIs, processes them, 
@@ -194,84 +195,70 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	}
 	
 	/**
-	 * @return Compiles and returns a report on it's status.
+	 * @return Compiles and returns a report on its status.
 	 */
 	public String report()
 	{
-		StringBuffer rep = new StringBuffer();
+		PaddingStringBuffer rep = new PaddingStringBuffer();
 		
-		rep.append("     Serial number: "+serialNumber+"\n");
-		
+		rep.append("     #"+serialNumber);
+        rep.padTo(11);
+        
+        if(currentCuri!=null)
+        {
+            rep.append(currentCuri.getURIString());
+            rep.append(" ("+currentCuri.getFetchAttempts()+" attempts)\n");
+        }
+        else
+        {
+            rep.append("[no CrawlURI]\n");
+        }
+
 		long now = System.currentTimeMillis();
         
-            rep.append("     Availible: "+(isAvailable()?"True":"False")+"\n");
-		
 		if(lastFinishTime > lastStartTime)
 		{
-            if(isAvailable()==false){
-                rep.append("     ERROR THIS THREAD SHOULD BE AVAILIBLE!!!!!");
-                rep.append("       currentCuri: "+currentCuri.getURIString()+"\n");
-            }
+//            if(isAvailable()==false){
+//                rep.append("     ERROR THIS THREAD SHOULD BE AVAILIBLE!!!!!");
+//                rep.append("       currentCuri: "+currentCuri.getURIString()+"\n");
+//            }
 			// That means we finished something after we last started something
 			// or in other words we are not working on anything.
-			rep.append("     Status:    WAITING\n");
+			rep.append("     WAITING for ");
 
 			long time = now-lastFinishTime;
-			rep.append("     Finished:  ");
-			if(time>3600000)
-			{
-				//got hours.
-				rep.append(time/3600000 + " hours., ");
-				time = time % 3600000;
-			}
-			if(time > 60000)
-			{
-				rep.append(time/60000 + " min., ");
-				time = time % 60000;
-			}
-			if(time > 1000)
-			{
-				rep.append(time/1000 + " sec. and ");
-				time = time % 60;
-			}
-			rep.append(time + " msek ago\n");
+            appendTime(rep, time);
 		}
 		else if(lastStartTime > 0)
 		{
 			// We are working on something
-			rep.append("     Status:    ACTIVE\n");
+			rep.append("     ACTIVE  for ");
 
 			long time = now-lastStartTime;
-			rep.append("     Started:   ");
-			if(time>3600000)
-			{
-				//got hours.
-				rep.append(time/3600000 + " hours., ");
-				time = time % 3600000;
-			}
-			if(time > 60000)
-			{
-				rep.append(time/60000 + " min., ");
-				time = time % 60000;
-			}
-			if(time > 1000)
-			{
-				rep.append(time/1000 + " sec. and ");
-				time = time % 60;
-			}
-			rep.append(time + " msek ago\n");
-
-			if(currentCuri!=null)
-			{
-				rep.append("     CrawlURI:  "+currentCuri.getURIString()+"\n");
-				rep.append("       Fetch attempts: "+currentCuri.getFetchAttempts()+"\n");
-			}
-			else
-			{
-				rep.append("     CrawlURI:  null\n");
-			}
+            appendTime(rep,time);
 		}
 		
 		return rep.toString();		
 	}
+
+
+    private void appendTime(PaddingStringBuffer rep, long time) {
+        if(time>3600000)
+        {
+        	//got hours.
+        	rep.append(time/3600000 + "h");
+        	time = time % 3600000;
+        }
+        if(time > 60000)
+        {
+        	rep.append(time/60000 + "m");
+        	time = time % 60000;
+        }
+        if(time > 1000)
+        {
+        	rep.append(time/1000 + "s");
+        	time = time % 60;
+        }
+        rep.append(time + "ms");
+    }
 }
