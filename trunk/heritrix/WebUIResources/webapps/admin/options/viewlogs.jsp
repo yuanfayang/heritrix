@@ -1,3 +1,4 @@
+<%@include file="/include/secure.jsp"%>
 <%
 	int iTime = 10;
 	String log = "crawl.log";
