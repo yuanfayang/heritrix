@@ -68,7 +68,9 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			return false; 
 		}
 		// require /robots.txt if not present
-		if (curi.getHost().getRobotsExpires()<System.currentTimeMillis()) {
+		if (	curi.getHost().getRobotsExpires() < 0 // "cheap" test of default
+				|| curi.getHost().getRobotsExpires()<System.currentTimeMillis()
+			){
 			logger.fine("No valid robots for "+curi.getHost()+"; deferring "+curi);
 			curi.setPrerequisiteUri("/robots.txt");
 			curi.incrementDeferrals();
