@@ -1,18 +1,19 @@
 -------------------------------------------------------------------------------
 $Id$
 -------------------------------------------------------------------------------
-0. Contents
-1. Introduction
-2. Webmasters!
-3. System Runtime Requirements
-4. Getting Started
-5. Developer Documentation
-6. Release History
-7. License
-8. Dependencies
+0.0 Contents
+
+1.0 Introduction
+2.0 Webmasters!
+3.0 System Runtime Requirements
+4.0 Getting Started
+5.0 Developer Documentation
+6.0 Release History
+7.0 License
+8.0 Dependencies
 
 
-1. Introduction
+1.0 Introduction
 Heritrix is the Internet Archive's open-source, extensible, web-scale,
 archival-quality web crawler project. Heritrix (sometimes spelled heretrix, or
 misspelled or missaid as heratrix/heritix/heretix/heratix) is an archaic word
@@ -20,14 +21,14 @@ for heiress (woman who inherits). Since our crawler seeks to collect the digital
 artifacts of our culture for the benefit of future researchers and generations,
 this name seemed apt. 
 
-2. Webmasters!
+2.0 Webmasters!
 Heritrix is designed to respect the robots.txt 
 <http://www.robotstxt.org/wc/robots.html> exclusion directives and META robots
 tags <http://www.robotstxt.org/wc/exclusion.html#meta>. If you notice our
 crawler behaving poorly, please send us email at archive-crawler-agent *at*
 lists *dot* sourceforge *dot* net. 
 
-3. System Runtime Requirements
+3.0 System Runtime Requirements
 
 3.1. Java Runtime Environment
 The Heritrix crawler is implemented purely in java. This means that the only
@@ -47,16 +48,16 @@ The Heritrix crawler has been built and tested primarily on Linux. It has seen
 some informal use on Macintosh, Windows 2000 and Windows XP, but is not tested,
 packaged, nor supported on platforms other than Linux at this time. 
 
-4. Getting Started
+4.0 Getting Started
 See the User Manual at ./docs/articles/user_manual.html or at
 <http://crawler.archive.org/articles/user_manual.html>.
 
-5. Developer Documentation
+5.0 Developer Documentation
 See ./docs/articles/developer_manual.html or
 <http://crawler.archive.org/articles/developer_manual.html>.
 
 
-6. Release History
+6.0 Release History
 
 Release 0.8.0 - 2004-05-18 14:00
 
@@ -217,7 +218,7 @@ add  Initial Mavenized development version number (CVS/internal only).   gojomo
      Added everything to new project layout.
 
 
-7. License
+7.0 License
 
 Heritrix is free software; you can redistribute it and/or modify it
 under the terms of the GNU Lesser Public License as published by the
@@ -238,7 +239,7 @@ For the licenses for libraries used by Heritrix and included in its
 distribution, see the dependencies section of project.xml for pointers
 to their licenses (TODO: Generate a license page).
 
-8. Dependencies
+8.0 Dependencies
 
 8.1. commons-httpclient
 version: 2.0-final
@@ -375,4 +376,3 @@ developed by ORO, Inc. This version supports Finger, Whois, TFTP, Telnet, POP3,
 FTP, NNTP, SMTP, and some miscellaneous protocols like Time and Echo as well as
 BSD R command support. Heritrix uses its FTP implementation.
 license: Apache 1.1 http://www.apache.org/LICENSE.txt
-
