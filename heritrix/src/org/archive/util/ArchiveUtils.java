@@ -6,8 +6,10 @@
  */
 package org.archive.util;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.io.File;
 
 /**
@@ -21,26 +23,120 @@ public class ArchiveUtils {
 	public static SimpleDateFormat TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");	
 	public static SimpleDateFormat TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");	
 
-	// utility functions for creating arc-style date stamps
+	/**
+	 * Utility function for creating arc-style date stamps
+	 * in the format yyyMMddHHmmssSSS.
+	 * Date stamps are in the UTC time zone
+	 * @return the date stamp
+	 */
 	public static String get17DigitDate(){
+		TIMESTAMP17.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP17.format(new Date());
 	}
+
+	/**
+	 * Utility function for creating arc-style date stamps
+	 * in the format yyyMMddHHmmss.
+	 * Date stamps are in the UTC time zone
+	 * @return the date stamp
+	 */
 	public static String get14DigitDate(){
+		TIMESTAMP14.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP14.format(new Date());
 	}
+
+	/**
+	 * Utility function for creating arc-style date stamps
+	 * in the format yyyMMddHHmm.
+	 * Date stamps are in the UTC time zone
+	 * @return the date stamp
+	 */
 	public static String get12DigitDate(){
+		TIMESTAMP12.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP12.format(new Date()); 
 	}
 	
+	/**
+	 * Utility function for creating arc-style date stamps
+	 * in the format yyyMMddHHmmssSSS.
+	 * Date stamps are in the UTC time zone
+	 * 
+	 * @param date milliseconds since epoc
+	 * @return the date stamp
+	 */
 	public static String get17DigitDate(long date){
+		TIMESTAMP17.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP17.format(new Date(date));
 	}
+	
+	/**
+	 * Utility function for creating arc-style date stamps
+	 * in the format yyyMMddHHmmss.
+	 * Date stamps are in the UTC time zone
+	 * 
+	 * @param date milliseconds since epoc
+	 * @return the date stamp
+	 */
 	public static String get14DigitDate(long date){
+		TIMESTAMP14.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP14.format(new Date(date));
 	}
+	
+	/**
+	 * Utility function for creating arc-style date stamps
+	 * in the format yyyMMddHHmm.
+	 * Date stamps are in the UTC time zone
+	 * 
+	 * @param date milliseconds since epoc
+	 * @return the date stamp
+	 */
 	public static String get12DigitDate(long date){
+		TIMESTAMP12.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP12.format(new Date(date)); 
 	}
+	
+	/**
+	 * Utility function for parsing arc-style date stamps
+	 * in the format yyyMMddHHmmssSSS.
+	 * Date stamps are in the UTC time zone
+	 * 
+	 * @param date an arc-style formatted date stamp
+	 * @return the Date corresponding to the date stamp string
+	 * @throws ParseException if the inputstring was malformed
+	 */
+	public static Date parse17DigitDate(String date) throws ParseException{
+		TIMESTAMP17.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return TIMESTAMP17.parse(date);
+	}
+	
+	/**
+	 * Utility function for parsing arc-style date stamps
+	 * in the format yyyMMddHHmmss.
+	 * Date stamps are in the UTC time zone
+	 * 
+	 * @param date an arc-style formatted date stamp
+	 * @return the Date corresponding to the date stamp string
+	 * @throws ParseException if the inputstring was malformed
+	 */
+	public static Date parse14DigitDate(String date) throws ParseException{
+		TIMESTAMP14.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return TIMESTAMP14.parse(date);
+	}
+	
+	/**
+	 * Utility function for parsing arc-style date stamps
+	 * in the format yyyMMddHHmm.
+	 * Date stamps are in the UTC time zone
+	 * 
+	 * @param date an arc-style formatted date stamp
+	 * @return the Date corresponding to the date stamp string
+	 * @throws ParseException if the inputstring was malformed
+	 */
+	public static Date parse12DigitDate(String date) throws ParseException{
+		TIMESTAMP12.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return TIMESTAMP12.parse(date);
+	}
+	
 	/**
 	 * @param i
 	 * @param j
