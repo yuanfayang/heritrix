@@ -86,10 +86,15 @@ if [ -f $startMessage ]
 then
     rm -f $startmessage
 fi
-
 # Run heritrix as daemon.  Redirect stdout and stderr to a file.
+# Print start message with date, java version, java opts, ulimit, and uname.
 stdouterrlog=${HERITRIX_HOME}/heritrix_out.log
 echo "`date` Starting heritrix" >> $stdouterrlog
+uname -a >> $stdouterrlog 2>&1
+${JAVACMD} -version >> $stdouterrlog 2>&1
+echo "JAVA_OPTS=${JAVA_OPTS}" >> $stdouterrlog
+ulimit -a >> $stdouterrlog 2>&1
+
 main=org.archive.crawler.Heritrix
 # If FOREGROUND is set, run heritrix in foreground.
 if [ -n "$FOREGROUND" ]
