@@ -133,7 +133,10 @@ public class FetchHTTP
 					this.getName(),
 					e,
 					"executeMethod " +executeRead + ":" + readFullyRead);
-			// try to continue: it may not be fatal
+			curi.setFetchStatus(S_CONNECT_FAILED);
+			rec.closeRecorders();
+			get.releaseConnection();
+			return;
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// for weird windows-only ArrayIndex exceptions from native code
 			// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
@@ -153,20 +156,21 @@ public class FetchHTTP
 			// not in later modules			
 			rec.getRecordedInput().readFullyOrUntil(maxLength,timeout);
 		} catch (RecorderTimeoutException ex) {
-			logger.info(curi.getUURI().getUriString()+": time limit exceeded");
+			logger.warning(curi.getUURI().getUriString()+": time limit exceeded");
 			// but, continue processing whatever was retrieved
 			// TODO: set indicator in curi and/or otherwise log
 		} catch (RecorderLengthExceededException ex) {
-			logger.info(curi.getUURI().getUriString()+": length limit exceeded");
+			logger.warning(curi.getUURI().getUriString()+": length limit exceeded");
 			// but, continue processing whatever was retrieved
 			// TODO: set indicator in curi and/or otherwise log
 		} catch (IOException e) {
-			readFullyRead = rec.getRecordedInput().getSize();
 			curi.addLocalizedError(
 					this.getName(),
 					e,
 					"readFully " +executeRead + ":" + readFullyRead);
 			curi.setFetchStatus(S_CONNECT_LOST);
+			rec.closeRecorders();
+			get.releaseConnection();
 			return;
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// for weird windows-only ArrayIndex exceptions from native code
@@ -178,10 +182,15 @@ public class FetchHTTP
 					e,
 					"readFully " +executeRead + ":" + readFullyRead);
 			curi.setFetchStatus(S_CONNECT_LOST);
-			return;
-		} finally  {
 			rec.closeRecorders();
 			get.releaseConnection();
+			return;
+		} finally {
+			rec.closeRecorders();
+			get.releaseConnection();
+//			readFullyRead = rec.getRecordedInput().getSize();
+//			curi.getAList().putLong("readFullyRead",readFullyRead);
+//			rec.getRecordedInput().verify();
 		}
 			
 		Header contentLength = get.getResponseHeader("Content-Length");
