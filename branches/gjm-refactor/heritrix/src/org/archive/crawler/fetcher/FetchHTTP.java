@@ -120,6 +120,18 @@ public class FetchHTTP
 			rec.closeRecorders();
 			get.releaseConnection();
 			return;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			// for weird windows-only ArrayIndex exceptions from native code
+			// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+			// treating as if it were an IOException
+			curi.addLocalizedError(
+					this.getName(),
+					e,
+					"executeMethod " +executeRead + ":" + readFullyRead);
+			curi.setFetchStatus(S_CONNECT_FAILED);
+			rec.closeRecorders();
+			get.releaseConnection();
+			return;
 		}
 			
 		try {
@@ -144,7 +156,20 @@ public class FetchHTTP
 			rec.closeRecorders();
 			get.releaseConnection();
 			return;
-		} 
+		} catch (ArrayIndexOutOfBoundsException e) {
+			// for weird windows-only ArrayIndex exceptions from native code
+			// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+			// treating as if it were an IOException
+			readFullyRead = rec.getRecordedInput().getSize();
+			curi.addLocalizedError(
+					this.getName(),
+					e,
+					"readFully " +executeRead + ":" + readFullyRead);
+			curi.setFetchStatus(S_CONNECT_FAILED);
+			rec.closeRecorders();
+			get.releaseConnection();
+			return;
+		}
 			
 		Header contentLength = get.getResponseHeader("Content-Length");
 		logger.fine(
