@@ -131,8 +131,11 @@ public class ARCWriterProcessor
 
     /**
      * Reference to an ARCWriter.
+     * 
+     * One pool shared by all instances of this class.  Gets set by 
+     * synchronized {@link #_initialize()}.
      */
-    ARCWriterPool pool = null;
+    private static ARCWriterPool pool = null;
 
     /**
      * Has this processor been initialized.
@@ -164,36 +167,41 @@ public class ARCWriterProcessor
     }
 
     public void initialize() {
-
-        if (!this.initialized)
-        {
-            Logger logger = getSettingsHandler().getOrder().getController()
-                .runtimeErrors;
-
-            // ReadConfiguration populates settings used creating ARCWriter.
-            try {
-                readConfiguration();
-            } catch (MBeanException e) {
-                logger.warning(e.getLocalizedMessage());
-            } catch (ReflectionException e) {
-                logger.warning(e.getLocalizedMessage());
-            } catch (AttributeNotFoundException e) {
-                logger.warning(e.getLocalizedMessage());
-            }
-
-            try {
-                // Set up the pool of ARCWriters.
-                this.pool =
-                    new ARCWriterPool(this.outputDir,
-                        this.arcPrefix,
-                        this.useCompression,
-                        this.poolMaximumActive,
-                        this.poolMaximumWait);
-            } catch (IOException e) {
-                logger.warning(e.getLocalizedMessage());
-            }
-            this.initialized = true;
+        
+        if (!this.initialized) {
+            _initialize();
         }
+    }
+    
+    private synchronized void _initialize() {
+        
+        Logger logger = getSettingsHandler().getOrder().getController()
+            .runtimeErrors;
+
+        // ReadConfiguration populates settings used creating ARCWriter.
+        try {
+            readConfiguration();
+        } catch (MBeanException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (ReflectionException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (AttributeNotFoundException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+
+        try {
+            // Set up the pool of ARCWriters.
+            this.pool =
+                new ARCWriterPool(this.outputDir,
+                    this.arcPrefix,
+                    this.useCompression,
+                    this.poolMaximumActive,
+                    this.poolMaximumWait);
+            
+        } catch (IOException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+        this.initialized = true;
     }
 
     protected void readConfiguration()

@@ -116,6 +116,9 @@ public class ARCWriterPool
             int maxActive, int maxWait)
         throws IOException
     {
+        logger.fine("Configuration: prefix=" + prefix + ", compress=" +
+                compress + ", maxActive=" + maxActive + ", maxWait=" + 
+                maxWait);
         this.pool = new GenericObjectPool(
             new ARCWriterFactory(arcsDir, prefix, compress),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
