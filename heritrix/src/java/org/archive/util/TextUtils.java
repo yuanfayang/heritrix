@@ -18,34 +18,18 @@
  */
 package org.archive.util;
 
-import java.util.EmptyStackException;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 public class TextUtils {
-    /**
-     * Upper-bound on Matcher Stacks.
-     * Profiling has the size of these Stacks tending upward over
-     * the life of a crawl.  TODO: do something better than an
-     * a coarse upperbound; do something that can get GC'd in
-     * low-memory conditions.
-     */
-    private final static int MAXIMUM_STACK_SIZE = 10;
-
-    /** Reusable precompiled Pattern objects indexed on pattern string.
+    /** PatternMatcherRecycler objects with reusable Pattern and Matcher
+     * instaces, indexed on pattern string.
      * Profiling has this Map growing to ~18 elements total circa
      * 1.3.0 Heritrix.
      */
-    private final static ConcurrentReaderHashMap patterns =
-        new ConcurrentReaderHashMap(50);
-
-    /** Resuable match objects indexed on pattern string. Each element is a
-     * stack of Matcher objects that can be reused.
-     */
-    private final static ConcurrentReaderHashMap patternMatchers =
+    private final static ConcurrentReaderHashMap recyclers =
         new ConcurrentReaderHashMap(50);
 
     /**
@@ -54,36 +38,38 @@ public class TextUtils {
      * 
      * This method is a hotspot frequently accessed.
      *
-     * @param pattern the precompiled Pattern
+     * @param pattern the string pattern to use
      * @param input the character sequence the matcher should be using
      * @return a matcher object loaded with the submitted character sequence
      */
     public static Matcher getMatcher(String pattern, CharSequence input) {
-        pattern = pattern == null ? "" : pattern;
-        input = input == null ? "" : input;
-        Matcher matcher = null;
-        Pattern p = (Pattern)patterns.get(pattern);
-        if (p == null) {
-            p = Pattern.compile(pattern);
-            patterns.put(pattern, p);
-            patternMatchers.put(pattern, new Stack());
-            matcher = p.matcher(input);
-        } else {
-            try {
-                Stack s = (Stack)patternMatchers.get(pattern);
-                if (s != null) {
-                    matcher = (Matcher)s.pop();
-                    matcher.reset(input);
-                }
-            } catch(EmptyStackException e) {
-                // The finally clause will 'recover' from this exception.
-            } finally {
-                if (matcher == null) {
-                    matcher = ((Pattern)patterns.get(pattern)).matcher(input);
-                }
-            }
+        return getRecycler(pattern).getMatcher(input);
+    }
+
+    /**
+     * Get a preexisting PatternMatcherRecycler for the given String pattern, 
+     * or create (and remember) a new one if necessary. 
+     * 
+     * @param pattern String pattern 
+     */
+    private static PatternMatcherRecycler getRecycler(String pattern) {
+        if (pattern == null) {
+            throw new IllegalArgumentException("String 'pattern' must not be null");
         }
-        return matcher;
+        PatternMatcherRecycler pmr = (PatternMatcherRecycler)recyclers.get(pattern);
+        if (pmr == null) {
+            /* harmless timing issue here:
+             * ---> <---
+             * if another thread sneaks in and beats this one to 
+             * create and populate recyclers map, only effect is that
+             * a redundant PatternMatcherRecycler is created and 
+             * clobbers the first
+             */
+            Pattern p = Pattern.compile(pattern);
+            pmr = new PatternMatcherRecycler(p);
+            recyclers.put(pattern, pmr);
+        }
+        return pmr; 
     }
 
     /**
@@ -95,14 +81,7 @@ public class TextUtils {
      * @param m the Matcher object that is no longer needed.
      */
     public static void freeMatcher(Matcher m) {
-        Stack matchers;
-        if((matchers = (Stack) patternMatchers.get(m.pattern().pattern()))
-                == null == matchers.size() > MAXIMUM_STACK_SIZE) {
-            // This matcher wasn't created by any pattern in the map, throw it
-            // away
-            return;
-        }
-        matchers.push(m);
+        getRecycler(m.pattern().pattern()).freeMatcher(m);
     }
 
     /**
@@ -170,13 +149,7 @@ public class TextUtils {
      * @return array of Strings split by pattern
      */
     public static String[] split(String pattern, CharSequence input) {
-        Pattern p = (Pattern) patterns.get(pattern);
-        if (p == null) {
-            p = Pattern.compile(pattern);
-            patterns.put(pattern, p);
-            patternMatchers.put(pattern, new Stack());
-        }
-        return p.split(input);
+        return getRecycler(pattern).getPattern().split(input); 
     }
 
     /**
