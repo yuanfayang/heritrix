@@ -48,6 +48,7 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
@@ -96,34 +97,39 @@ public class Frontier
 
     private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
     // how many multiples of last fetch elapsed time to wait before recontacting same server
-    private static String ATTR_DELAY_FACTOR = "delay-factor";
+    public final static String ATTR_DELAY_FACTOR = "delay-factor";
     // always wait this long after one completion before recontacting same server, regardless of multiple
-    private static String ATTR_MIN_DELAY = "min-delay-ms";
+    public final static String ATTR_MIN_DELAY = "min-delay-ms";
     // never wait more than this long, regardless of multiple
-    private static String ATTR_MAX_DELAY = "max-delay-ms";
+    public final static String ATTR_MAX_DELAY = "max-delay-ms";
     // always wait at least this long between request *starts*
     // (contrasted with min-delay: if min-interval time has already elapsed during last
     // fetch, then next fetch may occur immediately; it constrains starts not off-cycles)
-    private static String ATTR_MIN_INTERVAL = "min-interval-ms";
+    public final static String ATTR_MIN_INTERVAL = "min-interval-ms";
 
-    private static String ATTR_MAX_RETRIES = "max-retries";
-    private static String ATTR_RETRY_DELAY = "retry-delay-seconds";
+    public final static String ATTR_MAX_RETRIES = "max-retries";
+    public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
+    public final static String ATTR_MAX_OVERALL_BANDWITH_USAGE =
+        "total-bandwith-usage-KB-sec";
 
-    private static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    private static Integer DEFAULT_MIN_DELAY = new Integer(500);
-    private static Integer DEFAULT_MAX_DELAY = new Integer(5000);
-    private static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
-    private static Integer DEFAULT_MAX_RETRIES = new Integer(30);
-    private static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
-
+    private final static Float DEFAULT_DELAY_FACTOR = new Float(5);
+    private final static Integer DEFAULT_MIN_DELAY = new Integer(500);
+    private final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
+    private final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
+    private final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
+    private final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
+    private final static Integer DEFAULT_MAX_OVERALL_BANDWITH_USAGE =
+        new Integer(0);
+    private final static float KILO_FACTOR = 1.024F;
+    
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.Frontier");
 
-    private static String F_ADD = "F+ ";
-    private static String F_EMIT = "Fe ";
-    private static String F_RESCHEDULE = "Fr ";
-    private static String F_SUCCESS = "Fs ";
-    private static String F_FAILURE = "Ff ";
+    private final static String F_ADD = "F+ ";
+    private final static String F_EMIT = "Fe ";
+    private final static String F_RESCHEDULE = "Fr ";
+    private final static String F_SUCCESS = "Fs ";
+    private final static String F_FAILURE = "Ff ";
 
     CrawlController controller;
 
@@ -216,7 +222,10 @@ public class Frontier
     // scheduledDuplicates/totalUrisScheduled is running estimate of rate to discount pendingQueues
     long scheduledDuplicates = 0;
 
-
+    // Used when bandwith constraint are used
+    long nextURIEmitTime = 0;
+    long processedBytesAfterLastEmittedURI = 0;
+    
     /**
      * @param name
      */
@@ -246,6 +255,11 @@ public class Frontier
             "How long to wait by default until we retry fetching a URI that " +
             "failed to be retrieved (seconds). ",
             DEFAULT_RETRY_DELAY));
+        Type t = addElementToDefinition(
+            new SimpleType(ATTR_MAX_OVERALL_BANDWITH_USAGE,
+            "The maximum average bandwith the crawler is allowed to use",
+            DEFAULT_MAX_OVERALL_BANDWITH_USAGE));
+        t.setOverrideable(false);
     }
 
     /**
@@ -476,6 +490,41 @@ public class Frontier
         long waitMax = 0;
         CrawlURI curi = null;
 
+        int maxBandwithKB;
+        try {
+            maxBandwithKB = ((Integer) getAttribute(
+                    ATTR_MAX_OVERALL_BANDWITH_USAGE)).intValue();
+        } catch (Exception e) {
+            // Should never happen, but if, return default.
+            logger.severe(e.getLocalizedMessage());
+            maxBandwithKB = DEFAULT_MAX_OVERALL_BANDWITH_USAGE.intValue();
+        }
+        if (maxBandwithKB > 0) {
+            // Enforce bandwith limit
+            long sleepTime = nextURIEmitTime - now;
+
+            float maxBandwith = maxBandwithKB * KILO_FACTOR;
+            long processedBytes =
+                totalProcessedBytes - processedBytesAfterLastEmittedURI;
+            long shouldHaveEmittedDiff =
+                nextURIEmitTime == 0 ? 0 : nextURIEmitTime - now;
+            nextURIEmitTime = (long) (processedBytes / maxBandwith)
+                    + now + shouldHaveEmittedDiff;
+            processedBytesAfterLastEmittedURI = totalProcessedBytes;
+
+            if (sleepTime > 0) {
+                synchronized(this) {
+                    logger.fine("Frontier sleeps for: " + sleepTime
+                            + "ms to respect bandwith limit.");
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        logger.warning(e.getLocalizedMessage());
+                    }
+                }
+            }
+        }
+        
         // first, empty the high-priority queue
         CandidateURI caUri;
 
