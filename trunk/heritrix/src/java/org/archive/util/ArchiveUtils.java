@@ -28,7 +28,9 @@ package org.archive.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 /**
@@ -115,6 +117,7 @@ public class ArchiveUtils {
      * W3C/ISO8601 format, assuming UTC. 
      * 
      * Format is yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+     * @param date Date to format.
      * 
      * @return the date stamp
      */
@@ -127,6 +130,7 @@ public class ArchiveUtils {
      * W3C/ISO8601 format, assuming UTC. 
      * 
      * Format is yyyy-MM-dd'T'HH:mm:ss'Z'
+     * @param date Date to format.
      * 
      * @return the date stamp
      */
@@ -210,6 +214,41 @@ public class ArchiveUtils {
      */
     public static Date parse12DigitDate(String date) throws ParseException{
         return TIMESTAMP12.parse(date);
+    }
+    
+    /**
+     * Convert 17-digit date format timestamps (as found in crawl.log, for
+     * example) into a GregorianCalendar object. + * Useful so you can convert
+     * into milliseconds-since-epoch. Note: it is possible to compute
+     * milliseconds-since-epoch + * using {@link #parse17DigitDate}.UTC(), but
+     * that method is deprecated in favor of using Calendar.getTimeInMillis(). + *
+     * <p/>I probably should have dug into all the utility methods in
+     * DateFormat.java to parse the timestamp, but this was + * easier. If
+     * someone wants to fix this to use those methods, please have at it! <p/>
+     * Mike Schwartz, schwartz at CodeOnTheRoad dot com.
+     * 
+     * @param timestamp17String
+     * @return Calendar set to <code>timestamp17String</code>.
+     */
+    public static Calendar timestamp17ToCalendar(String timestamp17String) {
+        GregorianCalendar calendar = new GregorianCalendar();
+        int year = Integer.parseInt(timestamp17String.substring(0, 4));
+        int dayOfMonth = Integer.parseInt(timestamp17String.substring(6, 8));
+        // Month is 0-based
+        int month = Integer.parseInt(timestamp17String.substring(4, 6)) - 1;
+        int hourOfDay = Integer.parseInt(timestamp17String.substring(8, 10));
+        int minute = Integer.parseInt(timestamp17String.substring(10, 12));
+        int second = Integer.parseInt(timestamp17String.substring(12, 14));
+        int milliseconds = Integer
+                .parseInt(timestamp17String.substring(14, 17));
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, month);
+        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        calendar.set(Calendar.MINUTE, minute);
+        calendar.set(Calendar.SECOND, second);
+        calendar.set(Calendar.MILLISECOND, milliseconds);
+        return calendar;
     }
 
     /** 
