@@ -42,10 +42,10 @@ import org.archive.util.Lineable;
 public class CandidateURI implements Serializable, Lineable {
     private static final long serialVersionUID = -7152937921526560388L;
 
-    public static String FORCE_REVISIT = "Force";
-    public static String HIGH = "High"; // before any others of its class
-    public static String MEDIUM = "Medium"; // after any Highs
-    public static String NORMAL = "Normal"; // whenever/end of queue
+    public static final String FORCE_REVISIT = "Force";
+    public static final String HIGH = "High"; // before any others of its class
+    public static final String MEDIUM = "Medium"; // after any Highs
+    public static final String NORMAL = "Normal"; // whenever/end of queue
 
     /** Usuable URI under consideration */
     UURI uuri;

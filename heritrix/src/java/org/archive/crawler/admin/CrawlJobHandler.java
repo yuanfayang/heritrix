@@ -299,7 +299,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // Each directory in the profiles directory should contain the file order.xml.
                 File profile =
                     new File(profiles[i], "order.xml");
-                if (profile != null && profile.canRead()) {
+                if (profile.canRead()) {
                     // Ok, got the order file for this profile.
                     try {
                         // The directory name denotes the profiles UID and name.
@@ -763,12 +763,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
         orderfile.setName(name);
         orderfile.setDescription(description);
 
-        BufferedWriter writer;
+        BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new FileWriter(newHandler
                     .getPathRelativeToWorkingDirectory(seedfile)));
-            if (writer != null) {
+            try {
                 writer.write(seeds);
+            } finally {
                 writer.close();
             }
         } catch (IOException e) {
@@ -1038,16 +1039,20 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public static ArrayList loadOptions(String file) throws IOException{
         File optionfile = new File(MODULE_OPTIONS_DIRECTORY+file);
-        BufferedReader bf = new BufferedReader(new FileReader(optionfile), 8192);
         ArrayList ret = new ArrayList();
-
         String line = null;
-        while ((line = bf.readLine()) != null) {
-            line = line.trim();
-            if(line.indexOf('#')<0 && line.length()>0){
-                // Looks like a valid line.
-                ret.add(line);
+        BufferedReader bf =
+            new BufferedReader(new FileReader(optionfile), 8192);
+        try {
+            while ((line = bf.readLine()) != null) {
+                line = line.trim();
+                if(line.indexOf('#')<0 && line.length()>0){
+                    // Looks like a valid line.
+                    ret.add(line);
+                }
             }
+        } finally {
+            bf.close();
         }
         return ret;
     }

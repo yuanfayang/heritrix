@@ -44,15 +44,15 @@ public class ArchiveUtils {
     /**
      * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
      */
-    public static SimpleDateFormat TIMESTAMP12;
+    public static final SimpleDateFormat TIMESTAMP12;
     /**
      * Arc-style date stamp in the format yyyyMMddHHmmss and UTC time zone.
      */
-    public static SimpleDateFormat TIMESTAMP14;
+    public static final SimpleDateFormat TIMESTAMP14;
     /**
      * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
      */
-    public static SimpleDateFormat TIMESTAMP17;
+    public static final SimpleDateFormat TIMESTAMP17;
 
     // Initialize fomatters with pattern and time zone
     static {

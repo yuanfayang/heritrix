@@ -830,10 +830,13 @@ public class StatisticsTracker extends AbstractTracker
         }
 
         try {
-            FileWriter fw = new FileWriter(directory+File.separator+"seeds-report.txt");
-            fw.write(rep.toString());
-            fw.flush();
-            fw.close();
+            FileWriter fw =
+                new FileWriter(directory+File.separator+"seeds-report.txt");
+            try {
+                fw.write(rep.toString());
+            } finally {
+                fw.close();
+            }
             controller.addToManifest(directory+File.separator+"seeds-report.txt",
                     CrawlController.MANIFEST_REPORT_FILE,true);
         } catch (IOException e) {
