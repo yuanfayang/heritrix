@@ -244,7 +244,7 @@ public class CrawlScope extends Filter {
      * @param o URI to check.
      * @return true if too many hops.
      */
-    private boolean exeedsMaxHops(Object o) {
+    protected boolean exeedsMaxHops(Object o) {
         if(! (o instanceof CandidateURI)) {
             return false;
         }
@@ -262,12 +262,9 @@ public class CrawlScope extends Filter {
             e.printStackTrace();
         }
 
-        // Don't check if maxLinkHops is set to zero.
-        if (maxLinkHops == 0) {
-            return false;
-        }
-
-        String path = ((CandidateURI)o).getPathFromSeed();
+        CandidateURI cand = (CandidateURI)o;
+        
+        String path = cand.getPathFromSeed();
         int linkCount = 0;
         int transCount = 0;
         for(int i=path.length()-1;i>=0;i--) {
@@ -277,8 +274,7 @@ public class CrawlScope extends Filter {
                 transCount++;
             }
         }
-
-        return (linkCount > maxLinkHops) || (transCount>maxTransHops);
+        return (linkCount > maxLinkHops) || (transCount > maxTransHops);
     }
 
     /**
