@@ -56,9 +56,41 @@ public class UURITest extends TestCase {
             "test/../a.gif" + "\u00A0" + UURI.SPACE;
 
         UURI uuri = new UURI(URISTR);
-        String uuriStr = uuri.toString();
+        final String uuriStr = uuri.toString();
         assertTrue(ESCAPED_URISTR.equals(uuriStr));
     }
+    
+    /* TODO
+    public final void testPercentEscaping() throws URIException {
+        final String uri = "http://archive.org/%a%%%25.html";
+        final String tgtUri = "http://archive.org/%25a%25%25%25.html";
+        UURI uuri = new UURI(uri);
+        assertTrue("Not equal " + uuri.toString(),
+                uuri.toString().equals(tgtUri));
+    }*/
+    
+    public final void testTrimSpaceNBSP() throws URIException {
+        final String uri = "   http://archive.org/DIR WITH SPACES/" +
+        	UURI.NBSP + "home.html    " + UURI.NBSP + "   ";
+        final String tgtUri =
+            "http://archive.org/DIR%20WITH%20SPACES/%20home.html";
+        UURI uuri = new UURI(uri);
+        assertTrue("Not equal " + uuri.toString(),
+                uuri.toString().equals(tgtUri));
+    }
+    
+    /* TODO
+    public final void testDoubleEncoding() throws URIException {
+        final String uri = "http://archive.org/DIR WITH SPACES/home.html";
+        final String encodedUri = "http://archive.org/DIR%20WITH%20SPACES/home.html";
+        UURI uuri = new UURI(uri);
+        assertTrue("Not equal", uuri.toString().equals(encodedUri));
+        // Dbl-encodes.
+        uuri = new UURI(uuri.toString());
+        uuri = new UURI(uuri.getEscapedURI());
+        uuri = new UURI(uuri.getURI());
+        uuri = null;
+    }*/
     
     /**
      * Part of  <a
@@ -97,6 +129,7 @@ public class UURITest extends TestCase {
         assertTrue("Didn't get expected exception: " + uuri, 
             expectedException); 
     }
+    
     
     public final void testRelative() throws URIException {
         UURI uuriTgt = new UURI("http://archive.org:83/home.html");
