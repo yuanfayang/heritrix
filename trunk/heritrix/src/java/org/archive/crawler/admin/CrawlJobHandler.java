@@ -682,6 +682,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 "A fatal InitializationException occured when loading job:\n"
                     + e.getMessage());
             completedCrawlJobs.add(currentJob);
+            // Log to stdout so its seen in logs as well as in UI.
+            e.printStackTrace();
             currentJob = null;
             controller = null;
             startNextJob(); //Load the next job if there is one.
