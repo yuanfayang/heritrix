@@ -1049,7 +1049,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         ArrayList tmp = null;
         if (controller != null && controller.isPaused()) {
             // Ok, get the list.
-            tmp = controller.getFrontier().getPendingURIsList(marker,
+            tmp = controller.getFrontier().getURIsList(marker,
                     numberOfMatches, verbose);
         }
         return tmp;
@@ -1064,7 +1064,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public long deleteURIsFromPending(String regexpr){
         if(controller != null && controller.isPaused()){
-            return controller.getFrontier().deleteURIsFromPending(regexpr);
+            return controller.getFrontier().deleteURIs(regexpr);
         }
         return 0;
     }

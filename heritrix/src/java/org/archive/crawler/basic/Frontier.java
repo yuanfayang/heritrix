@@ -65,11 +65,6 @@ import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
 
-// import EDU.oswego.cs.dl.util.concurrent.Semaphore;
-
-// import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
-// import EDU.oswego.cs.dl.util.concurrent.Channel;
-
 /**
  * A basic mostly breadth-first frontier, which refrains from
  * emitting more than one CrawlURI of the same 'key' (host) at
@@ -86,10 +81,6 @@ import org.archive.util.QueueItemMatcher;
  * period of time, to either enforce politeness policies or allow
  * a configurable amount of time between error retries. 
  * 
- * // The start() method, finished() method, and a background process
- * //which wakes according to the interval to the next 'snoozed
- * //all work to keep a 'readyChannel' full 
- *
  * @author Gordon Mohr
  */
 public class Frontier
@@ -138,9 +129,6 @@ public class Frontier
 
     CrawlController controller;
 
-//    Channel readyChannel;
-//    CrawlURI onDeck;
-    
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
     UURISet alreadyIncluded;
@@ -160,72 +148,17 @@ public class Frontier
 
     // all per-class queues who are on hold until a certain time
     SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
-//    long wakeTime;
-//    volatile Thread wakerThread; 
-//    Semaphore snoozer = new Semaphore(0);
-//    private class Waker implements Runnable {
-//        /** 
-//         * @see java.lang.Runnable#run()
-//         */
-//        public void run() {
-//              while(true) {
-//                  long now = System.currentTimeMillis();
-//                  synchronized(Frontier.this) {
-//                      wakeTime = earliestWakeTime();
-//                      if (wakeTime<=now) {
-//                          wakeReadyQueues(now);
-//                          wakeTime = earliestWakeTime();
-//                      } // else: it was just a kick to reset (or first time through)
-//                  }
-//                  try {
-//                      snoozer.attempt(wakeTime-now);
-//                  } catch (InterruptedException e) {
-//                      // e.printStackTrace();
-//                      wakerThread=null;
-//                      break; // just finish when interrupted
-//                  }
-//              }
-//          }
-//    }
-//    private class Waker implements Runnable {
-//        /** 
-//         * @see java.lang.Runnable#run()
-//         */
-//        public void run() {
-//              while(true) {
-//                  synchronized (Frontier.this) {
-//                      long now = System.currentTimeMillis();
-//                      wakeTime = earliestWakeTime();
-//                      if (wakeTime<=now) {
-//                          fillReadyChannel(now);
-//                          wakeTime = earliestWakeTime();
-//                      } // else: it was just a kick to reset
-//                      try {
-//                          Frontier.this.wait(wakeTime-now);
-//                      } catch (InterruptedException e) {
-//                          // e.printStackTrace();
-//                          wakerThread=null;
-//                          break; // just finish when interrupted
-//                      }
-//                  }
-//              }
-//          }
-//    }
     
     // top-level stats
-    long completionCount = 0;
+    long discoveredCount = 0;
+    long queuedCount = 0;
+    
+    long successCount = 0;
     long failedCount = 0;
     long disregardedCount = 0; //URI's that are disregarded (for example because of robot.txt rules)
-
+    
     long totalProcessedBytes = 0;
 
-    // increments for every URI ever queued up (even dups)
-    long totalUrisScheduled = 0;
-    // increments for every URI ever queued up (even dups); decrements when retired
-    long netUrisScheduled = 0;
-    // increments for every URI that turned out to be alreadyIncluded after queuing
-    // scheduledDuplicates/totalUrisScheduled is running estimate of rate to discount pendingQueues
-    long scheduledDuplicates = 0;
 
     // Used when bandwidth constraint are used
     long nextURIEmitTime = 0;
@@ -294,29 +227,9 @@ public class Frontier
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
 
-        // readyChannel = new BoundedBuffer(10);
-        
         pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
-        //pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
 
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
-        //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
-
-        // alternative: pure disk-based set
-//        alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
-
-        // alternative: disk-based set with in-memory cache supporting quick positive contains() checks
-//        alreadyIncluded = new FPUURISet(
-//              new CachingDiskLongFPSet(
-//                      c.getScratchDisk(),
-//                      "alreadyIncluded",
-//                      23, // 8 million slots on disk (for start)
-//                      0.75f,
-//                      20, // 1 million slots in cache (always)
-//                      0.75f));
-//        wakerThread = new Thread(new Waker());
-//        wakerThread.setName("Frontier.Waker");
-//        wakerThread.start();
         
         this.controller = c;
         controller.addCrawlStatusListener(this);
@@ -344,7 +257,7 @@ public class Frontier
         }
 
         /**
-         * @return Queue
+         * @return Queue of 'batched' items
          */
         public Queue getQueue() {
             return (Queue)super.get();
@@ -352,20 +265,21 @@ public class Frontier
 
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void batchSchedule(CandidateURI caUri) {
-        // initially just pass-through
-        // schedule(caUri);
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    /** 
-     * 
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#batchFlush()
      */
     public synchronized void batchFlush() {
+        innerBatchFlush();
+    }
+    
+    private void innerBatchFlush(){
         Queue q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
             innerSchedule((CandidateURI) q.dequeue());
@@ -386,16 +300,16 @@ public class Frontier
      * Arrange for the given CandidateURI to be visited, if it is not
      * already scheduled/completed.
      *
-     * @param caUri
+     * @param caUri The CandidateURI to schedule
      */
-    protected void innerSchedule(CandidateURI caUri) {
+    private void innerSchedule(CandidateURI caUri) {
         if(!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
         }
         
         if(caUri.isSeed() && caUri.getVia() != null 
-                && caUri.getVia().toString().length()>0){
+                && caUri.flattenVia().length()>0){
             // The only way a seed can have a non empty via is if it is the 
             // result of a seed redirect. Add it to the seeds list.
             controller.getScope().addSeed(caUri.getUURI());
@@ -409,94 +323,11 @@ public class Frontier
             pendingQueue.enqueue(caUri);
         }
         alreadyIncluded.add(caUri);
-        // Increment counters
-        totalUrisScheduled++;
-        netUrisScheduled++;
+        discoveredCount++;
+        queuedCount++;
         // Update recovery log.
         controller.recover.info("\n"+F_ADD+caUri.getURIString());
     }
-
-    
-//    /**
-//     * @param timeout
-//     * @return
-//     * @throws InterruptedException
-//     */
-//    public CrawlURI newNext(int timeout) throws InterruptedException {
-//        return (CrawlURI) readyChannel.poll(timeout);
-////        CrawlURI result = (CrawlURI) readyChannel.poll(0);
-////        if (result!=null) {
-////            return result;
-////        }
-////        fillReadyChannel();
-////        result = (CrawlURI) readyChannel.poll(0);
-////        if ( result!=null || isEmpty() ) {
-////            return result;
-////        }
-////        // non-empty but also nothing ready;
-////        return (CrawlURI) readyChannel.poll(timeout);
-//    }
-    
-//    /** 
-//     * Fill the ready channel 
-//     * @param now
-//     * 
-//     */
-//    private void fillReadyChannel(long now) {
-//        // unsnooze as necessary
-//        wakeReadyQueues(now);
-//        // try any leftovers
-//        if(onDeck!=null) {
-//            if(onDeckToReady()) {
-//                return;
-//            }
-//        }
-//        // try all ready queues
-//        if (flushReadyQueuesToChannel()) {
-//            return;
-//        }
-//        // try all pending
-//        while(!pendingQueue.isEmpty()) {
-//            CrawlURI curi = CrawlURI.from((CandidateURI)pendingQueue.dequeue());
-//            enqueueToKeyed(curi);
-//            if(flushReadyQueuesToChannel()) {
-//                return;
-//            }
-//        }
-//        // done as much as is ready; rely on waker or 
-//        // future calls to do more
-//    }
-    
-//    /**
-//     * Move items from ready keyedqueues to the ready channel
-//     * @return if channel is full
-//     */
-//    private boolean flushReadyQueuesToChannel() {
-//        while(!readyClassQueues.isEmpty()) {
-//            onDeck = dequeueFromReady();
-//            emitCuri(onDeck);
-//            if(onDeckToReady()) {
-//                return true;
-//            }
-//        }
-//        return false; // channel not filled; onDeck empty
-//    }
-
-//    private boolean onDeckToReady() {
-//        try {
-//            if (!readyChannel.offer(onDeck,0)) {
-//                return true; // channel filled, onDeck set
-//            } else {
-//                onDeck=null;
-//            }
-//        } catch (InterruptedException e) {
-//            // TODO Auto-generated catch block
-//            System.err.println("onDeck "+onDeck);
-//            e.printStackTrace();
-//            return true; // pretend filled
-//        }
-//        return false;
-//    }
 
     /**
      * Return the next CrawlURI to be processed (and presumably
@@ -509,7 +340,7 @@ public class Frontier
      * 
      * @see org.archive.crawler.framework.URIFrontier#next(int)
      */
-    protected CrawlURI next() {
+    private CrawlURI next() {
         long now = System.currentTimeMillis();
         long waitMax = 0;
         CrawlURI curi = null;
@@ -613,30 +444,6 @@ public class Frontier
         return null;
     }
 
-//    private void waitForChange(int timeout, long now) {
-//        long waitMax;
-//        // block until something changes, or timeout occurs
-//        waitMax = Math.min(earliestWakeTime()-now,timeout);
-//        try {
-//            if ( waitMax > 0 ) {
-//                wait(waitMax);
-//            }
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    /**
-//     * Note that a URI that was queued up turned out to be a
-//     * duplicate.
-//     */
-//    private void noteScheduledDuplicate() {
-//        // TODO: No longer needed? If we are adding to alreadyIncluded on
-//        //       first schedule then this will not occur.
-//        netUrisScheduled--;
-//        scheduledDuplicates++;
-//    }
-
     /**
      * Note that the previously emitted CrawlURI has completed
      * its processing (for now).
@@ -652,7 +459,7 @@ public class Frontier
         logger.fine("Frontier.finished: " + curi.getURIString());
 
         // Catch up on scheduling
-        batchFlush();
+        innerBatchFlush();
 
         notify(); // new items might be available, let waiting threads know
 
@@ -701,11 +508,6 @@ public class Frontier
      * @param curi
      */
     private void disregardDisposition(CrawlURI curi) {
-        disregardedCount++;
-
-        // release any other curis that were waiting for this to finish
-        //releaseHeld(curi);
-
         //Let interested listeners know of disregard disposition.
         controller.throwCrawledURIDisregardEvent(curi);
 
@@ -728,10 +530,10 @@ public class Frontier
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
+            disregardedCount++;
             curi.setStoreState(URIStoreable.FINISHED);
             curi.stripToMinimal();
         }
-        decrementScheduled();
     }
 
     private boolean isDisregarded(CrawlURI curi) {
@@ -774,20 +576,10 @@ public class Frontier
      * The CrawlURI has been successfully crawled, and will be
      * attempted no more.
      *
-     * @param curi
+     * @param curi The CrawlURI
      */
-    protected void successDisposition(CrawlURI curi) {
-        completionCount++;
+    private void successDisposition(CrawlURI curi) {
         totalProcessedBytes += curi.getContentSize();
-
-        // TODO: Is there any use for this log anymore? The UI has up to date info
-//        if ( (completionCount % 500) == 0) {
-//            logger.info("==========> " +
-//                completionCount+" <========== HTTP URIs completed");
-//        }
-
-        // release any other curis that were waiting for this to finish
-        //releaseHeld(curi);
 
         curi.aboutToLog();
         Object array[] = { curi };
@@ -801,11 +593,11 @@ public class Frontier
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
+            successCount++;
             curi.setStoreState(URIStoreable.FINISHED);
         }
         controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
-        decrementScheduled();
         controller.recover.info("\n"+F_SUCCESS+curi.getURIString());
     }
 
@@ -887,6 +679,8 @@ public class Frontier
         }
         logger.finer(this+".emitCuri("+curi+")");
         controller.recover.info("\n"+F_EMIT+curi.getURIString());
+        // One less URI in the queue.
+        queuedCount--;
         return curi;
     }
 
@@ -939,45 +733,6 @@ public class Frontier
         }
         return kq;
     }
-
-//    /**
-//     * @param classQueue
-//     */
-//    private void enqueueToHeld(KeyedQueue classQueue) {
-//        heldClassQueues.add(classQueue);
-//        classQueue.setStoreState(URIStoreable.HELD);
-//    }
-
-//    /**
-//     * Defer curi until another curi with the given uuri is
-//     * completed.
-//     *
-//     * @param curi the curi to held
-//     * @param uuri the uuri to wait for
-//     */
-//    private void addAsHeld(CrawlURI curi, UURI uuri) {
-//        List heldsForUuri = (List) heldCuris.get(uuri);
-//        if(heldsForUuri ==null) {
-//            heldsForUuri = new ArrayList();
-//        }
-//        heldsForUuri.add(curi);
-//        heldCuris.put(uuri,heldsForUuri);
-//        curi.setStoreState(URIStoreable.HELD);
-//    }
-
-//    /**
-//     * @param curi
-//     */
-//    private void releaseHeld(CrawlURI curi) {
-//        List heldsForUuri = (List) heldCuris.get(curi.getUURI());
-//        if(heldsForUuri!=null) {
-//            heldCuris.remove(curi.getUURI());
-//            Iterator iter = heldsForUuri.iterator();
-//            while(iter.hasNext()) {
-//                reinsert((CrawlURI) iter.next());
-//            }
-//        }
-//    }
 
     protected CandidateURI dequeueFromPending() {
         if (pendingQueue.isEmpty()) {
@@ -1206,13 +961,7 @@ public class Frontier
      *
      * @param curi The CrawlURI
      */
-    protected void failureDisposition(CrawlURI curi) {
-
-        failedCount++;
-
-        // release any other curis that were waiting for this to finish
-        //releaseHeld(curi);
-
+    private void failureDisposition(CrawlURI curi) {
         controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
 
         // send to basic log
@@ -1234,15 +983,11 @@ public class Frontier
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
+            failedCount++;
             curi.setStoreState(URIStoreable.FINISHED);
             curi.stripToMinimal();
         }
-        decrementScheduled();
         controller.recover.info("\n"+F_FAILURE+curi.getURIString());
-    }
-
-    private void decrementScheduled() {
-        netUrisScheduled--;
     }
 
     /**
@@ -1275,12 +1020,16 @@ public class Frontier
     }
 
     /**
-     * @param curi
-     * @return True if we need to retry.
-     * @throws AttributeNotFoundException
+     * Checks if a recently completed CrawlURI that did not finish successfully
+     * needs to be retried immediately (processed again as soon as politeness
+     * allows.)
+     * 
+     * @param curi The CrawlURI to check
+     * @return True if we need to retry promptly.
+     * @throws AttributeNotFoundException If problems occur trying to read the
+     *            maximum number of retries from the settings framework.
      */
     private boolean needsPromptRetry(CrawlURI curi) throws AttributeNotFoundException {
-        //
         if (curi.getFetchAttempts()>= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
             return false;
         }
@@ -1293,20 +1042,23 @@ public class Frontier
     }
     
     /**
-     * @param curi
+     * Checks if a recently completed CrawlURI that did not finish successfully
+     * needs to be retried (processed again after some time elapses)
+     * 
+     * @param curi The CrawlURI to check
      * @return True if we need to retry.
-     * @throws AttributeNotFoundException
+     * @throws AttributeNotFoundException If problems occur trying to read the
+     *            maximum number of retries from the settings framework.
      */
     private boolean needsRetrying(CrawlURI curi) throws AttributeNotFoundException {
         //
-        if (curi.getFetchAttempts()>= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
+        if (curi.getFetchAttempts() >= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
             return false;
         }
         switch (curi.getFetchStatus()) {
             case S_CONNECT_FAILED:
             case S_CONNECT_LOST:
-// S_TIMEOUT may not deserve retry
-//          case S_TIMEOUT:
+            // case S_TIMEOUT: may not deserve retry
                 // these are all worth a retry
                 return true;
             default:
@@ -1352,6 +1104,7 @@ public class Frontier
             
         curi.processingCleanup(); // eliminate state related to only prior processing passthrough
         kq.enqueueMedium(curi);
+        queuedCount++;
     }
 
     /**
@@ -1371,19 +1124,7 @@ public class Frontier
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.setStoreState(URIStoreable.SNOOZED);
-//        kickWakerIfNecessary();
     }
-
-//    private void kickWakerIfNecessary() {
-//        if(wakeTime>earliestWakeTime()) {
-//            snoozer.release(); // cause Waker to spin and sleep for shorter period
-//        }
-//    }
-//    private void kickWakerIfNecessary() {
-//        if(wakeTime>earliestWakeTime()) {
-//            notifyAll(); 
-//        }
-//    }
 
     /**
      * Some URIs, if they recur,  deserve another
@@ -1411,59 +1152,74 @@ public class Frontier
      * to be created in the future, if it is reencountered under
      * different circumstances.
      *
-     * @param curi
+     * @param curi The CrawlURI to forget
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting "+curi);
         alreadyIncluded.remove(curi.getUURI());
+        discoveredCount--;
         curi.setStoreState(URIStoreable.FORGOTTEN);
     }
 
-//    /**
-//     * Revisit the CrawlURI -- but not before delay time has passed.
-//     * @param curi
-//     * @param retryDelay
-//     */
-//    protected void insertSnoozed(CrawlURI curi, long retryDelay) {
-//        curi.setWakeTime(System.currentTimeMillis()+retryDelay );
-//        curi.setStoreState(URIStoreable.SNOOZED);
-//        snoozeQueues.add(curi);
-//    }
-
-    /** Return the number of URIs successfully completed to date.
-     *
-     * @return The number of URIs successfully completed to date
-     */
-    public long successfullyFetchedCount(){
-        return completionCount;
-    }
-
-    /**
-     * @return Return the number of URIs that failed to date.
-     */
-    public long failedFetchCount(){
-        return failedCount;
-    }
-
-    /** Return the size of the URI store.
-     * @return storeSize
+    /*  (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
-        return alreadyIncluded.size();
+        return discoveredCount;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
+     */
+    public long queuedUriCount(){
+        return queuedCount;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
+     */
+    public long finishedUriCount() {
+        return successCount+failedCount+disregardedCount;
     }
 
-    /**
-     * Estimate of the number of URIs waiting to be fetched.
-     * scheduled
-     *
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
      */
     public long pendingUriCount() {
-        float duplicatesInPendingEstimate = (totalUrisScheduled == 0) ? 0 : scheduledDuplicates / totalUrisScheduled;
-        return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
+        // Always zero. No URI is kept pending. All are processed as soon as
+        // they are scheduled.
+        return 0;
     }
 
-    /** (non-Javadoc)
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
+     */
+    public long successfullyFetchedCount(){
+        return successCount;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#failedFetchCount()
+     */
+    public long failedFetchCount(){
+       return failedCount;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#disregardedFetchCount()
+     */
+    public long disregardedFetchCount() {
+        return disregardedCount;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#totalBytesWritten()
+     */
+    public long totalBytesWritten() {
+        return totalProcessedBytes;
+    }
+
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
      */
     public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
@@ -1480,10 +1236,10 @@ public class Frontier
         return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
     }
 
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#getURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
      */
-    public ArrayList getPendingURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
+    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
         if(marker instanceof FrontierMarker == false){
             throw new InvalidURIFrontierMarkerException();
         }
@@ -1594,7 +1350,7 @@ public class Frontier
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
      */
-    public long deleteURIsFromPending(String match) {
+    public long deleteURIs(String match) {
         long numberOfDeletes = 0;
         // Create QueueItemMatcher
         QueueItemMatcher mat = new URIQueueMatcher(match, true, this);
@@ -1625,13 +1381,8 @@ public class Frontier
         return numberOfDeletes;
     }
 
-
-
-    /**
-     * This methods compiles a human readable report on the status of the frontier
-     * at the time of the call.
-     *
-     * @return A report on the current status of the frontier.
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#report()
      */
     public synchronized String report()
     {
@@ -1640,9 +1391,17 @@ public class Frontier
 
         rep.append("Frontier report - "
                    + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-        rep.append(" Job being crawled:         "
+        rep.append(" Job being crawled: "
                    + controller.getOrder().getCrawlOrderName() + "\n");
+        rep.append("\n -----===== STATS =====-----\n");
+        rep.append(" Discovered:    " + discoveredCount + "\n");
+        rep.append(" Queued:        " + queuedCount + "\n");
+        rep.append(" Finished:      " + finishedUriCount() + "\n");
+        rep.append("  Successfully: " + successCount + "\n");
+        rep.append("  Failed:       " + failedCount + "\n");
+        rep.append("  Disregarded:  " + discoveredCount + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
+        rep.append(" Already included size:     " + alreadyIncluded.size()+"\n");
         rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
         rep.append("\n All class queues map size: " + allClassQueuesMap.size() + "\n");
         if(allClassQueuesMap.size()!=0)
@@ -1697,15 +1456,6 @@ public class Frontier
         }
     }
 
-//    /**
-//     * @return
-//     */
-//    public long getAllClassQueuesMap()
-//    {
-//        long total = 0;
-//        return total;
-//    }
-
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
@@ -1743,20 +1493,6 @@ public class Frontier
     }
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#totalBytesWritten()
-     */
-    public long totalBytesWritten() {
-        return totalProcessedBytes;
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#disregardedFetchCount()
-     */
-    public long disregardedFetchCount() {
-        return disregardedCount;
-    }
-    
-    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
      */
     public void importRecoverLog(String pathToLog) throws IOException {
@@ -1769,6 +1505,7 @@ public class Frontier
                 try {
                     u = UURI.createUURI(read.substring(3));
                     alreadyIncluded.add(u);
+                    discoveredCount++;
                 } catch (URISyntaxException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
@@ -1798,22 +1535,4 @@ public class Frontier
         reader.close();
 
     }
-    
-    /**
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize() throws Throwable {
-        super.finalize();
-//        wakerThread.interrupt();
-    }
-
-//    /** 
-//     * Start the Frontier, by preloading the readyChannel
-//     * with crawlable URIs.
-//     * 
-//     * @see org.archive.crawler.framework.URIFrontier#start()
-//     */
-//    public synchronized void start() {
-//        fillReadyChannel(System.currentTimeMillis());
-//    }
 }

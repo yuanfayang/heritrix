@@ -101,9 +101,12 @@ public class StatisticsTracker extends AbstractTracker
     /*
      * Snapshot data.
      */
-    protected long discoveredPages = 0;
-    protected long pendingPages = 0;
-    protected long downloadedPages = 0;
+    protected long discoveredUriCount = 0;
+    protected long queuedUriCount = 0;
+    protected long pendingUriCount = 0;
+    protected long finishedUriCount = 0;
+
+    protected long downloadedUriCount = 0;
     protected long downloadFailures = 0;
     protected long downloadDisregards = 0;
     protected double docsPerSecond = 0;
@@ -169,14 +172,16 @@ public class StatisticsTracker extends AbstractTracker
      */
     protected synchronized void logActivity() {
         // This method loads "snapshot" data.
-        discoveredPages = urisEncounteredCount();
-        pendingPages = urisInFrontierCount();
-        downloadedPages = successfulFetchAttempts();
+        discoveredUriCount = discoveredUriCount();
+        pendingUriCount = pendingUriCount();
+        downloadedUriCount = successfullyFetchedCount();
+        finishedUriCount = finishedUriCount();
+        queuedUriCount = queuedUriCount();
         downloadFailures = failedFetchAttempts();
         downloadDisregards = disregardedFetchAttempts();
-        totalProcessedBytes = getTotalBytesWritten();
+        totalProcessedBytes = totalBytesWritten();
 
-        if(totalFetchAttempts() == 0){
+        if(finishedUriCount() == 0){
             docsPerSecond = 0;
             totalKBPerSec = 0;
         }
@@ -184,7 +189,7 @@ public class StatisticsTracker extends AbstractTracker
             return; //Not enough time has passed for a decent snapshot.
         }
         else{
-            docsPerSecond = (double) downloadedPages / (double)(getCrawlerTotalElapsedTime() / 1000);
+            docsPerSecond = (double) downloadedUriCount / (double)(getCrawlerTotalElapsedTime() / 1000);
             totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())    / 1000)) + .5 ); // round to nearest long
         }
 
@@ -207,7 +212,7 @@ public class StatisticsTracker extends AbstractTracker
             {
 
                 // Update docs/sec snapshot
-                long currentPageCount = successfulFetchAttempts();
+                long currentPageCount = successfullyFetchedCount();
                 long samplePageCount = currentPageCount - lastPagesFetchedCount;
 
                 currentDocsPerSecond = (double) samplePageCount / (double)(sampleTime / 1000);
@@ -229,9 +234,9 @@ public class StatisticsTracker extends AbstractTracker
             Level.INFO,
             new PaddingStringBuffer()
                 .append(ArchiveUtils.TIMESTAMP14.format(now))
-                .raAppend(26, discoveredPages)
-                .raAppend(38, pendingPages)
-                .raAppend(51, downloadedPages)
+                .raAppend(26, discoveredUriCount)
+                .raAppend(38, pendingUriCount)
+                .raAppend(51, downloadedUriCount)
                 .raAppend(66, ArchiveUtils.doubleToString(currentDocsPerSecond,2) + "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
                 .raAppend(79, currentKBPerSec + "(" + totalKBPerSec + ")")
                 .raAppend(93, downloadFailures)
@@ -436,19 +441,20 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
-     * Get the number of URIs in the frontier (found but not processed).
-     * <p>
-     * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+     * Number of URIs that are awaiting detailed processing.
+     * 
+     * <p>If crawl not running (paused or stopped) this will return the value 
+     * of the last snapshot.
      *
      * @return The number of URIs in the frontier (found but not processed)
      *
      * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
      */
-    public long urisInFrontierCount() {
+    public long pendingUriCount() {
 
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().pendingUriCount() : pendingPages;
+        return shouldrun ? controller.getFrontier().pendingUriCount() : pendingUriCount;
     }
 
     /**
@@ -459,8 +465,8 @@ public class StatisticsTracker extends AbstractTracker
      * number of URIs encountered
      */
     public int percentOfDiscoveredUrisCompleted() {
-        long completed = totalFetchAttempts();
-        long total = urisEncounteredCount();
+        long completed = finishedUriCount();
+        long total = discoveredUriCount();
 
         if (total == 0) {
             return 0;
@@ -470,29 +476,30 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
-     * Returns a count of all uris encountered.  This includes both the frontier
-     * (unfetched pages) and fetched pages/failed fetch attempts.
-     * <p>
-     * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+     * Number of <i>discovered</i> URIs. 
+     * 
+     * <p>If crawl not running (paused or stopped) this will return the value of 
+     * the last snapshot.
      *
      * @return A count of all uris encountered
      *
      * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
-    public long urisEncounteredCount() {
+    public long discoveredUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().discoveredUriCount() : discoveredPages;
+        return shouldrun ? controller.getFrontier().discoveredUriCount() : discoveredUriCount;
     }
 
     /**
-     * Get the total number of URIs where fetches have been attempted.
+     * Number of URIs that have <i>finished</i> processing. 
      *
-     * @return Equal to the sum of {@link StatisticsTracker#successfulFetchAttempts() successfulFetchAttempts()}
-     * and {@link StatisticsTracker#failedFetchAttempts() failedFetchAttempts()}
+     * @return Number of URIs that have finished processing
+     * 
+     * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
      */
-    public long totalFetchAttempts() {
-        return successfulFetchAttempts() + failedFetchAttempts();
+    public long finishedUriCount() {
+        return shouldrun ? controller.getFrontier().finishedUriCount() : finishedUriCount;
     }
 
     /**
@@ -518,18 +525,35 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
-     * Get the number of successul document fetches.
-     * <p>
-     * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+     * Number of <i>successfully</i> processed URIs.
+     * 
+     * <p>If crawl not running (paused or stopped) this will return the value 
+     * of the last snapshot.
      *
-     * @return The number of successul document fetches
+     * @return The number of successully fetched URIs
      *
      * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
      */
-    public long successfulFetchAttempts() {
+    public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedPages;
+        return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedUriCount;
+    }
+
+    /**
+     * Number of URIs <i>queued</i> up and waiting for processing.
+     * 
+     * <p>If crawl not running (paused or stopped) this will return the value 
+     * of the last snapshot.
+     *
+     * @return Number of URIs queued up and waiting for processing.
+     *
+     * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
+     */
+    public long queuedUriCount() {
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().queuedUriCount() : downloadedUriCount;
     }
 
     /**
@@ -538,7 +562,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return The total number of uncompressed bytes written to disk
      */
-    public long getTotalBytesWritten() {
+    public long totalBytesWritten() {
         return shouldrun ? controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
 

@@ -122,7 +122,7 @@
 										</td>
 										<td nowrap>
 											<% if(handler.isCrawling()){ %>
-													Downloaded <%=head_stats.successfulFetchAttempts()%> documents in 
+													Downloaded <%=head_stats.successfullyFetchedCount()%> documents in 
 											<%
 													long time = (head_stats.getCrawlerTotalElapsedTime())/1000;
 						
