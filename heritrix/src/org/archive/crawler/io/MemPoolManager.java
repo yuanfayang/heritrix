@@ -27,13 +27,13 @@ public class MemPoolManager {
    * MemoryArea instances of the VirtualBuffers.
    * Mostly manipulated by the MemoryArea instances.
    */
-  byte[] dataPool;
+  byte[] mDataPool;
 
   /**
    * This is the free list which maintains the indices
-   * of unused blocks in the dataPool.
+   * of unused blocks in the mDataPool.
    */
-  private LinkedList freeBlocks;
+  private LinkedList mFreeBlocks;
 
   /**
    * Creates a memory pool manager with the specified buffer size and the
@@ -49,11 +49,11 @@ public class MemPoolManager {
           int lowerBlockSize) {
     // Initialize the data pool ...
     int memSizeInBytes = memorySize * 1024 * 1024;
-    dataPool = new byte[memSizeInBytes];
+    mDataPool = new byte[memSizeInBytes];
     // ToDo: Should trim off the last reminder chunk.
     int numBlocks = memSizeInBytes / upperBlockSize;
     for (int i = 0; i < numBlocks; i++) {
-        freeBlocks.add(new Integer(i));
+        mFreeBlocks.add(new Integer(i));
     }
   }
 
@@ -69,10 +69,10 @@ public class MemPoolManager {
    */
   LinkedList allocateBlocks(int numBlocks) {
     synchronized (this) {
-      if (freeBlocks.size() == 0)
+      if (mFreeBlocks.size() == 0)
         return null;
       LinkedList allocatedBlocks = new LinkedList();
-      Iterator iter = freeBlocks.iterator();
+      Iterator iter = mFreeBlocks.iterator();
       int numAdded = 0;
       while (iter.hasNext()) {
         allocatedBlocks.add(iter.next());
@@ -85,12 +85,12 @@ public class MemPoolManager {
   
   /**
    * Reclaims the specified blocks into the free list of the
-   * global data pool. Used by the VirtualBuffers when they 
+   * data pool. Used by the VirtualBuffers when they 
    * are closed.
    */
   void releaseBlocks(LinkedList indices) {
     synchronized (this) {
-      freeBlocks.addAll(indices);
+      mFreeBlocks.addAll(indices);
       /* ToDo : Adding the freed indices at last makes the 
       free list disordered. Should have to maintain it in order,
       so that it makes searching contiguous blocks easier. */

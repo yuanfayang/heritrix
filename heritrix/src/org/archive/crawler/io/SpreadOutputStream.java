@@ -21,7 +21,7 @@ import java.io.*;
  * 
  * The in-memory data store is a MemoryArea instance. If the MemoryArea 
  * instance could not be created because of non-availability of free space 
- * in the global data pool, a local augmented memory is created and used.
+ * in the manager's data pool, a local augmented memory is created and used.
  * 
  * The user should invoke the close method once he is done with writing.
  * This would enable the stream to callback its owner virtual buffer and
@@ -33,39 +33,45 @@ public class SpreadOutputStream extends OutputStream {
   /**
    * The manager to which the associated virtual buffer corresponds to.
    */
-  private MemPoolManager mgr;
+  private MemPoolManager mMgr;
   
   /**
    * The virtual buffer to which this stream is working for.
    */
-  private DiskedVirtualBuffer dBuff;
+  private DiskedVirtualBuffer mDBuff;
 
   /**
    * The memory area used by this stream. This could be null
-   * if the global data pool was full.
+   * if the manager's data pool was full.
    */
-  private MemoryArea memArea;
+  private MemoryArea mMemArea;
   
   /**
-   * The local memory used in case the global data pool is full.
+   * The local memory used in case the manager's data pool is full.
+   * This will be null if mMemArea is non-null which means that the
+   * manager's data pool had room for creation of MemoryArea.
    */
-  private byte[] augmentedDataArray;
+  private byte[] mAugmentedDataArray;
   
   /**
-   * Used to track the current position in the augmented array.
+   * Used to track the number of bytes written into the augmented array.
    */
-  private int augmentLength;
+  private int mAugmentLength;
 
   /**
    * The temporary file used to write the excess data.
-   */  
-  private File file;
+   */
+  private File mFile;
 
   /**
    * The file stream associated with the temporary file.
    */
-  private FileOutputStream fileStream;
+  private FileOutputStream mFileStream;
   
+  /**
+   * Used as a name generator for the spilled files.
+   */
+  private static int spillFileNameGen;
   
   /**
    * Constructs an output stream for the given virtual buffer.
@@ -73,19 +79,22 @@ public class SpreadOutputStream extends OutputStream {
    * else uses the local augmented memory.
    */
   SpreadOutputStream(MemPoolManager mgr, DiskedVirtualBuffer dBuff) {
-    this.mgr = mgr;
-    this.dBuff = dBuff;
-    LinkedList allocBlocks = mgr.allocateBlocks(1);
+    mMgr = mgr;
+    mDBuff = dBuff;
+    LinkedList allocBlocks = mMgr.allocateBlocks(1);
     if (allocBlocks != null) {
-      memArea = new MemoryArea(mgr, allocBlocks);
+      mMemArea = new MemoryArea(mMgr, allocBlocks);
     }
     else {
       /* ToDo: This local memory allocation could also fail.
       So, we might have to switch to disk IO straight-away. */
-      augmentedDataArray = new byte[dBuff.MAX_AUGMENT_SIZE];
+      mAugmentedDataArray = new byte[mDBuff.MAX_AUGMENT_SIZE];
     }
   }
  
+  private boolean isAugmented() {
+    return ( mAugmentedDataArray != null );
+  }
   
   /**
    * Writes into the allocated memory area or the local augmented memory.
@@ -95,22 +104,73 @@ public class SpreadOutputStream extends OutputStream {
    * Augmented memory writes and its positions are tracked locally.
    */
   public synchronized void write(byte b[], int off, int len) throws IOException {
-  
+    if ((off < 0) || (off > b.length) || (len < 0) ||
+              ((off + len) > b.length) || ((off + len) < 0)) {
+        throw new IndexOutOfBoundsException();
+    } else if (len == 0) {
+        return 0;
+    }
+    if ( ! isAugmented() ) {
+      if ( ! mMemArea.isExhausted()) {
+        // write into mem area.
+        int numWritten = mMemArea.write(b, off, len);
+        off += numWritten;
+        len -= numWritten;
+      }
+    } else {
+      // write into augmented data array.
+      int augWriteLength = 
+        Math.min(mAugmentedDataArray.length - mAugmentLength, len);
+      if (augWriteLength > 0) {
+        System.arraycopy(b, off, mAugmentedDataArray,
+            mAugmentLength, augWriteLength);
+        mAugmentLength += augWriteLength;
+        off += augWriteLength;
+        len -= augWriteLength;
+      }
+    }
+    if (len > 0) { // spill to file.
+      if (mFile == null) {
+        createSpillFile();
+      }
+      mFileStream.write(b, off, len);
+    }
   }
 
   public synchronized void write(int b) throws IOException {
-    
+    if ( ! isAugmented() ) {
+      if ( ! mMemArea.isExhausted()) {
+        // write into mem area.
+        if (mMemArea.write(b)) return;
+      }
+    } else {
+      // write into augmented data array.
+      if (mAugmentLength < mAugmentedDataArray.length) {
+        mAugmentedDataArray[mAugmentLength++] = (byte)b;
+        return;
+      }
+    }
+    if (mFile == null) {
+      createSpillFile();
+    }
+    mFileStream.write(b);
+  }
+  
+  private void createSpillFile() {
+    spillFileNameGen++;
+    mFile = File.createTempFile("Spill " + spillFileNameGen, "tmp");
+    mFileStream = new FileOutputStream(mFile);
   }
 
   /**
    * Flushes the underlying file output stream. This has no 
-   * effect if the data is in the global data pool only. But the user 
+   * effect if the data is in the manager's data pool alone. But the user 
    * has to invoke this method since he is unaware of whether a temporary
    * file is used or not.
    */
   public void flush() throws IOException {
-    if (fileStream != null)
-      fileStream.flush();
+    if (mFileStream != null)
+      mFileStream.flush();
   }
 
   /**
@@ -121,16 +181,16 @@ public class SpreadOutputStream extends OutputStream {
   public void close() throws IOException {
     flush();
     long length;
-    if (memArea != null) 
-      length = memArea.getLength();
-    else if (augmentedDataArray != null)
-      length = augmentLength;
-    if (fileStream != null) {
-      fileStream.close();
-      length += file.length();
+    if (mMemArea != null) 
+      length = mMemArea.getLength();
+    else if (mAugmentedDataArray != null)
+      length = mAugmentLength;
+    if (mFileStream != null) {
+      mFileStream.close();
+      length += mFile.length();
     }
-    dBuff.writeFinishCallBack(memArea, file, 
-        augmentedDataArray, length);
+    mDBuff.writeFinishCallBack(mMemArea, mFile,
+        mAugmentedDataArray, length);
   }
 
 }

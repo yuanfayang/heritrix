@@ -39,7 +39,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    * The manager of this virtual buffer. Set through the
    * constructor.
    */
-  private MemPoolManager mgr;
+  private MemPoolManager mMgr;
   
   /**
    * The memory area which abstracts the regions occupied in the
@@ -49,7 +49,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    * Set by the output stream's callback.
    * Package-private to allow easy access to the InputStreams.
    */
-  MemoryArea memArea;
+  MemoryArea mMemArea;
 
   /**
    * The max size of the local augmented memory.
@@ -63,25 +63,25 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    * Set by the output stream's callback.
    * Package-private to allow easy access to the InputStreams.
    */
-  byte[] augmentedDataArray;
+  byte[] mAugmentedDataArray;
 
   /**
    * This would be a file in the system's temp directory used by 
    * the OutputStream to spill the overflowing data into disk.
    * Set by the output stream's callback.
    */
-  File spillFile;
+  File mSpillFile;
   
   /**
    * The single output stream used to write data into this buffer.
    */
-  private OutputStream outStream;
+  private OutputStream mOutStream;
 
   /**
    * The total length or size of this virtual buffer.
    * Set by the output stream's callback.
    */
-  long length;
+  long mLength;
 
   /**
    * Creates a disked virtual buffer for the given manager.
@@ -89,7 +89,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    * the i/o streams provided by this class.
    */
   public DiskedVirtualBuffer(MemPoolManager mgr) {
-    this.mgr = mgr;
+    this.mMgr = mgr;
   }
   
   /**
@@ -99,9 +99,9 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public OutputStream getOutputStream() {
-    if (outStream == null)
-      outStream = new SpreadOutputStream(mgr, this);
-    return outStream;
+    if (mOutStream == null)
+      mOutStream = new SpreadOutputStream(mMgr, this);
+    return mOutStream;
   }
   
   /**
@@ -111,7 +111,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public SeekableInputStream getInputStream() {
-    return new SpreadInputStream(mgr, this);
+    return new SpreadInputStream(mMgr, this);
   }
 
   /**
@@ -160,7 +160,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   public int getSize() {
     // ToDo : This needs to be dynamic. If write is in progress,
     // then the length should be got from the output stream.
-    return length;
+    return mLength;
   }
   
   /**
@@ -180,9 +180,9 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    * yield the desired result.
    */  
   public void close() {
-    memArea.releaseMemory();
-    if (spillFile != null)
-      spillFile.delete();
+    mMemArea.releaseMemory();
+    if (mSpillFile != null)
+      mSpillFile.delete();
   }
 
   /**
@@ -191,18 +191,18 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    */
   void writeFinishCallBack(MemoryArea memArea, File file, 
       byte[] augmentedDataArray, int length) {
-    this.memArea = memArea;
-    this.spillFile = file;
-    this.augmentedDataArray = augmentedDataArray;
-    this.length = length;
+    this.mMemArea = memArea;
+    this.mSpillFile = file;
+    this.mAugmentedDataArray = augmentedDataArray;
+    this.mLength = length;
   }
   
   /**
   * Can be used to find if this buffer had used the augmented memory
-  * and not the memory from the global data pool.
+  * and not the memory from the manager's data pool.
   */
   boolean isAugmented() {
-    if (augmentedDataArray != null)
+    if (mAugmentedDataArray != null)
       return true;
     else
       return false;
