@@ -236,7 +236,7 @@ public class SimpleHttpServer
     /**
      * Get path to named webapp.
      *
-     * @param name Name of webpp.  Possible names are 'admin' or 'garden'.
+     * @param name Name of webpp.  Possible names are 'admin' or 'selftest'.
      *
      * @return Path to deployed webapp.
      */

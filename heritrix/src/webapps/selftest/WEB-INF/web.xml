@@ -5,4 +5,28 @@
 
 <web-app>
     <display-name>Heritrix Selftest</display-name>
+
+    <security-constraint>
+        <display-name>Basic auth constraint.</display-name>
+       <web-resource-collection>
+          <web-resource-name>Selftest BASIC Auth Test</web-resource-name>
+          <url-pattern>/Auth/basic/*</url-pattern>
+       </web-resource-collection>
+       <auth-constraint>
+          <role-name>selftest</role-name>
+       </auth-constraint>
+    </security-constraint>
+
+    <!--Looks like only one of these per web.xml according to DTD-->
+    <login-config>
+       <auth-method>BASIC</auth-method>
+       <realm-name>selftest</realm-name>
+    </login-config>
+
+    <security-role>
+        <description>Role used to get into the area protected by basic auth.
+            </description>
+        <role-name>selftest</role-name>
+    </security-role>
+
 </web-app>
