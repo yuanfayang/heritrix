@@ -230,10 +230,22 @@ public class CrawlURI extends CandidateURI
     }
 
 
+    /**
+     * Return the overall/fetch status of this CrawlURI for its
+     * current trip through the processing loop. 
+     * 
+     * @return a value from FetchStatusCodes
+     */
     public int getFetchStatus(){
         return fetchStatus;
     }
 
+    /**
+     * Set the overall/fetch status of this CrawlURI for
+     * its current trip through the processing loop.
+     * 
+     * @param newstatus a value from FetchStatusCodes
+     */
     public void setFetchStatus(int newstatus){
         fetchStatus = newstatus;
     }
@@ -297,35 +309,10 @@ public class CrawlURI extends CandidateURI
         }
     }
 
-//    /* (non-Javadoc)
-//     * @see org.archive.crawler.basic.URIStoreable#getStoreState()
-//     */
-//    public Object getStoreState() {
-//        return state;
-//    }
-//    /* (non-Javadoc)
-//     * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
-//     */
-//    public void setStoreState(Object s) {
-//        state = s;
-//    }
-//    /* (non-Javadoc)
-//     * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
-//     */
-//    public long getWakeTime() {
-//        return wakeTime;
-//    }
-//    /* (non-Javadoc)
-//     * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
-//     */
-//    public void setWakeTime(long w) {
-//        wakeTime = w;
-//    }
 
     public AList getAList() {
         return alist;
     }
-
 
     /**
      * Return the associated CrawlServer
@@ -675,7 +662,8 @@ public class CrawlURI extends CandidateURI
      */
     public void processingCleanup() {
         this.httpRecorder = null; 
-
+        this.fetchStatus = S_UNATTEMPTED;
+        
         // Allow get to be GC'd.
         if (this.alist != null)
         {
