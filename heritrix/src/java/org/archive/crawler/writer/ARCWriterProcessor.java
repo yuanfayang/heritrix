@@ -431,7 +431,12 @@ ARCWriterSettings, FetchStatusCodes {
         CrawlHost h = getController().getServerCache().getHostFor(curi);
         if (h == null) {
             throw new NullPointerException("Crawlhost is null for " +
-                curi);
+                curi + " " + curi.getVia());
+        }
+        InetAddress a = h.getIP();
+        if (a == null) {
+            throw new NullPointerException("Address is null for " +
+                curi + " " + curi.getVia());
         }
         return h.getIP().getHostAddress();
     }
