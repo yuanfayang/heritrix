@@ -34,10 +34,10 @@ import org.archive.util.MemLongFPSet;
 import org.archive.util.Queue;
 
 /**
- * A basic in-memory mostly breadth-first frontier, which 
- * refrains from emitting more than one CrawlURI of the same 
- * 'key' (host) at once, and respects minimum-delay and 
- * delay-factor specifications for politeness
+ * A basic mostly breadth-first frontier, which refrains from 
+ * emitting more than one CrawlURI of the same 'key' (host) at 
+ * once, and respects minimum-delay and delay-factor specifications 
+ * for politeness
  * 
  * @author gojomo
  *
@@ -111,8 +111,12 @@ public class Frontier
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
-		//alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
 		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
+		
+		// alternative: pure disk-based set 
+//		alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
+
+		// alternative: disk-based set with in-memory cache supporting quick positive contains() checks
 //		alreadyIncluded = new FPUURISet(
 //			new CachingDiskLongFPSet(
 //				c.getScratchDisk(),
@@ -133,22 +137,35 @@ public class Frontier
 	}
 
 	/** 
+	 * Arrange for the given CandidateURI to be visited, if it is not
+	 * already scheduled/completed. 
 	 * 
 	 * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void schedule(CandidateURI caUri) {
+		// TODO: where practical, do a quickie alreadyIncluded test
 		pendingQueue.enqueue(caUri);
 	}
 	
-	/* (non-Javadoc)
+	/** 
+	 * Arrange for the given CandidateURI to be visited, with top
+	 * priority (before anything else), if it is not already 
+	 * scheduled/completed. 
+	 * 
 	 * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void scheduleHigh(CandidateURI caUri) {
+		// TODO: where practical, do a quickie alreadyIncluded test
 		pendingHighQueue.enqueue(caUri);
 	}
 
 
 	/** 
+	 * Return the next CrawlURI to be processed (and presumably
+	 * visited/fetched) by a a worker thread. 
+	 * 
+	 * First checks the global pendingHigh queue, then any "Ready"
+	 * per-host queues, then the global pending queue. 
 	 * 
 	 * @see org.archive.crawler.framework.URIFrontier#next(int)
 	 */
@@ -235,7 +252,15 @@ public class Frontier
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Note that the previously emitted CrawlURI has completed 
+	 * its processing (for now). 
+	 * 
+	 * The CrawlURI may be scheduled to retry, if appropriate,
+	 * and other related URIs may become eligible for release
+	 * via the next next() call, as a result of finished(). 
+	 * 
+	 *  (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public synchronized void finished(CrawlURI curi) {
@@ -274,6 +299,8 @@ public class Frontier
 	} 
 			
 	/**
+	 * Take note of any processor-local errors that have
+	 * been entered into the CrawlURI. 
 	 * 
 	 */
 	private void logLocalizedErrors(CrawlURI curi) {
@@ -339,6 +366,7 @@ public class Frontier
 	
 	
 	/**
+	 * Wake any snoozed queues whose snooze time is up.
 	 * 
 	 */
 	protected void wakeReadyQueues(long now) {
