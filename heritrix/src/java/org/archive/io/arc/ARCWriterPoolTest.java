@@ -44,6 +44,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase
     {
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
+        cleanUpOldFiles("TEST");
         ARCWriterPool pool = new ARCWriterPool(getTmpDir(), "TEST", 
             true, MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
         ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
