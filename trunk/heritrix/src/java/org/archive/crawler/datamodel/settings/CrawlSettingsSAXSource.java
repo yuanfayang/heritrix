@@ -239,7 +239,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endDocument();
     }
 
-    /** Create SAX events from a @link ComplexType.
+    /** Create SAX events from a {@link ComplexType}.
      * 
      * @param complexType the object to creat SAX events from.
      * @param indent the indentation amount for prettyprinting XML.
@@ -350,7 +350,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endElement(nsu, objectElement, objectElement);
     }
 
-    /** Create SAX events for the content of a @link ListType.
+    /** Create SAX events for the content of a {@link ListType}.
      * 
      * @param value the ListType whose content we create SAX events for.
      * @param indent the indentation amount for prettyprinting XML.
@@ -371,7 +371,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         }
     }
 
-    /** Resolve the XML element name of a @link ComplexType.
+    /** Resolve the XML element name of a {@link ComplexType}.
      * 
      * @param complexType the object to investigate.
      * @return the name of the XML element.

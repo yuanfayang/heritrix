@@ -282,8 +282,8 @@ public abstract class SettingsHandler {
 
     /** Get or create CrawlerSettings object for a host or domain.
      * 
-     * This method is similar to @link #getSettingsObject(String) except that if
-     * there is no settings for this particular host or domain a new settings
+     * This method is similar to {@link #getSettingsObject(String)} except that
+     * if there is no settings for this particular host or domain a new settings
      * object will be returned.
      * 
      * @param scope the host or domain to get or create the settings for.

@@ -65,7 +65,7 @@ public class StringList extends ListType {
         addAll(l);
     }
 
-    /** Add a new @link java.lang.String at the specified index to this list.
+    /** Add a new {@link java.lang.String} at the specified index to this list.
      * 
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
@@ -74,7 +74,7 @@ public class StringList extends ListType {
         super.add(index, element);
     }
 
-    /** Add a new @link java.lang.String at the end of this list.
+    /** Add a new {@link java.lang.String} at the end of this list.
      * 
      * @param element the value to be added.
      */

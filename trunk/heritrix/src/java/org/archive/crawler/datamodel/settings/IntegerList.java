@@ -78,7 +78,7 @@ public class IntegerList extends ListType {
         addAll(l);
     }
 
-    /** Add a new @link java.lang.Integer at the specified index to this list.
+    /** Add a new {@link java.lang.Integer} at the specified index to this list.
      * 
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
@@ -96,7 +96,7 @@ public class IntegerList extends ListType {
         super.add(index, new Integer(element));
     }
 
-    /** Add a new @link java.lang.Integer at the end of this list.
+    /** Add a new {@link java.lang.Integer} at the end of this list.
      * 
      * @param element the value to be added.
      */
