@@ -25,6 +25,14 @@ package org.archive.crawler.selftest;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
+import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.basic.ARCWriterProcessor;
+import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.io.arc.ARCReader;
 import org.archive.util.FileUtils;
 
@@ -47,11 +55,16 @@ public class SelfTestCase extends TestCase
      */
     protected static final String SELFTEST = "SelfTest";
     
+    private static CrawlJob job = null;
     private static File jobDir = null;
-    private static String jobName = null;
     private static File arcFile = null;
-    private static String prefix = null;
     private static String selftestURL = null;
+    private static CrawlOrder crawlOrder = null;
+    
+    /**
+     * Directory logs are kept in.
+     */
+    private static File logsDir = null;
     
     /**
      * Has the static initializer for this class been run.
@@ -59,9 +72,9 @@ public class SelfTestCase extends TestCase
     private static boolean initialized = false;
     
     /**
-     * The selftest webapp directory.
+     * The selftest webapp htdocs directory.
      */
-    private static File webappDir = null;
+    private static File htdocs = null;
     
     /**
      * A reference to an ARCReader on which the validate method has been called.
@@ -101,17 +114,17 @@ public class SelfTestCase extends TestCase
      * Must be called before instantiation of any tests based off this class.
      * 
      * @param selftestURL URL to selftest webapp.
-     * @param webappDir Expanded webapp directory location.
-     * @param jobDir Directory where selftest resides.
-     * @param jobName Name of the selftest job.
-     * @param arcDir Directory wherein to find selftest arc.
-     * @param prefix Arc file prefix.
+     * @param job The selftest crawl job.
+      * @param jobDir Job output directory.  Has the seed file, the order file
+     * and logs.  
+     * @param htdocs Expanded webapp directory location.
      * 
      * @throws IOException if nonexistent directories passed.
      */
-    public static synchronized void initialize(String selftestURL,
-        File webappDir, File jobDir, String jobName, File arcDir, String prefix)
-        throws IOException
+    public static synchronized void initialize(final String selftestURL,
+            final CrawlJob job, final File jobDir, final File htdocs)
+        throws IOException, AttributeNotFoundException, MBeanException,
+            ReflectionException
     {
         if (selftestURL == null || selftestURL.length() <= 0)
         {
@@ -120,46 +133,91 @@ public class SelfTestCase extends TestCase
         SelfTestCase.selftestURL =
             selftestURL.endsWith("/")? selftestURL: selftestURL + "/";
         
-        if (webappDir == null || !webappDir.exists())
+        if (job == null)
         {
-            throw new IOException("WebappDir not set");
+        	throw new NullPointerException("Passed job is null");
         }
-        SelfTestCase.webappDir = webappDir;
-            
+        SelfTestCase.job = job;
+        
         if (jobDir == null || !jobDir.exists())
         {
-            throw new IOException("Jobdir not set");
+            throw new IOException("Jobdir null or does not exist");
         }
         SelfTestCase.jobDir = jobDir;
         
-        if (arcDir == null || !arcDir.exists())
+        SelfTestCase.crawlOrder = job.getSettingsHandler().getOrder();
+        if (crawlOrder != null)
         {
-            throw new IOException("ArcDir not set");
+            throw new NullPointerException("CrawlOrder is null");
         }
         
-        if (jobName == null || jobName.length() <= 0)
+        // Calculate the logs directory.  If diskPath is not absolute, then logs
+        // are in the jobs dir under the diskPath subdirectory.
+        String diskPath = (String)crawlOrder.
+            getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
+        if (diskPath != null && diskPath.length() > 0 &&
+                diskPath.startsWith(File.separator))
         {
-            throw new IOException("JobName not set");
-        }    
-        SelfTestCase.jobName = jobName;
+            SelfTestCase.logsDir = new File(diskPath);
+        }
+        else
+        {
+            SelfTestCase.logsDir =
+                (diskPath != null && diskPath.length() > 0)?
+                    new File(jobDir, diskPath): jobDir;
+        }
+
+        if (SelfTestCase.logsDir == null || !SelfTestCase.logsDir.exists())
+        {
+            throw new IOException("Logs directory not found");
+        }
         
+        // Calculate the arcfile name.  Find it in the arcDir.  Should only be one.
+        // Then make an instance of ARCReader and call the validate on it.
+        ComplexType arcWriterProcessor =
+            (ComplexType)crawlOrder.getProcessors().
+                getAttribute("Archiver");
+        String arcDirStr = (String)arcWriterProcessor.
+            getAttribute(ARCWriterProcessor.ATTR_PATH);
+        File arcDir = null;
+        if (arcDirStr != null && arcDirStr.length() > 0 &&
+                arcDirStr.startsWith(File.separator))
+        {
+        	arcDir = new File(arcDirStr);
+        }
+        else
+        {
+            arcDir = (arcDirStr != null && arcDirStr.length() > 0)?
+                new File(SelfTestCase.logsDir, arcDirStr): SelfTestCase.logsDir;
+        }
+ 
+        if (arcDir == null || !arcDir.exists())
+        {
+            throw new IOException("ArcDir not found");
+        }
+        
+        String prefix = (String)arcWriterProcessor.
+            getAttribute(ARCWriterProcessor.ATTR_PREFIX);
         if (prefix == null || prefix.length() <= 0)
         {
             throw new IOException("Prefix not set");
         }    
-        SelfTestCase.prefix = prefix;
         
-        // Find the arc file in the arcDir.  Should only be one.  Then make
-        // an instance of ARCReader and call the validate on it.
         File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
         if (arcs.length != 1)
         {
             throw new IOException("Expected one only arc file.  Found" +
                 " instead " + Integer.toString(arcs.length) + " files.");
         }
-        arcFile = arcs[0];
-        readReader = new ARCReader(arcFile);
-        readReader.validate();
+        SelfTestCase.arcFile = arcs[0];
+        SelfTestCase.readReader = new ARCReader(arcFile);
+        SelfTestCase.readReader.validate();
+        
+        if (htdocs == null || !htdocs.exists())
+        {
+            throw new IOException("WebappDir htdocs not set");
+        }
+        SelfTestCase.htdocs = htdocs;
         
         SelfTestCase.initialized = true;
     }
@@ -185,15 +243,7 @@ public class SelfTestCase extends TestCase
      */
     protected static File getLogsDir()
     {
-        return new File(getJobDir(), getJobName());
-    }
-
-    /**
-     * @return Returns the jobName.
-     */
-    protected static String getJobName()
-    {
-        return jobName;
+        return SelfTestCase.logsDir;
     }
     
     /**
@@ -244,8 +294,8 @@ public class SelfTestCase extends TestCase
     /**
      * @return Returns the selftest webappDir.
      */
-    public static File getWebappDir()
+    public static File getHtdocs()
     {
-        return webappDir;
+        return SelfTestCase.htdocs;
     }
 }

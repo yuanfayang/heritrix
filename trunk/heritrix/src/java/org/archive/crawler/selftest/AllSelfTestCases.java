@@ -24,6 +24,8 @@ package org.archive.crawler.selftest;
 
 import java.io.File;
 
+import org.archive.crawler.admin.CrawlJob;
+
 import junit.extensions.TestSetup;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -42,18 +44,15 @@ public class AllSelfTestCases
      * Each unit test to run as part of selftest needs to be added here.
      * 
      * @param selftestURL Base url to selftest webapp.
-     * @param webappDir Expanded webapp directory location.
+     * @param job The completed selftest job.
      * @param jobDir Job output directory.  Has the seed file, the order file
      * and logs.  
-     * @param jobName Name of job.  The logs are kept in jobdir/jobname.
-     * @param arcDir Directory in which to find arc files.
-     * @param prefix ARC file prefix.
+     * @param htdocs Expanded webapp directory location.
      * 
      * @return Suite of all selftests.
      */
-    public static Test suite(final String selftestURL, final File webappDir,
-            final File jobDir, final String jobName, final File arcDir,
-            final String prefix)
+    public static Test suite(final String selftestURL, final CrawlJob job,
+            final File jobDir, final File htdocs)
     {
         TestSuite suite =
             new TestSuite("Test for org.archive.crawler.selftest");
@@ -71,17 +70,8 @@ public class AllSelfTestCases
             {
                 protected void setUp() throws Exception
                 {
-                    SelfTestCase.initialize(selftestURL, webappDir, 
-                        jobDir, jobName, arcDir, prefix);
+                    SelfTestCase.initialize(selftestURL, job, jobDir, htdocs);
                 }
             };
-    }
- 
-    public static void main(String[] args)
-        throws Exception
-    {
-        junit.textui.TestRunner.
-            run(AllSelfTestCases.suite(args[0], new File(args[1]),
-                new File(args[2]), args[3], new File(args[4]), "IAH"));
     }
 }
