@@ -76,8 +76,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * <li> 7: META
      * <li> 8: !-- comment --
      */
-    static final String RELEVANT_TAG_EXTRACTOR =
-     "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
+// version w/ problems with unclosed script tags 
+//   static final String RELEVANT_TAG_EXTRACTOR =
+//   "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
+
+// version w/ less unnecessary backtracking
+      static final String RELEVANT_TAG_EXTRACTOR =
+          "(?is)<(?:((script[^>]*+)>.*?</script)|((style[^>]*+)>[^<]*+</style)|(((meta)|(?:\\w+))\\s+[^>]*+)|(!--.*?--))>";
 
 
 //    // this pattern extracts 'href' or 'src' attributes from
