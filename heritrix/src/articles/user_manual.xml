@@ -3122,12 +3122,14 @@ day.</quote></para>
           <para>The discovery path of seeds is an empty string.</para>
         </glossdef>
       </glossentry>
+
       <glossentry id="glossary_frontier">
         <glossterm>Frontier</glossterm>
         <glossdef>
         <para>A Frontier is a plug-able module in Heritrix that maintains the
         internal state of the crawl.  See 
           (<xref linkend="frontier" />).
+          </para>
         </glossdef>
       </glossentry>
 

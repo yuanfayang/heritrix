@@ -2196,8 +2196,8 @@ public class SimpleExtractor extends Processor
     interface that can be used to print out meta info and for doing random
     access getting of arc records (The command-line interface is described in
     the <ulink 
-        url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main method javadoc</ulink> comments).</p>  
-        <p><ulink 
+        url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main method javadoc</ulink> comments).</para>  
+        <para><ulink 
         url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink> have also developed arc reading and writing tools.
         </para>
 
