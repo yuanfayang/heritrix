@@ -116,6 +116,11 @@ public class TransclusionFilter extends Filter {
                 case 'L': {
                     break loop;
                 }
+                case 'P': {
+                    // always consider a P as a 1-hop trans inclusion; disregard previous hops
+                    transCount++;
+                    break loop;
+                }
                 case 'X': {
                     specCount++;
                     break;
