@@ -131,10 +131,16 @@
                         String fullName = mbean.getAbsoluteName() + "/" + att.getName();
                         
 						// Create override
-						if (att.isOverrideable()) {
-							p.append("<input name='" + fullName + ".override' id='" + fullName + ".override' type='checkbox' value='true' onChange='setUpdate()'");
+						if (att.isOverrideable() || localAttribute!=null) {
+							p.append("<input name='" + fullName + ".override' id='" + fullName + ".override' value='true' onChange='setUpdate()'");
 							if(localAttribute != null){
 								 p.append(" checked");
+							}
+							if(att.isOverrideable() == false){
+                                // Have a non overrideable setting set at the current level. Hide checkbox
+                                p.append(" type='hidden'");
+							} else {
+                                p.append(" type='checkbox'");
 							}
 							p.append(">");
 							p.append("</td>\n<td width='100%'>");
