@@ -45,7 +45,7 @@ import org.xbill.DNS.dns;
  *
  */
 public class FetchDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
 	
  	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
 	public static final boolean DO_CLASS_TYPE_CHECKING = true;
@@ -56,6 +56,14 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
  	
  	protected InetAddress serverInetAddr = null;
  	// protected CrawlServer dnsServer = null;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public FetchDNS(String name) {
+        super(name, "DNS Fetcher");
+    }
 
   	public void initialize(CrawlController c){
   		super.initialize(c);

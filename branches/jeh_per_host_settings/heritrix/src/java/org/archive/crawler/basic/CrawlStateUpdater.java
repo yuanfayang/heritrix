@@ -29,7 +29,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -45,12 +44,16 @@ import org.archive.crawler.framework.Processor;
  */
 public class CrawlStateUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 
-	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
-	
-	public void initialize(CrawlController c){
-		super.initialize(c);
-	}
+    public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 
+    /**
+     * @param name
+     * @param description
+     */
+    public CrawlStateUpdater(String name) {
+        super(name, "Crawl state updater");
+    }
+	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
@@ -95,7 +98,7 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 				if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 					GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 					try {
-						curi.getServer().updateRobots(get, controller.getOrder().getRobotsHonoringPolicy());
+						curi.getServer().updateRobots(get, controller.getOrder().getRobotsHonoringPolicy(curi));
 					} catch (IOException e) {
 						curi.addLocalizedError(getName(),e,"robots.txt parsing IOException");
 					}

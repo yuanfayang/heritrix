@@ -22,6 +22,11 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.util.ArchiveUtils;
@@ -47,15 +52,18 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker implements StatisticsTracking, 
+public abstract class AbstractTracker extends CrawlerModule implements StatisticsTracking, 
 												 CrawlStatusListener,
 												 CrawlURIDispositionListener
 {
+    public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(60);
+    public static final String ATTR_STATS_INTERVAL = "interval-seconds";
+
 	// A reference to the CrawlContoller of the crawl that we are to track statistics for. 
 	protected CrawlController controller;
 	
 	protected Logger periodicLogger = null;
-	protected int logInterval = 20; // In seconds.
+	//protected int logInterval; // In seconds.
 
 	// Keep track of time.
 	protected long crawlerStartTime;
@@ -68,6 +76,15 @@ public abstract class AbstractTracker implements StatisticsTracking,
 
 	protected boolean shouldrun = true;
 
+    /**
+     * @param name
+     * @param description
+     */
+    public AbstractTracker(String name, String description) {
+        super(name, description);
+        addElementToDefinition(new SimpleType(ATTR_STATS_INTERVAL, "Statistics interval", DEFAULT_STATISTICS_REPORT_INTERVAL));
+    }
+
 	/**
 	 * Set's up the Logger (including logInterval) and registers with the CrawlController 
 	 * for CrawlStatus and CrawlURIDisposition events.
@@ -79,8 +96,8 @@ public abstract class AbstractTracker implements StatisticsTracking,
 	{
 		controller = c;
 		periodicLogger = controller.progressStats;
-		logInterval = controller.getOrder().getIntAt(CrawlController.XP_STATS_INTERVAL,CrawlController.DEFAULT_STATISTICS_REPORT_INTERVAL);
-		
+		//logInterval = controller.getOrder().getIntAt(CrawlController.XP_STATS_INTERVAL,CrawlController.DEFAULT_STATISTICS_REPORT_INTERVAL);
+        
 		// Add listeners
 		controller.addCrawlStatusListener(this);	
 		controller.addCrawlURIDispositionListener(this);	
@@ -115,7 +132,7 @@ public abstract class AbstractTracker implements StatisticsTracking,
 			// pause before writing the first entry (so we have real numbers)
 			// and then pause between entries 
 			try {
-				Thread.sleep(controller.getOrder().getIntAt(CrawlController.XP_STATS_INTERVAL, CrawlController.DEFAULT_STATISTICS_REPORT_INTERVAL) * 1000);
+				Thread.sleep(getLogWriteInterval() * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				controller.runtimeErrors.log(
@@ -194,15 +211,27 @@ public abstract class AbstractTracker implements StatisticsTracking,
 	}
 
 	public void setLogWriteInterval(int interval) {
+        Integer logInterval;
 		if(interval < 0){
-			logInterval = 0;
-			return;
+			logInterval = new Integer(0);
+		} else {
+            logInterval = new Integer(interval);
 		}
-		
-		logInterval = interval;
+        try {
+            setAttribute(new Attribute(ATTR_STATS_INTERVAL, logInterval));
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }		
 	}
 	
 	public int getLogWriteInterval() {
+        int logInterval;
+        try {
+            logInterval = ((Integer) getAttribute(null, ATTR_STATS_INTERVAL)).intValue();
+        } catch (AttributeNotFoundException e) {
+            logInterval = 0;
+        }
 		return logInterval;
 	}	
 	/* (non-Javadoc)

@@ -27,6 +27,7 @@ import java.util.Iterator;
 
 import javax.management.InvalidAttributeValueException;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.framework.Filter;
@@ -54,10 +55,10 @@ public class OrFilter extends Filter {
     }
 
 	protected boolean innerAccepts(Object o) {
-		if (filters.isEmpty(globalSettings())) {
+		if (isEmpty(o)) {
 			return true;
 		}
-		Iterator iter = filters.iterator(globalSettings());
+		Iterator iter = iterator(o);
 		while(iter.hasNext()) {
 			Filter f = (Filter)iter.next();
 			if( f.accepts(o) ) {
@@ -79,17 +80,25 @@ public class OrFilter extends Filter {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize()
 	 */
-	public void initialize(CrawlerSettings settings) {
-		super.initialize(settings);
+     /*
+	public void initialize(CrawlURI curi) {
+		super.initialize(curi);
         
-        Iterator iter = filters.iterator(settings);
+        Iterator iter = iterator(curi);
         while(iter.hasNext()) {
             Filter f = (Filter) iter.next();
-            f.initialize(settings);
+            f.initialize(curi);
         }
 	}
+    */
     
-    public boolean isEmpty(CrawlerSettings settings) {
-        return filters.isEmpty(settings);
+    public boolean isEmpty(Object o) {
+        CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
+        return filters.isEmpty(curi);
+    }
+    
+    public Iterator iterator(Object o) {
+        CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
+        return filters.iterator(curi);
     }
 }

@@ -23,8 +23,13 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.logging.Logger;
+
+import javax.management.AttributeNotFoundException;
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.StringList;
 
 /**
  * This class represent the policy to which Robots.txt files is
@@ -46,48 +51,50 @@ import java.util.List;
  * 
  * The two last ones has the opportunity of adopting a different user-agent to reflect the restrictions we've opted to use.
  * 
- * @author johnh
+ * @author John Erik Halse
  *
  */
-public class RobotsHonoringPolicy {
+public class RobotsHonoringPolicy  extends CrawlerModule {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.RobotsHonoringPolicy");
+
 	public final static int CLASSIC = 0;
 	public final static int IGNORE = 1;
 	public final static int CUSTOM = 2;
 	public final static int MOST_FAVORED = 3;
 	public final static int MOST_FAVORED_SET = 4;
 	
-	private String name;
+	//private String name;
 	private int type;
 	private String customRobots;
-	private ArrayList userAgents;
+	private StringList userAgents;
 	private boolean shouldMasquerade = false;
 	
+    static final String ATTR_NAME = "robots-honoring-policy";
+    static final String ATTR_TYPE = "type";
+    static final String ATTR_MASQUERADE = "masquerade";
+    static final String ATTR_CUSTOM_ROBOTS = "custom-robots";
+    static final String ATTR_USER_AGENTS = "user-agents";
+
 	/**
 	 * Creates a new instance of RobotsHonoringPolicy.
 	 * 
-	 * @param name the type of policy to create
+	 * @param name the name of the RobotsHonoringPolicy attirubte.
 	 */
 	public RobotsHonoringPolicy(String name) {
-		if(name == null || name.length() == 0) {
-			name = "classic";
-		}
+        super(name, "Robots honoring policy");
 
-		name = name.toLowerCase();
-		if(name.equals("classic")) {
-			type = RobotsHonoringPolicy.CLASSIC;
-		} else if(name.equals("ignore")) {
-			type = RobotsHonoringPolicy.IGNORE;
-		} else if(name.equals("custom")) {
-			type = RobotsHonoringPolicy.CUSTOM;
-		} else if(name.equals("most-favored")) {
-			type = RobotsHonoringPolicy.MOST_FAVORED;
-		} else if(name.equals("most-favored-set")) {
-			type = RobotsHonoringPolicy.MOST_FAVORED_SET;
-		} else {
-			throw new IllegalArgumentException();
-		}
-		this.name = name;
+        String[] allowedTypes = new String[] {"classic", "ignore", "custom", "most-favored", "most-favored-set"};
+        
+        addElementToDefinition(new SimpleType(ATTR_TYPE, "Policy type", "classic", allowedTypes));
+        addElementToDefinition(new SimpleType(ATTR_MASQUERADE, "Should we masquerade as another user agent", new Boolean(false)));
+        addElementToDefinition(new SimpleType(ATTR_CUSTOM_ROBOTS, "Custom robots to use if type is custom", ""));
+        addElementToDefinition(new StringList(ATTR_USER_AGENTS, "User agents"));
 	}
+    
+    public RobotsHonoringPolicy() {
+        this(ATTR_NAME);
+    }
 	
 	/**
 	 * If policy-type is most favored crawler of set, then this method is
@@ -96,9 +103,11 @@ public class RobotsHonoringPolicy {
 	 * @param userAgent Name of user agent to add
 	 */
 	public void addUserAgent(String userAgent) {
+        /*
 		if(userAgents == null) {
 			userAgents = new ArrayList();
 		}
+        */
 		userAgents.add(userAgent);
 	}
 	
@@ -108,7 +117,7 @@ public class RobotsHonoringPolicy {
 	 * 
 	 * @return List of Strings with user agents
 	 */
-	public List getUserAgents() {
+	public StringList getUserAgents() {
 		return userAgents;
 	}
 	
@@ -196,4 +205,36 @@ public class RobotsHonoringPolicy {
 	public boolean isType(int type) {
 		return this.type == type;
 	}
+
+    public void initialize(CrawlerSettings settings) {
+        try {
+            String typeName = (String) getAttribute(settings, "type");
+
+            if(typeName.equals("classic")) {
+                type = RobotsHonoringPolicy.CLASSIC;
+            } else if(typeName.equals("ignore")) {
+                type = RobotsHonoringPolicy.IGNORE;
+            } else if(typeName.equals("custom")) {
+                type = RobotsHonoringPolicy.CUSTOM;
+            } else if(typeName.equals("most-favored")) {
+                type = RobotsHonoringPolicy.MOST_FAVORED;
+            } else if(typeName.equals("most-favored-set")) {
+                type = RobotsHonoringPolicy.MOST_FAVORED_SET;
+            } else {
+                throw new IllegalArgumentException();
+            }
+
+            setMasquerade(((Boolean) getAttribute(settings, ATTR_MASQUERADE)).booleanValue());
+            
+            // if the policy type is custom, we should look up the admins robots.txt file
+            if(isType(RobotsHonoringPolicy.CUSTOM)) {
+                setCustomRobots((String) getAttribute(settings, ATTR_CUSTOM_ROBOTS));
+            }
+            if (isType(RobotsHonoringPolicy.MOST_FAVORED_SET)) {
+                userAgents = (StringList) getAttribute(settings, ATTR_USER_AGENTS);
+            }
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+    }
 }

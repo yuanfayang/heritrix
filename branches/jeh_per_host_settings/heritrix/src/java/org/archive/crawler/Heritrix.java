@@ -25,6 +25,7 @@
  */
 package org.archive.crawler;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -33,11 +34,14 @@ import java.util.Properties;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import javax.management.InvalidAttributeValueException;
+
 import org.archive.crawler.admin.SimpleCrawlJob;
 import org.archive.crawler.admin.SimpleHandler;
 import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.exceptions.InitializationException;
@@ -301,12 +305,24 @@ public class Heritrix {
      */
     protected static void launch(String crawlOrderFile){
         try {
+            XMLSettingsHandler handler = new XMLSettingsHandler(new File(crawlOrderFile));
+            handler.initialize();
             CrawlController controller = new CrawlController();
-            CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
-            controller.initialize(order);
+            controller.initialize(handler);
             controller.startCrawl();
+
+
+
+            //CrawlController controller = new CrawlController();
+            //CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
+            //controller.initialize(order);
+            //controller.startCrawl();
             // catch all configuration exceptions, which at this level are fatal
         }catch(InitializationException e){
+            System.out.println("Fatal configuration exception: " + 
+                    e.toString());
+            return; 
+        } catch (InvalidAttributeValueException e) {
             System.out.println("Fatal configuration exception: " + 
                     e.toString());
             return; 

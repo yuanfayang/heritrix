@@ -27,7 +27,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -67,9 +67,22 @@ public class HopsFilter extends Filter {
 				transCount++;
 			}
 		}
+        if (o instanceof CrawlURI) {
+            CrawlURI curi = (CrawlURI) o;
+            Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
+            try {
+                maxLinkHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_LINK_HOPS, curi)).intValue();
+                maxTransHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
+            } catch (AttributeNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
 		return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
 	}
 
+/*
 	public void initialize(CrawlerSettings settings) {
 		super.initialize(settings);
         Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
@@ -81,5 +94,5 @@ public class HopsFilter extends Filter {
             e.printStackTrace();
         }
 	}
-
+*/
 }

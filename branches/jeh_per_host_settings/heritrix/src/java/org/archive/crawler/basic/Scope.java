@@ -165,7 +165,7 @@ public class Scope extends CrawlScope {
                 setAttribute(settings, focusFilter);
             }
             if (focusFilter != null) {
-                focusFilter.initialize(settings);
+                //focusFilter.initialize(settings);
                 // only set up transitiveFilter if focusFilter set
                 Object filter = getAttribute(settings, ATTR_TRANSITIVE_FILTER);
                 if (filter instanceof Filter) {
@@ -178,7 +178,7 @@ public class Scope extends CrawlScope {
                     transitiveFilter.setTransient(true);
                     setAttribute(settings, transitiveFilter);
                 }
-                transitiveFilter.initialize(settings);
+                //transitiveFilter.initialize(settings);
             }
 
             // setup exclude filter
@@ -194,7 +194,7 @@ public class Scope extends CrawlScope {
             if (excludeFilter.isEmpty(settings)) {
                 excludeFilter = null;
             } else {
-                excludeFilter.initialize(settings);
+                //excludeFilter.initialize(settings);
             }
 
         } catch (InvalidAttributeValueException e) {

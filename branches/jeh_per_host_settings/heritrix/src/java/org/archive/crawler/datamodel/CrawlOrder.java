@@ -29,10 +29,10 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.URIFrontier;
 
 /** Read and manipulate configuration (order) file.
  */
@@ -49,13 +49,19 @@ public class CrawlOrder extends CrawlerModule {
     public static final String ATTR_HTTP_HEADERS = "http-headers";
     public static final String ATTR_USER_AGENT = "user-agent";
     public static final String ATTR_FROM = "from";
-    public static final String ATTR_FRONTIER = "frontier";
+    //public static final String ATTR_FRONTIER = "frontier";
     public static final String ATTR_PROCESSORS = "processors";
+    public static final String ATTR_FIRST_PROCESSOR = "first-processor";
+    public static final String ATTR_LOGGERS = "loggers";
+
+    public static final String XP_FRONTIER = "//behavior/frontier";
+    public static final String XP_CRAWL_SCOPE = "//scope";
 
     String caseFlattenedUserAgent;
 
     private MapType httpHeaders;
     private MapType processors;
+    private MapType loggers;
     
     private CrawlController controller;
 
@@ -109,19 +115,25 @@ public class CrawlOrder extends CrawlerModule {
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
-        addElementToDefinition(new CrawlerModule(ATTR_FRONTIER, "Frontier"));
+        addElementToDefinition(new CrawlerModule(URIFrontier.ATTR_NAME, "Frontier"));
 
+        addElementToDefinition(new SimpleType(ATTR_FIRST_PROCESSOR, "First processor", ""));
+        
         processors =
             (MapType) addElementToDefinition(new MapType(ATTR_PROCESSORS,
                 "URI processors"));
+
+        loggers =
+            (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
+                "Loggers"));
     }
 
-    public String getUserAgent(CrawlerSettings settings) {
+    public String getUserAgent(CrawlURI curi) {
         if (caseFlattenedUserAgent == null) {
             try {
                 caseFlattenedUserAgent =
                     ((String) httpHeaders
-                        .getAttribute(settings, ATTR_USER_AGENT))
+                        .getAttribute(ATTR_USER_AGENT, curi))
                         .toLowerCase();
             } catch (AttributeNotFoundException e) {
                 logger.severe(e.getMessage());
@@ -130,10 +142,10 @@ public class CrawlOrder extends CrawlerModule {
         return caseFlattenedUserAgent;
     }
 
-    public String getFrom(CrawlerSettings settings) {
+    public String getFrom(CrawlURI curi) {
         String res = null;
         try {
-            res = (String) httpHeaders.getAttribute(settings, ATTR_FROM);
+            res = (String) httpHeaders.getAttribute(ATTR_FROM, curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
@@ -161,10 +173,9 @@ public class CrawlOrder extends CrawlerModule {
      * 
      * @return the new RobotsHonoringPolicy
      */
-    public RobotsHonoringPolicy getRobotsHonoringPolicy(CrawlerSettings settings) {
+    public RobotsHonoringPolicy getRobotsHonoringPolicy(CrawlURI curi) {
         try {
-            return (RobotsHonoringPolicy) getAttribute(settings,
-                    RobotsHonoringPolicy.ATTR_NAME);
+            return (RobotsHonoringPolicy) getAttribute(RobotsHonoringPolicy.ATTR_NAME, curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
             return null;
@@ -191,5 +202,13 @@ public class CrawlOrder extends CrawlerModule {
      */
     public void setController(CrawlController controller) {
         this.controller = controller;
+    }
+    
+    public MapType getLoggers() {
+        return loggers;
+    }
+    
+    public MapType getProcessors() {
+        return processors;
     }
 }

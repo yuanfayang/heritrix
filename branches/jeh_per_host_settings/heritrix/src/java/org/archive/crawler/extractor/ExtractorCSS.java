@@ -65,6 +65,14 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         Pattern.compile(
             "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorCSS(String name) {
+        super(name, "CSS Extractor");
+    }
+
 	/**
 	 * @param curi
 	 */

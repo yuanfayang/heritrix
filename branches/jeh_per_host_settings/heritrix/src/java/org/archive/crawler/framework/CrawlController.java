@@ -25,25 +25,24 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
-import java.util.ArrayList;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 
-import org.archive.crawler.admin.AdminConstants;
 import org.archive.crawler.admin.StatisticsTracker;
+import org.archive.crawler.basic.Frontier;
 import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -77,20 +76,11 @@ public class CrawlController extends Thread {
 	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
 	private static final String LOGNAME_RECOVER = "recover";
-	public static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
-	public static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval-seconds";
-	public static final String XP_DISK_PATH = "//behavior/@disk-path";
-	public static final String XP_PROCESSORS = "//behavior/processors/processor";
-	public static final String XP_FRONTIER = "//behavior/frontier";
-	public static final String XP_CRAWL_SCOPE = "//scope";
-	public static final String XP_MAX_BYTES_DOWNLOAD = "//behavior/@max-bytes-download";
-	public static final String XP_MAX_DOCUMENT_DOWNLOAD = "//behavior/@max-document-download";
-	public static final String XP_MAX_TIME = "//behavior/@max-time-sec";
-	
+
+    private SettingsHandler settingsHandler;
+    
 	protected String sExit; 
 
-	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
-	
 	public static final int DEFAULT_MASTER_THREAD_PRIORITY = Thread.NORM_PRIORITY + 1;
 
 	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
@@ -124,7 +114,8 @@ public class CrawlController extends Thread {
 		
 	Processor firstProcessor;
     Processor postprocessor;
-	LinkedHashMap processors = new LinkedHashMap(); 
+	//LinkedHashMap processors = new LinkedHashMap();
+    MapType processors; 
 	int nextToeSerialNumber = 0;
 	
 	ServerCache serverCache;
@@ -144,6 +135,7 @@ public class CrawlController extends Thread {
 	 * @throws InitializationException
 	 */
 	public void initialize(SettingsHandler settingsHandler) throws InitializationException {
+        this.settingsHandler = settingsHandler;
 		order = settingsHandler.getOrder();
         order.setController(this);
 		
@@ -167,8 +159,8 @@ public class CrawlController extends Thread {
 			throw new InitializationException("Unable to create log file(s): " + e.toString(), e);
 		}
 
-        // TODO: setupStatTracking();
-        // TODO: setupToePool();
+        setupStatTracking();
+        setupToePool();
 		setupCrawlModules();
 		
 	}
@@ -323,33 +315,49 @@ public class CrawlController extends Thread {
         //frontier = (URIFrontier) order.instantiate(XP_FRONTIER);
 
         try {
-            scope = (CrawlScope) order.getAttribute(null, Scope.ATTR_NAME);
-            //frontier = (URIFrontier) order.getAttribute(null, CrawlOrder.ATTR_FRONTIER);
-        } catch (AttributeNotFoundException e) {
+            scope = (CrawlScope) order.getAttribute(Scope.ATTR_NAME);
+            Object o = order.getAttribute(URIFrontier.ATTR_NAME);
+            if (o instanceof URIFrontier) {
+                frontier = (URIFrontier) o;
+            } else {
+                frontier = new Frontier(URIFrontier.ATTR_NAME);
+                order.setAttribute((Frontier) frontier);
+            }
+        } catch (Exception e) {
             throw new FatalConfigurationException(e.getMessage());
         }
 		
 		// TODO: firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
-		
-		// try to initialize each scope and frontier from the config file
+        processors = order.getProcessors();
+        if (processors.isEmpty(null)) {
+            throw new FatalConfigurationException("No processors defined");
+        }
+        
+        try {
+            String firstProcessorName =
+                (String) order.getAttribute(null, CrawlOrder.ATTR_FIRST_PROCESSOR);
+            firstProcessor = (Processor) processors.getAttribute(null, firstProcessorName);
+        } catch (AttributeNotFoundException e) {
+            throw new FatalConfigurationException("Could not resolve first processor " + e.getMessage());
+        }
 
-		
+
+		// try to initialize each scope and frontier from the config file
 		scope.initialize(scope.globalSettings());
-//		try {
-//			frontier.initialize(this);
-//		} catch (IOException e) {
-//			throw new FatalConfigurationException("unable to initialize frontier: "+e);
-//		}
+		try {
+			frontier.initialize(this);
+		} catch (IOException e) {
+			throw new FatalConfigurationException("unable to initialize frontier: "+e);
+		}
 			
 		serverCache = new ServerCache(this);
-		
-		Iterator iter = processors.entrySet().iterator();
-		while (iter.hasNext()) {
-			Object obj = iter.next();
-			logger.info(obj.toString());
-			Processor p = (Processor) ((Map.Entry)obj).getValue();
-			p.initialize(this);
-		}
+
+        Iterator it = processors.iterator(null);
+        while (it.hasNext()) {
+            Processor p = (Processor) it.next();
+            logger.info("Processor: " + p.getName() + " --> " + p.getClass().getName());
+            p.initialize(this);
+        }
 	}
 
 
@@ -384,10 +392,24 @@ public class CrawlController extends Thread {
 		// the statistics object must be created before modules that use it if those 
 		// modules retrieve the object from the controller during initialization 
 		// (which some do).  So here we go with that.
-		// TODO: int interval = order.getIntAt(XP_STATS_INTERVAL, DEFAULT_STATISTICS_REPORT_INTERVAL);
-        // TODO: statistics = new StatisticsTracker(); //TODO: Read from configuration file what implementation of StatisticsTracking to use
-        // TODO: statistics.initalize(this);
-	
+        MapType loggers = order.getLoggers();
+        if (loggers.isEmpty(null)) {
+            // set up a default tracker
+            try {
+                loggers.addElement(null, new StatisticsTracker("crawl-statistics"));
+            } catch (InvalidAttributeValueException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        Iterator it = loggers.iterator(null);
+        while (it.hasNext()) {
+            StatisticsTracking tracker = (StatisticsTracking) it.next();
+            tracker.initalize(this);
+            if (statistics == null) {
+                statistics = tracker;
+            }
+        }
 	}
 
 
@@ -652,7 +674,7 @@ public class CrawlController extends Thread {
 		return order;
 	}
 
-	public HashMap getProcessors() {
+	public MapType getProcessors() {
 		return processors;
 	}
 
@@ -831,4 +853,12 @@ public class CrawlController extends Thread {
 			frontier.scheduleHigh(caUri);
 		}
 	}
+    
+    /**
+     * @return
+     */
+    public SettingsHandler getSettingsHandler() {
+        return settingsHandler;
+    }
+
 }

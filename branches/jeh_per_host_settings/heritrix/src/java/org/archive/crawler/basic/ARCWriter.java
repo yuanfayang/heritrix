@@ -29,10 +29,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.IAGZIPOutputStream;
@@ -51,8 +56,12 @@ import org.xbill.DNS.Record;
  *
  */
 public class ARCWriter extends Processor implements CoreAttributeConstants {
-	
-	private int arcMaxSize = 100000000;		// max size we want arc files to be (bytes)
+	private final static String ATTR_COMPRESS = "compress";
+    private final static String ATTR_PREFIX = "prefix";
+    private final static String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
+    private final static String ATTR_PATH = "path";
+    
+    private int arcMaxSize = 100000000;		// max size we want arc files to be (bytes)
 	private String arcPrefix = "IAH";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
@@ -64,10 +73,26 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	//  the event multiple arcwriter exist and are creating files concurrently
 	private static int arcId = 0;						
 	
+    /**
+     * @param name
+     * @param description
+     */
+    public ARCWriter(String name, String description) {
+        super(name, description);
+        addElementToDefinition(new SimpleType(ATTR_COMPRESS, "Compress arc files", new Boolean(useCompression)));
+        addElementToDefinition(new SimpleType(ATTR_PREFIX, "Prefix", arcPrefix));
+        addElementToDefinition(new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file", new Integer(arcMaxSize)));
+        addElementToDefinition(new SimpleType(ATTR_PATH, "Where to store arc files", outputDir));
+    }
+
   	public void initialize(CrawlController c){
   		super.initialize(c);
   
-		readConfiguration();
+		try {
+            readConfiguration();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 		
 		try{
 			createNewArcFile();		  		
@@ -76,14 +101,14 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		}
   	}
   	
-  	protected void readConfiguration(){
+  	protected void readConfiguration() throws AttributeNotFoundException, MBeanException, ReflectionException{
 		// set up output directory
 		CrawlOrder order = controller.getOrder();
 		
-		setUseCompression(getBooleanAt("@compress",false));
-		setArcPrefix(getStringAt("@prefix",arcPrefix));
-		setArcMaxSize(getIntAt("@max-size-bytes",arcMaxSize));
-		setOutputDir(getStringAt("@path",outputDir));
+		setUseCompression(((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
+		setArcPrefix((String) getAttribute(ATTR_PREFIX));
+		setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
+		setOutputDir((String) getAttribute(ATTR_PATH));
 
   	}
 

@@ -46,7 +46,8 @@ import org.archive.util.TextUtils;
  * TODO: more testing
  */
 public class ExtractorHTML2 extends ExtractorHTML {
-	static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
+
+    static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
 	static final Pattern BACKSLAH = Pattern.compile("\\\\");
 	/** Regular expression that parses URIs for the CSS URL syntax */
 	static final Pattern CSS_URI_EXTRACTOR =
@@ -72,6 +73,13 @@ public class ExtractorHTML2 extends ExtractorHTML {
 	 */
 	static final Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
 	 "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>");
+
+    /**
+     * @param name
+     */
+    public ExtractorHTML2(String name) {
+        super(name);
+    }
 
 	/** 
 	 * @param curi

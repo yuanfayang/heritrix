@@ -46,10 +46,18 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class Postselector extends Processor implements CoreAttributeConstants, FetchStatusCodes {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.Postselector");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.Postselector");
 
 	// limits on retries TODO: separate into retryPolicy? 
 	private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
+
+    /**
+     * @param name
+     * @param description
+     */
+    public Postselector(String name) {
+        super(name, "Post selector");
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)

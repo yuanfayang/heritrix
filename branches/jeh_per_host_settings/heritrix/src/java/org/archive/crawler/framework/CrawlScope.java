@@ -75,7 +75,6 @@ public abstract class CrawlScope extends Filter {
     }
 
     public void initialize(CrawlerSettings settings) {
-        super.initialize(settings);
         // TODO let configuration info specify seedExtractor
     }
 
