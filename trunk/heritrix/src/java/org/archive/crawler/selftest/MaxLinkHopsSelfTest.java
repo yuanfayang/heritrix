@@ -52,7 +52,7 @@ public class MaxLinkHopsSelfTest
      * Files to find as an array.
      */
     private static final String [] FILES_TO_FIND_AS_ARRAY =
-        {"1.html", "2.html", "3.html", "4.html", "5.html"};
+        {"2.html", "3.html", "4.html", "5.html"};
 
     /**
      * Files to find as a list.
@@ -61,9 +61,16 @@ public class MaxLinkHopsSelfTest
         Arrays.asList(FILES_TO_FIND_AS_ARRAY);
 
     /**
-     * File not to find.
+     * Files not to find as an array.
      */
-    private static final String FILE_NOT_TO_FIND = "6.html";
+    private static final String [] FILES_NOT_TO_FIND_AS_ARRAY =
+        {"1.html", "6.html"};
+    
+    /**
+     * Files not to find as a list.
+     */
+    private static final List FILES_NOT_TO_FIND =
+        Arrays.asList(FILES_NOT_TO_FIND_AS_ARRAY);
 
 
     /**
@@ -81,7 +88,7 @@ public class MaxLinkHopsSelfTest
         assertTrue("max-link-hops incorrect", MAXLINKHOPS == maxLinkHops);
 
         // Make sure file we're NOT supposed to find is actually on disk.
-        assertTrue("File present on disk", fileExists(FILE_NOT_TO_FIND));
+        assertTrue("File present on disk", filesExist(FILES_NOT_TO_FIND));
 
         // Ok.  The file not to find exists.  Lets see if it made it into arc.
         testFilesInArc(FILES_TO_FIND);
