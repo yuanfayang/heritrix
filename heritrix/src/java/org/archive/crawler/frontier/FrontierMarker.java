@@ -45,9 +45,9 @@ public class FrontierMarker implements URIFrontierMarker {
     protected boolean inCacheOnly;
     protected boolean hasNext;
     protected long nextItemNumber;
-    protected ArrayList keyqueues;
+    protected ArrayList keyQueues;
     // -1 -> PendingQueue, > 0 -> KeyQueue at index...
-    int currentQueue;
+    protected int currentQueue;
     // The absolute position (ignoring matches or no matches) in the current
     // queue to BEGIN.
     protected long absolutePositionInCurrentQueue;
@@ -57,20 +57,20 @@ public class FrontierMarker implements URIFrontierMarker {
         this.inCacheOnly = inCacheOnly;
         p = Pattern.compile(match);
         nextItemNumber=1;
-        this.keyqueues = keyqueues;
+        this.keyQueues = keyqueues;
         currentQueue = 0;
         absolutePositionInCurrentQueue = 0;
         hasNext = true;
     }
 
-    protected void nextQueue(){
-        if(++currentQueue==keyqueues.size()){
+    public void nextQueue() {
+        if(++currentQueue==keyQueues.size()){
             currentQueue = -1;
         }
         absolutePositionInCurrentQueue = 0;
     }
 
-    protected boolean match(CandidateURI caURI){
+    public boolean match(CandidateURI caURI){
         return p.matcher(caURI.getURIString()).matches();
     }
 
@@ -80,6 +80,13 @@ public class FrontierMarker implements URIFrontierMarker {
 	public long getNextItemNumber() {
 		return nextItemNumber;
 	}
+    
+    /**
+     * Increment next item number.
+     */
+    public synchronized void incrementNextItemNumber() {
+    	    this.nextItemNumber++;
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontierMarker#getMatchExpression()
@@ -102,4 +109,36 @@ public class FrontierMarker implements URIFrontierMarker {
         return hasNext;
     }
 
+	/**
+	 * @return Returns the currentQueue.
+	 */
+	public int getCurrentQueue() {
+		return currentQueue;
+	}
+	/**
+	 * @return Returns the keyQueues.
+	 */
+	public ArrayList getKeyQueues() {
+		return keyQueues;
+	}
+	/**
+	 * @return Returns the absolutePositionInCurrentQueue.
+	 */
+	public long getAbsolutePositionInCurrentQueue() {
+		return absolutePositionInCurrentQueue;
+	}
+	/**
+	 * @return Returns the inCacheOnly.
+	 */
+	public boolean isInCacheOnly() {
+		return inCacheOnly;
+	}
+	/**
+	 * @param absolutePositionInCurrentQueue The absolutePositionInCurrentQueue
+     * to set.
+	 */
+	public synchronized void setAbsolutePositionInCurrentQueue(
+			long absolutePositionInCurrentQueue) {
+		this.absolutePositionInCurrentQueue = absolutePositionInCurrentQueue;
+	}
 }
