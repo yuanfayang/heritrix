@@ -4,7 +4,6 @@
  */
 package org.archive.crawler.admin;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,6 +16,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlListener;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
 /**
@@ -70,7 +70,6 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	/*
 	 * Snapshot data. 
 	 */
-	protected SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");
 	protected long discoveredPages = 0;
 	protected long pendingPages = 0;
 	protected long downloadedPages = 0;
@@ -276,7 +275,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		periodicLogger.log(
 			Level.INFO,
 			new PaddingStringBuffer()
-             .append(timestamp.format(now))
+             .append(ArchiveUtils.TIMESTAMP14.format(now))
              .raAppend(26,discoveredPages)
 			 .raAppend(38,pendingPages)
 			 .raAppend(51,downloadedPages)
