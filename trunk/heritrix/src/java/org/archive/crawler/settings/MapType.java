@@ -153,8 +153,8 @@ public class MapType extends ComplexType {
 
     /** Returns true if this map is empty.
      *
-     * @param settings the settings object for which this set of elements
-     *                 are valid.
+     * @param context the settings object for which this set of elements
+     * are valid.
      * @return true if this map is empty.
      */
     public boolean isEmpty(Object context) {

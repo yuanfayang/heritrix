@@ -42,8 +42,8 @@ import java.util.zip.GZIPInputStream;
  * by the zlib Inflater class.  Also implements this interface so can
  * compressed and uncompressed streams alike.
  * 
- * <p>If you need to know start of a gzip header, call {@link getFilePointer()}
- * just after a call to {@link hasNext()} and before you call {@link next()}.
+ * <p>If you need to know start of a gzip header, call {@link #getFilePointer()}
+ * just after a call to {@link #hasNext()} and before you call {@link #next()}.
  * 
  * @author stack
  */
