@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.archive.util.DiskBackedQueue;
-import org.archive.util.MemQueue;
 import org.archive.util.Queue;
 
 /**
