@@ -25,4 +25,11 @@ public class MemQueue extends LinkedList implements Queue {
 		return removeFirst();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#length()
+	 */
+	public long length() {
+		return (long)size();
+	}
+
 }
