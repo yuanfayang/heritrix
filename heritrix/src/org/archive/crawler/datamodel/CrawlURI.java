@@ -74,7 +74,7 @@ public class CrawlURI extends CandidateURI
 	 * @param caUri
 	 */
 	public CrawlURI(CandidateURI caUri) {
-		super(caUri.getUuri());
+		super(caUri.getUURI());
 		setIsSeed(caUri.getIsSeed());
 		setPathFromSeed(caUri.getPathFromSeed());
 		setVia(caUri.getVia());
@@ -124,13 +124,6 @@ public class CrawlURI extends CandidateURI
 	
 	public int incrementFetchAttempts(){
 		return fetchAttempts++;
-	}
-		
-	/**
-	 * @return
-	 */
-	public UURI getUURI() {
-		return uuri;
 	}
 
 	/** 

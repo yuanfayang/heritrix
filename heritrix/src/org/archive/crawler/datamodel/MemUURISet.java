@@ -31,8 +31,8 @@ public class MemUURISet extends HashSet implements UURISet {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public boolean contains(CrawlURI curi) {
-		return contains((Object)curi);
+	public boolean contains(CandidateURI curi) {
+		return contains((Object)curi.getUURI());
 	}
 
 	/* (non-Javadoc)
@@ -52,15 +52,15 @@ public class MemUURISet extends HashSet implements UURISet {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void add(CrawlURI curi) {
-		add((Object)curi);
+	public void add(CandidateURI curi) {
+		add(curi.getUURI());
 	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void remove(CrawlURI curi) {
-		remove((Object)curi);
+	public void remove(CandidateURI curi) {
+		remove(curi.getUURI());
 	}
 
 }

@@ -8,7 +8,7 @@ package org.archive.crawler.filter;
 
 import java.util.Iterator;
 
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
@@ -45,8 +45,8 @@ public class SeedExtensionFilter extends Filter {
 		UURI u = null;
 		if(o instanceof UURI) {
 			u = (UURI)o;
-		} else if ( o instanceof CrawlURI) {
-			u = ((CrawlURI)o).getUURI();
+		} else if ( o instanceof CandidateURI) {
+			u = ((CandidateURI)o).getUURI();
 		}
 		if(u==null) {
 			return false;

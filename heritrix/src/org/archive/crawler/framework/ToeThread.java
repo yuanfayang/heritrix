@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -45,7 +46,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		pool = p;
 		serialNumber = sn;
 		setName("ToeThread #"+serialNumber);
-		httpRecorder = new HttpRecorder("tt"+sn+"http");
+		httpRecorder = new HttpRecorder(new File(controller.getDisk(),"scratch"),"tt"+sn+"http");
 	}
 
 

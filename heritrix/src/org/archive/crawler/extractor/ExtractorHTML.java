@@ -30,7 +30,7 @@ import org.archive.crawler.framework.Processor;
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	private boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTML");
+	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
 
     // this pattern extracts either (1) whole <script>...</script>
     // ranges; or (2) any other open-tag with at least one attribute
@@ -205,6 +205,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		Matcher candidates = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(code);
 		while (candidates.find()) {
+			logger.finest("script: "+candidates.group(2)+ " from "+curi);
 			curi.addEmbed(candidates.group(2));
 			// TODO: treat "looks like" html URIs as links?
 		}
@@ -220,6 +221,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		if(link.matches("(?i)^javascript:.*")) {
 			processScriptCode(curi,value.subSequence(11,value.length()));
 		} else {
+			logger.finest("link: "+link+ " from "+curi);
 			curi.addLink(link);
 		}
 	}
@@ -233,6 +235,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	private void processEmbed(CrawlURI curi, CharSequence value) {
 		String embed = value.toString();
 		embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		logger.finest("embed: "+embed+ " from "+curi);
 		curi.addEmbed(embed);
 	}
 

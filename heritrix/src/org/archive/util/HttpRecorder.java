@@ -6,6 +6,7 @@
  */
 package org.archive.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,10 +28,12 @@ public class HttpRecorder {
 	/**
 	 * 
 	 */
-	public HttpRecorder(String backingFilenamePrefix) {
+	public HttpRecorder(File tempDir, String backingFilenamePrefix) {
 		super();
-		ris = new RecordingInputStream(32768,backingFilenamePrefix+".ris",2^20);
-		ros = new RecordingOutputStream(2048,backingFilenamePrefix+".ros",2^12);
+		tempDir.mkdirs();
+		String tempDirPath = tempDir.getPath()+File.separatorChar;
+		ris = new RecordingInputStream(32768,tempDirPath+backingFilenamePrefix+".ris",2^20);
+		ros = new RecordingOutputStream(2048,tempDirPath+backingFilenamePrefix+".ros",2^12);
 	}
 
 	/**
