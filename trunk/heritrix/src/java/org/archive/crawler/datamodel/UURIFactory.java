@@ -284,10 +284,8 @@ public class UURIFactory extends URI {
      */
     private UURI create(String uri, String charset) throws URIException {
         boolean escaped = isEscaped(uri);
-        UURI uuri  = (escaped)?
-            new UURIImpl(escapeWhitespace(fixup(uri, null, escaped)),
-                escaped, charset):
-            new UURIImpl(fixup(uri, null, escaped), escaped, charset);
+        UURI uuri  = new UURIImpl(fixup(uri, null, escaped),
+            escaped, charset);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("URI " + uri +
                 " PRODUCT " + uuri.toString() +
@@ -524,7 +522,8 @@ public class UURIFactory extends URI {
         appendNonNull(buffer, uriAuthority, "//", false);
         appendNonNull(buffer, uriPath, "", false);
         appendNonNull(buffer, uriQuery, "?", false);
-        return buffer.toString();
+        return (escaped)?
+            escapeWhitespace(buffer.toString()): buffer.toString();
     }
     
     /**

@@ -151,6 +151,15 @@ public class UURIFactoryTest extends TestCase {
         uuri = UURIFactory.getInstance(uri);
         assertTrue("Not equal " + uuri.toString(),
                 uuri.toString().equals(tgtUri));
+        uri = "http://gemini.info.usaid.gov/directory/" +
+            "pbResults.cfm?&urlNameLast=Adamson";
+        tgtUri = "http://gemini.info.usaid.gov/directory/faxResults.cfm?" +
+            "name=Charisse%20+Adamson,&location=RRB%20%20%20%205%2E08%2D006";
+        uuri = UURIFactory.getInstance(UURIFactory.getInstance(uri),
+            "faxResults.cfm?name=Charisse +Adamson,&location=" +
+            "RRB%20%20%20%205%2E08%2D006");
+        assertTrue("Not equal " + uuri.toString(),
+                uuri.toString().equals(tgtUri));
     }
     
 	public final void testFailedGetPath() throws URIException {
