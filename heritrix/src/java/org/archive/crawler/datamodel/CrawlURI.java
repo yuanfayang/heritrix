@@ -614,11 +614,17 @@ public class CrawlURI extends CandidateURI
      * Make note of a non-fatal error, local to a particular Processor,
      * which should be logged somewhere, but allows processing to continue.
      *
-     * @param processorName
-     * @param ex
-     * @param message
+     * This is how you add to the local-error log (the 'localized' in
+     * the below is making an error local rather than global, not
+     * making a swiss-french version of the error.).
+     * 
+     * @param processorName Name of processor the exception was thrown
+     * in.
+     * @param ex Exception to log.
+     * @param message Extra message to log beyond exception message.
      */
-    public void addLocalizedError(String processorName, Exception ex, String message) {
+    public void addLocalizedError(String processorName, Exception ex,
+        	String message) {
         List localizedErrors;
         if(alist.containsKey(A_LOCALIZED_ERRORS)) {
             localizedErrors = (List) alist.getObject(A_LOCALIZED_ERRORS);
