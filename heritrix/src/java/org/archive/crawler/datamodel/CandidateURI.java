@@ -26,6 +26,7 @@ package org.archive.crawler.datamodel;
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.extractor.Link;
 import org.archive.util.Lineable;
 
 import st.ata.util.AList;
@@ -139,8 +140,10 @@ implements Serializable, Lineable {
      * @param u uuri instance this CandidateURI wraps.
      * @param pathFromSeed
      * @param via
+     * @param viaContext
      */
-    public CandidateURI(UURI u, String pathFromSeed, UURI via, CharSequence viaContext) {
+    public CandidateURI(UURI u, String pathFromSeed, UURI via,
+            CharSequence viaContext) {
         this.uuri = u;
         this.pathFromSeed = pathFromSeed;
         this.via = via;
@@ -463,5 +466,16 @@ implements Serializable, Lineable {
     
     public void remove(String key) {
         getAList().remove(key);
+    }
+    
+    /**
+     * @return True if this CandidateURI was result of a redirect:
+     * i.e. Its parent URI redirected to here, this URI was what was in 
+     * the 'Location:' HTTP Header.
+     */
+    public boolean isLocation() {
+        return this.pathFromSeed != null && this.pathFromSeed.length() > 0 &&
+            this.pathFromSeed.charAt(this.pathFromSeed.length() - 1) ==
+                Link.REFER_HOP;
     }
 }

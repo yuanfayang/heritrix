@@ -314,7 +314,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         if (caUri.forceFetch()) {
             alreadyIncluded.addForce(canonicalize(caUri.getUURI()), caUri);
         } else {
-            alreadyIncluded.add(canonicalize(caUri.getUURI()), caUri);
+            // If we've been redirected, then canonicalization can cause us
+            // to miss urls (e.g. If archive.org redirects to www.archive.org,
+            // then if included, the www canonicalization rule will think
+            // www.archive.org already seen).  The conditionalCanonicalize
+            // takes a CandidateURI -- as opposed to canonicalize taking a
+            // UURI as above --
+            // tests for this case (See its javadoc for more on this).
+            alreadyIncluded.add(conditionalCanonicalize(caUri), caUri);
         }
     }
 
