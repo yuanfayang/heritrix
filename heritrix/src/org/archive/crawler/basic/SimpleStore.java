@@ -234,14 +234,22 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 			return; 
 		}
 		
-		CrawlURI curi = null;
-		if((curi=(CrawlURI) allCuris.get(uuri))!=null) {
-			// already inserted
-			// TODO: perhaps yank to front?
-			//if(curi.getStoreState()==URIStoreable.FINISHED) {
-			//	System.out.println("maybe a prob");
-			//}
-			return;
+
+		CrawlURI curi = (CrawlURI)allCuris.get(uuri);
+		if(curi != null) {
+			
+			// if we have it but it's expired, start anew
+			if(curi.isExpired()){
+				allCuris.remove(uuri);
+				curi = null;
+			}else{
+				// already inserted
+				// TODO: perhaps yank to front?
+				//if(curi.getStoreState()==URIStoreable.FINISHED) {
+				//	System.out.println("maybe a prob");
+				//}
+				return;
+			}
 		}
 		curi = new CrawlURI(uuri);
 		curi.getAList().putInt("distance-from-seed",dist);
