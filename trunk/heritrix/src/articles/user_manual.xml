@@ -1120,6 +1120,19 @@
         <para>Canonicalization rules can be added as an override so an added
         rule only works in the overridden domain.
         </para>
+        <para>Canonicalization rules are NOT run if the URI-to-check is the
+        fruit of a redirect. We do this for the
+        following reason. Lets say the www canonicalization rule is in place
+        (the rule that equates 'archive.org' and 'www.archive.org').  If the
+        crawler first encournters 'archive.org' but the server at archive.org
+        wants us to come in via 'www.archive.org', it will redirect us to
+        'www.archive.org'. The alreadyseen database will have been marked with
+        'archive.org' on the original access of 'archive.org'.  The www
+        canonicalization rule runs and makes 'archive.org' of
+        'www.archive.org' which has already been
+        seen. If we always ran canonicalization rules regardless, we wouldn't
+        ever crawl 'www.archive.org'.
+        </para>
         <sect3 id="urlcanonexample">
             <title>URL Canonicalization Use Case: Stripping
             Site-Particular Session IDs</title>
