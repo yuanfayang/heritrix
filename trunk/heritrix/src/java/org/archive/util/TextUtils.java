@@ -89,7 +89,7 @@ public class TextUtils {
      * Matcher objects.
      * 
      * @see java.util.regex.Pattern
-     * @param p precompiled Pattern to match against
+     * @param pattern precompiled Pattern to match against
      * @param input the character sequence to check
      * @param replacement the String to substitute every match with
      * @return the String with all the matches substituted
@@ -108,7 +108,7 @@ public class TextUtils {
      * Matcher objects.
      * 
      * @see java.util.regex.Pattern
-     * @param p precompiled Pattern to match against
+     * @param pattern precompiled Pattern to match against
      * @param input the character sequence to check
      * @param replacement the String to substitute the first match with
      * @return the String with the first match substituted
@@ -127,7 +127,7 @@ public class TextUtils {
      * objects.
      * 
      * @see java.util.regex.Pattern
-     * @param p precompiled Pattern to match against
+     * @param pattern precompiled Pattern to match against
      * @param input the character sequence to check
      * @return true if character sequence matches
      */
