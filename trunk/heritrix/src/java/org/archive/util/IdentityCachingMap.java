@@ -79,6 +79,11 @@ public class IdentityCachingMap implements Map {
         return identityCache.containsKey(key) || innerMap.containsKey(key);
     }
 
+    /** for testing */
+    boolean cacheContainsKey(Object key) {
+        return identityCache.containsKey(key);
+    }
+    
     /* (non-Javadoc)
      * @see java.util.Map#containsValue(java.lang.Object)
      */
