@@ -84,6 +84,11 @@ then
   JAVA_OPTS=" -Xmx256m"
 fi
 
+if [ -z "$CLASS_MAIN" ]
+then
+  CLASS_MAIN='org.archive.crawler.Heritrix'
+fi
+
 # heritrix_dmesg.log contains startup output from the crawler main class. 
 # As soon as content appears in this log, this shell script prints the 
 # successful (or failed) startup content and moves off waiting on heritrix
@@ -109,16 +114,15 @@ ${JAVACMD} -version >> $stdouterrlog 2>&1
 echo "JAVA_OPTS=${JAVA_OPTS}" >> $stdouterrlog
 ulimit -a >> $stdouterrlog 2>&1
 
-main=org.archive.crawler.Heritrix
 # If FOREGROUND is set, run heritrix in foreground.
 if [ -n "$FOREGROUND" ]
 then
     CLASSPATH=${CP} $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
-        -Dheritrix.out=${HERITRIX_OUT} ${JAVA_OPTS} $main $@
+        -Dheritrix.out=${HERITRIX_OUT} ${JAVA_OPTS} $CLASS_MAIN $@
 else
     CLASSPATH=${CP} nohup $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
         -Dheritrix.out=${HERITRIX_OUT} ${JAVA_OPTS} \
-        $main $@ >> ${stdouterrlog} 2>&1 &
+        $CLASS_MAIN $@ >> ${stdouterrlog} 2>&1 &
 
     # Wait for content in the heritrix_dmesg.log file.
     echo -n "`date` Starting heritrix"
