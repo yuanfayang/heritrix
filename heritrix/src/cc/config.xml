@@ -27,7 +27,10 @@
         </schedule>
 
         <!--Directory to write build logs to.-->
-        <log dir="logs/ArchiveOpenCrawler"/>
+        <log dir="logs/ArchiveOpenCrawler">
+            <merge dir="checkout/ArchiveOpenCrawler/target/test-reports/"/> 
+        </log>
+        
 
         <!--Publishers are run *after* a build completes.-->
         <publishers>
@@ -39,14 +42,13 @@
                 dest="artifacts/ArchiveOpenCrawler"/>
 
             <email mailhost="mail-dev.archive.org"
-                returnaddress="stack@archive.org"
+                returnaddress="stack at archive dot org"
                 defaultsuffix="@archive.org"
                 buildresultsurl="http://crawl08.archive.org:8080/cruisecontrol/buildresults/ArchiveOpenCrawler">
                 <always address="buildmasters" />
-                <failure address="developers" />
-                <map alias="buildmasters" address="stack" />
-                <map alias="developers" address="stack" />
-                <map alias="stack" address="stack at archive dot org" />
+                <failure address="buildmasters" />
+                <map alias="buildmasters" 
+                    address="stack at archive dot org" />
             </email>
         </publishers>
 

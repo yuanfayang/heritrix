@@ -31,12 +31,12 @@
             (Otherwise, version.build.suffix will have the previous value, 
             not the one just written above).
         -->
-        <antcall target="maven"/>
+            <antcall target="maven"/>
 
     </target>
 
     <target name="maven">
-        <exec executable="${maven.home}/bin/maven">
+        <exec failonerror="true" executable="${maven.home}/bin/maven">
             <arg value="clean" />
             <arg value="dist" />
             <arg value="site:generate" />
