@@ -232,7 +232,7 @@ public class ARCReader
         this.arcFile = arcFile;
 
         // Apart from any buffering benefits, there is a dependency on being
-        // able to mark and reset the stream if the ARC if uncompressed.
+        // able to mark and reset the stream if the ARC is uncompressed.
         // See the ARCRecord.skip() method.
         this.in = new BufferedInputStream(new FileInputStream(this.arcFile));
         if (this.compressed)

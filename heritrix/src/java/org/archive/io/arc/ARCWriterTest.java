@@ -160,6 +160,10 @@ public class ARCWriterTest
         File arcFile = writeRecords("writeRecord", false,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount);
+        
+        arcFile = writeRecords("writeRecord", true,
+                DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
+        validate(arcFile, recordCount);
     }
 
     public void testWriteRecordCompressed()
