@@ -36,8 +36,10 @@
         settingsHandler.writeSettingsObject(orderfile);
         BufferedWriter writer;
         try {
-            JobConfigureUtils.printOutSeeds(settingsHandler,
-                    request.getParameter("seeds"));
+        	if(request.getParameter("seeds") != null) {
+	            JobConfigureUtils.printOutSeeds(settingsHandler,
+	                    request.getParameter("seeds"));
+            }
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -242,10 +244,21 @@
                 </td>
                 <td></td>
                 <td>
+                    <%
+                        if(JobConfigureUtils.seedsEdittableSize(settingsHandler)) {
+                     %>
                     <textarea name="seeds" style="width: 440px" 
                         rows="8" onChange="setUpdate()"><%
                         JobConfigureUtils.printOutSeeds(settingsHandler, out);
                     %></textarea>
+                    <%
+                        } else {
+                    %>
+                    <a href="viewseeds.jsp?job=<%=theJob.getUID()%>">Seed list</a>
+                    too large to edit.
+                    <%
+                        }
+                    %>
                 </td>
             </tr>
         </table>
