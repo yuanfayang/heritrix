@@ -27,13 +27,14 @@ package org.archive.crawler;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.mortbay.http.DigestAuthenticator;
+import org.mortbay.http.HashUserRealm;
 import org.mortbay.http.HttpServer;
 import org.mortbay.http.NCSARequestLog;
 import org.mortbay.http.SocketListener;
@@ -236,7 +237,28 @@ public class SimpleHttpServer
 
         return context;
     }
-
+    
+    /**
+     * Setup a realm on the server named for the webapp and add to the 
+     * passed webapp's context.
+     * 
+     * Used by the selftest to check digest authentication is working.
+     * For this all to work, the <code>web.xml</code> needs to set with 
+     * a security constraint that points to a realm named for the passed
+     * webapp, <code>webappName</code>.
+     * 
+     * @param webappName Name of webapp to configure.
+     * @param authProperties Path to file that holds the auth login and
+     * password.
+     */
+    public void setAuthentication(String webappName, File authProperties)
+            throws IOException {
+        this.server.addRealm(new HashUserRealm(webappName,
+                authProperties.getAbsolutePath()));
+        WebApplicationContext context = getContext(webappName);
+        context.setRealmName(webappName);
+    }
+    
     /**
      * Get path to named webapp.
      *

@@ -54,7 +54,9 @@ import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
+import org.mortbay.http.DigestAuthenticator;
 import org.mortbay.http.HashUserRealm;
+import org.mortbay.jetty.servlet.WebApplicationContext;
 
 
 /**
@@ -561,10 +563,10 @@ public class Heritrix
         List webapps = Arrays.asList(
             new String [] {SimpleHttpServer.getRootWebappName(), SELFTEST});
         Heritrix.httpServer = new SimpleHttpServer(webapps, port);
-        // Set up basic auth for a section of the server so selftest can run
-        // auth tests.
-        Heritrix.httpServer.getServer().addRealm(new HashUserRealm(SELFTEST,
-            getPropertiesFile().getAbsolutePath()));
+        // Set up digest auth for a section of the server so selftest can run
+        // auth tests.  Looks like can only set one login realm going by the 
+        // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
+        Heritrix.httpServer.setAuthentication(SELFTEST, getPropertiesFile());
         // Start server.
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), SELFTEST);
