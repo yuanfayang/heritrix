@@ -6,10 +6,19 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.w3c.dom.Node;
+
 /**
  * @author gojomo
  *
  */
-public class CrawlScope {
+public class CrawlScope extends XMLConfig {
+	
+	/**
+	 * @param node
+	 */
+	public CrawlScope(Node node) {
+		xNode = nodeOrSrc(node);
+	}
 
 }
