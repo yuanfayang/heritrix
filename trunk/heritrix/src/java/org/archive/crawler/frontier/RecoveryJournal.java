@@ -67,7 +67,7 @@ implements FrontierJournal {
      */
     private OutputStreamWriter out = null;
 
-    private static final String GZIP_SUFFIX = ".gz";
+    public static final String GZIP_SUFFIX = ".gz";
 
     
     /**

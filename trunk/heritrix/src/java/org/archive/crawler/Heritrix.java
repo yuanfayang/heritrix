@@ -716,7 +716,7 @@ public class Heritrix implements HeritrixMBean {
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
             selftestURL += (oneSelfTestName + '/');
         }
-        job = Heritrix.jobHandler.newJob(job, SELFTEST,
+        job = Heritrix.jobHandler.newJob(job, false, SELFTEST,
             "Integration self test", Heritrix.selftestURL,
             CrawlJob.PRIORITY_CRITICAL);
         Heritrix.jobHandler.addJob(job);

@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
@@ -57,7 +58,9 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.crawler.frontier.HostQueuesFrontier;
+import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -104,7 +107,9 @@ import org.archive.util.LineReadingIterator;
  */
 
 public class CrawlJobHandler implements CrawlStatusListener {
-
+    private static final Logger logger =
+        Logger.getLogger(CrawlJobHandler.class.getName());
+    
     /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_FILTERS = "filters.options";
 
@@ -667,6 +672,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param baseOn
      *            A CrawlJob (with a valid settingshandler) to use as the
      *            template for the new job.
+     * @param isRecover 
+     *            Whether to preinitialize new job as recovery of baseOn job
      * @param name
      *            The name of the new job.
      * @param description
@@ -682,6 +689,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws IOException
      */
     public CrawlJob newJob(CrawlJob baseOn,
+                           boolean isRecover,
                            String name,
                            String description,
                            String seeds,
@@ -695,7 +703,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         File jobDir = new File(Heritrix.getJobsdir(), name + "-" + UID);
         CrawlJobErrorHandler errorHandler = new CrawlJobErrorHandler();
         newJob = new CrawlJob(UID, name,
-            makeNew(baseOn, name, description, seeds, jobDir, errorHandler,
+            makeNew(baseOn, isRecover, name, description, seeds, jobDir, errorHandler,
                 "order.xml", "seeds.txt"), errorHandler, priority, jobDir);
         return newJob;
     }
@@ -727,7 +735,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 + File.separator + name);
         CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE);
         CrawlJob newProfile = new CrawlJob(name,
-            makeNew(baseOn, name, description, seeds, profileDir, cjseh,
+            makeNew(baseOn, false, name, description, seeds, profileDir, cjseh,
                 "order.xml", "seeds.txt"),
                 cjseh);
         addProfile(newProfile);
@@ -742,6 +750,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param baseOn
      *            A CrawlJob (with a valid settingshandler) to use as the
      *            template for the new profile.
+     * @param isRecover
+     *            whether new job should be preinitialized to be a recovery
+     *            of the baseOn job
      * @param name
      *            Name for the new settings
      * @param description
@@ -762,9 +773,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *             configuration, with writing the new configuration or it's
      *             seed file.
      */
-    private XMLSettingsHandler makeNew(CrawlJob baseOn, String name,
-       String description, String seeds, File newSettingsDir,
-       CrawlJobErrorHandler errorHandler, String filename, String seedfile)
+    private XMLSettingsHandler makeNew(CrawlJob baseOn, boolean isRecover,
+            String name, String description, String seeds, File newSettingsDir,
+            CrawlJobErrorHandler errorHandler, String filename, String seedfile)
             throws FatalConfigurationException {
 
         XMLSettingsHandler newHandler;
@@ -791,26 +802,30 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // Set the seed file
             ((ComplexType) newHandler.getOrder().getAttribute("scope"))
                     .setAttribute(new Attribute("seedsfile", seedfile));
+            // set 'recover-from' to be old job's recoevery log path
+            if(isRecover) {
+                copyRecoveryPath(baseOn,newHandler);
+            }
         } catch (AttributeNotFoundException e1) {
             throw new FatalConfigurationException(
-                    "AttributeNotFoundException occured while setting seed" +
-                    " file for new job/profile\n" + e1.getMessage());
+                    "AttributeNotFoundException occured while setting up" +
+                    "new job/profile\n" + e1.getMessage());
         } catch (InvalidAttributeValueException e1) {
             throw new FatalConfigurationException(
                     "InvalidAttributeValueException occured while setting" +
-                    " seed file for new job/profile\n"  + e1.getMessage());
+                    "up new job/profile\n"  + e1.getMessage());
         } catch (MBeanException e1) {
             throw new FatalConfigurationException(
-                    "MBeanException occured while setting seed file for new" +
+                    "MBeanException occured while setting up new" +
                     " job/profile\n" + e1.getMessage());
         } catch (ReflectionException e1) {
             throw new FatalConfigurationException(
-                    "ReflectionException occured while setting seed file for" +
+                    "ReflectionException occured while setting up" +
                     " new job/profile\n" + e1.getMessage());
         }
 
         File newFile = new File(newSettingsDir.getAbsolutePath(), filename);
-
+        
         try {
             newHandler.copySettings(newFile, (String)newHandler.getOrder()
                 .getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
@@ -851,6 +866,30 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     " job/profile\n" + e.getMessage());
         }
         return newHandler;
+    }
+
+    /**
+     * @param baseOn
+     * @param newHandler
+     * @throws ReflectionException 
+     * @throws MBeanException 
+     * @throws InvalidAttributeValueException 
+     * @throws AttributeNotFoundException 
+     */
+    private void copyRecoveryPath(CrawlJob baseOn, XMLSettingsHandler newHandler) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+        File logsDisk = null;
+        try {
+            logsDisk = baseOn.getSettingsHandler().getOrder().getSettingsDir(
+                    CrawlOrder.ATTR_LOGS_PATH);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed to get logs directory " + e);
+        }
+        if (logsDisk != null) {
+            String recoveryPath = logsDisk.getAbsolutePath() + File.separatorChar 
+                + FrontierJournal.LOGNAME_RECOVER + RecoveryJournal.GZIP_SUFFIX;
+            newHandler.getOrder().setAttribute(
+                    new Attribute(CrawlOrder.ATTR_RECOVER_PATH, recoveryPath));
+        }
     }
 
     /**

@@ -9,8 +9,5 @@
 %>
 
                     <!-- END MAIN BODY -->
-                </td>
-            </tr>
-        </table>
     </body>
 </html>

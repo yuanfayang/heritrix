@@ -40,7 +40,7 @@
     </head>
 
     <body>
-        <table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
             <tr>
                 <td>
                     <table border="0" cellspacing="0" cellpadding="0" height="100%">
@@ -197,6 +197,5 @@
                 <td bgcolor="#0000FF" height="1" colspan="4">
                 </td>
             </tr>
-            <tr>
-                <td colspan="4" height="100%" valign="top" class="main">
+         </table>
                     <!-- MAIN BODY -->

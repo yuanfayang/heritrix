@@ -31,6 +31,8 @@ import org.archive.crawler.datamodel.UURI;
  * @version $Date$, $Revision$
  */
 public interface FrontierJournal {
+    public static final String LOGNAME_RECOVER = "recover";
+
     /**
      * @param curi CrawlURI that has been scheduled to be added to the
      * Frontier.
