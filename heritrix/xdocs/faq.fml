@@ -84,6 +84,25 @@ Eventually. For now, the crawler is still in early development, and only if you 
       </p>
       </answer>
       </faq>
+      <faq id="traps">
+        <question>
+        <p>What are crawler traps?</p></question>
+        <answer>
+        <p>Traps are infinite page sources put up to occupy ('trap') a crawler.
+        Traps may be as innocent as a calendar that returns pages years into
+        the future or not-so-innocent 
+        <a href="http://spiders.must.die.net/">http://spiders.must.die.net/</a>.
+        </p>
+        <p>Another trap that works by feeding documents of infinite sizes
+        to the crawler is
+        http://yahoo.domain.com.au/tools/spiderbait.aspx* as in
+        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=vic or
+        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=nsw.
+        To filter out infinite document size traps, add a maximum doc.
+        size filter to your crawl order.
+        </p>
+        </answer>
+      </faq>
   </part>
 
   <part id="references">
