@@ -1,6 +1,8 @@
-/* ReplayCharSequence
+/* EnhancedCharSequence
  * 
- * Created on Mar 5, 2004
+ * $Id$
+ * 
+ * Created on Mar 17, 2004
  *
  * Copyright (C) 2004 Internet Archive.
  * 
@@ -22,25 +24,22 @@
  */
 package org.archive.io;
 
-import java.io.IOException;
-
 
 /**
- * CharSequence interface with addition of a {@link #close()} method.
+ * Extends the <code>java.lang.CharSequence</code> to provide a couple of
+ * methods to improve the performance of implementing classes.
  * 
- * Users of implementations of this interface must call {@link #close()} so 
- * implementations get a chance at cleaning up after themselves.
- * 
- * @author stack
- * @version $Revision$, $Date$
+ * @author Kristinn Sigurdsson
  */
-public interface ReplayCharSequence extends EnhancedCharSequence {
-
+public interface EnhancedCharSequence extends CharSequence {
     /**
-     * Call this method when done so implementation has chance to clean up 
-     * resources.
-     * 
-     * @throws IOException Problem cleaning up file system resources.
+     * Much like the toString() method, except it returns what is effectively 
+     * a substring of that.
+     * @param offset Index of first char to include
+     * @param length How many chars after the first to include. offset + length
+     *           must be smaller then the length of the character sequence.
+     * @return a string consisting of exactly this sequence of characters from
+     *           <code>offset</code> to <code>offset + length</code>
      */
-    public void close() throws IOException;
+    public String toString(int offset, int length);
 }
