@@ -29,15 +29,10 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScheme;
-import org.apache.commons.httpclient.auth.AuthenticationException;
-import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 
 
 
@@ -49,13 +44,20 @@ import org.archive.crawler.settings.Type;
  */
 public class Rfc2617Credential extends Credential {
     
-    private static Logger logger =
-        Logger.getLogger(Rfc2617Credential.class.getName());
+    private static Logger logger = Logger.getLogger(
+        "org.archive.crawler.datamodel.settings.Rfc2617Credential");
 
     private static final String ATTR_REALM = "realm";
     private static final String ATTR_LOGIN = "login";
     private static final String ATTR_PASSWORD = "password";
-
+    
+    /**
+     * Cache an auth scheme here.
+     * 
+     * Needed when we come back around after a 401 only this time we want
+     * to run the authentication.
+     */
+    private AuthScheme authScheme = null;
     
     /**
      * Constructor.
@@ -87,17 +89,14 @@ public class Rfc2617Credential extends Credential {
     /**
      * @param context Context to use when searching the realm.
      * @return Realm using set context.
-     * @throws AttributeNotFoundException
      */
-    public String getRealm(CrawlURI context)
-            throws AttributeNotFoundException {
+    public String getRealm(CrawlURI context) throws AttributeNotFoundException {
         return (String)getAttribute(ATTR_REALM, context);
     }
     
     /**
-     * @param context CrawlURI ontext to use.
+     * @param context Context to use when searching the realm.
      * @return login to use doing credential.
-     * @throws AttributeNotFoundException
      */
     public String getLogin(CrawlURI context)
             throws AttributeNotFoundException {
@@ -105,95 +104,12 @@ public class Rfc2617Credential extends Credential {
     }
     
     /**
-     * @param context CrawlURI ontext to use.
+     * @param context Context to use when searching the realm.
      * @return Password to use doing credential.
-     * @throws AttributeNotFoundException
      */
     public String getPassword(CrawlURI context)
             throws AttributeNotFoundException {
         return (String)getAttribute(ATTR_PASSWORD, context);  
-    }
-
-    public boolean isPrerequisite(CrawlURI curi) {
-        // Return false.  Later when we implement preemptive
-        // rfc2617, this will change.
-        return false;
-    }
-
-    public boolean hasPrerequisite(CrawlURI curi) {
-        // Return false.  Later when we implement preemptive
-        // rfc2617, this will change.
-        return false;
-    }
-
-    public String getPrerequisite(CrawlURI curi) {
-        // Return null.  Later when we implement preemptive
-        // rfc2617, this will change.
-        return null;
-    }
-
-    public String getKey(CrawlURI context) throws AttributeNotFoundException {
-        return getRealm(context);
-    }
-
-    public boolean isEveryTime() {
-        return true;
-    }
-
-    public boolean populate(CrawlURI curi, HttpClient http, HttpMethod method,
-            Object payload) {
-        
-        boolean result = false;
-        AuthScheme authscheme = (AuthScheme)payload;
-        if (authscheme == null) {
-            logger.severe("No authscheme though creds: " + curi);
-            return result;
-        }
-        
-        // Always add the credential to HttpState. Doing this because no way of
-        // removing the credential once added AND there is a bug in the
-        // credentials management system in that it always sets URI root to
-        // null: it means the key used to find a credential is NOT realm + root
-        // URI but just the realm. Unless I set it everytime, there is
-        // possibility that as this thread progresses, it might come across a
-        // realm already loaded but the login and password are from another
-        // server. We'll get a failed authentication that'd be difficult to
-        // explain.
-        //
-        // Have to make a UsernamePasswordCredentials. The httpclient auth code
-        // does an instanceof down in its guts.
-        UsernamePasswordCredentials upc = null;
-        try {
-            upc = new UsernamePasswordCredentials(getLogin(curi), 
-                getPassword(curi));
-            http.getState().setCredentials(authscheme.getRealm(),
-                /* curi.getServer().getName() */null, upc);
-            
-            try {
-                boolean done = HttpAuthenticator.authenticate(authscheme,
-                    method, null, http.getState());
-                result = done;
-                logger.fine("Credentials for realm " + authscheme.getRealm() +
-                    " for curi " + curi.toString() + " added to request: " +
-                    result);
-            } catch (AuthenticationException e) {
-                logger.severe("Failed setting auth for " +
-                    authscheme.getRealm() + " for " + curi.toString() + ": " +
-                    e.getMessage());
-            }
-        }
-        catch (AttributeNotFoundException e1) {
-            logger.severe("Failed to get login and password for " +
-                curi + " and " + authscheme);
-        }
-        
-        return result;
-    }
-    
-    public boolean isPost(CrawlURI curi) {
-        // Return false.  This credential type doesn't care whether posted or
-        // get'd.
-        return false;
     }
     
     /**
@@ -209,11 +125,8 @@ public class Rfc2617Credential extends Credential {
      */
     public static Rfc2617Credential getByRealm(Set rfc2617Credentials,
             String realm, CrawlURI context) {
-
+        
         Rfc2617Credential result = null;
-        if (rfc2617Credentials == null || rfc2617Credentials.size() <= 0) {
-            return result;
-        }
         if (rfc2617Credentials != null && rfc2617Credentials.size() > 0) {
             for (Iterator i = rfc2617Credentials.iterator(); i.hasNext();) {
                 Rfc2617Credential c = (Rfc2617Credential)i.next();
@@ -228,5 +141,21 @@ public class Rfc2617Credential extends Credential {
             }
         }
         return result;
+    }
+    
+    /**
+     * @return Returns the currently cached authScheme.
+     */
+    public AuthScheme getAuthScheme()
+    {
+        return this.authScheme;
+    }
+    
+    /**
+     * @param authScheme The authScheme to cache.
+     */
+    public void setAuthScheme(AuthScheme authScheme)
+    {
+        this.authScheme = authScheme;
     }
 }

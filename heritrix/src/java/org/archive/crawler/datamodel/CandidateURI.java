@@ -26,7 +26,6 @@ package org.archive.crawler.datamodel;
 import java.io.IOException;
 import java.io.Serializable;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.util.Lineable;
 
 /**
@@ -165,10 +164,10 @@ public class CandidateURI implements Serializable, Lineable {
             return (String) via;
         }
         if (via instanceof UURI) {
-            return ((UURI)via).toString();
+            return ((UURI)via).getURIString();
         }
         if (via instanceof CandidateURI) {
-            return ((CandidateURI)via).getUURI().toString();
+            return ((CandidateURI)via).getUURI().getURIString();
         }
         return via.toString();
     }
@@ -178,7 +177,7 @@ public class CandidateURI implements Serializable, Lineable {
      */
     public String getLine() {
         return this.getClass().getName()
-                +" "+getUURI().toString()
+                +" "+getUURI().getURIString()
                 +" "+pathFromSeed
                 +" "+flattenVia();
     }
@@ -187,7 +186,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return URI String
      */
     public String getURIString() {
-        return getUURI().toString();
+        return getUURI().getURIString();
     }
 
     /**
@@ -196,9 +195,8 @@ public class CandidateURI implements Serializable, Lineable {
      * @param other The other CandidateURI
      *
      * @return True if both are in the same domain, false otherwise.
-     * @throws URIException
      */
-    public boolean sameDomainAs(CandidateURI other) throws URIException {
+    public boolean sameDomainAs(CandidateURI other) {
         String domain = getUURI().getHost();
         if (domain==null) return false;
         while(domain.lastIndexOf('.')>domain.indexOf('.')) {
@@ -222,7 +220,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return true if crawling of this URI should be forced
      */
     public boolean forceFetch() {
-        return this.schedulingDirective == FORCE_REVISIT;
+        return schedulingDirective == FORCE_REVISIT;
     }
 
    /**

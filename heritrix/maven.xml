@@ -16,7 +16,7 @@
     </preGoal> 
 
     <goal name="docbook">
-        <attainGoal name="sdocbook:generate-html"/>
+        <attainGoal name="sdocbook"/>
     </goal>
 
     <preGoal name="java:jar-resources"> 
@@ -54,8 +54,7 @@
         <!--Copy to a bin dir the heritrix start script.-->
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
           <fileset dir="${maven.src.dir}/scripts">
-            <include name="*heritrix"/>
-            <include name="arcreader"/>
+            <include name="heritrix*"/>
           </fileset>
         </copy>
 
@@ -67,7 +66,7 @@
             files (Putting the task in here whole doesn't work).-->
         <chmod perm="ugo+rx" >
           <fileset dir="${maven.dist.bin.assembly.dir}/bin">
-            <include name="*heritrix"/>
+            <include name="heritrix*"/>
           </fileset>
         </chmod>
 
@@ -79,16 +78,11 @@
         <copy todir="${maven.build.dir}/webapps" filtering="true">
           <fileset dir="${maven.src.dir}/webapps">
             <exclude name="**/*.gif"/>
-            <exclude name="**/*.jpg"/>
-            <exclude name="**/*.png"/>
-            <exclude name="**/jetty-web.xml"/>
           </fileset>
         </copy>
         <copy todir="${maven.build.dir}/webapps" filtering="false">
           <fileset dir="${maven.src.dir}/webapps">
             <include name="**/*.gif"/>
-            <include name="**/*.jpg"/>
-            <include name="**/*.png"/>
           </fileset>
         </copy>
 
@@ -126,34 +120,6 @@
           </fileset>
         </copy>
     </postGoal>
-
-    <goal name="selftest" 
-        prereqs="dist:build-bin"
-            description="Run selftest and fail if we don't pass." >
-        <property name="maven.dist.dir" 
-            value="${maven.build.dir}/distributions" />  
-        <property name="maven.selftest.dir" 
-            value="${maven.build.dir}/selftest" />  
-        <delete dir="${maven.selftest.dir}" />
-        <mkdir dir="${maven.selftest.dir}" />
-        <property name="${maven.selftest.dir}"
-           value="${maven.dist.dir}/${maven.final.name}" />  
-        <copy todir="${maven.selftest.dir}" 
-           file="${maven.dist.dir}/${maven.final.name}.tar.gz" />  
-        <property name="basename"
-           value="${maven.selftest.dir}/${maven.final.name}" />  
-        <gunzip src="${basename}.tar.gz" dest="${basename}.tar" />
-        <untar src="${basename}.tar" dest="${maven.selftest.dir}" />
-        <chmod file="${basename}/bin/*" perm="a+rx" />
-        <chmod file="${basename}/bin/*" perm="a+rx" />
-        <exec failonerror="true"
-                timeout="300000"
-                executable="${basename}/bin/foreground_heritrix">
-            <arg line="--selftest" />
-            <arg line="--port=8083" />
-        </exec>
-       
-    </goal>
 
     <goal name="jspc">
         <!--Compile down to servlets all in the ${webapp.name} webapp

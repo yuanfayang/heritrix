@@ -1,10 +1,4 @@
-/* KeyedQueue
- * 
- * $Id$
- * 
- * Created on May 29, 2003
- * 
- * Copyright (C) 2003 Internet Archive.
+/* Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -21,6 +15,11 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * KeyedQueue.java
+ * Created on May 29, 2003
+ *
+ * $Header$
  */
 package org.archive.crawler.frontier;
 
@@ -28,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.CompositeIterator;
@@ -36,47 +36,48 @@ import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
 
 /**
- * Ordered collection of work items with the same "classKey". 
- * 
- * The collection itself has a state, which may reflect where it
+ * Ordered collection of work items with the same "classKey". The
+ * collection itself has a state, which may reflect where it
  * is stored or what can be done with the contained items.
  * 
- * <p>For easy access to several locations in the main collection,
+ * For easy access to several locations in the main collection,
  * it is held between 2 data structures: a top stack and a 
  * bottom queue. (These in turn may be disk-backed.)
  * 
- * <p>Also maintains a collection 'off to the side' of 'frozen'
+ * Also maintains a collection 'off to the side' of 'frozen'
  * items. 
  *
- * <p>About KeyedQueue states:
+ * About KeyedQueue states:
  * 
- * <p>All KeyedQueues begin INACTIVE. A call to activate() will 
+ * All KeyedQueues begin INACTIVE. A call to activate() will 
  * render them READY (if not empty of eligible URIs) or EMPTY
  * otherwise. 
  * 
- * <p>A noteInProcess() puts the KeyedQueue into IN_PROCESS state. 
+ * A noteInProcess() puts the KeyedQueue into IN_PROCESS state. 
  * A matching noteProcessDone() puts the KeyedQueue bank into 
  * READY or EMPTY. 
  * 
- * <p>A freeze() may be issued to any READY or EMPTY queue to 
+ * A freeze() may be issued to any READY or EMPTY queue to 
  * put it into FROZEN state. Only an unfreeze() will move 
  * the queue to INACTIVE state. 
  * 
- * <p>A deactivate() may be issued to any READY or EMPTY queue
+ * A deactivate() may be issued to any READY or EMPTY queue
  * to put it into INACTIVE state. 
  * 
- * <p>A snooze() may be issued to any READY or EMPTY queue to 
+ * A snooze() may be issued to any READY or EMPTY queue to 
  * put it into SNOOZED state.
  * 
- * <p>A discard() may be issued to any EMPTY queue to put it into
+ * A discard() may be issued to any EMPTY queue to put it into
  * the DISCARDED state. A queue never leaves the discarded state;
  * if a queue of its hostname is needed again, a new one is created.
  * 
  * @author gojomo
- * @version $Date$ $Revision$
+ *
  */
 public class KeyedQueue implements Queue {
-     /** INACTIVE: not considered as URI source until activated by policy */
+    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
+
+    /** INACTIVE: not considered as URI source until activated by policy */
     public static final Object INACTIVE = "INACTIVE".intern();
     /** READY: eligible and able to supply a new work URI on demand */
     public static final Object READY = "READY".intern();
@@ -104,10 +105,7 @@ public class KeyedQueue implements Queue {
     LinkedList innerStack; // topmost eligible items
     Queue innerQ; // rest of eligible items
     
-    /**
-     * Put-to-side items; not returned from normal accessors.
-     */
-    Queue frozenQ = null;
+    Queue frozenQ; // put-to-side items; not returned from normal accessors
 
     /**
      * @param key A unique identifier used to distingush files related to this
@@ -119,19 +117,17 @@ public class KeyedQueue implements Queue {
      *           those that have been enqueuedMedium or enqueuedHigh).
      * @throws IOException When it fails to create disk based data structures.
      */
-    public KeyedQueue(String key, File scratchDir, int headMax)
-            throws IOException {
+    public KeyedQueue(String key, File scratchDir, int headMax) throws IOException {
         super();
-        this.classKey = key;
-        String tmpName = key;
-        this.innerStack = new LinkedList();
-        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
-        // TODO: Currently unimplemented.  Commenting out for now because its
-        // presence means extra two file descriptors per processed URI.
-        // See https://sourceforge.net/tracker/?func=detail&aid=943768&group_id=73833&atid=539099
-        // this.frozenQ =
-        //  new DiskBackedQueue(scratchDir,tmpName+".frozen",headMax);
-        this.state = INACTIVE;
+        classKey = key;
+        String tmpName = null;
+        if (key instanceof String) {
+            tmpName = (String) key;
+        }
+        innerStack = new LinkedList();
+        innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
+        frozenQ = new DiskBackedQueue(scratchDir,tmpName+".frozen",headMax);
+        state = INACTIVE;
     }
 
     /**
@@ -139,14 +135,14 @@ public class KeyedQueue implements Queue {
      * @return Object
      */
     public String getClassKey() {
-        return this.classKey;
+        return classKey;
     }
 
     /** 
      * @return The state of this queue.
      */
     public Object getState() {
-        return this.state;
+        return state;
     }
 
 //
@@ -156,50 +152,50 @@ public class KeyedQueue implements Queue {
      * Move queue from INACTIVE to ACTIVE state
      */
     public void activate() {
-        assert this.state == INACTIVE;
-        this.state = isEmpty() ? EMPTY : READY;
+        assert state == INACTIVE;
+        state = isEmpty() ? EMPTY : READY;
     }
     /**
      * Move queue from READY or EMPTY state to INACTIVE
      */
     public void deactivate() {
-        assert this.state == READY || this.state == EMPTY;
-        this.state = INACTIVE;
+        assert state == READY || state == EMPTY;
+        state = INACTIVE;
     }
     /**
      * Move queue from READY or EMPTY state to FROZEN
      */
     public void freeze() {
-        assert this.state == READY || this.state == EMPTY;
-        this.state = FROZEN;
+        assert state == READY || state == EMPTY;
+        state = FROZEN;
     }
     /**
      * Move queue from FROZEN state to INACTIVE
      */
     public void unfreeze() {
-        assert this.state == FROZEN;
-        this.state = INACTIVE;
+        assert state == FROZEN;
+        state = INACTIVE;
     }
     /**
      * Move queue from READY or EMPTY state to SNOOZED
      */
     public void snooze() {
-        assert this.state == READY || this.state == EMPTY;
-        this.state = SNOOZED;
+        assert state == READY || state == EMPTY;
+        state = SNOOZED;
     }
     /**
      * Move queue from SNOOZED state to READY or EMPTY
      */
     public void wake() {
-        assert this.state == SNOOZED;
-        this.state = isEmpty() ? EMPTY : READY;
+        assert state == SNOOZED;
+        state = isEmpty() ? EMPTY : READY;
     }
     /**
      * Move queue from READY or EMPTY to DISCARDED
      */
     public void discard() {
-        assert this.state == READY || this.state == EMPTY;
-        this.state = DISCARDED;
+        assert state == READY || state == EMPTY;
+        state = DISCARDED;
     }
     /**
      * Note that the given item is 'in process';
@@ -209,10 +205,10 @@ public class KeyedQueue implements Queue {
      * @param o
      */
     public void noteInProcess(Object o) {
-        assert this.state == READY || this.state == EMPTY;
-        assert this.inProcessItem == null;
-        this.inProcessItem = o;
-        this.state = IN_PROCESS;
+        assert state == READY || state == EMPTY;
+        assert inProcessItem == null;
+        inProcessItem = o;
+        state = IN_PROCESS;
     }
     /**
      * Note that the given item's processing
@@ -223,10 +219,10 @@ public class KeyedQueue implements Queue {
      * @param o
      */
     public void noteProcessDone(Object o) {
-        assert this.state == IN_PROCESS;
-        assert this.inProcessItem == o;
-        this.inProcessItem = null;
-        this.state = isEmpty() ? EMPTY : READY;
+        assert state == IN_PROCESS;
+        assert inProcessItem == o;
+        inProcessItem = null;
+        state = isEmpty() ? EMPTY : READY;
     }
     /**
      * Update READY/EMPTY state after preceding
@@ -236,30 +232,31 @@ public class KeyedQueue implements Queue {
      */
     public boolean checkEmpty() {
         // update READY|EMPTY state after recent relevant changes
-        if (! (this.state == READY || this.state == EMPTY) ) {
+        if (! (state == READY || state == EMPTY) ) {
             // only relevant for active states
             return false;
         }
-        Object previous = this.state;
-        this.state = isEmpty() ? EMPTY : READY;
-        return this.state != previous;
+        Object previous = state;
+        state = isEmpty() ? EMPTY : READY;
+        return state != previous;
     }
     
 //
 // SCHEDULING SUPPORT
 //
+    
     /** 
-     * @return Time to wake, when snoozed
+     * @return Ttime to wake, when snoozed
      */
     public long getWakeTime() {
-        return this.wakeTime;
+        return wakeTime;
     }
 
     /**
      * @param w time to wake, when snoozed
      */
     public void setWakeTime(long w) {
-        this.wakeTime = w;
+        wakeTime = w;
     }
 
     /** 
@@ -268,7 +265,7 @@ public class KeyedQueue implements Queue {
      * @return Fallback sort.
      */
     public String getSortFallback() {
-        return this.classKey.toString();
+        return classKey.toString();
     }
 
     /**
@@ -287,7 +284,7 @@ public class KeyedQueue implements Queue {
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
-        this.innerQ.enqueue(o);
+        innerQ.enqueue(o);
     }
 
     /** 
@@ -297,7 +294,7 @@ public class KeyedQueue implements Queue {
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
-        return this.innerStack.isEmpty() && this.innerQ.isEmpty();
+        return innerStack.isEmpty() && innerQ.isEmpty();
         // return innerStack.isEmpty() && innerQ.isEmpty() && frozenQ.isEmpty();
     }
 
@@ -307,10 +304,10 @@ public class KeyedQueue implements Queue {
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
-        if (!this.innerStack.isEmpty()) {
-            return this.innerStack.removeFirst();
+        if (!innerStack.isEmpty()) {
+            return innerStack.removeFirst();
         }
-        return this.innerQ.dequeue();
+        return innerQ.dequeue();
     }
 
     /** 
@@ -320,14 +317,14 @@ public class KeyedQueue implements Queue {
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-        return this.innerQ.length() + this.innerStack.size();
+        return innerQ.length()+innerStack.size();
     }
 
     /** 
      * @return Total number of 'frozen' items. 
      */
     public long frozenLength() {
-        return this.innerQ.length() + this.innerStack.size();
+        return innerQ.length()+innerStack.size();
     }
     
     /**
@@ -335,10 +332,8 @@ public class KeyedQueue implements Queue {
      * may be held.
      */
     public void release() {
-        this.innerQ.release();
-        if (this.frozenQ != null) {
-            this.frozenQ.release();
-        }
+        innerQ.release();
+        frozenQ.release();
     }
 
     /** 
@@ -347,8 +342,7 @@ public class KeyedQueue implements Queue {
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
-        return new CompositeIterator(this.innerStack.iterator(),
-            this.innerQ.getIterator(inCacheOnly));
+        return new CompositeIterator(innerStack.iterator(),innerQ.getIterator(inCacheOnly));
     }
 
     /** 
@@ -358,9 +352,9 @@ public class KeyedQueue implements Queue {
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
         // Delete from inner queue
-        long numberOfDeletes = this.innerQ.deleteMatchedItems(matcher);
+        long numberOfDeletes = innerQ.deleteMatchedItems(matcher);
         // Then delete from inner stack
-        Iterator it = this.innerStack.iterator();
+        Iterator it = innerStack.iterator();
         while(it.hasNext()){
             if(matcher.match(it.next())){
                 it.remove();
@@ -375,7 +369,7 @@ public class KeyedQueue implements Queue {
      * @return The remembered item in process (set with noteInProgress()).
      */
     public Object getInProcessItem() {
-       return this.inProcessItem;
+       return inProcessItem;
     }
 
     /**
@@ -385,7 +379,7 @@ public class KeyedQueue implements Queue {
      * @param curi
      */
     public void enqueueMedium(CrawlURI curi) {
-        this.innerStack.addLast(curi);
+        innerStack.addLast(curi);
     }
     /**
      * enqueue ahead of everything else
@@ -393,7 +387,7 @@ public class KeyedQueue implements Queue {
      * @param curi
      */
     public void enqueueHigh(CrawlURI curi) {
-        this.innerStack.addFirst(curi);
+        innerStack.addFirst(curi);
     }
 
     /**
@@ -404,9 +398,7 @@ public class KeyedQueue implements Queue {
      * @param curi
      */
     public void enqueueFrozen(CrawlURI curi) {
-        if (this.frozenQ != null) {
-            this.frozenQ.enqueue(curi);
-        }
+        frozenQ.enqueue(curi);
     }
     
     /**
@@ -415,11 +407,11 @@ public class KeyedQueue implements Queue {
      * @return The top available item.
      */
     public Object peek() {
-        if(!this.innerStack.isEmpty()) {
-            return this.innerStack.getFirst();
+        if(!innerStack.isEmpty()) {
+            return innerStack.getFirst();
         }
-        if(!this.innerQ.isEmpty()) {
-            return this.innerQ.peek();
+        if(!innerQ.isEmpty()) {
+            return innerQ.peek();
         }
         return null;
     }
@@ -434,8 +426,6 @@ public class KeyedQueue implements Queue {
      * @return True if discardable.
      */
     public boolean isDiscardable() {
-        return isEmpty() &&
-            ((this.frozenQ != null)? this.frozenQ.isEmpty(): true) &&
-                this.state == EMPTY;
+        return isEmpty() && frozenQ.isEmpty() && state == EMPTY;
     }
 }

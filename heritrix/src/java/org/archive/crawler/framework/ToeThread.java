@@ -49,20 +49,6 @@ import org.archive.util.PaddingStringBuffer;
 public class ToeThread extends Thread
     implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker
 {
-    private static final String STEP_NASCENT = "NASCENT";
-    private static final String STEP_PAUSING = "PAUSING";
-    private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
-    private static final String STEP_EXIT_PROCESSING_LOOP = "EXIT_PROCESSING_LOOP";
-    private static final String STEP_FINISHED = "FINISHED";
-    private static final String STEP_ABOUT_TO_BEGIN_CHAIN = "ABOUT_TO_BEGIN_CHAIN";
-    private static final String STEP_ABOUT_TO_BEGIN_PROCESSOR = "ABOUT_TO_BEGIN_PROCESSOR";
-    private static final String STEP_DONE_WITH_PROCESSORS = "DONE_WITH_PROCESSORS";
-    private static final String STEP_HANDLING_RUNTIME_EXCEPTION = "HANDLING_RUNTIME_EXCEPTION";
-    private static final String STEP_ABOUT_TO_RETURN_URI = "ABOUT_TO_RETURN_URI";
-    private static final String STEP_HANDLING_SERIOUS_ERROR = "HANDLING_SERIOUS_ERROR";
-    private static final String STEP_FINISHING_PROCESS = "FINISHING_PROCESS";
-    
-    
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
     private static int DEFAULT_TAKE_TIMEOUT = 3000;
     
@@ -89,7 +75,7 @@ public class ToeThread extends Thread
     // a queue of curis to do next? not for now
 
     // debugging + used by kill() to know what state the toe is in.
-    private String step = STEP_NASCENT;
+    int where = 0;
     
     /**
      * @param c
@@ -106,10 +92,11 @@ public class ToeThread extends Thread
     }
 
     /**
-     * @return If true then this thread is idle or dead. 
+     * @return If true then this thread is idle and ready to start work on 
+     *         another URI. Otherwise it is either busy or has been killed. 
      */
-    public synchronized boolean isIdleOrDead() {
-        return currentCuri == null || shouldDie == true;
+    public boolean isAvailable() {
+        return currentCuri == null && shouldDie == false;
     }
 
     /** (non-Javadoc)
@@ -118,99 +105,73 @@ public class ToeThread extends Thread
     public void run() {
         String name = controller.getOrder().getCrawlOrderName();
         logger.fine(getName()+" started for order '"+name+"'");
-        
-        try {
-            while ( shouldCrawl ) {
+
+        while ( shouldCrawl ) {
+            try {
                 while ( shouldPause ) {
-                    step = STEP_PAUSING;
-                    controller.toeChanged(this);
                     synchronized(this){
                         wait();
                     }
                 }
-                dieCheck();
-                step = STEP_ABOUT_TO_GET_URI;
-                if (controller.getFrontier() == null) {
-                	    throw new NullPointerException("Frontier is null");
+                if(shouldDie){ 
+                    return; 
                 }
                 currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
                 if ( currentCuri != null ) {
-                    processCrawlUri();
-                    step = STEP_ABOUT_TO_RETURN_URI; 
-                    synchronized(this) {
-                        dieCheck();
-                        controller.getFrontier().finished(currentCuri);
-                        currentCuri = null;
+                    if(shouldDie){ 
+                        return; 
                     }
-                    step = STEP_FINISHING_PROCESS;
-                    lastFinishTime = System.currentTimeMillis();
+                    processCrawlUri();
                 }
-                controller.checkFinish(); // after each URI or null
+                where = 16;
+            } catch (InterruptedException e1) {
+                currentCuri = null;
+                if(shouldDie){ 
+                    return;
+                } else {
+                    // Thread was interrupted for unknown reasons.
+                    e1.printStackTrace();
+                }
             }
-            step = STEP_EXIT_PROCESSING_LOOP;
-        } catch (InterruptedException e1) {
-            if(!shouldDie){ 
-                // Thread was interrupted for unknown reasons.
-                System.err.println("interrupted while working on "+currentCuri);
-                e1.printStackTrace();
-            }
-        } finally {
-            currentCuri = null;
-            if(controller!=null) {
-                controller.toeChanged(this);
-            }
-            // Do cleanup so that objects can be GC.
-            pool = null;
-            controller = null;
-            httpRecorder.closeRecorders();
-            httpRecorder = null;
-            localProcessors = null;
-            
-            logger.fine(getName()+" finished for order '"+name+"'");
-            step = STEP_FINISHED;
         }
+        where = 17;
+//        controller.toeFinished(this);
+
+        // Do cleanup so that objects can be GC.
+        pool = null;
+        controller = null;
+        httpRecorder.closeRecorders();
+        httpRecorder = null;
+        localProcessors = null;
+
+        logger.fine(getName()+" finished for order '"+name+"'");
     }
 
-    /**
-     * If an external die request is detected, throw an interrupted exception.
-     * Used before anything that should not be attempted by a 'zombie' thread
-     * that the Frontier/Crawl has given up on. 
-     * 
-     * @throws InterruptedException
-     */
-    private void dieCheck() throws InterruptedException {
-        if(Thread.interrupted()) {
-            throw new InterruptedException("die request detected");
-        }
-    }
-
-    /** 
-     * Pass the CrawlURI to all appropriate processors 
-     * 
-     * @throws InterruptedException
-     */
     private void processCrawlUri() throws InterruptedException {
         currentCuri.setThreadNumber(serialNumber);
         currentCuri.setNextProcessorChain(controller.getFirstProcessorChain());
         lastStartTime = System.currentTimeMillis();
+        where = 3;
         try {
             while (currentCuri.nextProcessorChain() != null) {
-                step = STEP_ABOUT_TO_BEGIN_CHAIN; 
+                where = 4;
                 // Starting on a new processor chain.
                 currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
                 currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
 
                 while (currentCuri.nextProcessor() != null) {
-                    step = STEP_ABOUT_TO_BEGIN_PROCESSOR;
+                    where = 5;
+                    if (shouldDie){
+                        return;
+                    }
                     Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
                     currentProcessorName = currentProcessor.getName();
-                    dieCheck();
                     currentProcessor.process(currentCuri);
                 }
             }
-            step = STEP_DONE_WITH_PROCESSORS;
+            where = 6;
         } catch (RuntimeException e) {
-            step = STEP_HANDLING_RUNTIME_EXCEPTION;
+            where = 7;
             e.printStackTrace(System.err);
             currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
@@ -220,7 +181,7 @@ public class ToeThread extends Thread
             		"to process '" + currentCuri.getURIString() + "'\n";
             Heritrix.addAlert(new Alert(title,message.toString(),e, Level.SEVERE));
         } catch (Error err) {
-            step = STEP_HANDLING_SERIOUS_ERROR;
+            where = 8;
             // OutOfMemory & StackOverflow & etc.
             System.err.println(err);
             System.err.println(DevUtils.extraInfo());
@@ -231,6 +192,18 @@ public class ToeThread extends Thread
             		"to process '" + currentCuri.getURIString() + "'\n";
             Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
         }
+        where = 9; // Not just a debug statement. Used to determine if we
+                   // are ready to report back.
+        if(shouldDie){
+            return;
+        }
+        controller.getFrontier().finished(currentCuri);
+        if(shouldDie){
+            return;
+        }
+        where = 10;
+        currentCuri = null;
+        lastFinishTime = System.currentTimeMillis();
     }
 
 
@@ -263,7 +236,7 @@ public class ToeThread extends Thread
     public synchronized void stopAfterCurrent() {
         logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
         shouldCrawl = false;
-        if(isIdleOrDead())
+        if(isAvailable())
         {
             notify();
         }
@@ -350,7 +323,7 @@ public class ToeThread extends Thread
         rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
         rep.newline();
         rep.padTo(8);
-        rep.append("Where: "+step);
+        rep.append("Where: "+where);
         rep.newline();
         if(shouldDie){
             rep.padTo(8);
@@ -406,21 +379,19 @@ public class ToeThread extends Thread
      * @param newSerial New serial (id) for the thread.
      */
     protected void kill(int newSerial){
-        synchronized(this) {
-            shouldDie = true;
-            shouldCrawl = false;
-            shouldPause = false;
-            serialNumber = newSerial;
-            if (currentCuri!=null) {
-                currentCuri.setFetchStatus(S_PROCESSING_THREAD_KILLED);
+        shouldDie = true;
+        shouldCrawl = false;
+        shouldPause = false;
+        serialNumber = newSerial;
+        if(currentCuri != null){
+            currentCuri.setFetchStatus(S_PROCESSING_THREAD_KILLED);
+            if(where!=9 && where!=10){
                 controller.getFrontier().finished(currentCuri);
-                // currentCuri = null;
-            }
-        } 
-        this.interrupt();
-        if(controller!=null) {
-            controller.toeChanged(this);
+            } //else we are either waiting for a lock on the frontier, in the
+              //process of calling finished() or have already called finished(). 
+              //In any case we don't want another extrenous call.
         }
+        this.interrupt();
     }
     
 }

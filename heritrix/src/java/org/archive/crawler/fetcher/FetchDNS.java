@@ -63,6 +63,9 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         super(name, "DNS Fetcher. \nHandles DNS lookups.");
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+     */
     protected void innerProcess(CrawlURI curi) {
 
         Record[] rrecordSet = null;         // store retrieved dns records
@@ -75,28 +78,24 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
             return;
         }
 
-        // Make sure we're in "normal operating mode", e.g. a cache + controller
-        // exist to assist us
-        if (getController() != null &&
-                getController().getServerCache() != null) {
-            targetServer =
-                getController().getServerCache().getServerFor(dnsName);
+        // make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
+        if (getController() != null && getController().getServerCache() != null) {
+            targetServer = getController().getServerCache().getServerFor(dnsName);
         } else {
-            // Standalone operation (mostly for test cases/potential other uses)
+            // standalone operation (mostly for test cases/potential other uses)
             targetServer = new CrawlServer(dnsName);
         }
 
         // if it's an ip no need to do a lookup
-        if (dnsName.matches(
-                "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
-            // Ideally this branch would never be reached: no CrawlURI
+        if (dnsName.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+            // ideally this branch would never be reached: no CrawlURI
             // would be created for numerical IPs
             logger.warning("unnecessary DNS CrawlURI created: "+curi);
 
             try {
                 String[] octets = dnsName.split("\\.");
 
-                targetServer.getHost().setIP (
+                targetServer.getHost().setIP(
                     InetAddress.getByAddress(
                         dnsName,
                         new byte[] {
@@ -134,8 +133,8 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
             curi.setContentType("text/dns");
             curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 
-            // Get TTL and IP info from the first A record (there may be
-            // multiple, e.g. www.washington.edu) then update the CrawlServer
+            // get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
+            // then update the CrawlServer
             for (int i = 0; i < rrecordSet.length; i++) {
 
                 if (rrecordSet[i].getType() != Type.A) {
@@ -144,7 +143,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
 
                 ARecord AsA = (ARecord) rrecordSet[i];
                 targetServer.getHost().setIP(
-                        AsA.getAddress(), (long) AsA.getTTL());
+                        AsA.getAddress(), (1000 * (long) AsA.getTTL()));
                 break; // only need to process one record
             }
         } else {

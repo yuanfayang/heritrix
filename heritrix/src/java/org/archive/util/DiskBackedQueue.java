@@ -34,11 +34,11 @@ import java.util.logging.Logger;
  * Queue which uses a DiskQueue ('tailQ') for spillover entries once a
  * MemQueue ('headQ') reaches a maximum size.
  *
+ *
  * @author Gordon Mohr
  */
 public class DiskBackedQueue implements Queue {
-    private static final Logger logger =
-        Logger.getLogger("org.archive.util.DiskBackedQueue");
+    private static Logger logger = Logger.getLogger("org.archive.util.DiskBackedQueue");
 
     int headMax;
     MemQueue headQ;
@@ -52,12 +52,11 @@ public class DiskBackedQueue implements Queue {
      * @throws IOException
      *
      */
-    public DiskBackedQueue(File dir, String name, int headMax)
-            throws IOException {
+    public DiskBackedQueue(File dir, String name, int headMax) throws IOException {
         this.headMax = headMax;
         this.name = name;
-        this.headQ = new MemQueue();
-        this.tailQ = new DiskQueue(dir, name);
+        headQ = new MemQueue();
+        tailQ = new DiskQueue(dir, name);
     }
 
     /* (non-Javadoc)

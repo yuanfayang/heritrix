@@ -31,8 +31,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
@@ -99,12 +97,14 @@ import org.archive.util.DevUtils;
  *
  * @author stack
  */
-public class ARCWriter implements ARCConstants {
+public class ARCWriter
+    implements ARCConstants
+{
     /**
      * Logger.
      */
-    private static final Logger logger =
-        Logger.getLogger(ARCWriter.class.getName());
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriter");
     
     /**
      * Max size we allow ARC files to be (bytes).
@@ -121,11 +121,6 @@ public class ARCWriter implements ARCConstants {
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String prefix = DEFAULT_ARC_FILE_PREFIX;
-    
-    /**
-     * Tail to add to arc file name.
-     */
-    private String suffix = "";
 
     /**
      * Directory into which we drop ARC files.
@@ -148,17 +143,14 @@ public class ARCWriter implements ARCConstants {
      *  Output stream for arcFile.
      */
     private OutputStream out = null;
-    
+
     /**
      * A running sequence used making unique ARC file names.
+     *
+     * Access via a synchronized method to guarantee no two files get the
+     * same sequence suffix.
      */
-    private static int serialNo = 0;
-    
-    /**
-     * NumberFormat instance for formatting serial number.
-     */
-    private static NumberFormat serialNoFormatter =
-        new DecimalFormat("00000");
+    private static int id = 0;
 
 
     /**
@@ -188,39 +180,6 @@ public class ARCWriter implements ARCConstants {
         throws IOException
     {
         this(arcsDir, prefix, DEFAULT_COMPRESS, DEFAULT_MAX_ARC_FILE_SIZE);
-    }
-    
-    /**
-     * Constructor.
-     *
-     * @param arcsDir Where to drop the ARC files.
-     * @param prefix ARC file prefix to use.  If null, we use
-     * DEFAULT_ARC_FILE_PREFIX.
-     * @param compress Compress the ARC files written.  The compression is done
-     * by individually gzipping each record added to the ARC file: i.e. the
-     * ARC file is a bunch of gzipped records concatenated together.
-     * @param maxSize Maximum size for ARC files written.
-     * @param suffix ARC file tail to use.  If null, unused.
-     *
-     * @exception IOException If passed directory does not exist or is not
-     * a directory.
-     */
-    public ARCWriter(File arcsDir, String prefix, boolean compress,
-            int maxSize, String suffix)
-        throws IOException
-    {
-        this.arcsDir = ArchiveUtils.ensureWriteableDirectory(arcsDir);
-        this.prefix = (prefix != null)? prefix: DEFAULT_ARC_FILE_PREFIX;
-        this.compress = compress;
-        if (maxSize < 0)
-        {
-            throw new IOException("Unreasonable maximum file size: " +
-                Integer.toString(maxSize));
-        }
-        this.maxSize = maxSize;
-        if (suffix != null) {
-            this.suffix = suffix;
-        }
     }
 
     /**
@@ -299,10 +258,8 @@ public class ARCWriter implements ARCConstants {
     {
         close();
         String now = ArchiveUtils.get14DigitDate();
-        String name = this.prefix + getUniqueBasename(now) +
-            ((this.suffix == null || this.suffix.length() <= 0)? 
-                "": "-" + this.suffix) +
-            '.' + ARC_FILE_EXTENSION +
+        String name = this.prefix + getUniqueBasename(now) + '.' +
+            ARC_FILE_EXTENSION +
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
         this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
@@ -319,27 +276,21 @@ public class ARCWriter implements ARCConstants {
      *
      * @return Unique basename.
      */
-    private synchronized String getUniqueBasename(String now)
+    private String getUniqueBasename(String now)
     {
-        return "-" + now + "-" +
-            ARCWriter.serialNoFormatter.format(getNewSerialNo());
+        return now + '-' + Integer.toString(getNextId());
     }
 
     /**
-	 * @return New serial number.
-	 */
-	private static synchronized int getNewSerialNo() {
-		return ARCWriter.serialNo++;
-	}
-    
-    /**
-     * Reset the serial number.
+     * @return Next id.
+     * @see #getUniqueBasename(String)
      */
-    public static synchronized void resetSerialNo() {
-        ARCWriter.serialNo = 0;   
+    private synchronized int getNextId()
+    {
+        return id++;
     }
 
-	/**
+    /**
      * Write out the ARCMetaData
      *
      * Generate ARC file meta data.  Currently we only do version 1 of the
@@ -668,7 +619,7 @@ public class ARCWriter implements ARCConstants {
      *
      * @author stack
      */
-    private class ARCWriterGZIPOutputStream extends GZIPOutputStream
+    public class ARCWriterGZIPOutputStream extends GZIPOutputStream
     {
         public ARCWriterGZIPOutputStream(OutputStream out)
             throws IOException
@@ -679,7 +630,7 @@ public class ARCWriter implements ARCConstants {
         /**
          * @return Reference to stream being compressed.
          */
-        OutputStream getOut()
+        private OutputStream getOut()
         {
             return this.out;
         }

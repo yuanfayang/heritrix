@@ -34,7 +34,8 @@ import org.archive.util.TmpDirTestCase;
 /**
  * Test ARCWriterPool
  */
-public class ARCWriterPoolTest extends TmpDirTestCase {
+public class ARCWriterPoolTest extends TmpDirTestCase
+{
     /*
      * Class to test for void ARCWriterPool(File, int, int)
      */
@@ -45,8 +46,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         final int MAX_WAIT_MILLISECONDS = 100;
         cleanUpOldFiles("TEST");
         ARCWriterPool pool = new ARCWriterPool(getTmpDir(), "TEST",
-            true, ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE, null,
-            MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
+            true, MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
         ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
         final String CONTENT = "Any old content";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -12,7 +12,7 @@
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
-    <integer name="max-toe-threads">1</integer>
+    <integer name="max-toe-threads">3</integer>
     <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
       <string name="seedsfile">seeds-selftest.txt</string>
@@ -59,7 +59,7 @@
       <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
     </newObject>
     <map name="pre-fetch-processors">
-      <newObject name="Preselector" class="org.archive.crawler.prefetch.Preselector">
+      <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
@@ -67,11 +67,11 @@
         <boolean name="block-all">false</boolean>
         <string name="block-by-regexp"></string>
       </newObject>
-      <newObject name="Preprocessor" class="org.archive.crawler.prefetch.PreconditionEnforcer">
+      <newObject name="Preprocessor" class="org.archive.crawler.basic.PreconditionEnforcer">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
-        <integer name="ip-validity-duration-seconds">-1</integer>
+        <integer name="ip-validity-duration-m">-1</integer>
         <integer name="robot-validity-duration-m">4320</integer>
       </newObject>
     </map>
@@ -119,7 +119,6 @@
         </map>
         <boolean name="compress">true</boolean>
         <string name="prefix">SELFTEST</string>
-        <string name="suffix">${HOSTNAME}</string>
         <integer name="max-size-bytes">100000000</integer>
         <string name="path"></string>
         <integer name="pool-max-active">1</integer>
@@ -127,12 +126,12 @@
       </newObject>
     </map>
     <map name="post-processors">
-      <newObject name="Updater" class="org.archive.crawler.postprocessor.CrawlStateUpdater">
+      <newObject name="Updater" class="org.archive.crawler.basic.CrawlStateUpdater">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
       </newObject>
-      <newObject name="Postselector" class="org.archive.crawler.postprocessor.Postselector">
+      <newObject name="Postselector" class="org.archive.crawler.basic.Postselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
@@ -147,38 +146,11 @@
     <string name="recover-path"></string>
     <newObject name="credential-store" class="org.archive.crawler.datamodel.CredentialStore">
       <map name="credentials" >
-        <!--Credential-domain is filled in by the Heritrix#selftest method on 
-            startup.  Its done there in case selftest port is changed  on us.
-         -->
         <newObject name="selftest" class="org.archive.crawler.datamodel.credential.Rfc2617Credential">
-          <string name="credential-domain" />
+          <string name="credential-domain">127.0.0.1:8080</string>
           <string name="realm">selftest</string>
           <string name="login">selftest</string>
           <string name="password">basic</string>
-        </newObject>
-        <newObject name="Selftest GET form login" 
-            class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
-          <string name="credential-domain" />
-          <string 
-            name="login-uri">/selftest/Auth/form/get/success.jsp</string>
-          <string name="http-method">GET</string>
-          <map name="form-items">
-            <string name="login">login</string>
-            <string name="password">password</string>
-            <string name="submit">submit</string>
-          </map>
-        </newObject>
-        <newObject name="Selftest POST form login" 
-            class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
-          <string name="credential-domain" />
-          <string 
-            name="login-uri">/selftest/Auth/form/post/success.jsp</string>
-          <string name="http-method">POST</string>
-          <map name="form-items">
-            <string name="login">login</string>
-            <string name="password">password</string>
-            <string name="submit">submit</string>
-          </map>
         </newObject>
       </map>
     </newObject>

@@ -23,23 +23,27 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.filter.OrFilter;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
 
 /**
@@ -72,28 +76,16 @@ public class CrawlScope extends Filter {
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
-    /**
-     * List of seeds.
-     * 
-     * This list is wrapped with the synchronized list whenever its
-     * instantiated.  This means, to iterate over this list, you'll need to 
-     * synchronize on the list itself first.  See 
-     * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List).
-     * Call getSeedList() to get the list to synchronize on.
-     */
-    private SeedList seedlist = null;
-    
-    
+    private List seeds = null;
+    private boolean seedsCached = false;
     private OrFilter excludeFilter;
-    
-    
+
     /** Constructs a new CrawlScope.
      * 
      * @param name the name is ignored since it always have to be the value of
      *        the constant ATT_NAME.
      */
     public CrawlScope(String name) {
-        // 'name' is never used.
         super(ATTR_NAME, "Crawl scope");
         Type t;
         t = addElementToDefinition(new SimpleType(ATTR_SEEDS,
@@ -106,7 +98,7 @@ public class CrawlScope extends Filter {
                 ATTR_MAX_TRANS_HOPS,
                 "Max transitive hops (embeds, referrals, preconditions) to include",
                 new Integer(5)));
-        this.excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
+        excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
         
         // Try to preserve the values of these attributes when we exchange
@@ -120,110 +112,78 @@ public class CrawlScope extends Filter {
     public CrawlScope() {
         this(ATTR_NAME);
     }
-    
-    /**
-     * Initialize is called just before the crawler starts to run.  
-     * 
-     * The settings system is up and initialized so can be used.  This
-     * initialize happens after {@link #earlyInitialize(CrawlerSettings)}.
-     * 
-     * @param controller Controller object.
-     */
-    public void initialize(CrawlController controller) {
-        createSeedlist(getSeedfile(), getSettingsHandler().
-            getOrder().getController().uriErrors, true);
-    }
-    
-    /**
-     * Create seedlist.
-     * 
-     * Always creates a caching SeedList.  Override if you want different 
-     * behavior.
-     * 
-     * @param seedfile Seedfile to use as seed source.
-     * @param l Logger to use internally.
-     * @param caching True if seed list created is to cache seeds.
-     */
-    protected synchronized void createSeedlist(File seedfile, Logger l,
-            boolean caching) {
-        if (this.seedlist == null) {
-            this.seedlist = new SeedList(seedfile, l, caching);
-        }
-    }
 
     public String toString() {
         return "CrawlScope<" + getName() + ">";
     }
-    
-    /**
-     * @param o An instance of UURI or of CandidateURI.
-     * @return Make into a UURI.
+
+    /** Refreshes the seeds cache.
+     * 
+     * This method could safely be overridden by a null implementation for
+     * scopes that doesn't need the seeds to be cached. For example is there
+     * no reason for the BroadScope to cache seeds since it doesn't have to
+     * check the seeds to see if a URI is inside the scope.
      */
-    protected UURI getUURI(Object o) {
-        UURI u = null;
-        if (o instanceof UURI) {
-            u = (UURI)o;
-        } else if (o instanceof CandidateURI) {
-            u = ((CandidateURI) o).getUURI();
+    public void refreshSeedsIteratorCache() {
+        // seeds should be in memory for scope tests
+        if (seeds == null) {
+            seeds = Collections.synchronizedList(new ArrayList());
         } else {
-            if (o != null) {
-                throw new IllegalArgumentException("Passed wrong type: " + o);
-            }
+            seeds.clear();
         }
-        return u;
-    }
-    
-    /**
-     * Use this method to get a reference to the seedlist.
-     * 
-     * Use it to get an iterator.  You must synchronize on it as you iterate
-     * over it as per
-     * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List)
-     * to prevent concurrentmodificationexceptions.  Same is case if you want
-     * to add seeds.
-     * 
-     * @return Returns a seedlist.
-     */
-    public List getSeedlist() {
-        return this.seedlist;
-    }
-    
-    /**
-     * Refresh seeds.
-     * 
-     * If caching, this will reread the seed file. If not, this will just update
-     * the seed file reference so all subsequent iterators will be against new
-     * file reference.
-     */
-    public void refreshSeeds() {
-        this.seedlist.refresh(getSeedfile());
-    }
-    
-    /**
-     * @return Seed list file or null if problem getting settings file.
-     */
-    protected File getSeedfile() {
-        File file = null;
-        try {
-            file = getSettingsHandler().getPathRelativeToWorkingDirectory(
-                (String)getAttribute(ATTR_SEEDS));
-            if (!file.exists() || !file.canRead()) {
-                throw new IOException("Seeds file " +
-                    file.getAbsolutePath() + " does not exist or unreadable.");
+        synchronized (seeds) {
+            seedsCached = false;
+            Iterator iter = getSeedsIterator();
+            while (iter.hasNext()) {
+                seeds.add(iter.next());
             }
-        } catch (IOException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-        } catch (AttributeNotFoundException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-        } catch (MBeanException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            e.printStackTrace();
+            seedsCached = true;
+        }
+    }
+
+    /**
+     * Return an iterator of the seeds in this scope. The seed
+     * input is taken from either the configuration file, or the
+     * external seed file it specifies.
+     *
+     * @return An iterator of the seeds in this scope.
+     */
+    public Iterator getSeedsIterator() {
+        Iterator seedIterator;
+
+        if (seedsCached) {
+            seedIterator = seeds.iterator();
+        } else {
+            try {
+                File file = getSettingsHandler()
+                    .getPathRelativeToWorkingDirectory(
+                        (String)getAttribute(ATTR_SEEDS));
+                if (!file.exists())
+                {
+                    throw new FileNotFoundException("Seeds file " +
+                       file.getAbsolutePath() + " does not exist.");
+                }
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                seedIterator = new SeedsInputIterator(reader,
+                        getSettingsHandler().getOrder().getController());
+            } catch (IOException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                seedIterator = null;
+            } catch (AttributeNotFoundException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                seedIterator = null;
+            } catch (MBeanException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                e.printStackTrace();
+                seedIterator = null;
+            } catch (ReflectionException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                e.printStackTrace();
+                seedIterator = null;
+            }
         }
 
-        return file;
+        return seedIterator;
     }
 
     /**
@@ -307,10 +267,10 @@ public class CrawlScope extends Filter {
      * @return True if exclude filter accepts passed object.
      */
     private boolean excludeAccepts(Object o) {
-        if (this.excludeFilter.isEmpty(o)) {
+        if (excludeFilter.isEmpty(o)) {
             return exeedsMaxHops(o);
         } else {
-            return this.excludeFilter.accepts(o) || exeedsMaxHops(o);
+            return excludeFilter.accepts(o) || exeedsMaxHops(o);
         }
     }
 
@@ -327,23 +287,17 @@ public class CrawlScope extends Filter {
      * @param a First UURI of compare.
      * @param b Second UURI of compare.
      * @return True if UURIs are of same host.
-     * @throws URIException
      */
-    protected boolean isSameHost(UURI a, UURI b) {
+    protected boolean isSameHost(UURI a, UURI b)
+    {
         boolean isSameHost = false;
         if (a != null && b != null) {
             // getHost can come back null.  See
             // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-            try {
-                if (a.getHost() != null && b.getHost() != null) {
-                    if (a.getHost().equals(b.getHost())) {
-                        isSameHost = true;
-                    }
+            if (a.getHost() != null && b.getHost() != null) {
+                if (a.getHost().equals(b.getHost())) {
+                    isSameHost = true;
                 }
-            }
-            catch (URIException e) {
-                logger.severe("Failed compare of " + a + " " + b + ": " +
-                    e.getMessage());
             }
         }
         return isSameHost;
@@ -360,8 +314,46 @@ public class CrawlScope extends Filter {
         return false; 
     }
     
+    /**
+     * Add a URI to the list of seeds. Includes adding the URI to the seed file.
+     * @param newSeed The new seed.
+     */
+    public void addSeed(UURI newSeed){
+        // Add to cached list if exists.
+        if(seedsCached){
+            synchronized(seeds){
+                seeds.add(newSeed);
+            }
+        }
+        // TODO: Write to seedfile.
+        try{
+            File file = getSettingsHandler().getPathRelativeToWorkingDirectory(
+                    (String)getAttribute(ATTR_SEEDS));
+            if (!file.exists())
+            {
+                throw new FileNotFoundException("Seeds file " +
+                   file.getAbsolutePath() + " does not exist.");
+            }
+            // Open file for reading (append)
+            FileWriter fw = new FileWriter(file,true);
+            // Write to new (last) line the URL.
+            fw.write("\n");
+            fw.write(newSeed.getURIString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        } catch (AttributeNotFoundException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        } catch (MBeanException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        } catch (ReflectionException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        }
+    }
+    
     /* (non-Javadoc)
-     * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
+     * @see org.archive.crawler.datamodel.settings.ModuleType#listUsedFiles(java.util.List)
      */
     public void listUsedFiles(List list){
         // Add seed file

@@ -453,7 +453,7 @@
       against the domain. This proposal is to add a new <emphasis>login
       precondition</emphasis> after the fashion of the robots and DNS
       preconditions -- See <ulink
-      url="org.archive.crawler.prefetch.PreconditionEnforcer">org.archive.crawler.prefetch.PreconditionEnforcer</ulink>
+      url="org.archive.crawler.basic.PreconditionEnforcer">org.archive.crawler.basic.PreconditionEnforcer</ulink>
       -- and a facility for having our HTTP fetcher run a configurable one
       time login.</para>
 

@@ -32,10 +32,11 @@ import java.io.ObjectOutputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.framework.Savable;
 import org.archive.io.DiskBackedByteQueue;
-import org.archive.io.DevNull;
+import org.archive.io.NullOutputStream;
 
 /**
  * Queue which stores all its objects to disk using object
@@ -52,6 +53,8 @@ import org.archive.io.DevNull;
  * @author Gordon Mohr
  */
 public class DiskQueue implements Queue, Savable {
+    private static Logger logger
+        = Logger.getLogger("org.archive.util.DiskQueue");
 
     /** the directory used to create the temporary files */
     private File scratchDir;
@@ -99,7 +102,7 @@ public class DiskQueue implements Queue, Savable {
     }
 
     private void lateInitialize() throws FileNotFoundException, IOException {
-        testStream = new ObjectOutputStream(new DevNull());        
+        testStream = new ObjectOutputStream(new NullOutputStream());        
         tailStream = new ObjectOutputStream(bytes.getTailStream());
         headStream = new ObjectInputStream(bytes.getHeadStream());
         tailStream.flush();

@@ -30,8 +30,8 @@ import java.util.logging.Level;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.StatisticsTracking;
-import org.archive.crawler.settings.XMLSettingsHandler;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and

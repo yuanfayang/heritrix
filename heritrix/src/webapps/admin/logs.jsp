@@ -1,7 +1,7 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
+<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.datamodel.settings.SettingsHandler,org.archive.crawler.datamodel.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
 
 <%
 	/* Various settings with default values (where applicable) */
@@ -53,12 +53,6 @@
 	{
 		settingsHandler = theJob.getSettingsHandler();
 		String diskPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_DISK_PATH);
-		String logsPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_LOGS_PATH);
-		if (diskPath.length()==0 || logsPath.length()==0) {
-		    diskPath = diskPath + logsPath;
-		} else {
-		    diskPath = diskPath + "/" + logsPath;
-		}
 		diskPath = settingsHandler.getPathRelativeToWorkingDirectory(diskPath).getAbsolutePath()+"/";
 
 		// Got a valid crawl order, find it's logs

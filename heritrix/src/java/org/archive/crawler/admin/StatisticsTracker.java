@@ -28,7 +28,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -235,7 +234,7 @@ public class StatisticsTracker extends AbstractTracker
         }
 
         Date now = new Date();
-        controller.progressStats.log(
+        periodicLogger.log(
             Level.INFO,
             new PaddingStringBuffer()
                 .append(ArchiveUtils.TIMESTAMP14.format(now))
@@ -689,16 +688,15 @@ public class StatisticsTracker extends AbstractTracker
      * @return the seed iterator
      */
     public Iterator getSeeds(){
-        if(this.shouldrun) {
-            List seeds = this.controller.getScope().getSeedlist();
-            this.allSeeds = new Vector();
-            synchronized (seeds) {
-                for(Iterator i = seeds.iterator(); i.hasNext();) {
-                    this.allSeeds.add(((UURI)i.next()).toString());
-                }
+        if(shouldrun){
+            Iterator tmp = controller.getScope().getSeedsIterator();
+            allSeeds = new Vector();
+            while(tmp.hasNext()){
+                String s = ((UURI)tmp.next()).getURIString();
+                allSeeds.add(s);
             }
         }
-        return this.allSeeds.iterator();
+        return allSeeds.iterator();
     }
 
     /**
@@ -760,13 +758,11 @@ public class StatisticsTracker extends AbstractTracker
      */
     public void crawlEnded(String sExitMessage) {
         CrawlController controller = this.controller;
-        
-        Iterator tmp = getSeeds(); // Need this before we do super.crawlEnded()
-        
         super.crawlEnded(sExitMessage);
         // Need to write some reports at the end of the crawl.
         String directory = controller.getDisk().getPath();
         // seeds-report.txt
+        Iterator tmp = getSeeds(); 
         
         int maxURILength = 0;
         while(tmp.hasNext()){

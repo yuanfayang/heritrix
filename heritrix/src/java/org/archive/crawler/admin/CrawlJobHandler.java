@@ -44,16 +44,16 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.settings.ComplexType;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
-import org.archive.crawler.settings.ComplexType;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SettingsHandler;
-import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 
@@ -487,7 +487,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // First check to see if we are deleting the current job.
         if (currentJob != null && jobUID.equals(currentJob.getUID())) {
             // Need to terminate the current job.
-            controller.requestCrawlStop(); // This will cause crawlEnding to be invoked.
+            controller.stopCrawl(); // This will cause crawlEnding to be invoked.
                                     // It will handle the clean up.
             crawling = false;
 
@@ -550,7 +550,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void resumeJob() {
         if (controller != null) {
-            controller.requestCrawlResume();
+            controller.resumeCrawl();
         }
     }
     /**
@@ -867,7 +867,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         currentJob.setRunning(true);
         currentJob.setStatisticsTracking(controller.getStatistics());
-        controller.requestCrawlStart();
+        controller.startCrawl();
     }
 
     /**

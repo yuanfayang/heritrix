@@ -25,8 +25,7 @@ package org.archive.crawler.datamodel;
 
 import java.util.HashMap;
 
-import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.settings.SettingsHandler;
+import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.xbill.DNS.FindServer;
 
 /**
@@ -66,13 +65,13 @@ public class ServerCache {
      * @param curi
      * @return CrawlServer
      */
-    public CrawlServer getServerFor(CrawlURI curi) throws URIException {
-        String scheme = curi.getUURI().getScheme();
+    public CrawlServer getServerFor(CrawlURI curi) {
+        String scheme = curi.getUURI().getUri().getScheme();
         if (scheme.equals("dns")) {
             // set crawlhost to default nameserver
             String primaryDns = FindServer.server();
             if (primaryDns == null) {
-                this.settingsHandler.getOrder().getController()
+                settingsHandler.getOrder().getController()
                     .runtimeErrors.warning("Could not get primary DNS server.");
                 return null;
             } else {
@@ -80,16 +79,13 @@ public class ServerCache {
             }
         }
 
-        String hostOrAuthority = curi.getUURI().getAuthority();
-        if (hostOrAuthority != null && scheme.equals(UURI.HTTP_PORT)) {
-            // If https and no port specified, add default https port to
-            // distinuish https from http server without a port.
-            if (!hostOrAuthority.matches(".+:[0-9]+")) {
-                hostOrAuthority += ":" + UURI.HTTPS_PORT;
-            }
+        String hostOrAuthority = curi.getUURI().getUri().getAuthority();
+        if (hostOrAuthority != null) {
+            return getServerFor(hostOrAuthority);
+            // TODOSOMEDAY: make this robust against those rare cases
+            // where authority is not a hostname
+        } else {
+            return null;
         }
-        // TODOSOMEDAY: make this robust against those rare cases
-        // where authority is not a hostname.
-        return (hostOrAuthority != null)? getServerFor(hostOrAuthority): null;
     }
 }

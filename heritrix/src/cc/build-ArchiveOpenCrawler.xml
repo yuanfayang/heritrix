@@ -39,7 +39,6 @@
         <exec failonerror="true" executable="${maven.home}/bin/maven">
             <arg value="clean" />
             <arg value="dist" />
-            <arg value="selftest" />
             <arg value="site:generate" />
             <arg value="site:update-sourceforge" />
         </exec>

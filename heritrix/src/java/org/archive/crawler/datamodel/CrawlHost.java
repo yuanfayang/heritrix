@@ -42,20 +42,8 @@ public class CrawlHost implements Serializable {
     private String hostname;
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
-    
-    /**
-     * TTL gotten from dns record.
-     * 
-     * From rfc2035:
-     * <pre>
-     * TTL       a 32 bit unsigned integer that specifies the time
-     *           interval (in seconds) that the resource record may be
-     *           cached before it should be discarded.  Zero values are
-     *           interpreted to mean that the RR can only be used for the
-     *           transaction in progress, and should not be cached.
-     * </pre>
-     */
     private long ipTTL = IP_NEVER_LOOKED_UP;
+    private boolean hasBeenLookedUp = false;
 
     // Used when bandwith constraint are used
     private long earliestNextURIEmitTime = 0;
@@ -97,19 +85,18 @@ public class CrawlHost implements Serializable {
         return ipFetched != IP_NEVER_LOOKED_UP;
     }
 
-    /**
-     * Set the IP address for this host.
+    /** Set the IP address for this host.
      * 
      * @param address
-     * @param ttl the TTL from the dns record in seconds or -1 if it should live
-     * forever (is a numeric IP).
+     * @param ttl the TTL from the dns record or -1 if it should live forever
+     *            (is a numeric IP).
      */
     public void setIP(InetAddress address, long ttl) {
-        this.ip = address;
-        // Assume that a lookup as occurred by the time
+        ip = address;
+        // assume that a lookup as occurred by the time
         // a caller decides to set this (even to null)
-        this.ipFetched = System.currentTimeMillis();
-        this.ipTTL = ttl;
+        ipFetched = System.currentTimeMillis();
+        ipTTL = ttl;
     }
 
     /** Get the IP address for this host.
@@ -128,14 +115,13 @@ public class CrawlHost implements Serializable {
         return ipFetched;
     }
 
-    /**
-     * Get the TTL value from the dns record for this host.
+    /** Get the TTL value from the dns record for this host.
      * 
-     * @return the TTL value from the dns record for this host -- in seconds --
-     * or -1 if this lookup should be valid forever (numeric ip).
+     * @return the TTL value from the dns record for this host or -1 if this
+     *         lookup should be valid forever (numeric ip).
      */
     public long getIpTTL() {
-        return this.ipTTL;
+        return ipTTL;
     }
 
     /**

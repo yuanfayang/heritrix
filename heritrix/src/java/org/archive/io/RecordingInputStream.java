@@ -164,11 +164,10 @@ public class RecordingInputStream
      * @throws IOException failed read.
      * @throws RecorderLengthExceededException
      * @throws RecorderTimeoutException
-     * @throws InterruptedException
      */
     public void readFullyOrUntil(long maxLength, long timeout)
         throws IOException, RecorderLengthExceededException,
-            RecorderTimeoutException, InterruptedException
+            RecorderTimeoutException
     {
         // Check we're open before proceeding.
         if (!isOpen()) {
@@ -193,9 +192,6 @@ public class RecordingInputStream
                     break;
                 }
                 totalBytes += bytesRead;
-                if(Thread.interrupted()) {
-                    throw new InterruptedException("interrupted during IO");
-                }
             } catch (SocketTimeoutException e) {
                 // Socket timed out. If we  haven't exceeded the timeout, throw
                 // an IOException.  If we have, it'll be picked up on by test

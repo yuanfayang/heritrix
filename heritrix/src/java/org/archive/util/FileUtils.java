@@ -43,7 +43,6 @@ public class FileUtils
      *
      */
     private FileUtils() {
-        super();
     }
 
     /** Recursively copy all files from one directory to another.

@@ -24,10 +24,9 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
@@ -89,10 +88,10 @@ public class PathScope extends CrawlScope {
             "path 'examples' will be crawled (like 'archive.org/examples/hello.html')" +
             "but not URIs in other paths or root (i.e. 'archive.org/index.html).");
 
-        this.additionalFocusFilter = (Filter) addElementToDefinition(
+        additionalFocusFilter = (Filter) addElementToDefinition(
                 new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
 
-        this.transitiveFilter = (Filter) addElementToDefinition(
+        transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
 
     }
@@ -102,10 +101,10 @@ public class PathScope extends CrawlScope {
      * @return True if transitive filter accepts passed object.
      */
     protected boolean transitiveAccepts(Object o) {
-        if (this.transitiveFilter == null) {
+        if (transitiveFilter == null) {
             return true;
         }
-        return this.transitiveFilter.accepts(o);
+        return transitiveFilter.accepts(o);
     }
 
     /**
@@ -113,45 +112,31 @@ public class PathScope extends CrawlScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        UURI u = getUURI(o);
+        UURI u = null;
+        if (o instanceof UURI) {
+            u = (UURI) o;
+        } else if (o instanceof CandidateURI) {
+            u = ((CandidateURI) o).getUURI();
+        }
         if (u == null) {
             return false;
         }
-        // Get the seeds to refresh and then get an iterator inside a 
-        // synchronization block.  The seeds list may get updated during our
-        // iteration. This will throw a concurrentmodificationexception unless
-        // we synchronize.
-        List seeds = getSeedlist();
-        synchronized(seeds) {
-            for (Iterator i = seeds.iterator(); i.hasNext();) {
-                UURI s = (UURI) i.next();
-                if (isSameHost(s, u)) {
-                    try {
-                        // Protect against non-parseable URIs. See
-                        // "[ 910120 ] java.net.URI#getHost fails when
-                        // leading digit"
-                        if (s.getPath() == null || u.getPath() == null) {
-                            continue;
-                        }
-                    }
-                    catch (URIException e) {
-                        logger.severe("Failed get path on " + u + " or " + s +
-                            ": " + e.getMessage());
-                    }
-                    try {
-                        if (s.getPath().regionMatches(0, u.getPath(), 0, 
-                            s.getPath().lastIndexOf('/'))) {
-                            // matches up to last '/'
-                            return true;
-                        } else {
-                            // no match; try next seed
-                            continue;
-                        }
-                    }
-                    catch (URIException e) {
-                        logger.severe("Failed get path on " + u + " or " + s +
-                            ": " + e.getMessage());
-                    }
+        Iterator iter = getSeedsIterator();
+        while (iter.hasNext()) {
+            UURI s = (UURI) iter.next();
+            if (isSameHost(s, u)) {
+                // Protect against non-parseable URIs. See
+                // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+                if (s.getPath() == null || u.getPath() == null) {
+                    continue;
+                }
+                if (s.getPath().regionMatches(0, u.getPath(), 0, 
+                    s.getPath().lastIndexOf('/'))) {
+                    // matches up to last '/'
+                    return true;
+                } else {
+                    // no match; try next seed
+                    continue;
                 }
             }
         }
@@ -164,7 +149,7 @@ public class PathScope extends CrawlScope {
      * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
      */
     protected boolean additionalFocusAccepts(Object o) {
-        return this.additionalFocusFilter.accepts(o);
+        return additionalFocusFilter.accepts(o);
     }
 
 }

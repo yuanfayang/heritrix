@@ -10,7 +10,7 @@
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@page import="org.archive.crawler.framework.Filter" %>
-<%@page import="org.archive.crawler.settings.refinements.*"%>
+<%@page import="org.archive.crawler.datamodel.settings.refinements.*"%>
 
 
 <%@include file="/include/jobfilters.jsp"%>

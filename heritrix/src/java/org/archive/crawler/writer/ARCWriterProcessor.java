@@ -36,10 +36,9 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
@@ -52,19 +51,14 @@ import org.xbill.DNS.Record;
  * perhaps someday, certain kinds of network failures) to the Internet Archive
  * ARC file format.
  *
- * Assumption is that there is only one of these ARCWriterProcessors per
+ * Assumption is that there is only one of this ARCWriterProcessors per
  * Heritrix instance.
  *
  * @author Parker Thompson
  */
-public class ARCWriterProcessor extends Processor
-        implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
-    /**
-     * Logger.
-     */
-    private static final Logger logger =
-        Logger.getLogger(ARCWriterProcessor.class.getName());
-    
+public class ARCWriterProcessor
+    extends Processor implements CoreAttributeConstants, ARCConstants
+{
     /**
      * Key to use asking settings for compression value.
      */
@@ -74,11 +68,6 @@ public class ARCWriterProcessor extends Processor
      * Key to use asking settings for prefix value.
      */
     public static final String ATTR_PREFIX = "prefix";
-    
-    /**
-     * Key to use asking settings for suffix value.
-     */
-    public static final String ATTR_SUFFIX = "suffix";
 
     /**
      * Key to use asking settings for max size value.
@@ -118,11 +107,6 @@ public class ARCWriterProcessor extends Processor
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
-    
-    /**
-     * File suffix for arcs.
-     */
-    private String arcSuffix = null;
 
     /**
      * Use compression flag.
@@ -152,6 +136,12 @@ public class ARCWriterProcessor extends Processor
     private ARCWriterPool pool = null;
 
     /**
+     * Has this processor been initialized.
+     */
+    private boolean initialized = false;
+    
+
+    /**
      * @param name
      */
     public ARCWriterProcessor(String name) {
@@ -162,10 +152,6 @@ public class ARCWriterProcessor extends Processor
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_PREFIX, "Prefix", this.arcPrefix));
-        e = addElementToDefinition(
-            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto arc files.\n" +
-                "If value is '${HOSTNAME}', will use hostname for suffix.",
-                "${HOSTNAME}.  If empty, no suffix will be added."));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
@@ -184,11 +170,26 @@ public class ARCWriterProcessor extends Processor
         e.setOverrideable(false);
     }
 
-    public synchronized void initialTasks() {
-        // Add this class to crawl state listeners
-        getSettingsHandler().getOrder().getController().
-            addCrawlStatusListener(this);
+    public void initialize() {
         
+        if (!this.initialized) {
+            _initialize();
+        }
+    }
+    
+    private synchronized void _initialize() {
+        
+        // Recheck inside now we're inside the synchronized block to be sure.
+        // I've seen the case where two threads have seen the flag set to false
+        // and both have then proceeded to call into this method thereby
+        // setting up two instances of ARCWriterPool.
+        if (this.initialized) {
+            return;
+        }
+        
+        Logger logger = getSettingsHandler().getOrder().getController()
+            .runtimeErrors;
+
         // ReadConfiguration populates settings used creating ARCWriter.
         try {
             readConfiguration();
@@ -206,14 +207,13 @@ public class ARCWriterProcessor extends Processor
                 new ARCWriterPool(this.outputDir,
                     this.arcPrefix,
                     this.useCompression,
-                    this.arcMaxSize,
-                    this.arcSuffix,
                     this.poolMaximumActive,
                     this.poolMaximumWait);
             
         } catch (IOException e) {
             logger.warning(e.getLocalizedMessage());
         }
+        this.initialized = true;
     }
 
     protected void readConfiguration()
@@ -223,7 +223,6 @@ public class ARCWriterProcessor extends Processor
         setUseCompression(
             ((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
         setArcPrefix((String) getAttribute(ATTR_PREFIX));
-        setArcSuffix((String) getAttribute(ATTR_SUFFIX));
         setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
         setOutputDir((String) getAttribute(ATTR_PATH));
         setPoolMaximumActive(
@@ -239,7 +238,9 @@ public class ARCWriterProcessor extends Processor
      *
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(CrawlURI curi) {
+    protected void innerProcess(CrawlURI curi)
+    {
+        initialize();
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
             return;
@@ -248,13 +249,19 @@ public class ARCWriterProcessor extends Processor
         // Find the write protocol and write this sucker
         String scheme = curi.getUURI().getScheme().toLowerCase();
 
-        try {
-            if (scheme.equals("dns")) {
+        try
+        {
+            if (scheme.equals("dns"))
+            {
                 writeDns(curi);
-            } else if (scheme.equals("http") || scheme.equals("https")) {
+            }
+            else if (scheme.equals("http") || scheme.equals("https"))
+            {
                 writeHttp(curi);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             curi.addLocalizedError(this.getName(), e, "WriteARCRecord");
         }
     }
@@ -353,10 +360,6 @@ public class ARCWriterProcessor extends Processor
     public void setArcPrefix(String buffer) {
         this.arcPrefix = buffer;
     }
-    
-    public void setArcSuffix(String suffix) {
-        this.arcSuffix = suffix;
-    }
 
     public void setUseCompression(boolean use) {
         this.useCompression = use;
@@ -413,37 +416,4 @@ public class ARCWriterProcessor extends Processor
     {
         this.poolMaximumWait = poolMaximumWait;
     }
-
-	public void crawlEnding(String sExitMessage) {
-		// sExitMessage is unused.
-		ARCWriter.resetSerialNo();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-	 */
-	public void crawlEnded(String sExitMessage) {
-        // sExitMessage is unused.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-	 */
-	public void crawlPausing(String statusMessage) {
-        // sExitMessage is unused.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-	 */
-	public void crawlPaused(String statusMessage) {
-        // sExitMessage is unused.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-	 */
-	public void crawlResuming(String statusMessage) {
-        // sExitMessage is unused.
-	}
 }

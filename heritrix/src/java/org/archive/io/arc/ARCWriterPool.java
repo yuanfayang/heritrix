@@ -26,8 +26,6 @@ package org.archive.io.arc;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
@@ -43,11 +41,12 @@ import org.archive.util.ArchiveUtils;
  * @author stack
  */
 public class ARCWriterPool {
+    
     /**
      * Logger instance used by this class.
      */
-    static final Logger logger =
-        Logger.getLogger(ARCWriterPool.class.getName());
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriterPool");
     
     /**
      * Default maximum active number of ARCWriters in the pool.
@@ -78,8 +77,7 @@ public class ARCWriterPool {
     public ARCWriterPool(File arcsDir, String prefix)
         throws IOException
     {
-        this(arcsDir, prefix, ARCConstants.DEFAULT_COMPRESS,
-            ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE, null, DEFAULT_MAX_ACTIVE,
+        this(arcsDir, prefix, ARCConstants.DEFAULT_COMPRESS, DEFAULT_MAX_ACTIVE,
             DEFAULT_MAXIMUM_WAIT);
     }
 
@@ -97,8 +95,8 @@ public class ARCWriterPool {
     public ARCWriterPool(File arcsDir, String prefix, boolean compress)
         throws IOException
     {
-        this(arcsDir, prefix, compress, ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE,
-            null, DEFAULT_MAX_ACTIVE, DEFAULT_MAXIMUM_WAIT);
+        this(arcsDir, prefix, compress, DEFAULT_MAX_ACTIVE,
+            DEFAULT_MAXIMUM_WAIT);
     }
 
     /**
@@ -107,9 +105,6 @@ public class ARCWriterPool {
      * @param arcsDir Directory we dump ARC files to.
      * @param prefix ARC file prefix to use.
      * @param compress Whether to compress the ARCs made.
-     * @param arcMaxSize Maximum size for arcs.
-     * @param suffix Suffix to tag on to arc file names.  May be null.  If
-     * '${HOSTNAME}' will interpolate hostname.
      * @param maxActive Maximum active ARCWriters.  Tactic is to block waiting
      * a maximum of MAXIMUM_WAIT till an ARC comes available.
      * @param maxWait Time to wait on an ARCWriter when pool is all checked
@@ -118,14 +113,14 @@ public class ARCWriterPool {
      * to create the directory.
      */
     public ARCWriterPool(File arcsDir, String prefix, boolean compress,
-            int arcMaxSize, String suffix, int maxActive, int maxWait)
+            int maxActive, int maxWait)
         throws IOException
     {
         logger.fine("Configuration: prefix=" + prefix + ", compress=" +
                 compress + ", maxActive=" + maxActive + ", maxWait=" + 
                 maxWait);
         this.pool = new GenericObjectPool(
-            new ARCWriterFactory(arcsDir, prefix, compress, arcMaxSize, suffix),
+            new ARCWriterFactory(arcsDir, prefix, compress),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
     }
 
@@ -207,7 +202,9 @@ public class ARCWriterPool {
      * @author stack
      * @see ARCWriterPool
      */
-    private class ARCWriterFactory extends BasePoolableObjectFactory {
+    public class ARCWriterFactory
+        extends BasePoolableObjectFactory
+    {
         /**
          * Directory into which we drop ARC files.
          */
@@ -222,21 +219,6 @@ public class ARCWriterPool {
          * Compress ARC files.
          */
         private boolean compress = ARCConstants.DEFAULT_COMPRESS;
-        
-        /**
-         * Arc suffix.
-         */
-        private final String suffix;
-
-        /**
-         * Maximum size for arc.
-         */
-		private final int arcMaxSize;
-
-        /**
-         * Value to interpolate with actual hostname.
-         */
-        private static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
 
         
         /**
@@ -245,40 +227,31 @@ public class ARCWriterPool {
          * @param arcsDir Directory we drop ARC files into.
          * @param prefix ARC file prefix to use.
          * @param compress True if ARC files should be compressed.
-         * @param arcMaxSize Maximum size for arc file.
-         * @param suffix Suffix to tag on to arc file names.  May be null.  If
-         * '${HOSTNAME}' will interpolate hostname.
          *
-         * @throws IOException Passed directory is not writeable or we were
-         * unable to create the directory.
+         * @throws IOException Passed directory is not writeable or we were unable
+         * to create the directory.
          */
-        public ARCWriterFactory(File arcsDir, String prefix, boolean compress,
-                int arcMaxSize, String suffix)
+        public ARCWriterFactory(File arcsDir, String prefix, boolean compress)
             throws IOException
         {
             super();
             this.arcsDir = ArchiveUtils.ensureWriteableDirectory(arcsDir);
             this.prefix = prefix;
             this.compress = compress;
-            this.arcMaxSize = arcMaxSize;
-            if (suffix != null && suffix.trim().equals(HOSTNAME_VARIABLE)) {
-                String str = "localhost.localdomain";
-                try {
-                    str = InetAddress.getLocalHost().getHostName();
-                } catch (UnknownHostException ue) {
-                    logger.severe("Failed getHostAddress for this host: " + ue);
-                }
-                suffix = str;
-            }
-            this.suffix = suffix;
         }
 
+        /* (non-Javadoc)
+         * @see org.apache.commons.pool.PoolableObjectFactory#makeObject()
+         */
         public Object makeObject() throws Exception
         {
             return new ARCWriter(this.arcsDir, this.prefix, this.compress,
-                this.arcMaxSize, this.suffix);
+                ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE);
         }
 
+        /* (non-Javadoc)
+         * @see org.apache.commons.pool.PoolableObjectFactory#destroyObject(java.lang.Object)
+         */
         public void destroyObject(Object arcWriter) throws Exception
         {
             ((ARCWriter)arcWriter).close();

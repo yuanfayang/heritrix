@@ -28,8 +28,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
 
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -118,29 +116,17 @@ public class ARCWriterTest
     private void validate(File arcFile, int recordCount)
         throws FileNotFoundException, IOException
     {
-        ARCReader reader = ARCReaderFactory.get(arcFile);
+        ARCReader reader = new ARCReader(arcFile);
         assertNotNull(reader);
-        List metaDatas = null;
-        if (recordCount == -1) {
-            metaDatas = reader.validate();
-        } else {
-                metaDatas = reader.validate(recordCount);
+        if (recordCount == -1)
+        {
+            reader.validate();
         }
-        // Now, run through each of the records doing absolute get going from
-        // the end to start.
-        for (int i = metaDatas.size() - 1; i >= 0; i--) {
-            ARCRecordMetaData meta = (ARCRecordMetaData)metaDatas.get(i);
-            ARCRecord r = reader.get(meta.getOffset());
-            String mimeType = r.getMetaData().getMimetype();
-            assertTrue("Record is bogus", 
-                mimeType != null && mimeType.length() > 0);
+        else
+        {
+            reader.validate(recordCount);
         }
         reader.close();
-        assertTrue("Metadatas not equal", metaDatas.size() == recordCount);
-        for (Iterator i = metaDatas.iterator(); i.hasNext();) {
-                ARCRecordMetaData r = (ARCRecordMetaData)i.next();
-                assertTrue("Record is empty", r.getLength() > 0);
-        }
     }
 
     public void testCheckARCFileSize()
@@ -161,26 +147,33 @@ public class ARCWriterTest
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
         File [] files = FileUtils.getFilesWithPrefix(getTmpDir(), PREFIX);
-        for (int i = 0; i < files.length; i++) {
+        for (int i = 0; i < files.length; i++)
+        {
             validate(files[i], -1);
         }
     }
 
-    public void testWriteRecord() throws IOException {
+    public void testWriteRecord()
+        throws IOException
+    {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecord", false,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount  + 1 /*Header record*/);
+        validate(arcFile, recordCount);
     }
 
-    public void testWriteRecordCompressed() throws IOException {
+    public void testWriteRecordCompressed()
+        throws IOException
+    {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecordCompressed", true,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount + 1 /*Header record*/);
+        validate(arcFile, recordCount);
     }
 
-    public void testGetOutputDir() throws IOException {
+    public void testGetOutputDir()
+        throws IOException
+    {
         ARCWriter arcWriter = new ARCWriter(getTmpDir(),
             "getOutputDir-" + PREFIX, false, DEFAULT_MAX_ARC_FILE_SIZE);
         assertEquals(getTmpDir(), arcWriter.getArcsDir());

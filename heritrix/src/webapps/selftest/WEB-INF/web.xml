@@ -7,10 +7,10 @@
     <display-name>Heritrix Selftest</display-name>
 
     <security-constraint>
-        <display-name>Basic auth constraint.</display-name>
+        <display-name>Digest auth constraint.</display-name>
        <web-resource-collection>
-          <web-resource-name>Selftest Basic Auth Test</web-resource-name>
-          <url-pattern>/Auth/basic/*</url-pattern>
+          <web-resource-name>Selftest Digest Auth Test</web-resource-name>
+          <url-pattern>/Auth/digest/*</url-pattern>
        </web-resource-collection>
        <auth-constraint>
           <role-name>selftest</role-name>
@@ -19,12 +19,12 @@
 
     <!--Looks like only one of these per web.xml according to DTD-->
     <login-config>
-       <auth-method>BASIC</auth-method>
+       <auth-method>DIGEST</auth-method>
        <realm-name>selftest</realm-name>
     </login-config>
 
     <security-role>
-        <description>Role used to get into the area protected by BASIC auth.
+        <description>Role used to get into the area protected by digest auth.
             </description>
         <role-name>selftest</role-name>
     </security-role>
