@@ -537,7 +537,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void pauseJob() {
         if (controller != null && controller.isPaused()==false) {
-            controller.pauseCrawl();
+            controller.requestCrawlPause();
             //We'll do this pre-emptively so that the UI can be updated.
             currentJob.setStatus(CrawlJob.STATUS_WAITING_FOR_PAUSE);
         }

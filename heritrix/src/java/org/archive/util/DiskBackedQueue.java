@@ -115,6 +115,13 @@ public class DiskBackedQueue implements Queue {
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+         return headQ.peek();
+    }
+
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {

@@ -41,12 +41,18 @@ import org.archive.util.Lineable;
 public class CandidateURI implements Serializable, Lineable {
     private static final long serialVersionUID = -7152937921526560388L;
 
+    public static String FORCE_REVISIT = "Force";
+    public static String HIGH = "High";
+    public static String NORMAL = "Normal";
+
     /** Usuable URI under consideration */
     UURI uuri;
     /** Seed status */
     boolean isSeed = false;
-    /** Latest version of the inScope definition met; (zero if not)*/
-    int inScopeVersion = -1;
+
+    String schedulingDirective = NORMAL;
+    boolean inclusionTested = false;
+    
     /** String of letters indicating how this URI was reached from a seed */
     // P precondition
     // R redirection
@@ -58,25 +64,13 @@ public class CandidateURI implements Serializable, Lineable {
     /** Where this URI was (presently) discovered */
     // mostly for debugging; will be a CrawlURI when memory is no object
     // just a string or null when memory is an object (configurable)
-    Object via;
-
-    public static final int NORMAL_PRIORITY       = 0;
-    public static final int HIGH_PRIORITY         = 1;
-    public static final int FORCED_FETCH_PRIORITY = 2;
-    private int priority;
-    
+    Object via;   
 
     /**
      * @param u
      */
     public CandidateURI(UURI u) {
         uuri = u;
-        priority = NORMAL_PRIORITY;
-    }
-
-    public CandidateURI(UURI u, int priority) {
-        uuri = u;
-        this.priority = priority;
     }
     
     /**
@@ -107,21 +101,6 @@ public class CandidateURI implements Serializable, Lineable {
      */
     public boolean getIsSeed() {
         return isSeed;
-    }
-
-    /**
-     * @return Scope version.
-     *
-     */
-    public int getScopeVersion() {
-        return inScopeVersion;
-    }
-
-    /**
-     * @param i
-     */
-    public void setScopeVersion(int i) {
-        inScopeVersion = i;
     }
 
     public String getPathFromSeed() {
@@ -226,21 +205,52 @@ public class CandidateURI implements Serializable, Lineable {
      * @return true if crawling of this URI should be forced
      */
     public boolean forceFetch() {
-        return (getPriority() == FORCED_FETCH_PRIORITY ? true : false);
+        return schedulingDirective == FORCE_REVISIT;
     }
 
-    /**
-     * @return URI's scheduling priority.
+   /**
+     * Method to signal that this URI should be fetched even though
+     * it already has been crawled. Setting this to true also implies
+     * that this URI will be scheduled for crawl before any other waiting
+     * URIs for the same host.
+     *
+     * This value is used to refetch any expired robots.txt or dns-lookups.
+     *
+     * @param b set to true to enforce the crawling of this URI
      */
-    public int getPriority() {
-        return priority;
+    public void setForceFetch(boolean b) {
+        schedulingDirective = FORCE_REVISIT;
     }
-
     /**
-     * @param priority Scheduling priority 
+     * @return Returns the inclusionTested.
      */
-    public void setPriority(int priority) {
-        this.priority = priority;
+    public boolean isInclusionTested() {
+        return inclusionTested;
+    }
+    /**
+     * @param inclusionTested The inclusionTested to set.
+     */
+    public void setInclusionTested(boolean inclusionTested) {
+        this.inclusionTested = inclusionTested;
+    }
+    /**
+     * @return Returns the schedulingDirective.
+     */
+    public String getSchedulingDirective() {
+        return schedulingDirective;
+    }
+    /**
+     * @param schedulingDirective The schedulingDirective to set.
+     */
+    public void setSchedulingDirective(String schedulingDirective) {
+        this.schedulingDirective = schedulingDirective;
     }
 
+    
+    /**
+     * @return
+     */
+    public boolean needsImmediateScheduling() {
+        return schedulingDirective==HIGH || schedulingDirective == FORCE_REVISIT;
+    }
 }

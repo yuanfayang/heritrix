@@ -65,6 +65,15 @@ public class MemQueue extends LinkedList implements Queue {
     public void release() {
         // nothing to release
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+        return getFirst();
+    }
+    
+    
     /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */

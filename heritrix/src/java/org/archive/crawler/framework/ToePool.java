@@ -24,6 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
@@ -146,6 +147,7 @@ public class ToePool extends CrawlStatusAdapter {
             for(int i = getToeCount(); i<newsize; i++) {
                 ToeThread newThread = new ToeThread(controller,this,i);
                 newThread.setPriority(DEFAULT_TOE_PRIORITY);
+                newThread.setShouldPause(true); // start paused
                 toes.add(newThread);
                 newThread.start();
             }
@@ -164,5 +166,16 @@ public class ToePool extends CrawlStatusAdapter {
                 toes.remove(newsize);
             }
         }
+    }
+
+    /**
+     * @param b
+     */
+    public void setShouldPause(boolean b) {
+        Iterator iter = toes.iterator();
+        while(iter.hasNext()) {
+            ((ToeThread)iter.next()).setShouldPause(b);
+        }
+
     }
 }

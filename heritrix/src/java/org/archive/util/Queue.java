@@ -63,6 +63,11 @@ public interface Queue {
     void release();
     
     /**
+     * @return
+     */
+    Object peek();
+    
+    /**
      * Returns an iterator for the queue.
      * <p>
      * The returned iterator's <code>remove</code> method is considered 
