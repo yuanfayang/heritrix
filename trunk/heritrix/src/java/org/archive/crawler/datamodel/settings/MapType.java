@@ -37,6 +37,18 @@ import javax.management.MBeanAttributeInfo;
  * This class is usually used to make it possible to have a dynamic number
  * of CrawlerModules like for instance a list of filters of different type.
  * 
+ * When this type is overridden on a per domain basis, the following
+ * restrictions apply:
+ * <ul>
+ *   <li>Added elements is placed after the elements in the map it overrides.
+ *   <li>You can not remove elements from the map it overrides. If it is
+ *       necessary to be able to remove an element, this has to be done by
+ *       adding some disable feature to the modules referenced by the map. An
+ *       example of this is the enabled attribute on the @link Filter class. 
+ *   <li>All elements defined in maps that this map overrides might have their
+ *       settings changed, but the order can not be changed.
+ * </ul>
+ * 
  * @author John Erik Halse
  */
 public class MapType extends ComplexType {
@@ -173,7 +185,8 @@ public class MapType extends ComplexType {
 
     /** Get an Iterator over all the elements in this map.
      * 
-     * @param uri the URI for which this set of elements are valid.
+     * @param settings the settings object for which this set of elements
+     *                 are valid.
      * @return an iterator over all the elements in this map.
      */
     public Iterator iterator(CrawlerSettings settings) {
@@ -183,7 +196,8 @@ public class MapType extends ComplexType {
 
     /** Returns true if this map is empty.
      * 
-     * @param uri the URI for which this set of elements are valid.
+     * @param settings the settings object for which this set of elements
+     *                 are valid.
      * @return true if this map is empty.
      */
     public boolean isEmpty(CrawlerSettings settings) {
@@ -194,7 +208,8 @@ public class MapType extends ComplexType {
     
     /** Get the number of elements in this map.
      * 
-     * @param uri the URI for which this set of elements are valid.
+     * @param settings the settings object for which this set of elements
+     *                 are valid.
      * @return the number of elements in this map.
      */
     public int size(CrawlerSettings settings) {
