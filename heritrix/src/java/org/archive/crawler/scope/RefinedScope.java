@@ -36,7 +36,7 @@ import org.archive.crawler.framework.Filter;
  * 
  * @author gojomo
  */
-public abstract class RefinedScope extends CrawlScope {
+public abstract class RefinedScope extends ClassicScope {
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
     public static final String ATTR_ADDITIONAL_FOCUS_FILTER =
         "additionalScopeFocus";

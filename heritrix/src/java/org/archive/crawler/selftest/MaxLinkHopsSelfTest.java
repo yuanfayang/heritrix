@@ -31,6 +31,7 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.framework.CrawlScope;
+import org.archive.crawler.scope.ClassicScope;
 
 
 /**
@@ -72,7 +73,7 @@ public class MaxLinkHopsSelfTest
            (CrawlScope)getCrawlJob().getSettingsHandler()
            .getModule(CrawlScope.ATTR_NAME);
         int maxLinkHops =
-            ((Integer)scope.getAttribute(CrawlScope.ATTR_MAX_LINK_HOPS))
+            ((Integer)scope.getAttribute(ClassicScope.ATTR_MAX_LINK_HOPS))
             .intValue();
         assertTrue("max-link-hops incorrect", MAXLINKHOPS == maxLinkHops);
 

@@ -39,7 +39,7 @@ import org.archive.crawler.framework.CrawlScope;
  * @author gojomo
  *
  */
-public class SeedCachingScope extends CrawlScope {
+public class SeedCachingScope extends ClassicScope {
     private static final Logger logger =
         Logger.getLogger(SeedCachingScope.class.getName());
     List seeds;

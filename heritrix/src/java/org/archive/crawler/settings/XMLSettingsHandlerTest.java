@@ -38,6 +38,7 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.CrawlScope;
+import org.archive.crawler.scope.ClassicScope;
 import org.archive.crawler.settings.refinements.Criteria;
 import org.archive.crawler.settings.refinements.PortnumberCriteria;
 import org.archive.crawler.settings.refinements.Refinement;
@@ -90,7 +91,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         Integer newHops = new Integer(500);
         String newFrom = "newfrom";
         scope.setAttribute(perHost, new Attribute(
-                CrawlScope.ATTR_MAX_LINK_HOPS, newHops));
+                ClassicScope.ATTR_MAX_LINK_HOPS, newHops));
         CrawlOrder order = handler.getOrder();
         ComplexType httpHeaders = (ComplexType) order
                 .getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
@@ -114,7 +115,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         ComplexType newScope = newHandler.getModule(CrawlScope.ATTR_NAME);
         assertNotNull(newScope);
         Integer r1 = (Integer) newScope.getAttribute(newPerHost,
-                CrawlScope.ATTR_MAX_LINK_HOPS);
+                ClassicScope.ATTR_MAX_LINK_HOPS);
         assertEquals(newHops, r1);
 
         ComplexType newHttpHeaders = (ComplexType) newHandler.getOrder()
