@@ -31,6 +31,9 @@ import org.archive.crawler.basic.StatisticsTracker;
  * @author Gordon Mohr
  */
 public class CrawlController {
+	
+	public static final String DEFAULT_USER_AGENT = "Heritrix pre-Alpha (contact gojomo@archive.org)";
+	
 	private File disk;
 	public Logger uriProcessing = Logger.getLogger("uri-processing");
 	public Logger crawlErrors = Logger.getLogger("crawl-errors");
@@ -66,6 +69,17 @@ public class CrawlController {
 
 	public void initialize(CrawlOrder o) {
 		order = o;	
+		
+		// don't start the crawl if they're using the default user-agent
+		String userAgent = order.getStringAt("//http-headers/User-Agent/");
+		if(userAgent.equals(DEFAULT_USER_AGENT)){
+			System.out.println("Before using Heratrix you must " +
+				"change the default user agent in the Heratrix configuration " +
+				"file to something other than '" + DEFAULT_USER_AGENT +
+				"'.  Please see the documentation for more information."
+				);
+				System.exit(0);
+		}
 			
 		// read from the configuration file
 		try {
