@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
-import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
@@ -266,7 +265,7 @@ public class MapType extends ComplexType {
      *            value is not used.
      * @return the content type definition for attributes of this map.
      */
-    Type getDefinition(Attribute attribute) {
+    Type getDefinition(String attributeName) {
         return definition;
     }
     
@@ -279,11 +278,12 @@ public class MapType extends ComplexType {
         return this.definition.getLegalValueType();
     }
 
-    FailedCheck checkValue(CrawlerSettings settings, Type definition,
-            Attribute attribute) {
-        FailedCheck res = super.checkValue(settings, definition, attribute);
+    FailedCheck checkValue(CrawlerSettings settings, String attributeName,
+            Type definition, Object value) {
+        FailedCheck res = super.checkValue(settings, attributeName, definition,
+                value);
 
-        definition = super.getDefinition(attribute);
+        definition = super.getDefinition(attributeName);
 
         // Check if value fulfills any constraints
         List constraints = definition != null ? definition.getConstraints()
@@ -293,7 +293,7 @@ public class MapType extends ComplexType {
             for (Iterator it = constraints.iterator(); it.hasNext()
                     && ac == null;) {
                 ac = ((Constraint) it.next()).check(settings, this, definition,
-                        attribute);
+                        value);
                 if (res == null
                         || ac.getLevel().intValue() >= res.getLevel()
                                 .intValue()) {

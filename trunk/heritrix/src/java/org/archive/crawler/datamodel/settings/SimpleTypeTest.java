@@ -62,8 +62,11 @@ public class SimpleTypeTest extends TestCase {
     public void testGetConstraints() {
         SimpleType t1 = new SimpleType("a1", "b1", "c1");
         SimpleType t2 = new SimpleType("a2", "b2", "c2", new String[] {"d", "e"});
-        assertNull(t1.getConstraints());
-        assertSame(LegalValueListConstraint.class, t2.getConstraints().get(0).getClass());
+        assertNotNull(t1.getConstraints());
+        assertSame(LegalValueTypeConstraint.class, t2.getConstraints().get(0)
+                .getClass());
+        assertSame(LegalValueListConstraint.class, t2.getConstraints().get(1)
+                .getClass());
     }
     
     public void testGetLegalValueType() {

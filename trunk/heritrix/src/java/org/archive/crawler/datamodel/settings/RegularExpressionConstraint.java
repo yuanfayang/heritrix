@@ -25,8 +25,6 @@ package org.archive.crawler.datamodel.settings;
 
 import java.util.logging.Level;
 
-import javax.management.Attribute;
-
 import org.archive.util.TextUtils;
 
 /**
@@ -89,15 +87,15 @@ public class RegularExpressionConstraint extends Constraint {
      *      javax.management.Attribute)
      */
     public FailedCheck innerCheck(CrawlerSettings settings, ComplexType owner,
-            Type definition, Attribute attribute) {
-        if (attribute.getValue() instanceof CharSequence) {
+            Type definition, Object value) {
+        if (value instanceof CharSequence) {
             if (!TextUtils
-                    .matches(pattern, (CharSequence) attribute.getValue())) {
-                return new FailedCheck(settings, owner, definition, attribute);
+                    .matches(pattern, (CharSequence) value)) {
+                return new FailedCheck(settings, owner, definition, value);
 
             }
         } else {
-            return new FailedCheck(settings, owner, definition, attribute,
+            return new FailedCheck(settings, owner, definition, value,
                     "Can't do regexp on non CharSequence.");
         }
         return null;
