@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* RecordingInputStream
+ * 
+ * $Id$
+ * 
+ * Created on Sep 24, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * RecordingInputStream.java
- * Created on Sep 24, 2003
- *
- * $Header$
  */
 package org.archive.io;
 
@@ -32,42 +33,47 @@ import java.security.MessageDigest;
 
 
 /**
- * Stream which records all data read from it, which
- * it acquires from a wrapped input stream.
+ * Stream which records all data read from it, which it acquires from a wrapped
+ * input stream.
  * 
- * Makes use of a RecordingOutputStream (with a dummy
- * wrapped stream) for recording.
+ * Makes use of a RecordingOutputStream for recording because of its being
+ * file backed so we can write massive amounts of data w/o worrying about
+ * overflowing memory.
  * 
  * @author gojomo
  *
  */
-public class RecordingInputStream extends InputStream {
-//	private long timeout;
-//	private long maxLength;
-//	private long timeoutTime;
+public class RecordingInputStream
+    extends InputStream 
+{
+    /**
+     * The stream we're recording.
+     */
 	protected InputStream wrappedStream;
+    
+    /**
+     * Where we are recording to.
+     */
 	protected RecordingOutputStream recordingOutputStream;
 
 
 	/**
-	 * Create a new RecordingInputStream with the specified parameters.
+	 * Create a new RecordingInputStream.
 	 * 
-	 * @param bufferSize
-	 * @param backingFilename
-	 * @param maxSize
+	 * @param bufferSize Size of buffer to use.
+	 * @param backingFilename Name of backing file.
+	 * @param maxSize Maximum amount to record.
 	 */
-	public RecordingInputStream(int bufferSize, String backingFilename, int maxSize) {
-		recordingOutputStream = new RecordingOutputStream(bufferSize, backingFilename, maxSize);
+	public RecordingInputStream(int bufferSize, String backingFilename,
+            int maxSize)
+    {
+		recordingOutputStream = new RecordingOutputStream(bufferSize,
+            backingFilename, maxSize);
 	}
 
 	public void open(InputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
-		recordingOutputStream.open(new NullOutputStream()); 
-//		if (timeout>0) {
-//			timeoutTime = System.currentTimeMillis() + timeout;
-//		} else {
-//			timeoutTime = 0;
-//		}
+		recordingOutputStream.open(); 
 	}
 
 	/* (non-Javadoc)

@@ -32,75 +32,114 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+
 /**
+ * An output stream that records all writes to wrapped output
+ * stream.
+ * 
  * A RecordingOutputStream can be wrapped around any other
- * OutputStream to record all bytes written to it. You can
+ * OutputStream to record all bytes written to it.  You can
  * then request a ReplayInputStream to read those bytes.
  * 
- * The RecordingOutputStream uses an in-memory buffer and 
+ * <p>The RecordingOutputStream uses an in-memory buffer and 
  * backing disk file to allow it to record streams of 
- * arbitrary length, limited only by available disk space. 
+ * arbitrary length limited only by available disk space. 
  * 
- * As long as the stream recorded is smaller than the 
+ * <p>As long as the stream recorded is smaller than the 
  * in-memory buffer, no disk access will occur. 
  * 
- * Recorded content can be recovered as a ReplayInputStream
+ * <p>Recorded content can be recovered as a ReplayInputStream
  * (via getReplayInputStream() or, for only the content after
  * the content-begin-mark is set, getContentReplayInputStream() )
  * or as a ReplayCharSequence (via getReplayCharSequence()). 
+ * 
+ * <p>This class is also used as a straight output stream 
+ * by {@link RecordingInputStream} to which it records all reads. 
+ * {@link RecordingInputStream} is exploiting the file backed buffer
+ * facility of this class passing <code>null</code> for the stream
+ * to wrap.  TODO: Make a FileBackedOutputStream class that is
+ * subclassed by RecordingInputStream.
  * 
  * @author gojomo
  *
  */
 public class RecordingOutputStream extends OutputStream {
-//	boolean locksize = false; 
 	protected long size = 0;
-	protected int maxSize;
 	protected String backingFilename;
 	protected BufferedOutputStream diskStream;
-	protected FileOutputStream fileStream;
-	protected OutputStream wrappedStream;
 	protected byte[] buffer;
 	protected long position;
-	protected long contentBeginMark; // when recording HTTP, where the content-body starts
 	protected boolean shouldDigest = false;
     protected MessageDigest digest; 
+    
+    /**
+     * Stream we wrap.
+     * 
+     * May be null.
+     */
+    protected OutputStream wrappedStream = null;
 	
-	/**
-	 * Create a new RecordingPutputStream with the specified parameters.
+    /**
+     * When recording HTTP, where the content-body starts.
+     */
+    protected long contentBeginMark;
+    
+	
+    /**
+	 * Create a new RecordingOutputStream.
 	 * 
-	 * @param bufferSize
-	 * @param backingFilename
-	 * @param maxSize
+	 * @param bufferSize Buffer size to use.
+	 * @param backingFilename Name of backing file to use.
+	 * @param maxSize Maximum size to record.  Currently ignored.  We just
+     * write until we fill the file/disk.
 	 */
-	public RecordingOutputStream(int bufferSize, String backingFilename, int maxSize) {
-		buffer = new byte[bufferSize];
+	public RecordingOutputStream(int bufferSize, String backingFilename,
+            int maxSize)
+    {
+		this.buffer = new byte[bufferSize];
 		this.backingFilename = backingFilename;
-		this.maxSize = maxSize;
 	}
 
-
-	/**
-     * Wrap the given stream, both recording and passing along any
-     * data written to this RecordingOutputStream.
+    /**
+     * Wrap the given stream, both recording and passing along any data written
+     * to this RecordingOutputStream.
      * 
-	 * @param wrappedStream
-	 * @throws IOException
+     * @throws IOException If failed creation of backing file.
+     */
+    public void open()
+        throws IOException
+    {
+        this.open(null);
+    }
+    
+	/**
+     * Wrap the given stream, both recording and passing along any data written
+     * to this RecordingOutputStream.
+     * 
+	 * @param wrappedStream Stream to wrap.  May be null for case where we 
+     * want to write to a file backed stream only.
+     * 
+	 * @throws IOException If failed creation of backing file.
 	 */
-	public void open(OutputStream wrappedStream) throws IOException {
+	public void open(OutputStream wrappedStream)
+        throws IOException
+   {
 		this.wrappedStream = wrappedStream;
 		this.position = 0;
-		this.size=0;
-        shouldDigest=false; // always begins false; must use startDigest() to begin
-        diskStream=null; 
+		this.size = 0;
+		// Always begins false; must use startDigest() to begin
+        this.shouldDigest = false;
+        this.diskStream = null; 
 		lateOpen();
 	}
 
 
-	private void lateOpen() throws FileNotFoundException {
-		if(diskStream==null) {
-			fileStream = new FileOutputStream(backingFilename);
-			diskStream = new BufferedOutputStream(fileStream,4096);
+	private void lateOpen()
+        throws FileNotFoundException
+    {
+		if (diskStream == null) {
+			FileOutputStream fis = new FileOutputStream(backingFilename);
+			this.diskStream = new BufferedOutputStream(fis, 4096);
 		}
 	}
 	
@@ -109,35 +148,49 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void write(int b) throws IOException {
 		record(b);
-		wrappedStream.write(b);
+        if (wrappedStream != null)
+        {
+            wrappedStream.write(b);
+        }
 	}
 	
 	/* (non-Javadoc)
 	 * @see java.io.OutputStream#write(byte[])
 	 */
 	public void write(byte[] b) throws IOException {
-		record(b,0,b.length);
-		wrappedStream.write(b);
+		record(b, 0, b.length);
+        if (wrappedStream != null)
+        {
+            wrappedStream.write(b);
+        }
 	}
 	
 	/* (non-Javadoc)
 	 * @see java.io.OutputStream#write(byte[], int, int)
 	 */
 	public void write(byte[] b, int off, int len) throws IOException {
-		record(b,off,len);
-		wrappedStream.write(b,off,len);
+		record(b, off, len);
+        if (wrappedStream != null)
+        {
+            wrappedStream.write(b, off, len);
+        }
 	}
 	
-	/** Record the given byte for later recovery
+	/** 
+     * Record the given byte for later recovery
      * 
-     * @param b
+     * @param b Int to record.
+     * 
+     * @exception IOException Failed write to backing file.
      */
     private void record(int b) throws IOException {
         if (shouldDigest) {
             digest.update((byte)b);
         }
         if (position >= buffer.length) {
-            //lateOpen();
+            // lateOpen()
+            // TODO: Its possible to call write w/o having first opened a
+            // stream.  Protect ourselves against this.
             diskStream.write(b);
         } else {
             buffer[(int) position] = (byte) b;
@@ -145,27 +198,32 @@ public class RecordingOutputStream extends OutputStream {
         position++;
     }
 	
-	/** Record the given byte-array range for recovery later
+	/** 
+     * Record the given byte-array range for recovery later
      * 
-	 * @param b
-	 * @param off
-	 * @param len
+	 * @param b Buffer to record.
+	 * @param off Offset into buffer at which to start recording.
+	 * @param len Length of buffer to record.
+     * 
+     * @exception IOException Failed write to backing file.
 	 */
 	private void record(byte[] b, int off, int len) throws IOException {
         if(shouldDigest) {
-            digest.update(b,off,len);
+            digest.update(b, off, len);
         }
-		if(position>=buffer.length){
-			//lateOpen();
-			diskStream.write(b,off,len);
+		if(position >= buffer.length){
+            // lateOpen()
+            // TODO: Its possible to call write w/o having first opened a
+            // stream.  Lets protect ourselves against this.
+			diskStream.write(b, off, len);
 			position += len;
 		} else {
-			int toCopy = (int)Math.min(buffer.length-position,len);
-			System.arraycopy(b,off,buffer,(int)position,toCopy);
+			int toCopy = (int)Math.min(buffer.length - position, len);
+			System.arraycopy(b, off, buffer, (int)position, toCopy);
 			position += toCopy;
 			// TODO verify these are +1 -1 right
-			if (toCopy<len) {
-				record(b,off+toCopy,len-toCopy);
+			if (toCopy < len) {
+				record(b, off + toCopy, len - toCopy);
 			}
 		}
 	}
@@ -177,14 +235,9 @@ public class RecordingOutputStream extends OutputStream {
 		super.close();
 		if(wrappedStream != null) {
 			wrappedStream.close();
-			wrappedStream=null;
+			wrappedStream = null;
 		} 
-		// diskStream.flush(); // redundant
-		if (diskStream != null) {
-			diskStream.close();
-			diskStream=null;
-		}
-		if(size==0) size = position;
+        closeRecorder();
 	}
 
 	/* (non-Javadoc)
@@ -201,11 +254,13 @@ public class RecordingOutputStream extends OutputStream {
 	}
 	
 	public ReplayInputStream getReplayInputStream() throws IOException {
-		return new ReplayInputStream(buffer,size,contentBeginMark,backingFilename);
+		return new ReplayInputStream(buffer, size, contentBeginMark,
+            backingFilename);
 	}
 
 	/**
 	 * Return a replay stream, cued up to beginning of content
+     * 
 	 * @throws IOException
 	 * @return An RIS.
 	 */
@@ -218,7 +273,6 @@ public class RecordingOutputStream extends OutputStream {
 	public long getSize() {
 		return size;
 	}
-
 
 	/**
 	 * Remember the current position as the start of the "response
@@ -234,9 +288,9 @@ public class RecordingOutputStream extends OutputStream {
      * set. 
      */
     public void startDigest() {
-        if (digest!=null) {
+        if (digest != null) {
             digest.reset();
-            shouldDigest=true;
+            shouldDigest = true;
         }
     }
     
@@ -247,24 +301,23 @@ public class RecordingOutputStream extends OutputStream {
         try {
             setDigest(MessageDigest.getInstance("SHA1"));
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
     
     /**
      * Sets a digest function which may be applied to recorded data.
+     * 
      * As usually only a subset of the recorded data should
      * be fed to the digest, you must also call startDigest()
      * to begin digesting. 
      * 
-     * @param md
+     * @param md Message digest function to use.
      */
     public void setDigest(MessageDigest md) {
         digest = md;
     }
 
-    
     /**
      * Return the digest value for any recorded, digested data. Call
      * only after all data has been recorded; otherwise, the running
@@ -273,7 +326,7 @@ public class RecordingOutputStream extends OutputStream {
      * @return the digest final value
      */
     public byte[] getDigestValue() {
-        if(digest==null) {
+        if(digest == null) {
             return null;
         }
         return digest.digest();
@@ -281,7 +334,8 @@ public class RecordingOutputStream extends OutputStream {
     
 	public CharSequence getReplayCharSequence() {
 		try {
-			return new ReplayCharSequence(buffer,size,contentBeginMark,backingFilename);
+			return new ReplayCharSequence(buffer, size, contentBeginMark,
+                backingFilename);
 		} catch (IOException e) {
 			// TODO convert to runtime exception?
 			e.printStackTrace();
@@ -294,44 +348,25 @@ public class RecordingOutputStream extends OutputStream {
 	}
 
 	public void closeRecorder() throws IOException {
-		// diskStream.flush(); // redundant, close includes flush
 		if (diskStream != null) {
 			diskStream.close();
-			diskStream=null;
+			diskStream = null;
 		}
-//		if(locksize) {
-//			System.out.println("gotcha");
-//		}
-		if(size==0) size = position;
+        if (size == 0)
+        {
+            size = position;
+        }
 	}
 
-
-//	/* (non-Javadoc)
-//	 * @see java.lang.Object#finalize()
-//	 */
-//	protected void finalize() throws Throwable {
-//		if (fileStream != null) {
-//			assert !fileStream.getFD().valid() : "valid fileStream reached finalize";
-//		}
-//		super.finalize();
-//	}
-
-	/**
-	 * 
-	 */
 	public void verify() {
-		if(size>buffer.length) {
+		if (size > buffer.length) {
 			File f = new File(backingFilename);
 			assert f.exists();
 			assert f.length() == size - buffer.length;
-			System.out.println(
-			backingFilename+".length()="+
-			f.length()+" size="+size+
-			" size-buffer.length=" + (size - buffer.length));
+			System.out.println(backingFilename + ".length()=" +
+			    f.length() + " size=" + size +
+			    " size-buffer.length=" + (size - buffer.length));
 			//locksize = true;
 		}
 	}
-
-
-
 }
