@@ -40,6 +40,7 @@
 <ul>
 	<li><a href="/admin/reports/frontier.jsp">Frontier report</a>
 	<li><a href="/admin/reports/threads.jsp">Thread report</a>
+	<li><a href="/admin/reports/processors.jsp">Processors report</a>
 <ul>
 <% } %>
 
