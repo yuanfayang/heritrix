@@ -29,16 +29,10 @@ public class UURI {
 
 	java.net.URI uri;
 	
-	public static UURI createUURI(String s) {
+	public static UURI createUURI(String s) throws URISyntaxException {
 		URI u;
-		try {
-			u = new URI(normalize(s));
-			return new UURI(u);
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+		u = new URI(normalize(s));
+		return new UURI(u);
 	}
 	
 	/**
@@ -201,16 +195,8 @@ public class UURI {
 	 * @param uri
 	 * @return
 	 */
-	public static UURI createUURI(String string, URI uri) {
-		if (isUnusableScheme(string)) {
-			return null;
-		}
-		try {
-			return createUURI(normalize(string,uri));
-		} catch (URISyntaxException e) {
-			logger.warning("BAD URI: "+e.getReason()+":"+string+" from "+uri);
-			return null;
-		}
+	public static UURI createUURI(String string, URI uri) throws URISyntaxException {
+		return createUURI(normalize(string,uri));
 	}
 
 	static Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
