@@ -63,7 +63,9 @@ import com.sleepycat.je.OperationStatus;
 public class BdbUriUniqFilter implements UriUniqFilter {
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
-    protected transient FPGenerator fpgen64 = FPGenerator.std64;
+    // protected transient FPGenerator fpgen64 = FPGenerator.std64;
+    protected transient FPGenerator fpgen40 = FPGenerator.std40;
+    protected transient FPGenerator fpgen24 = FPGenerator.std24;
     protected Environment environment = null;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
@@ -72,6 +74,8 @@ public class BdbUriUniqFilter implements UriUniqFilter {
 	private HasUriReceiver receiver = null;
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
+    
+    private static final String COLON_SLASH_SLASH = "://";
     
     /**
      * Shutdown default constructor.
@@ -166,8 +170,21 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         return this.lastCacheMissDiff;
     }
     
-    protected long createKey(String url) {
-        return this.fpgen64.fp(url);
+    /**
+     * Create fingerprint.
+     * Default access so can unit test createKey.
+     * @param url Url to fingerprint.
+     * @return Fingerprint of passed <code>url</code>.
+     */
+    long createKey(String url) {
+        int index = url.indexOf(COLON_SLASH_SLASH);
+        if (index > 0) {
+            index = url.indexOf('/', index + COLON_SLASH_SLASH.length());
+        }
+        String hostPlusScheme = (index == -1)? url: url.substring(0, index);
+        String path = (index == -1)? "": url.substring(index);
+        long tmp = this.fpgen24.fp(hostPlusScheme);
+        return tmp | (this.fpgen40.fp(path) >>> 24);
     }
     
     public long count() {

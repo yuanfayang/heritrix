@@ -88,6 +88,17 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
         assertTrue("Count is off", this.filter.count() == 1);
     }
     
+    public void testCreateKey() {
+        String url = "dns:archive.org";
+        long fingerprint = ((BdbUriUniqFilter)this.filter).createKey(url);
+        assertTrue("Fingerprint wrong " + url,
+            fingerprint == 8812918003193194397L);
+        url = "http://archive.org/index.html";
+        fingerprint = ((BdbUriUniqFilter)this.filter).createKey(url);
+        assertTrue("Fingerprint wrong " + url,
+            fingerprint == 6613238036839061197L);
+    }
+    
     /**
      * Time import of recovery log.
      * REMOVE
