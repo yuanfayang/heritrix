@@ -56,7 +56,7 @@
 						<td class="tab_seperator">
 						</td>
 						<td class="tab">
-							<a href="javascript:doSubmit()" class="tab_text">Finished</a>
+							<a href="javascript:doSubmit()" class="tab_text"><%=theJob.isNew()?"Submit job":"Finished"%></a>
 						</td>
 						<td class="tab_seperator">
 						</td>
