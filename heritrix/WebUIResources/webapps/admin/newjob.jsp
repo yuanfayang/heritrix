@@ -12,7 +12,7 @@
 	{
 		// Got something in the request.  Let's update!
 		String newUID = handler.getNextJobUID();
-		String filename = "jobs"+File.separator+newUID+File.separator+"job-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
+		String filename = "jobs"+File.separator+newUID+File.separator+"job-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+"-1.xml";
 		String seedfile = "seeds-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".txt";
 		File f = new File("jobs"+File.separator+newUID);
 		f.mkdirs();
