@@ -238,19 +238,34 @@ implements Serializable {
         return this.cachedEscapedURI;
     }
 
-    public String getHost() throws URIException {
+    public synchronized String getHost() throws URIException {
         if (this.cachedHost == null) {
-            synchronized (this) {
-                if (this.cachedHost == null) {
-                    // If this._host is null, 3.0 httpclient throws
-                    // illegalargumentexception.  Don't go there.
-                    if (this._host != null) {
-                    	this.cachedHost = super.getHost();
-                    }
-                }
+            // If this._host is null, 3.0 httpclient throws
+            // illegalargumentexception.  Don't go there.
+            if (this._host != null) {
+            	this.cachedHost = super.getHost();
             }
         }
         return this.cachedHost;
+    }
+    
+    /**
+     * Return the referenced host in the UURI, if any, also extracting the 
+     * host of a DNS-lookup URI where necessary. 
+     * 
+     * @return the target or topic host of the URI
+     * @throws URIException
+     */
+    public String getReferencedHost() throws URIException {
+        String referencedHost = this.getHost();
+        if(referencedHost==null && this.getScheme().equals("dns")) {
+            // extract target domain of DNS lookup
+            String possibleHost = this.getCurrentHierPath();
+            if(possibleHost != null && possibleHost.matches("[-_\\w\\.:]+")) {
+                referencedHost = possibleHost;
+            }
+        }
+        return referencedHost;
     }
 
     /**

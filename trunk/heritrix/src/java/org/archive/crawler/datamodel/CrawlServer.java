@@ -268,7 +268,7 @@ public class CrawlServer implements Serializable {
      * @return the settings object in effect for this server.
      */
     private CrawlerSettings getSettings(UURI uri) throws URIException {
-        return this.settingsHandler.getSettings(uri.getHost(), uri);
+        return this.settingsHandler.getSettings(uri.getReferencedHost(), uri);
     }
 
     /** Set the settings handler to be used by this server.

@@ -329,13 +329,14 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             context = new Context((CrawlerSettings) o, null);
         } else if (o instanceof UURI || o instanceof CandidateURI) {
             // Try to get settings for URI that has no references to a
-            // CrawlServer
+            // CrawlServer [SIC - CrawlURI may have CrawlServer -gjm]
             context = new Context();
             context.uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
                     .getUURI() : (UURI) o;
             try {
                 context.settings = getSettingsHandler().
-                    getSettings(context.uri.getHost(), context.uri);
+                    getSettings(
+                        context.uri.getReferencedHost(), context.uri);
             }
             catch (URIException e1) {
                 logger.severe("Failed to get host");
