@@ -25,31 +25,31 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTML");
 	
-	// TODO: correct this so that it handles name= and content= in alternate order, with intervening spaces, etc.
-	static Pattern META_ROBOTS_EXTRACTOR = Pattern.compile(
-	 "(?i)<meta\\s[^<]*?name=(?:\"|')robots(?:\"|')[^<]*?(?:content=(?:\"|')([^\"^']*)(?:\"|'))[^<]*>"
-	);
-	static Pattern BASE_EXTRACTOR = Pattern.compile(
-	 "(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
-	);
-	static Pattern LINK_EXTRACTOR = Pattern.compile(
-	 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
-	);
-	static Pattern EMBED_EXTRACTOR = Pattern.compile(
-	 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
-	);
+//	// TODO: correct this so that it handles name= and content= in alternate order, with intervening spaces, etc.
+//	static Pattern META_ROBOTS_EXTRACTOR = Pattern.compile(
+//	 "(?i)<meta\\s[^<]*?name=(?:\"|')robots(?:\"|')[^<]*?(?:content=(?:\"|')([^\"^']*)(?:\"|'))[^<]*>"
+//	);
+//	static Pattern BASE_EXTRACTOR = Pattern.compile(
+//	 "(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+//	);
+//	static Pattern LINK_EXTRACTOR = Pattern.compile(
+//	 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+//	);
+//	static Pattern EMBED_EXTRACTOR = Pattern.compile(
+//	 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
+//	);
 
     // this pattern extracts either (1) whole <script>...</script>
     // ranges; or (2) any other open-tag with at least one attribute
     // (eg matches "<a href='boo'>" but not "</a>" or "<br>")
 	static Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
-	 "(?is)<(?:(script\\s.*?>.*?</script>)|((?:(base)|(meta)|(\\w+))\\s+.*?)>)");
+	 "(?is)<(?:(script.*?>.*?</script)|((?:(base)|(meta)|(\\w+))\\s+.*?)|((!--).*?--))>");
 	// this pattern extracts 'href' or 'src' attributes from 
 	// any open-tag innards matched by the above
 	static Pattern RELEVANT_ATTRIBUTE_EXTRACTOR = Pattern.compile(
-	 "(?is)(\\w+)\\s+.*?(?:(href)|(src))\\s*=(?:(?:\\s*\"(.+?)\")|(?:\\s*'(.+?)')|(\\S+))");
+	 "(?is)(\\w+)(?:\\s+|(?:\\s.*?\\s))(?:(href)|(src))\\s*=(?:(?:\\s*\"(.+?)\")|(?:\\s*'(.+?)')|(\\S+))");
 	// this pattern extracts 'robots' attributes
 	static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 	 "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
@@ -86,10 +86,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processTagInto(cs.subSequence(tags.start(2),tags.end(2)),links,embeds);
 			} else if(tags.start(3)>0) {
 				// <base> match
-				processBase(curi,cs.subSequence(tags.start(3),tags.end(3)));
+				processBase(curi,cs.subSequence(tags.start(2),tags.end(2)));
 			} else if (tags.start(4)>0) {
 				// <meta> match
-				if (processMeta(curi,cs.subSequence(tags.start(4),tags.end(4)))) {
+				if (processMeta(curi,cs.subSequence(tags.start(2),tags.end(2)))) {
 					// meta tag included NOFOLLOW; abort processing
 					return;
 				}
@@ -118,6 +118,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 */
 	private void processScript(CrawlURI curi, CharSequence sequence) {
 		// for now, do nothing
+		// TODO: best effort extraction of strings
 	}
 
 
@@ -184,3 +185,4 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		}
 	}
 }
+
