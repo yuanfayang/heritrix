@@ -39,8 +39,8 @@
             crawl report</a></li>
         <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp">
             seeds report</a></li>
-        <li><a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>"></li>
-            crawl order (raw xml)</a>
+        <li><a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">
+            crawl order (raw xml)</a></li>
         </ul>
     </ul>
 <% } %>
