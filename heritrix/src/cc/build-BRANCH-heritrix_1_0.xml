@@ -39,8 +39,6 @@
             <arg value="clean" />
             <arg value="dist" />
             <arg value="selftest" />
-            <arg value="site:generate" />
-            <arg value="site:update-sourceforge" />
         </exec>
     </target>
 </project>
