@@ -29,6 +29,9 @@
       <artifactspublisher 
         dir="checkout/HEAD-heritrix/target/distributions" 
         dest="artifacts/HEAD-heritrix"/>
+      <artifactspublisher 
+        file="checkout/HEAD-heritrix/target/heritrix.war"
+        dest="artifacts/HEAD-heritrix"/>
       <htmlemail mailhost="mail-dev.archive.org" 
         returnaddress="stack@archive.org" 
         defaultsuffix="@archive.org" 
