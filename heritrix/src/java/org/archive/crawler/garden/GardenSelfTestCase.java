@@ -25,6 +25,9 @@ package org.archive.crawler.garden;
 import java.io.File;
 import java.io.IOException;
 
+import org.archive.io.arc.ARCReader;
+import org.archive.util.FileUtils;
+
 import junit.framework.TestCase;
 
 
@@ -39,12 +42,32 @@ import junit.framework.TestCase;
  */
 public class GardenSelfTestCase extends TestCase
 {
+    /**
+     * Suffix for selftest classes.
+     */
+    protected static final String SELFTEST = "SelfTest";
+    
     private static File jobDir = null;
     private static String jobName = null;
-    private static File arcDir = null;
+    private static File arcFile = null;
     private static boolean initialized = false;
     private static String prefix = null;
+    private static String selftestURL = null;
     
+    /**
+     * The selftest webapp directory.
+     */
+    private static File webappDir = null;
+    
+    /**
+     * A reference to an ARCReader on which the validate method has been called.
+     * Can be used to walk the metadata.
+     * 
+     * @see org.archive.io.arc.ARCReader#validate()
+     */
+    private static ARCReader readReader = null;
+
+
     public GardenSelfTestCase()
     {
         super();
@@ -73,6 +96,8 @@ public class GardenSelfTestCase extends TestCase
      * 
      * Must be called before instantiation of any tests based off this class.
      * 
+     * @param selftestURL URL to selftest webapp.
+     * @param webappDir Expanded webapp directory location.
      * @param jobDir Directory where selftest resides.
      * @param jobName Name of the selftest job.
      * @param arcDir Directory wherein to find selftest arc.
@@ -80,10 +105,23 @@ public class GardenSelfTestCase extends TestCase
      * 
      * @throws IOException if nonexistent directories passed.
      */
-    public static synchronized void initialize(File jobDir, String jobName, 
-            File arcDir, String prefix)
+    public static synchronized void initialize(String selftestURL,
+        File webappDir, File jobDir, String jobName, File arcDir, String prefix)
         throws IOException
     {
+        if (selftestURL == null || selftestURL.length() <= 0)
+        {
+            throw new IOException("SelftestURL not set");
+        }    
+        GardenSelfTestCase.selftestURL =
+            selftestURL.endsWith("/")? selftestURL: selftestURL + "/";
+        
+        if (webappDir == null || !webappDir.exists())
+        {
+            throw new IOException("WebappDir not set");
+        }
+        GardenSelfTestCase.webappDir = webappDir;
+            
         if (jobDir == null || !jobDir.exists())
         {
             throw new IOException("Jobdir not set");
@@ -94,7 +132,6 @@ public class GardenSelfTestCase extends TestCase
         {
             throw new IOException("ArcDir not set");
         }
-        GardenSelfTestCase.arcDir = arcDir;
         
         if (jobName == null || jobName.length() <= 0)
         {
@@ -108,15 +145,27 @@ public class GardenSelfTestCase extends TestCase
         }    
         GardenSelfTestCase.prefix = prefix;
         
+        // Find the arc file in the arcDir.  Should only be one.  Then make
+        // an instance of ARCReader and call the validate on it.
+        File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
+        if (arcs.length != 1)
+        {
+            throw new IOException("Expected one only arc file.  Found" +
+                " instead " + Integer.toString(arcs.length) + " files.");
+        }
+        arcFile = arcs[0];
+        readReader = new ARCReader(arcFile);
+        readReader.validate();
+        
         GardenSelfTestCase.initialized = true;
     }
     
     /**
      * @return Returns the arcDir.
      */
-    protected static File getArcDir()
+    protected static File getArcFile()
     {
-        return arcDir;
+        return arcFile;
     }
 
     /**
@@ -133,5 +182,50 @@ public class GardenSelfTestCase extends TestCase
     protected static String getJobName()
     {
         return jobName;
+    }
+    
+    /**
+     * Returns the selftest ARCReader.
+     * 
+     * The returned ARCReader has been validated.  Use it to get at metadata.
+     * 
+     * @return Returns the readReader, an ARCReader that has been validated.
+     */
+    protected static ARCReader getReadReader()
+    {
+        return readReader;
+    }
+    
+    /**
+     * @return Returns the selftestURL.  URL returned is guaranteed to have
+     * a trailing '/'.
+     */
+    public static String getSelftestURL()
+    {
+        return selftestURL;
+    }
+    
+    /**
+     * Calculates test name by stripping SelfTest from current class name.
+     * 
+     * @return The name of the test.
+     */
+    public String getTestName()
+    {
+        String classname = getClass().getName();
+        int selftestIndex = classname.indexOf(SELFTEST);
+        assertTrue("Class name ends with SelfTest", selftestIndex > 0);
+        int lastDotIndex = classname.lastIndexOf('.');
+        assertTrue("Package dot in unexpected location",
+            lastDotIndex + 1 < classname.length() && lastDotIndex > 0);
+        return classname.substring(lastDotIndex + 1, selftestIndex);
+    }
+
+    /**
+     * @return Returns the selftest webappDir.
+     */
+    public static File getWebappDir()
+    {
+        return webappDir;
     }
 }

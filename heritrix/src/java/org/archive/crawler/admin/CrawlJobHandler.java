@@ -168,7 +168,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 settingsFile = aOrderFile;
         }
         else {
-            settingsFile = SimpleHttpServer.getAdminWebappPath() + DEFAULT_ORDER_FILE;
+            settingsFile = Heritrix.getHttpServer().getAdminWebappPath() +
+                DEFAULT_ORDER_FILE;
         }
         loadProfiles();
     }

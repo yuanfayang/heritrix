@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.admin;
+package org.archive.crawler.garden;
 
 import java.io.File;
 import java.util.Date;
@@ -32,12 +32,14 @@ import junit.framework.TestResult;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.SimpleHttpServer;
+import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.basic.ARCWriterProcessor;
 import org.archive.crawler.datamodel.settings.ComplexType;
-import org.archive.crawler.garden.AllGardenSelfTests;
 
 /**
  * An override to gain access to end-of-crawljob message.
+ * 
  * 
  * @author stack
  * @version $Id$
@@ -45,6 +47,12 @@ import org.archive.crawler.garden.AllGardenSelfTests;
 public class SelftestCrawlJobHandler
     extends CrawlJobHandler
 {
+    /**
+     * Name of the selftest webapp.
+     */
+    private static final String SELFTEST_WEBAPP = "garden";
+    
+    
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.admin.SelftestCrawlJobHandler");
     
@@ -84,8 +92,12 @@ public class SelftestCrawlJobHandler
                 File arcDir = (arcDirStr.startsWith(File.separator))?
                     new File(arcDirStr):
                     new File(new File(jobDir, jobName), arcDirStr);
+                // Get the expanded webapp dir from the server.
+                File webappDir =
+                    Heritrix.getHttpServer().getWebappPath(SELFTEST_WEBAPP);
                 Test test =
-                    AllGardenSelfTests.suite(jobDir, jobName, arcDir, prefix);
+                    AllGardenSelfTests.suite(Heritrix.getSelftestURL(),
+                        webappDir, jobDir, jobName, arcDir, prefix);
                 result = junit.textui.TestRunner.run(test);
             }
         }

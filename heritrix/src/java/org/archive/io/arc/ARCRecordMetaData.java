@@ -70,7 +70,7 @@ public class ARCRecordMetaData
     
     /**
      * Test required field is present in hash.
-     * 
+     *  
      * @exception IOException If required field is not present.
      */
     protected void testRequiredField(Map fields, String requiredField)

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 
@@ -120,7 +121,7 @@ import java.util.zip.GZIPInputStream;
  * by scanning ahead which is probably less optimial than technique used below.
  * 
  * <p>TODO: Profiling of the two techniques -- java.io vs. memory-mapped
- * ByteBufferInputStream to see which is faster.
+ * ByteBufferInputStream to see which is faster.  As is, ARCReader is SLOW.
  * 
  * <p>TODO: Testing of this reader class against ARC files harvested out in 
  * the wilds.  This class has only been tested to date going against small
@@ -181,8 +182,18 @@ public class ARCReader
      * the 3rd line.
      */
     private ArrayList headerFieldNameKeys = null;
-    
-    
+
+    /**
+     * List of all read metadatas.
+     * 
+     * As we read records, we add a reference to the read metadata.
+     * 
+     * Upon instantiation, will have at least the metadata for the ARC file 
+     * itself.
+     */
+    private List metaDatas = new ArrayList();
+
+
     public ARCReader(String arcFile)
          throws FileNotFoundException, IOException
     {
@@ -467,7 +478,9 @@ public class ARCReader
         this.currentRecord = new ARCRecord(this.in,
             computeMetaData(this.headerFieldNameKeys, values, this.version),
             contentRead); 
-       return this.currentRecord;
+        // Add reference to metadata into a list of metadatas.
+        this.metaDatas.add(this.currentRecord.getMetaData());
+        return this.currentRecord;
     }
     
     /**
@@ -679,6 +692,18 @@ public class ARCReader
         return this.currentRecord;
     }
     
+    /**
+     * Returns list of all metadatas read so far. 
+     * 
+     * On instantiation, will have the ARC files metadata only.  As file is
+     * read, we add the metadata of ARCRecords found to this list.
+     * 
+     * @return Returns the metaDatas.
+     */
+    public List getMetaDatas()
+    {
+        return this.metaDatas;
+    }
     
     /**
      * Override that gives access to underlying input stream.

@@ -22,15 +22,27 @@
  */
 package org.archive.crawler.garden;
 
+import java.io.File;
+import java.util.Iterator;
+import java.util.List;
+
+import org.archive.io.arc.ARCRecordMetaData;
+
 /**
- * 
+ * Test the crawler can find background images in pages.
  * 
  * @author stack
  * @version $Id$
  */
 public class BackgroundImageExtractionSelfTest
     extends GardenSelfTestCase
-{
+{   
+    /**
+     * The name of the background image the crawler is supposed to find.
+     */
+    private static final String IMAGE_NAME = "example-background-image.jpeg";
+    private static final String JPEG = "image/jpeg";
+    
     /*
      * @see TestCase#setUp()
      */
@@ -49,10 +61,37 @@ public class BackgroundImageExtractionSelfTest
 
     /**
      * Read ARC file for the background image the file that contained it.
+     * 
+     * Look that there is only one instance of the background image in the 
+     * ARC and that it is of the same size as the image in the webapp dir.
      */
     public void testBackgroundImageExtraction()
     {
-        // TODO: Find the items on disk and then compare sizes and names
-        // w/ what is in the ARC file.
+        String relativePath = getTestName() + '/' + IMAGE_NAME;
+        String url = getSelftestURL() + relativePath;
+        File image = new File(getWebappDir(), relativePath);
+        assertTrue("Image exists", image.exists());
+        List metaDatas = getReadReader().getMetaDatas();
+        boolean found = false;
+        ARCRecordMetaData metaData = null;
+        for (Iterator i = metaDatas.iterator(); i.hasNext();)
+        {
+            metaData = (ARCRecordMetaData)i.next();
+            String localURL = metaData.getUrl();
+            if (metaData.getUrl().equals(url) &&
+                metaData.getMimetype().equalsIgnoreCase(JPEG))
+            {          
+                if (!found)
+                {
+                    found = true;
+                }
+                else
+                {
+                    fail("Found a 2nd instance of " + url);
+                }
+            }
+        }
+        assertTrue("No " + url + " in " + getArcFile().getAbsolutePath(), 
+            found);
     }
 }
