@@ -186,5 +186,12 @@ public class RecordingOutputStream extends OutputStream {
 		return size-responseBodyStart;
 	}
 
+	/**
+	 * 
+	 */
+	public void closeRecorder() throws IOException {
+		diskStream.close();
+	}
+
 
 }
