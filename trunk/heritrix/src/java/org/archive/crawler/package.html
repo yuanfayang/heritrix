@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<title>Heritrix - open-source, extensible, web-scale, archival-quality web crawler/title>
+</head>
+<body>
+    <h1>Introduction to Heritrix</h1>
+    <p>
+        Heritrix is designed to be easily extendable via 3rd party modules. 
+        
+    <h1>Architecture</h1>
+    <p>
+        The software is divided into several packages of varying importance.
+        The relationship between them will be covered in some greater depth
+        after their introductions.
+    <p>
+        The root package (this) contains the executable class
+        {@link org.archive.crawler.Heritrix org.archive.crawler.Heritrix}.
+        That class will load the crawler, parsing command line arguments.
+        If a WUI is to be launched it will launch it. It can also start
+        jobs (with or without the WUI) that are specified in command line
+        options.
+    <h2>{@link org.archive.crawler.framework org.archive.crawler.framework}</h2>
+    <p>
+        The <tt>framework</tt> package contains most of the core classes
+        for running a crawl. It also contains a number of Interfaces for
+        extensible items, the implementatations of whom can be found in
+        other classes.
+    <p>
+        Heritrix is in effect divided into two types of classes.
+        <ol>
+            <li> <em>Core classes</em> - these can often be configured but not 
+                 replaced.
+            <li> <em>Pluggable classes</em> - these must implment a given interface 
+                 or extend a specific class but 3rd parties can introduce their own
+                 implementations.
+        </ol>
+        The framework thus contains a selection of the core classes and a number
+        of the Interfaces and base classes for the pluggable classes.
+
+    <h2>{@link org.archive.crawler.admin org.archive.crawler.admin}</h2>
+    <p>
+        The <tt>admin</tt> package contains classes that are used by the Web UI.
+        This includes some core classes and a specific implementation of the 
+        <tt>Statistics Tracking</tt> interface found in the <tt>framework</tt>
+        package that is designed to provide the UI with information about 
+        ongoing crawls.
+
+    <h2>{@link org.archive.crawler.basic org.archive.crawler.basic}</h2>
+    <p>
+        The <tt>basic</tt> package contains the implementation of several 
+        pluggable modules. 
+    
+    <h1>Examples</h1>
+    <p>
+        ADD TEXT
+    	
+</body>
+</html>
