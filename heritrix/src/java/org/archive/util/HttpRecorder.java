@@ -114,8 +114,9 @@ public class HttpRecorder {
 	 * Mark the point where the HTTP headers end. 
 	 * 
 	 */
-	public void markResponseBodyStart() {
-		ris.markResponseBodyStart();
+	public void markContentBegin() {
+		ris.markContentBegin();
+        // ris.startDigest();
 	}
 
 	public long getResponseContentLength() {

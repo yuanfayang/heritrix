@@ -1609,7 +1609,7 @@ public abstract class HttpMethodBase implements HttpMethod {
             }
         }
         if(recorder!=null) {
-        	recorder.markResponseBodyStart();
+        	recorder.markContentBegin();
         }
         readResponseBody(state, conn);
         processResponseBody(state, conn);
