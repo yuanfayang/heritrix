@@ -1,11 +1,13 @@
+http:%5C/%5C/www.cbsnews.com/earlyshow/ads/thermacare/thermacare.html
+
 http://www.yahoo.com
 http://www.google.com/dirhp
 # http://www.lycos.com
-http://www.msn.com
+# http://www.msn.com
 # http://www.cnn.com
 http://www.drudgereport.com
 # http://www.aol.com
-http://www.msnbc.com
+# http://www.msnbc.com
 
 # http://www.archive.org
 # http://www.google.com
