@@ -6,17 +6,20 @@ implemented per-processor, per-selector Filters, RegExp Filter
 eliminate crawlscope
 refactor extractors
 respect NOFOLLOW meta robots
+initial DOC support
+cleaned up, file-based activity & error logging
+HTML extraction bugs fixed & reorged for efficiency
 
 _Next few things to do:
-implement Filters for seed-extension
-clean up log formats
+fix robots.txt spinning on certain errors
+ToeThread start/pause/stop cleanup
 get links from DOC/PDF/SWF/etc formats
 investigate MG4J, Nutch components (Nutch HTTP + MG4J Strings?)
 implement an explicit configurable retry policy (or policies) / document oob errors
 collect better stats on system state (pending URIs, etc.) and progress (raw bytes, URI results)
 mercator-style progress log ("timings"?)
 minimal admin interface
-ToeThread start/pause/stop cleanup
+implement Filters for seed-extension
 VirtualBuffer (chained buffer, etc.) impl & cleanup
 link markup conventions (docs)
 
