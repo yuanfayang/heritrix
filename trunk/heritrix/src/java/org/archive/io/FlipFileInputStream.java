@@ -112,7 +112,8 @@ public class FlipFileInputStream extends InputStream {
 	}
 
     /**
-     * @return
+     * @return Stream position.
+     * @throws IOException
      */
     public long getReadPosition() throws IOException {
         return fileStream.getChannel().position();

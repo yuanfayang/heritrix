@@ -110,26 +110,15 @@ public class FlipFileOutputStream extends OutputStream {
 		outStream.close();
 	}
 
-    /**
-     * 
-     */
     public File getFile0() {
         return file0;
     }
 
-    /**
-     * 
-     */
     public File getFile1() {
         return file1;
     }
 
-    /**
-     * @return
-     */
     public int getCurrentFileIndex() {
         return (currentFile == file0) ? 0 : 1;
     }
-
-
 }

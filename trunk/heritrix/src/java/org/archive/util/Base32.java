@@ -140,6 +140,8 @@ public class Base32 {
 
     /** For testing, take a command-line argument in Base32, decode, print in hex,
      * encode, print
+     * 
+     * @param args
      */
     static public void main(String[] args) {
         if (args.length == 0) {

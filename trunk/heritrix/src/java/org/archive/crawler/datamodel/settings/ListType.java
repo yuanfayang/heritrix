@@ -52,7 +52,7 @@ public abstract class ListType extends Type {
      * 
      * @param name the name of the list
      * @param description the description of the list
-     * @param Set if this setting is overrideable
+     * @param isOverrideable If type is overrideable.
      */
     public ListType(String name, String description, boolean isOverrideable) {
         super(name, null);
