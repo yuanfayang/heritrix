@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
     <classpathentry kind="src" path="src"/>
+    <classpathentry kind="src" path="oversrc"/>
     <classpathentry kind="lib" path="lib/binaries/commons-logging.jar"/>
     <classpathentry kind="lib" path="lib/binaries/dnsjava.jar"/>
     <classpathentry kind="lib" path="lib/binaries/stataclasses.jar"/>
     <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-    <classpathentry kind="lib" path="lib/binaries/commons-httpclient.jar"/>
     <classpathentry kind="lib" path="lib/binaries/junit.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/itext.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/org.mortbay.jetty.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/poi.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/javaswf.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/httpclient-cvs-20031002.jar"/>
     <classpathentry kind="output" path="bin"/>
 </classpath>
