@@ -63,9 +63,36 @@ then
   JAVA_OPTS=""
 fi
 
-# Run heritrix.
+
+# Start log contains useful information on started crawler.
+# This file is created by Heritrix main class on start up.
+startlog="start.log"
+
+# Clean up start log just in case that something whent wrong during previous 
+# run.
+if [ -f $startlog ]
+then
+    rm -f $startlog
+fi
+
+# Run heritrix as daemon
 MAIN=org.archive.crawler.Heritrix
-$JAVA_HOME/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} $MAIN $@
+run="$JAVA_HOME/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} $MAIN $@"
+nohup $run >> heritrix-run.log 2>> heritrix-run.err < /dev/null &
+
+# Wait for creation of start log 
+echo "Starting Heritrix... please wait!"
+while [ ! -f $startlog ]
+do
+    sleep 1;
+done
+
+# Cat and clean up start log.
+if [ -f $startlog ]
+then
+	cat $startlog
+	rm -f $startlog
+fi
 
 # Restore any old CLASSPATH.
 if [ "$oldCP" != "" ]; then
