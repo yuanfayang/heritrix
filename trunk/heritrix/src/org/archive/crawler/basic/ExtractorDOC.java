@@ -4,21 +4,19 @@
  */
 package org.archive.crawler.basic;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.poi.hdf.extractor.WordDocument;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.Header;
-import org.apache.poi.hdf.extractor.*;
-
-import java.io.InputStream;
-import java.io.Writer;
-import java.io.StringWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * @author Parker Thompson
@@ -53,14 +51,11 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		}
 		 get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 
-
-		//TODO figure out what content type docs have
 		Header contentType = get.getResponseHeader("Content-Type");		
 		if ((contentType==null)||(!contentType.getValue().startsWith("application/msword"))) {
 			// nothing to extract for other types here
 			return; 
 		}
-		
 		
 		// get the doc as a File
 		try{
