@@ -553,6 +553,43 @@ public class ReplayCharSequenceFactory {
             super.finalize();
             close();
         }
+
+        /* (non-Javadoc)
+         * @see org.archive.io.EnhancedCharSequence#toString(int, int)
+         */
+        public String toString(int offset, int length) {
+            StringBuffer ret = new StringBuffer();
+            // Add to offset start-of-content offset to get us over HTTP header
+            // if present.
+            offset += this.contentOffset;
+            if (offset < this.prefixBuffer.length) {
+                // Need something from the prefix buffer.
+                int from = offset;
+                int count = prefixBuffer.length-from; //To the end of the buffer
+                if (offset+length < this.prefixBuffer.length){
+                    count = length; //length falls within the buffer.
+                } else {
+                    // Will need more then is in the prefixBuffer.
+                    offset = prefixBuffer.length+1;
+                    length = length-count;
+                }
+                // Since we are dealing with a byte buffer we'll have to use 
+                // a String and then wrap up in a StringBuffer to concat with
+                // the backing file. TODO: This can probably be optimized.
+                ret.append(new String(this.prefixBuffer,from,count));
+                
+            } 
+            if (offset >= this.prefixBuffer.length) {
+                // TODO: Maybe better performance can be gained by reading 
+                //       blocks from files.
+                int to=offset+length;
+                for(int i=offset ; i<to ; i++){
+                    ret.append(charAtAbsolute(i));
+                }
+            }
+            
+            return ret.toString();
+        }
     }
     
     
@@ -934,6 +971,15 @@ public class ReplayCharSequenceFactory {
         
         public CharSequence subSequence(int start, int end) {
             return new CharSubSequence(this, start, end);
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.io.EnhancedCharSequence#toString(int, int)
+         */
+        public String toString(int offset, int length) {
+            // Not the absolute optimal way to do this but the content does
+            // not appear to support the array() method.
+            return this.content.toString().substring(offset,offset+length);
         }
     }
 }

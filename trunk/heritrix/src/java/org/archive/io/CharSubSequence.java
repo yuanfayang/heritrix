@@ -29,13 +29,13 @@ package org.archive.io;
  * @author gojomo
  * @version $Revision$, $Date$
  */
-public class CharSubSequence implements CharSequence {
+public class CharSubSequence implements EnhancedCharSequence {
     
-    CharSequence inner;
+    EnhancedCharSequence inner;
     int start;
     int end;
 
-    public CharSubSequence(CharSequence inner, int start, int end) {
+    public CharSubSequence(EnhancedCharSequence inner, int start, int end) {
         
         super();
     
@@ -69,12 +69,20 @@ public class CharSubSequence implements CharSequence {
     public CharSequence subSequence(int begin, int finish) {
         return new CharSubSequence(this, begin, finish);
     }
-
+    
     public String toString() {
-        StringBuffer sb = new StringBuffer(length());
-        for(int i = 0; i < length(); i++) {
-            sb.append(charAt(i));
-        }
-        return sb.toString();
+        return inner.toString(this.start,length());
+//        StringBuffer sb = new StringBuffer(length());
+//        for(int i = 0; i < length(); i++) {
+//            sb.append(charAt(i));
+//        }
+//        return sb.toString();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.io.EnhancedCharSequence#toString(int, int)
+     */
+    public String toString(int offset, int length) {
+        return inner.toString(this.start+offset,length);
     }
 }
