@@ -218,7 +218,14 @@ public class MapType extends ComplexType {
     public boolean isEmpty(CrawlerSettings settings) {
         settings = settings == null ? globalSettings() : settings;
 
-        return size(settings) == 0;
+        DataContainer data = getDataContainerRecursive(settings);
+        while (data != null) {
+            if (data.hasAttributes()) {
+                return false;
+            }
+            data = getDataContainerRecursive(data.getSettings().getParent());
+        }
+        return true;
     }
     
     /** Get the number of elements in this map.
