@@ -911,9 +911,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Get the one-line Frontier report.
-     * 
-     * @return
+     * @return One-line Frontier report.
      */
     public String getFrontierOneLine() {
         if (controller == null || controller.getFrontier() == null) {
@@ -938,9 +936,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Get the one-line threads report.
-     * 
-     * @return
+     * @return One-line threads report.
      */
     public String getThreadOneLine() {
         if (controller == null) {

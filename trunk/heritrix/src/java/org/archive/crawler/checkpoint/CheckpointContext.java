@@ -69,6 +69,7 @@ public class CheckpointContext implements Serializable {
     public int getNextCheckpoint() {
         return nextCheckpoint;
     }
+
     /**
      * Create a new CheckpointContext with the given store directory
      *
@@ -79,9 +80,6 @@ public class CheckpointContext implements Serializable {
         this.checkpointDirectory = checkpointDirectory;
     }
 
-    /**
-     *
-     */
     public void begin() {
         checkpointInProgress = new File(checkpointDirectory, nextCheckpointDirectoryName());
         checkpointErrors = false;
@@ -94,9 +92,6 @@ public class CheckpointContext implements Serializable {
         return (new DecimalFormat("00000")).format(nextCheckpoint);
     }
 
-    /**
-     *
-     */
     public void end() {
         if(checkpointErrors == false) {
             writeValidity();
@@ -117,7 +112,7 @@ public class CheckpointContext implements Serializable {
     }
 
     /**
-     * @return
+     * @return Checkpoint directory.
      */
     public File getCheckpointInProgressDirectory() {
         return checkpointInProgress;
@@ -134,10 +129,8 @@ public class CheckpointContext implements Serializable {
     }
 
     /**
-     * Return whether this context is at a new crawl, never-
+     * @return Return whether this context is at a new crawl, never-
      * checkpointed state.
-     *
-     * @return
      */
     public boolean isAtBeginning() {
         return nextCheckpoint == 1;

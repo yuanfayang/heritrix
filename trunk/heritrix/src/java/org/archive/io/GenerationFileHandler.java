@@ -82,7 +82,7 @@ public class GenerationFileHandler extends FileHandler {
      *
      * @param storeSuffix
      * @param activeSuffix
-     * @return
+     * @return GenerationFileHandler instance.
      * @throws IOException
      */
     public GenerationFileHandler rotate(String storeSuffix,String activeSuffix) throws IOException {
@@ -104,7 +104,7 @@ public class GenerationFileHandler extends FileHandler {
         return newGfh;
     }
     /**
-     * @return
+     * @return True if should manifest.
      */
     public boolean shouldManifest() {
         // TODO Auto-generated method stub

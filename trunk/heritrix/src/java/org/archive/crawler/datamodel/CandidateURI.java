@@ -291,10 +291,10 @@ public class CandidateURI implements Serializable, Lineable {
      * In some cases, URIs with greater than zero but less than some
      * threshold such hops are treated specially. 
      * 
-     * TODO: consider moving link-count in here as well, caching calculation, 
-     * and refactoring CrawlScope.exceedsMaxHops() to use this. 
+     * <p>TODO: consider moving link-count in here as well, caching
+     * calculation, and refactoring CrawlScope.exceedsMaxHops() to use this. 
      * 
-     * @return
+     * @return Transhop count.
      */
     public int getTransHops() {
         String path = getPathFromSeed();
@@ -314,11 +314,12 @@ public class CandidateURI implements Serializable, Lineable {
      * delimited hops-path and via info, create a CandidateURI 
      * instance.
      * 
-     * @param string
-     * @return
+     * @param uriHopsViaString String with a URI.
+     * @return A CandidateURI made from passed <code>uriHopsViaString</code>.
      * @throws URIException
      */
-    public static CandidateURI fromString(String uriHopsViaString) throws URIException {
+    public static CandidateURI fromString(String uriHopsViaString)
+            throws URIException {
         String args[] = uriHopsViaString.split("\\s+");
         CandidateURI caUri = new CandidateURI(UURIFactory.getInstance(args[0]));
         if (args.length > 1 && !args[1].equals("-")) {

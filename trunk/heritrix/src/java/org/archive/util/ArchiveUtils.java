@@ -377,7 +377,7 @@ public class ArchiveUtils {
     /**
      * Convert milliseconds value to a human-readable duration
      * @param time
-     * @return
+     * @return Human readable string version of passed <code>time</code>
      */
     public static String formatMillisecondsToConventional(long time) {
         StringBuffer sb = new StringBuffer();
@@ -407,7 +407,7 @@ public class ArchiveUtils {
      *
      * @param class1
      * @param version
-     * @return
+     * @return UID based off class and version number.
      */
     public static long classnameBasedUID(Class class1, int version) {
         String callingClassname = class1.getName();

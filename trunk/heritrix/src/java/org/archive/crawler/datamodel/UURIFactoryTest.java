@@ -98,9 +98,8 @@ public class UURIFactoryTest extends TestCase {
    }
    
    /**
-    * @see
-    * <a hef="https://sourceforge.net/tracker/index.php?func=detail&aid=966219&group_id=73833&atid=539099">[ 966219 ]
-    * UURI doubly-encodes %XX sequences</a>.
+    * Test for doubly-encoded sequences.
+    * @see <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=966219&group_id=73833&atid=539099">[ 966219 ] UURI doubly-encodes %XX sequences</a>.
     * @throws URIException
     */
    public final void testDoubleEncoding() throws URIException {
@@ -131,9 +130,8 @@ public class UURIFactoryTest extends TestCase {
    }
    
    /**
-    * Part of  <a
-    * href="https://sourceforge.net/tracker/?func=detail&aid=788219&group_id=73833&atid=539099">[ 788219 ]
-    * URI Syntax Errors stop page parsing</a>.
+    * Test for syntax errors stop page parsing.
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=788219&group_id=73833&atid=539099">[ 788219 ] URI Syntax Errors stop page parsing</a>
     * @throws URIException
     */
    public final void testThreeSlashes() throws URIException {
@@ -209,8 +207,8 @@ public class UURIFactoryTest extends TestCase {
    }
    
    /**
-    * [ 962892 ] UURI accepting/creating unUsable URIs (bad hosts).
-    * https://sourceforge.net/tracker/?func=detail&atid=539099&aid=962892&group_id=73833
+    * Test for [ 962892 ] UURI accepting/creating unUsable URIs (bad hosts).
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&atid=539099&aid=962892&group_id=73833">[ 962892 ] UURI accepting/creating unUsable URIs (bad hosts)</a>
     */
    public final void testHostWithLessThan() {
        checkExceptionOnIllegalDomainlabel("http://www.betamobile.com</A");
@@ -232,9 +230,9 @@ public class UURIFactoryTest extends TestCase {
    }
 
    /**
-    * [ 788277 ] Doing separate DNS lookup for same host
+    * Test for doing separate DNS lookup for same host
     *
-    * https://sourceforge.net/tracker/?func=detail&aid=788277&group_id=73833&atid=539099
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=788277&group_id=73833&atid=539099">[ 788277 ] Doing separate DNS lookup for same host</a>
     * @throws URIException
     */
    public final void testHostWithPeriod() throws URIException {
@@ -247,9 +245,9 @@ public class UURIFactoryTest extends TestCase {
    }
 
    /**
-    * [ 874220 ] NPE in java.net.URI.encode
+    * Test for NPE in java.net.URI.encode
     *
-    * https://sourceforge.net/tracker/?func=detail&aid=874220&group_id=73833&atid=539099
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=874220&group_id=73833&atid=539099">[ 874220 ] NPE in java.net.URI.encode</a>
     * @throws URIException
     */
    public final void testHostEncodedChars() throws URIException {
@@ -261,10 +259,9 @@ public class UURIFactoryTest extends TestCase {
    }
 
    /**
-    * [ 927940 ] java.net.URI parses %20 but getHost null
+    * Test for java.net.URI parses %20 but getHost null
     *
-    * https://sourceforge.net/tracker/?func=detail&aid=927940&group_id=73833&atid=539099
-    *
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=927940&group_id=73833&atid=539099">[ 927940 ] java.net.URI parses %20 but getHost null</a>
     * @throws URIException If fail to get host.
     */
    public final void testSpaceInHost() {
@@ -290,9 +287,9 @@ public class UURIFactoryTest extends TestCase {
    }
 
    /**
-    * [ 808270 ] java.net.URI chokes on hosts_with_underscores.
+    * Test for java.net.URI chokes on hosts_with_underscores.
     *
-    * https://sourceforge.net/tracker/?func=detail&aid=808270&group_id=73833&atid=539099
+    * @see  <a href="https://sourceforge.net/tracker/?func=detail&aid=808270&group_id=73833&atid=539099">[ 808270 ] java.net.URI chokes on hosts_with_underscores</a>
     * @throws URIException
     */
    public final void testHostWithUnderscores() throws URIException {
@@ -318,9 +315,9 @@ public class UURIFactoryTest extends TestCase {
    }
 
    /**
-    * [ 910120 ] java.net.URI#getHost fails when leading digit.
+    * Test for java.net.URI#getHost fails when leading digit.
     *
-    * https://sourceforge.net/tracker/?func=detail&aid=910120&group_id=73833&atid=539099
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=910120&group_id=73833&atid=539099">[ 910120 ] java.net.URI#getHost fails when leading digit.</a>
     * @throws URIException
     */
    public final void testHostWithDigit() throws URIException {
@@ -331,9 +328,9 @@ public class UURIFactoryTest extends TestCase {
    }
 
    /**
-    * [ 949548 ] Constraining java URI class.
+    * Test for Constraining java URI class.
     *
-    * https://sourceforge.net/tracker/?func=detail&aid=949548&group_id=73833&atid=539099
+    * @see <a href="https://sourceforge.net/tracker/?func=detail&aid=949548&group_id=73833&atid=539099">[ 949548 ] Constraining java URI class</a>
     */
    public final void testPort() {
        checkBadPort("http://www.tyopaikat.com:a/robots.txt");
@@ -443,7 +440,7 @@ public class UURIFactoryTest extends TestCase {
     * A UURI should always be without a 'fragment' segment, which is
     * unused and irrelevant for network fetches. 
     *  
-    * [ 970666 ] #anchor links not trimmed, and thus recrawled 
+    * See [ 970666 ] #anchor links not trimmed, and thus recrawled 
     * 
     * @throws URIException
     */

@@ -173,7 +173,7 @@ public class MapType extends ComplexType {
 
     /** Get the number of elements in this map.
      *
-     * @param settings the settings object for which this set of elements
+     * @param context the settings object for which this set of elements
      *                 are valid.
      * @return the number of elements in this map.
      */
@@ -193,8 +193,8 @@ public class MapType extends ComplexType {
     /**
      * Get the content type definition for attributes of this map.
      *
-     * @param attribute since all attributes of a map are of the same type, this
-     *            value is not used.
+     * @param attributeName since all attributes of a map are of the same type,
+     * this value is not used.
      * @return the content type definition for attributes of this map.
      */
     Type getDefinition(String attributeName) {

@@ -83,8 +83,9 @@ public class HashtableAList implements MutableAList, Serializable {
         return copy;
     }
 
-    /** Shallow copy of fields of <code>other</code> into <code>this</code>.
-     * * @param other
+    /** 
+     * Shallow copy of fields of <code>other</code> into <code>this</code>.
+     * @param other AList to copy from.
      */
     public void copyFrom(AList other) {
         Iterator keys = other.getKeys();

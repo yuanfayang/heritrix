@@ -1521,10 +1521,8 @@ public class Frontier
 
     
     /**
-     * One-line summary report, useful for display when full report
+     * @return One-line summary report, useful for display when full report
      * may be unwieldy. 
-     * 
-     * @return
      */
     public String oneLineReport() {
     	StringBuffer rep = new StringBuffer();

@@ -348,7 +348,7 @@ public class CrawlerSettings {
     /**
      * Add a refinement to this settings object.
      *
-     * @param refinements The refinements to set.
+     * @param refinement The refinements to set.
      */
     public void addRefinement(Refinement refinement) {
         if (refinements == null) {
