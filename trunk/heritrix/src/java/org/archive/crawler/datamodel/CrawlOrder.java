@@ -49,6 +49,7 @@ public class CrawlOrder extends CrawlerModule {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.CrawlOrder");
 
+    public static final String ATTR_NAME = "crawl-order";
     public static final String ATTR_SETTINGS_DIRECTORY = "settings-directory";
     public static final String ATTR_DISK_PATH = "disk-path";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
@@ -72,7 +73,7 @@ public class CrawlOrder extends CrawlerModule {
     /** Construct a CrawlOrder. 
      */
     public CrawlOrder() {
-        super("crawl-order", "Heritrix crawl order");
+        super(ATTR_NAME, "Heritrix crawl order");
 
         addElementToDefinition(
             new SimpleType(
@@ -199,7 +200,7 @@ public class CrawlOrder extends CrawlerModule {
      * 
      * @return the name of the order file.
      */
-    public String getName() {
+    public String getCrawlOrderName() {
         return getSettingsHandler().getSettingsObject(null).getName();
     }
     

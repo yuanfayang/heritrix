@@ -85,7 +85,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		String name = controller.getOrder().getName();
+		String name = controller.getOrder().getCrawlOrderName();
 		logger.fine(getName()+" started for order '"+name+"'");
 		// OutOfMemory catch might interfere with usual IBM JVM
 		// heapdump: so commenting out. memory problems will be fatal
