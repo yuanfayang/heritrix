@@ -250,4 +250,9 @@ public class MapType extends ComplexType {
     public List getConstraints() {
         return definition.getConstraints();
     }
+    
+    public Object getUncheckedAttribute(Object context, String name) {
+        throw new UnsupportedOperationException(
+                "This method is not allowed on MapType");
+    }
 }
