@@ -122,15 +122,10 @@ public class DiskStack implements Stack, Serializable {
                 lazyInitialize();
             }
             long itemStartPointer = raf.getFilePointer();
-            pushStream.writeObject(object);
-            long eos = raf.getFilePointer();
+            // The reset writes a byte onto the stream, some kind of delimiter.
+            // Put it onto the stream before serializing of object.
             pushStream.reset();
-            // The reset moves the stream on a byte. Messes up the
-            // pop function.  See
-            // '[ 982813 ] CCE deserializing diskqueue [Was: IllegalArgumentExcepti...]'
-            if (eos != raf.getFilePointer()) {
-                raf.seek(eos);
-            }
+            pushStream.writeObject(object);
             height++;
             raf.writeLong(height);
             raf.writeLong(itemStartPointer);
