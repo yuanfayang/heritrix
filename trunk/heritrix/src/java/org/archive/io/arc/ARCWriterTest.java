@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayInputStream;
@@ -55,6 +56,9 @@ import org.archive.util.TmpDirTestCase;
  */
 public class ARCWriterTest
 extends TmpDirTestCase implements ARCConstants {
+    private static final Logger logger =
+        Logger.getLogger(ARCWriterTest.class.getName());
+    
     /**
      * Prefix to use for ARC files made by JUNIT.
      */
@@ -409,4 +413,18 @@ extends TmpDirTestCase implements ARCConstants {
             message != null &&
             message.indexOf("Gap between expected and actual") >= 0);
     }
+    
+//    public void testSpeed() throws IOException {
+//        ARCWriter writer = createArcWithOneRecord("speed", true);
+//        // Add a record with a length that is too long.
+//        String content = getContent();
+//        final int count = 100000;
+//        logger.info("Starting speed write of " + count + " records.");
+//        for (int i = 0; i < count; i++) {
+//            writeRecord(writer, SOME_URL, "text/html", content.length(),
+//                    getBaos(content));
+//        }
+//        writer.close();
+//        logger.info("Finished speed write test.");
+//    }
 }

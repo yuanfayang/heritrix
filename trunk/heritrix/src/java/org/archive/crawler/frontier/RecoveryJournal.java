@@ -24,7 +24,8 @@
  */
 package org.archive.crawler.frontier;
 
-import java.io.BufferedOutputStream;
+import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
@@ -80,7 +81,7 @@ implements FrontierJournal {
     public RecoveryJournal(String path, String filename)
     throws IOException {
         this.out = new OutputStreamWriter(new GZIPOutputStream(
-            new BufferedOutputStream(new FileOutputStream(new File(path,
+            new FastBufferedOutputStream(new FileOutputStream(new File(path,
                 filename + GZIP_SUFFIX)))));
     }
 

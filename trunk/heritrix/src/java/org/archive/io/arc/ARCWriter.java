@@ -25,8 +25,9 @@
  */
 package org.archive.io.arc;
 
+import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -311,7 +312,7 @@ public class ARCWriter implements ARCConstants {
         File dir = getNextDirectory(this.settings.getOutputDirs());
         this.arcFile = new File(dir, name);
         this.fos = new FileOutputStream(this.arcFile);
-        this.out = new BufferedOutputStream(this.fos);
+        this.out = new FastBufferedOutputStream(this.fos);
         this.out.write(generateARCFileMetaData(tsn.getNow()));
         logger.info("Opened " + this.arcFile.getAbsolutePath());
     }
