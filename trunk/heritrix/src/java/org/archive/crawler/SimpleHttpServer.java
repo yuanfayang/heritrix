@@ -120,7 +120,8 @@ public class SimpleHttpServer
                 // If we've just mounted the root webapp, make it the root.
                 this.server.setRootWebApp(name);
             }
-            c.setExtractWAR(false);
+            // Selftest depends on finding the extracted WARs. TODO: Fix.
+            c.setExtractWAR(true);
             this.contexts.add(c);
         }
 
