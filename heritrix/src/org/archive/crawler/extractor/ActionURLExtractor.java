@@ -9,7 +9,6 @@ package org.archive.crawler.extractor;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.archive.util.IATagParser;
 
 import com.anotherbigidea.flash.writers.ActionWriter;
 

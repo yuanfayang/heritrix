@@ -2,23 +2,14 @@
  * Created on Jul 9, 2003
  *
  */
-package org.archive.util;
+package org.archive.crawler.extractor;
 
-import com.anotherbigidea.flash.interfaces.SWFTags;
-import com.anotherbigidea.flash.interfaces.*;
-
-import java.io.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Vector;
 
-import org.archive.crawler.extractor.*;
-//import java.util.zip.*;
-//import com.anotherbigidea.io.*;
-//import com.anotherbigidea.flash.*;
-//import com.anotherbigidea.flash.structs.*;
-//import org.archive.util.ActionURLExtractor;
-//import com.anotherbigidea.flash.interfaces.*;
-
+import com.anotherbigidea.flash.interfaces.SWFActions;
+import com.anotherbigidea.flash.interfaces.SWFTags;
 import com.anotherbigidea.flash.writers.TagWriter;
 
 /**
