@@ -14,9 +14,7 @@
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.settings.*" %>
-<%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.util.TextUtils" %>
-<%@ page import="java.io.File" %>
 <%@ page import="java.io.FileReader" %>
 <%@ page import="java.io.FileWriter" %>
 <%@ page import="java.io.BufferedReader" %>
@@ -26,9 +24,6 @@
 <%@ page import="javax.management.MBeanInfo"%>
 <%@ page import="javax.management.Attribute"%>
 <%@ page import="javax.management.MBeanAttributeInfo"%>
-<%@ page import="javax.management.AttributeNotFoundException"%>
-<%@ page import="javax.management.MBeanException"%>
-<%@ page import="javax.management.ReflectionException"%>
 
 <%!
 	/**
@@ -72,69 +67,72 @@
             } else {
 	            Object currentAttribute = null;
 				ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
-				try {
-					currentAttribute = mbean.getAttribute(att.getName());
-				} catch (Exception e1) {
-					String error = e1.toString() + " " + e1.getMessage();
-					return error;
-				}
 
-				if(currentAttribute instanceof ComplexType) {
-			    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",lists));
-				}
-				else if(currentAttribute instanceof ListType){
-					// Some type of list.
-					ListType list = (ListType)currentAttribute;
-					p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-					p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-					p.append(TextUtils.escapeForJavascript(att.getDescription()));
-					p.append("')\">?</a>&nbsp;</td>\n");
-					p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
-					p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
-					for(int i=0 ; i<list.size() ; i++){
-						p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
+                if(att.isTransient()==false){
+					try {
+						currentAttribute = mbean.getAttribute(att.getName());
+					} catch (Exception e1) {
+						String error = e1.toString() + " " + e1.getMessage();
+						return error;
 					}
-					p.append("</select></td>\n");
-					p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-					p.append("<tr><td><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
-					p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-					p.append("</table></td></tr>\n");
-
-					lists.append("'"+mbean.getAbsoluteName() + "/" + att.getName()+"',");
-				}
-				else{
-					Object[] legalValues = att.getLegalValues();
-					
-					p.append("<tr><td>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-					p.append("<td ><a class='help' href=\"javascript:doPop('");
-					p.append(TextUtils.escapeForJavascript(att.getDescription()));
-					p.append("')\">?</a>&nbsp;</td><td>\n");
-					
-					if(legalValues != null && legalValues.length > 0){
-						//Have legal values. Build combobox.
-						p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
-						for(int i=0 ; i < legalValues.length ; i++){
-							p.append("<option value='"+legalValues[i]+"'");
-							if(currentAttribute.equals(legalValues[i])){
-								p.append(" selected");
-							}
-							p.append(">"+legalValues[i]+"</option>\n");
+	
+					if(currentAttribute instanceof ComplexType) {
+				    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",lists));
+					}
+					else if(currentAttribute instanceof ListType){
+						// Some type of list.
+						ListType list = (ListType)currentAttribute;
+						p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
+						p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
+						p.append(TextUtils.escapeForJavascript(att.getDescription()));
+						p.append("')\">?</a>&nbsp;</td>\n");
+						p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
+						p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
+						for(int i=0 ; i<list.size() ; i++){
+							p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
 						}
-						p.append("</select>\n");
-					}
-					else if(currentAttribute instanceof Boolean){
-						// Boolean value
-						p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
-						p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
-						p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
-						p.append("</select>\n");
+						p.append("</select></td>\n");
+						p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
+						p.append("<tr><td><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
+						p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
+						p.append("</table></td></tr>\n");
+	
+						lists.append("'"+mbean.getAbsoluteName() + "/" + att.getName()+"',");
 					}
 					else{
-						//Input box
-						p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px'>\n");
+						Object[] legalValues = att.getLegalValues();
+						
+						p.append("<tr><td>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
+						p.append("<td ><a class='help' href=\"javascript:doPop('");
+						p.append(TextUtils.escapeForJavascript(att.getDescription()));
+						p.append("')\">?</a>&nbsp;</td><td>\n");
+						
+						if(legalValues != null && legalValues.length > 0){
+							//Have legal values. Build combobox.
+							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
+							for(int i=0 ; i < legalValues.length ; i++){
+								p.append("<option value='"+legalValues[i]+"'");
+								if(currentAttribute.equals(legalValues[i])){
+									p.append(" selected");
+								}
+								p.append(">"+legalValues[i]+"</option>\n");
+							}
+							p.append("</select>\n");
+						}
+						else if(currentAttribute instanceof Boolean){
+							// Boolean value
+							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
+							p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
+							p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
+							p.append("</select>\n");
+						}
+						else{
+							//Input box
+							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px'>\n");
+						}
+						
+						p.append("</td></tr>\n");
 					}
-					
-					p.append("</td></tr>\n");
 				}
 		    }
 		}
