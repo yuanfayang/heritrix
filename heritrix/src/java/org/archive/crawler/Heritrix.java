@@ -26,6 +26,7 @@
 package org.archive.crawler;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -73,7 +74,7 @@ public class Heritrix {
      */
     protected static Logger logger
         = Logger.getLogger("org.archive.crawler.Heritrix");
-    
+            
     /**
      * Heritrix properties.
      * 
@@ -81,7 +82,6 @@ public class Heritrix {
      */
     protected static Properties properties = null;
     
-        
     /**
      * Logging handler.
      *
@@ -89,6 +89,15 @@ public class Heritrix {
      */
     protected static CrawlJobHandler jobHandler;
 
+    /**
+     * Heritirx start log file.
+     * 
+     * This files contains standard out produces by this main class.
+     * Soley used by heritris.sh shell script.
+     */
+	private static final String STARTLOG = "start.log";
+	
+	private static FileOutputStream startLog = null;
 
     /**
      * Launch program
@@ -106,7 +115,7 @@ public class Heritrix {
         String admin = "admin:letmein";
         String user = "user:archive";
         // 0 = no crawl order specified, 1 = start, 2 = wait, 3 = set as default.
-        int crawllaunch = -1; 
+        int crawllaunch = -1;
         
         if(args.length > 7){
             // Too many arguments. Display usage
@@ -316,18 +325,18 @@ public class Heritrix {
             //controller.initialize(order);
             //controller.startCrawl();
             // catch all configuration exceptions, which at this level are fatal
-        }catch(InitializationException e){
-            System.out.println("Fatal configuration exception: " + 
-                    e.toString());
+        } catch (InitializationException e){
+            print("Fatal configuration exception: " + 
+                    e.toString() + "\n");
             return; 
         } catch (InvalidAttributeValueException e) {
-            System.out.println("Fatal configuration exception: " + 
-                    e.toString());
+            print("Fatal configuration exception: " + 
+                    e.toString() + "\n");
             return; 
         }
-        System.out.println("Heritrix " + getVersion() + " is running.");
-        System.out.println("\tNo web UI");
-        System.out.println("\tCrawling " + crawlOrderFile);
+        print("Heritrix " + getVersion() + " is running.\n");
+        print("\tNo web UI\n");
+        print("\tCrawling " + crawlOrderFile + "\n");
     }
     
     /**
@@ -388,25 +397,23 @@ public class Heritrix {
             SimpleHttpServer server = new SimpleHttpServer(port);
             server.startServer();
         } catch (Exception e) {
-            System.out.println("Fatal IO error: " + e.getMessage());
+            print("Fatal IO error: " + e.getMessage() + "\n");
             return;
         }
-        System.out.println("Heritrix is running");
-        System.out.println(" Web UI on port " + port);
+        print("Heritrix is running\n");
+        print(" Web UI on port " + port + "\n");
         try {
             InetAddress addr = InetAddress.getLocalHost();
 
-            // Get IP Address
-            byte[] ipAddr = addr.getAddress();
-
             // Get hostname
             String hostname = addr.getHostName();
-            System.out.println(" http://" + hostname + ":" + port + "/admin");
+            print(" http://" + hostname + ":" + port + "/admin\n");
         } catch (UnknownHostException e) {
+            e.printStackTrace();
         }
-        System.out.println(
-            " operator login/password = " + adminUN + "/" + adminPW);
-        System.out.println(status);
+            print(
+               " operator login/password = " + adminUN + "/" + adminPW + "\n");
+            print(status + "\n");
     }
 
     /**
@@ -431,33 +438,34 @@ public class Heritrix {
      *</pre>
      */
     protected static void usage() {
-        System.out.println("Heritrix version " + getVersion());
-        System.out.print("Usage: java org.archive.crawler.Heritrix");
-        System.out.println(" --help|-h");
-        System.out.print("Usage: java org.archive.crawler.Heritrix");
-        System.out.println(" --no-wui ORDER.XML");
-        System.out.print("Usage: java org.archive.crawler.Heritrix");
-        System.out.println(" [--port=PORT] \\");
-        System.out.println("\t\t\t[--admin username:password] [--user username:password] \\");
-		System.out.println("\t\t\t[ORDER.XML [--start|--wait|--set]]");
-        System.out.println("Options:");
-        System.out.println("  --help|-h\tPrints this message.");
-        System.out.print("  --no-wui\t");
-        System.out.println("Start crawler without a web User Interface.");
-		System.out.print("  --admin\t");
-		System.out.println("Set the username and password for the WUI administrator.");
-		System.out.print("  --user\t");
-		System.out.println("Set the username and password for the WUI lesser access.");
-        System.out.print("  ORDER.XML\t");
-        System.out.print("The crawl to launch. Optional if '--no-wui'");
-        System.out.println(" NOT specified.");
-        System.out.print("  --start\t");
-        System.out.println("Start crawling using specified ORDER.XML:");
-        System.out.print("  --wait\t");
-        System.out.print("Load job specified by ORDER.XML but do not start.");
-        System.out.println(" Default.");
-        System.out.print("  --set\t\t");
-        System.out.println("Set specified ORDER.XML as the default.");
+        print("Heritrix version " + getVersion() + "\n");
+        print("Usage: java org.archive.crawler.Heritrix");
+        print(" --help|-h\n");
+        print("Usage: java org.archive.crawler.Heritrix");
+        print(" --no-wui ORDER.XML\n");
+        print("Usage: java org.archive.crawler.Heritrix");
+        print(" [--port=PORT] \\\n");
+        print("\t\t\t[--admin username:password] [--user username:password]" +
+        	"\\\n");
+		print("\t\t\t[ORDER.XML [--start|--wait|--set]]\n");
+        print("Options:\n");
+        print("  --help|-h\tPrints this message.\n");
+        print("  --no-wui\t");
+        print("Start crawler without a web User Interface.\n");
+		print("  --admin\t");
+		print("Set the username and password for the WUI administrator.\n");
+		print("  --user\t");
+		print("Set the username and password for the WUI lesser access.\n");
+        print("  ORDER.XML\t\n");
+        print("The crawl to launch. Optional if '--no-wui'");
+        print(" NOT specified.\n");
+        print("  --start\t");
+        print("Start crawling using specified ORDER.XML:\n");
+        print("  --wait\t");
+        print("Load job specified by ORDER.XML but do not start.");
+        print(" Default.\n");
+        print("  --set\t\t");
+        print("Set specified ORDER.XML as the default.\n");
     }
 
     /**
@@ -504,7 +512,24 @@ public class Heritrix {
         	}
         }
     }   
-    
+
+	/**
+	 * Prints a string to both standard output and start.log file.
+	 * 
+	 * @param string
+	 */
+	public static void print (String string){
+		try {
+			if (startLog == null) {
+				startLog = new FileOutputStream(new File(STARTLOG));
+			}
+			System.out.print(string);
+			startLog.write(string.getBytes());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
     /**
      * Get the job handler
      * 
