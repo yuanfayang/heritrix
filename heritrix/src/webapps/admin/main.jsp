@@ -193,7 +193,7 @@
 				if(handler.isCrawling())
 				{
 					long begin = stats.successfullyFetchedCount();
-					long end = stats.queuedUriCount() + stats.successfullyFetchedCount();
+					long end = stats.queuedUriCount() + stats.activeThreadCount() + stats.successfullyFetchedCount();
 					if(end < 1)
 						end = 1; 
 					int ratio = (int) (100 * begin / end);
