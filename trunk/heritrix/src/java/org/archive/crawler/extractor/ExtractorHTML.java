@@ -158,9 +158,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         while (attr.find()) {
             int valueGroup =
-                (attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
-            CharSequence value =
-                cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
+                (attr.start(12) > -1) ? 12 : (attr.start(13) > -1) ? 13 : 14;
+            int start = attr.start(valueGroup);
+            int end = attr.end(valueGroup);
+            assert start >= 0: "Start is: " + start + ", " + curi;
+            assert end >= 0: "End is :" + end + ", " + curi;
+            CharSequence value = cs.subSequence(start, end);
             if (attr.start(2) > -1) {
                 // HREF
                 if(element.toString().equalsIgnoreCase(LINK)) {
@@ -281,7 +284,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         //code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
         code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
         
-        numberOfLinksExtracted +=
+        this.numberOfLinksExtracted +=
             ExtractorJS.considerStrings(curi, code, false);
     }
 
@@ -297,30 +300,22 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         //if(link.matches("(?i)^javascript:.*")) {
         if(TextUtils.matches(JAVASCRIPT, link)) {
-            processScriptCode(curi,value.subSequence(11,value.length()));
+            processScriptCode(curi,value.subSequence(11, value.length()));
         } else {
             logger.finest("link: "+link+ " from "+curi);
-            numberOfLinksExtracted++;
+            this.numberOfLinksExtracted++;
             curi.addLinkToCollection(link, A_HTML_LINKS);
         }
     }
 
-
-
-    /**
-     * @param curi
-     * @param value
-     */
     protected void processEmbed(CrawlURI curi, CharSequence value) {
         //String embed = value.toString();
         //embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         logger.finest("embed: "+embed+ " from "+curi);
-        numberOfLinksExtracted++;
+        this.numberOfLinksExtracted++;
         curi.addLinkToCollection(embed, A_HTML_EMBEDS);
     }
-
-
 
     public void innerProcess(CrawlURI curi) {
 
@@ -359,9 +354,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 // comment match
                 // for now do nothing
             } else if (tags.start(7) > 0) {
-            // <meta> match
+                // <meta> match
+                int start = tags.start(5);
+                int end = tags.end(5);
+                assert start >= 0: "Start is: " + start + ", " + curi;
+                assert end >= 0: "End is :" + end + ", " + curi;
                 if (processMeta(curi,
-                      cs.subSequence(tags.start(5), tags.end(5)))) {
+                    cs.subSequence(start, end))) {
                           
                     // meta tag included NOFOLLOW; abort processing
                     TextUtils.freeMatcher(tags);
@@ -369,23 +368,39 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 }
             } else if (tags.start(5) > 0) {
                 // generic <whatever> match
+                int start5 = tags.start(5);
+                int end5 = tags.end(5);
+                assert start5 >= 0: "Start is: " + start5 + ", " + curi;
+                assert end5 >= 0: "End is :" + end5 + ", " + curi;
+                int start6 = tags.start(6);
+                int end6 = tags.end(6);
+                assert start6 >= 0: "Start is: " + start6 + ", " + curi;
+                assert end6 >= 0: "End is :" + end6 + ", " + curi;               
                 processGeneralTag(curi,
-                    cs.subSequence(tags.start(6),tags.end(6)),
-                    cs.subSequence(tags.start(5),tags.end(5)));
+                    cs.subSequence(start6, end6),
+                    cs.subSequence(start5, end5));
                     
             } else if (tags.start(1) > 0) {
                 // <script> match
-                processScript(
-                    curi,
-                    cs.subSequence(tags.start(1), tags.end(1)),
-                    tags.end(2) - tags.start(1));
+                int start = tags.start(1);
+                int end = tags.end(1);
+                assert start >= 0: "Start is: " + start + ", " + curi;
+                assert end >= 0: "End is :" + end + ", " + curi;
+                assert tags.end(2) >= 0: "Tags.end(2) illegal " + tags.end(2) +
+                    ", " + curi;
+                processScript(curi, cs.subSequence(start, end),
+                    tags.end(2) - start);
                     
             } else if (tags.start(3) > 0){
                 // <style... match
-                processStyle(curi,
-                    cs.subSequence(tags.start(3), tags.end(3)),
-                    tags.end(4) - tags.start(3));
-
+                int start = tags.start(3);
+                int end = tags.end(3);
+                assert start >= 0: "Start is: " + start + ", " + curi;
+                assert end >= 0: "End is :" + end + ", " + curi;
+                assert tags.end(4) >= 0: "Tags.end(4) illegal " + tags.end(4) +
+                    ", " + curi;
+                processStyle(curi, cs.subSequence(start, end),
+                    tags.end(4) - start);
             }
         }
 
@@ -404,7 +419,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             }
         }
     }
-
 
     static final String NON_HTML_PATH_EXTENSION =
         "(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
@@ -504,7 +518,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
     
         // then, parse for URIs
-        numberOfLinksExtracted += ExtractorCSS.processStyleCode(
+        this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
             curi, sequence.subSequence(endOfOpenTag,sequence.length()));
     }
 
@@ -515,8 +529,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML\n");
         ret.append("  Function:          Link extraction on HTML documents\n");
-        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
-        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        ret.append("  CrawlURIs handled: " + this.numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + this.numberOfLinksExtracted +
+            "\n\n");
 
         return ret.toString();
     }
