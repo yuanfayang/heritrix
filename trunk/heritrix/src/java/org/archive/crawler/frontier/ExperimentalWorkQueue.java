@@ -41,21 +41,24 @@ import org.archive.util.ArchiveUtils;
  * Simplified version of URIWorkQueue/KeyedQueue, leaving
  * queue 'state' up to the enclosing/using Frontier.
  *
+ * CURRENT STATUS: Enclosing ExperimentalFrontier is not yet 
+ * even minimally functional. Work on hold pending other experiments. 
+ * 
  * @author gojomo
  * @version $Date$ $Revision$
  */
-public class NewWorkQueue implements Serializable  {
+public class ExperimentalWorkQueue implements Serializable  {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(NewWorkQueue.class,1);
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(ExperimentalWorkQueue.class,1);
     
     /** Associated CrawlServer instance, held to keep CrawlServer from being cache-flushed */
     CrawlServer crawlServer;
     
-    /** ms time to wake, if snoozed */
-    long wakeTime;
     /** common string 'key' of included items (typically hostname)  */
     String classKey;
-
+    /** whether queue is eligible to accept items */
+    boolean valid = false;
+    
     TieredQueue innerQ;
 
     // useful for reporting
@@ -71,7 +74,7 @@ public class NewWorkQueue implements Serializable  {
      * @param maxMemLoad Maximum number of items to keep in memory
      * @throws IOException When it fails to create disk based data structures.
      */
-    public NewWorkQueue(String key, CrawlServer server, File scratchDir, int maxMemLoad)
+    public ExperimentalWorkQueue(String key, CrawlServer server, File scratchDir, int maxMemLoad)
             throws IOException {
         super();
         this.classKey = key;
@@ -94,34 +97,7 @@ public class NewWorkQueue implements Serializable  {
         return this.classKey;
     }
 
-//
-// SCHEDULING SUPPORT
-//
-    /**
-     * @return Time to wake, when snoozed
-     */
-    public long getWakeTime() {
-        return this.wakeTime;
-    }
 
-    /**
-     * Should take care not to mutate this value while
-     * queue is inside a sorted queue.
-     * 
-     * @param w time to wake, when snoozed
-     */
-    public void setWakeTime(long w) {
-        this.wakeTime = w;
-    }
-
-    /**
-     * To ensure total and consistent ordering when
-     * in scheduled order, a fallback sort criterion
-     * @return Fallback sort.
-     */
-    public String getSortFallback() {
-        return this.classKey.toString();
-    }
 
     /**
      * The only equals() that matters for KeyedQueues is
@@ -235,5 +211,26 @@ public class NewWorkQueue implements Serializable  {
      */
     public void unpeek() {
         innerQ.unpeek();
+    }
+
+    /**
+     * @return
+     */
+    public boolean acquireLock() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    /**
+     * @return Returns the valid.
+     */
+    public boolean isValid() {
+        return valid;
+    }
+    /**
+     * @param valid The valid to set.
+     */
+    public void setValid(boolean valid) {
+        this.valid = valid;
     }
 }
