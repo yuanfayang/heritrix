@@ -13,6 +13,9 @@ import java.util.logging.Logger;
 
 
 /**
+ * 
+ * CURRENTLY UNUSED
+ * 
  * Interrupts threads at the requested time. Useful
  * for aborting hung network IO. 
  * 
