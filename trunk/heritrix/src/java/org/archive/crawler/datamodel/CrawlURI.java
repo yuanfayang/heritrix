@@ -548,9 +548,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
 
-    /** Get the size in bytes of this URI's content.  This may be set
-     *  at any time by any class and therefor should not be trusted.  Primarily
-     *  it exists to ease the calculation of statistics.
+    /** Get the size in bytes of this URI's content.
+     * This may be set at any time by any class and therefore should not be
+     * trusted. Primarily it exists to ease the calculation of statistics.
      * @return contentSize
      */
     public long getContentSize(){
@@ -697,11 +697,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /**
-     * For completed HTTP transactions, the length of the content-body
-     * (as given by the header or calculated)
+     * For completed HTTP transactions, the length of the content-body.
      *
-     * @return The length of the content-body (as given by the header or
-     * calculated).
+     * @return For completed HTTP transactions, the length of the content-body.
      */
     public long getContentLength() {
         if (this.contentLength < 0) {
@@ -711,7 +709,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /**
-     * @param l
+     * @param l Content size.
      */
     public void setContentSize(long l) {
         contentSize = l;

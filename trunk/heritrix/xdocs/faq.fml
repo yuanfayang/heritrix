@@ -92,15 +92,16 @@
       look at document mimetypes, you can Add a 
       <code>ContentTypeRegExpFilter</code>  filter
       as a <code>midfetch</code> filter to the http fetcher.
-      You'll get into trouble if you rule out robots.txt.  Make sure
-      you include text/plain.
       This filter will be checked after the response headers
       have been downloaded but before the response content
       is fetched.  Configure it to only allow through documents of the
       Content-Type desired.  Apply the same filter at the
       writer stage of processing to eliminate recording of
       response headers in ARCs.  See the
-      <a href="articles/user_manaul.html#midfetch">User Manual</a>.</answer>
+      <a href="articles/user_manaul.html#midfetch">User Manual</a>
+      (Prerequisite URLs by-pass the midfetch filters so it is not possible
+      to filter out robots.txt using this mechanism).
+      </answer>
     </faq>
 
     <faq id="crawllogstatuscodes">
