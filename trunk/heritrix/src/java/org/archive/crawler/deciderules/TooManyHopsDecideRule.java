@@ -53,7 +53,7 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
                 " depth for which this filter will match", DEFAULT_MAX_HOPS));
         // make default REJECT (replacing entry from superclass)
         addElementToDefinition(new SimpleType(ATTR_DECISION,
-                "Decision to be applied", ACCEPT, ALLOWED_TYPES));
+                "Decision to be applied", REJECT, ALLOWED_TYPES));
     }
 
     /**
