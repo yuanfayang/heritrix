@@ -51,7 +51,7 @@ public class ARCWriterPool {
     /**
      * Default maximum active number of ARCWriters in the pool.
      */
-    public static final int DEFAULT_MAX_ACTIVE = 3;
+    public static final int DEFAULT_MAX_ACTIVE = 5;
 
     /**
      * Maximum time to wait on a free ARCWriter.
