@@ -222,7 +222,7 @@ public class UURI extends URI {
         if (uri == null) {
             throw new NullPointerException();
         } else if (uri.length() <= 0){
-            throw new URIException();
+            throw new URIException("URI length is zero.");
         }
 
         // Replace nbsp with normal spaces (so that they get stripped if at
