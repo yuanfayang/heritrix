@@ -41,6 +41,7 @@ import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecordMetaData;
+import org.archive.io.arc.ARCWriter;
 import org.archive.util.FileUtils;
 
 import junit.framework.TestCase;
@@ -205,12 +206,9 @@ public class SelfTestCase extends TestCase
         String diskPath = (String)crawlOrder.
             getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         if (diskPath != null && diskPath.length() > 0 &&
-            diskPath.startsWith(File.separator))
-        {
+            diskPath.startsWith(File.separator)) {
             SelfTestCase.logsDir = new File(diskPath);
-        }
-        else
-        {
+        } else {
             SelfTestCase.logsDir =
                 (diskPath != null && diskPath.length() > 0)?
                     new File(jobDir, diskPath): jobDir;
@@ -224,25 +222,27 @@ public class SelfTestCase extends TestCase
             getAttribute(ARCWriterProcessor.ATTR_PATH);
         File arcDir = null;
         if (arcDirStr != null && arcDirStr.length() > 0 &&
-                arcDirStr.startsWith(File.separator))
-        {
+                arcDirStr.startsWith(File.separator)) {
             arcDir = new File(arcDirStr);
-        }
-        else
-        {
+        } else {
             arcDir = (arcDirStr != null && arcDirStr.length() > 0)?
                 new File(SelfTestCase.logsDir, arcDirStr): SelfTestCase.logsDir;
         }
         testNonNullExists(arcDir);
         String prefix = testNonNullNonEmpty((String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PREFIX));
-        File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
-        if (arcs.length != 1)
-        {
-            throw new IOException("Expected one only arc file.  Found" +
-                " instead " + Integer.toString(arcs.length) + " files.");
+        for (int i = 0; i < 10; i++) {
+            File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
+            if (arcs.length != 1) {
+                throw new IOException("Expected one only arc file.  Found" +
+                    " instead " + Integer.toString(arcs.length) + " files.");
+            }
+            SelfTestCase.arcFile = arcs[0];
+            if (!arcFile.getName().endsWith(ARCWriter.OCCUPIED_SUFFIX)) {
+                // The arc has been renamed.  Its safe to leave this loop.
+                break;
+            }
         }
-        SelfTestCase.arcFile = arcs[0];
         SelfTestCase.readReader = ARCReaderFactory.get(arcFile);
         SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
 

@@ -196,7 +196,7 @@ public class ARCWriter implements ARCConstants {
     /**
      * Suffix given to files currently being written by Heritrix.
      */
-    private static final String OCCUPIED_SUFFIX = ".open";
+    public static final String OCCUPIED_SUFFIX = ".open";
 
     /**
      * Constructor.
