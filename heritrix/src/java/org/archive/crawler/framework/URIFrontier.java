@@ -36,7 +36,7 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
 /**
  * An interface for URI Frontiers.
  * 
- * <p>A URI Frontier is a plug-able module in Heritrix that maintains the 
+ * <p>A URI Frontier is a pluggable module in Heritrix that maintains the 
  * internal state of the crawl. This includes (but is not limited to):
  * <ul>
  *     <li>What URIs have been discovered
@@ -90,17 +90,17 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  * 
  * <p>All URI Frontiers inherit from 
  * {@link org.archive.crawler.datamodel.settings.ModuleType ModuleType}
- * and therefor creating settings follows the usual pattern of plug-able modules
+ * and therefore creating settings follows the usual pattern of pluggable modules
  * in Heritrix.  
  * 
  * @author Gordon Mohr
  * @author Kristinn Sigurdsson
  * 
  * @see org.archive.crawler.framework.CrawlController
- * @see org.archive.crawler.framework.CrawlController#throwCrawledURIDisregardEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlController#throwCrawledURIFailureEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlController#throwCrawledURINeedRetryEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlController#throwCrawledURISuccessfulEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURIDisregardEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURIFailureEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURINeedRetryEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURISuccessfulEvent(CrawlURI)
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.ToeThread
  * @see org.archive.crawler.framework.URIFrontierHostStatistics
