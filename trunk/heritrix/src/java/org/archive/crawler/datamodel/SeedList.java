@@ -56,7 +56,7 @@ public class SeedList extends AbstractList {
      * Regexp for identifying URIs in seed input data
      */
     static final Pattern DEFAULT_SEED_EXTRACTOR =
-        Pattern.compile("(?i:((https?://[a-zA-Z0-9-]+)|([a-zA-Z0-9-]+" +
+        Pattern.compile("(?i:((([a-z]+)://[a-zA-Z0-9-@]+)|([a-zA-Z0-9-]+" +
             "\\.[a-zA-Z0-9-]+))(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
 
     /**
@@ -314,8 +314,9 @@ public class SeedList extends AbstractList {
                     Matcher m = this.seedExtractor.matcher(read);
                     while(m.find()) {
                         String candidate = m.group();
-                        if(m.group(2)==null) {
-                            // naked hostname without scheme
+                        // Group #3 has the scheme if any.
+                        if(m.group(3)==null) {
+                            // This is a naked hostname without a scheme
                             candidate = "http://" + candidate;
                         }
                         try {

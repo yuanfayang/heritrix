@@ -24,6 +24,7 @@ package org.archive.crawler.datamodel;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -88,8 +89,13 @@ public class SeedListTest extends TmpDirTestCase {
         SeedListTest.seeds = new TreeSet(SeedListTest.CMP);
         UURI [] tmp = {
             UURI.createUURI("http://www.google.com"),
-            UURI.createUURI("http://www.archive.org/"),
-            UURI.createUURI("http://www.duboce.net/")
+            UURI.createUURI("https://www.google.com"),
+            UURI.createUURI("gopher://www.google.com"),
+            UURI.createUURI("news://www.google.com"),
+            UURI.createUURI("rss://www.google.com"),
+            UURI.createUURI("telnet://www.google.com"),
+            UURI.createUURI("ftp://myname@example.com/etc/motd"),
+            UURI.createUURI("ftp://example.com/etc/motd2")
         };
         SeedListTest.seeds.addAll(Arrays.asList(tmp));
             
@@ -120,6 +126,26 @@ public class SeedListTest extends TmpDirTestCase {
     
     public void testCaching() throws URISyntaxException {
         coreTest(true);
+    }
+    
+    public void testNoScheme() throws IOException {
+        final String NOSCHEME = "x.y.z";
+        FileWriter fw = new FileWriter(this.seedsfile, true);
+        // Write to new (last) line the URL.
+        fw.write("\n");
+        fw.write(NOSCHEME);
+        fw.flush();
+        fw.close();
+        boolean found = false;
+        SeedList sl = new SeedList(this.seedsfile, SeedListTest.logger, false);
+        for (Iterator i = sl.iterator(); i.hasNext();) {
+            UURI uuri = (UURI)i.next();
+            if (uuri.getHost().equals(NOSCHEME)) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue("Did not find " + NOSCHEME, found);
     }
 
     public void coreTest(boolean caching) throws URISyntaxException {
