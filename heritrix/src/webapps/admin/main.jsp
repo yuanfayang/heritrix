@@ -179,7 +179,7 @@
 								</tr>
 								<tr>
 									<td>
-										<b>Total data written:</b>&nbsp;
+										<b>Total data received:</b>&nbsp;
 									</td>
 									<td>
 										<%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%>
