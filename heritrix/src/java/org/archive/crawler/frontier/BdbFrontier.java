@@ -380,7 +380,7 @@ implements Frontier,
     /**
      * Wake any queues sitting in the snoozed queue whose time has come
      */
-    private void wakeQueues() {
+    void wakeQueues() {
         long now = System.currentTimeMillis();
         synchronized (snoozedClassQueues) {
             while (true) {
