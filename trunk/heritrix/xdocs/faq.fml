@@ -74,6 +74,28 @@
       codes (-6, -7, -9998, etc.)?</question>
       <answer>See the <a href="http://crawler.archive.org/articles/user_manual.html#statuscodes">User Manual Glossary</a>.</answer>
     </faq>
+    <faq id="midfetch">
+      <question>I only want to download <code>text/html</code> and nothing else.  Can I do it?</question>
+      <answer>You can add filter that excludes all filters that end
+      in other than 'html|htm', etc., or, because you want to instead
+      look at document mimetypes, you can Add a 
+      <code>ContentTypeRegExpFilter</code>  filter
+      as a <code>midfetch</code> filter to the http fetcher.
+      This filter will be checked after the response headers
+      have been downloaded but before the response content
+      is fetched.  Configure it to only allow through documents of the
+      Content-Type desired.  Apply the same filter at the
+      writer stage of processing to eliminate recording of
+      response headers in ARCs.  See the
+      <a href="articles/user_manaul.html#midfetch">User Manual</a>.</answer>
+    </faq>
+
+    <faq id="crawllogstatuscodes">
+      <question>Where do I go to learn about these cryptic crawl.log status
+      codes (-6, -7, -9998, etc.)?</question>
+      <answer>See the <a href="http://crawler.archive.org/articles/user_manual.html#statuscodes">User Manual Glossary</a>.</answer>
+    </faq>
+
 
     <faq id="toomanyopenfiles">
       <question>Why do I get
