@@ -73,13 +73,13 @@ public class ServerCache {
     /**
      * @param curi CrawlURI we're to get server from.
      * @return CrawlServer
-     * @throws URIException
      */
-    public CrawlServer getServerFor(CrawlURI curi) throws URIException {
-        // TODO: evaluate if this is really necessary -- why not 
-        // make the server of a dns CrawlURI the looked-up domain,
-        // also simplifying FetchDNS?
-        String scheme = curi.getUURI().getScheme();
+    public CrawlServer getServerFor(CrawlURI curi) {
+        try {
+            // TODO: evaluate if this is really necessary -- why not 
+            // make the server of a dns CrawlURI the looked-up domain,
+            // also simplifying FetchDNS?
+            String scheme = curi.getUURI().getScheme();
 //        if (scheme.equals("dns")) {
 //            System.out.println("hold");
 //            // set crawlhost to default nameserver
@@ -95,25 +95,29 @@ public class ServerCache {
 //            }
 //        }
 
-        String hostOrAuthority = curi.getUURI().getAuthority();
-        if (hostOrAuthority == null) {
-            // fallback for cases where getAuthority() fails (eg dns:)
-            hostOrAuthority = curi.getUURI().getCurrentHierPath();
-            if(!hostOrAuthority.matches("[\\w\\.:]+")) {
-                // not just word chars and dots and colons; throw away
-                hostOrAuthority = null;
+            String hostOrAuthority = curi.getUURI().getAuthority();
+            if (hostOrAuthority == null) {
+                // fallback for cases where getAuthority() fails (eg dns:)
+                hostOrAuthority = curi.getUURI().getCurrentHierPath();
+                if(!hostOrAuthority.matches("[\\w\\.:]+")) {
+                    // not just word chars and dots and colons; throw away
+                    hostOrAuthority = null;
+                }
             }
-        }
-        if (hostOrAuthority != null && scheme.equals(UURIFactory.HTTPS)) {
-            // If https and no port specified, add default https port to
-            // distinuish https from http server without a port.
-            if (!hostOrAuthority.matches(".+:[0-9]+")) {
-                hostOrAuthority += ":" + UURIFactory.HTTPS_PORT;
+            if (hostOrAuthority != null && scheme.equals(UURIFactory.HTTPS)) {
+                // If https and no port specified, add default https port to
+                // distinuish https from http server without a port.
+                if (!hostOrAuthority.matches(".+:[0-9]+")) {
+                    hostOrAuthority += ":" + UURIFactory.HTTPS_PORT;
+                }
             }
+            // TODOSOMEDAY: make this robust against those rare cases
+            // where authority is not a hostname.
+            return (hostOrAuthority != null)? getServerFor(hostOrAuthority): null;
+        } catch (URIException e) {
+            e.printStackTrace();
+            return null;
         }
-        // TODOSOMEDAY: make this robust against those rare cases
-        // where authority is not a hostname.
-        return (hostOrAuthority != null)? getServerFor(hostOrAuthority): null;
     }
     
     public boolean containsServer(String serverKey) {
