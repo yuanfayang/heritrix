@@ -48,6 +48,7 @@ public class SimpleScheduler implements URIScheduler {
 				if(store.isEmpty()) {
 					// nothing left to crawl
 					logger.info("nothing left to crawl");
+					store.notify(); // spread the word
 					return null;
 				}
 				waitMax = store.earliestWakeTime()-now;
