@@ -7,9 +7,12 @@
 package org.archive.crawler.datamodel;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
 
 import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
 import st.ata.util.AList;
@@ -37,6 +40,7 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	private AList alist = new HashtableAList();
 	private UURI uuri; 
 	private Object state;
+	CrawlController controller;
 	Processor nextProcessor;
 	CrawlHost host;
 
@@ -236,7 +240,15 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 		if (!getAList().containsKey("html-base-href")) {
 			return getUURI().getUri();
 		}
-		baseUri = UURI.createUURI(getAList().getString("html-base-href"));
+		String base = getAList().getString("html-base-href");
+		try {
+			baseUri = UURI.createUURI(base);
+		} catch (URISyntaxException e) {
+			Object[] array = { this, base };
+			controller.uriErrors.log(Level.INFO,e.getMessage(), array );
+			// next best thing: use self
+			baseUri = getUURI();
+		}
 		return getBaseUri();
 	}
 	
@@ -267,6 +279,13 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	 */
 	public int getThreadNumber() {
 		return threadNumber;
+	}
+
+	/**
+	 * @param controller
+	 */
+	public void setController(CrawlController c) {
+		controller = c;
 	}
 	
 /*	public boolean isFubared(){

@@ -8,6 +8,7 @@ package org.archive.crawler.datamodel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,7 +70,12 @@ public class CrawlerBehavior extends XMLConfig {
 					reader.close();
 					reader = null;
 				} else {
-					seeds.add( UURI.createUURI(read) );
+					try {
+						seeds.add( UURI.createUURI(read) );
+					} catch (URISyntaxException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 		} catch (IOException e) {
