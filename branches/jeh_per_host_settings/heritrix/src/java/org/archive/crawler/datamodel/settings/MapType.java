@@ -76,7 +76,7 @@ public class MapType extends ComplexType {
      * @return true if attribute was moved, false if attribute was already
      *              at the top.
      */
-    public boolean moveElementUp(CrawlerSettings settings, String name) {
+    public boolean moveElementUp(CrawlerSettings settings, String name) throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).moveElementUp(name);
     }
@@ -87,7 +87,7 @@ public class MapType extends ComplexType {
      * @return true if attribute was moved, false if attribute was already
      *              at bottom.
      */
-    public boolean moveElementDown(CrawlerSettings settings, String name) {
+    public boolean moveElementDown(CrawlerSettings settings, String name) throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).moveElementDown(name);
     }
