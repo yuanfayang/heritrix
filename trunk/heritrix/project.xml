@@ -19,8 +19,6 @@
     or ant only.
 
     TODO: http://maven.apache.org/reference/plugins/statcvs/
-    TODO: Make a war file.
-    TODO: http://maven.apache.org/reference/plugins/docbook/
 
     Maven generates documentation using xdoc.  Xdoc is a dumbed down html
     written as xml.   There is no dtd so no validation.  The best description
