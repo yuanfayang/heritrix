@@ -52,9 +52,13 @@ public class SimplePreselector extends Processor implements FetchStatusCodes {
 	 */
 	protected void innerRejectProcess(CrawlURI curi) {
 		super.innerRejectProcess(curi);
-		// filter-rejection means out-of-scope
-		curi.setFetchStatus(S_OUT_OF_SCOPE);
-		curi.cancelFurtherProcessing();
+		// filter-rejection means out-of-scope for everything but embeds
+		if (curi.getEmbedHopCount() < 1) {
+			curi.setFetchStatus(S_OUT_OF_SCOPE);
+			curi.cancelFurtherProcessing();
+		} else {
+			// never mind; scope filters don't apply
+		}
 	}
 	
 	/* (non-Javadoc)
