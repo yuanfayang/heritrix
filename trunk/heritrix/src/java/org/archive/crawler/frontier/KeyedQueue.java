@@ -32,12 +32,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CompositeIterator;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
-import org.archive.util.QueueItemMatcher;
 
 /**
  * Ordered collection of work items with the same "classKey". 
@@ -413,15 +413,15 @@ public class KeyedQueue implements Serializable  {
     /** 
      * Delete items matching the supplied criterion. 
      * 
-     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
-    public long deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(Predicate matcher) {
         // Delete from inner queue
         long numberOfDeletes = this.innerQ.deleteMatchedItems(matcher);
         // Then delete from inner stack
         Iterator it = this.innerStack.iterator();
         while(it.hasNext()){
-            if(matcher.match(it.next())){
+            if(matcher.evaluate(it.next())){
                 it.remove();
                 numberOfDeletes++;
             }

@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
@@ -70,7 +71,6 @@ import org.archive.util.MemLongFPSet;
 import org.archive.util.MemQueue;
 import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
-import org.archive.util.QueueItemMatcher;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -1399,7 +1399,7 @@ public class Frontier
     public long deleteURIs(String match) {
         long numberOfDeletes = 0;
         // Create QueueItemMatcher
-        QueueItemMatcher mat = new URIQueueMatcher(match, true, this);
+        Predicate mat = new URIQueueMatcher(match, true, this);
         // Delete from all KeyedQueues
         if(allClassQueuesMap.size()!=0)
         {
