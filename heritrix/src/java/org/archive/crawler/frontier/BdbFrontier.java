@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
-import org.apache.commons.collections.HashBag;
+import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -117,7 +117,11 @@ implements Frontier,
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_BUDGET_REPLENISH_AMOUNT = "budget-replenish-amount";
     protected final static Integer DEFAULT_BUDGET_REPLENISH_AMOUNT = new Integer(3000);
-    
+
+    /** cost assignment policy to use (by class name) */
+    public final static String ATTR_COST_POLICY = "cost-policy";
+    protected final static String DEFAULT_COST_POLICY = UnitCostAssignmentPolicy.class.getName();
+
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
 
@@ -159,7 +163,7 @@ implements Frontier,
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
 
-    private CostAssignmentPolicy costAssignmentPolicy = new UnitCostAssignmentPolicy();
+    private CostAssignmentPolicy costAssignmentPolicy;
     
     /**
      * Create the BdbFrontier
@@ -221,6 +225,16 @@ implements Frontier,
                 DEFAULT_BUDGET_REPLENISH_AMOUNT));
         t.setExpertSetting(true);
         t.setOverrideable(true);
+        
+
+        String[] availableCostPolicies = new String[] {
+                DEFAULT_COST_POLICY,
+                WagCostAssignmentPolicy.class.getName()};
+
+        addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
+                "Policy for calculating the cost of each URI attempted. " +
+                "The default UnitCostAssignmentPolicy considers the cost of " +
+                "each URI to be '1'.", DEFAULT_COST_POLICY, availableCostPolicies));
     }
 
     /**
@@ -260,6 +274,14 @@ implements Frontier,
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
         }
+        try {
+            costAssignmentPolicy = (CostAssignmentPolicy) Class.forName(
+                    (String) getUncheckedAttribute(null, ATTR_COST_POLICY))
+                    .newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
+        } 
         loadSeeds();
     }
     
