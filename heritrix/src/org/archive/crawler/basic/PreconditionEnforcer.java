@@ -69,13 +69,14 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 			return false; 
 		}
 		// require /robots.txt if not present
-		if (	curi.getServer().getRobotsExpires() < 0 // "cheap" test of default
+		if (curi.getServer().getRobotsExpires() < 0 // "cheap" test of default
 				|| curi.getServer().getRobotsExpires()<System.currentTimeMillis()
 			){
 			logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
 			curi.setPrerequisiteUri("/robots.txt");
-			curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
+			//curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
 			curi.incrementDeferrals();
+			curi.setFetchStatus(S_DEFERRED);
 			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
 		}
@@ -114,7 +115,8 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 
 			String hostname = curi.getServer().getHostname();
 			curi.setPrerequisiteUri("dns:" + hostname);
-			curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
+			//curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
+			curi.setFetchStatus(S_DEFERRED);
 			curi.incrementDeferrals();
 			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
