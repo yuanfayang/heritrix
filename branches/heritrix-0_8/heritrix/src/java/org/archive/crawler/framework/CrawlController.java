@@ -481,7 +481,8 @@ public class CrawlController extends Thread {
         // try to initialize each scope and frontier from the config file
         //scope.initialize(this);
         try {
-            frontier.initialize(this);
+            this.scope.initialize(this);
+            this.frontier.initialize(this);
             
             String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
             if(recoverPath.length()>0) {
@@ -1044,14 +1045,8 @@ public class CrawlController extends Thread {
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-        getScope().refreshSeedsIteratorCache();
-        Iterator iter = getScope().getSeedsIterator();
-        while (iter.hasNext()) {
-            UURI u = (UURI) iter.next();
-            CandidateURI caUri = new CandidateURI(u);
-            caUri.setSeed();
-            caUri.setSchedulingDirective(CandidateURI.HIGH);
-            frontier.schedule(caUri);
+        if (this.frontier instanceof Frontier) {
+            ((Frontier)this.frontier).loadSeeds();
         }
     }
 

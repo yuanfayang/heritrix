@@ -48,15 +48,15 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.datamodel.settings.ModuleType;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DiskBackedQueue;
@@ -259,15 +259,33 @@ public class Frontier
         loadSeeds();
     }
 
-    private synchronized void loadSeeds() {
-        controller.getScope().refreshSeedsIteratorCache();
-        Iterator iter = controller.getScope().getSeedsIterator();
-        while (iter.hasNext()) {
-            UURI u = (UURI) iter.next();
-            CandidateURI caUri = new CandidateURI(u);
-            caUri.setSeed();
-            caUri.setSchedulingDirective(CandidateURI.HIGH);
-            innerSchedule(caUri);
+    /**
+     * Load up the seeds.
+     * 
+     * This method is called on initialize and inside in the crawlcontroller
+     * when it wants to force reloading of configuration.
+     * 
+     * @see org.archive.crawler.framework.CrawlController#kickUpdate()
+     */
+    public void loadSeeds() {
+        // Get the seeds to refresh and then get an iterator inside a 
+        // synchronization block.  The seeds list may get updated during our
+        // iteration. This will throw a concurrentmodificationexception unless
+        // we synchronize.
+        //
+        // TODO:  THe calling the refreshSeeds method forces the reading of all 
+        // seeds into a cache.  This might not be always what is wanted, 
+        // particularly if broad crawl with millions of seeds.
+        this.controller.getScope().refreshSeeds();
+        List seeds = this.controller.getScope().getSeedlist();
+        synchronized(seeds) {
+            for (Iterator i = seeds.iterator(); i.hasNext();) {
+                UURI u = (UURI)i.next();
+                CandidateURI caUri = new CandidateURI(u);
+                caUri.setSeed();
+                caUri.setSchedulingDirective(CandidateURI.HIGH);
+                innerSchedule(caUri);
+            }
         }
     }
 
@@ -327,16 +345,23 @@ public class Frontier
      * @param caUri The CandidateURI to schedule
      */
     private void innerSchedule(CandidateURI caUri) {
-        if(!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
+        if(!caUri.forceFetch() && this.alreadyIncluded.contains(caUri)) {
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
         }
         
         if(caUri.isSeed() && caUri.getVia() != null 
                 && caUri.flattenVia().length()>0){
-            // The only way a seed can have a non empty via is if it is the 
-            // result of a seed redirect. Add it to the seeds list.
-            controller.getScope().addSeed(caUri.getUURI());
+            // The only way a seed can have a non-empty via is if it is the 
+            // result of a seed redirect.  Add it to the seeds list.
+            // 
+            // This is a feature.  This is handling for case where a seed 
+            // gets immediately redirected to another page.  What we're doing is
+            // treating the immediate redirect target as a seed.
+            List seeds = this.controller.getScope().getSeedlist();
+            synchronized(seeds) {
+                seeds.add(caUri.getUURI());
+            }
             // And it needs immediate scheduling.
             caUri.setSchedulingDirective(CandidateURI.HIGH);
         }
@@ -344,12 +369,12 @@ public class Frontier
         if(caUri.needsImmediateScheduling()) {
             enqueueHigh(CrawlURI.from(caUri));
         } else {
-            pendingQueue.enqueue(caUri);
+            this.pendingQueue.enqueue(caUri);
         }
-        alreadyIncluded.add(caUri);
-        queuedCount++;
+        this.alreadyIncluded.add(caUri);
+        this.queuedCount++;
         // Update recovery log.
-        controller.recover.info("\n"+F_ADD+caUri.getURIString());
+        this.controller.recover.info("\n"+F_ADD+caUri.getURIString());
     }
 
     /**
@@ -456,7 +481,7 @@ public class Frontier
         long until = now + timeout;
         
         while(now<until) {
-            // Keep trying till we hit timout.
+            // Keep trying till we hit timeout.
             CrawlURI curi = next();
             if(curi!=null) {
                 return curi;
@@ -786,7 +811,9 @@ public class Frontier
         if (state == KeyedQueue.READY ) {
             // has become ready
             readyClassQueues.add(kq);
-            notify(); // wake a waiting thread
+            synchronized (this) {
+                notify(); // wake a waiting thread
+            }
             return;
         } 
         // otherwise, no need to change whatever state it's in
