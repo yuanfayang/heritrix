@@ -12,6 +12,7 @@
 	 *          2 - Settings
      *          3 - Overrides
      *          4 - Credentials
+     *          5 - Refinements
 	 *
 	 * @author Kristinn Sigurdsson
 	 */
@@ -56,11 +57,16 @@
 						</td>
 						<td class="tab_seperator">
 						</td>
-						<td class="tab<%=jobtab==3?"_selected":""%>" nowrap>
-							<a href="javascript:doGoto('/admin/jobs/per/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==3?"_selected":""%>">Overrides</a>
-						</td>
-						<td class="tab_seperator">
-						</td>
+                        <td class="tab<%=jobtab==3?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('/admin/jobs/per/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==3?"_selected":""%>">Overrides</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
+                        <td class="tab<%=jobtab==5?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('/admin/jobs/refinements/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==5?"_selected":""%>">Refinements</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
 						<td class="tab">
 							<a href="javascript:doSubmit()" class="tab_text"><%=theJob.isNew()?"Submit job":"Finished"%></a>
 						</td>
