@@ -33,30 +33,34 @@ import org.archive.util.TextUtils;
 
 
 /**
- * Usable URI: A heritrix spin on {@link java.net.URI}.
+ * Usable URI.
  *
- * This class is an implementation of RFC2396 codifying our experience of
- * URIs out in the wild.  Often the below is a looser implementation of RFC2396
- * {@link java.net.URI}.  At other times it fixes quirky {@link java.net.URI}
- * behaviors.  We've made this class because {@link java.net.URI} is not
- * subclassable -- its final -- and its unlikely URI will change any time soon
- * (See Gordon's considered petition here:
+ * <p>Instances of this class always "normalize"/escape/fixup URIs, massaging
+ * URIs in ways that by RFC2396 spec. and in practice, do not change the URI's
+ * meaning nor function.
+ * 
+ *  <p>This class is the heritrix alternative to {@link java.net.URI}.
+ * {@link java.net.URI} is not subclassable -- its final -- and its unlikely 
+ * that java.net.URI quirky handling will change any time soon (See Gordon's
+ * considered petition here:
  * <a href="http://developer.java.sun.com/developer/bugParade/bugs/4939847.html">java.net.URI
  * should have loose/tolerant/compatibility option (or allow reuse)</a>).
- *
- * <p>Instances of this class are always normalized -- massaged in
- * ways that by spec and in practice, do not change the URI's meaning nor
- * function. The superclass {@link #normalize()} is only one part of this
- * process; URIs are also rehabilitated by patching in riskless or necessary ways 
- * to be legal (eg escaping spaces).  Other things done are the removal of any
- * '..' if its first thing in the path as per IE, removal of trailing
- * whitespace, conversion of backslash to forward slash, and discarding any
- * 'fragment'/anchor portion of the URI. This class will also fail URIs if they 
- * are longer than IE's allowed maximum length.
+ * 
+ * <p>This class subclasses {@link org.apache.commons.httpclient.URI}.  This
+ * superclass is responsible for most of the heavy-lifting interpreting
+ * and escaping URIs.
+ * 
+ * <p>The superclass {@link #normalize()} is only one part of this
+ * process; URIs are also rehabilitated by patching in riskless or necessary
+ * ways to be legal.  For example, spaces are escaped, it removes any
+ * '..' if first thing in the path as per IE,  converts backslashes to forward
+ * slashes, and discards any 'fragment'/anchor portion of the URI. This
+ * class will also fail URIs if they are longer than IE's allowed maximum length.
  *
  * <p>This class tries to cache calculated strings such as the extracted host
  * and this class as a string rather than have the parent class rerun its
  * calculation everytime.
+ * 
  *
  * <p>See <a href="http://sourceforge.net/tracker/?func=detail&aid=910120&group_id=73833&atid=539099">[ 910120 ]
  * java.net.URI#getHost fails when leading digit</a>,
@@ -144,7 +148,7 @@ public class UURI extends URI {
     public static final String HTTPS_PORT = ":443";
     public static final String DOT = ".";
     public static final String EMPTY_STRING = "";
-    public static final String NBSP = "\\xA0";
+    public static final String NBSP = "\u00A0";
     public static final String SPACE = " ";
     public static final String ESCAPED_SPACE = "%20";
     public static final String PIPE = "|";
@@ -238,7 +242,7 @@ public class UURI extends URI {
      * @throws org.apache.commons.httpclient.URIException
      */
     public UURI(String uri) throws URIException {
-        super(patchEscape(uri, null));
+        super(patch(uri, null));
         normalize();
     }
 
@@ -248,7 +252,7 @@ public class UURI extends URI {
      * @throws org.apache.commons.httpclient.URIException
      */
     public UURI(UURI base, String relative) throws URIException {
-        super(base, patchEscape(relative, base));
+        super(base, patch(relative, base));
         normalize();
     }
 
@@ -264,7 +268,7 @@ public class UURI extends URI {
      * @return An URI escaped string.
      * @throws URIException
      */
-    private static String patchEscape(String uri, URI base)
+    private static String patch(String uri, URI base)
             throws URIException {
         if (uri == null) {
             throw new NullPointerException();
@@ -272,7 +276,7 @@ public class UURI extends URI {
             throw new URIException("URI length is zero (and not relative).");
         }
         
-        // Get rid of any trailing spaces or new-lines.
+        // Get rid of any trailing spaces or new-lines. 
         uri = uri.trim();
 
         // Replace nbsp with normal spaces (so that they get stripped if at
@@ -364,7 +368,7 @@ public class UURI extends URI {
             uriAuthority = stripPrefix(uriAuthority, DOT);
         }
 
-        return reassemble(uriScheme, uriAuthority, uriPath, uriQuery,
+        return reassemble(uriScheme,  uriAuthority, uriPath, uriQuery,
             null);
     }
 

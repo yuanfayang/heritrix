@@ -381,7 +381,7 @@ public class CrawlURI extends CandidateURI
         try {
             if (scheme.equals("dns")){
                 if (via!=null) {
-                    // special handling for DNS: treat as being
+                    // Special handling for DNS: treat as being
                     // of the same class as the triggering URI
                     // When a URI includes a port, this ensures 
                     // the DNS lookup goes atop the host:port
