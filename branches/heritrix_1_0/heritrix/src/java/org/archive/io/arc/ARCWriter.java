@@ -45,6 +45,7 @@ import java.util.zip.GZIPOutputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
+import org.archive.util.MimetypeUtils;
 
 
 /**
@@ -649,43 +650,6 @@ public class ARCWriter implements ARCConstants {
     }
 
     /**
-     * Clean-up passed content.
-     *
-     * Figure out content type, truncate at delimiters [;, ].
-     * Truncate multi-part content type header at ';'.
-     * Apache httpclient collapses values of multiple instances of the
-     * header into one comma-separated value,therefore truncated at ','.
-     * Current ia_tools that work with arc files expect 5-column
-     * space-separated meta-lines, therefore truncate at ' '.
-     *
-     * @param contentType Raw content-type.
-     *
-     * @return Computed content-type made from passed content-type after
-     * running it through a set of rules.
-     */
-    private String processContentType(String contentType)
-    {
-        if (contentType == null || contentType.length() == 0)
-        {
-            contentType = NO_TYPE_MIMETYPE;
-        }
-        else if (contentType.indexOf(';') >= 0 )
-        {
-            contentType = contentType.substring(0,contentType.indexOf(';'));
-        }
-        else if (contentType.indexOf(',') >= 0 )
-        {
-            contentType = contentType.substring(0,contentType.indexOf(','));
-        }
-        else if (contentType.indexOf(' ') >= 0 )
-        {
-            contentType = contentType.substring(0,contentType.indexOf(' '));
-        }
-
-        return contentType;
-    }
-
-    /**
      * Write ARC file version 1 metaline.
      *
      * @param uri URI of page we're writing metaline for.  Candidate URI would
@@ -720,7 +684,7 @@ public class ARCWriter implements ARCConstants {
         String metaLineStr = uri + HEADER_FIELD_SEPARATOR + hostIP +
             HEADER_FIELD_SEPARATOR +
             ArchiveUtils.get14DigitDate(fetchBeginTimeStamp) +
-            HEADER_FIELD_SEPARATOR + processContentType(contentType) +
+            HEADER_FIELD_SEPARATOR + MimetypeUtils.truncate(contentType) +
             HEADER_FIELD_SEPARATOR + recordLength + LINE_SEPARATOR;
         this.out.write(metaLineStr.getBytes("UTF-8"));
      }

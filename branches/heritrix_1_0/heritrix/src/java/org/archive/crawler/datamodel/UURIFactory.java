@@ -252,7 +252,7 @@ public class UURIFactory extends URI {
      */
     private UURI create(String uri, String charset) throws URIException {
         UURI uuri = isEscaped(uri)? 
-            new UURIImpl(escapeSpaces(fixup(uri, null)).toCharArray(),
+            new UURIImpl(escapeWhitespace(fixup(uri, null)).toCharArray(),
                 charset):
             new UURIImpl(fixup(uri, null), charset);
          if (logger.isLoggable(Level.FINE)) {
@@ -422,24 +422,47 @@ public class UURIFactory extends URI {
     }
 
     /**
-     * Escape any spaces found.
+     * Escape any whitespace found.
      * 
      * The parent class takes care of the bulk of escaping.  But if any
      * instance of escaping is found in the URI, then we ask for parent
-     * to do NO escaping.  Here we escape any spaces found irrespective
+     * to do NO escaping.  Here we escape any whitespace found irrespective
      * of whether the uri has already been escaped.  We do this for
      * case where uri has been judged already-escaped only, its been
-     * incompletly done and spaces remain.  Spaces in the URI are
-     * a real pain.  They're presence will break log file and
-     * ARC parsing.
+     * incompletly done and whitespace remains.  Spaces, etc., in the URI are
+     * a real pain.  They're presence will break log file and ARC parsing.
      * @param uri URI string to check.
      * @return uri with spaces escaped if any found.
      */
-    protected String escapeSpaces(String uri) {
-        if (uri.indexOf(" ") >= 0) {
-            uri = TextUtils.replaceAll(SPACE, uri, "%20");
-        }
-        return uri;
+    protected String escapeWhitespace(String uri) {
+        // Just write a new string anyways.  The perl '\s' is not
+        // as inclusive as the Character.isWhitespace so there are
+        // whitespace characters we could miss.  So, rather than
+        // write some awkward regex, just go through the string
+        // a character at a time.  Only create buffer first time
+        // we find a space.
+    	StringBuffer buffer = null;
+    	for(int i = 0; i < uri.length(); i++) {
+    		char c = uri.charAt(i);
+    		if (Character.isWhitespace(c)) {
+                if (buffer == null) {
+                	buffer = new StringBuffer(2 * uri.length());
+                    buffer.append(uri.substring(0, i));
+                }
+    			buffer.append("%");
+    			String hexStr = Integer.toHexString(c);
+    			if ((hexStr.length() % 2) > 0) {
+    				buffer.append("0");
+    			}
+    			buffer.append(hexStr);
+    			
+    		} else {
+                if (buffer != null) {
+                	buffer.append(c);
+                }
+    		}
+    	}
+    	return (buffer !=  null)? buffer.toString(): uri;
     }
     
     /**

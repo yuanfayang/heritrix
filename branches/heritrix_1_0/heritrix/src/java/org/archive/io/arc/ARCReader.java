@@ -472,7 +472,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             count++;
             ARCRecord r = (ARCRecord)i.next();
             if (r.getMetaData().getLength() <= 0
-                && r.getMetaData().getMimetype().equals(NO_TYPE_MIMETYPE)) {
+                && r.getMetaData().getMimetype().
+                    equals(MimetypeUtils.NO_TYPE_MIMETYPE)) {
                 throw new IOException("ARCRecord content is empty.");
             }
             r.close();
