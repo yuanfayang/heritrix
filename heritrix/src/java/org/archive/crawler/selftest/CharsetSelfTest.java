@@ -57,6 +57,6 @@ public class CharsetSelfTest extends SelfTestCase
      */
     public void testCharset()
     {
-         testFilesInArc(FILES_TO_FIND);
+        testFilesInArc(FILES_TO_FIND);
     }
 }
