@@ -33,7 +33,6 @@ import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.archive.util.ArchiveUtils;
 
@@ -75,6 +74,12 @@ public class ARCWriterPool {
      */
     private final int arbitraryRetryMax = 10;
     
+    /**
+     * Don't enforce a maximum number of idle instances in pool.
+     * (To do so means GenericObjectPool will close ARCWriters
+     * prematurely.)
+     */
+    private static final int NO_MAX_IDLE = -1;
 
     /**
      * Constructor
@@ -165,7 +170,7 @@ public class ARCWriterPool {
         this.pool = new GenericObjectPool(
             new ARCWriterFactory(arcsDir, prefix, suffix, compress, arcMaxSize,
                 metadata),
-            maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
+            maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait, NO_MAX_IDLE);
     }
 
     /**
