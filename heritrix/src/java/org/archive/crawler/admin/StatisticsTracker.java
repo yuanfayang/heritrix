@@ -754,6 +754,8 @@ public class StatisticsTracker extends AbstractTracker
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
+        CrawlController controller = this.controller;
+        super.crawlEnded(sExitMessage);
         // Need to write some reports at the end of the crawl.
         String directory = controller.getDisk().getPath();
         // seeds-report.txt
@@ -981,8 +983,6 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-        
-        super.crawlEnded(sExitMessage);
         
         // TODO: Save object to disk?
     }
