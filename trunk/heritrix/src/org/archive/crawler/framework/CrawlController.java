@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
+import org.archive.crawler.admin.SimpleHandler;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -38,7 +39,7 @@ import org.archive.crawler.io.UriProcessingFormatter;
  * 
  * @author Gordon Mohr
  */
-public class CrawlController {
+public class CrawlController extends Thread{
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
 
 	private static final String LOGNAME_PROGRESS_STATISTICS = "progress-statistics";
@@ -46,12 +47,19 @@ public class CrawlController {
 	private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
 	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
-	private static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
-	private static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval-seconds";
-	private static final String XP_DISK_PATH = "//behavior/@disk-path";
-	private static final String XP_PROCESSORS = "//behavior/processors/processor";
-	private static final String XP_FRONTIER = "//behavior/frontier";
-	private static final String XP_CRAWL_SCOPE = "//scope";
+	public static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
+	public static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval";
+	public static final String XP_DISK_PATH = "//behavior/@disk-path";
+	public static final String XP_PROCESSORS = "//behavior/processors/processor";
+	public static final String XP_FRONTIER = "//behavior/frontier";
+	public static final String XP_CRAWL_SCOPE = "//scope";
+	
+	private static final String EXIT_USER_TERMINATED = "Crawl job terminated by user";
+	private static final String EXIT_NORMAL = "Crawl job completed";
+	private static final String EXIT_ABNORMAL = "Abnormal exit";
+	private static final String EXIT_NOT_STARTED = "Crawl job not started";
+	
+	private String sExit; 
 
 	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
 	private Thread controlThread;
@@ -71,6 +79,8 @@ public class CrawlController {
 	
 	// create a statistic tracking object and have it write to the log every 
 	protected StatisticsTracker statistics = null;
+	
+	private SimpleHandler owner;
 
 	CrawlOrder order;
 	CrawlScope scope;
@@ -88,7 +98,7 @@ public class CrawlController {
 
 	/**
 	 * Starting from nothing, set up CrawlController and associated
-	 * classes to be ready fro crawling. 
+	 * classes to be ready for crawling. 
 	 * 
 	 * @param o CrawlOrder
 	 * @throws InitializationException
@@ -98,6 +108,8 @@ public class CrawlController {
 		order.initialize();
 		
 		checkUserAgentAndFrom();
+		
+		sExit = EXIT_NOT_STARTED;
 		
 		// read from the configuration file
 		try {
@@ -118,6 +130,17 @@ public class CrawlController {
 		statLogger.setName("StatLogger");
 		statLogger.start();
 		// TODO pause stat sampling when crawler paused
+	}
+	
+	/**
+	 * If an owner is specified then the CrawlController will call the 
+	 * owners jobFinished() method just before it exits.
+	 * 
+	 * @param owner
+	 */
+	public void setOwner(SimpleHandler owner)
+	{
+		this.owner = owner;	
 	}
 
 	private void setupCrawlModules() throws FatalConfigurationException {
@@ -257,11 +280,14 @@ public class CrawlController {
 	public void startCrawl() {
 		// assume Frontier state already loaded
 		shouldCrawl=true;
-		runCrawl();
+		logger.info("Should start Crawl");
+
+		this.start();
 	}
 
-
-	public synchronized void runCrawl() {
+	public void run() {
+		logger.fine(getName()+" started for CrawlController");
+		sExit = EXIT_ABNORMAL; // A proper exit will change this value.
 		assert controlThread == null: "non-null control thread";
 		controlThread = Thread.currentThread();
 		controlThread.setName("crawlControl");
@@ -270,21 +296,34 @@ public class CrawlController {
 			 if(curi != null) {
 				curi.setNextProcessor(firstProcessor);
 			 	toePool.available().crawl(curi);
-			 } 
+			 }
 		}
 		controlThread = null;
-		logger.info("exitting runCrawl");
+		logger.info("exitting run");
+		
+		if(owner!=null)
+		{
+			// Let the owner know that the crawler is finished.
+			owner.jobFinished(sExit);
+		}
+		
+		logger.fine(getName()+" finished for order CrawlController");
 	}
 
 	/**
 	 * @return
 	 */
 	private boolean shouldCrawl() {
+		if(frontier.isEmpty())
+		{
+			sExit = EXIT_NORMAL;
+		}
 		return shouldCrawl && !frontier.isEmpty();
 	}
 
 
 	public void stopCrawl() {
+		sExit = EXIT_USER_TERMINATED;
 		shouldCrawl = false;
 	}	
 
