@@ -7,6 +7,7 @@
 package org.archive.crawler.framework;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FatalConfigurationException;
 
 /**
  * @author gojomo
@@ -23,6 +24,6 @@ public interface URIScheduler {
 	/**
 	 * 
 	 */
-	void initialize(CrawlController c);
+	void initialize(CrawlController c) throws FatalConfigurationException;
 
 }

@@ -71,36 +71,36 @@ public class CrawlerBehavior extends XMLConfig implements CrawlerConfigurationCo
 		return getStringAt("//http-headers/From");
 	}
 
-	public List getSeeds() throws IOException {
+	public List getSeeds() throws FatalConfigurationException {
 		if (seeds != null) {
 			return seeds;
 		}
 		seeds = new ArrayList();
-		BufferedReader reader = nodeValueOrSrcReader("//seeds");
-		String read;
 		try {
+			BufferedReader reader = nodeValueOrSrcReader("//seeds");
+			String read;
 			while (reader != null) {
-				do {read = reader.readLine();}
-				while (
-				  (read != null) 
-				  && ( (read=read.trim()).startsWith("#") 
-					   || read.length() == 0) );
-			
+				do {
+					read = reader.readLine();
+				} while (
+					(read != null)
+						&& ((read = read.trim()).startsWith("#")
+							|| read.length() == 0));
+
 				if (read == null) {
 					reader.close();
 					reader = null;
 				} else {
 					try {
-						seeds.add( UURI.createUURI(read) );
+						seeds.add(UURI.createUURI(read));
 					} catch (URISyntaxException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new FatalConfigurationException(
+				"Unable to locate seeds file: " + e.toString());
 		}
 		return seeds;
    	
