@@ -86,6 +86,12 @@ public class MapType extends ComplexType {
     public Type addElement(CrawlerSettings settings, Type element)
         throws InvalidAttributeValueException {
         settings = settings == null ? globalSettings() : settings;
+        
+        if (getDataContainerRecursive(settings) != null) {
+            throw new IllegalArgumentException(
+                "Duplicate element: " + element.getName());
+        }
+        
         if (!(element instanceof MapType) && (contentType.isInstance(element))) {
             return super.addElement(settings, element);
         } else {
