@@ -302,8 +302,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
 
-        DataContainer data = settings.getData(this);
-        data = getDataContainerRecursive(settings);
+        DataContainer data = getDataContainerRecursive(settings);
         while (data != null) {
             if (data.containsKey(name)) {
                 return data.get(name);
@@ -394,9 +393,45 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (value instanceof ComplexType && value != oldValue) {
             ComplexType complex = (ComplexType) value;
             setupVaiables(complex);
-            //object.initializeComplexType(settings);
             addComplexType(settings, complex);
         }
+    }
+    
+    /** Unset an attribute on a per host level.
+     * 
+     * This methods removes an override on a per host or per domain level.
+     *
+     * @param settings the settings object for which the attribute should be
+     *        unset.
+     * @param name the name of the attribute.
+     * @throws AttributeNotFoundException is thrown if the attribute name
+     *         doesn't exist.
+     */
+    public Object unsetAttribute(CrawlerSettings settings, String name)
+            throws AttributeNotFoundException {
+
+        if (settings == globalSettings()) {
+            throw new IllegalArgumentException(
+                "Not allowed to unset attributes in Crawl Order.");
+        }
+
+        DataContainer data = settings.getData(this);
+        if (data.containsKey(name)) {
+            // Remove value
+            data.removeElement(name);
+        }
+
+        // Value not found. Check if we should return null or throw an exseption
+        data = getDataContainerRecursive(settings);
+        while (data != null) {
+            if (data.containsKey(name)) {
+                return null;
+            } else {
+                data = getDataContainerRecursive(data.getSettings().getParent());
+            }
+        }
+        // No attribute with this name in any settings object.
+        throw new AttributeNotFoundException(name);
     }
 
     private DataContainer getOrCreateDataContainer(CrawlerSettings settings)
