@@ -33,21 +33,16 @@
 							<td class="tab_inactive" nowrap>
 								<a href="javascript:alert('Can not edit modules on running jobs!')" class="tab_text_inactive">Modules</a>
 							</td>
-							<td class="tab_seperator">
-							</td>
-							<td class="tab_inactive" nowrap>
-								<a href="javascript:alert('Can not edit filters on running jobs!')" class="tab_text_inactive">Filters</a>
-							</td>
 						<% } else { %>
 							<td class="tab<%=jobtab==0?"_selected":""%>" nowrap>
 								<a href="javascript:doGotoModules()" class="tab_text<%=jobtab==0?"_selected":""%>">Modules</a>
 							</td>
-							<td class="tab_seperator">
-							</td>
-							<td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-								<a href="javascript:doGotoFilters()" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
-							</td>
 						<% } %>
+						<td class="tab_seperator">
+						</td>
+						<td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
+							<a href="javascript:doGotoFilters()" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
+						</td>
 						<td class="tab_seperator">
 						</td>
 						<td class="tab<%=jobtab==2?"_selected":""%>" nowrap>
