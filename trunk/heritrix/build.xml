@@ -112,7 +112,9 @@
         <fileset dir="src/webapps" />
     </copy>
     <copy todir="dist/bin">
-        <fileset dir="src/shell" />
+        <fileset dir="src/scripts">
+            <include name="heritrix*.sh"/>
+        </fileset>
    </copy>
   </target>
   <target name="test" description="o Run the test cases" if="test.failure" depends="internal-test">

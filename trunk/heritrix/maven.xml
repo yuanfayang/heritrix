@@ -20,8 +20,8 @@
 
         <!--Copy to a bin dir the heritrix start script.-->
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
-          <fileset dir="${maven.src.dir}/shell">
-            <include name="heritrix.sh"/>
+          <fileset dir="${maven.src.dir}/scripts">
+            <include name="heritrix*.sh"/>
           </fileset>
         </copy>
 
