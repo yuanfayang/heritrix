@@ -7,29 +7,12 @@
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%
     /**
-     *  Page allows user to view the information in the StatisticsTracker 
-     *  for a completed job. 
-     *    Parameter: job - UID for the job.
+     * Page allows user to view the information on seeds in the
+     * StatisticsTracker for a completed job.
+     * Parameter: job - UID for the job.
      */
-     
     String job = request.getParameter("job");
-    CrawlJob cjob = null;
-
-    StatisticsTracker stats = null;
-     
-    if(job != null)
-    {
-        cjob = handler.getJob(job);
-        if(cjob != null){
-            stats = (StatisticsTracker)cjob.getStatisticsTracking();
-        }
-    }
-    else
-    {
-        // Assume current job.
-        cjob = handler.getCurrentJob();
-        stats = (StatisticsTracker)cjob.getStatisticsTracking();
-    }
+    CrawlJob cjob = (job != null)? handler.getJob(job): handler.getCurrentJob();
     
     String title = "Crawl job report"; 
     int tab = 4;

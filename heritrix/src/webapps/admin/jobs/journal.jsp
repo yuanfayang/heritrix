@@ -5,12 +5,14 @@
 
 <%@ page import="java.io.FileWriter,java.io.File"%>
 <%@ page import="java.util.Date"%>
+<%@ page import="org.archive.crawler.admin.auth.User"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
 
 <%
     String journal = null;
     
-    String operator = getCookieValue(request.getCookies(),"operator",""); //method from secure.jsp
+    String operator = User.getCookieValue(request.getCookies(),
+        "operator","");
     
     String journalFilename = "operator.journal";
 
