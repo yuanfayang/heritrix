@@ -54,7 +54,8 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURISet;
+import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
@@ -65,7 +66,7 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.util.FPUURISet;
+import org.archive.crawler.util.FPUriUniqFilter;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
@@ -94,7 +95,7 @@ import org.archive.util.PaddingStringBuffer;
 public class Frontier
     extends ModuleType
     implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
-        CrawlStatusListener {
+        CrawlStatusListener, HasUriReceiver {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(Frontier.class,1);
 
@@ -157,7 +158,7 @@ public class Frontier
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
-    protected UURISet alreadyIncluded;
+    protected UriUniqFilter alreadyIncluded;
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
 
@@ -312,11 +313,14 @@ public class Frontier
      * @return A UURISet that will serve as a record of already seen URIs
      * @throws IOException If problems occur creating files on disk
      */
-    protected UURISet createAlreadyIncluded(File dir, String filePrefix)
+    protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
             throws IOException, FatalConfigurationException {
         // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
-        return new FPUURISet(new MemLongFPSet(23,0.75f));
+        UriUniqFilter uuf = new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
+        uuf.setDestination(this);
+        return uuf;
+        
         //return new PagedUURISet(c.getScratchDisk());
 
         // alternative: pure disk-based set
@@ -417,12 +421,19 @@ public class Frontier
      * @param caUri The CandidateURI to schedule
      */
     private void innerSchedule(CandidateURI caUri) {
-        if(!caUri.forceFetch() && this.alreadyIncluded.contains(caUri)) {
-            logger.finer("Disregarding alreadyIncluded "+caUri);
-            return;
+        if(caUri.forceFetch()) {
+            alreadyIncluded.addForce(caUri);
+        } else {
+            alreadyIncluded.add(caUri);
         }
+    }
+    
+    /**
+     * @param huri
+     */
+    public void receive(UriUniqFilter.HasUri huri) {
+        CandidateURI caUri = (CandidateURI) huri;
         CrawlURI curi = asCrawlUri(caUri);
-
 
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0){
@@ -1316,14 +1327,14 @@ public class Frontier
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting "+curi);
-        alreadyIncluded.remove(curi.getUURI());
+        alreadyIncluded.forget(curi.getUURI());
     }
 
     /**  (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
-        return alreadyIncluded.size();
+        return alreadyIncluded.count();
     }
 
     /** (non-Javadoc)
@@ -1566,7 +1577,7 @@ public class Frontier
         rep.append("  Failed:       " + failedCount + "\n");
         rep.append("  Disregarded:  " + disregardedCount + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
-        rep.append(" Already included size:     " + alreadyIncluded.size()+"\n");
+        rep.append(" Already included size:     " + alreadyIncluded.count()+"\n");
 //        rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
         rep.append("\n All class queues map size: " + allClassQueuesMap.size() + "\n");
         if(allClassQueuesMap.size()!=0)
@@ -1706,7 +1717,7 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
      */
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.add(u);
+        this.alreadyIncluded.note(u);
     }
 
     /* (non-Javadoc)
