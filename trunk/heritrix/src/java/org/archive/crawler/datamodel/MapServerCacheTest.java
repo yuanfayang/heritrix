@@ -25,7 +25,6 @@ package org.archive.crawler.datamodel;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.util.TestUtils;
 
 /**
  * Test the MapServerCache
