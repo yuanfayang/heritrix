@@ -93,7 +93,7 @@ public class TextUtils {
 				}
 				raf.readFully(buffer);
 				// remove runing white spaces
-				sb.append((new String(buffer)).replaceAll("[ ]+", " "));
+				sb.append(new String(buffer));
 			}
 			return sb.toString();
 
