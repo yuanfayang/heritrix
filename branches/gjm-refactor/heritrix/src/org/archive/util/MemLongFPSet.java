@@ -50,8 +50,12 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			return false;
 		}
 		size++;
-		rawArray[-(i+1)]=l;
+		setAt(-(i+1), l);
 		return true;
+	}
+
+	protected void setAt(int i, long l) {
+		rawArray[i]=l;
 	}
 
 	/**
@@ -116,17 +120,38 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	/**
 	 * @param i
 	 */
-	private void removeAt(int index) {
+	protected void removeAt(int index) {
+		size--;
+		clearAt(index);
+		int probeIndex = index+1;
+		if (probeIndex>size) {
+			probeIndex=0; //wraparound
+		}
+		while(rawArray[probeIndex]!=0) {
+			reposition(probeIndex);
+			probeIndex++;
+			if (probeIndex>size) {
+				probeIndex=0;  //wraparound
+			}
+		}
+	}
+
+	
+	protected void reposition(int index) {
+		long newIndex = indexFor(rawArray[index]);
+		if(newIndex!=index) {
+			relocate(index, newIndex);
+		}
+	}
+
+	private void relocate(long index, long newIndex) {
+		rawArray[(int)newIndex] = rawArray[(int)index];
+		rawArray[(int)index] = 0;
+	}
+
+	protected void clearAt(int index) {
 		assert rawArray[index] != 0 : "removeAt bad index";
 		rawArray[index]=0;
-		size--;
-		int probeIndex = index+1;
-		while(rawArray[probeIndex]!=0) {
-			long move = rawArray[probeIndex];
-			rawArray[probeIndex]=0;
-			rawArray[indexFor(move)]=move;
-			probeIndex++;
-		}
 	}
 
 }
