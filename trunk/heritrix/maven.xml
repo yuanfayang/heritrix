@@ -81,6 +81,7 @@
             <exclude name="**/*.gif"/>
             <exclude name="**/*.jpg"/>
             <exclude name="**/*.png"/>
+            <exclude name="**/jetty-web.xml"/>
           </fileset>
         </copy>
         <copy todir="${maven.build.dir}/webapps" filtering="false">
