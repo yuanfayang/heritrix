@@ -99,7 +99,8 @@ public class MapType extends ComplexType {
             }
         }
 
-        if (!(element instanceof MapType) && (contentType.isInstance(element))) {
+        if (!(element instanceof MapType)
+                && (this.contentType.isInstance(element))) {
             return super.addElement(settings, element);
         } else {
             throw new IllegalArgumentException("Nested maps are not allowed.");
@@ -160,32 +161,35 @@ public class MapType extends ComplexType {
 
             DataContainer data = getDataContainerRecursive(settings);
             while (data != null) {
-                attributeStack.push(data.getLocalAttributeInfoList().iterator());
-                data = getDataContainerRecursive(data.getSettings().getParent());
+                this.attributeStack.push(data.getLocalAttributeInfoList().
+                    iterator());
+                data = getDataContainerRecursive(data.getSettings().
+                    getParent());
             }
 
-            currentIterator = (Iterator) attributeStack.pop();
+            this.currentIterator = (Iterator) this.attributeStack.pop();
         }
 
         public boolean hasNext() {
-            if (currentIterator.hasNext()) {
+            if (this.currentIterator.hasNext()) {
                 return true;
             } else {
                 try {
-                    currentIterator = (Iterator) attributeStack.pop();
+                    this.currentIterator = (Iterator) this.attributeStack.pop();
                 } catch (EmptyStackException e) {
                     return false;
                 }
             }
-            return currentIterator.hasNext();
+            return this.currentIterator.hasNext();
         }
 
         public Object next() {
             hasNext();
             try {
                 return getAttribute(
-                    settings,
-                    ((MBeanAttributeInfo) currentIterator.next()).getName());
+                    this.settings,
+                    ((MBeanAttributeInfo) this.currentIterator.next()).
+                        getName());
             } catch (AttributeNotFoundException e) {
                 // This should never happen
                 e.printStackTrace();
@@ -196,7 +200,7 @@ public class MapType extends ComplexType {
         public void remove() {
             throw new UnsupportedOperationException();
         }
-    };
+    }
 
     /** Get an Iterator over all the elements in this map.
      *
@@ -251,7 +255,6 @@ public class MapType extends ComplexType {
      * @return the content type allowed for this map.
      */
     public Class getContentType() {
-        return contentType;
+        return this.contentType;
     }
-
 }

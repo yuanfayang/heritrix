@@ -25,14 +25,17 @@
 package org.archive.crawler.datamodel.settings;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 /** Super type for all lists.
  *
  * @author John Erik Halse
  */
-public abstract class ListType extends Type {
+public abstract class ListType extends Type implements List {
+    
     private final List listData = new ArrayList();
     private final String description;
 
@@ -63,10 +66,12 @@ public abstract class ListType extends Type {
      * @param element element to be appended to this list.
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
+     * @returns true if this collection changed as a result of the call (as
+     * per the Collections.add contract).
      */
-    public void add(Object element) {
+    public boolean add(Object element) {
         element = checkType(element);
-        listData.add(element);
+        return this.listData.add(element);
     }
 
     /** Inserts the specified element at the specified position in this list.
@@ -81,7 +86,7 @@ public abstract class ListType extends Type {
      */
     public void add(int index, Object element) {
         element = checkType(element);
-        listData.add(index, element);
+        this.listData.add(index, element);
     }
 
     /** Appends all of the elements in the specified list to the end of this
@@ -96,7 +101,7 @@ public abstract class ListType extends Type {
      * @param l list whose elements are to be added to this list.
      */
     protected void addAll(ListType l) {
-        listData.addAll(l.listData);
+        this.listData.addAll(l.listData);
     }
 
     /** Replaces the element at the specified position in this list with the
@@ -110,7 +115,7 @@ public abstract class ListType extends Type {
      */
     public Object set(int index, Object element) {
         element = checkType(element);
-        return listData.set(index, element);
+        return this.listData.set(index, element);
     }
 
     /** Returns an iterator over the elements in this list in proper sequence.
@@ -118,7 +123,7 @@ public abstract class ListType extends Type {
      * @return an iterator over the elements in this list.
      */
     public Iterator iterator() {
-        return listData.iterator();
+        return this.listData.iterator();
     }
 
     /** Get the number of elements in this list.
@@ -126,7 +131,7 @@ public abstract class ListType extends Type {
      * @return number of elements.
      */
     public int size() {
-        return listData.size();
+        return this.listData.size();
     }
 
     /** Returns true if this list contains no elements.
@@ -134,7 +139,7 @@ public abstract class ListType extends Type {
      * @return true if this list contains no elements.
      */
     public boolean isEmpty() {
-        return listData.isEmpty();
+        return this.listData.isEmpty();
     }
 
     /** Check if element is of right type for this list.
@@ -160,13 +165,13 @@ public abstract class ListType extends Type {
      * @see org.archive.crawler.datamodel.settings.Type#getDescription()
      */
     public String getDescription() {
-        return description;
+        return this.description;
     }
 
     /** Removes all elements from this list.
      */
     public void clear() {
-        listData.clear();
+        this.listData.clear();
     }
 
     /**
@@ -175,7 +180,7 @@ public abstract class ListType extends Type {
      * @return the object stored at the index specified
      */
     public Object get(int index){
-        return listData.get(index);
+        return this.listData.get(index);
     }
 
     /** The getLegalValues is not applicable for list so this method will
@@ -200,4 +205,78 @@ public abstract class ListType extends Type {
         return this;
     }
 
+    public boolean addAll(Collection c)
+    {
+        return this.listData.addAll(c);
+    }
+    
+    public boolean addAll(int index, Collection c)
+    {
+        return this.listData.addAll(index, c);
+    }
+
+    public boolean contains(Object o)
+    {
+        return this.listData.contains(o);
+    }
+
+    public boolean containsAll(Collection c)
+    {
+        return this.listData.containsAll(c);
+    }
+    
+    public int indexOf(Object o)
+    {
+        return this.listData.indexOf(o);
+    }
+    
+    public int lastIndexOf(Object o)
+    {
+        return this.listData.lastIndexOf(o);
+    }
+
+    public ListIterator listIterator()
+    {
+        return this.listData.listIterator();
+    }
+    
+    public ListIterator listIterator(int index)
+    {
+        return this.listData.listIterator(index);
+    }
+
+    public List subList(int fromIndex, int toIndex)
+    {
+        return this.listData.subList(fromIndex, toIndex);
+    }
+
+    public Object[] toArray()
+    {
+        return this.listData.toArray();
+    }
+
+    public Object[] toArray(Object[] a)
+    {
+        return this.listData.toArray(a);
+    }
+    
+    public Object remove(int index)
+    {
+        return this.listData.remove(index);
+    }
+
+    public boolean remove(Object o)
+    {
+        return this.listData.remove(o);
+    }
+
+    public boolean removeAll(Collection c)
+    {
+        return this.listData.removeAll(c);
+    }
+    
+    public boolean retainAll(Collection c)
+    {
+        return this.listData.retainAll(c);
+    }
 }
