@@ -6,16 +6,17 @@
  <scope 
    class="org.archive.crawler.basic.Scope"
    mode="broad"
-   max-link-hops="0"
-   max-trans-hops="4">
+   max-link-hops="3"
+   max-trans-hops="5">
    
   <seeds>
  # http://www.archive.org/movies/movies.php
- # http://www.drudgereport.com
+   http://www.drudgereport.com
+   http://www.yahoo.com
    http://my.yahoo.com
-   http://my.yahoo.com
-   http://my.yahoo.com
- # http://www.google.com/dirhp
+ # http://us.i1.yimg.com/us.yimg.com/i/my/edit2.gif
+ # http://geocities.yahoo.com/v/w/
+   http://www.google.com/dirhp
    
   </seeds>
  
@@ -34,8 +35,8 @@
   <frontier 
     class="org.archive.crawler.basic.Frontier"
     delay-factor="1"
-    min-delay="0"
-    max-delay="1000"
+    min-delay-ms="0"
+    max-delay-ms="1000"
    />
   
    <processors>
@@ -63,7 +64,8 @@
       class="org.archive.crawler.fetcher.FetchHTTP"
       next="ExtractorHTTP"
 
-      timeout-seconds="10"
+      timeout-seconds="20"
+      sotimeout-ms="10000"
       max-length-bytes="65536"
       max-fetch-attempts="5"
      />
