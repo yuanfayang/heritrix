@@ -87,7 +87,7 @@ public class RecoveryJournal {
      */
     public void added(CrawlURI curi) {
         write("\n" + F_ADD + curi.getURIString() + " " 
-                + " " + curi.getPathFromSeed() + curi.flattenVia());
+                 + curi.getPathFromSeed() + " " + curi.flattenVia());
     }
 
     /**
