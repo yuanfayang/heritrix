@@ -366,7 +366,7 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Get the token (usually the hostname) which indicates
+     * Get the token (usually the hostname + port) which indicates
      * what "class" this CrawlURI should be grouped with,
      * for the purposes of ensuring only one item of the
      * class is processed at once, all items of the class
