@@ -12,6 +12,7 @@ package org.archive.crawler.framework;
  */
 public abstract class Filter extends XMLConfig {
 	String name;
+	boolean inverter = false;
 	
 	public  void setName(String n) {
 		name = n;
@@ -20,5 +21,20 @@ public abstract class Filter extends XMLConfig {
 		return name;
 	}
 	
-	public abstract boolean accepts(Object o); 
+	public boolean accepts(Object o) {
+		return inverter ^ innerAccepts(o);
+	}
+	
+	/**
+	 * @param o
+	 * @return
+	 */
+	protected abstract boolean innerAccepts(Object o);
+	
+	public void initialize() {
+		setName(getStringAt("@name"));
+		if("not".equals(getStringAt("@modifier"))) {
+			inverter = true;
+		}
+	}
 }
