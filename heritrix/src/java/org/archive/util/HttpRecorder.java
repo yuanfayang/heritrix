@@ -24,6 +24,7 @@
  */
 package org.archive.util;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -315,5 +316,33 @@ public class HttpRecorder {
      */
     public ReplayCharSequence getReplayCharSequence() throws IOException {
         return getRecordedInput().getReplayCharSequence(this.characterEncoding);
+    }
+    
+    /**
+     * Record the input stream for later playback by an extractor, etc.
+     * This is convenience method used to setup an artificial HttpRecorder
+     * scenario used in unit tests, etc.
+     * @param dir Directory to write backing file to.
+     * @param basename of what we're recording.
+     * @param in Stream to read.
+     * @param encoding Stream encoding.
+     * @throws IOException
+     * @return An httprecorder.
+     */
+    public static HttpRecorder wrapInputStreamWithHttpRecord(File dir,
+        String basename, InputStream in, String encoding)
+    throws IOException {
+        HttpRecorder rec = new HttpRecorder(dir, basename);
+        if (encoding != null && encoding.length() > 0) {
+            rec.setCharacterEncoding(encoding);
+        }
+        InputStream is = rec.inputWrap(new BufferedInputStream(in));
+        final int BUFFER_SIZE = 1024 * 4;
+        byte [] buffer = new byte[BUFFER_SIZE];
+        while(is.read(buffer) != -1) {
+            // Just read it all down.
+        }
+        is.close();
+        return rec;
     }
 }
