@@ -37,33 +37,54 @@
      *
      * @return the HTML to edit the specified modules map
      */
-    public String buildModuleMap(ComplexType map, List availibleOptions){
+    public String buildModuleMap(ComplexType map, List availibleOptions, CrawlerSettings domain){
         StringBuffer ret = new StringBuffer();
         
         ret.append("<table cellspacing='0' cellpadding='2'>");
         
-        MBeanInfo mapInfo = map.getMBeanInfo();
+        MBeanInfo mapInfo = map.getMBeanInfo(domain);
         MBeanAttributeInfo m[] = mapInfo.getAttributes();
             
         // Printout modules in map.
         boolean alt = true;
         for(int n=0; n<m.length; n++) {
-            Object currentAttribute = null;
             ModuleAttributeInfo att = (ModuleAttributeInfo)m[n]; //The attributes of the current attribute.
+            Object currentAttribute = null;
+            Object localAttribute = null;
+
+            try {
+                currentAttribute = map.getAttribute(domain,att.getName());
+                localAttribute = map.getLocalAttribute(domain,att.getName());
+            } catch (Exception e1) {
+                ret.append(e1.toString() + " " + e1.getMessage());
+            }
     
             ret.append("<tr");
             if(alt){
                 ret.append(" bgcolor='#EEEEFF'");
             }
-            ret.append("><td>" + att.getName() + "</td><td>&nbsp;"+att.getType()+"</td>");
-            ret.append("<td><a href=\"javascript:doRemove('"+att.getName()+"')\">Remove</a></td>");
-            ret.append("<td><a href=\"javascript:alert('");
-            ret.append(TextUtils.escapeForJavascript(att.getDescription()));
-            ret.append("')\">Info</a></td>\n");
-            ret.append("</tr>");
+            ret.append(">");
+            
+            if(localAttribute == null){
+                // Inherited. Print for display only
+                ret.append("<td><i>" + att.getName() + "</i></td><td><i>&nbsp;"+att.getType()+"</i></td>");
+                ret.append("<td></td>");
+                ret.append("<td><a href=\"javascript:alert('");
+                ret.append(TextUtils.escapeForJavascript(att.getDescription()));
+                ret.append("')\">Info</a></td>\n");
+                ret.append("</tr>");
+            } else {
+	            ret.append("<td>" + att.getName() + "</td><td>&nbsp;"+att.getType()+"</td>");
+	            ret.append("<td><a href=\"javascript:doRemove('"+att.getName()+"')\">Remove</a></td>");
+	            ret.append("<td><a href=\"javascript:alert('");
+	            ret.append(TextUtils.escapeForJavascript(att.getDescription()));
+	            ret.append("')\">Info</a></td>\n");
+	            ret.append("</tr>");
+	        }
             alt = !alt;
         }
         
+        // Find out which aren't being used.
         if(availibleOptions.size() > 0 ){
             ret.append("<tr><td>");
             ret.append("<input name='name'>");
@@ -87,6 +108,8 @@
 <%
     // Load the job to manipulate   
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
+    // Load display level
+    String currDomain = request.getParameter("currDomain");
     
     if(theJob == null)
     {
@@ -100,8 +123,10 @@
     }
 
     XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob.getSettingsHandler();
-    ComplexType credstore = (ComplexType)settingsHandler.getOrder().getAttribute(CredentialStore.ATTR_NAME);
-    MapType credmap = (MapType)credstore.getAttribute(CredentialStore.ATTR_CREDENTIALS);
+    CrawlOrder crawlOrder = settingsHandler.getOrder();
+    CrawlerSettings orderfile = settingsHandler.getSettingsObject(currDomain);
+    ComplexType credstore = (ComplexType)crawlOrder.getAttribute(orderfile,CredentialStore.ATTR_NAME);
+    MapType credmap = (MapType)credstore.getAttribute(orderfile,CredentialStore.ATTR_CREDENTIALS);
 
     // See if we need to take any action
     if(request.getParameter("action") != null){
@@ -117,36 +142,27 @@
                 String typeName = request.getParameter("name");
                 if(typeName != null && typeName.length() > 0 
                    && className != null && className.length() > 0 ){
-                    credmap.addElement(settingsHandler.getSettings(null),
-                                         SettingsHandler.instantiateModuleTypeFromClassName(typeName,className));
+                    credmap.addElement(orderfile,
+                            SettingsHandler.instantiateModuleTypeFromClassName(typeName,className));
                 }
             } else if(subaction.equals("remove")){
                 // Remove a filter from a map
                 if(credential != null && credential.length() > 0){
-                    credmap.removeElement(settingsHandler.getSettings(null),credential);
+                    credmap.removeElement(orderfile,credential);
                 }
             }
             // Finally save the changes to disk
-            settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
+            settingsHandler.writeSettingsObject(orderfile);
         }else if(action.equals("done")){
             // Ok, done editing.
-            if(theJob.isNew()){         
-                handler.addJob(theJob);
-                response.sendRedirect("/admin/jobs.jsp?message=Job created");
-            }else{
-                if(theJob.isRunning()){
-                    handler.kickUpdate();
-                }
-                if(theJob.isProfile()){
-                    response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
-                }else{
-                    response.sendRedirect("/admin/jobs.jsp?message=Job modified");
-                }
+            if(theJob.isRunning()){
+                handler.kickUpdate();
             }
+            response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
             return;
         }else if(action.equals("goto")){
             // Goto another page of the job/profile settings
-            response.sendRedirect(request.getParameter("subaction"));
+            response.sendRedirect(request.getParameter("subaction")+"&currDomain="+currDomain);
             return;
         }
     }
@@ -187,13 +203,14 @@
     }
 </script>
     <p>
-        <%@include file="/include/jobnav.jsp"%>
+        <%@include file="/include/jobpernav.jsp"%>
     <p>
     <form name="frmCredentials" method="post" action="credentials.jsp">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="subaction" value="">
         <input type="hidden" name="credential" value="">
+        <input type="hidden" name="currDomain" value="<%=currDomain%>">
         <p>
             <b>Add / Remove credentials</b>
         <p>
@@ -201,11 +218,11 @@
                 List list = CredentialStore.getCredentialTypes();
             %>
             <table>
-            <%=buildModuleMap(credmap, list)%>
+            <%=buildModuleMap(credmap, list, orderfile)%>
             </table>
     </form>
     <p>
-        <%@include file="/include/jobnav.jsp"%>
+        <%@include file="/include/jobpernav.jsp"%>
 <%@include file="/include/foot.jsp"%>
 
 
