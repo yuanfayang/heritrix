@@ -29,7 +29,9 @@ public class TextUtils {
     /**
      * Upper-bound on Matcher Stacks.
      * Profiling has the size of these Stacks tending upward over
-     * the life of a crawl.
+     * the life of a crawl.  TODO: do something better than an
+     * a coarse upperbound; do something that can get GC'd in
+     * low-memory conditions.
      */
     private final static int MAXIMUM_STACK_SIZE = 10;
 
