@@ -31,7 +31,15 @@ import javax.management.Attribute;
  * @author John Erik Halse
  */
 public abstract class Type extends Attribute {
-    /**
+    /** Should this Type be serialized to persistent storage */
+    private boolean isTransient = false;
+    /** True if this Type can be overridden */
+    private boolean overrideable = true;
+    /** True if this Type should only show up in expert mode in UI */
+    private boolean isExpertSetting = false;
+
+    /** Creates a new instance of Type.
+     * 
      * @param name
      * @param value
      */
@@ -65,7 +73,50 @@ public abstract class Type extends Attribute {
      *
      * @return True if this is an an overrideable setting.
      */
-    public boolean getOverrideable(){
-        return true;
+    public boolean isOverrideable() {
+        return overrideable;
+    }
+
+    /** Set if this Type should be overideable.
+     * 
+     * @param b true if this Type should be overideable.
+     */
+    public void setOverrideable(boolean b) {
+        overrideable = b;
+    }
+    
+    /** Returns true if this ComplexType should be saved to persistent storage.
+    *
+    * @return true if this ComplexType should be saved to persistent storage.
+    */
+   public boolean isTransient() {
+       return isTransient;
+   }
+
+   /** Set to false if this attribute should not be serialized to persistent
+    * storage.
+    *
+    * @param b if false this complexType will not be saved to persistent
+    *          storage.
+    */
+   public void setTransient(boolean b) {
+       isTransient = b;
+   }
+
+    /** Returns true if this Type should only show up in expert mode in UI.
+     * 
+     * @return true if this Type should only show up in expert mode in UI.
+     */
+    public boolean isExpertSetting() {
+        return isExpertSetting;
+    }
+    
+    /** Set if this Type should only show up in expert mode in UI.
+     * 
+     * @param isExpertSetting true if this Type should only show up in
+     *        expert mode in UI.
+     */
+    public void setExpertSetting(boolean isExpertSetting) {
+        this.isExpertSetting = isExpertSetting;
     }
 }
