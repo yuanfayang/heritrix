@@ -84,25 +84,35 @@ public class GzipHeader {
      * 
      * Must pass an input stream.
 	 */
-	protected GzipHeader() {
+	public GzipHeader() {
 		super();
 	}
     
     /**
      * Constructor.
      * 
-     * This constructor advances the stream past any gzip header found
-     * else, throws IOException if problems getting the gzip header.
+     * This constructor advances the stream past any gzip header found.
      * 
      * @param in InputStream to read from.
      */
     public GzipHeader(InputStream in) throws IOException {
         super();
+        readHeader(in);
+    }
+    
+    /**
+     * Read in gzip header.
+     * 
+     * Advances the stream past the gzip header.
+     * 
+     * @throws IOException
+     */
+    public void readHeader(InputStream in) throws IOException {
         
         CRC32 crc = new CRC32();
         crc.reset();
    
-        if (readShort(in, crc) != GZIPInputStream.GZIP_MAGIC) {
+        if (!testGzipMagic(in, crc)) {
             throw new IOException("Failed to find GZIP MAGIC");
         }
         this.length += 2;
@@ -164,6 +174,32 @@ public class GzipHeader {
     }
     
     /**
+     * Test gzip magic is next in the stream.
+     * Reads two bytes.  Caller needs to manage resetting stream.
+     * @param in InputStream to read.
+     * @return true if found gzip magic.  False otherwise
+     * or an IOException (including EOFException).
+     * @throws IOException
+     */
+    public boolean testGzipMagic(InputStream in) throws IOException {
+        return testGzipMagic(in, null);
+    }
+    
+    /**
+     * Test gzip magic is next in the stream.
+     * Reads two bytes.  Caller needs to manage resetting stream.
+     * @param in InputStream to read.
+     * @param crc CRC to update.
+     * @return true if found gzip magic.  False otherwise
+     * or an IOException (including EOFException).
+     * @throws IOException
+     */
+    public boolean testGzipMagic(InputStream in, CRC32 crc)
+    		throws IOException {
+        return readShort(in, crc) == GZIPInputStream.GZIP_MAGIC;
+    }
+    
+    /**
      * Read an int. 
      * 
      * We do not expect to get a -1 reading.  If we do, we throw exception.
@@ -214,10 +250,11 @@ public class GzipHeader {
         if (b == -1) {
             throw new EOFException();
         }
-        crc.update(b);
+        if (crc != null) {
+            crc.update(b);
+        }
         return b & 0xff;
     }
-    
     
     /**
      * Read a byte. 
