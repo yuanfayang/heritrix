@@ -22,25 +22,25 @@ package org.archive.crawler.framework;
  * An interface for objects that want to collect statistics on
  * running crawls. An implementation of this is referenced in the
  * crawl order and loaded when the crawl begins.
- * <p>
- * It will be given a reference to the relevant CrawlController.
+ * 
+ * <p>It will be given a reference to the relevant CrawlController.
  * The CrawlController will contain any additional configuration
  * information needed.
- * <p>
- * Any class that implements this interface can be specified as a
+ * 
+ * <p>Any class that implements this interface can be specified as a
  * statistics tracker in a crawl order.  The CrawlController will
  * then create and initialize a copy of it and call it's start()
  * method.
- * <p>
- * This interface also specifies several methods to access data that
+ * 
+ * <p>This interface also specifies several methods to access data that
  * the CrawlController or the URIFrontier may be interested in at
  * run time but do not want to have keep track of for themselves.
  * {@link org.archive.crawler.framework.AbstractTracker AbstractTracker}
  * implements these. If there are more then one StatisticsTracking
  * classes defined in the crawl order only the first one will be
  * used to access this data.
- * <p>
- * It is recommended that it register for
+ * 
+ * <p>It is recommended that it register for
  * {@link org.archive.crawler.event.CrawlStatusListener CrawlStatus} events and
  * {@link org.archive.crawler.event.CrawlURIDispositionListener CrawlURIDisposition}
  * events to be able to properly monitor a crawl. Both are registered with the
@@ -57,15 +57,17 @@ public interface StatisticsTracking extends Runnable
 {
     /**
      * Do initialization.
-     * The CrawlController will call this method before calling the start() method.
+     * 
+     * <p>The CrawlController will call this method before calling the start() 
+     * method.
      *
      * @param c The {@link CrawlController CrawlController} running the crawl that this class is to gather statistics on.
      */
     public void initalize(CrawlController c);
 
     /**
-     * Returns how long the current crawl has been running (excluding any time spent
-     * paused/suspended/stopped) since it was begin.
+     * Returns how long the current crawl has been running (excluding any time 
+     * spent paused/suspended/stopped) since it began.
      *
      * @return The length of time - in msec - that this crawl has been running.
      */
