@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<project>
+    <preGoal name="xdoc:jelly-transform">
+        <attainGoal name="faq"/>
+    </preGoal>  
+
+    <postGoal name="dist:prepare-bin-filesystem">
+    <echo>[Heritrix] dist:prepare-bin-filesystem postGoal</echo>
+
+    <!--Add the lib dir to our binary distribution.-->
+    <copy todir="${maven.dist.bin.assembly.dir}/lib">
+      <fileset dir="./lib">
+        <include name="*.jar"/>
+      </fileset>
+    </copy>
+    <!--Copy to a bin dir the heritrix start script.-->
+    <copy todir="${maven.dist.bin.assembly.dir}/bin">
+      <fileset dir="${maven.src.dir}/shell">
+        <include name="heritrix.sh"/>
+      </fileset>
+    </copy>
+    <!--Copy over the admin webapp.-->
+    <copy todir="${maven.dist.bin.assembly.dir}/webapps">
+      <fileset dir="${maven.src.dir}/webapps">
+        <include name="**/*"/>
+      </fileset>
+    </copy>
+    </postGoal>
+
+    <postGoal name="dist:prepare-src-filesystem">
+        <echo>[Heritrix] dist:prepare-src-filesystem postGoal</echo>
+        <!--Add the lib dir to our binary distribution.-->
+        <copy todir="${maven.dist.src.assembly.dir}/lib">
+          <fileset dir="./lib">
+            <include name="*.jar"/>
+          </fileset>
+        </copy>
+    </postGoal>
+</project>
