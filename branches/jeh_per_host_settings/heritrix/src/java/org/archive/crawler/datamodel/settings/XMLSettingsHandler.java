@@ -32,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -56,6 +57,9 @@ import org.xml.sax.XMLReader;
  *
  */
 public class XMLSettingsHandler extends SettingsHandler {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.settings.XMLSettingsHandler");
+
     // XML element name constants
     protected static final String XML_SCHEMA = "heritrix_settings.xsd";
     protected static final String XML_ROOT_ORDER = "crawl-order";
@@ -133,6 +137,7 @@ public class XMLSettingsHandler extends SettingsHandler {
 	}
 
 	public final void writeSettingsObject(CrawlerSettings settings, File filename) {
+        logger.fine("Writing " + filename.getAbsolutePath());
 		try {
 			StreamResult result =
 				new StreamResult(
@@ -160,6 +165,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             filename = new File(dirname, settingsFilename);
         }
         if(filename.exists()) {
+            logger.fine("Reading " + filename.getAbsolutePath());
             try {
                 XMLReader parser = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
                 InputStream file = new BufferedInputStream(new FileInputStream(filename));
