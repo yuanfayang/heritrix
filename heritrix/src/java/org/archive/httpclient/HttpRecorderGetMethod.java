@@ -26,19 +26,52 @@ import java.io.IOException;
 
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.util.HttpRecorder;
 
 /**
  * Override of GetMethod that marks the passed HttpRecorder w/ the transition
- * from HTTP head to body.
+ * from HTTP head to body and that forces a close on the responseConnection.
+ * 
+ * The actions done in this subclass used to be done by copying 
+ * org.apache.commons.HttpMethodBase, overlaying our version in place of the 
+ * one that came w/ httpclient.  Here is the patch of the difference between
+ * shipped httpclient code and our mods:
+ * <pre>
+ *    @@ -1338,6 +1346,12 @@
+ *         
+ *        public void releaseConnection() {
+ *                                                                                   
+ *   +        // HERITRIX always ants the streams closed.
+ *   +        if (responseConnection != null)
+ *   +        {
+ *   +            responseConnection.close();
+ *   +        }
+ *   +
+ *            if (responseStream != null) {
+ *                try {
+ *                    // FYI - this may indirectly invoke responseBodyConsumed.
+ *   @@ -1959,6 +1973,11 @@
+ *                        this.statusLine = null;
+ *                    }
+ *                }
+ *   +            // HERITRIX mark transition from header to content.
+ *   +            if (this.httpRecorder != null)
+ *   +            {
+ *   +                this.httpRecorder.markContentBegin();
+ *   +            }
+ *                readResponseBody(state, conn);
+ *                processResponseBody(state, conn);
+ *            } catch (IOException e) {
+ * </pre>
  * 
  * @author stack
  * @version $Id$
  */
 public class HttpRecorderGetMethod extends GetMethod 
-{
+{   
     /**
      * Instance of http recorder we're using recording this http get.
      */
