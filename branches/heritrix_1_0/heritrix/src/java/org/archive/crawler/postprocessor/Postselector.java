@@ -23,8 +23,12 @@
  */
 package org.archive.crawler.postprocessor;
 
+import java.io.File;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,13 +37,16 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
@@ -55,18 +62,29 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         FetchStatusCodes {
 
     private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.Postselector");
+        Logger.getLogger(Postselector.class.getName());
 
     private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS =
         new Boolean(true);
     private final static String ATTR_SEED_REDIRECTS_NEW_SEEDS =
         "seed-redirects-new-seed";
+    
+    public static final String ATTR_LOG_REJECTS_ENABLED = "override-logger";
+    
+    public static final String ATTR_LOG_REJECT_FILTERS =
+        "scope-rejected-uri-log-filters";
+    
+    /**
+     * Instance of rejected uris log filters.
+     */
+    private MapType rejectLogFilters = null;
+    
 
     // limits on retries TODO: separate into retryPolicy?
     //private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 
     /**
-     * @param name
+     * @param name Name of this filter.
      */
     public Postselector(String name) {
         super(name, "Post selector. \nDetermines which extracted links and " +
@@ -77,6 +95,57 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 "(seed returned 301 or 302) will be treated as a seed.",
                 DEFAULT_SEED_REDIRECTS_NEW_SEEDS));
         t.setExpertSetting(true);
+        t = addElementToDefinition(new SimpleType(ATTR_LOG_REJECTS_ENABLED,
+            "If enabled, all logging goes to a file named for this class in" +
+            " the job log" +
+            " directory.\nSet the logging level in heritrix.properites." +
+            " Logging at level INFO will log URIs rejected by scope.",
+            new Boolean(true)));
+        t.setExpertSetting(true);
+        this.rejectLogFilters = (MapType)addElementToDefinition(
+            new MapType(ATTR_LOG_REJECT_FILTERS, "Filters applied after" +
+                " an URI has been rejected\n.  If any filter returns" +
+               " TRUE, the URI is logged if the logging level is INFO.",
+            Filter.class));
+        this.rejectLogFilters.setExpertSetting(true);
+    }
+   
+    protected void initialTasks() {
+        super.initialTasks();
+        // Set up logger for this instance.  May have special directives
+        // since this class can log scope-rejected URLs.
+        if (isOverrideEnabled(null))    {
+            int limit = Heritrix.getIntProperty(
+                "java.util.logging.FileHandler.limit",
+                1024 * 1024 * 1024 * 1024);
+            int count = Heritrix.getIntProperty(
+                "java.util.logging.FileHandler.count", 1);
+            try {
+                File logsDir = getController().getLogsDir();
+                String tmp = Heritrix.
+                    getProperty("java.util.logging.FileHandler.pattern");
+                File logFile = new File(logsDir,
+                    this.getClass().getName() +
+                        ((tmp != null && tmp.length() > 0)? tmp: ".log"));
+                FileHandler fh = new FileHandler(logFile.getAbsolutePath(),
+                    limit, count, true);
+                // Manage the formatter to use.
+                tmp = Heritrix.
+                    getProperty("java.util.logging.FileHandler.formatter");
+                if (tmp != null && tmp.length() > 0) {
+                        Constructor co = Class.forName(tmp).
+                            getConstructor(new Class [] {});
+                        Formatter f = (Formatter)co.
+                            newInstance(new Object [] {});
+                        fh.setFormatter(f);
+                }
+                logger.addHandler(fh);
+                logger.setUseParentHandlers(false);
+            } catch (Exception e) {
+                logger.severe("Failed customization of logger: " +
+                    e.getMessage());
+            }
+        }
     }
 
     /* (non-Javadoc)
@@ -97,26 +166,31 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
                 CandidateURI.HIGH);
         }
+        
         // handle embeds
         if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
             handleLinkCollection(curi, baseUri, A_HTML_EMBEDS, 'E',
                 CandidateURI.NORMAL);
         }
+        
         // handle speculative embeds
         if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
             handleLinkCollection(curi, baseUri,A_HTML_SPECULATIVE_EMBEDS, 'X',
                 CandidateURI.NORMAL);
         }
+        
         // handle links
         if (curi.getAList().containsKey(A_HTML_LINKS)) {
             handleLinkCollection(
                 curi, baseUri, A_HTML_LINKS, 'L', CandidateURI.NORMAL);
         }
+        
         // handle css links
         if (curi.getAList().containsKey(A_CSS_LINKS)) {
             handleLinkCollection(
                 curi, baseUri, A_CSS_LINKS, 'E', CandidateURI.NORMAL);
         }
+        
         // handle js file links
         if (curi.getAList().containsKey(A_JS_FILE_LINKS)) {
             UURI viaURI = baseUri;
@@ -132,7 +206,6 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             handleLinkCollection( curi, viaURI,
                 A_JS_FILE_LINKS, 'X', CandidateURI.NORMAL);
         }
-
     }
 
     private UURI getBaseURI(CrawlURI curi) {
@@ -195,13 +268,37 @@ public class Postselector extends Processor implements CoreAttributeConstants,
      */
     private boolean schedule(CandidateURI caUri) {
         if(getController().getScope().accepts(caUri)) {
-            logger.finer("URI accepted: "+caUri);
+            logger.finer("Accepted: "+caUri);
             getController().getFrontier().batchSchedule(caUri);
             return true;
+        } else {
+             // Run the curi through another set of filters to see
+             // if we should log it to the scope rejection log.
+             if (logger.isLoggable(Level.INFO)) {
+                 CrawlURI curi = (caUri instanceof CrawlURI)?
+                     (CrawlURI)caUri: new CrawlURI(caUri.getUURI());
+                 if (filtersAccept(this.rejectLogFilters, curi)) {
+                     logger.info("Rejected " + curi.getUURI().toString());
+                 }
+             }
         }
-        logger.finer("URI rejected: " + caUri);
         return false;
     }
+
+     public boolean isOverrideEnabled(Object context) {
+         boolean result = true;
+         try {
+             Boolean b = (Boolean)getAttribute(context,
+                 ATTR_LOG_REJECTS_ENABLED);
+             if (b != null) {
+                 result = b.booleanValue();
+             }
+         } catch (AttributeNotFoundException e) {
+             logger.warning("Failed get of 'enabled' attribute.");
+         }
+ 
+         return result;
+     }
 
     /**
      * Method handles links according to the collection, type and scheduling

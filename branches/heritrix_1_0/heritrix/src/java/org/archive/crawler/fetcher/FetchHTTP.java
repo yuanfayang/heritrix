@@ -720,6 +720,7 @@ public class FetchHTTP extends Processor
     }
 
     public void initialTasks() {
+        super.initialTasks();
         this.soTimeout = getSoTimeout(null);
         setupHttp();
 
@@ -993,6 +994,7 @@ public class FetchHTTP extends Processor
      */
     public void finalTasks() {
         saveCookies();
+        super.finalTasks();
     }
 
     /* (non-Javadoc)
