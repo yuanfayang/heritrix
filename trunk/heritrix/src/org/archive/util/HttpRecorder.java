@@ -21,6 +21,8 @@ import org.archive.io.RecordingOutputStream;
  *
  */
 public class HttpRecorder {
+	private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
+	private static final int DEFAULT_INPUT_BUFFER_SIZE = 65536;
 	protected String backingFilenamePrefix;
 	protected RecordingInputStream ris;
 	protected RecordingOutputStream ros;
@@ -32,8 +34,8 @@ public class HttpRecorder {
 		super();
 		tempDir.mkdirs();
 		String tempDirPath = tempDir.getPath()+File.separatorChar;
-		ris = new RecordingInputStream(32768,tempDirPath+backingFilenamePrefix+".ris",2^20);
-		ros = new RecordingOutputStream(2048,tempDirPath+backingFilenamePrefix+".ros",2^12);
+		ris = new RecordingInputStream(DEFAULT_INPUT_BUFFER_SIZE,tempDirPath+backingFilenamePrefix+".ris",2^20);
+		ros = new RecordingOutputStream(DEFAULT_OUTPUT_BUFFER_SIZE,tempDirPath+backingFilenamePrefix+".ros",2^12);
 	}
 
 	/**
