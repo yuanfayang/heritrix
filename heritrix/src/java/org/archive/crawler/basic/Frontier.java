@@ -1283,7 +1283,7 @@ public class Frontier
      */
     public void deleteURIsFromPending(String match) {
         // Create QueueItemMatcher
-        QueueItemMatcher mat = new URIQueueMatcher(match);
+        QueueItemMatcher mat = new URIQueueMatcher(match, true, this);
         // Delete from pendingHigh
         pendingHighQueue.deleteMatchedItems(mat);
         // Delete from all KeyedQueues
