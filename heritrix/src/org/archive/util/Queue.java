@@ -29,4 +29,9 @@ public interface Queue {
 	Object dequeue();
 
 	long length();
+
+	/**
+	 * release any OS/IO resources associated with Queue
+	 */
+	void release();
 }

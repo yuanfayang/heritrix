@@ -108,4 +108,21 @@ public class DiskQueue implements Queue {
 		return length;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#release()
+	 */
+	public void release() {
+		if (bytes != null) {
+			try {
+				headStream.close();
+				tailStream.close();
+				bytes.discard();
+
+			} catch (IOException e) {
+				// TODO: convert to runtime? 
+				e.printStackTrace();
+			}
+		}
+	}
+
 }

@@ -32,4 +32,11 @@ public class MemQueue extends LinkedList implements Queue {
 		return (long)size();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#release()
+	 */
+	public void release() {
+		// nothing to release
+	}
+
 }
