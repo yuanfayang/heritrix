@@ -8,6 +8,7 @@ package org.archive.crawler.basic;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -28,7 +29,8 @@ import org.xbill.DNS.dns;
  *
  */
 public class FetcherDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
- 	
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
+	
  	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
 	public static final boolean DO_CLASS_TYPE_CHECKING = true;
 
@@ -44,18 +46,17 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
   		// lookup nameserver
 		String nameServer = FindServer.server();
 		
-		try{
+		try {
 			// if we're local get something more useful than the loopback
-			if(nameServer.equals("127.0.0.1")){
-				serverInetAddr = InetAddress.getLocalHost();	
-			}else{
+			if (nameServer.equals("127.0.0.1")) {
+				serverInetAddr = InetAddress.getLocalHost();
+			} else {
 				serverInetAddr = InetAddress.getByName(nameServer);
 			}
-		}catch(UnknownHostException e){
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
-		}	
+		}
   	}
-
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -65,36 +66,33 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 		Record[] rrecordSet = null; 		// store retrieved dns records
 		long now; 									// the time this operation happened
 		CrawlHost targetHost = null;
-		String DnsName = parseTargetDomain(curi);	
+		String dnsName = parseTargetDomain(curi);	
 			
-		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
-		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
+		if (!curi.getUURI().getUri().getScheme().equals("dns")) {
 			// only handles dns
 			return;
 		}
 		
-		// make sure there are not restrictions on when we should fetch this
-		if(curi.dontFetchYet()){
-			return;
-		}
-		
 		// make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
-		if(controller != null && controller.getHostCache() != null){
-			targetHost = controller.getHostCache().getHostFor(DnsName);
-		
-		// standalone operation (mostly for test cases/potential other uses)
-		}else{
-			targetHost = new CrawlHost(DnsName);
+		if (controller != null && controller.getHostCache() != null) {
+			targetHost = controller.getHostCache().getHostFor(dnsName);
+		} else {
+			// standalone operation (mostly for test cases/potential other uses)
+			targetHost = new CrawlHost(dnsName);
 		}
 		
 		// if it's an ip no need to do a lookup
-		if (DnsName.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+		if (dnsName.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+			// ideally this branch would never be reached: no CrawlURI
+			// would be created for numerical IPs
+			logger.warning("unnecessary DNS CrawlURI created: "+curi);
+			
 			try {
-				String[] octets = DnsName.split("\\.");
+				String[] octets = dnsName.split("\\.");
 
 				targetHost.setIP(
 					InetAddress.getByAddress(
-						DnsName,
+						dnsName,
 						new byte[] {
 							(byte) (new Integer(octets[0])).intValue(),
 							(byte) (new Integer(octets[1])).intValue(),
@@ -107,21 +105,14 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 				e.printStackTrace();
 			}
 			
-			// don't expire IPs
-			targetHost.setIpExpiresFromTTL(Long.MAX_VALUE);
-			curi.setFetchStatus(1);
+			// don't expire numeric IPs
+			targetHost.setIpExpires(Long.MAX_VALUE);
+			curi.setFetchStatus(S_DNS_SUCCESS);
 			
-			// no need to continue with the lookup
-			curi.cancelFurtherProcessing();
-		}
-		
-		
-		
-		// we've successfully looked up this host, don't do it again
-		if(targetHost.hasBeenLookedUp() && targetHost.getIP() != null){
+			// no further lookup necessary
 			return;
 		}
-		
+				
 //		if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
 //			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 //			return;
@@ -133,47 +124,36 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 		//TODO add support for type and class specifications in query string, for now always use defaults
 		/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
 		} */
-
-		// add the nameserver as the curi's ip, to indicate the machine that did the lookup
-		curi.getHost().setIP(serverInetAddr);
 		
 		now = System.currentTimeMillis();
-		curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 			
 		// try to get the records for this host (assume domain name)
-		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
+		rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
+		
 		targetHost.setHasBeenLookedUp();
 		
-		// on failure check if it's an ip (silly looking but likely more 
-		// effecient than using a regexp to examine the uri for every call
-		if(rrecordSet==null){
-			rrecordSet = dns.getRecordsByAddress(DnsName, TypeType);
-		}
-		if(rrecordSet != null){
-
-			curi.setFetchStatus(1);
+		if (rrecordSet != null) {
+			curi.setFetchStatus(S_DNS_SUCCESS);
+			curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
 			curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 
 			// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
 			// then update the CrawlHost
-			for(int i=0;i < rrecordSet.length; i++){
+			for (int i = 0; i < rrecordSet.length; i++) {
 
-				if(rrecordSet[i].getType() != Type.A)
+				if (rrecordSet[i].getType() != Type.A) {
 					continue;
-			
-				ARecord AsA 	= (ARecord)rrecordSet[i];
-							
+				}
+
+				ARecord AsA = (ARecord) rrecordSet[i];
 				targetHost.setIP(AsA.getAddress());
-				
-				targetHost.setIpExpires( 1000*(long)AsA.getTTL() + System.currentTimeMillis());
-
-				break; 	// only need to process one record
-			}		
-
-		}else{
-				curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-		}		
+				targetHost.setIpExpires(1000 * (long) AsA.getTTL() + now);
+				break; // only need to process one record
+			}
+		} else {
+			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+		}
 	}
 	
 	// TODO should throw some sort of exception if it's passed
