@@ -80,6 +80,11 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 		if (curi.getAList().containsKey(A_HTML_LINKS)) {
 			handleLinks(curi, baseUri);
 		}
+		// handle css links
+		if (curi.getAList().containsKey(A_CSS_LINKS)) {
+			handleCSSLinks(curi, baseUri);
+		}
+
 	}
 
 	/**
@@ -249,6 +254,33 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 		}
 	}
 
+	protected void handleCSSLinks(CrawlURI curi, URI baseUri) {
+		// treat same as embedded links
+		if (curi.getFetchStatus() >= 400) {
+			// do not follow links of error pages
+			return;
+		}
+		Collection links = (Collection) curi.getAList().getObject(A_CSS_LINKS);
+		if (links == null) {
+			return;
+		}
+		Iterator iter = links.iterator();
+		while (iter.hasNext()) {
+			String e = (String) iter.next();
+			try {
+				UURI embed = UURI.createUURI(e, baseUri);
+				CandidateURI caUri = new CandidateURI(embed);
+				caUri.setVia(curi);
+				char pathSuffix = caUri.sameDomainAs(curi) ? 'D' : 'E';
+				caUri.setPathFromSeed(curi.getPathFromSeed() + pathSuffix);
+				logger.finest("inserting embed at head " + embed);
+				schedule(caUri);
+			} catch (URISyntaxException ex) {
+				Object[] array = { curi, e };
+				controller.uriErrors.log(Level.INFO, ex.getMessage(), array);
+			}
+		}
+	}
 
 	protected void handleEmbeds(CrawlURI curi, URI baseUri) {
 		if (curi.getFetchStatus() >= 400) {
