@@ -52,6 +52,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -226,7 +227,7 @@ public class ARCWriterProcessor extends Processor
         }
     }
 
-    private void setupPool() throws IOException {
+    void setupPool() throws IOException {
 		// Set up the pool of ARCWriters.
 		this.pool =
                 new ARCWriterPool(this.outputDir,
@@ -568,6 +569,16 @@ public class ARCWriterProcessor extends Processor
     // custom serialization
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        setupPool();
+        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
+        coistream.registerFinishTask( new Runnable() {
+            public void run() {
+                try {
+                    setupPool();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }

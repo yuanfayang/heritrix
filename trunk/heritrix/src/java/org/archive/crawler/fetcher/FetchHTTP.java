@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -51,6 +53,7 @@ import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.auth.MalformedChallengeException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.protocol.Protocol;
+import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
@@ -71,6 +74,7 @@ import org.archive.httpclient.PatchedHttpClient;
 import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.ConfigurableX509TrustManager;
 import org.archive.util.HttpRecorder;
 
@@ -86,7 +90,9 @@ import org.archive.util.HttpRecorder;
  */
 public class FetchHTTP extends Processor
     	implements CoreAttributeConstants, FetchStatusCodes {
-
+    // be robust against trivial implementation changes
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
+    
     private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
 
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
@@ -123,7 +129,7 @@ public class FetchHTTP extends Processor
      */
     public static final String ATTR_TRUST = "trust-level";
 
-    PatchedHttpClient http = null;
+    transient PatchedHttpClient http = null;
 
     private int soTimeout;
 
@@ -618,7 +624,14 @@ public class FetchHTTP extends Processor
 
     public void initialTasks() {
         this.soTimeout = getSoTimeout(null);
-        CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+        setupHttp();
+
+        // load cookies from a file if specified in the order file.
+        loadCookies();
+    }
+
+    void setupHttp() throws RuntimeException {
+		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
         SingleHttpConnectionManager connectionManager =
             new SingleHttpConnectionManager();
         this.http = new PatchedHttpClient(connectionManager);
@@ -638,9 +651,6 @@ public class FetchHTTP extends Processor
                             + e.getMessage());
         }
 
-        // load cookies from a file if specified in the order file.
-        loadCookies();
-
         // Considered same as overall timeout, for now.
         // TODO: When HTTPClient stops using a monitor 'waitingThread'
         // thread to watch over the getting of the socket from socket
@@ -650,10 +660,9 @@ public class FetchHTTP extends Processor
         // this
         // frequently
         this.http.setTimeout(this.soTimeout);
+	}
 
-    }
-
-    private boolean getStrict(CrawlURI curi) {
+	private boolean getStrict(CrawlURI curi) {
         Boolean isStrict = null;
         try {
             isStrict = (Boolean) getAttribute(ATTR_STRICT, curi);
@@ -927,6 +936,33 @@ public class FetchHTTP extends Processor
         } catch (ReflectionException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+    }
+    
+    // custom serialization
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
+        // save cookies
+        stream.writeObject(http.getState().getCookies());
+    }
+    
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        Cookie cookies[] = (Cookie[]) stream.readObject();
+        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
+        coistream.registerFinishTask( new PostRestore(cookies) );
+    }
+    
+    class PostRestore implements Runnable {
+        Cookie cookies[];
+        public PostRestore(Cookie cookies[]) {
+            this.cookies = cookies;
+        }
+    	public void run() {
+            setupHttp();
+            for(int i = 0; i < cookies.length; i++) {
+                FetchHTTP.this.http.getState().addCookie(cookies[i]);
+            }
         }
     }
 }
