@@ -63,6 +63,7 @@ public class MemPoolManager {
    * May return lesser than requested number of blocks. 
    * Returns null if no free blocks were found.
    * 
+   * ToDo : Returning LinkedList may not be a good interface.
    * ToDo : Should have to give variants of this method for contiguous 
    * allocations.
    */
