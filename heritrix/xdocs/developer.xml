@@ -258,5 +258,14 @@ ${package_declaration}</source></p>
                     build under <a 
                     href="http://cruisecontrol.sourceforge.net/">cruisecontrol</a>. 
                     See the README.txt in the same directory for how to set up 
-                    continuous building using cc.</p> </section> </body> 
+                    continuous building using cc.</p> </section> 
+                    
+                    
+<section name="Settings XML Schema">
+    <p>The XML Schema that describes the crawler job order file can be viewed
+    as xhtml here,
+    <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/webapps/root/heritrix_settings.html?rev=1">heritrix_settings.html</a>.
+    </p>
+</section>
+                    </body> 
                     </document>
