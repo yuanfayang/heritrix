@@ -84,6 +84,36 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 			targetHost = new CrawlHost(DnsName);
 		}
 		
+		// if it's an ip no need to do a lookup
+		if (DnsName.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+			try {
+				String[] octets = DnsName.split("\\.");
+
+				targetHost.setIP(
+					InetAddress.getByAddress(
+						DnsName,
+						new byte[] {
+							(byte) (new Integer(octets[0])).intValue(),
+							(byte) (new Integer(octets[1])).intValue(),
+							(byte) (new Integer(octets[2])).intValue(),
+							(byte) (new Integer(octets[3])).intValue()})
+				);
+
+			} catch (UnknownHostException e) {
+				// this should never happen as a dns lookup is not made
+				e.printStackTrace();
+			}
+			
+			// TODO come up with some better way of signifying it's an ip and never dies,  Gordon?
+			targetHost.setIpExpiresFromTTL(10000000);
+			curi.setFetchStatus(1);
+			
+			// no need to continue with the lookup
+			curi.cancelFurtherProcessing();
+		}
+		
+		
+		
 		// we've successfully looked up this host, don't do it again
 		if(targetHost.hasBeenLookedUp() && targetHost.getIP() != null){
 			return;
