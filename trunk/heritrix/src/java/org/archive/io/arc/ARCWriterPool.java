@@ -64,6 +64,13 @@ public class ARCWriterPool {
     public static final int DEFAULT_MAXIMUM_WAIT = 1000 * 60 * 5;
 
     /**
+     * Don't enforce a maximum number of idle instances in pool.
+     * (To do so means GenericObjectPool will close ARCWriters
+     * prematurely.)
+     */
+    private static final int NO_MAX_IDLE = -1;
+    
+    /**
      * Pool instance.
      */
     private GenericObjectPool pool = null;
@@ -153,19 +160,13 @@ public class ARCWriterPool {
      */
     public ARCWriterPool(File arcsDir, String prefix, String suffix,
             boolean compress, int arcMaxSize, List metadata, int maxActive,
-            int maxWait)
-        throws IOException
-    {        
-        logger.fine("Configuration: prefix=" + prefix +
-                ", suffix=" + suffix +
-                ", compress=" + compress +
-                ", maxSize=" + arcMaxSize +
-                ", maxActive=" + maxActive +
-                ", maxWait=" + maxWait);
-        this.pool = new GenericObjectPool(
-            new ARCWriterFactory(arcsDir, prefix, suffix, compress, arcMaxSize,
-                metadata),
-            maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
+            int maxWait) throws IOException {
+        logger.fine("Configuration: prefix=" + prefix + ", suffix=" + suffix
+                + ", compress=" + compress + ", maxSize=" + arcMaxSize
+                + ", maxActive=" + maxActive + ", maxWait=" + maxWait);
+        this.pool = new GenericObjectPool(new ARCWriterFactory(arcsDir, prefix,
+                suffix, compress, arcMaxSize, metadata), maxActive,
+                GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait, NO_MAX_IDLE);
     }
     
     public void close() {
