@@ -9,6 +9,7 @@ package org.archive.crawler.framework;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
+import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.util.DevUtils;
 
 /**
@@ -28,7 +29,7 @@ public class ToePool extends CrawlStatusAdapter {
 	 */
 	public ToePool(CrawlController c, int count) {
 		controller = c;
-		controller.addListener(this);
+		controller.addCrawlStatusListener(this);
 		toes = new ArrayList(count);
 		// TODO make number of threads self-optimizing
 		setSize(count);

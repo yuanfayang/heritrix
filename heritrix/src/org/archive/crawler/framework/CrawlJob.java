@@ -6,7 +6,6 @@ package org.archive.crawler.framework;
  * by a CrawlJobHandler to accept and execute them.
  */
 
-import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 
 public interface CrawlJob
@@ -125,7 +124,7 @@ public interface CrawlJob
 	 */
 	public int getOrderVersion();
 	
-	// TODO: Rewrite this once an interface for a general statistics tracker has been implemented
-	public void setStatisticsTracker(StatisticsTracker tracker);
-	public StatisticsTracker getStatisticsTracker();
+	// TODO: Do JavaDoc for these
+	public void setStatisticsTracking(StatisticsTracking tracker);
+	public StatisticsTracking getStatisticsTracking();
 }

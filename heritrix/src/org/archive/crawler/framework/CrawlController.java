@@ -24,6 +24,8 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.io.LocalErrorFormatter;
@@ -61,7 +63,7 @@ public class CrawlController extends Thread {
 	public static final String XP_FRONTIER = "//behavior/frontier";
 	public static final String XP_CRAWL_SCOPE = "//scope";
 	
-	private String sExit; 
+	protected String sExit; 
 
 	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
 	
@@ -84,9 +86,14 @@ public class CrawlController extends Thread {
 	public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
 	
 	// create a statistic tracking object and have it write to the log every 
-	protected StatisticsTracker statistics = null;
+	protected StatisticsTracking statistics = null;
 	
-	private ArrayList registeredListeners;	
+	protected ArrayList registeredCrawlStatusListeners;
+	// Since there is a high probability that there will only ever by one
+	// CrawlURIDispositionListner we will use this while there is only one:
+	CrawlURIDispositionListener registeredCrawlURIDispositionListener; 
+	// And then switch to the array once there is more then one.	
+	protected ArrayList registeredCrawlURIDispositionListeners;
 
 	CrawlOrder order;
 	CrawlScope scope;
@@ -137,17 +144,149 @@ public class CrawlController extends Thread {
 	}
 	
 	/**
-	 * If an owner is specified then the CrawlController will call the 
-	 * owners jobFinished() method just before it exits.
+	 * Register for CrawlStatus events.
 	 * 
-	 * @param owner
+	 * @param cl a class implementing the CrawlStatusListener interface
+	 * 
+	 * @see CrawlStatusListener
 	 */
-	public void addListener(CrawlStatusListener cl) {
-		if(registeredListeners == null) {
-			registeredListeners = new ArrayList();	
+	public void addCrawlStatusListener(CrawlStatusListener cl) {
+		if(registeredCrawlStatusListeners == null) {
+			registeredCrawlStatusListeners = new ArrayList();	
 		}
-		registeredListeners.add(cl);
+		registeredCrawlStatusListeners.add(cl);
 	}
+
+	/**
+	 * Register for CrawlURIDisposition events.
+	 * 
+	 * @param cl a class implementing the CrawlURIDispostionListener interface
+	 * 
+	 * @see CrawlURIDispositionListener
+	 */
+	public void addCrawlURIDispositionListener(CrawlURIDispositionListener cl) {
+		registeredCrawlURIDispositionListener = null;
+		if(registeredCrawlURIDispositionListeners == null)
+		{
+			// First listener;
+			registeredCrawlURIDispositionListener = cl; //Only used for the first one while it is the only one.
+			registeredCrawlURIDispositionListeners = new ArrayList(1); //We expect it to be very small.
+		}
+		registeredCrawlURIDispositionListeners.add(cl);
+	}
+	
+	/**
+	 * Allows an external class to raise a CrawlURIDispostion crawledURISuccessful event
+	 * that will be broadcast to all listeners that have registered with the CrawlController.
+	 * 
+	 * @param curi - The CrawlURI that will be sent with the event notification.
+	 * 
+	 * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
+	 */
+	public void raiseCrawledURISuccessfulEvent(CrawlURI curi)
+	{
+		if(registeredCrawlURIDispositionListener != null)
+		{
+			// Then we'll just use that.
+			registeredCrawlURIDispositionListener.crawledURISuccessful(curi);	
+		}
+		else
+		{
+			// Go through the list.
+			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
+			{
+				Iterator it = registeredCrawlURIDispositionListeners.iterator();
+				while(it.hasNext()) {
+					((CrawlURIDispositionListener) it.next()).crawledURISuccessful(curi);
+				}
+			}	
+		}
+	}
+
+	/**
+	 * Allows an external class to raise a CrawlURIDispostion crawledURINeedRetry event
+	 * that will be broadcast to all listeners that have registered with the CrawlController.
+	 * 
+	 * @param curi - The CrawlURI that will be sent with the event notification.
+	 * 
+	 * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
+	 */
+	public void raiseCrawledURINeedRetryEvent(CrawlURI curi)
+	{
+		if(registeredCrawlURIDispositionListener != null)
+		{
+			// Then we'll just use that.
+			registeredCrawlURIDispositionListener.crawledURINeedRetry(curi);	
+		}
+		else
+		{
+			// Go through the list.
+			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
+			{
+				Iterator it = registeredCrawlURIDispositionListeners.iterator();
+				while(it.hasNext()) {
+					((CrawlURIDispositionListener) it.next()).crawledURINeedRetry(curi);
+				}
+			}	
+		}
+	}
+	
+	/**
+	 * Allows an external class to raise a CrawlURIDispostion crawledURIDisregard event
+	 * that will be broadcast to all listeners that have registered with the CrawlController.
+	 * 
+	 * @param curi - The CrawlURI that will be sent with the event notification.
+	 * 
+	 * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
+	 */
+	public void raiseCrawledURIDisregardEvent(CrawlURI curi)
+	{
+		if(registeredCrawlURIDispositionListener != null)
+		{
+			// Then we'll just use that.
+			registeredCrawlURIDispositionListener.crawledURIDisregard(curi);	
+		}
+		else
+		{
+			// Go through the list.
+			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
+			{
+				Iterator it = registeredCrawlURIDispositionListeners.iterator();
+				while(it.hasNext()) {
+					((CrawlURIDispositionListener) it.next()).crawledURIDisregard(curi);
+				}
+			}	
+		}
+	}
+
+	/**
+	 * Allows an external class to raise a CrawlURIDispostion crawledURIFailure event
+	 * that will be broadcast to all listeners that have registered with the CrawlController.
+	 * 
+	 * @param curi - The CrawlURI that will be sent with the event notification.
+	 * 
+	 * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
+	 */
+	public void raiseCrawledURIFailureEvent(CrawlURI curi)
+	{
+		if(registeredCrawlURIDispositionListener != null)
+		{
+			// Then we'll just use that.
+			registeredCrawlURIDispositionListener.crawledURIFailure(curi);	
+		}
+		else
+		{
+			// Go through the list.
+			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
+			{
+				Iterator it = registeredCrawlURIDispositionListeners.iterator();
+				while(it.hasNext()) {
+					((CrawlURIDispositionListener) it.next()).crawledURIFailure(curi);
+				}
+			}	
+		}
+	}
+
 
 	private void setupCrawlModules() throws FatalConfigurationException {
 		scope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
@@ -201,20 +340,9 @@ public class CrawlController extends Thread {
 		// modules retrieve the object from the controller during initialization 
 		// (which some do).  So here we go with that.
 		int interval = order.getIntAt(XP_STATS_INTERVAL, DEFAULT_STATISTICS_REPORT_INTERVAL);
-		statistics = new StatisticsTracker(this, interval);
-		
-		// set the log level
-		String logLevel = order.getStringAt(XP_STATS_LEVEL);
-		if(logLevel != null){
-			if(logLevel.toLowerCase().equals("mercator")){
-				statistics.setLogLevel(StatisticsTracker.MERCATOR_LOGGING);
-			}else if(logLevel.toLowerCase().equals("human")){
-				statistics.setLogLevel(StatisticsTracker.HUMAN_LOGGING);
-			}else if(logLevel.toLowerCase().equals("verbose")){
-				statistics.setLogLevel(StatisticsTracker.VERBOSE_LOGGING);
-			}			
-		}
-		//statistics.setLogLevel(StatisticsTracker.VERBOSE_LOGGING);
+		statistics = new StatisticsTracker(); //TODO: Read from configuration file what implementation of StatisticsTracking to use
+		statistics.initalize(this);
+	
 	}
 
 
@@ -281,7 +409,7 @@ public class CrawlController extends Thread {
 	
 	/** Return the object this controller is using to track crawl statistics
 	 */
-	public StatisticsTracker getStatistics(){
+	public StatisticsTracking getStatistics(){
 		return statistics;
 	}
 	
@@ -322,7 +450,7 @@ public class CrawlController extends Thread {
 						
 						// Tell everyone that we have paused
 						logger.info("Crawl job paused");
-						Iterator it = registeredListeners.iterator();
+						Iterator it = registeredCrawlStatusListeners.iterator();
 						while(it.hasNext()) {
 							((CrawlStatusListener) it.next()).crawlPaused(CrawlJob.STATUS_PAUSED);
 						}
@@ -336,7 +464,7 @@ public class CrawlController extends Thread {
 					logger.info("Crawl job resumed");
 
 					// Tell everyone that we have resumed from pause
-					Iterator it = registeredListeners.iterator();
+					Iterator it = registeredCrawlStatusListeners.iterator();
 					while(it.hasNext()) {
 						((CrawlStatusListener) it.next()).crawlResuming(CrawlJob.STATUS_RUNNING);
 					}
@@ -355,17 +483,17 @@ public class CrawlController extends Thread {
 		}
 
 		// Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
-		Iterator it = registeredListeners.iterator();
+		Iterator it = registeredCrawlStatusListeners.iterator();
 		while(it.hasNext()) {
 			((CrawlStatusListener) it.next()).crawlEnding(sExit);
 		}
 		
 		// Ok, now we are ready to exit.		
-		while(registeredListeners.size()>0)
+		while(registeredCrawlStatusListeners.size()>0)
 		{
 			// Let the listeners know that the crawler is finished.
-			((CrawlStatusListener)registeredListeners.get(0)).crawlEnded(sExit);
-			registeredListeners.remove(0);
+			((CrawlStatusListener)registeredCrawlStatusListeners.get(0)).crawlEnded(sExit);
+			registeredCrawlStatusListeners.remove(0);
 		}
 
 		logger.info("exitting run");
@@ -377,7 +505,7 @@ public class CrawlController extends Thread {
 		scratchDisk = null;
 		
 		toePool = null;
-		registeredListeners = null;
+		registeredCrawlStatusListeners = null;
 		order = null;
 		scope = null;
 		firstProcessor = null;
@@ -421,7 +549,7 @@ public class CrawlController extends Thread {
 		logger.info("Pausing crawl job ...");
 
 		// Notify listeners that we are going to pause
-		Iterator it = registeredListeners.iterator();
+		Iterator it = registeredCrawlStatusListeners.iterator();
 		while(it.hasNext()) {
 			((CrawlStatusListener) it.next()).crawlPausing(sExit);
 		}
@@ -492,66 +620,66 @@ public class CrawlController extends Thread {
 	}
 
 	/** Print to stdout basic statistics about the crawl (for stat testing) */
-	public void printStatistics(){
-	
-		//System.out.println(":");
-		//System.out.println("\t:\t" + statistics.);
-		
-		System.out.println("Fetch Progress:");
-		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
-		
-		int kPerSec = statistics.currentProcessedKBPerSec()/1000;
-		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
-		
-		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
-		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
-		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
-		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-		//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
-
-		System.out.println("Threads:");
-	
-		System.out.println("\tTotal:\t" + statistics.threadCount());
-		System.out.println("\tActive:\t" + statistics.activeThreadCount());
-
-
-		HashMap dist = statistics.getFileDistribution();
-		
-		if(dist.size() > 0){
-			Iterator keyIterator = dist.keySet().iterator();
-
-			System.out.println("Fetched Resources MIME Distribution:");
-	
-			while(keyIterator.hasNext()){
-				String key = (String)keyIterator.next();
-				String val = ((Integer)dist.get(key)).toString();
-				
-				System.out.println("\t" + key + "\t" + val);	
-			}
-		}else{
-			System.out.println("No mime statistics");
-		}
-		
-		HashMap codeDist = statistics.getStatusCodeDistribution();
-		
-		if(codeDist.size() > 0){
-			
-			Iterator keyIterator = codeDist.keySet().iterator();
-
-			System.out.println("Status Code Distribution:");
-	
-			while(keyIterator.hasNext()){
-				String key = (String)keyIterator.next();
-				String val = ((Integer)codeDist.get(key)).toString();
-				
-				System.out.println("\t" + key + "\t" + val);	
-			}
-		}else{
-			System.out.println("No code distribution statistics.");
-		}
-
-
-	}
+//	public void printStatistics(){
+//	
+//		//System.out.println(":");
+//		//System.out.println("\t:\t" + statistics.);
+//		
+//		System.out.println("Fetch Progress:");
+//		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
+//		
+//		int kPerSec = statistics.currentProcessedKBPerSec()/1000;
+//		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
+//		
+//		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
+//		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
+//		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
+//		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
+//		//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
+//
+//		System.out.println("Threads:");
+//	
+//		System.out.println("\tTotal:\t" + statistics.threadCount());
+//		System.out.println("\tActive:\t" + statistics.activeThreadCount());
+//
+//
+//		HashMap dist = statistics.getFileDistribution();
+//		
+//		if(dist.size() > 0){
+//			Iterator keyIterator = dist.keySet().iterator();
+//
+//			System.out.println("Fetched Resources MIME Distribution:");
+//	
+//			while(keyIterator.hasNext()){
+//				String key = (String)keyIterator.next();
+//				String val = ((Integer)dist.get(key)).toString();
+//				
+//				System.out.println("\t" + key + "\t" + val);	
+//			}
+//		}else{
+//			System.out.println("No mime statistics");
+//		}
+//		
+//		HashMap codeDist = statistics.getStatusCodeDistribution();
+//		
+//		if(codeDist.size() > 0){
+//			
+//			Iterator keyIterator = codeDist.keySet().iterator();
+//
+//			System.out.println("Status Code Distribution:");
+//	
+//			while(keyIterator.hasNext()){
+//				String key = (String)keyIterator.next();
+//				String val = ((Integer)codeDist.get(key)).toString();
+//				
+//				System.out.println("\t" + key + "\t" + val);	
+//			}
+//		}else{
+//			System.out.println("No code distribution statistics.");
+//		}
+//
+//
+//	}
 
 
 	/**

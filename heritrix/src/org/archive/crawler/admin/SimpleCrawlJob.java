@@ -2,6 +2,7 @@ package org.archive.crawler.admin;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlJob;
+import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.InitializationException;
 
 /**
@@ -18,7 +19,7 @@ public class SimpleCrawlJob implements CrawlJob
 	protected String sFilename; //An XML file describing a crawl order (including path)
 	protected String sStatus;
 	protected boolean isReadOnly = false;
-	protected StatisticsTracker stats;
+	protected StatisticsTracking stats;
 	protected int priority;
 	protected int orderVersion;
 	
@@ -133,15 +134,27 @@ public class SimpleCrawlJob implements CrawlJob
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlJob#setStatisticsTracker(org.archive.crawler.admin.StatisticsTracker)
 	 */
-	public void setStatisticsTracker(StatisticsTracker tracker) {
+	public void setStatisticsTracking(StatisticsTracking tracker) {
 		stats = tracker;	
 	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlJob#getStatisticsTracker()
 	 */
-	public StatisticsTracker getStatisticsTracker() {
+	public StatisticsTracking getStatisticsTracking() {
 		return stats;
+	}
+
+	/**
+	 * Return StatisticTracking as StatisticsTracker.
+	 * This implementation assumes that org.archive.crawler.admin.StatisticsTracker is being used
+	 * to track statistics.
+	 * 
+	 * @return If the StatisticsTracking is in fact org.archive.crawler.admin.StatisticsTracker then
+	 * it will be returned (after typecasting) otherwise null is returned.
+	 */
+	public StatisticsTracker getStatisticsTracker() {
+		return stats instanceof StatisticsTracker ? (StatisticsTracker)stats : null;
 	}
 
 	/* (non-Javadoc)

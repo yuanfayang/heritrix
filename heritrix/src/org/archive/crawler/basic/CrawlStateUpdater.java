@@ -9,7 +9,6 @@ package org.archive.crawler.basic;
 import java.io.IOException;
 
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -30,12 +29,9 @@ import org.archive.crawler.framework.Processor;
 public class CrawlStateUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 
 	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
-	protected StatisticsTracker statistics = null;
 	
 	public void initialize(CrawlController c){
 		super.initialize(c);
-		
-		statistics = c.getStatistics();
 	}
 
 	/* (non-Javadoc)
@@ -91,14 +87,6 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 					curi.setDontRetryBefore(curi.getServer().getRobotsExpires());
 				}
 			}
-		}
-		
-		// if we've "successfully" fetched it increment our count for this type of file
-		if(curi.getFetchStatus() > 0 ){
-			statistics.incrementTypeCount(curi.getContentType());	
-
-			// note status for anything we've tried to retrieve
-			statistics.incrementStatusCodeCount(curi.getFetchStatus());
 		}
 	}
 }

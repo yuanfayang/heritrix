@@ -10,6 +10,9 @@ import org.archive.util.TimedFixedSizeList;
  *  can be created to store meta-data about the URI that can be extracted
  *  from the CrawlURI before it is 
  * @author Parker Thompson
+ * 
+ * @deprecated Was originally intended for use by statistics trackers.  
+ * Due to memory constraints they should only store aggregate data!
  */
 public class ProcessedCrawlURIRecord implements CoreAttributeConstants, TimedFixedSizeList.TimedItem {
 
