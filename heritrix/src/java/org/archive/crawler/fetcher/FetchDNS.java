@@ -41,14 +41,12 @@ import org.xbill.DNS.dns;
 
 
 /**
- * @author gojomo
- *
+ * Processor to resolve 'dns:' URIs. 
+ * 
+ * @author multiple
  */
 public class FetchDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
-
-     // set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
-    public static final boolean DO_CLASS_TYPE_CHECKING = true;
 
     // defaults
      private short ClassType = DClass.IN;
@@ -65,36 +63,13 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         super(name, "DNS Fetcher. \nHandles DNS lookups.");
     }
 
-//      public void initialize(CrawlController c) throws AttributeNotFoundException{
-//          super.initialize(c);
-
-          // lookup nameserver
-//        String nameServer = FindServer.server();
-//
-//        try {
-//            // if we're local get something more useful than the loopback
-//            if (nameServer.equals("127.0.0.1")) {
-//                serverInetAddr = InetAddress.getLocalHost();
-//            } else {
-//                serverInetAddr = InetAddress.getByName(nameServer);
-//            }
-//
-//            // create a dns host to attach to dns records
-//            dnsServer = new CrawlServer(nameServer);
-//            dnsServer.getHost().setIP(serverInetAddr);
-//
-//        } catch (UnknownHostException e) {
-//            e.printStackTrace();
-//        }
-//      }
-
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     protected void innerProcess(CrawlURI curi) {
 
         Record[] rrecordSet = null;         // store retrieved dns records
-        long now;                                     // the time this operation happened
+        long now;                           // the time this operation happened
         CrawlServer targetServer = null;
         String dnsName = parseTargetDomain(curi);
 
@@ -102,8 +77,6 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
             // only handles dns
             return;
         }
-
-        // curi.setServer(dnsServer);
 
         // make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
         if (getController() != null && getController().getServerCache() != null) {
@@ -132,10 +105,6 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
                             (byte) (new Integer(octets[3])).intValue()}),
                         CrawlHost.IP_NEVER_EXPIRES); // never expire numeric IPs
 
-//                if(targetHost.getIP() == null){
-//                    System.out.println("crapped out creating ip address for " + dnsName);
-//                }
-
             } catch (UnknownHostException e) {
                 // this should never happen as a dns lookup is not made
 
@@ -148,22 +117,11 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
             return;
         }
 
-//        if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
-//            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-//            return;
-//        }
-
-        // give it a go
-        //curi.incrementFetchAttempts();
-
-        //TODO add support for type and class specifications in query string, for now always use defaults
-        /* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
-        } */
-
         now = System.currentTimeMillis();
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
         // try to get the records for this host (assume domain name)
+        // TODO: Bug #935119 concerns potential hang here
         rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
 
         // Set null ip to mark that we have tried to look it up even if
@@ -195,8 +153,13 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
     }
 
-    // TODO should throw some sort of exception if it's passed
-    // a non-dns uri.  currently assumes the caller knows what he/she is doing
+    /**
+     * Extract the target hostname of a 'dns:' URI. Returns null
+     * for non-'dns:' input.
+     * 
+     * @param curi
+     * @return
+     */
     public static String parseTargetDomain(CrawlURI curi){
 
         // should look like "dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]
