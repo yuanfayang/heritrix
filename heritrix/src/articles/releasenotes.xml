@@ -55,6 +55,13 @@ java.net.SocketException: Socket is not connected
           (Current version is alpha2).</para>
         </sect4>
       </sect3>
+      <sect3 id="oldlogsfromui">
+        <title>Viewing logs for old jobs via the UI</title>
+        <para>Fails. Go to the disk to see old files.
+        See <ulink url="[ 1060589 ] Can't open logs of old jobs
+        post-restart in UI">https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1060589&amp;group_id=73833&amp;atid=539099</ulink>.
+        </para>
+      </sect3>
     </sect2>
 
     <sect2 id="1_2_0_changes">
