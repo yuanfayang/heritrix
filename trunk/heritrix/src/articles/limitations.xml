@@ -20,7 +20,7 @@
   </sect1>
 
   <sect1 id="1_0_0">
-    <title>1.0.0</title>
+    <title>Heritrix 1.0.0</title>
 
     <sect2 id="958055">
       <title><ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=958055&amp;group_id=73833&amp;atid=539099">[ 958055 ] Seed ConcurrentModificationException</ulink>
