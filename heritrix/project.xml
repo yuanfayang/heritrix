@@ -54,7 +54,7 @@
        be picked up and appended to the currentVersion.  Handy for continuous
        builds if the version.build.suffix holds time of build.
     -->
-  <currentVersion>1.0.0${version.build.suffix}</currentVersion>
+  <currentVersion>1.1.0${version.build.suffix}</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
