@@ -30,7 +30,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
-import org.archive.util.PaddingStringBuffer;
 import org.archive.util.TextUtils;
 
 /**
@@ -55,22 +54,14 @@ import org.archive.util.TextUtils;
 public class ExtractorUniversal extends Processor implements CoreAttributeConstants{
 
     private static String XP_MAX_DEPTH_BYTES = "@max-depth-bytes";
-    /** Default value for how far into an unknown document we should scan - 10k*/
+    /** Default value for how far into an unknown document we should scan - 10k<br>
+     *  A value of 0 or lower will disable this.
+     */
     private static long DEFAULT_MAX_DEPTH_BYTES = 10240;
 
     private static String XP_MAX_URL_LENGTH = "@max-url-length";
-    /** Default value for how far into an unknown document we should scan - 10k*/
+    /** Maximum length for a URI that we try to match.*/
     private static long DEFAULT_MAX_URL_LENGTH = 2083;
-
-    /**
-     * A pattern to determine if a string might be a URL.
-     * 
-     * Has an internal dot or some slash, begins and ends with either '/' or a word-char
-     * <br>
-     * NOTE: Finds plenty of false postitives.
-     */
-    static final Pattern LIKELY_URL_EXTRACTOR = Pattern.compile(
-        "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)"); //TODO: IMPROVE THIS    
 
     /**
      * Matches any string that begins with http:// or https:// followed by 
@@ -350,8 +341,6 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
 
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted= 0;
-    protected long timeSpentLookingAtMatches = 0;
-    protected long timeSpentOnTLDRegExpr = 0;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
@@ -377,11 +366,15 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             StringBuffer lookat = new StringBuffer();
             long counter = 0;
             long maxdepth = getLongAt(XP_MAX_DEPTH_BYTES, DEFAULT_MAX_DEPTH_BYTES);
+            if(maxdepth<=0){
+                maxdepth = Long.MAX_VALUE;
+            }
             long maxURLLength = getLongAt(XP_MAX_URL_LENGTH, DEFAULT_MAX_URL_LENGTH);
             boolean foundDot = false;
-            while(ch != -1 && counter++ <= maxdepth){   
+            while(ch != -1 && ++counter <= maxdepth){   
                 
                 if(lookat.length()>maxURLLength){
+                    //Exceeded maximum length of a URL. Start fresh.
                     lookat = new StringBuffer();
                     foundDot = false;
                 }
@@ -393,31 +386,30 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
                     }
                     lookat.append((char)ch);
                 } else if(lookat.length() > 3 && foundDot) {
-                    long startTime = System.currentTimeMillis();
                     // It takes a bare mininum of 4 characters to form a URL
                     // Since we have at least that many let's try link extraction.
                     String newURL = lookat.toString();
-                    Matcher uri = TextUtils.getMatcher(LIKELY_URL_EXTRACTOR, newURL);
                     if(looksLikeAnURL(newURL))
                     {
                         // Looks like we found something.
+                        
+                        // Let's start with a little cleanup as we may have junk in front or at the end.
                         if(newURL.toLowerCase().indexOf("http") > 0){
-                            // Got garbage up front. Get rid of it.
+                            // Got garbage in front of the protocol. Get rid of it.
                             newURL = newURL.substring(newURL.toLowerCase().indexOf("http"));
                         }
-                        PaddingStringBuffer msg = new PaddingStringBuffer();
-                        msg.append("EU MATCH: " + newURL);
-                        msg.padTo(60);
-                        msg.append(" in " + curi.getURIString()+"\n");
-                        controller.reports.info(msg.toString());
-
+                        while(newURL.substring(newURL.length()-1).equals(".")){
+                            // URLs can't end with a dot. Strip it off.
+                            newURL = newURL.substring(0,newURL.length()-1);
+                        }
+                        
+                        // And add the URL to speculative embeds.
                         numberOfLinksExtracted++;
                         curi.addSpeculativeEmbed(newURL);
                     }
                     // Reset lookat for next string.
                     lookat = new StringBuffer();
                     foundDot = false;
-                    timeSpentLookingAtMatches += System.currentTimeMillis()-startTime;
                 } else if(lookat.length()>0) {
                     // Didn't get enough chars. Reset lookat for next string.
                     lookat = new StringBuffer();
@@ -480,10 +472,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         }
         
         potentialTLD.toLowerCase();
-        long startTime = System.currentTimeMillis();
         Matcher uri = TextUtils.getMatcher(TLDs, potentialTLD);
         boolean ret = uri.matches(); 
-        timeSpentOnTLDRegExpr += System.currentTimeMillis()-startTime;
         return ret;
     }
 
@@ -524,8 +514,6 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorUniversal\n");
         ret.append("  Function:          Link extraction on unknown file types.\n");
-        ret.append("  Match Time       : " + timeSpentLookingAtMatches + "\n");
-        ret.append("  TLD RegExpr time : " + timeSpentOnTLDRegExpr + "\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
         
