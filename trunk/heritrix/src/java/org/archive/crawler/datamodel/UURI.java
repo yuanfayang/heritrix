@@ -263,6 +263,9 @@ public class UURI extends URI {
         } else if (uri.length() == 0 && base == null){
             throw new URIException("URI length is zero (and not relative).");
         }
+        
+        // Get rid of any trailing spaces or new-lines.
+        uri = uri.trim();
 
         // Replace nbsp with normal spaces (so that they get stripped if at
         // ends, or encoded if in middle)
