@@ -1047,7 +1047,7 @@
         run.  A default set lowercases, strips wwws, removes sessionids and
         does other types of fixup such as removal of any userinfo.
         The URL page works in the same manner as the 
-        <xref id="filters" /> page.
+        <xref linkend="filters" /> page.
         </para>
         <para>To watch the canonicalization process, enable
         <literal>org.archive.crawler.url.Canonicalizer</literal>
