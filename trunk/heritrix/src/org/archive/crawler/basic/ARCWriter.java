@@ -9,8 +9,8 @@ package org.archive.crawler.basic;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -106,8 +106,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			
   			if(useCompression()){ 			
 	  			// zip each record individually
-				IAGZIPOutputStream gout = (IAGZIPOutputStream)out;
-				gout.startCompressionBlock();
+				 ((IAGZIPOutputStream)out).startCompressionBlock();
 
   			} // else skip the special gzip jive and just write to a FileOutputStream
   			
@@ -117,6 +116,11 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			}else if(scheme.equals("http")){
 	  			writeHttp(curi);
   			}
+  			
+  			if(useCompression()){
+  				((IAGZIPOutputStream)out).endCompressionBlock();
+  			}
+			
   			
   		// catch disk write errors		
   		}catch(IOException e){

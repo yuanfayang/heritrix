@@ -18,6 +18,10 @@ import org.archive.util.NullOutputStream;
  */
 public class IAGZIPOutputStream extends GZIPOutputStream {
 
+	// begin with the header block in progress
+	private boolean blockWriteInProgress = true;
+
+
 	/**
 	 * Create a custom gzip output stream, writing IA header information.
 	 * Normal gzip output streams are then used to write records to the file.
@@ -36,6 +40,10 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 		
 		writeIAHeader();
 		crc.reset();
+		
+		// end the IA Header Block
+		//blockWriteInProgress = true;
+		//endCompressionBlock();
 	}
 	
 	/*
@@ -79,16 +87,25 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 	 * us up to start writing anew.
 	 */
 	public void startCompressionBlock() throws IOException{
-		endCompressionBlock();	  
+		if(blockWriteInProgress){
+			endCompressionBlock();	  
+		}
+		
 		writeStandardHeader();
+		blockWriteInProgress = true;
 	}
   	
 	/**
 	 * Flushes output buffer and gets the output stream and deflator
 	 * ready to write a new record.
 	 */
-	protected void endCompressionBlock() throws IOException{
+	public void endCompressionBlock() throws IOException{
+		if(!blockWriteInProgress){
+			return;
+		}
+		
 		finish();
 		def.reset();
+		blockWriteInProgress = false;
 	}
 }
