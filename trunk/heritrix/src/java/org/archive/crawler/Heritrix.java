@@ -41,13 +41,12 @@ import java.util.logging.Logger;
 import javax.management.InvalidAttributeValueException;
 
 import org.apache.commons.cli.Option;
+import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.admin.CrawlJob;
-import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.garden.AllGardenSelfTests;
 
 
 /**
@@ -70,26 +69,34 @@ public class Heritrix
     /**
      * Name of the heritrix home system property.
      */
-    private static final String HOME = "heritrix.home";
+    private static final String HOME_KEY = "heritrix.home";
     
     /**
      * Name of the heritrix property whose presence says we're running w/ 
      * development file locations: i.e conf, webapps, and profiles are under
      * the src directory rather than at top-level.
      */
-    private static final String DEVELOPMENT = "heritrix.development";
+    private static final String DEVELOPMENT_KEY = "heritrix.development";
     
     /**
      * Name of the heritrix properties file.
-     *
-     * Should be available on the classpath.
      */
     private static final String PROPERTIES = "heritrix.properties";
     
     /**
      * Name of the heritrix version property.
      */
-    private static final String VERSION = "heritrix.version";
+    private static final String VERSION_KEY = "heritrix.version";
+    
+    /**
+     * Key to pull the heritrix jobs directory location from properties file.
+     */
+    private static final String JOBSDIR_KEY = "heritrix.jobsdir";
+    
+    /**
+     * Default jobs dir location.
+     */
+    private static final String JOBSDIR_DEFAULT = "jobs";
     
     /**
      * The heritrix home directory.
@@ -99,8 +106,9 @@ public class Heritrix
      */
     private static File heritrixHome = null;
     
-    private static File confDir = null;
-    private static File webappsDir = null;
+    private static File confdir = null;
+    private static File webappsdir = null;
+    private static File jobsdir = null;
 
     /**
      * Heritrix logging instance.
@@ -150,9 +158,7 @@ public class Heritrix
         
         try
         {
-            findHeritrixHome();
-            loadProperties();
-            patchLogging();
+            initialize();
             doStart(args);
         }
         
@@ -172,6 +178,50 @@ public class Heritrix
         }
     }
     
+    private static void initialize()
+        throws IOException
+    {
+        String home = System.getProperty(HOME_KEY);
+        if (home == null || home.length() <= 0)
+        {
+            home = ".";
+        }
+        
+        heritrixHome = new File(home);
+        if (!heritrixHome.exists())
+        {
+            throw new IOException("HERITRIX_HOME <" + home +
+            "> does not exist.");
+        }
+        
+        // Make sure of conf dir.
+        File dir = new File(heritrixHome,
+            isDevelopment()? "src" + File.separator + "conf": "conf");
+        if (!dir.exists())
+        {
+            throw new IOException("Cannot find conf dir: " + dir);
+        }
+        confdir = dir;
+        
+        // Now I have conf dir, load properties and patch the logging.
+        loadProperties();
+        patchLogging();
+        
+        // Make sure of webapps dir.
+        dir = new File(heritrixHome,
+                isDevelopment()? "src" + File.separator + "webapps": "webapps");
+        if (!dir.exists())
+        {
+            throw new IOException("Cannot find webapps dir: " + dir);
+        }
+        webappsdir = dir;
+        
+        // Make sure of jobs dir.
+        String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
+        jobsdir = (jobsdirStr.startsWith(File.separator))?
+            new File(jobsdirStr): new File(heritrixHome, jobsdirStr); 
+    }
+
     private static void doStart(String [] args)
         throws Exception
     {
@@ -182,7 +232,7 @@ public class Heritrix
         boolean runMode = false;
         boolean selfTest = false;
  
-        CommandLineParser clp = new CommandLineParser(args, out);
+        CommandLineParser clp = new CommandLineParser(args, out, getVersion());
         List arguments = clp.getCommandLineArguments();
         Option [] options = clp.getCommandLineOptions();
         
@@ -219,10 +269,6 @@ public class Heritrix
                     clp.usage();
                     break;
                 
-                case 'v': 
-                    clp.message(getVersion(), 0);
-                    break;
-                
                 case 'a':
                     adminLoginPassword = options[i].getValue();
                     if (!isValidLoginPasswordString(adminLoginPassword))
@@ -236,13 +282,6 @@ public class Heritrix
                     {
                         clp.usage("You must specify an ORDER_FILE with" +
                             " '--nowui' option.", 1);
-                    }
-                    if (options.length > 1)
-                    {
-                        // If more than just '--nowui' passed, then there is 
-                        // confusion on what is being asked of us.  Print usage
-                        // rather than proceed.
-                        clp.usage(1);
                     }
                     noWui = true;
                     break;
@@ -269,13 +308,6 @@ public class Heritrix
                     break;
                 
                 case 's':
-                    if (options.length > 1)
-                    {
-                        // If more than just '--nowui' passed, then there is 
-                        // confusion on what is being asked of us.  Print usage
-                        // rather than proceed.
-                        clp.usage(1);
-                    }
                     selfTest = true;
                     break;
                 
@@ -287,10 +319,33 @@ public class Heritrix
         // Ok, we should now have everything to launch the program.
         if (selfTest)
         {
-            launch();
+            // If more than just '--selftest' and '--port' passed, then
+            // there is confusion on what is being asked of us.  Print usage
+            // rather than proceed.
+            for (int i = 0; i < options.length; i++)
+            {
+                if (options[i].getId() != 'p' || options[i].getId() != 's')
+                {
+                    clp.usage(1);
+                }
+            }
+            
+            if (arguments.size() > 0)
+            {
+                // No arguments accepted by selftest.
+                clp.usage(1);
+            }
+            launch(port);
         }
         else if (noWui)
         {
+            if (options.length > 1)
+            {
+                // If more than just '--nowui' passed, then there is 
+                // confusion on what is being asked of us.  Print usage
+                // rather than proceed.
+                clp.usage(1);
+            }
             launch(crawlOrderFile);
         }
         else
@@ -324,67 +379,16 @@ public class Heritrix
         return isValid;
     }
     
-    private static void findHeritrixHome()
-        throws IOException
-    {
-        String home = System.getProperty(HOME);
-        if (home == null || home.length() <= 0)
-        {
-            home = ".";
-        }
-        
-        heritrixHome = new File(home);
-        if (!heritrixHome.exists())
-        {
-            throw new IOException("HERITRIX_HOME <" + home +
-                "> does not exist.");
-        }
-        
-        // Make sure of conf dir.
-        File dir = new File(heritrixHome,
-                isDevelopment()? "src" + File.separator + "conf": "conf");
-        if (!dir.exists())
-        {
-            throw new IOException("Cannot find conf dir: " + dir);
-        }
-        confDir = dir;
-        
-        // Make sure of webapps dir.
-        dir = new File(heritrixHome,
-                isDevelopment()? "src" + File.separator + "webapps": "webapps");
-        if (!dir.exists())
-        {
-            throw new IOException("Cannot find webapps dir: " + dir);
-        }
-        webappsDir = dir;
-    }
-    
     private static boolean isDevelopment()
     {
-        return System.getProperty(DEVELOPMENT) != null;  
-    }
-    
-    /**
-     * @return The conf directory under HERITRIX_HOME.
-     */
-    public static File getConfDir()
-    {
-        return confDir;
-    }
-    
-    /**
-     * @return The webapps directory under HERITRIX_HOME.
-     */
-    public static File getWebappsDir()
-    {
-        return webappsDir;
+        return System.getProperty(DEVELOPMENT_KEY) != null;  
     }
     
     private static void loadProperties()
         throws IOException
     {    
         InputStream is =
-            new FileInputStream(new File(getConfDir(), PROPERTIES));
+            new FileInputStream(new File(getConfdir(), PROPERTIES));
         if (is != null)
         {
             properties = new Properties();
@@ -416,23 +420,77 @@ public class Heritrix
         // No user-set logging properties established; use defaults 
         // from distribution-packaged 'heritrix.properties'
         InputStream is =
-            new FileInputStream(new File(getConfDir(), PROPERTIES));
+            new FileInputStream(new File(getConfdir(), PROPERTIES));
         if (is != null)
         {
             LogManager.getLogManager().readConfiguration(is);
         }
     }
+
+    /**
+     * Get a property value from the properties file or from system properties.
+     * 
+     * System property overrides content of heritrix.properties file.
+     * 
+     * @param key Key for property to find.
+     * 
+     * @return Property if found or default if no such property.
+     */
+    private static String getProperty(String key)
+    {
+        return getProperty(key, null);
+    }
+    
+    /**
+     * Get a property value from the properties file or from system properties.
+     * 
+     * System property overrides content of heritrix.properties file.
+     * 
+     * @param key Key for property to find.
+     * @param fallback Default value to use if property not found.
+     * 
+     * @return Property if found or default if no such property.
+     */
+    private static String getProperty(String key, String fallback)
+    {
+        String value = System.getProperty(key);
+        if (value == null && properties !=  null)
+        {
+            value = properties.getProperty(key);
+        }
+        return (value != null)? value: fallback;
+    }
     
     /**
      * Run the selftest
+     * 
+     * @param port Port number to use for web UI.
      *
+     * @exception Exception
      */
-    private static void launch()
+    private static void launch(int port) throws Exception
     {
+        // Put up the webserver.  It has the selftest garden to go against.
+        SimpleHttpServer server = new SimpleHttpServer(port);
+        server.startServer();
+        
         // TODO: DO THIS PROPERLY.
         // TODO: If an error starting up I shouldn't run the tests.
-        out.println("Starting SelfTest");
-        junit.textui.TestRunner.run(AllGardenSelfTests.suite());       
+        // out.println("Starting SelfTest");
+        // junit.textui.TestRunner.run(AllGardenSelfTests.suite());      
+        
+        File selftestDir = new File(getConfdir(), "selftest");
+        File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
+        File seedFile = new File(selftestDir, "seeds-selftest.xml");
+        jobHandler = new CrawlJobHandler();
+        CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Selftest");
+        // Now make a new job based off job just created.  This should get my
+        // job into the jobs directory rather than have it log and arc beside
+        // order file's original location.
+        job = jobHandler.newJob(job, "selftest", "Integration self test",
+            seedFile.getAbsolutePath());
+        jobHandler.addJob(job);
+        jobHandler.startCrawler();
     }
 
     /**
@@ -468,29 +526,26 @@ public class Heritrix
     private static void launch(String crawlOrderFile, boolean runMode, 
             int port, String adminLoginPassword)
         throws Exception
-    {
-        jobHandler = new CrawlJobHandler();
-        String status = null;
- 
+    { 
         String adminUN =
             adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
 		User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
 		
+        String status = null;
         if (crawlOrderFile != null)
         {
-            CrawlJob cjob = new CrawlJob(jobHandler.getNextJobUID(),
-                "Auto launched",
-                new XMLSettingsHandler(new File(crawlOrderFile)),
-                CrawlJob.PRIORITY_HIGH);
-            jobHandler.addJob(cjob);
+            jobHandler = new CrawlJobHandler();
+            CrawlJob job = createCrawlJob(jobHandler, new File(crawlOrderFile),
+                "Auto launched");
+            jobHandler.addJob(job);
             if(runMode)
             {
                 jobHandler.startCrawler();
                 status = "Job being crawled: " + crawlOrderFile;
             }
-            else if(crawlOrderFile != null)
+            else
             {
                 status = "Crawl job ready and pending: " + crawlOrderFile;
             }
@@ -501,11 +556,11 @@ public class Heritrix
             // The use case is that jobs are to be run on a schedule and that
             // if the crawler is in run mode, then the scheduled job will be 
             // run at appropriate time.  Otherwise, not.
+            status = "Crawler set to run mode but no order file to crawl";
         }
 
         SimpleHttpServer server = new SimpleHttpServer(port);
         server.startServer();
-
         InetAddress addr = InetAddress.getLocalHost();
         String uiLocation = "http://" + addr.getHostName() + ":" + port +
             "/admin";
@@ -518,6 +573,16 @@ public class Heritrix
             out.println(status);
         }
     }
+    
+    private static CrawlJob createCrawlJob(CrawlJobHandler jobHandler,
+            File crawlOrderFile, String descriptor)
+        throws InvalidAttributeValueException
+    {
+        XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
+        settings.initialize();
+        return new CrawlJob(jobHandler.getNextJobUID(), descriptor, settings,
+            CrawlJob.PRIORITY_HIGH);
+    }
 
     /**
      * Get the heritrix version.
@@ -526,7 +591,7 @@ public class Heritrix
      */
     public static String getVersion()
     {
-        return (properties != null)? properties.getProperty(VERSION): null;
+        return (properties != null)? properties.getProperty(VERSION_KEY): null;
     }
     
     /**
@@ -549,5 +614,37 @@ public class Heritrix
     public static CrawlJobHandler getJobHandler()
     {
         return jobHandler;    
+    }
+    
+    /**
+     * @return The conf directory under HERITRIX_HOME.
+     */
+    public static File getConfdir()
+    {
+        return confdir;
+    }
+    
+    /**
+     * @return The webapps directory under HERITRIX_HOME.
+     */
+    public static File getWebappsdir()
+    {
+        return webappsdir;
+    }
+    
+    /**
+     * @return The directory into which we put jobs.
+     */
+    public static File getJobsdir()
+    {
+        return jobsdir;
+    }
+    
+    /**
+     * @return Returns the heritrixHome.
+     */
+    public static File getHeritrixHome()
+    {
+        return heritrixHome;
     }
 }

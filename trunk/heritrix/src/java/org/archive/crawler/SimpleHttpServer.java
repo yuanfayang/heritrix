@@ -77,7 +77,7 @@ public class SimpleHttpServer
      */
     private static String getWebappsPath()
     {
-        String webappsPath = Heritrix.getWebappsDir().getAbsolutePath();
+        String webappsPath = Heritrix.getWebappsdir().getAbsolutePath();
         if (!webappsPath.endsWith(File.separator))
         {
             webappsPath = webappsPath + File.separator;

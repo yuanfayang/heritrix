@@ -178,7 +178,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return the directory where profiles are stored. 
      */
     private String getProfilesDirectory(){
-        return Heritrix.getConfDir().getAbsolutePath() + File.separator +
+        return Heritrix.getConfdir().getAbsolutePath() + File.separator +
             "profiles";
     }
     
@@ -462,9 +462,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new crawl job.
      * @throws FatalConfigurationException
      */
-    public CrawlJob newJob(CrawlJob baseOn, String name, String description, String seeds)
-        throws FatalConfigurationException{
-        if( newJob !=null){
+    public CrawlJob newJob(CrawlJob baseOn, String name, String description,
+            String seeds)
+        throws FatalConfigurationException
+    {
+        if (newJob !=null){
             //There already is a new job. Discard it.
             discardNewJob();
         }
@@ -478,7 +480,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     name,
                     description,
                     seeds,
-                    "jobs" + File.separator + name + "-" + UID,
+                    Heritrix.getJobsdir().getAbsolutePath() + File.separator +
+                        name + "-" + UID,
                     "job-"+name+".xml",
                     "seeds-"+name+".txt"),
                 CrawlJob.PRIORITY_AVERAGE);
