@@ -332,9 +332,10 @@ ARCWriterSettings, FetchStatusCodes {
                 writeHttp(curi);
             }
         } catch (IOException e) {
-            curi.addLocalizedError(this.getName(), e, "WriteARCRecord");
-            Heritrix.addAlert(new Alert("Failed write of ARC Record",
-                e.getMessage(), e, Level.SEVERE));
+            curi.addLocalizedError(this.getName(), e, "WriteARCRecord: " +
+                curi.toString());
+            Heritrix.addAlert(new Alert("Failed write of ARC Record: " +
+                curi.toString(), e.getMessage(), e, Level.SEVERE));
         }
     }
 
