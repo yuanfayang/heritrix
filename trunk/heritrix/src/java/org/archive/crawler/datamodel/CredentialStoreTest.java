@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.datamodel.settings;
+package org.archive.crawler.datamodel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -32,6 +32,11 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
+
+import org.archive.crawler.datamodel.*;
+import org.archive.crawler.datamodel.credential.*;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SettingsFrameworkTestCase;
 
 
 /**

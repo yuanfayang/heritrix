@@ -34,7 +34,6 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.settings.CredentialStore;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.RegularExpressionConstraint;
@@ -208,7 +207,7 @@ public class CrawlOrder extends ModuleType {
         e.setExpertSetting(true);
         
         e = addElementToDefinition(
-            new CredentialStore(CredentialStore.ATTR_NAME));
+           new CredentialStore(CredentialStore.ATTR_NAME));
         e.setOverrideable(true);
         e.setExpertSetting(true);
     }
