@@ -53,18 +53,17 @@ public class DomainScopeTest extends TestCase {
      * false.
      * 
      * Also overwrite getSeedlsit so the test seeds is used. 
-     */ 
+     */
     private class TestUnitDomainScope extends DomainScope {
-        
+
         public TestUnitDomainScope(String name) {
             super(name);
         }
-        
+
         public List getSeedlist() {
             return seeds;
         }
-        
-        
+
         protected boolean additionalFocusAccepts(Object o) {
             return false;
         }
@@ -77,11 +76,11 @@ public class DomainScopeTest extends TestCase {
             return false;
         }
     }
-    
+
     public void setUp() throws URIException {
         seeds = new ArrayList();
-        urlsInScope  = new ArrayList();
-        urlsOutOfScope  = new ArrayList();
+        urlsInScope = new ArrayList();
+        urlsOutOfScope = new ArrayList();
         dc = new TestUnitDomainScope("TESTCASE");
 
         // Add seeds
@@ -89,6 +88,9 @@ public class DomainScopeTest extends TestCase {
         addURL(seeds, "http://b.com/");
         addURL(seeds, "http://www11.c.com");
         addURL(seeds, "http://www.x.y.z.com/index.html");
+        addURL(seeds, "http://www.1.com/index.html");
+        addURL(seeds, "http://www.a_b.com/index.html");
+
 
         // Add urls in domain scope
         addURL(urlsInScope, "http://www.a.com/");
@@ -110,13 +112,15 @@ public class DomainScopeTest extends TestCase {
         addURL(urlsInScope, "http://www1.x.y.z.com/");
         addURL(urlsInScope, "http://x.y.z.com/");
         addURL(urlsInScope, "http://xyz.x.y.z.com/");
-        
+        addURL(urlsInScope, "http://1.com/index.html");
+        addURL(urlsInScope, "http://a_b.com/index.html");
+
         // Add urls out of scope
         addURL(urlsOutOfScope, "http://a.co");
         addURL(urlsOutOfScope, "http://a.comm");
+        addURL(urlsOutOfScope, "http://aa.com");
         addURL(urlsOutOfScope, "http://z.com");
         addURL(urlsOutOfScope, "http://y.z.com");
-
     }
 
     public void addURL(ArrayList list, String url) throws URIException {
@@ -133,7 +137,8 @@ public class DomainScopeTest extends TestCase {
     public void testOutOfScope() throws URIException {
         for (Iterator i = this.urlsOutOfScope.iterator(); i.hasNext();) {
             Object url = i.next();
-            assertFalse("Should not be in domain scope: " + url, 
+            assertFalse(
+                "Should not be in domain scope: " + url,
                 dc.accepts(url));
         }
     }

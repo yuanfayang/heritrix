@@ -71,7 +71,8 @@ public class DomainScope extends CrawlScope {
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
     public static final String ATTR_ADDITIONAL_FOCUS_FILTER = 
         "additionalScopeFocus";
-
+    public static final String DOT = ".";
+    
     Filter additionalFocusFilter;
     Filter transitiveFilter;
 
@@ -80,8 +81,8 @@ public class DomainScope extends CrawlScope {
         setDescription(
             "A scope for domain crawls. Crawls made with this scope will be " +
             "limited to the domain of it's seeds. It will however reach " +
-            "subdomains of the seeds' original domains. www[#].host is considered " +
-            "to be the same as host.");
+            "subdomains of the seeds' original domains. www[#].host is " +
+            "considered to be the same as host.");
 
         this.additionalFocusFilter = (Filter) addElementToDefinition(
                 new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
@@ -99,6 +100,8 @@ public class DomainScope extends CrawlScope {
     }
 
     /**
+     * Check if an URI is part of this scope.
+     * 
      * @param o An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
@@ -112,40 +115,46 @@ public class DomainScope extends CrawlScope {
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
         List seeds = getSeedlist();
+        String seedDomain = null;
+        String candidateDomain =null;
+
+        // Get candidate domain where www[0-9]*\. is stripped.
+        try {
+            candidateDomain = u.getHostBasename();
+        }
+        catch (URIException e1) {
+            logger.severe(
+                "UURI getHostBasename failed for candidate URI: " + u);
+        }        
+        if (candidateDomain == null) {
+            // either an opaque, unfetchable, or unparseable URI
+            return false;
+        }
+
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI s = (UURI)i.next();
-                if(isSameHost(s, u)) {
-                    return true;
-                }
-                
-                // Might be a close-enough match
-                String seedDomain = null;
+                // Get seed domain where www[0-9]*\. is stripped.                
                 try {
-                    seedDomain = s.getHost();
+                    seedDomain = s.getHostBasename();
                 }
                 catch (URIException e) {
-                    logger.severe("Failed get host: " + s);
+                    logger.severe("UURI getHostBasename failed for seed: " + s);
                 }
                 if (seedDomain == null) {
-                    // GetHost can come back null.  See
-                    // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+                    // GetHost can come back null.  See bug item 
+                    // [ 910120 ] java.net.URI#getHost fails when leading digit
                     continue;
                 }
-                // Strip www[#].
-                seedDomain = seedDomain.replaceFirst("^www\\d*\\.", "");
-                String candidateDomain = null;
-                try {
-                    candidateDomain = u.getHost();
-                }
-                catch (URIException e1) {
-                    logger.severe("Failed get host from " + u);
-                }
-                if (candidateDomain == null) {
-                    // either an opaque, unfetchable, or unparseable URI
-                    continue;
+                
+                // Check if stripped hosts are same. 
+                if (seedDomain.equals(candidateDomain)) {
+                    return true;
                 }
 
+                // Hosts are not same. Adjust seed basename to check if
+                // candidate domain ends with .seedDomain
+                seedDomain = DOT + seedDomain;               
                 if (seedDomain.regionMatches(0, candidateDomain,
                     candidateDomain.length() - seedDomain.length(),
                     seedDomain.length())) {
@@ -158,10 +167,6 @@ public class DomainScope extends CrawlScope {
         return false;
     }
     
-    /**
-     *  
-     * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
-     */
     protected boolean additionalFocusAccepts(Object o) {
         return additionalFocusFilter.accepts(o);
     }
