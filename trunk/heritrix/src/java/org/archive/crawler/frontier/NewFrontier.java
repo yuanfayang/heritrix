@@ -35,10 +35,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.apache.commons.collections.Predicate;
-import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlServer;
@@ -567,44 +564,6 @@ public class NewFrontier
             Level.INFO,
             curi.getUURI().toString(),
             array );
-    }
-
-    /**
-     * Checks if a recently completed CrawlURI that did not finish successfully
-     * needs to be retried (processed again after some time elapses)
-     *
-     * @param curi The CrawlURI to check
-     * @return True if we need to retry.
-     * @throws AttributeNotFoundException If problems occur trying to read the
-     *            maximum number of retries from the settings framework.
-     */
-    private boolean needsRetrying(CrawlURI curi) {
-        if (overMaxRetries(curi)) {
-            return false; 
-        }
-        
-        switch (curi.getFetchStatus()) {
-            case HttpStatus.SC_UNAUTHORIZED:
-                // We can get here though usually a positive status code is
-                // a success.  We get here if there is rfc2617 credential data
-                // loaded and we're supposed to go around again.  See if any
-                // rfc2617 credential present and if there, assume it got
-                // loaded in FetchHTTP on expectation that we're to go around
-                // again.  If no rfc2617 loaded, we should not be here.
-                boolean loaded = curi.hasRfc2617CredentialAvatar();
-                if (!loaded) {
-                    logger.severe("Have 401 but no creds loaded " + curi);
-                }
-                return loaded;
-            case S_DEFERRED:
-            case S_CONNECT_FAILED:
-            case S_CONNECT_LOST:
-                // these are all worth a retry
-                // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
-                return true;
-            default:
-                return false;
-        }
     }
 
     /**
