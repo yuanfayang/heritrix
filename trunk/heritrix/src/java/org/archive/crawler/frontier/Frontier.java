@@ -1389,6 +1389,7 @@ public class Frontier
         }
         // Delete from pendingQueue
         numberOfDeletes += pendingQueue.deleteMatchedItems(mat);
+        queuedCount -= numberOfDeletes;
         return numberOfDeletes;
     }
 
@@ -1521,8 +1522,6 @@ public class Frontier
                     this.alreadyIncluded.add(u);
                 } catch (URIException e) {
                     e.printStackTrace();
-                } catch (NullPointerException e){
-                	e.printStackTrace();
                 }
             }
         }
@@ -1531,6 +1530,7 @@ public class Frontier
         // visitation
         reader = new BufferedReader(new FileReader(pathToLog));
         while((read = reader.readLine()) != null) {
+            // Lines 3 chars or shorter do not have a URI!
             if(read.startsWith(F_ADD)) {
                 UURI u;
                 try {
@@ -1544,8 +1544,6 @@ public class Frontier
                     }
                 } catch (URIException e) {
                     e.printStackTrace();
-                } catch (NullPointerException e){
-                	e.printStackTrace();
                 }
             }
         }
