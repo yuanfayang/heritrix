@@ -81,3 +81,14 @@ select
 {
 	text-decoration: none;
 }
+
+a.underLineOnHover
+{
+	text-decoration: none;
+}
+
+a:hover.underLineOnHover
+{
+	text-decoration: underline;
+}
+
