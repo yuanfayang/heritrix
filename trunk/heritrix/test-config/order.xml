@@ -35,22 +35,28 @@
   </processor>
   <processor 
     name="ExtractorHTTP" 
-    class="org.archive.crawler.basic.ExtractorHTTP"
+    class="org.archive.crawler.extractor.ExtractorHTTP"
     next="ExtractorHTML">
   </processor>
   <processor 
     name="ExtractorHTML" 
-    class="org.archive.crawler.basic.ExtractorHTML"
+    class="org.archive.crawler.extractor.ExtractorHTML"
     next="ExtractorDOC">
   </processor>
   <processor
   	name="ExtractorDOC"
-  	class="org.archive.crawler.basic.ExtractorDOC"
+  	class="org.archive.crawler.extractor.ExtractorDOC"
   	next="ExtractorSWF">
   </processor>
   <processor
     name="ExtractorSWF"
-    class="org.archive.crawler.basic.ExtractorSWF"
+    class="org.archive.crawler.extractor.ExtractorSWF"
+    next="ExtractorPDF"
+    >
+ </processor>
+ <processor
+   	name="ExtractorPDF"
+   	class="org.archive.crawler.extractor.ExtractorPDF"
     next="Archiver">
   </processor>
   <processor 
@@ -78,12 +84,12 @@
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
-  <max-toe-threads value="2" />
-  <max-link-depth value="40" />
+  <max-toe-threads value="1" />
+  <max-link-depth value="3" />
  </limits>
 
 </crawler-behavior>
 
  <disk path="arcs/" />
- <arc-file prefix="arcprefix" />
+ <arc-file prefix="archive-" />
 </crawl-order>
