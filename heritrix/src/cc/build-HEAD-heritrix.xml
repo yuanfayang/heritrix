@@ -6,20 +6,19 @@
     call one target.
  -->
 
-<project name="build-ArchiveOpenCrawler" 
-        default="build" 
-        basedir="checkout/ArchiveOpenCrawler">
+<project name="HEAD-heritrix" default="build" 
+        basedir="checkout/HEAD-heritrix">
+    <!--Shouldn't have to change anything below here. -->
 
     <property name="maven.home" value="/home/stack/bin/maven" />
 
     <target name="build">
-
         <!-- Get the latest from CVS -->
-        <cvs command="up -d -P"/>
+        <cvs command="up -d -P ${cvs.revision}"/>
 
         <!-- Write timestamp build suffix into build.properties -->
         <propertyfile file="build.properties"
-                comment="Updated by build-ArchiveOpenCrawler.xml">
+                comment="Updated by ${ant.project.name}">
             <entry  key="version.build.timestamp" type="date" value="now"
                 pattern="yyyyMMddHHmm"/>
             <entry  key="version.build.suffix"
@@ -31,8 +30,7 @@
             (Otherwise, version.build.suffix will have the previous value, 
             not the one just written above).
         -->
-            <antcall target="maven"/>
-
+        <antcall target="maven"/>
     </target>
 
     <target name="maven">
