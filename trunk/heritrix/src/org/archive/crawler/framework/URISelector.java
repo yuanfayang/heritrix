@@ -26,4 +26,9 @@ public interface URISelector {
 	 */
 	void inter(CrawlURI currentCuri);
 
+	/**
+	 * 
+	 */
+	void initialize(CrawlController c);
+
 }

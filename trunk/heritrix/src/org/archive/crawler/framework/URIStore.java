@@ -24,5 +24,9 @@ public interface URIStore {
 	public void peekFrom(AnnotatedURI auri, Object key);
 	public long count(Object key);
 	public long countFrom(Object key);
+	/**
+	 * 
+	 */
+	void initialize(CrawlController c);
 	
 }

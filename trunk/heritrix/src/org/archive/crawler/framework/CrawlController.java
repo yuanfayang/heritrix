@@ -38,12 +38,19 @@ public class CrawlController {
 	public void initialize(CrawlOrder o) {
 		order = o;
 		
-		scheduler = (URIScheduler) order.getBehavior().instantiate("scheduler");
 		store = (URIStore) order.getBehavior().instantiate("store");
+		scheduler = (URIScheduler) order.getBehavior().instantiate("scheduler");
 		selector = (URISelector) order.getBehavior().instantiate("selector");
 		
 		entryProcessor = (Processor) order.getBehavior().instantiateAllInto("processors/processor",processors);
+		
+		store.initialize(this);
+		scheduler.initialize(this);
+		selector.initialize(this);
+		
+		// TODO: initialize processors?
 	}
+	
 	/**
 	 * 
 	 */
@@ -109,6 +116,20 @@ public class CrawlController {
 			toes.add(newThread);
 			newThread.start();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	public CrawlOrder getOrder() {
+		return order;
+	}
+
+	/**
+	 * @return
+	 */
+	public URIStore getStore() {
+		return store;
 	}
 
 }
