@@ -7,6 +7,7 @@
 	/* Various settings with default values (where applicable) */
 	String mode = request.getParameter("mode");
 	String logText = "";
+	int defaultNumberOfLines = 50;
 	int iTime = -1;
 	int linenumber = 1;
 	String timestamp = null;
@@ -22,90 +23,96 @@
 	}
 
 	/* Location of logs */
-	CrawlOrder crawlOrder = handler.getDefaultCrawlOrder(); //We'll use the default crawl order if we have no other choice
+	CrawlOrder crawlOrder = null;
 	if(request.getParameter("job") != null && request.getParameter("job").length() > 0){
 		//Get logs for specific job. This assumes that the logs for each job are stored in a unique location.
 		crawlOrder = handler.getJob(request.getParameter("job")).getCrawlOrder();
 	}else{
 		if(handler.getCurrentJob() != null){
-			// Use current job settings rather then default
+			// If no specific job then assume current one
 			crawlOrder = handler.getCurrentJob().getCrawlOrder();
 		} else if(handler.getCompletedJobs().size() > 0){
 			// If no current job, use the latest completed job.
 			crawlOrder = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getCrawlOrder();
 		}
 	}
-//	String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH)+"/";
-	String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH) + "/";
-	diskPath = crawlOrder.getPathRelativeToOrderFile(diskPath);
 	
-	
-	if(mode != null && mode.equalsIgnoreCase("number"))
+	if(crawlOrder != null)
 	{
-		/* Get log by line number */
-	
-		try
+		String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH) + "/";
+		diskPath = crawlOrder.getPathRelativeToOrderFile(diskPath);
+		// Got a valid crawl order, find it's logs
+		if(mode != null && mode.equalsIgnoreCase("number"))
 		{
-			linenumber = Integer.parseInt(request.getParameter("linenumber"));
-		}
-		catch(Exception e){/*Ignore*/}
-	
-		logText = LogReader.get(diskPath + fileName,linenumber,30).replaceAll(" ","&nbsp;");
-	}
-	else if(mode != null && mode.equalsIgnoreCase("time"))
-	{
-		/* View by timestamp */
-		timestamp = request.getParameter("timestamp");
-	
-		if(timestamp == null || timestamp.length() < 1)
-		{
-			// No data
-			logText = "No timestamp!";
-		}	
-		else
-		{
-			int timestampLinenumber = LogReader.findFirstLineContaining(diskPath+fileName,timestamp+".*");
-			logText = LogReader.get(diskPath + fileName,timestampLinenumber,30).replaceAll(" ","&nbsp;");
-		}
-	}
-	else if(mode != null && mode.equalsIgnoreCase("regexpr"))
-	{
-		/* View by regexpr */
-		regexpr = request.getParameter("regexpr");
+			/* Get log by line number */
 		
-		if(regexpr == null)
-		{
-			logText = "No regular expression";
-		}
-		else
-		{
-			ln = request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true");
-			indent = request.getParameter("indent")!=null&&request.getParameter("indent").equalsIgnoreCase("true");
-			
-			if(indent)
+			try
 			{
-				logText = LogReader.getByRegExpr(diskPath + fileName, regexpr, " ", ln);
+				linenumber = Integer.parseInt(request.getParameter("linenumber"));
+			}
+			catch(Exception e){/*Ignore*/}
+		
+			logText = LogReader.get(diskPath + fileName,linenumber,defaultNumberOfLines).replaceAll(" ","&nbsp;");
+		}
+		else if(mode != null && mode.equalsIgnoreCase("time"))
+		{
+			/* View by timestamp */
+			timestamp = request.getParameter("timestamp");
+		
+			if(timestamp == null || timestamp.length() < 1)
+			{
+				// No data
+				logText = "No timestamp!";
+			}	
+			else
+			{
+				int timestampLinenumber = LogReader.findFirstLineContaining(diskPath+fileName,timestamp+".*");
+				logText = LogReader.get(diskPath + fileName,timestampLinenumber,defaultNumberOfLines).replaceAll(" ","&nbsp;");
+			}
+		}
+		else if(mode != null && mode.equalsIgnoreCase("regexpr"))
+		{
+			/* View by regexpr */
+			regexpr = request.getParameter("regexpr");
+			
+			if(regexpr == null)
+			{
+				logText = "No regular expression";
 			}
 			else
 			{
-				logText = LogReader.getByRegExpr(diskPath + fileName, regexpr, 0, ln);
+				ln = request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true");
+				indent = request.getParameter("indent")!=null&&request.getParameter("indent").equalsIgnoreCase("true");
+				
+				if(indent)
+				{
+					logText = LogReader.getByRegExpr(diskPath + fileName, regexpr, " ", ln);
+				}
+				else
+				{
+					logText = LogReader.getByRegExpr(diskPath + fileName, regexpr, 0, ln);
+				}
 			}
 		}
-	}
-	else
-	{
-		/* View by tail (default) */
-		mode = "tail";
-
-		try
+		else
 		{
-			iTime = Integer.parseInt(request.getParameter("time"));
+			/* View by tail (default) */
+			mode = "tail";
+	
+			try
+			{
+				iTime = Integer.parseInt(request.getParameter("time"));
+			}
+			catch(Exception e){/* Ignore - default value will do */}
+			
+			logText = LogReader.tail(diskPath + fileName,defaultNumberOfLines).replaceAll(" ","&nbsp;");
 		}
-		catch(Exception e){/* Ignore - default value will do */}
-		
-		logText = LogReader.tail(diskPath + fileName,30).replaceAll(" ","&nbsp;");
+	} 
+	else 
+	{
+		logText = "Invalid or missing crawl order";
 	}
-
+	
 	String title = "View logs";
 	int tab = 3;
 	
@@ -129,7 +136,7 @@
 		}
 	</script>
 
-	<form method="post" action="logs.jsp" name="frmLogs">
+	<form method="get" action="logs.jsp" name="frmLogs">
 		<table border="0" cellspacing="0" cellpadding="0">
 			<tr>
 				<td height="3"></td>
@@ -145,6 +152,7 @@
 								<a href="javascript:viewLog('crawl.log')" <%=fileName.equalsIgnoreCase("crawl.log")?"style='text-decoration: none; color: #000000'":""%>>crawl.log</a><br>
 								<a href="javascript:viewLog('local-errors.log')" <%=fileName.equalsIgnoreCase("local-errors.log")?"style='text-decoration: none; color: #000000'":""%>>local-errors.log</a><br>
 								<a href="javascript:viewLog('progress-statistics.log')" <%=fileName.equalsIgnoreCase("progress-statistics.log")?"style='text-decoration: none; color: #000000'":""%>>progress-statistics.log</a><br>
+								<a href="javascript:viewLog('reports.log')" <%=fileName.equalsIgnoreCase("reports.log")?"style='text-decoration: none; color: #000000'":""%>>reports.log</a><br>
 								<a href="javascript:viewLog('runtime-errors.log')" <%=fileName.equalsIgnoreCase("runtime-errors.log")?"style='text-decoration: none; color: #000000'":""%>>runtime-errors.log</a><br>
 								<a href="javascript:viewLog('uri-errors.log')" <%=fileName.equalsIgnoreCase("uri-errors.log")?"style='text-decoration: none; color: #000000'":""%>>uri-errors.log</a><br>
 								<input type="hidden" name="log" value="<%=fileName%>">
@@ -242,7 +250,7 @@
 			</tr>
 		</table>
 	</form>
-	
+	<p>	
 	<table border="0" cellspacing="0" cellpadding="0">
 		<tr>
 			<td colspan="2"></td>
