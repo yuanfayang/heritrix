@@ -6,26 +6,27 @@
  <scope 
    class="org.archive.crawler.basic.Scope"
    mode="broad"
-   max-link-hops="5"
+   max-link-hops="50"
    max-trans-hops="5">
    
   <seeds>
+ # http://dmoz.org/odphead.gif 
  # http://www.rawr.net/index.swf
-  http://www.ccianet.org/papers/cyberinsecurity.pdf
   http://www.drudgereport.com
   http://www.yahoo.com
  # http://www.yahoo.com
  # http://www.yahoo.com
  # http://my.yahoo.com
   http://www.google.com/dirhp
-   
+  http://www.lycos.com
+  http://www.msn.com
   </seeds>
  
  </scope>
  
  <behavior
    disk-path="disk"
-   max-toe-threads="100"
+   max-toe-threads="200"
    >
    
   <http-headers
@@ -33,8 +34,8 @@
     From="archive-crawler-agent@lists.sourceforge.net" 
    />
 
- <!--
-  <robots-honoring-policy name="most-favored-set" masquerade="true">
+  <!--
+  <robots-honoring-policy name="most-favored-set" masquerade="false">
   	<user-agents>
   		<agent>foo</agent>
   		<agent>bar</agent>
@@ -45,8 +46,8 @@
 		Disallow: /
 	</custom-robots>
   </robots-honoring-policy>
- -->
- 
+  -->
+  
   <frontier 
     class="org.archive.crawler.basic.Frontier"
     delay-factor="1"
