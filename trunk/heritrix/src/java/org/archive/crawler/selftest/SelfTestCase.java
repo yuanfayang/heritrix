@@ -384,7 +384,14 @@ public class SelfTestCase extends TestCase
      */
     private List filesFoundInArc()
     {
-        String baseURL = getSelftestURLWithTrailingSlash() + getTestName();
+        String baseURL = getSelftestURLWithTrailingSlash();
+        if (baseURL.endsWith(getTestName() + '/')) {
+            // URL may already end in the test name for case where we're
+            // running one test only.  If so, strip back the trailing '/'.
+            baseURL = baseURL.substring(0, baseURL.length() - 1);
+        } else {
+            baseURL += getTestName();
+        }
         List metaDatas = getReadReader().getMetaDatas();
         ARCRecordMetaData metaData = null;
         List filesFound = new ArrayList();

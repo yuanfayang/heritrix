@@ -23,6 +23,9 @@
 package org.archive.crawler.selftest;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
@@ -40,7 +43,23 @@ import org.archive.crawler.admin.CrawlJob;
 public class AllSelfTestCases
 {
     /**
-     * Run all of the selftest suite.
+     * Array of all known selftests.
+     */
+    private static final Class [] _allKnownSelftests = {
+            BackgroundImageExtractionSelfTestCase.class,
+            FramesSelfTestCase.class,
+            MaxLinkHopsSelfTest.class,
+            CharsetSelfTest.class
+        };
+    
+    /**
+     * All known selftests as a list.
+     */
+    private static List allKnownSelftests =
+        Arrays.asList(AllSelfTestCases._allKnownSelftests);
+    
+    /**
+     * Run all known tests in the selftest suite.
      *
      * Each unit test to run as part of selftest needs to be added here.
      *
@@ -55,27 +74,40 @@ public class AllSelfTestCases
     public static Test suite(final String selftestURL, final CrawlJob job,
             final File jobDir, final File htdocs)
     {
+        return suite(selftestURL, job, jobDir, htdocs,
+             AllSelfTestCases.allKnownSelftests);
+    }
+    
+    /**
+     * Run list of passed tests.
+     * 
+     * This method is exposed so can run something less than all of the
+     * selftests.
+     *
+     * @param selftestURL Base url to selftest webapp.
+     * @param job The completed selftest job.
+     * @param jobDir Job output directory.  Has the seed file, the order file
+     * and logs.
+     * @param htdocs Expanded webapp directory location.
+     * @param selftests List of selftests to run.
+     *
+     * @return Suite of all selftests.
+     */
+    public static Test suite(final String selftestURL, final CrawlJob job,
+            final File jobDir, final File htdocs, final List selftests)
+    {
         TestSuite suite =
-            new TestSuite("Test for org.archive.crawler.selftest");
+            new TestSuite("Test(s) for org.archive.crawler.selftest");
+        for (Iterator i = selftests.iterator(); i.hasNext();) {
+            suite.addTestSuite((Class)i.next());
+        }
 
-        //$JUnit-BEGIN$
-        // Add mention of self tests here for them to be run as part of the
-        // general integration self test.
-        suite.addTestSuite(BackgroundImageExtractionSelfTestCase.class);
-        suite.addTestSuite(FramesSelfTestCase.class);
-        suite.addTestSuite(MaxLinkHopsSelfTest.class);
-        suite.addTestSuite(CharsetSelfTest.class);
-        //$JUnit-END$
-
-        // Return an anonymous instance of TestSetup that does the one-time
-        // set up of SelfTestCase base class installing required test
-        // parameters.
-        return new TestSetup(suite)
-            {
+        return new TestSetup(suite) {
+            
                 protected void setUp() throws Exception
                 {
                     SelfTestCase.initialize(selftestURL, job, jobDir, htdocs);
                 }
-            };
+            };       
     }
 }

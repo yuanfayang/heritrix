@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -53,9 +54,23 @@ public class SelfTestCrawlJobHandler
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.admin.SelftestCrawlJobHandler");
 
+    /**
+     * Name of selftest to run.
+     * 
+     * If set, run this test only.  Otherwise run them all.
+     */
+    private String selfTestName = null;
+    
+
     public SelfTestCrawlJobHandler()
     {
+        this(null);
+    }
+    
+    public SelfTestCrawlJobHandler(String selfTestName)
+    {
         super(false,false); //No need to load jobs or profiles
+        this.selfTestName = selfTestName;
     }
 
     public void crawlEnded(String sExitMessage)
@@ -75,11 +90,32 @@ public class SelfTestCrawlJobHandler
             }
             else
             {
-                CrawlJob job = (CrawlJob)completedCrawlJobs.get(completedCrawlJobs.size()-1);
-                Test test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
-                        job, job.getDirectory(),
-                        Heritrix.getHttpServer().
-                            getWebappPath(SELFTEST_WEBAPP));
+                CrawlJob job = (CrawlJob)completedCrawlJobs.
+                    get(completedCrawlJobs.size()-1);
+                Test test = null;
+                if (this.selfTestName != null &&
+                        this.selfTestName.length() > 0) {
+                    // Run single selftest only.
+                    // Get class for the passed single selftest.
+                    // Assume test to run is in this package.
+                    String thisClassName = this.getClass().getName();
+                    String pkg = thisClassName.
+                        substring(0, thisClassName.lastIndexOf('.'));
+                    // All selftests end in 'SelfTest'.
+                    String selftestClass = pkg + '.' + this.selfTestName +
+                        "SelfTest";
+                    // Need to make a list.  Make an array first.
+                    List classList = new ArrayList();
+                    classList.add(Class.forName(selftestClass));
+                    test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
+                        job, job.getDirectory(), Heritrix.getHttpServer().
+                        getWebappPath(SELFTEST_WEBAPP), classList);
+                } else {
+                    // Run all tests.
+                    test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
+                        job, job.getDirectory(), Heritrix.getHttpServer().
+                        getWebappPath(SELFTEST_WEBAPP));
+                }
                 result = junit.textui.TestRunner.run(test);
             }
         }
