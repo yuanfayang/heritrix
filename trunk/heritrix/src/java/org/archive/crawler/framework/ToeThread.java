@@ -120,8 +120,12 @@ public class ToeThread extends Thread
                 continueCheck();
                 
                 setStep(STEP_ABOUT_TO_GET_URI);
+                
+                CrawlURI curi = controller.getFrontier().next();
+                
                 synchronized(this) {
-                    currentCuri = controller.getFrontier().next();
+                    continueCheck();
+                    currentCuri = curi;
                 }
                 
                 processCrawlUri();
@@ -141,7 +145,7 @@ public class ToeThread extends Thread
             // crawl ended, allow thread to end
         } catch (InterruptedException e1) {
             // Thread was interrupted 
-            System.err.println("interrupted while working on "+currentCuri);
+            System.err.println(getName()+" interrupted while working on "+currentCuri);
             // TODO: more?
             e1.printStackTrace();
         } catch (Error err) {
