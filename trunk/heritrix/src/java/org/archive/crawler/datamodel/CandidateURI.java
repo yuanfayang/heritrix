@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.UriUniqFilter.HasUri;
 import org.archive.util.Lineable;
 
 /**
@@ -39,7 +40,7 @@ import org.archive.util.Lineable;
  *
  * @author Gordon Mohr
  */
-public class CandidateURI implements Serializable, Lineable {
+public class CandidateURI implements Serializable, Lineable, HasUri {
     private static final long serialVersionUID = -7152937921526560388L;
 
     //public static final String FORCE_REVISIT = "Force";
@@ -334,5 +335,12 @@ public class CandidateURI implements Serializable, Lineable {
             caUri.setVia("");
         }
         return caUri;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUri#getUri()
+     */
+    public String getUri() {
+        return getURIString();
     }
 }
