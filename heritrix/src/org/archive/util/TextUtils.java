@@ -1,6 +1,5 @@
 package org.archive.util;
 
-import java.io.*;
 import java.util.EmptyStackException;
 import java.util.Hashtable;
 import java.util.Stack;
@@ -9,98 +8,28 @@ import java.util.regex.Pattern;
 
 public class TextUtils {
 
-	/**
-	 * Implementation of a unix-like 'tail' command
-	 * @param aFileName a file name String
-	 * @return the String representation of at most 10 last lines
-	 */
-	public static String tail(String aFileName) {
-		return tail(aFileName, 10);
-	}
+//	/**
+//	 * Implementation of a unix-like 'tail' command
+//	 * @param aFileName a file name String
+//	 * @return the String representation of at most 10 last lines
+//	 * 
+//	 * @deprecated Use @link LogReader#tail(String) instead.
+//	 */
+//	public static String tail(String aFileName) {
+//		return LogReader.tail(aFileName, 10);
+//	}
 
-	/**
-	 * Implementation of a unix-like 'tail -n' command
-	 * @param aFileName a file name String
-	 * @param n int number of lines to be returned
-	 * @return the String representation of at most n last lines 
-	 */
-	public static String tail(String aFileName, int n) {
-		int BUFFERSIZE = 1024;
-		long pos;
-		long endPos;
-		long lastPos;
-		int numOfLines = 0;
-		byte[] buffer = new byte[BUFFERSIZE];
-		StringBuffer sb = new StringBuffer();
-		RandomAccessFile raf = null;
-		try {
-			raf = new RandomAccessFile(new File(aFileName), "r");
-			endPos = raf.length();
-			lastPos = endPos;
-
-			// Check for non-empty file 
-			// Check for newline at EOF
-			if (endPos > 0) {
-				byte[] oneByte = new byte[1];
-				raf.seek(endPos - 1);
-				raf.read(oneByte);
-				if ((char) oneByte[0] != '\n') {
-					numOfLines++;
-				}
-			}
-
-			do {
-				// seek back BUFFERSIZE bytes
-				// if length of the file if less then BUFFERSIZE start from BOF
-				pos = 0;
-				if ((lastPos - BUFFERSIZE) > 0) {
-					pos = lastPos - BUFFERSIZE;
-				}
-				raf.seek(pos);
-				// If less then BUFFERSIZE avaliable read the remaining bytes
-				if ((lastPos - pos) < BUFFERSIZE) {
-					int remainer = (int) (lastPos - pos);
-					buffer = new byte[remainer];
-				}
-				raf.readFully(buffer);
-				// in the buffer seek back for newlines
-				for (int i = buffer.length - 1; i >= 0; i--) {
-					if ((char) buffer[i] == '\n') {
-						numOfLines++;
-						// break if we have last n lines
-						if (numOfLines > n) {
-							pos += (i + 1);
-							break;
-						}
-					}
-				}
-				// reset last postion
-				lastPos = pos;
-			} while ((numOfLines <= n) && (pos != 0));
-
-			// print last n line starting from last postion
-			for (pos = lastPos; pos < endPos; pos += buffer.length) {
-				raf.seek(pos);
-				if ((endPos - pos) < BUFFERSIZE) {
-					int remainer = (int) (endPos - pos);
-					buffer = new byte[remainer];
-				}
-				raf.readFully(buffer);
-				sb.append(new String(buffer));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (raf != null) {
-					raf.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return sb.toString();
-		}
-	}
+//	/**
+//	 * Implementation of a unix-like 'tail -n' command
+//	 * @param aFileName a file name String
+//	 * @param n int number of lines to be returned
+//	 * @return the String representation of at most n last lines 
+//	 * 
+//	 * @deprecated Use @link LogReader#tail(String, int) instead.
+//	 */
+//	public static String tail(String aFileName, int n) {
+//		return LogReader.tail(aFileName, n);
+//	}
 
 	
 	final static Hashtable patternMatchers = new Hashtable(50); // Resuable match objects
