@@ -160,7 +160,7 @@ public class TextUtils {
      * the String class.
      *
      * @see java.util.regex.Pattern
-     * @param p precompiled Pattern to split by
+     * @param pattern precompiled Pattern to split by
      * @param input the character sequence to split
      * @return array of Strings split by pattern
      */
