@@ -55,7 +55,8 @@
 	With defaults</a></li>
     </ul>
 	
-<h2>Pending Jobs (<%=handler.getPendingJobs().size()%>)</h2>
+<h2><a name="pending" />Pending
+Jobs (<%=handler.getPendingJobs().size()%>)</h2>
 
 <%  
     List jobs = handler.getPendingJobs();
@@ -112,7 +113,8 @@
 %>
 
 
-<h2>Completed Jobs (<%=handler.getCompletedJobs().size()%>)</h2>
+<h2><a name="completed" />Completed
+Jobs(<%=handler.getCompletedJobs().size()%>)</h2>
 
 <%  
     jobs = handler.getCompletedJobs();
