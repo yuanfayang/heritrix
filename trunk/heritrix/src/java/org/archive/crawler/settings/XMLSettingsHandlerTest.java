@@ -78,7 +78,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         CrawlerSettings settings = getGlobalSettings();
         XMLSettingsHandler handler = getSettingsHandler();
         handler.registerValueErrorHandler(this);
-        handler.getOrder().setAttribute(new CrawlScope());
+        handler.getOrder().setAttribute(new ClassicScope());
         handler.writeSettingsObject(settings);
         assertTrue("Order file was not written", getOrderFile().exists());
 
@@ -91,10 +91,10 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         Integer newHops = new Integer(500);
         String newFrom = "newfrom";
         scope.setAttribute(perHost, new Attribute(
-                ClassicScope.ATTR_MAX_LINK_HOPS, newHops));
+            ClassicScope.ATTR_MAX_LINK_HOPS, newHops));
         CrawlOrder order = handler.getOrder();
         ComplexType httpHeaders = (ComplexType) order
-                .getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
+            .getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
         httpHeaders.setAttribute(perHost, new Attribute(CrawlOrder.ATTR_FROM,
                 newFrom));
 
@@ -115,7 +115,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         ComplexType newScope = newHandler.getModule(CrawlScope.ATTR_NAME);
         assertNotNull(newScope);
         Integer r1 = (Integer) newScope.getAttribute(newPerHost,
-                ClassicScope.ATTR_MAX_LINK_HOPS);
+            ClassicScope.ATTR_MAX_LINK_HOPS);
         assertEquals(newHops, r1);
 
         ComplexType newHttpHeaders = (ComplexType) newHandler.getOrder()
