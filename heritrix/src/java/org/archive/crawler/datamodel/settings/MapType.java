@@ -40,15 +40,6 @@ public class MapType extends ComplexType {
     public MapType(String name, String description) {
         super(name, description);
     }
-/*
-    public Type addElementToDefinition(Type type) {
-        if(!(type instanceof MapType)) {
-            return super.addElementToDefinition(type);
-        } else {
-            throw new IllegalArgumentException("Nested maps are not allowed.");
-        }
-    }
-    */
     
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
