@@ -123,11 +123,14 @@ public class DiskQueueTest extends QueueTestBase {
             queue.enqueue("Item 1");
             queue.enqueue("Item 2");
             queue.enqueue("Item 3");
+            Iterator it = queue.getIterator(false);
+            assertTrue("disk queue iterator has first item (no dequeues have been made)",it.hasNext());
+            assertEquals("disk queue iterator checking item 1 (no dequeues have been made)","Item 1",(String)it.next());
             assertEquals("dequeue from disk","Item 1",(String)queue.dequeue());
             queue.enqueue("Item 4");
             queue.enqueue("Item 5");
             assertEquals("dequeue from disk","Item 2",(String)queue.dequeue());
-            Iterator it = queue.getIterator(false);
+            it = queue.getIterator(false);
             assertTrue("disk queue iterator has first item",it.hasNext());
             assertEquals("disk queue iterator checking item 3","Item 3",(String)it.next());
             assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());

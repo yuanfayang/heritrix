@@ -87,12 +87,16 @@ public class DiskBackedByteQueue implements Savable {
         tailStream.flush();
         // Get the head file, move the input stream for it to the current
         // position and wrap in a bufferedInputStream
-        FileInputStream tmpFileStream1 = new FileInputStream(
-                new File(headStream.currentFile.getAbsolutePath()));
-        tmpFileStream1.getChannel().position(
-                headStream.getReadPosition());
-        BufferedInputStream inStream1 = new BufferedInputStream(tmpFileStream1,
-                4096);
+        BufferedInputStream inStream1;
+        if(headStream.currentFile==null){
+            // No reads have been performed.
+            inStream1 = null;
+        } else {
+            FileInputStream tmpFileStream1 = new FileInputStream(new File(headStream.currentFile.getAbsolutePath()));
+            tmpFileStream1.getChannel().position(
+                    headStream.getReadPosition());
+            inStream1 = new BufferedInputStream(tmpFileStream1, 4096);
+        }
         
         // Get the tail file, alright to read it from start. Wrap it up.
         tailStream.flush(); // Let's make sure nothing is stuck in buffers.
@@ -107,7 +111,10 @@ public class DiskBackedByteQueue implements Savable {
         new ObjectOutputStream(baOutStream); // This triggers the header to be written to baOutStream.
         ByteArrayInputStream baInStream = new ByteArrayInputStream(baOutStream.toByteArray());
         
-        return new SequenceInputStream(new SequenceInputStream(baInStream,inStream1), inStream2);
+        return new SequenceInputStream(
+                (inStream1 == null ? (InputStream) baInStream
+                        : (InputStream) new SequenceInputStream(baInStream,
+                                inStream1)), inStream2);
     }
     
     /**
