@@ -645,7 +645,7 @@ public class CrawlController extends Thread {
         statLogger.start();
 
         toePool.setShouldPause(false);
-        frontier.start();
+//        frontier.start();
         while (shouldCrawl()) {
             if (shouldPause) {
                 pauseCrawl();
@@ -754,7 +754,8 @@ public class CrawlController extends Thread {
     }
 
     private boolean shouldCrawl() {
-        if (frontier.isEmpty()) {
+        boolean frontierEmpty = frontier.isEmpty();
+        if (frontierEmpty) {
             sExit = CrawlJob.STATUS_FINISHED;
         }
         //if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0)) {
@@ -797,7 +798,7 @@ public class CrawlController extends Thread {
             sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
             shouldCrawl = false;
         }
-        return shouldCrawl && !frontier.isEmpty();
+        return shouldCrawl && (frontier.isEmpty()==false);
     }
 
     /**
