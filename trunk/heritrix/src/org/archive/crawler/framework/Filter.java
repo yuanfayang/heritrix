@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import org.archive.crawler.filter.OrFilter;
+
 /**
  * 
  * @author Gordon Mohr
@@ -32,9 +34,11 @@ public abstract class Filter extends XMLConfig {
 	protected abstract boolean innerAccepts(Object o);
 	
 	public void initialize(CrawlController controller) {
-		setName(getStringAt("@name"));
-		if("not".equals(getStringAt("@modifier"))) {
-			inverter = true;
+		if(xNode!=null) {
+			setName(getStringAt("@name"));
+			if("not".equals(getStringAt("@modifier"))) {
+				inverter = true;
+			}
 		}
 	}
 	/* (non-Javadoc)
@@ -42,6 +46,16 @@ public abstract class Filter extends XMLConfig {
 	 */
 	public String toString() {
 		return "Filter<"+name+">";
+	}
+	/**
+	 * @param optionalExclude
+	 * @return
+	 */
+	public Filter orWith(Filter other) {
+		OrFilter orF = new OrFilter();
+		orF.addFilter(this);
+		orF.addFilter(other);
+		return orF;
 	}
 
 }
