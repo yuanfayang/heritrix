@@ -56,7 +56,7 @@ public abstract class AbstractTracker extends CrawlerModule
     public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(20);
     public static final String ATTR_STATS_INTERVAL = "interval-seconds";
 
-    // A reference to the CrawlContoller of the crawl that we are to track statistics for.
+    /** A reference to the CrawlContoller of the crawl that we are to track statistics for.*/
     protected CrawlController controller;
 
     protected Logger periodicLogger = null;
@@ -67,7 +67,7 @@ public abstract class AbstractTracker extends CrawlerModule
     protected long crawlerPauseStarted = 0;
     protected long crawlerTotalPausedTime = 0;
 
-    // Timestamp of when this logger last wrote something to the log
+    /** Timestamp of when this logger last wrote something to the log */
     protected long lastLogPointTime;
 
     protected boolean shouldrun = true;
@@ -214,14 +214,12 @@ public abstract class AbstractTracker extends CrawlerModule
     }
 
     /**
+     * Total amount of time spent actively crawling so far.<p>
      * Returns the total amount of time (in milliseconds) that has elapsed from
      * the start of the crawl {@link #getCrawlStartTime() getCrawlStartTime()}
      * and until the current time or if the crawl has ended until the the end
-     * of the crawl {@link #getCrawlEndTime() getCrawlEndTime} <b>minus</b> any
-     * time spent paused {@link #getCrawlTotalPauseTime() getCrawlTotalPauseTime}.
-     * <b>
-     * In other words, this is the total amount of time spent actively crawling
-     * so far. 
+     * of the crawl {@link #getCrawlEndTime() getCrawlEndTime()} <b>minus</b> any
+     * time spent paused {@link #getCrawlTotalPauseTime() getCrawlTotalPauseTime()}.
      * @return Total amount of time (in msec.) spent crawling so far.
      */
     public long getCrawlerTotalElapsedTime()
