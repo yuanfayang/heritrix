@@ -949,14 +949,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     /**
      * @param d True if we're to digest.
      */
-    private void setDigest(boolean d) {
+    public void setDigest(boolean d) {
         this.digest = d;
     }
     
     /**
      * @return True if we're digesting as we read.
      */
-    protected boolean getDigest() {
+    public boolean getDigest() {
         return this.digest;
     }
 
