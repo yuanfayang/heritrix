@@ -90,7 +90,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      * @param curi Crawl URI to process.
      */
     public void innerProcess(CrawlURI curi) {
-        if (!isHtmlTransactionContentToProcess(curi)) {
+        if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }
         String mimeType = curi.getContentType();

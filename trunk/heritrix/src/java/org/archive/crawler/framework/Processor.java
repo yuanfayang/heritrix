@@ -259,8 +259,7 @@ public class Processor extends ModuleType {
      * @return True if {@link #isContentToProcess(CrawlURI)} and
      * the CrawlURI represents a successful http transaction.
      */
-    protected boolean isHtmlTransactionContentToProcess(CrawlURI curi) {
-        // FIXME: 'html' in name doesn't make sense
+    protected boolean isHttpTransactionContentToProcess(CrawlURI curi) {
         return isContentToProcess(curi) &&
             curi.isHttpTransaction() &&
             curi.isSuccess();
