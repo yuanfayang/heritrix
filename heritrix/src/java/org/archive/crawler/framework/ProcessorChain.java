@@ -49,18 +49,10 @@ public class ProcessorChain {
      */
     public ProcessorChain(MapType processorMap) {
         this.processorMap = processorMap;
-    }
 
-    /** Initialize the processor chain.
-     * 
-     * @param nextProcessorChain the chain that should be processed after this
-     *        one.
-     */
-    public void initialize(ProcessorChain nextProcessorChain) {
-        this.nextChain = nextProcessorChain;
         Processor previous = null;
-        Iterator it = processorMap.iterator(null);
-        while (it.hasNext()) {
+        
+        for (Iterator it = processorMap.iterator(null); it.hasNext();) {
             Processor p = (Processor) it.next();
 
             if (previous == null) {
@@ -74,6 +66,16 @@ public class ProcessorChain {
             
             previous = p;
         }
+    }
+
+    /** Set the processor chain that the URI should be working through after
+     * finishing this one.
+     * 
+     * @param nextProcessorChain the chain that should be processed after this
+     *        one.
+     */
+    public void setNextChain(ProcessorChain nextProcessorChain) {
+        this.nextChain = nextProcessorChain;
     }
     
     /** Get the processor chain that the URI should be working through after
