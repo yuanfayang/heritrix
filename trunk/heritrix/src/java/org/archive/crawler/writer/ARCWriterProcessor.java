@@ -35,7 +35,6 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -57,7 +56,6 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.settings.XMLSettingsHandler;
