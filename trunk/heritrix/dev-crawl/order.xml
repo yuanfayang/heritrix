@@ -33,6 +33,18 @@
     From="archive-crawler-agent@lists.sourceforge.net" 
    />
 
+  <robots-honoring-policy name="most-favored-set" masquerade="true">
+  	<user-agents>
+  		<agent>foo</agent>
+  		<agent>bar</agent>
+  		<agent>booh</agent>
+	</user-agents>
+	<custom-robots>
+		User-agent: *
+		Disallow: /
+	</custom-robots>
+  </robots-honoring-policy>
+
   <frontier 
     class="org.archive.crawler.basic.Frontier"
     delay-factor="1"
