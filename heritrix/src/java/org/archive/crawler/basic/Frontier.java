@@ -858,6 +858,10 @@ public class Frontier
      */
     protected void noteInProcess(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            return; // Couldn't find/create kq.
+        }
+            
         assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
 
         kq.setInProcessItem(curi);
@@ -878,7 +882,20 @@ public class Frontier
     private KeyedQueue keyedQueueFor(CrawlURI curi) {
         KeyedQueue kq = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
         if (kq==null) {
-            kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+            try {
+                kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+            } catch (IOException e) {
+                controller.runtimeErrors.log(
+                        Level.SEVERE,
+                        "IOException occured while trying to make a new " +
+                        "KeyedQueue for CURI " + curi.getURIString() + 
+                        " found via " + 
+                        (curi.getVia() instanceof CandidateURI ?
+                                ((CandidateURI)curi.getVia()).getURIString() :
+                                "-via missing-") +
+                        ". URI will most likely be lost as a result."
+                        ,e);
+            }
             kq.setStoreState(URIStoreable.EMPTY);
             allClassQueuesMap.put(kq.getClassKey(),kq);
         }
@@ -939,6 +956,10 @@ public class Frontier
      */
     protected void enqueueToKeyed(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            return; // Couldn't find/create kq.
+        }
+            
         assert kq.getStoreState() == URIStoreable.EMPTY 
             || kq.getStoreState() == URIStoreable.READY 
             || kq.getStoreState() == URIStoreable.SNOOZED 
@@ -962,6 +983,10 @@ public class Frontier
      */
     protected boolean enqueueIfNecessary(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            return false; // Couldn't find/create kq.
+        }
+            
         assert kq.getStoreState() == URIStoreable.EMPTY 
             || kq.getStoreState() == URIStoreable.READY 
             || kq.getStoreState() == URIStoreable.SNOOZED 
@@ -1015,6 +1040,10 @@ public class Frontier
      */
     private void enqueueMedium(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            return; // Couldn't find/create kq.
+        }
+            
         kq.enqueueMedium(curi);
         updateQueue(kq);
     }
@@ -1024,6 +1053,10 @@ public class Frontier
      */
     private void enqueueHigh(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            return; // Couldn't find/create kq.
+        }
+            
         kq.enqueueHigh(curi);
         updateQueue(kq);
     }
@@ -1045,7 +1078,10 @@ public class Frontier
         logLocalizedErrors(curi);
 
         KeyedQueue kq = keyedQueueFor(curi);
-        
+        if(kq==null){
+            return; // Couldn't find/create kq.
+        }
+
         assert kq.getInProcessItem() == curi : "CrawlURI done wasn't inProcess";
         assert kq.getStoreState()
             == URIStoreable.IN_PROCESS : "odd state for classQueue of remitted CrawlURI";
@@ -1236,7 +1272,9 @@ public class Frontier
             // snooze to future
             logger.finer("inserting snoozed "+curi+" for "+delay);
             KeyedQueue kq = keyedQueueFor(curi);
-            snoozeQueueUntil(kq,System.currentTimeMillis()+(delay*1000));
+            if(kq!=null){
+                snoozeQueueUntil(kq,System.currentTimeMillis()+(delay*1000));
+            }
         }
 
         reschedule(curi);
@@ -1249,6 +1287,10 @@ public class Frontier
         // put near top of relevant keyedqueue (but behind anything
         // recently scheduled 'high')
         KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            return; // Couldn't find/create kq.
+        }
+            
         curi.processingCleanup(); // eliminate state related to only prior processing passthrough
         kq.enqueueMedium(curi);
     }

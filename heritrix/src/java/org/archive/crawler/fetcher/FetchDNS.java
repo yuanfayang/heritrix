@@ -210,7 +210,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         uri = uri.substring(4);                        // drop "dns:" prefix
 
         if(uri.startsWith("//")){                        // drop hostport
-            uri = uri.replaceFirst("//.+/", "");
+            uri = uri.replaceFirst("//[^/]+/", "");
         }
 
         // drop query string

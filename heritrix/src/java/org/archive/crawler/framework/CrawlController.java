@@ -693,7 +693,6 @@ public class CrawlController extends Thread {
         frontier = null;
         disk = null;
         scratchDisk = null;
-
         toePool = null;
         registeredCrawlStatusListeners = null;
         order = null;
@@ -704,36 +703,46 @@ public class CrawlController extends Thread {
     }
 
     private synchronized void pauseCrawl() {
-        try {
-            toePool.setShouldPause(true);
-            // Wait until all ToeThreads are finished with their work
-            while (getActiveToeCount() > 0 && shouldPause) {
+        Iterator iterator = registeredCrawlStatusListeners.iterator();
+
+        // Wait until all ToeThreads are finished with their work
+        // The crawlPausing() event should have told them to pause.
+        while (getActiveToeCount() > 0 && shouldPause) {
+            try {
                 wait(200);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-            if(shouldPause){
-                paused = true;
-                // Tell everyone that we have paused
-                logger.info("Crawl job paused");
-                Iterator iterator = registeredCrawlStatusListeners.iterator();
-                while (iterator.hasNext()) {
-                    ((CrawlStatusListener) iterator.next()).crawlPaused(
-                            CrawlJob.STATUS_PAUSED);
-                }
-                
-                wait(); // resumeCrawl() will wake us.
-            }
-            // Been given an order to resume while waiting
-            // to pause
-            paused = false;
-            toePool.setShouldPause(false);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
+        
+        if(shouldPause){
+            paused = true;
+            // Tell everyone that we have paused
+            logger.info("Crawl job paused");
+            iterator = registeredCrawlStatusListeners.iterator();
+            while (iterator.hasNext()) {
+                ((CrawlStatusListener) iterator.next()).crawlPaused(
+                        CrawlJob.STATUS_PAUSED);
+            }
+            
+            try {
+                wait(); // resumeCrawl() will wake us.
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
+        // Been given an order to resume while waiting
+        // to pause
+        paused = false;
+        toePool.setShouldPause(false);
+
         logger.info("Crawl job resumed");
         
         // Tell everyone that we have resumed from pause
-        Iterator iterator = registeredCrawlStatusListeners.iterator();
+        iterator = registeredCrawlStatusListeners.iterator();
         while (iterator.hasNext()) {
             ((CrawlStatusListener) iterator.next()).crawlResuming(
                     CrawlJob.STATUS_RUNNING);
