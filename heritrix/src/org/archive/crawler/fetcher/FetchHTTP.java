@@ -57,7 +57,7 @@ public class FetchHTTP
 	 */
 	protected void innerProcess(CrawlURI curi) {
 
-		String scheme = curi.getUURI().getUri().getScheme();
+		String scheme = curi.getUURI().getScheme();
 		if(!(scheme.equals("http")||scheme.equals("https"))) {
 			// only handles plain http for now
 			return;
@@ -87,9 +87,10 @@ public class FetchHTTP
 		long now = System.currentTimeMillis();
 		
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
-		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
+		GetMethod get = new GetMethod(curi.getUURI().getUriString());
 		get.setFollowRedirects(false); // don't auto-follow redirects
 		get.getParams().setVersion(HttpVersion.HTTP_1_0);
+		get.getParams().makeLenient();
 		// use only HTTP/1.0 (to avoid receiving chunked responses)
 		String userAgent = curi.getUserAgent();
 		if(userAgent == null) {
@@ -143,11 +144,11 @@ public class FetchHTTP
 			// not in later modules			
 			rec.getRecordedInput().readFullyOrUntil(maxLength,timeout);
 		} catch (RecorderTimeoutException ex) {
-			logger.info(curi.getUURI().getUri()+": time limit exceeded");
+			logger.info(curi.getUURI().getUriString()+": time limit exceeded");
 			// but, continue processing whatever was retrieved
 			// TODO: set indicator in curi
 		} catch (RecorderLengthExceededException ex) {
-			logger.info(curi.getUURI().getUri()+": length limit exceeded");
+			logger.info(curi.getUURI().getUriString()+": length limit exceeded");
 			// but, continue processing whatever was retrieved
 			// TODO: set indicator in curi
 		} catch (IOException e) {
@@ -177,7 +178,7 @@ public class FetchHTTP
 			
 		Header contentLength = get.getResponseHeader("Content-Length");
 		logger.fine(
-			curi.getUURI().getUri()+": "
+			curi.getUURI().getUriString()+": "
 			+get.getStatusCode()+" "
 			+(contentLength==null ? "na" : contentLength.getValue()));
 
@@ -204,6 +205,7 @@ public class FetchHTTP
 		maxLength = getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES);
 		maxTries = getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS);
 		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+		
 		MultiThreadedHttpConnectionManager connectionManager = 
 					new MultiThreadedHttpConnectionManager();
 		http = new HttpClient(connectionManager);
