@@ -54,7 +54,7 @@
 <table border="0" cellspacing="0" cellpadding="1">
     <tr>
         <td colspan="3">
-            <b>Finished crawl jobs</b> (newest to oldest)
+            <b>Started crawl jobs</b> (newest to oldest)
         </td>
     <% if (crawling == false && jobs.size() == 0) { %>
         <tr>
