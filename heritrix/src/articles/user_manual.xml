@@ -781,6 +781,11 @@
             belonging to a domain from which one of the seed came is within
             scope. Like always it is possible to apply depth
             restrictions.</para>
+            <para>Using the seed 'archive.org', a domain scope will
+            fetch 'audio.archive.org', 'movies.archive.org', etc.
+            It will fetch all discovered URIs from 'archive.org' and from
+            any subdomain of 'archive.org'.
+            </para>
           </listitem>
 
           <listitem>
@@ -788,6 +793,10 @@
 
             <para>This scope limits discovered URIs to the set of hosts
             defined by the provided seeds.</para>
+            <para>If the seed is 'www.archive.org', then we'll only fetch
+            items discovered on this host. The crawler will not go to
+            'audio.archive.org' or 'movies.archive.org'.
+            </para>
           </listitem>
 
           <listitem>
@@ -808,6 +817,23 @@
             <para>A highly configurable scope. By adding different filters in
             different combinations this scope can be configured to provide a
             wide variety of behaviour.</para>
+            <para>After selecting this filter, you must then go to the
+            <emphasis>Filters</emphasis> tab and add the filters you want to 
+            run as part of your scope. Add the filters at the
+            <emphasis>focusFilter</emphasis> label and give them a
+            meaningful name.  The URIRegexFilter probably makes
+            most sense in this context (The ContentTypeRegexFilter won't
+            work at scope time because we don't know the content-type till
+            after we've fetched the document).
+            </para>
+            <para>After adding the filter(s), return to the
+            <emphasis>Settings</emphasis> tab and fill in any
+            configuration required of the filters.  For example, say you
+            added the URIRegexFilter, and you wanted only 'www.archive.org'
+            hosts to be in focus, fill in a regex like the following:
+            <literal>^(?:http|dns)www.archve.org/\.*</literal> (Be careful
+            you don't rule out prerequisites such as dns or robots.txt
+            when specifying your scope filter).</para>
           </listitem>
 
           <listitem>
@@ -818,6 +844,9 @@
             external file of <xref linkend="surt" /> prefixes defining URIs to
             consider in-scope. Seeds may also be considered to imply SURT
             prefixes. </para>
+            <para>See also the crawler wiki on 
+            <ulink 
+            url="http://crawler.archive.org/cgi-bin/wiki.pl?SurtScope">SurtScope</ulink>.</para>
           </listitem>
         </itemizedlist>
 
@@ -1667,10 +1696,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <listitem>
             <para><emphasis role="bold">max-trans-hops</emphasis></para>
 
-            <para>Maximum number of non link hops a the end of the current
+            <para>Maximum number of non link hops at the end of the current
             URI's <xref linkend="discoverypath" />. Generally we don't want to
             follow embeds, redirects and the like for more then a few (default
-            5) hops in a row. Deep structures like that are usually crawler
+            5) hops in a row. Such deep embedded structures are usually crawler
             traps. Since embeds are usually treated with higher priority then
             links, getting stuck in this type of trap can be particularly
             harmful to the crawl.</para>
