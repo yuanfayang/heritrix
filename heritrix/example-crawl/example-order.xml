@@ -6,8 +6,8 @@
  <crawler-behavior>
 
   <http-headers>
-   <User-Agent>ArchiveOpenCrawler Alpha (new ia-archiver; problems to gojomo@archive.org)</User-Agent>
-   <From>gojomo@archive.org</From>
+   <User-Agent>ArchiveOpenCrawler Alpha (new ia-archiver; problems to archive-crawler-agent@lists.sourceforge.net)</User-Agent>
+   <From>archive-crawler-agent@lists.sourceforge.net</From>
   </http-headers>
  
   <selector class="org.archive.crawler.basic.SimpleSelector">
@@ -92,11 +92,11 @@
   <limits>
    <!-- actual enforcement of these limits may depend on choice 
         of SSS/processor instances that read and respect these limits -->
-   <max-link-depth value="1" /> <!-- zero means crawl seeds only -->
+   <max-link-depth value="100" /> <!-- zero means crawl seeds only -->
    <max-pages value="1000" />
    <max-duration value="1h" />
    <max-resources-per-site value="1000" />
-   <max-toe-threads value="4" />
+   <max-toe-threads value="25" />
   </limits>
 
  </crawler-behavior>
