@@ -1321,9 +1321,6 @@ public class CrawlController implements Serializable {
         }
     }
 
-    /**
-     * 
-     */
     public void toePaused() {
         if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
             completePause();
@@ -1331,7 +1328,7 @@ public class CrawlController implements Serializable {
     }
     
     public void toeEnded() {
-        if (state == STOPPING && toePool.getActiveToeCount()==0) {
+        if (state == STOPPING && toePool.getActiveToeCount() == 0) {
             completeStop();
         }
     }

@@ -540,6 +540,7 @@ public class Frontier
             // consider if URIs exhausted
             if(isEmpty()) {
                 // nothing left to crawl
+                this.controller.requestCrawlStop();
                 throw new EndedException("exhausted");
             } 
             
