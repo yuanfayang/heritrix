@@ -8,6 +8,7 @@ package org.archive.crawler.datamodel;
 
 import java.net.URI;
 
+import org.archive.crawler.basic.SimpleDNSFetcher;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.Processor;
 
@@ -88,11 +89,27 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants {
 	 } 
 
 	/**
+	 * Return a token (usually the hostname) which indicates
+	 * what "class" this CrawlURI should br grouped with,
+	 * for the purposes of ensuring only one item of the
+	 * class is processed at once, all items of the class
+	 * are held for a politeness period, etc.
+	 * 
 	 * @return
 	 */
 	public Object getClassKey() {
-		return uuri.getUri().getAuthority();
+		String scheme = getUURI().getUri().getScheme();
+		if (scheme.equals("dns")){
+			return SimpleDNSFetcher.parseTargetDomain(this);
+		}
+		String authorityUsuallyHost = getUURI().getUri().getAuthority();
+		if (authorityUsuallyHost != null) {
+			return authorityUsuallyHost;
+		} else {
+			return null;
+		} 
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#getStoreState()
 	 */
