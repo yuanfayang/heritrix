@@ -113,8 +113,8 @@
 			    		MapType thisMap = (MapType)currentAttribute;
 			    		if(thisMap.getContentType().getName().equals(Filter.class.getName())){
 				    		p.append("<tr><td colspan='5'>\n<b>"+indent+"&nbsp;&nbsp;&nbsp;&nbsp;</b>");
-				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
-				    		p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
+				    		p.append("Name: <input size='8' name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
+				    		p.append("Filter: <select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
 				    		for(int i=0 ; i<availibleFilters.size() ; i++){
 					    		p.append("<option value='"+availibleFilters.get(i)+"'>"+availibleFilters.get(i)+"</option>\n");
 					    	}
