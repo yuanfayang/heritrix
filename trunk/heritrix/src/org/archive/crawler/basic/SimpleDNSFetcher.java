@@ -37,16 +37,21 @@ public class SimpleDNSFetcher extends Processor {
 	public void process(CrawlURI curi) {
 		super.process(curi);
 		
-		Record[] rrecordSet = null; 					// store retrieved dns records
+		Record[] rrecordSet = null; 						// store retrieved dns records
 		long now = System.currentTimeMillis(); 	// the time this operation happened
 				
+				
+		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
+			// TODO this is a temp hack to make dns lookups happen here
+			
+			DnsName = curi.getUURI().getUri().getAuthority();
+			
 			// only handles dns
-			return;
+			//return;
+		}else{	
+			DnsName = curi.getUURI().getUri().getSchemeSpecificPart();
 		}
-		
-		//TODO currently the dns uri spec uses inconsistent syntax, this means we currently only support the syntax "dns:dnsname", resolve this issue with Joseffson, or support both semantic structures
-		DnsName = curi.getUURI().getUri().getSchemeSpecificPart();
 		
 		//TODO add support for type and class specifications in query string, for now always use defaults
 		/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
