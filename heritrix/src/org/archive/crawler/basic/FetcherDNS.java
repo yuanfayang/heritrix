@@ -99,9 +99,14 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 							(byte) (new Integer(octets[2])).intValue(),
 							(byte) (new Integer(octets[3])).intValue()})
 				);
+				
+//				if(targetHost.getIP() == null){
+//					System.out.println("crapped out creating ip address for " + dnsName);
+//				}
 
 			} catch (UnknownHostException e) {
 				// this should never happen as a dns lookup is not made
+			
 				e.printStackTrace();
 			}
 			
