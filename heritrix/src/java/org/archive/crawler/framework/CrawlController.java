@@ -486,7 +486,7 @@ public class CrawlController extends Thread {
         while (it.hasNext()) {
             StatisticsTracking tracker = (StatisticsTracking) it.next();
             tracker.initalize(this);
-            if (statistics == null) {
+            if (statistics == null && tracker instanceof StatisticsTracker) {
                 statistics = tracker;
             }
         }

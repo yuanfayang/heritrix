@@ -39,6 +39,7 @@
 							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
 							<a href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
 							<a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
+							<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
 							<a href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
 						</td>
 					</tr>

@@ -297,6 +297,7 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
     				 .toString()
     			);
     	shouldrun = false;
+        controller = null; //Facilitate GC.
     }
 
     /* (non-Javadoc)
