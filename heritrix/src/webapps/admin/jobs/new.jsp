@@ -49,6 +49,8 @@
     		response.sendRedirect("/admin/jobs/modules.jsp?job="+newJob.getUID());
     	} else if(request.getParameter("action").equals("filters")){
     		response.sendRedirect("/admin/jobs/filters.jsp?job="+newJob.getUID());
+    	} else if(request.getParameter("action").equals("override")){
+    		response.sendRedirect("/admin/jobs/per/overview.jsp?job="+newJob.getUID());
     	} else {
     		handler.addJob(newJob);
     		response.sendRedirect("/admin/jobs.jsp?message=Job created");
@@ -121,9 +123,10 @@
 					</td>
 				</tr>
 			</table>
-			<input type="button" value="Adjust modules" onClick="document.frmNew.action.value='modules';document.frmNew.submit()">
-			<input type="button" value="Select filters" onClick="document.frmNew.action.value='filters';document.frmNew.submit()">
-			<input type="button" value="Configure settings" onClick="document.frmNew.action.value='configure';document.frmNew.submit()">
+			<input type="button" value="Modules" onClick="document.frmNew.action.value='modules';document.frmNew.submit()">
+			<input type="button" value="Filters" onClick="document.frmNew.action.value='filters';document.frmNew.submit()">
+			<input type="button" value="Settings" onClick="document.frmNew.action.value='configure';document.frmNew.submit()">
+			<input type="button" value="Overrides" onClick="document.frmNew.action.value='override';document.frmNew.submit()">
 			<% if(isProfile == false){ %>
 				<input type="submit" value="Submit job">
 			<% } %>

@@ -51,7 +51,7 @@
 						</td>
 						<td>
 							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
-							<a href="/admin/jobs/configure.jsp?job=<%=job.getUID()%>">Modify</a>
+							<a href="/admin/jobs/configure.jsp?job=<%=job.getUID()%>">Edit configuration</a>
 							<a href="/admin/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
 						</td>
 					</tr>
