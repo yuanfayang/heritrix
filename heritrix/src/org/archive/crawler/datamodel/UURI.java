@@ -102,7 +102,7 @@ public class UURI implements Serializable {
 			u = u.normalize(); // factor out path cruft, according to official spec
 			// now, go further and eliminate extra '..' segments
 			//String fixedPath = u.getRawPath().replaceFirst("^(/\\.\\.)+","");
-			String fixedPath = TextUtils.replaceFirst(DOTDOT, u.getRawPath(), "");
+			String fixedPath = TextUtils.replaceFirst(DOTDOT, u.getPath(), "");
 			if ("".equals(fixedPath)) {
 //				ensure root URLs end with '/'
 				fixedPath = "/"; 
