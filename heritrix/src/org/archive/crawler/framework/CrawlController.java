@@ -398,7 +398,7 @@ public class CrawlController extends Thread{
 		System.out.println("Fetch Progress:");
 		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
 		
-		int kPerSec = statistics.approximateDiskWriteRate()/1000;
+		int kPerSec = statistics.currentProcessedKBPerSec()/1000;
 		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
 		
 		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());

@@ -85,7 +85,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	/*
 	 * Cumulative data 
 	 */
-	protected int totalProcessedBytes = 0;
+	protected long totalProcessedBytes = 0;
 	// keep track of the file types we see (mime type -> count)
 	protected HashMap fileTypeDistribution = new HashMap();
 	// keep track of fetch status codes
@@ -632,18 +632,10 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 *  be different from the actual number if you are using compression.
 	 * @return byteCount
 	 */
-	public int getTotalBytesWritten() {
+	public long getTotalBytesWritten() {
 		return totalProcessedBytes;
 	}
 
-	/** Returns the approximate rate at which we are writing uncompressed data
-	 *  to disk as calculated using a finite set (see declaration of recentDiskWrites)
-	 *  of recent disk writes.  THIS FUNCTION IS DEPRECIATED use 
-	 *  currentProcessedKBPerSec()
-	 */
-	public int approximateDiskWriteRate() {
-		return currentProcessedKBPerSec();
-	}
 
 	/** Returns the approximate rate at which we are writing uncompressed data
 	 *  to disk.
