@@ -387,32 +387,6 @@ public class CrawlURI extends CandidateURI
         return alist.getObject(A_PREREQUISITE_URI);
     }
 
-    /**
-     * Method to set a URI that has to be fetched before fetching this URI
-     * regardles if it has been fetched before. Setting this also implies
-     * that the prerequisite URI will be scheduled for crawl before any other
-     * waiting URIs for the same host.
-     *
-     * This method is used to refetch any expired robots.txt or dns-lookups.
-     *
-     * @param stringOrUURI The URI that is a prerequisite for this URI to be
-     * fetched
-     */
-    public void setForcedPrerequisiteUri(Object stringOrUURI) {
-        alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
-        alist.putObject(A_FORCED_PREREQUISITE_URI, "true");
-    }
-
-    /**
-     * Is the prerequisite URI for this URI a forced prerequisite
-     *
-     * @return true if fetching this URI's prerequisite URI should be done regardless
-     * of if it has been fetched before
-     */
-    public boolean hasForcedPrerequisiteUri() {
-        String force = (String) alist.getObject(A_FORCED_PREREQUISITE_URI);
-        return (force != null && force.equals("true"));
-    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -485,6 +459,14 @@ public class CrawlURI extends CandidateURI
         s.add(o);
     }
 
+    /**
+     * @param uri
+     * @param collection
+     */
+    public void addLinkToCollection(String uri, String collection) {
+        addToNamedSet(collection,uri);
+    }
+    
     /**
      * @param u
      */
@@ -766,4 +748,5 @@ public class CrawlURI extends CandidateURI
         }
         return new CrawlURI(caUri);
     }
+
 }

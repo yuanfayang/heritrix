@@ -32,7 +32,9 @@ import java.util.logging.Level;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -40,28 +42,45 @@ import org.archive.util.PaddingStringBuffer;
  * This is an implementation of the AbstractTracker. It is designed to function
  * with the WUI as well as performing various logging activity.
  * <p>
- * At the end of each snapshot a line is written to the progress-statistics.log file.
+ * At the end of each snapshot a line is written to the 
+ * 'progress-statistics.log' file.
  * <p>
  * The header of that file is as follows:
  * <pre> [timestamp] [discovered]    [queued] [downloaded] [doc/s(avg)]  [KB/s(avg)] [dl-failures] [busy-thread] [mem-use-KB]</pre>
- * First there is a time stamp, accurate down to 1 second.
+ * First there is a <b>timestamp</b>, accurate down to 1 second.
  * <p>
- * <b>discovered</b>, <b>queued</b>, <b>downloaded</b> and <b>dl-failures</b> are (respectively) the discovered URI count,
- * pending URI count, successfully fetched count and failed fetch count from the frontier at
- * the time of the snapshot.
+ * <b>discovered</b>, <b>queued</b>, <b>downloaded</b> and <b>dl-failures</b> 
+ * are (respectively) the discovered URI count, pending URI count, successfully 
+ * fetched count and failed fetch count from the frontier at the time of the 
+ * snapshot.
  * <p>
- * KB/s(avg) is the bandwidth usage.  We use the total bytes downloaded to calculate average
- * bandwidth usage (KB/sec). Since we also note the value each time a snapshot is made we can
- * calculate the average bandwidth usage during the last snapshot period to gain a "current" rate.
- * The first number is the current and the average is in parenthesis.
+ * <b>KB/s(avg)</b> is the bandwidth usage.  We use the total bytes downloaded  
+ * to calculate average bandwidth usage (KB/sec). Since we also note the value  
+ * each time a snapshot is made we can calculate the average bandwidth usage
+ * during the last snapshot period to gain a "current" rate. The first number is 
+ * the current and the average is in parenthesis.
  * <p>
- * doc/s(avg) works the same way as doc/s except it show the number of documents (URIs) rather then
- * KB downloaded.
+ * <b>doc/s(avg)</b> works the same way as doc/s except it show the number of 
+ * documents (URIs) rather then KB downloaded.
  * <p>
- * busy-threads is the total number of ToeThreads that are not available (and thus presumably busy processing a URI).
- * This information is extracted from the crawl controller.
+ * <b>busy-threads</b> is the total number of ToeThreads that are not available 
+ * (and thus presumably busy processing a URI). This information is extracted  
+ * from the crawl controller.
  * <p>
- * Finally mem-use-KB is extracted from the run time environment (Runtime.getRuntime().totalMemory()).
+ * Finally mem-use-KB is extracted from the run time environment 
+ * (<code>Runtime.getRuntime().totalMemory()</code>).
+ * <p>
+ * In addition to the data collected for the above logs, various other data
+ * is gathered and stored by this tracker.
+ * <ul>
+ *   <li> Successfully downloaded documents per fetch status code
+ *   <li> Successfully downloaded documents per document mime type
+ *   <li> Amount of data per mime type
+ *   <li> Successfully downloaded documents per host
+ *   <li> Amount of data per host
+ *   <li> Disposition of all seeds (this is written to 'reports.log' at end of 
+ *        crawl)
+ * </ul>
  *
  * @author Parker Thompson
  * @author Kristinn Sigurdsson
@@ -69,8 +88,13 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.AbstractTracker
  */
-public class StatisticsTracker extends AbstractTracker{
+public class StatisticsTracker extends AbstractTracker 
+                    implements CrawlURIDispositionListener{
 
+    // TODO: Class needs to be serializable.
+    // TODO: Need to be able to specify file where the object will be written once the CrawlEnded event occurs
+    // TODO: Need to be able to save object on Checkpointing as well as CrawlEnded.
+    
     protected long lastPagesFetchedCount = 0;
     protected long lastProcessedBytesCount = 0;
 
@@ -127,9 +151,17 @@ public class StatisticsTracker extends AbstractTracker{
         "Seed has not been processed";
 
     public StatisticsTracker(String name) {
-        super(
-            name,
-            "A statistics tracker that's been designed to work well with the web UI and creates the progress-statistics log.");
+        super( name,
+                "A statistics tracker that's been designed to work well " +
+                "with the web UI and creates the progress-statistics log.");
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.StatisticsTracking#initalize(org.archive.crawler.framework.CrawlController)
+     */
+    public void initalize(CrawlController c) {
+        super.initalize(c);
+        controller.addCrawlURIDispositionListener(this);
     }
 
     /* (non-Javadoc)
@@ -278,54 +310,71 @@ public class StatisticsTracker extends AbstractTracker{
     protected static void incrementMapCount(Hashtable map, String key) {
     	incrementMapCount(map,key,1);
     }
-    
-    protected static void incrementMapCount(Hashtable map, String key, long increment) {
+
+    /**
+     * Increment a counter for a key in a given HashMap by an arbitrary amount.
+     * Used for various aggregate data. The increment amount can be negative.
+     * 
+     * @param map
+     *            The HashMap
+     * @param key
+     *            The key for the counter to be incremented, if it does not exist
+     *            it will be added (set to equal to <code>increment</code>).
+     *            If null it will increment the counter "unknown".
+     * @param increment
+     *            The amount to increment counter related to the <code>key</code>.
+     */
+    protected static void incrementMapCount(Hashtable map, String key,
+            long increment) {
         if (key == null) {
             key = "unknown";
         }
 
         if (map.containsKey(key)) {
-            ((LongWrapper) map.get(key)).longValue+=increment;
+            ((LongWrapper) map.get(key)).longValue += increment;
 
         } else {
             // if we didn't find this key add it
-            synchronized(map){
+            synchronized (map) {
                 map.put(key, new LongWrapper(1));
             }
         }
     }
 
-
     /**
-     * Sort the entries of the given HashMap in descending order
-     * by their values, which must be Numbers
-     * @param map Assumes values are wrapped with LongWrapper.
-     * @return
+     * Sort the entries of the given HashMap in descending order by their values,
+     * which must be longs wrapped with <code>LongWrapper</code>.
+     * <p>
+     * Elements are sorted by value from largest to smallest. Equal values are
+     * sorted in an arbitrary, but consistent manner by their keys. Only items
+     * with identical value and key are considered equal. 
+     * 
+     * @param map
+     *            Assumes values are wrapped with LongWrapper.
+     * @return a sorted set containing the same elements as the map.
      */
     public TreeSet getSortedByValue(Hashtable map) {
-        TreeSet sortedSet = new TreeSet(
-            new Comparator() {
-                public int compare(Object e1, Object e2) {
-                    long firstVal = ((LongWrapper)((Map.Entry)e1).getValue()).longValue;
-                    long secondVal = ((LongWrapper)((Map.Entry)e2).getValue()).longValue;
-                    if(firstVal < secondVal){
-                        return 1;
-                    } if(secondVal < firstVal){
-                        return -1;
-                    }
-                    // If the values are the same, sort by keys.
-                    String firstKey = (String)((Map.Entry)e1).getKey();
-                    String secondKey = (String)((Map.Entry)e2).getKey();
-                    return firstKey.compareTo(secondKey);
-                }
-            });
+        TreeSet sortedSet = new TreeSet(new Comparator() {
+
+            public int compare(Object e1, Object e2) {
+                long firstVal = ((LongWrapper) ((Map.Entry) e1).getValue()).longValue;
+                long secondVal = ((LongWrapper) ((Map.Entry) e2).getValue()).longValue;
+                if (firstVal < secondVal) { return 1; }
+                if (secondVal < firstVal) { return -1; }
+                // If the values are the same, sort by keys.
+                String firstKey = (String) ((Map.Entry) e1).getKey();
+                String secondKey = (String) ((Map.Entry) e2).getKey();
+                return firstKey.compareTo(secondKey);
+            }
+        });
         sortedSet.addAll(map.entrySet());
         return sortedSet;
     }
-
-    /** Return a HashMap representing the distribution of status codes for
-     *  successfully fetched curis, as represented by a hashmap where
-     *  key -> val represents (string)code -> (integer)count
+    
+    /** 
+     * Return a HashMap representing the distribution of status codes for
+     * successfully fetched curis, as represented by a hashmap where
+     * key -> val represents (string)code -> (integer)count
      * <p>
      * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
      * @return statusCodeDistribution
@@ -334,9 +383,10 @@ public class StatisticsTracker extends AbstractTracker{
         return statusCodeDistribution;
     }
 
-    /** Return a Hashtable representing the distribution of hosts for
-     *  successfully fetched curis, as represented by a hashmap where
-     *  key -> val represents (string)code -> (integer)count
+    /** 
+     * Return a Hashtable representing the distribution of hosts for
+     * successfully fetched curis, as represented by a hashmap where
+     * key -> val represents (string)code -> (integer)count
      * <p>
      * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
      * @return Hosts distribution as a Hashtable
@@ -364,7 +414,7 @@ public class StatisticsTracker extends AbstractTracker{
     }
 
     /**
-     * Get the total number of ToeThreads  (sleeping and active)
+     * Get the total number of ToeThreads (sleeping and active)
      *
      * @return The total number of ToeThreads
      */
@@ -724,6 +774,8 @@ public class StatisticsTracker extends AbstractTracker{
         controller.reports.info(rep.toString()); //Write report to file.
 
         super.crawlEnded(sExitMessage);
+        
+        // TODO: Save object to disk.
     }
 
 }

@@ -65,6 +65,15 @@ public class MemQueue extends LinkedList implements Queue {
     public void release() {
         // nothing to release
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+        return getFirst();
+    }
+    
+    
     /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
@@ -75,19 +84,16 @@ public class MemQueue extends LinkedList implements Queue {
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public void deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
         Iterator it = listIterator();
+        long numberOfDeletes = 0;
         while(it.hasNext()){
             if(matcher.match(it.next())){
                 it.remove();
+                numberOfDeletes++;
             }
         }
-    }
-    /* (non-Javadoc)
-     * @see org.archive.util.Queue#peek()
-     */
-    public Object peek() {
-        return getFirst();
+        return numberOfDeletes;
     }
     
     

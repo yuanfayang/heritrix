@@ -40,8 +40,14 @@ import org.archive.util.ArchiveUtils;
  *
  * @author stack
  */
-public class ARCWriterPool
-{
+public class ARCWriterPool {
+    
+    /**
+     * Logger instance used by this class.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriterPool");
+    
     /**
      * Default maximum active number of ARCWriters in the pool.
      */
@@ -56,12 +62,6 @@ public class ARCWriterPool
      * Pool instance.
      */
     private ObjectPool pool = null;
-
-    /**
-     * Logger instance used by this class.
-     */
-    private static Logger logger =
-        Logger.getLogger("org.archive.io.arc.ARCWriterPool");
 
 
     /**
@@ -116,6 +116,9 @@ public class ARCWriterPool
             int maxActive, int maxWait)
         throws IOException
     {
+        logger.fine("Configuration: prefix=" + prefix + ", compress=" +
+                compress + ", maxActive=" + maxActive + ", maxWait=" + 
+                maxWait);
         this.pool = new GenericObjectPool(
             new ARCWriterFactory(arcsDir, prefix, compress),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);

@@ -107,7 +107,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         }
 
         try {
-            numberOfLinksExtracted += considerStrings(curi, cs);
+            numberOfLinksExtracted += considerStrings(curi, cs, true);
         } catch (StackOverflowError e) {
             // TODO Auto-generated catch block
             DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
@@ -115,7 +115,8 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
     }
 
-    public static long considerStrings(CrawlURI curi, CharSequence cs) {
+    public static long considerStrings(
+            CrawlURI curi, CharSequence cs, boolean handlingJSFile) {                
         long foundLinks = 0;
         Matcher strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
         while(strings.find()) {
@@ -125,9 +126,13 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                 String string = uri.group();
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, "&");
                 foundLinks++;
-                curi.addSpeculativeEmbed(string);
+                if (handlingJSFile) {
+                    curi.addLinkToCollection(string, A_JS_FILE_LINKS);
+                } else {
+                    curi.addLinkToCollection(string, A_HTML_SPECULATIVE_EMBEDS);
+                }
             } else {
-               foundLinks += considerStrings(curi,subsequence);
+               foundLinks += considerStrings(curi,subsequence, handlingJSFile);
             }
             TextUtils.freeMatcher(uri);
         }

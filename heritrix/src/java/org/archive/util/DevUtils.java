@@ -46,11 +46,19 @@ public class DevUtils {
      * @param note Message to print ahead of the stacktrace.
      */
     public static void warnHandle(Throwable ex, String note) {
+        logger.warning(format(note, ex));
+    }
+    
+    /**
+     * @return Return formatted string made of passed message and stack trace
+     * of passed exception.
+     */
+    public static String format(String  message, Throwable e) {
         StringWriter sw = new StringWriter();
-        sw.write(note);
+        sw.write(message);
         sw.write("\n");
-        ex.printStackTrace(new PrintWriter(sw));
-        logger.warning(sw.toString());
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 
     /**

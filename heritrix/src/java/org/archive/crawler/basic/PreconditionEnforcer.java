@@ -27,8 +27,8 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.framework.Processor;
 
 /**
  * Ensures the preconditions for a fetch -- such as
@@ -89,30 +89,27 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             return false;
         }
         // require /robots.txt if not present
-        if (curi.getServer().getRobotsExpires() < 0 // "cheap" test of default
-                || curi.getServer().getRobotsExpires()<System.currentTimeMillis()
-            ){
+        if (curi.getServer().isRobotsExpired()) {
             logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
-            if(curi.getServer().getRobotsExpires()<0) {
-                curi.setForcedPrerequisiteUri("/robots.txt");
-             } else {
-                 // Robots expired - should be refetched even though its already crawled
-                 curi.setForcedPrerequisiteUri("/robots.txt");
-             }
-             //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
-             curi.incrementDeferrals();
-             curi.setFetchStatus(S_DEFERRED);
-             curi.skipToProcessorChain(getController().getPostprocessorChain());
-             return true;
-         }
-         // test against robots.txt if available
-          String ua = getController().getOrder().getUserAgent(curi);
-         if( curi.getServer().getRobots().disallows(curi, ua)) {
-             // don't fetch
-             curi.skipToProcessorChain(getController().getPostprocessorChain());  // turn off later stages
-             curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-             curi.getAList().putString("error","robots.txt exclusion");
-             logger.fine("robots.txt precluded "+curi);
+            // Robots expired - should be refetched even though its already crawled
+            curi.setPrerequisiteUri("/robots.txt");
+            curi.incrementDeferrals();
+            curi.setFetchStatus(S_DEFERRED);
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            return true;
+        }
+        
+        // test against robots.txt if available
+        String ua = getController().getOrder().getUserAgent(curi);
+        if (curi.getServer().getRobots().disallows(curi, ua)) {
+            // don't fetch
+            curi.skipToProcessorChain(getController().getPostprocessorChain()); // turn
+                                                                                // off
+                                                                                // later
+                                                                                // stages
+            curi.setFetchStatus(S_ROBOTS_PRECLUDED);
+            curi.getAList().putString("error", "robots.txt exclusion");
+            logger.fine("robots.txt precluded " + curi);
             return true;
         }
          return false;
@@ -120,7 +117,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 
     /**
      * @param curi
-     * @return true if no further processing in this module shoudl occur
+     * @return true if no further processing in this module should occur
      */
     private boolean considerDnsPreconditions(CrawlURI curi) {
 
@@ -139,7 +136,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
                     + " for dns lookup.");
 
             String hostname = curi.getServer().getHostname();
-            curi.setForcedPrerequisiteUri("dns:" + hostname);
+            curi.setPrerequisiteUri("dns:" + hostname);
             //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
             curi.setFetchStatus(S_DEFERRED);
             curi.incrementDeferrals();

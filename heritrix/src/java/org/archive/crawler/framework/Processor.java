@@ -115,6 +115,15 @@ public class Processor extends CrawlerModule {
     }
 
     /**
+     * Classes subclassing this one should override this method to perform
+     * processor specific actions.  
+     *
+     */
+    protected void finalTasks () {
+        // by default do nothing
+    }
+    
+    /**
      * Do all specified filters (if any) accept this CrawlURI?
      *
      * @param curi

@@ -159,7 +159,34 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *
      */
     public CrawlJobHandler(){
-        loadProfiles();
+        this(true,true);
+    }
+    
+    /**
+     * Constructor allowing for optional loading of profiles and jobs.
+     * @param loadJobs If true then any applicable jobs will be loaded.
+     * @param loadProfiles If true then any applicable profiles will be loaded.
+     */
+    public CrawlJobHandler(boolean loadJobs, boolean loadProfiles){
+        if(loadProfiles){
+            loadProfiles();
+        }
+        if(loadJobs){
+            loadJobs();
+        }
+    }
+
+    /**
+     * Loads any availible jobs in the jobs directory.
+     * <p>
+     * Availible jobs are any directory containing a file called
+     * <code>name.job</code> where 'name' is the name of the job. The file
+     * must contain valid job information. 
+     */
+    private void loadJobs() {
+        // TODO Implement load jobs.
+        
+        // TODO: If we encounter jobs set as running, paused or waiting to pause - need handling policy
     }
 
     /**
@@ -397,6 +424,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 return; // We're not going to find another job with the same UID
             }
         }
+        // TODO: If completed job, delete from list and delete job settings file or mark it in such a way that we wont reload it.
     }
 
     /**
@@ -404,11 +432,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * will have to effect. If the job is already paused it may cause the status
      * of the job to be incorrectly states as 'Waiting to pause'.
      *
-     * @see CrawlController#pauseCrawl()
+     * @see CrawlController#requestCrawlPause()
      */
     public void pauseJob() {
         if (controller != null && controller.isPaused()==false) {
-            controller.pauseCrawl();
+            controller.requestCrawlPause();
             //We'll do this pre-emptively so that the UI can be updated.
             currentJob.setStatus(CrawlJob.STATUS_WAITING_FOR_PAUSE);
         }
@@ -475,17 +503,21 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     getJobdir(name, UID).getAbsolutePath(),
                     "job-"+name+".xml",
                     "seeds-"+name+".txt"),
-                CrawlJob.PRIORITY_AVERAGE);
+                CrawlJob.PRIORITY_AVERAGE,
+                getJobdir(name, UID));
         return newJob;
     }
 
     /**
+     * Return the directory containing a job with the specified name and UID
+     * is stored.
      * @param name Basename for job.
      * @param UID Job unique ID.
      * @return Job directory for passed job name and UID.
      */
     private File getJobdir(String name, String UID)
     {
+        // TODO: reconsider this. Is only valid for creating new jobs...
         return new File(Heritrix.getJobsdir(), name + "-" + UID);
     }
 
@@ -499,6 +531,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public File getJobdir(CrawlJob job)
     {
+        // TODO: Job keeps this info.
         return getJobdir(job.getJobName(), job.getUID());
     }
 
@@ -904,11 +937,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * the specified regular expression. If the current job is not paused (or
      * there is no current job) nothing will be done.
      * @param regexpr Regular expression to delete URIs by.
+     * @return the number of URIs deleted
      */
-    public void deleteURIsFromPending(String regexpr){
+    public long deleteURIsFromPending(String regexpr){
         if(controller != null && controller.isPaused()){
-            controller.getFrontier().deleteURIsFromPending(regexpr);
+            return controller.getFrontier().deleteURIsFromPending(regexpr);
         }
+        return 0;
     }
 
 }

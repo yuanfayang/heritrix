@@ -154,7 +154,7 @@ public class CandidateURI implements Serializable, Lineable {
     /**
      *
      */
-    private String flattenVia() {
+    public String flattenVia() {
         if (via instanceof String) {
             // already OK
             return (String) via;

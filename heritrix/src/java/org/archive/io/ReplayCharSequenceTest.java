@@ -29,10 +29,17 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Logger;
 
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
+
 import org.archive.util.TmpDirTestCase;
 
 /**
  * Test ReplayCharSequence class.
+ * 
+ * TODO: Add tests that check we're using the content body offset passed in.
+ * Doesn't look like we're using it at the moment.  Also, add test where 
+ * the content offset is beyond the buffer and someways into the file.
  * 
  * @author stack
  * @version $Revision$, $Date$
@@ -57,15 +64,40 @@ public class ReplayCharSequenceTest extends TmpDirTestCase {
      * 
      * Ensure we charAt gets expected character.  Assumes default encodings.
      */
+    public void testReplayCharSequencebyteArraylongString()
+            throws IOException {
+        byte [] buffer = fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
+        File backingFile = new File(getTmpDir(),
+            "testReplayCharSequencebyteArraylongString.bkng");
+        writeFile(backingFile, buffer, MULTIPLIER);
+        
+        ReplayCharSequence rcs = new ReplayCharSequence(buffer,
+            buffer.length + (buffer.length * MULTIPLIER),
+                backingFile.getAbsolutePath());
+        
+        for (int i = 0; i < MULTIPLIER; i++) {
+            accessingCharacters(rcs);
+        }
+    }
+    
+    /**
+     * Test constructor.
+     * 
+     * Ensure we charAt gets expected character.  Assumes default encodings.
+     * Here we're specifying an offset into the buffer of 256.  Should be ok
+     * for our comparison of characters since these get a modulus of 256.
+     */
     public void testReplayCharSequencebyteArraylonglongString()
             throws IOException {
         byte [] buffer = fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
         File backingFile = new File(getTmpDir(),
-            "testReplayCharSequencebyteArraylonglongString.bkng");
+            "testReplayCharSequencebyteArraylongString.bkng");
         writeFile(backingFile, buffer, MULTIPLIER);
+        
         ReplayCharSequence rcs = new ReplayCharSequence(buffer,
-            buffer.length + (buffer.length * MULTIPLIER), 0,
+            buffer.length + (buffer.length * MULTIPLIER), SEQUENCE_LENGTH,
                 backingFile.getAbsolutePath());
+        
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
         }
@@ -76,11 +108,10 @@ public class ReplayCharSequenceTest extends TmpDirTestCase {
      * 
      * @param rcs The ReplayCharSequence to try out.
      */
-    private void accessingCharacters(ReplayCharSequence rcs) {
+    private void accessingCharacters(CharSequence rcs) {
         long timestamp = (new Date()).getTime();
         int seeks = 0;
-        for (int i = (INCREMENT * 2); 
-                (i + INCREMENT) < (BUFFER_SIZE + (BUFFER_SIZE * MULTIPLIER));
+        for (int i = (INCREMENT * 2); (i + INCREMENT) < rcs.length();
                 i += INCREMENT) {
             checkCharacter(rcs, i);
             seeks++;
@@ -89,7 +120,7 @@ public class ReplayCharSequenceTest extends TmpDirTestCase {
                 seeks++;
             }
         }
-        logger.info("Seeks count " + seeks + " in " +
+        logger.info(rcs + " seeks count " + seeks + " in " +
             ((new Date().getTime()) - timestamp) + " milliseconds.");
     }
     
@@ -101,10 +132,10 @@ public class ReplayCharSequenceTest extends TmpDirTestCase {
      * @param rcs ReplayCharSequence to read from.
      * @param i Character offset.
      */
-    private void checkCharacter(ReplayCharSequence rcs, int i) {
+    private void checkCharacter(CharSequence rcs, int i) {
         int c = rcs.charAt(i);
-        assertTrue("Character " + Integer.toString(c) +
-            " unexpected", (c % SEQUENCE_LENGTH) == (i % SEQUENCE_LENGTH));
+        assertTrue("Character " + Integer.toString(c) + " at offset " + i +
+            " unexpected.", (c % SEQUENCE_LENGTH) == (i % SEQUENCE_LENGTH));
     }
     
     /**
@@ -134,13 +165,22 @@ public class ReplayCharSequenceTest extends TmpDirTestCase {
         int index = 0;
         for (int i = 0; i < buffer.length; i++) {
             buffer[i] = (byte) (index & 0x00ff);
-            if (index >= 255) {
+            index++;
+            if (index >= SEQUENCE_LENGTH) {
                 // Reset the index.
                 index = 0;
-            } else {
-                index++;
             }
         }
         return buffer;
+    }
+    
+    public static void main (String [] args) throws IOException {
+        
+        TestSuite suite = new TestSuite("Profiling");
+        suite.addTestSuite(ReplayCharSequenceTest.class);
+        TestResult result = junit.textui.TestRunner.run(suite);
+        logger.info(result.wasSuccessful()? "PASSED": "FAILED");
+        // Make the program hold here so I can inspect w/ the JMP profiler.
+        System.in.read();
     }
 }

@@ -115,6 +115,13 @@ public class DiskBackedQueue implements Queue {
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+         return headQ.peek();
+    }
+
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
@@ -162,16 +169,11 @@ public class DiskBackedQueue implements Queue {
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public void deleteMatchedItems(QueueItemMatcher matcher) {
-        headQ.deleteMatchedItems(matcher);
-        tailQ.deleteMatchedItems(matcher);
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.util.Queue#peek()
-     */
-    public Object peek() {
-         return headQ.peek();
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
+        long numberOfDeletes = 0;
+        numberOfDeletes += headQ.deleteMatchedItems(matcher);
+        numberOfDeletes += tailQ.deleteMatchedItems(matcher);
+        return numberOfDeletes;
     }
 
 }

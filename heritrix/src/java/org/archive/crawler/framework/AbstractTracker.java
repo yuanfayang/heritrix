@@ -28,10 +28,8 @@ import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
-
 
 /**
  * A partial implementation of the StatisticsTracking interface.
@@ -52,18 +50,16 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker extends CrawlerModule implements StatisticsTracking,
-                                                 CrawlStatusListener,
-                                                 CrawlURIDispositionListener
-{
-    public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(60);
+public abstract class AbstractTracker extends CrawlerModule 
+                                   implements StatisticsTracking,
+                                              CrawlStatusListener{
+    public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(20);
     public static final String ATTR_STATS_INTERVAL = "interval-seconds";
 
-    // A reference to the CrawlContoller of the crawl that we are to track statistics for.
+    /** A reference to the CrawlContoller of the crawl that we are to track statistics for.*/
     protected CrawlController controller;
 
     protected Logger periodicLogger = null;
-    //protected int logInterval; // In seconds.
 
     // Keep track of time.
     protected long crawlerStartTime;
@@ -71,7 +67,7 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
     protected long crawlerPauseStarted = 0;
     protected long crawlerTotalPausedTime = 0;
 
-    // Timestamp of when this logger last wrote something to the log
+    /** Timestamp of when this logger last wrote something to the log */
     protected long lastLogPointTime;
 
     protected boolean shouldrun = true;
@@ -103,7 +99,6 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
 
         // Add listeners
         controller.addCrawlStatusListener(this);
-        controller.addCrawlURIDispositionListener(this);
     }
 
     /**
@@ -163,21 +158,27 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      */
     protected abstract void logActivity();
 
-    public void setCrawlStartTime(long mili){
-        crawlerStartTime = mili;
-    }
+//    public void setCrawlStartTime(long mili){
+//        crawlerStartTime = mili;
+//    }
 
+    /**
+     * Get the starting time of the crawl (as given by 
+     * <code>System.currentTimeMillis()</code> when the crawl started).
+     * @return time fo the crawl's start
+     */
     public long getCrawlStartTime(){
         return crawlerStartTime;
     }
 
     /**
-     *
-     * @return If crawl has ended it will return the time
-     *         it ended (given by System.currentTimeMillis()
-     *            at that time).
-     *         If crawl is still going on it will return the
-     *         same as System.currentTimeMillis()
+     * If crawl has ended it will return the time it ended (given by 
+     * <code>System.currentTimeMillis()</code> at that time).
+     * <br>
+     * If crawl is still going on it will return the same as 
+     * <code>System.currentTimeMillis()</code> at the time of the call.
+     * @return The time of the crawl ending or the current time if the crawl has
+     *         not ended.
      */
     public long getCrawlEndTime()
     {
@@ -189,16 +190,38 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
         return crawlerEndTime;
     }
 
+    /**
+     * Returns the number of milliseconds that the crawl spent paused or 
+     * otherwise in a nonactive state.
+     * @return the number of msec. that the crawl was paused or otherwise
+     *         suspended. 
+     */
     public long getCrawlTotalPauseTime()
     {
         return crawlerTotalPausedTime;
     }
 
+    /**
+     * Get the time when the the crawl was last paused/suspended (as given by 
+     * <code>System.currentTimeMillis()</code> at that time). Will be 0 if the
+     * crawl is not currently paused.
+     * @return time of the crawl's last pause/suspend or 0 if the crawl is not
+     *         currently paused. 
+     */
     public long getCrawlPauseStartedTime()
     {
         return crawlerPauseStarted;
     }
 
+    /**
+     * Total amount of time spent actively crawling so far.<p>
+     * Returns the total amount of time (in milliseconds) that has elapsed from
+     * the start of the crawl {@link #getCrawlStartTime() getCrawlStartTime()}
+     * and until the current time or if the crawl has ended until the the end
+     * of the crawl {@link #getCrawlEndTime() getCrawlEndTime()} <b>minus</b> any
+     * time spent paused {@link #getCrawlTotalPauseTime() getCrawlTotalPauseTime()}.
+     * @return Total amount of time (in msec.) spent crawling so far.
+     */
     public long getCrawlerTotalElapsedTime()
     {
         if(getCrawlPauseStartedTime()!=0)
@@ -213,7 +236,12 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
         }
     }
 
-    public int getLogWriteInterval() {
+    /**
+     * The number of seconds to wait between writing snapshot data to log file.
+     * @return the number of seconds to wait between writing snapshot data to 
+     *         log file.
+     */
+    protected int getLogWriteInterval() {
         int logInterval;
         try {
             logInterval = ((Integer) getAttribute(null, ATTR_STATS_INTERVAL)).intValue();
@@ -222,6 +250,7 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
         }
         return logInterval;
     }
+    
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
      */
@@ -254,7 +283,10 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
-        crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
+        if(crawlerPauseStarted>0){
+            // Ok, we managed to actually pause before resuming.
+            crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
+        }
         crawlerPauseStarted = 0;
         periodicLogger.log(
                     Level.INFO,

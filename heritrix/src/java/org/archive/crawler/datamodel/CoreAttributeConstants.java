@@ -67,12 +67,12 @@ public interface CoreAttributeConstants {
     public static String A_ANNOTATIONS = "annotations";
 
     public static String A_PREREQUISITE_URI = "prerequisite-uri";
-    public static String A_FORCED_PREREQUISITE_URI = "forced-prerequisite-uri";
     public static String A_HTML_EMBEDS = "html-embeds";
     public static String A_HTML_SPECULATIVE_EMBEDS = "html-speculativeembeds";
     public static String A_DISTANCE_FROM_SEED = "distance-from-seed";
     public static String A_HTML_LINKS = "html-links";
     public static String A_CSS_LINKS = "css-links";
+    public static String A_JS_FILE_LINKS = "js-file-links";
     public static String A_HTML_BASE = "html-base-href";
     public static String A_RETRY_DELAY = "retry-delay";
 
