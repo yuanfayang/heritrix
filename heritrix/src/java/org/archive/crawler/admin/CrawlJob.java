@@ -306,15 +306,16 @@ public class CrawlJob
     }
 
     /**
-     * Cause the job to be written to persistent storage. This will also save the
-     * statistics tracker if it is not null and the job status is finished
-     * (regardless of how it's finished)
+     * Cause the job to be written to persistent storage. 
+     * This will also save the statistics tracker if it is not null and the
+     * job status is finished (regardless of how it's finished)
      */
     private void writeJobFile(){
         if(isProfile==false && isNew==false){
             try {
-                FileWriter jobWriter = new FileWriter(jobDir.getAbsolutePath() + 
-                        File.separator + name + ".job", false);
+                FileWriter jobWriter =
+                    new FileWriter(jobDir.getAbsolutePath() + 
+                        File.separator + "state.job", false);
                 jobWriter.write(UID+"\n");
                 jobWriter.write(name+"\n");
                 jobWriter.write(status+"\n");

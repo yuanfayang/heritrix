@@ -1727,9 +1727,8 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
               <para>Path where ARC files should be written. Can be an absolute
               path. If a relative path is specified it will be relative to the
-              <literal>disk </literal>directory (the jobs configurable working
-              directory). The disk directory is an expert setting. It can be
-              left empty.</para>
+              <literal>job</literal>directory. The disk directory is an expert
+              setting. It can be left empty.</para>
             </listitem>
 
             <listitem>
@@ -2856,8 +2855,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
         <para>This file is generated in the directory indicated by the
         '<emphasis>disk</emphasis>' attribute of the configuration at the very
-        end of the crawl. By default this is a subdirectory of the job
-        directory called <literal>disk</literal>.</para>
+        end of the crawl.</para>
       </sect3>
 
       <sect3>
@@ -2943,8 +2941,8 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
         <para>It is possible to specify the location of these files on the
         ARCWriter processor in settings page. Unless this is set as an
-        absolute path this is a path relative to the <emphasis>disk</emphasis>
-        attribute.</para>
+        absolute path this is a path relative to the <emphasis>job</emphasis>
+        directory.</para>
 
         <para>ARC files are named as follows:</para>
 

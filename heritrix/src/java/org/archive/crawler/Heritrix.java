@@ -601,7 +601,7 @@ public class Heritrix
         // Start server.
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), SELFTEST);
-        File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
+        File crawlOrderFile = new File(selftestDir, "order.xml");
         Heritrix.jobHandler = new SelfTestCrawlJobHandler(oneSelfTestName);
         // Create a job based off the selftest order file.  Then use this as
         // a template to pass jobHandler.newJob().  Doing this gets our
