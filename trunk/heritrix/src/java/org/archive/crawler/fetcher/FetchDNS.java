@@ -41,8 +41,8 @@ import org.xbill.DNS.dns;
 
 
 /**
- * Processor to resolve 'dns:' URIs. 
- * 
+ * Processor to resolve 'dns:' URIs.
+ *
  * @author multiple
  */
 public class FetchDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
@@ -56,7 +56,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
      // protected CrawlServer dnsServer = null;
 
     /** Create a new instance of FetchDNS.
-     * 
+     *
      * @param name the name of this attribute.
      */
     public FetchDNS(String name) {
@@ -161,7 +161,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
      * <code>"dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]</code>
      *
      * @param curi Crawl URI to parse.
-     * @return The target hostname of a 'dns:' URI. Returns null for 
+     * @return The target hostname of a 'dns:' URI. Returns null for
      * non-'dns:' input.
      */
     public static String parseTargetDomain(CrawlURI curi){

@@ -69,10 +69,10 @@ import org.archive.crawler.framework.Filter;
 public class DomainScope extends CrawlScope {
 
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
-    public static final String ATTR_ADDITIONAL_FOCUS_FILTER = 
+    public static final String ATTR_ADDITIONAL_FOCUS_FILTER =
         "additionalScopeFocus";
     public static final String DOT = ".";
-    
+
     Filter additionalFocusFilter;
     Filter transitiveFilter;
 
@@ -101,7 +101,7 @@ public class DomainScope extends CrawlScope {
 
     /**
      * Check if an URI is part of this scope.
-     * 
+     *
      * @param o An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
@@ -110,7 +110,7 @@ public class DomainScope extends CrawlScope {
         if (u == null) {
             return false;
         }
-        // Get the seeds to refresh and then get an iterator inside a 
+        // Get the seeds to refresh and then get an iterator inside a
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
@@ -125,7 +125,7 @@ public class DomainScope extends CrawlScope {
         catch (URIException e1) {
             logger.severe(
                 "UURI getHostBasename failed for candidate URI: " + u);
-        }        
+        }
         if (candidateDomain == null) {
             // either an opaque, unfetchable, or unparseable URI
             return false;
@@ -134,7 +134,7 @@ public class DomainScope extends CrawlScope {
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI s = (UURI)i.next();
-                // Get seed domain where www[0-9]*\. is stripped.                
+                // Get seed domain where www[0-9]*\. is stripped.
                 try {
                     seedDomain = s.getHostBasename();
                 }
@@ -142,19 +142,19 @@ public class DomainScope extends CrawlScope {
                     logger.severe("UURI getHostBasename failed for seed: " + s);
                 }
                 if (seedDomain == null) {
-                    // GetHost can come back null.  See bug item 
+                    // GetHost can come back null.  See bug item
                     // [ 910120 ] java.net.URI#getHost fails when leading digit
                     continue;
                 }
-                
-                // Check if stripped hosts are same. 
+
+                // Check if stripped hosts are same.
                 if (seedDomain.equals(candidateDomain)) {
                     return true;
                 }
 
                 // Hosts are not same. Adjust seed basename to check if
                 // candidate domain ends with .seedDomain
-                seedDomain = DOT + seedDomain;               
+                seedDomain = DOT + seedDomain;
                 if (seedDomain.regionMatches(0, candidateDomain,
                     candidateDomain.length() - seedDomain.length(),
                     seedDomain.length())) {
@@ -166,7 +166,7 @@ public class DomainScope extends CrawlScope {
         // if none found, fail
         return false;
     }
-    
+
     protected boolean additionalFocusAccepts(Object o) {
         return additionalFocusFilter.accepts(o);
     }

@@ -56,7 +56,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
     /**
      * Compiled relevant tag extractor.
-     * 
+     *
      * <p>
      * This pattern extracts either:
      * <li> (1) whole &lt;script&gt;...&lt;/script&gt; or
@@ -108,7 +108,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     // 4: ON[WHATEVER] - script handler
     // 5: SRC,BACKGROUND,CITE,LONGDESC,USEMAP,PROFILE,DATASRC, or FOR
     //    single URI relative to doc base
-    // 6: CODEBASE - a single URI relative to doc base, affecting other 
+    // 6: CODEBASE - a single URI relative to doc base, affecting other
     //    attributes
     // 7: CLASSID, DATA - a single URI relative to CODEBASE (if supplied)
     // 8: ARCHIVE - one or more space-delimited URIs relative to CODEBASE
@@ -134,19 +134,19 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     static final String APPLET = "applet";
     static final String BASE = "base";
     static final String LINK = "link";
-    
+
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
 
-    
+
     public ExtractorHTML(String name) {
         super(name, "HTML extractor. Extracts links from HTML documents");
     }
 
-    protected void processGeneralTag(CrawlURI curi, CharSequence element, 
+    protected void processGeneralTag(CrawlURI curi, CharSequence element,
             CharSequence cs) {
-                
+
         Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 
         // Just in case it's an OBJECT or APPLET tag
@@ -188,7 +188,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 processEmbed(curi,codebase);
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
-                if (resources == null) { 
+                if (resources == null) {
                     resources = new ArrayList();
                 }
                 resources.add(value.toString());
@@ -206,7 +206,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 if (resources==null) {
                     resources = new ArrayList();
                 }
-                // If element is applet and code value does not end with 
+                // If element is applet and code value does not end with
                 // '.class' then append '.class' to the code value.
                 if (element.toString().toLowerCase().equals(APPLET) &&
                         !value.toString().toLowerCase().endsWith(CLASSEXT)) {
@@ -214,7 +214,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 } else {
                     resources.add(value.toString());
                 }
-                
+
             } else if (attr.start(10) > -1) {
                 // VALUE
                 if(TextUtils.matches(LIKELY_URI_PATH, value)) {
@@ -256,7 +256,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
         } catch (IllegalArgumentException e) {
             DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
-                "codebase=" + codebase + " res=" + res + "\n" + 
+                "codebase=" + codebase + " res=" + res + "\n" +
                 DevUtils.extraInfo(), e);
         }
     }
@@ -287,7 +287,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     protected void processLink(CrawlURI curi, CharSequence value) {
         String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-        
+
         if(TextUtils.matches(JAVASCRIPT, link)) {
             processScriptCode(curi,value.subSequence(11, value.length()));
         } else {
@@ -299,7 +299,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
     protected void processEmbed(CrawlURI curi, CharSequence value) {
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-        
+
         logger.finest("embed: " + embed + " from " + curi);
         this.numberOfLinksExtracted++;
         curi.addLinkToCollection(embed, A_HTML_EMBEDS);
@@ -346,7 +346,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         // Set flag to indicate that link extraction is completed.
         curi.linkExtractorFinished();
-        
+
         // Done w/ the ReplayCharSequence.  Close it.
         if (cs != null) {
             try {
@@ -376,7 +376,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 assert end >= 0: "End is :" + end + ", " + curi;
                 if (processMeta(curi,
                     cs.subSequence(start, end))) {
-                          
+
                     // meta tag included NOFOLLOW; abort processing
                     break;
                 }
@@ -389,11 +389,11 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 int start6 = tags.start(6);
                 int end6 = tags.end(6);
                 assert start6 >= 0: "Start is: " + start6 + ", " + curi;
-                assert end6 >= 0: "End is :" + end6 + ", " + curi;               
+                assert end6 >= 0: "End is :" + end6 + ", " + curi;
                 processGeneralTag(curi,
                     cs.subSequence(start6, end6),
                     cs.subSequence(start5, end5));
-                    
+
             } else if (tags.start(1) > 0) {
                 // <script> match
                 int start = tags.start(1);
@@ -404,7 +404,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                     ", " + curi;
                 processScript(curi, cs.subSequence(start, end),
                     tags.end(2) - start);
-                    
+
             } else if (tags.start(3) > 0){
                 // <style... match
                 int start = tags.start(3);
@@ -428,8 +428,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
     /**
      * Test whether this HTML is so unexpected (eg in place of a GIF URI)
-     * that it shouldn't be scanned for links. 
-     * 
+     * that it shouldn't be scanned for links.
+     *
      * @param curi CrawlURI to examine.
      * @return True if HTML is acceptable/expected here
      * @throws URIException
@@ -517,11 +517,11 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     protected void processStyle(CrawlURI curi, CharSequence sequence,
             int endOfOpenTag)
-    {            
+    {
         // First, get attributes of script-open tag as per any other tag.
-        processGeneralTag(curi, sequence.subSequence(0,6), 
+        processGeneralTag(curi, sequence.subSequence(0,6),
             sequence.subSequence(0,endOfOpenTag));
-    
+
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
             curi, sequence.subSequence(endOfOpenTag,sequence.length()));

@@ -43,28 +43,28 @@ public class TransclusionFilter extends Filter {
     private static final String ATTR_MAX_REFERRAL_HOPS = "max-referral-hops";
     private static final String ATTR_MAX_EMBED_HOPS = "max-embed-hops";
     private static final int DEFAULT_MAX_TRANS_HOPS = 4;
-    
+
     /**
      * Default speculative hops.
-     * 
+     *
      * No more than 1
      */
     private static final int DEFAULT_MAX_SPECULATIVE_HOPS = 1;
-    
+
     /**
      * Default maximum referral hops.
-     * 
+     *
      * No limit beside the overall trans limit
      */
     private static final int DEFAULT_MAX_REFERRAL_HOPS = Integer.MAX_VALUE;
-    
+
     /**
      * Default embedded link hops.
-     * 
+     *
      * No limit beside the overall trans limit
      */
     private static final int DEFAULT_MAX_EMBED_HOPS = Integer.MAX_VALUE;
-    
+
     int maxTransHops = DEFAULT_MAX_TRANS_HOPS;
     int maxSpeculativeHops = DEFAULT_MAX_SPECULATIVE_HOPS;
     int maxReferralHops = DEFAULT_MAX_REFERRAL_HOPS;

@@ -1,7 +1,7 @@
 /* ValueConstraint
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 29, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -48,7 +48,7 @@ import java.util.logging.Level;
  * could be warned that she should investigate if the value actally is what she
  * wants it be.
  * </ul>
- * 
+ *
  * @author John Erik Halse
  */
 public abstract class Constraint implements Comparable {
@@ -56,7 +56,7 @@ public abstract class Constraint implements Comparable {
     private final String msg;
 
     /** Constructs a new Constraint.
-     * 
+     *
      * @param level the level for this constraint.
      * @param msg default message to return if the check fails.
      */
@@ -69,10 +69,10 @@ public abstract class Constraint implements Comparable {
         this.severity = level;
         this.msg = msg;
     }
-    
+
     /**
      * Run the check.
-     * 
+     *
      * @param owner the ComplexType owning the attribute to check.
      * @param definition the definition to check the attribute against.
      * @param value the value to check.
@@ -83,9 +83,9 @@ public abstract class Constraint implements Comparable {
             Type definition, Object value) {
         return innerCheck(settings, owner, definition, value);
     }
-    
+
     /** The method all subclasses should implement to do the actual checking.
-     * 
+     *
      * @param owner the ComplexType owning the attribute to check.
      * @param definition the definition to check the attribute against.
      * @param value the value to check.
@@ -94,17 +94,17 @@ public abstract class Constraint implements Comparable {
      */
     public abstract FailedCheck innerCheck(CrawlerSettings settings,
             ComplexType owner, Type definition, Object value);
-    
+
     /** Get the default message to return if a check fails.
-     * 
+     *
      * @return the default message to return if a check fails.
      */
     protected String getDefaultMessage() {
         return msg;
     }
-    
+
     /** Objects of this class represents failed constraint checks.
-     * 
+     *
      * @author John Erik Halse
      */
     public class FailedCheck {
@@ -114,10 +114,10 @@ public abstract class Constraint implements Comparable {
         private final Type definition;
         private final Object value;
         protected final ArrayList messageArguments = new ArrayList();
-        
+
         /**
          * Construct a new FailedCheck object.
-         * 
+         *
          * @param settings the CrawlerSettings object for which this check was
          *            executed.
          * @param owner the ComplexType owning the attribute to check.
@@ -137,11 +137,11 @@ public abstract class Constraint implements Comparable {
             this.messageArguments.add(value);
             this.messageArguments.add(owner.getName());
         }
-        
+
         /**
          * Construct a new FailedCheck object using the constraints default
          * message.
-         * 
+         *
          * @param settings the CrawlerSettings object for which this check was
          *            executed.
          * @param owner the ComplexType owning the attribute to check.
@@ -154,39 +154,39 @@ public abstract class Constraint implements Comparable {
         }
 
         /** Get the error message.
-         * 
+         *
          * @return the error message.
          */
         public String getMessage() {
             return MessageFormat.format(msg, messageArguments.toArray());
         }
-        
+
         /** Get the severity level.
-         * 
+         *
          * @return the severity level.
          */
         public Level getLevel() {
             return severity;
         }
-        
+
         /** Get the definition for the checked attribute.
-         * 
+         *
          * @return the definition for the checked attribute.
          */
         public Type getDefinition() {
             return definition;
         }
-        
+
         /** Get the value of the checked attribute.
-         * 
+         *
          * @return the value of the checked attribute.
          */
         public Object getValue() {
             return value;
         }
-        
+
         /** Get the {@link ComplexType} owning the checked attribute.
-         * 
+         *
          * @return the {@link ComplexType} owning the checked attribute.
          */
         public ComplexType getOwner() {
@@ -194,7 +194,7 @@ public abstract class Constraint implements Comparable {
         }
 
         /** Get the {@link CrawlerSettings} for the checked attribute.
-         * 
+         *
          * @return the {@link CrawlerSettings} for the checked attribute.
          */
         public CrawlerSettings getSettings() {
@@ -203,23 +203,23 @@ public abstract class Constraint implements Comparable {
 
         /** Returns a human readeable string for the failed check.
          * Returns the same as {@link #getMessage()}
-         * 
+         *
          * @param String  a human readeable string for the failed check.
          */
         public String toString() {
             return getMessage();
         }
     }
-    
+
     /** Compare this constraints level to another constraint.
      * This method is implemented to let constraints be sorted with the highest
      * level first.
-     * 
+     *
      * @param o a Constraint to compare to.
      */
     public int compareTo(Object o) {
         Constraint c = (Constraint) o;
         return c.severity.intValue() - severity.intValue();
     }
-    
+
 }

@@ -71,7 +71,7 @@ public class RobotsHonoringPolicy  extends ModuleType {
     public final static String ATTR_MASQUERADE = "masquerade";
     public final static String ATTR_CUSTOM_ROBOTS = "custom-robots";
     public final static String ATTR_USER_AGENTS = "user-agents";
-    
+
 
     /**
      * Creates a new instance of RobotsHonoringPolicy.

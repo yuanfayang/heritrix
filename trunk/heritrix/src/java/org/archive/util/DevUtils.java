@@ -1,7 +1,7 @@
 /* DevUtils
- * 
+ *
  * Created on Oct 29, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -31,7 +31,7 @@ import org.archive.crawler.framework.ToeThread;
 
 /**
  * Write a message and stack trace to the 'org.archive.util.DevUtils' logger.
- * 
+ *
  * @author gojomo
  * @version $Revision$ $Date$
  */
@@ -41,14 +41,14 @@ public class DevUtils {
     /**
      * Log a warning message to the logger 'org.archive.util.DevUtils' made of
      * the passed 'note' and a stack trace based off passed exception.
-     * 
+     *
      * @param ex Exception we print a stacktrace on.
      * @param note Message to print ahead of the stacktrace.
      */
     public static void warnHandle(Throwable ex, String note) {
         logger.warning(format(note, ex));
     }
-    
+
     /**
      * @return Return formatted string made of passed message and stack trace
      * of passed exception.
@@ -62,7 +62,7 @@ public class DevUtils {
     }
 
     /**
-     * @return Extra information gotten from current ToeThread.  May not 
+     * @return Extra information gotten from current ToeThread.  May not
      * always be available in which case we return empty string.
      */
     public static String extraInfo() {

@@ -62,7 +62,7 @@ public abstract class SettingsHandler {
 
     /** Reference to the order module */
     private final CrawlOrder order;
-    
+
     private Set valueErrorHandlers = Collections.synchronizedSet(new HashSet());
     private int errorReportingLevel = Level.ALL.intValue();
 
@@ -250,7 +250,7 @@ public abstract class SettingsHandler {
     public CrawlerSettings getSettings(String host) {
         return getRefinementsForSettings(getSettingsForHost(host), null);
     }
-    
+
     /** Get CrawlerSettings object in effect for a host or domain.
     *
     * If there is no specific settings for the host/domain, it will recursively
@@ -267,7 +267,7 @@ public abstract class SettingsHandler {
     public CrawlerSettings getSettings(String host, UURI uri) {
         return getRefinementsForSettings(getSettingsForHost(host), uri);
     }
-    
+
     protected CrawlerSettings getSettingsForHost(String host) {
         CrawlerSettings settings = settingsCache.getSettings(host, null);
 
@@ -278,10 +278,10 @@ public abstract class SettingsHandler {
                 tmpHost = getParentScope(tmpHost);
                 settings = getSettingsObject(tmpHost);
             }
-            
+
             settingsCache.putSettings(host, settings);
         }
-        
+
         return settings;
     }
 
@@ -315,10 +315,10 @@ public abstract class SettingsHandler {
     public CrawlerSettings getSettingsObject(String scope) {
         return getSettingsObject(scope, null);
     }
-    
+
     /**
      * Get CrawlerSettings object for a host/domain and a particular refinement.
-     * 
+     *
      * @param scope the host or domain to get the settings for.
      * @param refinement the refinement reference to get.
      * @return CrawlerSettings object for a host/domain and a particular
@@ -326,7 +326,7 @@ public abstract class SettingsHandler {
      */
     public CrawlerSettings getSettingsObject(String scope, String refinement) {
         CrawlerSettings settings = settingsCache.getSettingsObject(scope, refinement);
-        
+
         if (settings == null) {
             // Reference not found
             settings = new CrawlerSettings(this, scope, refinement);
@@ -361,7 +361,7 @@ public abstract class SettingsHandler {
         settings = getSettingsObject(scope, refinement);
         if (settings == null) {
             scope = scope.intern();
-            
+
             // No existing settings object found, create one
             settings = new CrawlerSettings(this, scope, refinement);
             settingsCache.refreshHostToSettings();
@@ -463,13 +463,13 @@ public abstract class SettingsHandler {
 
     /**
      * Unregister an instance of {@link ValueErrorHandler}.
-     * 
+     *
      * @param errorHandler the <code>CalueErrorHandler</code> to unregister.
-     * 
+     *
      * @see ValueErrorHandler
      * @see #setErrorReportingLevel(Level)
      * @see #registerValueErrorHandler(ValueErrorHandler)
-     *  
+     *
      */
     public void unregisterValueErrorHandler(ValueErrorHandler errorHandler) {
         valueErrorHandlers.remove(errorHandler);
@@ -482,9 +482,9 @@ public abstract class SettingsHandler {
      * {@link Level#SEVERE}will throw an {@link InvalidAttributeValueException}.
      * The ValueErrorHandler will recieve a notification for all failed checks
      * with level equal or greater than the error reporting level.
-     * 
+     *
      * @param errorHandler the <code>CalueErrorHandler</code> to register.
-     * 
+     *
      * @see ValueErrorHandler
      * @see #setErrorReportingLevel(Level)
      * @see #unregisterValueErrorHandler(ValueErrorHandler)
@@ -494,10 +494,10 @@ public abstract class SettingsHandler {
             valueErrorHandlers.add(errorHandler);
         }
     }
-    
+
     /**
      * Fire events on all registered {@link ValueErrorHandler}.
-     * 
+     *
      * @param error the failed constraints return value.
      * @return true if there was any registered ValueErrorHandlers to notify.
      */
@@ -509,26 +509,26 @@ public abstract class SettingsHandler {
         }
         return valueErrorHandlers.size() > 0;
     }
-    
+
     /**
      * Set the level for which notification of failed constraints will be fired.
-     * 
+     *
      * @param level the error reporting level.
      */
     public void setErrorReportingLevel(Level level) {
         errorReportingLevel = level.intValue();
     }
-    
+
     /**
-     * Creates and returns a <tt>List</tt> of all files comprising the current 
+     * Creates and returns a <tt>List</tt> of all files comprising the current
      * settings framework.
-     * 
-     * <p>The List contains the absolute String path of each file. 
-     * 
+     *
+     * <p>The List contains the absolute String path of each file.
+     *
      * <p>The list should contain any configurable files, including such files
      * as seed file and any other files use by the various settings modules.
-     * 
-     * <p>Implementations of the SettingsHandler that do not use files for 
+     *
+     * <p>Implementations of the SettingsHandler that do not use files for
      * permanent storage should return an empty list.
      */
     public abstract List getListOfAllFiles();

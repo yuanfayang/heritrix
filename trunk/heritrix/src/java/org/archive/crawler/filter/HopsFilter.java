@@ -39,8 +39,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class HopsFilter extends Filter {
-    
-    
+
+
     /**
      * @param name
      */

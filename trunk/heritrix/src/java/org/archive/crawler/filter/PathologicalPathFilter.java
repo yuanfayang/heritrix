@@ -1,7 +1,7 @@
 /* PathologicalFilter
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Feb 20, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -30,12 +30,12 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
 /** Checks if a URI contains a repated pattern.
- * 
+ *
  * This filter is checking if a pattern is repeated a specific number of times.
- * The use is to avoid crawler traps where the server adds the same pattern to 
+ * The use is to avoid crawler traps where the server adds the same pattern to
  * the requested URI like:
  * http://host/img/img/img/img....
- *  
+ *
  * @author John Erik Halse
  */
 public class PathologicalPathFilter extends URIRegExpFilter {
@@ -45,7 +45,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
     public static final Integer DEFAULT_REPETITIONS = new Integer(3);
 
     /** Constructs a new PathologicalPathFilter.
-     * 
+     *
      * @param name the name of the filter.
      */
     public PathologicalPathFilter(String name) {
@@ -68,7 +68,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
     }
 
     /** Construct the regexp string to be matched aginst the URI.
-     * 
+     *
      * @param o an object to extract a URI from.
      * @return the regexp pattern.
      */
@@ -82,7 +82,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
         }
 
         if (rep == 0) return null;
-        
+
         return ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
     }
 }

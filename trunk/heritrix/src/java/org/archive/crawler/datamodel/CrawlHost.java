@@ -42,10 +42,10 @@ public class CrawlHost implements Serializable {
     private String hostname;
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
-    
+
     /**
      * TTL gotten from dns record.
-     * 
+     *
      * From rfc2035:
      * <pre>
      * TTL       a 32 bit unsigned integer that specifies the time
@@ -59,9 +59,9 @@ public class CrawlHost implements Serializable {
 
     // Used when bandwith constraint are used
     private long earliestNextURIEmitTime = 0;
-    
+
     /** Create a new CrawlHost object.
-     * 
+     *
      * @param hostname the host name for this host.
      */
     public CrawlHost(String hostname) {
@@ -88,9 +88,9 @@ public class CrawlHost implements Serializable {
     }
 
     /** Return true if the IP for this host has been looked up.
-     * 
+     *
      * Returns true even if the lookup failed.
-     * 
+     *
      * @return true if the IP for this host has been looked up.
      */
     public boolean hasBeenLookedUp() {
@@ -99,7 +99,7 @@ public class CrawlHost implements Serializable {
 
     /**
      * Set the IP address for this host.
-     * 
+     *
      * @param address
      * @param ttl the TTL from the dns record in seconds or -1 if it should live
      * forever (is a numeric IP).
@@ -113,7 +113,7 @@ public class CrawlHost implements Serializable {
     }
 
     /** Get the IP address for this host.
-     * 
+     *
      * @return the IP address for this host.
      */
     public InetAddress getIP() {
@@ -121,7 +121,7 @@ public class CrawlHost implements Serializable {
     }
 
     /** Get the time when the IP address for this host was last looked up.
-     * 
+     *
      * @return the time when the IP address for this host was last looked up.
      */
     public long getIpFetched() {
@@ -130,7 +130,7 @@ public class CrawlHost implements Serializable {
 
     /**
      * Get the TTL value from the dns record for this host.
-     * 
+     *
      * @return the TTL value from the dns record for this host -- in seconds --
      * or -1 if this lookup should be valid forever (numeric ip).
      */
@@ -144,27 +144,27 @@ public class CrawlHost implements Serializable {
     public String toString() {
         return "CrawlHost<" + hostname + "(ip:" + ip + ")>";
     }
-    
+
     /** Get the host name.
-     * 
+     *
      * @return Returns the host name.
      */
     public String getHostName() {
         return hostname;
     }
-    
+
     /** Get the earliest time a URI for this host could be emitted.
      * This only has effect if constraints on bandwidth per host is set.
-     * 
+     *
      * @return Returns the earliestNextURIEmitTime.
      */
     public long getEarliestNextURIEmitTime() {
         return earliestNextURIEmitTime;
     }
-    
+
     /** Set the earliest time a URI for this host could be emitted.
      * This only has effect if constraints on bandwidth per host is set.
-     * 
+     *
      * @param earliestNextURIEmitTime The earliestNextURIEmitTime to set.
      */
     public void setEarliestNextURIEmitTime(long earliestNextURIEmitTime) {

@@ -36,18 +36,18 @@ import org.archive.crawler.settings.SimpleType;
 
 /**
  * Base class for URI processing classes.
- * 
+ *
  * <p> Each URI is processed be a user defined series of processors. This class
  * provides the basic infrastructure for these but does not actually do
  * anything. New processors can be easily created by subclassing this class.
- * 
+ *
  * <p> Classes subclassing this one should not trap InterruptedExceptions.
  * They should be allowed to propagate to the ToeThread executing the processor.
  * Also they should immediately exit their main method (<tt>innerProcess()</tt>)
  * if the <tt>interrupted</tt> flag is set.
- * 
+ *
  * @author Gordon Mohr
- * 
+ *
  * @see org.archive.crawler.framework.ToeThread
  */
 public class Processor extends ModuleType {
@@ -84,8 +84,8 @@ public class Processor extends ModuleType {
     }
 
     /**
-     * Perform processing on the given CrawlURI. 
-     * 
+     * Perform processing on the given CrawlURI.
+     *
      * @param curi
      * @throws InterruptedException
      */
@@ -108,7 +108,7 @@ public class Processor extends ModuleType {
             innerRejectProcess(curi);
         }
     }
-    
+
     protected void checkForInterrupt() throws InterruptedException {
         if (Thread.interrupted()) {
             throw new InterruptedException("interrupted");
@@ -136,23 +136,23 @@ public class Processor extends ModuleType {
      * Classes subclassing this one should override this method to perform
      * processor specific actions.
      * <p>
-     * 
+     *
      * This method is garanteed to be called after the crawl is set up, but
      * before any URI-processing has occured.
      */
     protected void initialTasks () {
         // by default do nothing
     }
-    
+
     /**
      * Classes subclassing this one should override this method to perform
-     * processor specific actions.  
+     * processor specific actions.
      *
      */
     protected void finalTasks () {
         // by default do nothing
     }
-    
+
     /**
      * Do all specified filters (if any) accept this CrawlURI?
      *
@@ -184,7 +184,7 @@ public class Processor extends ModuleType {
     }
 
     /** Set the default next processor in the chain.
-     * 
+     *
      * @param nextProcessor the default next processor in the chain.
      */
     public void setDefaultNextProcessor(Processor nextProcessor) {
@@ -192,7 +192,7 @@ public class Processor extends ModuleType {
     }
 
     /** Get the controller object.
-     * 
+     *
      * @return the controller object.
      */
     public CrawlController getController() {

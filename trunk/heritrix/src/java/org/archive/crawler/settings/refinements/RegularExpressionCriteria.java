@@ -1,7 +1,7 @@
 /* RegularExpressionCriteria
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -30,7 +30,7 @@ import org.archive.util.TextUtils;
 
 /**
  * A refinement criteria that test if a URI matches a regular expression.
- * 
+ *
  * @author John Erik Halse
  */
 public class RegularExpressionCriteria implements Criteria {
@@ -45,7 +45,7 @@ public class RegularExpressionCriteria implements Criteria {
     /**
      * Create a new instance of RegularExpressionCriteria initializing it with
      * a regular expression.
-     * 
+     *
      * @param regexp the regular expression for this criteria.
      */
     public RegularExpressionCriteria(String regexp) {
@@ -64,7 +64,7 @@ public class RegularExpressionCriteria implements Criteria {
 
     /**
      * Get the regular expression to be matched against a URI.
-     * 
+     *
      * @return Returns the regexp.
      */
     public String getRegexp() {
@@ -72,7 +72,7 @@ public class RegularExpressionCriteria implements Criteria {
     }
     /**
      * Set the regular expression to be matched against a URI.
-     * 
+     *
      * @param regexp The regexp to set.
      */
     public void setRegexp(String regexp) {

@@ -42,10 +42,10 @@ import org.archive.crawler.admin.CrawlJob;
  * @version $Id$
  */
 public class AllSelfTestCases
-{   
+{
     /**
      * All known selftests as a list.
-     * 
+     *
      * Gets initialized by the static block that immediately follows.
      */
     private static List allKnownSelftests;
@@ -58,10 +58,10 @@ public class AllSelfTestCases
                 CharsetSelfTest.class,
                 AuthSelfTest.class
             };
-        AllSelfTestCases.allKnownSelftests = 
+        AllSelfTestCases.allKnownSelftests =
             Collections.unmodifiableList(Arrays.asList(tmp));
     }
-    
+
     /**
      * Run all known tests in the selftest suite.
      *
@@ -81,10 +81,10 @@ public class AllSelfTestCases
         return suite(selftestURL, job, jobDir, htdocs,
              AllSelfTestCases.allKnownSelftests);
     }
-    
+
     /**
      * Run list of passed tests.
-     * 
+     *
      * This method is exposed so can run something less than all of the
      * selftests.
      *
@@ -107,11 +107,11 @@ public class AllSelfTestCases
         }
 
         return new TestSetup(suite) {
-            
+
                 protected void setUp() throws Exception
                 {
                     SelfTestCase.initialize(selftestURL, job, jobDir, htdocs);
                 }
-            };       
+            };
     }
 }

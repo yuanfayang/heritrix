@@ -1,7 +1,7 @@
 /* CharSubSequence.java
- * 
+ *
  * Created on Sep 30, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -25,12 +25,12 @@ package org.archive.io;
 
 /**
  * Provides a subsequence view onto a CharSequence.
- * 
+ *
  * @author gojomo
  * @version $Revision$, $Date$
  */
 public class CharSubSequence implements EnhancedCharSequence {
-    
+
     EnhancedCharSequence inner;
     int start;
     int end;
@@ -40,16 +40,16 @@ public class CharSubSequence implements EnhancedCharSequence {
             throw new IllegalArgumentException("Start " + start + " is > " +
                 " than end " + end);
         }
-        
+
         if (end < 0 || start < 0) {
             throw new IllegalArgumentException("Start " + start + " or end " +
                 end + " is < 0.");
         }
-        
+
         if (inner ==  null) {
             throw new NullPointerException("Passed charsequence is null.");
         }
-        
+
         this.inner = inner;
         this.start = start;
         this.end = end;
@@ -78,7 +78,7 @@ public class CharSubSequence implements EnhancedCharSequence {
     public CharSequence subSequence(int begin, int finish) {
         return new CharSubSequence(this, begin, finish);
     }
-    
+
     /*
      *  (non-Javadoc)
      * @see java.lang.CharSequence#toString()

@@ -1,7 +1,7 @@
 /* SimpleTypeTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 15, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -29,7 +29,7 @@ import junit.framework.TestCase;
 
 /**
  * Testing of the SimpleType
- * 
+ *
  * @author John Erik Halse
  */
 public class SimpleTypeTest extends TestCase {
@@ -37,28 +37,28 @@ public class SimpleTypeTest extends TestCase {
         SimpleType t1 = new SimpleType("a", "b", "c");
         assertEquals("a", t1.getName());
     }
-    
+
     public void testGetDescription() {
         SimpleType t1 = new SimpleType("a", "b", "c");
         assertEquals("b", t1.getDescription());
     }
-    
+
     public void testGetDefaultValue() {
         SimpleType t1 = new SimpleType("a", "b", "c");
         assertEquals("c", t1.getDefaultValue());
     }
-    
+
     public void testGetLegalValues() {
         SimpleType t1 = new SimpleType("a", "b", "c", new String[] {"d", "e"});
         checkArray(new String[] {"d", "e"}, t1.getLegalValues());
     }
-    
+
     public void testSetLegalValues() {
         SimpleType t1 = new SimpleType("a", "b", "c", new String[] {"d", "e"});
         t1.setLegalValues(new String[] {"f", "g"});
         checkArray(new String[] {"f", "g"}, t1.getLegalValues());
     }
-    
+
     public void testGetConstraints() {
         SimpleType t1 = new SimpleType("a1", "b1", "c1");
         SimpleType t2 = new SimpleType("a2", "b2", "c2", new String[] {"d", "e"});
@@ -68,7 +68,7 @@ public class SimpleTypeTest extends TestCase {
         assertSame(LegalValueListConstraint.class, t2.getConstraints().get(1)
                 .getClass());
     }
-    
+
     public void testGetLegalValueType() {
         SimpleType t1 = new SimpleType("a1", "b1", "c1");
         SimpleType t2 = new SimpleType("a2", "b2", new Integer(1));
@@ -77,7 +77,7 @@ public class SimpleTypeTest extends TestCase {
         assertSame(Integer.class, t2.getLegalValueType());
         assertSame(TextField.class, t3.getLegalValueType());
     }
-    
+
     public void testEquals() {
         SimpleType t1 = new SimpleType("a1", "b1", "c1");
         SimpleType t2 = new SimpleType("a1", "b1", "c1");

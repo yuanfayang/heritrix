@@ -89,7 +89,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
      */
     public synchronized void testIntoDiskBacking() {
         DiskBackedQueue queue = (DiskBackedQueue)this.queue;
-        
+
         queue.enqueue("foo1");
         queue.enqueue("foo2");
         queue.enqueue("foo3");
@@ -110,7 +110,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo5 dequeued","foo5",queue.dequeue());
         // this next forces read of 5 into memory from disk, file flip
         assertEquals("foo6 dequeued","foo6",queue.dequeue());
-       
+
         // these next 4 write to new file
         queue.enqueue("foo12");
         queue.enqueue("foo13");
@@ -143,13 +143,13 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo19 dequeued","foo19",queue.dequeue());
         assertEquals("foo20 dequeued","foo20",queue.dequeue());
         assertEquals("foo21 dequeued","foo21",queue.dequeue());
-        assertTrue("queue is empty", queue.isEmpty());    
+        assertTrue("queue is empty", queue.isEmpty());
     }
-    
+
     /**
      * Test that object + files properly serializes and deserialized
      * from ObjectPlusFiles streams.
-     * 
+     *
      * @throws IOException
      * @throws ClassNotFoundException
      */
@@ -174,10 +174,10 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo5 dequeued","foo5",queue.dequeue());
         // this next forces read of 5 into memory from disk, file flip
         assertEquals("foo6 dequeued","foo6",queue.dequeue());
-        
+
         // next 4 enqueues write to new file
         queue.enqueue("foo12");
-        
+
         // TODO serialize/deserialize
         File tmpDir = getTmpDir();
         File serFile = new File(tmpDir,"foo.ser");
@@ -190,10 +190,10 @@ public class DiskBackedQueueTest extends QueueTestBase {
 		} finally {
 			out.close();
         }
-        
+
         ((DiskBackedQueue)queue).release();
         queue = null;
-        
+
         ObjectPlusFilesInputStream in = null;
         try {
             in = new ObjectPlusFilesInputStream(
@@ -203,7 +203,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
         } finally {
             in.close();
         }
- 
+
         // continue where we left off
         queue.enqueue("foo13");
         queue.enqueue("foo14");
@@ -219,7 +219,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo1 dequeued","foo13",queue.dequeue());
         assertEquals("foo1 dequeued","foo14",queue.dequeue());
         assertEquals("foo1 dequeued","foo15",queue.dequeue());
-        assertTrue("queue is empty", queue.isEmpty());    
+        assertTrue("queue is empty", queue.isEmpty());
     }
 }
 

@@ -1,7 +1,7 @@
 /* Refinement
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 2, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -36,7 +36,7 @@ import org.archive.crawler.settings.CrawlerSettings;
 /**
  * This class acts as a mapping between refinement criterias and a settings
  * object.
- * 
+ *
  * @author John Erik Halse
  *
  */
@@ -48,11 +48,11 @@ public class Refinement {
     private String audience = "";
     private String reference;
     private List criteria = new ArrayList();
-    
+
 
     /**
      * Create a new instance of Refinement
-     * 
+     *
      * @param owner the settings object that owns the refinement.
      * @param reference a name that combined with the owner uniquely identifies
      *            the refinement.
@@ -64,7 +64,7 @@ public class Refinement {
     }
 
     /** Create a new instance of Refinement
-     * 
+     *
      * @param owner the settings object that owns the refinement.
      * @param reference a name that combined with the owner uniquely identifies
      *            the refinement.
@@ -78,7 +78,7 @@ public class Refinement {
     /**
      * Check if a URI is within the bounds of every criteria set for this
      * refinement.
-     * 
+     *
      * @param uri the URI that shoulb be checked.
      * @return true if within bounds.
      */
@@ -93,38 +93,38 @@ public class Refinement {
         }
         return true;
     }
-    
+
     /**
      * Return the description of this refinement.
-     * 
+     *
      * @return Returns the description.
      */
     public String getDescription() {
         return description;
     }
-    
+
     /**
      * Set the description for this refinement.
-     * 
+     *
      * @param description The description to set.
      */
     public void setDescription(String description) {
         this.description = description;
     }
-    
+
     /**
      * Get an <code>ListIterator</code> over the criteria set for this
      * refinement.
-     * 
+     *
      * @return Returns an iterator over the criteria.
      */
     public ListIterator criteriaIterator() {
         return criteria.listIterator();
     }
-    
+
     /**
      * Add a new criterion to this refinement.
-     * 
+     *
      * @param criterion the criterion to add.
      */
     public void addCriteria(Criteria criterion) {
@@ -132,28 +132,28 @@ public class Refinement {
             criteria.add(criterion);
         }
     }
-    
+
     /**
      * Get the reference to this refinement's settings object.
-     * 
+     *
      * @return Returns the reference.
      */
     public String getReference() {
         return reference;
     }
-    
+
     /**
      * Set the reference to this refinement's settings object.
-     * 
+     *
      * @param reference The reference to set.
      */
     public void setReference(String reference) {
         this.reference = reference;
     }
-    
+
     /**
      * Get the <code>CrawlerSettings</code> object this refinement refers to.
-     * 
+     *
      * @return the settings object this refinement refers to.
      */
     public CrawlerSettings getSettings() {
@@ -163,7 +163,7 @@ public class Refinement {
         settings.setDescription((getDescription()));
         return settings;
     }
-    
+
     public boolean equals(Object o) {
         if (this == o
                 || (o instanceof Refinement && this.reference
@@ -172,7 +172,7 @@ public class Refinement {
         }
         return false;
     }
-    
+
     /**
      * @return Returns the audience.
      */

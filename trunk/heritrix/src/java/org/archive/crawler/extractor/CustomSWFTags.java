@@ -1,8 +1,8 @@
-/* 
+/*
  * SWFCustomAction
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 19, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -33,9 +33,9 @@ import com.anotherbigidea.flash.interfaces.SWFActions;
 import com.anotherbigidea.flash.writers.SWFTagTypesImpl;
 
 /**
- * Overwrite action tags, that may hold URI, to use <code>CrawlUriSWFAction 
+ * Overwrite action tags, that may hold URI, to use <code>CrawlUriSWFAction
  * <code> action.
- * 
+ *
  * @author Igor Ranitovic
  */
 public class CustomSWFTags extends SWFTagTypesImpl {
@@ -48,13 +48,13 @@ public class CustomSWFTags extends SWFTagTypesImpl {
 
     public SWFActions tagDefineButton(int id, Vector buttonRecords)
             throws IOException {
-                
+
         return actions;
     }
 
     public SWFActions tagDefineButton2(int id, boolean trackAsMenu,
             Vector buttonRecord2s) throws IOException {
-                
+
         return actions;
     }
 

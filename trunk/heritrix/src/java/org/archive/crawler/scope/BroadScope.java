@@ -55,7 +55,7 @@ public class BroadScope extends CrawlScope {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name Name of this crawlscope.
      */
     public BroadScope(String name) {
@@ -64,11 +64,11 @@ public class BroadScope extends CrawlScope {
             "A scope for broad crawls. Crawls made with this scope will not" +
             "be limited to the hosts or domains of it's seeds.");
     }
-    
+
     /**
      * Override so can intercept creation of seed list making it be a
      * non-caching seed list.
-     * 
+     *
      * @param seedfile Seedfile to use as seed source.
      * @param l Logger to use internally.
      * @param caching True if seed list created is to cache seeds.

@@ -182,10 +182,10 @@ public interface ARCConstants
      * Lowercased.
      */
     public static final String VERSION_HEADER_FIELD_KEY = "archive-version";
-    
+
     /**
      * Key for the ARC Record absolute offset into arc file.
-     * 
+     *
      * Lowercased.
      */
     public static final String ABSOLUTE_OFFSET_KEY = "archive-offset";

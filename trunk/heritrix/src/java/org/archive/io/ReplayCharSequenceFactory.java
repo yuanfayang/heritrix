@@ -1,21 +1,21 @@
 /* ReplayCharSequenceFactory
- * 
+ *
  * Created on Mar 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,79 +48,79 @@ import org.archive.util.DevUtils;
 
 /**
  * Factory that returns a ReplayCharSequence view on to a recording stream.
- * 
+ *
  * This factory encapsulates the decision-making figuring which
  * ReplayCharSequence to return whether the single byte or multibyte handling
- * ReplayCharSequence implementations.  Get instance of this factory 
- * using {@link #getInstance()} and then call 
+ * ReplayCharSequence implementations.  Get instance of this factory
+ * using {@link #getInstance()} and then call
  * {@link #getReplayCharSequence(byte [], long, long, String, String)}.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
 public class ReplayCharSequenceFactory {
-    
+
     /**
      * Logger.
-     * 
+     *
      * Logger used by this factory and by the ReplayCharSequence's returned.
      */
     protected static Logger logger =
         Logger.getLogger("org.archive.io.ReplayCharSequenceFactory");
-    
+
     /**
      * Singleton instance of this factory.
      */
     private static final ReplayCharSequenceFactory factory =
         new ReplayCharSequenceFactory();
-    
-    
+
+
     /**
      * Pattern to use stripping underscores and hyphens from encoding names.
      */
     private Pattern HYPHENS_UNDERSCORES = Pattern.compile("[-_]?");
-    
-    
+
+
     /**
      * Private constructor.
-     * 
+     *
      * Private ensures only one singleton instance.
      */
     private ReplayCharSequenceFactory()
     {
         super();
     }
-    
+
     /**
      * @return Instance of the singleton ReplayCharSequenceFactory.
      */
     public static ReplayCharSequenceFactory getInstance() {
-        
+
         return ReplayCharSequenceFactory.factory;
     }
-    
+
     /**
      * Return appropriate ReplayCharSequence switching off passed encoding.
-     * 
-     * We look at the encoding and try to figure whether to pass back a 
-     * byte-orientated ReplayCharSequence or a character-orientated 
+     *
+     * We look at the encoding and try to figure whether to pass back a
+     * byte-orientated ReplayCharSequence or a character-orientated
      * ReplayCharStream.
-     * 
+     *
      * @param buffer In-memory buffer of recordings prefix.  We read from here
      * first and will only go to the backing file if <code>size</code> requested
      * is greater than <code>buffer.length</code>.
      * @param size Total size of stream to replay in bytes.  Used to find EOS.
      * This is total length of content including HTTP headers if present.
-     * @param responseBodyStart Where the response body starts in bytes. Used to 
+     * @param responseBodyStart Where the response body starts in bytes. Used to
      * skip over the HTTP headers if present.
      * @param backingFilename Full path to backing file with content in excess
      * of whats in <code>buffer</code>.
-     * @param encoding Encoding to use reading the passed prefix buffer and 
+     * @param encoding Encoding to use reading the passed prefix buffer and
      * backing file.  For now, should be java canonical name for the encoding.
      * (If null is passed, we will default to ByteReplayCharSequence).
-     * 
+     *
      * @return A ReplayCharSequence.
-     * 
+     *
      * @throws IOException Problems accessing backing file or writing new file
      * of the decoded content.
      */
@@ -137,38 +137,38 @@ public class ReplayCharSequenceFactory {
             rcs = new ByteReplayCharSequence(buffer, size, responseBodyStart,
                 backingFilename);
         }
-        
+
         return rcs;
     }
-    
+
     /**
      * Make decision as to whether encoding warrants single-byte replay char
      * sequence or multi-byte.
-     * 
-     * @param encoding Encoding to use reading the passed prefix buffer and 
+     *
+     * @param encoding Encoding to use reading the passed prefix buffer and
      * backing file.  For now, should be java canonical name for the encoding.
      * (If null is passed, we will default to ByteReplayCharSequence).
-     * 
+     *
      * @return True if multibyte encoding.
      */
     private boolean isMultibyteEncoding(String encoding) {
-        
+
         boolean isMultibyte = false;
         if (encoding != null)
         {
             // Have seen '\n\r' appended to encoding.  Remove.
             encoding = encoding.trim();
-            
+
             // TODO: Add a set here that we populate from a properties
             // file that has in it a list of charsets that we'd like to
             // be handled by the multibyte ReplayCharSequence.  Members of this
-            // set would include names of charsets other than the canonical 
+            // set would include names of charsets other than the canonical
             // java names.
             try
             {
                 "".getBytes(encoding);
                 // Lower case and replace all hyphens and underscores to make
-                // it easier to compare (Sometimes an encoding can have the 
+                // it easier to compare (Sometimes an encoding can have the
                 // underscore and other times not as in ISO-8859-1 or ISO8859-1.
                 // As an aside, java seems fine w/ iso-8859-1 and ISO-8859-1:
                 // i.e. its case insenstive.
@@ -192,13 +192,13 @@ public class ReplayCharSequenceFactory {
                     encodingLowerCase.startsWith("gb180")       ||
                     encodingLowerCase.startsWith("gbk")         ||
                     encodingLowerCase.startsWith("iscii") ) {
-                    
+
                     isMultibyte = true;
                     logger.info("Encoding " + encoding +
                         " considered multibyte.");
                 }
             }
-            
+
             catch (UnsupportedEncodingException e)
             {
                 // Unsupported encoding.  Default to singlebyte.
@@ -210,7 +210,7 @@ public class ReplayCharSequenceFactory {
             ((isMultibyte)? Boolean.TRUE: Boolean.FALSE));
         return isMultibyte;
     }
-    
+
     /**
      * Test passed arguments.
      *
@@ -219,45 +219,45 @@ public class ReplayCharSequenceFactory {
      * is greater than <code>buffer.length</code>.
      * @param size Total size of stream to replay in bytes.  Used to find EOS.
      * This is total length of content including HTTP headers if present.
-     * @param responseBodyStart Where the response body starts in bytes. Used to 
+     * @param responseBodyStart Where the response body starts in bytes. Used to
      * skip over the HTTP headers if present.
-     * 
+     *
      * @throws IllegalArgumentException Thrown if passed an illegal argument.
      */
     protected void checkParameters(byte[] buffer, long size,
             long responseBodyStart)
         throws IllegalArgumentException {
-        
+
         if (responseBodyStart > size) {
             throw new IllegalArgumentException("Illegal response body offset" +
                 " of " + responseBodyStart + " whereas size is only " + size);
         }
-        
+
         if (responseBodyStart > Integer.MAX_VALUE) {
             // A value of this size will mess up math below.
             throw new IllegalArgumentException("Response body start " +
                 " of " + responseBodyStart + " > Integer.MAX_VALUE.");
         }
-        
+
         if (responseBodyStart > buffer.length) {
             throw new IllegalArgumentException("Unexpected response body" +
                 " offset of " + responseBodyStart + ".  The way this" +
                 " class works, it assumes the HTTP headers are in buffer: " +
-                buffer.length);            
+                buffer.length);
         }
-        
+
         if ((size - responseBodyStart) > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Length is bigger than we  can" +
                " handle: " + (size - responseBodyStart));
-        }        
+        }
     }
-    
+
     /**
      * Provides a (Replay)CharSequence view on recorded stream bytes (a prefix
      * buffer and overflow backing file).
      *
      * Treats the byte stream as 8-bit.
-     * 
+     *
      * <p>Uses a wraparound rolling buffer of the last windowSize bytes read
      * from disk in memory; as long as the 'random access' of a CharSequence
      * user stays within this window, access should remain fairly efficient.
@@ -267,11 +267,11 @@ public class ReplayCharSequenceFactory {
      * <p>When rereading of a location is necessary, the whole window is
      * recentered around the location requested. (TODO: More research
      * into whether this is the best strategy.)
-     * 
+     *
      * <p>An implementation of a ReplayCharSequence done with ByteBuffers -- one
      * to wrap the passed prefix buffer and the second, a memory-mapped
-     * ByteBuffer view into the backing file -- was consistently slower: ~10%. 
-     * My tests did the following. Made a buffer filled w/ regular content. 
+     * ByteBuffer view into the backing file -- was consistently slower: ~10%.
+     * My tests did the following. Made a buffer filled w/ regular content.
      * This buffer was used as the prefix buffer.  The buffer content was
      * written MULTIPLER times to a backing file.  I then did accesses w/ the
      * following pattern: Skip forward 32 bytes, then back 16 bytes, and then
@@ -283,56 +283,56 @@ public class ReplayCharSequenceFactory {
      * <p>TODO determine in memory mapped files is better way to do this;
      * probably not -- they don't offer the level of control over
      * total memory used that this approach does.
-     * 
+     *
      * @author Gordon Mohr
      * @version $Revision$, $Date$
      */
     private class ByteReplayCharSequence implements ReplayCharSequence {
-        
+
         /**
          * Buffer that holds the first bit of content.
-         * 
+         *
          * Once this is exhausted we go to the backing file.
          */
         private byte[] prefixBuffer;
-        
+
         /**
          * Total length of character stream to replay minus the HTTP headers
-         * if present. 
-         * 
+         * if present.
+         *
          * Used to find EOS.
          */
         protected int length;
 
         /**
          * Absolute length of the stream.
-         * 
-         * Includes HTTP headers.  Needed doing calc. in the below figuring 
+         *
+         * Includes HTTP headers.  Needed doing calc. in the below figuring
          * how much to load into buffer.
          */
         private int absoluteLength = -1;
-   
+
         /**
          * Buffer window on to backing file.
          */
         private byte[] wraparoundBuffer;
-        
+
         /**
          * Absolute index into underlying bytestream where wrap starts.
          */
         private int wrapOrigin;
-        
+
         /**
          * Index in wraparoundBuffer that corresponds to wrapOrigin
          */
         private int wrapOffset;
 
         /**
-         * Name of backing file we go to when we've exhausted content from the 
+         * Name of backing file we go to when we've exhausted content from the
          * prefix buffer.
          */
         private String backingFilename;
-        
+
         /**
          * Random access to the backing file.
          */
@@ -350,10 +350,10 @@ public class ReplayCharSequenceFactory {
         private static final String DEFAULT_SINGLE_BYTE_ENCODING =
             "ISO-8859-1";
 
-        
+
         /**
          * Constructor.
-         * 
+         *
          * @param buffer In-memory buffer of recordings prefix.  We read from
          * here first and will only go to the backing file if <code>size</code>
          * requested is greater than <code>buffer.length</code>.
@@ -362,15 +362,15 @@ public class ReplayCharSequenceFactory {
          * present.
          * @param responseBodyStart Where the response body starts in bytes.
          * Used to skip over the HTTP headers if present.
-         * @param backingFilename Path to backing file with content in excess of 
+         * @param backingFilename Path to backing file with content in excess of
          * whats in <code>buffer</code>.
-         * 
+         *
          * @throws IOException
          */
         private ByteReplayCharSequence(byte[] buffer, long size,
                 long responseBodyStart, String backingFilename)
             throws IOException {
-            
+
             this.length = (int)(size - responseBodyStart);
             this.absoluteLength = (int)size;
             this.prefixBuffer = buffer;
@@ -382,12 +382,12 @@ public class ReplayCharSequenceFactory {
                 this.backingFilename = backingFilename;
                 this.raFile = new RandomAccessFile(backingFilename, "r");
                 this.wraparoundBuffer = new byte[this.prefixBuffer.length];
-                this.wrapOrigin = this.prefixBuffer.length;                                                                                     
+                this.wrapOrigin = this.prefixBuffer.length;
                 this.wrapOffset = 0;
                 loadBuffer();
             }
         }
-        
+
         /**
          * @return Length of characters in stream to replay.  Starts counting
          * at the HTTP header/body boundary.
@@ -398,14 +398,14 @@ public class ReplayCharSequenceFactory {
 
         /**
          * Get character at passed absolute position.
-         * 
-         * Called by {@link #charAt(int)} which has a relative index into the 
+         *
+         * Called by {@link #charAt(int)} which has a relative index into the
          * content, one that doesn't account for HTTP header if present.
-         * 
+         *
          * @param index Index into content adjusted to accomodate initial offset
          * to get us past the HTTP header if present (i.e.
          * {@link #contentOffset}).
-         * 
+         *
          * @return Characater at offset <code>index</code>.
          */
         public char charAt(int index) {
@@ -469,7 +469,7 @@ public class ReplayCharSequenceFactory {
         /**
          * Move the buffer window on backing file back centering current access
          * position in middle of window.
-         * 
+         *
          * @param index Index of character to access.
          */
         private void recenterBuffer(int index) {
@@ -495,8 +495,8 @@ public class ReplayCharSequenceFactory {
                 this.raFile.readFully(this.wraparoundBuffer, 0,
                     Math.min(this.wraparoundBuffer.length,
                          this.absoluteLength - this.wrapOrigin));
-            } 
-            
+            }
+
             catch (IOException e) {
                 // TODO convert this to a runtime error?
                 DevUtils.logger.log (
@@ -534,10 +534,10 @@ public class ReplayCharSequenceFactory {
         public CharSequence subSequence(int start, int end) {
             return new CharSubSequence(this, start, end);
         }
-        
+
         /**
          * Cleanup resources.
-         * 
+         *
          * @exception IOException Failed close of random access file.
          */
         public void close() throws IOException
@@ -546,7 +546,7 @@ public class ReplayCharSequenceFactory {
             if (this.raFile != null) {
                 this.raFile.close();
                 this.raFile = null;
-            } 
+            }
         }
 
         /* (non-Javadoc)
@@ -578,7 +578,7 @@ public class ReplayCharSequenceFactory {
                     offset = this.prefixBuffer.length + 1;
                     len = len - count;
                 }
-                // Since we are dealing with a byte buffer we'll have to use 
+                // Since we are dealing with a byte buffer we'll have to use
                 // a String and then wrap up in a StringBuffer to concat with
                 // the backing file. TODO: This can probably be optimized.
                 //
@@ -592,50 +592,50 @@ public class ReplayCharSequenceFactory {
                 catch (UnsupportedEncodingException e) {
                     logger.severe("Failed encoding string: " + e.getMessage());
                 }
-            } 
+            }
             if (offset >= this.prefixBuffer.length) {
-                // TODO: Maybe better performance can be gained by reading 
+                // TODO: Maybe better performance can be gained by reading
                 // blocks from files.
                 int to = offset + len;
                 for(int i = offset ; i < to ; i++) {
                     ret.append(charAt(i - this.contentOffset));
                 }
             }
-            
+
             return ret.toString();
         }
     }
-    
-    
+
+
     /**
      * Provides a (Replay)CharSequence view on recorded streams (a prefix
      * buffer and overflow backing file) that can handle streams of multibyte
      * characters.
-     * 
+     *
      * If possible, use {@link ByteReplayCharSequence}.  It performs better even
      * for the single byte case (Decoding is an expensive process).
-     * 
+     *
      * <p>Call close on this class when done so can clean up resources.
-     * 
-     * <p>Implementation currently works by checking to see if content to read 
+     *
+     * <p>Implementation currently works by checking to see if content to read
      * all fits the in-memory buffer.  If so, we decode into a CharBuffer and
      * keep this around for CharSequence operations.  This CharBuffer is
      * discarded on close.
-     * 
+     *
      * <p>If content length is greater than in-memory buffer, we decode the
-     * buffer plus backing file into a new file named for the backing file w/ 
+     * buffer plus backing file into a new file named for the backing file w/
      * a suffix of the encoding we write the file as. We then run w/ a
      * memory-mapped CharBuffer against this file to implement CharSequence.
      * Reasons for this implemenation are that CharSequence wants to return the
      * length of the CharSequence.
-     * 
+     *
      * <p>Obvious optimizations would keep around decodings whether the
      * in-memory decoded buffer or the file of decodings written to disk but the
      * general usage pattern processing URIs is that the decoding is used by one
      * processor only.  Also of note, files usually fit into the in-memory
      * buffer.
-     * 
-     * <p>We might also be able to keep up 3 windows that moved across the file 
+     *
+     * <p>We might also be able to keep up 3 windows that moved across the file
      * decoding a window at a time trying to keep one of the buffers just in
      * front of the regex processing returning it a length that would be only
      * the length of current position to end of current block or else the length
@@ -643,7 +643,7 @@ public class ReplayCharSequenceFactory {
      * estimate of average character size.  This would save us writing out the
      * decoded file.  We'd have to do the latter for files that are
      * > Integer.MAX_VALUE.
-     * 
+     *
      * @author stack
      * @version $Revision$, $Date$
      */
@@ -652,33 +652,33 @@ public class ReplayCharSequenceFactory {
         /**
          * Name of the encoding we use writing out concatenated decoded prefix
          * buffer and decoded backing file.
-         * 
+         *
          * This define is also used as suffix for the file that holds the
          * decodings.  The name of the file that holds the decoding is the name
          * of the backing file w/ this encoding for a suffix.
-         * 
+         *
          * @see http://java.sun.com/j2se/1.4.2/docs/guide/intl/encoding.doc.html
          */
         private static final String WRITE_ENCODING = "UTF-16BE";
-        
+
         /**
          * CharBuffer of decoded content.
-         * 
+         *
          * Content of this buffer is unicode.
          */
         private CharBuffer content = null;
 
         /**
          * File that has decoded content.
-         * 
+         *
          * Keep it around so we can remove on close.
          */
         private File decodedFile = null;
-        
-        
+
+
         /**
          * Constructor.
-         * 
+         *
          * @param buffer In-memory buffer of recordings prefix.  We read from
          * here first and will only go to the backing file if <code>size</code>
          * requested is greater than <code>buffer.length</code>.
@@ -687,19 +687,19 @@ public class ReplayCharSequenceFactory {
          * present.
          * @param responseBodyStart Where the response body starts in bytes.
          * Used to skip over the HTTP headers if present.
-         * @param backingFilename Path to backing file with content in excess of 
+         * @param backingFilename Path to backing file with content in excess of
          * whats in <code>buffer</code>.
-         * @param encoding Encoding to use reading the passed prefix buffer and 
+         * @param encoding Encoding to use reading the passed prefix buffer and
          * backing file.  For now, should be java canonical name for the
          * encoding. (If null is passed, we will default to
          * ByteReplayCharSequence).
-         * 
+         *
          * @throws IOException
          */
         private MultiByteReplayCharSequence(byte[] buffer, long size,
                 long responseBodyStart, String backingFilename, String encoding)
             throws IOException {
-            
+
             super();
             if (encoding == null) {
                 throw new NullPointerException("Character encoding is null.");
@@ -711,11 +711,11 @@ public class ReplayCharSequenceFactory {
 
         /**
          * Decode passed buffer and backing file into a CharBuffer.
-         * 
+         *
          * This method writes a new file made of the decoded concatenation of
          * the in-memory prefix buffer and the backing file.  Returns a
          * charSequence view onto this new file.
-         * 
+         *
          * @param buffer In-memory buffer of recordings prefix.  We read from
          * here first and will only go to the backing file if <code>size</code>
          * requested is greater than <code>buffer.length</code>.
@@ -724,34 +724,34 @@ public class ReplayCharSequenceFactory {
          * present.
          * @param responseBodyStart Where the response body starts in bytes.
          * Used to skip over the HTTP headers if present.
-         * @param backingFilename Path to backing file with content in excess of 
+         * @param backingFilename Path to backing file with content in excess of
          * whats in <code>buffer</code>.
-         * @param encoding Encoding to use reading the passed prefix buffer and 
+         * @param encoding Encoding to use reading the passed prefix buffer and
          * backing file.  For now, should be java canonical name for the
          * encoding. (If null is passed, we will default to
          * ByteReplayCharSequence).
-         * 
+         *
          * @return A CharBuffer view on decodings of the contents of passed
          * buffer.
          */
         private CharBuffer decode(byte[] buffer, String backingFilename,
                 long size, long responseBodyStart, String encoding)
             throws IOException {
-            
+
             CharBuffer charBuffer = null;
-                
+
             if (size <= buffer.length) {
                 charBuffer =
                     decodeInMemory(buffer, size, responseBodyStart, encoding);
             } else {
-                
+
                 File backingFile = new File(backingFilename);
                 if (!backingFile.exists()) {
                     throw new FileNotFoundException(backingFilename +
                          "doesn't exist");
                 }
-                
-                // Get decoder.  Will burp if encoding string is bad. 
+
+                // Get decoder.  Will burp if encoding string is bad.
                 // Should probably keep it around.  I'm sure its not
                 // cheap to construct. Tell decoder to replace bad chars with
                 // default marks.
@@ -760,11 +760,11 @@ public class ReplayCharSequenceFactory {
                 decoder.onMalformedInput(CodingErrorAction.REPLACE);
                 decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
                 decoder.reset();
-                
+
                 // Get a memory mapped bytebuffer view onto backing file
                 // and a bytebuffer view onto passed in-memory buffer.
-                // Pass them around as an array of ByteBuffers.  That I can 
-                // do this, pass around an array of ByteBuffers rather than 
+                // Pass them around as an array of ByteBuffers.  That I can
+                // do this, pass around an array of ByteBuffers rather than
                 // a byte array and an input stream, is why I'm using Channels.
                 ByteBuffer [] buffers = {ByteBuffer.wrap(buffer),
                     getReadOnlyMemoryMappedBuffer(backingFile)};
@@ -773,15 +773,15 @@ public class ReplayCharSequenceFactory {
                 charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
                     asCharBuffer();
             }
-            
+
             return charBuffer;
         }
-        
+
         /**
          * Decode passed buffer into a CharBuffer.
-         * 
+         *
          * This method decodes a memory buffer returning a memory buffer.
-         * 
+         *
          * @param buffer In-memory buffer of recordings prefix.  We read from
          * here first and will only go to the backing file if <code>size</code>
          * requested is greater than <code>buffer.length</code>.
@@ -790,11 +790,11 @@ public class ReplayCharSequenceFactory {
          * present.
          * @param responseBodyStart Where the response body starts in bytes.
          * Used to skip over the HTTP headers if present.
-         * @param encoding Encoding to use reading the passed prefix buffer and 
+         * @param encoding Encoding to use reading the passed prefix buffer and
          * backing file.  For now, should be java canonical name for the
          * encoding. (If null is passed, we will default to
          * ByteReplayCharSequence).
-         * 
+         *
          * @return A CharBuffer view on decodings of the contents of passed
          * buffer.
          */
@@ -808,21 +808,21 @@ public class ReplayCharSequenceFactory {
             bb.limit((int)size);
             return (Charset.forName(encoding)).decode(bb).asReadOnlyBuffer();
         }
-        
+
         /**
          * Create read-only memory-mapped buffer onto passed file.
-         * 
+         *
          * @param file File to get memory-mapped buffer on.
          * @return Read-only memory-mapped ByteBuffer view on to passed file.
          */
         private ByteBuffer getReadOnlyMemoryMappedBuffer(File file)
             throws IOException {
-            
+
             ByteBuffer bb = null;
             FileInputStream in = null;
             FileChannel c = null;
             assert file.exists(): "No file " + file.getAbsolutePath();
-            
+
             try {
                 in = new FileInputStream(file);
                 c = in.getChannel();
@@ -831,7 +831,7 @@ public class ReplayCharSequenceFactory {
                 bb = c.map(FileChannel.MapMode.READ_ONLY, 0, c.size()).
                     asReadOnlyBuffer();
             }
-            
+
             finally {
                 if (c != null && c.isOpen()) {
                     c.close();
@@ -840,41 +840,41 @@ public class ReplayCharSequenceFactory {
                     in.close();
                 }
             }
-            
+
             return bb;
         }
 
         /**
          * Decode passed array of bytebuffers into a file of passed name.
-         * 
+         *
          * This is the guts of the
          * {@link #decode(byte[], String, long, long, String)} method.
-         * 
+         *
          * @param buffers Array of byte buffers.
          * @param decoder Decoder to use decoding.
          * @param name Name of file we decoded into.
-         * 
+         *
          * @return File we put unicode decoding into.
          */
         private File decodeToFile(ByteBuffer [] buffers, CharsetDecoder decoder,
                 String name)
             throws IOException {
-            
+
             if (buffers.length <= 0) {
                 throw new IllegalArgumentException("No bytebuffers to read.");
             }
-            
+
             File unicode = new File(name);
             Writer writer = null;
 
-            // Place to catch decodings in memory. I'll then write to writer. If 
-            // I can't get a character array from it, then there is going to 
+            // Place to catch decodings in memory. I'll then write to writer. If
+            // I can't get a character array from it, then there is going to
             // be probs so throw exception here.
             CharBuffer cb = CharBuffer.allocate(1024 * 4);
             if (!cb.hasArray()) {
                 throw new IOException("Can't get array from CharBuffer.");
             }
-            
+
             boolean isException = false;
             try {
                 // Get a writer.  Output in our WRITE_ENCODING.
@@ -886,7 +886,7 @@ public class ReplayCharSequenceFactory {
                 for (int i = 0; i < buffers.length; i++) {
                     bb = manageTransition(bb, buffers[i], decoder, cb);
                     // If we fill the decoder buffer or if decoder reports
-                    // underfilled and the buffer has content in it, then go 
+                    // underfilled and the buffer has content in it, then go
                     // and drain the buffer and recall the decoder.
                     while((result = decoder.decode(bb, cb, false))
                                 == CoderResult.OVERFLOW) {
@@ -897,12 +897,12 @@ public class ReplayCharSequenceFactory {
                         throw new IOException("Unexpected result: " + result);
                     }
                 }
-                
+
                 if ((result = decoder.decode(bb, cb, true)) ==
                         CoderResult.OVERFLOW) {
                     drainCharBuffer(cb, writer);
                 }
-            
+
                 // Flush any remaining state from the decoder, being careful
                 // to detect output buffer overflow(s)
                 while (decoder.flush(cb) == CoderResult.OVERFLOW) {
@@ -912,12 +912,12 @@ public class ReplayCharSequenceFactory {
                 // Drain any chars remaining in the output buffer
                 drainCharBuffer(cb, writer);
             }
-            
+
             catch (IOException e) {
                 isException = true;
                 throw e;
             }
-            
+
             finally {
                 if (writer != null) {
                     writer.close();
@@ -932,14 +932,14 @@ public class ReplayCharSequenceFactory {
 
             return unicode;
         }
-            
+
         /**
          * Manage buffer transition.
-         * 
+         *
          * Handle case of multibyte characters spanning buffers.
          * See "[ 935122 ] ToeThreads hung in ExtractorHTML after Pause":
          * http://sourceforge.net/tracker/?func=detail&aid=935122&group_id=73833&atid=539099
-         * 
+         *
 		 * @param previous The buffer we're leaving.
 		 * @param next The buffer we're going to.
          * @param decoder Decoder to use decoding.
@@ -953,14 +953,14 @@ public class ReplayCharSequenceFactory {
             if (previous == null || !previous.hasRemaining()) {
                 return next;
             }
-            
+
             // previous has content remaining but its just a piece of a
             // multibyte character.  Need to go to next buffer to get the
             // rest of the character.  Save off tail for moment.
 
             ByteBuffer tail = previous.slice();
             int cbPosition = cb.position();
-            
+
             ByteBuffer tbb = null;
             final int MAX_CHAR_SIZE = 6;
             for (int i = 0; i < MAX_CHAR_SIZE; i++) {
@@ -968,7 +968,7 @@ public class ReplayCharSequenceFactory {
                 tbb.put(tail);
                 // Copy first bytes without disturbing buffer position.
                 for (int j = 0; j <= i; j++) {
-                    tbb.put(next.get(j));   
+                    tbb.put(next.get(j));
                 }
                 CoderResult result = decoder.decode(tbb, cb, false);
                 if (result == CoderResult.UNDERFLOW) {
@@ -981,7 +981,7 @@ public class ReplayCharSequenceFactory {
                     tail.rewind();
                 }
             }
-            
+
             return next;
 		}
 
@@ -989,54 +989,54 @@ public class ReplayCharSequenceFactory {
          * Helper method to drain the char buffer and write its content to
          * the given output stream (as bytes).  Upon return, the buffer is empty
          * and ready to be refilled.
-         * 
+         *
          * @param cb A CharBuffer containing chars to be written.
          * @param writer An output stream to consume the bytes in cb.
          */
         private void drainCharBuffer(CharBuffer cb, Writer writer)
             throws IOException  {
-            
+
             // Prepare buffer for draining
             cb.flip();
-        
+
             // This writes the chars contained in the CharBuffer but doesn't
             // actually modify the state of the buffer. If the char buffer was
             // being drained by calls to get(), a loop might be needed here.
             if (cb.hasRemaining()) {
                 writer.write (cb.array(), cb.arrayOffset(), cb.limit());
             }
-        
+
             cb.clear();        // Prepare buffer to be filled again
         }
-        
+
         private void deleteFile(File fileToDelete) {
             if (fileToDelete != null && fileToDelete.exists()) {
                 fileToDelete.delete();
             }
         }
-        
+
         public void close()
         {
             this.content = null;
             deleteFile(this.decodedFile);
         }
-        
+
         protected void finalize() throws Throwable
         {
             super.finalize();
             close();
         }
-        
+
         public int length()
         {
             return this.content.limit();
         }
-        
+
         public char charAt(int index)
         {
             return this.content.get(index);
         }
-        
+
         public CharSequence subSequence(int start, int end) {
             return new CharSubSequence(this, start, end);
         }
@@ -1045,13 +1045,13 @@ public class ReplayCharSequenceFactory {
          * @see org.archive.io.EnhancedCharSequence#substring(int, int)
          */
         public String substring(int offset, int length) {
-           
+
             if ((offset + length) > this.content.limit()) {
                 throw new IllegalArgumentException("Limit is " +
                     this.content.limit() + " but " + " offset is " + offset +
                     " and length is " + length);
             }
-            
+
             String result = null;
             if (offset == 0 && (length == this.content.limit())) {
                 result = this.content.toString();

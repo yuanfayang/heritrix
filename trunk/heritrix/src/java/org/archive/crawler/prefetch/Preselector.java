@@ -51,7 +51,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
     public static String ATTR_BLOCK_ALL = "block-all";
     /** indicator allowing all matching URIs to be blocked at this step */
     public static String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
-    
+
     /**
      * @param name
      */
@@ -67,7 +67,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
                 " is comming out of the queue, possibly after the scope is" +
                 " altered.", new Boolean(false)));
         e.setExpertSetting(true);
-        
+
         e = addElementToDefinition(new SimpleType(ATTR_BLOCK_ALL,
                 "Block all URIs from being processed. This is most likely to" +
                 " be used in overrides to easily reject certain hosts from" +

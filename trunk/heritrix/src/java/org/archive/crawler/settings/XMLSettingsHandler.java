@@ -294,7 +294,7 @@ public class XMLSettingsHandler extends SettingsHandler {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.archive.crawler.settings.SettingsHandler#readSettingsObject(org.archive.crawler.settings.CrawlerSettings,
      *      java.lang.String)
      */
@@ -469,12 +469,12 @@ public class XMLSettingsHandler extends SettingsHandler {
         recursiveFindSecondaryFiles(getOrder(),list);
         return list;
     }
-    
+
     /**
      * Add any files being used by any of the Modules making up the settings to
      * the list.
-     * 
-     * @param mbean A ModuleType to interrogate for files. Any child modules 
+     *
+     * @param mbean A ModuleType to interrogate for files. Any child modules
      *           will be recursively interrogated.
      * @param list The list to add found files to.
      */
@@ -485,7 +485,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         if(mbean instanceof ModuleType){
             ((ModuleType)mbean).listUsedFiles(list);
         }
-        
+
         // Recursively interrogate all sub modules that are of ModuleType
         for(int n=0; n<a.length; n++) {
             if(a[n] == null) {
@@ -509,14 +509,14 @@ public class XMLSettingsHandler extends SettingsHandler {
                     e.printStackTrace();
                 }
             }
-        }       
+        }
     }
 
     /**
      * Starting at the specific directory this method will iterate through all
-     * sub directories and add each file (as absolute name, with path as a 
+     * sub directories and add each file (as absolute name, with path as a
      * string) to the provided ArrayList. Any file found under the settings
-     * directory with the proper suffix will be considered valid and added to 
+     * directory with the proper suffix will be considered valid and added to
      * the list.
      * @param dir Starting directory
      * @param list The list to add to

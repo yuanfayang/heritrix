@@ -45,7 +45,7 @@ import com.anotherbigidea.flash.readers.TagParser;
  */
 public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 
-    private static Logger logger = 
+    private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorSWF");
 
     protected long numberOfCURIsHandled = 0;
@@ -89,8 +89,8 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
                 return;
             }
 
-            // Create SWF action taht will add discoved URIs to CrawlURI 
-            // alist(s).             
+            // Create SWF action taht will add discoved URIs to CrawlURI
+            // alist(s).
             CrawlUriSWFAction curiAction = new CrawlUriSWFAction(curi);
             // Overwirte parsing of specific tags that might have URIs.
             CustomSWFTags customTags = new CustomSWFTags(curiAction);
@@ -98,9 +98,9 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
             // Parse the file.
             SWFReader reader = new SWFReader(linkParser, documentStream);
             reader.readFile();
-            
+
             numberOfLinksExtracted += curiAction.getLinkCount();
-            
+
         } catch (IOException e) {
             curi.addLocalizedError(getName(), e, null);
         } finally {
@@ -110,9 +110,9 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
                 // TODO: Report the problem.
             }
         }
-        
+
         // Set flag to indicate that link extraction is completed.
-        curi.linkExtractorFinished(); 
+        curi.linkExtractorFinished();
         logger.fine(curi + " has " + numberOfLinksExtracted + " links.");
     }
 

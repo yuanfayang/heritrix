@@ -60,11 +60,11 @@ import org.archive.io.Position;
  *      20040107015752 text/plain 77
  * 1 0 InternetArchive
  * URL IP-address Archive-date Content-type Archive-length</pre>
- * 
+ *
  * <p>Assumptions is that the one arcfile reference supports iterator and
  * random access.  Also, underlying our access is a memory mapped byte
  * buffer both for compressed and for uncompressed arcfile.
- * 
+ *
  * <p>Iterator returns ARCRecords (though {@link #next()} returns
  * java.lang.Object).  Cast the return.
  *
@@ -132,7 +132,7 @@ import org.archive.io.Position;
  * the wilds.  This class has only been tested to date going against small
  * files made by unit tests.  The class needs to be tested that it might
  * develop robustness.
- * 
+ *
  * @author stack
  */
 public abstract class ARCReader implements ARCConstants, Iterator {
@@ -150,7 +150,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
     /**
      * The ARCRecord currently being read.
-     * 
+     *
      * Keep this ongoing reference so we'll close the record
      * even if the caller doesn't.  On construction, has the
      * arcfile header metadata.
@@ -161,16 +161,16 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * ARC file memory mapped byte buffer input stream.
      *
      * Keep it around so we can close it when done.
-     * 
+     *
      * <p>Set in constructor.
      */
     protected InputStream in = null;
 	
 	/**
 	 * Channel we got the memory mapped byte buffer from.
-	 * 
+	 *
 	 * Keep around so can close when done.
-	 * 
+	 *
      * <p>Set in constructor.
 	 */
 	protected FileChannel channel = null;
@@ -185,7 +185,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * the 3rd line.
      */
     private ArrayList headerFieldNameKeys = null;
-    
+
 
 	/**
 	 * @return An iterator over the total arcfile.
@@ -237,7 +237,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         return this.channel.map(FileChannel.MapMode.READ_ONLY, 0,
                 this.channel.size());
 	}
-    
+
     /**
      * Cleanout the current record if there is one.
      * @throws IOException
@@ -309,7 +309,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 e.getMessage());
 		}
     }
-    
+
     /* (non-Javadoc)
 	 * @see java.util.Iterator#remove()
 	 */
@@ -321,12 +321,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * Create new arc record.
      *
      * Encapsulate housekeeping that has to do w/ creating a new record.
-     * 
-     * <p>Call this method at end of constructor to read in the 
+     *
+     * <p>Call this method at end of constructor to read in the
      * arcfile header.  Will be problems reading subsequent arc records
      * if you don't since arcfile header has the list of metadata fields for
      * all records that follow.
-     * 
+     *
      * @param is InputStream to use.
      * @param offset Absolute offset into arc file.
      * @return An arc record.
@@ -395,7 +395,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             if (c == -1) {
                 throw new IOException("Hit EOF before header EOL.");
             }
-            
+
             read++;
             if (read > MAX_HEADER_LINE_LENGTH) {
                 throw new IOException("Header line longer than max allowed " +
@@ -467,10 +467,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * This method iterates over the file throwing exception if it fails
      * to successfully parse.
-     * 
+     *
      * @return List of all read metadatas. As we validate records, we add
      * a reference to the read metadata.
-     * 
+     *
      * <p>Assumes the stream is at the start of the file.
      *
      * @throws IOException
@@ -484,19 +484,19 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * This method iterates over the file throwing exception if it fails
      * to successfully parse.
-     * 
+     *
      * <p>Assumes the stream is at the start of the file.
      *
      * @param noRecords Number of records expected.  Pass -1 if number is
      * unknown.
-     * 
+     *
      * @return List of all read metadatas. As we validate records, we add
      * a reference to the read metadata.
      *
      * @throws IOException
      */
     public List validate(int noRecords) throws IOException {
-        List metaDatas = new ArrayList(); 
+        List metaDatas = new ArrayList();
         int count = 0;
         for (Iterator i = iterator(); hasNext();) {
             count++;
@@ -517,7 +517,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     Integer.toString(noRecords));
             }
         }
-        
+
         return metaDatas;
     }
 
@@ -545,9 +545,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     public ARCRecord getCurrentRecord() {
         return this.currentRecord;
     }
-    
+
     /**
-     * 
+     *
      * @param formatter Help formatter instance.
      * @param options Usage options.
      */
@@ -557,7 +557,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             " [--offset=# [--nohead]] ARCFILE",  options);
         System.exit(exitCode);
     }
-    
+
     /**
      * @param rec ARCRecord.
      * @param nohead Whether to output the header or just skip over.
@@ -587,27 +587,27 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             }
         }
     }
-    
+
     /**
      * Command-line interface to ARCReader.
-     * 
+     *
      * Here is the command-line interface:
      * <pre>
      * usage: java org.archive.io.arc.ARCReader [--offset=# [--nohead]] ARCFILE
      *  -h,--help      Prints this message and exits.
      *  -n,--nohead    Do not output request header as part of record.
      *  -o,--offset    Outputs record at this offset into arc file.</pre>
-     * 
+     *
      * <p>See in <code>$HERITRIX_HOME/bin/arcreader</code> for a script that'll
      * take care of classpaths and the calling of ARCReader.
-     * 
+     *
      * @param args Command-line arguments.
      * @throws IOException Failed read of passed arc files.
      * @throws ParseException Failed parse of the command line.
      */
     public static void main(String [] args)
         throws IOException, ParseException {
-        
+
         Options options = new Options();
         options.addOption(new Option("h","help", false,
             "Prints this message and exits."));
@@ -620,12 +620,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         List cmdlineArgs = cmdline.getArgList();
         Option [] cmdlineOptions = cmdline.getOptions();
         HelpFormatter formatter = new HelpFormatter();
-        
+
         // If no args, print help.
         if (cmdlineArgs.size() <= 0) {
             usage(formatter, options, 0);
         }
-        
+
         // Now look at options passed.
         long offset = -1;
         boolean nohead = false;
@@ -634,22 +634,22 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 case 'h':
                     usage(formatter, options, 0);
                     break;
-                    
+
                 case 'o':
                 	    offset =
                         Long.parseLong(cmdlineOptions[i].getValue());
                 	    break;
-                        
+
                 case 'n':
                     nohead = true;
                     break;
-                        
+
                 default:
                     throw new RuntimeException("Unexpected option: " +
                         + cmdlineOptions[i].getId());
             }
         }
-        
+
         if (offset >= 0) {
             if (cmdlineArgs.size() != 1) {
         	    System.out.println("Error: Pass one arcfile only.");

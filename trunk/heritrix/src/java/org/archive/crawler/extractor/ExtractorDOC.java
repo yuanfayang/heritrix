@@ -74,7 +74,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
         }
 
         String contentType = curi.getContentType();
-        if ((contentType==null) || 
+        if ((contentType==null) ||
             (!contentType.startsWith("application/msword")))
         {
             // nothing to extract for other types here

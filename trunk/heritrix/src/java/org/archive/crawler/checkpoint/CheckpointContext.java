@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.crawler.checkpoint;
 
 import java.io.File;
@@ -36,11 +36,11 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * Captures the checkpoint history and upcoming checkpoint name
- * of a crawl. 
- * 
- * A checkpoint name is a series number, starting from 1, 
+ * of a crawl.
+ *
+ * A checkpoint name is a series number, starting from 1,
  * typically zero-padded to 5 places.
- * 
+ *
  * @author gojomo
  *
  */
@@ -50,19 +50,19 @@ public class CheckpointContext implements Serializable {
     /** Next  overall series checkpoint number */
     protected int nextCheckpoint = 1;
 
-    /** All checkpoint names in chain prior to now. May not all still 
+    /** All checkpoint names in chain prior to now. May not all still
      * exist on disk */
     protected List predecessorCheckpoints = new LinkedList();
-    
+
     /** directory to place checkpoints */
     protected File checkpointDirectory = null;
-    
+
     /** if a checkpoint has begun, its directory */
     transient protected File checkpointInProgress = null;
-    
+
     /** if the checkpoint in progress has encountered fatal errors */
     private boolean checkpointErrors = false;
-        
+
     /**
      * @return Returns the nextCheckpoint.
      */
@@ -71,7 +71,7 @@ public class CheckpointContext implements Serializable {
     }
     /**
      * Create a new CheckpointContext with the given store directory
-     * 
+     *
      * @param checkpointDirectory
      */
     public CheckpointContext(File checkpointDirectory) {
@@ -80,7 +80,7 @@ public class CheckpointContext implements Serializable {
     }
 
     /**
-     * 
+     *
      */
     public void begin() {
         checkpointInProgress = new File(checkpointDirectory, nextCheckpointDirectoryName());
@@ -93,9 +93,9 @@ public class CheckpointContext implements Serializable {
     private String nextCheckpointDirectoryName() {
         return (new DecimalFormat("00000")).format(nextCheckpoint);
     }
-    
+
     /**
-     * 
+     *
      */
     public void end() {
         if(checkpointErrors == false) {
@@ -125,18 +125,18 @@ public class CheckpointContext implements Serializable {
 
     /**
      * Note that a checkpoint failed
-     * 
+     *
      * @param e
      */
     public void checkpointFailed(IOException e) {
         e.printStackTrace();
         checkpointErrors = true;
     }
-    
+
     /**
      * Return whether this context is at a new crawl, never-
      * checkpointed state.
-     * 
+     *
      * @return
      */
     public boolean isAtBeginning() {

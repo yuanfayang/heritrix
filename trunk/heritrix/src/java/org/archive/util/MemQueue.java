@@ -39,7 +39,7 @@ public class MemQueue extends LinkedList implements Queue {
     public MemQueue() {
         super();
     }
-    
+
     /**
      * @see org.archive.util.Queue#enqueue(Object)
      */
@@ -74,15 +74,15 @@ public class MemQueue extends LinkedList implements Queue {
     public Object peek() {
         return getFirst();
     }
-    
-    
+
+
     /**
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return listIterator();
     }
-    
+
     /**
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
@@ -97,7 +97,7 @@ public class MemQueue extends LinkedList implements Queue {
         }
         return numberOfDeletes;
     }
-    
-    
+
+
 
 }

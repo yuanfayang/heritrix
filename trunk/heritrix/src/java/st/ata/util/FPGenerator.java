@@ -367,7 +367,7 @@ public final class FPGenerator {
         polynomials for each degree. */
     public static final long polynomials[][] = {
         null,
-        {0xC000000000000000L, 0xC000000000000000L}, 
+        {0xC000000000000000L, 0xC000000000000000L},
         {0xE000000000000000L, 0xE000000000000000L},
         {0xD000000000000000L, 0xB000000000000000L},
         {0xF800000000000000L, 0xF800000000000000L},

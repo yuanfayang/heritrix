@@ -64,14 +64,14 @@ public class CrawlServer implements Serializable {
     // used to drive exponentially increasing retry timeout or decision
     // to 'freeze' entire class (queue) of URIs
     protected int consecutiveConnectionErrors = 0;
-    
+
     /**
      * Set of credential avatars.
      */
     private transient Set avatars =  null;
-    
+
     /** Creates a new CrawlServer object.
-     * 
+     *
      * @param h the host string for the server.
      */
     public CrawlServer(String h) {
@@ -90,7 +90,7 @@ public class CrawlServer implements Serializable {
     }
 
     /** Get the robots exclusion policy for this server.
-     * 
+     *
      * @return the robots exclusion policy for this server.
      */
     public RobotsExclusionPolicy getRobots() {
@@ -98,7 +98,7 @@ public class CrawlServer implements Serializable {
     }
 
     /** Set the robots exclusion policy for this server.
-     * 
+     *
      * @param policy the policy to set.
      */
     public void setRobots(RobotsExclusionPolicy policy) {
@@ -113,7 +113,7 @@ public class CrawlServer implements Serializable {
     }
 
     /** Update the robots exclusion policy.
-     * 
+     *
      * @param curi the crawl URI containing the fetched robots.txt
      * @throws IOException
      */
@@ -129,9 +129,9 @@ public class CrawlServer implements Serializable {
             validRobots = false;
             return;
         } else {
-            validRobots = true;   
+            validRobots = true;
         }
-        
+
         if (curi.getFetchStatus() != 200 ||
                 honoringPolicy.getType(getSettings(curi.getUURI())) ==
                     RobotsHonoringPolicy.IGNORE)
@@ -188,7 +188,7 @@ public class CrawlServer implements Serializable {
         return robotsFetched;
     }
 
-    /** 
+    /**
      * @return The server string which might include a port number.
      */
     public String getName() {
@@ -233,10 +233,10 @@ public class CrawlServer implements Serializable {
     }
 
     /** Called when object is beeing deserialized.
-     * 
+     *
      * In addition to the default java deserialation, this method re-establishes
      * the references to settings handler and robots honoring policy.
-     * 
+     *
      * @param stream the stream to deserialize from.
      * @throws IOException if I/O errors occur
      * @throws ClassNotFoundException If the class for an object being restored
@@ -285,24 +285,24 @@ public class CrawlServer implements Serializable {
     public void resetConsecutiveConnectionErrors() {
         this.consecutiveConnectionErrors = 0;
     }
-    
+
     /**
      * @return Credential avatars for this server.  Returns null if none.
      */
     public Set getCredentialAvatars() {
         return this.avatars;
     }
-    
+
     /**
      * @return True if there are avatars attached to this instance.
      */
     public boolean hasCredentialAvatars() {
         return this.avatars != null && this.avatars.size() > 0;
     }
-    
+
     /**
      * Add an avatar.
-     * 
+     *
      * @param ca Credential avatar to add to set of avatars.
      */
     public void addCredentialAvatar(CredentialAvatar ca) {
@@ -315,7 +315,7 @@ public class CrawlServer implements Serializable {
      * If true then valid robots.txt information has been retrived. If false
      * either no attempt has been made to fetch robots.txt or the attempt
      * failed.
-     * 
+     *
 	 * @return Returns the validRobots.
 	 */
 	public boolean isValidRobots() {

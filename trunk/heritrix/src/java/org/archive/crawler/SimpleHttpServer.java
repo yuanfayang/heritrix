@@ -62,17 +62,17 @@ public class SimpleHttpServer
      * Webapp contexts returned out of a server start.
      */
     private List contexts = new ArrayList();
-    
+
     /**
      * Name of the root webapp.
      */
     private static final String ROOT_WEBAPP = "root";
-    
+
     /**
      * Name of the admin webapp.
      */
     private static final String ADMIN_WEBAPP = "admin";
-    
+
     /**
      * List of webapps to deploy.
      */
@@ -81,17 +81,17 @@ public class SimpleHttpServer
 
 
     public SimpleHttpServer() throws Exception {
-        
+
         this(DEFAULT_PORT);
     }
-    
+
     public SimpleHttpServer(int port) throws Exception {
-        
+
         this(SimpleHttpServer.webapps, port);
     }
 
     public SimpleHttpServer(List webapps, int port) throws Exception {
-        
+
         this.server = new Server();
         this.port = port;
         SocketListener listener = new SocketListener();
@@ -142,7 +142,7 @@ public class SimpleHttpServer
      * @return Return webapp path (Path returned has a trailing '/').
      */
     private static String getWARSPath() {
-        
+
         String webappsPath = Heritrix.getWarsdir().getAbsolutePath();
         if (!webappsPath.endsWith(File.separator))
         {
@@ -159,7 +159,7 @@ public class SimpleHttpServer
      */
     public synchronized void startServer()
         throws Exception {
-        
+
         this.server.start();
     }
 
@@ -169,7 +169,7 @@ public class SimpleHttpServer
      * @throws InterruptedException
      */
     public synchronized void stopServer() throws InterruptedException {
-        
+
         if (this.server != null)
         {
             this.server.stop();
@@ -181,7 +181,7 @@ public class SimpleHttpServer
      */
     protected void finalize()
         throws Throwable {
-        
+
         stopServer();
         super.finalize();
     }
@@ -190,7 +190,7 @@ public class SimpleHttpServer
      * @return Port server is running on.
      */
     public int getPort() {
-        
+
         return this.port;
     }
 
@@ -198,7 +198,7 @@ public class SimpleHttpServer
      * @return Server reference.
      */
     public HttpServer getServer() {
-        
+
         return this.server;
     }
 
@@ -209,7 +209,7 @@ public class SimpleHttpServer
      * @return named context.
      */
     private WebApplicationContext getContext(String contextName) {
-        
+
         WebApplicationContext context = null;
 
         if (this.contexts == null)
@@ -237,20 +237,20 @@ public class SimpleHttpServer
 
         return context;
     }
-    
+
     /**
-     * Setup a realm on the server named for the webapp and add to the 
+     * Setup a realm on the server named for the webapp and add to the
      * passed webapp's context.
-     * 
+     *
      * Used by the selftest to check digest authentication is working.
-     * For this all to work, the <code>web.xml</code> needs to set with 
+     * For this all to work, the <code>web.xml</code> needs to set with
      * a security constraint that points to a realm named for the passed
      * webapp, <code>webappName</code>.
-     * 
+     *
      * @param webappName Name of webapp to configure.
      * @param authProperties Path to file that holds the auth login and
      * password.
-     * 
+     *
      * @throws IOException
      */
     public void setAuthentication(String webappName, File authProperties)
@@ -260,7 +260,7 @@ public class SimpleHttpServer
         WebApplicationContext context = getContext(webappName);
         context.setRealmName(webappName);
     }
-    
+
     /**
      * Get path to named webapp.
      *
@@ -269,7 +269,7 @@ public class SimpleHttpServer
      * @return Path to deployed webapp.
      */
     public File getWebappPath(String name) {
-        
+
         if (this.server == null)
         {
             throw new NullPointerException("Server does not exist");
@@ -279,7 +279,7 @@ public class SimpleHttpServer
         return new
             File(getContext(contextName).getServletHandler().getRealPath("/"));
     }
-    
+
     /**
      * @return Returns the root webapp name.
      */

@@ -86,7 +86,7 @@ import org.archive.util.HttpRecorder;
  *
  * <p>TODO: This technique will not work for secure sockets because can't
  * override SSLSocket. Might be able to wrap/adapt them.
- * 
+ *
  * <p>Internet Archive ARC files are described here:
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
  * File Format</a>.

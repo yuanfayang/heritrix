@@ -41,7 +41,7 @@ import junit.framework.TestSuite;
 public class DiskStackTest extends TmpDirTestCase {
     private static final String FILE_PREFIX = "foo";
     protected Stack stack;
-    
+
     /**
      * Create a new DiskStackTest object
      *
@@ -110,7 +110,7 @@ public class DiskStackTest extends TmpDirTestCase {
         }
         fail("no exception on bad file");
     }
-   
+
     /** test that stack puts things on, and they stay there :) */
     public void testStack() {
         assertEquals("no items in new stack", 0, stack.height());

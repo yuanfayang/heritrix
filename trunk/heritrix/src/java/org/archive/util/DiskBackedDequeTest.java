@@ -88,8 +88,8 @@ public class DiskBackedDequeTest extends DiskBackedQueueTest {
      * trigger flip of write and read files.
      */
     public synchronized void testIntoBothDiskBacking() {
-        fillAllSubsegments();        
-        emptyAllSubsegments();    
+        fillAllSubsegments();
+        emptyAllSubsegments();
     }
 
     /**
@@ -99,7 +99,7 @@ public class DiskBackedDequeTest extends DiskBackedQueueTest {
      * @throws ClassNotFoundException
      */
     public synchronized void testSerializationBoth() throws IOException, ClassNotFoundException {
-        fillAllSubsegments(); 
+        fillAllSubsegments();
         // serialize/deserialize
         File tmpDir = getTmpDir();
         File serFile = new File(tmpDir,"foo.ser");
@@ -112,10 +112,10 @@ public class DiskBackedDequeTest extends DiskBackedQueueTest {
         } finally {
             out.close();
         }
-        
+
         ((DiskBackedQueue)queue).release();
         queue = null;
-        
+
         ObjectPlusFilesInputStream in = null;
         try {
             in = new ObjectPlusFilesInputStream(
@@ -125,12 +125,12 @@ public class DiskBackedDequeTest extends DiskBackedQueueTest {
         } finally {
             in.close();
         }
-        emptyAllSubsegments();    
+        emptyAllSubsegments();
     }
 
     private void fillAllSubsegments() {
         DiskBackedDeque queue = (DiskBackedDeque)this.queue;
-        
+
         queue.enqueue("foo1");
         queue.enqueue("foo2");
         queue.enqueue("foo3");
@@ -158,13 +158,13 @@ public class DiskBackedDequeTest extends DiskBackedQueueTest {
         assertEquals("foo-1 dequeued","foo-1",queue.dequeue());
         // this next forces read of several into memory from disk stack
         assertEquals("foo0 dequeued","foo0",queue.dequeue());
-       
+
         assertEquals("deque properly sized",queue.length(),11);
-        // at this point, a couple should be in memory, a few in 
-        // the stack, and 6 still in the queue. 
+        // at this point, a couple should be in memory, a few in
+        // the stack, and 6 still in the queue.
     }
 
-    
+
     private void emptyAllSubsegments() {
         DiskBackedDeque queue = (DiskBackedDeque)this.queue;
         // now empty stack

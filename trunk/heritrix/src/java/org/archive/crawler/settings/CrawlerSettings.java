@@ -71,10 +71,10 @@ public class CrawlerSettings {
 
     /** Scope for this collection of settings (hostname) */
     private final String scope;
-    
+
     /** List of refinements applied to this settings object */
     private List refinements;
-    
+
     /** True if this settings object is a refinement */
     private boolean isRefinement = false;
 
@@ -83,23 +83,23 @@ public class CrawlerSettings {
 
     /** Description of this collection of settings */
     private String description = "";
-    
+
     /**
      * Operator of this crawl job.
      */
     private String operator = "Admin";
-    
+
     /**
      * Organization running this crawl job.
      */
     private String organization = "";
-    
+
     /**
      * Audience/recipient/customer on whose behalf this crawl is being run.
      */
     private String audience = "";
-    
-    
+
+
     /** Time when this collection was last saved to persistent storage */
     private Date lastSaved = null;
 
@@ -158,7 +158,7 @@ public class CrawlerSettings {
     public String getName() {
         return name;
     }
-    
+
     /**
      * Get the name of operator of this crawl from this CrawlerSettings object.
      *
@@ -167,8 +167,8 @@ public class CrawlerSettings {
     public String getOperator() {
         return operator;
     }
-    
-    /** 
+
+    /**
      * Get the name of the organization running this crawl from this
      * CrawlerSettings object.
      *
@@ -177,9 +177,9 @@ public class CrawlerSettings {
     public String getOrganization() {
         return organization;
     }
-    
-    /** 
-     * Get the audience/customer/recipient of the crawl job product from 
+
+    /**
+     * Get the audience/customer/recipient of the crawl job product from
      * this CrawlerSettings object.
      *
      * @return the audience/customer/recipient of the crawl job product.
@@ -203,7 +203,7 @@ public class CrawlerSettings {
     public void setDescription(String string) {
         description = string;
     }
-    
+
     /**
      * Set the operator of this crawl job.
      * @param name Operator running this crawl.
@@ -211,7 +211,7 @@ public class CrawlerSettings {
     public void setOperator(String name) {
         this.operator = name;
     }
-    
+
     /**
      * Set the name of the organization who is running this crawl.
      * @param name Name of organization running this crawl.
@@ -219,7 +219,7 @@ public class CrawlerSettings {
     public void setOrganization(String name) {
         this.organization = name;
     }
-    
+
     /**
      * Set the recipient/customer for the crawl job product.
      * @param name Recipient of crawl job product.
@@ -235,11 +235,11 @@ public class CrawlerSettings {
     public void setName(String string) {
         name = string;
     }
-    
+
     /**
      * Get the time when this CrawlerSettings was last saved to persistent
      * storage.
-     * 
+     *
      * @return the time when this CrawlerSettings was last saved to persistent
      * storage. Null if it has not been saved.
      */
@@ -250,7 +250,7 @@ public class CrawlerSettings {
     /**
      * Set the time when this CrawlerSettings was last saved to persistent
      * storage.
-     * 
+     *
      * @param lastSaved the time when this CrawlerSettings was last saved to
      * persistent storage.
      */
@@ -303,11 +303,11 @@ public class CrawlerSettings {
     public CrawlerSettings getParent() {
         return getParent(null);
     }
-    
+
     /**
      * Get the parent of this CrawlerSettings object.
      * This method passes around a URI so that refinements could be checked.
-     *   
+     *
      * @param uri The uri for which parents of this object shoul be found.
      * @return the parent of this CrawlerSettings object.
      */
@@ -331,11 +331,11 @@ public class CrawlerSettings {
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
     }
-    
+
     /**
      * Get an <code>ListIterator</code> over the refinements for this
      * settings object.
-     * 
+     *
      * @return Returns an iterator over the refinements.
      */
     public ListIterator refinementsIterator() {
@@ -344,10 +344,10 @@ public class CrawlerSettings {
         }
         return refinements.listIterator();
     }
-    
+
     /**
      * Add a refinement to this settings object.
-     * 
+     *
      * @param refinements The refinements to set.
      */
     public void addRefinement(Refinement refinement) {
@@ -357,10 +357,10 @@ public class CrawlerSettings {
         this.refinements.remove(refinement);
         this.refinements.add(refinement);
     }
-    
+
     /**
      * Remove a refinement from this settings object.
-     * 
+     *
      * @param reference the reference (name) to the refinement to be removed.
      * @return true if something was removed, false if the refinement was not
      *         found.
@@ -376,10 +376,10 @@ public class CrawlerSettings {
         }
         return false;
     }
-    
+
     /**
-     * Get a refinement with a given reference. 
-     * 
+     * Get a refinement with a given reference.
+     *
      * @param reference the reference (name) to the refinement to get.
      * @return the refinement having the specified reference or null if no
      *         refinement matches it.
@@ -395,28 +395,28 @@ public class CrawlerSettings {
         }
         return null;
     }
-    
+
     /**
      * Returns true if this settings object has refinements attached to it.
-     * 
+     *
      * @return true if this settings object has refinements attached to it.
      */
     public boolean hasRefinements() {
         return refinements != null && !refinements.isEmpty();
     }
-    
+
     /**
      * Returns true if this settings object is a refinement.
-     * 
+     *
      * @return true if this settings object is a refinement.
      */
     public boolean isRefinement() {
         return isRefinement;
     }
-    
+
     /**
      * Mark this settings object as an refinement.
-     * 
+     *
      * @param isRefinement Set this to true if this settings object is a
      *            refinement.
      */

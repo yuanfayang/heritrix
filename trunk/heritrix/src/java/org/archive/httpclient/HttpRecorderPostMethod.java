@@ -1,7 +1,7 @@
 /* HttpRecorderPostMethod
- * 
+ *
  * Created on Feb 24, 2004
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -37,32 +37,32 @@ import org.archive.util.HttpRecorder;
  * from HTTP head to body and that forces a close on the responseConnection.
  *
  * Copy of {@link HttpRecorderGetMethod}.
- * 
+ *
  * @author stack
  * @version $Date$ $Revision$
  */
-public class HttpRecorderPostMethod extends PostMethod 
-{   
+public class HttpRecorderPostMethod extends PostMethod
+{
     /**
      * Instance of http recorder we're using recording this http get.
      */
     private HttpRecorder httpRecorder = null;
-    
+
     /**
      * Save around so can force close.
-     * 
+     *
      * See [ 922080 ] IllegalArgumentException (size is wrong).
      * https://sourceforge.net/tracker/?func=detail&aid=922080&group_id=73833&atid=539099
      */
     private HttpConnection connection = null;
-    
-    
+
+
 	public HttpRecorderPostMethod(String uri, HttpRecorder recorder)
     {
 		super(uri);
         this.httpRecorder = recorder;
 	}
-    
+
 	protected void readResponseBody(HttpState state, HttpConnection connection)
 		throws IOException, HttpException
     {
@@ -70,41 +70,41 @@ public class HttpRecorderPostMethod extends PostMethod
 		this.httpRecorder.markContentBegin();
 		super.readResponseBody(state, connection);
 	}
-    
-    
+
+
     protected boolean shouldCloseConnection(HttpConnection conn)
     {
         // Save off the connection so we can close it on our way out in case
-        // httpclient fails to (We're not supposed to have access to the 
+        // httpclient fails to (We're not supposed to have access to the
         // underlying connection object; am only violating contract because
-        // see cases where httpclient is skipping out w/o cleaning up 
+        // see cases where httpclient is skipping out w/o cleaning up
         // after itself). This is second attempt at catching the connection used
-        // fetching.  First is above in the execute method override.  
-        // 
+        // fetching.  First is above in the execute method override.
+        //
         // If there's been a shortcircuit of the connection close, this method
         // most likely won't be called and I won't get a connection to close.
         // Means this bit of code is of little use but leaving it here anyways.
         if (conn != this.connection) {
             this.connection = conn;
         }
-        
+
         // Always close connection after each request. As best I can tell, this
         // is superfluous -- we've set our client to be HTTP/1.0.  Doing this
         // out of paranoia.
         return true;
     }
-    
+
     public void releaseConnection()
     {
         try {
             super.releaseConnection();
         }
-        
+
         finally {
             // Calling isOpen, makes httpclient do a lookup on the connection.
             // If something bad happened during the releaseConnection above,
-            /// it will usually call close itself inside in the isOpen -- 
-            // the close() won't get called but the wished-for effect will 
+            /// it will usually call close itself inside in the isOpen --
+            // the close() won't get called but the wished-for effect will
             // have occurred.
             if (this.connection != null) {
                 if (this.connection.isOpen()) {
@@ -119,9 +119,9 @@ public class HttpRecorderPostMethod extends PostMethod
             throws HttpException, HttpRecoverableException, IOException
     {
         // Save off the connection so we can close it on our way out in case
-        // httpclient fails to (We're not supposed to have access to the 
+        // httpclient fails to (We're not supposed to have access to the
         // underlying connection object; am only violating contract because
-        // see cases where httpclient is skipping out w/o cleaning up 
+        // see cases where httpclient is skipping out w/o cleaning up
         // after itself).
         this.connection = conn;
         return super.execute(state, conn);

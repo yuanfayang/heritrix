@@ -1,7 +1,7 @@
 /* ProcessorChain
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 1, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -32,7 +32,7 @@ import org.archive.crawler.settings.MapType;
 
 /** This class groups together a number of processors that logically fit
  * together.
- * 
+ *
  * @author John Erik Halse
  */
 public class ProcessorChain {
@@ -42,16 +42,16 @@ public class ProcessorChain {
     private final MapType processorMap;
     private ProcessorChain nextChain;
     private Processor firstProcessor;
-    
+
     /** Construct a new processor chain.
-     * 
+     *
      * @param processorMap a map of the processors belonging to this chain.
      */
     public ProcessorChain(MapType processorMap) {
         this.processorMap = processorMap;
 
         Processor previous = null;
-        
+
         for (Iterator it = processorMap.iterator(null); it.hasNext();) {
             Processor p = (Processor) it.next();
 
@@ -63,24 +63,24 @@ public class ProcessorChain {
 
             logger.info(
                 "Processor: " + p.getName() + " --> " + p.getClass().getName());
-            
+
             previous = p;
         }
     }
 
     /** Set the processor chain that the URI should be working through after
      * finishing this one.
-     * 
+     *
      * @param nextProcessorChain the chain that should be processed after this
      *        one.
      */
     public void setNextChain(ProcessorChain nextProcessorChain) {
         this.nextChain = nextProcessorChain;
     }
-    
+
     /** Get the processor chain that the URI should be working through after
      * finishing this one.
-     * 
+     *
      * @return the next processor chain.
      */
     public ProcessorChain getNextProcessorChain() {
@@ -88,7 +88,7 @@ public class ProcessorChain {
     }
 
     /** Get the first processor in the chain.
-     * 
+     *
      * @return the first processor in the chain.
      */
     public Processor getFirstProcessor() {
@@ -97,7 +97,7 @@ public class ProcessorChain {
 
     /** Get the first processor that is of class <code>classType</code> or a
      * subclass of it.
-     * 
+     *
      * @param classType the class of the requested processor.
      * @return the first processor matching the classType.
      */
@@ -112,15 +112,15 @@ public class ProcessorChain {
     }
 
     /** Get the number of processors in this chain.
-     * 
+     *
      * @return the number of processors in this chain.
      */
     public int size() {
         return processorMap.size(null);
     }
-    
+
     /** Get an iterator over the processors in this chain.
-     * 
+     *
      * @return an iterator over the processors in this chain.
      */
     public Iterator iterator() {

@@ -75,15 +75,15 @@ public class RecordingOutputStream extends OutputStream {
 
     private String backingFilename;
     private BufferedOutputStream diskStream = null;
-    
+
     /**
      * Buffer we write recordings to.
-     * 
-     * We write all recordings here first till its full.  Thereafter we 
+     *
+     * We write all recordings here first till its full.  Thereafter we
      * write the backing file.
      */
     private byte[] buffer;
-    
+
     private long position;
     private boolean shouldDigest = false;
     private MessageDigest digest;
@@ -375,7 +375,7 @@ public class RecordingOutputStream extends OutputStream {
     public ReplayCharSequence getReplayCharSequence() {
         return getReplayCharSequence(null);
     }
-    
+
     /**
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call

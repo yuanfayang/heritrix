@@ -1,7 +1,7 @@
 /* UriProcessingFormatter.java
- * 
+ *
  * Created on Jun 10, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -77,7 +77,7 @@ public class UriProcessingFormatter
         }
         // Cleanup mimetype
         mime = cleanupContentType(mime);
-         
+
         long time;
         String duration;
         if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {

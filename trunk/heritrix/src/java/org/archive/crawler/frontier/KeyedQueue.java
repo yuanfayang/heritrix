@@ -1,9 +1,9 @@
 /* KeyedQueue
- * 
+ *
  * $Id$
- * 
+ *
  * Created on May 29, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -40,49 +40,49 @@ import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
 
 /**
- * Ordered collection of work items with the same "classKey". 
- * 
+ * Ordered collection of work items with the same "classKey".
+ *
  * The collection itself has a state, which may reflect where it
  * is stored or what can be done with the contained items.
- * 
+ *
  * <p>For easy access to several locations in the main collection,
- * it is held between 2 data structures: a top stack and a 
+ * it is held between 2 data structures: a top stack and a
  * bottom queue. (These in turn may be disk-backed.)
- * 
+ *
  * <p>Also maintains a collection 'off to the side' of 'frozen'
- * items. 
+ * items.
  *
  * <p>About KeyedQueue states:
- * 
- * <p>All KeyedQueues begin INACTIVE. A call to activate() will 
+ *
+ * <p>All KeyedQueues begin INACTIVE. A call to activate() will
  * render them READY (if not empty of eligible URIs) or EMPTY
- * otherwise. 
- * 
- * <p>A noteInProcess() puts the KeyedQueue into IN_PROCESS state. 
- * A matching noteProcessDone() puts the KeyedQueue bank into 
- * READY or EMPTY. 
- * 
- * <p>A freeze() may be issued to any READY or EMPTY queue to 
- * put it into FROZEN state. Only an unfreeze() will move 
- * the queue to INACTIVE state. 
- * 
+ * otherwise.
+ *
+ * <p>A noteInProcess() puts the KeyedQueue into IN_PROCESS state.
+ * A matching noteProcessDone() puts the KeyedQueue bank into
+ * READY or EMPTY.
+ *
+ * <p>A freeze() may be issued to any READY or EMPTY queue to
+ * put it into FROZEN state. Only an unfreeze() will move
+ * the queue to INACTIVE state.
+ *
  * <p>A deactivate() may be issued to any READY or EMPTY queue
- * to put it into INACTIVE state. 
- * 
- * <p>A snooze() may be issued to any READY or EMPTY queue to 
+ * to put it into INACTIVE state.
+ *
+ * <p>A snooze() may be issued to any READY or EMPTY queue to
  * put it into SNOOZED state.
- * 
+ *
  * <p>A discard() may be issued to any EMPTY queue to put it into
  * the DISCARDED state. A queue never leaves the discarded state;
  * if a queue of its hostname is needed again, a new one is created.
- * 
+ *
  * @author gojomo
  * @version $Date$ $Revision$
  */
 public class KeyedQueue implements Serializable  {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
-    
+
     // states
     /** INACTIVE: not considered as URI source until activated by policy */
     public static final Object INACTIVE = "INACTIVE".intern();
@@ -111,12 +111,12 @@ public class KeyedQueue implements Serializable  {
     /** items in progress */
     LinkedList inProcessItems = new LinkedList();
     int inProcessLoad = 0;
-    
+
     LinkedList innerStack; // topmost eligible items
     Queue innerQ; // rest of eligible items
-    
+
     LinkedList unqueued; // held batch of items to be queued
-    
+
     /**
      * Put-to-side items; not returned from normal accessors.
      */
@@ -138,7 +138,7 @@ public class KeyedQueue implements Serializable  {
         this.classKey = key;
         String tmpName = key;
         this.innerStack = new LinkedList();
-        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);    
+        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);
         this.unqueued = new LinkedList();
         // TODO: Currently unimplemented.  Commenting out for now because its
         // presence means extra two file descriptors per processed URI.
@@ -156,7 +156,7 @@ public class KeyedQueue implements Serializable  {
         return this.classKey;
     }
 
-    /** 
+    /**
      * @return The state of this queue.
      */
     public Object getState() {
@@ -219,7 +219,7 @@ public class KeyedQueue implements Serializable  {
      * Note that the given item is 'in process';
      * move queue from READY or EMPTY to IN_PROCESS
      * and remember in-process item.
-     * 
+     *
      * @param o
      */
     public void noteInProcess(CrawlURI o) {
@@ -231,13 +231,13 @@ public class KeyedQueue implements Serializable  {
             this.state = BUSY;
         }
     }
-    
+
     /**
      * Note that the given item's processing
      * has completed; forget the in-process item
-     * and move queue from BUSY to READY or 
+     * and move queue from BUSY to READY or
      * EMPTY state
-     * 
+     *
      * @param o
      */
     public void noteProcessDone(CrawlURI o) {
@@ -249,7 +249,7 @@ public class KeyedQueue implements Serializable  {
             this.state = isEmpty() ? EMPTY : READY;
         }
     }
-    
+
     /**
      * @param o
      * @return
@@ -260,7 +260,7 @@ public class KeyedQueue implements Serializable  {
             // blocking all others
             return valence;
         } else {
-            // otherwise, it's just normal 
+            // otherwise, it's just normal
             return 1;
         }
     }
@@ -268,7 +268,7 @@ public class KeyedQueue implements Serializable  {
     /**
      * Update READY/EMPTY state after preceding
      * queue edit operations.
-     * 
+     *
      * @return true if state changed, false otherwise
      */
     public boolean checkEmpty() {
@@ -281,11 +281,11 @@ public class KeyedQueue implements Serializable  {
         this.state = isEmpty() ? EMPTY : READY;
         return this.state != previous;
     }
-    
+
 //
 // SCHEDULING SUPPORT
 //
-    /** 
+    /**
      * @return Time to wake, when snoozed
      */
     public long getWakeTime() {
@@ -299,8 +299,8 @@ public class KeyedQueue implements Serializable  {
         this.wakeTime = w;
     }
 
-    /** 
-     * To ensure total and consistent ordering when 
+    /**
+     * To ensure total and consistent ordering when
      * in scheduled order, a fallback sort criterion
      * @return Fallback sort.
      */
@@ -318,9 +318,9 @@ public class KeyedQueue implements Serializable  {
         return this == o;
     }
 
-    /** 
+    /**
      * Add an item in the default manner
-     * 
+     *
      * @param curi
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
@@ -337,7 +337,7 @@ public class KeyedQueue implements Serializable  {
     /**
      * enqueue at a middle location (ahead of 'most'
      * items, but behind any recent 'enqueueHigh's
-     * 
+     *
      * @param curi
      */
     private void enqueueMedium(CrawlURI curi) {
@@ -345,17 +345,17 @@ public class KeyedQueue implements Serializable  {
     }
     /**
      * enqueue ahead of everything else
-     * 
+     *
      * @param curi
      */
     private void enqueueHigh(CrawlURI curi) {
         this.innerStack.addFirst(curi);
     }
-   
-    /** 
+
+    /**
      * Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
      * still have 'frozen' off-to-side URIs.)
-     * 
+     *
      * @see org.archive.util.Queue#isEmpty()
      * @return
      */
@@ -364,9 +364,9 @@ public class KeyedQueue implements Serializable  {
         // return innerStack.isEmpty() && innerQ.isEmpty() && frozenQ.isEmpty();
     }
 
-    /** 
+    /**
      * Remove an item in the default manner
-     * 
+     *
      * @see org.archive.util.Queue#dequeue()
      * @return
      */
@@ -377,10 +377,10 @@ public class KeyedQueue implements Serializable  {
         return this.innerQ.dequeue();
     }
 
-    /** 
+    /**
      * Total number of available items. (Does not include
      * any 'frozen' items.)
-     * 
+     *
      * @see org.archive.util.Queue#length()
      * @return
      */
@@ -388,13 +388,13 @@ public class KeyedQueue implements Serializable  {
         return this.innerQ.length() + this.innerStack.size();
     }
 
-    /** 
-     * @return Total number of 'frozen' items. 
+    /**
+     * @return Total number of 'frozen' items.
      */
     public long frozenLength() {
         return this.innerQ.length() + this.innerStack.size();
     }
-    
+
     /**
      * Release any external resources (eg open files) which
      * may be held.
@@ -406,9 +406,9 @@ public class KeyedQueue implements Serializable  {
         }
     }
 
-    /** 
-     * Iterate over all available (non-frozen) items. 
-     * 
+    /**
+     * Iterate over all available (non-frozen) items.
+     *
      * @param inCacheOnly
      * @see org.archive.util.Queue#getIterator(boolean)
      * @return
@@ -418,9 +418,9 @@ public class KeyedQueue implements Serializable  {
             this.innerQ.getIterator(inCacheOnly));
     }
 
-    /** 
-     * Delete items matching the supplied criterion. 
-     * 
+    /**
+     * Delete items matching the supplied criterion.
+     *
      * @param matcher
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      * @return
@@ -449,9 +449,9 @@ public class KeyedQueue implements Serializable  {
 
     /**
      * enqueue to the 'frozen' set-aside queue,
-     * which holds items indefinitely (only 
+     * which holds items indefinitely (only
      * operator action returns them to availability)
-     * 
+     *
      * @param curi
      */
     public void enqueueFrozen(CrawlURI curi) {
@@ -459,10 +459,10 @@ public class KeyedQueue implements Serializable  {
             this.frozenQ.enqueue(curi);
         }
     }
-    
+
     /**
      * Return, without removing, the top available item.
-     * 
+     *
      * @return The top available item.
      */
     public Object peek() {
@@ -476,12 +476,12 @@ public class KeyedQueue implements Serializable  {
     }
 
     /**
-     * May this KeyedQueue be completely discarded. 
+     * May this KeyedQueue be completely discarded.
      *
      * It may be discarded only if empty of available and frozen items, and
      * not SNOOZED or FROZEN (which implies state info which would be lost if
      * discarded).
-     * 
+     *
      * @return True if discardable.
      */
     public boolean isDiscardable() {
@@ -489,7 +489,7 @@ public class KeyedQueue implements Serializable  {
             ((this.frozenQ != null)? this.frozenQ.isEmpty(): true) &&
                 this.state == EMPTY;
     }
-    
+
     // custom serialization
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();

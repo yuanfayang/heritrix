@@ -1,21 +1,21 @@
 /* SeedListTest
- * 
+ *
  * Created on Apr 30, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,9 +41,9 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class SeedListTest extends TmpDirTestCase {   
+public class SeedListTest extends TmpDirTestCase {
     private static Set seeds = null;
-    
+
     /**
      * Comparator for treeset of uuris.
      */
@@ -67,19 +67,19 @@ public class SeedListTest extends TmpDirTestCase {
         }
     };
 
-    
+
     /**
      * Seed file reference.
      */
     private File seedsfile;
-    
-    
+
+
     /* (non-Javadoc)
      * @see org.archive.util.TmpDirTestCase#setUp()
      */
     protected void setUp() throws Exception {
         super.setUp();
-        
+
         // First create array of seeds and add to treeset.
         SeedListTest.seeds = new TreeSet(SeedListTest.CMP);
         UURI [] tmp = {
@@ -93,7 +93,7 @@ public class SeedListTest extends TmpDirTestCase {
             new UURI("ftp://example.com/etc/motd2")
         };
         SeedListTest.seeds.addAll(Arrays.asList(tmp));
-            
+
         // Write a seeds file w/ our list of seeds.
         this.seedsfile = new File(getTmpDir(),
             SeedListTest.class.getName() + ".seedfile");
@@ -103,8 +103,8 @@ public class SeedListTest extends TmpDirTestCase {
         }
         writer.close();
     }
-    
-    
+
+
     /* (non-Javadoc)
      * @see org.archive.util.TmpDirTestCase#tearDown()
      */
@@ -114,15 +114,15 @@ public class SeedListTest extends TmpDirTestCase {
              this.seedsfile.delete();
         }
     }
-    
+
     public void testNoCaching() throws URIException {
         coreTest(false);
     }
-    
+
     public void testCaching() throws URIException {
         coreTest(true);
     }
-    
+
     public void testNoScheme() throws IOException {
         final String NOSCHEME = "x.y.z";
         FileWriter fw = new FileWriter(this.seedsfile, true);
@@ -154,11 +154,11 @@ public class SeedListTest extends TmpDirTestCase {
         set.add(uuri);
         checkContent(sl, set, caching);
     }
-    
+
     private SeedList checkContent(Set seedSet, boolean caching) {
         return checkContent(null, seedSet, caching);
     }
-    
+
     private SeedList checkContent(SeedList sl, Set seedSet, boolean caching) {
         if (sl == null) {
             sl = new SeedList(this.seedsfile, null, caching);

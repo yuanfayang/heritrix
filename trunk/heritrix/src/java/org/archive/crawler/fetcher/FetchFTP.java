@@ -1,23 +1,23 @@
 /* FetchFTP.java
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 17, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,11 +37,11 @@ import org.archive.crawler.settings.Type;
 
 /**
  * A processor that fetches documents from FTP servers.
- * 
- * <p> Makes use of the 
+ *
+ * <p> Makes use of the
  * <a href="http://jakarta.apache.org/commons/net/">Apache Jakarta Commons Net</a>
  * library.
- * 
+ *
  * @author Kristinn Sigurdsson
  */
 public class FetchFTP extends Processor {
@@ -49,8 +49,8 @@ public class FetchFTP extends Processor {
     // Default socket timeout
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
-    
-    
+
+
     /**
      * @param name Identifing name in the settings framework
      */
@@ -88,7 +88,7 @@ public class FetchFTP extends Processor {
               // TODO: Record failure. Should maybe be retryable?
               return;
             }
-            
+
             ftpc.setSoTimeout(getSocketTimeout(curi));
             ftpc.setFileTransferMode(FTP.BINARY_FILE_TYPE); //TODO: Is this ok?
             // TODO: How to handle inputstreams????
@@ -97,9 +97,9 @@ public class FetchFTP extends Processor {
             // TODO: Maybe we should 'listNames()' and store them somewhere
             //       for the FTPDirectoryExtractor to manage?
             //       Should there be a seperate extractor or just a toggle on
-            //       the fetcher since it requires communication with the 
+            //       the fetcher since it requires communication with the
             //       server anyway? If so what rules should apply.
-            // TODO: Determine mime type 
+            // TODO: Determine mime type
         } catch (IOException e){
             //TODO: Error handling.
             e.printStackTrace();

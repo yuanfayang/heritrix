@@ -1,22 +1,22 @@
 /*
  * TimespanCriteria
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 8, 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser Public License as published by the Free Software
  * Foundation; either version 2.1 of the License, or any later version.
- * 
+ *
  * Heritrix is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License along with
  * Heritrix; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
@@ -34,13 +34,13 @@ import org.archive.crawler.datamodel.UURI;
 /**
  * A refinement criteria that checks if a URI is requested within a specific
  * time frame. <p/>
- * 
+ *
  * The timeframe's resolution is minutes and always operates in 24h GMT. The
  * format is <code>hhmm</code>, exmaples:
  * <p>
  * <code> 1200</code> for noon GMT <br>
  * <code> 1805</code> for 5 minutes past six in the afternoon GMT.
- * 
+ *
  * @author John Erik Halse
  */
 public class TimespanCriteria implements Criteria {
@@ -58,7 +58,7 @@ public class TimespanCriteria implements Criteria {
 
     /**
      * Create a new instance of TimespanCriteria.
-     * 
+     *
      * @param from start of the time frame (inclusive).
      * @param to end of the time frame (inclusive).
      * @throws ParseException
@@ -70,7 +70,7 @@ public class TimespanCriteria implements Criteria {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.archive.crawler.settings.refinements.Criteria#isWithinRefinementBounds(org.archive.crawler.datamodel.UURI,
      *      int)
      */
@@ -99,7 +99,7 @@ public class TimespanCriteria implements Criteria {
 
     /**
      * Get the beginning of the time frame to check against.
-     * 
+     *
      * @return Returns the from.
      */
     public String getFrom() {
@@ -108,7 +108,7 @@ public class TimespanCriteria implements Criteria {
 
     /**
      * Set the beginning of the time frame to check against.
-     * 
+     *
      * @param from The from to set.
      */
     public void setFrom(String from) throws ParseException {
@@ -117,7 +117,7 @@ public class TimespanCriteria implements Criteria {
 
     /**
      * Get the end of the time frame to check against.
-     * 
+     *
      * @return Returns the to.
      */
     public String getTo() {
@@ -126,7 +126,7 @@ public class TimespanCriteria implements Criteria {
 
     /**
      * Set the end of the time frame to check against.
-     * 
+     *
      * @param to The to to set.
      */
     public void setTo(String to) throws ParseException {

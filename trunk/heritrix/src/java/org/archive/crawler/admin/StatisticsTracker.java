@@ -47,32 +47,32 @@ import org.archive.util.PaddingStringBuffer;
  * This is an implementation of the AbstractTracker. It is designed to function
  * with the WUI as well as performing various logging activity.
  * <p>
- * At the end of each snapshot a line is written to the 
+ * At the end of each snapshot a line is written to the
  * 'progress-statistics.log' file.
  * <p>
  * The header of that file is as follows:
  * <pre> [timestamp] [discovered]    [queued] [downloaded] [doc/s(avg)]  [KB/s(avg)] [dl-failures] [busy-thread] [mem-use-KB]</pre>
  * First there is a <b>timestamp</b>, accurate down to 1 second.
  * <p>
- * <b>discovered</b>, <b>queued</b>, <b>downloaded</b> and <b>dl-failures</b> 
- * are (respectively) the discovered URI count, pending URI count, successfully 
- * fetched count and failed fetch count from the frontier at the time of the 
+ * <b>discovered</b>, <b>queued</b>, <b>downloaded</b> and <b>dl-failures</b>
+ * are (respectively) the discovered URI count, pending URI count, successfully
+ * fetched count and failed fetch count from the frontier at the time of the
  * snapshot.
  * <p>
- * <b>KB/s(avg)</b> is the bandwidth usage.  We use the total bytes downloaded  
- * to calculate average bandwidth usage (KB/sec). Since we also note the value  
+ * <b>KB/s(avg)</b> is the bandwidth usage.  We use the total bytes downloaded
+ * to calculate average bandwidth usage (KB/sec). Since we also note the value
  * each time a snapshot is made we can calculate the average bandwidth usage
- * during the last snapshot period to gain a "current" rate. The first number is 
+ * during the last snapshot period to gain a "current" rate. The first number is
  * the current and the average is in parenthesis.
  * <p>
- * <b>doc/s(avg)</b> works the same way as doc/s except it show the number of 
+ * <b>doc/s(avg)</b> works the same way as doc/s except it show the number of
  * documents (URIs) rather then KB downloaded.
  * <p>
- * <b>busy-threads</b> is the total number of ToeThreads that are not available 
- * (and thus presumably busy processing a URI). This information is extracted  
+ * <b>busy-threads</b> is the total number of ToeThreads that are not available
+ * (and thus presumably busy processing a URI). This information is extracted
  * from the crawl controller.
  * <p>
- * Finally mem-use-KB is extracted from the run time environment 
+ * Finally mem-use-KB is extracted from the run time environment
  * (<code>Runtime.getRuntime().totalMemory()</code>).
  * <p>
  * In addition to the data collected for the above logs, various other data
@@ -83,7 +83,7 @@ import org.archive.util.PaddingStringBuffer;
  *   <li> Amount of data per mime type
  *   <li> Successfully downloaded documents per host
  *   <li> Amount of data per host
- *   <li> Disposition of all seeds (this is written to 'reports.log' at end of 
+ *   <li> Disposition of all seeds (this is written to 'reports.log' at end of
  *        crawl)
  * </ul>
  *
@@ -93,13 +93,13 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.AbstractTracker
  */
-public class StatisticsTracker extends AbstractTracker 
+public class StatisticsTracker extends AbstractTracker
                     implements CrawlURIDispositionListener{
 
     // TODO: Class needs to be serializable.
     // TODO: Need to be able to specify file where the object will be written once the CrawlEnded event occurs
     // TODO: Need to be able to save object on Checkpointing as well as CrawlEnded.
-    
+
     protected long lastPagesFetchedCount = 0;
     protected long lastProcessedBytesCount = 0;
 
@@ -324,7 +324,7 @@ public class StatisticsTracker extends AbstractTracker
     /**
      * Increment a counter for a key in a given HashMap by an arbitrary amount.
      * Used for various aggregate data. The increment amount can be negative.
-     * 
+     *
      * @param map
      *            The HashMap
      * @param key
@@ -357,8 +357,8 @@ public class StatisticsTracker extends AbstractTracker
      * <p>
      * Elements are sorted by value from largest to smallest. Equal values are
      * sorted in an arbitrary, but consistent manner by their keys. Only items
-     * with identical value and key are considered equal. 
-     * 
+     * with identical value and key are considered equal.
+     *
      * @param map
      *            Assumes values are wrapped with LongWrapper.
      * @return a sorted set containing the same elements as the map.
@@ -382,13 +382,13 @@ public class StatisticsTracker extends AbstractTracker
         }
         return sortedSet;
     }
-    
-    /** 
+
+    /**
      * Return a HashMap representing the distribution of status codes for
      * successfully fetched curis, as represented by a hashmap where
      * key -&gt; val represents (string)code -&gt; (integer)count.
      *
-     * <b>Note:</b> All the values are wrapped with a 
+     * <b>Note:</b> All the values are wrapped with a
      * {@link LongWrapper LongWrapper}
      * @return statusCodeDistribution
      */
@@ -396,12 +396,12 @@ public class StatisticsTracker extends AbstractTracker
         return statusCodeDistribution;
     }
 
-    /** 
+    /**
      * Return a Hashtable representing the distribution of hosts for
      * successfully fetched curis, as represented by a hashmap where
      * key -&gt; val represents (string)code -&gt; (integer)count.
      *
-     * <b>Note:</b> All the values are wrapped with a 
+     * <b>Note:</b> All the values are wrapped with a
      * {@link LongWrapper LongWrapper}
      *
      * @return Hosts distribution as a Hashtable
@@ -409,7 +409,7 @@ public class StatisticsTracker extends AbstractTracker
     public Hashtable getHostsDistribution() {
         return hostsDistribution;
     }
-    
+
     /**
      * Returns the accumulated number of bytes downloaded from a given host.
      * @param host name of the host
@@ -418,7 +418,7 @@ public class StatisticsTracker extends AbstractTracker
     public long getBytesPerHost(String host){
         return ((LongWrapper)hostsBytes.get(host)).longValue;
     }
-    
+
     /**
      * Returns the accumulated number of bytes from files of a given file type.
      * @param host name of the mime type
@@ -450,8 +450,8 @@ public class StatisticsTracker extends AbstractTracker
 
     /**
      * Number of URIs that are awaiting detailed processing.
-     * 
-     * <p>If crawl not running (paused or stopped) this will return the value 
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value
      * of the last snapshot.
      *
      * @return The number of URIs in the frontier (found but not processed)
@@ -484,9 +484,9 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
-     * Number of <i>discovered</i> URIs. 
-     * 
-     * <p>If crawl not running (paused or stopped) this will return the value of 
+     * Number of <i>discovered</i> URIs.
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value of
      * the last snapshot.
      *
      * @return A count of all uris encountered
@@ -500,10 +500,10 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
-     * Number of URIs that have <i>finished</i> processing. 
+     * Number of URIs that have <i>finished</i> processing.
      *
      * @return Number of URIs that have finished processing
-     * 
+     *
      * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
      */
     public long finishedUriCount() {
@@ -534,8 +534,8 @@ public class StatisticsTracker extends AbstractTracker
 
     /**
      * Number of <i>successfully</i> processed URIs.
-     * 
-     * <p>If crawl not running (paused or stopped) this will return the value 
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value
      * of the last snapshot.
      *
      * @return The number of successully fetched URIs
@@ -550,8 +550,8 @@ public class StatisticsTracker extends AbstractTracker
 
     /**
      * Number of URIs <i>queued</i> up and waiting for processing.
-     * 
-     * <p>If crawl not running (paused or stopped) this will return the value 
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value
      * of the last snapshot.
      *
      * @return Number of URIs queued up and waiting for processing.
@@ -760,14 +760,14 @@ public class StatisticsTracker extends AbstractTracker
      */
     public void crawlEnded(String sExitMessage) {
         CrawlController controller = this.controller;
-        
+
         Iterator tmp = getSeeds(); // Need this before we do super.crawlEnded()
-        
+
         super.crawlEnded(sExitMessage);
         // Need to write some reports at the end of the crawl.
         String directory = controller.getDisk().getPath();
         // seeds-report.txt
-        
+
         int maxURILength = 0;
         while(tmp.hasNext()){
             String tmpString = (String)tmp.next();
@@ -775,7 +775,7 @@ public class StatisticsTracker extends AbstractTracker
                 maxURILength = tmpString.length();
             }
         }
-        
+
         //Ok, we now know how much space to allocate the seed name colum
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
@@ -787,7 +787,7 @@ public class StatisticsTracker extends AbstractTracker
 
         int seedsCrawled = 0;
         int seedsNotCrawled = 0;
-        
+
         tmp = getSeedsSortedByStatusCode();
         while(tmp.hasNext()){
             String UriString = (String)tmp.next();
@@ -821,10 +821,10 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-        
+
         // hosts-report.txt
-        tmp = getHostsDistribution().entrySet().iterator(); 
-        
+        tmp = getHostsDistribution().entrySet().iterator();
+
         int maxHostLength = 0;
         while(tmp.hasNext()){
             Map.Entry tmpEntry = (Map.Entry)tmp.next();
@@ -832,7 +832,7 @@ public class StatisticsTracker extends AbstractTracker
                 maxHostLength = tmpEntry.getKey().toString().length();
             }
         }
-        
+
         //Ok, we now know how much space to allocate the seed name colum
         rep = new PaddingStringBuffer();
 
@@ -852,7 +852,7 @@ public class StatisticsTracker extends AbstractTracker
 
             rep.newline();
         }
-        
+
         try {
             FileWriter fw = new FileWriter(directory+File.separator+"hosts-report.txt");
             fw.write(rep.toString());
@@ -866,11 +866,11 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-        
-        
+
+
         // mimetype-report.txt
-        tmp = getFileDistribution().entrySet().iterator(); 
-        
+        tmp = getFileDistribution().entrySet().iterator();
+
         int maxMimeLength = 0;
         while(tmp.hasNext()){
             Map.Entry tmpEntry = (Map.Entry)tmp.next();
@@ -878,7 +878,7 @@ public class StatisticsTracker extends AbstractTracker
                 maxMimeLength = tmpEntry.getKey().toString().length();
             }
         }
-        
+
         //Ok, we now know how much space to allocate the seed name colum
         rep = new PaddingStringBuffer();
 
@@ -898,7 +898,7 @@ public class StatisticsTracker extends AbstractTracker
 
             rep.newline();
         }
-        
+
         try {
             FileWriter fw = new FileWriter(directory+File.separator+"mimetype-report.txt");
             fw.write(rep.toString());
@@ -912,10 +912,10 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-        
+
         // responsecode-report.txt
-        tmp = getFileDistribution().entrySet().iterator(); 
-        
+        tmp = getFileDistribution().entrySet().iterator();
+
         int maxCodeLength = 10;
 
         rep = new PaddingStringBuffer();
@@ -934,7 +934,7 @@ public class StatisticsTracker extends AbstractTracker
 
             rep.newline();
         }
-        
+
         try {
             FileWriter fw = new FileWriter(directory+File.separator+"responsecode-report.txt");
             fw.write(rep.toString());
@@ -948,14 +948,14 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-      
+
         // crawl-report.txt
         rep = new PaddingStringBuffer();
         rep.append("Crawl Name: " + controller.getOrder().getCrawlOrderName());
         rep.newline();
         rep.append("Crawl Status: " + sExitMessage);
         rep.newline();
-        rep.append("Duration Time: " + 
+        rep.append("Duration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));
         rep.newline();
         rep.append("Total Seeds Crawled: " + seedsCrawled);
@@ -963,20 +963,20 @@ public class StatisticsTracker extends AbstractTracker
         rep.append("Total Seeds not Crawled: " + seedsNotCrawled);
         rep.newline();
         // hostsDistribution contains all hosts crawled plus an entry for dns.
-        rep.append("Total Hosts Crawled: " + (hostsDistribution.size()-1)); 
+        rep.append("Total Hosts Crawled: " + (hostsDistribution.size()-1));
         rep.newline();
         rep.append("Total Documents Crawled: " + finishedUriCount);
         rep.newline();
-        rep.append("Processed docs/sec: " + 
+        rep.append("Processed docs/sec: " +
                 ArchiveUtils.doubleToString(docsPerSecond,2));
         rep.newline();
         rep.append("Bandwidth in Kbytes/sec: " + totalKBPerSec);
         rep.newline();
-        rep.append("Total Raw Data Size in Bytes: " + totalProcessedBytes + 
-                " (" + ArchiveUtils.formatBytesForDisplay(totalProcessedBytes) + 
+        rep.append("Total Raw Data Size in Bytes: " + totalProcessedBytes +
+                " (" + ArchiveUtils.formatBytesForDisplay(totalProcessedBytes) +
                 ") ");
         rep.newline();
-        
+
         try {
             FileWriter fw = new FileWriter(directory+File.separator+"crawl-report.txt");
             fw.write(rep.toString());
@@ -990,7 +990,7 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-        
+
         // TODO: Save object to disk?
     }
 

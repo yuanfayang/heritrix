@@ -33,13 +33,13 @@ import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.util.ArchiveUtils;
 
 /**
- * A collection of ToeThreads. The class manages the ToeThreads currently 
+ * A collection of ToeThreads. The class manages the ToeThreads currently
  * running. Including increasing and decreasing their number, keeping track
  * of their state and it can be used to kill hung threads.
  *
  * @author Gordon Mohr
  * @author Kristinn Sigurdsson
- * 
+ *
  * @see org.archive.crawler.framework.ToeThread
  */
 public class ToePool extends CrawlStatusAdapter {
@@ -51,29 +51,29 @@ public class ToePool extends CrawlStatusAdapter {
     protected int effectiveSize = 0;
 
     protected boolean paused;
-    
+
     /**
      * List of toe threads.
-     * 
+     *
      * All iterations need to synchronize on this object if they're to avoid
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
-     * 
+     *
      * <p>TODO: Is this list needed?  Why not just put all toe threads into
      * a group and then ask the thread group for the list of extant toe threads?
      */
     protected final List toes;
-    
+
     /**
      * List of killed toe threads.
-     * 
+     *
      * All iterations need to synchronize on this object if they're to avoid
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
     protected List killedToes;
 
-    
+
     /**
      * Constructor. Creates a pool of ToeThreads. Threads start in a paused
      * state.
@@ -116,13 +116,13 @@ public class ToePool extends CrawlStatusAdapter {
     }
 
     /**
-     * The crawl controller uses this method to notify the pool that the crawl 
+     * The crawl controller uses this method to notify the pool that the crawl
      * has ended.
-     * 
+     *
      * All toe threads will be ordered to stop after current.
-     * 
+     *
      * @param statusMessage Supplied status message is of no interest.
-     * 
+     *
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(String)
      */
     public void crawlEnding(String statusMessage) {
@@ -137,7 +137,7 @@ public class ToePool extends CrawlStatusAdapter {
 
     public void crawlEnded(String statusMessage) {
         // statusMessage is never used.
-        
+
         // Destory references to facilitate GC.
         synchronized (this.toes) {
             this.toes.removeAll(this.toes);
@@ -148,7 +148,7 @@ public class ToePool extends CrawlStatusAdapter {
                 this.killedToes.removeAll(this.killedToes);
             }
         }
-        
+
         // TODO Can anything more be done to ensure that the killed threads die?
         this.controller = null;
     }
@@ -160,12 +160,12 @@ public class ToePool extends CrawlStatusAdapter {
      */
     public String report()
     {
-        StringBuffer rep = new StringBuffer(32); 
-        rep.append("Toe threads report - " + 
+        StringBuffer rep = new StringBuffer(32);
+        rep.append("Toe threads report - " +
                 ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-        rep.append(" Job being crawled: " + 
+        rep.append(" Job being crawled: " +
                 this.controller.getOrder().getCrawlOrderName() + "\n");
-        rep.append(" Number of toe threads in pool: " + 
+        rep.append(" Number of toe threads in pool: " +
             getToeCount() + " (" + getActiveToeCount() + " active)\n");
 
         synchronized (this.toes) {
@@ -177,7 +177,7 @@ public class ToePool extends CrawlStatusAdapter {
                 }
             }
         }
-        
+
         if (this.killedToes != null) {
             rep.append("\n --- Killed threads --- \n\n");
             synchronized (this.killedToes) {
@@ -187,13 +187,13 @@ public class ToePool extends CrawlStatusAdapter {
                 }
             }
         }
-            
+
         return rep.toString();
     }
-    
+
     /**
      * Change the number of availible ToeThreads.
-     * 
+     *
      * @param newsize The new number of availible ToeThreads.
      */
     public void setSize(int newsize)
@@ -225,8 +225,8 @@ public class ToePool extends CrawlStatusAdapter {
     /**
      * Broadcasts a new value for <tt>shouldPause</tt> to all ToeThreads.
      * If this value is true then all threads should enter a paused state as
-     * soon as possible and stay there. If false then the treads should 
-     * resume (continue) their work. The ToePool will also remember the 
+     * soon as possible and stay there. If false then the treads should
+     * resume (continue) their work. The ToePool will also remember the
      * current value and issue it to any new ToeThreads that may be created.
      * @param b New value for <tt>shouldPause</tt>
      */
@@ -239,29 +239,29 @@ public class ToePool extends CrawlStatusAdapter {
         }
     }
 
-    /** 
+    /**
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
         setShouldPause(true);
     }
-    
-    /** 
+
+    /**
      * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
         setShouldPause(false);
     }
-    
+
     /**
      * Kills specified thread. Killed thread can be optionally replaced with a
      * new thread.
-     * 
+     *
      * <p><b>WARNING:</b> This operation should be used with great care. It may
      * destabilize the crawler.
-     * 
+     *
      * @param threadNumber Thread to kill
-     * @param replace If true then a new thread will be created to take the 
+     * @param replace If true then a new thread will be created to take the
      *           killed threads place. Otherwise the total number of threads
      *           will decrease by one.
      */
@@ -287,9 +287,9 @@ public class ToePool extends CrawlStatusAdapter {
         if(replace){
             // Create a new toe thread to take it's place. Replace toe
             startNewThread(threadNumber);
-        } 
+        }
     }
-    
+
     private void startNewThread(int threadNo) {
         ToeThread newThread = new ToeThread(this.controller, this, threadNo);
         newThread.setPriority(DEFAULT_TOE_PRIORITY);

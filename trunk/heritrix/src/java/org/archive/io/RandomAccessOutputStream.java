@@ -30,12 +30,12 @@ import java.io.RandomAccessFile;
 
 /**
  * Wraps a RandomAccessFile with OutputStream interface.
- * 
+ *
  * @author gojomo
  */
 public class RandomAccessOutputStream extends OutputStream {
     RandomAccessFile raf;
-    
+
     /**
      * Wrap the given RandomAccessFile
      */
@@ -43,7 +43,7 @@ public class RandomAccessOutputStream extends OutputStream {
         super();
         this.raf = raf;
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.OutputStream#write(int)
      */
@@ -57,14 +57,14 @@ public class RandomAccessOutputStream extends OutputStream {
     public void close() throws IOException {
         raf.close();
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.OutputStream#write(byte[], int, int)
      */
     public void write(byte[] b, int off, int len) throws IOException {
         raf.write(b, off, len);
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.OutputStream#write(byte[])
      */

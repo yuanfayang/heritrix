@@ -35,7 +35,7 @@ import java.util.ListIterator;
  * @author John Erik Halse
  */
 public abstract class ListType extends Type implements List {
-    
+
     private final List listData = new ArrayList();
     private final String description;
 
@@ -197,7 +197,7 @@ public abstract class ListType extends Type implements List {
     {
         return this.listData.addAll(c);
     }
-    
+
     public boolean addAll(int index, Collection c)
     {
         return this.listData.addAll(index, c);
@@ -212,12 +212,12 @@ public abstract class ListType extends Type implements List {
     {
         return this.listData.containsAll(c);
     }
-    
+
     public int indexOf(Object o)
     {
         return this.listData.indexOf(o);
     }
-    
+
     public int lastIndexOf(Object o)
     {
         return this.listData.lastIndexOf(o);
@@ -227,7 +227,7 @@ public abstract class ListType extends Type implements List {
     {
         return this.listData.listIterator();
     }
-    
+
     public ListIterator listIterator(int index)
     {
         return this.listData.listIterator(index);
@@ -247,7 +247,7 @@ public abstract class ListType extends Type implements List {
     {
         return this.listData.toArray(a);
     }
-    
+
     public Object remove(int index)
     {
         return this.listData.remove(index);
@@ -262,7 +262,7 @@ public abstract class ListType extends Type implements List {
     {
         return this.listData.removeAll(c);
     }
-    
+
     public boolean retainAll(Collection c)
     {
         return this.listData.retainAll(c);

@@ -39,8 +39,8 @@ public class FramesSelfTestCase extends SelfTestCase
      * Files to find as a list.
      */
     private static final List FILES_TO_FIND =
-        Arrays.asList(new File[] 
-            {new File("topframe.html"), 
+        Arrays.asList(new File[]
+            {new File("topframe.html"),
                 new File("leftframe.html"),
                 new File("noframe.html"),
                 new File("index.html"),

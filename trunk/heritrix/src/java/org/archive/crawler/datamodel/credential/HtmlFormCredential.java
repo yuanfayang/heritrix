@@ -1,21 +1,21 @@
 /* HtmlFormCredential
- * 
+ *
  * Created on Apr 7, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -47,7 +47,7 @@ import org.archive.crawler.settings.Type;
 
 /**
  * Credential that holds all needed to do a GET/POST to a HTML form.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
@@ -55,25 +55,25 @@ public class HtmlFormCredential extends Credential {
 
     private static final Logger logger =
         Logger.getLogger(HtmlFormCredential.class.getName());
-    
+
     private static final String ATTR_LOGIN_URI = "login-uri";
     private static final String ATTR_FORM_ITEMS = "form-items";
-    private static final String ATTR_FORM_METHOD = "http-method";   
+    private static final String ATTR_FORM_METHOD = "http-method";
     private static final String [] METHODS = {"POST", "GET"};
-    
+
     /**
      * Constructor.
-     * 
+     *
      * A constructor that takes name of the credential is required by settings
      * framework.
-     * 
+     *
      * @param name Name of this credential.
      */
     public HtmlFormCredential(final String name)
     {
         super(name, "Credential that has all necessary" +
             " for running a POST/GET to an HTML login form.");
-        
+
         Type t = addElementToDefinition(new SimpleType("login-uri",
             "URI of page that contains the HTML login form we're to apply" +
             " these credentials too.", ""));
@@ -85,13 +85,13 @@ public class HtmlFormCredential extends Credential {
             "GET or POST", METHODS[0], METHODS));
         t.setOverrideable(false);
         t.setExpertSetting(true);
-        
+
         t = addElementToDefinition(new MapType(ATTR_FORM_ITEMS, "Form items.",
             String.class));
         t.setOverrideable(false);
-        t.setExpertSetting(true);       
+        t.setExpertSetting(true);
     }
-    
+
     /**
      * @param context CrawlURI context to use.
      * @return login-uri.
@@ -99,9 +99,9 @@ public class HtmlFormCredential extends Credential {
      */
     public String getLoginUri(final CrawlURI context)
             throws AttributeNotFoundException {
-        return (String)getAttribute(ATTR_LOGIN_URI, context);  
+        return (String)getAttribute(ATTR_LOGIN_URI, context);
     }
-    
+
     /**
      * @param context CrawlURI context to use.
      * @return login-uri.
@@ -109,9 +109,9 @@ public class HtmlFormCredential extends Credential {
      */
     public String getHttpMethod(final CrawlURI context)
             throws AttributeNotFoundException {
-        return (String)getAttribute(ATTR_FORM_METHOD, context);  
+        return (String)getAttribute(ATTR_FORM_METHOD, context);
     }
-    
+
     /**
      * @param context CrawlURI context to use.
      * @return Form inputs as convenient map.  Returns null if no form items.
@@ -205,7 +205,7 @@ public class HtmlFormCredential extends Credential {
             }
             return result;
         }
-        
+
         NameValuePair[] data = new NameValuePair[formItems.size()];
         int index = 0;
         String key = null;

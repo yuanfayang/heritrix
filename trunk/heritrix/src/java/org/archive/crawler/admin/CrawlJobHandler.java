@@ -110,7 +110,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 	/** path to directory featuring lists of options to offer in UI */
     public static final String MODULE_OPTIONS_DIRECTORY = Heritrix.getConfdir()
 		+ File.separator + "modules" + File.separator;
-    
+
     /**
      * Name of system property whose specification overrides default profile
      * used.
@@ -145,7 +145,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     //private Vector completedCrawlJobs = new Vector();
     private TreeSet completedCrawlJobs;
-    
+
     /**
      * A list of profile CrawlJobs.
      */
@@ -173,7 +173,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public CrawlJobHandler(){
         this(true,true);
     }
-    
+
     /**
      * Constructor allowing for optional loading of profiles and jobs.
      * @param loadJobs If true then any applicable jobs will be loaded.
@@ -212,7 +212,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Loads any availible jobs in the jobs directory.
      * <p>
      * Availible jobs are any directory containing a file called
-     * <code>state.job</code>. The file must contain valid job information. 
+     * <code>state.job</code>. The file must contain valid job information.
      */
     private void loadJobs() {
         File jobDir = Heritrix.getJobsdir();
@@ -284,7 +284,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return the directory where profiles are stored.
      */
     private File getProfilesDirectory(){
-        return new File(Heritrix.getConfdir().getAbsolutePath() + 
+        return new File(Heritrix.getConfdir().getAbsolutePath() +
                 File.separator + "profiles");
     }
 
@@ -304,7 +304,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     try {
                         // The directory name denotes the profiles UID and name.
                         XMLSettingsHandler newSettingsHandler = new XMLSettingsHandler(profile);
-                        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE); 
+                        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE);
                         newSettingsHandler.setErrorReportingLevel(cjseh.getLevel());
                         newSettingsHandler.initialize();
                         addProfile(new CrawlJob(profiles[i].getName(),newSettingsHandler,cjseh));
@@ -559,10 +559,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
             controller.requestCrawlResume();
         }
     }
-    
+
     /**
      * Cause the current job to write a checkpoint to disk. Currently
-     * requires job to already be paused. 
+     * requires job to already be paused.
      */
     public void checkpointJob() {
         if (controller != null) {
@@ -577,9 +577,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * return the same value. <br>
      * Currently implemented to return a time stamp. That is subject to change
      * though.
-     * 
+     *
      * @return A unique job ID.
-     * 
+     *
      * @see ArchiveUtils#TIMESTAMP17
      */
     public String getNextJobUID() {
@@ -590,7 +590,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Creates a new job. The new job will be returned and also registered as
      * the handler's 'new job'. The new job will be based on the settings
      * provided but created in a new location on disk.
-     * 
+     *
      * @param baseOn
      *            A CrawlJob (with a valid settingshandler) to use as the
      *            template for the new job.
@@ -602,16 +602,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *            The contents of the new settings' seed file.
      * @param priority
      *            The priority of the new job.
-     *            
+     *
      * @return The new crawl job.
-     * @throws FatalConfigurationException If a problem occurs creating the 
+     * @throws FatalConfigurationException If a problem occurs creating the
      *             settings.
      */
-    public CrawlJob newJob(CrawlJob baseOn, 
-                           String name, 
+    public CrawlJob newJob(CrawlJob baseOn,
+                           String name,
                            String description,
                            String seeds,
-                           int priority) 
+                           int priority)
                     throws FatalConfigurationException {
         if (newJob != null) {
             //There already is a new job. Discard it.
@@ -630,7 +630,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Creates a new profile. The new profile will be returned and also
      * registered as the handler's 'new job'. The new profile will be based on
      * the settings provided but created in a new location on disk.
-     * 
+     *
      * @param baseOn
      *            A CrawlJob (with a valid settingshandler) to use as the
      *            template for the new profile.
@@ -643,17 +643,17 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new profile.
      * @throws FatalConfigurationException
      */
-    public CrawlJob newProfile(CrawlJob baseOn, 
+    public CrawlJob newProfile(CrawlJob baseOn,
                                String name,
-                               String description, 
+                               String description,
                                String seeds)
                         throws FatalConfigurationException {
         File profileDir = new File(getProfilesDirectory().getAbsoluteFile()
                 + File.separator + name);
-        
-        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE); 
-        
-        CrawlJob newProfile = new CrawlJob(name, 
+
+        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE);
+
+        CrawlJob newProfile = new CrawlJob(name,
             makeNew(baseOn, name, description, seeds, profileDir, cjseh,
                 "order.xml", "seeds.txt"),
                 cjseh);
@@ -665,7 +665,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Creates a new settings handler based on an existing job. Basically all
      * the settings file for the 'based on' will be copied to the specified
      * directory.
-     * 
+     *
      * @param baseOn
      *            A CrawlJob (with a valid settingshandler) to use as the
      *            template for the new profile.
@@ -676,13 +676,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param seeds
      *            The contents of the new settings' seed file.
      * @param newSettingsDir
-     * 
+     *
      * @param errorHandler
-     * 
+     *
      * @param filename
-     * 
+     *
      * @param seedfile
-     * 
+     *
      * @return The new settings handler.
      * @throws FatalConfigurationException
      *             If there are problems with reading the 'base on'
@@ -691,7 +691,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private XMLSettingsHandler makeNew(CrawlJob baseOn, String name,
        String description, String seeds, File newSettingsDir,
-       CrawlJobErrorHandler errorHandler, String filename, String seedfile) 
+       CrawlJobErrorHandler errorHandler, String filename, String seedfile)
             throws FatalConfigurationException {
 
         XMLSettingsHandler newHandler;
@@ -781,24 +781,24 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Resume the given job from the given checkpoint. Currently
-     * happens in-place of the existing job, and thus may clobber 
+     * happens in-place of the existing job, and thus may clobber
      * any job output that was subsequent to the given checkpoint,
-     * and corrupt subsequent checkpoints. 
-     * 
+     * and corrupt subsequent checkpoints.
+     *
      * @param job
      * @param cp
      */
-    public void resumeJobFromCheckpoint(CrawlJob job, Checkpoint cp) {        
+    public void resumeJobFromCheckpoint(CrawlJob job, Checkpoint cp) {
         //  remove Job from completed
         completedCrawlJobs.remove(job);
-        
+
         //  touchup internal values  to indicate resume
         job.configureForResume(cp);
-        
+
         //  add to pending & start if necessary
         addJob(job);
     }
-    
+
     /**
      * Discard the handler's 'new job'. This will remove any files/directories
      * written to disk.
@@ -881,9 +881,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
             }
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
-            
+
             SettingsHandler settingsHandler = currentJob.getSettingsHandler();
-            
+
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
@@ -932,9 +932,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return controller.reportThreads();
         }
     }
-    
+
     /**
-     * Kills a thread. For details see 
+     * Kills a thread. For details see
      * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)
      * ToePool.killThread(int, boolean)}.
      * @param threadNumber Thread to kill.
@@ -1009,7 +1009,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
     }
 
-    /* 
+    /*
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
@@ -1051,11 +1051,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return ret;
     }
-    
+
     /**
      * Returns a URIFrontierMarker for the current, paused, job. If there is no
      * current job or it is not paused null will be returned.
-     * 
+     *
      * @param regexpr
      *            A regular expression that each URI must match in order to be
      *            considered 'within' the marker.
@@ -1077,13 +1077,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return tmp;
     }
-    
+
     /**
      * Returns the frontiers URI list based on the provided marker. This method
      * will return null if there is not current job or if the current job is
      * not paused. Only when there is a paused current job will this method
      * return a URI list.
-     * 
+     *
      * @param marker
      *            URIFrontier marker
      * @param numberOfMatches
@@ -1108,7 +1108,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return tmp;
     }
-    
+
     /**
      * Delete any URI from the frontier of the current (paused) job that match
      * the specified regular expression. If the current job is not paused (or

@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.io;
 
 import java.io.File;
@@ -34,23 +34,23 @@ import java.util.logging.FileHandler;
 
 /**
  * FileHandler with support for rotating the current file to
- * an archival name with a specified integer suffix, and 
+ * an archival name with a specified integer suffix, and
  * provision of a new replacement FileHandler with the current
- * filename. 
- * 
+ * filename.
+ *
  * @author gojomo
  */
 public class GenerationFileHandler extends FileHandler {
     protected LinkedList filenameSeries = new LinkedList();
     protected boolean shouldManifest = false;
-    
+
     /**
      * @return Returns the filenameSeries.
      */
     public List getFilenameSeries() {
         return filenameSeries;
     }
-    
+
     /**
      * @param pattern
      * @param append
@@ -63,7 +63,7 @@ public class GenerationFileHandler extends FileHandler {
         filenameSeries.addFirst(pattern);
         this.shouldManifest = shouldManifest;
     }
-    
+
     /**
      * @param filenameSeries
      * @param shouldManifest
@@ -77,9 +77,9 @@ public class GenerationFileHandler extends FileHandler {
 
     /**
      * Move the current file to a new filename with the storeSuffix in place
-     * of the activeSuffix; continuing logging to a new file under the 
+     * of the activeSuffix; continuing logging to a new file under the
      * original filename.
-     * 
+     *
      * @param storeSuffix
      * @param activeSuffix
      * @return

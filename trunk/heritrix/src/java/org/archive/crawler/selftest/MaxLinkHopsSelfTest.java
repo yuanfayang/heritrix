@@ -46,9 +46,9 @@ public class MaxLinkHopsSelfTest
      * Files to find as a list.
      */
     private static final List FILES_TO_FIND =
-        Arrays.asList(new File[] {new File("2.html"), 
+        Arrays.asList(new File[] {new File("2.html"),
             new File("3.html"), new File("4.html"), new File("5.html")});
-    
+
     /**
      * Files not to find as a list.
      */

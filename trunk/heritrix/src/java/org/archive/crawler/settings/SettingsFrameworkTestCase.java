@@ -51,7 +51,7 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
     private CrawlURI unMatchedURI;
     private CrawlURI matchDomainURI;
     private CrawlURI matchHostURI;
-    
+
     /*
      * @see TmpDirTestCase#setUp()
      */
@@ -68,7 +68,7 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
         globalSettings = settingsHandler.getSettingsObject(null);
         perDomainSettings = settingsHandler.getOrCreateSettingsObject("archive.org");
         perHostSettings = settingsHandler.getOrCreateSettingsObject("www.archive.org");
-        
+
 
         ServerCache serverCache = new ServerCache(getSettingsHandler());
 
@@ -83,7 +83,7 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
         matchHostURI = new CrawlURI(
             new UURI("http://www.archive.org/index.html"));
         matchHostURI.setServer(serverCache.getServerFor(matchHostURI));
-        
+
         // Write legit email and url so we avoid warnings if tests are reading
         // and writing order files.
         MapType httpHeaders = (MapType)globalSettings.

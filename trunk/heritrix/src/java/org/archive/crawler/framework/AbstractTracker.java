@@ -49,7 +49,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker extends ModuleType 
+public abstract class AbstractTracker extends ModuleType
                                    implements StatisticsTracking,
                                               CrawlStatusListener{
     /** default period between logging stat values */
@@ -157,7 +157,7 @@ public abstract class AbstractTracker extends ModuleType
     protected abstract void logActivity();
 
     /**
-     * Get the starting time of the crawl (as given by 
+     * Get the starting time of the crawl (as given by
      * <code>System.currentTimeMillis()</code> when the crawl started).
      * @return time fo the crawl's start
      */
@@ -166,10 +166,10 @@ public abstract class AbstractTracker extends ModuleType
     }
 
     /**
-     * If crawl has ended it will return the time it ended (given by 
+     * If crawl has ended it will return the time it ended (given by
      * <code>System.currentTimeMillis()</code> at that time).
      * <br>
-     * If crawl is still going on it will return the same as 
+     * If crawl is still going on it will return the same as
      * <code>System.currentTimeMillis()</code> at the time of the call.
      * @return The time of the crawl ending or the current time if the crawl has
      *         not ended.
@@ -185,10 +185,10 @@ public abstract class AbstractTracker extends ModuleType
     }
 
     /**
-     * Returns the number of milliseconds that the crawl spent paused or 
+     * Returns the number of milliseconds that the crawl spent paused or
      * otherwise in a nonactive state.
      * @return the number of msec. that the crawl was paused or otherwise
-     *         suspended. 
+     *         suspended.
      */
     public long getCrawlTotalPauseTime()
     {
@@ -196,11 +196,11 @@ public abstract class AbstractTracker extends ModuleType
     }
 
     /**
-     * Get the time when the the crawl was last paused/suspended (as given by 
+     * Get the time when the the crawl was last paused/suspended (as given by
      * <code>System.currentTimeMillis()</code> at that time). Will be 0 if the
      * crawl is not currently paused.
      * @return time of the crawl's last pause/suspend or 0 if the crawl is not
-     *         currently paused. 
+     *         currently paused.
      */
     public long getCrawlPauseStartedTime()
     {
@@ -232,7 +232,7 @@ public abstract class AbstractTracker extends ModuleType
 
     /**
      * The number of seconds to wait between writing snapshot data to log file.
-     * @return the number of seconds to wait between writing snapshot data to 
+     * @return the number of seconds to wait between writing snapshot data to
      *         log file.
      */
     protected int getLogWriteInterval() {
@@ -244,7 +244,7 @@ public abstract class AbstractTracker extends ModuleType
         }
         return logInterval;
     }
-    
+
     /**
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */

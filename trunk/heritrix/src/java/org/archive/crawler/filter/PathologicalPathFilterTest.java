@@ -1,7 +1,7 @@
 /* PathologicalPathFilterTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Feb 23, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -30,7 +30,7 @@ import junit.framework.TestCase;
 
 
 /**
- * 
+ *
  * @author John Erik Halse
  *
  */

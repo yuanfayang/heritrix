@@ -116,10 +116,10 @@ public class DiskQueueTest extends QueueTestBase {
             return;
         }
     }
-    
+
     /**
      * Tests custom iterator over disk-stored contents
-     * 
+     *
      * @throws IOException
      */
     public void testIterator() throws IOException {

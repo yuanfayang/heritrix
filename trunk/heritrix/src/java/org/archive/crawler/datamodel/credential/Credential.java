@@ -1,21 +1,21 @@
 /* Credential
- * 
+ *
  * Created on Apr 1, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -42,27 +42,27 @@ import org.archive.crawler.settings.Type;
 
 /**
  * Credential type.
- * 
+ *
  * Let this be also a credential in the JAAS sense to in that this is what
  * gets added to a subject on successful authentication since it contains
  * data needed to authenticate (realm, login, password, etc.).
- * 
+ *
  * <p>Settings system assumes that subclasses implement a constructor that
  * takes a name only.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
 public abstract class Credential extends ModuleType {
-    
+
     private static final Logger logger =
         Logger.getLogger(Credential.class.getName());
 
     private static final String ATTR_CREDENTIAL_DOMAIN = "credential-domain";
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param name Name of this credential.
      * @param description Descrtiption of this particular credential.
      */
@@ -74,7 +74,7 @@ public abstract class Credential extends ModuleType {
             t.setOverrideable(false);
             t.setExpertSetting(true);
     }
-    
+
     /**
      * @param context Context to use when searching for credential domain.
      * @return The domain/root URI this credential is to go against.
@@ -82,9 +82,9 @@ public abstract class Credential extends ModuleType {
      */
     public String getCredentialDomain(CrawlURI context)
             throws AttributeNotFoundException {
-        return (String)getAttribute(ATTR_CREDENTIAL_DOMAIN, context);  
+        return (String)getAttribute(ATTR_CREDENTIAL_DOMAIN, context);
     }
-    
+
     /**
      * @param context Context to use when searching for credential domain.
      * @param domain New domain.
@@ -93,25 +93,25 @@ public abstract class Credential extends ModuleType {
      */
     public void setCredentialDomain(CrawlerSettings context, String domain)
             throws InvalidAttributeValueException, AttributeNotFoundException {
-        setAttribute(context, new Attribute(ATTR_CREDENTIAL_DOMAIN, domain));   
+        setAttribute(context, new Attribute(ATTR_CREDENTIAL_DOMAIN, domain));
     }
-    
+
     /**
      * Attach this credentials avatar to the passed <code>curi</code> .
-     * 
+     *
      * Override if credential knows internally what it wants to attach as
      * payload.  Otherwise, if payload is external, use the below
      * {@link #attach(CrawlURI, Object)}.
-     * 
+     *
      * @param curi CrawlURI to load with credentials.
      */
     public void attach(CrawlURI curi) {
         attach(curi, null);
     }
-    
+
     /**
      * Attach this credentials avatar to the passed <code>curi</code> .
-     * 
+     *
      * @param curi CrawlURI to load with credentials.
      * @param payload Payload to carry in avatar.  Usually credentials.
      */
@@ -128,10 +128,10 @@ public abstract class Credential extends ModuleType {
             logger.severe("Failed attach of " + this  + " for " + curi);
         }
     }
-    
+
     /**
      * Detach this credential from passed curi.
-     * 
+     *
      * @param curi
      * @return True if we detached a Credential reference.
      */
@@ -156,10 +156,10 @@ public abstract class Credential extends ModuleType {
         }
         return result;
     }
-    
+
     /**
      * Detach all credentials of this type from passed curi.
-     * 
+     *
      * @param curi
      * @return True if we detached references.
      */
@@ -186,17 +186,17 @@ public abstract class Credential extends ModuleType {
      * CrawlURI.
      */
     public abstract boolean isPrerequisite(CrawlURI curi);
-    
+
     /**
      * @param curi CrawlURI to look at.
      * @return True if this credential HAS a prerequisite for passed CrawlURI.
      */
-    public abstract boolean hasPrerequisite(CrawlURI curi); 
-    
+    public abstract boolean hasPrerequisite(CrawlURI curi);
+
     /**
      * Return the authentication URI, either absolute or relative, that serves
      * as prerequisite the passed <code>curi</code>.
-     * 
+     *
      * @param curi CrawlURI to look at.
      * @return Prerequisite URI for the passed curi.
      */
@@ -250,7 +250,7 @@ public abstract class Credential extends ModuleType {
         }
 
         // TODO: Account for port.  Currently we do not distingush between
-        // http and https; they both get same crawl server instance. 
+        // http and https; they both get same crawl server instance.
         String serverName = curi.getServer().getName();
         logger.fine("RootURI: Comparing " + serverName + " " + cd);
         return cd != null && serverName != null &&

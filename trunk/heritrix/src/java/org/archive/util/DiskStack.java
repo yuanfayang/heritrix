@@ -42,7 +42,7 @@ import org.archive.io.RandomAccessOutputStream;
 
 /**
  * A Stack which serializes objects to disk.
- * 
+ *
  * @author gojomo
  *
  */
@@ -51,11 +51,11 @@ public class DiskStack implements Stack, Serializable {
     protected File storage;
 
     /** total items in stack */
-    protected long height = 0; 
+    protected long height = 0;
 
     /** pointer to top prevIndex + topItem in backing file */
     protected long topItemPointer = -1;
-    
+
     transient RandomAccessFile raf;
     transient HeaderlessObjectOutputStream pushStream;
     transient HeaderlessObjectInputStream popStream;
@@ -73,12 +73,12 @@ public class DiskStack implements Stack, Serializable {
             storage.createNewFile();
         }
     }
-    
+
     /**
-     * Initialization tasks are put off until backing is 
+     * Initialization tasks are put off until backing is
      * needed, and may be repeated if backing is discarded
      * during object lifetime.
-     * 
+     *
      * @throws FileNotFoundException
      * @throws IOException
      */
@@ -178,7 +178,7 @@ public class DiskStack implements Stack, Serializable {
 
     /**
      * Close, releasing held resources.
-     * 
+     *
      * @throws IOException
      */
     public void close() throws IOException {
@@ -193,19 +193,19 @@ public class DiskStack implements Stack, Serializable {
             raf = null;
         }
     }
-    
+
     /**
      * Close and delete any disk-based storage
-     * 
+     *
      * @throws IOException
      */
     public void discard() throws IOException {
         close();
         storage.delete();
     }
-    
+
     /**
-     * 
+     *
      */
     public void disconnect() {
         try {
@@ -243,14 +243,14 @@ public class DiskStack implements Stack, Serializable {
         ObjectPlusFilesOutputStream coostream = (ObjectPlusFilesOutputStream)stream;
         // save storage file
         // TODO: ensure copy, since file is editted in place
-        coostream.snapshotAppendOnlyFile(storage ); 
+        coostream.snapshotAppendOnlyFile(storage );
     }
-    
+
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         // now, must restore constituent files to their checkpoint-time
         // extents and read positions
-        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;       
+        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
         // restore storage file
         coistream.restoreFile(storage);
     }

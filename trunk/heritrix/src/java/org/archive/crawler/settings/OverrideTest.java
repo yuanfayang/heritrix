@@ -1,21 +1,21 @@
 /* OverrideTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Feb 20, 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser Public License as published by the Free Software
  * Foundation; either version 2.1 of the License, or any later version.
- * 
+ *
  * Heritrix is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License along with
  * Heritrix; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
@@ -32,12 +32,12 @@ import org.archive.crawler.framework.Processor;
 
 /**
  * Test the concept of overrides.
- * 
+ *
  * As this test is testing a concept, it involves more than one class to be
  * tested. Thus the name of this test doesn't match a class name.
- * 
+ *
  * @author John Erik Halse
- *  
+ *
  */
 public class OverrideTest extends SettingsFrameworkTestCase {
 
@@ -58,7 +58,7 @@ public class OverrideTest extends SettingsFrameworkTestCase {
     public void testOverridingOfGlobalAttribute()
             throws AttributeNotFoundException, MBeanException,
             ReflectionException, InvalidAttributeValueException {
-        
+
         final String MODULE_NAME = "module1";
         ModuleType module1 = new ModuleType(MODULE_NAME);
         ModuleType module2 = new Processor(MODULE_NAME, "Descr");

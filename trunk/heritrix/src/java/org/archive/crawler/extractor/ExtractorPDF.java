@@ -41,7 +41,7 @@ import org.archive.crawler.framework.ToeThread;
 public class ExtractorPDF extends Processor implements CoreAttributeConstants
 {
     private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
-    
+
     // TODO: make configurable
     private long maxSizeToParse = DEFAULT_MAX_SIZE_TO_PARSE;
 
@@ -116,9 +116,9 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
         curi.linkExtractorFinished();
     }
 
-    /** 
+    /**
      * Provide a human-readable textual summary of this Processor's state.
-     * 
+     *
      * @see org.archive.crawler.framework.Processor#report()
      */
     public String report() {

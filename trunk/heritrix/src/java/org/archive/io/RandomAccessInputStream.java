@@ -30,12 +30,12 @@ import java.io.RandomAccessFile;
 
 /**
  * Wraps a RandomAccessFile with an InputStream interface.
- * 
+ *
  * @author gojomo
  */
 public class RandomAccessInputStream extends InputStream {
     RandomAccessFile raf;
-    
+
     /**
      * Wrap the given RandomAccessFile
      */
@@ -43,7 +43,7 @@ public class RandomAccessInputStream extends InputStream {
         super();
         this.raf = raf;
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#read()
      */
@@ -63,7 +63,7 @@ public class RandomAccessInputStream extends InputStream {
     public int read(byte[] b) throws IOException {
         return raf.read(b);
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#skip(long)
      */

@@ -736,7 +736,7 @@ public class HttpConnection {
                 outputStream = httpRecorder.outputWrap(outputStream);
             }
             // END HERITRIX change.
-            
+
             isOpen = true;
             used = false;
         } catch (IOException e) {

@@ -26,9 +26,9 @@ package org.archive.util;
 
 
 /**
- * Double-ended queue which supports add at either end, 
- * remove from only the 'head' end. 
- * 
+ * Double-ended queue which supports add at either end,
+ * remove from only the 'head' end.
+ *
  * @author gojomo
  *
  */

@@ -38,11 +38,11 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     private final Object legalValueLists[];
     private boolean complexType = false;
     private boolean isExpertSetting;
-    
+
     /** Construct a new instance of ModuleAttributeInfo.
-     * 
+     *
      * @param type the element to create info for.
-     * 
+     *
      * @throws InvalidAttributeValueException
      * @throws java.lang.IllegalArgumentException
      */
@@ -80,7 +80,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     }
 
     /** Returns true if this attribute refers to a ComplexType.
-     * 
+     *
      * @return true if this attribute refers to a ComplexType.
      */
     public boolean isComplexType() {
@@ -88,7 +88,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     }
 
     /** Returns true if this attribute could be overridden in per settings.
-     * 
+     *
      * @return True if overrideable.
      */
     public boolean isOverrideable() {
@@ -97,7 +97,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
 
     /** Returns true if this attribute should be hidden from UI and not be
      * serialized to persistent storage.
-     * 
+     *
      * @return True if transient.
      */
     public boolean isTransient() {
@@ -105,13 +105,13 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     }
 
     /** Returns true if this Type should only show up in expert mode in UI.
-     * 
+     *
      * @return true if this Type should only show up in expert mode in UI.
      */
     public boolean isExpertSetting() {
         return isExpertSetting;
     }
-    
+
     /**
      * @return Default value.
      */

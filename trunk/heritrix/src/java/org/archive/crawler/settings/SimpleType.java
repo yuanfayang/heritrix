@@ -26,7 +26,7 @@ package org.archive.crawler.settings;
 
 /**
  * A type that holds a Java type.
- * 
+ *
  * @author John Erik Halse
  *
  */
@@ -36,7 +36,7 @@ public class SimpleType extends Type {
 
     /**
      * Create a new instance of SimpleType.
-     * 
+     *
      * @param name the name of the type.
      * @param description a description suitable for the UI.
      * @param defaultValue the default value for this type. This also set what
@@ -49,7 +49,7 @@ public class SimpleType extends Type {
 
     /**
      * Create a new instance of SimpleType.
-     * 
+     *
      * @param name the name of the type.
      * @param description a description suitable for the UI.
      * @param defaultValue the default value for this type. This also set what
@@ -88,9 +88,9 @@ public class SimpleType extends Type {
     /**
      * Set the array of legal values for this type.
      * <p>
-     * 
+     *
      * The objects in this array must be of the same type as the default value.
-     * 
+     *
      * @param legalValues
      */
     public void setLegalValues(Object[] legalValues) {

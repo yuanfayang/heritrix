@@ -68,12 +68,12 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class PathScope extends CrawlScope {
- 
+
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.PathScope");
-        
+
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
-    public static final String ATTR_ADDITIONAL_FOCUS_FILTER = 
+    public static final String ATTR_ADDITIONAL_FOCUS_FILTER =
         "additionalScopeFocus";
 
     Filter additionalFocusFilter;
@@ -117,7 +117,7 @@ public class PathScope extends CrawlScope {
         if (u == null) {
             return false;
         }
-        // Get the seeds to refresh and then get an iterator inside a 
+        // Get the seeds to refresh and then get an iterator inside a
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
@@ -139,7 +139,7 @@ public class PathScope extends CrawlScope {
                             ": " + e.getMessage());
                     }
                     try {
-                        if (s.getPath().regionMatches(0, u.getPath(), 0, 
+                        if (s.getPath().regionMatches(0, u.getPath(), 0,
                             s.getPath().lastIndexOf('/'))) {
                             // matches up to last '/'
                             return true;
@@ -158,9 +158,9 @@ public class PathScope extends CrawlScope {
         // if none found, fail
         return false;
     }
-    
+
     /**
-     *  
+     *
      * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
      */
     protected boolean additionalFocusAccepts(Object o) {

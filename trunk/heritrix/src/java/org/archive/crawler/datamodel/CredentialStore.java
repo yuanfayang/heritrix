@@ -1,21 +1,21 @@
 /* CredentialStore
- * 
+ *
  * Created on Apr 1, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,31 +48,31 @@ import org.archive.crawler.settings.Type;
 
 /**
  * Front door to the credential store.
- * 
+ *
  * Come here to get at credentials.
- * 
- * <p>See <a 
+ *
+ * <p>See <a
  * href="http://crawler.archive.org/proposals/auth/#credentialstoredesign">Credential
  * Store Design</a>.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
 public class CredentialStore extends ModuleType {
-    
+
     private static Logger logger = Logger.getLogger(
         "org.archive.crawler.datamodel.CredentialStore");
-    
+
     public static final String ATTR_NAME = "credential-store";
-    
+
     /**
      * Name of the contained credentials map type.
      */
     public static final String ATTR_CREDENTIALS = "credentials";
-    
+
     /**
      * List of possible credential types as a List.
-     * 
+     *
      * This types are inner classes of this credential type so they cannot
      * be created without their being associated with a credential list.
      */
@@ -83,10 +83,10 @@ public class CredentialStore extends ModuleType {
         Class [] tmp = {HtmlFormCredential.class, Rfc2617Credential.class};
         credentialTypes = Collections.unmodifiableList(Arrays.asList(tmp));
     }
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param name for this credential store.
      */
     public CredentialStore(String name)
@@ -94,20 +94,20 @@ public class CredentialStore extends ModuleType {
         super(name, "Credentials used by heritrix" +
             " authenticating.\nSee http://crawler.archive.org/proposals/auth/" +
             " for background.");
-        
+
         Type t = addElementToDefinition(new MapType(ATTR_CREDENTIALS,
             "Map of credentials.", Credential.class));
         t.setOverrideable(true);
         t.setExpertSetting(true);
     }
-    
+
     /**
      * @return Unmodifable list of credential types.
      */
     public static List getCredentialTypes() {
         return CredentialStore.credentialTypes;
     }
-    
+
     /**
      * Get a credential store reference.
      * @param context A settingshandler object.
@@ -116,7 +116,7 @@ public class CredentialStore extends ModuleType {
     public static CredentialStore getCredentialStore(SettingsHandler context) {
 
         CredentialStore cs = null;
-        
+
         try {
             cs = (CredentialStore)context.getOrder().
                 getAttribute(CredentialStore.ATTR_NAME);
@@ -127,10 +127,10 @@ public class CredentialStore extends ModuleType {
         } catch (ReflectionException e) {
             logger.severe("Failed to get credential store: " + e.getMessage());
         }
-        
+
         return cs;
     }
-    
+
     /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
      * context.  If null, we use global context.
@@ -139,17 +139,17 @@ public class CredentialStore extends ModuleType {
      */
     protected MapType get(Object context)
         throws AttributeNotFoundException {
-        
+
         return (MapType)getAttribute(context, ATTR_CREDENTIALS);
     }
-    
+
     /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
      * context.  If null, we use global context.
      * @return An iterator or null.
      */
     public Iterator iterator(Object context) {
-        
+
         MapType m = null;
         try {
             m = (MapType)getAttribute(context, ATTR_CREDENTIALS);
@@ -158,7 +158,7 @@ public class CredentialStore extends ModuleType {
         }
         return (m == null)? null: m.iterator(context);
     }
-    
+
     /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
      * context.  If null, we use global context.
@@ -171,14 +171,14 @@ public class CredentialStore extends ModuleType {
      */
     public Credential get(Object context, String name)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
-        
+
         return (Credential)get(context).getAttribute(name);
     }
-    
+
     /**
      * Create and add to the list a credential of the passed <code>type</code>
      * giving the credential the passed <code>name</code>.
-     * 
+     *
      * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param name Name to give the manufactured credential.  Should be unique
@@ -193,17 +193,17 @@ public class CredentialStore extends ModuleType {
     public Credential create(CrawlerSettings context, String name, Class type)
         throws IllegalArgumentException, InvocationTargetException,
         InvalidAttributeValueException, AttributeNotFoundException {
-        
+
         Credential result = (Credential)SettingsHandler.
             instantiateModuleTypeFromClassName(name, type.getName());
         // Now add the just-created credential to the list.
         get(context).addElement(context, result);
         return result;
     }
-    
+
     /**
      * Delete the credential <code>name</code>.
-     * 
+     *
      * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param credential Credential to delete.
@@ -212,13 +212,13 @@ public class CredentialStore extends ModuleType {
      */
     public void remove(CrawlerSettings context, Credential credential)
         throws AttributeNotFoundException, IllegalArgumentException {
-        
+
         remove(context, credential.getName());
-    }   
-    
+    }
+
     /**
      * Delete the credential <code>name</code>.
-     * 
+     *
      * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param name Name of credential to delete.
@@ -227,14 +227,14 @@ public class CredentialStore extends ModuleType {
      */
     public void remove(CrawlerSettings context, String name)
         throws IllegalArgumentException, AttributeNotFoundException {
-        
+
         get(context).removeElement(context, name);
     }
-    
+
     /**
      * Return set made up of all credentials of the passed
      * <code>type</code>.
-     * 
+     *
      * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param type Type of the list to return.  Type is some superclass of
@@ -244,23 +244,23 @@ public class CredentialStore extends ModuleType {
     public Set subset(CrawlURI context, Class type) {
         return subset(context, type, null);
     }
-    
+
     /**
      * Return set made up of all credentials of the passed
      * <code>type</code>.
-     * 
+     *
      * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param type Type of the list to return.  Type is some superclass of
      * credentials.
-     * @param rootUri RootUri to match.  May be null.  In this case we return 
+     * @param rootUri RootUri to match.  May be null.  In this case we return
      * all.  Currently we expect the CrawlServer name to equate to root Uri.
      * Its not.  Currently it doesn't distingush between servers of same name
      * but different ports (e.g. http and https).
      * @return Unmodifable sublist of all elements of passed type.
      */
     public Set subset(CrawlURI context, Class type, String rootUri) {
-        
+
         Set result = null;
         Iterator i = iterator(context);
         if (i != null) {

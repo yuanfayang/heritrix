@@ -1,7 +1,7 @@
 /* TimespanCriteriaTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -34,7 +34,7 @@ import junit.framework.TestCase;
 
 
 /**
- * 
+ *
  * @author John Erik Halse
  *
  */
@@ -54,7 +54,7 @@ public class TimespanCriteriaTest extends TestCase {
         String beforeTime1 = timeFormat.format(new Date(now.getTime() - 1000 * 60 * 2));
         String beforeTime2 = timeFormat.format(new Date(now.getTime() - 1000 * 60 * 1));
         String afterTime1 = timeFormat.format(new Date(now.getTime() + 1000 * 60 * 1));
-        
+
         // now is inside and before is less than after
         TimespanCriteria c = new TimespanCriteria(beforeTime1, afterTime1);
         assertTrue(c.isWithinRefinementBounds(null));
@@ -70,7 +70,7 @@ public class TimespanCriteriaTest extends TestCase {
         // now is outside and before is less than after
         c = new TimespanCriteria(beforeTime1, beforeTime2);
         assertFalse(c.isWithinRefinementBounds(null));
-        
+
         // now is outside and before is greater than after
         c = new TimespanCriteria(afterTime1, beforeTime1);
         assertFalse(c.isWithinRefinementBounds(null));

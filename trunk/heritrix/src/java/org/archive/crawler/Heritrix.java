@@ -92,7 +92,7 @@ public class Heritrix
      * Name of the heritrix properties file.
      */
     private static final String PROPERTIES = "heritrix.properties";
-    
+
     /**
      * Name of the key to use specifying alternate heritrix properties on
      * command line.
@@ -168,12 +168,12 @@ public class Heritrix
      * wrapper has on this here java heritrix.
      */
     private static final String STARTLOG = "heritrix_dmesg.log";
-    
+
     /**
      * Heritrix stderr/stdout log file.
      *
      * This file should have nothing in it except messages over which we have
-     * no control (JVM stacktrace, 3rd-party lib emissions).  The wrapper 
+     * no control (JVM stacktrace, 3rd-party lib emissions).  The wrapper
      * startup script directs stderr/stdout here. This is a DEPENDENCY the shell
      * wrapper has on this here java heritrix.
      */
@@ -193,15 +193,15 @@ public class Heritrix
      * Alerts that have occured
      */
     private static Vector alerts = new Vector();
-    
+
     /**
      * Key for the truststore property.
-     * 
+     *
      * This must be defined somewhere in JSSE but can't find reference.
      */
     private static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
 
-    
+
     /**
      * Launch program
      *
@@ -230,7 +230,7 @@ public class Heritrix
 
         finally {
             // If not development, close the file that signals the wrapper
-            // script that we've started.  Otherwise, just flush it; if in 
+            // script that we've started.  Otherwise, just flush it; if in
             // development, the output is probably a console.
             if (!isDevelopment()) {
                 Heritrix.out.close();
@@ -239,7 +239,7 @@ public class Heritrix
             }
         }
     }
-    
+
     /**
      * @return Heritrix home directory.
      */
@@ -276,7 +276,7 @@ public class Heritrix
         jobsdir = jobsdirStr.startsWith(File.separator)?
             new File(jobsdirStr): new File(getHeritrixHome(), jobsdirStr);
     }
-    
+
     /**
      * Check for existence of expected subdir.
      *
@@ -473,7 +473,7 @@ public class Heritrix
             properties.load(is);
         }
     }
-    
+
     protected static File getPropertiesFile() throws FileNotFoundException {
         File result = null;
         String alternateProperties = System.getProperty(PROPERTIES_KEY);
@@ -518,10 +518,10 @@ public class Heritrix
             LogManager.getLogManager().readConfiguration(is);
         }
     }
-    
+
     /**
      * Configure our trust store.
-     * 
+     *
      * If system property is defined, then use it for our truststore.  Otherwise
      * use the heritrix truststore under conf directory if it exists.
      */
@@ -537,7 +537,7 @@ public class Heritrix
                 value = heritrixStore.getAbsolutePath();
             }
         }
-        
+
         if (value != null && value.length() > 0)
         {
             System.setProperty(TRUSTSTORE_KEY, value);
@@ -595,7 +595,7 @@ public class Heritrix
             new String [] {SimpleHttpServer.getRootWebappName(), SELFTEST});
         Heritrix.httpServer = new SimpleHttpServer(webapps, port);
         // Set up digest auth for a section of the server so selftest can run
-        // auth tests.  Looks like can only set one login realm going by the 
+        // auth tests.  Looks like can only set one login realm going by the
         // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
         Heritrix.httpServer.setAuthentication(SELFTEST, getPropertiesFile());
         // Start server.
@@ -847,11 +847,11 @@ public class Heritrix
     {
         performHeritrixShutDown(0);
     }
-    
+
     /**
      * Exit program. Recommended that prepareHeritrixShutDown() be invoked
      * prior to this method.
-     * 
+     *
      * @param exitCode Code to pass System.exit.
      *
      */
@@ -859,20 +859,20 @@ public class Heritrix
     {
         System.exit(exitCode);
     }
-    
+
     /**
      * Shutdown heritrix.
-     * 
+     *
      * Stops crawling, shutsdown webserver and system exits.
      */
     public static void shutdown()
     {
     	shutdown(0);
     }
-    
+
     /**
      * Shutdown heritrix.
-     * 
+     *
 	 * @param exitCode Exit code to pass system exit.
 	 */
 	public static void shutdown(int exitCode)
@@ -885,13 +885,13 @@ public class Heritrix
      * Add a new alert
      * @param alert the new alert
      */
-    public static void addAlert(Alert alert){   
+    public static void addAlert(Alert alert){
         if(noWui){
             alert.print(logger);
         }
-        alerts.add(alert); 
+        alerts.add(alert);
     }
-    
+
     /**
      * Get all current alerts
      * @return all current alerts
@@ -899,7 +899,7 @@ public class Heritrix
     public static Vector getAlerts(){
         return alerts;
     }
-    
+
     /**
      * Get the number of new alerts.
      * @return the number of new alerts
@@ -914,7 +914,7 @@ public class Heritrix
         }
         return n;
     }
-    
+
     /**
      * Remove an alert.
      * @param alertID the ID of the alert
@@ -927,10 +927,10 @@ public class Heritrix
             }
         }
     }
-    
+
     /**
      * Mark a specific alert as seen (That is, not now).
-     * @param alertID the ID of the alert 
+     * @param alertID the ID of the alert
      */
     public static void seenAlert(String alertID){
         for( int i = 0 ; i < alerts.size() ; i++ ){
@@ -940,11 +940,11 @@ public class Heritrix
             }
         }
     }
-    
+
     /**
      * Returns an alert with the given ID. If no alert is found for given ID
      * null is returned
-     * @param alertID the ID of the alert 
+     * @param alertID the ID of the alert
      * @return an alert with the given ID
      */
     public static Alert getAlert(String alertID){

@@ -40,7 +40,7 @@ public class AuthSelfTest
     private static final File FORM = new File("form");
     private static final File GET = new File(FORM, "get");
     private static final File POST = new File(FORM, "post");
-    
+
     /**
      * Files to find as a list.
      */

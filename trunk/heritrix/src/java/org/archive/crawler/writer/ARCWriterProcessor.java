@@ -82,7 +82,7 @@ public class ARCWriterProcessor extends Processor
      */
     private static final Logger logger =
         Logger.getLogger(ARCWriterProcessor.class.getName());
-    
+
     /**
      * Key to use asking settings for compression value.
      */
@@ -92,7 +92,7 @@ public class ARCWriterProcessor extends Processor
      * Key to use asking settings for prefix value.
      */
     public static final String ATTR_PREFIX = "prefix";
-    
+
     /**
      * Key to use asking settings for suffix value.
      */
@@ -136,7 +136,7 @@ public class ARCWriterProcessor extends Processor
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
-    
+
     /**
      * File suffix for arcs.
      */
@@ -206,7 +206,7 @@ public class ARCWriterProcessor extends Processor
         // Add this class to crawl state listeners
         getSettingsHandler().getOrder().getController().
             addCrawlStatusListener(this);
-        
+
         // ReadConfiguration populates settings used creating ARCWriter.
         try {
             readConfiguration();
@@ -217,10 +217,10 @@ public class ARCWriterProcessor extends Processor
         } catch (AttributeNotFoundException e) {
             logger.warning(e.getLocalizedMessage());
         }
-        
+
         try {
             setupPool();
-            
+
         } catch (IOException e) {
             logger.warning(e.getLocalizedMessage());
         }
@@ -238,13 +238,13 @@ public class ARCWriterProcessor extends Processor
                     this.poolMaximumActive,
                     this.poolMaximumWait);
     }
-    
+
     /**
      * Return list of metadatas to add to first arc file metadata record.
      *
      * Get xml files from settingshandle.  Currently order file is the
      * only xml file.  We're NOT adding seeds to meta data.
-     * 
+     *
      * @return List of strings and/or files to add to arc file as metadata or
      * null.
      */
@@ -278,17 +278,17 @@ public class ARCWriterProcessor extends Processor
         }
         return metadata;
     }
-    
+
     /**
      * Write the arc metadata body content.
-     * 
+     *
      * Its based on the order xml file but into this base we'll add other info
      * such as machine ip.
-     * 
+     *
      * @param orderFile Order file.
-     * 
+     *
      * @return String that holds the arc metaheader body.
-     * 
+     *
      * @throws TransformerConfigurationException
      * @throws FileNotFoundException
      * @throws UnknownHostException
@@ -330,7 +330,7 @@ public class ARCWriterProcessor extends Processor
             logger.severe("Transform error " + e + ", col " + col + ", line " +
                 line + ", publicId " + publicId + ", systemId " + systemId);
         }
-        
+
         return result;
     }
 
@@ -471,7 +471,7 @@ public class ARCWriterProcessor extends Processor
     public void setArcPrefix(String buffer) {
         this.arcPrefix = buffer;
     }
-    
+
     public void setArcSuffix(String suffix) {
         this.arcSuffix = suffix;
     }

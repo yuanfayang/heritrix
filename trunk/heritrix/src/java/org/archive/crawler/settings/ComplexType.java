@@ -81,7 +81,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     protected final Map definitionMap = new HashMap();
     private boolean initialized = false;
     private String[] preservedFields = new String[0];
-    
+
     /**
      * Private constructor to make sure that no one
      * instantiates this class with the empty constructor.
@@ -158,18 +158,18 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                     "Can't add ComplexType to 'free' ComplexType");
         }
         String[] preservedFields = object.getPreservedFields();
-        
+
         setupVariables(object);
-        
+
         DataContainer oldData = settings.getData(object);
         settings.addComplexType(object);
         DataContainer newData = settings.getData(object);
-        
+
         if (!object.initialized) {
             Iterator it = object.definition.iterator();
             while (it.hasNext()) {
                 Type t = (Type) it.next();
-                
+
                 // Check if attribute should be copied from old object.
                 boolean found = false;
                 if (preservedFields.length > 0) {
@@ -194,19 +194,19 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         return object;
     }
-    
+
     /** Set a list of attribute names that the complex type should attempt to
      * preserve if the module is exchanged with an other one.
-     * 
+     *
      * @param preservedFields array of attributenames to preserve.
      */
     protected void setPreservedFields(String[] preservedFields) {
         this.preservedFields = preservedFields;
     }
-    
+
     /** Get a list of attribute names that the complex type should attempt to
      * preserve if the module is exchanged with an other one.
-     * 
+     *
      * @return an array of attributenames to preserve.
      */
     protected String[] getPreservedFields() {
@@ -232,7 +232,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (context.settings == null) {
             return null;
         }
-        
+
         DataContainer data = context.settings.getData(this);
 
         if (data == null && context.settings.getParent(context.uri) != null) {
@@ -314,7 +314,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * object it tries its parent until it gets a settings object where this
      * attribute is set is found. If nothing is found, global settings is
      * returned.
-     * 
+     *
      * @param o possible {@link CrawlURI}.
      * @param attributeName the attribute that should have a value set on the
      *            returned settings object.
@@ -363,7 +363,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
         return context;
     }
-    
+
     /** Get settings object valid for a URI.
     *
     * This method takes an object, try to convert it into a {@link CrawlURI}
@@ -461,7 +461,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                         "Could not find attribute: " + name);
             }
         }
-        
+
         return getDataContainerRecursive(ctxt, name).get(name);
     }
 
@@ -541,7 +541,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     public synchronized final void setAttribute(CrawlerSettings settings,
             Attribute attribute) throws InvalidAttributeValueException,
             AttributeNotFoundException {
-        
+
         if(settings==null){
             settings = globalSettings();
         }
@@ -568,7 +568,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             }
             localAttrInfo = new ModuleAttributeInfo(attrInfo);
         }
-        
+
         // Check if value is of correct type. If not, see if it is
         // a string and try to turn it into right type
         Class typeClass = getDefinition(attribute.getName()).getLegalValueType();
@@ -600,7 +600,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         // Everything ok, set it
         localAttrInfo.setType(value);
         Object oldValue = data.put(attribute.getName(), localAttrInfo, value);
-        
+
         // If the attribute is a complex type other than the old value,
         // make sure that all sub attributes are correctly set
         if (value instanceof ComplexType && value != oldValue) {
@@ -608,21 +608,21 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             replaceComplexType(settings, complex);
         }
     }
-    
+
     /**
      * Get the content type definition for an attribute.
-     * 
+     *
      * @param attributeName the name of the attribute to get definition for.
      * @return the content type definition for the attribute.
      */
     Type getDefinition(String attributeName) {
         return (Type) definitionMap.get(attributeName);
     }
-    
+
     /**
      * Check an attribute to see if it fulfills all the constraints set on the
      * definition of this attribute.
-     * 
+     *
      * @param settings the CrawlerSettings object for which this check was
      *            executed.
      * @param attributeName the name of the attribute to check.
@@ -773,10 +773,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                 null, null, null);
         return info;
     }
-    
-    /** Get the effective Attribute info for an element of this type from 
+
+    /** Get the effective Attribute info for an element of this type from
      * a settings object.
-     * 
+     *
      * @param settings the settings object for which the Attribute info is
      *        effective.
      * @param name the name of the element to get the attribute for.
@@ -786,7 +786,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             String name) {
 
         MBeanAttributeInfo info = null;
-        
+
         Context context = new Context(settings, null);
         DataContainer data = getDataContainerRecursive(context);
         while (data != null && info == null) {
@@ -799,10 +799,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         return info;
     }
-    
+
     /** Get the Attribute info for an element of this type from the global
      * settings.
-     * 
+     *
      * @param name the name of the element to get the attribute for.
      * @return the attribute info
      */
@@ -850,7 +850,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * This method can only be called before the ComplexType has been
      * initialized. This usally means that this method is available for
      * constructors of subclasses of this class.
-     * 
+     *
      * @param type the type to add.
      * @return the newly added type.
      */
@@ -868,13 +868,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         definitionMap.put(type.getName(), type);
         return type;
     }
-    
+
     /** Get an element definition from this complex type.
-     * 
+     *
      * This method can only be called before the ComplexType has been
      * initialized. This usally means that this method is available for
      * constructors of subclasses of this class.
-     * 
+     *
      * @param name name of element to get.
      * @return the requested element or null if non existent.
      */
@@ -928,12 +928,12 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     class Context {
         CrawlerSettings settings;
         UURI uri;
-        
+
         Context() {
             settings = null;
             uri = null;
         }
-        
+
         Context(CrawlerSettings settings, UURI uri) {
             this.settings = settings;
             this.uri = uri;
@@ -960,7 +960,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
    /**
     * Iterator over all attributes in a ComplexType.
-    * 
+    *
     * @author John Erik Halse
     */
    private class AttributeIterator implements Iterator {
@@ -1019,7 +1019,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
    /**
     * Iterator over all MBeanAttributeInfo for this ComplexType
-    * 
+    *
     * @author John Erik Halse
     */
    public class MBeanAttributeInfoIterator implements Iterator {
@@ -1027,7 +1027,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
        private Stack attributeStack = new Stack();
        private Iterator currentIterator;
        private int attributeCount = 0;
-       
+
        public MBeanAttributeInfoIterator(Object ctxt) {
            this.context = getSettingsFromObject(ctxt);
            //Stack attributeStack = new Stack();
@@ -1042,7 +1042,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
            this.currentIterator = (Iterator) this.attributeStack.pop();
        }
-       
+
        public boolean hasNext() {
            if (this.currentIterator.hasNext()) {
                return true;
@@ -1065,10 +1065,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
        public void remove() {
            throw new UnsupportedOperationException();
        }
-       
+
        public int size() {
            return attributeCount;
        }
    }
-   
+
 }
