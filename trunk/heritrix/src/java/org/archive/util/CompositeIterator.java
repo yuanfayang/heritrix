@@ -109,7 +109,7 @@ public class CompositeIterator implements Iterator {
      *
      * @param i an iterator to add.
      */
-    private void add(Iterator i) {
+    public void add(Iterator i) {
         iterators.add(i);
     }
 
