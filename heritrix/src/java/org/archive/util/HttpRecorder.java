@@ -32,6 +32,7 @@ import java.util.logging.Level;
 
 import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
+import org.archive.io.ReplayCharSequence;
 
 
 /**
@@ -69,6 +70,11 @@ public class HttpRecorder
     * Backing file input stream suffix.
     */
     private static final String RECORDING_INPUT_STREAM_SUFFIX = ".ris";
+    
+    /**
+     * Response character encoding.
+     */
+    private String characterEncoding = null;
     
     
     /**
@@ -261,5 +267,30 @@ public class HttpRecorder
         }
         
         return recorder;
+    }
+
+    /**
+     * @param characterEncoding Character encoding of recording.
+     */
+    public void setCharacterEncoding(String characterEncoding)
+    {
+        this.characterEncoding = characterEncoding;
+    }
+    
+    /**
+     * @return Returns the characterEncoding.
+     */
+    public String getCharacterEncoding()
+    {
+        return this.characterEncoding;
+    }
+    
+    /**
+     * @return A ReplayCharSequence.  Call close on the RCS when done w/ it.
+     * Will return indeterminate results if the underlying recording streams 
+     * have not been closed first.
+     */
+    public ReplayCharSequence getReplayCharSequence() {
+        return getRecordedInput().getReplayCharSequence(this.characterEncoding);
     }
 }

@@ -1,4 +1,8 @@
-/* Copyright (C) 2003 Internet Archive.
+/* CharSubSequence.java
+ * 
+ * Created on Sep 30, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,61 +19,62 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * CharSubSequence.java
- * Created on Sep 30, 2003
- *
- * $Header$
  */
-package org.archive.crawler.io;
+package org.archive.io;
+
 
 /**
+ * Provides a subsequence view onto a CharSequence.
+ * 
  * @author gojomo
- *
+ * @version $Revision$, $Date$
  */
 public class CharSubSequence implements CharSequence {
+    
     CharSequence inner;
     int start;
     int end;
 
     public CharSubSequence(CharSequence inner, int start, int end) {
-        // TODO bounds check
+        
         super();
+    
+        if (end < start) {
+            throw new IllegalArgumentException("Start " + start + " is > " +
+                " than end " + end);
+        }
+        
+        if (end < 0 || start < 0) {
+            throw new IllegalArgumentException("Start " + start + " or end " +
+                end + " is < 0.");
+        }
+        
+        if (inner ==  null) {
+            throw new NullPointerException("Passed charsequence is null.");
+        }
+        
         this.inner = inner;
         this.start = start;
         this.end = end;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.CharSequence#length()
-     */
     public int length() {
-        return end-start;
+        return this.end - this.start;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.CharSequence#charAt(int)
-     */
     public char charAt(int index) {
-        return inner.charAt(start+index);
+        return this.inner.charAt(this.start + index);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.CharSequence#subSequence(int, int)
-     */
-    public CharSequence subSequence(int start, int end) {
-        return new CharSubSequence(this,start,end);
+    public CharSequence subSequence(int begin, int finish) {
+        return new CharSubSequence(this, begin, finish);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     public String toString() {
-        StringBuffer sb = new StringBuffer((int)length());
-        for(int i=0; i<length(); i++) {
+        StringBuffer sb = new StringBuffer(length());
+        for(int i = 0; i < length(); i++) {
             sb.append(charAt(i));
         }
         return sb.toString();
     }
-
 }

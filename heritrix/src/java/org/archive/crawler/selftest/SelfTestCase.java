@@ -211,7 +211,7 @@ public class SelfTestCase extends TestCase
         // Calculate the arcfile name.  Find it in the arcDir.  Should only be
         // one. Then make an instance of ARCReader and call the validate on it.
         ComplexType arcWriterProcessor = 
-            (ComplexType)crawlOrder.getSettingsHandler().getModule("Archiver");
+            crawlOrder.getSettingsHandler().getModule("Archiver");
         String arcDirStr = (String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PATH);
         File arcDir = null;
@@ -384,7 +384,7 @@ public class SelfTestCase extends TestCase
      */
     private List filesFoundInArc()
     {
-        String frameDirURL = getSelftestURLWithTrailingSlash() + getTestName();
+        String baseURL = getSelftestURLWithTrailingSlash() + getTestName();
         List metaDatas = getReadReader().getMetaDatas();
         ARCRecordMetaData metaData = null;
         List filesFound = new ArrayList();
@@ -392,7 +392,7 @@ public class SelfTestCase extends TestCase
         {
             metaData = (ARCRecordMetaData)i.next();
             String url = metaData.getUrl();
-            if (url.startsWith(frameDirURL) &&
+            if (url.startsWith(baseURL) &&
                 metaData.getMimetype().equalsIgnoreCase("text/html"))
             {
                 String name = url.substring(url.lastIndexOf("/") + 1);

@@ -23,12 +23,14 @@
  */
 package org.archive.crawler.extractor;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -40,7 +42,8 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorJS extends Processor implements CoreAttributeConstants {
-    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
     static final String ESCAPED_AMP = "&amp;";
     static final String WHITESPACE = "\\s";
@@ -95,14 +98,12 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
             return;
         }
 
-        numberOfCURIsHandled++;
+        this.numberOfCURIsHandled++;
 
-        CharSequence cs =
-            curi.getHttpRecorder().getRecordedInput().getCharSequence();
-
-        if (cs == null)
-        {
-            // TODO: note problem
+        ReplayCharSequence cs = curi.getHttpRecorder().getReplayCharSequence();
+        if (cs == null) {
+            logger.warning("Failed getting ReplayCharSequence: " +
+                curi.toString());
             return;
         }
 
@@ -112,7 +113,17 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
             // TODO Auto-generated catch block
             DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
         }
-        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
+        // Set flag to indicate that link extraction is completed.
+        curi.linkExtractorFinished();
+        // Done w/ the ReplayCharSequence.  Close it.
+        if (cs != null) {
+            try {
+                cs.close();
+            } catch (IOException ioe) {
+                logger.warning(DevUtils.format(
+                    "Failed close of ReplayCharSequence.", ioe));
+            }
+        }
     }
 
     public static long considerStrings(

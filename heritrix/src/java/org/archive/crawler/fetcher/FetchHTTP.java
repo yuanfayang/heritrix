@@ -224,6 +224,9 @@ public class FetchHTTP extends Processor
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
+        // Set the response charset into the HttpRecord if available.
+        rec.setCharacterEncoding(get.getResponseCharSet());
+        
         // Set current httpRecorder into curi for convenience of subsequent
         // processors.
         curi.setHttpRecorder(rec);

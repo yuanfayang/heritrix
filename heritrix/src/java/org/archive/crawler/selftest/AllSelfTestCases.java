@@ -64,6 +64,7 @@ public class AllSelfTestCases
         suite.addTestSuite(BackgroundImageExtractionSelfTestCase.class);
         suite.addTestSuite(FramesSelfTestCase.class);
         suite.addTestSuite(MaxLinkHopsSelfTest.class);
+        suite.addTestSuite(CharsetSelfTest.class);
         //$JUnit-END$
 
         // Return an anonymous instance of TestSetup that does the one-time
