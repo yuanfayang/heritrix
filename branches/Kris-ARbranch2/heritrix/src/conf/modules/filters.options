@@ -9,3 +9,4 @@ org.archive.crawler.filter.URIRegExpFilter
 org.archive.crawler.filter.PathologicalPathFilter
 org.archive.crawler.filter.SurtPrefixFilter
 org.archive.crawler.filter.ContentTypeRegExpFilter
+is.hi.bok.crawler.ar.filter.HTTPMidFetchUnhangedFilter
