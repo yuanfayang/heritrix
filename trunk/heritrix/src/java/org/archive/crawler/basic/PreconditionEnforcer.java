@@ -40,10 +40,6 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
  *
  */
 public class PreconditionEnforcer extends Processor implements CoreAttributeConstants, FetchStatusCodes {
-    //private static String ATTR_DELAY_FACTOR = "delay-factor";
-    //private static String ATTR_MINIMUM_DELAY = "minimum-delay";
-    //private static Integer DEFAULT_DELAY_FACTOR = new Integer(10);
-    //private static Integer DEFAULT_MINIMUM_DELAY = new Integer(2000);
 
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimplePolitenessEnforcer");
 
@@ -52,8 +48,6 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
      */
     public PreconditionEnforcer(String name) {
         super(name, "Precondition enforcer");
-        //addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR, "Delay factor", DEFAULT_DELAY_FACTOR));
-        //addElementToDefinition(new SimpleType(ATTR_MINIMUM_DELAY, "Minimum delay", DEFAULT_MINIMUM_DELAY));
     }
 
     /* (non-Javadoc)
@@ -170,15 +164,5 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         }
         return false;
     }
-
-    /*
-    private int getMinimumDelayFor(CrawlURI curi) {
-        return getIntAt(XP_MINIMUM_DELAY,DEFAULT_MINIMUM_DELAY);
-    }
-
-    private int getDelayFactorFor(CrawlURI curi) {
-        return getIntAt(XP_DELAY_FACTOR, DEFAULT_DELAY_FACTOR);
-    }
-    */
 
 }
