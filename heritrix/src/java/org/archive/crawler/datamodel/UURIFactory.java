@@ -162,10 +162,14 @@ public class UURIFactory extends URI {
     public static final String IMPROPERESC_REPLACE = "%25$1";
     public static final String IMPROPERESC =
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
-    public static final String PROPER_URI_ESCAPING =
-        "%[\\p{XDigit}][\\p{XDigit}]";
     public static final String COMMERCIAL_AT = "@";
     public static final char PERCENT_SIGN = '%';
+    
+    /**
+     * First percent sign in string followed by two hex chars.
+     */
+    public static final String URI_HEX_ENCODING =
+        "^[^%]*%[\\p{XDigit}][\\p{XDigit}].*";
     
     /**
      * Authority port number regex.
@@ -277,13 +281,13 @@ public class UURIFactory extends URI {
     }
     
     /**
-     * If we find any evidence of legit URI escaping in place, then we rule the
-     * URI has already been escaped (URI encoded) and won't do it again.
-     * @return True if the passed URI exhibits already-escaped characteristics.
+     * If first <code>%</code> found is URI encoded, then its
+     * escaped.
+     * @return True if the passed URI exhibits 'escapedness'.
      */
     protected boolean isEscaped(String uri) {
         return (uri == null || uri.length() <= 0)? false:
-            TextUtils.getMatcher(PROPER_URI_ESCAPING, uri).find();
+            TextUtils.getMatcher(URI_HEX_ENCODING, uri).matches();
     }
     
     /**

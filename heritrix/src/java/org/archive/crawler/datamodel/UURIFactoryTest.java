@@ -69,6 +69,16 @@ public class UURIFactoryTest extends TestCase {
        assertTrue(ESCAPED_URISTR.equals(uuriStr));
    }
    
+   public final void testFailedGetPath() throws URIException {
+       final String path = "/RealMedia/ads/" +
+           "click_lx.ads/%%PAGE%%/%%RAND%%/%%POS%%/%%CAMP%%/empty";
+       final String uri = "http://ads.nandomedia.com" + path;
+       final UURI uuri = UURIFactory.getInstance(uri);
+       String foundPath = uuri.getPath();
+       assertTrue("Didn't get expected path: " + uri, 
+            foundPath.equals(path));
+   }
+   
    public final void testPercentEscaping() throws URIException {
        final String uri = "http://archive.org/%a%%%%%.html";
        final String tgtUri = "http://archive.org/%25a%25%25%25%25%25.html";
@@ -96,7 +106,7 @@ public class UURIFactoryTest extends TestCase {
    public final void testDoubleEncoding() throws URIException {
        final char ae = '\u00E6';
        final String uri = "http://archive.org/DIR WITH SPACES/home" +
-       	ae + ".html";
+           ae + ".html";
        final String encodedUri =
            "http://archive.org/DIR%20WITH%20SPACES/home%E6.html";
        UURI uuri = UURIFactory.getInstance(uri, "ISO-8859-1");
@@ -127,7 +137,6 @@ public class UURIFactoryTest extends TestCase {
     * @throws URIException
     */
    public final void testThreeSlashes() throws URIException {
-       boolean expectedException = false;
        UURI goodURI = UURIFactory.
        	getInstance("http://lcweb.loc.gov/rr/goodtwo.html");
        String uuri = "http:///lcweb.loc.gov/rr/goodtwo.html";
@@ -159,7 +168,6 @@ public class UURIFactoryTest extends TestCase {
        assertTrue("Didn't get expected exception: " + uuri, 
            expectedException); 
    }
-   
    
    public final void testRelative() throws URIException {
        UURI uuriTgt = UURIFactory.
