@@ -192,7 +192,8 @@
         <!--Credential-domain is filled in by the Heritrix#selftest method on 
             startup.  Its done there in case selftest port is changed  on us.
          -->
-        <newObject name="selftest" class="org.archive.crawler.datamodel.credential.Rfc2617Credential">
+        <newObject name="selftest" 
+            class="org.archive.crawler.datamodel.credential.Rfc2617Credential">
           <string name="credential-domain" />
           <string name="realm">selftest</string>
           <string name="login">selftest</string>
@@ -202,7 +203,7 @@
             class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
           <string name="credential-domain" />
           <string 
-            name="login-uri">/selftest/Auth/form/get/success.jsp</string>
+            name="login-uri">/Auth/form/get/success.jsp</string>
           <string name="http-method">GET</string>
           <map name="form-items">
             <string name="login">login</string>
@@ -214,7 +215,7 @@
             class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
           <string name="credential-domain" />
           <string 
-            name="login-uri">/selftest/Auth/form/post/success.jsp</string>
+            name="login-uri">/Auth/form/post/success.jsp</string>
           <string name="http-method">POST</string>
           <map name="form-items">
             <string name="login">login</string>

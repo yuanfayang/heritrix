@@ -302,16 +302,22 @@ public class SimpleHttpServer
      * webapp, <code>webappName</code>.
      *
      * @param webappName Name of webapp to configure.
+     * @param contextName Name of context we're using with this webapp.
+     * If null, we'll use the webapp name as context name.
      * @param authProperties Path to file that holds the auth login and
      * password.
      *
      * @throws IOException
      */
-    public void setAuthentication(String webappName, File authProperties)
+    public void setAuthentication(String webappName, String contextName,
+                File authProperties)
             throws IOException {
         this.server.addRealm(new HashUserRealm(webappName,
                 authProperties.getAbsolutePath()));
-        WebApplicationContext context = getContext(webappName);
+        if (contextName == null || contextName.length() <= 0) {
+            contextName = webappName;
+        }
+        WebApplicationContext context = getContext(contextName);
         context.setRealmName(webappName);
     }
 
