@@ -56,6 +56,7 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
@@ -82,7 +83,7 @@ import org.xbill.DNS.Record;
  */
 public class ARCWriterProcessor extends Processor
 implements CoreAttributeConstants, ARCConstants, CrawlStatusListener,
-ARCWriterSettings {
+ARCWriterSettings, FetchStatusCodes {
     /**
      * Logger.
      */
@@ -323,7 +324,7 @@ ARCWriterSettings {
 
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
-            if (scheme.equals("dns")) {
+            if (scheme.equals("dns") && curi.getFetchStatus()==S_DNS_SUCCESS) {
                 writeDns(curi);
             } else if (scheme.equals("http") || scheme.equals("https")) {
                 writeHttp(curi);
