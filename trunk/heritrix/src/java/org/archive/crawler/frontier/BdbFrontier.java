@@ -66,11 +66,8 @@ import com.sleepycat.je.DatabaseException;
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
  * known hosts (queues), and pending URIs. 
  * 
- * EXPERIMENTAL 
- * CURRENT STATE: uses in-memory map of all known 'queues' inside a 
- * single BDB database. Round-robins between all queues. Encounters
- * BDB lock timeout exceptions if more than a tiny crawl; these seem
- * to be harmless. 
+ * Uses in-memory map of all known 'queues' inside a single BDB database.
+ * Round-robins between all queues.
  *
  * @author Gordon Mohr
  */
