@@ -34,71 +34,52 @@ import org.archive.crawler.datamodel.UriUniqFilter;
  * @author gojomo
  *
  */
-public class MemUriUniqFilter extends HashSet implements UriUniqFilter {
+public class MemUriUniqFilter
+extends HashSet implements UriUniqFilter {
     HasUriReceiver receiver;
 
     public void setDestination(HasUriReceiver r) {
         this.receiver = r;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#add(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public void add(HasUri obj) {
         if(super.add(obj.getUri())) {
             this.receiver.receive(obj);
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addNow(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public void addNow(HasUri obj) {
         add(obj);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addForce(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public void addForce(HasUri obj) {
         super.add(obj.getUri());
         this.receiver.receive(obj);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#note(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public void note(HasUri hu) {
         super.add(hu.getUri());
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#forget(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public void forget(HasUri hu) {
         super.remove(hu.getUri());
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#flush()
-     */
     public long flush() {
         // unnecessary; all actions here are immediate
         return 0;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#count()
-     */
     public long count() {
         return size();
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#pending()
-     */
     public long pending() {
         // no items pile up in this implementation
         return 0;
     }
+
+	public void close() {
+        // Nothing to do.
+	}
 }

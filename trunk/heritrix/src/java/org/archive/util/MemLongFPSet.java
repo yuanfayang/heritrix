@@ -38,8 +38,8 @@ implements LongFPSet, Serializable {
         Logger.getLogger(MemLongFPSet.class.getName());
     private static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
     private static final float DEFAULT_LOAD_FACTOR = 0.75f;
-    private byte[] slots;
-    private long[] values;
+    protected byte[] slots;
+    protected long[] values;
 
     public MemLongFPSet() {
         this(DEFAULT_CAPACITY_POWER_OF_TWO, DEFAULT_LOAD_FACTOR);

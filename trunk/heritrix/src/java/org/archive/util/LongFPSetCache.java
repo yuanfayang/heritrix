@@ -35,17 +35,10 @@ package org.archive.util;
 public class LongFPSetCache extends MemLongFPSet {
     long sweepHand = 0;
 
-    /**
-     *
-     */
     public LongFPSetCache() {
         super();
     }
 
-    /**
-     * @param capacityPowerOfTwo
-     * @param loadFactor
-     */
     public LongFPSetCache(int capacityPowerOfTwo, float loadFactor) {
         super(capacityPowerOfTwo, loadFactor);
     }
@@ -60,9 +53,6 @@ public class LongFPSetCache extends MemLongFPSet {
         discard(1);
     }
 
-    /**
-     * @param i
-     */
     private void discard(int i) {
         int toDiscard = i;
         while(toDiscard>0) {
