@@ -195,7 +195,7 @@ implements Frontier,
      * of already seen URIs.
      *
      * @return A UURISet that will serve as a record of already seen URIs
-     * @throws DatabaseException
+     * @throws IOException
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
         UriUniqFilter uuf = new BdbUriUniqFilter(this.dbEnvironment);
