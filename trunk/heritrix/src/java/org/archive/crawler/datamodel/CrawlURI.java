@@ -41,9 +41,12 @@ import org.archive.util.HttpRecorder;
  * Represents a candidate URI and the associated state it
  * collects as it is crawled.
  *
- * <p>Core state is in instance variables, but a flexible
- * attribute list is also available.
- *
+ * <p>Core state is in instance variables but a flexible
+ * attribute list is also available. Use this 'bucket' to carry
+ * custom processing extracted data and state across CrawlURI
+ * processing.  See the {@link #putString(String, String)},
+ * {@link #getString(String)}, etc. 
+ * 
  * <p>Should only be instantiated via URIStore.getCrawlURI(...),
  * which will assure only one CrawlURI can exist per
  * UURI within a distinct "crawler".
