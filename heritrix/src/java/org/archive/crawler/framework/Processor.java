@@ -149,7 +149,7 @@ public class Processor extends CrawlerModule {
     }
     
 	public void initialize(CrawlController c) {
-		//controller = c;
+		controller = c;
 		//Node n;
 		//if ((n=xNode.getAttributes().getNamedItem("next"))!=null) {
 		//	defaultNext = (Processor)c.getProcessors().get(n.getNodeValue());
