@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.basic;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -16,7 +17,9 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.MemUURISet;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIStore;
 
@@ -29,6 +32,8 @@ import org.archive.crawler.framework.URIStore;
  */
 public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleStore");
+	
+	UURISet seeds = new MemUURISet();
 	
 	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
 	
@@ -93,12 +98,13 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	 * @param uuri
 	 */
 	public void insertAsSeed(UURI uuri) {
+		seeds.add(uuri);
 		if(allCuris.get(uuri)!=null) {
 			// already inserted
 			return;
 		}
 		CrawlURI curi = new CrawlURI(uuri);
-		curi.getAList().putInt("distance-from-seed",0);
+		//curi.getAList().putInt("distance-from-seed",0);
 		allCuris.put(uuri,curi);
 		pendingQueue.addLast(curi);
 		curi.setStoreState(URIStoreable.PENDING);
@@ -486,6 +492,13 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			heldCuris.remove(curi.getUURI());
 			reinsert(released);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIStore#getSeeds()
+	 */
+	public Collection getSeeds() {
+		return seeds;
 	}
 
 }
