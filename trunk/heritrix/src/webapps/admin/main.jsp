@@ -193,7 +193,7 @@
 				if(handler.isCrawling())
 				{
 					long begin = stats.successfullyFetchedCount();
-					long end = (stats.discoveredUriCount() - stats.failedFetchAttempts()) - stats.disregardedFetchAttempts();
+					long end = stats.queuedUriCount() + stats.successfullyFetchedCount();
 					if(end < 1)
 						end = 1; 
 					int ratio = (int) (100 * begin / end);
@@ -207,7 +207,7 @@
 							<center>
 							<table border=1 width="500">
 							<tr>
-							<td><center><b><u>DOWNLOADED/DISCOVERED DOCUMENT RATIO</u></b><br>
+							<td><center><b><u>DOWNLOADED/QUEUED DOCUMENT RATIO</u></b><br>
 							<table border="0" cellpadding="0" cellspacing= "0" width="100%"> 
 								<tr>
 									<td width="20%"></td>
