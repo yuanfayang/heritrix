@@ -8,6 +8,7 @@ package org.archive.io;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -46,6 +47,18 @@ public class DiskBackedByteQueue {
 	 */
 	public OutputStream getTailStream() {
 		return tailStream;
+	}
+
+	/**
+	 * 
+	 */
+	public void close() throws IOException {
+		headStream.close();
+		tailStream.close();
+	}
+
+	public void discard() {
+		tailStream.discard();
 	}
 
 }
