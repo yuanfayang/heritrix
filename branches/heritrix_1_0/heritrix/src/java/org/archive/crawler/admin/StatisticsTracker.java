@@ -775,9 +775,11 @@ implements CrawlURIDispositionListener{
     }
 
     public void crawlEnded(String sExitMessage) {
+        logger.info("Entered crawlEnded");
         CrawlController c = this.controller;
         super.crawlEnded(sExitMessage);
         report(c, sExitMessage);
+        logger.info("Leaving crawlEnded");
     }
     
     /**
@@ -955,6 +957,10 @@ implements CrawlURIDispositionListener{
         writeReport(c, "crawl-report.txt", rep.toString());
     }
     
+    protected void wroteProcessorsReport(CrawlController c) {
+        writeReport(c, "processors-report.txt", c.reportProcessors());
+    }
+    
     protected void writeReport(CrawlController c, String name,
             String content) {
         File f = new File(c.getDisk().getPath(), name);
@@ -970,7 +976,7 @@ implements CrawlURIDispositionListener{
                 " at the end of crawl.", e, Level.SEVERE));
             e.printStackTrace();
         }
-        logger.info("Wrote " + f.getAbsolutePath());
+        logger.info(f.getAbsolutePath());
     }
     
     /**
@@ -979,11 +985,16 @@ implements CrawlURIDispositionListener{
      * @param seeds A seeds iterator.
      */
     public void report(CrawlController c, String exitMessage) {
-        SeedsSummary seedsSummary = writeSeedsReport(c);
+        // Add all files mentioned in the crawl order to the
+        // manifest set.
+        c.addOrderToManifest();
         writeHostsReport(c);
         writeMimetypesReport(c);
         writeResponseCodeReport(c);
+        SeedsSummary seedsSummary = writeSeedsReport(c);
         writeCrawlReport(c, exitMessage, seedsSummary);
+        wroteProcessorsReport(c);
+        writeReport(c, "crawl-manifest.txt", c.getManifest());
         // TODO: Save object to disk?
     }
     
