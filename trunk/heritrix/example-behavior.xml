@@ -1,7 +1,7 @@
 <crawler-behavior>
 
  <http-headers>
-  <User-Agent>Heritrix pre-Alpha (contact gojomo@archive.org)</User-Agent>
+  <User-Agent>Heritrix pre-Alpha (new ia-archiver; problems to gojomo@archive.org)</User-Agent>
   <From>gojomo@archive.org</From>
  </http-headers>
  
@@ -27,6 +27,7 @@
     name="HTTP" 
     class="org.archive.crawler.basic.SimpleHTTPFetcher"
     next="Extractor">
+    <params timeout-seconds="10" />
   </processor>
    <processor 
     name="Extractor" 
