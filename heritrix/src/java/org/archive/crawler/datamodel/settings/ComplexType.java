@@ -135,7 +135,6 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             Iterator it = object.definition.iterator();
             while (it.hasNext()) {
                 Type t = (Type) it.next();
-                object.definitionMap.put(t.getName(), t);
                 object.addElement(settings, t);
             }
             object.earlyInitialize(settings);
@@ -615,31 +614,14 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the newly added type.
      */
     public Type addElementToDefinition(Type type) {
+        if (definitionMap.containsKey(type.getName())) {
+            definition.remove(type);
+            definitionMap.remove(type.getName());
+        }
         definition.add(type);
+        definitionMap.put(type.getName(), type);
         return type;
     }
-
-    /** Initializes this ComplexType with it's defined attributes and
-     * default values.
-     *
-     * @param settings the CrawlerSettings object for which this
-     *        complex type is defined.
-     * @throws InvalidAttributeValueException is thrown if default values
-     *         is of wrong type.
-     *//*
-    private void initializeComplexType(CrawlerSettings settings)
-        throws InvalidAttributeValueException {
-        if (!initialized) {
-            Iterator it = definition.iterator();
-            while (it.hasNext()) {
-                Type t = (Type) it.next();
-                definitionMap.put(t.getName(), t);
-                addElement(settings, t);
-            }
-            earlyInitialize(settings);
-        }
-        initialized = true;
-    }*/
 
     /** This method can be overridden in subclasses to do local
      * initialisation.
