@@ -48,6 +48,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.util.ArchiveUtils;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -272,5 +273,28 @@ public class XMLSettingsHandler extends SettingsHandler {
         
         // Copy the per host files
         
+    }
+    
+    /**
+     * Transforms a relative path so that it is relative to the location of the 
+     * order file. If an absolute path is given, it will be returned unchanged.
+     * @param path A relative path to a file (or directory)
+     * @return The same path modified so that it is relative to the file level
+     *         location of the order file for the settings handler.
+     */
+    public String getPathRelativeToOrderFile(String path){
+        if (!path.endsWith(File.separator)) {
+            path = path + File.separator;
+        }
+        File f = new File(path);
+        // If path is not absolute, set f's directory
+        // relative to the path of the order file
+        if (!f.isAbsolute()) {
+            return ArchiveUtils.getFilePath(
+                this.getOrderFile().getAbsolutePath() + f.toString()
+            );
+        }
+        // If path is absolute, we return it itself.
+        return path;
     }
 }
