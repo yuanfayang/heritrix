@@ -1,4 +1,11 @@
-/* Copyright (C) 2003 Internet Archive.
+/* 
+ * ArchiveUtils
+ * 
+ * $Header$
+ * 
+ * Created on Jul 7, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,10 +23,6 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ArchiveUtils.java
- * Created on Jul 7, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -36,8 +39,17 @@ import java.io.File;
  * @author gojomo
  */
 public class ArchiveUtils {
+	/** 
+	 * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
+	 */
     public static SimpleDateFormat TIMESTAMP12;	
+	/**
+	 * Arc-style date stamp in the format yyyyMMddHHmmss and UTC time zone.
+	 */
 	public static SimpleDateFormat TIMESTAMP14;	
+	/**
+	 * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
+	 */
 	public static SimpleDateFormat TIMESTAMP17;	
 
 	// Initialize fomatters with pattern and time zone
@@ -187,18 +199,34 @@ public class ArchiveUtils {
 	 * @return Retruns a file name apropriate for the system
 	 */
 	public static String systemFileName(String aFileName){
-		return (new File(aFileName)).getPath();
+		return (aFileName != null ? (new File(aFileName)).getPath() : "null");
 	}
 
+	/**
+	 * Retunrs a file's path.
+	 * 
+	 * @param aFileName
+	 * @return
+	 */
 	public static String getFilePath(String aFileName){
 		String tmpFileName = systemFileName(aFileName);
 		int pathEnd = tmpFileName.lastIndexOf(File.separatorChar);
 		if(pathEnd >=0 ){
 			return tmpFileName.substring(0, pathEnd+1);
 		}else{
-			return "./";
+			return "." + File.separator;
 		}
 	}
+
+	/**
+	 * Tests if a file's path is absolute.
+	 * 
+	 * @param aFileName
+	 * @return boolean
+	 */
+	public static boolean isFilePathAbsolute(String aFileName){
+		return (new File(aFileName)).isAbsolute();
+ 	}
 	
 	public static boolean byteArrayEquals(byte[] lhs, byte[] rhs) {
 		if (lhs==rhs) {
@@ -214,4 +242,6 @@ public class ArchiveUtils {
 		}
 		return true;	
 	}
+
 }
+
