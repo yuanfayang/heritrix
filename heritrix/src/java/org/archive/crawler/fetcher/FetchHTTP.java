@@ -148,14 +148,9 @@ public class FetchHTTP extends Processor
     }
 
     protected void innerProcess(CrawlURI curi) {
-        initialize();
-        
-        // Clear any httpRecorder so subsequent processing doesn't mistakenly 
-        // think it current.
-        curi.setHttpRecorder(null);
-        
+        initialize();     
         if (!canFetch(curi)) {
-            // cannot fetch this, due to protocol, retries, or other problems
+            // Cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
@@ -300,6 +295,10 @@ public class FetchHTTP extends Processor
         {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+            // We use the multithreaded connection manager because, at the
+            // least, cookies will be shared across clients.  It also seems
+            // SimpleConnectionManager is unsafe run in an environment running
+            // multiple instances (to be verified).
             MultiThreadedHttpConnectionManager connectionManager =
                 new MultiThreadedHttpConnectionManager();
             // Ensure there will be as many http connections available as
@@ -312,7 +311,8 @@ public class FetchHTTP extends Processor
             {
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
                 Protocol.registerProtocol("https", new Protocol("https", 
-                    new ConfigurableTrustManagerProtocolSocketFactory(trustLevel), 443));
+                  new ConfigurableTrustManagerProtocolSocketFactory(trustLevel),
+                  443));
             }
             
             catch (Exception e)
