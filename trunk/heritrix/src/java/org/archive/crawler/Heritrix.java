@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -195,7 +194,7 @@ public class Heritrix
     /**
      * When running selftest, we set in here the URL for the selftest.
      */
-    private static String getSelftestURL = null;
+    private static String selftestURL = null;
 
     /**
      * Alerts that have occured
@@ -631,13 +630,14 @@ public class Heritrix
         throws Exception {
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
-        List webapps = Arrays.asList(
-            new String [] {SimpleHttpServer.getRootWebappName(), SELFTEST});
-        Heritrix.httpServer = new SimpleHttpServer(webapps, port, true);
+        final String CONTEXT = "/";
+        Heritrix.httpServer = new SimpleHttpServer(SELFTEST, CONTEXT,
+            port, true);
         // Set up digest auth for a section of the server so selftest can run
         // auth tests.  Looks like can only set one login realm going by the
         // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
-        Heritrix.httpServer.setAuthentication(SELFTEST, getPropertiesFile());
+        Heritrix.httpServer.setAuthentication(SELFTEST, CONTEXT,
+            getPropertiesFile());
         // Start server.
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), SELFTEST);
@@ -649,13 +649,12 @@ public class Heritrix
         // Pass as a seed a pointer to the webserver we just put up.
         final String ROOTURI = "127.0.0.1:" + Integer.toString(port);
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
-        Heritrix.getSelftestURL =
-            "http://" + ROOTURI + '/' + SELFTEST + '/';
+        Heritrix.selftestURL = "http://" + ROOTURI + '/';
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
-            getSelftestURL += (oneSelfTestName + '/');
+            selftestURL += (oneSelfTestName + '/');
         }
         job = Heritrix.jobHandler.newJob(job, SELFTEST,
-            "Integration self test", getSelftestURL, CrawlJob.PRIORITY_CRITICAL);
+            "Integration self test", selftestURL, CrawlJob.PRIORITY_CRITICAL);
         Heritrix.jobHandler.addJob(job);
         // Before we start, need to change some items in the settings file.
         CredentialStore cs = (CredentialStore)job.getSettingsHandler().
@@ -834,7 +833,7 @@ public class Heritrix
      */
     public static String getSelftestURL()
     {
-        return getSelftestURL;
+        return selftestURL;
     }
 
     /**
