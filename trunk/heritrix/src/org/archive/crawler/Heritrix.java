@@ -6,16 +6,12 @@
  */
 package org.archive.crawler;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.framework.CrawlController;
-
-import org.archive.crawler.datamodel.ConfigurationException;
-import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.InitializationException;
+import org.archive.crawler.framework.CrawlController;
 
 /**
  * Main class for Heritrix crawler.
