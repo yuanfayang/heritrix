@@ -5,24 +5,24 @@
 <%@ page import="java.util.Iterator" %>
 
 <%
-	String title = "Resume from an existing job";
-	int tab = 1;
+    String title = "Resume from an existing job";
+    int tab = 1;
 %>
 
 <%@include file="/include/head.jsp"%>
 <p>
-	<b>Select job with a checkpoint to resume:</b>
+    <b>Select job with a checkpoint to resume:</b>
 <p>
-	<ul>
+    <ul>
 <%
-	Iterator iter = handler.getCompletedJobs().iterator();
-	while(iter.hasNext()) {
-		CrawlJob job = (CrawlJob)iter.next();
-		out.println("<li><a href='/admin/jobs/resumefromcheckpoint.jsp?job="+job.getUID()+"'>"
-					+job.getDisplayName());
-	}
-%>	
-	</ul>
+    Iterator iter = handler.getCompletedJobs().iterator();
+    while(iter.hasNext()) {
+        CrawlJob job = (CrawlJob)iter.next();
+        out.println("<li><a href='/admin/jobs/resumefromcheckpoint.jsp?job="+job.getUID()+"'>"
+                    +job.getDisplayName());
+    }
+%>    
+    </ul>
 
-		
+        
 <%@include file="/include/foot.jsp"%>

@@ -56,14 +56,14 @@
         
         function doDelete(){
             if(confirm("This action will delete ALL URIs in the Frontier that match the specified regular expression!\nAre you sure you wish to proceed?")){
-	            document.frmFrontierList.action.value = "delete";
-	            document.frmFrontierList.submit();
-	        }
+                document.frmFrontierList.action.value = "delete";
+                document.frmFrontierList.submit();
+            }
         }
         function checkForEnter(e){
-			if(e.keyCode == 13){ //13 ascii == enter key
+            if(e.keyCode == 13){ //13 ascii == enter key
                 doDisplayInitial();
-			}
+            }
         }
     </script>
     
@@ -172,31 +172,31 @@
                 if ( action != null ) {
                     
                     FrontierMarker marker = null;
-			        if(grep){
-			            if(regexpr.length() > 0){
-			                regexpr = ".*" + regexpr + ".*";
-			            } else {
-			                regexpr = ".*";
-			            }
-			        }
-	                
-	                if(action.equals("initial")){
+                    if(grep){
+                        if(regexpr.length() > 0){
+                            regexpr = ".*" + regexpr + ".*";
+                        } else {
+                            regexpr = ".*";
+                        }
+                    }
+                    
+                    if(action.equals("initial")){
                        // Get initial marker.
                        marker = handler.getInitialMarker(regexpr,false);
                        session.setAttribute("marker",marker);
-	                } else if(action.equals("next")) {
-	                   // Reuse old marker.
-	                   marker = (FrontierMarker)session.getAttribute("marker");
-	                   regexpr = marker.getMatchExpression();
-	                } else if(action.equals("delete")){
-	                   // Delete based on regexpr.
-	                   long numberOfDeletes = handler.deleteURIsFromPending(regexpr);
+                    } else if(action.equals("next")) {
+                       // Reuse old marker.
+                       marker = (FrontierMarker)session.getAttribute("marker");
+                       regexpr = marker.getMatchExpression();
+                    } else if(action.equals("delete")){
+                       // Delete based on regexpr.
+                       long numberOfDeletes = handler.deleteURIsFromPending(regexpr);
                        out.println("<tr><td height='5'></td></tr>");
-	                   out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
+                       out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
                        out.println("<tr><td height='5'></td></tr>");
-	                }
-	                
-	                if (marker != null) {             
+                    }
+                    
+                    if (marker != null) {             
 
                         int found = 0;
                         try{
@@ -219,37 +219,37 @@
                             from = to-found;
                         }
 %>
-				        <tr><td height="5"></td></tr>
-				        <tr>
-				            <td colspan="7">
+                        <tr><td height="5"></td></tr>
+                        <tr>
+                            <td colspan="7">
                                 <% if(to>0) { %> Displaying URIs <%=from%> - <%=to%> matching <% } else { %> No URIs found matching <% } %> expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
-				            </td>
-				        </tr>
-				        <tr><td height="5"></td></tr>
-				        <tr bgColor="black">
-				            <td bgcolor="#000000" height="1" colspan="7">
-				            </td>
-				        </tr>
-				        <tr><td height="5"></td></tr>
-				        <tr>
-				            <td colspan="7"><pre><%=outputString.toString()%></pre></td>
-				        </tr>
-				        <tr><td height="5"></td></tr>
-				        <tr bgColor="black">
-				            <td bgcolor="#000000" height="1" colspan="7">
-				            </td>
-				        </tr>
-				        <tr><td height="5"></td></tr>
-				        <tr>
-				            <td colspan="7">
+                            </td>
+                        </tr>
+                        <tr><td height="5"></td></tr>
+                        <tr bgColor="black">
+                            <td bgcolor="#000000" height="1" colspan="7">
+                            </td>
+                        </tr>
+                        <tr><td height="5"></td></tr>
+                        <tr>
+                            <td colspan="7"><pre><%=outputString.toString()%></pre></td>
+                        </tr>
+                        <tr><td height="5"></td></tr>
+                        <tr bgColor="black">
+                            <td bgcolor="#000000" height="1" colspan="7">
+                            </td>
+                        </tr>
+                        <tr><td height="5"></td></tr>
+                        <tr>
+                            <td colspan="7">
                                 <% if(to>0) { %> Displaying URIs <%=from%> - <%=to%> matching <% } else { %> No URIs found matching <% } %> expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
-				            </td>
-				        </tr>
-				        <tr><td height="5"></td></tr>
+                            </td>
+                        </tr>
+                        <tr><td height="5"></td></tr>
 <%
-				        out.println("</pre>");
-				    }
-			    }
+                        out.println("</pre>");
+                    }
+                }
 %>
         <tr bgColor="black">
             <td bgcolor="#000000" height="1" colspan="7">

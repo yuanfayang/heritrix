@@ -55,33 +55,33 @@
         if(action.equals("done")){
             // Ok, done editing.
             if(global){
-	            if(theJob.isNew()){         
-	                handler.addJob(theJob);
-	                response.sendRedirect("/admin/jobs.jsp?message=Job created");
-	            }else{
-	                if(theJob.isRunning()){
-	                    handler.kickUpdate();
-	                }
-	                if(theJob.isProfile()){
-	                    response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
-	                }else{
-	                    response.sendRedirect("/admin/jobs.jsp?message=Job modified");
-	                }
-	            }
-	        } else {
-	            if(theJob.isRunning()){
-	                handler.kickUpdate();
-	            }
-	            response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
-	        }
+                if(theJob.isNew()){         
+                    handler.addJob(theJob);
+                    response.sendRedirect("/admin/jobs.jsp?message=Job created");
+                }else{
+                    if(theJob.isRunning()){
+                        handler.kickUpdate();
+                    }
+                    if(theJob.isProfile()){
+                        response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
+                    }else{
+                        response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+                    }
+                }
+            } else {
+                if(theJob.isRunning()){
+                    handler.kickUpdate();
+                }
+                response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
+            }
             return;
         } else if(action.equals("new")){
             // Add new refinement
             String reference = request.getParameter("newReference");
             String description = request.getParameter("newDescription");
             // Ensure we got a valid name. ([a-zA-Z][0-9][-_])
-	        Pattern p = Pattern.compile("[a-zA-Z_\\-0-9]*");
-	        if(p.matcher(reference).matches()==false){
+            Pattern p = Pattern.compile("[a-zA-Z_\\-0-9]*");
+            if(p.matcher(reference).matches()==false){
                 // Illegal name!
                 message = "Name can only contain alphanumeric chars, dash and underscore.<br>No spaces are allowed";
             } else {
@@ -167,10 +167,10 @@
         </b>
         <table border="0" cellpadding="0" cellspacing="0" width="450">
             <%
-				ListIterator refinements = localSettings.refinementsIterator();
-				boolean alt = true;
-				while(refinements.hasNext()){
-				    Refinement ref = (Refinement)refinements.next();
+                ListIterator refinements = localSettings.refinementsIterator();
+                boolean alt = true;
+                while(refinements.hasNext()){
+                    Refinement ref = (Refinement)refinements.next();
             %>
                     <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
                         <td width="350">
@@ -197,7 +197,7 @@
                     </tr>
             <%
                     alt = !alt;
-				}
+                }
             %>
         </table>
         <p>

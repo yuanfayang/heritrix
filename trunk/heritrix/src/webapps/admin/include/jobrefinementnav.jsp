@@ -1,36 +1,36 @@
 <%
-	/**
-	 * An include file that handles the sub navigation of a 
-	 * pages allowing the override section of a given 'job'. 
-	 * Include where the sub navigation should be displayed.
-	 *
-	 * The following variables must exist prior to this file being included:
-	 *
-	 * String theJob - The CrawlJob being manipulated.
-	 * int jobtab - Which to display as 'selected'.
-	 *          1 - Filters
-	 *          2 - Settings
-	 *          4 - Credentials
-	 *          5 - Criteria
-	 *
-	 * @author Kristinn Sigurdsson
-	 */
+    /**
+     * An include file that handles the sub navigation of a 
+     * pages allowing the override section of a given 'job'. 
+     * Include where the sub navigation should be displayed.
+     *
+     * The following variables must exist prior to this file being included:
+     *
+     * String theJob - The CrawlJob being manipulated.
+     * int jobtab - Which to display as 'selected'.
+     *          1 - Filters
+     *          2 - Settings
+     *          4 - Credentials
+     *          5 - Criteria
+     *
+     * @author Kristinn Sigurdsson
+     */
 %>
-	<table cellspacing="0" cellpadding="0">
-		<tr>
-			<td bgcolor="#0000FF" height="1">
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<table cellspacing="0" cellpadding="0">
-					<tr>
-						<td>
-							<b>Available options:</b>
-						</td>
-						<td class="tab_seperator">
+    <table cellspacing="0" cellpadding="0">
+        <tr>
+            <td bgcolor="#0000FF" height="1">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td>
+                            <b>Available options:</b>
+                        </td>
+                        <td class="tab_seperator">
 
-						</td>
+                        </td>
                         <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
                             <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
                         </td>
@@ -51,17 +51,17 @@
                         </td>
                         <td class="tab_seperator">
                         </td>
-						<td class="tab">
-							<a href="javascript:doSubmit()" class="tab_text">Done with the refinement</a>
-						</td>
-						<td class="tab_seperator">
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-		<tr>
-			<td bgcolor="#0000FF" height="1">
-			</td>
-		</tr>
-	</table>
+                        <td class="tab">
+                            <a href="javascript:doSubmit()" class="tab_text">Done with the refinement</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td bgcolor="#0000FF" height="1">
+            </td>
+        </tr>
+    </table>

@@ -170,29 +170,29 @@
                                 // Simple map
                                 MapType map = (MapType)currentAttribute;
                                 p.append("<table border='0' cellspacing='0' cellpadding='0'>\n");
-						        
-						        MBeanInfo mapInfo = map.getMBeanInfo(settings);
-						        MBeanAttributeInfo mp[] = mapInfo.getAttributes();
+                                
+                                MBeanInfo mapInfo = map.getMBeanInfo(settings);
+                                MBeanAttributeInfo mp[] = mapInfo.getAttributes();
 
-						        // Printout modules in map.
-						        boolean alt = true;
-						        for(int n2=0; n2<mp.length; n2++) {
-						            ModuleAttributeInfo mapAtt = (ModuleAttributeInfo)mp[n2]; //The attributes of the current attribute.
+                                // Printout modules in map.
+                                boolean alt = true;
+                                for(int n2=0; n2<mp.length; n2++) {
+                                    ModuleAttributeInfo mapAtt = (ModuleAttributeInfo)mp[n2]; //The attributes of the current attribute.
 
-						            Object currentMapAttribute = null;
-						            Object localMapAttribute = null;
-						
-						            try {
-						                currentMapAttribute = map.getAttribute(settings,mapAtt.getName());
-						                localMapAttribute = map.getLocalAttribute(settings,mapAtt.getName());
-						            } catch (Exception e1) {
-						                p.append(e1.toString() + " " + e1.getMessage());
-						            }
-						            p.append("<tr " + (alt?"bgcolor='#EEEEFF'":"") + "><td>" + mapAtt.getName() + "</td><td>&nbsp;-&gt;&nbsp</td><td>" + currentMapAttribute + "</td><td>&nbsp;<a href=\"javascript:doDeleteMap('"+attAbsoluteName+"','"+mapAtt.getName()+"')\">Remove</a></td></tr>\n");
-						            alt = !alt;
-						        }
-						        p.append("<tr><td><input name='"+attAbsoluteName+".key' name='"+attAbsoluteName+".key'></td><td>&nbsp;->&nbsp;</td><td><input name='"+attAbsoluteName+".value' name='"+attAbsoluteName+".value'></td><td>&nbsp;<input type='button' value='Add' onClick=\"doAddMap('"+attAbsoluteName+"')\"></td></tr>");
-						        p.append("</table>\n");
+                                    Object currentMapAttribute = null;
+                                    Object localMapAttribute = null;
+                        
+                                    try {
+                                        currentMapAttribute = map.getAttribute(settings,mapAtt.getName());
+                                        localMapAttribute = map.getLocalAttribute(settings,mapAtt.getName());
+                                    } catch (Exception e1) {
+                                        p.append(e1.toString() + " " + e1.getMessage());
+                                    }
+                                    p.append("<tr " + (alt?"bgcolor='#EEEEFF'":"") + "><td>" + mapAtt.getName() + "</td><td>&nbsp;-&gt;&nbsp</td><td>" + currentMapAttribute + "</td><td>&nbsp;<a href=\"javascript:doDeleteMap('"+attAbsoluteName+"','"+mapAtt.getName()+"')\">Remove</a></td></tr>\n");
+                                    alt = !alt;
+                                }
+                                p.append("<tr><td><input name='"+attAbsoluteName+".key' name='"+attAbsoluteName+".key'></td><td>&nbsp;->&nbsp;</td><td><input name='"+attAbsoluteName+".value' name='"+attAbsoluteName+".value'></td><td>&nbsp;<input type='button' value='Add' onClick=\"doAddMap('"+attAbsoluteName+"')\"></td></tr>");
+                                p.append("</table>\n");
                             } else if(legalValues != null && legalValues.length > 0) {
                                 //Have legal values. Build combobox.
                                 p.append("<select name='" + attAbsoluteName + "' style='width: 440px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
@@ -300,23 +300,23 @@
 
 
 <script type="text/javascript">
-	function doAddList(listName){
-		newItem = document.getElementById(listName+".add");
-		theList = document.getElementById(listName);
-		
-		if(newItem.value.length > 0){
-			insertLocation = theList.length;
-			theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
-			newItem.value = "";
-		}
-		setEdited(listName);
-	}
-	
-	function doDeleteList(listName){
-		theList = document.getElementById(listName);
-		theList.options[theList.selectedIndex] = null;
-		setEdited(listName);
-	}
+    function doAddList(listName){
+        newItem = document.getElementById(listName+".add");
+        theList = document.getElementById(listName);
+        
+        if(newItem.value.length > 0){
+            insertLocation = theList.length;
+            theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
+            newItem.value = "";
+        }
+        setEdited(listName);
+    }
+    
+    function doDeleteList(listName){
+        theList = document.getElementById(listName);
+        theList.options[theList.selectedIndex] = null;
+        setEdited(listName);
+    }
 
     function doAddMap(mapName){
         document.frmConfig.action.value = "addMap";
@@ -329,31 +329,31 @@
         document.frmConfig.update.value = mapName;
         document.frmConfig.item.value = key;
         doSubmit();
-    }    		
+    }            
 </script>
 
 <%
     // This code is shared by each of the configure.jsp pages. 
     // Sets up the CrawlJob, CrawlOrder, settingsHandler, 
     // the CrawlJobErrorHandler and sets the expert boolean.
-	CrawlJob theJob = handler.getJob(request.getParameter("job"));
-	if (theJob == null) {
-		// Didn't find any job with the given UID or no UID given.
-		response.sendRedirect("/admin/jobs.jsp?message=" +
+    CrawlJob theJob = handler.getJob(request.getParameter("job"));
+    if (theJob == null) {
+        // Didn't find any job with the given UID or no UID given.
+        response.sendRedirect("/admin/jobs.jsp?message=" +
             "No job selected " + request.getParameter("job"));
-		return;
-	} else if(theJob.isReadOnly()) {
-		// Can't edit this job.
-		response.sendRedirect("/admin/jobs.jsp?message=" +
+        return;
+    } else if(theJob.isReadOnly()) {
+        // Can't edit this job.
+        response.sendRedirect("/admin/jobs.jsp?message=" +
             "Can't configure a read only job");
-		return;
-	}
+        return;
+    }
     CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
-	boolean expert = false;
+    boolean expert = false;
     if(getCookieValue(request.getCookies(), "expert", "false").equals("true")) {
         expert = true;
     }
-	// Get the settings objects.
-	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
-	CrawlOrder crawlOrder = settingsHandler.getOrder();
+    // Get the settings objects.
+    XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
+    CrawlOrder crawlOrder = settingsHandler.getOrder();
 %>

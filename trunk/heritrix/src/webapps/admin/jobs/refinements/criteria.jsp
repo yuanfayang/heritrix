@@ -162,27 +162,27 @@
                         deleteCriteriaNumber=-1;
                     } else {
             %>
-	                    <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
-	                        <td width="400">
-	                            <b><%=cr.getName()%></b>&nbsp;
-	                        </td>
-	                        <td nowrap>
-	                            <a href="javascript:doDelete('<%=i++%>')" style="color: #003399;" class="underLineOnHover">Remove</a>&nbsp;
-	                        </td>
-	                    </tr>
-	                    <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
-	                        <td>
-	                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
-	                                <tr>
-	                                    <td>&nbsp;&nbsp;&nbsp;</td>
-	                                    <td width="100%">
-	                                        <i><%=cr.getDescription()%></i>
-	                                    </td>
-	                                </tr>
-	                            </table>
-	                        </td>
-	                        <td>&nbsp;</td>
-	                    </tr>
+                        <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
+                            <td width="400">
+                                <b><%=cr.getName()%></b>&nbsp;
+                            </td>
+                            <td nowrap>
+                                <a href="javascript:doDelete('<%=i++%>')" style="color: #003399;" class="underLineOnHover">Remove</a>&nbsp;
+                            </td>
+                        </tr>
+                        <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
+                            <td>
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td>&nbsp;&nbsp;&nbsp;</td>
+                                        <td width="100%">
+                                            <i><%=cr.getDescription()%></i>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>&nbsp;</td>
+                        </tr>
             <%
                         alt = !alt;
                     }

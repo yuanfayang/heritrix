@@ -2,12 +2,12 @@
 <%@include file="/include/handler.jsp"%>
 
 <%
-	String title = "Threads report";
-	int tab = 4;
-	
-	String action = request.getParameter("action");
-	String message = null;
-	if(action != null && action.equals("killkillkill")){
+    String title = "Threads report";
+    int tab = 4;
+    
+    String action = request.getParameter("action");
+    String message = null;
+    if(action != null && action.equals("killkillkill")){
         // Kill thread.
         try{
             handler.killThread(Integer.parseInt(request.getParameter("threadNumber")),
@@ -17,11 +17,11 @@
         } catch(NumberFormatException e){
             message = "Kill operation failed";
         }
-	}
+    }
 %>
 
 <%@include file="/include/head.jsp"%>
-	<script type="text/javascript">
+    <script type="text/javascript">
         function doKill(){
             thread = document.frmThread.threadNumber.value;
             if(confirm("Are you sure you wish to kill thread number " +
