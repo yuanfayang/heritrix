@@ -21,7 +21,7 @@ package org.archive.crawler.datamodel;
  * @author Gordon Mohr
  */
 public class CrawlURI {
-	// AttributeList alist;
+	AttributeList alist;
 	UURI uuri; 
 	CrawlHost host;
 	boolean doProcess;

@@ -24,4 +24,24 @@ public class UURI {
 	public static UURI createURI(String u) {
 		return null;
 	}
+	
+	
+	/**
+	 * Return a NormalizedURIString for the given String.
+	 * 
+	 * Normalization cleans a URI to the maximum extent
+	 * possible without regard to what it returns or 
+	 * special-casing based on past observed behavior.
+	 * 
+	 * For example, the URI scheme is case-flattened, 
+	 * hostnames are case-flattened, default ports are
+	 * removed, and path-info is regularized. 
+	 * 
+	 * @param u
+	 * @return
+	 */
+	 static String normalize(String u) {
+		// TODO implement
+		return null;
+	}
 }

@@ -8,7 +8,7 @@ package org.archive.crawler.datamodel;
 
 
 /**
- * Represents a collection of URIs.
+ * Represents a collection of URIs, without duplicates.
  * 
  * Implementors may also choose to include various sorts
  * of "fuzzy" contains tests, to determine when another

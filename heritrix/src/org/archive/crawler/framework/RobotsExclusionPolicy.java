@@ -6,23 +6,39 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.zip.Checksum;
+
+import org.archive.crawler.io.*;
+
 /**
  * @author gojomo
  *
  */
 public class RobotsExclusionPolicy {
-	public static RobotsExclusionPolicy ALLOWALL;
-	public static RobotsExclusionPolicy DENYALL;
+	public static RobotsExclusionPolicy ALLOWALL = new RobotsExclusionPolicy(true);
+	public static RobotsExclusionPolicy DENYALL = new RobotsExclusionPolicy(true);;
 	
 	boolean immutable;
 	long expires;
-	int policyChecksum;
+	Checksum robotstxtChecksum; 
 	
 	public boolean hasExpired() {
 		return System.currentTimeMillis()>expires;
 	}
 	
+	/**
+	 * @param b
+	 */
+	public RobotsExclusionPolicy(boolean b) {
+		immutable = b;
+	}
+
 	public boolean disallows(String path, String userAgent) {
+		if (this == ALLOWALL)
+			return false;
+		if (this == DENYALL)
+			return true;
+		
 		// TODO implement
 		return false;
 	}
@@ -31,8 +47,10 @@ public class RobotsExclusionPolicy {
 	 * Replace existing policy with 
 	 * @param fbis
 	 */
-	public RobotsExclusionPolicy updateWith(FullyBufferedInputStream fbis, long newExpires) {
+	public RobotsExclusionPolicy updateWith(ReadWriteVirtualBuffer fbis, long newExpires) {
 		// TODO implement
+		
+		// if immutable, don't change in place... return a fresh copy
 		return null;
 	}
 }
