@@ -272,20 +272,23 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param settingsDirectory the top level directory of the per host/domain
      *                          settings files.
      */
-    public void copySettings(File newOrderFileName, File newSettingsDirectory) throws IOException {
+    public void copySettings(File newOrderFileName, String newSettingsDirectory)
+      throws IOException {
         File oldSettingsDirectory = getSettingsDirectory();
         
         // Write new orderfile and point the settingshandler to it
         orderFile = newOrderFileName;
         try {
-            getOrder().setAttribute(new Attribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY, newSettingsDirectory.getPath()));
+            getOrder().setAttribute(new Attribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY, newSettingsDirectory));
         } catch (Exception e) {
             throw new IOException("Could not update settings with new location: " + e.getMessage());
         }
         writeSettingsObject(getSettingsObject(null));
         
+        File newDir = new File(getPathRelativeToWorkingDirectory(newSettingsDirectory));
+        
         // Copy the per host files
-        copyFiles(oldSettingsDirectory, newSettingsDirectory);
+        copyFiles(oldSettingsDirectory, newDir);
     }
     
     private void copyFiles(File src, File dest) throws IOException {
