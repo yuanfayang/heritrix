@@ -31,57 +31,70 @@ import org.archive.crawler.settings.Type;
 
 
 /**
- * Rule REJECTs any CrawlURIs whose total number of hops (length of the 
- * hopsPath string, traversed links of any type) is over a threshold.
+ * Rule REJECTs any CrawlURIs whose total number of path-segments (as
+ * indicated by the count of '/' characters not including the first '//')
+ * is over a given threshold.
  *
  * @author gojomo
  */
-public class TooManyHopsDecideRule extends PredicatedDecideRule {
-    private static final String ATTR_MAX_HOPS = "max-hops";
-    
-    /**
-     * Default access so available to test code.
-     */
-    static final Integer DEFAULT_MAX_HOPS = new Integer(20);
+public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
+    public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
+    private static final Integer DEFAULT_MAX_PATH_DEPTH = new Integer(20);
 
     /**
      * Usual constructor. 
      * @param name Name of this DecideRule.
      */
-    public TooManyHopsDecideRule(String name) {
+    public TooManyPathSegmentsDecideRule(String name) {
         super(name);
-        setDescription("TooManyHopsDecideRule: REJECTs URIs discovered " +
-                "after too many hops (followed links of any type) from seed.");
-        addElementToDefinition(new SimpleType(ATTR_MAX_HOPS, "Max path" +
-                " depth for which this filter will match", DEFAULT_MAX_HOPS));
+        setDescription("TooManyPathSegmentsDecideRule: REJECTs URIs with " +
+                "more total path-segments (as indicated by '/' characters) " +
+                "than the configured '"+ATTR_MAX_PATH_DEPTH+"'.");
+        
         // make default REJECT (overriding superclass) & always-default
         Type type = addElementToDefinition(new SimpleType(ATTR_DECISION,
                 "Decision to be applied", REJECT, ALLOWED_TYPES));
         type.setTransient(true);
+        
+        addElementToDefinition(new SimpleType(ATTR_MAX_PATH_DEPTH, "Number of" +
+                " path segments beyond which this rule will reject URIs.", 
+                DEFAULT_MAX_PATH_DEPTH));
+        
     }
 
     /**
      * Evaluate whether given object is over the threshold number of
-     * hops.
+     * path-segments.
      * 
      * @param object
-     * @return true if the mx-hops is exceeded
+     * @return true if the path-segments is exceeded
      */
     protected boolean evaluate(Object object) {
         try {
-            CandidateURI curi = (CandidateURI)object;
-            return curi.getPathFromSeed() != null &&
-                curi.getPathFromSeed().length() > getThresholdHops(object);
+            CandidateURI curi = (CandidateURI) object;
+            String uri = curi.toString();
+            int count = 3;
+            int threshold = getThresholdSegments(object);
+            for (int i = 0; i < uri.length(); i++) {
+                if (uri.charAt(i) == '/') {
+                    count++;
+                }
+                if (count > threshold) {
+                    return true;
+                }
+            }
         } catch (ClassCastException e) {
             // if not CrawlURI, always disregard
-            return false; 
         }
+        return false;
     }
 
     /**
-     * @return hops cutoff threshold
+     * @return path-segments cutoff threshold
      */
-    private int getThresholdHops(Object obj) {
-        return ((Integer)getUncheckedAttribute(obj,ATTR_MAX_HOPS)).intValue();
+    private int getThresholdSegments(Object obj) {
+        // add 2 for start-of-authority slashes (not path segments)
+        return ((Integer) getUncheckedAttribute(obj, ATTR_MAX_PATH_DEPTH))
+                .intValue() + 2;
     }
 }
