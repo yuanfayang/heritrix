@@ -68,6 +68,14 @@ public class UURIFactoryTest extends TestCase {
 		assertTrue(ESCAPED_URISTR.equals(uuriStr));
 	}
     
+    public final void testRelativeURIWithTwoSlashes() throws URIException {
+        UURI base = UURIFactory.getInstance("http://www.archive.org");
+        UURI uuri = UURIFactory.getInstance(base, "one//index.html");
+        assertTrue("Doesn't do right thing with two slashes " + uuri,
+            uuri.toString().equals(
+                "http://www.archive.org/one/index.html"));
+    }
+    
     public final void testTrailingEncodedSpace() throws URIException {
         UURI uuri = UURIFactory.getInstance("http://www.nps-shoes.co.uk%20");
         assertTrue("Doesn't strip trailing encoded space 1 " + uuri,
@@ -76,6 +84,7 @@ public class UURIFactoryTest extends TestCase {
         assertTrue("Doesn't strip trailing encoded space 2 " + uuri,
             uuri.toString().equals("http://www.nps-shoes.co.uk/"));
     }
+    
     public final void testPort0080is80() throws URIException {
         UURI uuri = UURIFactory.getInstance("http://archive.org:0080");
         assertTrue("Doesn't strip leading zeros " + uuri,
