@@ -407,7 +407,7 @@ public class Frontier
 			// SUCCESS: note & log
 			successDisposition(curi);
 		} catch (RuntimeException e) {
-			curi.setFetchStatus(S_INTERNAL_ERROR);
+			curi.setFetchStatus(S_RUNTIME_EXCEPTION);
 			// store exception temporarily for logging
 			curi.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
 			failureDisposition(curi);
@@ -784,7 +784,7 @@ public class Frontier
 			array);
 
 		// if exception, also send to crawlErrors
-		if (curi.getFetchStatus() == S_INTERNAL_ERROR) {
+		if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
 			controller.runtimeErrors.log(
 				Level.WARNING,
 				curi.getUURI().getUriString(),
@@ -824,7 +824,7 @@ public class Frontier
 			case S_DOMAIN_UNRESOLVABLE :
 				// network errors; perhaps some of these 
 				// should be scheduled for retries
-			case S_INTERNAL_ERROR :
+			case S_RUNTIME_EXCEPTION :
 				// something unexpectedly bad happened
 			case S_UNFETCHABLE_URI :
 				// no chance to fetch
