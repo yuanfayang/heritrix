@@ -51,7 +51,7 @@
 	{
 		settingsHandler = theJob.getSettingsHandler();
 		String diskPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_DISK_PATH);
-		diskPath = settingsHandler.getPathRelativeToWorkingDirectory(diskPath)+"/";
+		diskPath = settingsHandler.getPathRelativeToWorkingDirectory(diskPath).getAbsolutePath()+"/";
 
 		// Got a valid crawl order, find it's logs
 		if(mode != null && mode.equalsIgnoreCase("number"))
