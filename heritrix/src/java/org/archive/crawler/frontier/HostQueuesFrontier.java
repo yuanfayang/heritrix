@@ -29,7 +29,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -63,6 +62,7 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
@@ -71,7 +71,6 @@ import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.MemLongFPSet;
-import org.archive.util.PaddingStringBuffer;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
@@ -102,6 +101,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(HostQueuesFrontier.class, 1);
 
+    /** truncate reporting of queues at some large but not unbounded number */
+    private static final int REPORT_MAX_QUEUES = 100;
+    
     private static final Logger logger =
         Logger.getLogger(HostQueuesFrontier.class.getName());
 
@@ -137,6 +139,12 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     /** number of hops of embeds (ERX) to bump to front of host queue */
     public final static String ATTR_PREFERENCE_EMBED_HOPS = "preference-embed-hops";
     protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
+
+    /** queue assignment to force onto CrawlURIs; intended to be overridden */
+    public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
+    protected final static String DEFAULT_FORCE_QUEUE = "";
+    protected final static String 
+        ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.]*"; // word chars, dash, period
 
     /** maximum overall bandwidth usage */
     public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
@@ -273,6 +281,18 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 " host.",
                 DEFAULT_HOST_VALENCE));
         t.setExpertSetting(true);
+        
+        t = addElementToDefinition(
+                new SimpleType(ATTR_FORCE_QUEUE,
+                "EXPERT SETTING. The queue name into which to force URIs. Should " +
+                "be left blank at global level, and ",
+                DEFAULT_FORCE_QUEUE));
+        t.setOverrideable(true);
+        t.setExpertSetting(true);
+        t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
+                Level.WARNING, "This field must contain only alphanumeric " +
+                        "characters plus period, dash, or underscore."));
+        
         t = addElementToDefinition(
             new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use. \n" +
@@ -567,7 +587,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @return a String token representing a queue
      */
     protected String getClassKey(CrawlURI curi) {
-        String queueKey = queueAssignmentPolicy.getClassKey(curi);
+        String queueKey = (String) getUncheckedAttribute(curi,ATTR_FORCE_QUEUE);
+        if("".equals(queueKey)) {
+            // typical case, barring overrides
+            queueKey = queueAssignmentPolicy.getClassKey(curi);
+        }
         return queueKey;
     }
     
@@ -1369,7 +1393,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 throw new InvalidFrontierMarkerException();
             }
 
-            numberOfMatches -= inspectQueue(keyq,"hostQueue("+queueKey+")",list,mark,verbose, numberOfMatches);
+            numberOfMatches -= inspectQueue(keyq,queueKey,list,mark,verbose, numberOfMatches);
             if(numberOfMatches>0){
                 mark.nextQueue();
             }
@@ -1423,23 +1447,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 if(marker.match(caURI)){
                     // Found match.
                     String text;
-                    if(verbose){
-                        // A verbose description
-                        PaddingStringBuffer verb = new PaddingStringBuffer();
-                        verb.append(caURI.getURIString());
-                        verb.append(" ("+queueName+":" + itemsScanned + ")");
-                        verb.newline();
-                        verb.padTo(2);
-                        verb.append(caURI.getPathFromSeed());
-                        if(caURI.getVia() != null
-                                && caURI.getVia() instanceof CandidateURI){
-                            verb.append(" ");
-                            verb.append(((CandidateURI)caURI.getVia()).getURIString());
-                        }
-                        text = verb.toString();
-                    } else {
-                        text = caURI.getURIString();
-                    }
+
+                    // A verbose description
+                    text = "["+queueName+" " + itemsScanned + "] "+caURI.getLine();
+
                     list.add(text);
                     foundMatches++;
                     marker.incrementNextItemNumber();
@@ -1515,39 +1526,54 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         rep.append("  Disregarded:  " + disregardedUriCount() + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.count()+"\n");
-//        rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
-        rep.append("\n All class queues map size: " + allClassQueuesMap.size() + "\n");
-        if(allClassQueuesMap.size()!=0)
-        {
-            List l = new ArrayList(allClassQueuesMap.values());
-            Collections.sort(l,new URIWorkQueueStateComparator());
-            Iterator q = l.iterator();
-            while(q.hasNext())
-            {
-                KeyedQueue kq = (KeyedQueue)q.next();
-                appendKeyedQueue(rep,kq,now);
-            }
-        }
-        rep.append("\n Ready class queues size:   " + readyClassQueues.size() + "\n");
-        for(int i=0 ; i < readyClassQueues.size() ; i++)
+
+        // show up to REPORT_MAX_QUEUES of ready queues
+        int countOfQueues = readyClassQueues.size();
+        rep.append("\n Ready class queues size:   " + countOfQueues + "\n");
+        for(int i=0 ; i < countOfQueues && i < REPORT_MAX_QUEUES  ; i++)
         {
             KeyedQueue kq = (KeyedQueue)readyClassQueues.get(i);
             appendKeyedQueue(rep,kq,now);
         }
+        if(countOfQueues>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(countOfQueues-REPORT_MAX_QUEUES)+" more.\n\n");
+        }
 
-        rep.append("\n Snooze queues size:        " + snoozeQueues.size() + "\n");
-        if(snoozeQueues.size()!=0)
-        {
-            Object[] q = ((TreeSet)snoozeQueues).toArray();
-            for(int i=0 ; i < q.length ; i++)
+        // show up to REPORT_MAX_QUEUES of snoozed queues
+        countOfQueues = snoozeQueues.size();
+        rep.append("\n Snooze queues size:        " + countOfQueues + "\n");
+        int displayCount = 0;
+        Iterator iter = snoozeQueues.iterator();
+        while(iter.hasNext() && displayCount < REPORT_MAX_QUEUES) {
+            Object q = iter.next();
+            if(q instanceof KeyedQueue)
             {
-                if(q[i] instanceof URIWorkQueue)
-                {
-                    KeyedQueue kq = (KeyedQueue)q[i];
-                    appendKeyedQueue(rep,kq,now);
-                }
+                KeyedQueue kq = (KeyedQueue)q;
+                appendKeyedQueue(rep,kq,now);
+                displayCount++;
             }
         }
+        if(countOfQueues>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(countOfQueues-REPORT_MAX_QUEUES)+" more.\n\n");
+        }       
+        
+        // show up to REPORT_MAX_QUEUES of all queues, avoid dups of READY/SNOOZED
+        countOfQueues = allClassQueuesMap.size();
+        rep.append("\n All class queues map size: " + countOfQueues + "\n");
+        displayCount = 0;
+        iter = allClassQueuesMap.values().iterator();
+        while(iter.hasNext() && displayCount < REPORT_MAX_QUEUES) {
+            KeyedQueue kq = (KeyedQueue)iter.next();
+            if(kq.getState()!=URIWorkQueue.READY && kq.getState()!=URIWorkQueue.SNOOZED)
+            {
+                appendKeyedQueue(rep,kq,now);
+                displayCount++;
+            }
+        }
+        if (displayCount < countOfQueues) {
+            rep.append("...and "+(countOfQueues-displayCount)+" more.\n\n");
+        }       
+
         rep.append("\n Inactive queues size:        " + inactiveClassQueues.size() + "\n");
 
 
