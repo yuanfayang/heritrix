@@ -180,7 +180,7 @@
 							Status code
 						</th>
 						<th width="200">
-							Number of occurances
+							Documents
 						</th>
 						<th>
 						</th>
@@ -223,10 +223,11 @@
 						<th width="100">
 							File type
 						</th>
-						<th width="200">
-							Number of occurances
+						<th width="200" colspan="2">
+							Documents
 						</th>
 						<th>
+                            Kilobytes
 						</th>
 					</tr>
 					<%
@@ -254,6 +255,9 @@
 										</tr>
 									</table>
 								</td>
+								<td align="right">
+								    <%=(stats.getBytesPerFileType((String)file.getKey())/1024)%> Kb
+								</td>
 							</tr>
 					<%
 						}
@@ -265,7 +269,10 @@
 					Hosts
 				</th>
 				<th>
-					Number of occurances
+					Documents&nbsp;
+				</th>
+				<th>
+				    Kilobytes
 				</th>
 			</tr>
 			<%
@@ -281,6 +288,9 @@
 						</td>
 						<td>
 							<%=((LongWrapper)host.getValue()).longValue%>
+						</td>
+						<td align="right">
+                            <%=(stats.getBytesPerHost((String)host.getKey())/1024)%> Kb
 						</td>
 					</tr>
 			<%
