@@ -19,26 +19,26 @@ package org.archive.crawler.datamodel;
  *
  */
 public interface FetchStatusCodes {
-	public static int S_UNATTEMPTED = 0;
-	public static int S_DOMAIN_UNRESOLVABLE = -1;
-	public static int S_CONNECT_FAILED = -2;
-	public static int S_CONNECT_LOST = -3;
-	public static int S_TIMEOUT = -4;
-	public static int S_RUNTIME_EXCEPTION = -5;
-	public static int S_PREREQUISITE_FAILURE = -6;
-	public static int S_UNFETCHABLE_URI = -7;
-	public static int S_TOO_MANY_RETRIES = -8;
+	public static final int S_UNATTEMPTED = 0;
+	public static final int S_DOMAIN_UNRESOLVABLE = -1;
+	public static final int S_CONNECT_FAILED = -2;
+	public static final int S_CONNECT_LOST = -3;
+	public static final int S_TIMEOUT = -4;
+	public static final int S_RUNTIME_EXCEPTION = -5;
+	public static final int S_PREREQUISITE_FAILURE = -6;
+	public static final int S_UNFETCHABLE_URI = -7;
+	public static final int S_TOO_MANY_RETRIES = -8;
 
-	public static int S_SERIOUS_ERROR = -3000;
-	public static int S_DEFERRED = -50;
+	public static final int S_SERIOUS_ERROR = -3000;
+	public static final int S_DEFERRED = -50;
 
-	public static int S_ROBOTS_PRECLUDED = -9998;
-	public static int S_DEEMED_CHAFF = -4000;
-	public static int S_TOO_MANY_LINK_HOPS = -4001;
-	public static int S_TOO_MANY_EMBED_HOPS = -4002;
-	public static int S_OUT_OF_SCOPE = -5000;
+	public static final int S_ROBOTS_PRECLUDED = -9998;
+	public static final int S_DEEMED_CHAFF = -4000;
+	public static final int S_TOO_MANY_LINK_HOPS = -4001;
+	public static final int S_TOO_MANY_EMBED_HOPS = -4002;
+	public static final int S_OUT_OF_SCOPE = -5000;
 	
-	public static int S_DNS_SUCCESS = 1;
+	public static final int S_DNS_SUCCESS = 1;
 
 }
 
