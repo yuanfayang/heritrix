@@ -270,7 +270,8 @@ public class UURI extends URI {
         }
         
         // Do some checks if absolute path.
-        if (uriSchemeSpecificPart.startsWith(SLASH)) {
+        if (uriSchemeSpecificPart != null &&
+                uriSchemeSpecificPart.startsWith(SLASH)) {
             if (uriPath != null) {
 
                 // Eliminate '..' if its first thing in the path.  IE does this.
