@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
     <classpathentry kind="src" path="src"/>
+    <classpathentry kind="src" path="oversrc"/>
     <classpathentry kind="lib" path="lib/binaries/commons-logging.jar"/>
     <classpathentry kind="lib" path="lib/binaries/dnsjava.jar"/>
     <classpathentry kind="lib" path="lib/binaries/stataclasses.jar"/>
@@ -8,5 +9,9 @@
     <classpathentry kind="src" path="/httpclient"/>
     <classpathentry kind="src" path="/junit"/>
     <classpathentry kind="src" path="/dnsjava"/>
+    <classpathentry kind="lib" path="lib/binaries/itext.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/javaswf.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/org.mortbay.jetty.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/poi.jar"/>
     <classpathentry kind="output" path="bin"/>
 </classpath>
