@@ -90,6 +90,14 @@ to <literal>stringList</literal>):
        </newObject>]]></programlisting>
         </para>
       </sect3>
+      <sect3 id="cme_frontier">
+      <title><ulink url="https://sourceforge.net/tracker/?func=detail&amp;atid=539099&amp;aid=1119644&amp;group_id=73833">[ 1119644 ] frontier
+      ConcurrentModificationException</ulink></title>
+      <para>Sometimes you'll get a ConcurrentModificationException exception
+      when you go to view or refresh the Frontier's report page. Workaround
+      is to retry. The page should eventually come up.
+      </para>
+      </sect3>
     </sect2>
   </sect1>
 
