@@ -38,12 +38,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.Vector;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.management.InvalidAttributeValueException;
 
 import org.apache.commons.cli.Option;
+import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.admin.auth.User;
@@ -170,6 +172,10 @@ public class Heritrix
      */
     private static String getSelftestURL = null;
 
+    /**
+     * Alerts that have occured
+     */
+    private static Vector alerts = new Vector();
 
     /**
      * Launch program
@@ -743,5 +749,82 @@ public class Heritrix
      */
     public static void performHeritrixShutDown(){
         System.exit(0);
+    }
+    
+    /**
+     * Add a new alert
+     * @param alert the new alert
+     */
+    public static void addAlert(Alert alert){   
+        alerts.add(alert); 
+    }
+    
+    /**
+     * Get all current alerts
+     * @return all current alerts
+     */
+    public static Vector getAlerts(){
+        return alerts;
+    }
+    
+    /**
+     * Get the number of new alerts.
+     * @return the number of new alerts
+     */
+    public static int getNewAlerts(){
+        int n = 0;
+        for( int i = 0 ; i < alerts.size() ; i++ ){
+            Alert tmp = (Alert)alerts.get(i);
+            if(tmp.isNew()){
+                n++;
+            }
+        }
+        return n;
+    }
+    
+    /**
+     * Remove an alert.
+     * @param alertID the ID of the alert
+     */
+    public static void removeAlert(String alertID){
+        for( int i = 0 ; i < alerts.size() ; i++ ){
+            Alert tmp = (Alert)alerts.get(i);
+            if(alertID.equals(tmp.getID())){
+                alerts.remove(i--);
+            }
+        }
+    }
+    
+    /**
+     * Mark a specific alert as seen (i.e. not now)
+     * @param alertID the ID of the alert 
+     */
+    public static void seenAlert(String alertID){
+        for( int i = 0 ; i < alerts.size() ; i++ ){
+            Alert tmp = (Alert)alerts.get(i);
+            if(alertID.equals(tmp.getID())){
+                tmp.setAlertSeen();
+            }
+        }
+    }
+    
+    /**
+     * Returns an alert with the given ID. If no alert is found for given ID
+     * null is returned
+     * @param alertID the ID of the alert 
+     * @return an alert with the given ID
+     */
+    public static Alert getAlert(String alertID){
+        if(alertID == null){
+            // null will never match any alert
+            return null;
+        }
+        for( int i = 0 ; i < alerts.size() ; i++ ){
+            Alert tmp = (Alert)alerts.get(i);
+            if(alertID.equals(tmp.getID())){
+                return tmp;
+            }
+        }
+        return null;
     }
 }

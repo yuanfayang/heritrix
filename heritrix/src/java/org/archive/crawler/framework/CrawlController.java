@@ -37,6 +37,8 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.Heritrix;
+import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.basic.Frontier;
@@ -197,18 +199,33 @@ public class CrawlController extends Thread {
 
         if (checkUserAgentAndFrom(order) == false) {
             String message = "You must set the User-Agent and From HTTP" +
-            " header values to acceptable strings before proceeding. \n" +
+            " header values to acceptable strings. \n" +
             " User-Agent: [software-name](+[info-url])[misc]\n" +
             " From: [email-address]";
+            Heritrix.addAlert(
+                new Alert(
+                    "FatalConfigurationException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                    message));
             throw new FatalConfigurationException(message);
         }
 
         try {
             setupDisk();
         } catch (FatalConfigurationException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "FatalConfigurationException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                    "Unable to setup disk: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup disk: " + e.toString(), e);
         } catch (AttributeNotFoundException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "AttributeNotFoundException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                    "Unable to setup disk: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup disk: " + e.toString(), e);
         }
@@ -216,6 +233,11 @@ public class CrawlController extends Thread {
         try {
             setupLogs();
         } catch (IOException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "IOException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to create log file(s): \n" + e.toString()));
             throw new InitializationException(
                 "Unable to create log file(s): " + e.toString(),
                 e);
@@ -224,6 +246,11 @@ public class CrawlController extends Thread {
         try {
             setupStatTracking();
         } catch (InvalidAttributeValueException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "InvalidAttributeValueException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to setup statistics: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup statistics: " + e.toString(), e);
         }
@@ -233,18 +260,43 @@ public class CrawlController extends Thread {
         try {
             setupCrawlModules();
         } catch (FatalConfigurationException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "FatalConfigurationException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to setup crawl modules: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (AttributeNotFoundException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "AttributeNotFoundException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to setup crawl modules: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (InvalidAttributeValueException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "InvalidAttributeValueException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to setup crawl modules: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (MBeanException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "MBeanException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to setup crawl modules: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (ReflectionException e) {
+            Heritrix.addAlert(
+                new Alert(
+                    "ReflectionException on crawl: " 
+                    + settingsHandler.getSettingsObject(null).getName(),
+                     "Unable to setup crawl modules: \n" + e.toString()));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         }

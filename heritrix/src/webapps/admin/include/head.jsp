@@ -1,4 +1,7 @@
-<%@ page import="org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="org.archive.crawler.Heritrix" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%
 	/**
 	 * An include file that handles the "look" and navigation of a web page. 
@@ -68,10 +71,23 @@
 									<tr>
 										<td colspan="2" nowrap>
 											<%
-												java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM. d, yyyy HH:mm:ss");
+												SimpleDateFormat sdf = new SimpleDateFormat("MMM. d, yyyy HH:mm:ss");
 												sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
 											%>
-											<b>Status of crawler as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a></b>
+											<b>
+												Status of crawler as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a>
+											</b>
+											&nbsp;&nbsp;&nbsp;
+											<b>
+												Alerts: 
+											</b>
+											<% if(Heritrix.getAlerts().size()==0) { %>
+												<a style="color: #000000; text-decoration: none" href="/admin/console/alerts.jsp">no alerts</a>
+											<% } else if(Heritrix.getNewAlerts()>0){ %>
+												<b><a href="/admin/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlerts()%> new)</a></b>
+											<% } else { %>
+												<a style="color: #000000" href="/admin/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlerts()%> new)</a>
+											<% } %>
 										</td>
 									</tr>
 									<tr>

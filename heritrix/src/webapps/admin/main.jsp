@@ -21,7 +21,7 @@
 	<script type="text/javascript">
 		function doTerminateCurrentJob(){
 			if(confirm("Are you sure you wish to terminate the job currently being crawled?")){
-				document.location = '/admin/action.jsp?action=terminate';
+				document.location = '/admin/console/action.jsp?action=terminate';
 			}
 		}	
 	</script>
@@ -93,6 +93,17 @@
 								<%=(Runtime.getRuntime().maxMemory())/1024%> Kb
 							</td>
 						</tr>
+						<tr>
+							<td>
+								<b>
+									Alerts: 
+								</b>
+							</td>
+							<td>
+								<a style="color: #000000" href="/admin/console/alerts.jsp">
+									<%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlerts()%> new)
+								</a>
+							</td>
 					</table>
 				</td>
 			</tr>
@@ -223,11 +234,11 @@
 	<%
 		if(handler.isRunning())
 		{
-			out.println("<a href='/admin/action.jsp?action=stop'>Stop crawling pending jobs</a>");
+			out.println("<a href='/admin/console/action.jsp?action=stop'>Stop crawling pending jobs</a>");
 		}
 		else
 		{
-			out.println("<a href='/admin/action.jsp?action=start'>Start crawling pending jobs</a>");
+			out.println("<a href='/admin/console/action.jsp?action=start'>Start crawling pending jobs</a>");
 		}
 
 		if(handler.isCrawling())
@@ -235,11 +246,11 @@
 			out.println(" | <a href='javascript:doTerminateCurrentJob()'>Terminate current job</a> | ");
 			if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))
 			{
-				out.println("<a href='/admin/action.jsp?action=resume'>Resume current job</a> ");
+				out.println("<a href='/admin/console/action.jsp?action=resume'>Resume current job</a> ");
 			}
 			else
 			{
-				out.println("<a href='/admin/action.jsp?action=pause'>Pause current job</a> ");
+				out.println("<a href='/admin/console/action.jsp?action=pause'>Pause current job</a> ");
 			}
 		}
 	%> | <a href="/admin/main.jsp">Refresh</a>
@@ -251,6 +262,6 @@
 			&nbsp;
 	</td></tr>
 	<tr><td>
-		<a href="/admin/shutdown.jsp">Shut down Heritrix software</a>
+		<a href="/admin/console/shutdown.jsp">Shut down Heritrix software</a>
 	</td></tr></table>
 <%@include file="/include/foot.jsp"%>
