@@ -52,6 +52,11 @@ public interface ARCConstants {
      * Default maximum ARC file size.
      */
     public static final int DEFAULT_MAX_ARC_FILE_SIZE = 100000000;
+    
+    /**
+     * Maximum length for a metadata line.
+     */
+    public static final int MAX_METADATA_LINE_LENGTH = (4 * 1024);
 
     /**
      * ARC file extention.
