@@ -57,8 +57,11 @@ public class SeedList extends AbstractList implements Serializable {
      * Regexp for identifying URIs in seed input data
      */
     static final Pattern DEFAULT_SEED_EXTRACTOR =
-        Pattern.compile("(?i:((([a-z]+)://[a-zA-Z0-9-@]+)|([a-zA-Z0-9-]+" +
-            "\\.[a-zA-Z0-9-]+))(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
+        Pattern.compile("(?i:((([a-z]+)://[a-zA-Z0-9-@]+)|" +
+            "(([a-z]+):[a-zA-Z0-9-@]+)|" +
+            "([a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+))" +
+            "(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
+    
 
     /**
      * Cached name of seed file.
@@ -308,16 +311,17 @@ public class SeedList extends AbstractList implements Serializable {
         private boolean loadNext() {
             try {
                 String read;
-                while ((read = this.reader.readLine()) != null) {
+                nextline: while ((read = this.reader.readLine()) != null) {
                     read = read.trim();
                     if (read.length() == 0 || read.startsWith("#")) {
                         continue;
                     }
+                    
                     Matcher m = this.seedExtractor.matcher(read);
                     while(m.find()) {
                         String candidate = m.group();
-                        // Group #3 has the scheme if any.
-                        if(m.group(3)==null) {
+                        // Group #3 OR #5 has the scheme if any.
+                        if(m.group(3) == null && m.group(5) == null) {
                             // This is a naked hostname without a scheme
                             candidate = "http://" + candidate;
                         }
@@ -326,15 +330,15 @@ public class SeedList extends AbstractList implements Serializable {
                             // next loaded with next seed
                             return true;
                         } catch (URIException e1) {
-                            Object[] array = { null, candidate };
+                            Object[] array = {null, candidate};
                             SeedList.this.controller.uriErrors.log(Level.INFO,
-                                "Reading seeds: " + e1.getMessage(), array );
+                                "Reading seeds: " + e1.getMessage(), array);
                             this.next = null;
                             // keep reading for valid seeds
-                            continue;
+                            continue nextline;
                         }
                     }
-                    Object[] array = { null, read };
+                    Object[] array = {null, read};
                     SeedList.this.controller.uriErrors.log(Level.INFO, "bad seed line",
                         array);
                 }
