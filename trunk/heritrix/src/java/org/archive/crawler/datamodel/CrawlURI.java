@@ -389,6 +389,17 @@ public class CrawlURI extends CandidateURI
 		localizedErrors.add(new LocalizedError(processorName, ex, message));
 	}
 
+    public void addAnnotation(String annotation) {
+        String annotations;
+        if(alist.containsKey(A_ANNOTATIONS)) {
+            annotations = alist.getString(A_ANNOTATIONS);
+        } else {
+            annotations = "";
+        }
+        
+        annotations += ","+annotation;
+        alist.putString(A_ANNOTATIONS,annotations);
+    }
 //	/**
 //	 * @param sourceCuri
 //	 */
