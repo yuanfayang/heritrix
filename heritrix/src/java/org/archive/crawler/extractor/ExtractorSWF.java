@@ -67,10 +67,13 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
         if (!curi.isHttpTransaction()) {
             return;
         }
+        if ((curi.getContentType() == null)) {
+            return;
+        }
 
         String contentType = curi.getContentType();
-        if ((contentType == null) || (!contentType.toLowerCase().
-                startsWith("application/x-shockwave-flash"))) {
+        if ((contentType.toLowerCase().indexOf("x-shockwave-flash") < 0)
+                && (!curi.getURIString().toLowerCase().endsWith(".swf"))) {
             return;
         }
 
