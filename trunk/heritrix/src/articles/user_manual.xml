@@ -844,6 +844,15 @@
             external file of <xref linkend="surt" /> prefixes defining URIs to
             consider in-scope. Seeds may also be considered to imply SURT
             prefixes. </para>
+            <para>When you use this scope, it adds 3 hard-to-find-in-the-UI
+            attributes --<literal>surts-source-file</literal>, 
+            <literal>seeds-as-surt-prefixes</literal>, and
+            <literal>surts-dump-file</literal> -- to the end of the scope
+            section, just after
+            <literal>transitiveFilter</literal> but before
+            <literal>http-headers</literal>.  Use these attributes
+            to configure the SURT scope.
+            </para>
             <para>See also the crawler wiki on 
             <ulink 
             url="http://crawler.archive.org/cgi-bin/wiki.pl?SurtScope">SurtScope</ulink>.</para>
