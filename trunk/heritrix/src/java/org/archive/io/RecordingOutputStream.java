@@ -321,6 +321,7 @@ public class RecordingOutputStream extends OutputStream {
      */
     public void markContentBegin() {
         this.contentBeginMark = this.position;
+        startDigest();
     }
 
     /**

@@ -32,6 +32,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Base32;
 
 /**
  * Formatter for 'crawl.log'. Expects completed CrawlURI as parameter.
@@ -83,6 +84,11 @@ public class UriProcessingFormatter
         if (via instanceof UURI) {
             via = ((UURI)via).toString();
         }
+        
+        Object digest = curi.getContentDigest();
+        if(digest!=null) {
+            digest = Base32.encode((byte[])digest);
+        }
 
         return ArchiveUtils.get17DigitDate(time)
             + " "
@@ -104,6 +110,8 @@ public class UriProcessingFormatter
                     Integer.toString(curi.getThreadNumber()), 3, '0')
         	+ " "
             + duration
+            + " "
+            + checkForNull((String)digest)
             + " "
             + checkForNull(curi.getAnnotations())
             + "\n";

@@ -108,6 +108,7 @@ public class FetchHTTP extends Processor
     public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
     public static final String ATTR_ACCEPT_HEADERS = "accept-headers";
     public static final String ATTR_DEFAULT_ENCODING = "default-encoding";
+    public static final String ATTR_SHA1_CONTENT = "sha1-content";
    
     /**
      * SSL trust level setting attribute name.
@@ -126,6 +127,11 @@ public class FetchHTTP extends Processor
     private static String DEFAULT_DEFAULT_ENCODING =
         HttpConstants.DEFAULT_CONTENT_CHARSET;
 
+    /**
+     * Default whether to perform on-the-fly SHA1 hashing of content-bodies.
+     */
+    private static Boolean DEFAULT_SHA1_CONTENT = new Boolean(true);
+    
    /**
      * Default setting for HttpClient's "strict mode".
      * In strict mode, Cookies are served on a single header.
@@ -197,6 +203,11 @@ public class FetchHTTP extends Processor
             "ISO-8859-1.",
             DEFAULT_DEFAULT_ENCODING));
         e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_SHA1_CONTENT,
+                "Whether or not to perform an on-the-fly SHA1 hash of" +
+                "retrieved content-bodies.",
+                DEFAULT_SHA1_CONTENT));
+            e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
@@ -212,6 +223,13 @@ public class FetchHTTP extends Processor
 
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
+        boolean sha1Content = ((Boolean)getAttributeOrNull(ATTR_SHA1_CONTENT,curi)).booleanValue();
+        if(sha1Content) {
+            rec.getRecordedInput().setSha1Digest();
+        } else {
+            // clear
+            rec.getRecordedInput().setDigest(null);
+        }
         HttpMethod method = curi.isPost()?
             (HttpMethod)new HttpRecorderPostMethod(
                 curi.getUURI().toString(), rec):
@@ -295,6 +313,7 @@ public class FetchHTTP extends Processor
         curi.setFetchStatus(statusCode);
         Header ct = method.getResponseHeader("content-type");
         curi.setContentType((ct == null)? null: ct.getValue());
+        curi.setContentDigest(rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.FINE)) {
             logger.fine((curi.isPost()? "POST": "GET") + " " +
             		curi.getUURI().toString() + " " + statusCode + " " +
