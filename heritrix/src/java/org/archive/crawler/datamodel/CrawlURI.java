@@ -133,14 +133,18 @@ public class CrawlURI extends CandidateURI
     
 
     /**
-     * @param uuri
+     * Create a new instance of CrawlURI from a {@link UURI}.
+     * 
+     * @param uuri the UURI to base this CrawlURI on.
      */
     public CrawlURI(UURI uuri) {
         super(uuri);
     }
 
-        /**
-     * @param caUri
+    /**
+     * Create a new instance of CrawlURI from a {@link CandidateURI}
+     * 
+     * @param caUri the CandidateURI to base this CrawlURI on.
      */
     public CrawlURI(CandidateURI caUri) {
         super(caUri.getUURI());
@@ -151,6 +155,7 @@ public class CrawlURI extends CandidateURI
 
     /**
      * Takes a status code and converts it into a human readable string.
+     * 
      * @param code the status code
      * @return a human readable string declaring what the status code is.
      */
@@ -274,39 +279,74 @@ public class CrawlURI extends CandidateURI
         fetchStatus = newstatus;
     }
 
-    public int getFetchAttempts(){
+    /**
+     * Get the number of attempts at getting the document referenced by this
+     * URI.
+     * 
+     * @return the number of attempts at getting the document referenced by this
+     *         URI.
+     */
+    public int getFetchAttempts() {
         return fetchAttempts;
     }
 
-    public int incrementFetchAttempts(){
+    /**
+     * Increment the number of attempts at getting the document referenced by
+     * this URI.
+     * 
+     * @return the number of attempts at getting the document referenced by this
+     *         URI.
+     */
+    public int incrementFetchAttempts() {
         return fetchAttempts++;
     }
 
+    /**
+     * Get the next processor to process this URI.
+     * 
+     * @return the processor that should process this URI next.
+     */
     public Processor nextProcessor() {
         return nextProcessor;
     }
     
+    /**
+     * Get the processor chain that should be processing this URI after the
+     * current chain is finished with it.
+     * 
+     * @return the next processor chain to process this URI.
+     */
     public ProcessorChain nextProcessorChain() {
         return nextProcessorChain;
     }
     
     /**
-     * @param processor
+     * Set the next processor to process this URI.
+     * 
+     * @param processor the next processor to process this URI.
      */
     public void setNextProcessor(Processor processor) {
         nextProcessor = processor;
     }
     
+    /**
+     * Set the next processor chain to process this URI.
+     * 
+     * @param nextProcessorChain the next processor chain to process this URI.
+     */
     public void setNextProcessorChain(ProcessorChain nextProcessorChain) {
         this.nextProcessorChain = nextProcessorChain;
     }
 
     /**
-     * @return Token (usually the hostname) which indicates
+     * Get the token (usually the hostname) which indicates
      * what "class" this CrawlURI should be grouped with,
      * for the purposes of ensuring only one item of the
      * class is processed at once, all items of the class
      * are held for a politeness period, etc.
+     * 
+     * @return Token (usually the hostname) which indicates
+     * what "class" this CrawlURI should be grouped with.
      */
     public String getClassKey() {
         if(classKey==null) {
@@ -334,6 +374,16 @@ public class CrawlURI extends CandidateURI
     }
 
 
+    /**
+     * Get the attribute list.
+     * <p>
+     * The attribute list is a flexible map of key/value pairs for storing
+     * status of this URI for use by other processors. By convention the
+     * attribute list is keyed by constants found in the
+     * {@link CoreAttributeConstants}interface.
+     * 
+     * @return the attribute list.
+     */
     public AList getAList() {
         return alist;
     }
@@ -348,7 +398,9 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * @param host
+     * Set the CrawlServer which this URI is to be associated with.
+     * 
+     * @param host the CrawlServer which this URI is to be associated with.
      */
     public void setServer(CrawlServer host) {
         this.server = host;
@@ -371,25 +423,42 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
-     * @param stringOrUURI Either a string or a URI representation of a a URI.
+     * Set a prerequisite for this URI.
+     * <p>
+     * A prerequisite is a URI that must be crawled before this URI can be
+     * crawled.
+     * 
+     * @param stringOrUURI Either a string or a URI representation of a URI.
      */
     protected void setPrerequisiteUri(Object stringOrUURI) {
         this.alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
     }
 
+    /**
+     * Get the prerequisite for this URI.
+     * <p>
+     * A prerequisite is a URI that must be crawled before this URI can be
+     * crawled.
+     * 
+     * @return the prerequisite for this URI or null if no prerequisite.
+     */
     public Object getPrerequisiteUri() {
         return this.alist.getObject(A_PREREQUISITE_URI);
     }
     
     /**
-     * @return Returns true if this CrawlURI is a prerequisite.
+     * Returns true if this CrawlURI is a prerequisite.
+     * 
+     * @return true if this CrawlURI is a prerequisite.
      */
     public boolean isPrerequisite() {
         return this.prerequisite;
     }
     
     /**
-     * @param prerequisite True if this CrawlURI is itself a prerequiste url.
+     * Set if this CrawlURI is itself a prerequisite URI.
+     * 
+     * @param prerequisite True if this CrawlURI is itself a prerequiste uri.
      */
     public void setPrerequisite(boolean prerequisite) {
         this.prerequisite = prerequisite;
@@ -403,6 +472,8 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
+     * Get the content type of this URI.
+     * 
      * @return Fetched URIs content type.  May be null.
      */
     public String getContentType() {
@@ -419,24 +490,45 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * @param i
+     * Set the number of the ToeThread responsible for processing this uri.
+     * 
+     * @param i the ToeThread number.
      */
     public void setThreadNumber(int i) {
         threadNumber = i;
     }
 
+    /**
+     * Get the number of the ToeThread responsible for processing this uri.
+     * 
+     * @return the ToeThread number.
+     */
     public int getThreadNumber() {
         return threadNumber;
     }
 
+    /**
+     * Increment the deferral count.
+     *
+     */
     public void incrementDeferrals() {
         deferrals++;
     }
 
+    /**
+     * Get the deferral count.
+     * 
+     * @return the deferral count.
+     */
     public int getDeferrals() {
         return deferrals;
     }
 
+    /**
+     * Remove all attributes set on this uri.
+     * <p>
+     * This methods removes the attribute list.
+     */
     public void stripToMinimal() {
         alist = null;
     }
@@ -474,6 +566,16 @@ public class CrawlURI extends CandidateURI
         return contentSize;
     }
 
+    /**
+     * Set the attribute list.
+     * <p>
+     * The attribute list is a flexible map of key/value pairs for storing
+     * status of this URI for use by other processors. By convention the
+     * attribute list is keyed by constants found in the
+     * {@link CoreAttributeConstants}interface.
+     * 
+     * @param a the attribute list to set.
+     */
     public void setAList(AList a){
         alist = a;
     }
@@ -498,6 +600,11 @@ public class CrawlURI extends CandidateURI
         localizedErrors.add(new LocalizedError(processorName, ex, message));
     }
 
+    /**
+     * Add an annotation.
+     * 
+     * @param annotation the annotation to add.
+     */
     public void addAnnotation(String annotation) {
         String annotations;
         if(alist.containsKey(A_ANNOTATIONS)) {
@@ -510,6 +617,11 @@ public class CrawlURI extends CandidateURI
         alist.putString(A_ANNOTATIONS,annotations);
     }
 
+    /**
+     * Get the annotations set for this uri.
+     * 
+     * @return the annotations set for this uri.
+     */
     public String getAnnotations() {
         if(alist.containsKey(A_ANNOTATIONS)) {
             return alist.getString(A_ANNOTATIONS);
@@ -559,15 +671,28 @@ public class CrawlURI extends CandidateURI
         return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);
     }*/
 
-
+    /**
+     * Get the embeded hop count.
+     * 
+     * @return the embeded hop count.
+     */
     public int getEmbedHopCount() {
         return embedHopCount;
     }
 
+    /**
+     * Get the link hop count.
+     * 
+     * @return the link hop count.
+     */
     public int getLinkHopCount() {
         return linkHopCount;
     }
 
+    /**
+     * Mark this uri as being a seed.
+     *
+     */
     public void markAsSeed() {
         linkHopCount = 0;
         embedHopCount = 0;
@@ -596,13 +721,23 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * @param processor
+     * Set which processor should be the next processor to process this uri
+     * instead of using the default next processor.
+     * 
+     * @param processorChain the processor chain to skip to.
+     * @param processor the processor in the processor chain to skip to.
      */
-    public void skipToProcessor(ProcessorChain processorChain, Processor processor) {
+    public void skipToProcessor(ProcessorChain processorChain,
+            Processor processor) {
         setNextProcessorChain(processorChain);
         setNextProcessor(processor);
     }
 
+    /**
+     * Set which processor chain should be processing this uri next.
+     * 
+     * @param processorChain the processor chain to skip to.
+     */
     public void skipToProcessorChain(ProcessorChain processorChain) {
         setNextProcessorChain(processorChain);
         setNextProcessor(null);
@@ -614,7 +749,6 @@ public class CrawlURI extends CandidateURI
      *
      * @return The length of the content-body (as given by the header or
      * calculated).
-     *
      */
     public long getContentLength() {
         if (this.contentLength < 0) {
@@ -677,6 +811,8 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
+     * Get the http recorder associated with this uri.
+     * 
      * @return Returns the httpRecorder.  May be null.
      */
     public HttpRecorder getHttpRecorder() {
@@ -684,6 +820,8 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
+     * Set the http recorder to be associated with this uri.
+     * 
      * @param httpRecorder The httpRecorder to set.
      */
     public void setHttpRecorder(HttpRecorder httpRecorder) {
@@ -691,6 +829,8 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
+     * Return true if this is a http transaction.
+     * 
      * @return True if this is a http transaction.
      */
     public boolean isHttpTransaction() {
@@ -708,8 +848,7 @@ public class CrawlURI extends CandidateURI
         this.httpRecorder = null; 
         this.fetchStatus = S_UNATTEMPTED;
         this.setPrerequisite(false);
-        if (this.alist != null)
-        {
+        if (this.alist != null) {
             // Let current get method to be GC'd.
             this.alist.remove(A_HTTP_TRANSACTION);
             // Discard any ideas of prereqs -- may no longer be valid.
@@ -842,6 +981,9 @@ public class CrawlURI extends CandidateURI
 	}
 
     /**
+     * Set whether this URI should be fetched by sending a HTTP POST request.
+     * Else a HTTP GET request will be used.
+     * 
      * @param b Set whether this curi is to be POST'd.  Else its to be GET'd.
      */
     public void setPost(boolean b) {
@@ -849,6 +991,8 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
+     * Returns true if this URI should be fetched by sending a HTTP POST request.
+     * 
      * @return Returns is this CrawlURI instance is to be posted.
      */
     public boolean isPost() {
