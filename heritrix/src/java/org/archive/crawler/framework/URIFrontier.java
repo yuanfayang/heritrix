@@ -143,6 +143,7 @@ public interface URIFrontier {
      * @param timeout how long the calling thread is willing to wait for the
      *                next URI to become availible.
      * @return the next URI that should be processed.
+     * @throws InterruptedException
      */
     CrawlURI next(int timeout) throws InterruptedException;
 
