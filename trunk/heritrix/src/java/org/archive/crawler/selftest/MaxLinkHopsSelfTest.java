@@ -29,7 +29,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.basic.Scope;
+import org.archive.crawler.framework.CrawlScope;
 
 
 /**
@@ -72,10 +72,12 @@ public class MaxLinkHopsSelfTest
     public void testMaxLinkHops()
         throws AttributeNotFoundException, MBeanException, ReflectionException
     {
-        Scope scope =
-           (Scope)getCrawlJob().getSettingsHandler().getModule(Scope.ATTR_NAME);
+        CrawlScope scope =
+           (CrawlScope)getCrawlJob().getSettingsHandler()
+           .getModule(CrawlScope.ATTR_NAME);
         int maxLinkHops =
-            ((Integer)scope.getAttribute(Scope.ATTR_MAX_LINK_HOPS)).intValue();
+            ((Integer)scope.getAttribute(CrawlScope.ATTR_MAX_LINK_HOPS))
+            .intValue();
         assertTrue("max-link-hops incorrect", MAXLINKHOPS == maxLinkHops);
 
         // Make sure file we're NOT supposed to find is actually on disk.
