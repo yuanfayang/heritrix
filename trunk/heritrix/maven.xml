@@ -20,7 +20,22 @@
     </goal>
 
     <preGoal name="java:jar-resources"> 
+        <!--Copy the conf dirs content to build dir so it can
+            be run through filters and have the version number interpolated.
+            Project.xml refers to this new dir when its finding
+            stuff to include in the built heritrix jar.
+         -->
         <filter token="VERSION" value="${pom.currentVersion}" /> 
+        <copy todir="${maven.build.dir}/conf/" filtering="true">
+          <fileset dir="./src/conf/" >
+            <exclude name="*.cacerts"/>
+          </fileset>
+        </copy>
+        <copy todir="${maven.build.dir}/conf/" filtering="false">
+          <fileset dir="./src/conf/" >
+            <include name="*.cacerts"/>
+          </fileset>
+        </copy>
     </preGoal> 
 
     <postGoal name="dist:prepare-bin-filesystem">
