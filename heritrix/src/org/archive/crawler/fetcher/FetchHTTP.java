@@ -158,8 +158,6 @@ public class FetchHTTP
 					e,
 					"readFully " +executeRead + ":" + readFullyRead);
 			curi.setFetchStatus(S_CONNECT_FAILED);
-			rec.closeRecorders();
-			get.releaseConnection();
 			return;
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// for weird windows-only ArrayIndex exceptions from native code
@@ -171,9 +169,10 @@ public class FetchHTTP
 					e,
 					"readFully " +executeRead + ":" + readFullyRead);
 			curi.setFetchStatus(S_CONNECT_FAILED);
+			return;
+		} finally  {
 			rec.closeRecorders();
 			get.releaseConnection();
-			return;
 		}
 			
 		Header contentLength = get.getResponseHeader("Content-Length");
@@ -191,8 +190,8 @@ public class FetchHTTP
 		if ( ct!=null ) {
 			curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
 		}
-		rec.closeRecorders();
-		get.releaseConnection();
+		//rec.closeRecorders();
+		//get.releaseConnection();
 	}
 
 	/* (non-Javadoc)
