@@ -113,38 +113,40 @@ public class CrawlController extends Thread {
      * 
      * No exceptions.  Logs summary result of each url processing. 
      */
-    public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
+    public Logger uriProcessing;
     
     /**
-     * This logger contains errors that we cannot manage w/i the scope of a job.
+     * This logger contains unexpected runtime errors.
      * 
-     * Would contain errors trying to set up a job or job general failure.
+     * Would contain errors trying to set up a job or failures inside
+     * processors that they are not prepared to recover from.
      */
-    public Logger runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
+    public Logger runtimeErrors;
     
     /**
-     * This logger is for job-scoped logging.
+     * This logger is for job-scoped logging, specifically errors which
+     * happen and are handled within a particular processor. 
      * 
      * Examples would be socket timeouts, exceptions thrown by extractors, etc.
      */
-    public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
+    public Logger localErrors;
     
     /**
-     * Unknown.
+     * Special log for URI format problems, wherever they may occur.
      */
-    public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
+    public Logger uriErrors;
     
     /**
      * Statistics tracker writes here at regular intervals.
      */
-    public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
+    public Logger progressStats;
     
     /**
      * Crawl replay logger. 
      * 
-     * Currently unimplemented.
+     * Currently captures Frontier/URI transitions but recovery is unimplemented.
      */
-    public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
+    public Logger recover;
     
     /**
      * Logger to hold job summary report.
@@ -152,9 +154,8 @@ public class CrawlController extends Thread {
      * Large state reports made at infrequent intervals (e.g. job ending) go 
      * here.
      */
-    public Logger reports = Logger.getLogger(LOGNAME_REPORTS);
+    public Logger reports;
     
-
     // create a statistic tracking object and have it write to the log every 
     protected StatisticsTracking statistics = null;
 
@@ -497,6 +498,14 @@ public class CrawlController extends Thread {
 
     private void setupLogs() throws IOException {
         String diskPath = disk.getAbsolutePath() + File.separatorChar;
+
+        uriProcessing = Logger.getLogger(LOGNAME_CRAWL+"."+diskPath);
+        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS+"."+diskPath);
+        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS+"."+diskPath);
+        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS+"."+diskPath);
+        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS+"."+diskPath);
+        recover = Logger.getLogger(LOGNAME_RECOVER+"."+diskPath);
+        reports = Logger.getLogger(LOGNAME_REPORTS+"."+diskPath);
 
         FileHandler up = new FileHandler(diskPath + LOGNAME_CRAWL + ".log");
         up.setFormatter(new UriProcessingFormatter());
