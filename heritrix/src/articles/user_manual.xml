@@ -1049,16 +1049,6 @@
         The URL page works in the same manner as the 
         <xref id="filters" /> page.
         </para>
-        <para>A limitation of the <literal>RegexRule</literal> is that
-        it cannot be used in an override; it only has access to the global
-        settings object when it goes to run.  For now, if you need to
-        add a particular regex as an override, you'll need to write a
-        new Canonicalization Rule that does the required substitution and add
-        it to list of canonicalization rules so it shows in the
-        configuration (See <ulink 
-        url="developer_manual.html#writefilter">Writing a Filter</ulink> for
-        how to add a filter.  Canonicalization Rules are much like Filters).
-        </para>
         <para>To watch the canonicalization process, enable
         <literal>org.archive.crawler.url.Canonicalizer</litera>
         logging in <literal>heritrix.properties</literal> (There should
@@ -1935,9 +1925,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>Add URL Canonicalization Rules to the override. 
           It is not possible to remove
           inherited filters or interject new filters among them. New filters
-          will be added after existing filters. Note that the
-          <literal>RegexRule</literal> cannot be used in an override.
-          See <xref id="urlcanon" /></para>
+          will be added after existing filters. 
+          </para>
 
         </listitem>
         <listitem>

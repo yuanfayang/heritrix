@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.url.canonicalize;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.UURIFactory;
+
 import junit.framework.TestCase;
 
 /**
@@ -31,18 +34,21 @@ import junit.framework.TestCase;
  */
 public class StripWWWRuleTest extends TestCase {
 
-    public void testCanonicalize() {
+    public void testCanonicalize() throws URIException {
         String url = "http://WWW.aRchive.Org/index.html";
         String expectedResult = "http://aRchive.Org/index.html";
-        String result = (new StripWWWRule("test")).canonicalize(url);
+        String result = (new StripWWWRule("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://wWWW.aRchive.Org/index.html";
         expectedResult = "http://wWWW.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).canonicalize(url);
+        result = (new StripWWWRule("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://ww.aRchive.Org/index.html";
         expectedResult = "http://ww.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).canonicalize(url);
+        result = (new StripWWWRule("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
     }
 }

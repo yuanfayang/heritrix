@@ -22,21 +22,34 @@
  */
 package org.archive.crawler.url;
 
+
 /**
- * A rule to apply canonicalizing an URL.
+ * A rule to apply canonicalizing a url.
  * @author stack
  * @version $Date$, $Revision$
  */
 public interface CanonicalizationRule {
     /**
      * Apply this canonicalization rule.
-     * @param url URL to apply rule to.
+     * 
+     * @param url Url string we apply this rule to.
+     * @param context An object that will provide context for the settings
+     * system.  The UURI of the URL we're canonicalizing is an example of
+     * an object that provides context.
      * @return Result of applying this rule to passed <code>url</code>.
      */
-    public String canonicalize(String url);
+    public String canonicalize(String url, Object context);
 
     /**
      * @return Name of this rule.
      */
     public String getName();
+    
+    /**
+     * @param context An object that will provide context for the settings
+     * system.  The UURI of the URL we're canonicalizing is an example of
+     * an object that provides context.
+     * @return True if this rule is enabled and to be run.
+     */
+    public boolean isEnabled(Object context);
 }

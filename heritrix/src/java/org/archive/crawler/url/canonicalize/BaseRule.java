@@ -22,9 +22,13 @@
  */
 package org.archive.crawler.url.canonicalize;
 
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.url.CanonicalizationRule;
 
 /**
@@ -40,6 +44,10 @@ import org.archive.crawler.url.CanonicalizationRule;
 public abstract class BaseRule
 extends ModuleType
 implements CanonicalizationRule {
+    private static Logger logger =
+        Logger.getLogger(BaseRule.class.getName());
+    public static final String ATTR_ENABLED = "enabled";
+    
     /**
      * Constructor.
      * @param name Name of this canonicalization rule.
@@ -48,6 +56,23 @@ implements CanonicalizationRule {
     public BaseRule(String name, String description) {
         super(name, description);
         setOverrideable(true);
+        Object [] possibleValues = {Boolean.TRUE, Boolean.FALSE};
+        addElementToDefinition(new SimpleType(ATTR_ENABLED,
+            "Rule is enabled.", new Boolean(true), possibleValues));
+    }
+    
+    public boolean isEnabled(Object context) {
+        boolean result = true;
+        try {
+            Boolean b = (Boolean)getAttribute(context, ATTR_ENABLED);
+            if (b != null) {
+                result = b.booleanValue();
+            }
+        } catch (AttributeNotFoundException e) {
+            logger.warning("Failed get of 'enabled' attribute.");
+        }
+
+        return result;
     }
     
     /**

@@ -59,42 +59,49 @@ public class Canonicalizer {
      */
     public static String canonicalize(UURI uuri, CrawlOrder order) {
         MapType rules = null;
-        String uuriStr = uuri.toString();
+        String canonical = uuri.toString();
         try {
             rules = (MapType)order.getAttribute(uuri, CrawlOrder.ATTR_RULES);
-            uuriStr = Canonicalizer.canonicalize(uuriStr,
-                rules.iterator(uuri));
+            canonical = Canonicalizer.canonicalize(uuri, rules.iterator(uuri));
         } catch (AttributeNotFoundException e) {
-            logger.warning("Failed canonicalization of " + uuriStr + ": " + e);
+            logger.warning("Failed canonicalization of " + canonical +
+                ": " + e);
         }
-        return uuriStr;
+        return canonical;
     }
 
     /**
-     * Run the passed url through the list of rules.
-     * @param url String to canonicalize.
+     * Run the passed uuri through the list of rules.
+     * @param uuri Url to canonicalize.
      * @param rules Iterator of canonicalization rules to apply (Get one
      * of these on the url-canonicalizer-rules element in order files or
      * create a list externally).  Rules must implement the Rule interface.
      * @return Canonicalized URL.
      */
-    public static String canonicalize(String url, Iterator rules) {
-        String before = url;
+    public static String canonicalize(UURI uuri, Iterator rules) {
+        String before = uuri.toString();
         String beforeRule = null;
+        String canonical = before;
         for (; rules.hasNext();) {
             CanonicalizationRule r = (CanonicalizationRule)rules.next();
             if (logger.isLoggable(Level.FINE)) {
-                beforeRule = url;
+                beforeRule = canonical;
             }
-            url = r.canonicalize(url);
+            if (!r.isEnabled(uuri)) {
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("Rule " + r.getName() + " is disabled.");
+                }
+                continue;
+            }
+            canonical = r.canonicalize(canonical, uuri);
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Rule " + r.getName() + " " + before + " => " +
-                     url);
+                        canonical);
             }
         }
         if (logger.isLoggable(Level.INFO)) {
-            logger.info(before + " => " + url);
+            logger.info(before + " => " + canonical);
         }
-        return url;
+        return canonical;
     }
 }

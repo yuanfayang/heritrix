@@ -27,6 +27,8 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.url.canonicalize.FixupQueryStr;
 import org.archive.crawler.url.canonicalize.LowercaseRule;
 import org.archive.crawler.url.canonicalize.StripSessionIDs;
@@ -52,18 +54,21 @@ public class CanonicalizerTest extends TestCase {
         this.rules.add(new FixupQueryStr("querystr"));
     }
     
-    public void testCanonicalize() {
+    public void testCanonicalize() throws URIException {
         final String scheme = "http://";
         final String nonQueryStr = "archive.org/index.html";
         final String result = scheme + nonQueryStr;
         assertTrue("Mangled original", result.equals(
-            Canonicalizer.canonicalize(result, this.rules.iterator())));
+            Canonicalizer.canonicalize(UURIFactory.getInstance(result),
+                this.rules.iterator())));
         String tmp = scheme + "www." + nonQueryStr;
         assertTrue("Mangled www", result.equals(
-            Canonicalizer.canonicalize(tmp, this.rules.iterator())));
+            Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
+                this.rules.iterator())));
         tmp = scheme + "www." + nonQueryStr +
             "?jsessionid=01234567890123456789012345678901";
         assertTrue("Mangled sessionid", result.equals(
-            Canonicalizer.canonicalize(tmp, this.rules.iterator())));
+            Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
+                this.rules.iterator())));
     }
 }

@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.url.canonicalize;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.UURIFactory;
+
 import junit.framework.TestCase;
 
 /**
@@ -30,33 +33,38 @@ import junit.framework.TestCase;
  * @version $Date$, $Revision$
  */
 public class StripSessionIDsTest extends TestCase {
-    public void testCanonicalize() {
+    public void testCanonicalize() throws URIException {
         final String BASE = "http://www.archive.org/index.html";
         String str32id = "0123456789abcdefghijklemopqrstuv";
         String url = BASE + "?jsessionid=" + str32id;
         String expectedResult = BASE + "?";
-        String result = (new StripSessionIDs("test")).canonicalize(url);
+        String result = (new StripSessionIDs("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         // Test that we don't strip if not 32 chars only.
         url = BASE + "?jsessionid=" + str32id + '0';
         expectedResult = url;
-        result = (new StripSessionIDs("test")).canonicalize(url);
+        result = (new StripSessionIDs("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         // Test what happens when followed by another key/value pair.
         url = BASE + "?jsessionid=" + str32id + "&x=y";
         expectedResult = BASE + "?&x=y";
-        result = (new StripSessionIDs("test")).canonicalize(url);
+        result = (new StripSessionIDs("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         // Test aspsession.
         url = BASE + "?aspsessionidABCDEFGH=" + "ABCDEFGHIJKLMNOPQRSTUVWX"
             + "&x=y";
         expectedResult = BASE + "?&x=y";
-        result = (new StripSessionIDs("test")).canonicalize(url);
+        result = (new StripSessionIDs("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         // Test archive phpsession.
         url = BASE + "?phpsessid=" + str32id + "&x=y";
         expectedResult = BASE + "?&x=y";
-        result = (new StripSessionIDs("test")).canonicalize(url);
+        result = (new StripSessionIDs("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
     }
 }
