@@ -60,13 +60,13 @@
                 ret.append("')\">Info</a></td>\n");
                 ret.append("</tr>");
             } else {
-	            ret.append("<td>" + att.getName() + "</td><td>&nbsp;"+att.getType()+"</td>");
-	            ret.append("<td><a href=\"javascript:doRemove('"+att.getName()+"')\">Remove</a></td>");
-	            ret.append("<td><a href=\"javascript:alert('");
-	            ret.append(TextUtils.escapeForJavascript(att.getDescription()));
-	            ret.append("')\">Info</a></td>\n");
-	            ret.append("</tr>");
-	        }
+                ret.append("<td>" + att.getName() + "</td><td>&nbsp;"+att.getType()+"</td>");
+                ret.append("<td><a href=\"javascript:doRemove('"+att.getName()+"')\">Remove</a></td>");
+                ret.append("<td><a href=\"javascript:alert('");
+                ret.append(TextUtils.escapeForJavascript(att.getDescription()));
+                ret.append("')\">Info</a></td>\n");
+                ret.append("</tr>");
+            }
             alt = !alt;
         }
         

@@ -25,19 +25,19 @@
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
 
     // Should we update with changes.
-	if(request.getParameter("update") != null &&
+    if(request.getParameter("update") != null &&
             request.getParameter("update").equals("true")) {
-		// Update values with new ones in the request
-		errorHandler.clearErrors();
-		JobConfigureUtils.writeNewOrderFile(crawlOrder, null, request, expert);
-		orderfile.setDescription(request.getParameter("meta/description"));
-		orderfile.setOperator(request.getParameter("meta/operator"));
-		orderfile.setOrganization(request.getParameter("meta/organization"));
-		orderfile.setAudience(request.getParameter("meta/audience"));
-		settingsHandler.writeSettingsObject(orderfile);
+        // Update values with new ones in the request
+        errorHandler.clearErrors();
+        JobConfigureUtils.writeNewOrderFile(crawlOrder, null, request, expert);
+        orderfile.setDescription(request.getParameter("meta/description"));
+        orderfile.setOperator(request.getParameter("meta/operator"));
+        orderfile.setOrganization(request.getParameter("meta/organization"));
+        orderfile.setAudience(request.getParameter("meta/audience"));
+        settingsHandler.writeSettingsObject(orderfile);
         BufferedWriter writer;
         try {
-			String seedfile = (String)((ComplexType)settingsHandler.getOrder().
+            String seedfile = (String)((ComplexType)settingsHandler.getOrder().
                 getAttribute("scope")).getAttribute("seedsfile");
             writer = new BufferedWriter(new FileWriter(settingsHandler.
                 getPathRelativeToWorkingDirectory(seedfile)));
@@ -55,26 +55,26 @@
     // Check for actions.
     String action = request.getParameter("action");
     if(action != null) {
-		if(action.equals("done")) {
-			if(theJob.isNew()){			
-				handler.addJob(theJob);
-				response.sendRedirect("/admin/jobs.jsp?message=Job created");
-			}else{
-				if(theJob.isRunning()) {
-					handler.kickUpdate();
-				}
-				if(theJob.isProfile()) {
-					response.sendRedirect(
+        if(action.equals("done")) {
+            if(theJob.isNew()){            
+                handler.addJob(theJob);
+                response.sendRedirect("/admin/jobs.jsp?message=Job created");
+            }else{
+                if(theJob.isRunning()) {
+                    handler.kickUpdate();
+                }
+                if(theJob.isProfile()) {
+                    response.sendRedirect(
                         "/admin/profiles.jsp?message=Profile modified");
-				}else {
-					response.sendRedirect(
+                }else {
+                    response.sendRedirect(
                         "/admin/jobs.jsp?message=Job modified");
-				}
-			}
+                }
+            }
             return;
-		} else if(action.equals("goto")) {
+        } else if(action.equals("goto")) {
             // Goto another page of the job/profile settings
-			response.sendRedirect(request.getParameter("item"));
+            response.sendRedirect(request.getParameter("item"));
             return;
         } else if (action.equals("addMap")) {
             // Adding to a simple map
@@ -96,70 +96,70 @@
             map.removeElement(orderfile,key);
             response.sendRedirect("configure.jsp?job=" + theJob.getUID());
             return;
-		} else if(action.equals("updateexpert")) {
-		    if(request.getParameter("expert") != null) {
-		        if(request.getParameter("expert").equals("true")) {
-		            expert = true;
-		        } else {
-		            expert = false;
-		        }
-		        // Save to cookie.
-		        Cookie operatorCookie = new Cookie("expert", 
+        } else if(action.equals("updateexpert")) {
+            if(request.getParameter("expert") != null) {
+                if(request.getParameter("expert").equals("true")) {
+                    expert = true;
+                } else {
+                    expert = false;
+                }
+                // Save to cookie.
+                Cookie operatorCookie = new Cookie("expert", 
                     Boolean.toString(expert));
-		        operatorCookie.setMaxAge(60*60*24*365); //One year
-		        response.addCookie(operatorCookie);
-		    }
-		}
-	}	
+                operatorCookie.setMaxAge(60*60*24*365); //One year
+                response.addCookie(operatorCookie);
+            }
+        }
+    }    
 
-	// Get the HTML code to display the settigns.
-	StringBuffer listsBuffer = new StringBuffer();
-	String inputForm = printMBean(crawlOrder, null, "", listsBuffer, expert,
+    // Get the HTML code to display the settigns.
+    StringBuffer listsBuffer = new StringBuffer();
+    String inputForm = printMBean(crawlOrder, null, "", listsBuffer, expert,
         errorHandler);
-	// The listsBuffer will have a trailing comma if not empty. Strip it off.
-	String lists = listsBuffer.toString().substring(0, 
+    // The listsBuffer will have a trailing comma if not empty. Strip it off.
+    String lists = listsBuffer.toString().substring(0, 
         (listsBuffer.toString().length() > 0? 
             listsBuffer.toString().length() - 1: 0));
 
-	// Settings for the page header
-	String title = "Configure settings";
-	int tab = theJob.isProfile()?2:1;
-	int jobtab = 2;
+    // Settings for the page header
+    String title = "Configure settings";
+    int tab = theJob.isProfile()?2:1;
+    int jobtab = 2;
 %>
 
 <%@include file="/include/head.jsp"%>
 
-	<script type="text/javascript">
-		function doSubmit(){
-			// Before the form can be submitted we must
-			// ensure that ALL elements in ALL lists
-			// are selected. Otherwise they will be lost.
-			lists = new Array(<%=lists%>);
-			for(i=0 ; i<lists.length ; i++){
-				theList = document.getElementById(lists[i]);
-				for(j=0 ; j < theList.length ; j++){
-					theList.options[j].selected = true;
-				}
-			}
-			document.frmConfig.submit();
-		}
-		
-		function doGoto(where){
+    <script type="text/javascript">
+        function doSubmit(){
+            // Before the form can be submitted we must
+            // ensure that ALL elements in ALL lists
+            // are selected. Otherwise they will be lost.
+            lists = new Array(<%=lists%>);
+            for(i=0 ; i<lists.length ; i++){
+                theList = document.getElementById(lists[i]);
+                for(j=0 ; j < theList.length ; j++){
+                    theList.options[j].selected = true;
+                }
+            }
+            document.frmConfig.submit();
+        }
+        
+        function doGoto(where){
             document.frmConfig.action.value="goto";
             document.frmConfig.item.value = where;
             doSubmit();
-		}
-		
-		function doPop(text){
-			alert(text);
-		}
-		
-		function setExpert(val){
+        }
+        
+        function doPop(text){
+            alert(text);
+        }
+        
+        function setExpert(val){
             document.frmConfig.expert.value = val;
             document.frmConfig.action.value="updateexpert";
             doSubmit();
-		}
-		
+        }
+        
         function setUpdate(){
             document.frmConfig.update.value = "true";
         }
@@ -167,102 +167,102 @@
         function setEdited(name){
             setUpdate();
         }
-	</script>
+    </script>
 
-	<p>
-		<%@include file="/include/jobnav.jsp"%>
-	<p>
+    <p>
+        <%@include file="/include/jobnav.jsp"%>
+    <p>
         <% if(expert){ %>
             <a href="javascript:setExpert('false')">Hide expert settings</a>
         <% } else { %>
             <a href="javascript:setExpert('true')">View expert settings</a>
         <% } %>
-	<p>
-	
-	<form name="frmConfig" method="post" action="configure.jsp">
-		<input type="hidden" name="update" value="false">		
-		<input type="hidden" name="action" value="done">
-		<input type="hidden" name="item" value="">
-		<input type="hidden" name="expert" value="<%=expert%>">
-		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
-	
-		<p>			
-		<table>
-			<tr>
-				<td colspan="3">
-					<b>Meta data</b>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Description:
-				</td>
-				<td></td>
-				<td>
-					<input name="meta/description" 
+    <p>
+    
+    <form name="frmConfig" method="post" action="configure.jsp">
+        <input type="hidden" name="update" value="false">        
+        <input type="hidden" name="action" value="done">
+        <input type="hidden" name="item" value="">
+        <input type="hidden" name="expert" value="<%=expert%>">
+        <input type="hidden" name="job" value="<%=theJob.getUID()%>">
+    
+        <p>            
+        <table>
+            <tr>
+                <td colspan="3">
+                    <b>Meta data</b>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Description:
+                </td>
+                <td></td>
+                <td>
+                    <input name="meta/description" 
                         value="<%=orderfile.getDescription()%>"
                         style="width: 440px">
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Crawl Operator:
-				</td>
-				<td></td>
-				<td>
-					<input name="meta/operator"
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Crawl Operator:
+                </td>
+                <td></td>
+                <td>
+                    <input name="meta/operator"
                         value="<%=orderfile.getOperator()%>" 
                         style="width: 440px">
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Crawl Organization:
-				</td>
-				<td></td>
-				<td>
-					<input name="meta/organization" 
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Crawl Organization:
+                </td>
+                <td></td>
+                <td>
+                    <input name="meta/organization" 
                         value="<%=orderfile.getOrganization()%>" 
                         style="width: 440px">
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Crawl Job Recipient:
-				</td>
-				<td></td>
-				<td>
-					<input name="meta/audience" 
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Crawl Job Recipient:
+                </td>
+                <td></td>
+                <td>
+                    <input name="meta/audience" 
                         value="<%=orderfile.getAudience()%>" 
                         style="width: 440px">
-				</td>
-			</tr>
-			<%=inputForm%>
-			<tr>
-				<td colspan="3">
-					<b>Seeds</b>
-				</td>
-			</tr>
-			<tr>
-				<td valign="top">
-					Seeds:
-				</td>
+                </td>
+            </tr>
+            <%=inputForm%>
+            <tr>
+                <td colspan="3">
+                    <b>Seeds</b>
+                </td>
+            </tr>
+            <tr>
+                <td valign="top">
+                    Seeds:
+                </td>
                 <td></td>
-				<td>
-					<textarea name="seeds" style="width: 440px" 
+                <td>
+                    <textarea name="seeds" style="width: 440px" 
                         rows="8" onChange="setUpdate()"><%
-						BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
-						String sout = seeds.readLine();
-						while(sout!=null) {
-							out.println(sout);
-							sout = seeds.readLine();
-						}
-					%></textarea>
-				</td>
-			</tr>
-		</table>
-	</form>
-	<p>
-		<%@include file="/include/jobnav.jsp"%>
-		
+                        BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+                        String sout = seeds.readLine();
+                        while(sout!=null) {
+                            out.println(sout);
+                            sout = seeds.readLine();
+                        }
+                    %></textarea>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <p>
+        <%@include file="/include/jobnav.jsp"%>
+        
 <%@include file="/include/foot.jsp"%>

@@ -3,7 +3,7 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-	<display-name>Admin</display-name>
+    <display-name>Admin</display-name>
     <description>Heritrix Administration Console</description>
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
