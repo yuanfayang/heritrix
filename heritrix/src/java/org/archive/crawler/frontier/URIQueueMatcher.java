@@ -59,7 +59,7 @@ public class URIQueueMatcher implements Predicate {
      *                <code>finish</code> method for final disposition.
      * @param frontier The parent frontier. This can be null if delete is false.
      *                Must be valid if delete is true.
-     * @see Frontier#finished(CrawlURI)
+     * @see Frontier#deleted(CrawlURI)
      */
     public URIQueueMatcher(String pattern, boolean delete, URIFrontier frontier){
         p = Pattern.compile(pattern);
@@ -78,7 +78,7 @@ public class URIQueueMatcher implements Predicate {
                 if(delete && frontier != null){
                     CrawlURI tmp = new CrawlURI(CaURI,0);
                     tmp.setFetchStatus(FetchStatusCodes.S_DELETED_BY_USER);
-                    frontier.finished(tmp);
+                    frontier.deleted(tmp);
                 }
                 return true;
             }
