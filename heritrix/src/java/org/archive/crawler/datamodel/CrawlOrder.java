@@ -38,7 +38,12 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 
-/** Read and manipulate configuration (order) file.
+/** 
+ * Represents the 'root' of the settings hierarchy. Contains those settings that
+ * do not belong to any specific module, but rather relate to the crawl as a 
+ * whole (much of this is used by the CrawlController directly or indirectly).
+ * 
+ * @see org.archive.crawler.datamodel.settings.CrawlerModule
  */
 public class CrawlOrder extends CrawlerModule {
     private static Logger logger =
@@ -56,9 +61,6 @@ public class CrawlOrder extends CrawlerModule {
     public static final String ATTR_PROCESSORS = "processors";
     public static final String ATTR_LOGGERS = "loggers";
 
-    public static final String XP_FRONTIER = "//behavior/frontier";
-    public static final String XP_CRAWL_SCOPE = "//scope";
-
     String caseFlattenedUserAgent;
 
     private MapType httpHeaders;
@@ -67,7 +69,7 @@ public class CrawlOrder extends CrawlerModule {
     
     private CrawlController controller;
 
-    /** Construct a CrawlOrder instance given a Document.
+    /** Construct a CrawlOrder. 
      */
     public CrawlOrder() {
         super("crawl-order", "Heritrix crawl order");
@@ -150,6 +152,10 @@ public class CrawlOrder extends CrawlerModule {
         return res;
     }
 
+    /**
+     * Returns the set number of maximum toe threads.
+     * @return Number of maximum toe threads
+     */
     public int getMaxToes() {
         Integer res = null;
         try {
@@ -159,10 +165,6 @@ public class CrawlOrder extends CrawlerModule {
         }
         return res.intValue();
     }
-
-//    public String getCrawlOrderFilename() {
-//        return crawlOrderFilename;
-//    }
 
     /**
      * This method constructs a new RobotsHonoringPolicy object from the orders file.
@@ -203,10 +205,20 @@ public class CrawlOrder extends CrawlerModule {
         this.controller = controller;
     }
     
+    /**
+     * Returns the Map of the StatisticsTracking modules that are included in the 
+     * configuration that the current instance of this class is representing.
+     * @return Map of the StatisticsTracking modules
+     */
     public MapType getLoggers() {
         return loggers;
     }
     
+    /**
+     * Returns the Map of the URI Processor series as defined by the configuration
+     * that the current instance of this class is representing.
+     * @return Map of the URI Processor series.
+     */
     public MapType getProcessors() {
         return processors;
     }
