@@ -229,6 +229,23 @@ public class Frontier
         pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
+        //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
+
+        // alternative: pure disk-based set
+//        alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
+
+        // alternative: disk-based set with in-memory cache supporting quick positive contains() checks
+//        alreadyIncluded = new FPUURISet(
+//              new CachingDiskLongFPSet(
+//                      c.getScratchDisk(),
+//                      "alreadyIncluded",
+//                      23, // 8 million slots on disk (for start)
+//                      0.75f,
+//                      20, // 1 million slots in cache (always)
+//                      0.75f));
+//        wakerThread = new Thread(new Waker());
+//        wakerThread.setName("Frontier.Waker");
+//        wakerThread.start();
         
         this.controller = c;
         controller.addCrawlStatusListener(this);
@@ -264,14 +281,15 @@ public class Frontier
 
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void batchSchedule(CandidateURI caUri) {
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    /* (non-Javadoc)
+    /** 
+     * 
      * @see org.archive.crawler.framework.URIFrontier#batchFlush()
      */
     public synchronized void batchFlush() {
@@ -784,6 +802,7 @@ public class Frontier
             || kq.getStoreState() == URIStoreable.READY 
             || kq.getStoreState() == URIStoreable.SNOOZED 
             || kq.getStoreState() == URIStoreable.IN_PROCESS 
+            || kq.getStoreState() == URIStoreable.FROZEN 
             : "unexpected keyedqueue state";
         if((kq.getInProcessItem()!=null)
                 || kq.getStoreState()==URIStoreable.SNOOZED
@@ -806,6 +825,10 @@ public class Frontier
      */
     private void updateQueue(KeyedQueue kq) {
         Object initialState = kq.getStoreState();
+        if(kq.getStoreState()==URIStoreable.FROZEN) {
+            // only explicit operator action my unfreeze a queue
+            return;
+        }
         if (kq.isEmpty() && initialState!=URIStoreable.SNOOZED) {
             // empty & ready; discard
             discardQueue(kq);
@@ -821,6 +844,10 @@ public class Frontier
     }
 
     private void readyQueue(KeyedQueue kq) {
+        if(kq.getStoreState()==URIStoreable.FROZEN) {
+            // only explicit operator action my unfreeze a queue
+            return;
+        }
         if(kq.isEmpty()) {
             discardQueue(kq);
             return;
@@ -829,7 +856,29 @@ public class Frontier
         kq.setStoreState(URIStoreable.READY);
         notify(); // wake a waiting thread
     }
+    
+    // stop this queue from being actively scheduled
+    // essentially: a reaction to a serious connectivity
+    // problem or operator request
+    private void freezeQueue(KeyedQueue kq) {
+        if(kq.getStoreState()== URIStoreable.SNOOZED) {
+            snoozeQueues.remove(kq);
+        } else if (kq.getStoreState() == URIStoreable.READY ) {
+            readyClassQueues.remove(kq);
+        }
+        kq.setStoreState(URIStoreable.FROZEN);
+    }
+    
+    // stop this queue from being actively scheduled
+    // essentially: a reaction to a serious connectivity
+    // problem or operator request
+    private void unfreezeQueue(KeyedQueue kq) {
+        assert kq.getStoreState() == URIStoreable.FROZEN : "can't unfreeze unfrozen queue";
+        kq.setStoreState(URIStoreable.READY); // temp to fo
+        readyQueue(kq);
+    }
 
+    
     /**
      * @param curi
      */
@@ -1056,8 +1105,8 @@ public class Frontier
         switch (curi.getFetchStatus()) {
             case S_CONNECT_FAILED:
             case S_CONNECT_LOST:
-            // case S_TIMEOUT: may not deserve retry
                 // these are all worth a retry
+                // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
                 return true;
             default:
                 return false;
@@ -1113,6 +1162,10 @@ public class Frontier
      */
     protected void snoozeQueueUntil(KeyedQueue kq, long wake) {
         //assert kq.getStoreState() != URIStoreable.IN_PROCESS : "snoozing queue should have been READY, EMPTY, or SNOOZED";
+        if(kq.getStoreState()==URIStoreable.FROZEN) {
+            // only explicit operator action my unfreeze a queue
+            return;
+        }
         if(kq.getStoreState()== URIStoreable.SNOOZED) {
             // must be removed before time may be mutated
             snoozeQueues.remove(kq);
@@ -1216,7 +1269,7 @@ public class Frontier
         return totalProcessedBytes;
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
      */
     public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
@@ -1233,8 +1286,8 @@ public class Frontier
         return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#getURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
+    /** (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
      */
     public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
         if(marker instanceof FrontierMarker == false){
@@ -1369,7 +1422,10 @@ public class Frontier
                     } else if(kq.getStoreState() == URIStoreable.SNOOZED){
                         snoozeQueues.remove(kq);
                     }
-                    kq.setStoreState(URIStoreable.EMPTY);
+                    if (kq.getStoreState()!=URIStoreable.FROZEN) {
+                        // leave frozen queues FROZEN rather than EMPTY
+                        kq.setStoreState(URIStoreable.EMPTY);
+                    }
                 }
             }
         }
@@ -1378,8 +1434,11 @@ public class Frontier
         return numberOfDeletes;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#report()
+    /**
+     * This method compiles a human readable report on the status of the frontier
+     * at the time of the call.
+     *
+     * @return A report on the current status of the frontier.
      */
     public synchronized String report()
     {
