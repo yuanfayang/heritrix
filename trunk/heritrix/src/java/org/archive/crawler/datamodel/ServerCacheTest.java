@@ -1,4 +1,4 @@
-/* MapServerCacheTest
+/* ServerCacheTest
 *
 * Created on August 4, 2004
 *
@@ -27,15 +27,13 @@ import junit.framework.TestCase;
 import org.apache.commons.httpclient.URIException;
 
 /**
- * Test the MapServerCache
+ * Test the BigMapServerCache
  * 
  * @author gojomo
  */
-public class MapServerCacheTest extends TestCase {
-    public void testHolds()
-    throws ClassNotFoundException, InstantiationException,
-            IllegalAccessException {
-        ServerCache servers = ServerCacheFactory.getServerCache(null);
+public class ServerCacheTest extends TestCase {
+    public void testHolds() throws Exception {
+        ServerCache servers = new ServerCache(null);
         String serverKey = "www.example.com:9090";
         String hostKey = "www.example.com";
         servers.getServerFor(serverKey);
@@ -45,9 +43,8 @@ public class MapServerCacheTest extends TestCase {
     }
     
     public void testCrawlURIKeys()
-    throws ClassNotFoundException, InstantiationException,
-            IllegalAccessException, URIException {
-        ServerCache servers = ServerCacheFactory.getServerCache(null);
+    throws Exception {
+        ServerCache servers = new ServerCache(null);
         testHostServer(servers, "http://www.example.com");
         testHostServer(servers, "http://www.example.com:9090");
         testHostServer(servers, "dns://www.example.com:9090");
