@@ -244,6 +244,7 @@ public class Heritrix implements HeritrixMBean {
                 if (Heritrix.out != null) {
                     Heritrix.out.close();
                 }
+                System.out.println("Heritrix version: " + getVersion());
             } else {
                 if (Heritrix.out != null) {
                     Heritrix.out.flush();
