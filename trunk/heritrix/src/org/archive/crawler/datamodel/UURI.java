@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.archive.util.TextUtils;
 
@@ -311,8 +310,7 @@ public class UURI implements Serializable {
 	 * @return
 	 */
 	private static boolean isUnusableScheme(String string) {
-		Matcher m = UNUSABLE_SCHEMES.matcher(string);
-		if (m.matches()) {
+		if (TextUtils.matches(UNUSABLE_SCHEMES, string)) {
 			return true;
 		}
 		return false;

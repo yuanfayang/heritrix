@@ -104,7 +104,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param embeds
 	 */
 	private void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
-		Matcher attr = EACH_ATTRIBUTE_EXTRACTOR.matcher(cs);
+		Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 		
 		// Just in case it's an OBJECT tag
 		String codebase = null;
@@ -155,7 +155,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				}
 			} else if (attr.start(9)>-1) {
 				// VALUE
-				if(LIKELY_URI_PATH.matcher(value).matches()) {
+				if(TextUtils.matches(LIKELY_URI_PATH, value)) {
 					processLink(curi,value);
 				}
 
@@ -167,6 +167,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				// and/or symptomatic of page bugs
 			}
 		}
+		TextUtils.freeMatcher(attr);
+		attr = null;
+		
 		// handle codebase/resources
 		if (resources == null) {
 			return;
@@ -176,7 +179,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		String res = null;
 		try {
 			if (codebase != null) {
-				codebaseURI = new URI(codebase.toString());
+				codebaseURI = new URI(codebase);
 			}
 			while(iter.hasNext()) {
 				res = iter.next().toString();
@@ -218,12 +221,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		String code = cs.toString();
 		//code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-		Matcher candidates = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(code);
+		Matcher candidates = TextUtils.getMatcher(JAVASCRIPT_LIKELY_URI_EXTRACTOR, code);
 		while (candidates.find()) {
 			logger.finest("script: "+candidates.group(2)+ " from "+curi);
 			curi.addSpeculativeEmbed(candidates.group(2));
 			// TODO: treat "looks like" html URIs as links?
 		}
+		TextUtils.freeMatcher(candidates);
 	}
 
 	static final Pattern JAVASCRIPT = Pattern.compile("(?i)^javascript:.*");
@@ -294,7 +298,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			return;
 		}
 		
-		Matcher tags = RELEVANT_TAG_EXTRACTOR.matcher(cs);
+		Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
 		while(tags.find()) {
 			if (tags.start(6) > 0) {
 				// comment match
@@ -303,6 +307,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			// <meta> match
 				if (processMeta(curi,cs.subSequence(tags.start(3), tags.end(3)))) {
 					// meta tag included NOFOLLOW; abort processing
+					TextUtils.freeMatcher(tags);
 					return;
 				}
 			} else if (tags.start(3) > 0) {
@@ -316,6 +321,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
 			}
 		}
+		TextUtils.freeMatcher(tags);
 	}
 		
 	
@@ -338,7 +344,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			return true;
 		}
 		String ext = path.substring(dot+1);
-		return ! NON_HTML_PATH_EXTENSION.matcher(ext).matches();
+		return ! TextUtils.matches(NON_HTML_PATH_EXTENSION, ext);
 	}
 
 	/**
@@ -364,7 +370,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param sequence
 	 */
 	private boolean processMeta(CrawlURI curi, CharSequence cs) {
-		Matcher attr = EACH_ATTRIBUTE_EXTRACTOR.matcher(cs);
+		Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 
 		String name = null;
 		String httpEquiv = null;
@@ -384,6 +390,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			}
 			// TODO: handle other stuff
 		}
+		TextUtils.freeMatcher(attr);
+		attr = null;
+		
 		if("robots".equalsIgnoreCase(name) && content != null ) {
 			curi.getAList().putString(A_META_ROBOTS,content);
 			if(content.indexOf("nofollow")>0) {

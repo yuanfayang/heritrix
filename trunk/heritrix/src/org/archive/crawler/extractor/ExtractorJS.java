@@ -65,11 +65,12 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 			return;
 		}
 		
-		Matcher likelyUris = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(cs);
+		Matcher likelyUris = TextUtils.getMatcher(JAVASCRIPT_LIKELY_URI_EXTRACTOR, cs);
 		while(likelyUris.find()) {
 			String code = likelyUris.group(2);
 			code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
 			curi.addSpeculativeEmbed(code);
 		}
+		TextUtils.freeMatcher(likelyUris);
 	}
 }

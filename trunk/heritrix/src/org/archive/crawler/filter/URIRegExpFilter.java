@@ -6,13 +6,13 @@
  */
 package org.archive.crawler.filter;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
+import org.archive.util.TextUtils;
 
 
 /**
@@ -38,8 +38,7 @@ public class URIRegExpFilter extends Filter {
 			//TODO handle other inputs
 			input = o.toString();
 		}
-		Matcher m = pattern.matcher(input);
-		return m.matches();
+		return TextUtils.matches(pattern, input);
 	}
 
 
