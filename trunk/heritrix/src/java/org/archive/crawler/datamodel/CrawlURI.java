@@ -662,50 +662,10 @@ public class CrawlURI extends CandidateURI
         if(alist.containsKey(A_ANNOTATIONS)) {
             return alist.getString(A_ANNOTATIONS);
         } else {
-            return "";
+            return "."; // placeholder for "no annotations", maintain column count
         }
 
     }
-//    /**
-//     * @param sourceCuri
-//     */
-//    public void setViaLinkFrom(CrawlURI sourceCuri) {
-//        via = sourceCuri;
-//        // reset embedCount -- but only back to 1 if >0, so special embed handling still applies
-//        embedHopCount = (embedHopCount > 0) ? 1 : 0;
-//        int candidateLinkHopCount = sourceCuri.getLinkHopCount()+1;
-//        if (linkHopCount == -1) {
-//            linkHopCount = candidateLinkHopCount;
-//            return;
-//        }
-//        if (linkHopCount > candidateLinkHopCount) {
-//            linkHopCount = candidateLinkHopCount;
-//        }
-//    }
-
-//    /**
-//     * @param sourceCuri
-//     */
-//    public void setViaEmbedFrom(CrawlURI sourceCuri) {
-//        via = sourceCuri;
-//        int candidateLinkHopCount = sourceCuri.getLinkHopCount();
-//        if (linkHopCount == -1) {
-//            linkHopCount = candidateLinkHopCount;
-//        } else if (linkHopCount > candidateLinkHopCount) {
-//            linkHopCount = candidateLinkHopCount;
-//        }
-//        int candidateEmbedHopCount = sourceCuri.getEmbedHopCount()+1;
-//        if (embedHopCount == -1) {
-//            embedHopCount = candidateEmbedHopCount;
-//        } else if (embedHopCount > candidateEmbedHopCount) {
-//            embedHopCount = candidateEmbedHopCount;
-//        }
-//    }
-
-
-/*    public boolean isFubared(){
-        return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);
-    }*/
 
     /**
      * Get the embeded hop count.
