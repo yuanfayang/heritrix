@@ -154,7 +154,7 @@ public class TimespanCriteria implements Criteria {
      * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getDescription()
      */
     public String getDescription() {
-        return "Accept any URIs between the hours of " + getFrom() + " and "
-            + getTo() + " each day.";
+        return "Accept any URIs between the hours of " + getFrom() + "(GMT) and "
+            + getTo() + "(GMT) each day.";
     }
 }
