@@ -135,7 +135,10 @@ public class CrawlURI extends CandidateURI
      * Set to true if this <code>curi</code> is to be POST'd rather than GET-d.
      */
     private boolean post = false;
-    
+
+    /** monotonically increasing number within a crawl;
+     * useful for tending towards breadth-first ordering */
+    protected long ordinal; 
 
     /**
      * Create a new instance of CrawlURI from a {@link UURI}.
@@ -150,9 +153,11 @@ public class CrawlURI extends CandidateURI
      * Create a new instance of CrawlURI from a {@link CandidateURI}
      * 
      * @param caUri the CandidateURI to base this CrawlURI on.
+     * @param o
      */
-    public CrawlURI(CandidateURI caUri) {
+    public CrawlURI(CandidateURI caUri, long o) {
         super(caUri.getUURI());
+        ordinal = o;
         setIsSeed(caUri.isSeed());
         setPathFromSeed(caUri.getPathFromSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
@@ -872,13 +877,14 @@ public class CrawlURI extends CandidateURI
      * as a result. Otherwise, we create new CrawlURI instance.
      *
      * @param caUri Candidate URI.
+     * @param ordinal
      * @return A crawlURI made from the passed CandidateURI.
      */
-    public static CrawlURI from(CandidateURI caUri) {
+    public static CrawlURI from(CandidateURI caUri, long ordinal) {
         if (caUri instanceof CrawlURI) {
             return (CrawlURI) caUri;
         }
-        return new CrawlURI(caUri);
+        return new CrawlURI(caUri,ordinal);
     }
     
     /**
