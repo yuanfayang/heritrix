@@ -291,7 +291,7 @@ public class XMLSettingsHandler extends SettingsHandler {
                         + filename.getAbsolutePath() + "': " + e.getMessage());
             }
         } else {
-            // File doesn't exist, return null to inidcate this.
+            // File doesn't exist, return null to indicate this.
             settings = null;
         }
         return settings;
