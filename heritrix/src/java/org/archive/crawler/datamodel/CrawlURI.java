@@ -385,16 +385,18 @@ public class CrawlURI extends CandidateURI
         String scheme = getUURI().getScheme();
         String candidate = null;
         try {
-            if (scheme.equals("dns")){
-                if (via!=null) {
+            if (scheme.equals("dns")) {
+                if (via != null) {
                     // Special handling for DNS: treat as being
                     // of the same class as the triggering URI
                     // When a URI includes a port, this ensures 
                     // the DNS lookup goes atop the host:port
                     // queue that triggered it, rather than 
                     // some other host queue
-                    candidate =
-                        UURIFactory.getInstance(flattenVia()).getAuthority();
+                	UURI viaUuri = UURIFactory.getInstance(flattenVia());
+                    candidate = viaUuri.getAuthority();
+                    // adopt scheme of triggering URI
+                    scheme = viaUuri.getScheme();
                 } else {
                     candidate= FetchDNS.parseTargetDomain(this);
                 }
