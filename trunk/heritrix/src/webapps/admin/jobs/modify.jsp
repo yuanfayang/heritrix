@@ -365,7 +365,7 @@
 			</tr>
 		</table>
 		
-		<b>Note:</b> Not all changes made to running crawls will have an effect.
+		<b>Note:</b> Not all changes made to running crawls will have an effect.<br>
 		<input type="submit" value="Update job">
 		
 		</form>
