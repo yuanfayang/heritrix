@@ -54,6 +54,8 @@ public class KeyedQueue implements Queue, URIStoreable {
     
     LinkedList innerStack; // topmost items
     Queue innerQ;
+    
+    Queue frozenQ; // put-to-side items
 
     /**
      * @param key A unique identifier used to distingush files related to this
@@ -74,6 +76,7 @@ public class KeyedQueue implements Queue, URIStoreable {
         }
         innerStack = new LinkedList();
         innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
+        // frozenQ = new DiskBackedQueue(scratchDir,tmpName+".frozen",headMax);
     }
 
     public boolean isReady() {
@@ -152,6 +155,7 @@ public class KeyedQueue implements Queue, URIStoreable {
      */
     public boolean isEmpty() {
         return innerStack.isEmpty() && innerQ.isEmpty();
+        // return innerStack.isEmpty() && innerQ.isEmpty() && frozenQ.isEmpty();
     }
 
     /* (non-Javadoc)
@@ -230,6 +234,9 @@ public class KeyedQueue implements Queue, URIStoreable {
         innerStack.addFirst(curi);
     }
 
+    public void enqueueFrozen(CrawlURI curi) {
+        // frozenQ.enqueue(curi);
+    }
     /**
      * @return
      */
