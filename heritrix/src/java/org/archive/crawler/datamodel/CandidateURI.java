@@ -60,29 +60,25 @@ public class CandidateURI implements Serializable, Lineable {
     // just a string or null when memory is an object (configurable)
     Object via;
 
-    // Should a fetch be forced even though the URI is in the already included map
-    private boolean forceFetch = false;
-
+    public static final int NORMAL_PRIORITY       = 0;
+    public static final int HIGH_PRIORITY         = 1;
+    public static final int FORCED_FETCH_PRIORITY = 2;
+    private int priority;
+    
 
     /**
      * @param u
      */
     public CandidateURI(UURI u) {
         uuri = u;
+        priority = NORMAL_PRIORITY;
     }
 
-    /**
-     * @param uriString
-     */
-//    public CandidateURI(String s){
-//        try{
-//            setUURI(UURI.createUURI(s));
-//        }catch(Exception e){
-//            setUURI(null);
-//        }
-//    }
-
-
+    public CandidateURI(UURI u, int priority) {
+        uuri = u;
+        this.priority = priority;
+    }
+    
     /**
      * @param b
      */
@@ -165,9 +161,10 @@ public class CandidateURI implements Serializable, Lineable {
     }
 
     /**
-     *
+     * Method returns string version of this URI's referral URI.
+     * @return String verion of referral URI
      */
-    private String flattenVia() {
+    public String flattenVia() {
         if (via instanceof String) {
             // already OK
             return (String) via;
@@ -229,20 +226,21 @@ public class CandidateURI implements Serializable, Lineable {
      * @return true if crawling of this URI should be forced
      */
     public boolean forceFetch() {
-        return forceFetch;
+        return (getPriority() == FORCED_FETCH_PRIORITY ? true : false);
     }
 
     /**
-     * Method to signal that this URI should be fetched even though
-     * it already has been crawled. Setting this to true also implies
-     * that this URI will be scheduled for crawl before any other waiting
-     * URIs for the same host.
-     *
-     * This value is used to refetch any expired robots.txt or dns-lookups.
-     *
-     * @param b set to true to enforce the crawling of this URI
+     * @return URI's scheduling priority.
      */
-    public void setForceFetch(boolean b) {
-        forceFetch = b;
+    public int getPriority() {
+        return priority;
     }
+
+    /**
+     * @param priority Scheduling priority 
+     */
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
 }
