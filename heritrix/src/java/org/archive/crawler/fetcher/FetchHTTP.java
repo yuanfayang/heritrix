@@ -67,10 +67,10 @@ public class FetchHTTP
     public static final String ATTR_MAX_FETCH_ATTEMPTS = "max-fetch-attempts";
     public static final String ATTR_LOAD_COOKIES = "cookies-file";
     
-	private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(10);
-	private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(5000);
+	private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
+	private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
 	private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
-	private static Integer DEFAULT_MAX_FETCH_ATTEMPTS = new Integer(30);
+	private static Integer DEFAULT_MAX_FETCH_ATTEMPTS = new Integer(10);
     
     /**
      * HTTP protocol adherence strictness.
@@ -103,15 +103,15 @@ public class FetchHTTP
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
-            "Timeout seconds", DEFAULT_TIMEOUT_SECONDS));
+            "If the fetch is not completed in this number of seconds, give up", DEFAULT_TIMEOUT_SECONDS));
         addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
-            "So timeout milliseconds", DEFAULT_SOTIMEOUT_MS));
+            "If the socket is unresponsive for this number of seconds, give up (and retry)", DEFAULT_SOTIMEOUT_MS));
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
-            "Max length in bytes", DEFAULT_MAX_LENGTH_BYTES));
+            "Max length in bytes to fetch (truncate at this length)", DEFAULT_MAX_LENGTH_BYTES));
         addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS,
-            "Max fetch attempts", DEFAULT_MAX_FETCH_ATTEMPTS));
+            "Max number of fetches to attempt", DEFAULT_MAX_FETCH_ATTEMPTS));
         addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
-            "File to load cookies from", ""));
+            "File to preload cookies from", ""));
         addElementToDefinition(new SimpleType(ATTR_STRICT,
                 "Strict adherence to HTTP protocol",
                 new Boolean(strict)));

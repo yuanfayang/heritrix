@@ -111,15 +111,15 @@ public class Scope extends CrawlScope {
         super(name);
 
         addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
-            "Max link hops", new Integer(25)));
+            "Max link hops to include", new Integer(25)));
         addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
-            "Max trans hops", new Integer(5)));
+            "Max transitive hops (embeds, referrals, preconditions) to include", new Integer(5)));
         addElementToDefinition(new SimpleType(ATTR_MODE,
-            "Mode", defaultMode, allowedModes));
+            "Predefined crawl mode", defaultMode, allowedModes));
 
         Filter filter = (Filter) addElementToDefinition(
                 new Filter(ATTR_FOCUS_FILTER,
-                "Specify this filter if mode is userdefined."));
+                "Specify this filter only if mode is userdefined."));
         filter.setTransient(true);
         
         filter = (Filter) addElementToDefinition(
