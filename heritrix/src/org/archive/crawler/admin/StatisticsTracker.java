@@ -635,6 +635,14 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		return totalProcessedBytes;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+	 */
+	public void crawlPausing(String statusMessage) {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 	/** Returns the approximate rate at which we are writing uncompressed data
 	 *  to disk.
