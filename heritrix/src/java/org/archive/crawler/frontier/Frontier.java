@@ -50,6 +50,7 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -194,6 +195,15 @@ public class Frontier
     private int inactiveQueuesMemoryLoadTarget = 10000;
     private int inactivePerQueueLoadThreshold = 1000;
 
+   /**
+    * Crawl replay logger.
+    *
+    * Currently captures Frontier/URI transitions.
+    */
+   transient private FrontierJournal recover = null;
+    
+   static final String LOGNAME_RECOVER = "recover";
+
     
     public Frontier(String name){
         this(name,"Frontier. \nMaintains the internal" +
@@ -295,6 +305,16 @@ public class Frontier
         this.alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
             "alreadyIncluded");
         loadSeeds();
+        File logsDisk = null;
+        try {
+            logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed to get logs directory " + e);
+        }
+        if (logsDisk != null) {
+            String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+            this.recover = new RecoveryJournal(logsPath, LOGNAME_RECOVER);
+        }
     }
     
     /**
@@ -438,7 +458,7 @@ public class Frontier
             this.alreadyIncluded.add(curi);
             this.queuedCount++;
             // Update recovery log.
-            this.controller.recover.added(curi);
+            doJournalAdded(curi);
         } // else ignore: enqueueToKeyed already disposed of curi
     }
 
@@ -728,7 +748,7 @@ public class Frontier
         }
         controller.fireCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
-        controller.recover.finishedSuccess(curi);
+        doJournalFinishedSuccess(curi);
     }
 
 
@@ -804,7 +824,7 @@ public class Frontier
             }
         }
         logger.finer(this + ".emitCuri(" + curi + ")");
-        this.controller.recover.emitted(curi);
+        doJournalEmitted(curi);
         // One less URI in the queue.
         this.queuedCount--;
         return curi;
@@ -1128,7 +1148,7 @@ public class Frontier
             this.failedCount++;
             curi.stripToMinimal();
         }
-        this.controller.recover.finishedFailure(curi);
+        doJournalFinishedFailure(curi);
     }
 
     /**
@@ -1241,7 +1261,7 @@ public class Frontier
         queuedCount++;
         
         controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-        controller.recover.rescheduled(curi);
+        doJournalRescheduled(curi);
     }
 
     /**
@@ -1654,6 +1674,10 @@ public class Frontier
         // to facilitate gc.
         this.controller = null;
         this.alreadyIncluded = null;
+        if (this.recover != null) {
+            this.recover.close();
+            this.recover = null;
+        }
     }
     
     /**
@@ -1715,4 +1739,38 @@ public class Frontier
     public void kickUpdate() {
         loadSeeds();
     }
+
+   protected void doJournalFinishedSuccess(CrawlURI c) {
+       if (this.recover != null) {
+           this.recover.finishedSuccess(c);
+       }
+   }
+    
+   protected void doJournalAdded(CrawlURI c) {
+       if (this.recover != null) {
+           this.recover.added(c);
+       }
+   }
+  
+   protected void doJournalRescheduled(CrawlURI c) {
+       if (this.recover != null) {
+           this.recover.added(c);
+       }
+   }
+    
+   protected void doJournalFinishedFailure(CrawlURI c) {
+       if (this.recover != null) {
+           this.recover.finishedFailure(c);
+       }
+   }
+    
+   protected void doJournalEmitted(CrawlURI c) {
+       if (this.recover != null) {
+           this.recover.emitted(c);
+       }
+   }
+
+   public FrontierJournal getFrontierJournal() {
+       return this.recover;
+   }
 }
