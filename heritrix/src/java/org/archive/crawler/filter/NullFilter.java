@@ -31,7 +31,15 @@ import org.archive.crawler.framework.Filter;
  */
 public class NullFilter extends Filter {
 
-	/* (non-Javadoc)
+	/**
+     * @param name
+     * @param description
+     */
+    public NullFilter(String name) {
+        super(name, "Null filter");
+    }
+
+    /* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
 	protected boolean innerAccepts(Object o) {
