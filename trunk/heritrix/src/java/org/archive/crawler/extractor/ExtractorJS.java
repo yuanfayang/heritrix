@@ -46,6 +46,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
     static final String ESCAPED_AMP = "&amp;";
+    static final String AMP = "&";
     static final String WHITESPACE = "\\s";
 
     // finds strings in Javascript
@@ -132,11 +133,15 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         long foundLinks = 0;
         Matcher strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
         while(strings.find()) {
-            CharSequence subsequence = cs.subSequence(strings.start(2), strings.end(2));
-            Matcher uri = TextUtils.getMatcher(STRING_URI_EXTRACTOR, subsequence);
+            CharSequence subsequence = 
+                cs.subSequence(strings.start(2), strings.end(2));
+                
+            Matcher uri = 
+                TextUtils.getMatcher(STRING_URI_EXTRACTOR, subsequence);
+                
             if(uri.matches()) {
                 String string = uri.group();
-                string = TextUtils.replaceAll(ESCAPED_AMP, string, "&");
+                string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
                 foundLinks++;
                 if (handlingJSFile) {
                     curi.addLinkToCollection(string, A_JS_FILE_LINKS);
