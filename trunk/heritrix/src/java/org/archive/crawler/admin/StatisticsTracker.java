@@ -168,8 +168,8 @@ public class StatisticsTracker extends AbstractTracker
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.StatisticsTracking#initalize(org.archive.crawler.framework.CrawlController)
      */
-    public void initalize(CrawlController c) {
-        super.initalize(c);
+    public void initialize(CrawlController c) {
+        super.initialize(c);
         controller.addCrawlURIDispositionListener(this);
     }
 
