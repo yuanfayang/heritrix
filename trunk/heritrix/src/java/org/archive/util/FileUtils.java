@@ -25,10 +25,12 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.regex.Pattern;
 
 /** Utility methods for manipulating files and directories.
  * 
@@ -85,7 +87,7 @@ public class FileUtils {
     }
     
     /** Deletes all files and subdirectories under dir.
-     *  @param dir
+     * @param dir
      * @return true if all deletions were successful. If a deletion fails, the 
      *          method stops attempting to delete and returns false.
      */
@@ -103,4 +105,26 @@ public class FileUtils {
         return dir.delete();
     }
 
+    /** Get a @link java.io.FileFilter that filters files based on a regular
+     * expression.
+     * 
+     * @param regexp the regular expression the files must match.
+     * @return the newly created filter.
+     */
+    public static FileFilter getRegexpFileFilter(String regexp) {
+        // Inner class defining the RegexpFileFilter
+        class RegexpFileFilter implements FileFilter {
+            Pattern pattern;
+            
+            public RegexpFileFilter(String regexp) {
+                pattern = Pattern.compile(regexp);
+            }
+            
+            public boolean accept(File pathname) {
+                return pattern.matcher(pathname.getName()).matches();
+            }
+        };
+
+        return new RegexpFileFilter(regexp);
+    }
 }
