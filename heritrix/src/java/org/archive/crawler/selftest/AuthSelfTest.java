@@ -39,7 +39,7 @@ public class AuthSelfTest
      * Files to find as a list.
      */
     private static final List FILES_TO_FIND =
-        Arrays.asList(new String[] {"basic-loggedin.html"});
+        Arrays.asList(new String[] {"digest-loggedin.html"});
 
 
     /**
