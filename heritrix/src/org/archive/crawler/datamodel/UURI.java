@@ -33,9 +33,7 @@ public class UURI implements Serializable {
 	protected String uriString;
 	
 	public static UURI createUURI(String s) throws URISyntaxException {
-		URI u;
-		u = new URI(normalize(s));
-		return new UURI(u);
+		return new UURI(normalize(s));
 	}
 	
 	/**
@@ -64,7 +62,7 @@ public class UURI implements Serializable {
 	 * @param u
 	 * @return
 	 */
-	 public static String normalize(String u) throws URISyntaxException {
+	 public static URI normalize(String u) throws URISyntaxException {
 		return normalize(u,null);
 	}
 	
@@ -77,7 +75,7 @@ public class UURI implements Serializable {
 	 * @param parent URI to use for derelativizing; may be null
 	 * @return String
 	 */
-	public static String normalize(String s, URI parent)
+	public static URI normalize(String s, URI parent)
 		throws URISyntaxException {
 		
 		if (s==null) {
@@ -157,7 +155,7 @@ public class UURI implements Serializable {
 		}
 
 		try {
-			return u.toASCIIString();
+			return u;
 		} catch (NullPointerException npe) {
 			throw new URISyntaxException(u.toString(),npe.toString());
 		}
@@ -300,7 +298,7 @@ public class UURI implements Serializable {
 	 * @return
 	 */
 	public static UURI createUURI(String string, URI uri) throws URISyntaxException {
-		return createUURI(normalize(string,uri));
+		return new UURI(normalize(string,uri));
 	}
 
 	static final Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
