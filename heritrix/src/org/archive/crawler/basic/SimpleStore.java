@@ -6,16 +6,32 @@
  */
 package org.archive.crawler.basic;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import org.archive.crawler.datamodel.AnnotatedURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIStore;
 
 /**
+ * A minimal in-memory URIStore. Keeps "full" CrawlURI instances
+ * around, because it can. 
+ * 
  * @author gojomo
  *
  */
 public class SimpleStore implements URIStore {
+	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
+	LinkedList pendingCuris = new LinkedList(); // of CrawlURIs 
+	HashMap processing = new HashMap(); // of String (queueKey) -> CrawlURI
+	HashMap allQueues = new HashMap(); // of String (queueKey) -> KeyedQueue
+	LinkedList readyQueues = new LinkedList(); // of KeyedQueues 
+	LinkedList snoozeQueues = new LinkedList(); // of KeyedQueues (prob should be Heap)
+	
+	
+	
+	
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIStore#enqueueTo(org.archive.crawler.datamodel.AnnotatedURI, java.lang.Object)
