@@ -19,8 +19,6 @@ public class LongFPSetCache extends MemLongFPSet {
 	int sweepHand;
 	int maxSize;
 	
-	
-	
 	/**
 	 * 
 	 */

@@ -17,26 +17,29 @@ import org.archive.util.LongFPSet;
 import st.ata.util.FPGenerator;
 
 /**
- * UURISet which only stores 64-bit UURI fingerprints. 
+ * UURISet which only stores 64-bit UURI fingerprints, using an
+ * internal LongFPSet instance. (This internal instance may be
+ * disk or memory based.)
  * 
  * @author gojomo
  *
  */
-public class AbstractFPUURISet extends AbstractSet implements UURISet {
+public class FPUURISet extends AbstractSet implements UURISet {
 	LongFPSet fpset;
 	FPGenerator fpgen = FPGenerator.std64;
 	
 	/**
 	 * 
 	 */
-	public AbstractFPUURISet() {
+	public FPUURISet(LongFPSet fpset) {
+		this.fpset = fpset;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.datamodel.UURISet#count()
 	 */
 	public long count() {
-		return fpset.size();
+		return fpset.count();
 	}
 
 	/* (non-Javadoc)

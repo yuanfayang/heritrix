@@ -9,6 +9,9 @@ package org.archive.io;
 /**
  * @author gojomo
  *
+ *
+ * IN PROGRESS / THINKING OUT LOUD CODE
+ * 
  */
 public class ARCResource {
 

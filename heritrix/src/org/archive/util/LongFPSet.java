@@ -15,5 +15,5 @@ public interface LongFPSet {
 	boolean add(long l);
 	boolean contains(long l);
 	boolean remove(long l);
-	long size();
+	long count();
 }
