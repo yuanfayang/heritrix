@@ -79,7 +79,6 @@ public class HttpRecorder
 	 */
 	public HttpRecorder(File tempDir, String backingFilenameBase) {
 		tempDir.mkdirs();
-		String tempDirPath = tempDir.getPath() + File.separatorChar;
         this.backingFileBasename = 
             (new File(tempDir.getPath(), backingFilenameBase))
                 .getAbsolutePath();
