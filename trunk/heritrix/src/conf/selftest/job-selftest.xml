@@ -119,7 +119,7 @@
         <string name="prefix">IAH</string>
         <integer name="max-size-bytes">100000000</integer>
         <string name="path">arcs</string>
-        <integer name="pool-max-active">3</integer>
+        <integer name="pool-max-active">1</integer>
         <integer name="pool-max-wait">300000</integer>
       </newObject>
       <newObject name="Updater" class="org.archive.crawler.basic.CrawlStateUpdater">

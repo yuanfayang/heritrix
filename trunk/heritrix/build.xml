@@ -103,9 +103,9 @@
     <war destfile="target/webapps/admin.war"
             webxml="target/webapps/admin/WEB-INF/web.xml"
             basedir="target/webapps/admin" />
-    <war destfile="target/webapps/garden.war"
-            webxml="target/webapps/garden/WEB-INF/web.xml"
-            basedir="target/webapps/garden" />
+    <war destfile="target/webapps/selftest.war"
+            webxml="target/webapps/selftest/WEB-INF/web.xml"
+            basedir="target/webapps/selftest" />
     <war destfile="target/webapps/root.war"
             webxml="target/webapps/root/WEB-INF/web.xml"
             basedir="target/webapps/root" />

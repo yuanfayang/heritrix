@@ -67,11 +67,11 @@
         <war destfile="${maven.build.dir}/admin.war"
             webxml="${webapps.dir}/admin/WEB-INF/web.xml"
             basedir="${webapps.dir}/admin" />
-        <war destfile="${maven.build.dir}/garden.war"
-            webxml="${webapps.dir}/garden/WEB-INF/web.xml"
-            basedir="${webapps.dir}/garden" />
+        <war destfile="${maven.build.dir}/selftest.war"
+            webxml="${webapps.dir}/selftest/WEB-INF/web.xml"
+            basedir="${webapps.dir}/selftest" />
         <war destfile="${maven.build.dir}/root.war"
-            webxml="${webapps.dir}/garden/WEB-INF/web.xml"
+            webxml="${webapps.dir}/root/WEB-INF/web.xml"
             basedir="${webapps.dir}/root" />
 
         <!--Copy over the just made war files into the distribution copy.-->

@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.garden;
+package org.archive.crawler.selftest;
 
 import java.io.File;
 
@@ -34,14 +34,14 @@ import junit.framework.TestSuite;
  * @author stack
  * @version $Id$
  */
-public class AllGardenSelfTests
+public class AllSelfTestCases
 {
     /**
      * Run all of the selftest suite.
      * 
      * Each unit test to run as part of selftest needs to be added here.
      * 
-     * @param selftestURL Base url to selftest garden.
+     * @param selftestURL Base url to selftest webapp.
      * @param webappDir Expanded webapp directory location.
      * @param jobDir Job output directory.  Has the seed file, the order file
      * and logs.  
@@ -55,22 +55,23 @@ public class AllGardenSelfTests
             final File jobDir, final String jobName, final File arcDir,
             final String prefix)
     {
-        TestSuite suite = new TestSuite("Test for org.archive.crawler.garden");
+        TestSuite suite =
+            new TestSuite("Test for org.archive.crawler.selftest");
         //$JUnit-BEGIN$
         // Add mention of self tests here for them to be run as part of the
         // general integration self test.
-        suite.addTestSuite(BackgroundImageExtractionSelfTest.class);
-        suite.addTestSuite(FramesSelfTest.class);
+        suite.addTestSuite(BackgroundImageExtractionSelfTestCase.class);
+        suite.addTestSuite(FramesSelfTestCase.class);
         //$JUnit-END$
         
         // Return an anonymous instance of TestSetup that does the one-time
-        // set up of GardenSelfTestCase base class installing required test
+        // set up of SelfTestCase base class installing required test
         // parameters.
         return new TestSetup(suite)
             {
                 protected void setUp() throws Exception
                 {
-                    GardenSelfTestCase.initialize(selftestURL, webappDir, 
+                    SelfTestCase.initialize(selftestURL, webappDir, 
                         jobDir, jobName, arcDir, prefix);
                 }
             };
@@ -80,7 +81,7 @@ public class AllGardenSelfTests
         throws Exception
     {
         junit.textui.TestRunner.
-            run(AllGardenSelfTests.suite(args[0], new File(args[1]),
+            run(AllSelfTestCases.suite(args[0], new File(args[1]),
                 new File(args[2]), args[3], new File(args[4]), "IAH"));
     }
 }

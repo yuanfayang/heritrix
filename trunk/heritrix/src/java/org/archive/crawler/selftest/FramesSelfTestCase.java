@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.garden;
+package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.util.HashMap;
@@ -36,7 +36,7 @@ import org.archive.io.arc.ARCRecordMetaData;
  * @author stack
  * @version $Id$
  */
-public class FramesSelfTest extends GardenSelfTestCase
+public class FramesSelfTestCase extends SelfTestCase
 {
     /**
      * Files we expect to find in the archive.
