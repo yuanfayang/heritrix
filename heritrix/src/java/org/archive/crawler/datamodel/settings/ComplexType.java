@@ -175,7 +175,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /**
-     * @return
+     * @return Absolute name.
      */
     public String getAbsoluteName() {
         return absoluteName;

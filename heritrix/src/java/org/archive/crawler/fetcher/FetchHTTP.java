@@ -187,12 +187,12 @@ public class FetchHTTP
     
     
     /**
-     * Can this processor fetch the given CrawlURI? May set a fetch
+     * Can this processor fetch the given CrawlURI. May set a fetch
      * status if this processor would usually handle the CrawlURI,
      * but cannot in this instance. 
      * 
      * @param curi
-     * @return
+     * @return True if processor can fetch.
      */
     private boolean canFetch(CrawlURI curi) {
         String scheme = curi.getUURI().getScheme();

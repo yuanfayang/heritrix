@@ -175,11 +175,12 @@ public class ARCSocketFactory extends SocketFactory
     /**
      * Constructor.
      * 
-     * Private so users go via {@link getInstance} to get an instance.
+     * Private so users go via <code>getInstance()</code> to get an instance.
      * 
      * @param properties Properties to configure ARCSocketFactory.  There must
-     * at least be a 'arcsocketfactory.dumpDir' property that points at a 
-     * location on local disk to which arc and scratch files can be written.
+     * at least be a <code>arcsocketfactory.dumpDir</code> property that points
+     * at a location on local disk to which arc and scratch files can be
+     * written.
      */
     private ARCSocketFactory(Properties properties)
         throws IOException
