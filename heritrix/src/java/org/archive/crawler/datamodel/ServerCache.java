@@ -25,7 +25,7 @@ package org.archive.crawler.datamodel;
 
 import java.util.HashMap;
 
-import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.settings.SettingsHandler;
 import org.xbill.DNS.FindServer;
 
 /**

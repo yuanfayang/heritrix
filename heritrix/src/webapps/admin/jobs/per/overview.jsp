@@ -12,8 +12,8 @@
 <%@page import="java.util.ArrayList"%>
 
 <%@page import="org.archive.crawler.admin.CrawlJob"%>
-<%@page import="org.archive.crawler.datamodel.settings.CrawlerSettings"%>
-<%@page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler"%>
+<%@page import="org.archive.crawler.settings.CrawlerSettings"%>
+<%@page import="org.archive.crawler.settings.XMLSettingsHandler"%>
 
 <%
 	String message = request.getParameter("message");

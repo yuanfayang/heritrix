@@ -36,7 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.settings.CrawlerSettings;
 
 /**
  * expiry handled outside, in CrawlServer

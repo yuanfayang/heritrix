@@ -47,8 +47,6 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.settings.MapType;
-import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -60,6 +58,8 @@ import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.util.ArchiveUtils;
 
 /**

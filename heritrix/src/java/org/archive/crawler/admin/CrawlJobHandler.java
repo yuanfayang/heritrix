@@ -44,16 +44,16 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.settings.ComplexType;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.SettingsHandler;
-import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.settings.ComplexType;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.SettingsHandler;
+import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 

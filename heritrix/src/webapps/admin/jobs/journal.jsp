@@ -1,7 +1,7 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.datamodel.settings.SettingsHandler,org.archive.crawler.datamodel.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
+<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
 
 <%@ page import="java.io.FileWriter,java.io.File"%>
 <%@ page import="java.util.Date"%>

@@ -57,9 +57,9 @@ import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.PatchedHttpClient;
@@ -868,7 +868,7 @@ public class FetchHTTP extends Processor
     }
     
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.ModuleType#listUsedFiles(java.util.List)
+     * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
     protected void listUsedFiles(List list) {
         // List the cookies files

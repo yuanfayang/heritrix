@@ -29,10 +29,10 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.ComplexType;
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.MapType;
-import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.settings.ComplexType;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.SimpleType;
 
 /**
  * Base class for filter classes.

@@ -26,9 +26,9 @@ package org.archive.crawler.filter;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.settings.SimpleType;
 
 /**
  * Filter which accepts CandidateURI/CrawlURI instances which contain more

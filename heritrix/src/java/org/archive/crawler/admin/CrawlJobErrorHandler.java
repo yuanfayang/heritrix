@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-import org.archive.crawler.datamodel.settings.ValueErrorHandler;
-import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
+import org.archive.crawler.settings.ValueErrorHandler;
+import org.archive.crawler.settings.Constraint.FailedCheck;
 
 
 /**
@@ -43,7 +43,7 @@ import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
  * 
  * @author Kristinn Sigurdsson
  * 
- * @see org.archive.crawler.datamodel.settings.ValueErrorHandler
+ * @see org.archive.crawler.settings.ValueErrorHandler
  */
 public class CrawlJobErrorHandler implements ValueErrorHandler {
 
@@ -62,7 +62,7 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
     }
     
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.ValueErrorHandler#handleValueError(org.archive.crawler.datamodel.settings.Constraint.FailedCheck)
+     * @see org.archive.crawler.settings.ValueErrorHandler#handleValueError(org.archive.crawler.settings.Constraint.FailedCheck)
      */
     public void handleValueError(FailedCheck error) {
         String key = error.getOwner().getAbsoluteName() + 
@@ -148,13 +148,13 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
      * Get an List of all the encountered errors.
      * 
      * <p>The List contains a set of 
-     * {@link org.archive.crawler.datamodel.settings.Constraint.FailedCheck
+     * {@link org.archive.crawler.settings.Constraint.FailedCheck
      * FailedCheck} objects.
      * 
      * @return an list of all encountered errors (with level equal to
      *         or higher then current level).
      * 
-     * @see org.archive.crawler.datamodel.settings.Constraint.FailedCheck 
+     * @see org.archive.crawler.settings.Constraint.FailedCheck 
      */
     public List getErrors(){
         return getErrors(level);
@@ -164,7 +164,7 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
      * Get an List of all the encountered errors.
      * 
      * <p>The List contains a set of 
-     * {@link org.archive.crawler.datamodel.settings.Constraint.FailedCheck
+     * {@link org.archive.crawler.settings.Constraint.FailedCheck
      * FailedCheck} objects.
      * 
      * @param level Get all errors of this level or higher
@@ -172,7 +172,7 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
      * @return an list of all encountered errors (with level equal to
      *         or higher then specified level).
      * 
-     * @see org.archive.crawler.datamodel.settings.Constraint.FailedCheck 
+     * @see org.archive.crawler.settings.Constraint.FailedCheck 
      */
     public List getErrors(Level level){
         Iterator it = errors.entrySet().iterator();
