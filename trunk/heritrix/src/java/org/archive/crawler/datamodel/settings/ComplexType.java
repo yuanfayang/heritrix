@@ -116,12 +116,6 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             return null;
         }
         return settingsHandler.getSettingsObject(null);
-        
-//        try {
-//            return settingsHandler.getSettingsObject(null);
-//        } catch (NullPointerException e) {
-//            return null;
-//        }
     }
 
     public Type addElement(CrawlerSettings settings, Type type)
@@ -228,7 +222,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *                 is active.
      * @return the active DataContainer.
      */
-    protected DataContainer getDataContainerRecursive(CrawlerSettings settings) {
+    protected DataContainer getDataContainerRecursive(CrawlerSettings settings, UURI uri, int port) {
 
         if (settings == null) {
             return null;
@@ -236,8 +230,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         DataContainer data = settings.getData(this);
 
-        if (data == null && settings.getParent() != null) {
-            data = getDataContainerRecursive(settings.getParent());
+        if (data == null && settings.getParent(uri) != null) {
+            data = getDataContainerRecursive(settings.getParent(uri), uri, port);
         }
 
         return data;
@@ -259,15 +253,15 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the active DataContainer.
      */
     protected DataContainer getDataContainerRecursive(
-            CrawlerSettings settings, String key)
+            CrawlerSettings settings, String key, UURI uri, int port)
             throws AttributeNotFoundException {
 
-        DataContainer data = getDataContainerRecursive(settings);
+        DataContainer data = getDataContainerRecursive(settings, uri, port);
         while (data != null) {
             if (data.containsKey(key)) {
                 return data;
             } else {
-                data = getDataContainerRecursive(data.getSettings().getParent());
+                data = getDataContainerRecursive(data.getSettings().getParent(uri), uri, port);
             }
         }
         throw new AttributeNotFoundException(key);
@@ -301,38 +295,67 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return absoluteName;
     }
 
-    /** Get settings object valid for a URI.
-     *
-     * This method takes an object, try to convert it into a {@link CrawlURI}
-     * and then tries to get the settings object from it. If this fails, then
-     * the global settings object is returned.
-     *
+    /**
+     * Get settings object valid for a URI.
+     * <p/>
+     * This method takes an object,
+     * try to convert it into a {@link CrawlURI}and then tries to get the
+     * settings object from it. If this fails, then the global settings object
+     * is returned.
+     * <p/>
+     * If the requested attribute is not set on this settings
+     * object it tries its parent until it gets a settings object where this
+     * attribute is set is found. If nothing is found, global settings is
+     * returned.
+     * 
      * @param o possible {@link CrawlURI}.
+     * @param attributeName the attribute that should have a value set on the
+     *            returned settings object.
      * @return the settings object valid for the URI.
      */
-    public CrawlerSettings getSettingsFromObject(Object o) {
-        CrawlerSettings settings = null;
+    public CrawlerSettings getSettingsFromObject(Object o, String attributeName) {
+        CrawlerSettings settings;
 
-        if (o instanceof CrawlerSettings) {
+        if (o == null) {
+            settings = null;
+        } else if (o instanceof CrawlerSettings) {
             settings = (CrawlerSettings) o;
-        } else if (o instanceof CrawlURI) {
-            try {
-                settings = ((CrawlURI) o).getServer().getSettings();
-            } catch (NullPointerException e) {
-                // The URI don't know its settings
-            }
         } else if (o instanceof UURI || o instanceof CandidateURI) {
             // Try to get settings for URI that has no references to a
             // CrawlServer
             UURI uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
                     .getUURI() : (UURI) o;
-            String hostName = uri.getHost() == null ? "" : uri.getHost();
-            settings = getSettingsHandler().getSettings(hostName);
+            settings = getSettingsHandler().getSettings(uri.getHost(), uri);
+
+            if (attributeName != null) {
+                try {
+                    settings = getDataContainerRecursive(settings,
+                            attributeName, uri, uri.getPort()).getSettings();
+                } catch (AttributeNotFoundException e) {
+                    // Nothing found, globals will be used
+                }
+            }
+        } else {
+            logger.warning("Unknown object type: " + o.getClass().getName());
+            settings = null;
         }
 
         // if settings could not be resolved use globals.
         settings = settings == null ? globalSettings() : settings;
         return settings;
+    }
+    
+    /** Get settings object valid for a URI.
+    *
+    * This method takes an object, try to convert it into a {@link CrawlURI}
+    * and then tries to get the settings object from it. If this fails, then
+    * the global settings object is returned.
+    *
+    * @param o possible {@link CrawlURI}.
+    * @return the settings object valid for the URI.
+    */
+    public CrawlerSettings getSettingsFromObject(Object o) {
+        return getSettingsFromObject(o, null);
     }
 
     /** Returns true if an element is overridden for this settings object.
@@ -352,7 +375,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
 
         // Try to find attribute, will throw an exception if not found.
-        getDataContainerRecursive(settings.getParent(), name);
+        getDataContainerRecursive(settings.getParent(), name, null, -1);
         return true;
     }
 
@@ -389,18 +412,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      */
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException {
-        CrawlerSettings settings;
-        if(uri == null || uri.getServer() == null) {
-            settings = globalSettings();
-        } else {
-            settings = uri.getServer().getSettings();
-        }
-//        try {
-//            settings = uri.getServer().getSettings();
-//        } catch (NullPointerException e) {
-//            // The URI don't know its settings, use globals
-//            settings = globalSettings();
-//        }
+        CrawlerSettings settings = getSettingsFromObject(uri, name);
         return getAttribute(settings, name);
     }
 
@@ -431,7 +443,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             }
         }
         
-        return getDataContainerRecursive(settings, name).get(name);
+        return getDataContainerRecursive(settings, name, null, -1).get(name);
     }
 
     /** Obtain the value of a specific attribute that is valid for a
@@ -459,7 +471,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             return data.get(name);
         } else {
             // Try to find the attribute, will throw an exception if not found.
-            getDataContainerRecursive(settings, name);
+            getDataContainerRecursive(settings, name, null, -1);
             return null;
         }
     }
@@ -652,7 +664,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         // Value not found. Check if we should return null or throw an exception
         // This method throws an exception if not found.
-        getDataContainerRecursive(settings, name);
+        getDataContainerRecursive(settings, name, null, -1);
         return null;
     }
 
@@ -733,16 +745,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     public MBeanInfo getMBeanInfo(CrawlerSettings settings) {
         if( settings == null ){
-            // The use global settings
+            // Then use global settings
             settings = globalSettings();
         }
         Stack attributeStack = new Stack();
         int attributeCount = 0;
-        DataContainer data = getDataContainerRecursive(settings);
+        DataContainer data = getDataContainerRecursive(settings, null, -1);
         while (data != null) {
             attributeStack.push(data.getLocalAttributeInfoList());
             attributeCount += data.getLocalAttributeInfoList().size();
-            data = getDataContainerRecursive(data.getSettings().getParent());
+            data = getDataContainerRecursive(data.getSettings().getParent(), null, -1);
         }
         MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[attributeCount];
         int offset = 0;
@@ -759,7 +771,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                 null, null, null);
         return info;
     }
-
+    
     /** Get the effective Attribute info for an element of this type from 
      * a settings object.
      * 
@@ -773,11 +785,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         MBeanAttributeInfo info = null;
         
-        DataContainer data = getDataContainerRecursive(settings);
+        DataContainer data = getDataContainerRecursive(settings, null, -1);
         while (data != null && info == null) {
             info = data.getAttributeInfo(name);
             if (info == null) {
-                data = getDataContainerRecursive(data.getSettings().getParent());
+                data = getDataContainerRecursive(data.getSettings().getParent(), null, -1);
             }
         }
 

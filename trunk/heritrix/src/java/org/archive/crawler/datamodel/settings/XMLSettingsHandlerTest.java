@@ -1,31 +1,32 @@
-/* XMLSettingsHandlerTest
- *
+/*
+ * XMLSettingsHandlerTest
+ * 
  * $Id$
- *
+ * 
  * Created on Jan 28, 2004
- *
+ * 
  * Copyright (C) 2004 Internet Archive.
- *
+ * 
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ * Heritrix is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser Public License as published by the Free Software
+ * Foundation; either version 2.1 of the License, or any later version.
+ * 
+ * Heritrix is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser Public License along with
+ * Heritrix; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
  */
 package org.archive.crawler.datamodel.settings;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.text.ParseException;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
@@ -34,6 +35,13 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.refinements.Criteria;
+import org.archive.crawler.datamodel.settings.refinements.PortnumberCriteria;
+import org.archive.crawler.datamodel.settings.refinements.Refinement;
+import org.archive.crawler.datamodel.settings.refinements.RegularExpressionCriteria;
+import org.archive.crawler.datamodel.settings.refinements.TimespanCriteria;
 import org.archive.crawler.framework.CrawlScope;
 
 /**
@@ -81,8 +89,8 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         CrawlerSettings perHost = getPerHostSettings();
         Integer newHops = new Integer(500);
         String newFrom = "newfrom";
-        scope.setAttribute(perHost, new Attribute(CrawlScope.ATTR_MAX_LINK_HOPS,
-                newHops));
+        scope.setAttribute(perHost, new Attribute(
+                CrawlScope.ATTR_MAX_LINK_HOPS, newHops));
         CrawlOrder order = handler.getOrder();
         ComplexType httpHeaders = (ComplexType) order
                 .getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
@@ -91,8 +99,8 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
 
         // Write the per host file
         handler.writeSettingsObject(perHost);
-        assertTrue("Per host file was not written", handler.scopeToFile(
-                perHost.getScope()).exists());
+        assertTrue("Per host file was not written", handler.settingsToFilename(
+                perHost).exists());
 
         // Create a new handler for testing that changes was written to disk
         XMLSettingsHandler newHandler = new XMLSettingsHandler(getOrderFile());
@@ -139,11 +147,11 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         // Check if new files where created.
         assertTrue("Order file was not written", newOrderFile.exists());
 
-        assertTrue("New settings dir not set", handler.scopeToFile(
-                getPerHostSettings().getScope()).getAbsolutePath().matches(
+        assertTrue("New settings dir not set", handler.settingsToFilename(
+                getPerHostSettings()).getAbsolutePath().matches(
                 ".*" + newSettingsDir + ".*"));
-        assertTrue("Per host file was not written", handler.scopeToFile(
-                getPerHostSettings().getScope()).exists());
+        assertTrue("Per host file was not written", handler.settingsToFilename(
+                getPerHostSettings()).exists());
     }
 
     public void testGetSettings() {
@@ -169,10 +177,79 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
 
     public void testDeleteSettingsObject() {
         XMLSettingsHandler handler = getSettingsHandler();
-        File file = handler.scopeToFile(getPerHostSettings().getScope());
+        File file = handler.settingsToFilename(getPerHostSettings());
         handler.writeSettingsObject(getPerHostSettings());
         assertTrue("Per host file was not written", file.exists());
         handler.deleteSettingsObject(getPerHostSettings());
         assertFalse("Per host file was not deleted", file.exists());
+    }
+
+    public void testReadWriteRefinements() throws ParseException,
+            InvalidAttributeValueException, AttributeNotFoundException,
+            MBeanException, ReflectionException, URISyntaxException {
+        XMLSettingsHandler handler = getSettingsHandler();
+        CrawlerSettings global = getGlobalSettings();
+        CrawlerSettings per = getPerHostSettings();
+        ComplexType headers = (ComplexType) handler.getOrder().getAttribute(
+                CrawlOrder.ATTR_HTTP_HEADERS);
+
+        String globalFrom = (String) headers.getAttribute(CrawlOrder.ATTR_FROM);
+        String refinedGlobalFrom = "refined@global.address";
+        String refinedPerFrom = "refined@per.address";
+
+        // Create a refinement on the global level
+        Refinement globalRefinement = new Refinement(global, "test",
+                "Refinement test");
+        Criteria timespanCriteria = new TimespanCriteria("2300", "2300");
+        globalRefinement.addCriteria(timespanCriteria);
+        Criteria regexpCriteria = new RegularExpressionCriteria(".*www.*");
+        globalRefinement.addCriteria(regexpCriteria);
+        handler.writeSettingsObject(global);
+
+        // Override an attribute on the global refinement
+        CrawlerSettings globalRefinementSetting = globalRefinement
+                .getSettings();
+        headers.setAttribute(globalRefinementSetting, new Attribute(
+                CrawlOrder.ATTR_FROM, refinedGlobalFrom));
+        handler.writeSettingsObject(globalRefinementSetting);
+
+        // Create a refinement on a per level
+        Refinement perRefinement = new Refinement(per, "test2",
+                "Refinement test2");
+        Criteria portCriteria = new PortnumberCriteria("10");
+        perRefinement.addCriteria(portCriteria);
+        handler.writeSettingsObject(per);
+
+        // Override an attribute on the per refinement
+        CrawlerSettings perRefinementSetting = perRefinement.getSettings();
+        headers.setAttribute(perRefinementSetting, new Attribute(
+                CrawlOrder.ATTR_FROM, refinedPerFrom));
+        handler.writeSettingsObject(perRefinementSetting);
+
+        // Create a new handler for testing that changes was written to disk
+        XMLSettingsHandler newHandler = new XMLSettingsHandler(getOrderFile());
+        newHandler.initialize();
+        CrawlerSettings newGlobal = newHandler.getSettingsObject(null);
+        assertNotNull("Global scope could not be read", newGlobal);
+        CrawlerSettings newPer = newHandler.getSettingsObject(per.getScope());
+        assertNotNull("Per host scope could not be read", newPer);
+
+        ComplexType newHeaders = (ComplexType) newHandler.getOrder()
+                .getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
+        assertNotNull(newHeaders);
+
+        String newFrom1 = (String) newHeaders.getAttribute(
+                CrawlOrder.ATTR_FROM, getMatchDomainURI());
+        String newFrom2 = (String) newHeaders.getAttribute(
+                CrawlOrder.ATTR_FROM, getMatchHostURI());
+        CrawlURI matchHostAndPortURI = new CrawlURI(UURI
+                .createUURI("http://www.archive.org:10/index.html"));
+        String newFrom3 = (String) newHeaders.getAttribute(
+                CrawlOrder.ATTR_FROM, matchHostAndPortURI);
+
+        //Check that we got what we expected
+        assertEquals(globalFrom, newFrom1);
+        assertEquals(refinedGlobalFrom, newFrom2);
+        assertEquals(refinedPerFrom, newFrom3);
     }
 }

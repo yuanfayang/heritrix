@@ -24,10 +24,16 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.refinements.Refinement;
 
 /**
  * Class representing a settings file.
@@ -65,6 +71,12 @@ public class CrawlerSettings {
 
     /** Scope for this collection of settings (hostname) */
     private final String scope;
+    
+    /** List of refinements applied to this settings object */
+    private List refinements;
+    
+    /** True if this settings object is a refinement */
+    private boolean isRefinement = false;
 
     /** Name of this collection of settings */
     private String name = "";
@@ -75,7 +87,8 @@ public class CrawlerSettings {
     /** Time when this collection was last saved to persistent storage */
     private Date lastSaved = null;
 
-    /** Constructs a new CrawlerSettings object.
+    /**
+     * Constructs a new CrawlerSettings object.
      *
      * Application code should not call the constructor directly, but use the
      * methods in SettingsHandler instead.
@@ -89,6 +102,29 @@ public class CrawlerSettings {
     public CrawlerSettings(SettingsHandler handler, String scope) {
         this.settingsHandler = handler;
         this.scope = scope;
+    }
+
+    /**
+    * Constructs a new CrawlerSettings object which is a refinement of another
+    * settings object.
+    *
+    * Application code should not call the constructor directly, but use the
+    * methods in SettingsHandler instead.
+    *
+    * @param handler The SettingsHandler this object belongs to.
+    * @param scope The scope of this settings object (ie. host or domain).
+    * @param refinement the name or reference to the refinement.
+    *
+    * @see SettingsHandler#getSettings(String)
+    * @see SettingsHandler#getSettingsObject(String)
+    */
+    public CrawlerSettings(SettingsHandler handler, String scope,
+            String refinement) {
+        this(handler, scope);
+        if (refinement != null && !refinement.equals("")) {
+            this.isRefinement = true;
+            this.name = refinement;
+        }
     }
 
     /** Get the description of this CrawlerSettings object.
@@ -196,10 +232,27 @@ public class CrawlerSettings {
      * @return the parent of this CrawlerSettings object.
      */
     public CrawlerSettings getParent() {
-        if (scope == null || scope.equals("")) {
-            return null;
+        return getParent(null);
+    }
+    
+    /**
+     * Get the parent of this CrawlerSettings object.
+     * This method passes around a URI so that refinements could be checked.
+     *   
+     * @param uri The uri for which parents of this object shoul be found.
+     * @return the parent of this CrawlerSettings object.
+     */
+    public CrawlerSettings getParent(UURI uri) {
+        if (isRefinement()) {
+            return settingsHandler.getSettingsForHost(scope);
+        } else {
+            if (scope == null || scope.equals("")) {
+                return null;
+            } else {
+                return settingsHandler.getSettings(settingsHandler
+                        .getParentScope(scope), uri);
+            }
         }
-        return settingsHandler.getSettings(settingsHandler.getParentScope(scope));
     }
 
     /** Get the SettingHandler this CrawlerSettings object belongs to.
@@ -208,5 +261,60 @@ public class CrawlerSettings {
      */
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
+    }
+    
+    /**
+     * Get an <code>ListIterator</code> over the refinements for this
+     * settings object.
+     * 
+     * @return Returns an iterator over the refinements.
+     */
+    public ListIterator refinementsIterator() {
+        if (hasRefinements()) {
+            return refinements.listIterator();
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Add a refinement to this settings object.
+     * 
+     * @param refinements The refinements to set.
+     */
+    public void addRefinement(Refinement refinement) {
+        if (refinements == null) {
+            refinements = new ArrayList();
+        }
+        this.refinements.remove(refinement);
+        this.refinements.add(refinement);
+    }
+    
+    /**
+     * Returns true if this settings object has refinements attached to it.
+     * 
+     * @return true if this settings object has refinements attached to it.
+     */
+    public boolean hasRefinements() {
+        return refinements != null;
+    }
+    
+    /**
+     * Returns true if this settings object is a refinement.
+     * 
+     * @return true if this settings object is a refinement.
+     */
+    public boolean isRefinement() {
+        return isRefinement;
+    }
+    
+    /**
+     * Mark this settings object as an refinement.
+     * 
+     * @param isRefinement Set this to true if this settings object is a
+     *            refinement.
+     */
+    public void setRefinement(boolean isRefinement) {
+        this.isRefinement = isRefinement;
     }
 }

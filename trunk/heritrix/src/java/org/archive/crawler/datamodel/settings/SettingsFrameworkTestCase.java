@@ -91,7 +91,7 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
                 "unittest (+http://testing.one.two.three)"));
         httpHeaders.setAttribute(globalSettings,
                 new Attribute(CrawlOrder.ATTR_FROM,
-                    "unittestingtesting@one.two.three)"));
+                    "unittestingtesting@one.two.three"));
     }
 
     /*

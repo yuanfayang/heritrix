@@ -385,6 +385,14 @@ public class UURI implements Serializable {
     public String getScheme() {
         return uri.getScheme();
     }
+    
+    /** Return the portnumber or -1 if unknown.
+     * 
+     * @return the portnumber or -1 if unknown.
+     */
+    public int getPort() {
+        return uri.getPort();
+    }
 
     /**
      * @return The uri path.
