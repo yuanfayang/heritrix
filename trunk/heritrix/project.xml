@@ -223,7 +223,6 @@
     -->
     <dependencies>
         <dependency>
-        <dependency>
             <id>commons-httpclient</id>
             <version>2.0-final</version>
             <url>http://jakarta.apache.org/commons/httpclient/</url>
