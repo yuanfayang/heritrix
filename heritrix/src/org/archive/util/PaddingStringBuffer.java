@@ -33,6 +33,17 @@ public class PaddingStringBuffer {
 		buffer += string;
 		return this; 
 	}
+	
+	/**
+	 * Append, right-aligned to the given column
+	 * 
+	 * @param string
+	 */
+	public PaddingStringBuffer raAppend(int col, String string) {
+		padTo(col-string.length());
+		buffer += string;
+		return this; 
+	}
 
 	/**
 	 * @param i
@@ -45,20 +56,40 @@ public class PaddingStringBuffer {
 	}
 
 	/**
-	 * @param discoveredPages
+	 * @param i
 	 */
 	public PaddingStringBuffer append(int i) {
 		buffer += i;
 		return this; 
 	}
+	
 
 	/**
-	 * @param discoveredPages
+	 * @param col
+	 * @param i
+	 * @return
+	 */
+	public PaddingStringBuffer raAppend(int col, int i) {
+		return raAppend(col,Integer.toString(i)); 
+	}
+
+	/**
+	 * @param i
 	 */
 	public PaddingStringBuffer append(long lo) {
 		buffer += lo;
 		return this; 
 	}
+	
+	/**
+	 * @param col
+	 * @param lo
+	 * @return
+	 */
+	public PaddingStringBuffer raAppend(int col, long lo) {
+		return raAppend(col,Long.toString(lo)); 
+	}
+
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

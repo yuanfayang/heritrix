@@ -23,7 +23,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.io.CrawlErrorFormatter;
+import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
@@ -201,7 +201,7 @@ public class CrawlController {
 		uriProcessing.setUseParentHandlers(false);
 		
 		FileHandler cerr = new FileHandler(diskPath+LOGNAME_RUNTIME_ERRORS+".log");
-		cerr.setFormatter(new CrawlErrorFormatter());
+		cerr.setFormatter(new RuntimeErrorFormatter());
 		crawlErrors.addHandler(cerr);
 		crawlErrors.setUseParentHandlers(false);
 		
