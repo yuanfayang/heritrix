@@ -61,10 +61,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
 	 +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
 	 +"|(codebase)|((?:classid)|(?:data))|(archive)"
-	 +"|(\\w+))"
+	 +"|([-\\w]+))"
 	 +"\\s*=\\s*"
-	 +"(?:(?:\"(.+?)(?:\"|$))"
-	 +"|(?:'(.+?)(?:'|$))"
+	 +"(?:(?:\"(.*?)(?:\"|$))"
+	 +"|(?:'(.*?)(?:'|$))"
 	 +"|(\\S+))");
 	// groups:
 	// 1: attribute name
@@ -154,7 +154,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processEmbed(curi,res);
 			}
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
+			System.out.println("BAD CODEBASE "+codebase+" at "+curi);
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
@@ -232,19 +232,18 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			if (tags.start(6) > 0) {
 				// comment match
 				// for now do nothing
+			} else if (tags.start(5) > 0) {
+			// <meta> match
+				if (processMeta(curi,cs.subSequence(tags.start(3), tags.end(3)))) {
+					// meta tag included NOFOLLOW; abort processing
+					return;
+				}
 			} else if (tags.start(3) > 0) {
 				// generic <whatever> match
 				processGeneralTag(
 					curi,
 					cs.subSequence(tags.start(4),tags.end(4)),
 					cs.subSequence(tags.start(3),tags.end(3)));
-			}  else if (tags.start(5) > 0) {
-				// <meta> match
-				if (processMeta(curi,
-					cs.subSequence(tags.start(2), tags.end(2)))) {
-					// meta tag included NOFOLLOW; abort processing
-					return;
-				}
 			} else if (tags.start(1) > 0) {
 				// <script> match
 				processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
@@ -296,14 +295,14 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			}
 			// TODO: handle other stuff
 		}
-		if("robots".equals(name)) {
+		if("robots".equalsIgnoreCase(name)) {
 			curi.getAList().putString(A_META_ROBOTS,content);
 			if(content.indexOf("nofollow")>0) {
 				// if 'nofollow' is specified, end html extraction
 				return true;
 			}
-		} else if ("refresh".equals(httpEquiv)) {
-			curi.addLink(content.substring(content.indexOf(";")+1));
+		} else if ("refresh".equalsIgnoreCase(httpEquiv)) {
+			curi.addLink(content.substring(content.indexOf("=")+1));
 		}
 		return false;
 	}
