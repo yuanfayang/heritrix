@@ -1,4 +1,4 @@
-# http://www.yahoo.com
+http://www.yahoo.com
 # http://www.google.com/dirhp
 # http://www.lycos.com
 # http://www.msn.com
@@ -13,7 +13,9 @@
 # http://dmoz.org
 
 # test garden
-http://crawl08.archive.org/
+# http://crawl08.archive.org/
 
 # chunked
 # http://enterprise.lycos.com
+
+#http://java.sun.com
