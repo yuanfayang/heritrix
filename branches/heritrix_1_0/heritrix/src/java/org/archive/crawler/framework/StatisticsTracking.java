@@ -72,4 +72,9 @@ public interface StatisticsTracking extends Runnable
      * @return The length of time - in msec - that this crawl has been running.
      */
     public long crawlDuration();
+    
+    /**
+     * Start the tracker's crawl timing. 
+     */
+    public void noteStart();
 }
