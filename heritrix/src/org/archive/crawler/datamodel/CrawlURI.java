@@ -7,10 +7,13 @@
 package org.archive.crawler.datamodel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import org.archive.crawler.basic.FetcherDNS;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.URIStoreable;
+import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
 
 import st.ata.util.AList;
@@ -30,11 +33,15 @@ import st.ata.util.HashtableAList;
  * 
  * @author Gordon Mohr
  */
-public class CrawlURI
+public class CrawlURI extends CandidateURI
 	implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
-	// core identity: the "usable URI" to be crawled
-	private UURI uuri; 
-
+	// INHERITED FROM CANDIDATEURI
+	// uuri: core identity: the "usable URI" to be crawled
+	// isSeed
+	// inScopeVersion
+	// pathFromSeed
+	// via 
+	
 	// Scheduler lifecycle info
 	private Object state;   // state within scheduling/store/selector
 	private long wakeTime; // if "snoozed", when this CrawlURI may awake
@@ -51,32 +58,31 @@ public class CrawlURI
 	private AList alist = new HashtableAList();
 
 	// dynamic context
-	private CrawlURI via; // curi that led to this (lowest hops from seed)
 	private int linkHopCount = -1; // from seeds
 	private int embedHopCount = -1; // from a sure link; reset upon any link traversal
 
 ////////////////////////////////////////////////////////////////////
 	CrawlServer server;
 
+	private long contentSize = -1;
+	private long contentLength = -1;
 	
-	
-	private int contentSize = -1;
-	
-
 	/**
 	 * @param uuri
 	 */
-	public CrawlURI(UURI u) {
-		setUuri(u);
-	}
-		
-	/**
-	 * @param u
-	 */
-	private void setUuri(UURI u) {
-		uuri=u;
+	public CrawlURI(UURI uuri) {
+		super(uuri);
 	}
 
+		/**
+	 * @param caUri
+	 */
+	public CrawlURI(CandidateURI caUri) {
+		super(caUri.getUURI());
+		setIsSeed(caUri.getIsSeed());
+		setPathFromSeed(caUri.getPathFromSeed());
+		setVia(caUri.getVia());
+	}
 
 	/**
 	 * Set the time this curi is considered expired (and thus must be refetched)
@@ -123,24 +129,6 @@ public class CrawlURI
 	public int incrementFetchAttempts(){
 		return fetchAttempts++;
 	}
-	
-	/**
-	 * @param uriString
-	 */
-	public CrawlURI(String s){
-		try{
-			setUuri(UURI.createUURI(s));
-		}catch(Exception e){
-			setUuri(null);
-		}
-	}
-	
-	/**
-	 * @return
-	 */
-	public UURI getUURI() {
-		return uuri;
-	}
 
 	/** 
 	  *   
@@ -169,7 +157,7 @@ public class CrawlURI
 		
 		String scheme = getUURI().getUri().getScheme();
 		if (scheme.equals("dns")){
-			return FetcherDNS.parseTargetDomain(this);
+			return FetchDNS.parseTargetDomain(this);
 		}
 		String host = getUURI().getUri().getHost();
 		if (host == null) {
@@ -226,39 +214,25 @@ public class CrawlURI
 		this.server = host;
 	}
 
-	/**
-	 * 
-	 */
-	public void cancelFurtherProcessing() {
-		nextProcessor = null;
-	}
+//	/**
+//	 * 
+//	 */
+//	public void cancelFurtherProcessing() {
+//		nextProcessor = null;
+//	}
 
 	/**
 	 * @param string
 	 */
 	public void setPrerequisiteUri(String string) {
-		alist.putString("prerequisite-uri",string);
-	}
-
-	/**
-	 * @param object
-	 */
-	public void setDelayFactor(int f) {
-		alist.putInt(A_DELAY_FACTOR,f);
-	}
-	
-	/**
-	 * @param object
-	 */
-	public void setMinimumDelay(int m) {
-		alist.putInt(A_MINIMUM_DELAY,m);
+		alist.putString(A_PREREQUISITE_URI,string);
 	}
 
 	/**
 	 * 
 	 */
 	public String getPrerequisiteUri() {
-		return alist.getString("prerequisite-uri");
+		return alist.getString(A_PREREQUISITE_URI);
 	}
 
 	/* (non-Javadoc)
@@ -329,25 +303,25 @@ public class CrawlURI
 	 * @param value
 	 */
 	public void addEmbed(String u) {
-		addToNamedList(A_HTML_EMBEDS, u);
+		addToNamedSet(A_HTML_EMBEDS, u);
 	}
 
-	private void addToNamedList(String key, Object o) {
-		List l;
+	private void addToNamedSet(String key, Object o) {
+		Set s;
 		if(!alist.containsKey(key)) {
-			l = new ArrayList();
-			alist.putObject(key, l);
+			s = new HashSet();
+			alist.putObject(key, s);
 		} else {
-			l = (List)alist.getObject(key);
+			s = (Set)alist.getObject(key);
 		}
-		l.add(o);
+		s.add(o);
 	}
 
 	/**
 	 * @param value
 	 */
 	public void addLink(String u) {
-		addToNamedList(A_HTML_LINKS, u);
+		addToNamedSet(A_HTML_LINKS, u);
 	}
 
 	/**
@@ -360,17 +334,12 @@ public class CrawlURI
 		setDontRetryBefore(-1);
 	}
 	
-	/** Set the size of this URI's content in bytes for reporting */
-	public void setContentSize(int size){
-		contentSize = size;
-	}
-	
 	/** Get the size in bytes of this URI's content.  This may be set
 	 *  at any time by any class and therefor should not be trusted.  Primarily
 	 *  it exists to ease the calculation of statistics.
 	 * @return contentSize
 	 */
-	public int getContentSize(){
+	public long getContentSize(){
 		return contentSize;
 	}
 	
@@ -379,52 +348,59 @@ public class CrawlURI
 	}
 
 	/**
-	 * Make note of a non-fatal error which should be logged
-	 * somewhere, but allows processing to continue.
+	 * Make note of a non-fatal error. local to a particular Processor,
+	 * which should be logged somewhere, but allows processing to continue.
 	 * 
 	 * @param string
 	 * @param e
 	 */
 	public void addLocalizedError(String processorName, Exception ex, String message) {
-		// TODO implement
-		System.out.println("CrawlURI.addLocalizedError() says: \"Implement me!\"");
+		List localizedErrors;
+		if(alist.containsKey(A_LOCALIZED_ERRORS)) {
+			localizedErrors = (List) alist.getObject(A_LOCALIZED_ERRORS);
+		} else {
+			localizedErrors = new ArrayList();
+			alist.putObject(A_LOCALIZED_ERRORS,localizedErrors);
+		}
+		
+		localizedErrors.add(new LocalizedError(processorName, ex, message));
 	}
 
-	/**
-	 * @param sourceCuri
-	 */
-	public void setViaLinkFrom(CrawlURI sourceCuri) {
-		via = sourceCuri;
-		// reset embedCount -- but only back to 1 if >0, so special embed handling still applies
-		embedHopCount = (embedHopCount > 0) ? 1 : 0;
-		int candidateLinkHopCount = sourceCuri.getLinkHopCount()+1;
-		if (linkHopCount == -1) {
-			linkHopCount = candidateLinkHopCount;
-			return;
-		}
-		if (linkHopCount > candidateLinkHopCount) {
-			linkHopCount = candidateLinkHopCount; 
-		}
-	}
+//	/**
+//	 * @param sourceCuri
+//	 */
+//	public void setViaLinkFrom(CrawlURI sourceCuri) {
+//		via = sourceCuri;
+//		// reset embedCount -- but only back to 1 if >0, so special embed handling still applies
+//		embedHopCount = (embedHopCount > 0) ? 1 : 0;
+//		int candidateLinkHopCount = sourceCuri.getLinkHopCount()+1;
+//		if (linkHopCount == -1) {
+//			linkHopCount = candidateLinkHopCount;
+//			return;
+//		}
+//		if (linkHopCount > candidateLinkHopCount) {
+//			linkHopCount = candidateLinkHopCount; 
+//		}
+//	}
 	
-	/**
-	 * @param sourceCuri
-	 */
-	public void setViaEmbedFrom(CrawlURI sourceCuri) {
-		via = sourceCuri;
-		int candidateLinkHopCount = sourceCuri.getLinkHopCount();
-		if (linkHopCount == -1) {
-			linkHopCount = candidateLinkHopCount;
-		} else if (linkHopCount > candidateLinkHopCount) {
-			linkHopCount = candidateLinkHopCount; 
-		}
-		int candidateEmbedHopCount = sourceCuri.getEmbedHopCount()+1;
-		if (embedHopCount == -1) {
-			embedHopCount = candidateEmbedHopCount;
-		} else if (embedHopCount > candidateEmbedHopCount) {
-			embedHopCount = candidateEmbedHopCount; 
-		}
-	}
+//	/**
+//	 * @param sourceCuri
+//	 */
+//	public void setViaEmbedFrom(CrawlURI sourceCuri) {
+//		via = sourceCuri;
+//		int candidateLinkHopCount = sourceCuri.getLinkHopCount();
+//		if (linkHopCount == -1) {
+//			linkHopCount = candidateLinkHopCount;
+//		} else if (linkHopCount > candidateLinkHopCount) {
+//			linkHopCount = candidateLinkHopCount; 
+//		}
+//		int candidateEmbedHopCount = sourceCuri.getEmbedHopCount()+1;
+//		if (embedHopCount == -1) {
+//			embedHopCount = candidateEmbedHopCount;
+//		} else if (embedHopCount > candidateEmbedHopCount) {
+//			embedHopCount = candidateEmbedHopCount; 
+//		}
+//	}
 
 	
 /*	public boolean isFubared(){
@@ -454,4 +430,42 @@ public class CrawlURI
 		embedHopCount = 0;
 	}
 
+	/**
+	 * @param processor
+	 */
+	public void skipToProcessor(Processor processor) {
+		setNextProcessor(processor);
+	}
+
+	/**
+	 * For completed HTTP transactions, the length of the content-body
+	 * (as given by the header or calculated)
+	 * 
+	 * @return
+	 */
+	public long getContentLength() {
+		if (contentLength<0) {
+			GetMethod get = (GetMethod) getAList().getObject(A_HTTP_TRANSACTION);
+			//if (get.getResponseHeader("Content-Length")!=null) {
+			//	contentLength = Integer.parseInt(get.getResponseHeader("Content-Length").getValue());
+			//} else {
+				contentLength = get.getHttpRecorder().getResponseContentLength();
+			//}
+		}
+		return contentLength;
+	}
+
+	/**
+	 * @param l
+	 */
+	public void setContentSize(long l) {
+		contentSize = l;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void addSpeculativeEmbed(String string) {
+		addToNamedSet(A_HTML_SPECULATIVE_EMBEDS,string);
+	}
 }

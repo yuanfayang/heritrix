@@ -6,12 +6,13 @@
  */
 package org.archive.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.archive.crawler.io.RecordingInputStream;
-import org.archive.crawler.io.RecordingOutputStream;
+import org.archive.io.RecordingInputStream;
+import org.archive.io.RecordingOutputStream;
 
 /**
  * Initially only supports HTTP/1.0 (one request, one response per stream)
@@ -27,10 +28,12 @@ public class HttpRecorder {
 	/**
 	 * 
 	 */
-	public HttpRecorder(String backingFilenamePrefix) {
+	public HttpRecorder(File tempDir, String backingFilenamePrefix) {
 		super();
-		ris = new RecordingInputStream(32768,backingFilenamePrefix+".ris",2^20);
-		ros = new RecordingOutputStream(2048,backingFilenamePrefix+".ros",2^12);
+		tempDir.mkdirs();
+		String tempDirPath = tempDir.getPath()+File.separatorChar;
+		ris = new RecordingInputStream(32768,tempDirPath+backingFilenamePrefix+".ris",2^20);
+		ros = new RecordingOutputStream(2048,tempDirPath+backingFilenamePrefix+".ros",2^12);
 	}
 
 	/**
@@ -54,9 +57,19 @@ public class HttpRecorder {
 	/**
 	 * 
 	 */
-	public void close() throws IOException {
-		ris.close();
-		ros.close();
+	public void close() {
+		try {
+			ris.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			ros.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	/**
@@ -71,6 +84,25 @@ public class HttpRecorder {
 	 */
 	public void markResponseBodyStart() {
 		ris.markResponseBodyStart();
+	}
+
+	/**
+	 * @return
+	 */
+	public long getResponseContentLength() {
+		return ris.getResponseContentLength();
+	}
+
+	/**
+	 * 
+	 */
+	public void closeRecorders() {
+		try {
+			ris.closeRecorder();
+			ros.closeRecorder();
+		} catch (IOException e) {
+			DevUtils.warnHandle(e,"convert to runtime exception?");
+		}
 	}
 	
 }

@@ -11,8 +11,10 @@ import java.util.Date;
 import java.io.File;
 
 /**
+ * Miscellaneous useful methods.
+ * 
+ * 
  * @author gojomo
- *
  */
 public class ArchiveUtils {
     public static SimpleDateFormat TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");	

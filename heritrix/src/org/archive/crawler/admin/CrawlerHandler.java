@@ -15,10 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.FatalConfigurationException;
-import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.util.Sorts;
 import org.archive.crawler.util.StringIntPair;
 import org.archive.crawler.util.StringIntPairComparator;
@@ -200,56 +200,56 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		//				o.getStringAt("//crawl-order/comment/")));
 		sb.append(
 			genHtmlTextField(
-				"//http-headers/User-Agent",
+				"/behavior/http-headers/@User-Agent",
 				"USER AGENT",
-				o.getBehavior().getUserAgent()));
+				o.getUserAgent()));
 		sb.append(
 			genHtmlTextField(
-				"//http-headers/From",
+				"/behavior/http-headers/@From",
 				" FROM",
-				o.getBehavior().getFrom()));
+				o.getFrom()));
 		sb.append(
 			genHtmlTextField(
-				"//limits/max-toe-threads/@value",
+				"/behavior/@max-toe-threads",
 				"MAX NUMBER OF THREADS",
-				String.valueOf(o.getBehavior().getMaxToes())));
+				String.valueOf(o.getMaxToes())));
+//		sb.append(
+//			genHtmlTextField(
+//				"//limits/max-link-depth/@value",
+//				"MAX LINK DEPTH",
+//				String.valueOf(o.getMaxLinkDepth())));
 		sb.append(
 			genHtmlTextField(
-				"//limits/max-link-depth/@value",
-				"MAX LINK DEPTH",
-				String.valueOf(o.getBehavior().getMaxLinkDepth())));
-		sb.append(
-			genHtmlTextField(
-				"/crawl-order/arc-file/@prefix",
+				"/behavior/processors/processor[Archiver]/@prefix",
 				"ARC FILE PREFIX",
-				o.getNodeAt("/crawl-order/arc-file/@prefix").getNodeValue()));
+				o.getNodeAt("/behavior/processors/processor[Archiver]/@prefix").getNodeValue()));
 		sb.append(
 			genHtmlTextField(
-				"//processors/processor/arc-files/@max-size-bytes",
+				"/behavior/processors/processor[Archiver]/@max-size-bytes",
 				"MAX ARC FILE SIZE",
 				o
-					.getNodeAt("//processors/processor/arc-files/@max-size-bytes")
+					.getNodeAt("/behavior/processors/processor[Archiver]/@max-size-bytes")
 					.getNodeValue()));
 		sb.append(
 			genHtmlTextField(
-				"//disk/@path",
+				"/behavior/@disk-path",
 				"DISK PATH",
-				o.getNodeAt("//disk/@path").getNodeValue()));
+				o.getNodeAt("/behavior/@disk-path").getNodeValue()));
 		sb.append(
 			genHtmlTextField(
-				"//processors/processor/compression/@use",
+				"/behavior/processors/processor[Archiver]/@compress",
 				"COMPRESS ARC FILES",
 				o
-					.getNodeAt("//processors/processor/compression/@use")
+					.getNodeAt("/behavior/processors/processor[Archiver]/@compress")
 					.getNodeValue()));
 
-		sb.append(
-			genHtmlTextField(
-				"//selector/seeds/@src",
-				"SEEDS FILE",
-				o.getBehavior().getStringAt("//selector/seeds/@src")));
-
-		sb.append(genHtmlTextArea("seed-urls", "", o.getBehavior().getSeeds()));
+//		sb.append(
+//			genHtmlTextField(
+//				"//selector/seeds/@src",
+//				"SEEDS FILE",
+//				o.getStringAt("//selector/seeds/@src")));
+//
+//		sb.append(genHtmlTextArea("seed-urls", "", o.getSeeds()));
 		sb.append(
 			"<INPUT type=hidden name=CrawlerAction value=2>\n<br><INPUT TYPE=submit VALUE=\"UpdateOrder\">\n</FORM>");
 		sb.append(
@@ -297,16 +297,16 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		Iterator it = req.getParameterNames().iterator();
 		String name;
 		_controller.getOrder().clearCaches();
-		_controller.getOrder().getBehavior().clearCaches();
+		_controller.getOrder().clearCaches();
 
 		while (it.hasNext()) {
 			name = it.next().toString();
 			String value = req.getParameter(name);
 			if (name.equals("seed-urls")) {
 				String[] urls = value.split("\n");
-				_controller.getOrder().getBehavior().clearSeeds();
-				for (int i = 0; i < urls.length; i++)
-					_controller.getOrder().getBehavior().addSeed(urls[i]);
+//				_controller.getOrder().clearSeeds();
+//				for (int i = 0; i < urls.length; i++)
+//					_controller.getOrder().getBehavior().addSeed(urls[i]);
 			} else {
 				if (_controller.getOrder().getNodeAt(name) != null) {
 					_controller.getOrder().getNodeAt(name).setNodeValue(value);

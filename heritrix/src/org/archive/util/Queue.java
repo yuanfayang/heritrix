@@ -1,56 +1,32 @@
 /*
- * Created on Jul 17, 2003
+ * Queue.java
+ * Created on Oct 14, 2003
  *
+ * $Header$
  */
 package org.archive.util;
 
-import java.util.LinkedList;
-import java.util.Iterator;
 
-/** Provide a simple fixed-size queue that handles ordering and
- *  makes sure it's a first-in first-out kind of thing.
- * 
- * @author Parker Thompson
+/**
+ * @author gojomo
+ *
  */
-public class Queue {
+public interface Queue {
 
-	protected int maxSize = 10;
-	protected LinkedList store = new LinkedList();
-	
-	public Queue() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-	
-	public Queue(int size){
-		maxSize = size;
-	}
-	
-	public void add(Object item){
+	/**
+	 * @param caUri
+	 */
+	void enqueue(Object o);
 
-		if(store.size() >= maxSize){
-			store.removeFirst();
-		}
-		store.addLast(item);
-	}
-	
-	public void remove(Object item){
-		store.remove(item);
-	}
-	
-	public Iterator iterator(){
-		return store.iterator();
-	}
-	
-	public Object getFirst(){
-		return store.getFirst();
-	}
-	
-	public Object getLast(){
-		return store.getLast();
-	}
-	
-	public int size(){
-		return store.size();
-	}
+	/**
+	 * @return
+	 */
+	boolean isEmpty();
+
+	/**
+	 * @return
+	 */
+	Object dequeue();
+
+	long length();
 }

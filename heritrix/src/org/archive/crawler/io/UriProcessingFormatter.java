@@ -11,12 +11,14 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.util.ArchiveUtils;
 
 /**
- * Expects parameters 
+ * Formmatter for 'crawl.log'. Expects completed CrawlURI as parameter.  
  *   
  * @author gojomo
  *
@@ -36,15 +38,24 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 		String uri = curi.getUURI().getUri().toASCIIString();
 		if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
-			// allow get to be GC'd
-			curi.getAList().remove(A_HTTP_TRANSACTION);
 				
-			if (get.getResponseHeader("Content-Length")!=null) {
-				length = get.getResponseHeader("Content-Length").getValue();
+			if(curi.getContentLength()>=0) {
+				length = Long.toString(curi.getContentLength());
+			} else if (curi.getContentSize()>0) {
+				length = Long.toString(curi.getContentSize());
 			}
+			
 			if (get.getResponseHeader("Content-Type")!=null) {
 				mime = get.getResponseHeader("Content-Type").getValue();
 			}
+		} else {
+			if (curi.getContentSize()>0) {
+				length = Long.toString(curi.getContentSize());
+ 
+			}
+			if (curi.getContentType() != null) {
+				mime = curi.getContentType();
+			} 
 		}
 		long time;
 		if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
@@ -53,9 +64,20 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			time = System.currentTimeMillis();
 		}
 		
+		Object via = curi.getVia();
+		if (via instanceof CandidateURI) {
+			via = ((CandidateURI)via).getUURI().getUri().toASCIIString();
+		}
+		if (via instanceof UURI) {
+			via = ((UURI)via).getUri().toASCIIString();
+		}
+		
+		// allow get to be GC'd
+		curi.getAList().remove(A_HTTP_TRANSACTION);
+
 		return ArchiveUtils.get17DigitDate(time)
 			+ " "
-			+ ArchiveUtils.padTo(curi.getFetchStatus(),4)
+			+ ArchiveUtils.padTo(curi.getFetchStatus(),5)
 			+ " "
 			+ ArchiveUtils.padTo(length,10)
 			+ " "
@@ -65,6 +87,11 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			+ uri
 			+ " "
 			+ mime
+			+ "\n"
+			+ "  "
+			+ curi.getPathFromSeed()
+			+ " "
+			+ via
 			+ "\n";
 	}
 

@@ -6,26 +6,24 @@
  */
 package org.archive.crawler.datamodel;
 
-import org.archive.crawler.basic.CrawlerConfigurationConstants;
-
+import java.io.File;
 import java.io.IOException;
 
-import javax.xml.transform.TransformerException;
-
-import org.apache.xpath.XPathAPI;
-import org.archive.crawler.framework.*;
+import org.archive.crawler.framework.XMLConfig;
+import org.archive.crawler.framework.exceptions.*;
 import org.w3c.dom.Document;
-
-import java.io.File;
 
 /** Read and manipulate configuration (order) file.
  */
-public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstants {
-	protected String name;
-	protected CrawlerBehavior behavior;
-	protected String outputLocation;
-	public String crawlOrderFilename;
-	//protected CrawlOrder parentConfigurationFile;
+public class CrawlOrder extends XMLConfig {
+	private static final String XP_CRAWL_ORDER_NAME = "//crawl-order/@name";
+	private static final String XP_HTTP_USER_AGENT = "//http-headers/@User-Agent";
+	private static final String XP_HTTP_FROM = "//http-headers/@From";
+	private static final String XP_MAX_TOE_THREADS = "//behavior/@max-toe-threads";
+	String caseFlattenedUserAgent;
+	String name;
+    String outputLocation;
+	String crawlOrderFilename;
 	
 	/**
 	 * @param crawlOrderFile
@@ -37,11 +35,9 @@ public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstan
 		Document doc = null;
 		
 		// try to extract a default path for later file reading
-		File f = new File(crawlOrderFile);
-		String tmpOrderFile = f.getPath();
-		int pathEnd = tmpOrderFile.lastIndexOf(File.separatorChar);
+		int pathEnd = crawlOrderFile.lastIndexOf(File.separatorChar);
 		if(pathEnd >=0){
-			pathToDoc = tmpOrderFile.substring(0,pathEnd);
+			pathToDoc = crawlOrderFile.substring(0,pathEnd);
 		}
 		
 		try{
@@ -82,7 +78,7 @@ public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstan
 			defaultFilePath = ".";
 		}
 		
-		loadParents(pathToDoc);
+		//loadParents(pathToDoc);
 		initialize();
 
 	}
@@ -91,25 +87,7 @@ public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstan
 	 *  be called on the primary (non-inherited from) crawl order.
 	 */
 	public void initialize(){
-		try {
-			name = getStringAt("//crawl-order/@name");
-
-			// ignore null pointers here, it may just mean this file inherited from
-			// another and we can find the behavior there.			
-			try {
-				behavior =
-					new CrawlerBehavior(
-						XPathAPI.selectSingleNode(xNode, "//crawler-behavior"));
-				behavior.setDefaultFileLocation(this.defaultFilePath);
-				behavior.setParentConfig(this.parentConfigurationFile);
-			} catch (NullPointerException e) {
-			}
-
-			//outputLocation = getStringAt("//disk/@path");
-
-		} catch (TransformerException e) {
-			e.printStackTrace();
-		}
+		name = getStringAt(XP_CRAWL_ORDER_NAME);
 	}
 	
 	protected void loadParents(String pathToDoc) throws InitializationException {
@@ -140,17 +118,6 @@ public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstan
 	}
 
 	/**
-	 * 
-	 */
-	public CrawlerBehavior getBehavior() {
-		// if this node doesn't have it but we have a parent conf file check that
-		if(behavior == null && parentConfigurationFile != null){ 
-			return ((CrawlOrder)parentConfigurationFile).getBehavior();
-		}
-		return behavior;
-	}
-
-	/**
 	 * @return
 	 */
 	public String getName() {
@@ -166,5 +133,36 @@ public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstan
 			return ((CrawlOrder)parentConfigurationFile).getOutputLocation();
 		}
 		return outputLocation;
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getUserAgent() {
+		if (caseFlattenedUserAgent==null) {
+			caseFlattenedUserAgent =  getStringAt(XP_HTTP_USER_AGENT).toLowerCase();
+		}
+		return caseFlattenedUserAgent;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getFrom() {
+		return getStringAt(XP_HTTP_FROM);
+	}
+	
+	/**
+		 * @return
+	*/
+	public int getMaxToes() {
+		return getIntAt(XP_MAX_TOE_THREADS);
+	}
+
+	/**
+	 * 
+	 */
+	public String getCrawlOrderFilename() {
+		return crawlOrderFilename;
 	}
 }

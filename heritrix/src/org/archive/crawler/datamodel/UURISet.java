@@ -23,12 +23,12 @@ import java.util.Set;
 public interface UURISet extends Set {
 	public long count();
 	public boolean contains(UURI u);
-	public boolean contains(CrawlURI curi);
+	public boolean contains(CandidateURI curi);
 	
 	public void add(UURI u);
 	public void remove(UURI u);
 	
-	public void add(CrawlURI curi); // convenience; only really adds the UURI
-	public void remove(CrawlURI curi); // convenience; only really adds the UURI
+	public void add(CandidateURI curi); // convenience; only really adds the UURI
+	public void remove(CandidateURI curi); // convenience; only really adds the UURI
 
 }
