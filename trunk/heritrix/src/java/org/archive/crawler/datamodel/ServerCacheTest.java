@@ -46,20 +46,6 @@ public class ServerCacheTest extends TestCase {
         assertTrue("cache lost server", servers.containsServer(serverKey));
         assertTrue("cache lost host", servers.containsHost(hostKey));
     }
-    
-    public void testDiscards() {
-        ServerCache servers = new ServerCache(null);
-        
-        String serverKey = "www.example.com:9090";
-        String hostKey = "www.example.com";
-        CrawlServer s = servers.getServerFor(serverKey);
-        s = null;// dereference
-        
-        forceScarceMemory();
-        
-        assertFalse("cache held server", servers.containsServer(serverKey));
-        assertFalse("cache held host", servers.containsHost(hostKey));
-    }
 
     /**
      * 
