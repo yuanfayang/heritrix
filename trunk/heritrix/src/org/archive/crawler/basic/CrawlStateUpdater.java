@@ -77,7 +77,7 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 		// if it's not dns make sure it's http, 'cause we don't know nuthin' else
 		}else if(curi.getUURI().getScheme().equals("http")){
 		
-			if ( curi.getUURI().getPath().equals("/robots.txt")) {
+			if ( curi.getFetchStatus()>0 && (curi.getUURI().getPath() != null) && curi.getUURI().getPath().equals("/robots.txt")) {
 				// update host with robots info
 				if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 					GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
