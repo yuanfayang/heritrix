@@ -25,8 +25,8 @@
              -->
             <maven mavenscript="/home/stack/bin/maven-1.0-rc1/bin/maven"
                 projectfile="checkout/ArchiveOpenCrawler/project.xml"
-                goal="scm:update-project clean dist site:generate
-                    site:update-sourceforge" />
+                goal="scm:update-project build-properties clean dist
+                    site:generate site:update-sourceforge" />
         </schedule>
 
         <!--Directory to write build logs to.-->
