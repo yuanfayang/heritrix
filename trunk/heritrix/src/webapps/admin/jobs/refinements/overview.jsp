@@ -6,14 +6,12 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
-<%@page import="java.util.ArrayList"%>
 <%@page import="java.util.ListIterator"%>
 <%@page import="java.util.regex.Pattern" %>
 
-<%@page import="org.archive.crawler.admin.CrawlJob"%>
 <%@page import="org.archive.crawler.datamodel.settings.CrawlerSettings"%>
 <%@page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler"%>
 <%@page import="org.archive.crawler.datamodel.settings.refinements.Refinement"%>
@@ -49,7 +47,6 @@
     } else {
         localSettings = settingsHandler.getSettingsObject(currDomain);
     }
-    
     
     // Check for actions
     String action = request.getParameter("action");
@@ -99,7 +96,8 @@
         } else if(action.equals("delete")){
             // Delete refinement.
             String reference = request.getParameter("refinement");
-            
+            localSettings.removeRefinement(reference);
+            settingsHandler.writeSettingsObject(localSettings);
         } else if(action.equals("goto")){
             // Goto another page of the job/profile settings
             if(global){
@@ -111,17 +109,6 @@
         }
     }
     
-    // Adjust display data.
-    String parentDomain = null;
-    if(currDomain==null){
-        currDomain = "";
-    } else {
-        if(currDomain.indexOf('.')==-1){
-            parentDomain = "";
-        } else {
-            parentDomain = currDomain.substring(currDomain.indexOf('.')+1);
-        }
-    }   
     String title = "Refinements";
     int tab = theJob.isProfile()?2:1;
     int jobtab = 5;
@@ -170,7 +157,7 @@
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="where" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
-        <input type="hidden" name="currDomain" value="<%=currDomain%>">
+        <input type="hidden" name="currDomain" value="<%=currDomain==null?"":currDomain%>">
         <input type="hidden" name="refinement" value="">
         <b>
             Known Refinements for '<%=global?"global settings":currDomain%>' of

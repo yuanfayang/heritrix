@@ -78,4 +78,19 @@ public class RegularExpressionCriteria implements Criteria {
     public void setRegexp(String regexp) {
         this.regexp = regexp;
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getName()
+     */
+    public String getName() {
+        return "Regular expression criteria";
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getDescription()
+     */
+    public String getDescription() {
+        return "Accept URIs that match the following regular expression: "
+            + getRegexp();
+    }
 }

@@ -41,4 +41,16 @@ public interface Criteria {
      * @return true if the uri is within the bounds.
      */
     public boolean isWithinRefinementBounds(UURI uri);
+    
+    /**
+     * Returns the name of the Criteria type.
+     * @return the name of the Criteria type
+     */
+    public String getName();
+
+    /**
+     * Returns a description of the Criteria's current settings.
+     * @return a description of the Criteria's current settings.
+     */
+    public String getDescription();
 }

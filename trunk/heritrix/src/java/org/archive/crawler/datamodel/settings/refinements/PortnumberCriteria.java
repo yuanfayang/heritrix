@@ -89,4 +89,18 @@ public class PortnumberCriteria implements Criteria {
     public void setPortNumber(String portNumber) {
         this.portNumber = Integer.parseInt(portNumber);
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getName()
+     */
+    public String getName() {
+        return "Port number criteria";
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getDescription()
+     */
+    public String getDescription() {
+        return "Accept URIs on port " + getPortNumber();
+    }
 }
