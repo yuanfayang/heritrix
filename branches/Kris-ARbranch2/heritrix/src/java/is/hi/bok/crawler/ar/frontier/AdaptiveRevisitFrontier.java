@@ -416,12 +416,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 CrawlURI.fetchStatusCodesToString(curi.getFetchStatus()));
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
-        try {
-            innerFinished(curi);
-        } finally {
-            // This method cleans out all curi state.
-            curi.processingCleanup();
-        }
+
+        innerFinished(curi);
     }
     
     /**
@@ -441,7 +437,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
             }
         }
         a.remove(A_ANNOTATIONS);
-        curi.resetFetchAttempts();
+        curi.processingCleanup();
     }
     
     protected synchronized void innerFinished(CrawlURI curi) {
