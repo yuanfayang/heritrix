@@ -68,7 +68,7 @@ public class SimpleHttpServer
      * Looks at system properties to see if default has been overridden.  This
      * method is used by SimpleHandler also.
      * 
-     * @ return Return admin webapp path (Path returned has a trailing '/').
+     * @return Return admin webapp path (Path returned has a trailing '/').
      */
     protected static String getAdminWebappPath()
     {
