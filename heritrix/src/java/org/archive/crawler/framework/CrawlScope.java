@@ -73,7 +73,7 @@ public class CrawlScope extends Filter {
 
     // a monotonically increasing version number, for scopes that may change
     int version = 0;
-    private List seeds;
+    private List seeds = null;
     private OrFilter excludeFilter;
 
     /**
@@ -81,13 +81,16 @@ public class CrawlScope extends Filter {
      */
     public CrawlScope(String name) {
         super(name, "Crawl scope");
-        addElementToDefinition(new SimpleType(ATTR_SEEDS, "File from which to extract seeds", "seeds.txt"));
+        addElementToDefinition(new SimpleType(ATTR_SEEDS,
+                "File from which to extract seeds", "seeds.txt"));
         addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
                 "Max link hops to include", new Integer(25)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
-                "Max transitive hops (embeds, referrals, preconditions) to include", new Integer(5)));
-        excludeFilter = (OrFilter) addElementToDefinition(
-                new OrFilter(ATTR_EXCLUDE_FILTER));
+        addElementToDefinition(new SimpleType(
+                ATTR_MAX_TRANS_HOPS,
+                "Max transitive hops (embeds, referrals, preconditions) to include",
+                new Integer(5)));
+        excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
+                ATTR_EXCLUDE_FILTER));
     }
 
     public CrawlScope() {
@@ -110,6 +113,16 @@ public class CrawlScope extends Filter {
         return "CrawlScope<" + getName() + ">";
     }
 
+    public void refreshSeedsIteratorCache() {
+        // seeds should be in memory for scope tests
+        seeds = null;
+        Iterator iter = getSeedsIterator();
+        seeds = new ArrayList();
+        while (iter.hasNext()) {
+            seeds.add(iter.next());
+        }
+    }
+
     /**
      * Return an iterator of the seeds in this scope. The seed
      * input is taken from either the configuration file, or the
@@ -117,21 +130,12 @@ public class CrawlScope extends Filter {
      *
      * @return An iterator of the seeds in this scope.
      */
-    public Iterator getSeedsIterator(boolean shouldCache) {
+    public Iterator getSeedsIterator() {
         Iterator seedIterator;
 
-        if (shouldCache) {
-            // seeds should be in memory for scope tests
-            if (seeds == null) {
-                seeds = new ArrayList();
-                Iterator iter = getSeedsIterator(false);
-                while (iter.hasNext()) {
-                    seeds.add(iter.next());
-                }
-            }
+        if (seeds != null) {
             seedIterator = seeds.iterator();
         } else {
-            seeds = null;
             try {
                 String fileName = getSettingsHandler()
                 .getPathRelativeToWorkingDirectory(
@@ -155,51 +159,18 @@ public class CrawlScope extends Filter {
                 seedIterator = null;
             }
         }
+
         return seedIterator;
     }
 
-    //    /**
-    //     * Adds a seed to this scope -- and the associated crawl/frontier.
-    //     *
-    //     * TODO determine if this is appropriate place for this
-    //     * @param u
-    //     */
-    //    public void addSeed(UURI u){
-    //        seeds.add(u);
-    //        CandidateURI caUri = new CandidateURI(u);
-    //        caUri.setIsSeed(true);
-    //        controller.getFrontier().schedule(caUri);
-    //    }
-
     /**
      * Returns whether the given object (typically a CandidateURI) falls
-     * within this scope. If so, stamps the object with the current scope
-     * version, so that subsequent checks are expedited. IMPORTANT NOTE:
-     * assumes the same CandidateURI object will not be tested  against
-     * different CrawlScope objects.
+     * within this scope.
+     *
      * @param o
      * @return Whether the given object (typically a CandidateURI) falls
-     * within this scope. If so, stamps the object with the current scope.
+     * within this scope.
      */
-    public boolean accepts(Object o) {
-        // expedited check
-
-// Scope version is not updated at the moment, so skip check.
-//        if (o instanceof CandidateURI
-//            && ((CandidateURI) o).getScopeVersion() == version) {
-//            return true;
-//        }
-
-        // Check if Scope is enabled
-        boolean result = super.accepts(o);
-
-        // stamp with version for expedited check
-        if (result == true && o instanceof CandidateURI) {
-            ((CandidateURI) o).setScopeVersion(version);
-        }
-        return result;
-    }
-
     protected final boolean innerAccepts(Object o) {
         return ((isSeed(o) || focusAccepts(o)) || transitiveAccepts(o))
             && !excludeAccepts(o);
@@ -270,7 +241,8 @@ public class CrawlScope extends Filter {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        return true;
+        // The CrawlScope doesn't accept any URIs
+        return false;
     }
 
     /** Check if URI is excluded by any filters.

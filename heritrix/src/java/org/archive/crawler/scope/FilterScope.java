@@ -25,9 +25,7 @@ package org.archive.crawler.scope;
 
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
@@ -35,33 +33,33 @@ import org.archive.crawler.framework.Filter;
 /**
  * A core CrawlScope suitable for the most common
  * crawl needs.
- * 
+ *
  * Roughly, its logic is that a URI is included if:
- * 
- *    (( isSeed(uri) || focusFilter.accepts(uri) ) 
+ *
+ *    (( isSeed(uri) || focusFilter.accepts(uri) )
  *      || transitiveFilter.accepts(uri) )
  *     && ! excludeFilter.accepts(uri)
- * 
+ *
  * The focusFilter may be specified by either:
- *   - adding a 'mode' attribute to the 
+ *   - adding a 'mode' attribute to the
  *     <code>scope</code> element. mode="broad" is equivalent
  *     to no focus; modes "path", "host", and "domain"
- *     imply a SeedExtensionFilter will be used, with 
- *     the <code>scope</code> element providing its configuration 
+ *     imply a SeedExtensionFilter will be used, with
+ *     the <code>scope</code> element providing its configuration
  *   - adding a <code>focus</code> subelement
  * If unspecified, the focusFilter will default to
  * an accepts-all filter.
- * 
+ *
  * The transitiveFilter may be specified by supplying
- * a <code>transitive</code> subelement. If unspecified, a 
+ * a <code>transitive</code> subelement. If unspecified, a
  * TransclusionFilter will be used, with the <code>scope</code>
  * element providing its configuration.
- * 
+ *
  * The excludeFilter may be specified by supplying
  * a <code>exclude</code> subelement. If unspecified, a
  * accepts-none filter will be used -- meaning that
  * no URIs will pass the filter and thus be excluded.
- * 
+ *
  * @author gojomo
  *
  */
@@ -71,21 +69,19 @@ public class FilterScope extends CrawlScope {
     public static final String ATTR_FOCUS_FILTER = "focusFilter";
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
 
+    Filter focusFilters;
+    Filter transitiveFilter;
 
     public FilterScope(String name) {
-        this();
-    }
+        super(name);
 
-    public FilterScope() {
-        super();
-        
-        Filter filter = (Filter) addElementToDefinition(
-                new Filter(ATTR_FOCUS_FILTER,
-                "Specify this filter to focus the crawl."));
-        
-        filter = (Filter) addElementToDefinition(
+        focusFilters = (Filter) addElementToDefinition(
+                new OrFilter(ATTR_FOCUS_FILTER,
+                "Add filters here to focus the crawl."));
+
+        transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
-        
+
     }
 
     /**
@@ -93,15 +89,7 @@ public class FilterScope extends CrawlScope {
      * @return True if transitive filter accepts passed object.
      */
     protected boolean transitiveAccepts(Object o) {
-        CrawlerSettings settings = getSettingsFromObject(o);
-        try {
-            Filter transitiveFilter = (Filter) getAttribute(settings, ATTR_TRANSITIVE_FILTER);
-            return transitiveFilter.accepts(o);
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-            e.printStackTrace();
-            return true;
-        }
+        return transitiveFilter.accepts(o);
     }
 
     /**
@@ -109,15 +97,7 @@ public class FilterScope extends CrawlScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        CrawlerSettings settings = getSettingsFromObject(o);
-        try {
-            Filter focusFilter = (Filter) getAttribute(settings, ATTR_FOCUS_FILTER);
-            return focusFilter.accepts(o);
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-            e.printStackTrace();
-            return true;
-        }
+        return focusFilters.accepts(o);
     }
 
 }

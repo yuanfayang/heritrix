@@ -35,33 +35,33 @@ import org.archive.crawler.framework.Filter;
 /**
  * A core CrawlScope suitable for the most common
  * crawl needs.
- * 
+ *
  * Roughly, its logic is that a URI is included if:
- * 
- *    (( isSeed(uri) || focusFilter.accepts(uri) ) 
+ *
+ *    (( isSeed(uri) || focusFilter.accepts(uri) )
  *      || transitiveFilter.accepts(uri) )
  *     && ! excludeFilter.accepts(uri)
- * 
+ *
  * The focusFilter may be specified by either:
- *   - adding a 'mode' attribute to the 
+ *   - adding a 'mode' attribute to the
  *     <code>scope</code> element. mode="broad" is equivalent
  *     to no focus; modes "path", "host", and "domain"
- *     imply a SeedExtensionFilter will be used, with 
- *     the <code>scope</code> element providing its configuration 
+ *     imply a SeedExtensionFilter will be used, with
+ *     the <code>scope</code> element providing its configuration
  *   - adding a <code>focus</code> subelement
  * If unspecified, the focusFilter will default to
  * an accepts-all filter.
- * 
+ *
  * The transitiveFilter may be specified by supplying
- * a <code>transitive</code> subelement. If unspecified, a 
+ * a <code>transitive</code> subelement. If unspecified, a
  * TransclusionFilter will be used, with the <code>scope</code>
  * element providing its configuration.
- * 
+ *
  * The excludeFilter may be specified by supplying
  * a <code>exclude</code> subelement. If unspecified, a
  * accepts-none filter will be used -- meaning that
  * no URIs will pass the filter and thus be excluded.
- * 
+ *
  * @author gojomo
  *
  */
@@ -73,12 +73,8 @@ public class DomainScope extends CrawlScope {
     Filter transitiveFilter;
 
     public DomainScope(String name) {
-        this();
-    }
+        super(name);
 
-    public DomainScope() {
-        super();
-        
         transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
     }
@@ -105,7 +101,7 @@ public class DomainScope extends CrawlScope {
         if (u == null) {
             return false;
         }
-        Iterator iter = getSeedsIterator(true);
+        Iterator iter = getSeedsIterator();
         while (iter.hasNext()) {
             UURI s = (UURI) iter.next();
             if (s.getHost().equals(u.getHost())) {

@@ -43,6 +43,11 @@ import org.archive.crawler.framework.Filter;
 public class OrFilter extends Filter {
     private MapType filters;
 
+    public OrFilter(String name, String description) {
+        this(name);
+        setDescription(description);
+    }
+
     /**
      * @param name
      */

@@ -55,16 +55,16 @@ public class URIRegExpFilter extends Filter {
      * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
      */
     protected boolean innerAccepts(Object o) {
-    	String input = null;
-    	// TODO consider changing this to ask o for its matchString
-    	if(o instanceof CandidateURI) {
-    		input = ((CandidateURI)o).getURIString();
-    	} else if (o instanceof UURI ){
-    		input = ((UURI)o).getUriString();
-    	} else {
-    		//TODO handle other inputs
-    		input = o.toString();
-    	}
+        String input = null;
+        // TODO consider changing this to ask o for its matchString
+        if(o instanceof CandidateURI) {
+            input = ((CandidateURI)o).getURIString();
+        } else if (o instanceof UURI ){
+            input = ((UURI)o).getUriString();
+        } else {
+            //TODO handle other inputs
+            input = o.toString();
+        }
         CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
         try {
             return TextUtils.matches(
