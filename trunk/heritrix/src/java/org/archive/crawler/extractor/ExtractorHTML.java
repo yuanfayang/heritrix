@@ -314,7 +314,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         if(this.ignoreUnexpectedHTML) {
             try {
-                if(!expectedHTML(curi)) {
+                if(!isHtmlExpectedHere(curi)) {
                     // HTML was not expected (eg a GIF was expected) so ignore
                     // (as if a soft 404)
                     return;
@@ -421,15 +421,15 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         "|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
 
     /**
+     * Test whether this HTML is so unexpected (eg in place of a GIF URI)
+     * that it shouldn't be scanned for links. 
+     * 
      * @param curi CrawlURI to examine.
-     * @return True if HTML.
+     * @return True if HTML is acceptable/expected here
      * @throws URIException
      */
-    protected boolean expectedHTML(CrawlURI curi) throws URIException {
+    protected boolean isHtmlExpectedHere(CrawlURI curi) throws URIException {
         String path = curi.getUURI().getPath();
-        if (path == null) {
-            return false;
-        }
         int dot = path.lastIndexOf('.');
         if (dot < 0) {
             // no path extension, HTML is fine
