@@ -25,9 +25,7 @@
 
 package org.archive.util;
 
-import java.lang.ref.SoftReference;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -82,30 +80,12 @@ public class IdentityCachingMapTest extends TestCase {
         assertTrue("underlying map provides identity", value1 != value1c);
         value2 = null;
         assertTrue("cache not holding instance", map.cacheContainsKey(new Integer(2)));
-        forceScarceMemory();
+        TestUtils.forceScarceMemory();
         assertFalse("cache not cleared appropriately", map.cacheContainsKey(new Integer(2)));
         Object value3b = map.get(new Integer(3));
         assertTrue("identity not preserved", value3 == value3b);
     }
 
-    /**
-     * Temporarily exhaust memory, forcing weak/soft references to
-     * be broken. 
-     */
-    private void forceScarceMemory() {
-        // force soft references to be broken
-        LinkedList hog = new LinkedList();
-        long blocks = Runtime.getRuntime().maxMemory() / 1000000;
-        for(long l = 0; l <= blocks; l++) {
-            try {
-                hog.add(new SoftReference(new byte[1000000]));
-            } catch (OutOfMemoryError e) {
-                hog = null;
-                break;
-            }
-        }
-    }
-    
     /**
      * Works as a Map, but actually creates String return values from Integer 
      * keys. Useful for testing, because the new-instance-per-get is much 
