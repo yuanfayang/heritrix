@@ -36,6 +36,7 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
+import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 
 import st.ata.util.AList;
@@ -367,38 +368,41 @@ public class CrawlURI extends CandidateURI
      * @return Token (usually the hostname) which indicates
      * what "class" this CrawlURI should be grouped with.
      */
-    public String getClassKey() throws URIException {
+    public String getClassKey() {
         if(classKey==null) {
             classKey = calculateClassKey();
         }
         return classKey;
     }
 
-    private String calculateClassKey() throws URIException {
+    private String calculateClassKey() {
         String scheme = getUURI().getScheme();
-        if (scheme.equals("dns")){
-            if (via!=null) {
-                // special handling for DNS: treat as being
-                // of the same class as the triggering URI
-                // When a URI includes a port, this ensures
-                // the DNS lookup goes atop the host:port
-                // queue that triggered it, rather than
-                // some other host queue
-                return new UURI(flattenVia()).getAuthority();
-            } // else
-            return FetchDNS.parseTargetDomain(this);
-        }
-//        String host = getUURI().getHost();
-//        if (host == null) {
-            String authority =  getUURI().getAuthority();
-            if(authority == null) {
-                return DEFAULT_CLASS_KEY;
+        String candidate = null;
+        try {
+            if (scheme.equals("dns")){
+                if (via!=null) {
+                    // special handling for DNS: treat as being
+                    // of the same class as the triggering URI
+                    // When a URI includes a port, this ensures 
+                    // the DNS lookup goes atop the host:port
+                    // queue that triggered it, rather than 
+                    // some other host queue
+                    candidate = new UURI(flattenVia()).getAuthority();
+                } else {
+                    candidate= FetchDNS.parseTargetDomain(this);
+                }
             } else {
-                return authority;
+                candidate =  getUURI().getAuthority();
             }
-//        } else {
-//            return host;
-//        }
+            if(candidate==null || candidate.length()==0) {
+                candidate = DEFAULT_CLASS_KEY;
+            }
+        } catch (URIException e) {
+            DevUtils.warnHandle(e,"Failed to get class key: " 
+                    + e.getMessage() + " " + this);
+            candidate = DEFAULT_CLASS_KEY;
+        }
+        return candidate;
     }
 
 
@@ -570,13 +574,6 @@ public class CrawlURI extends CandidateURI
         alist = null;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#getSortFallback()
-     */
-    public String getSortFallback() {
-        return uuri.toString();
-    }
-
     private void addToNamedSet(String key, Object o) {
         Set s;
         if(!alist.containsKey(key)) {
@@ -588,11 +585,6 @@ public class CrawlURI extends CandidateURI
         s.add(o);
     }
 
-    public void reconstitute() {
-        if (alist == null) {
-            alist = new HashtableAList();
-        }
-    }
 
     /** Get the size in bytes of this URI's content.  This may be set
      *  at any time by any class and therefor should not be trusted.  Primarily
