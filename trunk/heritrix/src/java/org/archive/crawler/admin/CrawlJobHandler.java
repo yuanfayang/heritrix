@@ -669,18 +669,20 @@ public class CrawlJobHandler implements CrawlStatusListener {
         try {
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
+            // Can't load current job since it is misconfigured.
             currentJob.setStatus(CrawlJob.STATUS_MISCONFIGURED);
-            currentJob.setErrorMessage("A fatal InitializationException occured when loading job:\n"+e.getMessage());
+            currentJob.setErrorMessage(
+                "A fatal InitializationException occured when loading job:\n"
+                    + e.getMessage());
             completedCrawlJobs.add(currentJob);
             currentJob = null;
             controller = null;
-            running = false;
+            startNextJob(); //Load the next job if there is one.
             return;
         }
         crawling = true;
         controller.startCrawl();
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
-        currentJob.setRunning(true);
         currentJob.setStatisticsTracking(controller.getStatistics());
     }
 
