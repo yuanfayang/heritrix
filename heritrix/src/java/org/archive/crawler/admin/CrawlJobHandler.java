@@ -819,12 +819,4 @@ public class CrawlJobHandler implements CrawlStatusListener {
             controller.kickUpdate();
         }
     }
-    
-    /**
-     * @return Returns the completedCrawlJobs.
-     */
-    protected Vector getCompletedCrawlJobs()
-    {
-        return this.completedCrawlJobs;
-    }
 }
