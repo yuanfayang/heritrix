@@ -150,11 +150,12 @@
                 boolean alt = true;
                 int i = 0;
                 while(criteria.hasNext()){
+                    Criteria cr = (Criteria)criteria.next();
                     if(i==deleteCriteriaNumber){
                         // Need to delete this criteria
                         criteria.remove();
+                        deleteCriteriaNumber=-1;
                     } else {
-	                    Criteria cr = (Criteria)criteria.next();
             %>
 	                    <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
 	                        <td width="400">
