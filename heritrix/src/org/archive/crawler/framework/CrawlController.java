@@ -297,7 +297,10 @@ public class CrawlController extends Thread{
 			 CrawlURI curi = frontier.next(timeout);
 			 if(curi != null) {
 				curi.setNextProcessor(firstProcessor);
-			 	toePool.available().crawl(curi);
+			 	ToeThread toe = toePool.available();
+			 	if (toe !=null) {
+			 		toe.crawl(curi);
+			 	} 
 			 }
 		}
 		controlThread = null;
