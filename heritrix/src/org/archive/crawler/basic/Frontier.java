@@ -19,13 +19,13 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.datamodel.MemUURISet;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.util.DiskFPUURISet;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
 
@@ -55,7 +55,7 @@ public class Frontier
 	// HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
 	
 	// TODO update to use fingerprints only
-	UURISet alreadyIncluded = new MemUURISet();
+	UURISet alreadyIncluded;
 	
 	// every CandidateURI not yet in process or another queue; 
 	// all seeds start here; may contain duplicates
@@ -108,7 +108,8 @@ public class Frontier
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
-
+		alreadyIncluded = new DiskFPUURISet(c.getScratchDisk(),"alreadyIncluded");
+		
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();
 		while (iter.hasNext()) {
@@ -153,8 +154,10 @@ public class Frontier
 			} else {
 				if (alreadyIncluded.contains(caUri)) {
 					// TODO: potentially up-prioritize URI
+					logger.finer("Disregarding duplicate"+caUri);
 					continue;
 				}
+				logger.finer("Scheduling "+caUri);
 				alreadyIncluded.add(caUri);
 				curi = new CrawlURI(caUri);
 			}
@@ -179,8 +182,10 @@ public class Frontier
 				curi = (CrawlURI) caUri;
 			} else {
 				if (alreadyIncluded.contains(caUri)) {
+					logger.finer("Disregarding duplicate"+caUri);
 					continue;
 				}
+				logger.finer("Scheduling "+caUri);
 				alreadyIncluded.add(caUri);
 				curi = new CrawlURI(caUri);
 			}
@@ -714,6 +719,7 @@ public class Frontier
 	 * @param curi
 	 */
 	protected void forget(CrawlURI curi) {
+		logger.finer("Forgetting "+curi);
 		alreadyIncluded.remove(curi.getUURI());
 		curi.setStoreState(URIStoreable.FORGOTTEN);
 	}
