@@ -29,7 +29,7 @@
 			{
 				// Redirect to 'Administrator' start page.
 				session.setAttribute("user",user);
-				response.sendRedirect("/admin/servlet/AdminController?CrawlerAction=6");
+				response.sendRedirect("/admin/main.jsp");
 			}
 		}
 		else if(sAction.equalsIgnoreCase("logout"))
