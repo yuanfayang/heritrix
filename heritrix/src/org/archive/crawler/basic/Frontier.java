@@ -407,6 +407,7 @@ public class Frontier
 			if(curi.getFetchStatus() > 0){
 				// SUCCESS: note & log
 				successDisposition(curi);
+				return;
 			}
 			
 			// consider errors which can be retried
@@ -419,6 +420,7 @@ public class Frontier
 			// must be disregarded for any reason.			
 			if(isDisregarded(curi)){
 				disregardDisposition(curi);
+				return;
 			}
 					
 			// In that case FAILURE, note & log
