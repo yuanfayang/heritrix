@@ -827,8 +827,8 @@ public class ReplayCharSequenceFactory {
             boolean isException = false;
             try {
                 // Get a writer.  Output in our WRITE_ENCODING.
-                writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(unicode), WRITE_ENCODING));
+                writer = /*new BufferedWriter(new OutputStreamWriter(*/
+                    new FileOutputStream(unicode), WRITE_ENCODING)/*)*/;
                 assert writer != null: "Writer is null: " + name;
                 CoderResult result = null;
                 ByteBuffer bb = null;
@@ -869,7 +869,7 @@ public class ReplayCharSequenceFactory {
                 }
             
                 // REMOVE
-                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
+                // assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
                 // Drain any chars remaining in the output buffer
                 if (drainCharBuffer(cb, writer)) {
                     assert unicode.exists(): "No file: " +
