@@ -23,17 +23,21 @@ import java.util.logging.Logger;
 public class RobotsExclusionPolicy {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.RobotsExclusionPolicy");
 
-	public static RobotsExclusionPolicy ALLOWALL = new RobotsExclusionPolicy(null, null, false);
-	public static RobotsExclusionPolicy DENYALL = new RobotsExclusionPolicy(null, null, false);
+	public static RobotsExclusionPolicy ALLOWALL = new RobotsExclusionPolicy(null, null, false, null);
+	public static RobotsExclusionPolicy DENYALL = new RobotsExclusionPolicy(null, null, false, null);
 	
 	private LinkedList userAgents = null;
 	private HashMap disallows = null; // of (String -> List)
 	private boolean hasErrors = false; // flag for flawed bu workable robots.txts
+	private RobotsHonoringPolicy honoringPolicy = null;
+	
+	private String lastUsedUserAgent = null;
+	private List userAgentsToTest = null;
 	
 	/**
 	 * @param vb
 	 */
-	public static RobotsExclusionPolicy policyFor(BufferedReader reader) {
+	public static RobotsExclusionPolicy policyFor(BufferedReader reader, RobotsHonoringPolicy honoringPolicy) {
 		String read;
 		ArrayList current = null;
 		LinkedList userAgents = new LinkedList();
@@ -97,7 +101,7 @@ public class RobotsExclusionPolicy {
 		if (catchall!=null) {
 			userAgents.addLast(catchall);
 		}
-		return new RobotsExclusionPolicy(userAgents, disallows, hasErrors);
+		return new RobotsExclusionPolicy(userAgents, disallows, hasErrors, honoringPolicy);
 	}
 	
 	
@@ -106,41 +110,95 @@ public class RobotsExclusionPolicy {
 	 * @param d
 	 * @param errs
 	 */
-	public RobotsExclusionPolicy(LinkedList u, HashMap d, boolean errs) {
+	public RobotsExclusionPolicy(LinkedList u, HashMap d, boolean errs, RobotsHonoringPolicy honoringPolicy) {
 		userAgents = u;
 		disallows = d;
 		hasErrors = errs;
+		this.honoringPolicy = honoringPolicy;
+		
+		if(honoringPolicy == null) return;
+		
+		// If honoring policy is most favored user agent, all rules should be shecked
+		if(honoringPolicy.isType(RobotsHonoringPolicy.MOST_FAVORED)) {
+			userAgentsToTest = userAgents;
+
+		// IF honoring policy is most favored of set, then make a list with only the set as members
+		} else if(honoringPolicy.isType(RobotsHonoringPolicy.MOST_FAVORED_SET)) {
+			userAgentsToTest = new ArrayList();
+			Iterator userAgentSet = honoringPolicy.getUserAgents().iterator();
+			while(userAgentSet.hasNext()) {
+				String userAgent = (String) userAgentSet.next();
+				
+				Iterator iter = userAgents.iterator();
+				while ( iter.hasNext() ) {
+					String ua = (String)iter.next();
+					if (userAgent.indexOf(ua)>-1) {
+						userAgentsToTest.add(ua);
+						break;
+					}
+				}
+			}			
+		}
 	}
 
-	public boolean disallows(String path, String userAgent) {
+	public boolean disallows(CrawlURI curi, String userAgent) {
 		if (this == ALLOWALL)
 			return false;
 		if (this == DENYALL)
 			return true;
 		
-		// TODO: improve behavior in common case: where only one entry matters,
-		// because crawler user-agent never changes
-		
-		Iterator iter = userAgents.iterator();
-		while ( iter.hasNext() ) {
-			String ua = (String)iter.next();
-			if (userAgent.indexOf(ua)>-1) {
-				Iterator i2 = ((List)disallows.get( ua )).iterator();
-				while ( i2.hasNext() ) {
-					String disallowedPath = (String)i2.next();
-					if ( disallowedPath.length() == 0 ) {
-						// blanket allow
-						return false;
-					}
-					if ( path.startsWith(disallowedPath) ) {
-						return true;
-					}
+		// In the common case with policy=Classic, the useragent is remembered from uri to uri on
+		// the same server
+		if(honoringPolicy.isType(RobotsHonoringPolicy.CLASSIC) && (lastUsedUserAgent == null || !lastUsedUserAgent.equals(userAgent))) {
+			lastUsedUserAgent = null;
+			Iterator iter = userAgents.iterator();
+			while ( iter.hasNext() && lastUsedUserAgent == null) {
+				String ua = (String)iter.next();
+				if (userAgent.indexOf(ua)>-1) {
+					lastUsedUserAgent = userAgent; 
+					userAgentsToTest = new ArrayList();
+					userAgentsToTest.add(ua);
 				}
-				return false; // no disallows for this ua
 			}
 		}
-		// no matching ua
-		return false;
+		
+		boolean disallow = false;
+		boolean examined = false;
+		String ua = null;
+		
+		// Go thru list of all user agents we might act as
+		Iterator uas = userAgentsToTest.iterator();
+		while(uas.hasNext() && examined == false) {
+			disallow = false;
+			ua = (String) uas.next();
+			Iterator dis = ((List) disallows.get(ua)).iterator();
+			
+			// Check if the current user agent is allowed to crawl
+			while(dis.hasNext() && examined == false && disallow == false) {
+				String disallowedPath = (String) dis.next();
+				if(disallowedPath.length() == 0) {
+					// blanket allow
+					examined = true;
+					disallow = false;
+					break;
+				}
+				if ( curi.getUURI().getUri().getPath().startsWith(disallowedPath) ) {
+					// the user agent tested isn't allowed to get this uri
+					disallow = true;
+				}
+			}
+			if(disallow == false) {
+				// the user agent tested is allowed
+				examined = true;
+			}
+		}
+		
+		// Are we supposed to masquerade as the user agent to which restrictions
+		// we follow?
+		if(honoringPolicy.shouldMasquerade() && !ua.equals("")) {
+			curi.setUserAgent(ua);
+		} 
+		return disallow;
 	}
  
 }
