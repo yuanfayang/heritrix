@@ -148,7 +148,7 @@ sub print_response_report {
     sort { $responses->{$b}{count} <=> $responses->{$a}{count} }
     keys %$responses;
   foreach my $res (@sortedresps) {
-    print NEWRESPONSES ( "%-15s%8d\n", $res, $responses->{$res}{count} );
+    printf NEWRESPONSES ( "%-15s%8d\n", $res, $responses->{$res}{count} );
   }
 }
 
