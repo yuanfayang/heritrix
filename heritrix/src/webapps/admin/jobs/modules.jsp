@@ -6,33 +6,13 @@
 <%@ page import="org.archive.crawler.datamodel.settings.*" %>
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
 
-<%@ page import="java.io.*,java.lang.Boolean,java.util.Vector" %>
+<%@ page import="java.io.*,java.lang.Boolean,java.util.Vector,java.util.ArrayList" %>
 <%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
 
 <%
-	String[] availibleURIFrontiers = {"org.archive.crawler.basic.Frontier"};
-	String[] availibleProcessors = {"org.archive.crawler.basic.Preselector|Preselector",
-									"org.archive.crawler.basic.PreconditionEnforcer|Preprocessor",
-									"org.archive.crawler.fetcher.FetchDNS|DNS",
-									"org.archive.crawler.fetcher.FetchHTTP|HTTP",
-									"org.archive.crawler.extractor.ExtractorHTTP|ExtractorHTTP",
-									"org.archive.crawler.extractor.ExtractorHTML|ExtractorHTML",
-									"org.archive.crawler.extractor.ExtractorHTML2|ExtractorHTML2",
-									"org.archive.crawler.extractor.ExtractorCSS|ExtractorCSS",
-									"org.archive.crawler.extractor.ExtractorSWF|ExtractorSWF",
-									"org.archive.crawler.extractor.ExtractorJS|ExtractorJS",
-									"org.archive.crawler.extractor.ExtractorPDF|ExtractorPDF",
-									"org.archive.crawler.extractor.ExtractorDOC|ExtractorDOC",
-									"org.archive.crawler.extractor.ExtractorUniversal|ExtractorUniversal",
-									"org.archive.crawler.basic.ARCWriterProcessor|Archiver",
-									"org.archive.crawler.basic.CrawlStateUpdater|Updater",
-									"org.archive.crawler.basic.Postselector|Postselector"
-									};
-	String[] availibleScopes = {"org.archive.crawler.framework.CrawlScope",
-								"org.archive.crawler.scope.DomainScope",
-								"org.archive.crawler.scope.HostScope",
-								"org.archive.crawler.scope.PathScope",
-								"org.archive.crawler.scope.FilterScope"};
+	ArrayList availibleURIFrontiers = CrawlJobHandler.loadOptions("urifrontiers.options");
+	ArrayList availibleProcessors = CrawlJobHandler.loadOptions("processors.options");
+	ArrayList availibleScopes = CrawlJobHandler.loadOptions("scopes.options");
 	
 	// Get the default settings.
 	
@@ -208,12 +188,12 @@
 					<select name="cboFrontier">
 					<%
 						MBeanAttributeInfo frontier = settingsHandler.getOrder().getAttributeInfo("frontier");
-						for(int i=0 ; i<availibleURIFrontiers.length ; i++){
-							out.print("<option value='"+availibleURIFrontiers[i]+"'");
-							if(frontier.getType().equals((String)availibleURIFrontiers[i])){
+						for(int i=0 ; i<availibleURIFrontiers.size() ; i++){
+							out.print("<option value='"+availibleURIFrontiers.get(i)+"'");
+							if(frontier.getType().equals((String)availibleURIFrontiers.get(i))){
 								out.print(" selected");
 							}
-							out.println(">"+ availibleURIFrontiers[i]+"</option>");
+							out.println(">"+ availibleURIFrontiers.get(i)+"</option>");
 						}
 					%>
 					</select>
@@ -233,12 +213,12 @@
 					<select name="cboScope">
 					<%
 						MBeanAttributeInfo scope = settingsHandler.getOrder().getAttributeInfo("scope");
-						for(int i=0 ; i<availibleScopes.length ; i++){
-							out.print("<option value='"+availibleScopes[i]+"'");
-							if(scope.getType().equals((String)availibleScopes[i])){
+						for(int i=0 ; i<availibleScopes.size() ; i++){
+							out.print("<option value='"+availibleScopes.get(i)+"'");
+							if(scope.getType().equals((String)availibleScopes.get(i))){
 								out.print(" selected");
 							}
-							out.println(">"+ availibleScopes[i]+"</option>");
+							out.println(">"+ availibleScopes.get(i)+"</option>");
 						}
 					%>
 					</select>
@@ -286,7 +266,7 @@
 			}
 		
 			// Find out which aren't being used.
-			for(int i=0 ; i<availibleProcessors.length ; i++){
+			for(int i=0 ; i<availibleProcessors.size() ; i++){
 				boolean isIncluded = false;
 				
 				for(int n=0; n<p.length; n++) {
@@ -299,7 +279,7 @@
 						out.println(e1.toString() + " " + e1.getMessage());
 					}
 					String typeAndName = att.getType()+"|"+att.getName();
-					if(typeAndName.equals(availibleProcessors[i])){
+					if(typeAndName.equals(availibleProcessors.get(i))){
 						//Found it
 						isIncluded = true;
 						break;
@@ -307,7 +287,7 @@
 				}
 				if(isIncluded == false){
 					// Yep the current one is unused.
-					unusedProcessors.add(availibleProcessors[i]);
+					unusedProcessors.add(availibleProcessors.get(i));
 				}
 			}
 			if(unusedProcessors.size() > 0 ){
