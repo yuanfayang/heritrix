@@ -69,9 +69,9 @@ public class DiskIncludedFrontier extends Frontier {
         "included-uris-initfile-loadfactor";
 
     protected final static Integer DEFAULT_INCLUDED_URIS_CACHE_EXPONENT =
-        new Integer(20); // 1 million slots
-    protected final static Integer DEFAULT_INCLUDED_URIS_INITFILE_EXPONENT =
         new Integer(23); // 8 million slots
+    protected final static Integer DEFAULT_INCLUDED_URIS_INITFILE_EXPONENT =
+        new Integer(25); // 32 million slots
     protected final static Float DEFAULT_INCLUDED_URIS_CACHE_LOADFACTOR =
         new Float(0.75f);
     protected final static Float DEFAULT_INCLUDED_URIS_INITFILE_LOADFACTOR =
@@ -96,8 +96,8 @@ public class DiskIncludedFrontier extends Frontier {
                         "The size of the already included URIs list" +
                         "in-memory cache. " +
                         "The cache capacity will be 2 to the power of this " +
-                        "factor. So a value of 20 equals just over 1 million " +
-                        "'slots'. Each million slots require about 72MB of RAM.",
+                        "factor. So a value of 23 equals just over 8 million " +
+                        "'slots'. Each million slots require about 9MB of RAM.",
                         DEFAULT_INCLUDED_URIS_CACHE_EXPONENT));
         t.setExpertSetting(true);
         t.setOverrideable(false);
@@ -113,8 +113,8 @@ public class DiskIncludedFrontier extends Frontier {
                         "The inital size of the already included URIs list " +
                         "backing disk structure." +
                         "Its initial capacity will be 2 to the " +
-                        "power of this factor. So a value of 23 equals " +
-                        "about 8 million 'slots', taking up about 576MB on" +
+                        "power of this factor. So a value of 25 equals " +
+                        "about 32 million 'slots', taking up about 288MB on" +
                         "disk.",
                         DEFAULT_INCLUDED_URIS_INITFILE_EXPONENT));
         t.setExpertSetting(true);

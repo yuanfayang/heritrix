@@ -135,8 +135,8 @@ public class Frontier
 
 
     protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(500);
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000);
+    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000);
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
@@ -312,7 +312,7 @@ public class Frontier
             throws IOException, FatalConfigurationException {
         // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
-        return new FPUURISet(new MemLongFPSet(20,0.75f));
+        return new FPUURISet(new MemLongFPSet(23,0.75f));
         //return new PagedUURISet(c.getScratchDisk());
 
         // alternative: pure disk-based set
