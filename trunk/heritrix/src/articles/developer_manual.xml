@@ -304,9 +304,7 @@ ${package_declaration}</programlisting></para>
       linkend="processor_chains" />). Each chain does some processing on a
       URI. When a Processor is finished with a URI the ToeThread sends the URI
       to the next Processor until the URI has been processed by all the
-      Processors. A processor has the option of telling the URI to skip to a
-      particular chain. Also if a processor throws a fatal error, the
-      processing skipps to the Post-processing chain. </para>
+      Processors.</para>
 
       <figure id="processor_chains">
         <title>Processor chains</title>
@@ -321,90 +319,7 @@ ${package_declaration}</programlisting></para>
       <para>The task performed by the different processing chains are as
       follows:</para>
 
-      <sect3>
-        <title>Pre-fetch processing chain</title>
-
-        <para>The first chain is responsible for investigate if the URI could
-        be crawled at this point. That includes checking if all preconditions
-        are met (DNS-lookup, fetching robots.txt, authentication). It is also
-        possible to completely block the crawling of URIs that have passed
-        through the scope check.</para>
-
-        <para>In the <literal>Pre Processing</literal> chain the following two
-        processors should be included (or replacement modules that perform
-        similar operations):<itemizedlist>
-            <listitem>
-              <para><emphasis role="bold">Preselector</emphasis></para>
-
-              <para>Last check if the URI should indeed be crawled. Can for
-              example recheck scope. Useful if it has been changed after the
-              crawl starts. The scope is checked before new URIs are added to
-              the queue of URIs to be crawled. If the user changes the scope
-              limits, it will not affect already queued URIs. By rechecking
-              the scope at this point, you make sure that only URIs that are
-              within scope are being crawled.</para>
-            </listitem>
-
-            <listitem>
-              <para><emphasis
-              role="bold">PreconditionEnforcer</emphasis></para>
-
-              <para>Ensures that all preconditions for crawling a URI have
-              been met. These currently include verifying that DNS and
-              robots.txt information has been fetched for the URI.</para>
-            </listitem>
-          </itemizedlist></para>
-      </sect3>
-
-      <sect3>
-        <title>Fetch processing chain</title>
-
-        <para>The processors in this chain are responsible for getting the
-        data from the remote server. There should be one processor for each
-        protocol that Heritrix support e.g. HTTPFetcher.</para>
-      </sect3>
-
-      <sect3>
-        <title>Extractor processing chain</title>
-
-        <para>At this point the content of the document referenced by the URI
-        is available and several processors will in turn try to get new links
-        from it.</para>
-      </sect3>
-
-      <sect3>
-        <title>Write/index processing chain</title>
-
-        <para>This chain is responsible for writing the data to archive files.
-        Heritrix comes with an ARCWriterProcessor which writes to the
-        ARC-format. New processors could be written to support other formats
-        and even create indexes.</para>
-      </sect3>
-
-      <sect3>
-        <title>Post-processing chain</title>
-
-        <para>A URI should always pass through this chain even if a desition
-        not to crawl the URI was done in a processor earlier in the chain. The
-        post-processing chain must contain the following two processors (or
-        replacement modules that perform similar operations):<itemizedlist>
-            <listitem>
-              <para><emphasis role="bold">CrawlStateUpdater</emphasis></para>
-
-              <para>Updates the per-host information that may have been
-              affected by the fetch. This is currently robots and IP address
-              info.</para>
-            </listitem>
-
-            <listitem>
-              <para><emphasis role="bold">Postselector</emphasis></para>
-
-              <para>Feeds discovered URIs back to the Frontier. Without this
-              processor no discovered URI will ever be scheduled for
-              crawling.</para>
-            </listitem>
-          </itemizedlist></para>
-      </sect3>
+      <para>TODO: finish it</para>
     </sect2>
   </sect1>
 
@@ -1013,9 +928,7 @@ public class Foo extends ModuleType {
     it is one of the hardest modules to write well. You should really
     investigate if your needs could not be met by the existing Frontier. With
     these warnings in mind, let's go ahead and create a really simple
-    Frontier.</para>
-
-    <para><programlisting>package mypackage;
+    Frontier.<programlisting>package mypackage;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -1204,25 +1117,17 @@ public class MyFrontier extends ModuleType implements URIFrontier,
         return 0;
     }
 
-}</programlisting></para>
-
-    <para><note>
-        <para>To test this new Frontier you must add it to the classpath. Then
-        to let the user interface be aware of it, you must add the fully
-        qualified classname to the frontier.options file in the conf/modules
-        directory.</para>
-      </note></para>
-
-    <para>This Frontier hands out the URIs in the order they are discovered,
-    one at a time. To make sure that the web servers are not overloaded it
-    waits until a URI is finished processing before it hands out the next one.
-    It does not retry URIs for other reasons than prerequisites not met (DNS
-    lookup and fetching of robots.txt). This Frontier skips a lot of the tasks
-    a real Frontier should take care of. The first thing is that it doesn't
-    log anything. A real Frontier would log what happened to every URI. A real
-    Frontier would also be aware of the fact that Heritrix is multi threaded
-    and try to process as many URIs simultaneously as allowed by the number of
-    threads without breaking the politeness rules. Take a look at <ulink
+}</programlisting>This Frontier hands out the URIs in the order they are
+    discovered, one at a time. To make sure that the web servers are not
+    overloaded it waits until a URI is finished processing before it hands out
+    the next one. It does not retry URIs for other reasons than prerequisites
+    not met (DNS lookup and fetching of robots.txt). This Frontier skips a lot
+    of the tasks a real Frontier should take care of. The first thing is that
+    it doesn't log anything. A real Frontier would log what happened to every
+    URI. A real Frontier would also be aware of the fact that Heritrix is
+    multi threaded and try to process as many URIs simultaneously as allowed
+    by the number of threads without breaking the politeness rules. Take a
+    look at <ulink
     url="http://crawler.archive.org/xref/org/archive/crawler/frontier/Frontier.html">Frontier</ulink>
     <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/Frontier.html">(javadoc)</ulink>
@@ -1328,14 +1233,12 @@ public class MyFrontier extends ModuleType implements URIFrontier,
           url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#next(int)">next(timeout)</ulink>
           to get an explanation.</para>
         </callout>
-      </calloutlist></para>
-
-    <para>When a URI has been sent through the processor chain it ends up in
-    the PostSelector. All URIs should end up here even if the preconditions
-    where not met and the fetching, extraction and writing to the archive has
-    been postponed. The PostSelector iterates through all new URIs
-    (prerequisites and/or extracted URIs) added to the CrawlURI and, if they
-    are within the scope, adds them to Frontier by calling the <ulink
+      </calloutlist>When a URI has been sent through the processor chain it
+    ends up in the PostSelector. All URIs should end up here even if the
+    preconditions where not met and the fetching, extraction and writing to
+    the archive has been postponed. The PostSelector iterates through all new
+    URIs (prerequisites and/or extracted URIs) added to the CrawlURI and, if
+    they are within the scope, adds them to Frontier by calling the <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
     method. There is also a batch version of the schedule method for
     efficiency, see the <ulink
@@ -1374,10 +1277,9 @@ public class MyFrontier extends ModuleType implements URIFrontier,
                  id="frontierScheduleEx_txt_addIncluded">
           <para>Add the URI to the list of already scheduled URIs.</para>
         </callout>
-      </calloutlist></para>
-
-    <para>After all the processors are finished (including the PostSelector's
-    scheduling of new URIs), the ToeThread calls the Frontiers <ulink
+      </calloutlist>After the all the processors are finished (including the
+    PostSelector's scheduling of new URIs), the ToeThread calls the Frontiers
+    <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
     method submitting the CrawlURI that was sent through the
     chain.<programlisting>    public synchronized void finished(CrawlURI cURI) {
@@ -1483,35 +1385,6 @@ public class MyFrontier extends ModuleType implements URIFrontier,
           it.</para>
         </callout>
       </calloutlist></para>
-
-    <para></para>
-  </sect1>
-
-  <sect1>
-    <title>Writing a Filter</title>
-
-    <para>Filters<footnoteref linkend="footnote_scope_problems" /> are modules
-    that take a CrawlURI and determine if it matches the criteria of the
-    filter. If so it returns true, otherwise it returns false.</para>
-
-    <para>A filter could be used in several places in the crawler. Most
-    notably is the use of filters in the Scope. Aside that, filters are also
-    used in processors. Filters applied to processors always filter URIs out.
-    That is to say that any URI matching a filter on a processor will
-    effectively skip over that processor. This can be useful to disable (for
-    instance) link extraction on documents coming from a specific section of a
-    given website.</para>
-
-    <para>All Filters should subclass the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Filter.html">Filter</ulink>
-    class. Creating a filter is just a matter of implementing the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Filter.html#innerAccepts(java.lang.Object)">innerAccepts(Object)</ulink>
-    method. Because of the planned overhaul of the scopes and filters, we will
-    not provide a extensive example of how to create a filter at this point.
-    It should be pretty easy though to follow the directions in the
-    javadoc.</para>
-
-    <para></para>
   </sect1>
 
   <sect1>
@@ -1526,87 +1399,15 @@ public class MyFrontier extends ModuleType implements URIFrontier,
         with the current Scopes</ulink>. The proposed changes to the Scope
         will affect the Filters as well.</para>
       </footnote> instance defines which URIs are "in" a particular crawl. It
-    is essentially a Filter which determines (actually it subclasses the
-    <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Filter.html">Filter</ulink>
-    class), looking at the totality of information available about a
-    CandidateURI/CrawlURI instance, if that URI should be scheduled for
-    crawling. Dynamic information inherent in the discovery of the URI, such
-    as the path by which it was discovered, may be considered. Dynamic
-    information which requires the consultation of external and potentially
-    volatile information, such as current robots.txt requests and the history
-    of attempts to crawl the same URI, should NOT be considered. Those
-    potentially high-latency decisions should be made at another step.</para>
-
-    <para>As with Filters, the scope will be going through a refactoring.
-    Because of that we will only briefly describe how to create new Scopes at
-    this point.</para>
-
-    <para>All Scopes should subclass the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/CrawlScope.html">CrawlScope</ulink>
-    class. Instead of overriding the innerAccepts method as you would do if
-    you created a filter, the CrawlScope class implements this and instead
-    offers several other methods that should be overriden instead. These
-    methods acts as different type of filters that the URI will be checked
-    against. In addition the CrawlScope class offers a list of exclude filters
-    which can be set on every scope. If the URI is accepted (matches the test)
-    by any of the filters in the exclude list, it will be cinsidered being out
-    of scope. The implementation of the innerAccepts method in the CrawlSope
-    is as follows:</para>
-
-    <para><programlisting>protected final boolean innerAccepts(Object o) {
-    return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
-            transitiveAccepts(o)) &amp;&amp; !excludeAccepts(o);
-}</programlisting></para>
-
-    <para>The result is that the checked URI is considered being inside the
-    crawl's scope if it is a seed or is accepted by any of the focusAccepts,
-    additionalFocusAccepts or transitiveAccepts, unless it is matched by any
-    of the exclude filters.</para>
-
-    <para>When writing your own scope the methods you might want to override
-    are:</para>
-
-    <itemizedlist>
-      <listitem>
-        <para><ulink
-        url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/CrawlScope.html#focusAccepts(java.lang.Object)">focusAccepts(Object)</ulink>
-        the focus filter should rule things in by prima facia/regexp-pattern
-        analysis. The typical variants of the focus filter are:<itemizedlist>
-            <listitem>
-              <para>broad: accept all</para>
-            </listitem>
-
-            <listitem>
-              <para>domain: accept if on same 'domain' (for some definition)
-              as seeds</para>
-            </listitem>
-
-            <listitem>
-              <para>host: accept if on exact host as seeds</para>
-            </listitem>
-
-            <listitem>
-              <para>path: accept if on same host and a shared path-prefix as
-              seeds</para>
-            </listitem>
-          </itemizedlist>Heritrix ships with scopes that implement each of
-        these variants. An implementation of a new scope might thus be
-        subclassing one of these scopes.</para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/CrawlScope.html#additionalFocusAccepts(java.lang.Object)">additionalFocusAccepts(Object)</ulink></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/CrawlScope.html#transitiveAccepts(java.lang.Object)">transitiveAccepts(Object)</ulink>
-        the transitive filter rule extra items in by dynamic path analysis
-        (for example, off site embedded images).</para>
-      </listitem>
-    </itemizedlist>
+    is essentially a Filter which determines, looking at the totality of
+    information available about a CandidateURI/CrawlURI instance, if that URI
+    should be scheduled for crawling. Dynamic information inherent in the
+    discovery of the URI, such as the path by which it was discovered, may be
+    considered. Dynamic information which requires the consultation of
+    external and potentially volatile information, such as current robots.txt
+    requests and the history of attempts to crawl the same URI, should NOT be
+    considered. Those potentially high-latency decisions should be made at
+    another step.</para>
 
     <para></para>
   </sect1>
@@ -1614,37 +1415,315 @@ public class MyFrontier extends ModuleType implements URIFrontier,
   <sect1>
     <title id="writing_a_processor">Writing a Processor</title>
 
-    <para></para>
+    <para>All processors extend <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Processor.html">org.archive.crawler.framework.Processor</ulink>.
+    In fact that is a complete class and could be used as a valid processor,
+    only it doesn't actually do anything.</para>
+
+    <para>Extending classes need to override the <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Processor.html#innerProcess(org.archive.crawler.datamodel.CrawlURI)">innerProcess(CrawlURI)</ulink>
+    method on it to add custom behavior. This method will be invoked for each
+    URI being processed and this is therfore where a processor can affect
+    it.</para>
+
+    <para>Basically the innerProcess method uses the CrawlURI that is passed
+    to it as a parameter (see <xref linkend="editingCURI" />) and the
+    underlying HttpRecorder (managed by the ToeThread) (see <xref
+    linkend="httprecorder" />) to perform whatever actions are needed. </para>
+
+    <para>Fetchers read the CrawlURI, fetch the relevant document and write to
+    the HttpRecorder. Extractors read the HttpRecorder and add the discovered
+    URIs to the CrawlURIs list of discovered URIs etc. Not all processors need
+    to make use of the HttpRecorder.</para>
+
+    <para>Several other methods can also be optionally overriden for special
+    needs:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Processor.html#initialTasks()">initialTasks()</ulink></para>
+
+        <para>This method will be called after the crawl is set up, but before
+        any URIs are crawled.</para>
+
+        <para>Basically it is a place to write initialization code that only
+        needs to be run once at the start of a crawl.</para>
+
+        <para>Example: The <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/fetcher/FetchHTTP.html">FetchHTTP</ulink>
+        processor uses this method to load the cookies file specified in the
+        configuration among other things.</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Processor.html#innerProcess(org.archive.crawler.datamodel.CrawlURI)">finalTasks()
+        </ulink></para>
+
+        <para>This method will be called after the last URI has been processed
+        that will be processed. That is at the very end of a crawl (assuming
+        that the crawl terminates normally).</para>
+
+        <para>Basically a place to write finalization code.</para>
+
+        <para>Example: The FetchHTTP processor uses it to save cookies
+        gathered during the crawl to a specified file.</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Processor.html#innerProcess(org.archive.crawler.datamodel.CrawlURI)">report()
+        </ulink></para>
+
+        <para>This method returns a string that contains a human readable
+        report on the status and/or progress of the processor. This report is
+        accessible via the WUI and is also written to file at the end of a
+        crawl.</para>
+
+        <para>Generally processor would include the number of URIs that
+        they've handled, the number of links extracted (for link extractors)
+        or any other abitrary information of relevance to that
+        processor.</para>
+      </listitem>
+    </itemizedlist>
+
+    <sect2 id="editingCURI">
+      <title>Accessing and updating the CrawlURI</title>
+
+      <para>The CrawlURI contains quite a bit of data. For an exhaustive look
+      refer to it's <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html">Javadoc</ulink>.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getAList()">getAlist()</ulink></para>
+
+          <para>This method returns the CrawlURI's 'AList'. The AList is
+          basically a hash map. It is used instead of the Java HashMap or
+          Hashtable because it is more efficient (especially when it comes to
+          serializing it). It also has typed methods for adding and getting
+          strings, longs, dates etc.</para>
+
+          <para>Keys to values and objects placed in it are defined in the
+          <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">CoreAttributeConstants</ulink>.
+          </para>
+
+          <para>It is of course possible to add any arbitrary entry to it but
+          that requires writing both the module that sets the value and the
+          one that reads it. This may in fact be desirable in many cases, but
+          where the keys defined in CoreAttributeConstants suffice and fit we
+          strongly recommend using them.</para>
+
+          <para>The following is a quick overview of the most used
+          CoreAttributeConstants:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para><emphasis role="bold">A_CONTENT_TYPE</emphasis></para>
+
+              <para>Extracted MIME type of fetched content; should be set
+              immediately by fetching module if possible (rather than waiting
+              for a later analyzer)</para>
+            </listitem>
+
+            <listitem>
+              <para><emphasis role="bold">LINK COLLECTIONS</emphasis></para>
+
+              <para>There are several Java Collection containing URIs
+              extracted from different sources. Each link is a string
+              containing the extracted URI. The URI can be relative. The
+              Postselector will read this list and feed discovered.</para>
+
+              <note>
+                <para>CrawlURI has the convenience method <ulink
+                url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#addLinkToCollection(java.lang.String,%20java.lang.String)">addLinkToCollection(link,
+                collection)</ulink> for adding links to these collections.
+                This methods is the prefered way of adding to the
+                collections.</para>
+              </note>
+
+              <itemizedlist>
+                <listitem>
+                  <para><emphasis>A_CSS_LINKS</emphasis></para>
+
+                  <para>URIs extracted from CSS stylesheets</para>
+                </listitem>
+
+                <listitem>
+                  <para><emphasis>A_HTML_EMBEDS</emphasis></para>
+
+                  <para>URIs belived to be embeds.</para>
+                </listitem>
+
+                <listitem>
+                  <para><emphasis>A_HTML_LINKS</emphasis></para>
+
+                  <para>Regularly discovered URIs. Despite the name the links
+                  could have (in theroy) been found</para>
+                </listitem>
+
+                <listitem>
+                  <para><emphasis>A_HTML_SPECULATIVE_EMBEDS</emphasis></para>
+
+                  <para>URIs discovered via aggressive link extraction. Are
+                  treated as embeds but generally with lesser tolerance for
+                  nested embeds.</para>
+                </listitem>
+
+                <listitem>
+                  <para><emphasis>A_HTTP_HEADER_URIS</emphasis></para>
+
+                  <para>URIs discovered in the returned HTTP header. Usually
+                  only redirects.</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </itemizedlist>
+
+          <para>See the <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">Javadoc</ulink>
+          for CoreAttributeConstants for more.</para>
+
+          <note>
+            <para>The AList may be subject to API changes. See <xref
+            linkend="alist" />.</para>
+          </note>
+        </listitem>
+
+        <listitem>
+          <para><ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#setHttpRecorder(org.archive.util.HttpRecorder)">setHttpRecorder(HttpRecorder)</ulink></para>
+
+          <para>Set the HttpRecorder that contains the fetched document. This
+          is generally done by the fetching processor.</para>
+        </listitem>
+
+        <listitem>
+          <para><ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#setHttpRecorder(org.archive.util.HttpRecorder)">getHttpRecorder()</ulink></para>
+
+          <para>A method to get at the fetched document. See <xref
+          linkend="httprecorder" /> for more.</para>
+        </listitem>
+
+        <listitem>
+          <para><ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getContentSize()">getContentSize()</ulink></para>
+
+          <para>If a document has been fetched, this method will return it's
+          size in bytes.</para>
+        </listitem>
+
+        <listitem>
+          <para><ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getContentType()">getContentType()</ulink></para>
+
+          <para>The content (mime) type of the fetched document.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>For more see the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html">Javadoc</ulink>
+      for CrawlURI.</para>
+    </sect2>
+
+    <sect2 id="httprecorder">
+      <title>The HttpRecorder</title>
+
+      <para>A <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/util/HttpRecorder.html">HttpRecorder</ulink>
+      is attached to each CrawlURI that is successfully fetched by the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/fetcher/FetchHTTP.html">FetchHTTP</ulink>
+      processor. Despite it's name it could be used for non-http transactions
+      if some care is taken. This class will likely be subject to some changes
+      in the future to make it more general.</para>
+
+      <para>Basically it pairs together a RecordingInputStream and
+      RecordingOutputStream to capture exactly a single HTTP
+      transaction.</para>
+
+      <sect3>
+        <title>Writing to HttpRecorder</title>
+
+        <para>Before it can be written to a processor must get a reference to
+        the current threads HttpRecorder. This is done by invoking the
+        HttpRecorder class' static method <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/util/HttpRecorder.html#getHttpRecorder()">getHttpRecorder()</ulink>.
+        This will return the HttpRecorder for the current thread. Fetchers
+        should then add a reference to this to the CrawlURI via the method
+        discussed above.</para>
+
+        <para>Once a processor has the HttpRecorder object it can access it's
+        <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/io/RecordingInputStream.html">RecordingInputStream</ulink>
+        stream via the <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/util/HttpRecorder.html#getRecordedInput()">getRecordedInput()</ulink>
+        method. The RecordingInputStream extends InputStream and should be
+        used to capture the incoming document.</para>
+      </sect3>
+
+      <sect3>
+        <title>Reading from HttpRecorder</title>
+
+        <para>Processors interested in the contents of the HttpRecorder can
+        get at it's <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/io/ReplayCharSequence.html">ReplayCharSequence</ulink>
+        via it's <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/util/HttpRecorder.html#getReplayCharSequence()">getReplayCharSequence()</ulink>
+        method. The ReplayCharSequence is basically a java.lang.CharSequence
+        that can be read normally. As discussed above the CrawlURI has a
+        method for getting at the existing HttpRecorder.</para>
+      </sect3>
+    </sect2>
 
     <sect2>
-      <title>Methods to override</title>
+      <title>An example processor</title>
+
+      <para>The following example is a very simple extractor.</para>
+    </sect2>
+
+    <sect2>
+      <title>Things to keep in mind when writing a processor</title>
 
       <para></para>
 
       <sect3>
-        <title>initialTasks()</title>
+        <title>Interruptions</title>
 
-        <para></para>
+        <para>Classes extending Processor should not trap
+        InterruptedExceptions.</para>
+
+        <para>InterruptedExceptions should be allowed to propagate to the
+        ToeThread executing the processor.</para>
+
+        <para>Also they should immediately exit their main method
+        (<literal>innerProcess()</literal>) if the
+        <literal>interrupted</literal> flag is set.</para>
       </sect3>
 
       <sect3>
-        <title>finalTasks()</title>
+        <title>One processor, many threads</title>
 
-        <para></para>
-      </sect3>
+        <para>For each processor only one instance is created per crawl. As
+        there are multiple threads running these processors must be carefully
+        written so that no conflicts arise. This usually means that class
+        variables can not be used for other things then gathering incremental
+        statistics and data.</para>
 
-      <sect3>
-        <title>innerProcess(CrawlURI)</title>
-
-        <para></para>
-      </sect3>
-
-      <sect3>
-        <title>report()</title>
-
-        <para></para>
+        <para>There is a facility for having an instance per thread but it has
+        not been tested and will not be covered in this document.</para>
       </sect3>
     </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Writing a Filter</title>
+
+    <para>A filter<footnoteref linkend="footnote_scope_problems" /> could be
+    used in several places in the crawler.</para>
   </sect1>
 
   <sect1>
@@ -1729,7 +1808,7 @@ public class MyFrontier extends ModuleType implements URIFrontier,
       of these methods and deprecate the getRawURI() method.</para>
     </sect1>
 
-    <sect1>
+    <sect1 id="alist">
       <title>The org.archive.crawler.datamodel.CrawlURI class</title>
 
       <para>The attribute list of the CrawlURI, manipulated trough the
