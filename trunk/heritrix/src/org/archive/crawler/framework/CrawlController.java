@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,22 +19,30 @@ import org.archive.crawler.datamodel.HostCache;
  * @author Gordon Mohr
  */
 public class CrawlController {
+
 	CrawlOrder order;
 	
 	URIScheduler scheduler;
-	URIStore db;
+	URIStore store;
 	URISelector selector;
 	
 	Processor entryProcessor;
+	HashMap processors = new HashMap(); 
 	List toes /* of ToeThreads */;
 
 	HostCache hosts;
 	
+	private boolean paused = false;
+	private boolean finished = false;
+
 	public void initialize(CrawlOrder o) {
 		order = o;
-		// set up scheduler, db, selector
-		// set up processor chain(/graph)
 		
+		scheduler = (URIScheduler) order.getBehavior().instantiate("scheduler");
+		store = (URIStore) order.getBehavior().instantiate("store");
+		selector = (URISelector) order.getBehavior().instantiate("selector");
+		
+		entryProcessor = (Processor) order.getBehavior().instantiateAllInto("processors/processor",processors);
 	}
 	/**
 	 * 
@@ -42,8 +51,6 @@ public class CrawlController {
 		return scheduler;
 		
 	}
-
-
 
 	/**
 	 * @param thread
@@ -67,15 +74,19 @@ public class CrawlController {
 	 * @return
 	 */
 	public CrawlURI crawlUriFor(ToeThread thread) {
-		// TODO 
-		// IF RUNNING
-		// get from scheduler
-		// init CrawlURI nextProcessor to first processor
-		// IF PAUSED
-		// hold until running
-		// IF DONE
-		// return null
-		return null;
+		if( paused ) {
+			thread.pauseAfterCurrent();
+			return null;
+		}
+		// TODO check global limits, etc to see if finished
+		if ( finished  ) {	
+			thread.stopAfterCurrent();
+			return null;
+		}
+		CrawlURI curi = scheduler.curiFor(thread);
+		// TODO consider possible case where curi is null
+		curi.setNextProcessor(entryProcessor);
+		return curi;
 	}
 	/**
 	 * 
@@ -86,7 +97,7 @@ public class CrawlController {
 		// start toes
 		Iterator iter = toes.iterator();
 		while(iter.hasNext()) {
-			((ToeThread)iter.next()).startCrawling();
+			((ToeThread)iter.next()).unpause();
 		}
 		adjustToeCount();
 	}

@@ -6,14 +6,16 @@
  */
 package org.archive.crawler.framework;
 
-import org.archive.crawler.datamodel.*;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.w3c.dom.Node;
 
 /**
  * 
  * @author Gordon Mohr
  */
 public class Processor {
+	CrawlController controller;
+	
 	public void process(CrawlURI curi) {
 		// by default, simply forward curi along
 		curi.setNextProcessor(getDefaultNext());
@@ -27,7 +29,7 @@ public class Processor {
 		
 	}
 	
-	public void init(Config conf, CrawlController controller) {
-		// default do nothing
+	public void init(Node xNode, CrawlController c) {
+		controller = c;
 	}
 }

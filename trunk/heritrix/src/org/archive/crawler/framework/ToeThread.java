@@ -13,6 +13,8 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author Gordon Mohr
  */
 public class ToeThread extends Thread {
+	private boolean paused;
+	private boolean shouldCrawl;
 	CrawlController controller;
 	CrawlURI currentCuri;
 	// in-process/on-hold curis? not for now
@@ -29,39 +31,57 @@ public class ToeThread extends Thread {
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		processingLoop();
+		while ( shouldCrawl ) {
+			processingLoop();
+		} 
 		controller.toeFinished(this);
 	}
 	
 	private void processingLoop() {
 		assert currentCuri == null;
 		
+		while ( paused ) {
+			try {
+				this.wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		currentCuri = controller.crawlUriFor(this);
 		
-		while ( currentCuri != null ) {
+		if ( currentCuri != null ) {
 		
 			while ( currentCuri.nextProcessor() != null ) {
 				currentCuri.nextProcessor().process(currentCuri);
 			}
 	
-			finishCurrentCuri();
-			
-			currentCuri = controller.crawlUriFor(this);
-			
+			controller.getSelector().inter(currentCuri);
+			currentCuri = null;
 		}
-		
 	}
 
-	private void finishCurrentCuri() {
-		controller.getSelector().inter(currentCuri);
-		currentCuri = null;
+	/**
+	 * @return
+	 */
+	private boolean shouldCrawl() {
+		return shouldCrawl;
 	}
 
 	/**
 	 * 
 	 */
-	public void startCrawling() {
-		// TODO Auto-generated method stub
-		
+	public void unpause() {
+		paused = false;
+		this.notify();
+	}
+	
+	public void pauseAfterCurrent() {
+		paused = true;
+	}
+	
+	public void stopAfterCurrent() {
+		shouldCrawl = false;
 	}
 }
