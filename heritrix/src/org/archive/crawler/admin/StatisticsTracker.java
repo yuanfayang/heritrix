@@ -103,9 +103,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	
 		// log the legend	
 		periodicLogger.log(Level.INFO,
-				"[timestamp]    [discovered] [pending]    [downloaded] "
-					+ "[unique]     [overall-docs/s] [current-docs/s]  [overall-KB/s] "
-					+ "[current-KB/s] [download-failures] [stalled-threads] [memory-usage]"
+				"   [timestamp] [discovered]   [pending] [downloaded]"
+					+ " [doc/s(avg)]  [KB/s(avg)]"
+					+ " [dl-failures] [stall-thrds] [mem-use-KB]"
 			);
 
 		// keep logging as long as this thang is running
@@ -141,12 +141,13 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 		Date now = new Date();
 		
 		
-		// 			mercator style log entry
+		// 			mercator style log entry was
 		//			[timestamp] [discovered-pages] [pending-pages] [downloaded-pages]
 		//			[unique-pages] \
 		//			[overall-docs-per-sec] [current-docs-per-sec] [overall-KB-sec]
 		//			[current-KB-sec] \
-		//			[download-failures] [stalled-threads] [memory-usage]
+		//			[download-failures] [stalled-threads] [memmory-usage]
+		
 		periodicLogger.log(
 			Level.INFO,
 			new PaddingStringBuffer()
@@ -154,14 +155,12 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
              .raAppend(26,discoveredPages)
 			 .raAppend(38,pendingPages)
 			 .raAppend(51,downloadedPages)
-			 .raAppend(64,uniquePages)
-			 .raAppend(80,docsPerSecond)
-			 .raAppend(99,currentDocsPerSecond)
-			 .raAppend(114,totalKBPerSec)
-			 .raAppend(129,currentKBPerSec)
-			 .raAppend(149,downloadFailures)
-			 .raAppend(167,pausedThreads)
-			 .raAppend(180,Runtime.getRuntime().totalMemory())
+			 //.raAppend(64,uniquePages)
+			 .raAppend(64,currentDocsPerSecond+"("+docsPerSecond+")")
+			 .raAppend(77,currentKBPerSec+"("+totalKBPerSec+")")
+			 .raAppend(91,downloadFailures)
+			 .raAppend(105,pausedThreads)
+			 .raAppend(118,Runtime.getRuntime().totalMemory()/1024)
 			 .toString()
 		);
 		
