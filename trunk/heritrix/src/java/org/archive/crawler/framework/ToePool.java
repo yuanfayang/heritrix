@@ -98,7 +98,8 @@ public class ToePool extends CrawlStatusAdapter {
         int count = 0;
         // will be an approximation
         for(int i=0; i < toes.size();i++){
-            if(!((ToeThread)toes.get(i)).isAvailable()) {
+            ToeThread tt = (ToeThread)toes.get(i);
+            if(tt!=null && !tt.isIdleOrDead()) {
                 count++;
             }
         }
@@ -138,12 +139,12 @@ public class ToePool extends CrawlStatusAdapter {
     {
         // Destory referances to facilitate GC.
         toes.removeAll(toes); //Empty it
-        toes = null;
+        // toes = null; // gjm: superfluous
         if(killedToes!=null){
             killedToes.removeAll(killedToes);
         }
         // TODO Can anything more be done to ensure that the killed threads die?
-        killedToes = null;
+        // killedToes = null; // gjm: superfluous
         controller = null;
     }
 
@@ -163,12 +164,15 @@ public class ToePool extends CrawlStatusAdapter {
             getToeCount() + " (" + getActiveToeCount() + " active)\n");
 
         for (int i = 0; i < toes.size(); i++) {
-            rep.append("   ToeThread #" + i + "\n");
-            rep.append(((ToeThread)toes.get(i)).report());
+            ToeThread tt = (ToeThread)toes.get(i);
+            if(tt!=null) {
+                rep.append("   ToeThread #" + tt.getSerialNumber() + "\n");
+                rep.append(tt.report());
+            }
         }
         
         if (killedToes != null){
-            rep.append("\n --- Killed and replaced threads --- \n\n");
+            rep.append("\n --- Killed threads --- \n\n");
             for (int i = 0; i < killedToes.size(); i++) {
                 rep.append("   Killed ToeThread #" + i + "\n");
                 rep.append(((ToeThread)killedToes.get(i)).report());
@@ -257,18 +261,14 @@ public class ToePool extends CrawlStatusAdapter {
     public void killThread(int threadNumber, boolean replace){
         // Thread number should always be equal to it's placement in toes.
         ToeThread toe = (ToeThread)toes.get(threadNumber);
+        toe.kill(threadNumber);
+        toes.remove(threadNumber);
+        if(killedToes==null){
+            killedToes = new ArrayList(1);
+        }
+        killedToes.add(toe);
         if(replace){
-            // Kill the toe thread, move it to a list of killed threads and 
             // create a new toe thread to take it's place.
-            if(killedToes==null){
-                killedToes = new ArrayList(1);
-            }
-            // Negative index starting at -1 for killed toes.
-            int newSerial = (killedToes.size()+1)*-1;
-            // Remove toe
-            toes.remove(threadNumber);
-            killedToes.add(toe);
-            toe.kill(newSerial);
             // Replace toe
             ToeThread newThread = new ToeThread(controller,this,threadNumber);
             newThread.setPriority(DEFAULT_TOE_PRIORITY);
@@ -276,9 +276,6 @@ public class ToePool extends CrawlStatusAdapter {
             newThread.setShouldPause(paused); 
             toes.add(threadNumber,newThread);
             newThread.start();
-        } else {
-            // If it is not being replaced we will leave it in the toes array.
-            toe.kill(threadNumber);
-        }
+        } 
     }
 }
