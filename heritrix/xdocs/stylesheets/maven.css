@@ -1,53 +1,53 @@
 body {
  background: #FFFFFF;
- color: #FFFFFF;
+ color: #000000;
  }
 
 .app h3 {
- color: #FFFFFF;
+ color: #000000;
  background-color: #9999FF;
  }
 
 .app h4 {
- color: #FFFFFF;
+ color: #000000;
  background-color: #FFFFFF;
  }
 
 .a td { 
  background: #FFFFFF;
- color: #FFFFFF;
+ color: #000000;
  }
 
 .b td { 
  background: #FFFFFF;
- color: #FFFFFF;
+ color: #000000;
  }
 
 .app th {
  background-color: #FFFFFF;
- color: #FFFFFF;
+ color: #000000;
  }
 
 div#banner {
  border-top: 1px solid #9999FF;
- border-bottom: 1px solid @UI_BANNER_BORDER_BOTTOM@;
+ border-bottom: 1px solid #9999FF;
  }
 
 #banner, #banner td { 
  background: #9999FF;
- color: #FFFFFF;
+ color: #000000;
  }
 
 #leftcol {
- background: #FFFFFF;
- color: #FFFFFF;
+ background: #9999FF;
+ color: #000000;
  border-right: 1px solid @UI_NAVCOL_BORDER_RIGHT@;
  border-bottom: 1px solid @UI_NAVCOL_BORDER_BOTTOM@;
  border-top: 1px solid @UI_NAVCOL_BORDER_TOP@;
 }
 
 #navcolumn {
- background: #FFFFFF;
+ background: #9999FF;
  color: #FFFFFF;
  border-right: none;
  border-bottom: none;
@@ -56,14 +56,14 @@ div#banner {
 
 #breadcrumbs {
  background-color: #FFFFFF;
- color: #FFFFFF;
+ color: #000000;
  border-top: 1px solid @UI_BREADCRUMBS_BORDER_TOP@;
  border-bottom: 1px solid @UI_BREADCRUMBS_BORDER_BOTTOM@;
  }
 
 #source {
  background-color: #FFFFFF;
- color: #FFFFFF;
+ color: #000000;
  border-right: 1px solid @UI_SOURCE_BORDER_RIGHT@; 
  border-left: 1px solid @UI_SOURCE_BORDER_LEFT@; 
  border-top: 1px solid @UI_SOURCE_BORDER_TOP@; 
@@ -83,7 +83,7 @@ a[name]:hover, #leftcol a[name]:hover {
  }
 
 a:link, #breadcrumbs a:visited, #navcolumn a:visited, .app a:visited, .tasknav a:visited {
- color: #FFFFFF;
+ color: #000000;
  }
 
 a:active, a:hover, #leftcol a:active, #leftcol a:hover {
