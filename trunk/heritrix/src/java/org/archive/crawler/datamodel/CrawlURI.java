@@ -74,8 +74,8 @@ public class CrawlURI extends CandidateURI
     private String classKey; // cached classKey value
 
     // Processing progress
-    private Processor nextProcessor;
-    private ProcessorChain nextProcessorChain;
+    transient private Processor nextProcessor;
+    transient private ProcessorChain nextProcessorChain;
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
@@ -105,7 +105,7 @@ public class CrawlURI extends CandidateURI
      * 
      * Gets set upon successful request.  Reset at start of processing chain.
      */
-    private HttpRecorder httpRecorder = null;
+    transient private HttpRecorder httpRecorder = null;
     
     /**
      * Content type of a successfully fetched URI.
@@ -155,6 +155,7 @@ public class CrawlURI extends CandidateURI
         super(caUri.getUURI());
         setIsSeed(caUri.isSeed());
         setPathFromSeed(caUri.getPathFromSeed());
+        setSchedulingDirective(caUri.getSchedulingDirective());
         setVia(caUri.getVia());
     }
 
@@ -415,16 +416,16 @@ public class CrawlURI extends CandidateURI
      * Do all actions associated with setting a <code>CrawlURI</code> as 
      * requiring a prerequisite.
      * 
-     * @param lastProcesorChain Last processor chain reference.  This chain is
+     * @param lastProcessorChain Last processor chain reference.  This chain is
      * where this <code>CrawlURI</code> goes next.
      * @param stringOrUURI Object to set a prerequisite.
      */
     public void markPrerequisite(Object stringOrUURI,
-            ProcessorChain lastProcesorChain) {
+            ProcessorChain lastProcessorChain) {
         setPrerequisiteUri(stringOrUURI);   
         incrementDeferrals();
         setFetchStatus(S_DEFERRED);
-        skipToProcessorChain(lastProcesorChain);
+        skipToProcessorChain(lastProcessorChain);
     }
     
     /**

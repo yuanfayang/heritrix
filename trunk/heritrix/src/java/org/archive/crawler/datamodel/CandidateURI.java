@@ -43,8 +43,9 @@ public class CandidateURI implements Serializable, Lineable {
     private static final long serialVersionUID = -7152937921526560388L;
 
     public static String FORCE_REVISIT = "Force";
-    public static String HIGH = "High";
-    public static String NORMAL = "Normal";
+    public static String HIGH = "High"; // before any others of its class
+    public static String MEDIUM = "Medium"; // after any Highs
+    public static String NORMAL = "Normal"; // whenever/end of queue
 
     /** Usuable URI under consideration */
     UURI uuri;
@@ -270,4 +271,12 @@ public class CandidateURI implements Serializable, Lineable {
     public boolean needsImmediateScheduling() {
         return schedulingDirective==HIGH || schedulingDirective == FORCE_REVISIT;
     }
+    
+    /**
+     * @return True if needs soon but not top scheduling.
+     */
+    public boolean needsSoonScheduling() {
+        return schedulingDirective == MEDIUM;
+    }
+
 }
