@@ -191,7 +191,7 @@ public class ExtractorHTML2 extends ExtractorHTML {
             caUri = TextUtils.replaceAll(BACKSLAH, caUri, "");
             logger.finest("stlye: " + caUri + " from " + curi);
             numberOfLinksExtracted++;
-            curi.addCSSLink(caUri);
+            curi.addLinkToCollection(caUri, A_CSS_LINKS);
         }
         TextUtils.freeMatcher(candidates);
 
