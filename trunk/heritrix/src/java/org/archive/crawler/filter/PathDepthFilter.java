@@ -40,7 +40,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class PathDepthFilter extends Filter {
-    static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
+    public static final String ATTR_INVERTED = "path-deeper-than";
+    public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
     Integer maxPathDepth = new Integer(Integer.MAX_VALUE);
     char slash = '/';
     String path;
@@ -51,6 +52,14 @@ public class PathDepthFilter extends Filter {
     public PathDepthFilter(String name) {
         super(name, "Path depth filter");
         addElementToDefinition(new SimpleType(ATTR_MAX_PATH_DEPTH, "Max path depth", maxPathDepth));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_INVERTED,
+                "Allow only paths deeper then max path depth. \nNormally max path" +
+                "depth means that only URIs with shorter paths are accepted," +
+                "setting this to true means that max path depth becomes (in" +
+                "effect) minimum path depth.",
+                new Boolean(false)));
     }
 
     /* (non-Javadoc)
@@ -79,11 +88,22 @@ public class PathDepthFilter extends Filter {
             try {
                 maxPathDepth = (Integer) getAttribute(ATTR_MAX_PATH_DEPTH, (CrawlURI) o);
             } catch (AttributeNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                logger.severe(e.getMessage());
             }
         }
         return (count <= maxPathDepth.intValue());
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#applyInversion()
+     */
+    protected boolean applyInversion(CrawlURI curi) {
+       boolean inverter = false;
+       try {
+           inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
+       } catch (AttributeNotFoundException e) {
+           logger.severe(e.getMessage());
+       }
+       return inverter;
+    }
 }

@@ -46,11 +46,11 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * @see org.archive.crawler.framework.Processor
  */
 public class Filter extends CrawlerModule {
-    private static Logger logger =
+    protected static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 
-    private static final String ATTR_INVERTED = "inverted";
-    private static final String ATTR_ENABLED = "enabled";
+//    private static final String ATTR_INVERTED = "inverted";
+    public static final String ATTR_ENABLED = "enabled";
 
     /** Creates a new 'null' filter.
      *
@@ -63,9 +63,9 @@ public class Filter extends CrawlerModule {
         addElementToDefinition(
             new SimpleType(ATTR_ENABLED,
                 "Filter is enabled.", new Boolean(true)));
-        addElementToDefinition(
-            new SimpleType(ATTR_INVERTED,
-                "Filter functionality should be inverted", new Boolean(false)));
+//        addElementToDefinition(
+//            new SimpleType(ATTR_INVERTED,
+//                "Filter functionality should be inverted", new Boolean(false)));
     }
 
     /** Creates a new 'null' filter.
@@ -88,15 +88,20 @@ public class Filter extends CrawlerModule {
             logger.severe(e.getMessage());
         }
 
-        boolean inverter = false;
-        try {
-            inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-        }
-        return inverter ^ innerAccepts(o);
+        return applyInversion(curi) ^ innerAccepts(o);
     }
 
+    /**
+     * Checks to see if filter functionality should be inverted for this
+     * curi. Classes extending this class should override this method with
+     * appropriate code.
+     * @param curi Current CrawlURI
+     * @return true if filter should be inverted, false otherwise.
+     */
+    protected boolean applyInversion(CrawlURI curi){
+        return false;
+    }
+    
     /**
      * Classes subclassing this one should override this method to perfrom
      * their custom determination of whether or not the object given to it.

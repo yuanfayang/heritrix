@@ -40,15 +40,25 @@ import org.archive.util.TextUtils;
  * @author Gordon Mohr
  */
 public class URIRegExpFilter extends Filter {
-    final static String ATTR_REGEXP = "regexp";
+    public static final String ATTR_REGEXP = "regexp";
+    public static final String ATTR_INVERTED = "accept-matches";
 
     /**
      * @param name
      */
     public URIRegExpFilter(String name) {
-        super(name, "URI regexp filter");
+        super(name, "URI regexp filter.");
         addElementToDefinition(
-                new SimpleType(ATTR_REGEXP, "Regular expression", ""));
+            new SimpleType(
+                ATTR_INVERTED,
+                "Only allow matches. \nIf set to true all URIs matching the "
+                    + "regular expression will be allowed and only those that "
+                    + "don't match will be filtered out. If false then URIs "
+                    + "matching the regular expression will be filtered out "
+                    + "others will be accepted.",
+                new Boolean(false)));
+        addElementToDefinition(
+                new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
     }
 
     /* (non-Javadoc)
@@ -70,7 +80,21 @@ public class URIRegExpFilter extends Filter {
             return TextUtils.matches(
                     (String) getAttribute(ATTR_REGEXP, curi), input);
         } catch (AttributeNotFoundException e) {
-            return true;
+            logger.severe(e.getMessage());
+            return true;  // Basically the filter is inactive if this occurs.
         }
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#applyInversion()
+     */
+    protected boolean applyInversion(CrawlURI curi) {
+       boolean inverter = false;
+       try {
+           inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
+       } catch (AttributeNotFoundException e) {
+           logger.severe(e.getMessage());
+       }
+       return inverter;
     }
 }

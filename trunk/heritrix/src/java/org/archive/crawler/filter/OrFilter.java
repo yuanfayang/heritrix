@@ -25,10 +25,13 @@ package org.archive.crawler.filter;
 
 import java.util.Iterator;
 
+import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -41,6 +44,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class OrFilter extends Filter {
+    public static final String ATTR_INVERTED = "make-filter-XOR";
+
     private MapType filters;
 
     public OrFilter(String name, String description) {
@@ -54,12 +59,20 @@ public class OrFilter extends Filter {
     public OrFilter(String name) {
         super(
             name,
-            "OrFilter.\nA filter that serves as a placeholder for other filters who's functionality should be logically or'ed together.");
+            "OR Filter. \nA filter that serves as a placeholder for other filters who's functionality should be logically OR'ed together.");
         filters =
             new MapType(
                 "filters",
                 "This is a list of filters who's functionality should be logically or'ed together by the OrFilter.",
                 Filter.class);
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_INVERTED,
+                "Turn the filter into an XOR filter. \nIf true, instead of " +
+                "filtering out anything that any of the filters added to it" +
+                "matches, it will only filter out URIs that none of them " +
+                "matches.",
+                new Boolean(false)));
         addElementToDefinition(filters);
     }
 
@@ -81,8 +94,7 @@ public class OrFilter extends Filter {
         try {
             filters.addElement(settings, f);
         } catch (InvalidAttributeValueException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.severe(e.getMessage());
         }
     }
 
@@ -92,5 +104,18 @@ public class OrFilter extends Filter {
 
     public Iterator iterator(Object o) {
         return filters.iterator(getSettingsFromObject(o));
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#applyInversion()
+     */
+    protected boolean applyInversion(CrawlURI curi) {
+       boolean inverter = false;
+       try {
+           inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
+       } catch (AttributeNotFoundException e) {
+           logger.severe(e.getMessage());
+       }
+       return inverter;
     }
 }
