@@ -23,6 +23,11 @@ import org.archive.crawler.framework.Processor;
 import org.xbill.DNS.Record;
 
 /**
+ * Processor module for writing the results of any 
+ * successful fetches (and perhaps someday, certain
+ * kinds of network failures) to the Internet Archive
+ * ARC file format. 
+ * 
  * @author Parker Thompson
  *
  */
