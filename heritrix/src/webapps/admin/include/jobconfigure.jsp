@@ -218,7 +218,8 @@
                                 p.append("</textarea>\n");
                             } else {
                                 //Input box
-                                p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 440px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
+                                String patchedAttribute = currentAttribute.toString().replaceAll("&","&amp;");
+                                p.append("<input name='" + attAbsoluteName + "' value='" + patchedAttribute + "' style='width: 440px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
                             }
                         } else {
                             // Display non editable
