@@ -25,6 +25,7 @@
 package org.archive.crawler.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Logger;
 
@@ -88,15 +89,28 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     /**
      * Constructor.
      * @param environment A bdb environment ready-configured.
-     * @throws DatabaseException
-     * @throws UnsupportedEncodingException
-     * @throws DatabaseException
-     * @throws UnsupportedEncodingException
+     * @throws IOException
      */
     public BdbUriUniqFilter(Environment environment)
-    throws DatabaseException {
+    throws IOException {
         super();
-        initialize(environment);
+        try {
+            initialize(environment);
+        } catch (DatabaseException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+    
+    /**
+     * Constructor.
+     * @param bdbEnv The directory that holds the bdb environment. Will
+     * make a database under here if doesn't already exit.  Otherwise
+     * reopens any existing dbs.
+     * @throws IOException
+     */
+    public BdbUriUniqFilter(File bdbEnv)
+    throws IOException {
+        this(bdbEnv, -1);
     }
     
     /**
@@ -105,20 +119,25 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * make a database under here if doesn't already exit.  Otherwise
      * reopens any existing dbs.
      * @param cacheSizePercentage Percentage of JVM bdb allocates as
-     * its cache.
-     * @throws DatabaseException
-     * @throws UnsupportedEncodingException
+     * its cache.  Pass -1 to get default cache size.
+     * @throws IOException
      */
     public BdbUriUniqFilter(File bdbEnv, int cacheSizePercentage)
-    throws DatabaseException {
+    throws IOException {
         super();
         if (!bdbEnv.exists()) {
             bdbEnv.mkdirs();
         }
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
-        envConfig.setCachePercent(cacheSizePercentage);
-        initialize(new Environment(bdbEnv, envConfig));
+        if (cacheSizePercentage > 0 && cacheSizePercentage < 100) {
+            envConfig.setCachePercent(cacheSizePercentage);
+        }
+        try {
+            initialize(new Environment(bdbEnv, envConfig));
+        } catch (DatabaseException e) {
+            throw new IOException(e.getMessage());
+        }
     }
     
     /**
