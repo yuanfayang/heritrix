@@ -716,7 +716,7 @@
 
       <para><note>
           <para>Modules are referred to by their Java class names
-          (org.archive.crawler.frontier.Frontier). This is done because these
+          (org.archive.crawler.frontier.HostQueuesFrontier). This is done because these
           are the only names we can be assured of being unique.</para>
         </note>See <ulink
       url="http://crawler.archive.org/articles/developer_manual.html">Developer's
@@ -724,9 +724,9 @@
       to Heritrix.</para>
 
       <sect3 id="frontier">
-        <title>URI Frontier</title>
+        <title>Frontier</title>
 
-        <para>The URI Frontier is a module that maintains the internal state
+        <para>The Frontier is a module that maintains the internal state
         of the crawl. What URIs have been discovered, crawled etc. As such its
         selection greatly affects for instance the order in which discovered
         URIs are crawled.</para>
@@ -3317,7 +3317,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
           <para>Number of discovered URIs that have not been inspected for
           scope or duplicates. Depending on the implementation of the
-          URIFrontier this might always be zero. It may also be an adjusted
+          Frontier this might always be zero. It may also be an adjusted
           number that tries to account for duplicates by estimation.</para>
         </glossdef>
       </glossentry>

@@ -29,8 +29,8 @@ package org.archive.crawler.framework.exceptions;
  * <code>URIFrontierMarker</code> that has become invalid.
  * @author Kristinn Sigurdsson
  */
-public class InvalidURIFrontierMarkerException extends Exception {
-    public InvalidURIFrontierMarkerException(){
+public class InvalidFrontierMarkerException extends Exception {
+    public InvalidFrontierMarkerException(){
         super("URIFrontierMarker does not match URIFrontier internal state.");
     }
 }
