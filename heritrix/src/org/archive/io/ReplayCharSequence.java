@@ -32,6 +32,8 @@ import org.archive.util.DevUtils;
  * probably not -- they don't offer the level of control over 
  * total memory used that this approach does. 
  * 
+ * TODO consider character-encoding issues; right now single-byte
+ * characters assumed
  * @author Gordon Mohr
  */
 public class ReplayCharSequence implements CharSequence {
@@ -90,10 +92,10 @@ public class ReplayCharSequence implements CharSequence {
 //			throw new IndexOutOfBoundsException();
 //		}
 		if(index < prefixBuffer.length) {
-			return (char) prefixBuffer[index];
+			return (char) ((int)prefixBuffer[index]&0xFF); // mask to unsigned
 		}
 		if(index >= wrapOrigin && index-wrapOrigin < wraparoundBuffer.length) {
-			return (char) wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length];
+			return (char) ((int)wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length]&0xFF); // mask to unsigned
 		}
 		return faultCharAt(index);
 	}
