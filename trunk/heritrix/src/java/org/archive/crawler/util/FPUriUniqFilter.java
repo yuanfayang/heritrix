@@ -66,7 +66,7 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UriUniqFilter#add(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
      */
-    public void add(HasUri obj) {
+    public synchronized void add(HasUri obj) {
         if(fpset.add(getFp(obj))) {
             this.receiver.receive(obj);
         }
@@ -90,7 +90,7 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UriUniqFilter#addForce(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
      */
-    public void addForce(HasUri obj) {
+    public synchronized void addForce(HasUri obj) {
         fpset.add(getFp(obj));
         this.receiver.receive(obj);
     }
@@ -98,14 +98,14 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UriUniqFilter#note(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
      */
-    public void note(HasUri hu) {
+    public synchronized void note(HasUri hu) {
         fpset.add(getFp(hu));        
     }
     
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UriUniqFilter#forget(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
      */
-    public void forget(HasUri hu) {
+    public synchronized void forget(HasUri hu) {
         fpset.remove(getFp(hu));        
     }
     /* (non-Javadoc)
@@ -120,7 +120,7 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     /**
      * @see org.archive.crawler.datamodel.UriUniqFilter#count()
      */
-    public long count() {
+    public synchronized long count() {
         return fpset.count();
     }
 
