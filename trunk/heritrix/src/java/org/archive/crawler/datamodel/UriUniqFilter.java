@@ -82,9 +82,13 @@ public interface UriUniqFilter {
     public void addNow(String key, CandidateURI value);
     
     /**
-     * Add given uri, even if already present
+     * Add given uri, all the way through to underlying destination, even 
+     * if already present.
      * 
-     * TODO: What is this for?
+     * (Sometimes a URI must be fetched, or refetched, for example when
+     * DNS or robots info expires or the operator forces a refetch. A
+     * normal add() or addNow() would drop the URI without forwarding
+     * on once it is determmined to already be in the filter.) 
      * 
      * @param key Usually a canonicalized version of <code>uri</code>.
      * This is the key used doing lookups, forgets and insertions on the
