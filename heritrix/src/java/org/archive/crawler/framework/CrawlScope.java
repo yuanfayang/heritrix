@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -158,12 +159,34 @@ public class CrawlScope extends Filter {
      * 
      * @return Returns a seedlist.
      */
-    public synchronized List getSeedlist() {
+    public List getSeedlist() {
         if (this.seedlist == null) {
-            this.seedlist = new SeedList(getSeedfile(), getSettingsHandler().
+            createSeedlist(getSeedfile(), getSettingsHandler().
                 getOrder().getController().uriErrors);
         }
         return this.seedlist;
+    }
+    
+    /** 
+     * Refreshes the list of seeds cached.
+     * 
+     * This method could safely be overridden by a null implementation for
+     * scopes that don't need the seeds to be cached. For example, there is
+     * no reason for the BroadScope to cache seeds since it doesn't have to
+     * check the seeds to see if a URI is inside the scope.
+     */
+    public void refreshSeeds() {
+        if (this.seedlist == null) {
+            createSeedlist(getSeedfile(), getSettingsHandler().
+                getOrder().getController().uriErrors);
+        }
+        this.seedlist.refresh(getSeedfile());
+    }
+    
+    protected synchronized void createSeedlist(File seedfile, Logger l) {
+        if (this.seedlist == null) {
+            this.seedlist = new SeedList(seedfile, l);
+        }
     }
     
     /**
@@ -191,24 +214,6 @@ public class CrawlScope extends Filter {
         }
 
         return file;
-    }
-    
-    /** 
-     * Refreshes the list of seeds cached.
-     * 
-     * This method could safely be overridden by a null implementation for
-     * scopes that don't need the seeds to be cached. For example, there is
-     * no reason for the BroadScope to cache seeds since it doesn't have to
-     * check the seeds to see if a URI is inside the scope.
-     * 
-     * <p>While the above statement is true, our 
-     */
-    public synchronized void refreshSeeds() {
-        if (this.seedlist == null) {
-            this.seedlist = new SeedList(getSeedfile(), getSettingsHandler().
-                getOrder().getController().uriErrors);
-        }
-        this.seedlist.refresh(getSeedfile());
     }
 
     /**
