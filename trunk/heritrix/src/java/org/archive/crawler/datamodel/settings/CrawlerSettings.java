@@ -310,6 +310,26 @@ public class CrawlerSettings {
     }
     
     /**
+     * Get a refinement with a given reference. 
+     * 
+     * @param reference the reference (name) to the refinement to get.
+     * @return the refinement having the specified reference or null if no
+     *         refinement matches it.
+     */
+    public Refinement getRefinement(String reference) {
+        if (hasRefinements()) {
+            for(Iterator it = refinements.iterator(); it.hasNext();) {
+                Refinement tmp = (Refinement) it.next();
+                if (tmp.getReference().equals(reference)) {
+                    it.remove();
+                    return tmp;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
      * Returns true if this settings object has refinements attached to it.
      * 
      * @return true if this settings object has refinements attached to it.
