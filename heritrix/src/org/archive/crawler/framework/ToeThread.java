@@ -74,7 +74,7 @@ public class ToeThread extends Thread {
 				currentCuri = null;
 			} else {
 				// self-pause, because there's nothing left to crawl
-				logger.info("ToeThread #"+serialNumber+" pausing: nothing to crawl");
+				logger.warning("ToeThread #"+serialNumber+" pausing: nothing to crawl");
 				paused = true;
 			}
 		} catch (OutOfMemoryError e) {
