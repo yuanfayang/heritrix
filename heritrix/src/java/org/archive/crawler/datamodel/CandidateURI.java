@@ -238,14 +238,10 @@ implements Serializable, Lineable {
      * @return This candidate URI as a string wrapped with 'CandidateURI(' +
      * ')'.
      */
-    public String toString() {
+    public synchronized String toString() {
         if (this.cachedCandidateURIString == null) {
-            synchronized (this) {
-                if (this.cachedCandidateURIString == null) {
-                    this.cachedCandidateURIString =
-                        "CandidateURI(" + getURIString() + ")";
-                }
-            }
+            this.cachedCandidateURIString =
+                "CandidateURI(" + getURIString() + ")";
         }
         return this.cachedCandidateURIString;
     }

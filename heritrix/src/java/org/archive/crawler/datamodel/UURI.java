@@ -247,13 +247,9 @@ implements CharSequence, Serializable {
      * Override to cache result
      * @return String representation of this URI 
      */
-    public String toString() {
+    public synchronized String toString() {
         if (this.cachedString == null) {
-            synchronized (this) {
-                if (this.cachedString == null) {
-                    this.cachedString = super.toString();
-                }
-            }
+            this.cachedString = super.toString();
         }
         return this.cachedString;
     }
