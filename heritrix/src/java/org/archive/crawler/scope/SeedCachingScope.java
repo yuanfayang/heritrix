@@ -52,7 +52,7 @@ public class SeedCachingScope extends CrawlScope {
      * @see org.archive.crawler.framework.CrawlScope#addSeed(org.archive.crawler.datamodel.UURI)
      */
     public boolean addSeed(UURI uuri) {
-        if(super.addSeed(uuri)== false) {
+        if (super.addSeed(uuri) == false) {
             // failed
             return false;
         }
