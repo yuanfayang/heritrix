@@ -59,6 +59,13 @@ public class ARCRecord
      * Position w/i the ARCRecord content.
      */
     private long position = 0;
+    
+    /**
+     * Absolute offset at which this record begins in arc file.
+     * 
+     * Position is beginning of the compressed or uncompressed record.
+     */
+    private long offset = 0;
 
     /**
      * Set flag when we've reached the end-of-record.
@@ -75,10 +82,10 @@ public class ARCRecord
      *
      * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData)
+    public ARCRecord(InputStream in, long offset, ARCRecordMetaData metaData)
         throws IOException
     {
-        this(in, metaData, false);
+        this(in, offset, metaData, false);
     }
 
     /**
@@ -93,15 +100,17 @@ public class ARCRecord
      *
      * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData,
+    public ARCRecord(InputStream in, long offset, ARCRecordMetaData metaData,
             boolean contentRead)
         throws IOException
     {
         this.in = in;
+        this.offset = offset;
         this.metaData = metaData;
         if (contentRead)
         {
             this.position = this.metaData.getLength();
+            close();
         }
     }
 
@@ -217,4 +226,12 @@ public class ARCRecord
             this.eor = true;
         }
     }
+    
+	/**
+	 * @return Returns the absolute offset at which this record begins in the
+	 * arc. Position is beginning of the compressed or uncompressed record.
+	 */
+	public long getOffset() {
+		return this.offset;
+	}
 }

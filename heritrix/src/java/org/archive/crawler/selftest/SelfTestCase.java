@@ -90,6 +90,13 @@ public class SelfTestCase extends TestCase
      */
     private static ARCReader readReader = null;
 
+    /**
+     * Metadata list from the arc reader.
+     * 
+     * Gotten as byproduct of calling validate on the arcreader.
+     */
+	private static List metaDatas;
+
 
     public SelfTestCase()
     {
@@ -236,7 +243,7 @@ public class SelfTestCase extends TestCase
         }
         SelfTestCase.arcFile = arcs[0];
         SelfTestCase.readReader = new ARCReader(arcFile);
-        SelfTestCase.readReader.validate();
+        SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
 
         SelfTestCase.initialized = true;
     }
@@ -275,6 +282,15 @@ public class SelfTestCase extends TestCase
     protected static ARCReader getReadReader()
     {
         return SelfTestCase.readReader;
+    }
+    
+    /**
+     * @return Returns list of ARCReader metadatas, the byproduct of calling
+     * validate.
+     */
+    protected static List getMetaDatas()
+    {
+        return SelfTestCase.metaDatas;
     }
 
     /**
@@ -391,7 +407,7 @@ public class SelfTestCase extends TestCase
         } else {
             baseURL += getTestName();
         }
-        List metaDatas = getReadReader().getMetaDatas();
+        List metaDatas = getMetaDatas();
         ARCRecordMetaData metaData = null;
         List filesFound = new ArrayList();
         for (Iterator i = metaDatas.iterator(); i.hasNext();) {
