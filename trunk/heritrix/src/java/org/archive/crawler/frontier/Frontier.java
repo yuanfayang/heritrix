@@ -59,6 +59,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
@@ -194,7 +195,10 @@ public class Frontier
     private int inactiveQueuesMemoryLoadTarget = 10000;
     private int inactivePerQueueLoadThreshold = 1000;
 
-    
+    // flags indicating operator-specified crawl pause/end 
+    private boolean shouldPause = false;
+    private boolean shouldTerminate = false;
+  
     public Frontier(String name){
         this(name,"Frontier. \nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
@@ -468,50 +472,72 @@ public class Frontier
      *
      * @see org.archive.crawler.framework.URIFrontier#next(int)
      */
-    private CrawlURI next() {
-        long now = System.currentTimeMillis();
-        CrawlURI curi = null;
+    synchronized public CrawlURI next() throws InterruptedException, EndedException {
+        while(true) {
+            long now = System.currentTimeMillis();
+            CrawlURI curi = null;
 
-        enforceBandwidthThrottle(now);
-        
-        // Check for snoozing queues who are ready to wake up.
-        wakeReadyQueues(now);
-
-        // if no ready queues among active, activate inactive queues
-        // TODO: avoid activating new queue if wait for another would be trivial
-        // TODO: have inactive queues sorted by priority
-        // TODO: (probably elsewhere) deactivate active queues that "have 
-        // done enough for now" ("enough" to be defined)
-        while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
-            URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
-            kq.activate();
-            assert kq.isEmpty() == false : "empty queue was waiting for activation";
-            kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
-                    ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
-            updateQ(kq);
-        }
-        
-        // now, see if any holding queues are ready with a CrawlURI
-        if (!this.readyClassQueues.isEmpty()) {
-            curi = dequeueFromReady();
-            try {
-                return emitCuri(curi);
+            // enforce operator pause
+            while(shouldPause) {
+                controller.toePaused();
+                wait();
             }
-            catch (URIException e) {
-                logger.severe("Failed holding emitcuri: " + e.getMessage());
+            // enforce operator terminate
+            if(shouldTerminate) {
+                throw new EndedException("terminated");
             }
+            
+            enforceBandwidthThrottle(now);
+            
+            // Check for snoozing queues who are ready to wake up.
+            wakeReadyQueues(now);
+    
+            // if no ready queues among active, activate inactive queues
+            // TODO: avoid activating new queue if wait for another would be trivial
+            // TODO: have inactive queues sorted by priority
+            // TODO: (probably elsewhere) deactivate active queues that "have 
+            // done enough for now" ("enough" to be defined)
+            while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
+                URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
+                kq.activate();
+                assert kq.isEmpty() == false : "empty queue was waiting for activation";
+                kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
+                        ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
+                updateQ(kq);
+            }
+            
+            // now, see if any holding queues are ready with a CrawlURI
+            if (!this.readyClassQueues.isEmpty()) {
+                curi = dequeueFromReady();
+                try {
+                    return emitCuri(curi);
+                }
+                catch (URIException e) {
+                    logger.severe("Failed holding emitcuri: " + e.getMessage());
+                }
+            }
+    
+            // consider if URIs exhausted
+            if(isEmpty()) {
+                // nothing left to crawl
+                throw new EndedException("exhausted");
+            } 
+            
+            // wait until something changes
+            waitForChange(now);
         }
+    }
 
-        // consider if URIs exhausted
-        if(isEmpty()) {
-            // nothing left to crawl
-            logger.info("nothing left to crawl");
-            return null;
-        } else {
-            // nothing to return now, but there are still URIs
-            // held for the future
-            return null;
+    /**
+     * @return
+     * @throws InterruptedException
+     */
+    private void waitForChange(long now) throws InterruptedException {
+        long wait = 1000; // TODO: consider right value
+        if(!snoozeQueues.isEmpty()) {
+            wait = ((URIWorkQueue)snoozeQueues.first()).getWakeTime() - now;
         }
+        wait(wait);
     }
 
     private CrawlURI asCrawlUri(CandidateURI caUri) {
@@ -521,6 +547,15 @@ public class Frontier
         return CrawlURI.from(caUri,nextOrdinal++);
     }
 
+    /**
+     * Ensure that any overall-bandwidth-usage limit is respected,
+     * by pausing as long as necessary.
+     * 
+     * TODO: release frontier lock on scheduling, finishing URIs
+     * while this pause is in effect.
+     * 
+     * @param now
+     */
     private void enforceBandwidthThrottle(long now) {
         int maxBandwidthKB;
         try {
@@ -562,32 +597,6 @@ public class Frontier
                 }
             }
         }
-    }
-
-    /**
-     * @param timeout Time to wait on next CrawlURI (milliseconds).
-     * @return The next CrawlURI eligible for processing.
-     * @throws InterruptedException
-     */
-    public synchronized CrawlURI next(int timeout) throws InterruptedException {
-        long now = System.currentTimeMillis();
-        long until = now + timeout;
-
-        while(now<until) {
-            // Keep trying till we hit timeout.
-            CrawlURI curi = next();
-            if(curi!=null) {
-                return curi;
-            }
-            long earliestWake = earliestWakeTime();
-            // Sleep to timeout or earliestWakeup time, whichever comes first
-            long sleepuntil = earliestWake < until ? earliestWake : until;
-            if(sleepuntil > now){
-                wait(sleepuntil-now); // If new URIs are scheduled, we will be woken
-            }
-            now = System.currentTimeMillis();
-        }
-        return null;
     }
 
     /**
@@ -1706,4 +1715,16 @@ public class Frontier
     public void kickUpdate() {
         loadSeeds();
     }
+    
+    synchronized public void pause() { 
+        shouldPause = true;
+    }
+    synchronized public void unpause() { 
+        shouldPause = false;
+        notifyAll();
+    }
+    synchronized public void terminate() { 
+        shouldTerminate = true;
+    }
+
 }

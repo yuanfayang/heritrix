@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 
@@ -146,7 +147,7 @@ public interface URIFrontier {
      * @return the next URI that should be processed.
      * @throws InterruptedException
      */
-    CrawlURI next(int timeout) throws InterruptedException;
+    CrawlURI next() throws InterruptedException, EndedException;
 
     /**
      * Returns true if the frontier contains no more URIs to crawl.
@@ -456,5 +457,22 @@ public interface URIFrontier {
      */
     public void kickUpdate();
 
+    /**
+     * Notify Frontier that it should not release any URIs, instead
+     * holding all threads, until instructed otherwise. 
+     */
+    public void pause();
 
+    /**
+     * Resumes the release of URIs to crawl, allowing worker
+     * ToeThreads to proceed. 
+     */
+    public void unpause();
+
+    /**
+     * Notify Frontier that it should end the crawl, giving
+     * any worker ToeThread that askss for a next() an 
+     * EndedException. 
+     */
+    public void terminate();
 }
