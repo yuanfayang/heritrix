@@ -101,6 +101,7 @@ public class CrawlJob
     private boolean isProfile = false;
     private boolean isRunning = false;
     private int priority;
+    private int numberOfJournalEntries = 0;
 
     // TODO: Statistics tracker will be saved at end of crawl. We will also want to save it at checkpoints.
     private StatisticsTracking stats;
@@ -157,9 +158,10 @@ public class CrawlJob
      * Line 4. is job read only (true/false) <br>
      * Line 5. is job running (true/false) <br>
      * Line 6. job priority (int) <br>
-     * Line 7. setting file (with path) <br>
-     * Line 8. statistics tracker file (with path) <br>
-     * Line 9-?. error message (String, empty for null), can be many lines <br>
+     * Line 7. number of journal entries <br>
+     * Line 8. setting file (with path) <br>
+     * Line 9. statistics tracker file (with path) <br>
+     * Line 10-?. error message (String, empty for null), can be many lines <br>
      * 
      * @param jobFile
      *            a file containing information about the job to load.
@@ -224,6 +226,15 @@ public class CrawlJob
                     "file '" + jobFile.getAbsolutePath() + "' is not valid: " +
                     "'" + tmp + "'");
         }
+        // numberOfJournalEntries
+        tmp = jobReader.readLine();
+        try{
+            numberOfJournalEntries = Integer.parseInt(tmp);
+        } catch(NumberFormatException e){
+            throw new InvalidJobFileException("numberOfJournalEntries " +
+                    "(line 5) in job file '" + jobFile.getAbsolutePath() + 
+                    "' is not valid: " + "'" + tmp + "'");
+        }
         // settingsHandler
         tmp = jobReader.readLine();
         try {
@@ -267,6 +278,7 @@ public class CrawlJob
                 jobWriter.write(isReadOnly+"\n");
                 jobWriter.write(isRunning+"\n");
                 jobWriter.write(priority+"\n");
+                jobWriter.write(numberOfJournalEntries+"\n");
                 jobWriter.write(getSettingsDirectory()+"\n");
                 jobWriter.write(statisticsFileSave+"\n");// TODO: Is this right?
                 // Can be multiple lines so we keep it last
@@ -484,4 +496,17 @@ public class CrawlJob
         writeJobFile(); //Save changes
     }
 
+    /**
+     * @return Returns the number of journal entries.
+     */
+    public int getNumberOfJournalEntries() {
+        return numberOfJournalEntries;
+    }
+    /**
+     * @param numberOfJournalEntries The number of journal entries to set.
+     */
+    public void setNumberOfJournalEntries(int numberOfJournalEntries) {
+        this.numberOfJournalEntries = numberOfJournalEntries;
+        writeJobFile();
+    }
 }

@@ -3,7 +3,7 @@
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.datamodel.settings.SettingsHandler,org.archive.crawler.datamodel.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
 
-<%@ page import="java.io.FileWriter"%>
+<%@ page import="java.io.FileWriter,java.io.File"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
 
@@ -41,17 +41,21 @@
             if(action.equals("add")){
                 operator = request.getParameter("operator");
                 // Add new journal entry.
+                int number = theJob.getNumberOfJournalEntries()+1;
+                File file = new File(diskPath);
+                file.mkdirs();
                 FileWriter fw = new FileWriter(diskPath + journalFilename,true);
-                fw.write("----------------------------------------------------------------------------------\n");
+                fw.write("#" + number + "\n");
                 fw.write("Operator: " + operator+"\n");
                 SimpleDateFormat journalsdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
                 journalsdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
-                fw.write("Time:     " + journalsdf.format(new Date()) + " GMT\n");
-                fw.write("---------------------------------\n");
+                fw.write("Time: " + journalsdf.format(new Date()) + " GMT\n");
+                fw.write("Entry: ");
                 fw.write(request.getParameter("entry"));
-                fw.write("\n\n\n"); // Make some room behind each entry.
+                fw.write("\n"); // Make some room behind each entry.
                 fw.flush();
                 fw.close();
+                theJob.setNumberOfJournalEntries(number);
                 
                 if(request.getParameter("remember") != null && request.getParameter("remember").equals("true")){
                     // Save operator name to cookie.
