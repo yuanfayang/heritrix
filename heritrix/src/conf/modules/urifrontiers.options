@@ -3,3 +3,4 @@
 # Lines beginning with # and empty lines are ignored
 org.archive.crawler.frontier.Frontier
 org.archive.crawler.frontier.DiskIncludedFrontier
+org.archive.crawler.frontier.DomainSensitiveFrontier
