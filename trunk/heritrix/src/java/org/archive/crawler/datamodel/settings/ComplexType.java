@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -65,6 +66,9 @@ import org.archive.crawler.datamodel.UURI;
  * @author John Erik Halse
  */
 public abstract class ComplexType extends Type implements DynamicMBean {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.settings.ComplexType");
+
     private SettingsHandler settingsHandler;
     private ComplexType parent;
     private String description;
@@ -561,8 +565,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                         try {
                             parent.setAttribute(settings, this);
                         } catch (AttributeNotFoundException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+                            logger.severe(e.getMessage());
                         }
                     }
                 } else {
