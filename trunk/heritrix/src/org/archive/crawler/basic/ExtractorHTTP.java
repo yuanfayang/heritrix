@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -19,6 +20,7 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -41,7 +43,9 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
 			} 
 			// TODO: consider possibility of multiple headers
 			if(uris.size()>0) {
-				curi1.getAList().putObject("uris-from-headers", uris);
+				curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
+				logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
+
 			}
 		}
 	}
