@@ -55,7 +55,7 @@ implements CoreAttributeConstants {
     private CrawlerSettings globalSettings = null;
     private XMLSettingsHandler settingsHandler = null;
     private final String ARCHIVE_DOT_ORG = "archive.org";
-    private final String LINK_TO_FIND = "http://www.hewlett.org";
+    private final String LINK_TO_FIND = "http://www.hewlett.org/";
     private HttpRecorder recorder = null;
 
     /*
