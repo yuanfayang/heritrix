@@ -26,8 +26,13 @@
 
 package org.archive.crawler.filter;
 
+import java.util.logging.Level;
+
 import javax.management.AttributeNotFoundException;
 
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.ComplexType;
+import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
@@ -128,4 +133,39 @@ public class FilePatternFilter extends URIRegExpFilter {
         
         return null;  // Basically the filter is inactive if this occurs.
     }
+    
+    /** 
+     * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
+     */
+    public boolean accepts(Object o) {
+        CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
+
+        // Skip the evaluation if the filter is disabled
+        // Since this filter is primarily used with seed and focus filters
+        // it has to return false when disabled -- unlike Filter's accepts
+        // method.
+        try {
+            if (!((Boolean) getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
+                return false;
+            }
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+
+        boolean accept = returnTrueIfMatches(curi) == innerAccepts(o);
+
+        if (accept && logger.isLoggable(Level.FINEST)) {
+            // Log if filter returns true
+            ComplexType p = this.getParent();
+            if (p instanceof MapType) {
+                p = p.getParent();
+            }
+            String msg = this.toString() + " belonging to " + p.toString()
+                         + " accepted " + o.toString();
+            logger.finest(msg);
+        }
+
+        return accept;
+    }
+
 }
