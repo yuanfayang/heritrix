@@ -180,7 +180,14 @@ public class ARCWriterProcessor extends Processor
                 new Boolean(this.useCompression)));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new SimpleType(ATTR_PREFIX, "Prefix", this.arcPrefix));
+            new SimpleType(ATTR_PREFIX, 
+                "ARC file prefix\n" +
+                "The text supplied here will be used as a prefix naming " +
+                "ARC files.  For example if the prefix is 'IAH', then " +
+                "ARC names will look like " +
+                "IAH-20040808101010-0001-HOSTNAME.arc.gz " +
+                "(The prefix will be separated from the date by a hyphen).",
+                this.arcPrefix));
         e = addElementToDefinition(
             new SimpleType(ATTR_SUFFIX, "Suffix to tag onto arc files.\n" +
                 "If value is '${HOSTNAME}', will use hostname for suffix.",
