@@ -15,13 +15,14 @@ import java.util.zip.Checksum;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 /**
- * Represents a 
+ * Represents a single remote "host". 
+ * 
  * @author gojomo
  *
  */
 public class CrawlHost {
 	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day 
-	String hostname;
+	String hostname; // actually, host+port in the http case
 	InetAddress ip;
 	long ipExpires = -1;
 	RobotsExclusionPolicy robots;
@@ -33,31 +34,14 @@ public class CrawlHost {
 	 * @param h
 	 */
 	public CrawlHost(String h) {
-		// did they give us a dotted quad?
-		// don't set the host or do the lookup
-		//if( h.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") ){
-		//	
-		//}
-		
-		//TODO do we want to check this for valid host?
+		// TODO: possibly check for illegal host string
 		hostname = h;
 	}
-	
-	public void resetForRobotsExpire(){
-		ipExpires = -1;
-		robots = null;
-		robotsExpires = -1;
-		robotstxtChecksum = null;
-	}
-	public void resetForIpExpire(){
-		hasBeenLookedUp = false;
-		hostname = null;
-		ip = null;
-	}
-	
+		
 	public boolean hasBeenLookedUp(){
 		return hasBeenLookedUp;
 	}
+	
 	public void setHasBeenLookedUp(){
 		hasBeenLookedUp = true;
 	}
@@ -107,11 +91,13 @@ public class CrawlHost {
 			robots = RobotsExclusionPolicy.ALLOWALL;
 			return;
 		}
-		if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
-			// authorization/allowed errors = all deny
-			robots = RobotsExclusionPolicy.DENYALL;
-			return;
-		}
+//	PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed, 
+//  since they're usually indicative of a mistake
+//      if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
+//			// authorization/allowed errors = all deny
+//			robots = RobotsExclusionPolicy.DENYALL;
+//			return;
+//		}
 		// TODO: handle other errors, perhaps redirects
 		// note that akamai will return 400 for some "not founds"
 		try {
@@ -142,32 +128,23 @@ public class CrawlHost {
 	 * @param expires
 	 */
 	 public void setIpExpires(long expires){
-	 	ipExpires = System.currentTimeMillis() + 10000;
-	 	//ipExpires = expires;
+	 	//ipExpires = System.currentTimeMillis() + 10000;
+	 	ipExpires = expires;
 	 }
 	 
-	 public boolean isIpExpired(){
-	 	if(	ipExpires >= 0 && 
-	 			ipExpires < System.currentTimeMillis()
-	 	){
-
-	 		resetForIpExpire();
-	 		return true;
-	 	}
-	 	return false;
-	 }
-	 public boolean isRobotsExpired(){
-	 	if(robotsExpires >= 0 && robotsExpires < System.currentTimeMillis()){
-	 		resetForRobotsExpire();
-	 		return true;
-	 	}
-	 	return false;
-	 }
+	public boolean isIpExpired() {
+		if (ipExpires >= 0 && ipExpires < System.currentTimeMillis()) {
+			return true;
+		}
+		return false;
+	}
 	 
-	 public void setIpExpiresFromTTL(long ttl){
-		long now = System.currentTimeMillis();
-		setIpExpires(now + ttl);
-	 }
+	public boolean isRobotsExpired() {
+		if (robotsExpires >= 0 && robotsExpires < System.currentTimeMillis()) {
+			return true;
+		}
+		return false;
+	}
 	 
 	 public InetAddress getIP(){
 	 	return ip;
