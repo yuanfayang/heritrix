@@ -23,9 +23,7 @@
  */
 package org.archive.crawler.frontier;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -56,7 +54,6 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -150,14 +147,7 @@ public class Frontier
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
 
-
     protected final static float KILO_FACTOR = 1.024F;
-
-    protected final static String F_ADD = "F+ ";
-    protected final static String F_EMIT = "Fe ";
-    protected final static String F_RESCHEDULE = "Fr ";
-    protected final static String F_SUCCESS = "Fs ";
-    protected final static String F_FAILURE = "Ff ";
 
     protected CrawlController controller;
 
@@ -435,11 +425,12 @@ public class Frontier
             caUri.setSchedulingDirective(CandidateURI.HIGH);
         }
 
-        if(enqueueToKeyed(asCrawlUri(caUri))) {
-            this.alreadyIncluded.add(caUri);
+        CrawlURI curi = asCrawlUri(caUri);
+        if(enqueueToKeyed(curi)) {
+            this.alreadyIncluded.add(curi);
             this.queuedCount++;
             // Update recovery log.
-            this.controller.recover.info("\n"+F_ADD+caUri.getURIString());
+            this.controller.recover.added(curi);
         } // else ignore: enqueueToKeyed already disposed of curi
     }
 
@@ -720,7 +711,7 @@ public class Frontier
         }
         controller.fireCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
-        controller.recover.info("\n"+F_SUCCESS+curi.getURIString());
+        controller.recover.finishedSuccess(curi);
     }
 
 
@@ -796,7 +787,7 @@ public class Frontier
             }
         }
         logger.finer(this + ".emitCuri(" + curi + ")");
-        this.controller.recover.info("\n"+F_EMIT+curi.getURIString());
+        this.controller.recover.emitted(curi);
         // One less URI in the queue.
         this.queuedCount--;
         return curi;
@@ -1120,7 +1111,7 @@ public class Frontier
             this.failedCount++;
             curi.stripToMinimal();
         }
-        this.controller.recover.info("\n"+F_FAILURE+curi.getURIString());
+        this.controller.recover.finishedFailure(curi);
     }
 
     /**
@@ -1213,7 +1204,7 @@ public class Frontier
         reschedule(curi);
 
         controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-        controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
+        controller.recover.rescheduled(curi);
     }
 
     /**
@@ -1628,48 +1619,6 @@ public class Frontier
         this.controller = null;
     }
 
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
-     */
-    public void importRecoverLog(String pathToLog) throws IOException {
-        // scan log for all 'Fs' lines: add as 'alreadyIncluded'
-        BufferedReader reader = new BufferedReader(new FileReader(pathToLog));
-        String read;
-        while((read = reader.readLine()) != null) {
-            if(read.startsWith(F_SUCCESS)) {
-                UURI u;
-                try {
-                    u = UURIFactory.getInstance(read.substring(3));
-                    this.alreadyIncluded.add(u);
-                } catch (URIException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        reader.close();
-        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for
-        // visitation
-        reader = new BufferedReader(new FileReader(pathToLog));
-        while((read = reader.readLine()) != null) {
-            if(read.startsWith(F_ADD)) {
-                UURI u;
-                try {
-                    u = UURIFactory.getInstance(read.substring(3));
-                    if(!this.alreadyIncluded.contains(u)) {
-                        CandidateURI caUri = new CandidateURI(u);
-                        caUri.setVia(pathToLog);
-                        // TODO: reevaluate if this is correct
-                        caUri.setPathFromSeed("L");
-                        schedule(caUri);
-                    }
-                } catch (URIException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        reader.close();
-
-    }
 
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -1692,5 +1641,19 @@ public class Frontier
     public synchronized void deleted(CrawlURI curi) {
         disregardDisposition(curi);
         curi.processingCleanup();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
+     */
+    public void importRecoverLog(String pathToLog) throws IOException {
+        RecoveryJournal.importRecoverLog(pathToLog,this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
+     */
+    public void considerIncluded(UURI u) {
+        this.alreadyIncluded.add(u);
     }
 }

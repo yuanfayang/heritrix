@@ -29,6 +29,7 @@ import java.util.ArrayList;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 
@@ -433,4 +434,12 @@ public interface URIFrontier {
      * @param curi Deleted CrawlURI.
      */
     public void deleted(CrawlURI curi);
+
+    /**
+     * Notify Frontier that it should consider the given UURI as if
+     * already scheduled.
+     * 
+     * @param u
+     */
+    public void considerIncluded(UURI u);
 }
