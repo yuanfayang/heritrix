@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import org.apache.commons.httpclient.ConnectTimeoutException;
@@ -167,7 +168,13 @@ implements ProtocolSocketFactory {
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
-            socket.connect(address, timeout);
+            try {
+                socket.connect(address, timeout);
+            } catch (SocketTimeoutException e) {
+                // Add timeout info. to the exception.
+                throw new SocketTimeoutException(e.getMessage() +
+                    ": timeout set at " + Integer.toString(timeout) + "ms.");
+            }
             assert socket.isConnected(): "Socket not connected " + host;
         }
         return socket;

@@ -858,7 +858,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
             String trustLevel = (String) getAttribute(ATTR_TRUST);
             Protocol.registerProtocol("https", new Protocol("https",
                 ((ProtocolSocketFactory)
-                    new HeritixSSLProtocolSocketFactory(
+                    new HeritrixSSLProtocolSocketFactory(
                         trustLevel)), 443));
         } catch (Exception e) {
             // Convert all to RuntimeException so get an exception out if
