@@ -22,7 +22,7 @@
  	max-toe-threads="100">
    
   <http-headers 
-   	User-Agent="os-heritrix/0.1.0cvs (+PROJECT_URL_HERE)"
+   	User-Agent="os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"
    	From="CONTACT_EMAIL_ADDRESS_HERE" />
 
   <frontier 

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Properties;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -52,11 +53,40 @@ import org.archive.crawler.framework.exceptions.InitializationException;
  *
  */
 public class Heritrix {
+
+    /**
+     * Name of the heritrix properties file.
+     *
+     * Should be available on the classpath.
+     */
+    private static final String PROPERTIES = "heritrix.properties";
+    
+    /**
+     * Name of the heritrix version property.
+     */
+    private static final String VERSION = "heritrix.version";
+
+    /**
+     * Heritrix logging instance.
+     */
     protected static Logger logger
         = Logger.getLogger("org.archive.crawler.Heritrix");
+    
+    /**
+     * Heritrix properties.
+     * 
+     * Read from properties file on startup and cached thereafter.
+     */
+    protected static Properties properties = null;
+    
         
-    // TODO: Make implementation of CrawlJobHandler configurable
+    /**
+     * Logging handler.
+     *
+     * TODO: Make implementation of CrawlJobHandler configurable
+     */
     protected static SimpleHandler handler;
+
 
     /**
      * Launch program
@@ -66,6 +96,7 @@ public class Heritrix {
      * @see #usage()
      */
     public static void main(String[] args) {
+        loadProperties();
         patchLogging();
         boolean noWUI = false;
         int port = -1;
@@ -216,7 +247,8 @@ public class Heritrix {
         }
         // no user-set logging properties established; use defaults 
         // from distribution-packaged 'heritrix.properties'
-        InputStream properties = ClassLoader.getSystemResourceAsStream("heritrix.properties");
+        InputStream properties 
+            = ClassLoader.getSystemResourceAsStream(PROPERTIES);
         if (properties != null ) {
             try {
                 LogManager.getLogManager().readConfiguration(properties);
@@ -247,7 +279,7 @@ public class Heritrix {
                     e.toString());
             return; 
         }
-        System.out.println("Heritrix is running.");
+        System.out.println("Heritrix " + getVersion() + " is running.");
         System.out.println("\tNo web UI");
         System.out.println("\tCrawling " + crawlOrderFile);
     }
@@ -333,7 +365,7 @@ public class Heritrix {
      *</pre>
      */
     protected static void usage() {
-        // TODO: System.out.println("Heritrix: Version unknown. Build unknown");
+        System.out.println("Heritrix version " + getVersion());
         System.out.print("Usage: java org.archive.crawler.Heritrix");
         System.out.println(" --help|-h");
         System.out.print("Usage: java org.archive.crawler.Heritrix");
@@ -342,22 +374,67 @@ public class Heritrix {
         System.out.println(" [--port=PORT] \\");
         System.out.println("\t\t\t[ORDER.XML [--start|--wait|--set]]");
         System.out.println("Options:");
-        System.out.println("\t--help|-h\tPrints this message.");
-        System.out.print("\t--no-wui\t");
+        System.out.println("  --help|-h\tPrints this message.");
+        System.out.print("  --no-wui\t");
         System.out.println("Start crawler without a web User Interface.");
-        System.out.print("\t--port\t\t");
+        System.out.print("  --port\t");
         System.out.println("PORT is port the web UI runs on. Default: 8080.");
-        System.out.print("\tORDER.XML\t");
+        System.out.print("  ORDER.XML\t");
         System.out.print("The crawl to launch. Optional if '--no-wui'");
         System.out.println(" NOT specified.");
-        System.out.print("\t--start\t\t");
+        System.out.print("  --start\t");
         System.out.println("Start crawling using specified ORDER.XML:");
-        System.out.print("\t--wait\t\t");
+        System.out.print("  --wait\t");
         System.out.print("Load job specified by ORDER.XML but do not start.");
         System.out.println(" Default.");
-        System.out.print("\t--set\t\t");
+        System.out.print("  --set\t\t");
         System.out.println("Set specified ORDER.XML as the default.");
     }
+
+    /**
+     * Get the heritrix version.
+     *
+     * @return The heritrix version.  May be null.
+     */
+    public static String getVersion()
+    {
+        return (properties != null)? properties.getProperty(VERSION): null;
+    }
+    
+    /**
+     * Return heritrix properties. 
+     * 
+     * @return The returned Properties contains the content of 
+     * heritrix.properties.  May be null if we failed initial read of 
+     * 'heritrix.properties'.
+     */
+    public static Properties getProperties()
+    {
+    	return properties;
+    }
+    
+    protected static void loadProperties()
+    {
+    	InputStream is = ClassLoader.getSystemResourceAsStream(PROPERTIES);
+        if (is == null)
+        {
+            logger.warning("Failed to find heritrix.properties on classpath.");
+        }
+        else
+        {
+        	properties = new Properties();
+        	try
+    		{
+                properties.load(is);
+        	}
+                
+        	catch(IOException e)
+			{
+        		logger.warning("Failed loading heritrix properties: " +
+                     e.getMessage());
+        	}
+        }
+    }   
     
     /**
      * Get the job handler
