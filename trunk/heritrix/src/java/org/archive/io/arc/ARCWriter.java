@@ -507,10 +507,12 @@ public class ARCWriter implements ARCConstants {
      */
     private String getArcName() {
         String name = this.arcFile.getName();
-        if(this.settings.isCompressed() && name.endsWith(".gz")) {
+        if(this.settings.isCompressed() &&
+                name.endsWith(DOT_COMPRESSED_FILE_EXTENSION)) {
             return name.substring(0,name.length() - 3);
         } else if(this.settings.isCompressed() &&
-                name.endsWith(".gz" + OCCUPIED_SUFFIX)) {
+                name.endsWith(DOT_COMPRESSED_FILE_EXTENSION +
+                    OCCUPIED_SUFFIX)) {
             return name.substring(0, name.length() -
                 (3 + OCCUPIED_SUFFIX.length()));
         } else {
