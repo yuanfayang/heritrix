@@ -213,7 +213,7 @@ implements FrontierJournal {
      * @return Recover log buffered reader.
      * @throws IOException
      */
-    protected static BufferedReader getBufferedReader(File source)
+    public static BufferedReader getBufferedReader(File source)
     throws IOException {
         boolean isGzipped = source.getName().toLowerCase().
             endsWith(GZIP_SUFFIX);
