@@ -73,6 +73,41 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         this.factory = ReplayCharSequenceFactory.getInstance();
     }
 
+    public void testShiftjis() throws IOException {
+        
+        // Here's the bytes for the JIS encoding of the Japanese form of Nihongo
+        byte[] bytes_nihongo = {    
+            (byte) 0x1B, (byte) 0x24, (byte) 0x42, (byte) 0x46,
+            (byte) 0x7C, (byte) 0x4B, (byte) 0x5C, (byte) 0x38,
+            (byte) 0x6C, (byte) 0x1B, (byte) 0x28, (byte) 0x42,
+            (byte) 0x1B, (byte) 0x28, (byte) 0x42 };
+        final String ENCODING = "SJIS";
+        // Here is nihongo converted to JVM encoding.
+        String nihongo = new String(bytes_nihongo, ENCODING);
+        
+        String fileName =
+            writeShiftjisFile("testShiftjis", bytes_nihongo).
+                getAbsolutePath();
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+                bytes_nihongo, bytes_nihongo.length +
+                    (bytes_nihongo.length * MULTIPLIER),
+                0, fileName, ENCODING);
+        
+        // Now check that start of the rcs comes back in as nihongo string.
+        String rcsStr = rcs.subSequence(0, nihongo.length()).toString();
+        assertTrue("Nihongo " + nihongo + " does not equal converted string" +
+                " from rcs " + rcsStr, 
+            nihongo.equals(rcsStr));
+        // And assert next string is also properly nihongo.
+        if (rcs.length() >= (nihongo.length() * 2)) {
+            rcsStr = rcs.subSequence(nihongo.length(),
+                nihongo.length() + nihongo.length()).toString();
+            assertTrue("Nihongo " + nihongo + " does not equal converted " + 
+                " string from rcs (2nd time)" + rcsStr, 
+                nihongo.equals(rcsStr));
+        }
+    }
+    
     public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
         
         String fileName =
@@ -141,6 +176,8 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     /**
      * Accessing characters test.
      * 
+     * Checks that characters in the rcs are in sequence.
+     * 
      * @param rcs The ReplayCharSequence to try out.
      */
     private void accessingCharacters(CharSequence rcs) {
@@ -171,6 +208,16 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         int c = rcs.charAt(i);
         assertTrue("Character " + Integer.toString(c) + " at offset " + i +
             " unexpected.", (c % SEQUENCE_LENGTH) == (i % SEQUENCE_LENGTH));
+    }
+    
+    /**
+     * @return Write a shiftjis file w/ japanese characters.
+     */
+    private File writeShiftjisFile(String baseName, byte [] buffer)
+            throws IOException {
+        File file = new File(getTmpDir(), baseName + ".shiftjisContent.txt");
+        writeFile(file, buffer, MULTIPLIER);
+        return file;
     }
     
     /**

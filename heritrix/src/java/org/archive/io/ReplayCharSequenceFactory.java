@@ -568,7 +568,7 @@ public class ReplayCharSequenceFactory {
             if (offset < this.prefixBuffer.length) {
                 // Need something from the prefix buffer.
                 int from = offset;
-                int count = prefixBuffer.length-from; //To the end of the buffer
+                int count = this.prefixBuffer.length-from; //To the end of the buffer
                 if (offset+length < this.prefixBuffer.length){
                     count = length; //length falls within the buffer.
                 } else {
@@ -875,8 +875,14 @@ public class ReplayCharSequenceFactory {
                 for (int i = 0; i < buffers.length; i++) {
                     bb = buffers[i];
                     assert bb.hasRemaining(): "Buffer has nought in it: " + i;
-                    while((result = decoder.decode(bb, cb, false))
-                            == CoderResult.UNDERFLOW && bb.hasRemaining()) {
+                    // If we fill the decoder buffer or if decoder reports
+                    // underfilled and the buffer has content in it, then go 
+                    // and drain the buffer and recall the decoder.
+                    while(((result = decoder.decode(bb, cb, false))
+                                == CoderResult.OVERFLOW) ||
+                            ((result == CoderResult.UNDERFLOW) &&
+                                bb.hasRemaining())) {
+                        
                         drainCharBuffer(cb, writer);
                     }
                     
@@ -980,9 +986,24 @@ public class ReplayCharSequenceFactory {
          * @see org.archive.io.EnhancedCharSequence#substring(int, int)
          */
         public String substring(int offset, int length) {
-            // Not the absolute optimal way to do this but the content does
-            // not appear to support the array() method.
-            return this.content.toString().substring(offset,offset+length);
+           
+            if ((offset + length) > this.content.limit()) {
+                throw new IllegalArgumentException("Limit is " +
+                    this.content.limit() + " but " + " offset is " + offset +
+                    " and length is " + length);
+            }
+            
+            String result = null;
+            if (offset == 0 && length == this.content.limit()) {
+                result = this.content.toString();
+            } else {
+                int originalPosition = this.content.position();
+                // Move position to offest.
+                this.content.position(offset);
+                result = this.content.subSequence(0, length).toString();
+                this.content.position(originalPosition);
+            }
+            return result;
         }
     }
 }
