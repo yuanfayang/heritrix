@@ -57,7 +57,8 @@ public class AllSelfTestCases
                 MaxLinkHopsSelfTest.class,
                 CharsetSelfTest.class,
                 AuthSelfTest.class,
-                BadURIsStopPageParsingSelfTest.class
+                BadURIsStopPageParsingSelfTest.class,
+                FlashParseSelfTest.class
             };
         AllSelfTestCases.allKnownSelftests =
             Collections.unmodifiableList(Arrays.asList(tmp));
