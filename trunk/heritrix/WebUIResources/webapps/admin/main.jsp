@@ -57,7 +57,7 @@
 		<%
 			if(handler.isCrawling())
 			{
-				out.println("<a href='main.jsp?action=terminate'>Terminate current job</a> | <a href='options/viewfrontier.jsp'>View current job</a> |");
+				out.println("<a href='main.jsp?action=terminate'>Terminate current job</a> | <a href='options/viewcurrentjob.jsp'>View current job</a> |");
 			}
 		%>
 		<a href="newjob.jsp">New job</a>
