@@ -25,7 +25,6 @@
 package org.archive.util;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 
 import junit.framework.TestCase;
@@ -37,9 +36,7 @@ import junit.framework.TestCase;
  * 
  * @author stack
  */
-public class TmpDirTestCase
-    extends TestCase
-    implements FileFilter
+public class TmpDirTestCase extends TestCase
 {
     /**
      * Name of the system property that holds pointer to tmp directory into
@@ -125,12 +122,12 @@ public class TmpDirTestCase
     /**
      * Delete any files left over from previous run.
      * 
-     * @param basename Base name of files we're to clean up.
+     * @param prefix Base name of files we're to clean up.
      * @param basedir Directory to start cleaning in.
      */
-    public void cleanUpOldFiles(File basedir, String basename)
+    public void cleanUpOldFiles(File basedir, String prefix)
     {
-        File [] files = getListOfFiles(basedir, basename);
+        File [] files = FileUtils.getFilesWithPrefix(basedir, prefix);
         if (files != null)
         {
             for (int i = 0; i < files.length; i++)
@@ -139,27 +136,5 @@ public class TmpDirTestCase
             }
         }
     }
-    
-    /**
-     * @param basename Basename to look for.
-     * @return List of files in dir that start w/ passed basename.
-     */
-    protected File [] getListOfFiles(File dir, String basename)
-    {
-        this.fileFilterPrefix = basename;
-        return dir.listFiles(this);
-    }
-    
-    /**
-     * Return files that begin w/ fileFilterPrefix.
-     * 
-     * Implementation of the FileFilter.accept method.
-     * 
-     * @param pathname File to filter.
-     * @return True if we are to include the passed file.
-     */
-    public boolean accept(File pathname)
-    {
-        return pathname.getName().startsWith(this.fileFilterPrefix);
-    }
+
 }

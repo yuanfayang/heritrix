@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.archive.util.ArchiveUtils;
+import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -145,7 +146,7 @@ public class ARCWriterTest
     {
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
-        File [] files = getTmpDir().listFiles(this);
+        File [] files = FileUtils.getFilesWithPrefix(getTmpDir(), PREFIX);
         for (int i = 0; i < files.length; i++)
         {
             validate(files[i], -1);
