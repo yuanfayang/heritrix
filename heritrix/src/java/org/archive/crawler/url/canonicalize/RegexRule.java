@@ -50,7 +50,7 @@ extends BaseRule {
         this(name, "(.*)", "${1}");
     }
     
-    public RegexRule(String name, String defaultRegex, String defaultFormat) {
+    protected RegexRule(String name, String defaultRegex, String defaultFormat) {
         super(name, DESCRIPTION);
         addElementToDefinition(new SimpleType(ATTR_REGEX,
             "Java regular expression.\nIf the regex matches, we'll rewrite" +
