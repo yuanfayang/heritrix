@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -23,6 +21,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
+import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
@@ -40,9 +39,12 @@ import org.archive.crawler.io.UriProcessingFormatter;
  * @author Gordon Mohr
  */
 public class CrawlController {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
+
 	private static final String LOGNAME_PROGRESS_STATISTICS = "progress-statistics";
 	private static final String LOGNAME_URI_ERRORS = "uri-errors";
 	private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
+	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
 	private static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
 	private static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval";
@@ -50,7 +52,9 @@ public class CrawlController {
 	private static final String XP_PROCESSORS = "//behavior/processors/processor";
 	private static final String XP_FRONTIER = "//behavior/frontier";
 	private static final String XP_CRAWL_SCOPE = "//scope";
+
 	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
+	private Thread controlThread;
 	private ToePool toePool;
 	private URIFrontier frontier;
 	private boolean shouldCrawl;
@@ -60,7 +64,8 @@ public class CrawlController {
 	private File disk;
 	private File scratchDisk;
 	public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
-	public Logger crawlErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
+	public Logger runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
+	public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
 	public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
 	public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
 	
@@ -73,7 +78,6 @@ public class CrawlController {
 	Processor firstProcessor;
     Processor postprocessor;
 	LinkedHashMap processors = new LinkedHashMap(); 
-	List toes = new LinkedList(); /* of ToeThreads */;
 	int nextToeSerialNumber = 0;
 	
 	ServerCache serverCache;
@@ -81,13 +85,6 @@ public class CrawlController {
 	
 	private boolean paused = false;
 	private boolean finished = false;
-
-	/** Return the list of toes (threads) this controller is using.
-	 */
-	public List getToes(){
-		return toes;
-	}
-
 
 	/**
 	 * Starting from nothing, set up CrawlController and associated
@@ -202,8 +199,13 @@ public class CrawlController {
 		
 		FileHandler cerr = new FileHandler(diskPath+LOGNAME_RUNTIME_ERRORS+".log");
 		cerr.setFormatter(new RuntimeErrorFormatter());
-		crawlErrors.addHandler(cerr);
-		crawlErrors.setUseParentHandlers(false);
+		runtimeErrors.addHandler(cerr);
+		runtimeErrors.setUseParentHandlers(false);
+		
+		FileHandler lerr = new FileHandler(diskPath+LOGNAME_LOCAL_ERRORS+".log");
+		lerr.setFormatter(new LocalErrorFormatter());
+		localErrors.addHandler(cerr);
+		localErrors.setUseParentHandlers(false);
 		
 		FileHandler uerr = new FileHandler(diskPath+LOGNAME_URI_ERRORS+".log");
 		uerr.setFormatter(new UriErrorFormatter());
@@ -259,7 +261,10 @@ public class CrawlController {
 	}
 
 
-	public void runCrawl() {
+	public synchronized void runCrawl() {
+		assert controlThread == null: "non-null control thread";
+		controlThread = Thread.currentThread();
+		controlThread.setName("crawlControl");
 		while(shouldCrawl()) {
 			 CrawlURI curi = frontier.next(timeout);
 			 if(curi != null) {
@@ -267,7 +272,8 @@ public class CrawlController {
 			 	toePool.available().crawl(curi);
 			 } 
 		}
-		System.out.println("exitting runCrawl");
+		controlThread = null;
+		logger.info("exitting runCrawl");
 	}
 
 	/**
@@ -285,10 +291,6 @@ public class CrawlController {
 	
 	public int getActiveToeCount(){
 		return toePool.getActiveToeCount();
-	}
-	
-	public int getToeCount(){
-		return toes.size();
 	}
 	
 	private void setupToePool() {
@@ -434,6 +436,13 @@ public class CrawlController {
 	 */
 	public File getScratchDisk() {
 		return scratchDisk;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getToeCount() {
+		return toePool.getActiveToeCount();
 	}
 
 }
