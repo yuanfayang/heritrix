@@ -2510,8 +2510,8 @@ public class SimpleExtractor extends Processor
 
       <listitem>
         <para>Commit all changes made above all in the one commit with a log
-        message about new release. Commit files with the new version -- the
-        build.xml and project.xml -- as well as the README.txt, home page, and
+        message about new release. Commit files with the new version, the
+        the README.txt, home page, and
         all changes in documentation including the changelog additions.</para>
       </listitem>
 
