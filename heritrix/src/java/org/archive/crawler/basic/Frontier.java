@@ -23,7 +23,10 @@
  */
 package org.archive.crawler.basic;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -94,11 +97,11 @@ public class Frontier
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.Frontier");
 
-    private static String F_ADD = "\nF+ ";
-    private static String F_EMIT = "\nFe ";
-    private static String F_RESCHEDULE = "\nFr ";
-    private static String F_SUCCESS = "\nFs ";
-    private static String F_FAILURE = "\nFf ";
+    private static String F_ADD = "F+ ";
+    private static String F_EMIT = "Fe ";
+    private static String F_RESCHEDULE = "Fr ";
+    private static String F_SUCCESS = "Fs ";
+    private static String F_FAILURE = "Ff ";
 
     CrawlController controller;
 
@@ -295,7 +298,7 @@ public class Frontier
         }
         pendingQueue.enqueue(caUri);
         incrementScheduled();
-        controller.recover.info(F_ADD+caUri.getURIString());
+        controller.recover.info("\n"+F_ADD+caUri.getURIString());
     }
 
     /**
@@ -312,7 +315,7 @@ public class Frontier
         }
         pendingHighQueue.enqueue(caUri);
         incrementScheduled();
-        controller.recover.info(F_ADD+caUri.getURIString());
+        controller.recover.info("\n"+F_ADD+caUri.getURIString());
     }
 
     /**
@@ -624,7 +627,7 @@ public class Frontier
         controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
         decrementScheduled();
-        controller.recover.info(F_SUCCESS+curi.getURIString());
+        controller.recover.info("\n"+F_SUCCESS+curi.getURIString());
     }
 
 
@@ -700,7 +703,7 @@ public class Frontier
             curi.setServer(controller.getServerCache().getServerFor(curi));
         }
         logger.finer(this+".emitCuri("+curi+")");
-        controller.recover.info(F_EMIT+curi.getURIString());
+        controller.recover.info("\n"+F_EMIT+curi.getURIString());
         return curi;
     }
 
@@ -951,7 +954,7 @@ public class Frontier
             curi.stripToMinimal();
         }
         decrementScheduled();
-        controller.recover.info(F_FAILURE+curi.getURIString());
+        controller.recover.info("\n"+F_FAILURE+curi.getURIString());
     }
 
     /**
@@ -1021,7 +1024,7 @@ public class Frontier
             UURI prereq = (UURI) curi.getPrerequisiteUri();
             addAsHeld(curi,prereq);
             curi.getAList().remove(A_PREREQUISITE_URI);
-            controller.recover.info(F_RESCHEDULE+curi.getURIString());
+            controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
             return;
         }
         if(curi.getAList().containsKey(A_RETRY_DELAY)) {
@@ -1039,7 +1042,7 @@ public class Frontier
             pushToPending(curi);
         }
         controller.throwCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-        controller.recover.info(F_RESCHEDULE+curi.getURIString());
+        controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
     }
 
     /**
@@ -1323,5 +1326,45 @@ public class Frontier
      */
     public long disregardedFetchCount() {
         return disregardedCount;
+    }
+    
+    public void importRecoverLog(String pathToLog) throws IOException {
+        // scan log for all 'Fs' lines: add as 'alreadyIncluded'
+        BufferedReader reader = new BufferedReader(new FileReader(pathToLog));
+        String read;
+        while((read = reader.readLine()) != null) {
+            if(read.startsWith(F_SUCCESS)) {
+                UURI u;
+                try {
+                    u = UURI.createUURI(read.substring(3));
+                    alreadyIncluded.add(u);
+                } catch (URISyntaxException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+        reader.close();
+        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for visitation
+        reader = new BufferedReader(new FileReader(pathToLog));
+        while((read = reader.readLine()) != null) {
+            if(read.startsWith(F_ADD)) {
+                UURI u;
+                try {
+                    u = UURI.createUURI(read.substring(3));
+                    if(!alreadyIncluded.contains(u)) {
+                        CandidateURI caUri = new CandidateURI(u);
+                        caUri.setVia(pathToLog);
+                        caUri.setPathFromSeed("L"); // TODO: reevaluate if this is correct
+                        schedule(caUri);
+                    }
+                } catch (URISyntaxException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+        reader.close();
+
     }
 }
