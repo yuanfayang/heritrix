@@ -1,7 +1,7 @@
 package org.archive.crawler.admin.auth;
 
 /**
- * @author Kristinn Sigurðsson
+ * @author Kristinn Sigurdsson
  *
  * A simple class for user authentication.  The class also defines the availible user roles.
  */

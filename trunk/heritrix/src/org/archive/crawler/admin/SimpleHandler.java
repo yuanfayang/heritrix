@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlListener;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 
@@ -18,7 +19,7 @@ import org.w3c.dom.Node;
 
 /**
  * 
- * @author Kristinn Sigurðsson
+ * @author Kristinn Sigurdsson
  *
  * This class provides control access to the crawler to the web pages.
  * It allows them to submit jobs, changed configurations and get status information. 
@@ -30,7 +31,7 @@ import org.w3c.dom.Node;
  * all page instances.
  */
 
-public class SimpleHandler implements AdminConstants
+public class SimpleHandler implements AdminConstants, CrawlListener
 {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
 
@@ -105,7 +106,7 @@ public class SimpleHandler implements AdminConstants
 	/**
 	 * The CrawlController calls this method once it's current job is finished.
 	 */
-	public void jobFinished(String sExitMessage)
+	public void crawlEnding(String sExitMessage)
 	{
 		crawling = false;
 		currentJob.setStatus(sExitMessage);
@@ -189,7 +190,7 @@ public class SimpleHandler implements AdminConstants
 		pendingCrawlJobs.remove(0);
 		
 		controller = new CrawlController(); //Create new controller.
-		controller.setOwner(this);			//Register as owner to get job finished notice.
+		controller.addListener(this);		//Register as listener to get job finished notice.
 		
 		try {
 			controller.initialize(CrawlOrder.readFromFile(currentJob.getOrderFile()));
