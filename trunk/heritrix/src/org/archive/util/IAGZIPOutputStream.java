@@ -108,4 +108,64 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 		def.reset();
 		blockWriteInProgress = false;
 	}
+	
+	// finish the compression block, but keep the deflater around
+	// and don't close the steam.
+	public void finish() throws IOException {
+		if (!def.finished()) {
+			def.finish();
+			while (!def.finished()) {
+				int len = def.deflate(buf, 0, buf.length);
+				if (def.finished() && len <= buf.length - TRAILER_SIZE) {
+					// last deflater buffer. Fit trailer at the end
+					writeTrailer(buf, len);
+					len = len + TRAILER_SIZE;
+					out.write(buf, 0, len);
+					return;
+				}
+				if (len > 0)
+					out.write(buf, 0, len);
+			}
+			// if we can't fit the trailer at the end of the last
+			// deflater buffer, we write it separately
+			byte[] trailer = new byte[TRAILER_SIZE];
+			writeTrailer(trailer, 0);
+			out.write(trailer);
+		}
+	}	
+	
+	// ibm stuff
+	
+	/*
+	  * Writes GZIP member trailer to a byte array, starting at a given
+	  * offset.
+	  */
+	 private void writeTrailer(byte[] buf, int offset) throws IOException {
+		 writeInt((int)crc.getValue(), buf, offset); // CRC-32 of uncompr. data
+		 writeInt(def.getTotalIn(), buf, offset + 4); // Number of uncompr. bytes
+	 }
+
+	 /*
+	  * Writes integer in Intel byte order to a byte array, starting at a
+	  * given offset.
+	  */
+	 private void writeInt(int i, byte[] buf, int offset) throws IOException {
+		 writeShort(i & 0xffff, buf, offset);
+		 writeShort((i >> 16) & 0xffff, buf, offset + 2);
+	 }
+
+	 /*
+	  * Writes short integer in Intel byte order to a byte array, starting
+	  * at a given offset
+	  */
+	 private void writeShort(int s, byte[] buf, int offset) throws IOException {
+		 buf[offset] = (byte)(s & 0xff);
+		 buf[offset + 1] = (byte)((s >> 8) & 0xff);
+	 }
+	 
+	/*
+	 * Trailer size in bytes.
+	 *
+	 */
+	private final static int TRAILER_SIZE = 8;
 }
