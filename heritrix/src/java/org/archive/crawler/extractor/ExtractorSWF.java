@@ -54,8 +54,7 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
      * @param name
      */
     public ExtractorSWF(String name) {
-        super(name, "Flash extractor. Extract URIs from SWF (flash/shockwave)" +
-                " files.");
+        super(name, "Flash extractor");
     }
 
     /* (non-Javadoc)

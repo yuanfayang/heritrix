@@ -33,7 +33,6 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -62,22 +61,18 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
      */
     public PreconditionEnforcer(String name) {
         super(name, "Precondition enforcer");
-        
-        Type e;
-        
-        e = addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
+
+        addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
                 "How long a dns-record is considered valid (in minutes). \n" +
                 "If the value is set to '-1', then the dns-record's ttl-value" +
-                " will be used. If set to '0', then the dns will never expire.",
+                "will be used. If set to '0', then the dns will never expire.",
                 DEFAULT_IP_VALIDITY_DURATION));
-        e.setExpertSetting(true);
 
-        e = addElementToDefinition(new SimpleType(ATTR_ROBOTS_VALIDITY_DURATION,
-                "The time in minutes, between refreshes of robots.txt.\n" +
-                "If the value is set to '0', then the robots.txt information" +
-                " will never expire.",
+        addElementToDefinition(new SimpleType(ATTR_ROBOTS_VALIDITY_DURATION,
+                "The time in minutes, between robots.txt are refreshed.\n" +
+                "If the value is set to '0', then the robots will never" +
+                " expire.",
                 DEFAULT_ROBOTS_VALIDITY_DURATION));
-        e.setExpertSetting(true);
     }
 
     /* (non-Javadoc)

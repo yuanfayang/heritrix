@@ -28,7 +28,6 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.TextUtils;
@@ -53,28 +52,23 @@ public class Preselector extends Processor implements FetchStatusCodes {
      * @param name
      */
     public Preselector(String name) {
-        super(name, "Preselector. \nDoes one last bit of checking to make " +
-                "sure that the current URI should be fetched.");
-        Type e;
-        e = addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE,
+        super(name, "Preselector");
+        addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE,
                 "Recheck if uri is in scope. This is meaningfull if the scope" +
                 " is altered during a crawl. URIs are checked against the" +
                 " scope when they are added to queues. Setting this value to" +
                 " true forces the URI to be checked against the scope when it" +
                 " is comming out of the queue, possibly after the scope is" +
                 " altered.", new Boolean(false)));
-        e.setExpertSetting(true);
         
-        e = addElementToDefinition(new SimpleType(ATTR_BLOCK_ALL,
-                "Block all URIs from being processed. This is most likely to" +
+        addElementToDefinition(new SimpleType(ATTR_BLOCK_ALL,
+                "Block all uris from beeing processed. This is most likely to" +
                 " be used in overrides to easily reject certain hosts from" +
-                " being processed.", new Boolean(false)));
-        e.setExpertSetting(true);
+                " beeing processed.", new Boolean(false)));
 
-        e = addElementToDefinition(new SimpleType(ATTR_BLOCK_BY_REGEXP,
-                "Block all URIs matching the regular expression from being" +
+        addElementToDefinition(new SimpleType(ATTR_BLOCK_BY_REGEXP,
+                "Block all uris matching the regular expression from beeing" +
                 " processed.", ""));
-        e.setExpertSetting(true);
     }
 
     /* (non-Javadoc)

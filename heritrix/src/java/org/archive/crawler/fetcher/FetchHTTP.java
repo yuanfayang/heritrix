@@ -46,7 +46,6 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
@@ -122,31 +121,26 @@ public class FetchHTTP extends Processor
      */
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");
-        Type e;
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
             "If the fetch is not completed in this number of seconds,"
             + " give up", DEFAULT_TIMEOUT_SECONDS));
-        e = addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
-            "If the socket is unresponsive for this number of milliseconds, "
-            + "give up (and retry later)", DEFAULT_SOTIMEOUT_MS));
-        e.setExpertSetting(true);
+        addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
+            "If the socket is unresponsive for this number of seconds, give up"
+            + " (and retry)", DEFAULT_SOTIMEOUT_MS));
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
             "Max length in bytes to fetch (truncate at this length)", 
             DEFAULT_MAX_LENGTH_BYTES));
         addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS,
             "Max number of fetches to attempt", DEFAULT_MAX_FETCH_ATTEMPTS));
-        e = addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
+        addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
-        e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_SAVE_COOKIES,
+        addElementToDefinition(new SimpleType(ATTR_SAVE_COOKIES,
             "When crawl finishes save cookies to this file", ""));
-        e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_STRICT,
+        addElementToDefinition(new SimpleType(ATTR_STRICT,
                 "Strict adherence to HTTP protocol.  At a minimum all cookies"
                 + " will be served on one line only",
                 new Boolean(this.strict)));
-        e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_TRUST,
+        SimpleType trustLevel = new SimpleType(ATTR_TRUST,
             "SSL certificate trust level.  Range is from the default 'open'"
             + " (trust all certs including expired, selfsigned, and those for"
             + " which we do not have a CA) through 'loose' (trust all valid"
@@ -154,9 +148,9 @@ public class FetchHTTP extends Processor
             + " certificates not including selfsigned) to 'strict' (Cert is"
             + " valid and DN must match servername)",
             ConfigurableX509TrustManager.DEFAULT,
-            ConfigurableX509TrustManager.LEVELS_AS_ARRAY));
-        e.setOverrideable(false);
-        e.setExpertSetting(true);
+            ConfigurableX509TrustManager.LEVELS_AS_ARRAY);
+        trustLevel.setOverrideable(false);
+        addElementToDefinition(trustLevel);
     }
 
     protected void innerProcess(CrawlURI curi) {

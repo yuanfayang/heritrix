@@ -62,7 +62,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
      * @param name the name of this attribute.
      */
     public FetchDNS(String name) {
-        super(name, "DNS Fetcher. \nHandles DNS lookups.");
+        super(name, "DNS Fetcher");
     }
 
 //      public void initialize(CrawlController c) throws AttributeNotFoundException{

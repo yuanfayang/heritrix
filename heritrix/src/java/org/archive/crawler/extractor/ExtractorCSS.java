@@ -74,8 +74,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      * @param name
      */
     public ExtractorCSS(String name) {
-        super(name, "CSS Extractor. Extracts links from Cascading Style" +
-                " Sheets (.css).");
+        super(name, "CSS Extractor");
     }
 
     /**
