@@ -1,4 +1,6 @@
 /*
+ * utf-8 eth test : ð
+ * 
  * ARCReader.java
  * Created on Sep 26, 2003
  *
