@@ -66,5 +66,11 @@ public class StripSessionIDsTest extends TestCase {
         result = (new StripSessionIDs("test")).
             canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
+        // Test sid.
+        url = BASE + "?" + "sid=9682993c8daa2c5497996114facdc805" + "&x=y";
+        expectedResult = BASE + "?&x=y";
+        result = (new StripSessionIDs("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
+        assertTrue("Failed " + result, expectedResult.equals(result));	
     }
 }

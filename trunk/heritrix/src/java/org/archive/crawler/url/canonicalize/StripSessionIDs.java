@@ -58,7 +58,7 @@ extends BaseRule {
      * so have to have it run after the phpsessid elimination.
      */
     private static final Pattern SID_PATTERN =
-        Pattern.compile("^(.+)(?:(?:sid)=" + "[0-9a-zA-Z]{32})(&.*)?$",
+        Pattern.compile("^(.+)(?:sid=[0-9a-zA-Z]{32})(&.*)?$",
             Pattern.CASE_INSENSITIVE);
     
     /**
