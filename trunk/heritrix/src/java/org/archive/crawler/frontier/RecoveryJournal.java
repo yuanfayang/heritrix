@@ -42,7 +42,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Frontier;
-import org.archive.io.arc.ARCConstants;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -68,6 +67,8 @@ implements FrontierJournal {
      */
     private OutputStreamWriter out = null;
 
+    private static final String GZIP_SUFFIX = ".gz";
+
     
     /**
      * Create a new recovery journal at the given location
@@ -80,7 +81,7 @@ implements FrontierJournal {
     throws IOException {
         this.out = new OutputStreamWriter(new GZIPOutputStream(
             new BufferedOutputStream(new FileOutputStream(new File(path,
-                filename + ARCConstants.DOT_COMPRESSED_FILE_EXTENSION)))));
+                filename + GZIP_SUFFIX)))));
     }
 
     public synchronized void added(CrawlURI curi) {
@@ -213,7 +214,7 @@ implements FrontierJournal {
     protected static BufferedReader getBufferedReader(File source)
     throws IOException {
         boolean isGzipped = source.getName().toLowerCase().
-            endsWith(ARCConstants.DOT_COMPRESSED_FILE_EXTENSION);
+            endsWith(GZIP_SUFFIX);
         // Scan log for all 'Fs' lines: add as 'alreadyIncluded'
         FileInputStream fis = new FileInputStream(source);
         return new BufferedReader(isGzipped?
