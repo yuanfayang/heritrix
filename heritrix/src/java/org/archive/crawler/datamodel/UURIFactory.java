@@ -625,11 +625,10 @@ public class UURIFactory extends URI {
             if (no != null && no.length() > 0) {
                 // First check if the port has leading zeros
                 // as in '0080'.  Strip them if it has and
-                // then reconstitute the uriAuthority.
-                boolean hasLeadingZeros = false;
-                while (no.charAt(0) == '0') {
+                // then reconstitute the uriAuthority.  Be careful
+                // of cases where port is '0' or '000'.
+                while (no.charAt(0) == '0' && no.length() > 1) {
                     no = no.substring(1);
-                    hasLeadingZeros = true;
                 }
                 uriAuthority = m.group(1) + no;
                 // Now makesure the number is legit.

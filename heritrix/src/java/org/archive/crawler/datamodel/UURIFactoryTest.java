@@ -67,6 +67,12 @@ public class UURIFactoryTest extends TestCase {
 		final String uuriStr = uuri.toString();
 		assertTrue(ESCAPED_URISTR.equals(uuriStr));
 	}
+
+    public final void testUnderscoreMakesPortParseFail() throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://one-two_three:8080/index.html");
+        int port = uuri.getPort();
+        assertTrue("Failed find of port " + uuri, port == 8080);
+    }
     
     public final void testRelativeURIWithTwoSlashes() throws URIException {
         UURI base = UURIFactory.getInstance("http://www.archive.org");
@@ -508,7 +514,9 @@ public class UURIFactoryTest extends TestCase {
 		checkBadPort("http://158.144.21.3:80808/robots.txt");
 		checkBadPort("http://pdb.rutgers.edu:81.rutgers.edu/robots.txt");
 		checkBadPort(
-		"https://webmail.gse.harvard.edu:9100robots.txt/robots.txt");
+		    "https://webmail.gse.harvard.edu:9100robots.txt/robots.txt");
+		checkBadPort(
+		    "https://webmail.gse.harvard.edu:0/robots.txt/robots.txt");
 	}
 	
 	/**
