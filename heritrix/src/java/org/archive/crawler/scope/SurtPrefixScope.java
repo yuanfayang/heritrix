@@ -25,11 +25,13 @@ package org.archive.crawler.scope;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.util.SurtPrefixSet;
 
 /**
@@ -48,6 +50,11 @@ import org.archive.util.SurtPrefixSet;
  */
 public class SurtPrefixScope extends RefinedScope {
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
+    public static final String ATTR_SEEDS_AS_SURT_PREFIXES = "seeds-as-surt-prefixes";
+    public static final String ATTR_SURTS_DUMP_FILE = "surts-dump=file";
+    
+    private static final Boolean DEFAULT_SEEDS_AS_SURT_PREFIXES = new Boolean(true);
+
     SurtPrefixSet surtPrefixes = null;
 
     public SurtPrefixScope(String name) {
@@ -60,6 +67,15 @@ public class SurtPrefixScope extends RefinedScope {
         addElementToDefinition(
                 new SimpleType(ATTR_SURTS_SOURCE_FILE, "Source file from which to " +
                         "read SURT prefixes.", ""));
+        addElementToDefinition(
+                new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES, "Should seeds also " +
+                        "be intepreted as SURT prefixes.", 
+                        DEFAULT_SEEDS_AS_SURT_PREFIXES));
+        
+        Type t = addElementToDefinition(
+                new SimpleType(ATTR_SURTS_DUMP_FILE, "Dump file to save SURT " +
+                        "prefixes actually used.", ""));
+        t.setExpertSetting(true);
 
     }
 
@@ -70,7 +86,7 @@ public class SurtPrefixScope extends RefinedScope {
      *            An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
-    protected boolean focusAccepts(Object o) {
+    protected synchronized boolean focusAccepts(Object o) {
         if (surtPrefixes == null) {
             readPrefixes();
         }
@@ -89,26 +105,78 @@ public class SurtPrefixScope extends RefinedScope {
     
     private void readPrefixes() {
         surtPrefixes = new SurtPrefixSet(); 
+        FileReader fr = null;
+        
+        // read SURTs from file, if appropriate 
         String sourcePath = (String) getAttributeOrNull(ATTR_SURTS_SOURCE_FILE,
                 (CrawlURI) null);
-        File source = new File(sourcePath);
-        if (!source.isAbsolute()) {
-            source = new File(getSettingsHandler().getOrder()
-                    .getController().getDisk(), sourcePath);
-        }
-        FileReader fr = null;
-        try {
-
-            fr = new FileReader(source);
-            try {
-                surtPrefixes.importFrom(fr);
-            } finally {
-                fr.close();
+        if(sourcePath.length()>0) {
+            File source = new File(sourcePath);
+            if (!source.isAbsolute()) {
+                source = new File(getSettingsHandler().getOrder()
+                        .getController().getDisk(), sourcePath);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        } 
+            try {
+                fr = new FileReader(source);
+                try {
+                    surtPrefixes.importFrom(fr);
+                } finally {
+                    fr.close();
+                }
+        
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            } 
+        }
+        
+        // interpret seeds as surts, if appropriate
+        if(((Boolean)getAttributeOrNull(ATTR_SEEDS_AS_SURT_PREFIXES, null)).booleanValue()) {
+            try {
+                fr = new FileReader(getSeedfile());
+                try {
+                    surtPrefixes.importFromUris(fr);
+                } finally {
+                    fr.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }      
+
+        // dump surts to file, if appropriate
+        String dumpPath = (String) getAttributeOrNull(ATTR_SURTS_DUMP_FILE,
+                (CrawlURI) null);
+        if(dumpPath.length()>0) {
+            File dump = new File(dumpPath);
+            if (!dump.isAbsolute()) {
+                dump = new File(getSettingsHandler().getOrder()
+                        .getController().getDisk(), dumpPath);
+            }
+            try {
+                FileWriter fw = new FileWriter(dump);
+                try {
+                    surtPrefixes.exportTo(fw);
+                } finally {
+                    fw.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
     }
 
+    /**
+     * Re-read prefixes after an update. 
+     * 
+     * @see org.archive.crawler.framework.CrawlScope#kickUpdate()
+     */
+    public synchronized void kickUpdate() {
+        super.kickUpdate();
+        // TODO: make conditional on file having actually changed,
+        // perhaps by remembering mod-time
+        readPrefixes();
+    }
 }
