@@ -306,7 +306,9 @@
         your CLASSPATH (ensuring the heritrix.jar is found first).
         Thereafter, using HEAD (post-1.2.0), doing the following should
         get you a long ways: <programlisting>Heritrix h = new Heritrix();
-h.launch();</programlisting>
+h.launch();</programlisting>.  You'll then need to have your program
+        hangaround while the crawl runs.  See
+        <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example.
         </p>
         </answer>
       </faq>
