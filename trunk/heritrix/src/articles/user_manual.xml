@@ -899,9 +899,10 @@
           DomainScope, BroadScope -- all could be thought of as fitting a
           specific pattern: A URI is included if and only if:</para>
 
-          <para><programlisting>    ( ( focusFilter.accepts(u)
-        || transitiveFilter.accepts(u) )
-      &amp;&amp; exclusionFilter.accepts(u) == false )</programlisting></para>
+    <para><programlisting>protected final boolean innerAccepts(Object o) {
+    return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
+            transitiveAccepts(o)) &amp;&amp; !excludeAccepts(o);
+}</programlisting></para>
 
           <para>More generally, the <emphasis>focus</emphasis> filter was
           meant to rule things in by prima facia/regexp-pattern analysis; the
