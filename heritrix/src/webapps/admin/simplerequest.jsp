@@ -1,5 +1,5 @@
-<%@include file="/include/secure_limited.jsp"%>
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/secure.jsp"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob" %>
 
 <%
@@ -108,31 +108,31 @@
 					out.println("<tr><td></td><td>");
 					switch(Integer.parseInt(sProfile))
 					{
-						case 1 : out.println("'Page' crawl: Get seed pages and their embedded resources (frames, online images), but follow no links.");
+						case 1 : out.println("Description of a Page crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - page\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"0\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"broad\">");
 								 break;
-						case 2 : out.println("'Page+1' crawl: Get seed pages and their embedded resources, and follow all links one hop out, getting those pages and their embedded resources, also.");
+						case 2 : out.println("Description of a Page+1 crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - page+1\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"1\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"broad\">");
 								 break;
-						case 3 : out.println("'Path' crawl: Get seed pages and their embedded resources, and follow links to all URIs which are proper path-extensions of the seeds, up to 3 hops out.");
+						case 3 : out.println("Description of a Path crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - path\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"3\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"path\">");
 								 break;
-						case 4 : out.println("'Host' crawl: Get seed pages and their embedded resources, and follow links to all URIs on the same hostnames as the seeds, up to 5 hops out.");
+						case 4 : out.println("Description of a Host crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - host\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"host\">");
 						         break;
-						case 5 : out.println("'Domain' crawl: Get seed pages and their embedded resources, and follow links to all URIs in the same general domain as the seeds, up to 6 hops out. ");
+						case 5 : out.println("Description of a Domain crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - domain\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"6\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
