@@ -214,6 +214,21 @@ public class ArchiveUtilsTest extends TestCase {
             "cecking precision higher then the double has",
             ArchiveUtils.doubleToString(test, 65).equals("12.345"));
     }
+    
+    public void testFormatBytesForDisplay(){
+        long kb = 1024;
+        long mb = 1024*1024*2;
+        long gb = ((long)1024*1024)*1024*4;
+        
+        assertEquals("formating negative number","0 B",ArchiveUtils.formatBytesForDisplay(-1));
+        assertEquals("formating byte - lower bound","0 B",ArchiveUtils.formatBytesForDisplay(0));
+        assertEquals("formating byte - upper bound","1023 B",ArchiveUtils.formatBytesForDisplay(kb-1));
+        assertEquals("formating kilobyte - lower bound","1 KB",ArchiveUtils.formatBytesForDisplay(kb));
+        assertEquals("formating kilobyte - upper bound","2047 KB",ArchiveUtils.formatBytesForDisplay(mb-1));
+        assertEquals("formating megabyte - lower bound","2 MB",ArchiveUtils.formatBytesForDisplay(mb));
+        assertEquals("formating megabyte - upper bound","4095 MB",ArchiveUtils.formatBytesForDisplay(gb-1));
+        assertEquals("formating gigabyte - lower bound","4 GB",ArchiveUtils.formatBytesForDisplay(gb));
+    }
 
     /*
      * helper methods
