@@ -24,8 +24,14 @@
 package org.archive.crawler.frontier;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,6 +47,9 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.checkpoint.CheckpointContext;
+import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
+import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -90,7 +99,9 @@ public class Frontier
     extends ModuleType
     implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
         CrawlStatusListener {
-    
+    // be robust against trivial implementation changes
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(Frontier.class,1);
+
     private static final Logger logger =
         Logger.getLogger(Frontier.class.getName());
 
@@ -135,7 +146,7 @@ public class Frontier
     private final static String F_SUCCESS = "Fs ";
     private final static String F_FAILURE = "Ff ";
 
-    CrawlController controller;
+    protected CrawlController controller;
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
@@ -236,7 +247,7 @@ public class Frontier
         throws FatalConfigurationException, IOException {
 
         // TODO: Make the queue size configurable.
-        pendingQueue = new DiskBackedQueue(c.getStateDisk(),"pendingQ",10000);
+        pendingQueue = new DiskBackedQueue(c.getStateDisk(),"pendingQ",false,10000);
 
         // TODO: Make the uri set configurable.
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
@@ -259,7 +270,6 @@ public class Frontier
 //        wakerThread.start();
         
         this.controller = c;
-        controller.addCrawlStatusListener(this);
         loadSeeds();
     }
 
@@ -293,7 +303,7 @@ public class Frontier
         }
     }
 
-    private static class ThreadLocalQueue extends ThreadLocal {
+    private static class ThreadLocalQueue extends ThreadLocal implements Serializable {
         /* (non-Javadoc)
          * @see java.lang.ThreadLocal#initialValue()
          */
@@ -1576,5 +1586,20 @@ public class Frontier
         }
         reader.close();
 
+    }
+
+    // custom serialization
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        ObjectPlusFilesOutputStream coostream = (ObjectPlusFilesOutputStream)stream;
+        coostream.pushAuxiliaryDirectory(new File(coostream.getAuxiliaryDirectory(),"frontier"));
+        coostream.defaultWriteObject();
+        coostream.popAuxiliaryDirectory();
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
+        coistream.pushAuxiliaryDirectory(new File(coistream.getAuxiliaryDirectory(),"frontier"));
+        coistream.defaultReadObject();
+        coistream.popAuxiliaryDirectory();
     }
 }
