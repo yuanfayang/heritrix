@@ -78,7 +78,7 @@ import org.archive.util.FileUtils;
  *                              can be moved to the pending queue.
  * <li> <code>Profiles</code> - Jobs under profiles are not actual jobs. They can 
  *                              be edited normally but can not be submitted to
- *                              to the pending queue. New jobs can be created 
+ *                              the pending queue. New jobs can be created 
  *                              using a profile as it's template. 
  * 
  * @author Kristinn Sigurdsson
@@ -256,6 +256,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
         return null;    
     }
     
+    /**
+     * Set the default profile.
+     * @param profile The new default profile. The following must apply to it.
+     *                profile.isProfile() should return true and 
+     *                this.getProfiles() should contain it. 
+     */
     public void setDefaultProfile(CrawlJob profile){
         defaultProfile = profile.getJobName();
     }
