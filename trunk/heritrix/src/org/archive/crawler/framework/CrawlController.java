@@ -22,7 +22,7 @@ import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FatalConfigurationException;
-import org.archive.crawler.datamodel.HostCache;
+import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.io.CrawlErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -57,7 +57,7 @@ public class CrawlController implements CrawlerConfigurationConstants {
 	List toes = new LinkedList(); /* of ToeThreads */;
 	int nextToeSerialNumber = 0;
 	
-	HostCache hostCache;
+	ServerCache hostCache;
 	//ThreadKicker kicker;
 	
 	private boolean paused = false;
@@ -174,7 +174,7 @@ public class CrawlController implements CrawlerConfigurationConstants {
 			);
 		}
 			
-		hostCache = new HostCache();
+		hostCache = new ServerCache();
 		//kicker = new ThreadKicker();
 		//kicker.start();
 		
@@ -340,7 +340,7 @@ public class CrawlController implements CrawlerConfigurationConstants {
 	/**
 	 * 
 	 */
-	public HostCache getHostCache() {
+	public ServerCache getHostCache() {
 		return hostCache;
 	}
 

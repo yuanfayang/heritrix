@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * expiry handled outside, in CrawlHost
+ * expiry handled outside, in CrawlServer
  * @author gojomo
  *
  */

@@ -46,7 +46,7 @@ public class CrawlURI
 	private Object state;
 	CrawlController controller;
 	Processor nextProcessor;
-	CrawlHost host;
+	CrawlServer server;
 
 	private int fetchStatus = 0;	// default to unattempted
 	private int deferrals = 0;
@@ -208,15 +208,15 @@ public class CrawlURI
 	/**
 	 * @return
 	 */
-	public CrawlHost getHost() {
-		return host;
+	public CrawlServer getServer() {
+		return server;
 	}
 
 	/**
 	 * @param host
 	 */
-	public void setHost(CrawlHost host) {
-		this.host = host;
+	public void setServer(CrawlServer host) {
+		this.server = host;
 	}
 
 	/**

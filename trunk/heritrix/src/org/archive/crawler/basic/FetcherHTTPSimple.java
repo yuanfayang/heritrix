@@ -62,7 +62,8 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 		curi.incrementFetchAttempts();
 		
 		// make sure the dns lookup succeeded
-		if(curi.getHost().getIP() == null && curi.getHost().hasBeenLookedUp()){
+		if (curi.getServer().getHost().getIP() == null
+			&& curi.getServer().getHost().hasBeenLookedUp()) {
 			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 			return;
 		}
@@ -70,12 +71,17 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 		// attempt to get the page
 		long now = System.currentTimeMillis();
 		
-		curi.getAList().putLong(A_FETCH_BEGAN_TIME,now);
+		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false); // don't auto-follow redirects
-		get.setHttp11(false); // use only HTTP/1.0 (to avoid receiving chunked responses)
-		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
-		get.setRequestHeader("From",controller.getOrder().getBehavior().getFrom());
+		get.setHttp11(false);
+		// use only HTTP/1.0 (to avoid receiving chunked responses)
+		get.setRequestHeader(
+			"User-Agent",
+			controller.getOrder().getBehavior().getUserAgent());
+		get.setRequestHeader(
+			"From",
+			controller.getOrder().getBehavior().getFrom());
 		
 		//controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
 
