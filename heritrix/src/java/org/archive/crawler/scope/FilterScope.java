@@ -75,17 +75,14 @@ public class FilterScope extends CrawlScope {
     public FilterScope(String name) {
         super(name);
         setDescription(
-            "A scope using customizable filters. To use this " +
-            "filter, add any desired filters to it and adjust their" +
+            "FilterScope: A scope using customizable filters. To use this" +
+            " filter, add any desired filters to it and adjust their" +
             " settings appropriately. For advanced users only.");
-
         focusFilters = (Filter) addElementToDefinition(
                 new OrFilter(ATTR_FOCUS_FILTER,
                 "Add filters here to focus the crawl."));
-
         transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
-
     }
 
     /**

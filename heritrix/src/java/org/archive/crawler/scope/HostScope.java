@@ -78,15 +78,13 @@ public class HostScope extends CrawlScope {
     public HostScope(String name) {
         super(name);
         setDescription(
-            "A scope for host crawls. Crawls made with this scope" +
+            "HostScope: A scope for host crawls. Crawls made with this scope" +
             " will be limited to the hosts its seeds. Thus if one of" +
             " the seeds is 'archive.org' the subdomain" +
             " 'crawler.archive.org' will not be crawled." +
             " 'www.host' is considered to be the same as host.");
-
        additionalFocusFilter = (Filter) addElementToDefinition(
                 new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
-
         this.transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
     }
