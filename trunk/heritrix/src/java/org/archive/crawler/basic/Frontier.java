@@ -163,10 +163,21 @@ public class Frontier
         // The frontier should always have the same name.
         // the argument to this constructor is just ignored.
         super(URIFrontier.ATTR_NAME, "Frontier");
-        addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR, "How many multiples of last fetch elapsed time to wait before recontacting same server", DEFAULT_DELAY_FACTOR));
-        addElementToDefinition(new SimpleType(ATTR_MAX_DELAY, "Never wait more than this long, regardless of multiple", DEFAULT_MAX_DELAY));
-        addElementToDefinition(new SimpleType(ATTR_MIN_DELAY, "Always wait this long after one completion before recontacting same server, regardless of multiple", DEFAULT_MIN_DELAY));
-        addElementToDefinition(new SimpleType(ATTR_MIN_INTERVAL, "always wait at least this long between request *starts* (contrasted with min-delay: if min-interval time has already elapsed during last fetch, then next fetch may occur immediately; it constrains starts not off-cycles)", DEFAULT_MIN_INTERVAL));
+        addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
+         "How many multiples of last fetch elapsed time to wait before " +
+         "recontacting same server", DEFAULT_DELAY_FACTOR));
+        addElementToDefinition(new SimpleType(ATTR_MAX_DELAY,
+            "Never wait more than this long, regardless of multiple",
+            DEFAULT_MAX_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_MIN_DELAY,
+            "Always wait this long after one completion before recontacting " +
+            "same server, regardless of multiple", DEFAULT_MIN_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_MIN_INTERVAL,
+            "always wait at least this long between request *starts* " +
+            "(contrasted with min-delay: if min-interval time has already " +
+            "elapsed during last fetch, then next fetch may occur " +
+            "immediately; it constrains starts not off-cycles)",
+            DEFAULT_MIN_INTERVAL));
     }
     
     public Frontier() {
@@ -180,11 +191,6 @@ public class Frontier
 	 */
 	public void initialize(CrawlController c)
 		throws FatalConfigurationException, IOException {
-		
-//		delayFactor = getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
-//		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
-//		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
-//		minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
