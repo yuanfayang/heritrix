@@ -659,7 +659,8 @@ public class Frontier
         while(!snoozeQueues.isEmpty()&&((URIStoreable)snoozeQueues.first()).getWakeTime()<=now) {
             URIStoreable awoken = (URIStoreable)snoozeQueues.first();
             if (!snoozeQueues.remove(awoken)) {
-                logger.severe("first() item couldn't be remove()d! - "+awoken);
+                logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
+                logger.severe(report());
             }
             if (awoken instanceof KeyedQueue) {
                 assert inProcessMap.get(awoken.getClassKey()) == null : "false ready: class peer still in process";

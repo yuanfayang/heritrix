@@ -1,4 +1,6 @@
-/* Copyright (C) 2003 Internet Archive.
+/* CrawlJob
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -18,6 +20,8 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.File;
+
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.StatisticsTracking;
 
@@ -27,10 +31,14 @@ import org.archive.crawler.framework.StatisticsTracking;
  * methods needed by a CrawlJobHandler to accept and execute them. A given crawl
  * job may also be a 'profile' for a crawl. In that case it should not be executed
  * as a crawl but can be edited and used as a template for creating new CrawlJobs.
+ * <p>
+ * All of it's constructors are protected since only the CrawlJobHander (or it's
+ * subclasses) should construct new CrawlJobs.
  *
  * @author Kristinn Sigurdsson
  *
- * @see CrawlJobHandler
+ * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob, String, String, String)
+ * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob, String, String, String)
  */
 
 public class CrawlJob
@@ -84,33 +92,55 @@ public class CrawlJob
     private boolean isNew = true;
     private boolean isProfile = false;
     private boolean isRunning = false;
+    // TODO: Statistics tracker will be saved at end of crawl. We will also want to save it at checkpoints.
     private StatisticsTracking stats;
     private int priority;
 
     private String errorMessage = null;
+    
+    private File jobDir = null;
 
     protected XMLSettingsHandler settingsHandler;
 
     /**
-     * Simple constructor. Settings need to be added seperately before a job created
-     * with this constructor can be submitted to the CrawlJobHandler.
+     * Simple constructor. Settings need to be added seperately before a job 
+     * created with this constructor can be submitted to the CrawlJobHandler.
      *
      * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
+     * @param dir The directory to store the job file.
      *
      * @see CrawlJobHandler#getNextJobUID()
      */
-    public CrawlJob(String UID){
+//    protected CrawlJob(String UID, File dir){
+//        this.UID = UID;
+//        isReadOnly = false;
+//        jobDir = dir;
+//    }
+
+    /**
+     * A constructor for jobs. Create, ready to crawl, jobs.
+     * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
+     * @param name The name of the job
+     * @param settingsHandler The associated settings
+     * @param priority job priority.
+     */
+    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler, int priority, File dir) {
         this.UID = UID;
-        isReadOnly = false;
+        this.name = name;
+        this.settingsHandler = settingsHandler;
+        this.priority = priority;
+        jobDir = dir;
     }
 
     /**
      * A constructor for profiles. Any job created with this constructor will be
-     * considered a profile.
+     * considered a profile. Profiles are not stored on disk (only their 
+     * settings files are stored on disk). This is because their data is 
+     * predictible given any settings files.
      * @param UIDandName A unique ID for this job. For profiles this is the same as name
      * @param settingsHandler
      */
-    public CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler) {
+    protected  CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler) {
         this.UID = UIDandName;
         this.name = UIDandName;
         this.settingsHandler = settingsHandler;
@@ -118,24 +148,27 @@ public class CrawlJob
         isNew = false;
         status = STATUS_PROFILE;
     }
-
-
+    
     /**
-     * Advanced constructor. If given proper values this will create a CrawlJob
-     * that is ready to be crawled at once.
-     * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
-     * @param name
-     * @param settingsHandler
-     * @param priority
+     * A constructor for reloading jobs from disk. Jobs (not profiles) have 
+     * their data written to persistent storage in the file system. This method 
+     * is used to load the job from such storage. This is done by the 
+     * <code>CrawlJobHandler</code>
+     * @param jobFile
      */
-    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler, int priority) {
-        this.UID = UID;
-        this.name = name;
-        this.settingsHandler = settingsHandler;
-        this.priority = priority;
+    protected CrawlJob(File jobFile){
+        
     }
 
-
+    /**
+     * Cause the job to be written to persistent storage. This will also
+     * save the statistics tracker if it is not null and the job status is
+     * finished (regardless of how it's finished)
+     */
+    private void writeJobFile(){
+        
+    }
+    
 
     /**
      * Returns this jobs unique ID (UID) that was issued by the CrawlJobHandler()
@@ -154,9 +187,10 @@ public class CrawlJob
      *
      * @param jobname The 'name' of the job.
      */
-    protected void setJobName(String jobname){
-        this.name = jobname;
-    }
+//Should not be editable
+//    protected void setJobName(String jobname){
+//        this.name = jobname;
+//    }
 
     /**
      * Returns this job's 'name'. The name comes from the settings for this job,
@@ -184,6 +218,7 @@ public class CrawlJob
      * @see #PRIORITY_HIGH
      * @see #PRIORITY_CRITICAL
      */
+    // TODO: Either implement the priority or get rid of it.
     public void setJobPriority(int priority){
         this.priority = priority;
     }
@@ -210,6 +245,7 @@ public class CrawlJob
      */
     public void setReadOnly(){
         isReadOnly = true;
+        writeJobFile(); //Save changes
     }
 
     /**
@@ -228,6 +264,8 @@ public class CrawlJob
      */
     public void setStatus(String status){
         this.status = status;
+        writeJobFile(); //Save changes
+        // TODO: If job finished, save StatisticsTracker!
     }
 
     /**
@@ -250,6 +288,7 @@ public class CrawlJob
 
     public void setSettingsHandler(XMLSettingsHandler settingsHandler){
         this.settingsHandler = settingsHandler;
+        // TODO: Is this method needed? Probably not.
     }
 
     /**
@@ -281,15 +320,18 @@ public class CrawlJob
      */
     public void setNew(boolean b) {
         isNew = b;
+        writeJobFile(); //Save changes
     }
 
     /**
      * Set's wether or not this job is a profile.
      * @param b True/False
      */
-    public void setProfile(boolean b) {
-        isProfile = b;
-    }
+// Can't change a profile into a job directly or vica versa!
+//    public void setProfile(boolean b) {
+//        isProfile = b;
+//        // TODO: Is this method needed? Probably not.
+//    }
 
     /**
      * Returns true if the job is being crawled.
@@ -305,6 +347,9 @@ public class CrawlJob
      */
     public void setRunning(boolean b) {
         isRunning = b;
+        writeJobFile(); //Save changes
+        //TODO: Job ending -> Save statistics tracker.
+        //TODO: This is likely to happen as the CrawlEnding event occurs, need to ensure that the StatisticsTracker is saved to disk on CrawlEnded. Maybe move responsibility for this into the StatisticsTracker? 
     }
 
     /**
@@ -314,12 +359,14 @@ public class CrawlJob
      * @return the directory where the configuration files for this job are
      *         located
      */
+    // TODO: Split into two methods. getJobDirectory() and getSettingsDirectory()
     public String getDirectory() {
         if(settingsHandler!=null){
             return settingsHandler.getOrderFile().getPath();
         }
         return null;
     }
+    
     /**
      * Get the error message associated with this job. Will return null if there
      * is no error message.
@@ -336,6 +383,7 @@ public class CrawlJob
      */
     public void setErrorMessage(String string) {
         errorMessage = string;
+        writeJobFile(); //Save changes
     }
 
 }
