@@ -23,13 +23,18 @@
 package org.archive.crawler.datamodel;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
-import org.archive.crawler.datamodel.credential.*;
+import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.CredentialDomain;
 import org.archive.crawler.datamodel.settings.ListType;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.util.TmpDirTestCase;
@@ -104,25 +109,43 @@ public class CredentialStoreTest extends TmpDirTestCase {
     
     final public void testCredentials()
         throws InvalidAttributeValueException, AttributeNotFoundException,
-            ClassNotFoundException {
+            IllegalArgumentException, InstantiationException,
+            IllegalAccessException, InvocationTargetException {
         final String DOMAIN = "one.two.three";
-        final String REALM = "allover";
-        final String REALM_PATTERN = DOMAIN + "/login/realm";
         CredentialDomain d = this.store.createCredentialDomain(DOMAIN, null);
-        Credential rfc2617 = d.createRfc2617Credential(null, REALM);
-        List list = d.getRfc2617Credentials(null);
-        assertTrue("No rfc2617", list.size() == 1);
-        assertTrue("Not equal realms.", rfc2617.getName().
-            equals(((Credential)list.get(0)).getName()));
-        Credential htmlForm = d.createHtmlFormCredential(null, REALM_PATTERN);
-        list = d.getHtmlFormCredentials(null);
-        assertTrue("No htmlform", list.size() == 1);
-        assertTrue("Not equal realmpatterns.", htmlForm.getName().
-            equals(((Credential)list.get(0)).getName()));
-        d.removeCredential(null, rfc2617);
-        d.removeCredential(null, htmlForm);
-        ListType lt = d.getCredentials(null);
-        assertTrue("Not empty", lt.size() == 0);
+        List types = d.getCredentialTypes();
+        List credentials = new ArrayList();
+        assertTrue("Empty credentials", credentials.size() == 0);
+        for (Iterator i = types.iterator(); i.hasNext();) {
+            Class cl = (Class)i.next();
+            Credential c = d.createCredential(cl);
+            assertNotNull("Failed create of " + cl, c);
+            logger.info("Created " + c.getName());
+            credentials.add(c);
+        }
+        assertTrue("Types not equal to credentials.",
+            credentials.size() == types.size());
+        for (Iterator i = credentials.iterator(); i.hasNext();) {
+            d.addCredential(null, (Credential)i.next());
+        }
+        ListType all = d.getCredentials(null);
+        assertTrue("Types not equal to all.",
+            credentials.size() == all.size());
+        // Should now be able to find at least one credential per type.
+        for (Iterator i = types.iterator(); i.hasNext();) {
+            Class cl = (Class)i.next();
+            assertTrue("Failed to get credential for type " + cl,
+                d.getCredentials(null, (Class)i.next()).size() > 0);
+        }
+        assertTrue("Creds are empty", all.size() > 0);
+        logger.info("Size of all " + all.size());
+        for (ListIterator i = all.listIterator(); i.hasNext();) {
+            i.next();
+            i.remove();
+        }
+        all = d.getCredentials(null);
+        logger.info("Size of all " + all.size());
+        assertTrue("Creds not empty", all.size() == 0);
     }
     
 }

@@ -35,7 +35,7 @@ import org.archive.crawler.datamodel.settings.ModuleType;
  * @version $Revision$, $Date$
  */
 public abstract class Credential extends ModuleType {
-    
+
     /**
      * Constructor.
      * 
