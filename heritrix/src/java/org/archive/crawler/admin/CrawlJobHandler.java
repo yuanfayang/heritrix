@@ -67,7 +67,8 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
-import org.archive.util.LineReadingIterator;
+import org.archive.util.iterator.LineReadingIterator;
+import org.archive.util.iterator.RegexpLineIterator;
 
 /**
  * This class manages CrawlJobs. Submitted crawl jobs are queued up and run
@@ -1327,8 +1328,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
             extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
             output = "$1";
         } else {
-            extractor = LineReadingIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
-            output = LineReadingIterator.ENTRY;
+            extractor = RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
+            output = RegexpLineIterator.ENTRY;
         }
         File source = new File(file);
         if (!source.isAbsolute()) {
@@ -1338,9 +1339,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         int addedCount = 0;
         try {
             br = new BufferedReader(new FileReader(source));
-            Iterator iter = new LineReadingIterator(
-                    br,
-                    LineReadingIterator.COMMENT_LINE,
+            Iterator iter = new RegexpLineIterator(
+                    new LineReadingIterator(br),
+                    RegexpLineIterator.COMMENT_LINE,
                     extractor,
                     output);
             while(iter.hasNext()) {
