@@ -6,6 +6,7 @@
  */
 package org.archive.util;
 
+
 /**
  * Like a MemLongFPSet, but with fixed capacity and maximum size.
  * When an add would expand past the maximum size, an old entry
@@ -15,9 +16,7 @@ package org.archive.util;
  *
  */
 public class LongFPSetCache extends MemLongFPSet {
-	byte[] counter;
-	int sweepHand;
-	int maxSize;
+	long sweepHand = 0;
 	
 	/**
 	 * 
@@ -29,33 +28,41 @@ public class LongFPSetCache extends MemLongFPSet {
 	/**
 	 * @param capacityPowerOfTwo
 	 */
-	public LongFPSetCache(int capacityPowerOfTwo) {
-		super(capacityPowerOfTwo);
-		counter = new byte[1<<capacityPowerOfTwo];
+	public LongFPSetCache(int capacityPowerOfTwo, float loadFactor) {
+		super(capacityPowerOfTwo, loadFactor);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.util.LongFPSet#remove(long)
+	protected void noteAccess(long index) {
+		if(slots[(int)index]<Byte.MAX_VALUE) {
+			slots[(int)index]++;
+		}
+	}
+	
+	protected void makeSpace() {
+		discard(1);
+	}
+	
+	/**
+	 * @param i
 	 */
-	public boolean remove(long l) {
-		// TODO Auto-generated method stub
-		return super.remove(l);
+	private void discard(int i) {
+		int toDiscard = i;
+		while(true) {
+			if(slots[(int)sweepHand]==0) {
+				removeAt(sweepHand);
+				toDiscard--;
+			} else {
+				if (slots[(int)sweepHand]>0) {
+					slots[(int)sweepHand]--;
+				}
+			}
+			sweepHand++;
+			if (sweepHand==count) {
+				sweepHand = 0;
+			}
+			if (toDiscard==0) {
+				break;
+			}
+		}
 	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.util.LongFPSet#add(long)
-	 */
-	public boolean add(long l) {
-		// TODO Auto-generated method stub
-		return super.add(l);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.util.AbstractLongFPSet#contains(long)
-	 */
-	public boolean contains(long l) {
-		// TODO Auto-generated method stub
-		return super.contains(l);
-	}
-
 }

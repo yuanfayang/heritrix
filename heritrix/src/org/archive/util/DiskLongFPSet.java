@@ -8,7 +8,6 @@ package org.archive.util;
 
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
@@ -19,6 +18,8 @@ import java.util.logging.Logger;
  */
 public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	private static Logger logger = Logger.getLogger("org.archive.util.DiskLongFPSet");
+	static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
+	static final float DEFAULT_LOAD_FACTOR = 0.75f;
 	File disk;
 	RandomAccessFile rawRafile;
 	
@@ -26,17 +27,19 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 * 
 	 */
 	public DiskLongFPSet(File dir, String name) throws IOException {
-		this(dir, name, 20);
+		this(dir, name, DEFAULT_CAPACITY_POWER_OF_TWO,DEFAULT_LOAD_FACTOR);
 	}
 
 	/**
 	 * @param i
 	 */
-	public DiskLongFPSet(File dir, String name, int capacityPowerOfTwo) throws IOException {
+	public DiskLongFPSet(File dir, String name, int capacityPowerOfTwo, float loadFactor) throws IOException {
 		this.capacityPowerOfTwo = capacityPowerOfTwo;
+		this.loadFactor = loadFactor;
 		disk = new File(dir, name+".fps");
 		rawRafile = new RandomAccessFile(disk,"rw");
 		for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
+			rawRafile.writeByte(EMPTY);
 			rawRafile.writeLong(0);
 		}
 		count = 0;
@@ -46,21 +49,27 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 * 
 	 */
 	protected void makeSpace() {
+		grow();
+	}
+
+	private void grow() {
 		try {
 			RandomAccessFile oldRaw = rawRafile;
 			capacityPowerOfTwo++;
 			File tmpDisk = new File(disk.getAbsolutePath()+".tmp");
 			rawRafile = new RandomAccessFile(tmpDisk,"rw");
 			for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
+				rawRafile.writeByte(EMPTY);
 				rawRafile.writeLong(0);
 			}
 			count=0;
 			oldRaw.seek(0);
 			while(true) {
 				try {
-					long lo = oldRaw.readLong();
-					if(lo!=0) {
-						add(lo);
+					byte slot = oldRaw.readByte();
+					long val = oldRaw.readLong();
+					if (slot!=EMPTY) {
+						add(val);
 					} 
 				} catch (EOFException e) {
 					break;
@@ -84,7 +93,8 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 */
 	protected void setAt(long i, long val) {
 		try {
-			rawRafile.seek(i*8);
+			rawRafile.seek(i*(1+8));
+			rawRafile.write(0); // non-empty
 			rawRafile.writeLong(val);
 		} catch (IOException e) {
 			// TODO Convert to runtime exception
@@ -97,7 +107,7 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 */
 	protected long getAt(long i) {
 		try {
-			rawRafile.seek(i*8);
+			rawRafile.seek((i*(1+8))+1);
 			return rawRafile.readLong();
 		} catch (IOException e) {
 			// TODO Convert to runtime exception
@@ -105,5 +115,41 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			return 0;
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.AbstractLongFPSet#relocate(long, long, long)
+	 */
+	void relocate(long value, long fromIndex, long toIndex) {
+		clearAt(fromIndex);
+		setAt(toIndex,value);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.AbstractLongFPSet#getSlotState(long)
+	 */
+	protected int getSlotState(long i) {
+		try {
+			rawRafile.seek(i*(1+8));
+			return rawRafile.readByte();
+		} catch (IOException e) {
+			// TODO convert to runtime exception
+			e.printStackTrace();
+			return 0;
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.AbstractLongFPSet#clearAt(long)
+	 */
+	protected void clearAt(long index) {
+		try {
+			rawRafile.seek(index*(1+8));
+			rawRafile.writeByte(EMPTY);
+		} catch (IOException e) {
+			// TODO convert to runtime exception
+			e.printStackTrace();
+		}
+	}
+
 
 }

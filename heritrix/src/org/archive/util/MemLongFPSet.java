@@ -8,57 +8,87 @@ package org.archive.util;
 
 /**
  * Open-addressing in-memory hash set for holding primitive long fingerprints. 
- * Assumes fingerprints are already well-distributed. Capacity is always a power
- * of 2. Load factor is always kept below 50%. 
  * 
  * @author Gordon Mohr
  */
 public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
-	
-	long[] rawArray;
+	static final float DEFAULT_LOAD_FACTOR = 0.75f;
+	;
+	byte[] slots;
+	long[] values;
 	
 	/**
 	 * 
 	 */
 	public MemLongFPSet() {
-		this(DEFAULT_CAPACITY_POWER_OF_TWO);
+		this(DEFAULT_CAPACITY_POWER_OF_TWO, 0.75f);
 	}
 
 	/**
 	 * @param i
 	 */
-	public MemLongFPSet(int capacityPowerOfTwo) {
+	public MemLongFPSet(int capacityPowerOfTwo, float loadFactor) {
 		this.capacityPowerOfTwo = capacityPowerOfTwo;
-		rawArray = new long[1<<capacityPowerOfTwo];
+		this.loadFactor = loadFactor;
+		slots = new byte[1<<capacityPowerOfTwo];
+		for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
+			slots[i]=EMPTY; // flag value for unused
+		}
+		values = new long[1<<capacityPowerOfTwo];
 		count = 0;
 	}
 
 	protected void setAt(long i, long val) {
-		rawArray[(int)i]=val;
+		slots[(int)i]=1;
+		values[(int)i]=val;
 	}
 	
 	protected long getAt(long i) {
-		return rawArray[(int)i];
+		return values[(int)i];
 	}
 
 	/**
 	 * 
 	 */
 	protected void makeSpace() {
-		long[] oldRaw = rawArray;
+		grow();
+	}
+
+	private void grow() {
+		long[] oldValues = values;
+		byte[] oldSlots = slots;
 		capacityPowerOfTwo++;
-		rawArray = new long[1<<capacityPowerOfTwo];
+		values = new long[1<<capacityPowerOfTwo];
+		slots = new byte[1<<capacityPowerOfTwo];
+		for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
+			slots[i]=EMPTY; // flag value for unused
+		}
 		count=0;
-		for(int i = 0; i< oldRaw.length; i++) {
-			if(oldRaw[i]!=0) {
-				add(oldRaw[i]);
+		for(int i = 0; i< oldValues.length; i++) {
+			if(oldSlots[i]>=0) {
+				add(oldValues[i]);
 			}
 		}
 	}
 
-	protected void relocate(long index, long newIndex) {
-		rawArray[(int)newIndex] = rawArray[(int)index];
-		rawArray[(int)index] = 0;
+	protected void relocate(long val, long oldIndex, long newIndex) {
+		values[(int)newIndex] = values[(int)oldIndex];
+		slots[(int)newIndex] = slots[(int)oldIndex];
+		slots[(int)oldIndex] = EMPTY;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.AbstractLongFPSet#getSlotState(long)
+	 */
+	protected int getSlotState(long i) {
+		return slots[(int)i];
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.AbstractLongFPSet#clearAt(long)
+	 */
+	protected void clearAt(long index) {
+		slots[(int)index]=EMPTY;
 	}
 }
