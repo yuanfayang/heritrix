@@ -97,7 +97,7 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 public class HostQueuesFrontier
     extends ModuleType
     implements Frontier, FetchStatusCodes, CoreAttributeConstants,
-        CrawlStatusListener, HasUriReceiver {
+        HasUriReceiver {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(HostQueuesFrontier.class,1);
 
