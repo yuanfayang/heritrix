@@ -282,6 +282,18 @@ public class ArchiveUtils {
 
         return dir;
     }
+
+    /**
+     * If possible, create a hard link from the second File to
+     * the first. If not, create a copy.
+     *
+     * @param file
+     * @param file2
+     */
+    public static void hardLinkOrCopy(File file, File file2) {
+        // TODO Auto-generated method stub
+
+    }
     
     /**
      * Converts a double to a string.
@@ -345,12 +357,7 @@ public class ArchiveUtils {
         }
     }
     
-    /**
-     * Convert milliseconds value to a human-readable duration
-     * @param time
-     * @return
-     */
-    public static String formatMillisecondsToConventional(long time) {
+public static String formatMillisecondsToConventional(long time) {
         StringBuffer sb = new StringBuffer();
         if (time > 3600000) {
             //got hours.
@@ -368,21 +375,5 @@ public class ArchiveUtils {
         sb.append(time + "ms");
         return sb.toString();
     }
-
-
-    /**
-     * Generate a long UID based on the given class and version number.
-     * Using this instead of the default will assume serialization
-     * compatibility across class changes unless version number is 
-     * intentionally bumped.
-     * 
-     * @param class1
-     * @param version
-     * @return
-     */
-    public static long classnameBasedUID(Class class1, int version) {
-        String callingClassname = class1.getName();
-        return (long)callingClassname.hashCode() << 32 + version;
-    }
 }
-    
+

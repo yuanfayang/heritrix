@@ -25,12 +25,11 @@ package org.archive.crawler.filter;
 
 import javax.management.AttributeNotFoundException;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
-import org.archive.crawler.settings.SimpleType;
 
 /**
  * Accepts all urls passed in with a path depth
@@ -64,25 +63,15 @@ public class PathDepthFilter extends Filter {
      * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
      */
     protected boolean innerAccepts(Object o) {
-        this.path = null;
         if(o instanceof CandidateURI) {
-            try {
-                this.path = ((CandidateURI)o).getUURI().getPath();
-            }
-            catch (URIException e) {
-                logger.severe("Failed getpath for " +
-                    ((CandidateURI)o).getUURI());
-            }
+            path = ((CandidateURI)o).getUURI().getPath();
         } else if (o instanceof UURI ){
-            try {
-                this.path = ((UURI)o).getPath();
-            }
-            catch (URIException e) {
-                logger.severe("Failed getpath for " + ((UURI)o));
-            }
+            path = ((UURI)o).getPath();
+        }else{
+            path = null;
         }
 
-        if (path == null) {
+        if (path == null){
             return true;
         }
 

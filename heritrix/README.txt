@@ -59,6 +59,11 @@ See ./docs/articles/developer_manual.html or
 
 6.0 Release History
 
+Release 0.8.1 - 2004-05-28 12:00
+
+Type Changes                                               By
+fix  080 doesn't build with maven rc2+                     stack-sf
+
 Release 0.8.0 - 2004-05-18 14:00
 
 Type Changes                                               By

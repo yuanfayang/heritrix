@@ -11,9 +11,9 @@
 <%@page import="java.util.ListIterator"%>
 <%@page import="java.util.regex.Pattern" %>
 
-<%@page import="org.archive.crawler.settings.CrawlerSettings"%>
-<%@page import="org.archive.crawler.settings.XMLSettingsHandler"%>
-<%@page import="org.archive.crawler.settings.refinements.*"%>
+<%@page import="org.archive.crawler.datamodel.settings.CrawlerSettings"%>
+<%@page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler"%>
+<%@page import="org.archive.crawler.datamodel.settings.refinements.*"%>
 
 <%
     String message = request.getParameter("message");

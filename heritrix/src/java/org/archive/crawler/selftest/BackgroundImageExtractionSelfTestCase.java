@@ -59,7 +59,7 @@ public class BackgroundImageExtractionSelfTestCase
         String url = getSelftestURLWithTrailingSlash() + relativePath;
         File image = new File(getHtdocs(), relativePath);
         assertTrue("Image exists", image.exists());
-        List metaDatas = getMetaDatas();
+        List metaDatas = getReadReader().getMetaDatas();
         boolean found = false;
         ARCRecordMetaData metaData = null;
         for (Iterator i = metaDatas.iterator(); i.hasNext();)

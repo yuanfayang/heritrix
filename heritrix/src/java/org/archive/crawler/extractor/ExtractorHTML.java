@@ -24,17 +24,17 @@
 package org.archive.crawler.extractor;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
@@ -138,12 +138,15 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
-
-    
+    /**
+     * @param name
+     */
     public ExtractorHTML(String name) {
         super(name, "HTML extractor. Extracts links from HTML documents");
     }
 
+    /**
+     */
     protected void processGeneralTag(CrawlURI curi, CharSequence element, 
             CharSequence cs) {
                 
@@ -237,11 +240,11 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             return;
         }
         Iterator iter = resources.iterator();
-        UURI codebaseURI = null;
+        URI codebaseURI = null;
         String res = null;
         try {
             if (codebase != null) {
-                codebaseURI = new UURI(codebase);
+                codebaseURI = new URI(codebase);
             }
             while(iter.hasNext()) {
                 res = iter.next().toString();
@@ -252,7 +255,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 }
                 processEmbed(curi, res);
             }
-        } catch (URIException e) {
+        } catch (URISyntaxException e) {
             curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
         } catch (IllegalArgumentException e) {
             DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
@@ -313,15 +316,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         }
 
         if(this.ignoreUnexpectedHTML) {
-            try {
-                if(!isHtmlExpectedHere(curi)) {
-                    // HTML was not expected (eg a GIF was expected) so ignore
-                    // (as if a soft 404)
-                    return;
-                }
-            }
-            catch (URIException e) {
-                logger.severe("Failed expectedHTML test: " + e.getMessage());
+            if(!expectedHTML(curi)) {
+                // HTML was not expected (eg a GIF was expected) so ignore
+                // (as if a soft 404)
+                return;
             }
         }
 
@@ -341,29 +339,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             return;
         }
 
-        // extract all links from the charsequence
-        extract(curi, cs);
-
-        // Set flag to indicate that link extraction is completed.
-        curi.linkExtractorFinished();
-        
-        // Done w/ the ReplayCharSequence.  Close it.
-        if (cs != null) {
-            try {
-                cs.close();
-            } catch (IOException ioe) {
-                logger.warning(DevUtils.format(
-                    "Failed close of ReplayCharSequence.", ioe));
-            }
-        }
-    }
-
-    // this method extracted, pacakage visible to ease testing
-    void extract(CrawlURI curi, CharSequence cs) {
         Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
         while(tags.find()) {
             if(Thread.interrupted()){
-                break;
+                return;
             }
             if (tags.start(8) > 0) {
                 // comment match
@@ -378,7 +357,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                     cs.subSequence(start, end))) {
                           
                     // meta tag included NOFOLLOW; abort processing
-                    break;
+                    TextUtils.freeMatcher(tags);
+                    return;
                 }
             } else if (tags.start(5) > 0) {
                 // generic <whatever> match
@@ -419,25 +399,33 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         }
 
         TextUtils.freeMatcher(tags);
-    }
 
+        // Set flag to indicate that link extraction is completed.
+        curi.linkExtractorFinished();
+        
+        // Done w/ the ReplayCharSequence.  Close it.
+        if (cs != null) {
+            try {
+                cs.close();
+            } catch (IOException ioe) {
+                logger.warning(DevUtils.format(
+                    "Failed close of ReplayCharSequence.", ioe));
+            }
+        }
+    }
 
     static final String NON_HTML_PATH_EXTENSION =
         "(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
         "|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
 
     /**
-     * Test whether this HTML is so unexpected (eg in place of a GIF URI)
-     * that it shouldn't be scanned for links. 
-     * 
-     * @param curi CrawlURI to examine.
-     * @return True if HTML is acceptable/expected here
-     * @throws URIException
+     * @param curi
+     * @return True if HTML.
      */
-    protected boolean isHtmlExpectedHere(CrawlURI curi) throws URIException {
+    protected boolean expectedHTML(CrawlURI curi) {
         String path = curi.getUURI().getPath();
         int dot = path.lastIndexOf('.');
-        if (dot < 0) {
+        if (dot<0) {
             // no path extension, HTML is fine
             return true;
         }
@@ -449,22 +437,26 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         return ! TextUtils.matches(NON_HTML_PATH_EXTENSION, ext);
     }
 
-    protected void processScript(CrawlURI curi, CharSequence sequence,
-            int endOfOpenTag) {
+    /**
+     * @param curi
+     * @param sequence
+     */
+    protected void processScript(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
         // for now, do nothing
         // TODO: best effort extraction of strings
 
         // first, get attributes of script-open tag
         // as per any other tag
-        processGeneralTag(curi,sequence.subSequence(0,6),
-            sequence.subSequence(0,endOfOpenTag));
+        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
 
         // then, apply best-effort string-analysis heuristics
         // against any code present (false positives are OK)
-        processScriptCode(
-            curi, sequence.subSequence(endOfOpenTag, sequence.length()));
+        processScriptCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
     }
 
+
+    /**
+     */
     protected boolean processMeta(CrawlURI curi, CharSequence cs) {
         Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 

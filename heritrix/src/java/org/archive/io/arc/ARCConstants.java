@@ -181,14 +181,7 @@ public interface ARCConstants
      *
      * Lowercased.
      */
-    public static final String VERSION_HEADER_FIELD_KEY = "archive-version";
-    
-    /**
-     * Key for the ARC Record absolute offset into arc file.
-     * 
-     * Lowercased.
-     */
-    public static final String ABSOLUTE_OFFSET_KEY = "archive-offset";
+    public static final String VERSION_HEADER_FIELD_KEY = "version";
 
     /**
      * Version 1 required metadata fields.
@@ -200,8 +193,7 @@ public interface ARCConstants
             DATE_HEADER_FIELD_KEY,
             MIMETYPE_HEADER_FIELD_KEY,
             LENGTH_HEADER_FIELD_KEY,
-            VERSION_HEADER_FIELD_KEY,
-            ABSOLUTE_OFFSET_KEY});
+            VERSION_HEADER_FIELD_KEY});
 
     /**
      * Minimum possible record length.

@@ -1,5 +1,5 @@
 <%@ page import="org.archive.crawler.admin.CrawlJobErrorHandler" %>
-<%@ page import="org.archive.crawler.settings.*" %>
+<%@ page import="org.archive.crawler.datamodel.settings.*" %>
 <%@ page import="javax.management.MBeanInfo"%>
 <%@ page import="javax.management.Attribute"%>
 <%@ page import="javax.management.MBeanAttributeInfo"%>

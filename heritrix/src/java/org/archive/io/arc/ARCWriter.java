@@ -25,20 +25,12 @@
  */
 package org.archive.io.arc;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
@@ -55,16 +47,13 @@ import org.archive.util.DevUtils;
  *
  * <p>ARC files are described here:
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
- * File Format</a>.  This class does version 1 of the ARC file format.  It also
- * writes version 1.1 which is version 1 with data stuffed into the body of the
- * first arc record in the file, the arc file meta record itself.
+ * File Format</a>.  This class does version 1 of the ARC file format only.
  *
- * <p>An ARC file is three lines of meta data followed by an optional 'body' and
- * then a couple of '\n' and then: record, '\n', record, '\n', record, etc.
- * If we are writing compressed ARC files, then each of the ARC file records is
- * individually gzipped and concatenated together to make up a single ARC file.
- * In GZIP terms, each ARC record is a GZIP <i>member</i> of a total gzip'd
- * file.
+ * <p>An ARC file is three lines of meta data followed by a couple of '\n' and
+ * then: record, '\n', record, '\n', record, etc.  If we are writing compressed
+ * ARC files, then each of the ARC file records is individually gzipped and
+ * concatenated together to make up a single ARC file.  In GZIP
+ * terms, each ARC record is a GZIP <i>member</i> of a total gzip'd file.
  *
  * <p>The GZIPping of the ARC file meta data is exceptional.  It is GZIPped
  * w/ an extra GZIP header, a special Internet Archive (IA) extra header field
@@ -76,27 +65,23 @@ import org.archive.util.DevUtils;
  * <p>This class then does its GZIPping in the following fashion.  Each GZIP
  * member is written w/ a new instance of GZIPOutputStream -- actually
  * ARCWriterGZIPOututStream so we can get access to the underlying stream.
- * The underlying stream stays open across GZIPoutputStream instantiations.
- * For the 'special' GZIPing of the ARC file meta data, we cheat by catching the
- * GZIPOutputStream output into a byte array, manipulating it adding the
+ * The underlying stream open across GZIPoutputStream instantiations.  For the
+ * 'special' GZIPing of the ARC file meta data, we cheat by catching the
+ * GZIPOutputStream output into a byte array, manipulating the array adding the
  * IA GZIP header, before writing to the stream.
  *
  * <p>I tried writing a resettable GZIPOutputStream and could make it work w/
  * the SUN JDK but the IBM JDK threw NPE inside in the deflate.reset -- its zlib
  * native call doesn't seem to like the notion of resetting -- so I gave up on
  * it.
- * 
- * <p>Because of such as the above and troubles with GZIPInputStream, we should
- * write our own GZIP*Streams, ones that resettable and consious of gzip
- * members.
  *
  * <p>This class will write until we hit >= maxSize.  The check is done at
- * record boundary.  Records do not span ARC files.  We will then close current
- * file and open another and then continue writing.
+ * record boundary.  Records do not span ARC files.  We will then close
+ * current file and open another and then continue writing.
  *
  * <p><b>TESTING: </b>Here is how to test that produced ARC files are good
  * using the
- * <a href="http://www.archive.org/web/researcher/tool_documentation.php">alexa
+ * <a href="http://www.archive.org/web/researcher/tool_documentation.php?PHPSESSID=bfbf9105ff0d112d7ae7b9a13821ca8e">alexa
  * ARC c-tools</a>:
  * <pre>
  * % av_procarc hx20040109230030-0.arc.gz | av_ziparc > \
@@ -112,9 +97,14 @@ import org.archive.util.DevUtils;
  *
  * @author stack
  */
-public class ARCWriter implements ARCConstants {
-    private static final Logger logger =
-        Logger.getLogger(ARCWriter.class.getName());
+public class ARCWriter
+    implements ARCConstants
+{
+    /**
+     * Logger.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriter");
     
     /**
      * Max size we allow ARC files to be (bytes).
@@ -131,13 +121,6 @@ public class ARCWriter implements ARCConstants {
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String prefix = DEFAULT_ARC_FILE_PREFIX;
-    
-    /**
-     * Tail to add to arc file name.
-     * 
-     * Default is no tail.
-     */
-    private String suffix = "";
 
     /**
      * Directory into which we drop ARC files.
@@ -160,35 +143,14 @@ public class ARCWriter implements ARCConstants {
      *  Output stream for arcFile.
      */
     private OutputStream out = null;
-    
+
     /**
      * A running sequence used making unique ARC file names.
+     *
+     * Access via a synchronized method to guarantee no two files get the
+     * same sequence suffix.
      */
-    private static int serialNo = 0;
-    
-    /**
-     * NumberFormat instance for formatting serial number.
-     * 
-     * Pads serial number with zeros.
-     */
-    private static NumberFormat serialNoFormatter =
-        new DecimalFormat("00000");
-
-    /**
-     * Arc file meta data list of files.
-     * 
-     * Can be null.  Else list of file and/or string objects to write into the
-     * 'body' of the first record in the arc file, the arc file meta record.
-     */
-    private final List metadata;
-
-    /**
-     * Encoding to use getting bytes from strings.
-     * 
-     * Specify an encoding rather than leave it to chance: i.e whatever the
-     * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
-     */
-    private static final String ENCODING = "ISO-8859-1";
+    private static int id = 0;
 
 
     /**
@@ -199,7 +161,9 @@ public class ARCWriter implements ARCConstants {
      * @exception IOException If passed directory does not exist or is not
      * a directory.
      */
-    public ARCWriter(File arcsDir) throws IOException {
+    public ARCWriter(File arcsDir)
+        throws IOException
+    {
         this(arcsDir, DEFAULT_ARC_FILE_PREFIX);
     }
 
@@ -212,10 +176,12 @@ public class ARCWriter implements ARCConstants {
      * @exception IOException If passed directory does not exist or is not
      * a directory.
      */
-    public ARCWriter(File arcsDir, String prefix) throws IOException {
+    public ARCWriter(File arcsDir, String prefix)
+        throws IOException
+    {
         this(arcsDir, prefix, DEFAULT_COMPRESS, DEFAULT_MAX_ARC_FILE_SIZE);
     }
-    
+
     /**
      * Constructor.
      *
@@ -230,42 +196,19 @@ public class ARCWriter implements ARCConstants {
      * @exception IOException If passed directory does not exist or is not
      * a directory.
      */
-    public ARCWriter(File arcsDir, String prefix, boolean compress, int maxSize)
-            throws IOException {
-        this(arcsDir, prefix, null, compress, maxSize, null);
-    }
-    
-    /**
-     * Constructor.
-     *
-     * @param arcsDir Where to drop the ARC files.
-     * @param prefix ARC file prefix to use.  If null, we use
-     * DEFAULT_ARC_FILE_PREFIX.
-     * @param compress Compress the ARC files written.  The compression is done
-     * by individually gzipping each record added to the ARC file: i.e. the
-     * ARC file is a bunch of gzipped records concatenated together.
-     * @param maxSize Maximum size for ARC files written.
-     * @param suffix ARC file tail to use.  If null, unused.
-     * @param metadata Arc file meta data.  Can be null.  Is list of File and/or
-     * String objects.
-     *
-     * @exception IOException If passed directory does not exist or is not
-     * a directory.
-     */
-    public ARCWriter(File arcsDir, String prefix, String suffix,
-            boolean compress, int maxSize, List metadata) throws IOException {
+    public ARCWriter(File arcsDir, String prefix, boolean compress,
+            int maxSize)
+        throws IOException
+    {
         this.arcsDir = ArchiveUtils.ensureWriteableDirectory(arcsDir);
         this.prefix = (prefix != null)? prefix: DEFAULT_ARC_FILE_PREFIX;
         this.compress = compress;
-        if (maxSize < 0) {
+        if (maxSize < 0)
+        {
             throw new IOException("Unreasonable maximum file size: " +
                 Integer.toString(maxSize));
         }
         this.maxSize = maxSize;
-        if (suffix != null) {
-            this.suffix = suffix;
-        }
-        this.metadata = metadata;
     }
 
     /**
@@ -277,8 +220,11 @@ public class ARCWriter implements ARCConstants {
      *
      * @throws IOException
      */
-    public void close() throws IOException {
-        if (this.out != null) {
+    public void close()
+        throws IOException
+    {
+        if (this.out != null)
+        {
             this.out.close();
             this.out = null;
         }
@@ -293,8 +239,11 @@ public class ARCWriter implements ARCConstants {
      *
      * @exception IOException
      */
-    private void checkARCFileSize() throws IOException {
-        if (this.out == null || (this.arcFile.length() > this.maxSize)) {
+    private void checkARCFileSize()
+        throws IOException
+    {
+        if (this.out == null || (this.arcFile.length() > this.maxSize))
+        {
             createARCFile();
         }
     }
@@ -304,13 +253,13 @@ public class ARCWriter implements ARCConstants {
      *
      * @throws IOException
      */
-    private void createARCFile() throws IOException {
+    private void createARCFile()
+        throws IOException
+    {
         close();
         String now = ArchiveUtils.get14DigitDate();
-        String name = this.prefix + '-' + getUniqueBasename(now) +
-            ((this.suffix == null || this.suffix.length() <= 0)? 
-                "": "-" + this.suffix) +
-            '.' + ARC_FILE_EXTENSION +
+        String name = this.prefix + getUniqueBasename(now) + '.' +
+            ARC_FILE_EXTENSION +
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
         this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
@@ -327,32 +276,25 @@ public class ARCWriter implements ARCConstants {
      *
      * @return Unique basename.
      */
-    private synchronized String getUniqueBasename(String now) {
-        return now + "-" + ARCWriter.serialNoFormatter.format(getNewSerialNo());
+    private String getUniqueBasename(String now)
+    {
+        return now + '-' + Integer.toString(getNextId());
     }
 
     /**
-	 * @return New serial number.
-	 */
-	private static synchronized int getNewSerialNo() {
-		return ARCWriter.serialNo++;
-	}
-    
-    /**
-     * Reset the serial number.
+     * @return Next id.
+     * @see #getUniqueBasename(String)
      */
-    public static synchronized void resetSerialNo() {
-        ARCWriter.serialNo = 0;   
+    private synchronized int getNextId()
+    {
+        return id++;
     }
 
-	/**
-     * Write out the ARCMetaData.
+    /**
+     * Write out the ARCMetaData
      *
-     * <p>Generate ARC file meta data.  Currently we only do version 1 of the
-     * ARC file formats or version 1.1 when metadata has been supplied (We
-     * write it into the body of the first record in the arc file).
-     * 
-     * <p>Version 1 metadata looks roughly like this:
+     * Generate ARC file meta data.  Currently we only do version 1 of the
+     * ARC file formats.  Version 1 metadata looks roughly like this:
      *
      * <pre>filedesc://testWriteRecord-JunitIAH20040110013326-2.arc 0.0.0.0 \\
      *  20040110013326 text/plain 77
@@ -377,35 +319,15 @@ public class ARCWriter implements ARCConstants {
      *
      * @return Byte array filled w/ the arc header.
      */
-    private byte [] generateARCFileMetaData(String date) throws IOException {
-        int metadataBodyLength = getMetadataLength();
-        // If metadata body, then the minor part of the version is '1' rather
-        // than '0'.
-        String minorVersionPart = (metadataBodyLength > 0)? "1": "0";
-        String metadataHeaderLinesTwoAndThree =
-            LINE_SEPARATOR +
-            "1 " + minorVersionPart + " InternetArchive" +
-            LINE_SEPARATOR +
+    private byte [] generateARCFileMetaData(String date)
+        throws IOException
+    {
+        String metaDataStr = ARC_MAGIC_NUMBER + this.arcFile.getName() +
+            " 0.0.0.0 " + date + " text/plain 77" + LINE_SEPARATOR +
+            "1 0 InternetArchive" + LINE_SEPARATOR +
             "URL IP-address Archive-date Content-type Archive-length" +
-            LINE_SEPARATOR;
-        int recordLength = metadataBodyLength +
-            metadataHeaderLinesTwoAndThree.getBytes(ENCODING).length;
-        String metadataHeaderStr = ARC_MAGIC_NUMBER + this.arcFile.getName() +
-            " 0.0.0.0 " + date + " text/plain " + recordLength +
-            metadataHeaderLinesTwoAndThree;
-        ByteArrayOutputStream metabaos =
-            new ByteArrayOutputStream(recordLength);
-        // Write the metadata header.
-        metabaos.write(metadataHeaderStr.getBytes(ENCODING));
-        // Write the metadata body, if anything to write.
-        if (metadataBodyLength > 0) {
-            writeMetaData(metabaos);
-        }
-        // Write out a couple of LINE_SEPARATORs to end this record.
-        metabaos.write(("" + LINE_SEPARATOR + LINE_SEPARATOR).
-            getBytes(ENCODING));
-        // Now get bytes of all just written and compress if flag set.
-        byte [] bytes = metabaos.toByteArray();
+            LINE_SEPARATOR + LINE_SEPARATOR + LINE_SEPARATOR;
+        byte [] metaData = metaDataStr.getBytes("UTF-8");
         if(isCompress())
         {
             // GZIP the header but catch the gzipping into a byte array so we
@@ -417,7 +339,7 @@ public class ARCWriter implements ARCConstants {
             // do the 'optional' CRC'ing of the header.
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             GZIPOutputStream gzipOS = new GZIPOutputStream(baos);
-            gzipOS.write(bytes, 0, bytes.length);
+            gzipOS.write(metaData, 0, metaData.length);
             gzipOS.close();
             byte [] gzippedMetaData = baos.toByteArray();
             if (gzippedMetaData[3] != 0)
@@ -442,67 +364,9 @@ public class ARCWriter implements ARCConstants {
                 ARC_GZIP_EXTRA_FIELD.length);
             System.arraycopy(gzippedMetaData, 10, assemblyBuffer,
                 10 + ARC_GZIP_EXTRA_FIELD.length, gzippedMetaData.length - 10);
-            bytes = assemblyBuffer;
+            metaData = assemblyBuffer;
         }
-        return bytes;
-    }
-
-    /**
-     * Write all metadata to passed <code>baos</code>.
-     * 
-     * @param baos Byte array to write to.
-     */
-    private void writeMetaData(ByteArrayOutputStream baos)
-            throws UnsupportedEncodingException, IOException {
-        if (this.metadata == null) {
-            return;
-        }
-
-        for (Iterator i = this.metadata.iterator(); i.hasNext();) {
-            Object obj = i.next();
-            if (obj instanceof String) {
-                baos.write(((String)obj).getBytes(ENCODING));
-            } else if (obj instanceof File) {
-                InputStream is = null;
-                try {
-                    is = new BufferedInputStream(
-                        new FileInputStream((File)obj));
-                    byte [] buffer = new byte[4096];
-                    for (int read = -1; (read = is.read(buffer)) != -1;) {
-                        baos.write(buffer, 0, read);
-                    }
-                } finally {
-                    if (is != null) {
-                        is.close();
-                    }
-                }
-            } else {
-                logger.severe("Unsupported metadata type: " + obj);
-            }
-        }
-        return;
-    }
-
-    /**
-     * @return Total length of metadata.
-     */
-    private int getMetadataLength() throws UnsupportedEncodingException {
-        int result = -1;
-        if (this.metadata == null) {
-            result = 0;
-        } else {
-            for (Iterator i = this.metadata.iterator(); i.hasNext();) {
-                Object obj = i.next();
-                if (obj instanceof String) {
-                    result += ((String)obj).getBytes(ENCODING).length;
-                } else if (obj instanceof File) {
-                    result += ((File)obj).length();
-                } else {
-                    logger.severe("Unsupported metadata type: " + obj);
-                }
-            }
-        }
-        return result;
+        return metaData;
     }
 
     /**
@@ -520,14 +384,19 @@ public class ARCWriter implements ARCConstants {
      */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength,
-            ByteArrayOutputStream baos) throws IOException {
+            ByteArrayOutputStream baos)
+        throws IOException
+    {
         preWriteRecordTasks();
-        try {
+        try
+        {
             writeMetaLine(uri, contentType, hostIP, fetchBeginTimeStamp,
                 recordLength);
             baos.writeTo(this.out);
             this.out.write(LINE_SEPARATOR);
-        } finally {
+        }
+        finally
+        {
             postWriteRecordTasks();
         }
     }
@@ -750,15 +619,19 @@ public class ARCWriter implements ARCConstants {
      *
      * @author stack
      */
-    private class ARCWriterGZIPOutputStream extends GZIPOutputStream {
-        public ARCWriterGZIPOutputStream(OutputStream out) throws IOException {
+    public class ARCWriterGZIPOutputStream extends GZIPOutputStream
+    {
+        public ARCWriterGZIPOutputStream(OutputStream out)
+            throws IOException
+        {
             super(out);
         }
 
         /**
          * @return Reference to stream being compressed.
          */
-        OutputStream getOut() {
+        private OutputStream getOut()
+        {
             return this.out;
         }
     }

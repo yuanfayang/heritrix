@@ -3,9 +3,6 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
-    <operator>Admin</operator>
-    <organization />
-    <audience />
     <date>20040409202922</date>
   </meta>
   <controller>
@@ -62,7 +59,7 @@
       <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
     </newObject>
     <map name="pre-fetch-processors">
-      <newObject name="Preselector" class="org.archive.crawler.prefetch.Preselector">
+      <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
@@ -70,11 +67,11 @@
         <boolean name="block-all">false</boolean>
         <string name="block-by-regexp"/>
       </newObject>
-      <newObject name="Preprocessor" class="org.archive.crawler.prefetch.PreconditionEnforcer">
+      <newObject name="Preprocessor" class="org.archive.crawler.basic.PreconditionEnforcer">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
-        <integer name="ip-validity-duration-seconds">-1</integer>
+        <integer name="ip-validity-duration-m">-1</integer>
         <integer name="robot-validity-duration-m">4320</integer>
       </newObject>
     </map>
@@ -122,7 +119,6 @@
         </map>
         <boolean name="compress">true</boolean>
         <string name="prefix">IAH</string>
-        <string name="suffix">${HOSTNAME}</string>
         <integer name="max-size-bytes">100000000</integer>
         <string name="path"/>
         <integer name="pool-max-active">5</integer>
@@ -130,12 +126,12 @@
       </newObject>
     </map>
     <map name="post-processors">
-      <newObject name="Updater" class="org.archive.crawler.postprocessor.CrawlStateUpdater">
+      <newObject name="Updater" class="org.archive.crawler.basic.CrawlStateUpdater">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
       </newObject>
-      <newObject name="Postselector" class="org.archive.crawler.postprocessor.Postselector">
+      <newObject name="Postselector" class="org.archive.crawler.basic.Postselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>

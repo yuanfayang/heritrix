@@ -29,15 +29,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.apache.commons.collections.Predicate;
-import org.archive.io.*;
-import org.archive.io.DevNull;
-import org.archive.io.DiskByteQueue;
+import org.archive.crawler.framework.Savable;
+import org.archive.io.DiskBackedByteQueue;
+import org.archive.io.NullOutputStream;
 
 /**
  * Queue which stores all its objects to disk using object
@@ -53,7 +52,10 @@ import org.archive.io.DiskByteQueue;
  *
  * @author Gordon Mohr
  */
-public class DiskQueue implements Queue, Serializable {
+public class DiskQueue implements Queue, Savable {
+    private static Logger logger
+        = Logger.getLogger("org.archive.util.DiskQueue");
+
     /** the directory used to create the temporary files */
     private File scratchDir;
 
@@ -66,31 +68,27 @@ public class DiskQueue implements Queue, Serializable {
     /**
      * The object which deals with serializing the actual bytes to/from disk.
      */
-    DiskByteQueue bytes;
+    DiskBackedByteQueue bytes;
 
-    transient ObjectOutputStream testStream; // to verify that object is serializable
-    transient ObjectOutputStream tailStream;
-    transient ObjectInputStream headStream;
+    ObjectOutputStream testStream; // to verify that object is serializable
+    ObjectOutputStream tailStream;
+    ObjectInputStream headStream;
 
     /**
      * A flag which marks when the lazy initialization is finished, and the
      * object is ready for use
      */
     private boolean isInitialized = false;
-    
-    private boolean reuse;
 
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
-     * given directory, with a given prefix, and reuse any prexisting backing
-     * files as directed.
+     * given directory, with a given prefix.
      *
      * @param dir the directory in which to create the data files
      * @param prefix
-     * @param reuse whether to reuse any existing backing files
-     * @throws IOException if we cannot create an appropriate file
+     * @throws FileNotFoundException if we cannot create an appropriate file
      */
-    public DiskQueue(File dir, String prefix, boolean reuse) throws IOException {
+    public DiskQueue(File dir, String prefix) throws FileNotFoundException {
         if(dir == null || prefix == null) {
             throw new FileNotFoundException("null arguments not accepted");
         }
@@ -98,51 +96,27 @@ public class DiskQueue implements Queue, Serializable {
         length = 0;
         this.prefix = prefix;
         this.scratchDir = dir;
-        this.reuse = reuse;
-        // test minimally if supplied disk paths are sensible
-        if(dir.exists()==false) {
-            if(dir.mkdirs()==false) {
-                throw new FileNotFoundException("unable to create scratch directory");
-            }
-        }
-        // TODO: test more extensively, given lazy disk use, if queue
-        // will be be viable?
+        bytes = new DiskBackedByteQueue(scratchDir, this.prefix);
+        bytes.initializeStreams();
+        // TODO someday: enable queue to already be filled
     }
 
-    /** Create a new {@link DiskQueue} which creates its temporary files in a
-     * given directory, with a given prefix. 
-     * @param file
-     * @param file_prefix
-     * @throws IOException
-     */
-    public DiskQueue(File file, String file_prefix) throws IOException {
-        this(file,file_prefix,false);
-    }
-
-    private void lazyInitialize() throws FileNotFoundException, IOException {
-        if(bytes==null) {
-            bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
-            bytes.initializeStreams(0);
-        }
-        testStream = new ObjectOutputStream(new DevNull());        
-        tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
-        headStream = new HeaderlessObjectInputStream(bytes.getHeadStream());
-        // tailStream.flush(); // ??
+    private void lateInitialize() throws FileNotFoundException, IOException {
+        testStream = new ObjectOutputStream(new NullOutputStream());        
+        tailStream = new ObjectOutputStream(bytes.getTailStream());
+        headStream = new ObjectInputStream(bytes.getHeadStream());
+        tailStream.flush();
         isInitialized = true;
     }
-    
-    protected boolean isInitialized(){
-    	return isInitialized;
-    }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o){
         //logger.finest(name+"("+length+"): "+o);
         try {
             if(!isInitialized) {
-                lazyInitialize();
+                lateInitialize();
             }
             // TODO: optimize this, for example by serializing to buffer, then
             // writing to disk on success
@@ -158,14 +132,14 @@ public class DiskQueue implements Queue, Serializable {
         }
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
         return length==0;
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
@@ -174,9 +148,6 @@ public class DiskQueue implements Queue, Serializable {
         }
         Object o;
         try {
-             if(!isInitialized) {
-                lazyInitialize();
-            }
             o = headStream.readObject();
         } catch (IOException e) {
             e.printStackTrace();
@@ -190,74 +161,45 @@ public class DiskQueue implements Queue, Serializable {
         return o;
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
     public long length() {
         return length;
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#release()
      */
     public void release() {
         if (bytes != null) {
             try {
-                releaseStreams();
-                //bytes.close();
+                if(headStream != null) headStream.close();
+                if(tailStream != null) tailStream.close();
                 bytes.discard();
             } catch (IOException e) {
                 // TODO: convert to runtime?
                 e.printStackTrace();
             }
-            bytes = null;
-        }
-        isInitialized = false; 
-        // If this object is used again after this method is invoked, the 
-        // late initialization will be reinvoked aquiring these resources
-        // again.
-    }
-    
-    private void releaseStreams() throws IOException {
-        if(testStream != null) {
-            testStream.close();
-            testStream = null;
-        }
-        if(headStream != null) {
-            headStream.close();
-            headStream = null;
-        }
-        if(tailStream != null) {
-            tailStream.close();
-            tailStream = null;
         }
     }
 
-    /**
-     * Disconnect from any backing files, without deleting those
-     * files, allowing reattachment later. 
-     * 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Savable#save(java.io.File, java.lang.String)
      */
-    public void disconnect() {
-        try {
-            releaseStreams();
-            bytes.disconnect();
-            isInitialized = false;
-        } catch (IOException e) {
-            // TODO convert to runtime exception?
-            DevUtils.logger.log(Level.SEVERE,"disconnect()" +
-                DevUtils.extraInfo(),e);
-        } 
-    }
-    
-    /**
-     * Reconnect to disk-based backing
-     */
-    public void connect() {
-        // do nothing -- allow lazy initialization to connect when necessary
+    public void save(File directory, String key) throws IOException {
+        bytes.save(directory, key);
     }
 
-    /**
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Savable#restore(java.io.File, java.lang.String)
+     */
+    public void restore(File directory, String key) throws IOException {
+        // TODO Auto-generated method stub
+
+    }
+
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
@@ -265,24 +207,19 @@ public class DiskQueue implements Queue, Serializable {
         throw new UnsupportedOperationException();
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
-     * @return iterator
      */
     public Iterator getIterator(boolean inCacheOnly) {
         // There are no levels of storage so we will return all items.
         Iterator it = null;
         
-        if( isInitialized ){
-            try {
-                it = new DiskQueueIterator(bytes.getReadAllInputStream(),length);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } 
-        if( it == null ){
+        try {
+            it = new DiskQueueIterator(bytes.getReadAllInputStream(),length);
+        } catch (IOException e) {
+            e.printStackTrace();
             it = new Iterator(){
-                public void remove() { throw new UnsupportedOperationException(); }
+                public void remove() { ; }
                 public boolean hasNext() { return false; }
                 public Object next() { throw new NoSuchElementException(); }
             };        
@@ -291,10 +228,10 @@ public class DiskQueue implements Queue, Serializable {
         return it;
     }
 
-    /** 
-     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public long deleteMatchedItems(Predicate matcher) {
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
         // While not processed as many items as there currently are in the queue
         //  dequeue item
         //  if it does not match, requeue it.
@@ -304,7 +241,7 @@ public class DiskQueue implements Queue, Serializable {
         long numberOfDeletes = 0;
         for ( int i = 0 ; i < itemsInQueue ; i++ ){
             Object o = dequeue();
-            if(matcher.evaluate(o)==false){
+            if(matcher.match(o)==false){
                 // Not supposed to delete this one, put it back
                 enqueue(o);
             } else {
@@ -314,10 +251,4 @@ public class DiskQueue implements Queue, Serializable {
         return numberOfDeletes;
     }
 
-    // custom serialization
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        // after deserialization, must reinitialize object streams from underlying bytestreams
-        isInitialized = false; 
-    }
 }

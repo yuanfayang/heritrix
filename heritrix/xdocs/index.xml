@@ -33,6 +33,12 @@
         <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+
+    <subsection name="Release 0.8.1 05/28/2004">
+        <p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.8.1</a> fixes problems building heritrix
+        with maven 1.0 release candidate 2+ (maven-1.0-rc2, etc.).
+        </p>
+    </subsection>
     <subsection name="Release 0.8.0 05/24/2004">
         <p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.8.0</a> fixes problems using seed lists
         of tens and more hosts, ameliorates too-many-open files, 

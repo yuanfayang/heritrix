@@ -26,7 +26,7 @@
 package org.archive.util;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.Iterator;
 
 import junit.framework.Test;
@@ -75,8 +75,8 @@ public class DiskQueueTest extends QueueTestBase {
     protected Queue makeQueue() {
         try {
             return new DiskQueue(getTmpDir(), FILE_PREFIX);
-        } catch (IOException e) {
-            fail("IOException: " + e.getMessage());
+        } catch (FileNotFoundException e) {
+            fail("file not found : " + e.getMessage());
             // never gets here
             return null;
         }
@@ -90,7 +90,7 @@ public class DiskQueueTest extends QueueTestBase {
     public void testCtorBadDir() {
          try {
             DiskQueue queue = new DiskQueue(new File("/foo"), "bar");
-        } catch(IOException e) {
+        } catch(FileNotFoundException e) {
             return;
         }
     }
@@ -101,7 +101,7 @@ public class DiskQueueTest extends QueueTestBase {
     public void testCtorNullDir() {
         try {
             DiskQueue queue = new DiskQueue(null, "bar");
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             return;
         }
     }
@@ -112,34 +112,33 @@ public class DiskQueueTest extends QueueTestBase {
     public void testCtorNullPrefix() {
         try {
             DiskQueue queue = new DiskQueue(new File("/foo"), null);
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             return;
         }
     }
     
-    /**
-     * Tests custom iterator over disk-stored contents
-     * 
-     * @throws IOException
-     */
-    public void testIterator() throws IOException {
-        DiskQueue queue = new DiskQueue(getTmpDir(), "bar");
-        queue.enqueue("Item 1");
-        queue.enqueue("Item 2");
-        queue.enqueue("Item 3");
-        Iterator it = queue.getIterator(false);
-        assertTrue("disk queue iterator has first item (no dequeues have been made)",it.hasNext());
-        assertEquals("disk queue iterator checking item 1 (no dequeues have been made)","Item 1",(String)it.next());
-        assertEquals("dequeue from disk","Item 1",(String)queue.dequeue());
-        queue.enqueue("Item 4");
-        queue.enqueue("Item 5");
-        assertEquals("dequeue from disk","Item 2",(String)queue.dequeue());
-        it = queue.getIterator(false);
-        assertTrue("disk queue iterator has first item",it.hasNext());
-        assertEquals("disk queue iterator checking item 3","Item 3",(String)it.next());
-        assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());
-        assertEquals("disk queue iterator checking item 4","Item 5",(String)it.next());
-        assertFalse("disk queue iterator ends correctly",it.hasNext());
+    public void testIterator(){
+        try {
+            DiskQueue queue = new DiskQueue(new File("/foo"), "bar");
+            queue.enqueue("Item 1");
+            queue.enqueue("Item 2");
+            queue.enqueue("Item 3");
+            Iterator it = queue.getIterator(false);
+            assertTrue("disk queue iterator has first item (no dequeues have been made)",it.hasNext());
+            assertEquals("disk queue iterator checking item 1 (no dequeues have been made)","Item 1",(String)it.next());
+            assertEquals("dequeue from disk","Item 1",(String)queue.dequeue());
+            queue.enqueue("Item 4");
+            queue.enqueue("Item 5");
+            assertEquals("dequeue from disk","Item 2",(String)queue.dequeue());
+            it = queue.getIterator(false);
+            assertTrue("disk queue iterator has first item",it.hasNext());
+            assertEquals("disk queue iterator checking item 3","Item 3",(String)it.next());
+            assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());
+            assertEquals("disk queue iterator checking item 4","Item 5",(String)it.next());
+            assertFalse("disk queue iterator ends correctly",it.hasNext());
+        } catch (FileNotFoundException e) {
+            return;
+        }
     }
 }
 

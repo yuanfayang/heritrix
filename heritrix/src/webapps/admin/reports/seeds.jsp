@@ -3,6 +3,7 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
+<%@ page import="org.archive.crawler.datamodel.UURI"%>
 
 <%
 	/**

@@ -36,10 +36,9 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.settings.ComplexType;
+import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
-import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecordMetaData;
 import org.archive.util.FileUtils;
 
@@ -90,13 +89,6 @@ public class SelfTestCase extends TestCase
      * @see org.archive.io.arc.ARCReader#validate()
      */
     private static ARCReader readReader = null;
-
-    /**
-     * Metadata list from the arc reader.
-     * 
-     * Gotten as byproduct of calling validate on the arcreader.
-     */
-	private static List metaDatas;
 
 
     public SelfTestCase()
@@ -243,8 +235,8 @@ public class SelfTestCase extends TestCase
                 " instead " + Integer.toString(arcs.length) + " files.");
         }
         SelfTestCase.arcFile = arcs[0];
-        SelfTestCase.readReader = ARCReaderFactory.get(arcFile);
-        SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
+        SelfTestCase.readReader = new ARCReader(arcFile);
+        SelfTestCase.readReader.validate();
 
         SelfTestCase.initialized = true;
     }
@@ -283,15 +275,6 @@ public class SelfTestCase extends TestCase
     protected static ARCReader getReadReader()
     {
         return SelfTestCase.readReader;
-    }
-    
-    /**
-     * @return Returns list of ARCReader metadatas, the byproduct of calling
-     * validate.
-     */
-    protected static List getMetaDatas()
-    {
-        return SelfTestCase.metaDatas;
     }
 
     /**
@@ -408,7 +391,7 @@ public class SelfTestCase extends TestCase
         } else {
             baseURL += getTestName();
         }
-        List metaDatas = getMetaDatas();
+        List metaDatas = getReadReader().getMetaDatas();
         ARCRecordMetaData metaData = null;
         List filesFound = new ArrayList();
         for (Iterator i = metaDatas.iterator(); i.hasNext();) {

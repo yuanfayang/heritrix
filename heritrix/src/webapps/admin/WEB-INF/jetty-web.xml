@@ -6,7 +6,7 @@
             <Arg>jsp</Arg>   
             <Call name="setInitParameter">
                 <Arg>scratchdir</Arg>
-                <Arg>target/jsp-compiled-development</Arg>
+                <Arg>jsp-compiled</Arg>
             </Call>
         </Call>
     </Call>

@@ -30,8 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.credential.CredentialAvatar;
+import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
@@ -46,10 +45,10 @@ import st.ata.util.HashtableAList;
  * Represents a candidate URI and the associated state it
  * collects as it is crawled.
  *
- * <p>Core state is in instance variables, but a flexible
+ * Core state is in instance variables, but a flexible
  * attribute list is also available.
  *
- * <p>Should only be instantiated via URIStore.getCrawlURI(...),
+ * Should only be instantiated via URIStore.getCrawlURI(...),
  * which will assure only one CrawlURI can exist per
  * UURI within a distinct "crawler".
  *
@@ -57,11 +56,7 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
     implements CoreAttributeConstants, FetchStatusCodes {
-    
-    /**
-     * When neat host-based class-key fails us
-     */
-    private static String DEFAULT_CLASS_KEY = "default...";
+    private static String DEFAULT_CLASS_KEY = "default..."; // when neat host-based class-key fails us
     
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
@@ -71,11 +66,13 @@ public class CrawlURI extends CandidateURI
     // via
 
     // Scheduler lifecycle info
+    private Object state;   // state within scheduling/store/selector
+    private long wakeTime; // if "snoozed", when this CrawlURI may awake
     private String classKey; // cached classKey value
 
     // Processing progress
-    transient private Processor nextProcessor;
-    transient private ProcessorChain nextProcessorChain;
+    private Processor nextProcessor;
+    private ProcessorChain nextProcessorChain;
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
@@ -105,7 +102,7 @@ public class CrawlURI extends CandidateURI
      * 
      * Gets set upon successful request.  Reset at start of processing chain.
      */
-    transient private HttpRecorder httpRecorder = null;
+    private HttpRecorder httpRecorder = null;
     
     /**
      * Content type of a successfully fetched URI.
@@ -115,66 +112,29 @@ public class CrawlURI extends CandidateURI
     private String contentType = null;
     
     /**
-     * Key to get credential avatars from A_LIST.
+     * Key to get credentials from A_LIST.
      */
-    private static final String A_CREDENTIAL_AVATARS_KEY = "credential-avatars";
-    
-    /**
-     * True if this CrawlURI has been deemed a prerequisite by the
-     * {@link org.archive.crawler.prefetch.PreconditionEnforcer}.
-     * 
-     * This flag is used at least inside in the precondition enforcer so that
-     * subsequent prerequisite tests know to let this CrawlURI through because
-     * its a prerequisite needed by an earlier prerequisite tests (e.g. If 
-     * this is a robots.txt, then the subsequent login credentials prereq
-     * test must not throw it out because its not a login curi).
-     */
-    private boolean prerequisite = false;
+    private static final String A_CREDENTIALS_KEY = "credentials";
 
     /**
-     * Set to true if this <code>curi</code> is to be POST'd rather than GET-d.
-     */
-    private boolean post = false;
-
-    /** monotonically increasing number within a crawl;
-     * useful for tending towards breadth-first ordering */
-    protected long ordinal;
-
-    /**
-     * Cache of this candidate uuri as a string.
-     * 
-     * Profiling shows us spending about 1-2% of total elapsed time in
-     * toString.
-     */
-    private String cachedCrawlURIString = null; 
-
-    /**
-     * Create a new instance of CrawlURI from a {@link UURI}.
-     * 
-     * @param uuri the UURI to base this CrawlURI on.
+     * @param uuri
      */
     public CrawlURI(UURI uuri) {
         super(uuri);
     }
 
-    /**
-     * Create a new instance of CrawlURI from a {@link CandidateURI}
-     * 
-     * @param caUri the CandidateURI to base this CrawlURI on.
-     * @param o
+        /**
+     * @param caUri
      */
-    public CrawlURI(CandidateURI caUri, long o) {
+    public CrawlURI(CandidateURI caUri) {
         super(caUri.getUURI());
-        ordinal = o;
         setIsSeed(caUri.isSeed());
         setPathFromSeed(caUri.getPathFromSeed());
-        setSchedulingDirective(caUri.getSchedulingDirective());
         setVia(caUri.getVia());
     }
 
     /**
      * Takes a status code and converts it into a human readable string.
-     * 
      * @param code the status code
      * @return a human readable string declaring what the status code is.
      */
@@ -187,12 +147,12 @@ public class CrawlURI extends CandidateURI
             case 101  : return "HTTP-101-Info-Switching Protocols";
             // HTTP Successful 2xx
             case 200  : return "HTTP-200-Success-OK";
-            case 201  : return "HTTP-201-Success-Created";
-            case 202  : return "HTTP-202-Success-Accepted";
-            case 203  : return "HTTP-203-Success-Non-Authoritative";
-            case 204  : return "HTTP-204-Success-No Content ";
-            case 205  : return "HTTP-205-Success-Reset Content";
-            case 206  : return "HTTP-206-Success-Partial Content";
+            case 201  : return "HTTP-200-Success-Created";
+            case 202  : return "HTTP-200-Success-Accepted";
+            case 203  : return "HTTP-200-Success-Non-Authoritative";
+            case 204  : return "HTTP-200-Success-No Content ";
+            case 205  : return "HTTP-200-Success-Reset Content";
+            case 206  : return "HTTP-200-Success-Partial Content";
             // HTTP Redirection 3xx
             case 300  : return "HTTP-300-Redirect-Multiple Choices";
             case 301  : return "HTTP-301-Redirect-Moved Permanently";
@@ -298,120 +258,66 @@ public class CrawlURI extends CandidateURI
         fetchStatus = newstatus;
     }
 
-    /**
-     * Get the number of attempts at getting the document referenced by this
-     * URI.
-     * 
-     * @return the number of attempts at getting the document referenced by this
-     *         URI.
-     */
-    public int getFetchAttempts() {
+    public int getFetchAttempts(){
         return fetchAttempts;
     }
 
-    /**
-     * Increment the number of attempts at getting the document referenced by
-     * this URI.
-     * 
-     * @return the number of attempts at getting the document referenced by this
-     *         URI.
-     */
-    public int incrementFetchAttempts() {
+    public int incrementFetchAttempts(){
         return fetchAttempts++;
     }
 
-    /**
-     * Get the next processor to process this URI.
-     * 
-     * @return the processor that should process this URI next.
-     */
     public Processor nextProcessor() {
         return nextProcessor;
     }
     
-    /**
-     * Get the processor chain that should be processing this URI after the
-     * current chain is finished with it.
-     * 
-     * @return the next processor chain to process this URI.
-     */
     public ProcessorChain nextProcessorChain() {
         return nextProcessorChain;
     }
     
     /**
-     * Set the next processor to process this URI.
-     * 
-     * @param processor the next processor to process this URI.
+     * @param processor
      */
     public void setNextProcessor(Processor processor) {
         nextProcessor = processor;
     }
     
-    /**
-     * Set the next processor chain to process this URI.
-     * 
-     * @param nextProcessorChain the next processor chain to process this URI.
-     */
     public void setNextProcessorChain(ProcessorChain nextProcessorChain) {
         this.nextProcessorChain = nextProcessorChain;
     }
 
     /**
-     * Get the token (usually the hostname) which indicates
+     * @return Token (usually the hostname) which indicates
      * what "class" this CrawlURI should be grouped with,
      * for the purposes of ensuring only one item of the
      * class is processed at once, all items of the class
      * are held for a politeness period, etc.
-     * 
-     * @return Token (usually the hostname) which indicates
-     * what "class" this CrawlURI should be grouped with.
      */
-    public String getClassKey() throws URIException {
+    public String getClassKey() {
         if(classKey==null) {
             classKey = calculateClassKey();
         }
         return classKey;
     }
 
-    private String calculateClassKey() throws URIException {
-        String scheme = getUURI().getScheme();
+    private String calculateClassKey() {
+        String scheme = getUURI().getUri().getScheme();
         if (scheme.equals("dns")){
-            if (via!=null) {
-                // special handling for DNS: treat as being
-                // of the same class as the triggering URI
-                // When a URI includes a port, this ensures 
-                // the DNS lookup goes atop the host:port
-                // queue that triggered it, rather than 
-                // some other host queue
-                return new UURI(flattenVia()).getAuthority();
-            } // else
             return FetchDNS.parseTargetDomain(this);
         }
-//        String host = getUURI().getHost();
-//        if (host == null) {
-            String authority =  getUURI().getAuthority();
+        String host = getUURI().getUri().getHost();
+        if (host == null) {
+            String authority =  getUURI().getUri().getAuthority();
             if(authority == null) {
                 return DEFAULT_CLASS_KEY;
             } else {
                 return authority;
             }
-//        } else {
-//            return host;
-//        }
+        } else {
+            return host;
+        }
     }
 
 
-    /**
-     * Get the attribute list.
-     * <p>
-     * The attribute list is a flexible map of key/value pairs for storing
-     * status of this URI for use by other processors. By convention the
-     * attribute list is keyed by constants found in the
-     * {@link CoreAttributeConstants}interface.
-     * 
-     * @return the attribute list.
-     */
     public AList getAList() {
         return alist;
     }
@@ -426,91 +332,39 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Set the CrawlServer which this URI is to be associated with.
-     * 
-     * @param host the CrawlServer which this URI is to be associated with.
+     * @param host
      */
     public void setServer(CrawlServer host) {
         this.server = host;
     }
-    
-    /**
-     * Do all actions associated with setting a <code>CrawlURI</code> as 
-     * requiring a prerequisite.
-     * 
-     * @param lastProcessorChain Last processor chain reference.  This chain is
-     * where this <code>CrawlURI</code> goes next.
-     * @param stringOrUURI Object to set a prerequisite.
-     */
-    public void markPrerequisite(Object stringOrUURI,
-            ProcessorChain lastProcessorChain) {
-        setPrerequisiteUri(stringOrUURI);   
-        incrementDeferrals();
-        setFetchStatus(S_DEFERRED);
-        skipToProcessorChain(lastProcessorChain);
-    }
-    
-    /**
-     * Set a prerequisite for this URI.
-     * <p>
-     * A prerequisite is a URI that must be crawled before this URI can be
-     * crawled.
-     * 
-     * @param stringOrUURI Either a string or a URI representation of a URI.
-     */
-    protected void setPrerequisiteUri(Object stringOrUURI) {
-        this.alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
-    }
+
+//    /**
+//     *
+//     */
+//    public void cancelFurtherProcessing() {
+//        nextProcessor = null;
+//    }
 
     /**
-     * Get the prerequisite for this URI.
-     * <p>
-     * A prerequisite is a URI that must be crawled before this URI can be
-     * crawled.
-     * 
-     * @return the prerequisite for this URI or null if no prerequisite.
+     * @param stringOrUURI
      */
+    public void setPrerequisiteUri(Object stringOrUURI) {
+        alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
+    }
+
     public Object getPrerequisiteUri() {
-        return this.alist.getObject(A_PREREQUISITE_URI);
-    }
-    
-    /**
-     * Returns true if this CrawlURI is a prerequisite.
-     * 
-     * @return true if this CrawlURI is a prerequisite.
-     */
-    public boolean isPrerequisite() {
-        return this.prerequisite;
-    }
-    
-    /**
-     * Set if this CrawlURI is itself a prerequisite URI.
-     * 
-     * @param prerequisite True if this CrawlURI is itself a prerequiste uri.
-     */
-    public void setPrerequisite(boolean prerequisite) {
-        this.prerequisite = prerequisite;
+        return alist.getObject(A_PREREQUISITE_URI);
     }
 
-    /**
-     * @return This crawl URI as a string wrapped with 'CrawlURI(' + 
-     * ')'.
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
      */
     public String toString() {
-        if (this.cachedCrawlURIString == null) {
-            synchronized (this) {
-                if (this.cachedCrawlURIString == null) {
-                    this.cachedCrawlURIString =
-                        "CrawlURI(" + getURIString() + ")";
-                }
-            }
-        }
-        return this.cachedCrawlURIString;
+        return "CrawlURI("+getURIString()+")";
     }
 
     /**
-     * Get the content type of this URI.
-     * 
      * @return Fetched URIs content type.  May be null.
      */
     public String getContentType() {
@@ -527,45 +381,24 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Set the number of the ToeThread responsible for processing this uri.
-     * 
-     * @param i the ToeThread number.
+     * @param i
      */
     public void setThreadNumber(int i) {
         threadNumber = i;
     }
 
-    /**
-     * Get the number of the ToeThread responsible for processing this uri.
-     * 
-     * @return the ToeThread number.
-     */
     public int getThreadNumber() {
         return threadNumber;
     }
 
-    /**
-     * Increment the deferral count.
-     *
-     */
     public void incrementDeferrals() {
         deferrals++;
     }
 
-    /**
-     * Get the deferral count.
-     * 
-     * @return the deferral count.
-     */
     public int getDeferrals() {
         return deferrals;
     }
 
-    /**
-     * Remove all attributes set on this uri.
-     * <p>
-     * This methods removes the attribute list.
-     */
     public void stripToMinimal() {
         alist = null;
     }
@@ -603,16 +436,6 @@ public class CrawlURI extends CandidateURI
         return contentSize;
     }
 
-    /**
-     * Set the attribute list.
-     * <p>
-     * The attribute list is a flexible map of key/value pairs for storing
-     * status of this URI for use by other processors. By convention the
-     * attribute list is keyed by constants found in the
-     * {@link CoreAttributeConstants}interface.
-     * 
-     * @param a the attribute list to set.
-     */
     public void setAList(AList a){
         alist = a;
     }
@@ -637,11 +460,6 @@ public class CrawlURI extends CandidateURI
         localizedErrors.add(new LocalizedError(processorName, ex, message));
     }
 
-    /**
-     * Add an annotation.
-     * 
-     * @param annotation the annotation to add.
-     */
     public void addAnnotation(String annotation) {
         String annotations;
         if(alist.containsKey(A_ANNOTATIONS)) {
@@ -654,11 +472,6 @@ public class CrawlURI extends CandidateURI
         alist.putString(A_ANNOTATIONS,annotations);
     }
 
-    /**
-     * Get the annotations set for this uri.
-     * 
-     * @return the annotations set for this uri.
-     */
     public String getAnnotations() {
         if(alist.containsKey(A_ANNOTATIONS)) {
             return alist.getString(A_ANNOTATIONS);
@@ -708,28 +521,15 @@ public class CrawlURI extends CandidateURI
         return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);
     }*/
 
-    /**
-     * Get the embeded hop count.
-     * 
-     * @return the embeded hop count.
-     */
+
     public int getEmbedHopCount() {
         return embedHopCount;
     }
 
-    /**
-     * Get the link hop count.
-     * 
-     * @return the link hop count.
-     */
     public int getLinkHopCount() {
         return linkHopCount;
     }
 
-    /**
-     * Mark this uri as being a seed.
-     *
-     */
     public void markAsSeed() {
         linkHopCount = 0;
         embedHopCount = 0;
@@ -758,23 +558,13 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Set which processor should be the next processor to process this uri
-     * instead of using the default next processor.
-     * 
-     * @param processorChain the processor chain to skip to.
-     * @param processor the processor in the processor chain to skip to.
+     * @param processor
      */
-    public void skipToProcessor(ProcessorChain processorChain,
-            Processor processor) {
+    public void skipToProcessor(ProcessorChain processorChain, Processor processor) {
         setNextProcessorChain(processorChain);
         setNextProcessor(processor);
     }
 
-    /**
-     * Set which processor chain should be processing this uri next.
-     * 
-     * @param processorChain the processor chain to skip to.
-     */
     public void skipToProcessorChain(ProcessorChain processorChain) {
         setNextProcessorChain(processorChain);
         setNextProcessor(null);
@@ -786,6 +576,7 @@ public class CrawlURI extends CandidateURI
      *
      * @return The length of the content-body (as given by the header or
      * calculated).
+     *
      */
     public long getContentLength() {
         if (this.contentLength < 0) {
@@ -848,8 +639,6 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
-     * Get the http recorder associated with this uri.
-     * 
      * @return Returns the httpRecorder.  May be null.
      */
     public HttpRecorder getHttpRecorder() {
@@ -857,8 +646,6 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Set the http recorder to be associated with this uri.
-     * 
      * @param httpRecorder The httpRecorder to set.
      */
     public void setHttpRecorder(HttpRecorder httpRecorder) {
@@ -866,11 +653,6 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
-     * Return true if this is a http transaction.
-     * 
-     * TODO: Compound this and {@link #isPost()} method so that there is one
-     * place to go to find out if get http, post http, ftp, dns.
-     * 
      * @return True if this is a http transaction.
      */
     public boolean isHttpTransaction() {
@@ -887,8 +669,8 @@ public class CrawlURI extends CandidateURI
         
         this.httpRecorder = null; 
         this.fetchStatus = S_UNATTEMPTED;
-        this.setPrerequisite(false);
-        if (this.alist != null) {
+        if (this.alist != null)
+        {
             // Let current get method to be GC'd.
             this.alist.remove(A_HTTP_TRANSACTION);
             // Discard any ideas of prereqs -- may no longer be valid.
@@ -903,91 +685,110 @@ public class CrawlURI extends CandidateURI
      * as a result. Otherwise, we create new CrawlURI instance.
      *
      * @param caUri Candidate URI.
-     * @param ordinal
      * @return A crawlURI made from the passed CandidateURI.
      */
-    public static CrawlURI from(CandidateURI caUri, long ordinal) {
+    public static CrawlURI from(CandidateURI caUri) {
         if (caUri instanceof CrawlURI) {
             return (CrawlURI) caUri;
         }
-        return new CrawlURI(caUri,ordinal);
+        return new CrawlURI(caUri);
     }
     
     /**
-     * @param avatars Credential avatars to save off.
+     * @param credentials Set of credentials.
      */
-    private void setCredentialAvatars(Set avatars) {
-        this.alist.putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
+    private void setCredentials(Set credentials) {
+        this.alist.putObject(A_CREDENTIALS_KEY, credentials);
     }
     
     /**
-     * @return Credential avatars.  Null if none set.
+     * @param credential Add credential to list of credentials.  Creates a set
+     * if none currently in place.
+     * @return Credential just added.
      */
-    public Set getCredentialAvatars() {
-        return (Set)this.alist.getObject(A_CREDENTIAL_AVATARS_KEY);
+    public Credential addCredential(Credential credential) {
+        Set credentials = getCredentials();
+        if (credentials == null)
+        {
+            synchronized(this) {
+                credentials = getCredentials();
+                if (credentials == null) {
+                    credentials = new HashSet();
+                    setCredentials(credentials);
+                }
+            }
+        }
+        credentials.add(credential);
+        return credential;
     }
-    
+
     /**
-     * @return True if there are avatars attached to this instance.
+     * @return Set of credential objects.  Null if none set.
      */
-    public boolean hasCredentialAvatars() {
-        return getCredentialAvatars() != null &&
-            getCredentialAvatars().size() > 0;
+    public Set getCredentials() {
+        return (Set)this.alist.getObject(A_CREDENTIALS_KEY);
     }
     
     /**
-     * Add an avatar.
+     * @return True if there are credentials in the CrawlURI.
+     */
+    public boolean hasCredentials() {
+        Set c = getCredentials();
+        return (c == null || c.size() <= 0)? false: true;
+    }
+    
+    /**
+     * Does this crawlURI have credentials of the passed type?
      * 
-     * We do lazy instantiation.
-     * 
-     * @param ca Credential avatar to add to set of avatars.
+     * @return True if there are credentials in the CrawlURI of passed type.
      */
-    public void addCredentialAvatar(CredentialAvatar ca) {  
-    	    Set avatars = getCredentialAvatars();
-    	    if (avatars == null) {
-    	    	    avatars = new HashSet();
-    	    	    	setCredentialAvatars(avatars);
-    	    }
-    	    avatars.add(ca);
+    public boolean hasCredentials(Class type) {
+        Set credentials = Credential.filterCredentials(getCredentials(), type);
+        return (credentials != null && credentials.size() > 0)? true: false;
     }
     
     /**
-     * Remove all credential avatars from this crawl uri.
+     * @return True if there are rfc2617 credentials in the CrawlURI.
      */
-    public void removeCredentialAvatars() {
-        if (hasCredentialAvatars()) {
-            this.alist.remove(A_CREDENTIAL_AVATARS_KEY);
+    public boolean hasRfc2617Credentials() {
+        return hasCredentials(Rfc2617Credential.class);
+    }
+
+    /**
+     * @param credential Credential to remove.
+     */
+    public void removeCredential(Credential credential) {
+        Set credentials = getCredentials();
+        if (credentials != null && credentials.size() > 0 ) {
+            boolean removed = credentials.remove(credential);
         }
     }
-    
+
     /**
-     * Remove all credential avatars from this crawl uri.
-     * @param ca Avatar to remove.
-     * @return True if we removed passed parameter.  False if no operation 
-     * performed.
+     * Remove any instance of passed type.
+     * @param type Type to remove.
      */
-    public boolean removeCredentialAvatar(CredentialAvatar ca) {
-        boolean result = false;
-        Set avatars = getCredentialAvatars();
-        if (avatars != null && avatars.size() > 0) {
-            result = avatars.remove(ca);
+    public void removeCredentials(Class type)
+    {
+        Set credentials = Credential.filterCredentials(getCredentials(), type);
+        if (credentials != null && credentials.size() > 0) {
+            for (Iterator i = credentials.iterator(); i.hasNext();) {
+                removeCredential((Credential)i.next());
+            }
         }
-        return result;
     }
     
     /**
      * Ask this URI if it was a success or not.
      * 
-     * Only makes sense to call this method after execution of
-     * HttpMethod#execute. Regard any status larger then 0 as success
-     * except for below caveat regarding 401s.
+     * Only makes sense to call this method after execution of get method.
+     * Regard any status larger then 0 as success (Except for caveat regarding
+     * 401s).
      * 
-     * <p>401s caveat: If any rfc2617 credential data present and we got a 401 
-     * assume it got loaded in FetchHTTP on expectation that we're to go around
-     * the processing chain again. Report this condition as a failure so we
-     * get another crack at the processing chain only this time we'll be making
-     * use of the loaded credential data.
+     * <p>If any rfc2617 credential present and we got a 401, assume it
+     * got loaded in FetchHTTP on expectation that we're to go around again.
      * 
+     * @param curi Finishing CrawlURI to examine.
      * @return True if ths URI has been successfully processed.
      */
     public boolean isSuccess()
@@ -995,52 +796,11 @@ public class CrawlURI extends CandidateURI
         boolean result = false;
         int statusCode = this.fetchStatus;
         if (statusCode == HttpStatus.SC_UNAUTHORIZED &&
-            hasRfc2617CredentialAvatar()) {
+                hasRfc2617Credentials()) {
             result = false;
         } else {
             result = (statusCode > 0);
         }
         return result;
-    }
-
-    /**
-	 * @return True if we have an rfc2617 payload.
-	 */
-	public boolean hasRfc2617CredentialAvatar() {
-	    boolean result = false;
-	    Set avatars = getCredentialAvatars();
-	    if (avatars != null && avatars.size() > 0) {
-	        for (Iterator i = avatars.iterator(); i.hasNext();) {
-	            if (((CredentialAvatar)i.next()).
-	                match(Rfc2617Credential.class)) {
-	                result = true;
-	                break;
-	            }
-	        }
-	    }
-        return result;
-	}
-
-    /**
-     * Set whether this URI should be fetched by sending a HTTP POST request.
-     * Else a HTTP GET request will be used.
-     * 
-     * @param b Set whether this curi is to be POST'd.  Else its to be GET'd.
-     */
-    public void setPost(boolean b) {
-        this.post = b;
-    }
-    
-    /**
-     * Returns true if this URI should be fetched by sending a HTTP POST request.
-     * 
-     * 
-     * TODO: Compound this and {@link #isHttpTransaction()} method so that there
-     * is one place to go to find out if get http, post http, ftp, dns.
-     * 
-     * @return Returns is this CrawlURI instance is to be posted.
-     */
-    public boolean isPost() {
-        return this.post;
     }
 }

@@ -29,15 +29,16 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.io.StringReader;
-import java.util.HashSet;
+import java.security.Principal;
 import java.util.Set;
 import java.util.zip.Checksum;
 
-import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.credential.CredentialAvatar;
+import javax.security.auth.Subject;
+
+import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.framework.ToeThread;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
 
 /**
@@ -48,7 +49,7 @@ import org.archive.io.ReplayInputStream;
  *
  * @author gojomo
  */
-public class CrawlServer implements Serializable {
+public class CrawlServer implements Serializable, Principal {
     public static final long ROBOTS_NOT_FETCHED = -1;
 
     private final String server; // actually, host+port in the http case
@@ -57,7 +58,6 @@ public class CrawlServer implements Serializable {
     private transient SettingsHandler settingsHandler;
     RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
-    boolean validRobots = false;
     Checksum robotstxtChecksum;
 
     // how many consecutive connection errors have been encountered;
@@ -66,9 +66,16 @@ public class CrawlServer implements Serializable {
     protected int consecutiveConnectionErrors = 0;
     
     /**
-     * Set of credential avatars.
+     * Subject to hold principals and credentials for this crawlserver.
+     * 
+     * Instance only created if credentials associated with this CrawlServer.
+     * 
+     * <p>Marked transient so not part of serialization.  Notion is that if 
+     * this instance is serialized, then on reconstitution, logins need to be
+     * rerun (Probably makes sense.  If we've been serialized, we've been put
+     * aside for a period so relogin is apt).
      */
-    private transient Set avatars =  null;
+    private transient Subject subject = null;
     
     /** Creates a new CrawlServer object.
      * 
@@ -123,15 +130,6 @@ public class CrawlServer implements Serializable {
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
         robotsFetched = System.currentTimeMillis();
-
-        if (curi.getFetchStatus() < 0 || curi.isHttpTransaction() == false) {
-            // robots.txt lookup failed.
-            validRobots = false;
-            return;
-        } else {
-            validRobots = true;   
-        }
-        
         if (curi.getFetchStatus() != 200 ||
                 honoringPolicy.getType(getSettings(curi.getUURI())) ==
                     RobotsHonoringPolicy.IGNORE)
@@ -141,14 +139,14 @@ public class CrawlServer implements Serializable {
             robots = RobotsExclusionPolicy.ALLOWALL;
             return;
         }
-//      PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
-//      since they're usually indicative of a mistake
-//      Thus these lines are commented out:
+//    PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
+//  since they're usually indicative of a mistake
+// Thus these lines are commented out:
 //      if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
-//      // authorization/allowed errors = all deny
-//      robots = RobotsExclusionPolicy.DENYALL;
-//      return;
-//      }
+//            // authorization/allowed errors = all deny
+//            robots = RobotsExclusionPolicy.DENYALL;
+//            return;
+//        }
         ReplayInputStream contentBodyStream = null;
         try {
             BufferedReader reader;
@@ -179,6 +177,7 @@ public class CrawlServer implements Serializable {
                 contentBodyStream.close();
             }
         }
+        return;
     }
 
     /**
@@ -188,10 +187,11 @@ public class CrawlServer implements Serializable {
         return robotsFetched;
     }
 
-    /** 
-     * @return The server string which might include a port number.
+    /** Get the server string which might include a port number.
+     *
+     * @return the server string.
      */
-    public String getName() {
+    public String getServer(){
        return server;
     }
 
@@ -259,15 +259,15 @@ public class CrawlServer implements Serializable {
      * @return the settings handler.
      */
     public SettingsHandler getSettingsHandler() {
-        return this.settingsHandler;
+        return settingsHandler;
     }
 
     /** Get the settings object in effect for this server.
      *
      * @return the settings object in effect for this server.
      */
-    private CrawlerSettings getSettings(UURI uri) throws URIException {
-        return this.settingsHandler.getSettings(uri.getHost(), uri);
+    private CrawlerSettings getSettings(UURI uri) {
+        return settingsHandler.getSettings(uri.getHost(), uri);
     }
 
     /** Set the settings handler to be used by this server.
@@ -278,47 +278,65 @@ public class CrawlServer implements Serializable {
         this.settingsHandler = settingsHandler;
     }
 
+    /**
+     * 
+     */
     public void incrementConsecutiveConnectionErrors() {
-        this.consecutiveConnectionErrors++;
+        consecutiveConnectionErrors++;
     }
 
+    /**
+     * 
+     */
     public void resetConsecutiveConnectionErrors() {
-        this.consecutiveConnectionErrors = 0;
+        consecutiveConnectionErrors = 0;
+    }
+
+    /* (non-Javadoc)
+     * @see java.security.Principal#getName()
+     */
+    public String getName()
+    {
+        return getServer();
     }
     
     /**
-     * @return Credential avatars for this server.  Returns null if none.
+     * @return Credentials for this server.  Returns null if no credentials
+     * associated with this server.
      */
-    public Set getCredentialAvatars() {
-        return this.avatars;
+    public Set getCredentials() {
+        return this.subject == null? null:
+            (this.subject.getPublicCredentials() == null) ||
+                (this.subject.getPublicCredentials().size() <= 0)? null:
+                    this.subject.getPublicCredentials();
     }
     
     /**
-     * @return True if there are avatars attached to this instance.
+     * @return True if this crawlserver has credentials.
      */
-    public boolean hasCredentialAvatars() {
-        return this.avatars != null && this.avatars.size() > 0;
+    public boolean hasCredentials() {
+        return (getCredentials() == null)? false: true;
     }
     
     /**
-     * Add an avatar.
-     * 
-     * @param ca Credential avatar to add to set of avatars.
+     * @param credential Credential to add.
      */
-    public void addCredentialAvatar(CredentialAvatar ca) {
-        if (this.avatars == null) {
-            this.avatars = new HashSet();
+    public void addCredential(Credential credential) {
+        if (this.subject == null) {
+            createSubject();
         }
-        this.avatars.add(ca);
+        this.subject.getPublicCredentials().add(credential);
     }
-	/**
-     * If true then valid robots.txt information has been retrived. If false
-     * either no attempt has been made to fetch robots.txt or the attempt
-     * failed.
+    
+    /**
+     * Create subject for this class.
      * 
-	 * @return Returns the validRobots.
-	 */
-	public boolean isValidRobots() {
-		return validRobots;
-	}
+     * Called only when needed to hold credentials.
+     */
+    private synchronized void createSubject() {
+        if (this.subject == null) {
+            this.subject = new Subject();
+            this.subject.getPrincipals().add(this);
+        }
+    }
 }

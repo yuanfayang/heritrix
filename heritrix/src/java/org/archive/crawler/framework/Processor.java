@@ -30,9 +30,9 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.ModuleType;
+import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
  * Base class for URI processing classes.
@@ -83,12 +83,6 @@ public class Processor extends ModuleType {
             "Filters applied to this processor", Filter.class));
     }
 
-    /**
-     * Perform processing on the given CrawlURI. 
-     * 
-     * @param curi
-     * @throws InterruptedException
-     */
     public final void process(CrawlURI curi) throws InterruptedException {
         // by default, arrange for curi to proceed to next processor
         curi.setNextProcessor(getDefaultNextProcessor(curi));
@@ -106,12 +100,6 @@ public class Processor extends ModuleType {
             innerProcess(curi);
         } else {
             innerRejectProcess(curi);
-        }
-    }
-    
-    protected void checkForInterrupt() throws InterruptedException {
-        if (Thread.interrupted()) {
-            throw new InterruptedException("interrupted");
         }
     }
 
@@ -132,18 +120,6 @@ public class Processor extends ModuleType {
         // by default do nothing
     }
 
-    /**
-     * Classes subclassing this one should override this method to perform
-     * processor specific actions.
-     * <p>
-     * 
-     * This method is garanteed to be called after the crawl is set up, but
-     * before any URI-processing has occured.
-     */
-    protected void initialTasks () {
-        // by default do nothing
-    }
-    
     /**
      * Classes subclassing this one should override this method to perform
      * processor specific actions.  

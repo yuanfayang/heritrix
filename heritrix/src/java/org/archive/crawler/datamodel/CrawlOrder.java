@@ -27,7 +27,6 @@
 
 package org.archive.crawler.datamodel;
 
-import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,23 +34,22 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.ModuleType;
+import org.archive.crawler.datamodel.settings.RegularExpressionConstraint;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.URIFrontier;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.RegularExpressionConstraint;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 
 /**
  * Represents the 'root' of the settings hierarchy. Contains those settings that
  * do not belong to any specific module, but rather relate to the crawl as a
  * whole (much of this is used by the CrawlController directly or indirectly).
  *
- * @see org.archive.crawler.settings.ModuleType
+ * @see org.archive.crawler.datamodel.settings.ModuleType
  */
 public class CrawlOrder extends ModuleType {
     private static Logger logger =
@@ -60,9 +58,6 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_NAME = "crawl-order";
     public static final String ATTR_SETTINGS_DIRECTORY = "settings-directory";
     public static final String ATTR_DISK_PATH = "disk-path";
-    public static final String ATTR_LOGS_PATH = "logs-path";
-    public static final String ATTR_CHECKPOINTS_PATH = "checkpoints-path";
-    public static final String ATTR_STATE_PATH = "state-path";
     public static final String ATTR_SCRATCH_PATH = "scratch-path";
     public static final String ATTR_RECOVER_PATH = "recover-path";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
@@ -107,33 +102,12 @@ public class CrawlOrder extends ModuleType {
         e = addElementToDefinition(new SimpleType(ATTR_DISK_PATH,
                 "Directory where logs, arcs and other run time files will " +
                 "be kept. If this path is a relative path, it will be " +
-                "relative to the crawl order.", ""));
-        e.setOverrideable(false);
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_LOGS_PATH,
-                "Directory where crawler log files will be kept. If this path " +
-                "is a relative path, it will be relative to the 'disk-path'.",
-                "logs"));
-        e.setOverrideable(false);
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_CHECKPOINTS_PATH,
-                "Directory where crawler checkpoint files will be kept. If this path " +
-                "is a relative path, it will be relative to the 'disk-path'.",
-                "checkpoints"));
-        e.setOverrideable(false);
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_STATE_PATH,
-                "Directory where crawler-state files will be kept. If this path " +
-                "is a relative path, it will be relative to the 'disk-path'.",
-                "state"));
+                "relative to the crawl order.", "disk"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_SCRATCH_PATH,
-                "Directory where discardable temporary files will be kept. If this path " +
+                "Directory where temporary files will be kept. If this path " +
                 "is a relative path, it will be relative to the 'disk-path'.",
                 "scratch"));
         e.setOverrideable(false);
@@ -239,10 +213,6 @@ public class CrawlOrder extends ModuleType {
         e.setExpertSetting(true);
     }
 
-    /**
-     * @param curi
-     * @return user-agent header value to use
-     */
     public String getUserAgent(CrawlURI curi) {
         if (caseFlattenedUserAgent == null) {
             try {
@@ -257,10 +227,6 @@ public class CrawlOrder extends ModuleType {
         return caseFlattenedUserAgent;
     }
 
-    /**
-     * @param curi
-     * @return from header value to use
-     */
     public String getFrom(CrawlURI curi) {
         String res = null;
         try {
@@ -336,51 +302,4 @@ public class CrawlOrder extends ModuleType {
         return loggers;
     }
 
-    // must include a bot name and info URL
-    private static String ACCEPTABLE_USER_AGENT =
-        "\\S+.*\\(\\+http://\\S*\\).*";
-    // must include a contact email address
-    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
-
-    /**
-     * Checks if the User Agent and From field are set 'correctly' in
-     * the specified Crawl Order.
-     * 
-     * @throws FatalConfigurationException
-     */
-    public void checkUserAgentAndFrom() throws FatalConfigurationException {
-        // don't start the crawl if they're using the default user-agent
-        String userAgent = this.getUserAgent(null);
-        String from = this.getFrom(null);
-        if (!(userAgent.matches(ACCEPTABLE_USER_AGENT)
-            && from.matches(ACCEPTABLE_FROM))) {
-            throw new FatalConfigurationException("unacceptable user-agent or from");
-        }
-    }
-
-    /**
-     * @return
-     */
-    public File getCheckpointsDirectory() {
-        try {
-            return getDirectoryRelativeToDiskPath((String) getAttribute(null, CrawlOrder.ATTR_CHECKPOINTS_PATH));
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return null;
-        }
-    }
-    
-    private File getDirectoryRelativeToDiskPath(String subpath) {
-        File disk;
-        try {
-            disk = getSettingsHandler().getPathRelativeToWorkingDirectory(
-                    (String) getAttribute(null, CrawlOrder.ATTR_DISK_PATH));
-            return new File(disk, subpath);
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return null;
-        }
-    }
 }

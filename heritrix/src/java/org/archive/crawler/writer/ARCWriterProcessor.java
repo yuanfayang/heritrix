@@ -27,37 +27,18 @@ package org.archive.crawler.writer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
-import javax.xml.transform.SourceLocator;
-import javax.xml.transform.Templates;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 
-import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
@@ -70,19 +51,14 @@ import org.xbill.DNS.Record;
  * perhaps someday, certain kinds of network failures) to the Internet Archive
  * ARC file format.
  *
- * Assumption is that there is only one of these ARCWriterProcessors per
+ * Assumption is that there is only one of this ARCWriterProcessors per
  * Heritrix instance.
  *
  * @author Parker Thompson
  */
-public class ARCWriterProcessor extends Processor
-        implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
-    /**
-     * Logger.
-     */
-    private static final Logger logger =
-        Logger.getLogger(ARCWriterProcessor.class.getName());
-    
+public class ARCWriterProcessor
+    extends Processor implements CoreAttributeConstants, ARCConstants
+{
     /**
      * Key to use asking settings for compression value.
      */
@@ -92,11 +68,6 @@ public class ARCWriterProcessor extends Processor
      * Key to use asking settings for prefix value.
      */
     public static final String ATTR_PREFIX = "prefix";
-    
-    /**
-     * Key to use asking settings for suffix value.
-     */
-    public static final String ATTR_SUFFIX = "suffix";
 
     /**
      * Key to use asking settings for max size value.
@@ -136,11 +107,6 @@ public class ARCWriterProcessor extends Processor
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
-    
-    /**
-     * File suffix for arcs.
-     */
-    private String arcSuffix = null;
 
     /**
      * Use compression flag.
@@ -167,7 +133,13 @@ public class ARCWriterProcessor extends Processor
     /**
      * Reference to an ARCWriter.
      */
-    transient private ARCWriterPool pool = null;
+    private ARCWriterPool pool = null;
+
+    /**
+     * Has this processor been initialized.
+     */
+    private boolean initialized = false;
+    
 
     /**
      * @param name
@@ -180,17 +152,13 @@ public class ARCWriterProcessor extends Processor
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_PREFIX, "Prefix", this.arcPrefix));
-        e = addElementToDefinition(
-            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto arc files.\n" +
-                "If value is '${HOSTNAME}', will use hostname for suffix.",
-                "${HOSTNAME}.  If empty, no suffix will be added."));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
                 new Integer(this.arcMaxSize)));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new SimpleType(ATTR_PATH, "Where to store arc files", "arcs"));
+            new SimpleType(ATTR_PATH, "Where to store arc files", ""));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
             "Maximum active ARC writers in pool",
@@ -202,11 +170,26 @@ public class ARCWriterProcessor extends Processor
         e.setOverrideable(false);
     }
 
-    public synchronized void initialTasks() {
-        // Add this class to crawl state listeners
-        getSettingsHandler().getOrder().getController().
-            addCrawlStatusListener(this);
+    public void initialize() {
         
+        if (!this.initialized) {
+            _initialize();
+        }
+    }
+    
+    private synchronized void _initialize() {
+        
+        // Recheck inside now we're inside the synchronized block to be sure.
+        // I've seen the case where two threads have seen the flag set to false
+        // and both have then proceeded to call into this method thereby
+        // setting up two instances of ARCWriterPool.
+        if (this.initialized) {
+            return;
+        }
+        
+        Logger logger = getSettingsHandler().getOrder().getController()
+            .runtimeErrors;
+
         // ReadConfiguration populates settings used creating ARCWriter.
         try {
             readConfiguration();
@@ -217,131 +200,29 @@ public class ARCWriterProcessor extends Processor
         } catch (AttributeNotFoundException e) {
             logger.warning(e.getLocalizedMessage());
         }
-        
+
         try {
-            setupPool();
+            // Set up the pool of ARCWriters.
+            this.pool =
+                new ARCWriterPool(this.outputDir,
+                    this.arcPrefix,
+                    this.useCompression,
+                    this.poolMaximumActive,
+                    this.poolMaximumWait);
             
         } catch (IOException e) {
             logger.warning(e.getLocalizedMessage());
         }
+        this.initialized = true;
     }
 
-    private void setupPool() throws IOException {
-		// Set up the pool of ARCWriters.
-		this.pool =
-                new ARCWriterPool(this.outputDir,
-                    this.arcPrefix,
-                    this.arcSuffix,
-                    this.useCompression,
-                    this.arcMaxSize,
-                    getMetadata(),
-                    this.poolMaximumActive,
-                    this.poolMaximumWait);
-    }
-    
-    /**
-     * Return list of metadatas to add to first arc file metadata record.
-     *
-     * Get xml files from settingshandle.  Currently order file is the
-     * only xml file.  We're NOT adding seeds to meta data.
-     * 
-     * @return List of strings and/or files to add to arc file as metadata or
-     * null.
-     */
-    protected List getMetadata() {
-        List settingsFiles = getSettingsHandler().getListOfAllFiles();
-        if (settingsFiles ==  null || settingsFiles.size() <= 0) {
-            // Early return.
-            return null;
-        }
-        List metadata = null;
-        final String XML_TAIL = ".xml";
-        for (Iterator i = settingsFiles.iterator(); i.hasNext();) {
-            String str = (String)i.next();
-            if (str == null || str.length() <= 0) {
-                continue;
-            }
-            if (str.length() <= XML_TAIL.length() ||
-                !str.toLowerCase().endsWith(XML_TAIL)) {
-                continue;
-            }
-            File f = new File(str);
-            if (!f.exists() || !f.canRead()) {
-                logger.severe("File " + str + " is does not exist or is" +
-                " not readable.");
-                continue;
-            }
-            if (metadata == null) {
-                metadata = new ArrayList(settingsFiles.size());
-            }
-            metadata.add(getMetadataBody(f));
-        }
-        return metadata;
-    }
-    
-    /**
-     * Write the arc metadata body content.
-     * 
-     * Its based on the order xml file but into this base we'll add other info
-     * such as machine ip.
-     * 
-     * @param orderFile Order file.
-     * 
-     * @return String that holds the arc metaheader body.
-     * 
-     * @throws TransformerConfigurationException
-     * @throws FileNotFoundException
-     * @throws UnknownHostException
-     */
-    protected String getMetadataBody(File orderFile) {
-        String result = null;
-        TransformerFactory factory = TransformerFactory.newInstance();
-        Templates templates = null;
-        Transformer xformer = null;
-        try {
-            templates = factory.newTemplates(new StreamSource(
-                this.getClass().getResourceAsStream("/arcMetaheaderBody.xsl")));
-            xformer = templates.newTransformer();
-            // Below parameter names must match what is in the stylesheet.
-            xformer.setParameter("software", "Heritrix " +
-                Heritrix.getVersion() + " http://crawler.archive.org");
-            xformer.setParameter("ip",
-                InetAddress.getLocalHost().getHostAddress());
-            xformer.setParameter("hostname",
-                InetAddress.getLocalHost().getHostName());
-            StreamSource source = new StreamSource(
-                new FileInputStream(orderFile));
-            StringWriter writer = new StringWriter();
-            StreamResult target = new StreamResult(writer);
-            xformer.transform(source, target);
-            result= writer.toString();
-        } catch (TransformerConfigurationException e) {
-            logger.severe("Failed transform " + e);
-        } catch (FileNotFoundException e) {
-            logger.severe("Failed transform, file not found " + e);
-        } catch (UnknownHostException e) {
-            logger.severe("Failed transform, unknown host " + e);
-        } catch(TransformerException e) {
-            SourceLocator locator = e.getLocator();
-            int col = locator.getColumnNumber();
-            int line = locator.getLineNumber();
-            String publicId = locator.getPublicId();
-            String systemId = locator.getSystemId();
-            logger.severe("Transform error " + e + ", col " + col + ", line " +
-                line + ", publicId " + publicId + ", systemId " + systemId);
-        }
-        
-        return result;
-    }
-
-	protected void readConfiguration()
+    protected void readConfiguration()
         throws AttributeNotFoundException, MBeanException, ReflectionException {
 
         // set up output directory
         setUseCompression(
             ((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
         setArcPrefix((String) getAttribute(ATTR_PREFIX));
-        setArcSuffix((String) getAttribute(ATTR_SUFFIX));
         setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
         setOutputDir((String) getAttribute(ATTR_PATH));
         setPoolMaximumActive(
@@ -357,7 +238,9 @@ public class ARCWriterProcessor extends Processor
      *
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(CrawlURI curi) {
+    protected void innerProcess(CrawlURI curi)
+    {
+        initialize();
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
             return;
@@ -366,13 +249,19 @@ public class ARCWriterProcessor extends Processor
         // Find the write protocol and write this sucker
         String scheme = curi.getUURI().getScheme().toLowerCase();
 
-        try {
-            if (scheme.equals("dns")) {
+        try
+        {
+            if (scheme.equals("dns"))
+            {
                 writeDns(curi);
-            } else if (scheme.equals("http") || scheme.equals("https")) {
+            }
+            else if (scheme.equals("http") || scheme.equals("https"))
+            {
                 writeHttp(curi);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             curi.addLocalizedError(this.getName(), e, "WriteARCRecord");
         }
     }
@@ -471,10 +360,6 @@ public class ARCWriterProcessor extends Processor
     public void setArcPrefix(String buffer) {
         this.arcPrefix = buffer;
     }
-    
-    public void setArcSuffix(String suffix) {
-        this.arcSuffix = suffix;
-    }
 
     public void setUseCompression(boolean use) {
         this.useCompression = use;
@@ -530,44 +415,5 @@ public class ARCWriterProcessor extends Processor
     public void setPoolMaximumWait(int poolMaximumWait)
     {
         this.poolMaximumWait = poolMaximumWait;
-    }
-
-	public void crawlEnding(String sExitMessage) {
-		// sExitMessage is unused.
-		ARCWriter.resetSerialNo();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-	 */
-	public void crawlEnded(String sExitMessage) {
-        // sExitMessage is unused.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-	 */
-	public void crawlPausing(String statusMessage) {
-        // sExitMessage is unused.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-	 */
-	public void crawlPaused(String statusMessage) {
-        // sExitMessage is unused.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-	 */
-	public void crawlResuming(String statusMessage) {
-        // sExitMessage is unused.
-	}
-	
-    // custom serialization
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        setupPool();
     }
 }

@@ -25,17 +25,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.logging.Level;
 
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.StatisticsTracking;
-import org.archive.crawler.settings.XMLSettingsHandler;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and
@@ -59,15 +55,10 @@ public class CrawlJob
     /*
      * Possible values for Priority
      */
-    /** lowest */
     public static final int PRIORITY_MINIMAL = 0;
-    /** low */
     public static final int PRIORITY_LOW = 1;
-    /** average */
     public static final int PRIORITY_AVERAGE = 2;
-    /** high */
     public static final int PRIORITY_HIGH = 3;
-    /** highest */
     public static final int PRIORITY_CRITICAL = 4;
 
     /*
@@ -124,13 +115,7 @@ public class CrawlJob
     private CrawlJobErrorHandler errorHandler = null;
 
     protected XMLSettingsHandler settingsHandler;
-    
-    // all discovered on-disk checkpoints for this job
-    private Collection checkpoints = null;
 
-    // Checkpoint to resume
-    private Checkpoint resumeFrom = null;
-    
     /**
      * A constructor for jobs. 
      * 
@@ -202,8 +187,6 @@ public class CrawlJob
      *            null means none is set
      * @throws InvalidJobFileException
      *            if the specified file does not refer to a valid job file.
-     * @throws IOException
-     *            if io operations fail
      */
     protected CrawlJob(File jobFile, CrawlJobErrorHandler errorHandler) 
             throws InvalidJobFileException, IOException {
@@ -301,7 +284,6 @@ public class CrawlJob
             // Empty error message should be null
             errorMessage = null;
         }
-        jobDir = jobFile.getParentFile();
         // TODO: Load stattrack if needed.
     }
 
@@ -359,16 +341,6 @@ public class CrawlJob
      */
     public String getJobName(){
         return name;
-    }
-    
-    /**
-     * Return the combination of given name and UID most commonly
-     * used in administrative interface. 
-     * 
-     * @return Job's name with UID notation
-     */
-    public String getDisplayName() {
-        return getJobName()+" ["+getUID()+"]";
     }
 
     /**
@@ -442,25 +414,14 @@ public class CrawlJob
         return status;
     }
 
-    /**
-     * Set the stat tracking helper object.
-     * 
-     * @param tracker
-     */
     public void setStatisticsTracking(StatisticsTracking tracker){
         this.stats = tracker;
     }
 
-    /**
-     * @return the stat tracking helper object
-     */
     public StatisticsTracking getStatisticsTracking(){
         return stats;
     }
 
-    /**
-     * @param settingsHandler
-     */
     public void setSettingsHandler(XMLSettingsHandler settingsHandler){
         this.settingsHandler = settingsHandler;
         // TODO: Is this method needed? Probably not.
@@ -580,66 +541,5 @@ public class CrawlJob
      */
     public CrawlJobErrorHandler getErrorHandler() {
         return errorHandler;
-    }
-    
-    /**
-     * Read all the checkpoints found in the job's checkpoints
-     * directory into Checkpoint instances
-     */
-    public void scanCheckpoints() {
-        File checkpointsDirectory = settingsHandler.getOrder().getCheckpointsDirectory();
-        File[] perCheckpointDirs = checkpointsDirectory.listFiles();
-        checkpoints = new ArrayList();
-        for(int i = 0; i < perCheckpointDirs.length; i++) {
-            Checkpoint cp = new Checkpoint(perCheckpointDirs[i]);
-            checkpoints.add(cp);
-        }
-    }
-        
-        
-    /**
-     * @return collection of Checkpoint instances available
-     * on disk for this job
-     */
-    public Collection getCheckpoints() {
-        return checkpoints;
-    }
-
-    /**
-     * @param name
-     * @return checkpoint matching the given name
-     */
-    public Checkpoint getCheckpoint(String name) {
-        if(checkpoints==null) {
-            scanCheckpoints();
-        }
-        Iterator iter = checkpoints.iterator();
-        while(iter.hasNext()) {
-            Checkpoint candidate = (Checkpoint) iter.next();
-            if (candidate.getName().equals(name)) {
-                return candidate;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @return the checkpoint to resume from, or null
-     */
-    public Checkpoint getResumeFromCheckpoint() {
-        return resumeFrom;
-    }
-    
-    /**
-     * Update the job's state to reflect that it should
-     * be resumed from the given checkpoint.
-     * 
-     * @param cp
-     */
-    public void configureForResume(Checkpoint cp) {
-        // TODO clear old data? reset any values?
-        
-        // mark as resume, remember checkpoint
-        resumeFrom  = cp;
     }
 }

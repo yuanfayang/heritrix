@@ -23,16 +23,15 @@
  */
 package org.archive.crawler.frontier;
 
-import java.io.Serializable;
 import java.util.Comparator;
 
 /**
  *
  * @author Gordon Mohr
  */
-public class SchedulingComparator implements Comparator, Serializable {
+public class SchedulingComparator implements Comparator {
 
-    /**
+    /* (non-Javadoc)
      * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
      */
     public int compare(Object o1, Object o2) {
