@@ -129,7 +129,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        return "CandidateURI("+getUURI()+")";
+        return "CandidateURI("+getURIString()+")";
     }
 
 

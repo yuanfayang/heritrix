@@ -300,7 +300,8 @@ public class ToeThread extends Thread
         }
         rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
         rep.newline();
-        rep.append("where:"+where);
+        rep.padTo(8);
+        rep.append("Where: "+where);
         rep.newline();
 
         return rep.toString();

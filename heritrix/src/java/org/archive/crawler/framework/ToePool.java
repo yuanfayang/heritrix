@@ -103,26 +103,33 @@ public class ToePool extends CrawlStatusAdapter {
     }
 
     /**
-     * The crawl controller uses this method to notify the pool that the crawl has ended.
+     * The crawl controller uses this method to notify the pool that the crawl 
+     * has ended.
      * All toe threads will be ordered to stop after current.
      * All references in this object will be set to null to facilitate GC.
-     * Once the CrawlController has called this method, this object should be considered
+     * Once the CrawlController has called this method, this object should be 
+     * considered
      * as having been destroyed.
      * @param statusMessage
      */
     public void crawlEnding(String statusMessage) {
-        while(toes.size()>0)
+        Iterator it = toes.iterator();
+        while(it.hasNext())
         {
-            ToeThread t = (ToeThread)toes.get(0);
+            ToeThread t = (ToeThread)it.next();
             t.stopAfterCurrent();
-            toes.remove(0);
         }
-        controller = null;
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
     public void crawlEnded(String statusMessage)
     {
+        // Destory referances to facilitate GC.
+        toes.removeAll(toes); //Empty it
         toes = null;
+        controller = null;
     }
 
     /**
