@@ -154,10 +154,15 @@ public class Processor extends CrawlerModule {
 		//if ((n=xNode.getAttributes().getNamedItem("next"))!=null) {
 		//	defaultNext = (Processor)c.getProcessors().get(n.getNodeValue());
 		//}
-		//if ((n=xNode.getAttributes().getNamedItem("postprocessor"))!=null) {
-		//	// I am the distinguished postprocessor earlier stage can skip to
-		//	controller.setPostprocessor(this);
-		//}
+		try {
+            if (((Boolean) getAttribute(null, ATTR_POSTPROCESSOR)).booleanValue()) {
+            	// I am the distinguished postprocessor earlier stage can skip to
+            	controller.setPostprocessor(this);
+            }
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 		//instantiateAllInto(XP_FILTERS,filters);
 		//Iterator iter = filters.iterator();
 		//while(iter.hasNext()) {
