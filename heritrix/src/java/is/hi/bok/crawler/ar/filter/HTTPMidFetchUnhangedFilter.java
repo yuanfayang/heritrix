@@ -113,9 +113,10 @@ public class HTTPMidFetchUnhangedFilter extends Filter
         HttpMethod method = (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
 
         // Compare datestamps (last-modified)
-        String newDatestamp = method.getResponseHeader("last-modified")
-                .getValue();
-        
+        String newDatestamp = null;
+        if(method.getResponseHeader("last-modified") != null){
+            newDatestamp = method.getResponseHeader("last-modified").getValue();
+        }
         
         if(newDatestamp != null && newDatestamp.length() > 0){
             datestamp = HEADER_PREDICTS_CHANGED; // Not missing, assume change
@@ -130,7 +131,11 @@ public class HTTPMidFetchUnhangedFilter extends Filter
         }
         
         // Compare ETags
-        String newETag = method.getResponseHeader("etag").getValue();
+        String newETag = null;
+        if(method.getResponseHeader("last-etag") != null){
+            newETag = method.getResponseHeader("last-etag").getValue();
+        }
+        
         if(newETag != null && newETag.length() > 0){
             etag = HEADER_PREDICTS_CHANGED; // Not missing, assume change
             if(curi.containsKey(A_LAST_ETAG)){
