@@ -61,12 +61,12 @@ public class GzipHeader {
     /**
      * GZIP header XFL byte.
      */
-	private int xfl;
+    private int xfl;
     
     /**
      * GZIP header OS byte.
      */
-	private int os;
+    private int os;
     
     /**
      * Extra header field content.
@@ -79,14 +79,14 @@ public class GzipHeader {
     private int mtime;
     
     
-	/**
-	 * Shutdown constructor.
+    /**
+     * Shutdown constructor.
      * 
      * Must pass an input stream.
-	 */
-	public GzipHeader() {
-		super();
-	}
+     */
+    public GzipHeader() {
+        super();
+    }
     
     /**
      * Constructor.
@@ -195,7 +195,7 @@ public class GzipHeader {
      * @throws IOException
      */
     public boolean testGzipMagic(InputStream in, CRC32 crc)
-    		throws IOException {
+            throws IOException {
         return readShort(in, crc) == GZIPInputStream.GZIP_MAGIC;
     }
     
@@ -231,6 +231,21 @@ public class GzipHeader {
     private int readShort(InputStream in, CRC32 crc) throws IOException {
         int b = readByte(in, crc);
         return ((readByte(in, crc) << 8) & 0x00ff00) | b;
+    }
+    
+    /**
+     * Read a byte. 
+     * 
+     * We do not expect to get a -1 reading.  If we do, we throw exception.
+     * Update the crc as we go.
+     * 
+     * @param in InputStream to read.
+     * @return Byte read.
+     * 
+     * @throws IOException
+     */
+    protected int readByte(InputStream in) throws IOException {
+            return readByte(in, null);
     }
     
     /**
@@ -280,41 +295,41 @@ public class GzipHeader {
         return length;
     }
     
-	/**
-	 * @return Returns the fextra.
-	 */
-	public byte[] getFextra() {
-		return this.fextra;
-	}
+    /**
+     * @return Returns the fextra.
+     */
+    public byte[] getFextra() {
+        return this.fextra;
+    }
     
-	/**
-	 * @return Returns the flg.
-	 */
-	public int getFlg() {
-		return this.flg;
-	}
+    /**
+     * @return Returns the flg.
+     */
+    public int getFlg() {
+        return this.flg;
+    }
     
-	/**
-	 * @return Returns the os.
-	 */
-	public int getOs() {
-		return this.os;
-	}
+    /**
+     * @return Returns the os.
+     */
+    public int getOs() {
+        return this.os;
+    }
     
-	/**
-	 * @return Returns the xfl.
-	 */
-	public int getXfl() {
-		return this.xfl;
-	}
+    /**
+     * @return Returns the xfl.
+     */
+    public int getXfl() {
+        return this.xfl;
+    }
     
-	/**
-	 * @return Returns the mtime.
-	 */
-	public int getMtime() {
-		return this.mtime;
-	}
-	
+    /**
+     * @return Returns the mtime.
+     */
+    public int getMtime() {
+        return this.mtime;
+    }
+    
     /**
      * @return Returns the length.
      */
