@@ -204,11 +204,6 @@ public class UURIFactory extends URI {
     final static Pattern MULTIPLE_SLASHES = Pattern.compile("//+");
     
     /**
-     * Consider URIs too long for IE as illegal.
-     */
-    private final static int MAX_URL_LENGTH = 2083;
-    
-    /**
      * System property key for list of supported schemes.
      */
     private static final String SCHEMES_KEY = ".schemes";
@@ -327,9 +322,9 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     protected UURI validityCheck(UURI uuri) throws URIException {
-        if (uuri.getRawURI().length > MAX_URL_LENGTH) {
+        if (uuri.getRawURI().length > UURI.MAX_URL_LENGTH) {
            throw new URIException("Created (escaped) uuri > " +
-              MAX_URL_LENGTH);
+              UURI.MAX_URL_LENGTH);
         }
         return uuri;
     }
@@ -365,10 +360,10 @@ public class UURIFactory extends URI {
             throw new URIException("URI length is zero (and not relative).");
         }
         
-        if (uri.length() > MAX_URL_LENGTH) {
+        if (uri.length() > UURI.MAX_URL_LENGTH) {
             // TODO: Would  make sense to test against for excessive length
             // after all the fixup and normalization has been done.
-            throw new URIException("URI length > " + MAX_URL_LENGTH + ": " +
+            throw new URIException("URI length > " + UURI.MAX_URL_LENGTH + ": " +
                 uri);
         }
         
