@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.extractor;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.crawler.framework.Processor;
+import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -49,7 +51,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
     protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
-    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
 
     /**
      * Compiled relevant tag extractor.
@@ -326,7 +329,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             return;
         }
 
-        if(ignoreUnexpectedHTML) {
+        if(this.ignoreUnexpectedHTML) {
             if(!expectedHTML(curi)) {
                 // HTML was not expected (eg a GIF was expected) so ignore
                 // (as if a soft 404)
@@ -341,13 +344,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             return;
         }
 
-        numberOfCURIsHandled++;
+        this.numberOfCURIsHandled++;
 
-        CharSequence cs =
-           curi.getHttpRecorder().getRecordedInput().getCharSequence();
-
-        if (cs==null) {
-            // TODO: note problem
+        ReplayCharSequence cs = curi.getHttpRecorder().getReplayCharSequence();
+        if (cs == null) {
+            logger.warning("Failed getting ReplayCharSequence: " +
+                curi.toString());
             return;
         }
 
@@ -389,7 +391,18 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         TextUtils.freeMatcher(tags);
 
-        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
+        // Set flag to indicate that link extraction is completed.
+        curi.linkExtractorFinished();
+        
+        // Done w/ the ReplayCharSequence.  Close it.
+        if (cs != null) {
+            try {
+                cs.close();
+            } catch (IOException ioe) {
+                logger.warning(DevUtils.format(
+                    "Failed close of ReplayCharSequence.", ioe));
+            }
+        }
     }
 
 

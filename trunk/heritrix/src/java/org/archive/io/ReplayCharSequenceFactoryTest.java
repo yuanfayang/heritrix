@@ -1,6 +1,6 @@
-/* ReplayCharSequenceTest
+/* ReplayCharSequenceFactoryTest
  * 
- * Created on Mar 2, 2004
+ * Created on Mar 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
  * 
@@ -29,75 +29,113 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Logger;
 
-import junit.framework.TestResult;
-import junit.framework.TestSuite;
-
 import org.archive.util.TmpDirTestCase;
 
 /**
- * Test ReplayCharSequence class.
- * 
- * TODO: Add tests that check we're using the content body offset passed in.
- * Doesn't look like we're using it at the moment.  Also, add test where 
- * the content offset is beyond the buffer and someways into the file.
+ * Test the ReplayCharSequence factory.
  * 
  * @author stack
  * @version $Revision$, $Date$
  */
-public class ReplayCharSequenceTest extends TmpDirTestCase {   
-    
+public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
+{
     /**
      * Logger.
      */
     private static Logger logger =
-        Logger.getLogger("org.archive.io.ReplayCharSequenceTest");
+        Logger.getLogger("org.archive.io.ReplayCharSequenceFactoryTest");
     
 
-    private static final int SEQUENCE_LENGTH = 256;
+    private static final int SEQUENCE_LENGTH = 127;
     private static final int MULTIPLIER = 3;
     private static final int BUFFER_SIZE = SEQUENCE_LENGTH * MULTIPLIER;
-    private static final int INCREMENT = 16;
-
-        
+    private static final int INCREMENT = 1;
+    
     /**
-     * Test constructor.
-     * 
-     * Ensure we charAt gets expected character.  Assumes default encodings.
+     * Name of the file with regular content.
      */
-    public void testReplayCharSequencebyteArraylongString()
-            throws IOException {
-        byte [] buffer = fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
-        File backingFile = new File(getTmpDir(),
-            "testReplayCharSequencebyteArraylongString.bkng");
-        writeFile(backingFile, buffer, MULTIPLIER);
+    private static final String REGULAR_CONTENT_FILE_NAME =
+        "ReplayCharSequenceFactoryTest.regular.content.txt";
+    
+    /**
+     * Regular content file.
+     */
+    private File regularFile = null;
+    
+    /**
+     * Buffer of regular content.
+     */
+    private byte [] regularBuffer = null;
+    
+    /**
+     * Instance of the replay char sequence factory.
+     */
+    private ReplayCharSequenceFactory factory = null;
+    
+    
+    /*
+     * @see TestCase#setUp()
+     */
+    protected void setUp() throws Exception
+    {
+        super.setUp();
+        // Write a single-byte file of regular content.
+        this.regularBuffer =
+            fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
+        this.regularFile = new File(getTmpDir(), REGULAR_CONTENT_FILE_NAME);
+        writeFile(this.regularFile, this.regularBuffer, MULTIPLIER);
+        this.factory = ReplayCharSequenceFactory.getInstance();
+    }
+
+    public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
         
-        ReplayCharSequence rcs = new ReplayCharSequence(buffer,
-            buffer.length + (buffer.length * MULTIPLIER),
-                backingFile.getAbsolutePath());
-        
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+                this.regularBuffer,
+                this.regularBuffer.length +
+                    (this.regularBuffer.length * MULTIPLIER),
+                0, this.regularFile.getAbsolutePath(), null);
+
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
         }
     }
     
-    /**
-     * Test constructor.
-     * 
-     * Ensure we charAt gets expected character.  Assumes default encodings.
-     * Here we're specifying an offset into the buffer of 256.  Should be ok
-     * for our comparison of characters since these get a modulus of 256.
-     */
-    public void testReplayCharSequencebyteArraylonglongString()
-            throws IOException {
-        byte [] buffer = fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
-        File backingFile = new File(getTmpDir(),
-            "testReplayCharSequencebyteArraylongString.bkng");
-        writeFile(backingFile, buffer, MULTIPLIER);
+    public void testGetReplayCharSequenceByteOffset() throws IOException {
         
-        ReplayCharSequence rcs = new ReplayCharSequence(buffer,
-            buffer.length + (buffer.length * MULTIPLIER), SEQUENCE_LENGTH,
-                backingFile.getAbsolutePath());
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+                this.regularBuffer,
+                this.regularBuffer.length +
+                    (this.regularBuffer.length * MULTIPLIER),
+                SEQUENCE_LENGTH, this.regularFile.getAbsolutePath(), null);
+
+        for (int i = 0; i < MULTIPLIER; i++) {
+            accessingCharacters(rcs);
+        }
+    }
+
+    public void testGetReplayCharSequenceMultiByteZeroOffset()
+        throws IOException {
         
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+                this.regularBuffer,
+                this.regularBuffer.length +
+                    (this.regularBuffer.length * MULTIPLIER),
+                0, this.regularFile.getAbsolutePath(), "UTF-8");
+
+        for (int i = 0; i < MULTIPLIER; i++) {
+            accessingCharacters(rcs);
+        }
+    }
+    
+    public void testGetReplayCharSequenceMultiByteOffset() throws IOException {
+        
+        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+                this.regularBuffer,
+                this.regularBuffer.length +
+                    (this.regularBuffer.length * MULTIPLIER),
+                SEQUENCE_LENGTH, this.regularFile.getAbsolutePath(),
+                "UTF-8");
+
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
         }
@@ -174,13 +212,8 @@ public class ReplayCharSequenceTest extends TmpDirTestCase {
         return buffer;
     }
     
-    public static void main (String [] args) throws IOException {
-        
-        TestSuite suite = new TestSuite("Profiling");
-        suite.addTestSuite(ReplayCharSequenceTest.class);
-        TestResult result = junit.textui.TestRunner.run(suite);
-        logger.info(result.wasSuccessful()? "PASSED": "FAILED");
-        // Make the program hold here so I can inspect w/ the JMP profiler.
-        System.in.read();
+    public void testCheckParameters()
+    {
+        // TODO.
     }
 }

@@ -26,12 +26,14 @@
 
 package org.archive.crawler.extractor;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -92,18 +94,26 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             && (!curi.getURIString().toLowerCase().endsWith(".css"))) {
             return;
         }
-        numberOfCURIsHandled++;
+        this.numberOfCURIsHandled++;
 
-        CharSequence cs =
-            curi.getHttpRecorder().getRecordedInput().getCharSequence();
-
+        ReplayCharSequence cs = curi.getHttpRecorder().getReplayCharSequence();
         if (cs == null) {
-            // TODO: note problem
+            logger.warning("Failed getting ReplayCharSequence: " +
+                curi.toString());
             return;
         }
-        numberOfLinksExtracted += processStyleCode(curi, cs);
-        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-
+        this.numberOfLinksExtracted += processStyleCode(curi, cs);
+        // Set flag to indicate that link extraction is completed.
+        curi.linkExtractorFinished();
+        // Done w/ the ReplayCharSequence.  Close it.
+        if (cs != null) {
+            try {
+                cs.close();
+            } catch (IOException ioe) {
+                logger.warning(DevUtils.format(
+                    "Failed close of ReplayCharSequence.", ioe));
+            }
+        }
     }
 
     public static long processStyleCode (CrawlURI curi, CharSequence cs) {
@@ -124,9 +134,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "ExtractorCSS StackOverflowError");
         }
-
         return foundLinks;
-        
     }
     public String report() {
         StringBuffer ret = new StringBuffer();

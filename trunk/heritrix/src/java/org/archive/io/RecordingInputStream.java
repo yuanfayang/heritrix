@@ -237,8 +237,18 @@ public class RecordingInputStream
         return this.recordingOutputStream.getDigestValue();
     }
 
-    public CharSequence getCharSequence() {
-        return this.recordingOutputStream.getReplayCharSequence();
+    public ReplayCharSequence getReplayCharSequence() {
+        return getReplayCharSequence(null);
+    }
+    
+    /**
+     * @param characterEncoding Encoding of recorded stream.
+     * @return A ReplayCharSequence  Will return null if an IOException.  Call
+     * close on returned RCS when done.
+     */
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding) {
+        return this.recordingOutputStream.
+            getReplayCharSequence(characterEncoding);
     }
 
     public long getResponseContentLength() {

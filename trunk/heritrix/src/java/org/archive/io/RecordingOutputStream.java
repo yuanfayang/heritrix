@@ -367,11 +367,22 @@ public class RecordingOutputStream extends OutputStream {
         return this.digest.digest();
     }
 
-    public CharSequence getReplayCharSequence() {
+    public ReplayCharSequence getReplayCharSequence() {
+        return getReplayCharSequence(null);
+    }
+    
+    /**
+     * @param characterEncoding Encoding of recorded stream.
+     * @return A ReplayCharSequence  Will return null if an IOException.  Call
+     * close on returned RCS when done.
+     */
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding) {
 
         try {
-            return new ReplayCharSequence(this.buffer, this.size,
-                this.contentBeginMark, this.backingFilename);
+            return ReplayCharSequenceFactory.getInstance().
+                getReplayCharSequence(this.buffer, this.size,
+                    this.contentBeginMark, this.backingFilename,
+                    characterEncoding);
         } catch (IOException e) {
             // TODO convert to runtime exception?
             e.printStackTrace();
