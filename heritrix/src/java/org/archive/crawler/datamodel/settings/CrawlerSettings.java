@@ -142,4 +142,8 @@ public class CrawlerSettings {
 	public CrawlerSettings getParent() {
 		return parent;
 	}
+    
+    public AbstractSettingsHandler getSettingsHandler() {
+        return handler;
+    }
 }
