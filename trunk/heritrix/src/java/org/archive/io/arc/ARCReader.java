@@ -56,17 +56,6 @@ import java.util.zip.GZIPInputStream;
  * reset of an extant instance -- it seems to read the header in the
  * constructor only).
  *
- * <p>ASSUMPTIONS:
- * <ul>
- * <li>That the line delimiter character is '&lt;nl&gt; (0x0A) in ARC files
- * only (The alexa c-code does this so this should be safe assumption).</li>
- * </ul>
- * <p>LIMITATIONS:
- * <ul>
- * <li>Currently you can only read through the ARC file sequentially.  There
- * is no mechanism for backing up the stream.</li>
- * </ul>
- *
   * <p>I wanted to use java.nio memory-mapped files rather than old-school
  * java.io because:
  *
@@ -161,12 +150,20 @@ public class ARCReader
      * Keep it around so we can close it when done.
      */
     private InputStream in = null;
-
+    
+    /**
+     * Position stream.
+     * 
+     * Ask this stream for stream postion.
+     */
+    private PositionInputStream pin = null;
+    
+    
     /**
      * The ARCRecord currently being read.
-     *
-     * You can only go serially through the file.  This is pointer to current
-     * ARCRecord.
+     * 
+     * Keep this ongoing reference so we'll close the record
+     * even if the caller doesn't.
      */
     private ARCRecord currentRecord = null;
 
@@ -180,16 +177,6 @@ public class ARCReader
      * the 3rd line.
      */
     private ArrayList headerFieldNameKeys = null;
-
-    /**
-     * List of all read metadatas.
-     *
-     * As we read records, we add a reference to the read metadata.
-     *
-     * Upon instantiation, will have at least the metadata for the ARC file
-     * itself.
-     */
-    private List metaDatas = new ArrayList();
 
 
     public ARCReader(String arcFile)
@@ -234,18 +221,13 @@ public class ARCReader
         // Apart from any buffering benefits, there is a dependency on being
         // able to mark and reset the stream if the ARC is uncompressed.
         // See the ARCRecord.skip() method.
-        this.in = new BufferedInputStream(new FileInputStream(this.arcFile));
+        this.pin = new PositionInputStream(
+        		new FileInputStream(this.arcFile));
+        this.in = this.pin;
         if (this.compressed)
         {
-            this.in = new ARCReaderGZIPInputStream(
-                new GZIPMemberPushbackInputStream(this.in));
+            this.in = new GZIPMemberPushbackInputStream(this.in);
         }
-
-        // Read in the first ARC record.  Its the meta info for the ARC file.
-        // Immediately close it since it doesn't have any content but the
-        // meta info itself.  Closing cues us up at the next ARC record in
-        // the file.
-        createARCRecord().close();
     }
 
     /**
@@ -293,6 +275,7 @@ public class ARCReader
                 ARC_GZIP_EXTRA_FIELD.length;
             byte [] b = new byte[readLength];
             int read = fis.read(b, 0, readLength);
+            fis.close();
             if (read == readLength)
             {
                 if (b[0] == GZIP_HEADER_BEGIN[0]
@@ -339,6 +322,7 @@ public class ARCReader
             FileInputStream fis = new FileInputStream(arcFile);
             byte [] b = new byte[ARC_MAGIC_NUMBER.length()];
             int read = fis.read(b, 0, ARC_MAGIC_NUMBER.length());
+            fis.close();
             if (read == ARC_MAGIC_NUMBER.length())
             {
                 StringBuffer beginStr
@@ -361,6 +345,10 @@ public class ARCReader
     public void close()
         throws IOException
     {
+    		if (this.currentRecord != null) {
+    			this.currentRecord.close();
+    			this.currentRecord = null;
+    		}
         if (this.in != null)
         {
             this.in.close();
@@ -382,20 +370,7 @@ public class ARCReader
     public boolean hasNext()
         throws IOException
     {
-        boolean hasNext = this.in.available() > 0;
-        if (!hasNext && isCompressed())
-        {
-            // Only come in here if we've emptied out the stream.
-            // Ask the stream that underlays the GZIPInputStream if there
-            // are more GZIP members to be read.
-            ARCReaderGZIPInputStream agis
-                = (ARCReaderGZIPInputStream)this.in;
-            GZIPMemberPushbackInputStream gmpis
-                = (GZIPMemberPushbackInputStream)agis.getIn();
-            hasNext = gmpis.hasNext();
-        }
-
-        return hasNext;
+    		return this.in.available() > 0;
     }
 
     /**
@@ -419,22 +394,6 @@ public class ARCReader
             this.currentRecord.close();
         }
 
-        if (isCompressed())
-        {
-            ARCReaderGZIPInputStream agis = (ARCReaderGZIPInputStream)this.in;
-            GZIPMemberPushbackInputStream gmpis =
-                (GZIPMemberPushbackInputStream)agis.getIn();
-            // Move underlying GZIPMemberInputStream on to the next GZIP member.
-            gmpis.next();
-            // Create new instance of ARCReaderGZIPInputStream.  Would be better
-            // if we could just reset the old instance but I had little luck
-            // trying to make a resettable instance of GZIPInputStream.  Doing
-            // a new instance is (probably) more costly but cleaner.
-            this.in = new ARCReaderGZIPInputStream(gmpis);
-            // Make it so no bones about GC'ing old GZIPInputStream instance.
-            agis = null;
-        }
-
         return createARCRecord();
     }
 
@@ -446,11 +405,29 @@ public class ARCReader
     private ARCRecord createARCRecord()
         throws IOException
     {
-        ArrayList values = getTokenizedHeaderLine();
-        boolean contentRead = false;
-        if (this.currentRecord == null)
+    		int offset = this.pin.getPosition();
+    		InputStream stream = this.in;
+        if (isCompressed())
         {
-            // If currentRecord is null, then no records have been read yet
+            // Move underlying GZIPMemberInputStream on to the next GZIP member
+        		// and start decompression (Calling GZIPInputStream to start the
+        		// compression reads in the first ten gzip header bytes so position
+        		// is 10 bytes into the stream.
+            ((GZIPMemberPushbackInputStream)this.in).next();
+            stream = new GZIPInputStream(stream);
+            // Record offset is actually current postion minus the gzip header
+            // length.
+            if (offset > 0) {
+            		offset -= GZIPMemberPushbackInputStream.
+					DEFAULT_GZIP_HEADER_LENGTH;
+            }
+        }
+        ArrayList values = getTokenizedHeaderLine(stream);
+        boolean contentRead = false;
+        
+        if (offset == 0)
+        {
+            // If offset is zero, then no records have been read yet
             // and we're reading our first one, the record of ARC file meta
             // info.  We've just read the first line.  There are
             // two more.   The second line has misc. info.  We're only
@@ -463,21 +440,19 @@ public class ARCReader
             // 1 0 InternetArchive
             // URL IP-address Archive-date Content-type Archive-length
             //
-            this.version = ((String)getTokenizedHeaderLine().get(0));
-            this.headerFieldNameKeys = computeHeaderFieldNameKeys();
+            this.version = ((String)getTokenizedHeaderLine(stream).get(0));
+            this.headerFieldNameKeys = computeHeaderFieldNameKeys(stream);
 
             // There is no content in the ARC file meta record or, rather,
             // there is but its the lines 2 and 3 that we just read above
-            // so set contentRead to true so ARCRecord content position
-            // pointer doesn't get out of whack.
+            // and then a couple of carriage returns.  So things don't get
+            // out of whack, set content read to true.
             contentRead = true;
         }
 
-        this.currentRecord = new ARCRecord(this.in,
+        this.currentRecord = new ARCRecord(stream, offset,
             computeMetaData(this.headerFieldNameKeys, values, this.version),
-            contentRead);
-        // Add reference to metadata into a list of metadatas.
-        this.metaDatas.add(this.currentRecord.getMetaData());
+			contentRead);
         return this.currentRecord;
     }
 
@@ -487,12 +462,13 @@ public class ARCReader
      * We keep reading till we find a LINE_SEPARATOR or we reach the end
      * of file w/o finding a LINE_SEPARATOR or the line length is crazy.
      *
+     * @param stream InputStream to read from.
      * @return List of string tokens.
      *
      * @exception IOException If problem reading stream or no line separator
      * found or EOF before EOL or we didn't get minimum header fields.
      */
-    private ArrayList getTokenizedHeaderLine()
+    private ArrayList getTokenizedHeaderLine(InputStream stream)
         throws IOException
     {
         ArrayList list = new ArrayList(20);
@@ -507,7 +483,7 @@ public class ARCReader
                 " -- or passed buffer doesn't contain a line.");
             }
 
-            c = this.in.read();
+            c = stream.read();
             if (c == -1)
             {
                 throw new IOException("Hit EOF before header EOL.");
@@ -552,14 +528,15 @@ public class ARCReader
      * Assumption is that we're cue'd up to read the 3rd line of the ARC file
      * record when this method is called.
      *
+     * @param is Stream to use reading.
      * @return Lowercased field names parsed from 3rd line of the ARC file.
      *
      * @exception IOException If we fail reading ARC file meta line no. 3.
      */
-    private ArrayList computeHeaderFieldNameKeys()
+    private ArrayList computeHeaderFieldNameKeys(InputStream stream)
         throws IOException
     {
-        ArrayList values = getTokenizedHeaderLine();
+        ArrayList values = getTokenizedHeaderLine(stream);
         // Lowercase the field names found.
         for (int i = 0; i < values.size(); i++)
         {
@@ -607,13 +584,18 @@ public class ARCReader
      *
      * This method iterates over the file throwing exception if it fails
      * to successfully parse.
+     * 
+     * @return List of all read metadatas. As we validate records, we add
+     * a reference to the read metadata.
+     * 
+     * <p>Assumes the stream is at the start of the file.
      *
      * @throws IOException
      */
-    public void validate()
+    public List validate()
         throws IOException
     {
-        validate(-1);
+        return validate(-1);
     }
 
     /**
@@ -621,15 +603,22 @@ public class ARCReader
      *
      * This method iterates over the file throwing exception if it fails
      * to successfully parse.
+     * 
+     * <p>Assumes the stream is at the start of the file.
      *
      * @param noRecords Number of records expected.  Pass -1 if number is
      * unknown.
+     * 
+     * @return List of all read metadatas. As we validate records, we add
+     * a reference to the read metadata.
      *
      * @throws IOException
      */
-    public void validate(int noRecords)
+    public List validate(int noRecords)
         throws IOException
     {
+    		List metaDatas = new ArrayList();
+		 
         int count = 0;
         for(; hasNext(); count++)
         {
@@ -641,6 +630,9 @@ public class ARCReader
             }
 
             r.close();
+
+            // Add reference to metadata into a list of metadatas.
+            metaDatas.add(r.getMetaData());
         }
 
         if (noRecords != -1)
@@ -652,10 +644,13 @@ public class ARCReader
                     Integer.toString(noRecords));
             }
         }
+        
+        return metaDatas;
     }
 
     /**
      * @return True if file can be successfully parsed.
+     * Assumes the stream is at the start of the file.
      */
     public boolean isValid()
     {
@@ -691,42 +686,6 @@ public class ARCReader
     }
 
     /**
-     * Returns list of all metadatas read so far.
-     *
-     * On instantiation, will have the ARC files metadata only.  As file is
-     * read, we add the metadata of ARCRecords found to this list.
-     *
-     * @return Returns the metaDatas.
-     */
-    public List getMetaDatas()
-    {
-        return this.metaDatas;
-    }
-
-    /**
-     * Override that gives access to underlying input stream.
-     *
-     * @author stack
-     */
-    public class ARCReaderGZIPInputStream
-        extends GZIPInputStream
-    {
-        public ARCReaderGZIPInputStream(InputStream in)
-            throws IOException
-        {
-            super(in);
-        }
-
-        /**
-         * @return The  underlying compressed stream.
-         */
-        private InputStream getIn()
-        {
-            return this.in;
-        }
-    }
-
-    /**
      * Use this main to pass the ARCReader files to test its ability at
      * parse/reading.
      *
@@ -743,5 +702,21 @@ public class ARCReader
             r = new ARCReader(args[i]);
             r.validate();
         }
+    }
+
+    /**
+     * Wrapper for BufferedInputStream that exposes the buffer position.
+     * 
+     * Needed so can get offsets.
+     */
+    private class PositionInputStream extends BufferedInputStream {
+
+		public PositionInputStream(InputStream in) {
+			super(in);
+		}
+		
+		public int getPosition() {
+			return this.pos;
+		}
     }
 }

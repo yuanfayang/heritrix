@@ -27,6 +27,7 @@ package org.archive.io.arc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
+import java.util.NoSuchElementException;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 
@@ -38,7 +39,7 @@ import java.util.zip.GZIPInputStream;
  * made up of multiple GZIP members.  This stream is for spoon feeding
  * GZIPInputStream GZIP members.  It returns -1 on reads done at a GZIP member
  * boundary.  Use {@link #next()} to move reading on to the next GZIP in the
- * file.   {@link #next()} returns -1 if we're at EOF.
+ * file.
  *
  * <p>We subclass PushbackInputStream so we can unread bytes as soon as we
  * notice we've stepped into the next GZIP member.  BufferedInputStream won't
@@ -60,10 +61,10 @@ public class GZIPMemberPushbackInputStream extends PushbackInputStream
      *
      * See RFC1952 for explaination of value of 10.
      */
-    private static final int DEFAULT_GZIP_HEADER_LENGTH = 10;
+    public static final int DEFAULT_GZIP_HEADER_LENGTH = 10;
 
     /**
-     * Flag is set when we are to read the GZIP member that sitting in
+     * Flag is set when we are to read the GZIP member that is sitting in
      * the stream.  Flag is false when we come across the end of a GZIP member.
      * Reading of next GZIP member in the stream is blocked till this flag is
      * set to true again.
@@ -101,11 +102,10 @@ public class GZIPMemberPushbackInputStream extends PushbackInputStream
         testIsOpen();
         if (!hasNext())
         {
-            throw new IOException("No more GZIP members.");
+            throw new NoSuchElementException("No more GZIP members.");
         }
         this.readGZIPMember = true;
     }
-
 
     public int read()
         throws IOException
@@ -162,9 +162,7 @@ public class GZIPMemberPushbackInputStream extends PushbackInputStream
     /**
      * Test for GZIP header.
      *
-     * This methods assumes that we've just read the first byte of
-     * GZIP_MAGIC.  This method will look ahead in the buffer to see if we're
-     * upon a GZIP header.
+     * Look ahead in the buffer to see if we're upon a GZIP header.
      *
      * @return True if buffer begins w/ a .
      */
@@ -173,8 +171,7 @@ public class GZIPMemberPushbackInputStream extends PushbackInputStream
     {
         boolean gzipHeader = false;
 
-        // Read the next DEFAULT_GZIP_HEADER_LENGTH - 1 candidate header
-        // bytes.
+        // Read the next DEFAULT_GZIP_HEADER_LENGTH candidate header bytes.
         byte [] header = new byte[DEFAULT_GZIP_HEADER_LENGTH];
         int read = super.read(header, 0, DEFAULT_GZIP_HEADER_LENGTH);
         if (read == DEFAULT_GZIP_HEADER_LENGTH)
@@ -184,7 +181,7 @@ public class GZIPMemberPushbackInputStream extends PushbackInputStream
                 && header[2] == Deflater.DEFLATED)
             {
                 // The top bits of the FLG byte are reserved.  Assume they
-                // are always zero.  This may not be correct.
+                // are always < 0x20 for our case.
                 if (header[3] < 0x20)
                 {
                     // The XFL field when using the default (CM = 8) method

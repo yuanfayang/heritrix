@@ -28,6 +28,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -118,15 +120,21 @@ public class ARCWriterTest
     {
         ARCReader reader = new ARCReader(arcFile);
         assertNotNull(reader);
+        List metaDatas = null;
         if (recordCount == -1)
         {
-            reader.validate();
+            metaDatas = reader.validate();
         }
         else
         {
-            reader.validate(recordCount);
+        		metaDatas = reader.validate(recordCount);
         }
         reader.close();
+        assertTrue("Metadatas not equal", metaDatas.size() == recordCount);
+        for (Iterator i = metaDatas.iterator(); i.hasNext();) {
+        		ARCRecordMetaData r = (ARCRecordMetaData)i.next();
+        		assertTrue("Record is empty", r.getLength() > 0);
+        }
     }
 
     public void testCheckARCFileSize()
@@ -159,11 +167,7 @@ public class ARCWriterTest
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecord", false,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount);
-        
-        arcFile = writeRecords("writeRecord", true,
-                DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount);
+        validate(arcFile, recordCount  + 1 /*Header record*/);
     }
 
     public void testWriteRecordCompressed()
@@ -172,7 +176,7 @@ public class ARCWriterTest
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecordCompressed", true,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount);
+        validate(arcFile, recordCount + 1 /*Header record*/);
     }
 
     public void testGetOutputDir()
