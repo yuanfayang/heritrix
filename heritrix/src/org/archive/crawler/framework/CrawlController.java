@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -20,7 +21,7 @@ public class CrawlController {
 	CrawlOrder order;
 	
 	URIScheduler scheduler;
-	URIDB db;
+	URIStore db;
 	URISelector selector;
 	
 	Processor entryProcessor;
@@ -80,8 +81,23 @@ public class CrawlController {
 	 * 
 	 */
 	public void startCrawl() {
-		// TODO Auto-generated method stub
+		// assume scheduler/URIStore already loaded state
 		
+		// start toes
+		Iterator iter = toes.iterator();
+		while(iter.hasNext()) {
+			((ToeThread)iter.next()).startCrawling();
+		}
+		adjustToeCount();
+	}
+	
+	private void adjustToeCount() {
+		while(toes.size()<order.getCrawler().getMaxToes()) {
+			// TODO make number of threads self-optimizing
+			ToeThread newThread = new ToeThread(this);
+			toes.add(newThread);
+			newThread.start();
+		}
 	}
 
 }

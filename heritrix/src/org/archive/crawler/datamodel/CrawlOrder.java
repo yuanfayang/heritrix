@@ -11,7 +11,9 @@ package org.archive.crawler.datamodel;
  *
  */
 public class CrawlOrder {
-
+	CrawlScope scope;
+	CrawlerBehavior crawler;
+	
 	/**
 	 * @param crawlOrderFile
 	 * @return
@@ -19,6 +21,14 @@ public class CrawlOrder {
 	public static CrawlOrder readFromFile(String crawlOrderFile) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	/**
+	 * 
+	 */
+	public CrawlerBehavior getCrawler() {
+		return crawler;
+		
 	}
 
 }

@@ -6,6 +6,9 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.Checksum;
 
 import org.archive.crawler.io.*;
@@ -21,6 +24,9 @@ public class RobotsExclusionPolicy {
 	boolean immutable;
 	long expires;
 	Checksum robotstxtChecksum; 
+	private List userAgents = new LinkedList();
+	private HashMap disallows = new HashMap(); // of (String -> List)
+
 	
 	public boolean hasExpired() {
 		return System.currentTimeMillis()>expires;

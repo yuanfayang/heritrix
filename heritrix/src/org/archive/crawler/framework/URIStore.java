@@ -16,7 +16,7 @@ import org.archive.crawler.datamodel.*;
  * @author gojomo
  *
  */
-public interface URIDB {
+public interface URIStore {
 	public void enqueueTo(AnnotatedURI auri, Object key);
 	public void dequeueFrom(AnnotatedURI auri, Object key);
 	public void pushTo(AnnotatedURI auri, Object key);
