@@ -72,6 +72,8 @@ public abstract class AbstractTracker implements StatisticsTracking,
 	 * Set's up the Logger (including logInterval) and registers with the CrawlController 
 	 * for CrawlStatus and CrawlURIDisposition events.
 	 * 
+	 * @param c A crawl controller instance.
+     * 
 	 * @see CrawlStatusListener
 	 * @see CrawlURIDispositionListener
 	 */

@@ -155,6 +155,7 @@ public class SimpleHandler
     /** 
      * Loads the default crawl order file (as specified by the orderFile attribute) from disk
      * as a crawlOrder. Useful if it has changed on disk.  Also used at startup.
+     * @throws InitializationException
      */
     public void loadCrawlOrder() throws InitializationException
     { 

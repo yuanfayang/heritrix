@@ -125,7 +125,7 @@
      
     <processor 
       name="Archiver" 
-      class="org.archive.crawler.basic.ARCWriter"
+      class="org.archive.crawler.basic.ARCWriterProcessor"
       next="Updater"
       
       path="arcs"
