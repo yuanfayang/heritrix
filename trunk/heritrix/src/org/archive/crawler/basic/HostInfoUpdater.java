@@ -48,10 +48,23 @@ public class HostInfoUpdater extends Processor implements CoreAttributeConstants
 				long expires = curi.getHost().getIpExpires();
 				
 				if(expires > 0){
-					curi.setDontRetryBeforeSmart(expires);
+					curi.setDontRetryBefore(expires);
 				}
 				
-			}else{
+			}else{ 
+				
+				// TODO: resolve several issues here:
+				//   (1) i don't think this else clause is ever reached;
+				//       won't every DNS uri that gets this far imply
+				//       hasBeenLookedUp will have been set?
+				//   (2) we don't want repeated successful attempts to
+				//       refetch a domain name, each time it expires,
+				//       to eventually exhaust the retries... so in
+				//       fact the retry count needs to be reset somewhere,
+				//       maybe at each success
+				
+				
+				
 				// if we've tried too many times give up
 				if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
 					curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
@@ -69,13 +82,15 @@ public class HostInfoUpdater extends Processor implements CoreAttributeConstants
 					curi.getHost().updateRobots(get);
 				
 					// see which epires first, the dns or the robots.txt
-					long expireCuri = ( curi.getHost().getRobotsExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getRobotsExpires() : curi.getHost().getIpExpires();
-					curi.setDontRetryBefore(expireCuri);
+					// long expireCuri = ( curi.getHost().getRobotsExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getRobotsExpires() : curi.getHost().getIpExpires();
+					
+					// curi can be refetched once robots data expires
+					curi.setDontRetryBefore(curi.getHost().getRobotsExpires());
 				}
 			}
 		}
 		
-		// if we've "successfully" fetch it incriment our count for this type of file
+		// if we've "successfully" fetched it increment our count for this type of file
 		if(curi.getFetchStatus() > 0 ){
 			statistics.incrementTypeCount(curi.getContentType());	
 		}
