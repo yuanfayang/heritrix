@@ -780,6 +780,15 @@ implements CrawlURIDispositionListener{
         logger.info("Leaving crawlEnded");
     }
     
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
+    
     /**
      * @return Length of longest URL.
      */

@@ -30,8 +30,13 @@ package org.archive.crawler.event;
  * @see org.archive.crawler.framework.CrawlController#addCrawlStatusListener(CrawlStatusListener)
  */
 
-public interface CrawlStatusListener
-{
+public interface CrawlStatusListener {
+    /**
+     * Called on crawl start.
+     * @param message Start message.
+     */
+    public void crawlStarted(String message);
+    
     /**
      * Called when a CrawlController is ending a crawl (for any reason)
      *

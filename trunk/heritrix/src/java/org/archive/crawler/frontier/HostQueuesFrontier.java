@@ -1810,6 +1810,14 @@ HasUriReceiver,  CrawlStatusListener {
         // NPEs in #preNext.
         // this.controller = null;
     }
+   
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
