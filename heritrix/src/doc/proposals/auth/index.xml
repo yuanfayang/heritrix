@@ -330,17 +330,25 @@
       status code, extract a realm from the 401 response and use this
       <parameter>realm + URI canonical root URL</parameter> as a compound key
       to do a look up into a store of Basic/Digest Auth credentials. If a
-      match is found, a <emphasis>persistent domain/virtualdomain
-      object</emphasis> is loaded with the discovered credentials and the
-      401'ing current URI is marked for retry (If no matching credentials
-      found, the current URI is marked failed with a 401 response code). If
-      any credentials found in a <emphasis>persistent domain/virtualdomain
-      object</emphasis> are always loaded into the HTTP GET request, when our
-      401'ing URI comes around again for retry, since credentials were loaded
-      the last time this URI was seen, credentials will be found in the
-      <emphasis>persistent domain/virtualdomain object</emphasis> and will be
-      added to the request headers. This time around the authentication should
-      succeed.</para>
+      match is found, the <emphasis>persistent domain/virtualdomain
+      object</emphasis> made for the current domain is loaded with the
+      discovered credentials and the 401'ing current URI is marked for retry
+      (If no matching credentials found, the current URI is marked failed with
+      a 401 response code). </para>
+
+      <para>Let it be a given that any rfc2617 credentials found in a
+      <emphasis>persistent domain/virtualdomain object</emphasis> always get
+      always loaded into the HTTP GET request.</para>
+
+      <para>When our 401'ing URI comes around again for retry, since
+      credentials were loaded the last time this URI was seen, credentials
+      will be found in the <emphasis>persistent domain/virtualdomain
+      object</emphasis> and will be added to the request headers. This time
+      around the authentication should succeed.</para>
+
+      <para>Any other URI that is a member of this realm will also
+      subsequently successfully authenticate given the above rule whereby we
+      always load any found credentials into the current request.</para>
 
       <para>Let the above be the default behavior. Configurations would
       enable/disable:</para>
