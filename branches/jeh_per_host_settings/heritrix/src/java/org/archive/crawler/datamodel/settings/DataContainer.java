@@ -59,7 +59,8 @@ public class DataContainer extends HashMap {
         String description,
         boolean overrideable,
         Object[] legalValues,
-        Object defaultValue) throws InvalidAttributeValueException {
+        Object defaultValue)
+        throws InvalidAttributeValueException {
         if (attributeNames.containsKey(name)) {
             throw new IllegalArgumentException("Duplicate field: " + name);
         }
@@ -73,6 +74,13 @@ public class DataContainer extends HashMap {
                 defaultValue);
         attributes.add(attribute);
         attributeNames.put(name, attribute);
+        try {
+            put(name, defaultValue);
+        } catch (InvalidAttributeValueException e) {
+            e.printStackTrace();
+        } catch (AttributeNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public MBeanInfo getMBeanInfo() {
@@ -99,32 +107,37 @@ public class DataContainer extends HashMap {
         destination.attributes.add(attribute);
         destination.attributeNames.put(name, attribute);
     }
-    
+
     public Object put(Object key, Object value) {
         throw new UnsupportedOperationException();
     }
-    
+
     public Object get(Object key) {
         throw new UnsupportedOperationException();
     }
-    
+
     /* (non-Javadoc)
      * @see java.util.Map#put(java.lang.Object, java.lang.Object)
      */
-    protected Object put(String key, Object value) throws InvalidAttributeValueException, AttributeNotFoundException {
+    protected Object put(String key, Object value)
+        throws InvalidAttributeValueException, AttributeNotFoundException {
         ModuleAttributeInfo attrInfo =
             (ModuleAttributeInfo) complexType.getAttributeInfo((String) key);
-        if (attrInfo == null) {
+        ModuleAttributeInfo localAttrInfo =
+            (ModuleAttributeInfo) getAttributeInfo((String) key);
+
+        if (attrInfo == null && localAttrInfo == null) {
             throw new AttributeNotFoundException(key);
         }
-        value = attrInfo.checkValue(value);
 
-        MBeanAttributeInfo localAttribute = getAttributeInfo((String) key);
-        if (localAttribute == null) {
+        if (localAttrInfo == null) {
+            value = attrInfo.checkValue(value);
             attributes.add(attrInfo);
             attributeNames.put(key, attrInfo);
+        } else {
+            value = localAttrInfo.checkValue(value);
         }
-        
+
         return super.put(key, value);
     }
 
@@ -132,7 +145,7 @@ public class DataContainer extends HashMap {
      * @see java.util.Map#get(java.lang.Object)
      */
     public Object get(String key) throws AttributeNotFoundException {
-        if (complexType.getAttributeInfo((String) key) == null) {
+        if (complexType.definitionMap.get(key) == null) {
             throw new AttributeNotFoundException(key);
         }
         return super.get(key);

@@ -92,7 +92,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
             try {
                 if (!(Class.forName(getType()).isInstance(value))
                     && value instanceof String) {
-                    value = AbstractSettingsHandler.StringToType((String) value, AbstractSettingsHandler.getTypeName(getType()));
+                    value = SettingsHandler.StringToType((String) value, SettingsHandler.getTypeName(getType()));
                 }
             } catch (Exception e) {
                 throw new InvalidAttributeValueException(

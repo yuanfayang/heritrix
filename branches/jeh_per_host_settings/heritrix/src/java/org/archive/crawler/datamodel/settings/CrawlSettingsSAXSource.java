@@ -191,27 +191,44 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
 
         // Write meta information
         handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
-        handler.startElement(nsu, XMLSettingsHandler.XML_ELEMENT_META, XMLSettingsHandler.XML_ELEMENT_META, nullAtts);
+        handler.startElement(
+            nsu,
+            XMLSettingsHandler.XML_ELEMENT_META,
+            XMLSettingsHandler.XML_ELEMENT_META,
+            nullAtts);
 
         // Write settings name
-        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_NAME, settings.getName(), null, 1 + indentAmount * 2);
+        writeSimpleElement(
+            XMLSettingsHandler.XML_ELEMENT_NAME,
+            settings.getName(),
+            null,
+            1 + indentAmount * 2);
 
         // Write settings description
-        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION, settings.getDescription(), null, 1 + indentAmount * 2);
+        writeSimpleElement(
+            XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
+            settings.getDescription(),
+            null,
+            1 + indentAmount * 2);
 
         // Write file date
         String dateStamp = ArchiveUtils.get14DigitDate();
-        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DATE, dateStamp, null, 1 + indentAmount * 2);
+        writeSimpleElement(
+            XMLSettingsHandler.XML_ELEMENT_DATE,
+            dateStamp,
+            null,
+            1 + indentAmount * 2);
 
         handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
-        handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_META, XMLSettingsHandler.XML_ELEMENT_META);
+        handler.endElement(
+            nsu,
+            XMLSettingsHandler.XML_ELEMENT_META,
+            XMLSettingsHandler.XML_ELEMENT_META);
 
         Iterator modules = settings.modules();
         while (modules.hasNext()) {
             ComplexType complexType = (ComplexType) modules.next();
-            parseComplexType(
-                complexType,
-                1 + indentAmount);
+            parseComplexType(complexType, 1 + indentAmount);
         }
         handler.ignorableWhitespace(indentArray, 0, 1);
         handler.endElement(nsu, rootElement, rootElement);
@@ -219,18 +236,21 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endDocument();
     }
 
-    private void parseComplexType(
-        ComplexType complexType,
-        int indent)
+    private void parseComplexType(ComplexType complexType, int indent)
         throws SAXException {
         DataContainer data = settings.getData(complexType.getAbsoluteName());
         MBeanInfo mbeanInfo = data.getMBeanInfo();
         String objectElement = resolveElementName(complexType);
 
         AttributesImpl atts = new AttributesImpl();
-        atts.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_NAME, XMLSettingsHandler.XML_ATTRIBUTE_NAME, nsu, complexType.getName());
-        
-        if (objectElement == XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT) {       
+        atts.addAttribute(
+            nsu,
+            XMLSettingsHandler.XML_ATTRIBUTE_NAME,
+            XMLSettingsHandler.XML_ATTRIBUTE_NAME,
+            nsu,
+            complexType.getName());
+
+        if (objectElement == XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT) {
             // Only 'newObject' elements have a class attribute
             atts.addAttribute(
                 nsu,
@@ -239,11 +259,11 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
                 nsu,
                 mbeanInfo.getClassName());
         }
-            
+
         if (complexType.getParent() == null) {
             atts = new AttributesImpl();
         }
-        
+
         handler.ignorableWhitespace(indentArray, 0, indent);
         handler.startElement(nsu, objectElement, objectElement, atts);
 
@@ -255,7 +275,8 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
                 try {
                     value = data.get(attribute.getName());
                 } catch (AttributeNotFoundException e) {
-                    throw new SAXException(e);
+                    value = attribute.getDefaultValue();
+                    //throw new SAXException(e);
                 }
             } else {
                 value =
@@ -272,8 +293,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
                 } else {
                     // Write element
                     String elementName =
-                        AbstractSettingsHandler.getTypeName(
-                            attribute.getType());
+                        SettingsHandler.getTypeName(attribute.getType());
                     atts.clear();
                     atts.addAttribute(
                         nsu,
@@ -331,9 +351,12 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         while (it.hasNext()) {
             Object element = it.next();
             String elementName =
-                AbstractSettingsHandler.getTypeName(
-                    element.getClass().getName());
-            writeSimpleElement(elementName, element.toString(), null, indent + indentAmount);
+                SettingsHandler.getTypeName(element.getClass().getName());
+            writeSimpleElement(
+                elementName,
+                element.toString(),
+                null,
+                indent + indentAmount);
         }
     }
 
@@ -343,7 +366,11 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             if (complexType.getParent() == null) {
                 // Top level controller element
                 elementName = XMLSettingsHandler.XML_ELEMENT_CONTROLLER;
-            } else if (settings.getParent() != null && complexType.getSettingsHandler().getModule(complexType.getName()) != null) {
+            } else if (
+                settings.getParent() != null
+                    && complexType.getSettingsHandler().getModule(
+                        complexType.getName())
+                        != null) {
                 // This is not the order file and we are referencing an object
                 elementName = XMLSettingsHandler.XML_ELEMENT_OBJECT;
             } else {
@@ -352,12 +379,18 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             }
         } else {
             // It's a map
-            elementName = AbstractSettingsHandler.getTypeName(complexType.getClass().getName());
+            elementName =
+                SettingsHandler.getTypeName(complexType.getClass().getName());
         }
         return elementName;
     }
 
-    private void writeSimpleElement(String elementName, String value, Attributes atts, int indent) throws SAXException {
+    private void writeSimpleElement(
+        String elementName,
+        String value,
+        Attributes atts,
+        int indent)
+        throws SAXException {
         if (atts == null) {
             atts = new AttributesImpl();
         }
@@ -366,7 +399,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.characters(value.toCharArray(), 0, value.length());
         handler.endElement(nsu, elementName, elementName);
     }
-    
+
     /* (non-Javadoc)
      * @see org.xml.sax.XMLReader#parse(java.lang.String)
      */

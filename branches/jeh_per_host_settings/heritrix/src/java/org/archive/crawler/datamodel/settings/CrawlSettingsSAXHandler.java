@@ -1,8 +1,26 @@
-/*
- * CrawlSettingsSAXHandler.java
+/* CrawlSettingsSAXHandler
+ * 
+ * $Id$
+ * 
  * Created on Dec 8, 2003
  *
- * $Header$
+ * Copyright (C) 2004 Internet Archive.
+ *
+ * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ * Heritrix is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * any later version.
+ *
+ * Heritrix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser Public License
+ * along with Heritrix; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 package org.archive.crawler.datamodel.settings;
 
@@ -28,7 +46,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class CrawlSettingsSAXHandler extends DefaultHandler {
     private Locator locator;
     private CrawlerSettings settings;
-    private AbstractSettingsHandler settingsHandler;
+    private SettingsHandler settingsHandler;
     private Map handlers = new HashMap();
     private Stack handlerStack = new Stack();
     private Stack stack = new Stack();
@@ -43,18 +61,28 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         this.settings = settings;
         this.settingsHandler = settings.getSettingsHandler();
         handlers.put(XMLSettingsHandler.XML_ROOT_ORDER, new RootHandler());
-        handlers.put(XMLSettingsHandler.XML_ROOT_HOST_SETTINGS, new RootHandler());
-        handlers.put(XMLSettingsHandler.XML_ELEMENT_CONTROLLER, new ModuleHandler());
-        handlers.put(XMLSettingsHandler.XML_ELEMENT_OBJECT, new ModuleHandler());
-        handlers.put(XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT, new NewModuleHandler());
+        handlers.put(
+            XMLSettingsHandler.XML_ROOT_HOST_SETTINGS,
+            new RootHandler());
+        handlers.put(
+            XMLSettingsHandler.XML_ELEMENT_CONTROLLER,
+            new ModuleHandler());
+        handlers.put(
+            XMLSettingsHandler.XML_ELEMENT_OBJECT,
+            new ModuleHandler());
+        handlers.put(
+            XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT,
+            new NewModuleHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_META, new MetaHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_NAME, new NameHandler());
-        handlers.put(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION, new DescriptionHandler());
+        handlers.put(
+            XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
+            new DescriptionHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_DATE, new DateHandler());
-        handlers.put(AbstractSettingsHandler.MAP, new MapHandler());
-        handlers.put(AbstractSettingsHandler.INTEGER_LIST, new ListHandler());
-        handlers.put(AbstractSettingsHandler.STRING, new SimpleElementHandler());
-        handlers.put(AbstractSettingsHandler.INTEGER, new SimpleElementHandler());
+        handlers.put(SettingsHandler.MAP, new MapHandler());
+        handlers.put(SettingsHandler.INTEGER_LIST, new ListHandler());
+        handlers.put(SettingsHandler.STRING, new SimpleElementHandler());
+        handlers.put(SettingsHandler.INTEGER, new SimpleElementHandler());
     }
 
     /* (non-Javadoc)
@@ -96,7 +124,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             handlerStack.push(handler);
             handler.startElement(qName, attributes);
         } else {
-            throw new SAXParseException("Unknown element '" + qName + "'", locator);
+            throw new SAXParseException(
+                "Unknown element '" + qName + "'",
+                locator);
         }
     }
 
@@ -157,7 +187,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             if (name.equals(XMLSettingsHandler.XML_ELEMENT_CONTROLLER)) {
                 moduleName = name;
             } else {
-                moduleName = atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+                moduleName =
+                    atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
             }
             stack.push(settingsHandler.getModule(moduleName));
         }
@@ -171,14 +202,20 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         public void startElement(String name, Attributes atts)
             throws SAXException {
             ComplexType parentModule = (ComplexType) stack.peek();
-            String moduleName = atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
-            String moduleClass = atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
+            String moduleName =
+                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+            String moduleClass =
+                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
             try {
                 Class cl = Class.forName(moduleClass);
-                Constructor co = cl.getConstructor(new Class[] {String.class});
-                CrawlerModule module = (CrawlerModule) co.newInstance(new Object[] {moduleName});
+                Constructor co =
+                    cl.getConstructor(new Class[] { String.class });
+                CrawlerModule module =
+                    (CrawlerModule) co.newInstance(new Object[] { moduleName });
                 try {
-                    parentModule.setAttribute(settings, new Attribute(moduleName, module));
+                    parentModule.setAttribute(
+                        settings,
+                        new Attribute(moduleName, module));
                 } catch (AttributeNotFoundException e) {
                     parentModule.addElement(settings, module);
                 }
@@ -196,7 +233,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private class MapHandler extends ElementHandler {
         public void startElement(String name, Attributes atts)
             throws SAXException {
-            String mapName = atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+            String mapName =
+                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
             ComplexType parentModule = (ComplexType) stack.peek();
             try {
                 stack.push(parentModule.getAttribute(settings, mapName));
@@ -247,7 +285,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             Object container = stack.peek();
             if (container instanceof ComplexType) {
                 try {
-                    ((ComplexType) container).setAttribute(settings, new Attribute(elementName, value));
+                    ((ComplexType) container).setAttribute(
+                        settings,
+                        new Attribute(elementName, value));
                 } catch (OperationsException e) {
                     throw new SAXException(e);
                 }
@@ -260,7 +300,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private class ListHandler extends ElementHandler {
         public void startElement(String name, Attributes atts)
             throws SAXException {
-            String listName = atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+            String listName =
+                atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
             ComplexType parentModule = (ComplexType) stack.peek();
             ListType list;
             try {

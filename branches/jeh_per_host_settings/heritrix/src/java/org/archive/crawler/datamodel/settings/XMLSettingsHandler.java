@@ -55,7 +55,7 @@ import org.xml.sax.XMLReader;
  * @author John Erik Halse
  *
  */
-public class XMLSettingsHandler extends AbstractSettingsHandler {
+public class XMLSettingsHandler extends SettingsHandler {
     // XML element name constants
     protected static final String XML_SCHEMA = "heritrix_settings.xsd";
     protected static final String XML_ROOT_ORDER = "crawl-order";
@@ -118,7 +118,7 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.settings.AbstractSettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
+	 * @see org.archive.crawler.datamodel.settings.SettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
 	 */
 	public final void writeSettingsObject(CrawlerSettings settings) {
         File filename;
@@ -147,7 +147,7 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.settings.AbstractSettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
+	 * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
 	 */
 	protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
         File filename;
