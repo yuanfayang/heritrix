@@ -325,7 +325,8 @@ public abstract class SettingsHandler {
      * refinement or null if no settings exist for the host/domain.
      */
     public CrawlerSettings getSettingsObject(String scope, String refinement) {
-        CrawlerSettings settings = settingsCache.getSettingsObject(scope, refinement);
+        CrawlerSettings settings =
+            settingsCache.getSettingsObject(scope, refinement);
 
         if (settings == null) {
             // Reference not found
