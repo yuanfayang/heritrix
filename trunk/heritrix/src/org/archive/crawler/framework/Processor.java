@@ -93,7 +93,7 @@ public class Processor extends XMLConfig {
 		while(iter.hasNext()) {
 			Object o = iter.next();
 			Filter f = (Filter)o;
-			f.initialize();
+			f.initialize(controller);
 		}
 	}
 	

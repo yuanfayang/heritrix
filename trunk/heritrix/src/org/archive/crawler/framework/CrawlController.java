@@ -35,8 +35,6 @@ import org.archive.crawler.io.UriProcessingFormatter;
  */
 public class CrawlController implements CrawlerConfigurationConstants {
 	
-
-	
 	private File disk;
 	public Logger uriProcessing = Logger.getLogger("uri-processing");
 	public Logger crawlErrors = Logger.getLogger("crawl-errors");
@@ -51,7 +49,7 @@ public class CrawlController implements CrawlerConfigurationConstants {
 	URIScheduler scheduler;
 	URIStore store;
 	URISelector selector;
-	
+		
 	Processor firstProcessor;
 	LinkedHashMap processors = new LinkedHashMap(); 
 	List toes = new LinkedList(); /* of ToeThreads */;

@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.Collection;
+
 /**
  * Handles all persistence for Scheduler and Selector, allowing
  * them to be stateless (and somewhat indifferent to the strategies
@@ -24,4 +26,9 @@ public interface URIStore {
 	public int urisInFrontier();
 	
 	public int discoveredUriCount();
+
+	/**
+	 * 
+	 */
+	Collection getSeeds();
 }
