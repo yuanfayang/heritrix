@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -78,6 +79,7 @@ import org.archive.util.MimetypeUtils;
  * @author stack
  */
 public abstract class ARCReader implements ARCConstants, Iterator {
+    Logger logger = Logger.getLogger(ARCReader.class.getName());
     
     /**
      * Assumed maximum size of a record meta header line.
@@ -321,6 +323,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     public Object next() {
         try {
             return get(((PositionableStream)this.in).getFilePointer());
+        } catch (RecoverableIOException e) {
+            logger.warning("Recoverable error: " + e.getMessage());
+            if (hasNext()) {
+                return next();
+            } else {
+                return null;
+            }
         } catch (IOException e) {
             throw new NoSuchElementException(e.getClass() + ": " +
                 e.getMessage());
@@ -405,16 +414,19 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         StringBuffer buffer = new StringBuffer(MAX_HEADER_LINE_LENGTH + 20);
         int read = 0;
         for (int c = -1; true;) {
-            c = stream.read() & 0xff;
+            c = stream.read();
             if (c == -1) {
-                throw new IOException("Hit EOF before header EOL.");
+                throw new RecoverableIOException("Hit EOF before header EOL.");
             }
-
+            c &= 0xff; 
             read++;
             if (read > MAX_HEADER_LINE_LENGTH) {
                 throw new IOException("Header line longer than max allowed " +
-                        " -- " + String.valueOf(MAX_HEADER_LINE_LENGTH) +
-                " -- or passed buffer doesn't contain a line.");
+                    " -- " + String.valueOf(MAX_HEADER_LINE_LENGTH) +
+                    " -- or passed buffer doesn't contain a line (Read: " +
+                    buffer.length() + ").  Here's" +
+                    " some of what was read: " +
+                    buffer.substring(0, Math.min(buffer.length(), 256)));
             }
 
             if (c == LINE_SEPARATOR) {
@@ -714,6 +726,22 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 index(new File((String)i.next()));
             }
+        }
+    }
+    
+    /**
+     * A subclass of IOException that is not fatal.
+     * If iterating over records, should be able to move to the next record and 
+     * continue processing.
+     * @author stack
+     * @version $Date$, $Revision$
+     */
+    public class RecoverableIOException extends IOException {
+        private RecoverableIOException() {
+            super();
+        }
+        private RecoverableIOException(String message) {
+            super(message);
         }
     }
 }

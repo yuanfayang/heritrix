@@ -544,11 +544,13 @@ public class ARCWriter implements ARCConstants {
      */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength,
-            ByteArrayOutputStream baos) throws IOException {
+            ByteArrayOutputStream baos)
+    throws IOException {
+        String metaline = getMetaLine(uri, contentType, hostIP,
+            fetchBeginTimeStamp, recordLength);
         preWriteRecordTasks();
         try {
-            writeMetaLine(uri, contentType, hostIP, fetchBeginTimeStamp,
-                recordLength);
+            this.out.write(metaline.getBytes("UTF-8"));
             baos.writeTo(this.out);
             this.out.write(LINE_SEPARATOR);
         } finally {
@@ -573,15 +575,13 @@ public class ARCWriter implements ARCConstants {
      */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength, ReplayInputStream ris)
-        throws IOException
-    {
+    throws IOException {
+        String metaline = getMetaLine(uri, contentType, hostIP,
+                fetchBeginTimeStamp, recordLength);
         preWriteRecordTasks();
-        try
-        {
-            writeMetaLine(uri, contentType, hostIP, fetchBeginTimeStamp,
-                    recordLength);
-            try
-            {
+        try {
+            this.out.write(metaline.getBytes("UTF-8"));
+            try {
                 ris.readFullyTo(this.out);
                 long remaining = ris.remaining();
                 if (remaining > 0)
@@ -591,39 +591,36 @@ public class ARCWriter implements ARCConstants {
                     String message = "Gap between expected and actual: "
                         +  remaining + LINE_SEPARATOR + DevUtils.extraInfo();
                     DevUtils.warnHandle(new Throwable(message), message);
-                    while (remaining > 0)
-                    {
+                    while (remaining > 0) {
                         // Pad with zeros
                         this.out.write(0);
                         remaining--;
                     }
                 }
-            }
-            finally
-            {
+            } finally {
                 ris.close();
             }
 
             // Trailing newline
             this.out.write(LINE_SEPARATOR);
-        }
-        finally
-        {
+        } finally {
             postWriteRecordTasks();
         }
     }
 
     /**
      * Post write tasks.
+     * 
+     * Has side effects.  Will open new ARC if we're at the upperbound.
+     * If we're writing compressed ARCs, it will write the GZIP header
+     * out on the stream.
      *
      * @exception IOException
      */
     private void preWriteRecordTasks()
-        throws IOException
-    {
+    throws IOException {
         checkARCFileSize();
-        if (isCompress())
-        {
+        if (isCompress()) {
             // The below construction immediately writes the GZIP 'default'
             // header out on the underlying stream.
             this.out = new ARCWriterGZIPOutputStream(this.out);
@@ -636,10 +633,8 @@ public class ARCWriter implements ARCConstants {
      * @exception IOException
      */
     private void postWriteRecordTasks()
-        throws IOException
-    {
-        if (isCompress())
-        {
+    throws IOException {
+        if (isCompress()) {
             ARCWriterGZIPOutputStream o = (ARCWriterGZIPOutputStream)this.out;
             o.finish();
             o.flush();
@@ -647,36 +642,24 @@ public class ARCWriter implements ARCConstants {
             o = null;
         }
     }
-
+    
     /**
-     * Write ARC file version 1 metaline.
-     *
-     * @param uri URI of page we're writing metaline for.  Candidate URI would
-     *        be output of curi.getURIString().
-     * @param contentType Content type of content meta line describes.
-     * @param hostIP IP of host we got content from.
-     * @param fetchBeginTimeStamp Time at which fetch began.
-     * @param recordLength Length of the content fetched.
-     *
-     * @throws IOException
+     * @return Metadata line for an ARCRecord made of passed components.
+     * @exception IOException
      */
-    private void writeMetaLine(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength)
-        throws IOException
-    {
-        if (fetchBeginTimeStamp <= 0)
-        {
+    protected String getMetaLine(String uri, String contentType, String hostIP,
+        long fetchBeginTimeStamp, int recordLength)
+    throws IOException {
+        if (fetchBeginTimeStamp <= 0) {
             throw new IOException("Bogus fetchBeginTimestamp: " +
                 Long.toString(fetchBeginTimeStamp));
         }
 
-        if (hostIP == null)
-        {
+        if (hostIP == null) {
             throw new IOException("Null hostIP passed.");
         }
 
-        if (uri == null || uri.length() <= 0)
-        {
+        if (uri == null || uri.length() <= 0) {
             throw new IOException("URI is empty: " + uri);
         }
 
@@ -686,8 +669,8 @@ public class ARCWriter implements ARCConstants {
             HEADER_FIELD_SEPARATOR + MimetypeUtils.truncate(contentType) +
             HEADER_FIELD_SEPARATOR + recordLength + LINE_SEPARATOR;
         validateMetaLine(metaLineStr);
-        this.out.write(metaLineStr.getBytes("UTF-8"));
-     }
+        return metaLineStr;
+    }
     
     /**
      * Test that the metadata line is valid before writing.
