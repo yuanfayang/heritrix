@@ -16,12 +16,12 @@
     name="pathological-path" 
     class="org.archive.crawler.util.URIRegExpFilter"
     modifier="not"
-    regexp=".*/(.*)/\1/\1/.*" />
+    regexp=".*/([^/]*)/\1/\1/.*" />
    <filter 
     name="no-more-than-20-slashes" 
     class="org.archive.crawler.util.URIRegExpFilter"
     modifier="not"
-    regexp=".*//.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*" />
+    regexp="[^/]*?//[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?" />
   </selector>
   
   <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
@@ -92,13 +92,20 @@
   <limits>
    <!-- actual enforcement of these limits may depend on choice 
         of SSS/processor instances that read and respect these limits -->
-   <max-link-depth value="100" /> <!-- zero means crawl seeds only -->
+   <max-link-depth value="1" /> <!-- zero means crawl seeds only -->
    <max-pages value="1000" />
    <max-duration value="1h" />
    <max-resources-per-site value="1000" />
-   <max-toe-threads value="5" />
+   <max-toe-threads value="3" />
   </limits>
 
  </crawler-behavior>
  <disk path="example-crawl" />
+ 
+ <loggers>
+  <crawl-statistics>
+    <interval>60</interval>
+  </crawl-statistics>
+</loggers>
+
 </crawl-order>
