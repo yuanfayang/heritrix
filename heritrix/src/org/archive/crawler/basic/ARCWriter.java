@@ -98,6 +98,11 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	 */
   	public synchronized void process(CrawlURI curi){
   		super.process(curi);
+  		
+  		// if  there was a failure, or we haven't fetched the resource yet, return
+		if(curi.getFetchStatus()<=0){
+			return;
+		}
 
   		// find the write protocol and write this sucker
   		String scheme = curi.getUURI().getUri().getScheme();
@@ -111,7 +116,9 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			} // else skip the special gzip jive and just write to a FileOutputStream
   			
   			if(scheme.equals("dns")){
-  				writeDns(curi);
+  				// this breaks the tools, don't do it for now
+  				return;
+  				//writeDns(curi);
   				
   			}else if(scheme.equals("http")){
 	  			writeHttp(curi);
