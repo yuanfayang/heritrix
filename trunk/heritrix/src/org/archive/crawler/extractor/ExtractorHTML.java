@@ -81,21 +81,28 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		
 		Matcher tags = RELEVANT_TAG_EXTRACTOR.matcher(cs);
 		while(tags.find()) {
-			if(tags.start(5)>0) {
+			if (tags.start(6) > 0) {
+				// comment match
+				// for now do nothing
+			} else if (tags.start(5) > 0) {
 				// generic <whatever> match
-				processTagInto(cs.subSequence(tags.start(2),tags.end(2)),links,embeds);
-			} else if(tags.start(3)>0) {
+				processTagInto(
+					cs.subSequence(tags.start(2), tags.end(2)),
+					links,
+					embeds);
+			} else if (tags.start(3) > 0) {
 				// <base> match
-				processBase(curi,cs.subSequence(tags.start(2),tags.end(2)));
-			} else if (tags.start(4)>0) {
+				processBase(curi, cs.subSequence(tags.start(2), tags.end(2)));
+			} else if (tags.start(4) > 0) {
 				// <meta> match
-				if (processMeta(curi,cs.subSequence(tags.start(2),tags.end(2)))) {
+				if (processMeta(curi,
+					cs.subSequence(tags.start(2), tags.end(2)))) {
 					// meta tag included NOFOLLOW; abort processing
 					return;
 				}
-			} else if (tags.start(1)>0) {
+			} else if (tags.start(1) > 0) {
 				// <script> match
-				processScript(curi,cs.subSequence(tags.start(1),tags.end(1)));
+				processScript(curi, cs.subSequence(tags.start(1), tags.end(1)));
 			}
 		}
 		
