@@ -24,7 +24,7 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  *
  */
-public class HostInfoUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
+public class CrawlStateUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 
 	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 	protected StatisticsTracker statistics = null;
@@ -90,13 +90,17 @@ public class HostInfoUpdater extends Processor implements CoreAttributeConstants
 			}
 		}
 		
+		// print statistics
+		if ( (statistics.successfulFetchAttempts() % 50) == 0) {
+			controller.printStatistics();
+		}
+		
 		// if we've "successfully" fetched it increment our count for this type of file
 		if(curi.getFetchStatus() > 0 ){
 			statistics.incrementTypeCount(curi.getContentType());	
-		}
-		
-		if ( (statistics.successfulFetchAttempts() % 50) == 0) {
-			controller.printStatistics();
+
+			// note status for anything we've tried to retrieve
+			statistics.incrementStatusCodeCount(curi.getFetchStatus());
 		}
 	}
 }

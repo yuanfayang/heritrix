@@ -55,6 +55,8 @@ public class CrawlURI
 
 	private int threadNumber;
 	
+	private int contentSize;
+	
 	private long dontRetryBefore = -1;
 
 	/**
@@ -392,6 +394,21 @@ public class CrawlURI
 		}
 		setDontRetryBefore(-1);
 	}
+	
+	/** Set the size of this URI's content in bytes for reporting */
+	public void setContentSize(int size){
+		contentSize = size;
+	}
+	
+	/** Get the size in bytes of this URI's content.  This may be set
+	 *  at any time by any class and therefor should not be trusted.  Primarily
+	 *  it exists to ease the calculation of statistics.
+	 * @return contentSize
+	 */
+	public int getContentSize(){
+		return contentSize;
+	}
+	
 	
 /*	public boolean isFubared(){
 		return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);

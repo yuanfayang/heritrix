@@ -30,7 +30,7 @@ public interface FetchStatusCodes {
 	
 	public static int S_ROBOTS_PRECLUDED = -9998;
 	
-	public static int S_DNS_SUCCESS = 1001;
+	public static int S_DNS_SUCCESS = 1;
 
 }
 

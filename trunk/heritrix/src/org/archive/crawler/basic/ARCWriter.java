@@ -14,12 +14,14 @@ import java.io.OutputStream;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.DiskWrite;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IAGZIPOutputStream;
 import org.w3c.dom.Node;
@@ -48,11 +50,14 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	//  the event multiple arcwriter exist and are creating files concurrently
 	private static int arcId = 0;						
 	
+	protected StatisticsTracker statistics = null;
 	
   	public void initialize(CrawlController c){
   		super.initialize(c);
   
 		readConfiguration();
+		
+		statistics = c.getStatistics();
 		
 		try{
 			createNewArcFile();		  		
@@ -122,8 +127,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			if(useCompression()){
   				((IAGZIPOutputStream)out).endCompressionBlock();
   			}
-			
-  			
+    			
   		// catch disk write errors		
   		}catch(IOException e){
   			e.printStackTrace();
@@ -184,6 +188,13 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}catch(IOException e){
 				e.printStackTrace();
 			}
+			
+			// keep statistics on how much we're writing (it's interesting stuff)
+			statistics.sentToDisk( 
+					new DiskWrite(
+							recordLength + metaLineStr.getBytes().length, System.currentTimeMillis() 
+							)
+				);
   		}
   	}
   	

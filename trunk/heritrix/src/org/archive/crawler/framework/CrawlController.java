@@ -257,11 +257,15 @@ public class CrawlController {
 		
 		System.out.println("Fetch Progress:");
 		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
+		
+		int kPerSec = statistics.approximateDiskWriteRate()/1000;
+		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
+		
 		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
 		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
 		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
 		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-		System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
+		//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
 
 		System.out.println("Threads:");
 	
@@ -283,8 +287,27 @@ public class CrawlController {
 				System.out.println("\t" + key + "\t" + val);	
 			}
 		}else{
-			System.out.println("No mime statistics, size is " + dist.size());
+			System.out.println("No mime statistics");
 		}
+		
+		HashMap codeDist = statistics.getStatusCodeDistribution();
+		
+		if(codeDist.size() > 0){
+			
+			Iterator keyIterator = codeDist.keySet().iterator();
+
+			System.out.println("Status Code Distribution:");
+	
+			while(keyIterator.hasNext()){
+				String key = (String)keyIterator.next();
+				String val = ((Integer)codeDist.get(key)).toString();
+				
+				System.out.println("\t" + key + "\t" + val);	
+			}
+		}else{
+			System.out.println("No code sistribution statistics.");
+		}
+
 
 	}
 }
