@@ -181,7 +181,7 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
                         logger.fine("Unable to load unchanged factor for " + 
                                 curi.getURIString());
                     }
-                    waitInterval = waitInterval*2;
+                    waitInterval = (long)(waitInterval*factor);
                 }
             } else {
                 // If wait element not found, use initial wait interval 
@@ -202,7 +202,7 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
             waitInterval = max;
         }
         
-        logger.finest("URI " + curi.getURIString() + ", change: " + 
+        logger.fine("URI " + curi.getURIString() + ", change: " + 
                 curi.getContentState() + " new wait interval: " + waitInterval);
                
         // Update wait interval

@@ -90,6 +90,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     protected static final String XML_ELEMENT_TIMESPAN = "timespan";
     protected static final String XML_ELEMENT_PORTNUMBER = "portnumber";
     protected static final String XML_ELEMENT_URIMATCHES = "uri-matches";
+    protected static final String XML_ELEMENT_CONTENTMATCHES = "content-type-matches";
     protected static final String XML_ELEMENT_OBJECT = "object";
     protected static final String XML_ELEMENT_NEW_OBJECT = "newObject";
     protected static final String XML_ATTRIBUTE_NAME = "name";
