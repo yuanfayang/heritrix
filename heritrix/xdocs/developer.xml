@@ -11,7 +11,7 @@
             <p>This doc. is for observers and contributors who'd like to pull 
                 and build from source. In here we'll talk of cvs access, the 
                 code layout, core technologies and patterns and their why, key 
-                technical decisions and why.</p>
+                technical decisions and their why.</p>
         </section>
         <section name="Obtaining Heritrix">
             <p>There three ways to obtain Heritrix: packaged binary or packaged 
@@ -29,19 +29,43 @@
                 heritrix release version. </p>
         </section>
         <section name="Building Heritrix">
-            <p>If you obtained packaged source, here is how you build w/ Ant: 
+            <p>You can build Heritrix from source using Ant or Maven. The Maven 
+                build is more comprehensive and will generate all from either 
+                the packaged source or from a CVS checkout. The Ant build is 
+                less so in that they doesn't generate the distribution 
+                documentation but it does produce all else needed to run 
+                Heritrix.</p>
+                <p>If you are building Heritrix w/ Ant, you must have Ant 1.5 
+                    installed. If you want to run the Heritrix unit tests from 
+                    Ant, you will have to make sure the Ant optional.jar file 
+                    sits beside the junit.jar. See <a 
+                    href="http://ant.apache.org/manual/OptionalTasks/junit.html">JUnit 
+                    Task</a> for what you must do setting up Ant to run junit 
+                    tests.</p>
+                    <p>The Heritrix maven build was developed using 
+                    1.0-rc1. See maven.apache.org. </p>
+	<subsection name="Building Heritrix with Ant">
+	    <p>If you obtained packaged source, here is how you build w/ Ant: 
 <source>% tar xfz heritrix-?.?.?-src.tar.gz 
 % cd heritrix-?.?.? % $ANT_HOME/bin/ant dist </source> </p>
             <p>In the <em>dist</em> subdir will be all you need to run the 
                 Heritrix crawler. To learn more about the ant build, type 
                 <em>ant -projecthelp</em>. </p>
+	</subsection>
+            
+            <subsection name="Building Heritrix with Maven">
             <p>To build a CVS source checkout w/ Maven:
-<source> % cd CVS_CHECKOUT_DIR 
+<source>% cd CVS_CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</source> </p>
             <p>In the <em>target/distribution</em> subdir, you will find 
                 packaged source and binary builds. Run 
                 <em>$MAVEN_HOME/bin/maven -g</em> for other Maven 
-                possibilities. </p>
+                possibilities.</p>
+                </subsection>
+        </section>
+        <section name="Running Heritrix">
+            <p>See the <a href="user.html">User Manual</a> for how to run 
+                the built Heritrix.</p>
         </section>
         <section name="Eclipse">
             <p>At the head of the CVS tree, you'll find Eclipse 
@@ -78,6 +102,35 @@
             </subsection>
             <subsection name="Indent Width">
                 <p>Indents are 4 charcters wide.</p>
+            </subsection>
+            <subsection name="File comment">
+                <p>Here is the eclipse
+                    template we use for the file header comment:
+                <source>/* ${type_name}
+ * 
+ * $$Id$$
+ * 
+ * Created on ${date}
+ *
+ * Copyright (C) ${year} Internet Archive.
+ * 
+ * This file is part of the Heritrix web crawler (crawler.archive.org).
+ * 
+ * Heritrix is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * any later version.
+ * 
+ * Heritrix is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser Public License
+ * along with Heritrix; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+${package_declaration}</source></p>
             </subsection>
         </section>
         <section name="Version and Release Numbering" id="version">
