@@ -568,6 +568,7 @@ implements Frontier,
      */
     void wakeQueues() {
         long now = System.currentTimeMillis();
+        logger.info("wakeReadyQueues() at "+now);
         synchronized (snoozedClassQueues) {
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
