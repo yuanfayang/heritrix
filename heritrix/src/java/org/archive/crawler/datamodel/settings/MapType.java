@@ -66,7 +66,7 @@ public class MapType extends ComplexType {
      * 
      * @param settings the settings object for this method to have effect.
      * @param element the element to be added.
-     * @return
+     * @return Element added.
      * @throws InvalidAttributeValueException
      */
     public Type addElement(CrawlerSettings settings, Type element)

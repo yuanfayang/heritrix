@@ -90,7 +90,7 @@ public class Filter extends CrawlerModule {
     }
 
     /**
-     * @return
+     * @return The crawl controller.
      */
     public CrawlController getController() {
         return controller;

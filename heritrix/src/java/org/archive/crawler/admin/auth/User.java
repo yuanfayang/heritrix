@@ -91,7 +91,8 @@ public class User
 	}
 
 	/**
-	 * Add a new user to list of allowed logins.<br>
+	 * Add a new user to list of allowed logins.
+     *
 	 * If given username already exist this method will overwrite it.
 	 * 
 	 * @param username Username

@@ -936,7 +936,7 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * @return
+     * @return The settings handler.
      */
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
