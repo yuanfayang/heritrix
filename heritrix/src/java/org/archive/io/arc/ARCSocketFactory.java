@@ -53,10 +53,18 @@ import org.archive.util.HttpRecorder;
 
 /**
  * A Socket Factory that gives out ARCSockets.
+ *
+ * ARCSockets tee all that was read from the socket to ARC files.
+ * ARCSockets do not support keep-alive, only do the http protocol, assume
+ * a new socket per request and the  {@link ARCSocket.close()} MUST be called
+ * at end of each request (Its the call to socket close that signals
+ * end-of-response and its then that ARCSocket goes to work writing the
+ * response to the ARC file).
  * 
- * This factory is odd in that it takes configuration.   If you don't call the 
- * {@link #initialize(Properties)} before first use of {@link #getInstance()},
- * you'll get <code>null</code> for a SocketFactory instance.
+ * <p>This factory is unusual in that it takes configuration.   If you don't
+ * call the {@link #initialize(Properties)} before first use of
+ * {@link #getInstance()}, you'll get <code>null</code> for a SocketFactory
+ * instance.
  *
  *<p>The {@link java.util.Properties} passed must contain at least an 
  * <code>arcsocketfactory.dumpDir</code> property that points at a directory
@@ -72,6 +80,11 @@ import org.archive.util.HttpRecorder;
  * 
  * <p>This factory is also a singleton to ensure only a single instance of an
  * ARCWriter shared by all ARCSockets.
+ * 
+ * 
+ * <p>Internet Archive ARC files are described here: 
+ * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
+ * File Format</a>.
  * 
  * @author stack
  */
@@ -92,7 +105,7 @@ public class ARCSocketFactory extends SocketFactory
      * 
      * Default is <i>ASF</i> (ARC Socket Factory).
      * 
-     * Protected so unit tests can get at this value.
+     * Protected rather than private so unit tests can get at this value.
      */
     protected static final String DEFAULT_PREFIX = "ASF";
     
@@ -111,6 +124,11 @@ public class ARCSocketFactory extends SocketFactory
      * Directory to dump arc and recording stream backing files.
      */
     private File dumpDir = null;
+    
+    /**
+     * Directory to which we dump arc files under dumpDir.
+     */
+    private File arcDumpDir = null;  
     
     /**
      * Dir name where we dump backing files used recording input and
@@ -142,7 +160,7 @@ public class ARCSocketFactory extends SocketFactory
      * 
      * @see #getUniqueBasename()
      */
-    private static int id = 0;  
+    private static int id = 0;
     
     
 	/**
@@ -164,6 +182,7 @@ public class ARCSocketFactory extends SocketFactory
                 "Properties", DUMPDIR_KEY);
         }
         this.dumpDir = ArchiveUtils.ensureWriteableDirectory(dumpDirStr);
+        this.arcDumpDir = new File(this.dumpDir, ARCDIR_NAME);
         this.backingFileDir = new File(dumpDir, SCRATCH_DIR);
         
         String prefix = properties.getProperty(PREFIX_KEY);
@@ -173,7 +192,7 @@ public class ARCSocketFactory extends SocketFactory
         }
         
         // Set up the pool of ARCWriters.
-        this.pool = new ARCWriterPool(new File(dumpDir, ARCDIR_NAME), prefix);
+        this.pool = new ARCWriterPool(this.arcDumpDir, prefix);
     }
     
     /**
@@ -240,7 +259,7 @@ public class ARCSocketFactory extends SocketFactory
      * Return a unique basename.
      * 
      * Name is timestamp + an every increasing sequence number.  Used 
-     * creating backing files for recording input streams.
+     * creating backing files for recording input and output streams.
      * 
      * @return Unique basename.
      */
@@ -260,7 +279,7 @@ public class ARCSocketFactory extends SocketFactory
     }
     
     /**
-     * @return Returns the ARC file dumpDir.
+     * @return Returns the dumpDir into which arcs and backing files are dumped.
      */
     public File getDumpDir()
     {
@@ -268,21 +287,31 @@ public class ARCSocketFactory extends SocketFactory
     }
 
     /**
+     * @return Returns the arcDumpDir.
+     */
+    public File getArcDumpDir()
+    {
+        return arcDumpDir;
+    }
+
+    /**
+     * @return Returns the backingFileDir.
+     */
+    public File getBackingFileDir()
+    {
+        return backingFileDir;
+    }
+
+    /**
      * A socket that records all read (and written) to Internet Archive ARC
      * files.
      * 
-     * Internet Archive ARC files are described here: 
-     * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
-     * File Format</a>.
-     * 
-     * <p>This socket does not do KeepAlive (Socket close is our signal for
-     * completion of transaction and that we now have a record to add to the 
-     * arc file).  It explicitly prevents the setting of the keep alive flag.
-     * 
-     * <p>Currently assumed we're doing http protocol only.
-     * 
-     * <p>TODO: Test redirects, test what happens w/ other protocol use.  Test
-     * socket resuse handling.
+     * ARCSockets tee all that was read from the socket to ARC files.
+     * ARCSockets do not support keep-alive, only do the http protocol, assume
+     * a new socket per request and the  {@link ARCSocket.close()} MUST be
+     * called at end of each request (Its the call to socket close that signals
+     * end-of-response and its then that ARCSocket goes to work writing the
+     * response to the ARC file).
      * 
      * @author stack
      */
@@ -436,7 +465,7 @@ public class ARCSocketFactory extends SocketFactory
             this.recorder.close();
             try
             {
-                save();
+                record();
             }
             finally
             {
@@ -451,7 +480,7 @@ public class ARCSocketFactory extends SocketFactory
          * 
          * @exception IOException
          */
-        private void save()
+        private void record()
             throws IOException
         {
             ReplayInputStream response =

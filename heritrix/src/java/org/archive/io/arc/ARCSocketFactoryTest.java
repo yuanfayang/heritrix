@@ -100,19 +100,19 @@ public class ARCSocketFactoryTest
 	{
 		super.tearDown();
 	}
-
-	/**
-	 * Constructor for ARCSocketFactoryTest.
-     *
-	 * @param method Method to run.
-	 */
-	public ARCSocketFactoryTest(String method)
-	{
-		super(method);
-	}
     
     /**
+     * @param testName
+     */
+    public ARCSocketFactoryTest(String testName)
+    {
+        super(testName);
+    }
+
+    /**
      * Test of httpclient using ARCSocketFactory.
+     * 
+     * Gets some pages and verifies produced ARC files.
      * 
      * @exception HttpException
      * @exception IOException
@@ -125,10 +125,13 @@ public class ARCSocketFactoryTest
         // used by httpclient.
         Protocol.registerProtocol("http", httpProtocol);
         // Clean up arc files.
-        cleanUpOldFiles(((ARCSocketFactory)this.factory).getDumpDir(),
+        cleanUpOldFiles(((ARCSocketFactory)this.factory).getArcDumpDir(),
             ARCSocketFactory.DEFAULT_PREFIX);
-        // Now use httpclient to fetch an url.
-        String [] urls = {"http://www.google.com",
+        cleanUpOldFiles(((ARCSocketFactory)this.factory).getBackingFileDir(),
+            "");
+        cleanUpOldFiles(getTmpDir(), "arcsocketfactorytest");
+        // Now use httpclient to fetch urls.
+        String [] urls = {"http://www.google.com/NO_SUCH_PLACE",
             "http://directory.google.com/Top/Society/",
             "http://www.google.com/images/logo.gif"};
         for (int i = 0; i < urls.length; i++)
@@ -136,40 +139,12 @@ public class ARCSocketFactoryTest
             getURLContent(urls[i]);
         }
         File [] f =
-            getListOfFiles(((ARCSocketFactory)this.factory).getDumpDir(),
+            getListOfFiles(((ARCSocketFactory)this.factory).getArcDumpDir(),
                 ARCSocketFactory.DEFAULT_PREFIX);
         for (int i = 0; i < f.length; i++)
         {
             (new ARCReader(f[i])).validate(urls.length);
         }
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.commons.httpclient.protocol.ProtocolSocketFactory#createSocket(java.lang.String, int)
-     */
-    public Socket createSocket(String host, int port)
-        throws IOException, UnknownHostException
-    {
-        // Wrap whats returned out of ARCSocketFactory w/ a recorder that 
-        // will capture all read and written on the socket.
-        this.socket = new ARCSocketFactoryTestSocket(
-            this.factory.createSocket(host, port));
-        return this.socket;
-    }
-    
-    /* (non-Javadoc)
-     * @see org.apache.commons.httpclient.protocol.ProtocolSocketFactory#createSocket(java.lang.String, int, java.net.InetAddress, int)
-     */
-    public Socket createSocket(String host, int port, InetAddress clientHost,
-            int clientPort)
-        throws IOException, UnknownHostException
-    {
-        
-        // Wrap whats returned out of ARCSocketFactory w/ a recorder that 
-        // will capture all read and written on the socket.
-        this.socket = new ARCSocketFactoryTestSocket(
-            this.factory.createSocket(host, port, clientHost, clientPort));
-        return this.socket;
     }
 
     /**
@@ -214,10 +189,42 @@ public class ARCSocketFactoryTest
 
         byte[] responseBody = method.getResponseBody();
         method.releaseConnection();
-        // Have to force the close myself.  httpclient doesn't call it.
+        
+        // Have to force the close myself.  httpclient doesn't call socket
+        // close.  It wants to recycle.  It doesn't even call close on streams
+        // because it doesn't expect to get an EOF out of stream; rather it
+        // wraps our stream w/ a watching stream that looks for content-length
+        // characters and there returns a -1.
         this.socket.close();
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.commons.httpclient.protocol.ProtocolSocketFactory#createSocket(java.lang.String, int)
+     */
+    public Socket createSocket(String host, int port)
+        throws IOException, UnknownHostException
+    {
+        // Wrap whats returned out of ARCSocketFactory w/ a recorder that 
+        // will capture all read and written on the socket.  Helps debugging.
+        this.socket = new ARCSocketFactoryTestSocket(
+                this.factory.createSocket(host, port));
+        return this.socket;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.apache.commons.httpclient.protocol.ProtocolSocketFactory#createSocket(java.lang.String, int, java.net.InetAddress, int)
+     */
+    public Socket createSocket(String host, int port, InetAddress clientHost,
+            int clientPort)
+        throws IOException, UnknownHostException
+    {   
+        // Wrap whats returned out of ARCSocketFactory w/ a recorder that 
+        // will capture all read and written on the socket.  Helps debugging.
+        this.socket = new ARCSocketFactoryTestSocket(
+                this.factory.createSocket(host, port, clientHost, clientPort));
+        return this.socket;
+    }
+    
     /**
      * Select tests to run.
      * 
@@ -281,8 +288,6 @@ public class ARCSocketFactoryTest
             this.in = new TeeInputStream(wrappedSocket.getInputStream(),
                 new File(getTmpDir(), IN_FILENAME), true);
         }
-        
-        
         
         /* (non-Javadoc)
          * @see java.net.Socket#getInputStream()
