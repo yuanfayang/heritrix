@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.scope;
 
+import java.io.File;
 import java.util.logging.Logger;
 
 import org.archive.crawler.framework.CrawlScope;
@@ -36,11 +37,11 @@ import org.archive.crawler.framework.CrawlScope;
  * CandidateURI/CrawlURI instamce, if that URI should be
  * scheduled for crawling.
  *
- * Dynamic information inherent in the discovery of the
+ * <p>Dynamic information inherent in the discovery of the
  * URI -- such as the path by which it was discovered --
  * may be considered.
  *
- * Dynamic information which requires the consultation
+ * <p>Dynamic information which requires the consultation
  * of external and potentially volatile information --
  * such as current robots.txt requests and the history
  * of attempts to crawl the same URI -- should NOT be
@@ -51,17 +52,30 @@ import org.archive.crawler.framework.CrawlScope;
  *
  */
 public class BroadScope extends CrawlScope {
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.BroadScope");
 
     /**
-     * @param name
+     * Constructor.
+     * 
+     * @param name Name of this crawlscope.
      */
     public BroadScope(String name) {
         super(name);
         setDescription(
-            "A scope for broad crawls. Crawls made with this scope will not be " +
-            "limited to the hosts or domains of it's seeds.");
+            "A scope for broad crawls. Crawls made with this scope will not" +
+            "be limited to the hosts or domains of it's seeds.");
+    }
+    
+    /**
+     * Override so can intercept creation of seed list making it be a
+     * non-caching seed list.
+     * 
+     * @param seedfile Seedfile to use as seed source.
+     * @param l Logger to use internally.
+     * @param caching True if seed list created is to cache seeds.
+     */
+    protected synchronized void createSeedlist(File seedfile, Logger l,
+            boolean caching) {
+        super.createSeedlist(seedfile, l, false);
     }
 
     /**
@@ -81,12 +95,5 @@ public class BroadScope extends CrawlScope {
      */
     protected boolean focusAccepts(Object o) {
         return true;
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.CrawlScope#refreshSeedsIteratorCache()
-     */
-    public void refreshSeedsIteratorCache() {
-        // We don't want the seeds to be cached for a broad crawl.
     }
 }

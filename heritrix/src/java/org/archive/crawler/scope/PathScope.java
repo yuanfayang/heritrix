@@ -24,6 +24,7 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -112,31 +113,32 @@ public class PathScope extends CrawlScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        UURI u = null;
-        if (o instanceof UURI) {
-            u = (UURI) o;
-        } else if (o instanceof CandidateURI) {
-            u = ((CandidateURI) o).getUURI();
-        }
+        UURI u = getUURI(o);
         if (u == null) {
             return false;
         }
-        Iterator iter = getSeedsIterator();
-        while (iter.hasNext()) {
-            UURI s = (UURI) iter.next();
-            if (isSameHost(s, u)) {
-                // Protect against non-parseable URIs. See
-                // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-                if (s.getPath() == null || u.getPath() == null) {
-                    continue;
-                }
-                if (s.getPath().regionMatches(0, u.getPath(), 0, 
-                    s.getPath().lastIndexOf('/'))) {
-                    // matches up to last '/'
-                    return true;
-                } else {
-                    // no match; try next seed
-                    continue;
+        // Get the seeds to refresh and then get an iterator inside a 
+        // synchronization block.  The seeds list may get updated during our
+        // iteration. This will throw a concurrentmodificationexception unless
+        // we synchronize.
+        List seeds = getSeedlist();
+        synchronized(seeds) {
+            for (Iterator i = seeds.iterator(); i.hasNext();) {
+                UURI s = (UURI) i.next();
+                if (isSameHost(s, u)) {
+                    // Protect against non-parseable URIs. See
+                    // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+                    if (s.getPath() == null || u.getPath() == null) {
+                        continue;
+                    }
+                    if (s.getPath().regionMatches(0, u.getPath(), 0, 
+                        s.getPath().lastIndexOf('/'))) {
+                        // matches up to last '/'
+                        return true;
+                    } else {
+                        // no match; try next seed
+                        continue;
+                    }
                 }
             }
         }
