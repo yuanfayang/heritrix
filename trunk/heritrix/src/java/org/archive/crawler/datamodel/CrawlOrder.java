@@ -320,10 +320,8 @@ public class CrawlOrder extends ModuleType {
     public String getUserAgent(CrawlURI curi) {
         if (caseFlattenedUserAgent == null) {
             try {
-                caseFlattenedUserAgent =
-                    ((String) httpHeaders
-                        .getAttribute(ATTR_USER_AGENT, curi))
-                        .toLowerCase();
+                caseFlattenedUserAgent = ((String) httpHeaders.
+                    getAttribute(ATTR_USER_AGENT, curi));
             } catch (AttributeNotFoundException e) {
                 logger.severe(e.getMessage());
             }
