@@ -42,8 +42,9 @@ import org.archive.crawler.framework.Processor;
 public class CrawlStateUpdater extends Processor implements
         CoreAttributeConstants, FetchStatusCodes {
 
-    public static int MAX_DNS_FETCH_ATTEMPTS = 3;
-
+    /**
+     * @param name
+     */
     public CrawlStateUpdater(String name) {
         super(name, "Crawl state updater");
     }
@@ -51,28 +52,7 @@ public class CrawlStateUpdater extends Processor implements
     protected void innerProcess(CrawlURI curi) {
         String scheme = curi.getUURI().getScheme().toLowerCase();
 
-        // if it's a dns entry set the expire time
-        if (scheme.equals("dns")) {
-            // if we've looked up the host update the expire time
-            if (!curi.getServer().getHost().hasBeenLookedUp()) {
-                // TODO: resolve several issues here:
-                //   (1) i don't think this if clause is ever reached;
-                //       won't every DNS uri that gets this far imply
-                //       hasBeenLookedUp will have been set?
-                //   (2) we don't want repeated successful attempts to
-                //       refetch a domain name, each time it expires,
-                //       to eventually exhaust the retries... so in
-                //       fact the retry count needs to be reset somewhere,
-                //       maybe at each success
-
-                // if we've tried too many times give up
-                if (curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS) {
-                    curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-                }
-            }
-            // If not dns make sure it's http, 'cause we don't know nuthin'
-            // else
-        } else if (scheme.equals("http") || scheme.equals("https")) {
+        if (scheme.equals("http") || scheme.equals("https")) {
             
             // update connection problems counter
             if(curi.getFetchStatus()==S_CONNECT_FAILED) {
