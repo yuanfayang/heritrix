@@ -29,4 +29,11 @@ public class CrawlerBehavior extends XMLConfig {
 		return getIntAt("//limits/max-toe-threads/@value");
 	}
 
+	/**
+	 * @return
+	 */
+	public String getUserAgent() {
+		return getStringAt("//http-headers/User-Agent");
+	}
+
 }

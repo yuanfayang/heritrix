@@ -14,7 +14,7 @@ import org.w3c.dom.Node;
  * @author Gordon Mohr
  */
 public class Processor extends XMLConfig {
-	CrawlController controller;
+	protected CrawlController controller;
 	Processor defaultNext;
 	
 	public void process(CrawlURI curi) {

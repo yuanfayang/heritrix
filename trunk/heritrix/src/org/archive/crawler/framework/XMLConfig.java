@@ -21,9 +21,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import org.apache.xpath.XPathAPI;
+import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.traversal.NodeIterator;
 import org.xml.sax.SAXException;
 
@@ -122,7 +124,7 @@ public class XMLConfig {
 	protected int getIntAt(String xpath) {
 
 			try {
-				return Integer.parseInt(XPathAPI.selectSingleNode(xNode,xpath).getNodeValue());
+				return Integer.parseInt(textOf(XPathAPI.selectSingleNode(xNode,xpath)));
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -134,6 +136,42 @@ public class XMLConfig {
 				e.printStackTrace();
 			}
 			return -1;
+	}
+
+	/**
+	 * @param node
+	 * @return
+	 */
+	private String textOf(Node node) {
+		if (node instanceof Attr) {
+			return node.getNodeValue();
+		}
+		String value = ""; 
+		NodeList children = node.getChildNodes(); 
+		for(int i = 0; i < children.getLength(); i++ ) { 
+		  Node ci = children.item(i); 
+		  if( ci.getNodeType() == Node.TEXT_NODE ) { 
+			value = value + ci.getNodeValue(); 
+		  }
+		}
+		return value;
+	}
+
+	protected String getStringAt(String xpath) {
+
+			try {
+				return textOf(XPathAPI.selectSingleNode(xNode,xpath));
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (DOMException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (TransformerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
 	}
 	
 	

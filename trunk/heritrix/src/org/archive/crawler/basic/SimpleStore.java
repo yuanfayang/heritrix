@@ -76,14 +76,16 @@ public class SimpleStore implements URIStore {
 	 * 
 	 */
 	public void wakeReadyQueues(long now) {
-		if(snoozeQueues.isEmpty()) {
-			return;
-		}
-		while(((URIStoreable)snoozeQueues.first()).getWakeTime()<now) {
+		while(!snoozeQueues.isEmpty()&&((URIStoreable)snoozeQueues.first()).getWakeTime()<=now) {
 			URIStoreable awoken = (URIStoreable)snoozeQueues.first();
 			snoozeQueues.remove(awoken);
 			if (awoken instanceof KeyedQueue) {
 				assert inProcessMap.get(awoken.getClassKey()) == null : "false ready: class peer still in process";
+				if(((KeyedQueue)awoken).isEmpty()) {
+					// just drop queue
+					allClassQueuesMap.remove(((KeyedQueue)awoken).getClassKey());
+					return;
+				}
 				readyClassQueues.add(awoken);
 				awoken.setStoreState(URIStoreable.READY);
 			} else if (awoken instanceof CrawlURI) {
@@ -108,7 +110,7 @@ public class SimpleStore implements URIStore {
 	 */
 	public CrawlURI dequeueFromReady() {
 		KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
-		CrawlURI readyCuri = (CrawlURI) firstReadyQueue.getFirst();
+		CrawlURI readyCuri = (CrawlURI) firstReadyQueue.removeFirst();
 		return readyCuri;
 	}
 
@@ -133,6 +135,31 @@ public class SimpleStore implements URIStore {
 
 	/**
 	 * 
+	 * @return
+	 */
+	public void noteProcessingDone(CrawlURI curi) {
+		assert inProcessMap.get(curi.getClassKey()) == curi : "CrawlURI returned not in process";
+		
+		inProcessMap.remove(curi.getClassKey());
+		
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+		if ( classQueue == null ) {
+			return;
+		}
+		assert classQueue.getStoreState() == URIStoreable.HELD : "odd state for classQueue of remitted CrawlURI";
+		heldClassQueues.remove(classQueue);
+		if(classQueue.isEmpty()) {
+			// just drop it
+			allClassQueuesMap.remove(classQueue.getClassKey());
+			return; 
+		}
+		readyClassQueues.add(classQueue);
+		classQueue.setStoreState(URIStoreable.READY);
+		// TODO: since usually, queue will be snoozed, this juggling is usually superfluous
+	}
+	
+	/**
+	 * 
 	 */
 	protected CrawlURI dequeueFromPending() {
 		if (pendingQueue.isEmpty()) {
@@ -142,8 +169,9 @@ public class SimpleStore implements URIStore {
 	}
 
 	/**
+	 * 
 	 * @param curi
-	 * @return
+	 * @return true if enqueued
 	 */
 	public boolean enqueueIfNecessary(CrawlURI curi) {
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
@@ -157,6 +185,7 @@ public class SimpleStore implements URIStore {
 		if (classmateInProgress != null) {
 			// must create queue, and enqueue
 			classQueue = new KeyedQueue(curi.getClassKey());
+			allClassQueuesMap.put(classQueue.getClassKey(), classQueue);
 			enqueueToHeld(classQueue);
 			classQueue.add(curi);
 			curi.setStoreState(classQueue.getStoreState());
@@ -198,4 +227,101 @@ public class SimpleStore implements URIStore {
 		return heldClassQueues;
 	}
 
+	/**
+	 * @param prereq
+	 */
+	public void insertAtHead(UURI uuri, int dist) {
+		if(filteredOut(uuri)) return;
+		if(allCuris.get(uuri)!=null) {
+			// already inserted
+			// TODO: perhaps yank to front?
+			return;
+		}
+		CrawlURI curi = new CrawlURI(uuri);
+		curi.getAList().putInt("distance-from-seed",dist);
+		allCuris.put(uuri,curi);
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+		if ( classQueue == null ) {
+			pendingQueue.addFirst(curi);
+			curi.setStoreState(URIStoreable.PENDING);
+			return;
+		}
+		classQueue.addFirst(curi);
+		curi.setStoreState(classQueue.getStoreState());
+	}
+
+	/**
+	 * @param uuri
+	 * @return
+	 */
+	private boolean filteredOut(UURI uuri) {
+		// for now discard all non-http
+		if (uuri==null) return true;
+		return !uuri.getUri().getScheme().equals("http");
+	}
+
+	/**
+	 * @param curi
+	 */
+	public void reinsert(CrawlURI curi) {
+		if(enqueueIfNecessary(curi)) {
+			// added to classQueue
+			return;
+		}
+		// no classQueue
+		pushToPending(curi);
+	}
+
+	/**
+	 * @param curi
+	 */
+	private void pushToPending(CrawlURI curi) {
+		pendingQueue.addFirst(curi);
+		curi.setStoreState(URIStoreable.PENDING);
+	}
+
+	/**
+	 * @param object
+	 * @param l
+	 */
+	public void snoozeQueueUntil(Object classKey, long wake) {
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(classKey);
+		if ( classQueue == null ) {
+			classQueue = new KeyedQueue(classKey);
+			allClassQueuesMap.put(classQueue.getClassKey(),classQueue);
+		} else {
+			assert classQueue.getStoreState() == URIStoreable.READY : "snoozing queue should have been READY";
+			readyClassQueues.remove(classQueue);
+		}
+		classQueue.setWakeTime(wake);
+		snoozeQueues.add(classQueue);
+		classQueue.setStoreState(URIStoreable.SNOOZED);
+	}
+
+	/**
+	 * add, without necessarily adding to front of queues
+	 * (in fact, currently adds at back
+	 * 
+	 * @param embed
+	 * @param i
+	 */
+	public void insert(UURI uuri, int dist) {
+		if(filteredOut(uuri)) return;
+		if(allCuris.get(uuri)!=null) {
+			// already inserted
+			// TODO: perhaps yank to front?
+			return;
+		}
+		CrawlURI curi = new CrawlURI(uuri);
+		curi.getAList().putInt("distance-from-seed",dist);
+		allCuris.put(uuri,curi);
+		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+		if ( classQueue == null ) {
+			pendingQueue.addLast(curi);
+			curi.setStoreState(URIStoreable.PENDING);
+			return;
+		}
+		classQueue.addLast(curi);
+		curi.setStoreState(classQueue.getStoreState());
+	}
 }

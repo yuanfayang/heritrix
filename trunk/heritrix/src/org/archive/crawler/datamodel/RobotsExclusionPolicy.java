@@ -8,12 +8,9 @@ package org.archive.crawler.datamodel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-
-import org.archive.crawler.io.VirtualBuffer;
 
 /**
  * expiry handled outside, in CrawlHost
@@ -30,10 +27,7 @@ public class RobotsExclusionPolicy {
 	/**
 	 * @param vb
 	 */
-	public static RobotsExclusionPolicy policyFor(VirtualBuffer vb) {
-		BufferedReader reader = new BufferedReader(
-			new InputStreamReader(
-				vb.getInputStream()));
+	public static RobotsExclusionPolicy policyFor(BufferedReader reader) {
 		String read;
 		ArrayList current = null;
 		LinkedList userAgents = new LinkedList();

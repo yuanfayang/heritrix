@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.net.URI;
+
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.Processor;
 
@@ -27,6 +29,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI implements URIStoreable {
+	private UURI baseUri;
 	AList alist = new HashtableAList();
 	UURI uuri; 
 	Processor nextProcessor;
@@ -104,4 +107,68 @@ public class CrawlURI implements URIStoreable {
 	}
 	
 	
+	/**
+	 * @return
+	 */
+	public CrawlHost getHost() {
+		return host;
+	}
+
+	/**
+	 * @param host
+	 */
+	public void setHost(CrawlHost host) {
+		this.host = host;
+	}
+
+	/**
+	 * 
+	 */
+	public void cancelFurtherProcessing() {
+		nextProcessor = null;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void setPrerequisiteUri(String string) {
+		alist.putString("prerequisite-uri",string);
+	}
+
+	/**
+	 * @param object
+	 */
+	public void setDelayFactor(int f) {
+		alist.putInt("delay-factor",f);
+	}
+
+	/**
+	 * 
+	 */
+	public String getPrerequisiteUri() {
+		return alist.getString("prerequisite-uri");
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "CrawlURI("+getUURI()+")";
+	}
+	
+	/**
+	 * 
+	 */
+	public URI getBaseUri() {
+		if (baseUri != null) {
+			return baseUri.getUri();
+		}
+		if (!getAList().containsKey("html-base-href")) {
+			return getUURI().getUri();
+		}
+		baseUri = UURI.createUURI(getAList().getString("html-base-href"));
+		return getBaseUri();
+	}
+
+
 }

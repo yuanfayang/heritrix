@@ -8,6 +8,7 @@ package org.archive.crawler.datamodel;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Logger;
 
 /**
  * Usable URI: a legal URI for our purposes.
@@ -22,6 +23,8 @@ import java.net.URISyntaxException;
  *
  */
 public class UURI {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.UURI");
+
 	java.net.URI uri;
 	
 	public static UURI createUURI(String s) {
@@ -170,6 +173,20 @@ public class UURI {
 	 */
 	public int hashCode() {
 		return uri.hashCode();
+	}
+
+	/**
+	 * @param string
+	 * @param uri
+	 * @return
+	 */
+	public static UURI createUURI(String string, URI uri) {
+		try {
+			return createUURI(normalize(string,uri));
+		} catch (URISyntaxException e) {
+			logger.info("BAD URI: "+string+" from "+uri);
+			return null;
+		}
 	}
 
 }
