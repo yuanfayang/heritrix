@@ -56,6 +56,10 @@ import org.archive.util.TextUtils;
  */
 public class UURI extends URI
 implements CharSequence, Serializable {
+    /**
+     * Consider URIs too long for IE as illegal.
+     */
+    public final static int MAX_URL_LENGTH = 2083;
     
     public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
 
