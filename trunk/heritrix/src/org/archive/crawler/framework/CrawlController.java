@@ -61,13 +61,16 @@ public class CrawlController extends Thread{
 	
 	private String sExit; 
 
+	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
+	
+	public static final int DEFAULT_MASTER_THREAD_PRIORITY = Thread.NORM_PRIORITY + 1;
+
 	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
 	private Thread controlThread;
 	private ToePool toePool;
 	private URIFrontier frontier;
 	private boolean shouldCrawl;
 
-	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
 
 	private File disk;
 	private File scratchDisk;
@@ -291,6 +294,7 @@ public class CrawlController extends Thread{
 		assert controlThread == null: "non-null control thread";
 		controlThread = Thread.currentThread();
 		controlThread.setName("crawlControl");
+		controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
 		while(shouldCrawl()) {
 			 CrawlURI curi = frontier.next(timeout);
 			 if(curi != null) {
