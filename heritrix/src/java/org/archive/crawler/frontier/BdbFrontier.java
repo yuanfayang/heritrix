@@ -100,12 +100,17 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
     /** all per-class queues whose first item may be handed out */
     protected LinkedQueue readyClassQueues = new LinkedQueue(); // of KeyedQueues
+    /** count of items in readyClassQueues */
+    protected int readyQueueCount = 0;
 
     /** daemon to wake (put in ready queue) WorkQueues at the appropriate time */
     protected ClockDaemon daemon = new ClockDaemon();
 
     public BdbFrontier(String name) {
-        this(name, "BdbFrontier. NOT YET FUNCTIONAL. DO NOT USE.");
+        this(name, "BdbFrontier. EXPERIMENTAL - MAY NOT BE RELIABLE. " +
+                "A Frontier using BerkeleyDB Java Edition Databases for " +
+                "persistence to disk. Not yet fully tested or " +
+                "feature-equivalent to classic HostQueuesFrontier.");
     }
 
     /**
@@ -139,7 +144,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @return the created BdbMultiQueue
      */
     private BdbMultiQueue createMultiQueue() {
-        return new BdbMultiQueue(controller.getStateDisk());
+        return new BdbMultiQueue(new File(controller.getStateDisk(),"uriQueues"));
     }
 
     /**
@@ -189,18 +194,31 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
         applySpecialHandling(curi);
 
-        incrementQueuedCount();
+        incrementQueuedUriCount();
         BdbWorkQueue wq = getQueueFor(curi.getClassKey());
         synchronized (wq) {
             wq.enqueue(curi);
-            if (wq.hasBecomeReady()) {
-                try {
-                    readyClassQueues.put(wq);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+            if(!wq.isHeld()) {
+                readyQueue(wq);
             }
+        }
+        // Update recovery log.
+        this.controller.recover.added(curi);
+    }
+
+    /**
+     * Put the given queue on the readyClassQueues queue
+     * @param wq
+     */
+    private void readyQueue(BdbWorkQueue wq) {
+        try {
+            readyClassQueues.put(wq);
+            wq.setHeld();
+            readyQueueCount++;
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            System.err.println("unable to ready queue "+wq);
         }
     }
 
@@ -223,13 +241,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         return wq;
     }
 
-    /**
-     * Increment the running count of queued URIs. Synchronized
-     * because operations on longs are not atomic. 
-     */
-    private synchronized void incrementQueuedCount() {
-        queuedCount++;
-    }
+
 
     /**
      * Return the next CrawlURI to be processed (and presumably
@@ -251,10 +263,17 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
             BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(5000);
             if (readyQ != null) {
-                CrawlURI curi = readyQ.peek();
-                if (curi != null) {
-                    noteAboutToEmit(curi, readyQ);
-                    return curi;
+                synchronized(readyQ) {
+                    readyQueueCount--;
+                    CrawlURI curi = readyQ.peek();
+                    if (curi != null) {
+                        noteAboutToEmit(curi, readyQ);
+                        return curi;
+                    } else {
+                        // readyQ is empty and ready: release held, allowing
+                        // subsequent enqueues to ready
+                        readyQ.clearHeld();
+                    }
                 }
             }
 
@@ -301,17 +320,13 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             // Consider errors which can be retried, leaving uri atop queue
             long delay_sec = retryDelayFor(curi);
             wq.unpeek();
-            if (delay_sec > 0) {
-                long delay = delay_sec * 1000;
-                wq.snooze();
-                daemon.executeAfterDelay(delay, new WakeTask(wq));
-            } else {
-                try {
-                    readyClassQueues.put(wq);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    System.err.println("unable to ready queue "+wq);
-                    e.printStackTrace();
+            synchronized(wq) { // TODO: possibly narrow this to just cover snooze()
+                if (delay_sec > 0) {
+                    long delay = delay_sec * 1000;
+                    wq.snooze();
+                    daemon.executeAfterDelay(delay, new WakeTask(wq));
+                } else {
+                    readyQueue(wq);
                 }
             }
             // Let everyone interested know that it will be retried.
@@ -326,14 +341,14 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
         if (curi.isSuccess()) {
             totalProcessedBytes += curi.getContentSize();
-            successCount++;
+            incrementSucceededFetchCount();
             // Let everyone know in case they want to do something before we strip the curi.
             controller.fireCrawledURISuccessfulEvent(curi);
             controller.recover.finishedSuccess(curi);
         } else if (isDisregarded(curi)) {
             // Check for codes that mean that while we the crawler did
             // manage to try it, it must be disregarded for some reason.
-            disregardedCount++;
+            incrementDisregardedUriCount();
             //Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
             // if exception, also send to crawlErrors
@@ -354,21 +369,17 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
                         .toString(), array);
             }
 
-            this.failedCount++;
+            incrementFailedFetchCount();
             this.controller.recover.finishedFailure(curi);
         }
 
         long delay_ms = politenessDelayFor(curi);
-        if (delay_ms > 0) {
-            wq.snooze();
-            daemon.executeAfterDelay(delay_ms, new WakeTask(wq));
-        } else {
-            try {
-                readyClassQueues.put(wq);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                System.err.println("unable to ready queue "+wq);
-                e.printStackTrace();
+        synchronized(wq) { // TODO: possibly narrow this to just cover snooze()
+            if (delay_ms > 0) {
+                wq.snooze();
+                daemon.executeAfterDelay(delay_ms, new WakeTask(wq));
+            } else {
+                readyQueue(wq);
             }
         }
 
@@ -433,7 +444,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public String oneLineReport() {
         StringBuffer rep = new StringBuffer();
-        rep.append(allQueues.size() + " queues: ");
+        rep.append(allQueues.size() + " queues: "+ readyQueueCount + " ready");
         // TODO: improve based on new backing queues
         return rep.toString();
     }
@@ -454,11 +465,11 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
                 + controller.getOrder().getCrawlOrderName() + "\n");
         rep.append("\n -----===== STATS =====-----\n");
         rep.append(" Discovered:    " + discoveredUriCount() + "\n");
-        rep.append(" Queued:        " + queuedCount + "\n");
+        rep.append(" Queued:        " + queuedUriCount() + "\n");
         rep.append(" Finished:      " + finishedUriCount() + "\n");
-        rep.append("  Successfully: " + successCount + "\n");
-        rep.append("  Failed:       " + failedCount + "\n");
-        rep.append("  Disregarded:  " + disregardedCount + "\n");
+        rep.append("  Successfully: " + succeededFetchCount() + "\n");
+        rep.append("  Failed:       " + failedFetchCount() + "\n");
+        rep.append("  Disregarded:  " + disregardedUriCount() + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.count()
                 + "\n");
@@ -476,7 +487,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         //treat as disregarded
         controller.fireCrawledURIDisregardEvent(curi);
         log(curi);
-        disregardedCount++;
+        incrementDisregardedUriCount();
         curi.stripToMinimal();
         curi.processingCleanup();
     }
@@ -545,13 +556,13 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
         protected SerialBinding crawlUriBinding;
 
-        ThreadLocal cursor = new ThreadLocal();
 
         /**
          * @param stateDisk
          */
         public BdbMultiQueue(File stateDisk) {
             // Open the environment. Allow it to be created if it does not already exist. 
+            stateDisk.mkdirs();
             try {
                 EnvironmentConfig envConfig = new EnvironmentConfig();
                 envConfig.setAllowCreate(true);
@@ -567,7 +578,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
                 classCatalog = new StoredClassCatalog(classCatalogDB);
                 crawlUriBinding = new SerialBinding(classCatalog,
                         CrawlURI.class);
-                // cursor = pendingUrisDB.openCursor(null,null);
             } catch (DatabaseException dbe) {
                 // TODO: handle
                 dbe.printStackTrace();
@@ -588,30 +598,15 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          */
         public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
             DatabaseEntry result = new DatabaseEntry();
-            getCursor().getSearchKeyRange(headKey, result, null);
+            Cursor cursor = pendingUrisDB.openCursor(null,null);
+            cursor.getSearchKeyRange(headKey, result, null);
+            cursor.close();
             CrawlURI retVal = (CrawlURI) crawlUriBinding.entryToObject(result);
             retVal.setHolderKey(headKey);
             return retVal;
         }
 
-        /**
-         * Get a thread-specific, lazy-initialized Cursor. 
-         * 
-         * @return
-         */
-        private Cursor getCursor() {
-            Cursor c = (Cursor) cursor.get();
-            if (c == null) {
-                try {
-                    c = pendingUrisDB.openCursor(null, null);
-                } catch (DatabaseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                cursor.set(c);
-            }
-            return c;
-        }
+
 
         /**
          * Put the given CrawlURI in at the appropriate place. 
@@ -675,7 +670,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          */
         public void close() {
             try {
-                //cursor.close();
                 pendingUrisDB.close();
                 classCatalogDB.close();
                 myDbEnvironment.close();
@@ -700,10 +694,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         
         /** total number of stored items */
         long count = 0;
-
-        /** whether the queue has recently become ready */
-        boolean hasBecomeReady = false;
-
+        
         /** whether the queue is snoozed (held unready even if items
          *  available */
         boolean snoozed = false;
@@ -714,6 +705,15 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         /** key coordinate to begin seeks, to find queue head */
         byte[] origin; 
 
+        // useful for reporting
+        /** last URI enqueued */
+        private String lastQueued; 
+        /** last URI peeked */
+        private String lastPeeked;
+
+        /** whether queue is already in lifecycle stage */
+        boolean isHeld = false; 
+        
         /**
          * Create a virtual queue inside the given BdbMultiQueue 
          * 
@@ -726,6 +726,31 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             origin = new byte[16];
             long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
             ArchiveUtils.longIntoByteArray(fp, origin, 0);
+        }
+
+        /**
+         * Clear isHeld to false
+         */
+        public void clearHeld() {
+            isHeld = false;
+        }
+
+        /**
+         * Whether the queue is already in a lifecycle stage --
+         * such as ready, in-progress, snoozed -- and thus should
+         * not be redundantly inserted to readyClassQueues
+         * 
+         * @return isHeld
+         */
+        public boolean isHeld() {
+            return isHeld;
+        }
+
+        /**
+         * Set isHeld to true
+         */
+        public void setHeld() {
+            isHeld = true; 
         }
 
         /**
@@ -775,6 +800,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             if (peekItem == null && count > 0) {
                 try {
                     peekItem = masterQueue.get(new DatabaseEntry(origin));
+                    lastPeeked = peekItem.getURIString();
                 } catch (DatabaseException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
@@ -792,25 +818,12 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         public void enqueue(CrawlURI curi) {
             try {
                 masterQueue.put(curi);
+                lastQueued = curi.getURIString();
             } catch (DatabaseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             count++;
-            if (count == 1 && snoozed == false) {
-                hasBecomeReady = true;
-            }
-        }
-
-        /**
-         * check-and-clear whether queue has just become ready
-         * 
-         * @return whether the queue had just become ready
-         */
-        public boolean hasBecomeReady() {
-            boolean retVal = hasBecomeReady;
-            hasBecomeReady = false;
-            return retVal;
         }
 
         /**
@@ -847,13 +860,9 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          * @see java.lang.Runnable#run()
          */
         public void run() {
-            try {
+            synchronized(waker) {
                 waker.unsnooze();
-                readyClassQueues.put(waker);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                System.err.println("Queue not woken: " + waker);
+                readyQueue(waker);
             }
         }
 
