@@ -153,10 +153,10 @@ public class SimpleHandler
     }
     
     /** 
-     * Loads the selected order file (as specified by the orderFile attribute)
-     * as a crawlOrder. 
+     * Loads the default crawl order file (as specified by the orderFile attribute) from disk
+     * as a crawlOrder. Useful if it has changed on disk.  Also used at startup.
      */
-    private void loadCrawlOrder() throws InitializationException
+    public void loadCrawlOrder() throws InitializationException
     { 
         crawlOrder = CrawlOrder.readFromFile(orderFile);
     }
@@ -614,6 +614,13 @@ public class SimpleHandler
         }
     }
 
+	/**
+	 * Returns the filename (with path) of the default order file.
+	 * @return the filename (with path) of the default order file.
+	 */
+	public String getDefaultOrderFileName(){
+		return orderFile;
+	}
 
     /**
      * @param jobUID Job to remove.

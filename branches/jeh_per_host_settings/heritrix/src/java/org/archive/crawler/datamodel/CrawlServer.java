@@ -32,6 +32,7 @@ import java.io.Serializable;
 import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.io.ReplayInputStream;
 
 /**
@@ -44,6 +45,7 @@ public class CrawlServer implements Serializable {
 	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 3*(1000*60*60*24); // three days
 	String server; // actually, host+port in the http case
 	CrawlHost host;
+    private CrawlerSettings settings;
 	RobotsExclusionPolicy robots;
 	long robotsExpires = -1;
 	Checksum robotstxtChecksum;
@@ -190,4 +192,17 @@ public class CrawlServer implements Serializable {
 //	 	server = (String)reads.get("server",null);
 //	 }
 
+    /**
+     * @return
+     */
+    public CrawlerSettings getSettings() {
+        return settings;
+    }
+
+    /**
+     * @param settings
+     */
+    public void setSettings(CrawlerSettings settings) {
+        this.settings = settings;
+    }
 }

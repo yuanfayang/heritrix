@@ -24,6 +24,8 @@
 package org.archive.crawler.datamodel;
 
 import java.util.HashMap;
+
+import org.archive.crawler.framework.CrawlController;
 import org.xbill.DNS.FindServer;
 
 /**
@@ -34,13 +36,19 @@ import org.xbill.DNS.FindServer;
  *
  */
 public class ServerCache {
+    private final CrawlController controller;
 	private HashMap servers = new HashMap(); // hostname[:port] -> CrawlServer
 	private HashMap hosts = new HashMap(); // hostname -> CrawlHost
 	
+    public ServerCache(CrawlController controller) {
+        this.controller = controller;
+    }
+    
 	public CrawlServer getServerFor(String h) {
 		CrawlServer cserver = (CrawlServer) servers.get(h);
 		if (cserver==null) {
 			cserver = new CrawlServer(h);
+            //cserver.setSettings(controller.getSettingsHandler().);
 			servers.put(h,cserver);
 		}
 		String hostname = cserver.getHostname();

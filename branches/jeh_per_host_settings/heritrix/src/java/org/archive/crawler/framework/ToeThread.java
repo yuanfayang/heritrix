@@ -207,34 +207,53 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		{
 			// That means we finished something after we last started something
 			// or in other words we are not working on anything.
-			String time = Long.toString((now-lastFinishTime)/10);
-			int timelength = time.length();
 			rep.append("     Status:    WAITING\n");
-			if(timelength>3)
+
+			long time = now-lastFinishTime;
+			rep.append("     Finished:  ");
+			if(time>3600000)
 			{
-				time = time.substring(0,(timelength-3))+"."+time.substring((timelength-3),timelength)+" sek ago";			
+				//got hours.
+				rep.append(time/3600000 + " hours., ");
+				time = time % 3600000;
 			}
-			else
+			if(time > 60000)
 			{
-				time = time + " msek ago";
+				rep.append(time/60000 + " min., ");
+				time = time % 60000;
 			}
-			rep.append("     Finished:  "+time+"\n");
+			if(time > 1000)
+			{
+				rep.append(time/1000 + " sec. and ");
+				time = time % 60;
+			}
+			rep.append(time + " msek ago\n");
 		}
 		else if(lastStartTime > 0)
 		{
 			// We are working on something
 			rep.append("     Status:    ACTIVE\n");
-			String time = Long.toString((now-lastStartTime)/10);
-			int timelength = time.length();
-			if(timelength>3)
+
+			long time = now-lastStartTime;
+			rep.append("     Started:   ");
+			if(time>3600000)
 			{
-				time = time.substring(0,(timelength-3))+"."+time.substring((timelength-3),timelength)+" sek ago";			
+				//got hours.
+				rep.append(time/3600000 + " hours., ");
+				time = time % 3600000;
 			}
-			else
+			if(time > 60000)
 			{
-				time = time + " msek ago";
+				rep.append(time/60000 + " min., ");
+				time = time % 60000;
 			}
-			rep.append("     Started:   "+time+"\n");
+			if(time > 1000)
+			{
+				rep.append(time/1000 + " sec. and ");
+				time = time % 60;
+			}
+			rep.append(time + " msek ago\n");
+
 			if(currentCuri!=null)
 			{
 				rep.append("     CrawlURI:  "+currentCuri.getURIString()+"\n");
