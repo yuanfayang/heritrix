@@ -22,7 +22,7 @@
         <url-pattern>/</url-pattern> 
     </filter-mapping> 
     <listener>
-        <listener-class>org.archive.crawler.admin.ui.WebappLifecycle
+        <listener-class>org.archive.crawler.WebappLifecycle
         </listener-class>
     </listener>
     <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
