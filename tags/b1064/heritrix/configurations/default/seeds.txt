@@ -1,0 +1,5 @@
+# The following URI points at the Heritrix test garden.  
+# This is a good place to test your crawler's configuration, 
+# as well as any other changes you make to the crawler,
+# before you put it into production.
+http://crawl08.archive.org/
