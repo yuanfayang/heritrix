@@ -59,7 +59,20 @@ public class UURITest extends TestCase {
         String uuriStr = uuri.toString();
         assertTrue(ESCAPED_URISTR.equals(uuriStr));
     }
-
+    
+    public final void testNoScheme() {
+        boolean expectedException = false;
+        String uuri = "www.loc.gov/rr/european/egw/polishex.html";
+        try {
+            new UURI(uuri);
+        } catch (URIException e) {
+            // Expected exception.
+            expectedException = true;
+        }
+        assertTrue("Didn't get expected exception: " + uuri, 
+            expectedException); 
+    }
+    
     public final void testRelative() throws URIException {
         UURI uuriTgt = new UURI("http://archive.org:83/home.html");
         UURI uri = new UURI("http://archive.org:83/one/two/three.html");
@@ -184,10 +197,8 @@ public class UURITest extends TestCase {
 
     /**
      * Two dots for igor.
-     * 
-     * @throws URIException
      */
-    public final void testTwoDots() throws URIException {
+    public final void testTwoDots() {
         boolean expectedException = false;
         try {
             new UURI(
