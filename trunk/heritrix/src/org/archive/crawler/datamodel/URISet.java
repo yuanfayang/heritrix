@@ -4,9 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.framework;
-
-import org.archive.crawler.datamodel.*;
+package org.archive.crawler.datamodel;
 
 
 /**
@@ -21,13 +19,14 @@ import org.archive.crawler.datamodel.*;
  *
  */
 public interface URISet /* extends Set ??? */ {
+	public long size();
 	public boolean contains(UURI u);
 	public boolean contains(CrawlURI curi);
 	
 	public void add(UURI u);
 	public void remove(UURI u);
 	
-	public void add(CrawlURI curi);
-	public void remove(CrawlURI curi);
+	public void add(CrawlURI curi); // convenience; only really adds the UURI
+	public void remove(CrawlURI curi); // convenience; only really adds the UURI
 
 }
