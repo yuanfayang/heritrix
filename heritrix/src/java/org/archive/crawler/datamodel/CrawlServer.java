@@ -177,7 +177,7 @@ public class CrawlServer implements Serializable {
      * @return true if the robots policy is expired.
      */
     public boolean isRobotsExpired() {
-        if (robotsFetched >= 0 &&
+        if (robotsFetched == -1 ||
                 getRobotsExpires() < System.currentTimeMillis()) {
             return true;
         }
