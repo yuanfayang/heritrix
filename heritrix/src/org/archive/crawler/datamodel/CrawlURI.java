@@ -39,13 +39,13 @@ public class CrawlURI
 	private Object state;   // state within scheduling/store/selector
 	private long wakeTime; // if "snoozed", when this CrawlURI may awake
 	private long dontRetryBefore = -1;
-	private int threadNumber;
 
 	// Processing progress
 	Processor nextProcessor;
 	private int fetchStatus = 0;	// default to unattempted
 	private int deferrals = 0;     // count of postponements for prerequisites
 	private int fetchAttempts = 0; // the number of fetch attempts that have been made	
+	private int threadNumber;
 
 	// flexible dynamic attributes
 	private AList alist = new HashtableAList();
@@ -53,7 +53,7 @@ public class CrawlURI
 	// dynamic context
 	private CrawlURI via; // curi that led to this (lowest hops from seed)
 	private int linkHopCount = -1; // from seeds
-	private int embedHopCount = -1; // from a sure link
+	private int embedHopCount = -1; // from a sure link; reset upon any link traversal
 
 ////////////////////////////////////////////////////////////////////
 	CrawlServer server;
@@ -395,8 +395,9 @@ public class CrawlURI
 	 */
 	public void setViaLinkFrom(CrawlURI sourceCuri) {
 		via = sourceCuri;
+		// reset embedCount -- but only back to 1 if >0, so special embed handling still applies
+		embedHopCount = (embedHopCount > 0) ? 1 : 0;
 		int candidateLinkHopCount = sourceCuri.getLinkHopCount()+1;
-		embedHopCount = 0;
 		if (linkHopCount == -1) {
 			linkHopCount = candidateLinkHopCount;
 			return;
@@ -443,6 +444,14 @@ public class CrawlURI
 	 */
 	public int getLinkHopCount() {
 		return linkHopCount;
+	}
+
+	/**
+	 * 
+	 */
+	public void markAsSeed() {
+		linkHopCount = 0;
+		embedHopCount = 0;
 	}
 
 }

@@ -104,6 +104,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			return;
 		}
 		CrawlURI curi = new CrawlURI(uuri);
+		curi.markAsSeed();
 		//curi.getAList().putInt("distance-from-seed",0);
 		allCuris.put(uuri,curi);
 		pendingQueue.addLast(curi);
