@@ -357,9 +357,25 @@ public class XMLConfig {
 	public long getLongAt(String xpath, long defaultValue) {
 		// TODO possibly mimic the caching that happens for Integers
 		String n = getStringAt(xpath);
-		long l;
 		if (n != null) {
 			return Long.parseLong(n);
+		}
+		return defaultValue;
+	}
+	
+	/**
+	 * Retrieve a float value from the given xpath;
+	 * return the supplied default if none found or other error occurs. 
+	 * 
+	 * @param xpath
+	 * @param defaultValue
+	 * @return
+	 */
+	public float getFloatAt(String xpath, float defaultValue) {
+		// TODO possibly mimic the caching that happens for Integers
+		String n = getStringAt(xpath);
+		if (n != null) {
+			return Float.parseFloat(n);
 		}
 		return defaultValue;
 	}
