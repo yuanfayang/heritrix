@@ -26,10 +26,14 @@ import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.management.AttributeNotFoundException;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.PaddingStringBuffer;
 import org.archive.util.TextUtils;
 
 /**
@@ -52,16 +56,19 @@ import org.archive.util.TextUtils;
  * @see org.archive.crawler.datamodel.CrawlURI#addSpeculativeEmbed(String)
  */
 public class ExtractorUniversal extends Processor implements CoreAttributeConstants{
+    private static String ATTR_MAX_DEPTH_BYTES = "max-depth-bytes";
+    /** Default value for how far into an unknown document we should scan - 10k*/
+    private static Long DEFAULT_MAX_DEPTH_BYTES = new Long(10240);
 
-    private static String XP_MAX_DEPTH_BYTES = "@max-depth-bytes";
-    /** Default value for how far into an unknown document we should scan - 10k<br>
-     *  A value of 0 or lower will disable this.
+    /**
+     * A pattern to determine if a string might be a URL.
+     * 
+     * Has an internal dot or some slash, begins and ends with either '/' or a word-char
+     * <br>
+     * NOTE: Finds plenty of false postitives.
      */
-    private static long DEFAULT_MAX_DEPTH_BYTES = 10240;
-
-    private static String XP_MAX_URL_LENGTH = "@max-url-length";
-    /** Maximum length for a URI that we try to match.*/
-    private static long DEFAULT_MAX_URL_LENGTH = 2083;
+    static final Pattern LIKELY_URL_EXTRACTOR = Pattern.compile(
+        "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)"); //TODO: IMPROVE THIS    
 
     /**
      * Matches any string that begins with http:// or https:// followed by 
@@ -342,6 +349,15 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted= 0;
 
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorUniversal(String name) {
+        super(name, "Universial extractor");
+        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES, "Max depth in bytes", DEFAULT_MAX_DEPTH_BYTES));
+    }
+
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
      */
@@ -365,60 +381,41 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
             long counter = 0;
-            long maxdepth = getLongAt(XP_MAX_DEPTH_BYTES, DEFAULT_MAX_DEPTH_BYTES);
-            if(maxdepth<=0){
-                maxdepth = Long.MAX_VALUE;
-            }
-            long maxURLLength = getLongAt(XP_MAX_URL_LENGTH, DEFAULT_MAX_URL_LENGTH);
-            boolean foundDot = false;
-            while(ch != -1 && ++counter <= maxdepth){   
-                
-                if(lookat.length()>maxURLLength){
-                    //Exceeded maximum length of a URL. Start fresh.
-                    lookat = new StringBuffer();
-                    foundDot = false;
-                }
-                else if(isURLableChar(ch)){
+            long maxdepth = ((Long) getAttribute(ATTR_MAX_DEPTH_BYTES, curi)).longValue();
+            while(ch != -1 && counter++ <= maxdepth){   
+                if(isURLableChar(ch))
+                {
                     //Add to buffer.
-                    if(ch == 46){
-                        // Current character is a dot '.'
-                        foundDot = true;
-                    }
                     lookat.append((char)ch);
-                } else if(lookat.length() > 3 && foundDot) {
+                } else if(lookat.length() > 3) {
                     // It takes a bare mininum of 4 characters to form a URL
                     // Since we have at least that many let's try link extraction.
-                    String newURL = lookat.toString();
-                    if(looksLikeAnURL(newURL))
+                    Matcher uri = TextUtils.getMatcher(LIKELY_URL_EXTRACTOR, lookat.toString());
+                    if(looksLikeAnURL(lookat.toString()))
                     {
                         // Looks like we found something.
-                        
-                        // Let's start with a little cleanup as we may have junk in front or at the end.
-                        if(newURL.toLowerCase().indexOf("http") > 0){
-                            // Got garbage in front of the protocol. Get rid of it.
-                            newURL = newURL.substring(newURL.toLowerCase().indexOf("http"));
-                        }
-                        while(newURL.substring(newURL.length()-1).equals(".")){
-                            // URLs can't end with a dot. Strip it off.
-                            newURL = newURL.substring(0,newURL.length()-1);
-                        }
-                        
-                        // And add the URL to speculative embeds.
+                        PaddingStringBuffer msg = new PaddingStringBuffer();
+                        msg.append("EU MATCH: " + lookat.toString());
+                        msg.padTo(60);
+                        msg.append(" in " + curi.getURIString()+"\n");
+                        controller.reports.info(msg.toString());
+
                         numberOfLinksExtracted++;
-                        curi.addSpeculativeEmbed(newURL);
+                        curi.addSpeculativeEmbed(lookat.toString());
                     }
                     // Reset lookat for next string.
                     lookat = new StringBuffer();
-                    foundDot = false;
                 } else if(lookat.length()>0) {
                     // Didn't get enough chars. Reset lookat for next string.
                     lookat = new StringBuffer();
-                    foundDot = false;
                 }
                 ch = instream.read();
             }
         } catch(IOException e){
             //TODO: Handle this exception.
+            e.printStackTrace();
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -447,11 +444,10 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         int dot = lookat.indexOf(".");
         if(dot!=0){//An URL can't start with a .tld.
             while(dot != -1 && dot < lookat.length()){
-                lookat = lookat.substring(dot+1);
-                if(isTLD(lookat.substring(0,lookat.length()<=6?lookat.length():6))){
+                if(isTLD(lookat.substring(dot,lookat.length()<=dot+6?lookat.length()-1:dot+6))){
                     return true;
                 }               
-                dot = lookat.indexOf(".");
+                dot = lookat.substring(dot+1).indexOf(".");
             }
         }
         
@@ -472,9 +468,9 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         }
         
         potentialTLD.toLowerCase();
-        Matcher uri = TextUtils.getMatcher(TLDs, potentialTLD);
-        boolean ret = uri.matches(); 
-        return ret;
+        Matcher uri = TextUtils.getMatcher(LIKELY_URL_EXTRACTOR, potentialTLD);
+        
+        return uri.matches();
     }
 
     /**

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -44,6 +45,7 @@ import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -68,250 +70,262 @@ import org.archive.util.ArchiveUtils;
  * @author Gordon Mohr
  */
 public class CrawlController extends Thread {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.framework.CrawlController");
 
-	private static final String LOGNAME_PROGRESS_STATISTICS = "progress-statistics";
-	private static final String LOGNAME_URI_ERRORS = "uri-errors";
-	private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
-	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
-	private static final String LOGNAME_CRAWL = "crawl";
-	private static final String LOGNAME_RECOVER = "recover";
+    private static final String LOGNAME_PROGRESS_STATISTICS =
+        "progress-statistics";
+    private static final String LOGNAME_URI_ERRORS = "uri-errors";
+    private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
+    private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
+    private static final String LOGNAME_CRAWL = "crawl";
+    private static final String LOGNAME_RECOVER = "recover";
+    private static final String LOGNAME_REPORTS = "reports";
 
     private SettingsHandler settingsHandler;
-    
-	protected String sExit; 
 
-	public static final int DEFAULT_MASTER_THREAD_PRIORITY = Thread.NORM_PRIORITY + 1;
+    protected String sExit;
 
-	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
-	private Thread controlThread;
-	private ToePool toePool;
-	private URIFrontier frontier;
-	private boolean shouldCrawl;
-	private boolean shouldPause;
+    public static final int DEFAULT_MASTER_THREAD_PRIORITY =
+        Thread.NORM_PRIORITY + 1;
 
-	private File disk;
-	private File scratchDisk;
-	public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
-	public Logger runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
-	public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
-	public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
-	public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
-	public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
-	
-	// create a statistic tracking object and have it write to the log every 
-	protected StatisticsTracking statistics = null;
-	
-	protected ArrayList registeredCrawlStatusListeners;
-	// Since there is a high probability that there will only ever by one
-	// CrawlURIDispositionListner we will use this while there is only one:
-	CrawlURIDispositionListener registeredCrawlURIDispositionListener; 
-	// And then switch to the array once there is more then one.	
-	protected ArrayList registeredCrawlURIDispositionListeners;
+    private int timeout = 1000;
+    // to wait for CrawlURI from frontier before spinning
+    private Thread controlThread;
+    private ToePool toePool;
+    private URIFrontier frontier;
+    private boolean shouldCrawl;
+    private boolean shouldPause;
 
-	CrawlOrder order;
-	CrawlScope scope;
-		
-	Processor firstProcessor;
+    private File disk;
+    private File scratchDisk;
+    public Logger uriProcessing = Logger.getLogger(LOGNAME_CRAWL);
+    public Logger runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS);
+    public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
+    public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
+    public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
+    public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
+    public Logger reports = Logger.getLogger(LOGNAME_REPORTS);
+
+    // create a statistic tracking object and have it write to the log every 
+    protected StatisticsTracking statistics = null;
+
+    protected ArrayList registeredCrawlStatusListeners;
+    // Since there is a high probability that there will only ever by one
+    // CrawlURIDispositionListner we will use this while there is only one:
+    CrawlURIDispositionListener registeredCrawlURIDispositionListener;
+    // And then switch to the array once there is more then one.	
+    protected ArrayList registeredCrawlURIDispositionListeners;
+
+    CrawlOrder order;
+    CrawlScope scope;
+
+    Processor firstProcessor;
     Processor postprocessor;
-	//LinkedHashMap processors = new LinkedHashMap();
-    MapType processors; 
-	int nextToeSerialNumber = 0;
-	
-	ServerCache serverCache;
-	//ThreadKicker kicker;
-	
-	private boolean paused = false;
-	private boolean finished = false;
+    //LinkedHashMap processors = new LinkedHashMap();
+    MapType processors;
+    int nextToeSerialNumber = 0;
 
-	public CrawlController() {
-	}
+    ServerCache serverCache;
+    //ThreadKicker kicker;
 
-	/**
-	 * Starting from nothing, set up CrawlController and associated
-	 * classes to be ready for crawling. 
-	 * 
-	 * @param o CrawlOrder
-	 * @throws InitializationException
-	 */
-	public void initialize(SettingsHandler settingsHandler) throws InitializationException {
+    private boolean paused = false;
+    private boolean finished = false;
+
+    public CrawlController() {
+    }
+
+    /**
+     * Starting from nothing, set up CrawlController and associated
+     * classes to be ready for crawling. 
+     * 
+     * @param o CrawlOrder
+     * @throws InitializationException
+     */
+    public void initialize(SettingsHandler settingsHandler)
+        throws InitializationException {
         this.settingsHandler = settingsHandler;
-		order = settingsHandler.getOrder();
+        order = settingsHandler.getOrder();
         order.setController(this);
-		
-		if(checkUserAgentAndFrom(order)==false){
-			throw new FatalConfigurationException(
-				"You must set the User-Agent and From HTTP header values " +
-				"to acceptable strings before proceeding. \n" +
-				" User-Agent: [software-name](+[info-url])[misc]\n" +
-				" From: [email-address]");
-		}
-		
-		sExit = "";
-		
-		// read from the configuration file
-		try {
 
-			setupDisk();
-			setupLogs();
-			
-		} catch (IOException e) {
-			throw new InitializationException("Unable to create log file(s): " + e.toString(), e);
-		}
+        if (checkUserAgentAndFrom(order) == false) {
+            throw new FatalConfigurationException(
+                "You must set the User-Agent and From HTTP header values "
+                    + "to acceptable strings before proceeding. \n"
+                    + " User-Agent: [software-name](+[info-url])[misc]\n"
+                    + " From: [email-address]");
+        }
+
+        sExit = "";
+
+        // read from the configuration file
+        try {
+
+            setupDisk();
+            setupLogs();
+
+        } catch (IOException e) {
+            throw new InitializationException(
+                "Unable to create log file(s): " + e.toString(),
+                e);
+        }
 
         setupStatTracking();
         setupToePool();
-		setupCrawlModules();
-		
-	}
-	
-	/**
-	 * Register for CrawlStatus events.
-	 * 
-	 * @param cl a class implementing the CrawlStatusListener interface
-	 * 
-	 * @see CrawlStatusListener
-	 */
-	public void addCrawlStatusListener(CrawlStatusListener cl) {
-		if(registeredCrawlStatusListeners == null) {
-			registeredCrawlStatusListeners = new ArrayList();	
-		}
-		registeredCrawlStatusListeners.add(cl);
-	}
+        setupCrawlModules();
 
-	/**
-	 * Register for CrawlURIDisposition events.
-	 * 
-	 * @param cl a class implementing the CrawlURIDispostionListener interface
-	 * 
-	 * @see CrawlURIDispositionListener
-	 */
-	public void addCrawlURIDispositionListener(CrawlURIDispositionListener cl) {
-		registeredCrawlURIDispositionListener = null;
-		if(registeredCrawlURIDispositionListeners == null)
-		{
-			// First listener;
-			registeredCrawlURIDispositionListener = cl; //Only used for the first one while it is the only one.
-			registeredCrawlURIDispositionListeners = new ArrayList(1); //We expect it to be very small.
-		}
-		registeredCrawlURIDispositionListeners.add(cl);
-	}
-	
-	/**
-	 * Allows an external class to raise a CrawlURIDispostion crawledURISuccessful event
-	 * that will be broadcast to all listeners that have registered with the CrawlController.
-	 * 
-	 * @param curi - The CrawlURI that will be sent with the event notification.
-	 * 
-	 * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
-	 */
-	public void throwCrawledURISuccessfulEvent(CrawlURI curi)
-	{
-		if(registeredCrawlURIDispositionListener != null)
-		{
-			// Then we'll just use that.
-			registeredCrawlURIDispositionListener.crawledURISuccessful(curi);	
-		}
-		else
-		{
-			// Go through the list.
-			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
-			{
-				Iterator it = registeredCrawlURIDispositionListeners.iterator();
-				while(it.hasNext()) {
-					((CrawlURIDispositionListener) it.next()).crawledURISuccessful(curi);
-				}
-			}	
-		}
-	}
+    }
 
-	/**
-	 * Allows an external class to raise a CrawlURIDispostion crawledURINeedRetry event
-	 * that will be broadcast to all listeners that have registered with the CrawlController.
-	 * 
-	 * @param curi - The CrawlURI that will be sent with the event notification.
-	 * 
-	 * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
-	 */
-	public void throwCrawledURINeedRetryEvent(CrawlURI curi)
-	{
-		if(registeredCrawlURIDispositionListener != null)
-		{
-			// Then we'll just use that.
-			registeredCrawlURIDispositionListener.crawledURINeedRetry(curi);	
-		}
-		else
-		{
-			// Go through the list.
-			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
-			{
-				Iterator it = registeredCrawlURIDispositionListeners.iterator();
-				while(it.hasNext()) {
-					((CrawlURIDispositionListener) it.next()).crawledURINeedRetry(curi);
-				}
-			}	
-		}
-	}
-	
-	/**
-	 * Allows an external class to raise a CrawlURIDispostion crawledURIDisregard event
-	 * that will be broadcast to all listeners that have registered with the CrawlController.
-	 * 
-	 * @param curi - The CrawlURI that will be sent with the event notification.
-	 * 
-	 * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
-	 */
-	public void throwCrawledURIDisregardEvent(CrawlURI curi)
-	{
-		if(registeredCrawlURIDispositionListener != null)
-		{
-			// Then we'll just use that.
-			registeredCrawlURIDispositionListener.crawledURIDisregard(curi);	
-		}
-		else
-		{
-			// Go through the list.
-			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
-			{
-				Iterator it = registeredCrawlURIDispositionListeners.iterator();
-				while(it.hasNext()) {
-					((CrawlURIDispositionListener) it.next()).crawledURIDisregard(curi);
-				}
-			}	
-		}
-	}
+    /**
+     * Register for CrawlStatus events.
+     * 
+     * @param cl a class implementing the CrawlStatusListener interface
+     * 
+     * @see CrawlStatusListener
+     */
+    public void addCrawlStatusListener(CrawlStatusListener cl) {
+        if (registeredCrawlStatusListeners == null) {
+            registeredCrawlStatusListeners = new ArrayList();
+        }
+        registeredCrawlStatusListeners.add(cl);
+    }
 
-	/**
-	 * Allows an external class to raise a CrawlURIDispostion crawledURIFailure event
-	 * that will be broadcast to all listeners that have registered with the CrawlController.
-	 * 
-	 * @param curi - The CrawlURI that will be sent with the event notification.
-	 * 
-	 * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
-	 */
-	public void throwCrawledURIFailureEvent(CrawlURI curi)
-	{
-		if(registeredCrawlURIDispositionListener != null)
-		{
-			// Then we'll just use that.
-			registeredCrawlURIDispositionListener.crawledURIFailure(curi);	
-		}
-		else
-		{
-			// Go through the list.
-			if(registeredCrawlURIDispositionListeners != null && registeredCrawlURIDispositionListeners.size() > 0)
-			{
-				Iterator it = registeredCrawlURIDispositionListeners.iterator();
-				while(it.hasNext()) {
-					((CrawlURIDispositionListener) it.next()).crawledURIFailure(curi);
-				}
-			}	
-		}
-	}
+    /**
+     * Register for CrawlURIDisposition events.
+     * 
+     * @param cl a class implementing the CrawlURIDispostionListener interface
+     * 
+     * @see CrawlURIDispositionListener
+     */
+    public void addCrawlURIDispositionListener(CrawlURIDispositionListener cl) {
+        registeredCrawlURIDispositionListener = null;
+        if (registeredCrawlURIDispositionListeners == null) {
+            // First listener;
+            registeredCrawlURIDispositionListener = cl;
+            //Only used for the first one while it is the only one.
+            registeredCrawlURIDispositionListeners = new ArrayList(1);
+            //We expect it to be very small.
+        }
+        registeredCrawlURIDispositionListeners.add(cl);
+    }
 
+    /**
+     * Allows an external class to raise a CrawlURIDispostion
+     * crawledURISuccessful event that will be broadcast to all listeners that
+     * have registered with the CrawlController.
+     * 
+     * @param curi - The CrawlURI that will be sent with the event notification.
+     * 
+     * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
+     */
+    public void throwCrawledURISuccessfulEvent(CrawlURI curi) {
+        if (registeredCrawlURIDispositionListener != null) {
+            // Then we'll just use that.
+            registeredCrawlURIDispositionListener.crawledURISuccessful(curi);
+        } else {
+            // Go through the list.
+            if (registeredCrawlURIDispositionListeners != null
+                && registeredCrawlURIDispositionListeners.size() > 0) {
+                Iterator it = registeredCrawlURIDispositionListeners.iterator();
+                while (it.hasNext()) {
+                    (
+                        (CrawlURIDispositionListener) it
+                            .next())
+                            .crawledURISuccessful(
+                        curi);
+                }
+            }
+        }
+    }
 
-	private void setupCrawlModules() throws FatalConfigurationException {
-		//scope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
+    /**
+     * Allows an external class to raise a CrawlURIDispostion
+     * crawledURINeedRetry event that will be broadcast to all listeners that
+     * have registered with the CrawlController.
+     * 
+     * @param curi - The CrawlURI that will be sent with the event notification.
+     * 
+     * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
+     */
+    public void throwCrawledURINeedRetryEvent(CrawlURI curi) {
+        if (registeredCrawlURIDispositionListener != null) {
+            // Then we'll just use that.
+            registeredCrawlURIDispositionListener.crawledURINeedRetry(curi);
+        } else {
+            // Go through the list.
+            if (registeredCrawlURIDispositionListeners != null
+                && registeredCrawlURIDispositionListeners.size() > 0) {
+                Iterator it = registeredCrawlURIDispositionListeners.iterator();
+                while (it.hasNext()) {
+                    (
+                        (CrawlURIDispositionListener) it
+                            .next())
+                            .crawledURINeedRetry(
+                        curi);
+                }
+            }
+        }
+    }
+
+    /**
+     * Allows an external class to raise a CrawlURIDispostion
+     * crawledURIDisregard event that will be broadcast to all listeners that
+     * have registered with the CrawlController.
+     * 
+     * @param curi - The CrawlURI that will be sent with the event notification.
+     * 
+     * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
+     */
+    public void throwCrawledURIDisregardEvent(CrawlURI curi) {
+        if (registeredCrawlURIDispositionListener != null) {
+            // Then we'll just use that.
+            registeredCrawlURIDispositionListener.crawledURIDisregard(curi);
+        } else {
+            // Go through the list.
+            if (registeredCrawlURIDispositionListeners != null
+                && registeredCrawlURIDispositionListeners.size() > 0) {
+                Iterator it = registeredCrawlURIDispositionListeners.iterator();
+                while (it.hasNext()) {
+                    (
+                        (CrawlURIDispositionListener) it
+                            .next())
+                            .crawledURIDisregard(
+                        curi);
+                }
+            }
+        }
+    }
+
+    /**
+     * Allows an external class to raise a CrawlURIDispostion crawledURIFailure event
+     * that will be broadcast to all listeners that have registered with the CrawlController.
+     * 
+     * @param curi - The CrawlURI that will be sent with the event notification.
+     * 
+     * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
+     */
+    public void throwCrawledURIFailureEvent(CrawlURI curi) {
+        if (registeredCrawlURIDispositionListener != null) {
+            // Then we'll just use that.
+            registeredCrawlURIDispositionListener.crawledURIFailure(curi);
+        } else {
+            // Go through the list.
+            if (registeredCrawlURIDispositionListeners != null
+                && registeredCrawlURIDispositionListeners.size() > 0) {
+                Iterator it = registeredCrawlURIDispositionListeners.iterator();
+                while (it.hasNext()) {
+                    (
+                        (CrawlURIDispositionListener) it
+                            .next())
+                            .crawledURIFailure(
+                        curi);
+                }
+            }
+        }
+    }
+
+    private void setupCrawlModules() throws FatalConfigurationException {
+        //scope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
         //frontier = (URIFrontier) order.instantiate(XP_FRONTIER);
 
         try {
@@ -326,77 +340,94 @@ public class CrawlController extends Thread {
         } catch (Exception e) {
             throw new FatalConfigurationException(e.getMessage());
         }
-		
-		// TODO: firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
+
+        // TODO: firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
         processors = order.getProcessors();
         if (processors.isEmpty(null)) {
             throw new FatalConfigurationException("No processors defined");
         }
-        
+
         try {
             String firstProcessorName =
-                (String) order.getAttribute(null, CrawlOrder.ATTR_FIRST_PROCESSOR);
-            firstProcessor = (Processor) processors.getAttribute(null, firstProcessorName);
+                (String) order.getAttribute(
+                    null,
+                    CrawlOrder.ATTR_FIRST_PROCESSOR);
+            firstProcessor =
+                (Processor) processors.getAttribute(null, firstProcessorName);
         } catch (AttributeNotFoundException e) {
-            throw new FatalConfigurationException("Could not resolve first processor " + e.getMessage());
+            throw new FatalConfigurationException(
+                "Could not resolve first processor " + e.getMessage());
         }
 
+        // try to initialize each scope and frontier from the config file
+        scope.initialize(scope.globalSettings());
+        try {
+            frontier.initialize(this);
+        } catch (IOException e) {
+            throw new FatalConfigurationException(
+                "unable to initialize frontier: " + e);
+        }
 
-		// try to initialize each scope and frontier from the config file
-		scope.initialize(scope.globalSettings());
-		try {
-			frontier.initialize(this);
-		} catch (IOException e) {
-			throw new FatalConfigurationException("unable to initialize frontier: "+e);
-		}
-			
-		serverCache = new ServerCache(this);
+        serverCache = new ServerCache(this);
 
         Iterator it = processors.iterator(null);
         while (it.hasNext()) {
             Processor p = (Processor) it.next();
-            logger.info("Processor: " + p.getName() + " --> " + p.getClass().getName());
+            logger.info(
+                "Processor: " + p.getName() + " --> " + p.getClass().getName());
             p.initialize(this);
         }
-	}
+    }
 
-
-	private void setupDisk() throws FatalConfigurationException {
-		//String diskPath = order.getStringAt(XP_DISK_PATH);
+    private void setupDisk() throws FatalConfigurationException {
+        //String diskPath = order.getStringAt(XP_DISK_PATH);
         String diskPath;
         try {
-            diskPath = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
+            diskPath =
+                (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         } catch (AttributeNotFoundException e) {
             throw new FatalConfigurationException(e.getMessage());
         }
         /*
-		if(diskPath == null || diskPath.length() == 0){
-			throw new FatalConfigurationException("No output Directory specified", 
-									order.getCrawlOrderFilename(), 
-									XP_DISK_PATH
-			);
-		}
-		*/
-        
-		if(! diskPath.endsWith(File.separator)){
-			diskPath = diskPath + File.separator;
-		}
-		disk = new File(diskPath);
-		disk.mkdirs();
-		scratchDisk = new File(diskPath,"scratch");
-		scratchDisk.mkdirs();
-	}
+        if(diskPath == null || diskPath.length() == 0){
+        	throw new FatalConfigurationException("No output Directory specified", 
+        							order.getCrawlOrderFilename(), 
+        							XP_DISK_PATH
+        	);
+        }
+        */
 
+        if (!diskPath.endsWith(File.separator)) {
+            diskPath = diskPath + File.separator;
+        }
+        disk = new File(diskPath);
+        // If 'disk' path is not absolute, create 'disk' directory
+        // relative to the path of the order file
+        if (!disk.isAbsolute()) {
+            disk =
+                new File(
+                    ArchiveUtils.getFilePath(
+                        ((XMLSettingsHandler) settingsHandler)
+                            .getOrderFile()
+                            .getAbsolutePath())
+                        + disk.toString());
+        }
+        disk.mkdirs();
+        scratchDisk = new File(disk.getPath(), "scratch");
+        scratchDisk.mkdirs();
+    }
 
-	private void setupStatTracking() {
-		// the statistics object must be created before modules that use it if those 
-		// modules retrieve the object from the controller during initialization 
-		// (which some do).  So here we go with that.
+    private void setupStatTracking() {
+        // the statistics object must be created before modules that use it if those 
+        // modules retrieve the object from the controller during initialization 
+        // (which some do).  So here we go with that.
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
             // set up a default tracker
             try {
-                loggers.addElement(null, new StatisticsTracker("crawl-statistics"));
+                loggers.addElement(
+                    null,
+                    new StatisticsTracker("crawl-statistics"));
             } catch (InvalidAttributeValueException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -410,450 +441,521 @@ public class CrawlController extends Thread {
                 statistics = tracker;
             }
         }
-	}
+    }
 
+    private void setupLogs() throws IOException {
+        String diskPath = disk.getAbsolutePath() + File.separatorChar;
 
-	private void setupLogs() throws IOException {
-		String diskPath = disk.getAbsolutePath() + File.separatorChar;
-		
-		FileHandler up = new FileHandler(diskPath+LOGNAME_CRAWL+".log");
-		up.setFormatter(new UriProcessingFormatter());
-		uriProcessing.addHandler(up);
-		uriProcessing.setUseParentHandlers(false);
-		
-		FileHandler cerr = new FileHandler(diskPath+LOGNAME_RUNTIME_ERRORS+".log");
-		cerr.setFormatter(new RuntimeErrorFormatter());
-		runtimeErrors.addHandler(cerr);
-		runtimeErrors.setUseParentHandlers(false);
-		
-		FileHandler lerr = new FileHandler(diskPath+LOGNAME_LOCAL_ERRORS+".log");
-		lerr.setFormatter(new LocalErrorFormatter());
-		localErrors.addHandler(lerr);
-		localErrors.setUseParentHandlers(false);
-		
-		FileHandler uerr = new FileHandler(diskPath+LOGNAME_URI_ERRORS+".log");
-		uerr.setFormatter(new UriErrorFormatter());
-		uriErrors.addHandler(uerr);
-		uriErrors.setUseParentHandlers(false);
-		
-		FileHandler stat = new FileHandler(diskPath+LOGNAME_PROGRESS_STATISTICS+".log");
-		stat.setFormatter(new StatisticsLogFormatter());
-		progressStats.addHandler(stat);
-		progressStats.setUseParentHandlers(false);
-		
-		FileHandler reco = new FileHandler(diskPath+LOGNAME_RECOVER+".log");
-		reco.setFormatter(new PassthroughFormatter());
-		recover.addHandler(reco);
-		recover.setUseParentHandlers(false);
-	}
+        FileHandler up = new FileHandler(diskPath + LOGNAME_CRAWL + ".log");
+        up.setFormatter(new UriProcessingFormatter());
+        uriProcessing.addHandler(up);
+        uriProcessing.setUseParentHandlers(false);
 
-	// must include a bot name and info URL
-	private static String ACCEPTABLE_USER_AGENT = 
-	 "\\S+.*\\(\\+http://\\S*\\).*";
-	// must include a contact email address
-	private static String ACCEPTABLE_FROM =
-	 "\\S+@\\S+\\.\\S+";
-	 
-	/**
-	 * Checks if the User Agent and From field are set 'correctly' in
-	 * the specified Crawl Order.
-	 * 
-	 * @param order The Crawl Order to check
-	 * @return true if it passes, false otherwise.
-	 */
-	public static boolean checkUserAgentAndFrom(CrawlOrder order){
-		// don't start the crawl if they're using the default user-agent
-		String userAgent = order.getUserAgent(null);
-		String from = order.getFrom(null);
-		return userAgent.matches(ACCEPTABLE_USER_AGENT) && from.matches(ACCEPTABLE_FROM);
-	}
-	
-	/**
-	 * @param thread
-	 */
-	public void toeFinished(ToeThread thread) {
-		// for now do nothing
-	}
-	
-	/** 
+        FileHandler cerr =
+            new FileHandler(diskPath + LOGNAME_RUNTIME_ERRORS + ".log");
+        cerr.setFormatter(new RuntimeErrorFormatter());
+        runtimeErrors.addHandler(cerr);
+        runtimeErrors.setUseParentHandlers(false);
+
+        FileHandler lerr =
+            new FileHandler(diskPath + LOGNAME_LOCAL_ERRORS + ".log");
+        lerr.setFormatter(new LocalErrorFormatter());
+        localErrors.addHandler(lerr);
+        localErrors.setUseParentHandlers(false);
+
+        FileHandler uerr =
+            new FileHandler(diskPath + LOGNAME_URI_ERRORS + ".log");
+        uerr.setFormatter(new UriErrorFormatter());
+        uriErrors.addHandler(uerr);
+        uriErrors.setUseParentHandlers(false);
+
+        FileHandler stat =
+            new FileHandler(diskPath + LOGNAME_PROGRESS_STATISTICS + ".log");
+        stat.setFormatter(new StatisticsLogFormatter());
+        progressStats.addHandler(stat);
+        progressStats.setUseParentHandlers(false);
+
+        FileHandler reco = new FileHandler(diskPath + LOGNAME_RECOVER + ".log");
+        reco.setFormatter(new PassthroughFormatter());
+        recover.addHandler(reco);
+        recover.setUseParentHandlers(false);
+
+        FileHandler rep = new FileHandler(diskPath + LOGNAME_REPORTS + ".log");
+        rep.setFormatter(new PassthroughFormatter());
+        reports.addHandler(rep);
+        reports.setUseParentHandlers(false);
+        reports.setLevel(Level.INFO);
+    }
+
+    // must include a bot name and info URL
+    private static String ACCEPTABLE_USER_AGENT =
+        "\\S+.*\\(\\+http://\\S*\\).*";
+    // must include a contact email address
+    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
+
+    /**
+     * Checks if the User Agent and From field are set 'correctly' in
+     * the specified Crawl Order.
+     * 
+     * @param order The Crawl Order to check
+     * @return true if it passes, false otherwise.
+     */
+    public static boolean checkUserAgentAndFrom(CrawlOrder order) {
+        // don't start the crawl if they're using the default user-agent
+        String userAgent = order.getUserAgent(null);
+        String from = order.getFrom(null);
+        return userAgent.matches(ACCEPTABLE_USER_AGENT)
+            && from.matches(ACCEPTABLE_FROM);
+    }
+
+    /**
+     * @param thread
+     */
+    public void toeFinished(ToeThread thread) {
+        // for now do nothing
+    }
+
+    /** 
      * @return Object this controller is using to track crawl statistics
-	 */
-	public StatisticsTracking getStatistics(){
-		return statistics;
-	}
-	
-	/**
-	 * 
-	 */
-	public void startCrawl() {
-		// assume Frontier state already loaded
-		shouldCrawl=true;
-		shouldPause=false;
-		logger.info("Should start Crawl");
+     */
+    public StatisticsTracking getStatistics() {
+        return statistics;
+    }
 
-		this.start();
-	}
+    /**
+     * 
+     */
+    public void startCrawl() {
+        // assume Frontier state already loaded
+        shouldCrawl = true;
+        shouldPause = false;
+        logger.info("Should start Crawl");
 
-	public void run() {
-		logger.fine(getName()+" started for CrawlController");
-		sExit = CrawlJob.STATUS_FINISHED_ABNORMAL; // A proper exit will change this value.
-		assert controlThread == null: "non-null control thread";
-		controlThread = Thread.currentThread();
-		controlThread.setName("crawlControl");
-		controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
+        this.start();
+    }
 
-		// start periodic background logging of crawl statistics
-		Thread statLogger = new Thread(statistics);
-		statLogger.setName("StatLogger");
-		statLogger.start();
+    public void run() {
+        logger.fine(getName() + " started for CrawlController");
+        sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
+        // A proper exit will change this value.
+        assert controlThread == null : "non-null control thread";
+        controlThread = Thread.currentThread();
+        controlThread.setName("crawlControl");
+        controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
 
-		while(shouldCrawl()) {
-			if (shouldPause) {
-				synchronized (this) {
-					try {
-						// Wait until all ToeThreads are finished with their work
-						while (getActiveToeCount() > 0) {
-							wait(200);
-						}
-						paused = true;
-						
-						// Tell everyone that we have paused
-						logger.info("Crawl job paused");
-						Iterator it = registeredCrawlStatusListeners.iterator();
-						while(it.hasNext()) {
-							((CrawlStatusListener) it.next()).crawlPaused(CrawlJob.STATUS_PAUSED);
-						}
-						
-						wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					paused = false;
-					logger.info("Crawl job resumed");
+        // start periodic background logging of crawl statistics
+        Thread statLogger = new Thread(statistics);
+        statLogger.setName("StatLogger");
+        statLogger.start();
 
-					// Tell everyone that we have resumed from pause
-					Iterator it = registeredCrawlStatusListeners.iterator();
-					while(it.hasNext()) {
-						((CrawlStatusListener) it.next()).crawlResuming(CrawlJob.STATUS_RUNNING);
-					}
-				}
-			}
-		
-			 CrawlURI curi = frontier.next(timeout);
-			 if(curi != null) {
-				curi.setNextProcessor(firstProcessor);
-			 	ToeThread toe = toePool.available();
-			 	//if (toe !=null) {
-			 		logger.fine(toe.getName()+" crawl: "+curi.getURIString());
-			 		toe.crawl(curi);
-			 	//} 
-			 }
-		}
+        while (shouldCrawl()) {
+            if (shouldPause) {
+                synchronized (this) {
+                    try {
+                        // Wait until all ToeThreads are finished with their work
+                        while (getActiveToeCount() > 0) {
+                            wait(200);
+                        }
+                        paused = true;
 
-		// Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
-		Iterator it = registeredCrawlStatusListeners.iterator();
-		while(it.hasNext()) {
-			((CrawlStatusListener) it.next()).crawlEnding(sExit);
-		}
-		
-		// Ok, now we are ready to exit.		
-		while(registeredCrawlStatusListeners.size()>0)
-		{
-			// Let the listeners know that the crawler is finished.
-			((CrawlStatusListener)registeredCrawlStatusListeners.get(0)).crawlEnded(sExit);
-			registeredCrawlStatusListeners.remove(0);
-		}
+                        // Tell everyone that we have paused
+                        logger.info("Crawl job paused");
+                        Iterator it = registeredCrawlStatusListeners.iterator();
+                        while (it.hasNext()) {
+                            ((CrawlStatusListener) it.next()).crawlPaused(
+                                CrawlJob.STATUS_PAUSED);
+                        }
 
-		logger.info("exitting run");
+                        wait();
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    paused = false;
+                    logger.info("Crawl job resumed");
 
-		//Do cleanup to facilitate GC.
-		controlThread = null;
-		frontier = null;
-		disk = null;
-		scratchDisk = null;
-		
-		toePool = null;
-		registeredCrawlStatusListeners = null;
-		order = null;
-		scope = null;
-		firstProcessor = null;
-		postprocessor = null;
-		processors = null; 
-		serverCache = null;
+                    // Tell everyone that we have resumed from pause
+                    Iterator it = registeredCrawlStatusListeners.iterator();
+                    while (it.hasNext()) {
+                        ((CrawlStatusListener) it.next()).crawlResuming(
+                            CrawlJob.STATUS_RUNNING);
+                    }
+                }
+            }
 
-		logger.fine(getName()+" finished for order CrawlController");
-	}
+            CrawlURI curi = frontier.next(timeout);
+            if (curi != null) {
+                curi.setNextProcessor(firstProcessor);
+                ToeThread toe = toePool.available();
+                //if (toe !=null) {
+                logger.fine(toe.getName() + " crawl: " + curi.getURIString());
+                toe.crawl(curi);
+                //} 
+            }
+        }
 
-	private boolean shouldCrawl() {
-		if(frontier.isEmpty())
-		{
-			sExit = CrawlJob.STATUS_FINISHED;
-		}
-        // TODO: if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0))
-		{
-			// Hit the max byte download limit!
-			sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
-			shouldCrawl = false;
-		}
-        // TODO: else if(order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0) > 0 && frontier.successfullyFetchedCount()>= order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0))
-		{
-			// Hit the max document download limit!
-			sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
-			shouldCrawl = false;
-		}
-        // TODO: else if(order.getLongAt(XP_MAX_TIME,0) > 0 && statistics.crawlDuration()>= order.getLongAt(XP_MAX_TIME,0)*1000)
-		{
-			// Hit the max byte download limit!
-			sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
-			shouldCrawl = false;
-		}
-		return shouldCrawl && !frontier.isEmpty();
-	}
+        // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
+        Iterator it = registeredCrawlStatusListeners.iterator();
+        while (it.hasNext()) {
+            ((CrawlStatusListener) it.next()).crawlEnding(sExit);
+        }
 
+        // Ok, now we are ready to exit.		
+        while (registeredCrawlStatusListeners.size() > 0) {
+            // Let the listeners know that the crawler is finished.
+            (
+                (CrawlStatusListener) registeredCrawlStatusListeners.get(
+                    0)).crawlEnded(
+                sExit);
+            registeredCrawlStatusListeners.remove(0);
+        }
 
-	public void stopCrawl() {
-		sExit = CrawlJob.STATUS_ABORTED;
-		shouldCrawl = false;
-		// If crawl is paused it should be resumed first so it
-		// can be stopped properly
-		resumeCrawl();
-	}	
+        // Save processors report to file
+        reports.info(reportProcessors());
 
-	/**
-	 * Stop the crawl temporarly.
-	 */
-	public synchronized void pauseCrawl() {
-		if(shouldPause) {
-			// Already about to pause
-			return;
-		}
-		sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
-		shouldPause = true;
-		logger.info("Pausing crawl job ...");
+        logger.info("exitting run");
 
-		// Notify listeners that we are going to pause
-		Iterator it = registeredCrawlStatusListeners.iterator();
-		while(it.hasNext()) {
-			((CrawlStatusListener) it.next()).crawlPausing(sExit);
-		}
-	}
-	
-	/**
-	 * Tell if the controller is paused
-	 * @return true if paused
-	 */
-	public boolean isPaused() {
-		return paused;
-	}
-	
-	/**
-	 * Resume crawl from paused state
-	 */
-	public synchronized void resumeCrawl() {
-		if(!paused ) {
-			// Can't resume if not been told to pause
-			return;
-		}
-		
-		shouldPause = false;
-		notify();
-	}
+        //Do cleanup to facilitate GC.
+        controlThread = null;
+        frontier = null;
+        disk = null;
+        scratchDisk = null;
 
+        toePool = null;
+        registeredCrawlStatusListeners = null;
+        order = null;
+        scope = null;
+        firstProcessor = null;
+        postprocessor = null;
+        processors = null;
+        serverCache = null;
 
-	
-	public int getActiveToeCount(){
-		return toePool.getActiveToeCount();
-	}
-	
-	private void setupToePool() {
-		toePool = new ToePool(this,order.getMaxToes());
-	}
+        logger.fine(getName() + " finished for order CrawlController");
+    }
 
-	public CrawlOrder getOrder() {
-		return order;
-	}
+    private boolean shouldCrawl() {
+        if (frontier.isEmpty()) {
+            sExit = CrawlJob.STATUS_FINISHED;
+        }
+        //if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0)) {
+        long maxBytes = 0;
+        try {
+            maxBytes =
+                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_BYTES_DOWNLOAD))
+                    .longValue();
+        } catch (Exception e) {
+        }
+        long maxDocument = 0;
+        try {
+            maxDocument =
+                ((Long) order
+                    .getAttribute(CrawlOrder.ATTR_MAX_DOCUMENT_DOWNLOAD))
+                    .longValue();
+        } catch (Exception e) {
+        }
+        long maxTime = 0;
+        try {
+            maxTime =
+                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_TIME_SEC))
+                    .longValue();
+        } catch (Exception e) {
+        }
 
-	public MapType getProcessors() {
-		return processors;
-	}
+        if (maxBytes > 0 && frontier.totalBytesWritten() >= maxBytes) {
+            // Hit the max byte download limit!
+            sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
+            shouldCrawl = false;
+        } else if (
+            maxDocument > 0
+                && frontier.successfullyFetchedCount() >= maxDocument) {
+            // Hit the max document download limit!
+            sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
+            shouldCrawl = false;
+        } else if (
+            maxTime > 0 && statistics.crawlDuration() >= maxTime * 1000) {
+            // Hit the max byte download limit!
+            sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
+            shouldCrawl = false;
+        }
+        return shouldCrawl && !frontier.isEmpty();
+    }
 
-	public ServerCache getServerCache() {
-		return serverCache;
-	}
+    public void stopCrawl() {
+        sExit = CrawlJob.STATUS_ABORTED;
+        shouldCrawl = false;
+        // If crawl is paused it should be resumed first so it
+        // can be stopped properly
+        resumeCrawl();
+    }
 
-	/**
-	 * @param o
-	 */
-	public void setOrder(CrawlOrder o){
-		order = o;	
-	}
+    /**
+     * Stop the crawl temporarly.
+     */
+    public synchronized void pauseCrawl() {
+        if (shouldPause) {
+            // Already about to pause
+            return;
+        }
+        sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
+        shouldPause = true;
+        logger.info("Pausing crawl job ...");
 
-	/** Print to stdout basic statistics about the crawl (for stat testing) * @return
-	 */
-//	public void printStatistics(){
-//	
-//		//System.out.println(":");
-//		//System.out.println("\t:\t" + statistics.);
-//		
-//		System.out.println("Fetch Progress:");
-//		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
-//		
-//		int kPerSec = statistics.currentProcessedKBPerSec()/1000;
-//		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
-//		
-//		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
-//		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
-//		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
-//		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-//		//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
-//
-//		System.out.println("Threads:");
-//	
-//		System.out.println("\tTotal:\t" + statistics.threadCount());
-//		System.out.println("\tActive:\t" + statistics.activeThreadCount());
-//
-//
-//		HashMap dist = statistics.getFileDistribution();
-//		
-//		if(dist.size() > 0){
-//			Iterator keyIterator = dist.keySet().iterator();
-//
-//			System.out.println("Fetched Resources MIME Distribution:");
-//	
-//			while(keyIterator.hasNext()){
-//				String key = (String)keyIterator.next();
-//				String val = ((Integer)dist.get(key)).toString();
-//				
-//				System.out.println("\t" + key + "\t" + val);	
-//			}
-//		}else{
-//			System.out.println("No mime statistics");
-//		}
-//		
-//		HashMap codeDist = statistics.getStatusCodeDistribution();
-//		
-//		if(codeDist.size() > 0){
-//			
-//			Iterator keyIterator = codeDist.keySet().iterator();
-//
-//			System.out.println("Status Code Distribution:");
-//	
-//			while(keyIterator.hasNext()){
-//				String key = (String)keyIterator.next();
-//				String val = ((Integer)codeDist.get(key)).toString();
-//				
-//				System.out.println("\t" + key + "\t" + val);	
-//			}
-//		}else{
-//			System.out.println("No code distribution statistics.");
-//		}
-//
-//
-//	}
+        // Notify listeners that we are going to pause
+        Iterator it = registeredCrawlStatusListeners.iterator();
+        while (it.hasNext()) {
+            ((CrawlStatusListener) it.next()).crawlPausing(sExit);
+        }
+    }
 
-	/**
-	 * @return The frontier.
-	 */
-	public URIFrontier getFrontier() {
-		return frontier;
-	}
+    /**
+     * Tell if the controller is paused
+     * @return true if paused
+     */
+    public boolean isPaused() {
+        return paused;
+    }
 
-	public CrawlScope getScope() {
-		return scope;
-	}
+    /**
+     * Resume crawl from paused state
+     */
+    public synchronized void resumeCrawl() {
+        if (!paused) {
+            // Can't resume if not been told to pause
+            return;
+        }
 
-	public Processor getPostprocessor() {
-		return postprocessor;
-	}
+        shouldPause = false;
+        notify();
+    }
 
-	/**
-	 * @param processor
-	 */
-	public void setPostprocessor(Processor processor) {
-		postprocessor = processor;
-	}
+    public int getActiveToeCount() {
+        return toePool.getActiveToeCount();
+    }
 
-	public File getDisk() {
-		return disk;
-	}
+    private void setupToePool() {
+        toePool = new ToePool(this, order.getMaxToes());
+    }
 
-	public File getScratchDisk() {
-		return scratchDisk;
-	}
+    public CrawlOrder getOrder() {
+        return order;
+    }
 
-	/**
-	 * @return The number of ToeThreads
-	 * 
-	 * @see ToePool#getToeCount()
-	 */
-	public int getToeCount() {
-		return toePool.getToeCount();
-	}
+    public MapType getProcessors() {
+        return processors;
+    }
 
-	/**
-	 * @return Compiles and returns a human readable report on the
+    public ServerCache getServerCache() {
+        return serverCache;
+    }
+
+    /**
+     * @param o
+     */
+    public void setOrder(CrawlOrder o) {
+        order = o;
+    }
+
+    /** Print to stdout basic statistics about the crawl (for stat testing) * @return
+     */
+    //	public void printStatistics(){
+    //	
+    //		//System.out.println(":");
+    //		//System.out.println("\t:\t" + statistics.);
+    //		
+    //		System.out.println("Fetch Progress:");
+    //		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
+    //		
+    //		int kPerSec = statistics.currentProcessedKBPerSec()/1000;
+    //		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
+    //		
+    //		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
+    //		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
+    //		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
+    //		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
+    //		//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
+    //
+    //		System.out.println("Threads:");
+    //	
+    //		System.out.println("\tTotal:\t" + statistics.threadCount());
+    //		System.out.println("\tActive:\t" + statistics.activeThreadCount());
+    //
+    //
+    //		HashMap dist = statistics.getFileDistribution();
+    //		
+    //		if(dist.size() > 0){
+    //			Iterator keyIterator = dist.keySet().iterator();
+    //
+    //			System.out.println("Fetched Resources MIME Distribution:");
+    //	
+    //			while(keyIterator.hasNext()){
+    //				String key = (String)keyIterator.next();
+    //				String val = ((Integer)dist.get(key)).toString();
+    //				
+    //				System.out.println("\t" + key + "\t" + val);	
+    //			}
+    //		}else{
+    //			System.out.println("No mime statistics");
+    //		}
+    //		
+    //		HashMap codeDist = statistics.getStatusCodeDistribution();
+    //		
+    //		if(codeDist.size() > 0){
+    //			
+    //			Iterator keyIterator = codeDist.keySet().iterator();
+    //
+    //			System.out.println("Status Code Distribution:");
+    //	
+    //			while(keyIterator.hasNext()){
+    //				String key = (String)keyIterator.next();
+    //				String val = ((Integer)codeDist.get(key)).toString();
+    //				
+    //				System.out.println("\t" + key + "\t" + val);	
+    //			}
+    //		}else{
+    //			System.out.println("No code distribution statistics.");
+    //		}
+    //
+    //
+    //	}
+
+    /**
+     * @return The frontier.
+     */
+    public URIFrontier getFrontier() {
+        return frontier;
+    }
+
+    public CrawlScope getScope() {
+        return scope;
+    }
+
+    public Processor getPostprocessor() {
+        return postprocessor;
+    }
+
+    /**
+     * @param processor
+     */
+    public void setPostprocessor(Processor processor) {
+        postprocessor = processor;
+    }
+
+    public File getDisk() {
+        return disk;
+    }
+
+    public File getScratchDisk() {
+        return scratchDisk;
+    }
+
+    /**
+     * @return The number of ToeThreads
+     * 
+     * @see ToePool#getToeCount()
+     */
+    public int getToeCount() {
+        return toePool.getToeCount();
+    }
+
+    /**
+     * @return Compiles and returns a human readable report on the
      * ToeThreads in it's ToePool.
-	 */
-	public String reportThreads(){
-		StringBuffer rep = new StringBuffer();	
-		
-		rep.append("Toe threads report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-		rep.append(" Job being crawled:         " + getOrder().getName()+"\n");
-		
-		rep.append(" Number of toe threads in pool: " + toePool.getToeCount() + " (" + toePool.getActiveToeCount() + " active)\n");
-		for(int i=0 ; i < toePool.getToeCount() ; i++){
-			rep.append("   ToeThread #"+(i+1)+"\n");
-			rep.append(toePool.getReport(i));
-			rep.append("\n");
-		}
-		
-		return rep.toString();
-	}
-	
-	/**
-	 * Set's a new CrawlOrder for this controller.  Objects that do not cache the values they
-	 * read from the CrawlOrder will be updated automatically.  
-	 * 
-	 * Some changes may not take effect until the Crawl is stopped and restarted.
-	 * 
-	 * The following changes will by applied immediately:
-	 *  - Max link hops
-	 *  - Max trans hops
-	 *  - Crawl mode
-	 *  - All politeness rules
-	 *  - All HTTP Fetch rules except sotimeout
-	 *  - All request header settings
-	 *  - Number of worker threads
-	 *  - Logging interval for crawl statistics
-	 *  - Seeds (Any seeds that have been already crawled - regardless of wether 
-	 *    they are old seeds or were simply encountered - will be ignored. Other 
-	 *    valid seeds will be scheduled high.)
-	 * 
-	 * @param o The new CrawlOrder
-	 */
-	public void updateOrder(CrawlOrder o) {
-		// Prepare the new CrawlOrder
+     */
+    public String reportThreads() {
+        StringBuffer rep = new StringBuffer();
+
+        rep.append(
+            "Toe threads report - "
+                + ArchiveUtils.TIMESTAMP12.format(new Date())
+                + "\n");
+        rep.append(
+            " Job being crawled:         " + getOrder().getName() + "\n");
+
+        rep.append(
+            " Number of toe threads in pool: "
+                + toePool.getToeCount()
+                + " ("
+                + toePool.getActiveToeCount()
+                + " active)\n");
+        for (int i = 0; i < toePool.getToeCount(); i++) {
+            rep.append("   ToeThread #" + (i + 1) + "\n");
+            rep.append(toePool.getReport(i));
+            rep.append("\n");
+        }
+
+        return rep.toString();
+    }
+
+    /**
+     * Compiles and returns a human readable report on the active processors.
+     * @return human readable report on the active processors.
+     * 
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String reportProcessors() {
+        StringBuffer rep = new StringBuffer();
+        rep.append(
+            "Processors report - "
+                + ArchiveUtils.TIMESTAMP12.format(new Date())
+                + "\n");
+        rep.append("  Job being crawled:    " + getOrder().getName() + "\n");
+
+        rep.append("  Number of Processors: " + processors.size(null) + "\n");
+        rep.append("  NOTE: Some processors may not return a report!\n\n");
+
+        Iterator iter = processors.iterator(null);
+        while (iter.hasNext()) {
+            Processor p = (Processor) iter.next();
+            //Processor p = (Processor) ((Map.Entry)obj).getValue();
+            rep.append(p.report());
+        }
+
+        return rep.toString();
+    }
+
+    /**
+     * Set's a new CrawlOrder for this controller.  Objects that do not cache the values they
+     * read from the CrawlOrder will be updated automatically.  
+     * 
+     * Some changes may not take effect until the Crawl is stopped and restarted.
+     * 
+     * The following changes will by applied immediately:
+     *  - Max link hops
+     *  - Max trans hops
+     *  - Crawl mode
+     *  - All politeness rules
+     *  - All HTTP Fetch rules except sotimeout
+     *  - All request header settings
+     *  - Number of worker threads
+     *  - Logging interval for crawl statistics
+     *  - Seeds (Any seeds that have been already crawled - regardless of wether 
+     *    they are old seeds or were simply encountered - will be ignored. Other 
+     *    valid seeds will be scheduled high.)
+     * 
+     * @param o The new CrawlOrder
+     */
+    public void updateOrder(CrawlOrder o) {
+        // Prepare the new CrawlOrder
         // TODO: o.initialize();
-		// Replace the old CrawlOrder
-		order = o;
-		// Resize the ToePool
-		toePool.setSize(order.getMaxToes());
-		// Prepare the new CrawlScope	
+        // Replace the old CrawlOrder
+        order = o;
+        // Resize the ToePool
+        toePool.setSize(order.getMaxToes());
+        // Prepare the new CrawlScope	
         // TODO: CrawlScope newscope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
         // TODO: newscope.initialize(this);
-		// Replace the old CrawlScope		
+        // Replace the old CrawlScope		
         // TODO: scope = newscope;
-		// Update the seed list in the frontier
-		Iterator iter = getScope().getSeedsIterator();
-		while (iter.hasNext()) {
-			UURI u = (UURI) iter.next();
-			CandidateURI caUri = new CandidateURI(u);
-			caUri.setIsSeed(true);
-			frontier.scheduleHigh(caUri);
-		}
-	}
-    
+        // Update the seed list in the frontier
+        Iterator iter = getScope().getSeedsIterator();
+        while (iter.hasNext()) {
+            UURI u = (UURI) iter.next();
+            CandidateURI caUri = new CandidateURI(u);
+            caUri.setIsSeed(true);
+            frontier.scheduleHigh(caUri);
+        }
+    }
+
     /**
      * @return
      */

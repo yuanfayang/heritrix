@@ -81,6 +81,9 @@ public class CrawlURI extends CandidateURI
 	// User agent to masquerade as when crawling this URI. If null, globals should be used
 	private String userAgent = null;
 	
+    // Once a link extractor has finished processing this curi this will be set as true
+    private boolean linkExtractorFinished = false;
+    
 ////////////////////////////////////////////////////////////////////
 	CrawlServer server;
 
@@ -510,4 +513,30 @@ public class CrawlURI extends CandidateURI
 	public void addCSSLink(String string) {
 		addToNamedSet(A_CSS_LINKS, string);		
 	}
+    
+    /**
+     * If true then a link extractor has already claimed this CrawlURI and
+     * performed link extraction on it. This does not preclude other link
+     * extractors that may have an interest in this CrawlURI from also doing
+     * link extraction.
+     * @return True if a processor has performed link extraction on this CrawlURI
+     * 
+     * @see #linkExtractorFinished()
+     */
+    public boolean hasBeenLinkExtracted(){
+        return linkExtractorFinished;
+    }
+    
+    /**
+     * Note that link extraction has been performed on this CrawlURI. A processor
+     * doing link extraction should invoke this method once it has finished it's
+     * work. It should invoke it even if no links are extracted. It should only 
+     * invoke this method if the link extraction was performed on the document
+     * body (not the HTTP headers etc.).
+     * 
+     * @see #hasBeenLinkExtracted()
+     */
+    public void linkExtractorFinished(){
+        linkExtractorFinished = true;
+    }
 }

@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* LongSet
+ *
+ * $Id$
+ *  
+ * Created on Oct 19, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * LongSet.java
- * Created on Oct 19, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -29,9 +30,30 @@ package org.archive.util;
  * @author Gordon Mohr
  */
 public interface LongFPSet {
+    /**
+     * Add a fingerprint to the set.
+     * @param l the fingerprint to add
+     * @return <code>true</code> if set has changed with this addition
+     */
 	boolean add(long l);
+
+    /**
+     *  Does this set contain a given fingerprint.
+     * @param l the fingerprint to check for
+     * @return <code>true</code> if the fingerprint is in the set
+     */
 	boolean contains(long l);
+
+    /**
+     *  Remove a fingerprint from the set, if it is there
+     * @param l the fingerprint to remove
+     * @return <code>true</code> if we removed the fingerprint
+     */
 	boolean remove(long l);
+
+    /** get the number of elements in the Set
+     * @return the number of elements in the Set
+     */
 	long count();
 	
 	/**
@@ -41,8 +63,8 @@ public interface LongFPSet {
 	 * false, fp  *MAY* still be contained -- must use
 	 * full-cost contains() to be sure. 
 	 * 
-	 * @param fp
-	 * @return True if contains passed long.
+	 * @param fp the fingerprint to check for
+	 * @return <code>true</code> if contains the fingerprint
 	 */
 	boolean quickContains(long fp);
 }

@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* DiskQueue
+ * 
+ * $Id$
+ * 
+ * Created on Oct 16, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * DiskQueue.java
- * Created on Oct 16, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -44,37 +45,64 @@ import org.archive.io.NullOutputStream;
  * pull out excessive referenced objects, or objects which
  * will be redundantly reinstantiated upon dequeue() from 
  * disk. 
- * 
+ *
+ * This class is not syncronized internally.
+ *
  * @author Gordon Mohr
  */
 public class DiskQueue implements Queue {
-	private static Logger logger = Logger.getLogger("org.archive.util.DiskQueue");
+	private static Logger logger
+        = Logger.getLogger("org.archive.util.DiskQueue");
 
+    /** the directory used to create the temporary files */
 	private File scratchDir;
-	String name;
+
+    /** the prefix for the files created in the scratchDir */
+	String prefix;
+
+    /** the number of elements currently in the queue */
 	long length;
+
+    /** 
+     * The object which deals with serializing the actual bytes to/from disk.
+     */
 	DiskBackedByteQueue bytes;
+
 	ObjectOutputStream testStream; // to verify that object is serializable
 	ObjectOutputStream tailStream;
 	ObjectInputStream headStream;
-	
-	/**
-	 * @param dir
-	 * @param name
-	 * 
+
+    /** 
+     * A flag which marks when the lazy initialization is finished, and the
+     * object is ready for use
+     */
+	private boolean isInitialized = false;
+    
+
+	/** Create a new {@link DiskQueue} which creates its temporary files in a
+     * given directory, with a given prefix.
+     *
+	 * @param dir the directory in which to create the data files
+	 * @param prefix
+	 * @throws FileNotFoundException if we cannot create an appropriate file
 	 */
-	public DiskQueue(File dir, String name) {
-		length = 0;
-		this.name = name;
+	public DiskQueue(File dir, String prefix) throws FileNotFoundException {
+		if(dir == null || prefix == null) {
+            throw new FileNotFoundException("null arguments not accepted");
+        }
+        
+        length = 0;
+		this.prefix = prefix;
 		this.scratchDir = dir;
+        bytes = new DiskBackedByteQueue(scratchDir, this.prefix);
 		// TODO someday: enable queue to already be filled
 	}
 	
 	private void lateInitialize() throws FileNotFoundException, IOException {
-		bytes = new DiskBackedByteQueue(scratchDir,this.name);
 		testStream = new ObjectOutputStream(new NullOutputStream());
 		tailStream = new ObjectOutputStream(bytes.getTailStream());
 		headStream = new ObjectInputStream(bytes.getHeadStream());
+        isInitialized = true;
 	}
 
 	/* (non-Javadoc)
@@ -83,10 +111,11 @@ public class DiskQueue implements Queue {
 	public void enqueue(Object o){
 		//logger.finest(name+"("+length+"): "+o);
 		try {
-			if(bytes==null) {
+			if(!isInitialized) {
 				lateInitialize();
 			}
-			// TODO: optimize this, for example by serializing to buffer, then writing to disk on success
+			// TODO: optimize this, for example by serializing to buffer, then
+            // writing to disk on success
 			testStream.writeObject(o);
 			testStream.reset();
 			tailStream.writeObject(o);
@@ -94,7 +123,8 @@ public class DiskQueue implements Queue {
 			length++;
 		} catch (IOException e) {
 			// TODO convert to runtime exception?
-			DevUtils.logger.log(Level.SEVERE,"enqueue("+o+")"+DevUtils.extraInfo(),e);
+			DevUtils.logger.log(Level.SEVERE,"enqueue("+o+")" +
+			    DevUtils.extraInfo(),e);
 		}
 	}
 
@@ -140,10 +170,9 @@ public class DiskQueue implements Queue {
 	public void release() {
 		if (bytes != null) {
 			try {
-				headStream.close();
-				tailStream.close();
+				if(headStream != null) headStream.close();
+				if(tailStream != null) tailStream.close();
 				bytes.discard();
-
 			} catch (IOException e) {
 				// TODO: convert to runtime? 
 				e.printStackTrace();

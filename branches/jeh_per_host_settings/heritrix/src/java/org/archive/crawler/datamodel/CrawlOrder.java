@@ -1,4 +1,11 @@
-/* Copyright (C) 2003 Internet Archive.
+/* 
+ * CrawlOrder
+ *
+ * $Header$ 
+ * 
+ * Created on May 15, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -21,6 +28,7 @@
  *
  * $Header$
  */
+
 package org.archive.crawler.datamodel;
 
 import java.util.logging.Logger;
@@ -83,14 +91,14 @@ public class CrawlOrder extends CrawlerModule {
             new SimpleType(
                 ATTR_MAX_BYTES_DOWNLOAD,
                 "Max number of bytes to download",
-                new Integer(0)));
+                new Long(0)));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_DOCUMENT_DOWNLOAD,
                 "Max number of documents to download",
-                new Integer(0)));
+                new Long(0)));
         addElementToDefinition(
-            new SimpleType(ATTR_MAX_TIME_SEC, "Max time", new Integer(0)));
+            new SimpleType(ATTR_MAX_TIME_SEC, "Max time", new Long(0)));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_TOE_THREADS,
