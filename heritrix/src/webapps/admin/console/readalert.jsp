@@ -6,16 +6,18 @@
 
 <%
     Alert alert = Heritrix.getAlert(request.getParameter("alert"));
-    alert.setAlertSeen();
     String title = "Read alert";
     int tab = 0;
 %>
 
 <%@include file="/include/head.jsp"%>
 <p>
-<% if(alert == null){ %>
-    <b> No matching alert found </b>
-<% } else { %>
+<%  if(alert == null){  %>
+        <b> No matching alert found </b>
+<% 
+    } else { 
+        alert.setAlertSeen();
+%>
     <table>
         <tr>
             <td>
@@ -54,5 +56,7 @@
     <p>
         <a href="<%=request.getContextPath()%>/console/alerts.jsp">Back to alerts</a>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getID()%>&action=delete">Delete this alert</a>
+        <% if(alert != null) { %>
+            <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getID()%>&action=delete">Delete this alert</a>
+        <% } %>
 <%@include file="/include/foot.jsp"%>

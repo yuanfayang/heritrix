@@ -68,7 +68,6 @@ public class ChangeEvaluator extends Processor implements ARAttributeConstants {
             return;
         }
         
-        // TODO: Consider, will digest (hash) always be byte array? Should there be an interface for 'digest' classes that wrap such information?
         String currentDigest = null;
         Object digest = curi.getContentDigest();
         if(digest!=null) {
@@ -90,10 +89,12 @@ public class ChangeEvaluator extends Processor implements ARAttributeConstants {
             // If equal, we have just downloaded a duplicate.
             logger.finer("On " + curi.getURIString() + " both digest are " +
                     "equal. Old: " + oldDigest + ", new: " + currentDigest);;
-            // TODO: There should be a status for this! curi.setFetchStatus();
             curi.setContentState(CrawlURI.CONTENT_UNCHANGED);
-            // TODO: Maybe only skip to Writing chain? Configurable?
+            // TODO: In the future processors should take not of the content
+            //       state, removing the need for the following 'skip'
             curi.skipToProcessorChain(getController().getPostprocessorChain());
+            // Set content size to zero, we are not going to 'write it to disk'
+            curi.setContentSize(0);
         } else {
             // Document has changed
             logger.finer("On " + curi.getURIString() + " digest are not " +

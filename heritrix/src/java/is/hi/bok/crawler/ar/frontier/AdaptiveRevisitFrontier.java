@@ -833,14 +833,14 @@ public class AdaptiveRevisitFrontier extends ModuleType
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
-    public long discoveredUriCount() {
+    public synchronized long discoveredUriCount() {
         return hostQueues.getSize();
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
-    public long queuedUriCount() {
+    public synchronized long queuedUriCount() {
         return hostQueues.getSize();
     }
 
