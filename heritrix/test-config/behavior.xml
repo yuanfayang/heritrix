@@ -1,0 +1,57 @@
+<crawler-behavior>
+
+ <http-headers>
+  <User-Agent>Heritrix pre-Alpha (contact gojomo@archive.org)</User-Agent>
+  <From>gojomo@archive.org</From>
+ </http-headers>
+ 
+ <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
+ <store class="org.archive.crawler.basic.SimpleStore" />
+ <selector class="org.archive.crawler.basic.SimpleSelector">
+  <exclude name="pathological path" regexp=".*/(.*)/\1/\1/.*" />
+ </selector>
+ 
+ <processors>
+  <processor 
+    name="Preprocessor" 
+    class="org.archive.crawler.basic.SimplePolitenessEnforcer"
+    next="DNS">
+   <params delay-factor="20" />
+  </processor>
+  <processor 
+    name="DNS" 
+    class="org.archive.crawler.basic.SimpleDNSFetcher"
+    next="HTTP">
+  </processor>
+  <processor 
+    name="HTTP" 
+    class="org.archive.crawler.basic.SimpleHTTPFetcher"
+    next="Extractor">
+  </processor>
+   <processor 
+    name="Extractor" 
+    class="org.archive.crawler.basic.SimpleLinkExtractor"
+    next="Archiver">
+  </processor>
+  <processor 
+    name="Archiver" 
+    class="org.archive.crawler.basic.ARCWriter"
+    next="Cacher">
+  </processor>
+  <processor 
+    name="Cacher" 
+    class="org.archive.crawler.basic.HostInfoUpdater">
+  </processor>
+ </processors>
+ 
+ <limits>
+  <!-- actual enforcement of these limits may depend on choice 
+       of processors that read and respect these limits -->
+  <max-pages value="1000" />
+  <max-duration value="1h" />
+  <max-resources-per-site value="1000" />
+  <max-toe-threads value="1" />
+  <max-link-depth value="20" />
+ </limits>
+
+</crawler-behavior>

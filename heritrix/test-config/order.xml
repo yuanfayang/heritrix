@@ -1,0 +1,8 @@
+<crawl-order name="GardenCrawl">
+ <comment>
+  A simple crawl to test the crawler's features.
+ </comment>
+ <crawl-scope src="test-config/scope.xml" />
+ <crawler-behavior src="test-config/behavior.xml" />
+ <disk path="arcs/" />
+</crawl-order>

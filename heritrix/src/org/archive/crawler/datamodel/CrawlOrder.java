@@ -20,6 +20,7 @@ public class CrawlOrder extends XMLConfig {
 	String name;
 	CrawlScope scope;
 	CrawlerBehavior behavior;
+	String outputLocation;
 	
 	/**
 	 * @param crawlOrderFile
@@ -36,9 +37,13 @@ public class CrawlOrder extends XMLConfig {
 	public CrawlOrder(Document doc) {
 		xNode = doc;
 		try {
-			name = getNodeAt("/crawl-order/@name").getNodeValue();
-			scope = new CrawlScope(XPathAPI.selectSingleNode(doc,"//crawl-scope"));
-			behavior = new CrawlerBehavior(XPathAPI.selectSingleNode(doc,"//crawler-behavior"));
+			name 		= getNodeAt("/crawl-order/@name").getNodeValue();
+			scope 		= new CrawlScope(XPathAPI.selectSingleNode(doc,"//crawl-scope"));
+			behavior 	= new CrawlerBehavior(XPathAPI.selectSingleNode(doc,"//crawler-behavior"));
+			
+			outputLocation 	= getStringAt("//disk/@path");
+			
+			
 		} catch (TransformerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -67,4 +72,7 @@ public class CrawlOrder extends XMLConfig {
 		return name;
 	}
 
+	public String getOutputLocation(){
+		return outputLocation;
+	}
 }
