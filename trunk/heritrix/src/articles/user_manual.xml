@@ -68,7 +68,7 @@
 
       <para>A Crawl job encompassses the configurations needed to run a single
       crawl. It also contains some additional elements such as logs, status
-      etc. </para>
+      etc.</para>
 
       <para>Once logged onto the WUI new jobs can be created by going to the
       <emphasis>Jobs</emphasis> tab. Once the Jobs page loads users can create
@@ -104,7 +104,7 @@
       Initially there is only one profile and no existing jobs.</para>
 
       <para>As should be clear by now, all crawl jobs are created by basing
-      them on profiles (see next chapter) or existing jobs. </para>
+      them on profiles (see next chapter) or existing jobs.</para>
 
       <para>Once the proper profile/job has been chosen to base the new job
       one a simple page will appear asking for the new jobs:</para>
@@ -173,7 +173,88 @@
     <sect2>
       <title>Credentials</title>
 
-      <para></para>
+      <para>Heritrix can do two types of authentication: <ulink
+      url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
+      DIGEST Auth) and POST and GET of an HTML Form.</para>
+
+      <note>
+        <title>Logging</title>
+
+        <para>To enable logging of authentication interactions, set the
+        FetchHTTP log level to fine:</para>
+
+        <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level =
+        FINE</programlisting></para>
+      </note>
+
+      <sect3>
+        <title><ulink
+        url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
+        DIGEST Auth)</title>
+
+        <para>Supply <ulink url="#cd">Credential Domain</ulink>, <ulink
+        url="realm">Realm</ulink>, login, and password.</para>
+
+        <para>The way that the RFC2617 authentication works in heritrix is
+        that in response to a 401 response code (Unauthorized), heritrix will
+        use a key made up of the Credential Domain plus Realm to do a lookup
+        into its Credential Store. If a match is found, then the credential is
+        loaded into the CrawlURI and the CrawlURI is marked for immediate
+        retry.</para>
+
+        <para>When the requeued CrawlURI comes around again, this time
+        through, the found credentials are added to the request. If the
+        request succeeds -- result code of 200 -- the credentialls are
+        promotoed to the CrawlServer and all subsequent requests made against
+        this CrawlServer will preemptively volunteer the credential. If the
+        credential fails -- we get another 401 -- then the URI is let die a
+        natural 401 death.</para>
+
+        <sect4 id="cd">
+          <title>Credential Domain</title>
+
+          <para>This equates to the canonical root URI of RFC2617;
+          effectively, in our case, its the CrawlServer name or <ulink
+          url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
+          authority</ulink> (domain plus port if other than port 80). </para>
+        </sect4>
+
+        <sect4 id="realm">
+          <title>Realm</title>
+
+          <para>Realm as per <ulink
+          url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink>. The
+          realm string must match exactly the realm name presented in the
+          authentication challenge served up by the webserver</para>
+        </sect4>
+
+        <sect4>
+          <title>Known Limitations</title>
+
+          <sect5>
+            <title>One Realm per Credential Domain Only</title>
+
+            <para>Currently, you can only have one realm per credential
+            domain.</para>
+          </sect5>
+
+          <sect5>
+            <title>Digest Auth works for Apache</title>
+
+            <para>... but your mileage may vary going up against other servers
+            (See <ulink
+            url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=914301&amp;group_id=73833&amp;atid=539102">[
+            914301 ] Logging in (HTTP POST, Basic Auth, etc.)</ulink> to learn
+            more).</para>
+          </sect5>
+        </sect4>
+      </sect3>
+
+      <sect3>
+        <title>HTML Form POST or GET</title>
+
+        <para></para>
+      </sect3>
     </sect2>
 
     <sect2>
