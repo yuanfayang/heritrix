@@ -25,8 +25,8 @@
       </newObject>
     </newObject>
     <map name="http-headers">
-      <string name="user-agent">os-heritrix/@VERSION@ (+http://localhost.localdomain)</string>
-      <string name="from">johnh@localhost.localdomain</string>
+      <string name="user-agent">os-heritrix/@VERSION@ (+PROJECT_URL_HERE)</string>
+      <string name="from">CONTACT_EMAIL_ADDRESS_HERE</string>
     </map>
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
       <string name="type">classic</string>
