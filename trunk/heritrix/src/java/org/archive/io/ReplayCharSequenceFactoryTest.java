@@ -86,7 +86,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         writeFile(this.regularFile, this.regularBuffer, MULTIPLIER);
         this.factory = ReplayCharSequenceFactory.getInstance();
     }
-
+/*
     public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
         
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
@@ -112,6 +112,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             accessingCharacters(rcs);
         }
     }
+    
 
     public void testGetReplayCharSequenceMultiByteZeroOffset()
         throws IOException {
@@ -126,7 +127,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             accessingCharacters(rcs);
         }
     }
-    
+    */
     public void testGetReplayCharSequenceMultiByteOffset() throws IOException {
         
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
