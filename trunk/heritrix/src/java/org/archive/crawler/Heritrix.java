@@ -195,6 +195,12 @@ public class Heritrix implements HeritrixMBean {
         super();
         Heritrix.loadProperties();
         Heritrix.patchLogging();
+        // Register a shutdownHook so we get called on JVM KILL SIGNAL
+        Runtime.getRuntime().addShutdownHook(new Thread("HeritrixShutdown") {
+            public void run() {
+                Heritrix.prepareHeritrixShutDown();
+            }
+        });
     }
 
     /**
@@ -924,23 +930,28 @@ public class Heritrix implements HeritrixMBean {
      * possible to finish what they are doing.
      */
     public static void prepareHeritrixShutDown(){
-        if(httpServer != null){
+        if(Heritrix.httpServer != null) {
             // Shut down the web access.
             try {
-                httpServer.stopServer();
+                Heritrix.httpServer.stopServer();
             } catch (InterruptedException e) {
                 // Generally this can be ignored, but we'll print a stack trace
                 // just in case.
                 e.printStackTrace();
+            } finally {
+                Heritrix.httpServer = null;
             }
         }
-        if(jobHandler != null){
+        
+        if(Heritrix.jobHandler != null) {
             // Shut down the jobHandler.
             if(jobHandler.isCrawling()){
                 jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
             }
-        } else if(controller != null) {
-            controller.requestCrawlStop();
+            Heritrix.jobHandler = null;
+        } else if(Heritrix.controller != null) {
+            Heritrix.controller.requestCrawlStop();
+            Heritrix.controller = null;
         }
     }
 
@@ -949,8 +960,7 @@ public class Heritrix implements HeritrixMBean {
      * prior to this method.
      *
      */
-    public static void performHeritrixShutDown()
-    {
+    public static void performHeritrixShutDown() {
         performHeritrixShutDown(0);
     }
 
@@ -970,8 +980,7 @@ public class Heritrix implements HeritrixMBean {
      *
      * Stops crawling, shutsdown webserver and system exits.
      */
-    public static void shutdown()
-    {
+    public static void shutdown() {
     	shutdown(0);
     }
 
@@ -980,8 +989,7 @@ public class Heritrix implements HeritrixMBean {
      *
 	 * @param exitCode Exit code to pass system exit.
 	 */
-	public static void shutdown(int exitCode)
-    {
+	public static void shutdown(int exitCode) {
         prepareHeritrixShutDown();
         performHeritrixShutDown(exitCode);
 	}
