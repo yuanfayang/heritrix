@@ -56,6 +56,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private Map handlers = new HashMap();
     private Stack handlerStack = new Stack();
     private Stack stack = new Stack();
+    
+    /** Keeps track of elements which subelements should be skipped. */
+    private Stack skip = new Stack();
     private StringBuffer buffer = new StringBuffer();
     private String value;
 
@@ -113,6 +116,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
      * @see org.xml.sax.ContentHandler#startDocument()
      */
     public void startDocument() throws SAXException {
+        skip.push(new Boolean(false));
         super.startDocument();
     }
 
@@ -138,11 +142,30 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         String localName,
         String qName,
         Attributes attributes)
-        throws SAXException {
+            throws SAXException {
+
         ElementHandler handler = ((ElementHandler) handlers.get(qName));
         if (handler != null) {
             handlerStack.push(handler);
-            handler.startElement(qName, attributes);
+
+            if (((Boolean) skip.peek()).booleanValue()) {
+                skip.push(new Boolean(true));
+                String moduleName =
+                    attributes.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+                logger.fine("Skipping: " + qName + " " + moduleName);
+            } else {
+                try {
+                    handler.startElement(qName, attributes);
+                    skip.push(new Boolean(false));
+                } catch (SAXException e) {
+                    if (e.getException() instanceof InvocationTargetException) {
+                        skip.push(new Boolean(true));
+                    } else {
+                        skip.push(new Boolean(false));
+                        throw e;
+                    }
+                }
+            }
         } else {
             logger.warning("Unknown element '" + qName
                + "' in '" + locator.getSystemId()
@@ -159,12 +182,14 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
      * @throws SAXException
      */
     public void endElement(String uri, String localName, String qName)
-        throws SAXException {
+            throws SAXException {
         value = buffer.toString().trim();
         buffer.setLength(0);
         ElementHandler handler = (ElementHandler) handlerStack.pop();
-        if (handler != null) {
-            handler.endElement(qName);
+        if (!((Boolean) skip.pop()).booleanValue()) {
+            if (handler != null) {
+                handler.endElement(qName);
+            }
         }
     }
 
@@ -248,7 +273,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             String moduleClass =
                 atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
             try {
-                CrawlerModule module = SettingsHandler.instantiateCrawlerModuleFromClassName(moduleName, moduleClass);
+                CrawlerModule module =
+                    SettingsHandler.instantiateCrawlerModuleFromClassName(
+                        moduleName, moduleClass);
                 try {
                     parentModule.setAttribute(settings, module);
                 } catch (AttributeNotFoundException e) {
@@ -256,6 +283,11 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                 }
                 stack.push(module);
             } catch (InvocationTargetException e) {
+                logger.warning("Couldn't instantiate " + moduleName
+                   + ", from class: " + moduleClass
+                   + "' in '" + locator.getSystemId()
+                   + "', line: " + locator.getLineNumber()
+                   + ", column: " + locator.getColumnNumber());
                 throw new SAXException(e);
             } catch (InvalidAttributeValueException e) {
                 throw new SAXException(e);
