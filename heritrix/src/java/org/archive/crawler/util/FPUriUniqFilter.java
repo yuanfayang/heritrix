@@ -33,10 +33,11 @@ import org.archive.util.LongFPSet;
 import st.ata.util.FPGenerator;
 
 /**
- * UriUniqFilter stores 64-bit UURI fingerprints, using an internal LongFPSet
+ * UriUniqFilter storing 64-bit UURI fingerprints, using an internal LongFPSet
  * instance. 
  * 
- * The passed LongFPSet internal instance may be disk or memory based.
+ * The passed LongFPSet internal instance may be disk or memory based. Accesses
+ * to the underlying LongFPSet are synchronized.
  *
  * @author gojomo
  */
@@ -52,6 +53,11 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     private transient FPGenerator fpgen = FPGenerator.std64;
     private HasUriReceiver receiver;
     
+    /**
+     * Create FPUriUniqFilter wrapping given long set
+     * 
+     * @param fpset
+     */
     public FPUriUniqFilter(LongFPSet fpset) {
         this.fpset = fpset;
     }
@@ -61,15 +67,15 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     }
 
     public void add(HasUri obj) {
-        boolean passOn = false;
-        synchronized(this) {
-            passOn = fpset.add(getFp(obj));
-        }
-        if(passOn) {
+        if(fpAdd(getFp(obj))) {
             this.receiver.receive(obj);
         }
     }
 
+    private synchronized boolean fpAdd(long fp) {
+        return fpset.add(fp);
+    }
+    
     private long getFp(HasUri obj) {
         return fpgen.fp(obj.getUri());
     }
@@ -79,20 +85,16 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     }
 
     public void addForce(HasUri obj) {
-        synchronized(this) {
-            fpset.add(getFp(obj));
-        }
+        fpAdd(getFp(obj));
         this.receiver.receive(obj);
     }
 
     public void note(HasUri hu) {
-        fpset.add(getFp(hu));        
+        fpAdd(getFp(hu));        
     }
     
-    public void forget(HasUri hu) {
-        synchronized(this) {
-            fpset.remove(getFp(hu));        
-        }
+    public synchronized void forget(HasUri hu) {
+        fpset.remove(getFp(hu));        
     }
 
     public long flush() {
