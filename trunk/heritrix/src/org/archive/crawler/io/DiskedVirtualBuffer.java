@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
 import java.util.zip.Checksum;
+import java.nio.ByteOrder;
 
 
 /**
@@ -121,16 +122,20 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * Returns a CharSequence interface on this VirtualBuffer
   * (for use by Regular Expressions, for example).
   * 
-  * May require choice of a character encoding in subclasses,
+  * ToDo: May require choice of a character encoding in subclasses,
   * by previous initialization, or in alternate forms of
   * this method.
   * @return
   */
   public CharSequence getCharSequence() {
-    // ToDo:
-    return null;
+    try {
+      return new CharSequenceImpl(getInputStream());
+    } catch (Exception ex) {
+      // ToDo: We may have to have some generic exception handling framework.
+      throw new RuntimeException("Unable to create char sequence.", ex);
+    }
   }
-  
+
   /**
   * Returns a CharSequence interface on a subrange of
   * this VirtualBuffer (for use by Regular Expressions, for example).
@@ -141,8 +146,12 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public CharSequence getCharSequence(long start, long end) {
-    // ToDo:
-    return null;
+    try {
+      return new CharSequenceImpl(getInputStream(), start, end);
+    } catch (Exception ex) {
+      // ToDo: We may have to have some generic exception handling framework.
+      throw new RuntimeException("Unable to create char sequence.", ex);
+    }
   }
   
   
@@ -210,6 +219,72 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   */
   boolean isAugmented() {
     return (mAugmentedDataArray != null);
+  }
+
+
+  class CharSequenceImpl implements CharSequence {
+    private SeekableInputStream src;
+    private long start, end;
+    
+    CharSequenceImpl(SeekableInputStream src)
+    {
+      this.src = src;
+      start = 0;
+      end = getSize();
+    }
+    
+    CharSequenceImpl(SeekableInputStream src, long start, long end)
+            throws IOException
+    {
+      // ToDo: Need to validate start and end..
+      this.start = start;
+      this.end = end;
+      this.src = new SeekableInputSubstream(src, start, end);
+    }
+    
+    public int length() {
+      return (int)(end - start);
+    }
+    
+    public char charAt(int index) {
+      if ((index < 0) || (index >= length())) {
+          throw new StringIndexOutOfBoundsException(index);
+      }
+      try {
+        src.seek(index);
+        // ToDo: The following would work only for us-ascii encoding.
+        // Will have to support other encoding.
+        return (char)src.read();
+      } catch (IOException ex) {
+        throw new RuntimeException("Unable to read from virtual buffer.", ex);
+      }
+    }
+
+    /*
+    private char getChar(byte b1, byte b2) {
+      if (ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
+        return (char)((b1 << 8) | (b2 & 0xff));
+      }
+      else {
+        return (char)((b2 << 8) | (b1 & 0xff));
+      }
+    }*/
+    
+    public CharSequence subSequence(int start, int end) {
+      try {
+        return new CharSequenceImpl(src, start, end);
+      } catch (Exception ex) {
+        // ToDo: We may have to have some generic exception handling framework.
+        throw new RuntimeException("Unable to create char subsequence.", ex);
+      }
+    }
+    
+    // ToDo: Doing a toString will be very costly.. may be nobody would
+    // want to do it.
+    public String toString() {
+      return null;
+    }
+
   }
 
  
