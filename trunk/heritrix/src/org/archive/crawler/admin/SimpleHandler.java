@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,17 +22,16 @@ import org.archive.util.ArchiveUtils;
 import org.w3c.dom.Node;
 
 /**
- * 
- * @author Kristinn Sigurdsson
- *
- * This class provides control access to the crawler to the web pages.
+ * This class provides control access to the crawler to the web pages or other control interfaces.
  * It allows them to submit jobs, changed configurations and get status information. 
- * 
+ * <p>
  * Jobs are queued and processed in the order they are submitted in while the crawler is
  * set to run.  
+ * <p>
+ * If used with web pages an instance of it should reside in "application scope" to be equally 
+ * accessible to all page instances.
  * 
- * An instance of it should reside in "application scope" to be equally accessible to
- * all page instances.
+ * @author Kristinn Sigurdsson
  */
 
 public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStatusListener
@@ -47,7 +47,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	private boolean shouldcrawl;
 	
 	private boolean crawling = false;
-	private String statusMessage = "No actions taken"; //Reports the success or failure of the last action taken.
+	private String statusMessage = "No actions taken"; //Reports the success or failure of the last action taken. TODO: Reconsider how this is used and if it should stay in at all.
 
 	private CrawlController controller;
 	private OrderTransformation orderTransform;
@@ -92,7 +92,8 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		return crawlOrder;
 	}
 	
-	/* Loads the selected order file (as specified by the orderFile attribute)
+	/** 
+	 * Loads the selected order file (as specified by the orderFile attribute)
 	 * as a crawlOrder. 
 	 */
 	private void loadCrawlOrder() throws InitializationException
@@ -103,7 +104,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	/**
 	 * Returns the Frontier report..
 	 * 
-	 * @return A report of the frontiers status.
+	 * @return A report of the frontier's status.
 	 */
 	public String getFrontierReport()
 	{
@@ -113,6 +114,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		}
 		else
 		{
+			// TODO: Consider making Frontier.report() method a part of the URIFrontier interface.
 			return ((Frontier)controller.getFrontier()).report();
 		}
 	}
@@ -120,7 +122,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	/**
 	 * Returns the CrawlControllers ToeThreads report.
 	 * 
-	 * @return
+	 * @return The CrawlControllers ToeThreads report
 	 */
 	public String getThreadsReport()
 	{
@@ -134,6 +136,10 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		}
 	}
 	
+	/*
+	 *  (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJobHandler#addJob(org.archive.crawler.framework.CrawlJob)
+	 */
 	public void addJob(CrawlJob newJob)
 	{
 		newJob.setStatus(CrawlJob.STATUS_PENDING);
@@ -148,11 +154,19 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		statusMessage = "New job added " + newJob.getJobName();		
 	}
 	
+	/*
+	 *  (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJobHandler#getPendingJobs()
+	 */
 	public Vector getPendingJobs()
 	{
 		return pendingCrawlJobs;
 	}
 	
+	/*
+	 *  (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJobHandler#getCurrentJobs()
+	 */
 	public Vector getCurrentJobs()
 	{
 		Vector temp = new Vector();
@@ -160,16 +174,73 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		return temp;		
 	}
 	
+	/**
+	 * Implemented to return a time stamp.
+	 * 
+	 * @return A unique job ID in the form of a timestamp.
+	 * 
+	 * @see org.archive.crawler.framework.CrawlJobHandler#getNextJobUID()
+	 * @see ArchiveUtils#TIMESTAMP17
+	 */
 	public String getNextJobUID()
 	{
 		return ArchiveUtils.TIMESTAMP17.format(new Date());		
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJobHandler#getJob(int)
+	 */
+	public CrawlJob getJob(String jobUID) 
+	{
+		// Find a crawl job with a matching UID and return it.
+		
+		// First check currently running job
+		if(currentJob != null && currentJob.getUID().equals(jobUID)) 
+		{
+			return currentJob;
+		}
+		else
+		{
+			// Then check pending jobs.
+			Iterator itPend = pendingCrawlJobs.iterator();
+			while(itPend.hasNext())
+			{
+				CrawlJob cj = (CrawlJob)itPend.next();
+				if(cj.getUID().equals(jobUID))
+				{
+					return cj;
+				}
+			}
+
+			// Finally check completed jobs.
+			Iterator itComp = completedCrawlJobs.iterator();
+			while(itComp.hasNext())
+			{
+				CrawlJob cj = (CrawlJob)itComp.next();
+				if(cj.getUID().equals(jobUID))
+				{
+					return cj;
+				}
+			}
+		}
+		return null; //Nothing found, return null
+	}
+
+	/**
+	 * Since this implementation of the CrawlJobHandler allows for only one job
+	 * to be running at a time, this method is included for convenience.
+	 * 
+	 * @return The currently running job.
+	 */
 	public CrawlJob getCurrentJob()
 	{
 		return currentJob;
 	}
-	
+
+	/*
+	 *  (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJobHandler#getCompletedJobs()
+	 */	
 	public Vector getCompletedJobs()
 	{
 		return completedCrawlJobs;
@@ -277,6 +348,11 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 			statusMessage = CRAWLER_STOPPED;
 			crawling = false;
 		}
+		try
+		{
+			wait(3000); // Take a few moments so that the controller can change states before the UI updates. The CrawlEnding event will wake us if it occurs sooner than this.
+		}
+		catch(InterruptedException e){}
 	}
 	
 	public void pauseJob() {
@@ -430,32 +506,28 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
 	 */
 	public void crawlPausing(String statusMessage) {
 		currentJob.setStatus(statusMessage);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
 	 */
 	public void crawlPaused(String statusMessage) {
 		currentJob.setStatus(statusMessage);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
 	 */
 	public void crawlResuming(String statusMessage) {
 		currentJob.setStatus(statusMessage);
 	}
 
-	/**
-	 * Once a job has started crawling, it is considered to be crawling until this
-	 * method is invoked.  It should only be invoked by the CrawlController in question
-	 * once it is exiting.
-	 * 
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnding(java.lang.String)
+	/* 
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
 	 */
 	public void crawlEnding(String sExitMessage)
 	{
@@ -469,15 +541,17 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		{
 			startNextJob();		
 		}
+		
+		synchronized(this){
+			notify(); 		//If the GUI terminated the job then it is waiting for this event.
+		}
 	}
 	
-	/**
-	 * The CrawlController calls this method once it's current job is finished (totally)
-	 * or has been terminated for whatever reason (sExitMessage contains details).
-	 * 
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
+	/*
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
 	 */
 	public void crawlEnded(String sExitMessage) {
 		// Not interested.  Once the Controller tells us that it is ending it's crawl we will simply assume that that was indeed done.
 	}
+
 }
