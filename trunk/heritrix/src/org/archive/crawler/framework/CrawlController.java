@@ -8,6 +8,7 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -16,6 +17,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 
+import org.archive.crawler.admin.AdminConstants;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -27,6 +29,7 @@ import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
+import org.archive.util.ArchiveUtils;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -505,4 +508,31 @@ public class CrawlController extends Thread{
 		return toePool.getToeCount();
 	}
 
+	/**
+	 * Compiles and returns a human readable report on the ToeThreads in it's ToePool.
+	 * 
+	 * @return
+	 */
+	public String reportThreads()
+	{
+		StringBuffer rep = new StringBuffer();	
+		
+		rep.append("Toe threads report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+		rep.append(" Job being crawled:         " + getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
+		
+		rep.append(" Number of toe threads in pool: " + toePool.getToeCount() + " (" + toePool.getActiveToeCount() + " active)\n");
+		for(int i=0 ; i < toePool.getToeCount() ; i++)
+		{
+			rep.append("   ToeThread #"+(i+1)+"\n");
+			rep.append(toePool.getReport(i));
+			rep.append("\n");
+		}
+		
+		rep.append("\n");
+		rep.append("\n");
+		
+		
+		
+		return rep.toString();
+	}
 }

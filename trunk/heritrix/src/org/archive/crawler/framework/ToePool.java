@@ -103,4 +103,14 @@ public class ToePool implements CrawlListener {
 		toes = null;
 	}
 
+	/**
+	 * Gets a ToeThreads internal status report.
+	 * 
+	 * @param toe the number of the ToeThread to query.
+	 * @return
+	 */
+	public String getReport(int toe)
+	{
+		return ((ToeThread)toes.get(toe)).report();
+	}
 }
