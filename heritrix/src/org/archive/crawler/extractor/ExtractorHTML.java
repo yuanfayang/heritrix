@@ -112,7 +112,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
 			if (attr.start(2)>-1) {
 				// HREF
-				processLink(curi, value);
+				if(element.toString().equalsIgnoreCase("link")) {
+					// <LINK> elements treated as embeds (css, ico, etc)
+					processEmbed(curi, value);
+				} else {
+					// other HREFs treated as links
+					processLink(curi, value);
+				}
 				if (element.toString().equalsIgnoreCase("base")) {
 					curi.getAList().putString(A_HTML_BASE,value.toString());
 				}
@@ -258,7 +264,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		}
 			
 				
-		CharSequence cs = get.getResponseBodyAsString();
+		CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 		
 		if (cs==null) {
 			// TODO: note problem
