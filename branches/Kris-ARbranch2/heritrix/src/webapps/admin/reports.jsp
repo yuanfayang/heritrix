@@ -47,7 +47,7 @@
     <li><a href="<%=request.getContextPath()%>/reports/frontier.jsp">Frontier report</a> <%= handler.getFrontierOneLine() %></li>
     <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">Thread report</a> <%= handler.getThreadOneLine() %></li>
 </ul>
-<p>The crawler generates reports when its done crawling.  Clicking here on <a href="<%=request.getContextPath()%>/reports.jsp?<%=ACTION%>=<%=FORCE%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
+<p>The crawler generates reports when it finishes a job.  Clicking here on <a href="<%=request.getContextPath()%>/reports.jsp?<%=ACTION%>=<%=FORCE%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
 <% } %>
 
 

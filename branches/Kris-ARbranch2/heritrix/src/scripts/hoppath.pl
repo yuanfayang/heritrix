@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 # Script that parses crawl.log and prints out path to passed in URI.
 # This script works by first sorting the crawl.log to a file named

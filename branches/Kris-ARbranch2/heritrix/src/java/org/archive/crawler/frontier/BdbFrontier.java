@@ -70,6 +70,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
@@ -94,7 +95,7 @@ implements Frontier,
             .classnameBasedUID(BdbFrontier.class, 1);
 
     /** truncate reporting of queues at some large but not unbounded number */
-    private static final int REPORT_MAX_QUEUES = 100;
+    private static final int REPORT_MAX_QUEUES = 1000;
 
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
@@ -104,6 +105,13 @@ implements Frontier,
         "bdb-cache-percent";
     protected final static Integer DEFAULT_BDB_CACHE_PERCENT =
         new Integer(0);
+    
+    /** whether to hold queues INACTIVE until needed for throughput */
+    public final static String ATTR_HOLD_QUEUES = "hold-queues";
+    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
+
+    // budgetted rotation support
+    private static int DEFAULT_BUDGET_REFRESH_INCREMENT = 5000;
     
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
@@ -125,6 +133,9 @@ implements Frontier,
     /** all per-class queues held in snoozed state, sorted by wake time */
     protected SortedSet snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet());
 
+    /** all 'inactive' queues, not yet in active rotation */
+    protected LinkedQueue inactiveQueues = new LinkedQueue();
+    
     /** moves waking items from snoozedClassQueues to readyClassQueues */
     protected ClockDaemon wakeDaemon = new ClockDaemon();
     
@@ -141,7 +152,7 @@ implements Frontier,
     protected Environment dbEnvironment;
 
     /** how long to wait for a ready queue when there's nothing snoozed */
-    private static final long DEFAULT_WAIT = 1000; // 1 seconds
+    private static final long DEFAULT_WAIT = 1000; // 1 second
     
     /**
      * Create the BdbFrontier
@@ -172,6 +183,18 @@ implements Frontier,
                 "or properties setting).",
                 DEFAULT_BDB_CACHE_PERCENT));
         t.setExpertSetting(true);
+        t.setOverrideable(false);
+        t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
+                "Whether to hold newly-created per-host URI work" +
+                " queues until needed to stay busy.\n If false (default)," +
+                " all queues may contribute URIs for crawling at all" +
+                " times. If true, queues begin (and collect URIs) in" +
+                " an 'inactive' state, and only when the Frontier needs" +
+                " another queue to keep all ToeThreads busy will new" +
+                " queues be activated.",
+                DEFAULT_HOLD_QUEUES));
+        t.setExpertSetting(true);
+        t.setOverrideable(false);
     }
 
     /**
@@ -188,13 +211,20 @@ implements Frontier,
         envConfig.setAllowCreate(true);
         int bdbCachePercent = ((Integer) getUncheckedAttribute(null,
 				ATTR_BDB_CACHE_PERCENT)).intValue();
-        if(bdbCachePercent>0) {
-        	// operator has expressed a preference; override BDB default or 
+        if(bdbCachePercent > 0) {
+        	// Operator has expressed a preference; override BDB default or 
         	// je.properties value
         	envConfig.setCachePercent(bdbCachePercent);
         }
         try {
             dbEnvironment = new Environment(c.getStateDisk(), envConfig);
+            if (logger.isLoggable(Level.INFO)) {
+                // Write out the bdb configuration.
+                envConfig = dbEnvironment.getConfig();
+                logger.info("BdbConfiguration: Cache percentage " +
+                    envConfig.getCachePercent() +
+                    ", cache size " + envConfig.getCacheSize());
+            }
             pendingUris = createMultiQueue();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
@@ -203,12 +233,46 @@ implements Frontier,
         }
         loadSeeds();
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        // Ok, if the CrawlController is exiting we delete our
+        // reference to it to facilitate gc.  In fact, do it for
+        // all references because frontier instances stick around
+        // betweeen crawls so the UI can build new jobs based off
+        // the old and so old jobs can be looked at.
+        this.allQueues = null;
+        this.inProcessQueues = null;
+        if (this.alreadyIncluded != null) {
+            this.alreadyIncluded.close();
+            this.alreadyIncluded = null;
+        }
+        if (this.pendingUris != null) {
+            this.pendingUris.close();
+            this.pendingUris = null;
+        }
+        this.snoozedClassQueues = null;
+        if (this.wakeDaemon != null) {
+            this.wakeDaemon.shutDown();
+            this.wakeDaemon = null;
+        }
+        this.queueAssignmentPolicy = null;
+        this.readyClassQueues = null;
+        this.dbEnvironment = null;
+        // Clearing controller is a problem. We get
+        // NPEs in #preNext.
+        // this.controller = null;
+        super.crawlEnded(sExitMessage);
+    }
 
     /**
      * Create the single object (within which is one BDB database)
      * inside which all the other queues live. 
      * 
      * @return the created BdbMultiQueue
+     * @throws DatabaseException
      */
     private BdbMultiQueue createMultiQueue() throws DatabaseException {
         return new BdbMultiQueue(this.dbEnvironment);
@@ -248,6 +312,7 @@ implements Frontier,
      * Choose a per-classKey queue and enqueue it. If this
      * item has made an unready queue ready, place that 
      * queue on the readyClassQueues queue. 
+     * @param caUri CandidateURI.
      */
     public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
@@ -269,9 +334,25 @@ implements Frontier,
             wq.enqueue(curi);
             if(!wq.isHeld()) {
                 wq.setHeld();
-                readyQueue(wq);
+                if(holdQueues()) {
+                    deactivateQueue(wq);
+                } else {
+                    replenishBudget(wq);
+                    readyQueue(wq);
+                }
             }
         }
+    }
+
+    /**
+     * Whether queues should start inactive (only becoming active when needed
+     * to keep the crawler busy), or if queues should start out ready.
+     * 
+     * @return true if new queues should held inactive
+     */
+    private boolean holdQueues() {
+        return ((Boolean) getUncheckedAttribute(null, ATTR_HOLD_QUEUES))
+                .booleanValue();
     }
 
     /**
@@ -289,6 +370,20 @@ implements Frontier,
         }
     }
 
+    /**
+     * Put the given queue on the inactiveQueues queue
+     * @param wq
+     */
+    private void deactivateQueue(BdbWorkQueue wq) {
+        try {
+            inactiveQueues.put(wq);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.err.println("unable to deactivate queue "+wq);
+            // propagate interrupt up 
+            throw new RuntimeException(e);
+        }
+    }
     /**
      * Return the work queue for the given classKey. URIs
      * are ordered and politeness-delayed within their 'class'.
@@ -326,8 +421,10 @@ implements Frontier,
             // do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             
-            // don't wait if there are items buffered in alreadyIncluded
-            long wait = alreadyIncluded.pending() > 0 ? 0 : DEFAULT_WAIT;
+            // don't wait if there are items buffered in alreadyIncluded or
+            // inactive queues
+            long wait = (alreadyIncluded.pending() > 0)
+                    || (!inactiveQueues.isEmpty()) ? 0 : DEFAULT_WAIT;
             
             BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
             if (readyQ != null) {
@@ -344,15 +441,14 @@ implements Frontier,
                                 noteAboutToEmit(curi, readyQ);
                                 inProcessQueues.add(readyQ);
                                 return curi;
-                            } else {
-                                // URI's assigned queue has changed since it
-                                // was queued (eg because its IP has become
-                                // known). Requeue to new queue.
-                                curi.setClassKey(currentQueueKey);
-                                readyQ.dequeue();
-                                curi.setHolderKey(null);
-                                sendToQueue(curi);
                             }
+                            // URI's assigned queue has changed since it
+                            // was queued (eg because its IP has become
+                            // known). Requeue to new queue.
+                            curi.setClassKey(currentQueueKey);
+                            readyQ.dequeue();
+                            curi.setHolderKey(null);
+                            sendToQueue(curi);
                         } else {
                             // readyQ is empty and ready: release held, allowing
                             // subsequent enqueues to ready
@@ -363,16 +459,83 @@ implements Frontier,
                 }
             }
 
-            // nothing was ready; ensure any piled-up scheduled URIs are considered
-            alreadyIncluded.flush();
+            if(shouldTerminate) {
+                // skip subsequent steps if already on last legs
+                throw new EndedException("shouldTerminate is true");
+            }
+                
+            // Nothing was ready; ensure any piled-up scheduled URIs are considered
+            this.alreadyIncluded.flush(); 
+            
+            // if still nothing ready, activate an inactive queue, if available
+            if(readyClassQueues.isEmpty()) {
+                activateInactiveQueue();
+            }
         }
     }
 
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.AbstractFrontier#noteAboutToEmit(org.archive.crawler.datamodel.CrawlURI, org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue)
+     */
+    protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
+        // TODO Auto-generated method stub
+        super.noteAboutToEmit(curi, q);
+        if(employBudgetRotation()) {
+            q.decrementBudget(getCost(curi));
+        }
+    }
+    
+    /** 
+     * Whether to use a budgeting process to rotate queues into and
+     * out of active status. 
+     * 
+     * @return true if budgetted rotation should be used, false otherwise
+     */
+    private boolean employBudgetRotation() {
+        // TODO for now, always do apply budget rotation
+        return true;
+    }
+
+    /**
+     * Return the 'cost' of a CrawlURI (how much of its associated
+     * queue's budget it depletes upon attempted processing)
+     * 
+     * @param curi
+     * @return the associated cost
+     */
+    private int getCost(CrawlURI curi) {
+        // for now, all CrawlURI have cost of 1
+        return 1;
+    }
+    
+    /**
+     * Activate an inactive queue, if any are available. 
+     * 
+     * @throws InterruptedException
+     */
+    private void activateInactiveQueue() throws InterruptedException {
+        BdbWorkQueue activatedQ = (BdbWorkQueue) inactiveQueues.poll(0);
+        if(activatedQ!=null) {
+            replenishBudget(activatedQ);
+            readyQueue(activatedQ);
+            logger.info("ACTIVATED queue: "+activatedQ.classKey);
+        }
+    }
+
+    /**
+     * Replenish the budget of the given queue by the appropriate amount.
+     * 
+     * @param activatedQ queue to replenish
+     */
+    private void replenishBudget(BdbWorkQueue queue) {
+        queue.incrementBudget(DEFAULT_BUDGET_REFRESH_INCREMENT);
+    }
+
     /**
      * Wake any queues sitting in the snoozed queue whose time has come
      */
-    private void wakeQueues() {
+    void wakeQueues() {
         long now = System.currentTimeMillis();
         synchronized (snoozedClassQueues) {
             while (true) {
@@ -382,12 +545,8 @@ implements Frontier,
                 BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
                 if (peek.getWakeTime() < now) {
                     snoozedClassQueues.remove(peek);
-                    try {
-                        peek.setWakeTime(0);
-                        readyClassQueues.put(peek);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    peek.setWakeTime(0);
+                    reenqueueQueue(peek);
                 } else {
                     return;
                 }
@@ -424,7 +583,7 @@ implements Frontier,
                     long delay_ms = delay_sec * 1000;
                     snoozeQueue(wq, now, delay_ms);
                 } else {
-                    readyQueue(wq);
+                    reenqueueQueue(wq);
                 }
             }
             // Let everyone interested know that it will be retried.
@@ -477,7 +636,7 @@ implements Frontier,
             if (delay_ms > 0) {
                 snoozeQueue(wq,now,delay_ms);
             } else {
-                readyQueue(wq);
+                reenqueueQueue(wq);
             }
         }
 
@@ -487,14 +646,32 @@ implements Frontier,
     }
 
     /**
+     * Enqueue the given queue to either readyClassQueues or inactiveQueues,
+     * as appropriate.
+     * 
      * @param wq
-     * @param now
-     * @param delay_ms
+     */
+    private void reenqueueQueue(BdbWorkQueue wq) {
+        if(employBudgetRotation() && wq.getBudget() <= 0) {
+            logger.info("DEACTIVATED queue: "+wq.classKey);
+            deactivateQueue(wq);
+        } else {
+            readyQueue(wq);
+        }
+    }
+
+    /**
+     * Place the given queue into 'snoozed' state, ineligible to
+     * supply any URIs for crawling, for the given amount of time. 
+     * 
+     * @param wq queue to snooze 
+     * @param now time now in ms 
+     * @param delay_ms time to snooze in ms
      */
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
         wq.setWakeTime(now+delay_ms);
         snoozedClassQueues.add(wq);
-        wakeDaemon.executeAfterDelay(delay_ms,waker);
+        wakeDaemon.executeAfterDelay(delay_ms, waker);
     }
 
     /**
@@ -513,7 +690,7 @@ implements Frontier,
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount() {
-        return alreadyIncluded.count();
+        return (this.alreadyIncluded != null)? this.alreadyIncluded.count(): 0;
     }
 
     /** (non-Javadoc)
@@ -571,11 +748,19 @@ implements Frontier,
      * may be unwieldy. 
      */
     public String oneLineReport() {
+        int allCount = allQueues.size();
+        int inProcessCount = inProcessQueues.uniqueSet().size();
+        int readyCount = readyClassQueues.getCount();
+        int snoozedCount = snoozedClassQueues.size();
+        int activeCount = inProcessCount + readyCount + snoozedCount;
+        int inactiveCount = inactiveQueues.getCount();
         StringBuffer rep = new StringBuffer();
-        rep.append(allQueues.size() + " queues: " + 
-                inProcessQueues.uniqueSet().size() + " in-process; " +
-                readyClassQueues.getCount() + " ready; " + 
-                snoozedClassQueues.size() + " snoozed");
+        rep.append(allCount + " queues: " + 
+                activeCount + " active (" + 
+                inProcessCount + " in-process; " +
+                readyCount + " ready; " + 
+                snoozedCount + " snoozed); " +
+                inactiveCount +" inactive");
         return rep.toString();
     }
 
@@ -586,7 +771,12 @@ implements Frontier,
      * @return A report on the current status of the frontier.
      */
     public synchronized String report() {
-        long now = System.currentTimeMillis();
+        int allCount = allQueues.size();
+        int inProcessCount = inProcessQueues.uniqueSet().size();
+        int readyCount = readyClassQueues.getCount();
+        int snoozedCount = snoozedClassQueues.size();
+        int activeCount = inProcessCount + readyCount + snoozedCount;
+        int inactiveCount = inactiveQueues.getCount();
         StringBuffer rep = new StringBuffer();
 
         rep.append("Frontier report - "
@@ -603,16 +793,27 @@ implements Frontier,
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.count()
                 + "\n");
-        rep.append("\n All class queues map size: " + allQueues.size() + "\n");
-        rep.append(  "         In-process queues: " + 
-                inProcessQueues.uniqueSet().size()  + "\n");
-        rep.append(  "              Ready queues: " + 
-                readyClassQueues.getCount() + "\n");
-        rep.append(  "            Snoozed queues: " + 
-                snoozedClassQueues.size() + "\n");
-        rep.append("\n -----===== READY QUEUES =====-----\n");
-        Iterator iter = readyClassQueues.iterator();
+        rep.append("\n All class queues map size: " + allCount + "\n");
+        rep.append(  "             Active queues: " + activeCount  + "\n");
+        rep.append(  "                    In-process: " + inProcessCount  + "\n");
+        rep.append(  "                         Ready: " + readyCount + "\n");
+        rep.append(  "                       Snoozed: " + snoozedCount + "\n");
+        rep.append(  "           Inactive queues: " + 
+                inactiveCount + "\n");
+        rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
+        Iterator iter = inProcessQueues.iterator();
         int count = 0; 
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(inProcessQueues.size()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(inProcessQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
+        }
+        rep.append("\n -----===== READY QUEUES =====-----\n");
+        iter = readyClassQueues.iterator();
+        count = 0; 
         while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
             BdbWorkQueue q = (BdbWorkQueue) iter.next();
             count++;
@@ -631,7 +832,18 @@ implements Frontier,
         }
         if(snoozedClassQueues.size()>REPORT_MAX_QUEUES) {
             rep.append("...and "+(snoozedClassQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
-        }    
+        }
+        rep.append("\n -----===== INACTIVE QUEUES =====-----\n");
+        iter = inactiveQueues.iterator();
+        count = 0; 
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(inactiveQueues.getCount()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(inactiveQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
+        }
         return rep.toString();
     }
 
@@ -682,8 +894,16 @@ implements Frontier,
             // Open the database. Create it if it does not already exist. 
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setAllowCreate(true);
+            try {
+                // new preferred truncateDatabase() method cannot be used
+                // on an open (and thus certain to exist) database like 
+                // the deprecated method it replaces -- so use before
+                // opening the database and be ready if it doesn't exist
+                env.truncateDatabase(null, "pending", false);
+            } catch (DatabaseNotFoundException e) {
+                // ignored
+            }
             pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-            pendingUrisDB.truncate(null, false);
             classCatalogDB = env.openDatabase(null, "classes", dbConfig);
             classCatalog = new StoredClassCatalog(classCatalogDB);
             crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
@@ -815,7 +1035,7 @@ implements Frontier,
          * TODO: hold within a queue's range
          * 
          * @param headKey
-         * @return
+         * @return CrawlURI.
          * @throws DatabaseException
          */
         public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
@@ -926,6 +1146,9 @@ implements Frontier,
         /** time to wake, if snoozed */
         long wakeTime = 0;
         
+        /** running 'budget' indicating whether queue should stay active */
+        int budget = 0;
+        
         /**
          * Create a virtual queue inside the given BdbMultiQueue 
          * 
@@ -938,6 +1161,32 @@ implements Frontier,
             origin = new byte[16];
             long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
             ArchiveUtils.longIntoByteArray(fp, origin, 0);
+        }
+
+        public int getBudget() {
+            return budget;
+        }
+
+        /**
+         * Increase the internal running budget to be used before 
+         * deactivating the queue
+         * 
+         * @param amount amount to increment
+         * @return updated budget value
+         */
+        public int incrementBudget(int amount) {
+            this.budget = this.budget + amount;
+            return this.budget;
+        }
+
+        /**
+         * Decrease the internal running budget by the given amount. 
+         * @param amount tp decrement
+         * @return updated budget value
+         */
+        public int decrementBudget(int amount) {
+            this.budget = this.budget - amount;
+            return this.budget;
         }
 
         /**
