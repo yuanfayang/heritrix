@@ -715,7 +715,10 @@ public class CrawlController extends Thread {
         // Save processors report to file
         reports.info(reportProcessors());
 
-        logger.info("exitting run");
+        // Run processors' final tasks
+        runProcessorFinalTasks();
+
+        logger.info("exiting run");
 
         //Do cleanup to facilitate GC.
         controlThread = null;
@@ -850,68 +853,6 @@ public class CrawlController extends Thread {
         order = o;
     }
 
-    /** Print to stdout basic statistics about the crawl (for stat testing) * @return
-     */
-    //    public void printStatistics(){
-    //
-    //        //System.out.println(":");
-    //        //System.out.println("\t:\t" + statistics.);
-    //
-    //        System.out.println("Fetch Progress:");
-    //        System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
-    //
-    //        int kPerSec = statistics.currentProcessedKBPerSec()/1000;
-    //        System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
-    //
-    //        System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
-    //        System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
-    //        System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
-    //        System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-    //        //System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
-    //
-    //        System.out.println("Threads:");
-    //
-    //        System.out.println("\tTotal:\t" + statistics.threadCount());
-    //        System.out.println("\tActive:\t" + statistics.activeThreadCount());
-    //
-    //
-    //        HashMap dist = statistics.getFileDistribution();
-    //
-    //        if(dist.size() > 0){
-    //            Iterator keyIterator = dist.keySet().iterator();
-    //
-    //            System.out.println("Fetched Resources MIME Distribution:");
-    //
-    //            while(keyIterator.hasNext()){
-    //                String key = (String)keyIterator.next();
-    //                String val = ((Integer)dist.get(key)).toString();
-    //
-    //                System.out.println("\t" + key + "\t" + val);
-    //            }
-    //        }else{
-    //            System.out.println("No mime statistics");
-    //        }
-    //
-    //        HashMap codeDist = statistics.getStatusCodeDistribution();
-    //
-    //        if(codeDist.size() > 0){
-    //
-    //            Iterator keyIterator = codeDist.keySet().iterator();
-    //
-    //            System.out.println("Status Code Distribution:");
-    //
-    //            while(keyIterator.hasNext()){
-    //                String key = (String)keyIterator.next();
-    //                String val = ((Integer)codeDist.get(key)).toString();
-    //
-    //                System.out.println("\t" + key + "\t" + val);
-    //            }
-    //        }else{
-    //            System.out.println("No code distribution statistics.");
-    //        }
-    //
-    //
-    //    }
 
     /**
      * @return The frontier.
@@ -1034,10 +975,12 @@ public class CrawlController extends Thread {
         getScope().refreshSeedsIteratorCache();
         Iterator iter = getScope().getSeedsIterator();
         while (iter.hasNext()) {
-            UURI u = (UURI) iter.next();
-            CandidateURI caUri = new CandidateURI(u);
+            UURI u = (UURI) iter.next();            
+            CandidateURI caUri = 
+                new CandidateURI (u, CandidateURI.HIGH_PRIORITY);                
+                
             caUri.setIsSeed(true);
-            frontier.scheduleHigh(caUri);
+            frontier.scheduleURI(caUri);
         }
     }
 
@@ -1047,5 +990,18 @@ public class CrawlController extends Thread {
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
     }
-
+    
+    /**
+     * This method iterates through processor chains to run processors' final 
+     * tasks.
+     *
+     */
+    private void runProcessorFinalTasks(){
+        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
+            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
+                    ip.hasNext(); ) {
+                ((Processor) ip.next()).finalTasks();
+            }
+        }
+    }
 }
