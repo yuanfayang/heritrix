@@ -54,8 +54,9 @@ Above should checkout the crawler w/o requiring a password.  See the end
 of the sourceforge CVS page for more on ssh CVS access:
 http://sourceforge.net/cvs/?group_id=73833
 
-+ Install java.  Set JAVA_HOME.  You also have to add the java bin to your 
-path:
++ Install java.  Build requires SUN 1.4.2.  The IBM JVM fails copying binary
+data and fails finding default builtin parser.  Set JAVA_HOME.  You also have
+to add the java bin to your path:
 
     % export PATH=$PATH:$JAVA_HOME/bin
 
@@ -69,7 +70,7 @@ Its used generating docbook articles.  You'll also need to manually add
 the jimi jar to your maven repository. Its needed by sdocbook and its
 sun licensed so you'll have to go pull it down yourself.  Maven can't do 
 it for you.  I undid the JimiProClasses.zip file and redid is a jar called
-jimi-1.0.jar.
+jimi-1.0.jar (You might be able to just rename the zip and have it work).
     
 + Install cruisecontrol.  This doc. was done w/ 2.1.4.  You have to build it
 after downloading (This is the best doc. I found on cruisecontrol setup:
