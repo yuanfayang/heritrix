@@ -132,7 +132,8 @@ public class ArchiveUtils {
 	/**
 	 * Utility function for parsing arc-style date stamps
 	 * in the format yyyMMddHHmmssSSS.
-	 * Date stamps are in the UTC time zone
+	 * Date stamps are in the UTC time zone.  The whole string will not be
+     * parsed, only the first 17 digits.
 	 * 
 	 * @param date an arc-style formatted date stamp
 	 * @return the Date corresponding to the date stamp string
@@ -145,7 +146,8 @@ public class ArchiveUtils {
 	/**
 	 * Utility function for parsing arc-style date stamps
 	 * in the format yyyMMddHHmmss.
-	 * Date stamps are in the UTC time zone
+	 * Date stamps are in the UTC time zone.  The whole string will not be
+     * parsed, only the first 14 digits.
 	 * 
 	 * @param date an arc-style formatted date stamp
 	 * @return the Date corresponding to the date stamp string
@@ -158,7 +160,8 @@ public class ArchiveUtils {
 	/**
 	 * Utility function for parsing arc-style date stamps
 	 * in the format yyyMMddHHmm.
-	 * Date stamps are in the UTC time zone
+	 * Date stamps are in the UTC time zone.  The whole string will not be
+     * parsed, only the first 12 digits.
 	 * 
 	 * @param date an arc-style formatted date stamp
 	 * @return the Date corresponding to the date stamp string
@@ -168,22 +171,27 @@ public class ArchiveUtils {
 		return TIMESTAMP12.parse(date);
 	}
 	
-	/**
-	 * @param i
-	 * @param pad
+	/** Convert an <code>int</code> to a <code>String</code>, and pad it to
+     * <code>pad</code> spaces.
+	 * @param i the int
+	 * @param pad the width to pad to.
 	 * @return String w/ padding.
 	 */
-	public static String padTo(int i, int pad) {
+	public static String padTo(final int i, final int pad) {
 		String n = Integer.toString(i);
 		return padTo(n,pad);
 	}
 	
-	/**
-	 * @param s
-	 * @param pad
+	/** Pad the given <code>String</code> to <code>pad</code> characters wide
+     * by pre-pending spaces.  <code>s</code> should not be <code>null</code>.
+     * If <code>s</code> is already wider than <code>pad</code> no change is
+     * done.
+     *
+	 * @param s the String to pad
+	 * @param pad the width to pad to.
 	 * @return String w/ padding.
 	 */
-	public static String padTo(String s, int pad) {
+	public static String padTo(final String s, final int pad) {
 		int l = s.length();
 		StringBuffer sb = new StringBuffer();
 		while(l<pad) {
@@ -192,7 +200,8 @@ public class ArchiveUtils {
 		}
 		sb.append(s);
 		return sb.toString();
-	}	
+	}
+    
 	/**
 	 * Example: On Windows machine file test/test.txt is converted to test\test.txt 
 	 * @param aFileName
@@ -221,14 +230,28 @@ public class ArchiveUtils {
 	/**
 	 * Tests if a file's path is absolute.
 	 * 
-	 * @param aFileName
-	 * @return boolean
+	 * @param aFileName the filename to check
+	 * @return <code>true</code> if it is an absolute file
 	 */
 	public static boolean isFilePathAbsolute(String aFileName){
+        // deal with null argument to avoid npe
+        if(aFileName == null) {
+            return false;
+        }
 		return (new File(aFileName)).isAbsolute();
  	}
-	
-	public static boolean byteArrayEquals(byte[] lhs, byte[] rhs) {
+
+    /** check that two byte arrays are equal.  They may be <code>null</code>.
+     *
+     * @param lhs a byte array
+     * @param rhs another byte array.
+     * @return <code>true</code> if they are both equal (or both
+     * <code>null</code>)
+     */
+	public static boolean byteArrayEquals(final byte[] lhs, final byte[] rhs) {
+        if (lhs == null && rhs != null || lhs != null && rhs == null) {
+            return false;
+        }
 		if (lhs==rhs) {
 			return true;
 		}

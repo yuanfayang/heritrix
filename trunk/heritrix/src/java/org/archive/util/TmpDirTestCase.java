@@ -1,4 +1,4 @@
-/* ARCTest
+/* TmpDirTestCase
  * 
  * $Id$
  * 
@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.arc;
+package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,39 +31,41 @@ import junit.framework.TestCase;
 
 
 /**
- * Base class for ARC*Test files.
- * 
- * This class sets up where we write temporary files and tests for its 
- * writeableness.
+ * Base class for TestCases that want access to a tmp dir for the writing 
+ * of files.
  * 
  * @author stack
  */
-public class ARCTest
+public class TmpDirTestCase
     extends TestCase
 {
     /**
      * Name of the system property that holds pointer to tmp directory into
      * which we can safely write files.
-     * 
-     * This property is used by unit testing code.
      */
     private static final String TEST_TMP_SYSTEM_PROPERTY_NAME = "testtmpdir";
     
     /**
      * Default test tmp.
-     * 
-     * We'll write test ARC files in here if we can't find a 'testtmpdir' 
-     * system property.
-     * 
-     * 
      */
-    private static final String DEFAULT_TEST_TMP_DIR = File.separator + "tmp";
+    private static final String DEFAULT_TEST_TMP_DIR = File.separator + "tmp" +
+        File.separator + "heritrix-junit-tests";
     
     /**
      * Directory to write temporary files to.
      */
     protected File tmpDir = null;
     
+
+    public TmpDirTestCase()
+    {
+        super();
+    }
+
+    public TmpDirTestCase(String testName)
+    {
+        super(testName);
+    }
     
     /*
      * @see TestCase#setUp()
@@ -78,6 +80,12 @@ public class ARCTest
         {
             tmpDir.mkdirs();
         }
+        
+        if (!tmpDir.canWrite())
+        {
+            throw new IOException(tmpDir.getAbsolutePath() +
+                 " is unwriteable.");
+        }
     }
     
     /*
@@ -87,11 +95,4 @@ public class ARCTest
     {
         super.tearDown();
     }
-    
-    public void testTmpDir()
-        throws IOException
-    {
-        assertTrue(this.tmpDir.exists());
-        assertTrue(this.tmpDir.canWrite());
-    } 
 }
