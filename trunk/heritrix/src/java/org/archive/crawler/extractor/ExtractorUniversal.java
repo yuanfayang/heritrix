@@ -30,6 +30,7 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.TextUtils;
 
@@ -349,12 +350,18 @@ public class ExtractorUniversal extends Processor
      * @param name The name of the module.
      */
     public ExtractorUniversal(String name) {
-        super(name, "Link extraction on unknown file types");
-        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES,
+        super(name, "Link extraction on unknown file types. \nA best effort" +
+                " extractor that looks at the raw byte code of any file " +
+                "that has not been handled by another extractor and tries" +
+                " to find URIs. Will only match absolute URIs.");
+        Type e;
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES,
             "How deep to look into files for URI strings, in bytes",
             new Long(DEFAULT_MAX_DEPTH_BYTES)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH,
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH,
             "Max length of URIs in bytes", new Long(DEFAULT_MAX_URL_LENGTH)));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) {

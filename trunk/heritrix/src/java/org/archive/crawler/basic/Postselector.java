@@ -55,7 +55,8 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @param name
      */
     public Postselector(String name) {
-        super(name, "Post selector");
+        super(name, "Post selector. \nDetermines which extracted links and " +
+                "other related information gets fed back to the Frontier.");
     }
 
     /* (non-Javadoc)

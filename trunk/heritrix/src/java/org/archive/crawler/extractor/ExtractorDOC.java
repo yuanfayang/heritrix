@@ -50,7 +50,8 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      * @param name
      */
     public ExtractorDOC(String name) {
-        super(name, "DOC Extractor");
+        super(name, "MS-Word document Extractor. Extracts links from MS-Word" +
+                " '.doc' documents.");
     }
 
     /**

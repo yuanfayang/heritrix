@@ -55,7 +55,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
      * @param name
      */
     public ExtractorPDF(String name) {
-        super(name, "PDF extractor");
+        super(name, "PDF extractor. Link extraction on PDF documents.");
     }
 
     protected void innerProcess(CrawlURI curi){
