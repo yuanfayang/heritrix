@@ -53,7 +53,7 @@
     </table>
 <% } %>
     <p>
-        <a href="<%=request.getContext()%>/console/alerts.jsp">Back to alerts</a>
+        <a href="<%=request.getContextPath()%>/console/alerts.jsp">Back to alerts</a>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="<%=request.getContext()%>/console/alerts.jsp?alerts=<%=alert.getID()%>&action=delete">Delete this alert</a>
+        <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getID()%>&action=delete">Delete this alert</a>
 <%@include file="/include/foot.jsp"%>
