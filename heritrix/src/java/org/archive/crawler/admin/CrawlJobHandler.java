@@ -42,8 +42,10 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -57,6 +59,7 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
+import org.archive.util.LineReadingIterator;
 
 /**
  * This class manages CrawlJobs. Submitted crawl jobs are queued up and run
@@ -1128,6 +1131,52 @@ public class CrawlJobHandler implements CrawlStatusListener {
         return 0;
     }
 
+    public String importUris(String file, String style, String force) {
+        boolean forceRevisit = "true".equals(force);
+        String extractor;
+        String output;
+        if("crawlLog".equals(style)) {
+            // skip first 3 fields
+            extractor = "\\S+\\s+\\S+\\s+\\S+\\s+(\\S+\\s+\\S+\\s+\\S+\\s+).*";
+            output = "$1";
+        } else if ("recoveryJournal".equals(style)) {
+            // skip the begin-of-line directive
+            extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
+            output = "$1";
+        } else {
+            extractor = LineReadingIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
+            output = LineReadingIterator.ENTRY;
+        }
+        File source = new File(file);
+        if (!source.isAbsolute()) {
+            source = new File(controller.getDisk(), file);
+        }
+        BufferedReader br = null;
+        int addedCount = 0;
+        try {
+            br = new BufferedReader(new FileReader(source));
 
+            Iterator iter = new LineReadingIterator(
+                    br,
+                    LineReadingIterator.COMMENT_LINE,
+                    extractor,
+                    output);
+            while(iter.hasNext()) {
+                try {
+                    CandidateURI caUri = CandidateURI.fromString((String)iter.next());
+                    caUri.setForceFetch(forceRevisit);
+                    controller.getFrontier().schedule(caUri);
+                    addedCount++;
+                } catch (URIException e) {
+                    e.printStackTrace();
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return e.toString();
+        }
 
+        return addedCount +" URIs added from "+ file;
+    }
 }
