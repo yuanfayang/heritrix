@@ -884,18 +884,18 @@ public class ReplayCharSequenceFactory {
             
             finally {
                 // REMOVE
-                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
+                //assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
                 if (writer != null) {
                     writer.close();
                 }
                 // REMOVE
-                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
-                assert isException: "IsException is true";
-                if (isException) {
-                    deleteFile(unicode);
-                }
+                //assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
+                //assert isException: "IsException is true";
+                //if (isException) {
+                //    deleteFile(unicode);
+                //}
             }
-            assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
+            //assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
             return unicode;
         }
             
