@@ -28,11 +28,14 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
+import org.archive.util.HttpRecorderMarker;
 import org.archive.util.HttpRecorder;
 import org.archive.util.PaddingStringBuffer;
 
@@ -42,7 +45,9 @@ import org.archive.util.PaddingStringBuffer;
  *
  * @author Gordon Mohr
  */
-public class ToeThread extends Thread implements CoreAttributeConstants, FetchStatusCodes {
+public class ToeThread extends Thread
+    implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker
+{
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
     private ToePool pool;
@@ -51,6 +56,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
     int serialNumber;
     HttpRecorder httpRecorder;
     HashMap localProcessors = new HashMap();
+    String currentProcessorName = "";
 
     CrawlURI currentCuri;
     long lastStartTime;
@@ -118,11 +124,19 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
             lastStartTime = System.currentTimeMillis();
 
             try {
-                while ( currentCuri.nextProcessor() != null ) {
-                    Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-                    currentProcessor.process(currentCuri);
+                while (currentCuri.nextProcessorChain() != null) {
+                    // Starting on a new processor chain.
+                    currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
+                    currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
+
+                    while (currentCuri.nextProcessor() != null) {
+                        Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+                        currentProcessorName = currentProcessor.getName();
+                        currentProcessor.process(currentCuri);
+                    }
                 }
             } catch (RuntimeException e) {
+                e.printStackTrace(System.err);
                 currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
                 // store exception temporarily for logging
                 currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
@@ -218,7 +232,17 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
         {
             rep.append(currentCuri.getURIString());
             rep.append(" ("+currentCuri.getFetchAttempts()+" attempts)");
-            rep.append(" "+currentCuri.getPathFromSeed());
+            rep.newline();
+            rep.padTo(8);
+            rep.append(currentCuri.getPathFromSeed());
+            if(currentCuri.getVia() != null 
+                    && currentCuri.getVia() instanceof CandidateURI){
+                rep.append(" ");
+                rep.append(((CandidateURI)currentCuri.getVia()).getURIString());
+            }
+            rep.newline();
+            rep.padTo(8);
+            rep.append("Current processor: "+currentProcessorName);
         }
         else
         {
@@ -242,34 +266,16 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
         else if(lastStartTime > 0)
         {
             // We are working on something
-            rep.append("ACTIVE  for ");
+            rep.append("ACTIVE for ");
 
             time = now-lastStartTime;
         }
-        appendTime(rep, time);
+        rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
         rep.newline();
 
         return rep.toString();
     }
 
 
-    private void appendTime(PaddingStringBuffer rep, long time) {
-        if(time>3600000)
-        {
-            //got hours.
-            rep.append(time/3600000 + "h");
-            time = time % 3600000;
-        }
-        if(time > 60000)
-        {
-            rep.append(time/60000 + "m");
-            time = time % 60000;
-        }
-        if(time > 1000)
-        {
-            rep.append(time/1000 + "s");
-            time = time % 60;
-        }
-        rep.append(time + "ms");
-    }
+
 }

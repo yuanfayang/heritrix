@@ -356,5 +356,24 @@ public class ArchiveUtils {
             return Long.toString((long)(((double)amount/(1024*1024*1024))))+" GB";
         }
     }
+    
+public static String formatMillisecondsToConventional(long time) {
+        StringBuffer sb = new StringBuffer();
+        if (time > 3600000) {
+            //got hours.
+            sb.append(time / 3600000 + "h");
+            time = time % 3600000;
+        }
+        if (time > 60000) {
+            sb.append(time / 60000 + "m");
+            time = time % 60000;
+        }
+        if (time > 1000) {
+            sb.append(time / 1000 + "s");
+            time = time % 1000;
+        }
+        sb.append(time + "ms");
+        return sb.toString();
+    }
 }
 
