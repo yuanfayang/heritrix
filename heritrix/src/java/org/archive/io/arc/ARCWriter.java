@@ -398,7 +398,7 @@ public class ARCWriter implements ARCConstants {
             LINE_SEPARATOR;
         int recordLength = metadataBodyLength +
             metadataHeaderLinesTwoAndThree.getBytes(ENCODING).length;
-        String metadataHeaderStr = ARC_MAGIC_NUMBER + this.arcFile.getName() +
+        String metadataHeaderStr = ARC_MAGIC_NUMBER + getArcName() +
             " 0.0.0.0 " + date + " text/plain " + recordLength +
             metadataHeaderLinesTwoAndThree;
         ByteArrayOutputStream metabaos =
@@ -453,6 +453,20 @@ public class ARCWriter implements ARCConstants {
             bytes = assemblyBuffer;
         }
         return bytes;
+    }
+
+    /**
+     * Get the (uncompressed) ARC name
+     * 
+     * @return the filename, as if uncompressed
+     */
+    private String getArcName() {
+        String name = this.arcFile.getName();
+        if(isCompress() && name.endsWith(".gz")) {
+            return name.substring(0,name.length()-3);
+        } else {
+            return name;
+        }
     }
 
     /**
