@@ -121,8 +121,12 @@ public class DiskQueue implements Queue, Serializable {
 
     private void lazyInitialize() throws FileNotFoundException, IOException {
         if(bytes==null) {
+ //           if(prefix.equals("DMO.info")) System.out.println("(re)instantiating DiskQueue bytes "+prefix);
             bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
             bytes.initializeStreams(0);
+        } else {
+ //           if(prefix.equals("DMO.info")) System.out.println("reconnecting DiskQueue bytes "+prefix);
+            bytes.connect();
         }
         testStream = new ObjectOutputStream(new DevNull());
         tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
@@ -151,6 +155,10 @@ public class DiskQueue implements Queue, Serializable {
             tailStream.writeObject(o);
             tailStream.reset(); // forget state with each enqueue
             length++;
+        } catch (NullPointerException npe) {
+            // temporarily here for debugging/breakpoint purposes
+            System.err.println("NPE");
+            throw npe;
         } catch (IOException e) {
             // TODO convert to runtime exception?
             DevUtils.logger.log(Level.SEVERE,"enqueue("+o+")" +
@@ -201,10 +209,10 @@ public class DiskQueue implements Queue, Serializable {
      * @see org.archive.util.Queue#release()
      */
     public void release() {
+ //       if(prefix.equals("DMO.info")) System.out.println("releasing DiskQueue "+prefix);
         if (bytes != null) {
             try {
                 releaseStreams();
-                //bytes.close();
                 bytes.discard();
             } catch (IOException e) {
                 // TODO: convert to runtime?
@@ -239,9 +247,12 @@ public class DiskQueue implements Queue, Serializable {
      *
      */
     public void disconnect() {
+//        if(prefix.equals("DMO.info")) System.out.println("disconnecting DiskQueue "+prefix);
         try {
             releaseStreams();
-            bytes.disconnect();
+            if(bytes!=null ) {
+                bytes.disconnect();
+            }
             isInitialized = false;
         } catch (IOException e) {
             // TODO convert to runtime exception?
