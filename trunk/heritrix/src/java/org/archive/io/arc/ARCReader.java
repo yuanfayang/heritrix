@@ -156,6 +156,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     
     private boolean strict = false;
     
+    private boolean parseHttpHeaders = true;
+    
     private static final byte [] outputBuffer = new byte[8 * 1024];
     
     private static final String CDX_OUTPUT = "cdx";
@@ -330,6 +332,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     
     /**
      * Call close when done so we can cleanup after ourselves.
+     * When parsing through an ARC writing out CDX info, we spend
+     * 45% of CPU in here skipping over ARC Record body (~34% is
+     * spent in the ARCRecord#read).
      * @throws IOException
      */
     public void close() throws IOException {
@@ -420,6 +425,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * arcfile header.  Will be problems reading subsequent arc records
      * if you don't since arcfile header has the list of metadata fields for
      * all records that follow.
+     * 
+     * <p>When parsing through ARCs writing out CDX info, we spend about
+     * 38% of CPU in here -- about 30% of which is in getTokenizedHeaderLine
+     * -- of which 16% is reading.
      *
      * @param is InputStream to use.
      * @param offset Absolute offset into arc file.
@@ -463,7 +472,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             this.currentRecord = new ARCRecord(is,
                 computeMetaData(this.headerFieldNameKeys, firstLineValues,
                     this.version, offset), bodyOffset, this.digest,
-                    isStrict());
+                    isStrict(), isParseHttpHeaders());
         } catch (IOException e) {
             IOException newE = new IOException(e.getMessage() + " (Offset " +
                     offset + ").");
@@ -488,6 +497,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     private int getTokenizedHeaderLine(final InputStream stream,
             List list) throws IOException {
         // Preallocate usual line size.
+        // TODO: Replace StringBuffer with more lightweight.  We burn
+        // alot of our parse CPU in this method.
         StringBuffer buffer = new StringBuffer(2048 + 20);
         int read = 0;
         for (int c = -1; true;) {
@@ -805,12 +816,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             arc.setDigest(digest);
             cdxOutput(arc, compressed);
         } else if (format.equals(DUMP_OUTPUT)) {
-            // No point digesting if we're doing a dump.
-            arc.setDigest(false);
             dumpOutput(arc, false);
         } else if (format.equals(GZIP_DUMP_OUTPUT)) {
-            // No point digesting if we're doing a dump.
-            arc.setDigest(false);
             dumpOutput(arc, true);
         } else {
             throw new IOException("Unsupported format: " + format);
@@ -819,6 +826,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     
     protected static void dumpOutput(ARCReader arc, boolean compressed)
     throws IOException, java.text.ParseException {
+        // No point digesting if we're doing a dump.
+        arc.setDigest(false);
         boolean firstRecord = true;
         ARCWriter writer = null;
         for (Iterator ii = arc.iterator(); ii.hasNext();) {
@@ -853,6 +862,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     throws IOException {
         System.out.println("CDX b e a m s c " +
             ((compressed)? "V": "v") + " n g");
+        // Parsing http headers is costly and not needed dumping cdx.
+        arc.setParseHttpHeaders(false);
         for (Iterator ii = arc.iterator(); ii.hasNext();) {
             ARCRecord r = (ARCRecord)ii.next();
             outputARCRecordCdx(r);
@@ -958,6 +969,20 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     public boolean getDigest() {
         return this.digest;
+    }
+
+    /**
+     * @return Returns the parseHttpHeaders.
+     */
+    public boolean isParseHttpHeaders() {
+        return this.parseHttpHeaders;
+    }
+    
+    /**
+     * @param parseHttpHeaders The parseHttpHeaders to set.
+     */
+    public void setParseHttpHeaders(boolean parseHttpHeaders) {
+        this.parseHttpHeaders = parseHttpHeaders;
     }
 
     /**
@@ -1070,9 +1095,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             arc.setStrict(strict);
             ARCRecord rec = arc.get(offset);
             outputARCRecord(rec, format);
-        } else if (cmdlineOptions.length > 1) {
-            System.out.println("Error: Unexpected # of options.");
-            usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 File f = new File((String)i.next());
@@ -1107,5 +1129,4 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             super(message);
         }
     }
-
 }
