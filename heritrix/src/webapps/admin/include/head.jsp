@@ -1,3 +1,4 @@
+<%@ page errorPage="/error.jsp" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
