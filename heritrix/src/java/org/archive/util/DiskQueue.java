@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.framework.Savable;
 import org.archive.io.DiskBackedByteQueue;
 import org.archive.io.NullOutputStream;
 
@@ -46,11 +47,11 @@ import org.archive.io.NullOutputStream;
  * will be redundantly reinstantiated upon dequeue() from 
  * disk. 
  *
- * This class is not syncronized internally.
+ * This class is not synchronized internally.
  *
  * @author Gordon Mohr
  */
-public class DiskQueue implements Queue {
+public class DiskQueue implements Queue, Savable {
 	private static Logger logger
         = Logger.getLogger("org.archive.util.DiskQueue");
 
@@ -95,6 +96,7 @@ public class DiskQueue implements Queue {
 		this.prefix = prefix;
 		this.scratchDir = dir;
         bytes = new DiskBackedByteQueue(scratchDir, this.prefix);
+        bytes.initializeStreams();
 		// TODO someday: enable queue to already be filled
 	}
 	
@@ -179,5 +181,20 @@ public class DiskQueue implements Queue {
 			}
 		}
 	}
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Savable#save(java.io.File, java.lang.String)
+     */
+    public void save(File directory, String key) throws IOException {
+        bytes.save(directory, key);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Savable#restore(java.io.File, java.lang.String)
+     */
+    public void restore(File directory, String key) throws IOException {
+        // TODO Auto-generated method stub
+        
+    }
 
 }

@@ -319,5 +319,17 @@ public class ArchiveUtils {
         
         return dir;
     }
+
+    /**
+     * If possible, create a hard link from the second File to 
+     * the first. If not, create a copy. 
+     * 
+     * @param file
+     * @param file2
+     */
+    public static void hardLinkOrCopy(File file, File file2) {
+        // TODO Auto-generated method stub
+        
+    }
 }
 

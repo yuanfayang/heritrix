@@ -35,6 +35,7 @@ import java.io.InputStream;
  */
 public class FlipFileInputStream extends InputStream {
 	FlipFileOutputStream source;
+    FileInputStream fileStream;
 	InputStream inStream;
 	
 	/**
@@ -98,7 +99,8 @@ public class FlipFileInputStream extends InputStream {
 		if(inStream!=null) {
 			inStream.close();
 		} 
-		inStream = new BufferedInputStream(new FileInputStream(source.getInputFile()),4096);
+        fileStream = new FileInputStream(source.getInputFile());
+		inStream = new BufferedInputStream(fileStream,4096);
 	}
 
 	/* (non-Javadoc)
@@ -108,4 +110,11 @@ public class FlipFileInputStream extends InputStream {
 		super.close();
 		inStream.close();
 	}
+
+    /**
+     * @return
+     */
+    public long getReadPosition() throws IOException {
+        return fileStream.getChannel().position();
+    }
 }
