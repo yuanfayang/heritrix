@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.security.MessageDigest;
 
 
 /**
@@ -175,12 +176,47 @@ public class RecordingInputStream extends InputStream {
 		return recordingOutputStream.getSize();
 	}
 
-	public void markResponseBodyStart() {
-		recordingOutputStream.markResponseBodyStart();
+	public void markContentBegin() {
+		recordingOutputStream.markContentBegin();
 	}
+    
+    public void startDigest() {
+        recordingOutputStream.startDigest();
+    }
 
+    /**
+     * Convenience method for setting SHA1 digest. 
+     */
+    public void setSha1Digest() {
+        recordingOutputStream.setSha1Digest();
+    }
+    
+    /**
+     * Sets a digest function which may be applied to recorded data.
+     * As usually only a subset of the recorded data should
+     * be fed to the digest, you must also call startDigest()
+     * to begin digesting. 
+     * 
+     * @param md
+     */
+    public void setDigest(MessageDigest md) {
+        recordingOutputStream.setDigest(md);
+    }
+
+    
+    /**
+     * Return the digest value for any recorded, digested data. Call
+     * only after all data has been recorded; otherwise, the running
+     * digest state is ruined.  
+     * 
+     * @return the digest final value
+     */
+    public byte[] getDigestValue() {
+        return recordingOutputStream.getDigestValue();
+    }
+    
 	public CharSequence getCharSequence() {
-		return recordingOutputStream.getCharSequence();
+		return recordingOutputStream.getReplayCharSequence();
 	}
 
 	public long getResponseContentLength() {

@@ -29,6 +29,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * A RecordingOutputStream can be wrapped around any other
@@ -41,6 +43,11 @@ import java.io.OutputStream;
  * 
  * As long as the stream recorded is smaller than the 
  * in-memory buffer, no disk access will occur. 
+ * 
+ * Recorded content can be recovered as a ReplayInputStream
+ * (via getReplayInputStream() or, for only the content after
+ * the content-begin-mark is set, getContentReplayInputStream() )
+ * or as a ReplayCharSequence (via getReplayCharSequence()). 
  * 
  * @author gojomo
  *
@@ -55,8 +62,9 @@ public class RecordingOutputStream extends OutputStream {
 	protected OutputStream wrappedStream;
 	protected byte[] buffer;
 	protected long position;
-	protected long responseBodyStart; // when recording HTTP, where the content-body starts
-
+	protected long contentBeginMark; // when recording HTTP, where the content-body starts
+	protected boolean shouldDigest = false;
+    protected MessageDigest digest; 
 	
 	/**
 	 * Create a new RecordingPutputStream with the specified parameters.
@@ -72,14 +80,20 @@ public class RecordingOutputStream extends OutputStream {
 	}
 
 
+	/**
+     * Wrap the given stream, both recording and passing along any
+     * data written to this RecordingOutputStream.
+     * 
+	 * @param wrappedStream
+	 * @throws IOException
+	 */
 	public void open(OutputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
 		this.position = 0;
 		this.size=0;
-		// locksize=false;
-		diskStream=null; 
+        shouldDigest=false; // always begins false; must use startDigest() to begin
+        diskStream=null; 
 		lateOpen();
- 
 	}
 
 
@@ -129,17 +143,20 @@ public class RecordingOutputStream extends OutputStream {
 	}
 	
 	/**
-	 * @param b
-	 */
-	private void record(int b) throws IOException {
-		if(position>=buffer.length){
-			//lateOpen();
-			diskStream.write(b);
-		} else {
-			buffer[(int)position] = (byte)b;
-		}
-		position++;
-	}
+     * @param b
+     */
+    private void record(int b) throws IOException {
+        if (shouldDigest) {
+            digest.update((byte)b);
+        }
+        if (position >= buffer.length) {
+            //lateOpen();
+            diskStream.write(b);
+        } else {
+            buffer[(int) position] = (byte) b;
+        }
+        position++;
+    }
 	
 	/**
 	 * @param b
@@ -147,6 +164,9 @@ public class RecordingOutputStream extends OutputStream {
 	 * @param len
 	 */
 	private void record(byte[] b, int off, int len) throws IOException {
+        if(shouldDigest) {
+            digest.update(b,off,len);
+        }
 		if(position>=buffer.length){
 			//lateOpen();
 			diskStream.write(b,off,len);
@@ -193,7 +213,7 @@ public class RecordingOutputStream extends OutputStream {
 	}
 	
 	public ReplayInputStream getReplayInputStream() throws IOException {
-		return new ReplayInputStream(buffer,size,responseBodyStart,backingFilename);
+		return new ReplayInputStream(buffer,size,contentBeginMark,backingFilename);
 	}
 
 	/**
@@ -203,7 +223,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public ReplayInputStream getContentReplayInputStream() throws IOException {
 		ReplayInputStream replay = getReplayInputStream();
-		replay.skip(responseBodyStart);
+		replay.skip(contentBeginMark);
 		return replay;
 	}
 
@@ -212,13 +232,68 @@ public class RecordingOutputStream extends OutputStream {
 	}
 
 
-	public void markResponseBodyStart() {
-		responseBodyStart = position;
+	/**
+	 * Remember the current position as the start of the "response
+     * body". Useful when recording HTTP traffic as a way to start
+     * replays after the headers. 
+	 */
+	public void markContentBegin() {
+		contentBeginMark = position;
 	}
+    
+    /**
+     * Starts digesting recorded data, if a MessageDigest has been
+     * set. 
+     */
+    public void startDigest() {
+        if (digest!=null) {
+            digest.reset();
+            shouldDigest=true;
+        }
+    }
+    
+    /**
+     * Convenience method for setting SHA1 digest. 
+     */
+    public void setSha1Digest() {
+        try {
+            setDigest(MessageDigest.getInstance("SHA1"));
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Sets a digest function which may be applied to recorded data.
+     * As usually only a subset of the recorded data should
+     * be fed to the digest, you must also call startDigest()
+     * to begin digesting. 
+     * 
+     * @param md
+     */
+    public void setDigest(MessageDigest md) {
+        digest = md;
+    }
 
-	public CharSequence getCharSequence() {
+    
+    /**
+     * Return the digest value for any recorded, digested data. Call
+     * only after all data has been recorded; otherwise, the running
+     * digest state is ruined.  
+     * 
+     * @return the digest final value
+     */
+    public byte[] getDigestValue() {
+        if(digest==null) {
+            return null;
+        }
+        return digest.digest();
+    }
+    
+	public CharSequence getReplayCharSequence() {
 		try {
-			return new ReplayCharSequence(buffer,size,responseBodyStart,backingFilename);
+			return new ReplayCharSequence(buffer,size,contentBeginMark,backingFilename);
 		} catch (IOException e) {
 			// TODO convert to runtime exception?
 			e.printStackTrace();
@@ -227,7 +302,7 @@ public class RecordingOutputStream extends OutputStream {
 	}
 
 	public long getResponseContentLength() {
-		return size-responseBodyStart;
+		return size-contentBeginMark;
 	}
 
 	public void closeRecorder() throws IOException {
