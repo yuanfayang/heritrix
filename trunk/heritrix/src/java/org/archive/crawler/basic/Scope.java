@@ -112,29 +112,22 @@ public class Scope extends CrawlScope {
     public Scope(String name) {
         super(name);
 
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_LINK_HOPS,
-                "Max link hops",
-                new Integer(25)));
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_TRANS_HOPS,
-                "Max trans hops",
-                new Integer(5)));
-        addElementToDefinition(
-            new SimpleType(ATTR_MODE, "Mode", defaultMode, allowedModes));
+        addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
+            "Max link hops", new Integer(25)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
+            "Max trans hops", new Integer(5)));
+        addElementToDefinition(new SimpleType(ATTR_MODE,
+            "Mode", defaultMode, allowedModes));
 
-        ComplexType filter =
-            (ComplexType) addElementToDefinition(
+        ComplexType filter = (ComplexType) addElementToDefinition(
                 new CrawlerModule(ATTR_FOCUS_FILTER));
         filter.setTransient(true);
-        filter =
-            (ComplexType) addElementToDefinition(
+        
+        filter = (ComplexType) addElementToDefinition(
                 new CrawlerModule(ATTR_TRANSITIVE_FILTER));
         filter.setTransient(true);
-        excludeFilter =
-            (OrFilter) addElementToDefinition(
+        
+        excludeFilter = (OrFilter) addElementToDefinition(
                 new OrFilter(ATTR_EXCLUDE_FILTER));
     }
 
