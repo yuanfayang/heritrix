@@ -804,7 +804,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     .setAttribute(new Attribute("seedsfile", seedfile));
             // set 'recover-from' to be old job's recoevery log path
             if(isRecover) {
-                copyRecoveryPath(baseOn,newHandler);
+                updateRecoveryPaths(baseOn,newHandler);
             }
         } catch (AttributeNotFoundException e1) {
             throw new FatalConfigurationException(
@@ -876,19 +876,59 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws InvalidAttributeValueException 
      * @throws AttributeNotFoundException 
      */
-    private void copyRecoveryPath(CrawlJob baseOn, XMLSettingsHandler newHandler) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
-        File logsDisk = null;
+    private void updateRecoveryPaths(CrawlJob baseOn, XMLSettingsHandler newHandler) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+        // First, bring original crawl's recovery-log path into 
+        // new job's 'recover-path'
+        File oldLogsDisk = null;
         try {
-            logsDisk = baseOn.getSettingsHandler().getOrder().getSettingsDir(
+            oldLogsDisk = baseOn.getSettingsHandler().getOrder().getSettingsDir(
                     CrawlOrder.ATTR_LOGS_PATH);
         } catch (AttributeNotFoundException e) {
             logger.severe("Failed to get logs directory " + e);
         }
-        if (logsDisk != null) {
-            String recoveryPath = logsDisk.getAbsolutePath() + File.separatorChar 
+        if (oldLogsDisk != null) {
+            String recoveryPath = oldLogsDisk.getAbsolutePath() + File.separatorChar 
                 + FrontierJournal.LOGNAME_RECOVER + RecoveryJournal.GZIP_SUFFIX;
             newHandler.getOrder().setAttribute(
                     new Attribute(CrawlOrder.ATTR_RECOVER_PATH, recoveryPath));
+        }
+        // Now, ensure that 'logs' and 'state' don't overlap with
+        // previous job's files (ok for 'arcs' and 'scratch' to overlap)
+        File newLogsDisk = null;
+        while(true) {
+            try {
+                newLogsDisk = newHandler.getOrder().getSettingsDir(
+                        CrawlOrder.ATTR_LOGS_PATH);
+            } catch (AttributeNotFoundException e) {
+                logger.severe("Failed to get logs directory " + e);
+            }
+            if (newLogsDisk.list().length>0) {
+                // 'new' directory is nonempty; rename with trailing '-R'
+                String logsPath =  (String) newHandler.getOrder().getAttribute(CrawlOrder.ATTR_LOGS_PATH);
+                newHandler.getOrder().setAttribute(
+                        new Attribute(CrawlOrder.ATTR_LOGS_PATH, logsPath+"-R"));
+            } else {
+                // directory is suitably empty; exit loop
+                break;
+            }
+        }
+        File newStateDisk = null;
+        while (true) {
+            try {
+                newStateDisk = newHandler.getOrder().getSettingsDir(
+                        CrawlOrder.ATTR_STATE_PATH);
+            } catch (AttributeNotFoundException e) {
+                logger.severe("Failed to get state directory " + e);
+            }
+            if (newStateDisk.list().length>0) {
+                // 'new' directory is nonempty; rename with trailing '-R'
+                String statePath =  (String) newHandler.getOrder().getAttribute(CrawlOrder.ATTR_STATE_PATH);
+                newHandler.getOrder().setAttribute(
+                        new Attribute(CrawlOrder.ATTR_STATE_PATH, statePath+"-R"));
+            } else {
+                // directory is suitably empty; exit loop
+                break;
+            }
         }
     }
 
