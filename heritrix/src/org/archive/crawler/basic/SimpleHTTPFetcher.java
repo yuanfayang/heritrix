@@ -7,8 +7,6 @@
 package org.archive.crawler.basic;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
@@ -83,6 +81,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 				+(contentLength==null ? "na" : contentLength.getValue()));
 
 			// TODO consider errors more carefully
+			curi.setFetchStatus(get.getStatusCode());
 			curi.getAList().putObject(A_HTTP_TRANSACTION,get);
 			curi.getAList().putLong(A_FETCH_COMPLETED_TIME,System.currentTimeMillis());
 			Header ct = get.getResponseHeader("content-type");
@@ -97,12 +96,6 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 		} catch (IOException e) {
 			logger.warning(e+" on "+curi);
 			curi.setFetchStatus(S_CONNECT_FAILED);
-		} catch (RuntimeException e) {
-			StringWriter sw = new StringWriter();
-			e.printStackTrace(new PrintWriter(sw));
-			logger.warning(e+" on "+curi+" in SimpleHTTPFetcher\n"+
-			               sw.toString());
-			curi.setFetchStatus(S_INTERNAL_ERROR);
 		} finally {
 			controller.getKicker().cancelKick(Thread.currentThread());
 		}
