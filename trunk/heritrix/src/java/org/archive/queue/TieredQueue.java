@@ -101,8 +101,9 @@ public class TieredQueue implements Queue {
      */
     public Object dequeue() throws NoSuchElementException {
         Object o = peek();
-        assert (o == innerQueues[headSource].dequeue()) : 
+        assert (o == innerQueues[headSource].peek()) : 
             "TieredQueue innerQueue[headSource] != headObject";
+        innerQueues[headSource].dequeue();
         headObject = null;
         length--;
         return o;
