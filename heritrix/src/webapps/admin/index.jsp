@@ -4,6 +4,13 @@
 <%@ page import="org.archive.util.ArchiveUtils" %>
 
 <%
+    // If user comes in with a path of null or of '/', redirect to
+    // '/index.jsp' so the container security check happens.
+    if(request.getPathTranslated() == null) {
+        response.sendRedirect(request.getContextPath() +
+            request.getServletPath());
+    }
+
     String title = "Administrator Console";
     int tab = 0;
 %>
