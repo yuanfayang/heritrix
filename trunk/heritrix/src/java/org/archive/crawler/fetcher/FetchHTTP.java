@@ -343,11 +343,11 @@ public class FetchHTTP extends Processor
              return false;
          }
 
-         // only try so many times...
-         if (curi.getFetchAttempts() >= getMaxFetchAttempts(curi)) {
-             curi.setFetchStatus(S_TOO_MANY_RETRIES);
-             return false;
-         }
+//         System.out.println(curi.toString() + " : " + curi.getFetchAttempts());
+//         if (curi.getFetchAttempts() >= getMaxFetchAttempts(curi)) {
+//             curi.setFetchStatus(S_TOO_MANY_RETRIES);
+//             return false;
+//         }
 
          // make sure the dns lookup succeeded
          if (curi.getServer().getHost().getIP() == null

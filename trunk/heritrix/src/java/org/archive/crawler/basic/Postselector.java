@@ -51,8 +51,11 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  *
  */
-public class Postselector extends Processor implements CoreAttributeConstants, FetchStatusCodes {
-    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.Postselector");
+public class Postselector extends Processor implements CoreAttributeConstants, 
+        FetchStatusCodes {
+            
+    private static Logger logger = 
+        Logger.getLogger("org.archive.crawler.basic.Postselector");
 
     private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS = 
         new Boolean(true);
@@ -60,7 +63,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
         "seed-redirects-new-seed";
     
     // limits on retries TODO: separate into retryPolicy?
-    private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
+    //private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 
     /**
      * @param name
@@ -152,11 +155,11 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
-        if ( curi.getDeferrals() > maxDeferrals ) {
-            // too many deferrals, equals failure
-            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
-            return;
-        }
+//        if ( curi.getDeferrals() > maxDeferrals ) {
+//            // too many deferrals, equals failure
+//            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+//            return;
+//        }
         
         try {
             // create and schedule prerequisite
@@ -204,7 +207,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
     }
         
     /**
-     * Method handles links arcording the collection, type and scheduling 
+     * Method handles links according to the collection, type and scheduling 
      * priority.
      * 
      * @param curi CrawlURI that is origin of the links.
