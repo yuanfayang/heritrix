@@ -53,15 +53,15 @@ package org.archive.crawler.framework;
  * @see org.archive.crawler.event.CrawlURIDispositionListener
  * @see org.archive.crawler.framework.CrawlController
  */
-public interface StatisticsTracking extends Runnable
-{
+public interface StatisticsTracking extends Runnable {
     /**
      * Do initialization.
      *
-     * <p>The CrawlController will call this method before calling the start()
+     * The CrawlController will call this method before calling the start()
      * method.
      *
-     * @param c The {@link CrawlController CrawlController} running the crawl that this class is to gather statistics on.
+     * @param c The {@link CrawlController CrawlController} running the crawl
+     * that this class is to gather statistics on.
      */
     public void initialize(CrawlController c);
 

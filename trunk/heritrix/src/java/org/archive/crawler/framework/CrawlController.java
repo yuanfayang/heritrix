@@ -90,7 +90,8 @@ import org.xbill.DNS.dns;
  */
 public class CrawlController implements Serializable {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(CrawlController.class,1);
+    private static final long serialVersionUID =
+        ArchiveUtils.classnameBasedUID(CrawlController.class,1);
 
     /**
      * Messages from the crawlcontroller.
@@ -553,11 +554,14 @@ public class CrawlController implements Serializable {
         scratchDisk.mkdirs();
     }
 
+    /**
+     * Setup the statistics tracker.
+     * The statistics object must be created before modules can use it.
+     * Do it here now so that when modules retrieve the object from the
+     * controller during initialization (which some do), its in place.
+     * @throws InvalidAttributeValueException
+     */
     private void setupStatTracking() throws InvalidAttributeValueException {
-        // the statistics object must be created before modules that use it if those
-        // modules retrieve the object from the controller during initialization
-        // (which some do).  So here we go with that.
-
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
             // set up a default tracker
@@ -721,9 +725,9 @@ public class CrawlController implements Serializable {
             runProcessorInitialTasks();
         }
 
-        // assume Frontier state already loaded
+        // Sssume Frontier state already loaded
         state = beginPaused ? PAUSED : RUNNING;
-        logger.info("Should start Crawl");
+        logger.info("Starting crawl.");
 
         sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
         // A proper exit will change this value.
@@ -733,7 +737,6 @@ public class CrawlController implements Serializable {
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
         statLogger.start();
-
         frontier.unpause();
     }
 
@@ -756,7 +759,7 @@ public class CrawlController implements Serializable {
 
         closeLogFiles();
 
-        logger.info("exiting a crawl run");
+        logger.info("Finished crawl.");
 
         // Do cleanup to facilitate GC.
         this.frontier = null;
@@ -815,7 +818,7 @@ public class CrawlController implements Serializable {
     }
 
     private void completePause() {
-        logger.info("Crawl job paused");
+        logger.info("Crawl paused.");
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = PAUSED;
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
@@ -875,6 +878,7 @@ public class CrawlController implements Serializable {
     }
 
     private void beginCrawlStop() {
+        logger.info("Starting crawl stopping...");
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = STOPPING;
             frontier.terminate();
@@ -884,6 +888,7 @@ public class CrawlController implements Serializable {
                 ((CrawlStatusListener)i.next()).crawlEnding(sExit);
             }
         }
+        logger.info("Finished crawl stopping.");
     }
 
     /**
@@ -896,7 +901,7 @@ public class CrawlController implements Serializable {
         }
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
 
-        logger.info("Pausing crawl job ...");
+        logger.info("Pausing crawl...");
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = PAUSING;
             frontier.pause();
@@ -927,7 +932,7 @@ public class CrawlController implements Serializable {
         state = RUNNING;
         frontier.unpause();
 
-        logger.info("Crawl job resumed");
+        logger.info("Crawl resumed.");
 
         // Tell everyone that we have resumed from pause
         synchronized (this.registeredCrawlStatusListeners) {
