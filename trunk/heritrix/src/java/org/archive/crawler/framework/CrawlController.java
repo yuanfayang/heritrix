@@ -25,14 +25,15 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.ArrayList;
 
 import org.archive.crawler.admin.AdminConstants;
 import org.archive.crawler.admin.StatisticsTracker;
@@ -72,7 +73,8 @@ public class CrawlController extends Thread {
 	private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
 	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
-	private static final String LOGNAME_RECOVER = "recover";
+    private static final String LOGNAME_RECOVER = "recover";
+    private static final String LOGNAME_REPORTS = "reports";
 	public static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
 	public static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval-seconds";
 	public static final String XP_DISK_PATH = "//behavior/@disk-path";
@@ -103,7 +105,8 @@ public class CrawlController extends Thread {
 	public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
 	public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
 	public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
-	public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
+    public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
+    public Logger reports = Logger.getLogger(LOGNAME_REPORTS);
 	
 	// create a statistic tracking object and have it write to the log every 
 	protected StatisticsTracking statistics = null;
@@ -408,10 +411,16 @@ public class CrawlController extends Thread {
 		progressStats.addHandler(stat);
 		progressStats.setUseParentHandlers(false);
 		
-		FileHandler reco = new FileHandler(diskPath+LOGNAME_RECOVER+".log");
-		reco.setFormatter(new PassthroughFormatter());
-		recover.addHandler(reco);
-		recover.setUseParentHandlers(false);
+        FileHandler reco = new FileHandler(diskPath+LOGNAME_RECOVER+".log");
+        reco.setFormatter(new PassthroughFormatter());
+        recover.addHandler(reco);
+        recover.setUseParentHandlers(false);
+
+        FileHandler rep = new FileHandler(diskPath+LOGNAME_REPORTS+".log");
+        rep.setFormatter(new PassthroughFormatter());
+        reports.addHandler(rep);
+        reports.setUseParentHandlers(false);
+        reports.setLevel(Level.INFO);
 	}
 
 	// must include a bot name and info URL
@@ -531,6 +540,9 @@ public class CrawlController extends Thread {
 			((CrawlStatusListener)registeredCrawlStatusListeners.get(0)).crawlEnded(sExit);
 			registeredCrawlStatusListeners.remove(0);
 		}
+
+        // Save processors report to file
+        reports.info(reportProcessors());
 
 		logger.info("exitting run");
 
