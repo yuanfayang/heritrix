@@ -1563,9 +1563,9 @@ public class MyFrontier extends ModuleType implements Frontier,
     method. Because of the planned overhaul of the scopes and filters, we will
     not provide a extensive example of how to create a filter at this point.
     It should be pretty easy though to follow the directions in the
-    javadoc.</para>
+    javadoc. For your filter to show in the application interface, you'll need
+    to edit <filename>src/conf/modules/filters.options</filename></para>
 
-    <para></para>
   </sect1>
 
   <sect1>
