@@ -506,7 +506,7 @@
         </dependency>
         <dependency>
             <id>commons-collections</id>
-            <version>2.1</version>
+            <version>3.1</version>
             <url>http://jakarta.apache.org/site/binindex.cgi#commons-collections</url>
             <properties>
                 <war.bundle>true</war.bundle>
