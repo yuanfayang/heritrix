@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +27,10 @@ import org.mortbay.util.StringUtil;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.util.Sorts;
+import org.archive.crawler.util.StringIntPair;
+import org.archive.crawler.util.StringIntPairComparator;
+import org.archive.crawler.util.StringIntPairComparator;
 
 import sun.security.provider.certpath.CollectionCertStore;
 
@@ -64,6 +69,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		{
 			if (!isStarted())
 				return;
+
 			// Only handle GET, HEAD and POST
 			if (!HttpRequest.__GET.equals(request.getMethod())
 				&& !HttpRequest.__HEAD.equals(request.getMethod())
@@ -74,10 +80,11 @@ public class CrawlerHandler extends AbstractHttpHandler {
 				Integer
 					.valueOf(request.getParameter("CrawlerAction"))
 					.intValue();
+
 			switch (_crawlerAction) {
 				case STOP :
 					outputMessage(
-						"===>Crawling stoped!<===\nShutting Down the Server!",
+						"===>Crawling stoped!<===<br>\nShutting Down the Server!",
 						response);
 					_controller.stopCrawl();
 					_crawling = false;
@@ -117,10 +124,6 @@ public class CrawlerHandler extends AbstractHttpHandler {
 	private void outputCrawlerStats(HttpResponse r)
 		throws HttpException, IOException {
 
-		r.setField(HttpFields.__ContentType, HttpFields.__TextHtml);
-		OutputStream out = r.getOutputStream();
-		ByteArrayOutputStream buf = new ByteArrayOutputStream(2048);
-		Writer writer = new OutputStreamWriter(buf, StringUtil.__ISO_8859_1);
 		StringBuffer sb = new StringBuffer(32768);
 		sb.append("<html>\n<head>\n<title>Heritrix WUI</title>\n");
 		if (_controller.getStatistics().activeThreadCount() != 0)
@@ -128,112 +131,106 @@ public class CrawlerHandler extends AbstractHttpHandler {
 				"<META HTTP-EQUIV=Refresh CONTENT=\"3\" URL=\"CrawlAction?CrawlAction=\"4\"\n");
 		sb.append("</head>\n");
 		sb.append(genPageHeader());
+		sb.append(genNavigationLinks());
+		sb.append("<br>");
 		sb.append("<br>Total Threads: ");
 		sb.append(_controller.getStatistics().threadCount());
 		sb.append("<br>Total Active Threads: <font color=\"red\">");
 		sb.append(_controller.getStatistics().activeThreadCount());
-		sb.append("</font>");
+		sb.append("</font><br>Total Bytes Fetched: ");
+		sb.append(_controller.getStatistics().getTotalBytesWritten());
+		sb.append("<br><center><table border=1><tr><td><center><b><u>DOWNLOADED/DISCOVERED DOCUMENT RATIO</u></b><br>");
 		sb.append(
 			genProgressBar(
-				"Downloaded/Discovered Document Ration",
+				"",
 				_controller.getStatistics().uriFetchSuccessCount(),
 				_controller.getStatistics().urisEncounteredCount(),
 				"darkorange",
 				"lightblue"));
-		Object objArray[] =
-			_controller
-				.getStatistics()
-				.getFileDistribution()
-				.values()
-				.toArray();
-		java.util.Arrays.sort(objArray);
 
-		Iterator keys =
-			_controller
-				.getStatistics()
-				.getFileDistribution()
-				.keySet()
-				.iterator();
-		Iterator values =
-			_controller
-				.getStatistics()
-				.getFileDistribution()
-				.values()
-				.iterator();
-			List l = new ArrayList();
-		while (values.hasNext()) {
+		sb.append("</td></center></tr></table><br><center><table border=1><tr><td><center><b><u>MIME TYPES</u></b></center></td><td><center><b><u>HTTP RESPONSE CODE</u><b></center></td></tr><tr><td>");
+		Object[] mimeTypesSorted = Sorts.sortStringIntHashMap(_controller.getStatistics().getFileDistribution());
+		Arrays.sort(mimeTypesSorted, new StringIntPairComparator());
+		for (int i = mimeTypesSorted.length - 1; i >= 0; i--)
 			sb.append(
 				genProgressBar(
-					"Total Mime Type:" + keys.next().toString(),
-					((Integer) values.next()).intValue(),
+					((StringIntPair) mimeTypesSorted[i]).getStringValue(),
+					((StringIntPair) mimeTypesSorted[i]).getIntValue(),
 					_controller.getStatistics().urisEncounteredCount(),
 					"darkorange",
 					"lightblue"));
-		}
+
+			sb.append("</td><td>");
+			Object[] httpResCodeSorted = Sorts.sortStringIntHashMap(_controller.getStatistics().getStatusCodeDistribution());
+			Arrays.sort(httpResCodeSorted, new StringIntPairComparator());
+			for (int i = httpResCodeSorted.length - 1; i >= 0; i--)
+				sb.append(
+					genProgressBar(
+						((StringIntPair) httpResCodeSorted[i]).getStringValue(),
+						((StringIntPair) httpResCodeSorted[i]).getIntValue(),
+						_controller.getStatistics().uriFetchSuccessCount(),
+						"darkorange",
+						"lightblue"));
+		sb.append("</td></tr></table>");
 		sb.append("<br>");
 		sb.append(genNavigationLinks());
 		sb.append(genPageEnd());
-		writer.write(sb.toString());
-		writer.flush();
-		buf.writeTo(out);
-		out.flush();
+
+		outputHtmlPage(r, sb.toString());
 	}
 	private void outputCrawlOrder(CrawlOrder o, HttpResponse r)
 		throws HttpException, IOException {
 
-		r.setField(HttpFields.__ContentType, HttpFields.__TextHtml);
-		OutputStream out = r.getOutputStream();
-		ByteArrayOutputStream buf = new ByteArrayOutputStream(2048);
-		Writer writer = new OutputStreamWriter(buf, StringUtil.__ISO_8859_1);
-		writer.write(genPageStart());
-		writer.write(genPageHeader());
-		writer.write("<h2>Crawl Order</h2>");
-		writer.write("<FORM ACTION=\"CrawlerAction\" METHOD=GET>\n");
-		writer.write(
+		StringBuffer sb = new StringBuffer();
+		sb.append(genPageStart());
+		sb.append(genPageHeader());
+		sb.append("<h2>Crawl Order</h2>");
+		sb.append("<FORM ACTION=\"CrawlerAction\" METHOD=GET>\n");
+		sb.append(
 			genHtmlTextField("/crawl-order/@name", "CRAWL NAME", o.getName()));
-		//		writer.write(
+		//		sb.append(
 		//			genHtmlTextField(
 		//				"//crawl-order/comment",
 		//				"COMMENT",
 		//				o.getStringAt("//crawl-order/comment/")));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//http-headers/User-Agent",
 				"USER AGENT",
 				o.getBehavior().getUserAgent()));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//http-headers/From",
 				" FROM",
 				o.getBehavior().getFrom()));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//limits/max-toe-threads/@value",
 				"MAX NUMBER OF THREADS",
 				String.valueOf(o.getBehavior().getMaxToes())));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//limits/max-link-depth/@value",
 				"MAX LINK DEPTH",
 				String.valueOf(o.getBehavior().getMaxLinkDepth())));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"/crawl-order/arc-file/@prefix",
 				"ARC FILE PREFIX",
 				o.getNodeAt("/crawl-order/arc-file/@prefix").getNodeValue()));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//processors/processor/arc-files/@max-size-bytes",
 				"MAX ARC FILE SIZE",
 				o
 					.getNodeAt("//processors/processor/arc-files/@max-size-bytes")
 					.getNodeValue()));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//disk/@path",
 				"DISK PATH",
 				o.getNodeAt("//disk/@path").getNodeValue()));
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//processors/processor/compression/@use",
 				"COMPRESS ARC FILES",
@@ -241,34 +238,37 @@ public class CrawlerHandler extends AbstractHttpHandler {
 					.getNodeAt("//processors/processor/compression/@use")
 					.getNodeValue()));
 
-		writer.write(
+		sb.append(
 			genHtmlTextField(
 				"//selector/seeds/@src",
 				"SEEDS FILE",
 				o.getBehavior().getStringAt("//selector/seeds/@src")));
 
-		writer.write(
-			genHtmlTextArea("seed-urls", "", o.getBehavior().getSeeds()));
-		writer.write(
+		sb.append(genHtmlTextArea("seed-urls", "", o.getBehavior().getSeeds()));
+		sb.append(
 			"<INPUT type=hidden name=CrawlerAction value=2>\n<br><INPUT TYPE=submit VALUE=\"UpdateOrder\">\n</FORM>");
-		writer.write(
+		sb.append(
 			"<FORM ACTION=\"Crawleraction\" METHOD=GET>\n<INPUT type=hidden name=CrawlerAction value=3>\n<br><INPUT TYPE=submit VALUE=\" StartCrawler \">\n</FROM>");
-		writer.write(genPageEnd());
-		writer.flush();
-		buf.writeTo(out);
-		out.flush();
+		sb.append(genPageEnd());
+
+		outputHtmlPage(r, sb.toString());
 	}
 	private String genHtmlTextField(
 		String name,
 		String description,
 		String value) {
-		return "<input type=\"text\" size=\"48\" value=\""
-			+ value
-			+ "\" name=\""
-			+ name
-			+ "\">:<STRONG>"
-			+ description
-			+ "</STRONG><BR>\n";
+
+		StringBuffer sb = new StringBuffer();
+
+		sb.append("<input type=\"text\" size=\"48\" value=\"");
+		sb.append(value);
+		sb.append("\" name=\"");
+		sb.append(name);
+		sb.append("\">:<STRONG>");
+		sb.append(description);
+		sb.append("</STRONG><BR>\n");
+
+		return sb.toString();
 	}
 
 	private String genHtmlTextArea(
@@ -277,9 +277,12 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		List items) {
 		Iterator it = items.iterator();
 		StringBuffer sb = new StringBuffer();
-		sb.append("<textarea rows=\"8\" cols=\"64\" name=\"" + name + "\">\n");
+		sb.append("<textarea rows=\"8\" cols=\"64\" name=\"");
+		sb.append(name);
+		sb.append("\">\n");
 		while (it.hasNext()) {
-			sb.append(((UURI) it.next()).toExternalForm() + "\n");
+			sb.append(((UURI) it.next()).toExternalForm());
+			sb.append("\n");
 		}
 		sb.append("</textarea>\n");
 		return sb.toString();
@@ -351,8 +354,8 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		String color2) {
 
 		int ratio = (int) (100 * start / end);
-
 		StringBuffer sb = new StringBuffer();
+
 		sb.append(
 			"<left><table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"white\"> <tr><td align=\"center\" colspan=\"200\">");
 		sb.append("</td></tr>\n<tr>\n<td>");
@@ -387,7 +390,6 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		sb.append(" of ");
 		sb.append(end);
 		sb.append(")</td>\n");
-
 		sb.append("</tr></table></left>");
 
 		return sb.toString();
@@ -395,20 +397,30 @@ public class CrawlerHandler extends AbstractHttpHandler {
 
 	private void outputMessage(String message, HttpResponse r)
 		throws HttpException, IOException {
+
+		StringBuffer sb = new StringBuffer();
+
+		sb.append(genPageStart());
+		sb.append(genPageHeader());
+		sb.append("<center><FONT size=\"14\" color=\"red\">");
+		sb.append(message);
+		sb.append("</FONT></center>\n");
+		sb.append(genNavigationLinks());
+		sb.append(genPageEnd());
+
+		outputHtmlPage(r, sb.toString());
+	}
+
+	private void outputHtmlPage(HttpResponse r, String htmlPage)
+		throws HttpException, IOException {
 		r.setField(HttpFields.__ContentType, HttpFields.__TextHtml);
 		OutputStream out = r.getOutputStream();
 		ByteArrayOutputStream buf = new ByteArrayOutputStream(2048);
 		Writer writer = new OutputStreamWriter(buf, StringUtil.__ISO_8859_1);
-		writer.write(genPageStart());
-		writer.write(genPageHeader());
-		writer.write(
-			"<center><FONT size=\"14\" color=\"red\">"
-				+ message
-				+ "</FONT></center>\n");
-		writer.write(genNavigationLinks());
-		writer.write(genPageEnd());
+		writer.write(htmlPage);
 		writer.flush();
 		buf.writeTo(out);
 		out.flush();
+
 	}
 }
