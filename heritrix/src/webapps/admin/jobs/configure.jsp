@@ -127,7 +127,7 @@
 							
 							if(legalValues != null && legalValues.length > 0){
 								//Have legal values. Build combobox.
-								p.append("<select name='" + attAbsoluteName + "' style='width: 320px'>\n");
+								p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange='setUpdate()'>\n");
 								for(int i=0 ; i < legalValues.length ; i++){
 									p.append("<option value='"+legalValues[i]+"'");
 									if(currentAttribute.equals(legalValues[i])){
@@ -138,18 +138,18 @@
 								p.append("</select>\n");
 							} else if (currentAttribute instanceof Boolean){
 								// Boolean value
-								p.append("<select name='" + attAbsoluteName + "' style='width: 320px'>\n");
+								p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange='setUpdate()'>\n");
 								p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
 								p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
 								p.append("</select>\n");
 							} else if (currentAttribute instanceof TextField){
 								// Text area
-								p.append("<textarea name='" + attAbsoluteName + "' style='width: 320px' rows='4'>");
+								p.append("<textarea name='" + attAbsoluteName + "' style='width: 320px' rows='4' onChange='setUpdate()'>");
 								p.append(currentAttribute + "\n");
 								p.append("</textarea>\n");
 							} else {
 								//Input box
-								p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 320px'>\n");
+								p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 320px' onChange='setUpdate()'>\n");
 							}
 							
 							p.append(checkError(attAbsoluteName,errorHandler));
@@ -252,7 +252,7 @@
 	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
 
-	// Check for actions.
+    // Should we update with changes.
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
 		errorHandler.clearErrors();
@@ -274,8 +274,12 @@
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
-		if(request.getParameter("action").equals("done")){
+    }
+    
+    // Check for actions.
+    String action = request.getParameter("action");
+    if(action != null){
+		if(action.equals("done")){
 			if(theJob.isNew()){			
 				handler.addJob(theJob);
 				response.sendRedirect("/admin/jobs.jsp?message=Job created");
@@ -290,11 +294,11 @@
 				}
 			}
             return;
-		}else if(request.getParameter("action").equals("goto")){
+		}else if(action.equals("goto")){
             // Goto another page of the job/profile settings
 			response.sendRedirect(request.getParameter("where"));
             return;
-		}else if(request.getParameter("action").equals("updateexpert")){
+		}else if(action.equals("updateexpert")){
 		    if(request.getParameter("expert") != null){
 		        if(request.getParameter("expert").equals("true")){
 		            expert = true;
@@ -334,11 +338,13 @@
 				theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
 				newItem.value = "";
 			}
+			setUpdate();
 		}
 		
 		function doDeleteList(listName){
 			theList = document.getElementById(listName);
 			theList.options[theList.selectedIndex] = null;
+			setUpdate();
 		}
 		
 		function doSubmit(){
@@ -370,6 +376,10 @@
             document.frmConfig.action.value="updateexpert";
             doSubmit();
 		}
+		
+		function setUpdate(){
+            document.frmConfig.update.value = "true";
+		}
 	</script>
 
 	<p>
@@ -383,7 +393,7 @@
 	<p>
 	
 	<form name="frmConfig" method="post" action="configure.jsp">
-		<input type="hidden" name="update" value="true">		
+		<input type="hidden" name="update" value="false">		
 		<input type="hidden" name="action" value="done">
 		<input type="hidden" name="where" value="">
 		<input type="hidden" name="expert" value="<%=expert%>">
@@ -417,7 +427,7 @@
 				</td>
 				<td></td>
 				<td>
-					<textarea name="seeds" style="width: 320px" rows="8"><%
+					<textarea name="seeds" style="width: 320px" rows="8" onChange="setUpdate()"><%
 						BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
 						String sout = seeds.readLine();
 						while(sout!=null){
