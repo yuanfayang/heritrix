@@ -198,6 +198,11 @@ public interface ARCConstants {
     public static final String MIMETYPE_FIELD_KEY = "mimetype";
     
     /**
+     * Key for statuscode field.
+     */
+    public static final String STATUSCODE_FIELD_KEY = "statuscode";
+    
+    /**
      * Tokenized field prefix.
      * 
      * Use this prefix for tokenized fields  when naming fields in
