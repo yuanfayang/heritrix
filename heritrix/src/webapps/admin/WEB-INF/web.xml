@@ -9,6 +9,18 @@
     </icon>
     <display-name>Heritrix Console</display-name>
     <description>Heritrix Administration Console</description>
+    <filter> 
+        <filter-name>RootFilter</filter-name> 
+        <filter-class>org.archive.crawler.admin.ui.RootFilter</filter-class> 
+        <init-param>
+            <param-name>rootFilter.redirectTo</param-name>
+            <param-value>/index.jsp</param-value>
+        </init-param>
+    </filter> 
+    <filter-mapping> 
+        <filter-name>RootFilter</filter-name> 
+        <url-pattern>/</url-pattern> 
+    </filter-mapping> 
     <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
     <session-config>
         <session-timeout>120</session-timeout>
