@@ -190,10 +190,10 @@ public abstract class AbstractLongFPSet {
 			}
 			long val = getAt(probeIndex);
 			long newIndex = indexFor(val);
-			if(newIndex!=index) {
+			if(newIndex!=probeIndex) {
 				// value must shift down
 				newIndex = -(newIndex+1); // positivize
-				relocate(val, index, newIndex);
+				relocate(val, probeIndex, newIndex);
 			}
 			probeIndex++;
 		}

@@ -47,7 +47,7 @@ public class LongFPSetCache extends MemLongFPSet {
 	 */
 	private void discard(int i) {
 		int toDiscard = i;
-		while(true) {
+		while(toDiscard>0) {
 			if(slots[(int)sweepHand]==0) {
 				removeAt(sweepHand);
 				toDiscard--;
@@ -57,11 +57,8 @@ public class LongFPSetCache extends MemLongFPSet {
 				}
 			}
 			sweepHand++;
-			if (sweepHand==count) {
+			if (sweepHand==slots.length) {
 				sweepHand = 0;
-			}
-			if (toDiscard==0) {
-				break;
 			}
 		}
 	}
