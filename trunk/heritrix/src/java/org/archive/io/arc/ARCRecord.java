@@ -139,7 +139,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData)
     		throws IOException {
-        this(in, metaData, 0);
+        this(in, metaData, 0, true);
     }
 
     /**
@@ -149,20 +149,23 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * is to represent.
      * @param metaData Meta data.
      * @param bodyOffset Offset into the body.  Usually 0.
+     * @param digest True if we're to calculate digest for this record.
      * @throws IOException
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData,
-                int bodyOffset) 
+                int bodyOffset, boolean digest) 
     		throws IOException {
         this.in = in;
         this.metaData = metaData;
         this.position = bodyOffset;
-        try {
-            this.digest = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException e) {
-            // Convert to IOE because thats more amenable to callers
-            // -- they are dealing with it anyways.
-            throw new IOException(e.getMessage());
+        if (digest) {
+            try {
+                this.digest = MessageDigest.getInstance("SHA1");
+            } catch (NoSuchAlgorithmException e) {
+                // Convert to IOE because thats more amenable to callers
+                // -- they are dealing with it anyways.
+                throw new IOException(e.getMessage());
+            }
         }
         
         this.httpHeaderStream = readHttpHeader();
@@ -361,7 +364,9 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 if (c == -1) {
                     throw new IOException("Premature EOF before end-of-record.");
                 }
-                this.digest.update((byte)c);
+                if (this.digest != null) {
+                    this.digest.update((byte)c);
+                }
             }
         }
         this.position++;
@@ -394,7 +399,9 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 if (read == -1) {
                     throw new IOException("Premature EOF before end-of-record.");
                 }
-                this.digest.update(b, offset, read);
+                if (this.digest != null) {
+                    this.digest.update(b, offset, read);
+                }
             }
         }
         this.position += read;
@@ -450,7 +457,9 @@ public class ARCRecord extends InputStream implements ARCConstants {
         
         this.eor = true;
         // Set the metadata digest as base32 string.
-        this.metaData.setDigest(Base32.encode(this.digest.digest()));
+        if (this.digest != null) {
+            this.metaData.setDigest(Base32.encode(this.digest.digest()));
+        }
         if (this.httpStatus != null) {
             int statusCode = this.httpStatus.getStatusCode();
             this.metaData.setStatusCode(Integer.toString(statusCode));
