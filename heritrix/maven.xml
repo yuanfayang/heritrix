@@ -9,7 +9,7 @@
     </preGoal> 
 
     <postGoal name="dist:prepare-bin-filesystem">
-    <echo>[Heritrix] dist:prepare-bin-filesystem postGoal</echo>
+        <echo>[Heritrix] dist:prepare-bin-filesystem postGoal</echo>
 
         <!--Add the lib dir to our binary distribution.-->
         <copy todir="${maven.dist.bin.assembly.dir}/lib">
@@ -17,12 +17,14 @@
             <include name="*.jar"/>
           </fileset>
         </copy>
+
         <!--Copy to a bin dir the heritrix start script.-->
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
           <fileset dir="${maven.src.dir}/shell">
             <include name="heritrix.sh"/>
           </fileset>
         </copy>
+
         <!--Copy over the admin webapp.-->
         <filter token="VERSION" value="${pom.currentVersion}" />
         <copy todir="${maven.dist.bin.assembly.dir}/webapps" filtering="true">
