@@ -65,6 +65,8 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			curi.incrementFetchAttempts();
 			curi.cancelFurtherProcessing();
 			// should there be a return here? -gm
+			// yes, I think so: -gm
+			return;
 		}
 		
 		// make sure we only process schemes we understand (i.e. not dns)
@@ -74,7 +76,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		}
 		
 		// for all curis, set appropriate delays
-		// TODOSOMEDAY: allow per-host factors
+		// TODOSOMEDAY: allow per-host, per-protocol, etc. factors
 		curi.setDelayFactor(getDelayFactorFor(curi));
 		curi.setMinimumDelay(getMinimumDelayFor(curi));
 		// treat /robots.txt fetches specially
