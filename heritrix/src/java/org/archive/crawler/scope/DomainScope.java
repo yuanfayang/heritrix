@@ -132,8 +132,8 @@ public class DomainScope extends CrawlScope {
                     // "[ 910120 ] java.net.URI#getHost fails when leading digit"
                     continue;
                 }
-                // Strip www[#]
-                seedDomain = seedDomain.replaceFirst("^www\\d*", "");
+                // Strip www[#].
+                seedDomain = seedDomain.replaceFirst("^www\\d*\\.", "");
                 String candidateDomain = null;
                 try {
                     candidateDomain = u.getHost();
@@ -145,6 +145,7 @@ public class DomainScope extends CrawlScope {
                     // either an opaque, unfetchable, or unparseable URI
                     continue;
                 }
+
                 if (seedDomain.regionMatches(0, candidateDomain,
                     candidateDomain.length() - seedDomain.length(),
                     seedDomain.length())) {
