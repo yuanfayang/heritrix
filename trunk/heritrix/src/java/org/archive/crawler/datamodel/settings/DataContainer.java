@@ -178,7 +178,6 @@ public class DataContainer extends HashMap {
     protected void copyAttributeInfo(String name, DataContainer destination) {
         if (this != destination) {
             Object attribute = attributeNames.get(name);
-            //destination.attributes.add(attribute);
             destination.attributeNames.put(name, attribute);
         }
     }
@@ -281,7 +280,7 @@ public class DataContainer extends HashMap {
         return true;
     }
 
-    /** Remove an attribute from the map.
+    /** Remove an attribute from the DataContainer.
      * 
      * @param key name of the attribute to remove.
      * @return the element that was removed.
