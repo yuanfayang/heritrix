@@ -495,13 +495,12 @@ public class XMLConfig {
 				first = currentObject;
 			}
 			
-			try{
-				// if they actually specify which one should come first, use that
-				if(currentNode.getAttributes().getNamedItem("isFirst").getNodeValue().equals("true")){
+			Node firstSet = currentNode.getAttributes().getNamedItem("isFirst");
+			if(firstSet!=null) {
+				if("true".equalsIgnoreCase(firstSet.getNodeValue())) {
 					first = currentObject;
 				}
-			// ignore null pointers, this just means they didn't include this attribute (which is cool)
-			}catch(NullPointerException e){}
+			}
 			
 			if (results instanceof HashMap) {
 				// if supplied hashmap, look for 'name' key
