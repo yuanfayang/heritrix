@@ -13,6 +13,8 @@ import java.util.ArrayList;
  *
  */
 public class ToePool {
+	public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
+	
 	protected CrawlController controller;
 	protected ArrayList toes;
 	/**
@@ -24,6 +26,7 @@ public class ToePool {
 		// TODO make number of threads self-optimizing
 		for(int i = 0; i<count; i++) {
 			ToeThread newThread = new ToeThread(c,this,i);
+			newThread.setPriority(DEFAULT_TOE_PRIORITY);
 			toes.add(newThread);
 			newThread.start();
 		}
