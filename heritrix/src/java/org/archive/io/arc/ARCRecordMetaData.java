@@ -112,11 +112,17 @@ public class ARCRecordMetaData
     }
 
     /**
-     * @return Header date.
+     * Get the time when the record was harvested.
+     * <p>
+     * Returns the date in Heritrix 14 digit time format (UTC). See the
+     * {@link org.archive.util.ArchiveUtils} class for converting to Java
+     * dates.
+     * 
+     * @return Header date in Heritrix 14 digit format.
+     * @see org.archive.util.ArchiveUtils#parse14DigitDate(String)
      */
-    public long getDate() {
-        return Long.parseLong((String)this.headerFields.
-            get(DATE_HEADER_FIELD_KEY));
+    public String getDate() {
+        return (String) this.headerFields.get(DATE_HEADER_FIELD_KEY);
     }
 
     /**
