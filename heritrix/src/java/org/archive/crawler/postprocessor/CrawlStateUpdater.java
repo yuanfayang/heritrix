@@ -70,7 +70,7 @@ public class CrawlStateUpdater extends Processor implements
                         curi.getServer().updateRobots(curi);
                     } catch (IOException e) {
                         curi.addLocalizedError(getName(), e,
-                                "robots.txt parsing IOException");
+                            "robots.txt parsing IOException");
                     }
                 }
             }
