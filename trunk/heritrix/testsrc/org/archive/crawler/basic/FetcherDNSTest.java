@@ -20,7 +20,7 @@ import org.xbill.DNS.Record;
  * @author parkert
  *
  */
-public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConstants {
+public class FetcherDNSTest extends TestCase implements CoreAttributeConstants {
 
 	FetcherDNS fetcher;
 	CrawlURI curiBasic;
@@ -34,14 +34,14 @@ public class SimpleDNSFetcherTest extends TestCase implements CoreAttributeConst
 		t.run(result);
 	}
 	
-	public SimpleDNSFetcherTest(String s){
+	public FetcherDNSTest(String s){
 		super(s);
 	}
 	
 	public static Test suite(){
 		
-		SimpleDNSFetcherTest tp 	= new SimpleDNSFetcherTest("testParsing");
-		SimpleDNSFetcherTest ths 	= new SimpleDNSFetcherTest("testHostSeeding");
+		FetcherDNSTest tp 	= new FetcherDNSTest("testParsing");
+		FetcherDNSTest ths 	= new FetcherDNSTest("testHostSeeding");
 		
 		TestSuite s = new TestSuite();
 		s.addTest(tp);
