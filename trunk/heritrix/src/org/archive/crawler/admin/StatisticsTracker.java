@@ -57,6 +57,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	
 	// default start time to the time this object was instantiated
 	protected long crawlerStartTime = System.currentTimeMillis();
+	protected long crawlerEndTime = -1; // Until crawl ends, this value is -1.
 	
 	
 	// timestamp of when this logger last wrote something to the log
@@ -92,6 +93,24 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	public long getCrawlStartTime(){
 		return crawlerStartTime;
 	}
+	
+	/**
+	 * 
+	 * @return If crawl has ended it will return the time 
+	 *         it ended (given by System.currentTimeMillis() 
+	 * 		   at that time).
+	 *         If crawl is still going on it will return the
+	 *         same as System.currentTimeMillis()
+	 */
+	public long getCrawlEndTime()
+	{
+		if(crawlerEndTime==-1)
+		{
+			return System.currentTimeMillis();
+		}
+		
+		return crawlerEndTime;
+	}
 
 	public void setLogWriteInterval(int interval) {
 		if(interval < 0){
@@ -111,6 +130,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 */
 	public void stop()
 	{
+		crawlerEndTime = System.currentTimeMillis();
 		shouldrun = false;
 	}
 
