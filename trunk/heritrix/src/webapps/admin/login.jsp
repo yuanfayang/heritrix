@@ -59,7 +59,7 @@
 				}
 				
 				if(back!=null && back.length()>0 && back.equalsIgnoreCase("null")==false){
-					redirect = URLDecoder.decode(back);
+					redirect = URLDecoder.decode(back,"UTF-8");
 				}
 				response.sendRedirect(redirect);
 			}
