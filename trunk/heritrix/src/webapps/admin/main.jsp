@@ -21,7 +21,9 @@
 		else if(sAction.equalsIgnoreCase("terminate"))
 		{
 			// Delete current job
-			handler.deleteJob(handler.getCurrentJob().getUID());
+			if(handler.getCurrentJob()!=null){
+				handler.deleteJob(handler.getCurrentJob().getUID());
+			}
 		}
 		else if(sAction.equalsIgnoreCase("pause"))
 		{
