@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
  * @author gojomo
  *
  */
-public class SimpleStore implements URIStore, FetchStatusCodes {
+public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleStore");
 	
 	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
@@ -50,7 +51,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 	LinkedList heldClassQueues = new LinkedList(); // of String (queueKey) -> KeyedQueue 
 
     // all per-class queues who are on hold until a certain time
-	SortedSet snoozeQueues = new TreeSet(); // of KeyedQueue, sorted by wakeTime
+	SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime
 
 
 	/* (non-Javadoc)
@@ -234,26 +235,28 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 			return; 
 		}
 		
-
 		CrawlURI curi = (CrawlURI)allCuris.get(uuri);
-		if(curi != null) {
+		if(curi == null) {
+			// newly scheduled
+			curi = new CrawlURI(uuri);
+			allCuris.put(uuri,curi);
+		} else {
+			// curi already exists;
 			
-			// if we have it but it's expired, start anew
-			if(!curi.dontFetchYet()){
-				allCuris.remove(uuri);
-				curi = null;
-			}else{
-				// already inserted
-				// TODO: perhaps yank to front?
-				//if(curi.getStoreState()==URIStoreable.FINISHED) {
-				//	System.out.println("maybe a prob");
-				//}
+			// if curi is still locked out, ignore request to schedule
+			if(curi.dontFetchYet()){
 				return;
-			}
+			} 
+			// yank URI back into scheduling
+			// TODO: ? reconstitute alist?
 		}
-		curi = new CrawlURI(uuri);
-		curi.getAList().putInt("distance-from-seed",dist);
-		allCuris.put(uuri,curi);
+		
+		int newDist = dist;
+		if(curi.getAList().containsKey(A_DISTANCE_FROM_SEED)) {
+			newDist = Math.max(dist,curi.getAList().getInt(A_DISTANCE_FROM_SEED));
+		}
+		curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
+		
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if ( classQueue == null ) {
 			pendingQueue.addFirst(curi);
