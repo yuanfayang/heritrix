@@ -187,7 +187,11 @@ public class DiskBackedQueue implements Queue, Serializable {
     	if(headQ.isEmpty()){
     		fillHeadQ();
     	}
-    	return headQ.getFirst();
+        if(!headQ.isEmpty()) {
+            return headQ.getFirst();
+        } else {
+            return tailQ.peek();
+        }
     }
 
     /**

@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.commons.collections.Predicate;
 
 
@@ -90,9 +92,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
-        Object candidate = dequeue();
-        push(candidate);
-        return candidate;
+        throw new UnsupportedOperationException("no peek for deque");
     }
 
     /* (non-Javadoc)
