@@ -773,7 +773,91 @@
             limits on the hosts, domains, or URI paths crawled.</para>
           </listitem>
 
+          <listitem id="surtprefixscope">
+            <para><emphasis role="bold">SurtPrefixScope</emphasis></para>
+
+            <para>A highly flexible and fairly efficient scope which can crawl 
+            within defined domains, individual hosts, or path-defined areas of 
+            hosts, or any mixture of those, depending on the configuration.
+            </para>
+            
+            <para>It considers whether any URI is inside the primary focus
+            of the scope by converting the URI to its <xref linkend="surt" />
+            form, and then seeing if that SURT form begins with any of a number
+            of <xref linkend="surtprefix" />es. (See the glossary definitions
+            for detailed information about the SURT form of a URI and SURT
+            prefix comparisons.)</para>
+            
+            <para>The operator may establish the set of SURT prefixes used
+            either by letting the SURT prefixes be implied from the supplied 
+            seed URIs, specifying an external file with a listing of SURT
+            prefixes, or both.</para>
+            
+            <para>When you use this scope, it adds 3 hard-to-find-in-the-UI
+            attributes -- <literal>surts-source-file</literal>, 
+            <literal>seeds-as-surt-prefixes</literal>, and
+            <literal>surts-dump-file</literal> -- to the end of the scope
+            section, just after
+            <literal>transitiveFilter</literal> but before
+            <literal>http-headers</literal>.</para>
+            
+            <para>Use the <literal>surts-source-file</literal> setting to 
+            supply an external file with a list of SURT prefixes, if desired.
+            Use the <literal>seeds-as-surt-prefixes</literal> setting to 
+            establish whether SURT prefixes should be deduced from the seeds,
+            in accordance with the rules given at the 
+            <xref linkend="surtprefix" /> glossary entry. (The default is 
+            'true', to deduce SURT prefixes from seeds.)</para>
+            
+            <para>To see what SURT prefixes were actually used -- perhaps
+            merged from seed-deduced and externally-supplied -- you can specify
+            a file path in the <literal>surts-dump-file</literal> setting. The
+            sorted list of actual SURT prefixes used will be written to that 
+            file  for reference. (Note that redundant entries will be removed
+            from this dump. If you have SURT prefixes &lt;http://(org,&gt; and
+            &lt;http://(org,archive,&gt;, only the former will actually be
+            used, because all SURT form URIs prefixed by the latter are also
+            prefixed by the former.)</para>
+
+            <para>See also the crawler wiki on 
+            <ulink 
+            url="http://crawler.archive.org/cgi-bin/wiki.pl?SurtScope">SurtScope</ulink>.</para>
+          </listitem>
+          
           <listitem>
+            <para><emphasis role="bold">FilterScope</emphasis></para>
+
+            <para>A highly configurable scope. By adding different filters in
+            different combinations this scope can be configured to provide a
+            wide variety of behaviour.</para>
+            <para>After selecting this filter, you must then go to the
+            <emphasis>Filters</emphasis> tab and add the filters you want to 
+            run as part of your scope. Add the filters at the
+            <emphasis>focusFilter</emphasis> label and give them a
+            meaningful name.  The URIRegexFilter probably makes
+            most sense in this context (The ContentTypeRegexFilter won't
+            work at scope time because we don't know the content-type till
+            after we've fetched the document).
+            </para>
+            <para>After adding the filter(s), return to the
+            <emphasis>Settings</emphasis> tab and fill in any
+            configuration required of the filters.  For example, say you
+            added the URIRegexFilter, and you wanted only 'www.archive.org'
+            hosts to be in focus, fill in a regex like the following:
+            <literal>^(?:http|dns)www.archve.org/\.*</literal> (Be careful
+            you don't rule out prerequisites such as dns or robots.txt
+            when specifying your scope filter).</para>
+          </listitem>
+
+        </itemizedlist>
+
+		<para>The following scopes are deprecated as the same effects can 
+        be achieved more efficiently with SurtPrefixScope. When 
+        SurtPrefixScope can be more easily understood and configured,
+        these scopes may be removed entirely.</para>
+		
+		<itemizedlist>
+		  <listitem>
             <para><emphasis role="bold">DomainScope</emphasis></para>
 
             <para>This scope limits discovered URIs to the set of domains
@@ -824,54 +908,7 @@
             instead.
             </note>
           </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">FilterScope</emphasis></para>
-
-            <para>A highly configurable scope. By adding different filters in
-            different combinations this scope can be configured to provide a
-            wide variety of behaviour.</para>
-            <para>After selecting this filter, you must then go to the
-            <emphasis>Filters</emphasis> tab and add the filters you want to 
-            run as part of your scope. Add the filters at the
-            <emphasis>focusFilter</emphasis> label and give them a
-            meaningful name.  The URIRegexFilter probably makes
-            most sense in this context (The ContentTypeRegexFilter won't
-            work at scope time because we don't know the content-type till
-            after we've fetched the document).
-            </para>
-            <para>After adding the filter(s), return to the
-            <emphasis>Settings</emphasis> tab and fill in any
-            configuration required of the filters.  For example, say you
-            added the URIRegexFilter, and you wanted only 'www.archive.org'
-            hosts to be in focus, fill in a regex like the following:
-            <literal>^(?:http|dns)www.archve.org/\.*</literal> (Be careful
-            you don't rule out prerequisites such as dns or robots.txt
-            when specifying your scope filter).</para>
-          </listitem>
-
-          <listitem id="surtprefixscope">
-            <para><emphasis role="bold">SurtPrefixScope</emphasis></para>
-
-            <para>A highly flexible scope which can mix the Domain, Host, and
-            Path scope behavior in a single crawl. The operator may supply an
-            external file of <xref linkend="surt" /> prefixes defining URIs to
-            consider in-scope. Seeds may also be considered to imply SURT
-            prefixes. </para>
-            <para>When you use this scope, it adds 3 hard-to-find-in-the-UI
-            attributes -- <literal>surts-source-file</literal>, 
-            <literal>seeds-as-surt-prefixes</literal>, and
-            <literal>surts-dump-file</literal> -- to the end of the scope
-            section, just after
-            <literal>transitiveFilter</literal> but before
-            <literal>http-headers</literal>.  Use these attributes
-            to configure the SURT scope.
-            </para>
-            <para>See also the crawler wiki on 
-            <ulink 
-            url="http://crawler.archive.org/cgi-bin/wiki.pl?SurtScope">SurtScope</ulink>.</para>
-          </listitem>
-        </itemizedlist>
+		</itemizedlist>
 
         <para>Scopes usually allow for some flexibility in defining depth and
         possible transitive includes (that is getting items that would usually
@@ -3743,17 +3780,105 @@ collapsed in this lookup).</para>
         <glossdef>
           <para>SURT stands for Sort-friendly URI Reordering Transform, and is
           a transformation applied to URIs which makes their left-to-right
-          representation better match the natural hierarchy of domain names. A
-          URI &lt;scheme://domain.tld/path?query&gt; has SURT form
-          &lt;scheme://(tld,domain,:port@userinfo)/path?query&gt;. SURT forms
-          sort into natural groups, and a SURT prefix can be helpful to define
-          an area of the URI space to include or exclude from a crawl. For
-          example, the prefix &lt;http://(is,&gt; will match all URIs in the
-          .is top-level domain. (Typically, https URIs are converted to be
-          http URIs for SURT prefix matching.)</para>
+          representation better match the natural hierarchy of domain names.
+          </para>
+          
+          <para>A URI &lt;scheme://domain.tld/path?query&gt; has SURT form
+          &lt;scheme://(tld,domain,:port@userinfo)/path?query&gt;.</para>
+          
+          <para>Conversion to SURT form also involves making all characters
+          lowercase, and changing the 'https' scheme to 'http'. And, in a 
+          small convention that can be important when using real URIs as
+          a shorthand for SURT prefixes (see below), the '/' after a URI 
+          authority component -- the third slash in a regular HTTP URI -- will 
+          only appear in the SURT form if it appeared in the plain URI form.)
+          </para>
+          
+          <para>SURT form URIs are typically not fetched -- nor is the SURT
+          form used to specify exact URIs. Rather SURT form is useful when
+          comparing or sorting URIs. For example, URIs in SURT format sort 
+          into natural groups -- all 'archive.org' URIs will be adjacent, 
+          regardless of what subdomains like 'books.archive.org' or 
+          'movies.archive.org' are used.</para>
+          
+          <para>Most importantly, a SURT form URI, or a truncated version of
+          a SURT form URI, can be used as a <xref linkend="surtprefix" />.
+          A SURT prefix will often correspond to all URIs within a
+          common 'area' of interest for crawling. For example, the prefix 
+          &lt;http://(is,&gt; will be shared by all URIs in the '.is' top-level 
+          domain. </para>
+
         </glossdef>
       </glossentry>
 
+      <glossentry id="surtprefix">
+        <glossterm>SURT prefix</glossterm>
+
+        <glossdef>
+          <para>A URI in <xref linkend="surt" /> form, especially if truncated,
+          may be of use as a "SURT prefix", which may be a shared prefix string
+          of all SURT form URIs in the same 'area' of interest for web crawling.
+          </para>
+          
+          <para>For example, the prefix 
+          &lt;http://(is,&gt; will be shared by all URIs in the '.is' top-level 
+          domain. The prefix &lt;http://(org,archive,www,)/movies&gt; (which is
+          also a valid full SURT form URI) will be shared by all URIs at 
+          www.archive.org with a path beginning '/movies'.</para>
+          
+          <para>A collection of sorted SURT prefixes is an efficient way to
+          specify a desired crawl scope: any URI whose SURT form starts with
+          any of these prefixes should be ruled in.</para>
+          
+          <para>A small set of conventions can be also be used to calculate an
+          "implied SURT prefix" from a regular URI, such as a URI supplied as a
+          crawl seed.  These conventions are:</para>
+          
+          <orderedlist>
+          <listitem>Convert the URI to its SURT form. 
+          </listitem>
+          <listitem>If there are at least 3 slashes ('/') in the SURT form, 
+          remove everything after the last slash. As examples, 
+          &lt;http://(org,example,www,)/main/subsection/&gt; is unchanged;
+          &lt;http://(org,example,www,)/main/subsection&gt; is truncated to 
+          &lt;http://(org,example,www,)/main/&gt;; 
+          &lt;http://(org,example,www,)/&gt; is unchanged; and 
+          &lt;http://(org,example,www,)&gt; is unchanged.
+          </listitem>
+          <listitem>If the resulting form ends in an off-parenthesis (')'),
+          remove it. So each of the above examples except for the last is
+          unchanged, while the last &lt;http://(org,example,www,)&gt; becomes
+          &lt;http://(org,example,www,&gt;.
+          </listitem>
+          </orderedlist>
+          
+          <para>This allows many lists of seed URIs, in their usual form, to
+          imply the most useful SURT prefixes for crawling all related URIs --
+          with the presence or absence of a trailing '/' on URIs without 
+          further path-info being a subtle indicator as to whether subdomains
+          of the supplied domain should be included.</para>
+          
+          <para>For example, seed &lt;http://www.archive.org/&gt; will become 
+          SURT form and implied SURT prefix &lt;http://(org,archive,www,)/&gt;, 
+          and match the prefix of all URIs on www.archive.org. However, any 
+          subdomain URI like &lt;http://homepages.www.archive.org/directory&gt;
+          would be ruled out, because its SURT form
+          &lt;http://(org,archive,www,homepages,)/directory&gt; does not
+          begin with the full SURT prefix, including the ')/', deduced from 
+          the seed.</para>
+          
+          <para>In contrast, seed &lt;http://www.archive.org&gt; (note the
+          lack of trailing slash) will become SURT form 
+          &lt;http://(org,archive,www,)&gt;, and implied SURT prefix
+          &lt;http://(org,archive,www,&gt; (note the lack of trailing ')'). 
+          This will be the prefix of all URIs on www.archive.org, as well as
+          any subdomain URIs like 
+          &lt;http://homepages.www.archive.org/directory&gt;, because the
+          full SURT prefix appears in subdomain URI SURT forms.</para>
+
+        </glossdef>
+      </glossentry>
+      
       <glossentry id="toethreads">
         <glossterm>Toe Threads</glossterm>
 
