@@ -425,7 +425,8 @@ public class ExtractorUniversal extends Processor
 
                         // And add the URL to speculative embeds.
                         numberOfLinksExtracted++;
-                        curi.addSpeculativeEmbed(newURL);
+                        curi.addLinkToCollection(
+                            newURL, A_HTML_SPECULATIVE_EMBEDS);
                     }
                     // Reset lookat for next string.
                     lookat = new StringBuffer();

@@ -112,7 +112,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 // Remove backslash(s), an escape character used in CSS URL
                 cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
                 numberOfLinksExtracted++;
-                curi.addCSSLink(cssUri);
+                curi.addLinkToCollection(cssUri, A_CSS_LINKS);
             }
             TextUtils.freeMatcher(uris);
         } catch (StackOverflowError e) {

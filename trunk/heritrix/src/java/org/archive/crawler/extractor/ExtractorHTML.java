@@ -242,7 +242,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         String code = cs.toString();
         //code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
         code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-        numberOfLinksExtracted += ExtractorJS.considerStrings(curi,code);
+        
+        numberOfLinksExtracted +=
+            ExtractorJS.considerStrings(curi, code, false);
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
@@ -261,7 +263,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         } else {
             logger.finest("link: "+link+ " from "+curi);
             numberOfLinksExtracted++;
-            curi.addLink(link);
+            curi.addLinkToCollection(link, A_HTML_LINKS);
         }
     }
 
@@ -277,8 +279,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         logger.finest("embed: "+embed+ " from "+curi);
         numberOfLinksExtracted++;
-        curi.addEmbed(embed);
+        curi.addLinkToCollection(embed, A_HTML_EMBEDS);
     }
+
+
 
     public void innerProcess(CrawlURI curi) {
 
@@ -423,7 +427,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 return true;
             }
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
-            curi.addLink(content.substring(content.indexOf("=")+1));
+            curi.addLinkToCollection(
+                content.substring(content.indexOf("=") + 1), A_HTML_LINKS);
         }
         return false;
     }
