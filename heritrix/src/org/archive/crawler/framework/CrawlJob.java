@@ -89,6 +89,8 @@ public interface CrawlJob
 	/**
 	 * Called by the CrawlJobHandler when the job is sent to the crawler.  
 	 * Once called no changes can be made to the crawl order file.
+	 * Typically this is done once a crawl is completed and further changes
+	 * to the crawl order are therefor meaningless.
 	 */
 	public void setReadOnly();  
 
@@ -111,6 +113,15 @@ public interface CrawlJob
 	 *         (see constants defined here beginning with STATUS)
 	 */
 	public String getStatus();
+	
+	/**
+	 * Returns the current version of the order file 
+	 * (this should be initially set to 1 and then 
+	 * incremented each time setCrawlOrder() is called.
+	 * 
+	 * @return The version number of the current order file. 
+	 */
+	public int getOrderVersion();
 	
 	// TODO: Rewrite this once an interface for a general statistics tracker has been implemented
 	public void setStatisticsTracker(StatisticsTracker tracker);
