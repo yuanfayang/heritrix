@@ -66,7 +66,7 @@ public class PreconditionEnforcer
     /** seconds to keep IP information for */
     public final static String ATTR_IP_VALIDITY_DURATION
         = "ip-validity-duration-seconds";
-    /** minutes to cache robots info */
+    /** seconds to cache robots info */
     public final static String ATTR_ROBOTS_VALIDITY_DURATION
         = "robot-validity-duration-seconds";
 
@@ -303,8 +303,8 @@ public class PreconditionEnforcer
             logger.severe(e.getLocalizedMessage());
             d = DEFAULT_ROBOTS_VALIDITY_DURATION;
         }
-        // convert from minutes to milliseconds
-        return d.longValue() * 60 * 1000;
+        // convert from seconds to milliseconds
+        return d.longValue() * 1000;
     }
 
     /**
