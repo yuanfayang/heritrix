@@ -37,7 +37,6 @@ import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -51,6 +50,7 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.util.MultiHttpConnectionProvider;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HeritrixGetMethod;
+import org.archive.httpclient.HeritrixHttpClient;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ConfigurableX509TrustManager;
@@ -107,7 +107,7 @@ public class FetchHTTP extends Processor
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 
-    HttpClient http = null;
+    HeritrixHttpClient http = null;
 
     private int soTimeout;
     
@@ -352,7 +352,7 @@ public class FetchHTTP extends Processor
 //            // worker threads
 //            connectionManager.setMaxTotalConnections(getController().
 //                getToeCount());
-            this.http = new HttpClient(connectionManager);
+            this.http = new HeritrixHttpClient(connectionManager);
 
             try
             {
