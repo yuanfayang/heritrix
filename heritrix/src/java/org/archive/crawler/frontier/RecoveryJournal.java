@@ -86,8 +86,8 @@ public class RecoveryJournal {
      * @param curi
      */
     public void added(CrawlURI curi) {
-        write("\n" + F_ADD + curi.getURIString() + " " + curi.flattenVia()
-                + " " + curi.getPathFromSeed());
+        write("\n" + F_ADD + curi.getURIString() + " " 
+                + " " + curi.getPathFromSeed() + curi.flattenVia());
     }
 
     /**
@@ -184,15 +184,15 @@ public class RecoveryJournal {
                         u = UURIFactory.getInstance(args[1]);
                         CandidateURI caUri = new CandidateURI(u);
                         if (args.length > 2) {
-                            caUri.setVia(args[2]);
+                            caUri.setPathFromSeed(args[2]);
                         } else {
-                            caUri.setVia(pathToLog);
+                            caUri.setPathFromSeed("");
                         }
                         if (args.length > 3) {
-                            caUri.setPathFromSeed(args[3]);
+                            caUri.setVia(args[3]);
                         } else {
                             // filler
-                            caUri.setPathFromSeed("L");
+                            caUri.setVia(pathToLog);
                         }
                         frontier.schedule(caUri);
                     } catch (URIException e) {
