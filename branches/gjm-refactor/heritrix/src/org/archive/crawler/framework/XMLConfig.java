@@ -345,6 +345,25 @@ public class XMLConfig {
 	}
 
 	/**
+	 * Retrieve a (positive) long  value from the given xpath;
+	 * return the supplied default if none found or other error occurs. 
+	 * 
+	 * @param xpath
+	 * @param defaultValue
+	 * @return
+	 */
+	public long getLongAt(String xpath, long defaultValue) {
+		// TODO possibly mimic the caching that happens for Integers
+		String n = getStringAt(xpath);
+		long l;
+		if (n != null) {
+			return Long.parseLong(n);
+		}
+		return defaultValue;
+	}
+
+
+	/**
 	 * Return the text of the given node: the value if an
 	 * attribute node, the concatenation of all text children
 	 * if an element node.
