@@ -219,7 +219,7 @@
         BufferedWriter writer;
         try {
 			String seedfile = (String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile");
-            writer = new BufferedWriter(new FileWriter(new File(settingsHandler.getPathRelativeToWorkingDirectory(seedfile))));
+            writer = new BufferedWriter(new FileWriter(settingsHandler.getPathRelativeToWorkingDirectory(seedfile)));
             if (writer != null) {
                 // TODO Read seeds from profile.
                 writer.write(request.getParameter("seeds"));
