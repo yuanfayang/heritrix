@@ -121,7 +121,7 @@ public class XMLConfig {
 
 	}
 
-	protected int getIntAt(String xpath) {
+	public int getIntAt(String xpath) {
 
 			try {
 				return Integer.parseInt(textOf(XPathAPI.selectSingleNode(xNode,xpath)));
