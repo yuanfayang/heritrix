@@ -49,7 +49,8 @@ public class ToePool extends CrawlStatusAdapter {
     protected CrawlController controller;
 
     protected int effectiveSize = 0;
-
+    protected int activeToeCount = 0;
+    
     protected boolean paused;
 
     /**
@@ -95,16 +96,17 @@ public class ToePool extends CrawlStatusAdapter {
      * @return The number of ToeThreads that are not available (Approximation).
      */
     public int getActiveToeCount() {
-        int count = 0;
-        synchronized (this.toes) {
-            for(int i = 0; i < this.toes.size(); i++) {
-                ToeThread tt = (ToeThread)this.toes.get(i);
-                if(tt != null && !tt.isIdleOrDead()) {
-                    count++;
-                }
-            }
-        }
-        return count;
+        return activeToeCount;
+//        int count = 0;
+//        synchronized (this.toes) {
+//            for(int i = 0; i < this.toes.size(); i++) {
+//                ToeThread tt = (ToeThread)this.toes.get(i);
+//                if(tt != null && !tt.isIdleOrDead()) {
+//                    count++;
+//                }
+//            }
+//        }
+//        return count;
     }
 
     /**
@@ -291,7 +293,7 @@ public class ToePool extends CrawlStatusAdapter {
     }
 
     private void startNewThread(int threadNo) {
-        ToeThread newThread = new ToeThread(this.controller, this, threadNo);
+        ToeThread newThread = new ToeThread(this.controller, threadNo);
         newThread.setPriority(DEFAULT_TOE_PRIORITY);
         // start paused if controller is paused.
         newThread.setShouldPause(this.paused);
@@ -299,5 +301,19 @@ public class ToePool extends CrawlStatusAdapter {
             this.toes.add(threadNo, newThread);
         }
         newThread.start();
+    }
+
+    /**
+     * @param thread
+     */
+    public synchronized void noteActive(ToeThread thread) {
+        activeToeCount++;
+    }
+
+    /**
+     * @param thread
+     */
+    public void noteInactive(ToeThread thread) {
+        activeToeCount--;
     }
 }
