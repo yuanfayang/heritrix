@@ -1,4 +1,5 @@
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/secure.jsp"%>
 
 <html>
 	<body>

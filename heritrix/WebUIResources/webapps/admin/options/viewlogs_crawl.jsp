@@ -1,4 +1,5 @@
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/secure.jsp"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob" %>
 
 <jsp:useBean id="textutils" class="org.archive.util.TextUtils" scope="application">

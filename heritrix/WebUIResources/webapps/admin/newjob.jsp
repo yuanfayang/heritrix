@@ -1,4 +1,5 @@
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/secure.jsp"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob,java.io.File" %>
 
 <%
