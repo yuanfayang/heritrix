@@ -83,7 +83,7 @@ public class PathScope extends CrawlScope {
         super(name);
         setDescription(
             "A scope for path crawls. Crawls made with this scope will be " +
-            "limited to a specific portion of the hosts it's seeds provide. " +
+            "limited to a specific portion of the hosts its seeds provide. " +
             "More specifically the paths those seeds provide. For example if " +
             "one of the seeds is 'archive.org/example/' all URIs under the" +
             "path 'examples' will be crawled (like 'archive.org/examples/hello.html')" +

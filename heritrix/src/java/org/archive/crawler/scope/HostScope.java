@@ -79,7 +79,7 @@ public class HostScope extends CrawlScope {
         super(name);
         setDescription(
             "A scope for host crawls. Crawls made with this scope will  be " +
-            "limited to the hosts it's seeds. Thus if one of the seeds is" +
+            "limited to the hosts its seeds. Thus if one of the seeds is" +
             "'archive.org' the subdomain 'crawler.archive.org' will not " +
             "be crawled. www.host is considered to be the same as host.");
 
