@@ -110,8 +110,10 @@ public class StatisticsTracker extends AbstractTracker{
 			docsPerSecond = 0;
 			totalKBPerSec = 0;
 		}
-		else
-		{
+		else if(getCrawlerTotalElapsedTime() < 1000){
+            return; //Not enough time has passed for a decent snapshot.
+        }
+        else{
 			docsPerSecond = (int)(downloadedPages / ((getCrawlerTotalElapsedTime()) / 1000) + .5); // rounded to nearest int
 			totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())	/ 1000)) + .5 ); // round to nearest long
 		}
