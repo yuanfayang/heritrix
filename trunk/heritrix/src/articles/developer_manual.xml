@@ -87,9 +87,9 @@
       <para>Run the integration self test on the command line by doing the
       following:<programlisting>% $HERITRIX_HOME/bin/heritrix --selftest</programlisting>This
       will set the crawler going against itself, in particular, the selftest
-      webapp. When done, it runs an analsys of the produced arc files and logs
-      and dumps a ruling into <filename>heritrix_out.log</filename>. See the
-      <ulink
+      webapp. When done, it runs an analysis of the produced arc files and
+      logs and dumps a ruling into <filename>heritrix_out.log</filename>. See
+      the <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/selftest/package-summary.html">org.archive.crawler.selftest</ulink>
       package for more on how the selftest works.</para>
     </sect2>
@@ -258,13 +258,13 @@ ${package_declaration}</programlisting></para>
     <sect2>
       <title>The Frontier</title>
 
-      <para>The Frontier is responsible for handling out the next URI to be
+      <para>The Frontier is responsible for handing out the next URI to be
       crawled. It does so by consulting the CrawlScope to see if the URI is
       within this crawl's scope. It is also responsible for maintaining
-      politeness, that is making sure that no web server is crawled to
-      heavily. After a URI is crawled, it is handled back to the Frontier
-      along with any newly discovered URI's that the Frontier will evaluate
-      for crawling.</para>
+      politeness, that is making sure that no web server is crawled too
+      heavily. After a URI is crawled, it is handed back to the Frontier along
+      with any newly discovered URI's that the Frontier will evaluate for
+      crawling.</para>
 
       <para>It is the Frontier which keeps the state of the crawl. This
       includes, but is not limited to:</para>
@@ -292,8 +292,8 @@ ${package_declaration}</programlisting></para>
       <title>ToeThreads</title>
 
       <para>The Heritrix web crawler is multi threaded. Every URI is handled
-      by its own thread called ToeThreads. A ToeThread asks the Frontier for a
-      new URI, sends it trough all the processors and the asks for a new
+      by its own thread called a ToeThread. A ToeThread asks the Frontier for
+      a new URI, sends it through all the processors and the asks for a new
       URI.</para>
     </sect2>
 
@@ -319,7 +319,7 @@ ${package_declaration}</programlisting></para>
       <para>The task performed by the different processing chains are as
       follows:</para>
 
-      <para></para>
+      <para>TODO: finish it</para>
     </sect2>
   </sect1>
 
@@ -330,9 +330,10 @@ ${package_declaration}</programlisting></para>
     a crawl with special treatment for subparts of the web without adding to
     much performance overhead. If you want to write a module which should be
     configurable through the user interface, it is important to have a basic
-    understanding of the Settings framework. At the core the settings
-    framework is a way to keep persistent, context sensitive configuration
-    settings for any class in the crawler.</para>
+    understanding of the Settings framework (for the impatient, have a look at
+    <xref linkend="chap_modules_common" /> for code examples). At it's core
+    the settings framework is a way to keep persistent, context sensitive
+    configuration settings for any class in the crawler.</para>
 
     <para>All classes in the crawler that has configurable settings subclasses
     <ulink
@@ -376,10 +377,11 @@ ${package_declaration}</programlisting></para>
       object and returns the global value. If no value is set here either
       (normally it would be), a hard coded default value is returned.</para>
 
-      <para>All per domain/host settings objects does only contain those
-      settings which are to be overridden for this particular domain/host. The
+      <para>All per domain/host settings objects only contain those settings
+      which are to be overridden for that particular domain/host. The
       convention is to name the top level object "global settings" and the
-      objects beneath "per settings".</para>
+      objects beneath "per settings" or "overrides" (although the refinements
+      described next, also do overriding).</para>
 
       <para>To further complicate the picture, there is also settings objects
       called refinements. An object of this type belongs to a global or per
@@ -417,14 +419,13 @@ ${package_declaration}</programlisting></para>
       and <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#setAttribute(javax.management.Attribute)">setAttribute(Attribute
       attribute)</ulink> is there for conformance to the Java JMX
-      specification. The latter to always works on the global settings
+      specification. The latter two always works on the global settings
       object.</para>
 
-      <para>Getting an attribute within a crawl is different in that way that
-      you always want to get a value even if it is not set in it's context.
-      That means that the settings framework should work its way up the
-      settings hierarchy to find the value in effect for the context. The
-      method <ulink
+      <para>Getting an attribute within a crawl is different in that you
+      always want to get a value even if it is not set in it's context. That
+      means that the settings framework should work its way up the settings
+      hierarchy to find the value in effect for the context. The method <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.String,%20org.archive.crawler.datamodel.CrawlURI)">getAttribute(String
       name, CrawlURI uri)</ulink> should be used to make sure that the right
       context is used. The <xref linkend="get_attribute_flow" /> shows how the
@@ -460,7 +461,7 @@ ${package_declaration}</programlisting></para>
       </orderedlist>
 
       <para>Except for the SimpleType, the actual type used will be a subclass
-      of one of thes main types.</para>
+      of one of these main types.</para>
 
       <sect3>
         <title>SimpleType</title>
@@ -491,7 +492,7 @@ ${package_declaration}</programlisting></para>
         url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/LongList.html">LongList</ulink>,
         <ulink
         url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/StringList.html">StringList</ulink>).
-        A List holds values in the same order as they was added. If an
+        A List holds values in the same order as they were added. If an
         attribute of type ListType is overridden, then the complete list of
         values is replaced at the override level.</para>
       </sect3>
@@ -515,7 +516,7 @@ ${package_declaration}</programlisting></para>
         ModuleType doesn't allow additions in overrides, but the predefined
         attributes' values might be overridden. Since the ModuleType is
         defined at construction time, it is possible to set more restrictions
-        on each attribute than in the MapType. An other consequence of
+        on each attribute than in the MapType. Another consequence of
         definition at construction time is that you would normally subclass
         the ModuleType, while the MapType is usable as it is. It is possible
         to restrict the MapType to only allow attributes of a certain type.
@@ -525,7 +526,7 @@ ${package_declaration}</programlisting></para>
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="chap_modules_common">
     <title>Common needs for all configurable modules</title>
 
     <para>As mentioned earlier all configurable modules in Heritrix subclasses
@@ -559,14 +560,14 @@ ${package_declaration}</programlisting></para>
       <sect3>
         <title>The obligatory one argument constructor</title>
 
-        <para>All modules needs to have a constructor taking a String
-        argument. This string is used to identify the module. In the case
-        where a module is of a type that is replacing an existing module of
-        which there could only be one, it is important that the same name is
-        used. In this case the constructor might choose to ignore the name
-        string and substitute it with a hardcoded one. This is for example the
-        case with the Frontier. The name of the Frontier should always be the
-        string "frontier". For this reason the URIFrontier interface that all
+        <para>All modules need to have a constructor taking a String argument.
+        This string is used to identify the module. In the case where a module
+        is of a type that is replacing an existing module of which there could
+        only be one, it is important that the same name is being used. In this
+        case the constructor might choose to ignore the name string and
+        substitute it with a hard coded one. This is for example the case with
+        the Frontier. The name of the Frontier should always be the string
+        "frontier". For this reason the URIFrontier interface that all
         Frontiers should implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
         implementations of the Frontier use instead of the string argument
         submitted to the constructor. Here is the part of the default
@@ -585,7 +586,7 @@ ${package_declaration}</programlisting></para>
         shows how to set the description of a module. The description is used
         by the user interface to guide the user in configuring the crawl. If
         you don't want to set a description (strongly discouraged), the
-        ModuleType also have a one argument constructor taking just the
+        ModuleType also has a one argument constructor taking just the
         name.</para>
       </sect3>
 
@@ -607,7 +608,7 @@ ${package_declaration}</programlisting></para>
         addElementToDefinition method returns the added Type so that it is
         easy to refine the configuration of the Type. Lets look at an example
         (also from the default Frontier) of an attribute
-        definiton.<programlisting linenumbering="numbered">public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
+        definition.<programlisting linenumbering="numbered">public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
         "total-bandwidth-usage-KB-sec";
 private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
         new Integer(0);
@@ -710,7 +711,7 @@ public class Foo extends ModuleType {
       myMapType.addElement(
               null, new SimpleType("name", "Description", "defaultValue")); <co
           id="simpleEx_addElement" linkends="simpleEx_txt_addElement" />
-      myMapType.setAttribute(new Atrribute("name", "newValue")); <co
+      myMapType.setAttribute(new Attribute("name", "newValue")); <co
           id="simpleEx_setAttribute" linkends="simpleEx_txt_setAttribute" />
     } catch (Exception e) {
       logger.warning(e.getMessage());
@@ -722,8 +723,8 @@ public class Foo extends ModuleType {
           <callout arearefs="simpleEx_logger" id="simpleEx_txt_logger">
             <para>One thing that we have not mentioned before is how we do
             general error logging. Heritrix uses the standard Java 1.4 logging
-            facility. The convention is to initialize it with the
-            classname.</para>
+            facility. The convention is to initialize it with the class
+            name.</para>
           </callout>
 
           <callout arearefs="simpleEx_addSimpleType"
@@ -747,7 +748,7 @@ public class Foo extends ModuleType {
                 <term>Level.INFO</term>
 
                 <listitem>
-                  <para>Values are accepted even if they don't fullfill the
+                  <para>Values are accepted even if they don't fulfill the
                   constraint's requirement. This is used when you don't want
                   to disallow the value, but warn the user that the value
                   seems to be out of reasonable bounds.</para>
@@ -760,9 +761,9 @@ public class Foo extends ModuleType {
                 <listitem>
                   <para>The value must be accepted by the constraint to be
                   valid in crawl jobs, but is legal in profiles even if it
-                  don't. This is used to be able to put values into a profile
-                  that a user should change for every crawl job derived from
-                  the profile.</para>
+                  doesn't. This is used to be able to put values into a
+                  profile that a user should change for every crawl job
+                  derived from the profile.</para>
                 </listitem>
               </varlistentry>
 
@@ -829,15 +830,15 @@ public class Foo extends ModuleType {
         addressing of resources see: <ulink
         url="http://www.w3.org/Addressing/">Naming and Addressing: URIs, URLs,
         ...</ulink> on w3.org's website.</para>
-      </footnote> in Heritrix is represented be several classes. The basic
+      </footnote> in Heritrix are represented by several classes. The basic
     building block is the <ulink
     url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">java.net.URI</ulink>
-    class. This class offers some normalisation of an URI in addition to
+    class. This class offers some normalization of an URI in addition to
     methods for accessing the different parts of the URI. The URI class,
     according to its documentation, is meant to strictly conform to the <ulink
     url="http://www.ietf.org/rfc/rfc2396.txt">RFC 2396</ulink>. This causes
-    som problems because the real world does not conform to the RFC. In
-    addition some bugs in the URI class has been discovered which restricts
+    some problems because the real world does not conform to the RFC. In
+    addition some bugs in the URI class have been discovered which restricts
     its acceptance of some URIs further. To overcome these limitations we need
     to, at some point, write a replacement for the java.net.URI.</para>
 
@@ -852,8 +853,8 @@ public class Foo extends ModuleType {
           <para>Usable URI: a legal URI for our purposes. These instances will
           always have been normalized (massaged in ways that by spec and in
           practice, do not change the URI's meaning or function) and
-          rehabilitated (patched in riskless or necessary ways to be legal, eg
-          escaping spaces).</para>
+          rehabilitated (patched in risk less or necessary ways to be legal,
+          eg escaping spaces).</para>
         </listitem>
       </varlistentry>
 
@@ -886,8 +887,8 @@ public class Foo extends ModuleType {
       <title>The CrawlURI's Attribute list</title>
 
       <para>The CrawlURI offers a flexible attribute list which is used to
-      keep arbritary information about the URI while crawling. If you are
-      going to write a processor you almost certanly will use the attribute
+      keep arbitrary information about the URI while crawling. If you are
+      going to write a processor you almost certainly will use the attribute
       list. The attribute list is a key/value-pair list accessed by the
       methods <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getAList()">getAList()</ulink>
@@ -906,26 +907,484 @@ public class Foo extends ModuleType {
       <para>The crawler wouldn't be of much use if it did not give access to
       the HTTP request and response. For this purpose the CrawlURI has the
       <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getHttpRecorder()">getHttpRecorder()</ulink>
-      method. The recorder is referenced by the CrawlURI and available to all
-      the processors. Se <xref linkend="writing_a_processor" /> for an
-      explanation on how to use the recorder.</para>
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getHttpRecorder()">getHttpRecorder()</ulink><footnote>
+          <para>This method will most likely change name see <xref
+          linkend="refactor_HTTPRecorder" /> for details.</para>
+        </footnote> method. The recorder is referenced by the CrawlURI and
+      available to all the processors. Se <xref
+      linkend="writing_a_processor" /> for an explanation on how to use the
+      recorder.</para>
     </sect2>
   </sect1>
 
   <sect1>
     <title>Writing a Frontier</title>
 
-    <para>As mentioned before the URIFrontier is a pluggable module
+    <para>As mentioned before, the URIFrontier is a pluggable module
     responsible for deciding which URI to process next, and when. The Frontier
-    is also responsible for keeping track other aspects of the crawls internal
-    state which in turn can be used for logging and reporting. Even though the
-    responsibilities of the Frontier might not look overwhelming, it is one of
-    the hardest modules to write well. You should really investigate if your
-    needs could not be met by the existing Frontier. With these warnings in
-    mind, let's go ahead and create a really simple Frontier.</para>
+    is also responsible for keeping track of other aspects of the crawls
+    internal state which in turn can be used for logging and reporting. Even
+    though the responsibilities of the Frontier might not look overwhelming,
+    it is one of the hardest modules to write well. You should really
+    investigate if your needs could not be met by the existing Frontier. With
+    these warnings in mind, let's go ahead and create a really simple
+    Frontier.<programlisting>package mypackage;
 
-    <para></para>
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.settings.ModuleType;
+
+
+/**
+ * A simple Frontier implementation for tutorial purposes
+ */
+public class MyFrontier extends ModuleType implements URIFrontier,
+        FetchStatusCodes {
+    // A list of the discovered URIs that should be crawled.
+    List pendingURIs = new ArrayList();
+    
+    // A list of prerequisites that needs to be met before any other URI is
+    // allowed to be crawled, e.g. DNS-lookups
+    List prerequisites = new ArrayList();
+    
+    // A hash of already crawled URIs so that every URI is crawled only once.
+    Map alreadyIncluded = new HashMap();
+    
+    // Reference to the CrawlController.
+    CrawlController controller;
+
+    // Flag to note if a URI is being processed.
+    boolean uriInProcess = false;
+    
+    // top-level stats
+    long successCount = 0;
+    long failedCount = 0;
+    long disregardedCount = 0;
+    long totalProcessedBytes = 0;
+
+    public MyFrontier(String name) {
+        super(URIFrontier.ATTR_NAME, "A simple frontier.");
+    }
+
+    public void initialize(CrawlController controller)
+            throws FatalConfigurationException, IOException {
+        this.controller = controller;
+        
+        // Initialize the pending queue with the seeds
+        controller.getScope().refreshSeedsIteratorCache();
+        Iterator iter = controller.getScope().getSeedsIterator();
+        while (iter.hasNext()) {
+            UURI u = (UURI) iter.next();
+            CandidateURI caUri = new CandidateURI(u);
+            caUri.setSeed();
+            schedule(caUri);
+        }
+    }
+
+    public synchronized CrawlURI next(int timeout) throws InterruptedException {
+        if (!uriInProcess &amp;&amp; !isEmpty()) {
+            uriInProcess = true;
+            CrawlURI curi;
+            if (!prerequisites.isEmpty()) {
+                curi = CrawlURI.from((CandidateURI) prerequisites.remove(0));
+            } else {
+                curi = CrawlURI.from((CandidateURI) pendingURIs.remove(0));
+            }
+            curi.setServer(controller.getServerCache().getServerFor(curi));
+            return curi;
+        } else {
+            wait(timeout);
+            return null;
+        }
+    }
+
+    public boolean isEmpty() {
+        return pendingURIs.isEmpty() &amp;&amp; prerequisites.isEmpty();
+    }
+
+    public synchronized void schedule(CandidateURI caURI) {
+        // Schedule a uri for crawling if it is not already crawled
+        if (!alreadyIncluded.containsKey(caURI.getURIString())) {
+            if(caURI.needsImmediateScheduling()) {
+                prerequisites.add(caURI);
+            } else {
+                pendingURIs.add(caURI);
+            }
+            alreadyIncluded.put(caURI.getURIString(), caURI);
+        }
+    }
+
+    public void batchSchedule(CandidateURI caURI) {
+        schedule(caURI);
+    }
+
+    public void batchFlush() {
+    }
+
+    public synchronized void finished(CrawlURI cURI) {
+        uriInProcess = false;
+        if (cURI.isSuccess()) {
+            successCount++;
+            totalProcessedBytes += cURI.getContentSize();
+            controller.fireCrawledURISuccessfulEvent(cURI);
+            cURI.stripToMinimal();
+        } else if (cURI.getFetchStatus() == S_DEFERRED) {
+            cURI.processingCleanup();
+            alreadyIncluded.remove(cURI.getURIString());
+            schedule(cURI);
+        } else if (cURI.getFetchStatus() == S_ROBOTS_PRECLUDED
+                || cURI.getFetchStatus() == S_OUT_OF_SCOPE
+                || cURI.getFetchStatus() == S_BLOCKED_BY_USER
+                || cURI.getFetchStatus() == S_TOO_MANY_EMBED_HOPS
+                || cURI.getFetchStatus() == S_TOO_MANY_LINK_HOPS
+                || cURI.getFetchStatus() == S_DELETED_BY_USER) {
+            controller.fireCrawledURIDisregardEvent(cURI);
+            disregardedCount++;
+            cURI.stripToMinimal();
+        } else {
+            controller.fireCrawledURIFailureEvent(cURI);
+            failedCount++;
+            cURI.stripToMinimal();
+        }
+        cURI.processingCleanup();
+    }
+
+    public long discoveredUriCount() {
+        return alreadyIncluded.size();
+    }
+
+    public long queuedUriCount() {
+        return pendingURIs.size() + prerequisites.size();
+    }
+
+    public long finishedUriCount() {
+        return successCount + failedCount + disregardedCount;
+    }
+
+    public long pendingUriCount() {
+        return 0;
+    }
+
+    public long successfullyFetchedCount() {
+        return successCount;
+    }
+
+    public long failedFetchCount() {
+        return failedCount;
+    }
+
+    public long disregardedFetchCount() {
+        return disregardedCount;
+    }
+
+    public long totalBytesWritten() {
+        return totalProcessedBytes;
+    }
+
+    public String report() {
+        return "This frontier does not return a report.";
+    }
+
+    public void importRecoverLog(String pathToLog) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    public URIFrontierMarker getInitialMarker(String regexpr,
+            boolean inCacheOnly) {
+        return null;
+    }
+
+    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches,
+            boolean verbose) throws InvalidURIFrontierMarkerException {
+        return null;
+    }
+
+    public long deleteURIs(String match) {
+        return 0;
+    }
+
+}</programlisting>This Frontier hands out the URIs in the order they are
+    discovered, one at a time. To make sure that the web servers are not
+    overloaded it waits until a URI is finished processing before it hands out
+    the next one. It does not retry URIs for other reasons than prerequisites
+    not met (DNS lookup and fetching of robots.txt). This Frontier skips a lot
+    of the tasks a real Frontier should take care of. The first thing is that
+    it doesn't log anything. A real Frontier would log what happened to every
+    URI. A real Frontier would also be aware of the fact that Heritrix is
+    multi threaded and try to process as many URIs simultaneously as allowed
+    by the number of threads without breaking the politeness rules. Take a
+    look at <ulink
+    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/Frontier.html">Frontier</ulink>
+    <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/Frontier.html">(javadoc)</ulink>
+    to see how a full blown Frontier might look like.</para>
+
+    <para>All Frontiers must implement the URIFrontier interface. Most
+    Frontiers will also implement the FetchStatusCodes because these codes are
+    used to determine what to do with a URI after it has returned from the
+    processing cycle. In addition you might want to implement the <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlStatusListener.html">CrawlStatusListener</ulink>
+    which enables the Frontier to be aware of starts, stops, and pausing of a
+    crawl. For this simple example we don't care about that. The most
+    important methods in the URIFrontier interface are:<orderedlist>
+        <listitem>
+          <para>next(int timeout)</para>
+        </listitem>
+
+        <listitem>
+          <para>schedule(CandidateURI caURI)</para>
+        </listitem>
+
+        <listitem>
+          <para>finished(CrawlURI cURI)</para>
+        </listitem>
+      </orderedlist>The <xref linkend="figure_frontier_sequence" /> shows a
+    simplified sequence diagram of the Frontiers collaboration with other
+    classes. For readability, the processors (of which there are more than
+    showed in this diagram) are chained together in this diagram. It is
+    actually the ToeThread that runs each processor in turn.<figure
+        id="figure_frontier_sequence">
+        <title>Frontier data flow</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="frontier1.png" />
+          </imageobject>
+        </mediaobject>
+      </figure>As the diagram shows, the next() method of the Frontier will
+    return URI's from the prerequisite list before the pending queue is
+    considered. Let's take a closer look at the
+    implementation.<programlisting>    public synchronized CrawlURI next(int timeout) throws InterruptedException {
+        if (!uriInProcess &amp;&amp; !isEmpty()) { <co
+          id="frontierNextEx_inProcess"
+          linkends="frontierNextEx_txt_inProcess" />
+            uriInProcess = true;
+            CrawlURI curi;
+            if (!prerequisites.isEmpty()) { <co
+          id="frontierNextEx_prerequisite"
+          linkends="frontierNextEx_txt_prerequisite" />
+                curi = CrawlURI.from((CandidateURI) prerequisites.remove(0));
+            } else {
+                curi = CrawlURI.from((CandidateURI) pendingURIs.remove(0));
+            }
+            curi.setServer(controller.getServerCache().getServerFor(curi)); <co
+          id="frontierNextEx_setServer"
+          linkends="frontierNextEx_txt_setServer" />
+            return curi;
+        } else {
+            wait(timeout); <co id="frontierNextEx_wait"
+          linkends="frontierNextEx_txt_wait" />
+            return null;
+        }
+    }</programlisting><calloutlist>
+        <callout arearefs="frontierNextEx_inProcess"
+                 id="frontierNextEx_txt_inProcess">
+          <para>First we check if there is a URI in process already, then
+          check if there are any URIs left to crawl.</para>
+        </callout>
+
+        <callout arearefs="frontierNextEx_prerequisite"
+                 id="frontierNextEx_txt_prerequisite">
+          <para>Make sure that we let the prerequisites be processed before
+          any regular pending URI. This ensures that DNS-lookups and fetching
+          of robots.txt is done before any "real" data is fetched from the
+          host. Note that DNS-lookups are treated as an ordinary URI from the
+          Frontier's point of view. The next lines pulls a CandidateURI from
+          the right list and turn it into a CrawlURI suitable for being
+          crawled. The <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#from(org.archive.crawler.datamodel.CandidateURI)">CrawlURI.from(CandidateURI)</ulink>
+          method is used because the URI in the list might already be a
+          CrawlURI and could then be used directly. This is the case for URIs
+          where the preconditions was not met. As we will see further down
+          these URIs are put back into the pending queue.</para>
+        </callout>
+
+        <callout arearefs="frontierNextEx_setServer"
+                 id="frontierNextEx_txt_setServer">
+          <para>This line is very important. Before a CrawlURI can be
+          processed it must be associated with a CrawlServer. The reason for
+          this, among others, is to be able to check preconditions against the
+          URI's host (for example so that DNS-lookups are done only once for
+          each host, not for every URI).</para>
+        </callout>
+
+        <callout arearefs="frontierNextEx_wait" id="frontierNextEx_txt_wait">
+          <para>In this simple example, we are not being aware of the fact
+          that Heritrix is multi threaded. We just let the method wait the
+          timeout time and the return null if no URIs where ready. The
+          intention of the timeout is that if no URI could be handed out at
+          this time, we should wait the timeout before returning null. But if
+          a URI becomes available during this time it should wake up from the
+          wait and hand it out. See the javadoc for <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#next(int)">next(timeout)</ulink>
+          to get an explanation.</para>
+        </callout>
+      </calloutlist>When a URI has been sent through the processor chain it
+    ends up in the PostSelector. All URIs should end up here even if the
+    preconditions where not met and the fetching, extraction and writing to
+    the archive has been postponed. The PostSelector iterates through all new
+    URIs (prerequisites and/or extracted URIs) added to the CrawlURI and, if
+    they are within the scope, adds them to Frontier by calling the <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
+    method. There is also a batch version of the schedule method for
+    efficiency, see the <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html">javadoc</ulink>
+    for more information. This simple Frontier treats them the
+    same.<programlisting>    public synchronized void schedule(CandidateURI caURI) {
+        // Schedule a uri for crawling if it is not already crawled
+        if (!alreadyIncluded.containsKey(caURI.getURIString())) { <co
+          id="frontierScheduleEx_containsKey"
+          linkends="frontierScheduleEx_txt_containsKey" />
+            if(caURI.needsImmediateScheduling()) { <co
+          id="frontierScheduleEx_prerequisite"
+          linkends="frontierScheduleEx_txt_prerequisite" />
+                prerequisites.add(caURI);
+            } else {
+                pendingURIs.add(caURI);
+            }
+            alreadyIncluded.put(caURI.getURIString(), caURI); <co
+          id="frontierScheduleEx_addIncluded"
+          linkends="frontierScheduleEx_txt_addIncluded" />
+        }
+    }</programlisting><calloutlist>
+        <callout arearefs="frontierScheduleEx_containsKey"
+                 id="frontierScheduleEx_txt_containsKey">
+          <para>This line checks if we already has scheduled this URI for
+          crawling. This way no URI is crawled more than once.</para>
+        </callout>
+
+        <callout arearefs="frontierScheduleEx_prerequisite"
+                 id="frontierScheduleEx_txt_prerequisite">
+          <para>If the URI is marked by a processor as a URI that needs
+          immediate scheduling, it is added to the prerequisite queue.</para>
+        </callout>
+
+        <callout arearefs="frontierScheduleEx_addIncluded"
+                 id="frontierScheduleEx_txt_addIncluded">
+          <para>Add the URI to the list of already scheduled URIs.</para>
+        </callout>
+      </calloutlist>After the all the processors are finished (including the
+    PostSelector's scheduling of new URIs), the ToeThread calls the Frontiers
+    <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
+    method submitting the CrawlURI that was sent through the
+    chain.<programlisting>    public synchronized void finished(CrawlURI cURI) {
+        uriInProcess = false;
+        if (cURI.isSuccess()) { <co id="frontierFinishedEx_isSuccess"
+          linkends="frontierFinishedEx_txt_isSuccess" />
+            successCount++;
+            totalProcessedBytes += cURI.getContentSize();
+            controller.fireCrawledURISuccessfulEvent(cURI); <co
+          id="frontierFinishedEx_fireEvent"
+          linkends="frontierFinishedEx_txt_fireEvent" />
+            cURI.stripToMinimal(); <co id="frontierFinishedEx_strip"
+          linkends="frontierFinishedEx_txt_strip" />
+        } else if (cURI.getFetchStatus() == S_DEFERRED) { <co
+          id="frontierFinishedEx_deferred"
+          linkends="frontierFinishedEx_txt_deferred" />
+            cURI.processingCleanup(); <co id="frontierFinishedEx_cleanup"
+          linkends="frontierFinishedEx_txt_cleanup" />
+            alreadyIncluded.remove(cURI.getURIString());
+            schedule(cURI);
+        } else if (cURI.getFetchStatus() == S_ROBOTS_PRECLUDED <co
+          id="frontierFinishedEx_disregard"
+          linkends="frontierFinishedEx_txt_disregard" />
+                || cURI.getFetchStatus() == S_OUT_OF_SCOPE
+                || cURI.getFetchStatus() == S_BLOCKED_BY_USER
+                || cURI.getFetchStatus() == S_TOO_MANY_EMBED_HOPS
+                || cURI.getFetchStatus() == S_TOO_MANY_LINK_HOPS
+                || cURI.getFetchStatus() == S_DELETED_BY_USER) {
+            controller.fireCrawledURIDisregardEvent(cURI); <co
+          id="frontierFinishedEx_fireEvent2"
+          linkends="frontierFinishedEx_txt_fireEvent" />
+            disregardedCount++;
+            cURI.stripToMinimal(); <co id="frontierFinishedEx_strip2"
+          linkends="frontierFinishedEx_txt_strip" />
+        } else { <co id="frontierFinishedEx_fail"
+          linkends="frontierFinishedEx_txt_fail" />
+            controller.fireCrawledURIFailureEvent(cURI); <co
+          id="frontierFinishedEx_fireEvent3"
+          linkends="frontierFinishedEx_txt_fireEvent" />
+            failedCount++;
+            cURI.stripToMinimal(); <co id="frontierFinishedEx_strip3"
+          linkends="frontierFinishedEx_txt_strip" />
+        }
+        cURI.processingCleanup(); <co id="frontierFinishedEx_cleanup2"
+          linkends="frontierFinishedEx_txt_cleanup" />
+    }</programlisting>The processed URI will have status information attached
+    to it. It is the task of the finished method to check these statuses and
+    treat the URI according to that (see <xref
+    linkend="refactor_frontier_dispositions" />).<calloutlist>
+        <callout arearefs="frontierFinishedEx_isSuccess"
+                 id="frontierFinishedEx_txt_isSuccess">
+          <para>If the URI was successfully crawled we update some counters
+          for statistical purposes and "forget about it".</para>
+        </callout>
+
+        <callout arearefs="frontierFinishedEx_fireEvent frontierFinishedEx_fireEvent2 frontierFinishedEx_fireEvent3"
+                 id="frontierFinishedEx_txt_fireEvent">
+          <para>Modules can register with the <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/CrawlController.html">controller</ulink>
+          to receive <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlURIDispositionListener.html">notifications</ulink>
+          when decisions are made on how to handle a CrawlURI. For example the
+          <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/admin/StatisticsTracker.html">StatisticsTracker</ulink>
+          is dependent on these notifications to report the crawler's
+          progress. Different fireEvent methods are called on the controller
+          for each of the different actions taken on the CrawlURI.</para>
+        </callout>
+
+        <callout arearefs="frontierFinishedEx_strip frontierFinishedEx_strip2 frontierFinishedEx_strip3"
+                 id="frontierFinishedEx_txt_strip">
+          <para>We call the stripToMinimal method so that all data structures
+          referenced by the URI are removed. This is done so that any class
+          that might want to serialize the URI could be do this as efficient
+          as possible.</para>
+        </callout>
+
+        <callout arearefs="frontierFinishedEx_deferred"
+                 id="frontierFinishedEx_txt_deferred">
+          <para>If the URI was deferred because of a unsatisfied precondition,
+          reschedule it. Also make sure it is removed from the already
+          included map.</para>
+        </callout>
+
+        <callout arearefs="frontierFinishedEx_cleanup frontierFinishedEx_cleanup2"
+                 id="frontierFinishedEx_txt_cleanup">
+          <para>This method nulls out any state gathered during
+          processing.</para>
+        </callout>
+
+        <callout arearefs="frontierFinishedEx_disregard"
+                 id="frontierFinishedEx_txt_disregard">
+          <para>If the status is any of the one in this check, we treat it as
+          disregarded. That is, the URI could be crawled, but we don't want it
+          because it is outside some limit we have defined on the
+          crawl.</para>
+        </callout>
+
+        <callout arearefs="frontierFinishedEx_fail"
+                 id="frontierFinishedEx_txt_fail">
+          <para>If it isn't any of the previous states, then the crawling of
+          this URI is regarded as failed. We notify about it and then forget
+          it.</para>
+        </callout>
+      </calloutlist></para>
   </sect1>
 
   <sect1>
@@ -937,8 +1396,8 @@ public class Foo extends ModuleType {
         <para>It has been identified problems with how the Scopes are defined.
         Please see the user manual for a discussion of the <ulink
         url="http://crawler.archive.org/articles/user_manual.html#scopeproblems">problems
-        with the current Scopes</ulink>. The propsed changes to the Scope will
-        affect the Filters as well.</para>
+        with the current Scopes</ulink>. The proposed changes to the Scope
+        will affect the Filters as well.</para>
       </footnote> instance defines which URIs are "in" a particular crawl. It
     is essentially a Filter which determines, looking at the totality of
     information available about a CandidateURI/CrawlURI instance, if that URI
@@ -1012,7 +1471,7 @@ public class Foo extends ModuleType {
       <para>This is done implementing the thread aspects of the statistics
       tracker. This means that classes extending the AbstractTracker need not
       worry about thread handling, implementing the logActivity() method
-      allows them to poll any information at fixed intervals. </para>
+      allows them to poll any information at fixed intervals.</para>
 
       <para>AbstractTracker also listens for crawl status events and pauses
       and stops it's activity based on them.</para>
@@ -1042,7 +1501,7 @@ public class Foo extends ModuleType {
       <title>The org.archive.crawler.datamodel.UURI class</title>
 
       <para>The UURI class gives access to the java.net.URI it wraps. Because
-      of limitiations in the java.net.URI class it might be necessary to
+      of limitations in the java.net.URI class it might be necessary to
       substitute this with something else. UURI implements a lot of
       convenience methods to get information from the URI. We might add more
       of these methods and deprecate the getRawURI() method.</para>
@@ -1063,8 +1522,8 @@ public class Foo extends ModuleType {
         </listitem>
 
         <listitem>
-          <para>The Alist could be moved somwhere into the org.archive package
-          tree.</para>
+          <para>The Alist could be moved somewhere into the org.archive
+          package tree.</para>
         </listitem>
       </orderedlist>
 
@@ -1073,14 +1532,37 @@ public class Foo extends ModuleType {
       ways described.</para>
     </sect1>
 
-    <sect1>
+    <sect1 id="refactor_HTTPRecorder">
       <title>The org.archive.util.HTTPRecorder class</title>
 
       <para>The intention is to allow Heritrix to handle all relevant
-      protocols, not only hhtp/https. The naming of HTTPRecorder indicates
+      protocols, not only http/https. The naming of HTTPRecorder indicates
       that it is only for HTTP. Hopefully it is not. We have not investigated
       it fully yet, but it might be that changing the name of the class is all
       there is to be done.</para>
+    </sect1>
+
+    <sect1 id="refactor_frontier_dispositions">
+      <title>The Frontiers handling of dispositions</title>
+
+      <para>When the Frontier decides which URIs should be treated as deferred
+      and which has failed, it must check the fetch status and have knowledge
+      about every possible status code. This complicates adding new status
+      codes. It should be possible to constrain the number of status groups
+      the Frontier has to know and then let the processors decide which group
+      a new status code falls into. Possible status groups are:</para>
+
+      <para>successful</para>
+
+      <para>failure</para>
+
+      <para>disregard</para>
+
+      <para>retry immediately</para>
+
+      <para>retry after any prerequisite</para>
+
+      <para>retry at some later time</para>
     </sect1>
   </appendix>
 
@@ -1101,7 +1583,7 @@ public class Foo extends ModuleType {
     number.</para>
 
     <para>The patchlevel number increments for small sets of changes,
-    providing the most fine-grain timeline of software evolution. Patchlevels
+    providing the most fine-grain time line of software evolution. Patchlevels
     increment regularly for internal/development(odd minor level) work, but
     only increment for external releases when an official update to the
     previous release version has been tested and packaged.</para>
@@ -1265,6 +1747,105 @@ public class Foo extends ModuleType {
       <publisher>
         <publishername>Geotechnical Software Services</publishername>
       </publisher>
+    </biblioentry>
+
+    <biblioentry>
+      <abbrev>Towards web-scale web archeology</abbrev>
+
+      <title><ulink
+      url="http://citeseer.ist.psu.edu/leung01towards.html">Towards web-scale
+      web archeology. Research Report 174</ulink></title>
+
+      <publisher>
+        <publishername>Compaq Systems Research Center, Paolo Alto,
+        CA</publishername>
+      </publisher>
+
+      <date>September 10, 2001</date>
+
+      <authorgroup>
+        <author>
+          <firstname>S.</firstname>
+
+          <surname>Leung</surname>
+        </author>
+
+        <author>
+          <firstname>S.</firstname>
+
+          <surname>Perl</surname>
+        </author>
+
+        <author>
+          <firstname>R.</firstname>
+
+          <surname>Stata</surname>
+        </author>
+
+        <author>
+          <firstname>J.</firstname>
+
+          <surname>Wiener</surname>
+        </author>
+      </authorgroup>
+    </biblioentry>
+
+    <biblioentry>
+      <abbrev>On High-Performance Web Crawling.</abbrev>
+
+      <title><ulink
+      url="http://citeseer.ist.psu.edu/najork01highperformance.html">On
+      High-Performance Web Crawling. Research Report 173</ulink></title>
+
+      <publisher>
+        <publishername>Compaq Systems Research Center, Paolo Alto,
+        CA</publishername>
+      </publisher>
+
+      <date>September 26, 2001</date>
+
+      <authorgroup>
+        <author>
+          <firstname>Marc</firstname>
+
+          <surname>Najork</surname>
+        </author>
+
+        <author>
+          <firstname>Allan</firstname>
+
+          <surname>Heydon</surname>
+        </author>
+      </authorgroup>
+    </biblioentry>
+
+    <biblioentry>
+      <abbrev>Mercator: A Scalable, Extensible Web Crawler</abbrev>
+
+      <title><ulink
+      url="http://citeseer.ist.psu.edu/heydon99mercator.html">Mercator: A
+      Scalable, Extensible Web Crawler</ulink></title>
+
+      <publisher>
+        <publishername>Compaq Systems Research Center, Paolo Alto,
+        CA</publishername>
+      </publisher>
+
+      <date>1999</date>
+
+      <authorgroup>
+        <author>
+          <firstname>Marc</firstname>
+
+          <surname>Najork</surname>
+        </author>
+
+        <author>
+          <firstname>Allan</firstname>
+
+          <surname>Heydon</surname>
+        </author>
+      </authorgroup>
     </biblioentry>
   </bibliography>
 </article>
