@@ -148,7 +148,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     /** Get the active data container for this ComplexType for a specific
      * settings object.
      * 
-     * If no value has bee overridden on the settings object for this
+     * If no value has been overridden on the settings object for this
      * ComplexType, then it traverses up until it find a DataContainer with
      * values for this ComplexType.
      * 
@@ -157,9 +157,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * 
      * @param settings the settings object for which the {@link DataContainer}
      *                 is active.
-     * @return the active DataContainer
+     * @return the active DataContainer.
      */
     protected DataContainer getDataContainerRecursive(CrawlerSettings settings) {
+                
         if (settings == null) {
             return null;
         }
@@ -171,6 +172,36 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
 
         return data;
+    }
+
+    /** Get the active data container for this ComplexType for a specific
+     * settings object.
+     * 
+     * If the key has not been overridden on the settings object for this
+     * ComplexType, then it traverses up until it find a DataContainer with
+     * the key for this ComplexType.
+     *
+     * This method should probably not be called from user code. It is a helper
+     * method for the settings framework.
+     * 
+     * @param settings the settings object for which the {@link DataContainer}
+     *                 is active.
+     * @param key the key to look for.
+     * @return the active DataContainer.
+     */
+    protected DataContainer getDataContainerRecursive(
+            CrawlerSettings settings, String key)
+            throws AttributeNotFoundException {
+                
+        DataContainer data = getDataContainerRecursive(settings);
+        while (data != null) {
+            if (data.containsKey(key)) {
+                return data;
+            } else {
+                data = getDataContainerRecursive(data.getSettings().getParent());
+            }
+        }
+        throw new AttributeNotFoundException(key);
     }
 
     /** Sets up some variables for a new complex type.
@@ -233,15 +264,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (data == null || !data.containsKey(name)) {
             return false;
         }
-        data = getDataContainerRecursive(settings.getParent());
-        while (data != null) {
-            if (data.containsKey(name)) {
-                return true;
-            } else {
-                data = getDataContainerRecursive(data.getSettings().getParent());
-            }
-        }
-        throw new AttributeNotFoundException(name);
+
+        // Try to find attribute, will throw an exception if not found.
+        getDataContainerRecursive(settings.getParent(), name);
+        return true;
     }
 
     /** Obtain the value of a specific attribute from the crawl order.
@@ -304,15 +330,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
 
-        DataContainer data = getDataContainerRecursive(settings);
-        while (data != null) {
-            if (data.containsKey(name)) {
-                return data.get(name);
-            } else {
-                data = getDataContainerRecursive(data.getSettings().getParent());
-            }
-        }
-        throw new AttributeNotFoundException(name);
+        return getDataContainerRecursive(settings, name).get(name);
     }
 
     /** Obtain the value of a specific attribute that is valid for a
@@ -336,9 +354,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         DataContainer data = settings.getData(this);
         if (data != null && data.containsKey(name)) {
+            // Attribute was found return it.
             return data.get(name);
         } else {
-            getAttribute(settings, name);
+            // Try to find the attribute, will throw an exception if not found.
+            getDataContainerRecursive(settings, name);
             return null;
         }
     }
@@ -423,17 +443,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             return data.removeElement(name);
         }
 
-        // Value not found. Check if we should return null or throw an exseption
-        data = getDataContainerRecursive(settings);
-        while (data != null) {
-            if (data.containsKey(name)) {
-                return null;
-            } else {
-                data = getDataContainerRecursive(data.getSettings().getParent());
-            }
-        }
-        // No attribute with this name in any settings object.
-        throw new AttributeNotFoundException(name);
+        // Value not found. Check if we should return null or throw an exception
+        // This method throws an exception if not found.
+        getDataContainerRecursive(settings, name);
+        return null;
     }
 
     private DataContainer getOrCreateDataContainer(CrawlerSettings settings)
