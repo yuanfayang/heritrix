@@ -11,9 +11,11 @@
    
   <seeds>
  #  http://www.archive.org/movies/movies.php
-   http://www.drudgereport.com
+ # http://www.drudgereport.com
    http://www.yahoo.com
-   http://www.google.com/dirhp
+   http://www.yahoo.com
+   http://www.yahoo.com
+ # http://www.google.com/dirhp
    
   </seeds>
  
@@ -21,7 +23,7 @@
  
  <behavior
    disk-path="disk"
-   max-toe-threads="3"
+   max-toe-threads="1"
    >
    
   <http-headers
