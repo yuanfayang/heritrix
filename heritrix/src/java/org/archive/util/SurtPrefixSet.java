@@ -25,8 +25,10 @@
 package org.archive.util;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -78,23 +80,96 @@ public class SurtPrefixSet extends TreeSet {
     
     
     /**
-     * Read a set of SURT prefixes from a file; return sorted and 
+     * Read a set of SURT prefixes from a reader source; keep sorted and 
      * with redundant entries removed.
      * 
-     * @param attribute
-     * @return
+     * @param r reader over file of SURT_format strings
      * @throws IOException
      */
-    public void importFrom(Reader r) throws IOException {
+    public void importFrom(Reader r) {
         BufferedReader reader = new BufferedReader(r);
-        String read;
-        while ((read = reader.readLine()) != null) {
-            read = read.trim();
-            if (read.length() == 0 || read.startsWith("#")) {
-                continue;
+        String s;
+        
+        LineReadingIterator iter = 
+            new LineReadingIterator(
+                    reader,
+                    LineReadingIterator.COMMENT_LINE,
+                    LineReadingIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
+                    LineReadingIterator.ENTRY);
+
+        while (iter.hasNext()) {
+            s = (String) iter.next();
+            add(s);
+        }
+    }
+
+    /**
+     * @param fr
+     */
+    public void importFromUris(Reader r) {
+        BufferedReader reader = new BufferedReader(r);
+        String s;
+        
+        LineReadingIterator iter = 
+            new LineReadingIterator(
+                    reader,
+                    LineReadingIterator.COMMENT_LINE,
+                    LineReadingIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
+                    LineReadingIterator.ENTRY);
+
+        while (iter.hasNext()) {
+            s = (String) iter.next();
+            // s is a URI (or even fragmentary hostname), not a SURT
+            if(s.indexOf(':')==-1 || s.indexOf('.')<s.indexOf(':')) {
+                // no scheme present; prepend "http://"
+                s = "http://" + s;
             }
-            // TODO: handle other cruft or end-of-line comments?
-            add(read);
+            // convert to full SURT
+            s = SURT.fromURI(s);
+            // truncate to implied prefix
+            s = SurtPrefixSet.asPrefix(s);
+            add(s);
+        }
+        
+    }
+
+    /**
+     * Utility method for truncating a SURT that came from a 
+     * full URI (as a seed, for example) into a prefix
+     * for determining inclusion.
+     * 
+     * This involves: 
+     *    (1) removing the last path component, if any
+     *        (anything after the last '/', if there are
+     *        at least 3 '/'s)
+     *    (2) removing a trailing ',)', if present, opening
+     *        the possibility of proper subdomains and 
+     *        numbered sibling domains like www3. (This
+     *        means that the presence or absense of a
+     *        trailing '/' after a hostname is significant
+     *        for the how the SURT prefix is created, even
+     *        though it is not signficant for the URI's
+     *        treatment as a seed.)
+     *
+     * @param s
+     * @return
+     */
+    private static String asPrefix(String s) {
+        // strip last path-segment, if more than 3 slashes
+        s = s.replaceAll("^(.*//.*/)[^/]*","$1");
+        // strip trailing ",)", if present
+        s = s.replaceAll("^(.*),\\)","$1");       
+        return s;
+    }
+
+    /**
+     * @param fw
+     * @throws IOException
+     */
+    public void exportTo(FileWriter fw) throws IOException {
+        Iterator iter = this.iterator();
+        while(iter.hasNext()) {
+            fw.write((String)iter.next() + "\n");
         }
     }
 }
