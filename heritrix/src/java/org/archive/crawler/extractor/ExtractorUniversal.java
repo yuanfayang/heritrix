@@ -46,11 +46,9 @@ import org.archive.util.TextUtils;
  * strings of consecutive bytes that all represent characters that are valid
  * in a URL (see {@link #isURLableChar(int) isURLableChar()} for details). 
  * Once it hits the end of such a string (i.e. finds a character that
- * should not be in a URL) it will try to determine if it has found a URL using
- * a regular expression LIKELY_URL_EXTRACTOR LIKELY_URL_EXTRACTOR. 
- * Strings under 4 characters in length will not be considered.  If the regular
- * expression matches we will consider the string a URL and add it to the 
- * CrawlURI as a speculative embed.
+ * should not be in a URL) it will try to determine if it has found a URL. This is
+ * done be seeing if the string is an IP address prefixed with http(s):// or 
+ * contains a dot followed by a Top Level Domain and end of string or a slash.
  * 
  * @author Kristinn Sigurdsson
  * 
@@ -348,7 +346,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     protected long numberOfLinksExtracted= 0;
 
     /**
-     * @param name
+     * Constructor
+     * @param name The name of the module.
      */
     public ExtractorUniversal(String name) {
         super(name, "Link extraction on unknown file types");
