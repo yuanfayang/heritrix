@@ -57,6 +57,7 @@ implements CoreAttributeConstants {
         Logger.getLogger(ExtractorSWF.class.getName());
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
+    private static final int MAX_READ_SIZE = 16 * 1024 * 1024;
 
     /**
      * @param name
@@ -115,7 +116,7 @@ implements CoreAttributeConstants {
                         length = (int)mIn.readUI32();
                     }
                     // Below test added for Heritrix use.
-                    if (length > (64 * 1024 * 1024)) {
+                    if (length > MAX_READ_SIZE) {
                         throw new IOException("Length to read too big: " +
                             length);
                     }
@@ -172,6 +173,13 @@ implements CoreAttributeConstants {
                 }
                 for( int i = 1; i <= glyphCount; i++ ) {
                     int glyphSize = offsets[i] - offsets[i-1];
+                    // Here is an SWF which returns massive size to read
+                    // causing OOME:
+                    // http://pya.cc/pyaimg/img3/2004080708.swf
+                    if (glyphSize > MAX_READ_SIZE) {
+                        throw new IOException("Glyphsize to read is too big " +
+                            glyphSize + " (Max is " + MAX_READ_SIZE + ").");
+                    }
                     byte[] glyphBytes = in.read( glyphSize );
                     glyphs.addElement( glyphBytes );
                 }
