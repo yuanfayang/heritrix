@@ -26,10 +26,13 @@ package org.archive.crawler.frontier;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.CompositeIterator;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
@@ -75,8 +78,12 @@ import org.archive.util.QueueItemMatcher;
  * @author gojomo
  * @version $Date$ $Revision$
  */
-public class KeyedQueue implements Queue {
-     /** INACTIVE: not considered as URI source until activated by policy */
+public class KeyedQueue implements Queue, Serializable  {
+    // be robust against trivial implementation changes
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
+    
+    // states
+    /** INACTIVE: not considered as URI source until activated by policy */
     public static final Object INACTIVE = "INACTIVE".intern();
     /** READY: eligible and able to supply a new work URI on demand */
     public static final Object READY = "READY".intern();
@@ -125,7 +132,7 @@ public class KeyedQueue implements Queue {
         this.classKey = key;
         String tmpName = key;
         this.innerStack = new LinkedList();
-        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
+        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);
         // TODO: Currently unimplemented.  Commenting out for now because its
         // presence means extra two file descriptors per processed URI.
         // See https://sourceforge.net/tracker/?func=detail&aid=943768&group_id=73833&atid=539099
@@ -437,5 +444,12 @@ public class KeyedQueue implements Queue {
         return isEmpty() &&
             ((this.frozenQ != null)? this.frozenQ.isEmpty(): true) &&
                 this.state == EMPTY;
+    }
+    
+    // custom serialization
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        // ensure object identities of state value match
+        this.state = ((String) this.state).intern();
     }
 }
