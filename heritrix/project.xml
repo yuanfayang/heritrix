@@ -274,6 +274,19 @@
     -->
     <dependencies>
         <dependency>
+            <id>bdb</id>
+            <version>1.5.3</version>
+            <url>http://www.sleepycat.com/products/je.shtml</url>
+            <properties>
+                <description>Berkeley DB Java Edition.  
+                Copyright (c) 1990-2004 Sleepycat Software.  
+                All rights reserved.  See above link for how to obtain source.  
+                </description>
+                <license>http://www.sleepycat.com/download/jeoslicense.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
             <id>commons-httpclient</id>
             <version>2.0-final</version>
             <url>http://jakarta.apache.org/commons/httpclient/</url>
