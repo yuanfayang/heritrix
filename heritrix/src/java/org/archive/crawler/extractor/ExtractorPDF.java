@@ -48,7 +48,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
 	
     protected long numberOfCURIsHandled = 0;
-    protected long numberOfLinksExtracted= 0;
+    protected long numberOfLinksExtracted = 0;
 
     /**
      * @param name

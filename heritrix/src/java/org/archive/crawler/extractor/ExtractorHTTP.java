@@ -40,7 +40,7 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
 
     protected long numberOfCURIsHandled = 0;
-    protected long numberOfLinksExtracted= 0;
+    protected long numberOfLinksExtracted = 0;
 
     /**
      * @param name

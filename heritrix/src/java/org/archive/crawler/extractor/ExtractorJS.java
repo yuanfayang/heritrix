@@ -69,7 +69,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");	
 
     protected long numberOfCURIsHandled = 0;
-    protected static long numberOfLinksExtracted= 0;
+    protected static long numberOfLinksExtracted = 0;
 
     /**
      * @param name
