@@ -26,7 +26,7 @@ package org.archive.crawler.filter;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
@@ -143,14 +143,14 @@ public class TransclusionFilter extends Filter {
     }
 
     public void readMaxValues(Object o) {
-        CrawlURI curi = (CrawlURI)((o instanceof CrawlURI)? o: null);
+        CrawlerSettings settings = getSettingsFromObject(o);
         try {
             CrawlScope scope =
                 (CrawlScope) globalSettings().getModule(CrawlScope.ATTR_NAME);
-            this.maxTransHops = ((Integer) scope.getAttribute(CrawlScope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
-            this.maxSpeculativeHops = ((Integer) getAttribute(ATTR_MAX_SPECULATIVE_HOPS, curi)).intValue();
-            this.maxReferralHops = ((Integer) getAttribute(ATTR_MAX_REFERRAL_HOPS, curi)).intValue();
-            this.maxEmbedHops = ((Integer) getAttribute(ATTR_MAX_EMBED_HOPS, curi)).intValue();
+            this.maxTransHops = ((Integer) scope.getAttribute(settings, CrawlScope.ATTR_MAX_TRANS_HOPS)).intValue();
+            this.maxSpeculativeHops = ((Integer) getAttribute(settings, ATTR_MAX_SPECULATIVE_HOPS)).intValue();
+            this.maxReferralHops = ((Integer) getAttribute(settings, ATTR_MAX_REFERRAL_HOPS)).intValue();
+            this.maxEmbedHops = ((Integer) getAttribute(settings, ATTR_MAX_EMBED_HOPS)).intValue();
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
