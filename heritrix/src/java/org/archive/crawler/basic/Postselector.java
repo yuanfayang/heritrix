@@ -104,7 +104,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 				UURI embed = UURI.createUURI(e,baseUri);
 				CandidateURI caUri = new CandidateURI(embed);
 				caUri.setVia(curi);
-				char pathSuffix = caUri.sameDomainAs(curi) ? 'D' : 'X'; 
+				char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'X'; 
 				caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
 				logger.finest("inserting speculative embed at head "+embed);
 				schedule(caUri);
@@ -271,7 +271,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 				UURI embed = UURI.createUURI(e, baseUri);
 				CandidateURI caUri = new CandidateURI(embed);
 				caUri.setVia(curi);
-				char pathSuffix = caUri.sameDomainAs(curi) ? 'D' : 'E';
+				char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'E';
 				caUri.setPathFromSeed(curi.getPathFromSeed() + pathSuffix);
 				logger.finest("inserting embed at head " + embed);
 				schedule(caUri);
@@ -295,7 +295,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 				UURI embed = UURI.createUURI(e,baseUri);
 				CandidateURI caUri = new CandidateURI(embed);
 				caUri.setVia(curi);
-				char pathSuffix = caUri.sameDomainAs(curi) ? 'D' : 'E'; 
+				char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'E'; 
 				caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
 				logger.finest("inserting embed at head "+embed);
 				schedule(caUri);
