@@ -423,7 +423,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             e.printStackTrace();
         }
         UriUniqFilter uuf = (b.booleanValue())?
-            (UriUniqFilter)new BdbUriUniqFilter(dir):
+            (UriUniqFilter)new BdbUriUniqFilter(dir, 25):
             (UriUniqFilter)new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
         uuf.setDestination(this);
         return uuf;
@@ -859,14 +859,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     private void logLocalizedErrors(CrawlURI curi) {
         if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
-            List localErrors = (List)curi.getAList().getObject(A_LOCALIZED_ERRORS);
+            List localErrors = (List)curi.getAList().
+                getObject(A_LOCALIZED_ERRORS);
             Iterator iter = localErrors.iterator();
             while(iter.hasNext()) {
-                Object array[] = { curi, iter.next() };
-                controller.localErrors.log(
-                    Level.WARNING,
-                    curi.getUURI().toString(),
-                    array);
+                Object array[] = {curi, iter.next()};
+                controller.localErrors.log(Level.WARNING,
+                    curi.getUURI().toString(), array);
             }
             // once logged, discard
             curi.getAList().remove(A_LOCALIZED_ERRORS);
