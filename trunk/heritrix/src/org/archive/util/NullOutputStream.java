@@ -2,7 +2,7 @@
  * Created on Jun 23, 2003
  *
  */
-package org.archive.crawler.util;
+package org.archive.util;
 
 import java.io.IOException;
 import java.io.OutputStream;

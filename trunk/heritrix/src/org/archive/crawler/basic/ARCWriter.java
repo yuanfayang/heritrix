@@ -22,7 +22,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.util.IAGzipOutputStream;
+import org.archive.util.IAGZIPOutputStream;
 import org.w3c.dom.Node;
 import org.xbill.DNS.Record;
 
@@ -106,7 +106,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			
   			if(useCompression()){ 			
 	  			// zip each record individually
-				IAGzipOutputStream gout = (IAGzipOutputStream)out;
+				IAGZIPOutputStream gout = (IAGZIPOutputStream)out;
 				gout.startCompressionBlock();
 
   			} // else skip the special gzip jive and just write to a FileOutputStream
@@ -202,7 +202,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			arcOut = new FileOutputStream(file);
 			
 			if(useCompression()){
-				out = new IAGzipOutputStream(arcOut);
+				out = new IAGZIPOutputStream(arcOut);
 			}else{
 				out = arcOut;
 			}

@@ -4,19 +4,19 @@
  * To change the template for this generated file go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-package org.archive.crawler.util;
+package org.archive.util;
 
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.Deflater;
 import java.io.OutputStream;
 import java.io.IOException;
-import org.archive.crawler.util.NullOutputStream;
+import org.archive.util.NullOutputStream;
 
 /**
  * @author Parker Thompson
  *
  */
-public class IAGzipOutputStream extends GZIPOutputStream {
+public class IAGZIPOutputStream extends GZIPOutputStream {
 
 	/**
 	 * Create a custom gzip output stream, writing IA header information.
@@ -24,11 +24,11 @@ public class IAGzipOutputStream extends GZIPOutputStream {
 	 * @param outputstream
 	 * @throws IOException
 	 */
-	public IAGzipOutputStream(OutputStream o) throws IOException {
+	public IAGZIPOutputStream(OutputStream o) throws IOException {
 		this(o, 512);
 	}
 	
-	public IAGzipOutputStream(OutputStream o, int size) throws IOException{
+	public IAGZIPOutputStream(OutputStream o, int size) throws IOException{
 		// call super to satisfy java, let it do its thang with dev null
 		super(new NullOutputStream());
 		
