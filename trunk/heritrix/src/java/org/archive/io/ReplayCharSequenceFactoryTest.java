@@ -79,21 +79,20 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     protected void setUp() throws Exception
     {
         super.setUp();
-        // Write a single-byte file of regular content.
         this.regularBuffer =
             fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
-        this.regularFile = new File(getTmpDir(), REGULAR_CONTENT_FILE_NAME);
-        writeFile(this.regularFile, this.regularBuffer, MULTIPLIER);
         this.factory = ReplayCharSequenceFactory.getInstance();
     }
 /*
     public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
         
+        String fileName =
+            writeRegularFile("testGetReplayCharSequenceByteZeroOffset").
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
                 this.regularBuffer,
                 this.regularBuffer.length +
                     (this.regularBuffer.length * MULTIPLIER),
-                0, this.regularFile.getAbsolutePath(), null);
+                0, fileName, null);
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
@@ -102,40 +101,48 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     
     public void testGetReplayCharSequenceByteOffset() throws IOException {
         
+        String fileName =
+            writeRegularFile("testGetReplayCharSequenceByteOffset").
+                getAbsolutePath();
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
                 this.regularBuffer,
                 this.regularBuffer.length +
                     (this.regularBuffer.length * MULTIPLIER),
-                SEQUENCE_LENGTH, this.regularFile.getAbsolutePath(), null);
+                SEQUENCE_LENGTH, fileName, null);
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
         }
     }
     
-
+    */
     public void testGetReplayCharSequenceMultiByteZeroOffset()
         throws IOException {
         
+        String fileName =
+            writeRegularFile("testGetReplayCharSequenceMultiByteZeroOffset").
+                getAbsolutePath();
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
                 this.regularBuffer,
                 this.regularBuffer.length +
                     (this.regularBuffer.length * MULTIPLIER),
-                0, this.regularFile.getAbsolutePath(), "UTF-8");
+                0, fileName, "UTF-8");
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
         }
     }
-    */
+
     public void testGetReplayCharSequenceMultiByteOffset() throws IOException {
         
+        String fileName =
+            writeRegularFile("testGetReplayCharSequenceMultiByteOffset").
+                getAbsolutePath();
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
                 this.regularBuffer,
                 this.regularBuffer.length +
                     (this.regularBuffer.length * MULTIPLIER),
-                SEQUENCE_LENGTH, this.regularFile.getAbsolutePath(),
-                "UTF-8");
+                SEQUENCE_LENGTH, fileName, "UTF-8");
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
@@ -175,6 +182,16 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         int c = rcs.charAt(i);
         assertTrue("Character " + Integer.toString(c) + " at offset " + i +
             " unexpected.", (c % SEQUENCE_LENGTH) == (i % SEQUENCE_LENGTH));
+    }
+    
+    /**
+     * @return Regular file reference.
+     */
+    private File writeRegularFile(String baseName) throws IOException {
+        // Write a single-byte file of regular content.
+        File file = new File(getTmpDir(), baseName + ".regularContent.txt");
+        writeFile(file, this.regularBuffer, MULTIPLIER);
+        return file;
     }
     
     /**
