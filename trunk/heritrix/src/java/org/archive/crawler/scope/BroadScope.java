@@ -75,7 +75,7 @@ public class BroadScope extends CrawlScope {
      * @param caching True if seed list created is to cache seeds.
      */
     protected synchronized void createSeedlist(File seedfile, Logger l,
-            boolean caching) {dd
+            boolean caching) {
         super.createSeedlist(seedfile, l, false);
     }
 
