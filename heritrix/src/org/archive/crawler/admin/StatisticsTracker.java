@@ -61,7 +61,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	protected long crawlerStartTime;
 	protected long crawlerEndTime = -1; // Until crawl ends, this value is -1.
 	
-	protected long crawlerPauseStarted;
+	protected long crawlerPauseStarted = 0;
 	protected long crawlerTotalPausedTime;
 	
 	// timestamp of when this logger last wrote something to the log
@@ -182,21 +182,10 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 */
 	public void stop()
 	{
-		shouldrun = false;
 		crawlerEndTime = System.currentTimeMillis(); //Note the time when the crawl stops.
 		logActivity(); //Log end state		
+		shouldrun = false;
 	}
-
-	/**
-	 * Will be called once the crawl job we are monitoring has ended.
-	 * 
-	 *  (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlListener#crawlEnding(java.lang.String)
-	 */
-	public void crawlEnding(String sExitMessage) {
-		stop();
-	}
-
 
 	/** This object can be run as a thread to enable periodic loggin */
 	public void run() {
@@ -704,6 +693,23 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 					 .toString()
 				);			
 		lastLogPointTime = System.currentTimeMillis();	
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlListener#crawlEnding(java.lang.String)
+	 */
+	public void crawlEnding(String sExitMessage) {
+		// Not interested in this event.
+	}
+
+
+	/**
+	 * Will be called once the crawl job we are monitoring has ended.
+	 * 
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
+	 */
+	public void crawlEnded(String sExitMessage) {
+		stop();
 	}
 
 

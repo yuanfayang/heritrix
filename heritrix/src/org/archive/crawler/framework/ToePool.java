@@ -91,7 +91,7 @@ public class ToePool extends CrawlStatusAdapter {
 	 * Once the CrawlController has called this method, this object should be considered
 	 * as having been destroyed.
 	 */
-	public void crawlEnding(String sExitMessage) {
+	public void crawlEnding(String statusMessage) {
 		while(toes.size()>0)
 		{
 			ToeThread t = (ToeThread)toes.get(0);
@@ -99,6 +99,10 @@ public class ToePool extends CrawlStatusAdapter {
 			toes.remove(0);
 		}
 		controller = null;
+	}
+	
+	public void crawlEnded(String statusMessage)
+	{
 		toes = null;
 	}
 

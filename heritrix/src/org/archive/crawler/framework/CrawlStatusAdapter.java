@@ -31,5 +31,11 @@ public class CrawlStatusAdapter implements CrawlStatusListener
 	 */
 	public void crawlResuming(String statusMessage) {
 	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
+	 */
+	public void crawlEnded(String sExitMessage) {
+	}
 	
 }

@@ -13,9 +13,16 @@ public interface CrawlStatusListener
 	/**
 	 * Called when a CrawlController is ending a crawl (for any reason)
 	 * 
-	 * @param sExitMessage - Type of exit (human readable)
+	 * @param sExitMessage
 	 */
 	public void crawlEnding(String sExitMessage);	
+	
+	/**
+	 * Called when a CrawlController has ended a crawl and is about to exit.
+	 * 
+	 * @param sExitMessage - Type of exit (human readable)
+	 */
+	public void crawlEnded(String sExitMessage);
 
 	/**
 	 * Called when a CrawlController is going to be paused. 

@@ -1057,15 +1057,6 @@ public class Frontier
 
 
 
-	/** 
-	 *  The crawl controller invokes this method when it is exiting.
-	 *  The frontier should do cleanup to facilitate gc.
-	 *  No other object then the crawl controller should invoke this method. 
-	 */
-	public void crawlEnding(String sExitMessage) {
-		controller = null;			
-	}
-	
 	/**
 	 * This methods compiles a human readable report on the status of the frontier
 	 * at the time of the call. 
@@ -1212,5 +1203,22 @@ public class Frontier
 	 */
 	public void crawlResuming(String statusMessage) {
 		// We are not interested in the crawlResuming event
+	}
+
+
+	/*	(non-Javadoc) 
+	 *  @see org.archive.crawler.framework.CrawlStatusListener#crawlEnding(java.lang.String)
+	 */
+	public void crawlEnding(String sExitMessage) {
+		// We are not interested in the crawlEnding event
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
+	 */
+	public void crawlEnded(String sExitMessage) {
+		// Ok, if the CrawlController is exiting we delete our reference to it to facilitate gc.
+		controller = null;			
 	}
 }
