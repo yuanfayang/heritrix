@@ -92,8 +92,8 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  * period of time, to either enforce politeness policies or allow
  * a configurable amount of time between error retries.
  *
- *
  * @author Gordon Mohr
+ * @deprecated As of release 1.4, replaced by {@link BdbFrontier}.
  */
 public class HostQueuesFrontier extends ModuleType
 implements Frontier, FetchStatusCodes, CoreAttributeConstants,

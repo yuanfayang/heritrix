@@ -102,7 +102,7 @@ public abstract class Credential extends ModuleType {
      *
      * Override if credential knows internally what it wants to attach as
      * payload.  Otherwise, if payload is external, use the below
-     * {@link #attach(CrawlURI, Object)}.
+     * {@link #attach(CrawlURI, String)}.
      *
      * @param curi CrawlURI to load with credentials.
      */
@@ -116,7 +116,7 @@ public abstract class Credential extends ModuleType {
      * @param curi CrawlURI to load with credentials.
      * @param payload Payload to carry in avatar.  Usually credentials.
      */
-    public void attach(CrawlURI curi, Object payload) {
+    public void attach(CrawlURI curi, String payload) {
         CredentialAvatar ca = null;
         try {
             ca = (payload == null )?
@@ -224,7 +224,7 @@ public abstract class Credential extends ModuleType {
      * @return True if added a credentials.
      */
     public abstract boolean populate(CrawlURI curi, HttpClient http,
-        HttpMethod method, Object payload);
+        HttpMethod method, String payload);
 
     /**
      * @param curi CrawlURI to look at.

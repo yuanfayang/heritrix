@@ -60,10 +60,7 @@ import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
-import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
 
 /**
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
@@ -88,12 +85,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
-
-    /** percentage of heap to allocate to bdb cache */
-    public final static String ATTR_BDB_CACHE_PERCENT =
-        "bdb-cache-percent";
-    protected final static Integer DEFAULT_BDB_CACHE_PERCENT =
-        new Integer(0);
     
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
@@ -135,11 +126,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     /** 'retired' queues, no longer considered for activation */
     protected LinkedQueue retiredQueues = new LinkedQueue();
-    
-    /** shared bdb Environment for Frontier subcomponents */
-    // TODO: investigate using multiple environments to split disk accesses
-    // across separate physical disks
-    protected Environment dbEnvironment;
 
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
@@ -166,10 +152,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @param name
      */
     public BdbFrontier(String name) {
-        this(name, "BdbFrontier. EXPERIMENTAL - MAY NOT BE RELIABLE. " +
-                "A Frontier using BerkeleyDB Java Edition Databases for " +
-                "persistence to disk. Not yet fully tested or " +
-                "feature-equivalent to classic HostQueuesFrontier.");
+        this(name, "BdbFrontier.\n" +
+            "A Frontier using BerkeleyDB Java Edition Databases for " +
+            "persistence to disk.");
     }
 
     /**
@@ -182,15 +167,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         // therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
-        Type t = addElementToDefinition(
-                new SimpleType(ATTR_BDB_CACHE_PERCENT,
-                "Percentage of heap to allocate to BerkeleyDB JE cache. " +
-                "Default of zero means no preference (accept BDB's default" +
-                "or properties setting).",
-                DEFAULT_BDB_CACHE_PERCENT));
-        t.setExpertSetting(true);
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
+        Type t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
                 "Whether to hold newly-created per-host URI work" +
                 " queues until needed to stay busy.\n If false (default)," +
                 " all queues may contribute URIs for crawling at all" +
@@ -235,27 +212,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // Call the super method. It sets up frontier journalling.
         super.initialize(c);
         this.controller = c;
-        EnvironmentConfig envConfig = new EnvironmentConfig();
-        envConfig.setAllowCreate(true);
-        // This setting required by Linda Lee of bdbje as part of the 
-        // work on the bug #11552.
-        envConfig.setConfigParam("je.evictor.criticalPercentage", "1");
-        int bdbCachePercent = ((Integer) getUncheckedAttribute(null,
-				ATTR_BDB_CACHE_PERCENT)).intValue();
-        if(bdbCachePercent > 0) {
-        	// Operator has expressed a preference; override BDB default or 
-        	// je.properties value
-        	envConfig.setCachePercent(bdbCachePercent);
-        }
         try {
-            dbEnvironment = new Environment(c.getStateDisk(), envConfig);
-            if (logger.isLoggable(Level.INFO)) {
-                // Write out the bdb configuration.
-                envConfig = dbEnvironment.getConfig();
-                logger.info("BdbConfiguration: Cache percentage " +
-                    envConfig.getCachePercent() +
-                    ", cache size " + envConfig.getCacheSize());
-            }
             pendingUris = createMultipleWorkQueues();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
@@ -296,7 +253,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         this.snoozedClassQueues = null;
         this.queueAssignmentPolicy = null;
         this.readyClassQueues = null;
-        this.dbEnvironment = null;
         // Clearing controller is a problem. We get
         // NPEs in #preNext.
         // this.controller = null;
@@ -312,7 +268,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private BdbMultipleWorkQueues createMultipleWorkQueues()
     throws DatabaseException {
-        return new BdbMultipleWorkQueues(this.dbEnvironment);
+        return new BdbMultipleWorkQueues(this.controller.getBdbEnvironment(),
+            this.controller.getClassCatalog());
     }
 
     /**
@@ -323,7 +280,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @throws IOException
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
-        UriUniqFilter uuf = new BdbUriUniqFilter(this.dbEnvironment);
+        UriUniqFilter uuf =
+            new BdbUriUniqFilter(this.controller.getBdbEnvironment());
         uuf.setDestination(this);
         return uuf;
     }
@@ -1016,17 +974,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
-    }
-
-    /**
-     * @return Returns the dbEnvironment.
-     */
-    public Environment getBdbEnvironment() {
-        return this.dbEnvironment;
-    }
-    
-    public StoredClassCatalog getBdbClassCatalog() {
-        return this.pendingUris.getClassCatalog();
     }
 }
 

@@ -97,7 +97,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * Gets set upon successful request.  Reset at start of processing chain.
      */
-    transient private HttpRecorder httpRecorder = null;
+    private transient HttpRecorder httpRecorder = null;
 
     /**
      * Content type of a successfully fetched URI.
@@ -857,12 +857,12 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param ca Credential avatar to add to set of avatars.
      */
     public void addCredentialAvatar(CredentialAvatar ca) {
-    	    Set avatars = getCredentialAvatars();
-    	    if (avatars == null) {
-    	    	    avatars = new HashSet();
-    	    	    	setCredentialAvatars(avatars);
-    	    }
-    	    avatars.add(ca);
+        Set avatars = getCredentialAvatars();
+        if (avatars == null) {
+            avatars = new HashSet();
+            setCredentialAvatars(avatars);
+        }
+        avatars.add(ca);
     }
 
     /**

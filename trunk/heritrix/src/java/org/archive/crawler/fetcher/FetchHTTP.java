@@ -704,14 +704,14 @@ implements CoreAttributeConstants, FetchStatusCodes {
         			logger.info("No rfc2617 credentials for " + curi);
         		} else {
         			Rfc2617Credential found = Rfc2617Credential.
-					getByRealm(storeRfc2617Credentials, realm, curi);
+					    getByRealm(storeRfc2617Credentials, realm, curi);
         			if (found == null) {
         				logger.info("No rfc2617 credentials for realm " +
         						realm + " in " + curi);
         			} else {
-        				found.attach(curi, authscheme);
+        				found.attach(curi, authscheme.getRealm());
         				logger.info("Found credential for realm " + realm +
-        						" in store for " + curi.toString());
+        				    " in store for " + curi.toString());
         			}
         		}
         	}
