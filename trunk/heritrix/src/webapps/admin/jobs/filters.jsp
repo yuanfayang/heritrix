@@ -208,7 +208,7 @@
 	}
 
 	// Set page header.
-	String title = "Adjust modules";
+	String title = "Select filters";
 	int tab = theJob.isProfile()?2:1;
 	int jobtab = 1;
 %>
