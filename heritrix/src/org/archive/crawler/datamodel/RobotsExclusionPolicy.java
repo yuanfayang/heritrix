@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 /**
  * expiry handled outside, in CrawlHost
@@ -18,12 +19,15 @@ import java.util.LinkedList;
  *
  */
 public class RobotsExclusionPolicy {
-	public static RobotsExclusionPolicy ALLOWALL = new RobotsExclusionPolicy(null, null);
-	public static RobotsExclusionPolicy DENYALL = new RobotsExclusionPolicy(null, null);
+	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.RobotsExclusionPolicy");
+
+	public static RobotsExclusionPolicy ALLOWALL = new RobotsExclusionPolicy(null, null, false);
+	public static RobotsExclusionPolicy DENYALL = new RobotsExclusionPolicy(null, null, false);
 	
 	private LinkedList userAgents = null;
 	private HashMap disallows = null; // of (String -> List)
-		
+	private boolean hasErrors = false; // flag for flawed bu workable robots.txts
+	
 	/**
 	 * @param vb
 	 */
@@ -32,7 +36,8 @@ public class RobotsExclusionPolicy {
 		ArrayList current = null;
 		LinkedList userAgents = new LinkedList();
 		HashMap disallows = new HashMap(); 
- 
+ 		boolean hasErrors = false;
+ 		
 		try {
 			while (reader != null) {
 				do {read = reader.readLine();}
@@ -69,6 +74,11 @@ public class RobotsExclusionPolicy {
 						continue;
 					}
 					if (read.matches("(?i)Disallow:.*")) {
+						if(current==null) {
+							// buggy robots.txt
+							hasErrors = true; 
+							continue;
+						}
 						String path = read.substring(9);
 						current.add(path);
 						continue;
@@ -82,17 +92,19 @@ public class RobotsExclusionPolicy {
 			// TODO: be smarter here: perhaps use partial results, if avail?
 			return ALLOWALL;
 		}
-		return new RobotsExclusionPolicy(userAgents, disallows);
+		return new RobotsExclusionPolicy(userAgents, disallows, hasErrors);
 	}
 	
 	
 	/**
-	 * @param userAgents
-	 * @param disallows
+	 * @param u
+	 * @param d
+	 * @param errs
 	 */
-	public RobotsExclusionPolicy(LinkedList u, HashMap d) {
+	public RobotsExclusionPolicy(LinkedList u, HashMap d, boolean errs) {
 		userAgents = u;
 		disallows = d;
+		hasErrors = errs;
 	}
 
 	public boolean disallows(String path, String userAgent) {
