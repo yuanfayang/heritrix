@@ -1311,4 +1311,11 @@ public class Frontier
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#disregardedFetchCount()
+     */
+    public long disregardedFetchCount() {
+        return disregardedCount;
+    }
 }

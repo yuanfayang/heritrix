@@ -52,7 +52,23 @@ public interface URIFrontier {
      */
     void scheduleHigh(CandidateURI caUri);
 
-    long successfullyFetchedCount();
+    /**
+     * Get the number of successfully downloaded documents.
+     * @return the number of successfully downloaded documents
+     */
+    public long successfullyFetchedCount();
+
+    /**
+     * Get the number of documents that failed to download.
+     * @return the number of documents that faile to download
+     */
+    public long failedFetchCount();
+
+    /**
+     * Get the number of documents that were disregarded (robot exclusion etc.).
+     * @return the number of documents that were disregarded
+     */
+    public long disregardedFetchCount();
 
     long discoveredUriCount();
 
@@ -60,8 +76,6 @@ public interface URIFrontier {
      * @return Estimated number of URIs scheduled for prcoessing..
      */
     long pendingUriCount();
-
-    long failedFetchCount();
 
     /**
      * Put caUri into a queue of items to be scheduled

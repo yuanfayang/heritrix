@@ -80,11 +80,12 @@ public class StatisticsTracker extends AbstractTracker{
     protected long discoveredPages = 0;
     protected long pendingPages = 0;
     protected long downloadedPages = 0;
+    protected long downloadFailures = 0;
+    protected long downloadDisregards = 0;
     protected double docsPerSecond = 0;
     protected double currentDocsPerSecond = 0;
     protected int currentKBPerSec = 0;
     protected long totalKBPerSec = 0;
-    protected long downloadFailures = 0;
     protected int busyThreads = 0;
     protected long totalProcessedBytes = 0;
 
@@ -140,6 +141,7 @@ public class StatisticsTracker extends AbstractTracker{
         pendingPages = urisInFrontierCount();
         downloadedPages = successfulFetchAttempts();
         downloadFailures = failedFetchAttempts();
+        downloadDisregards = disregardedFetchAttempts();
         totalProcessedBytes = getTotalBytesWritten();
 
         if(totalFetchAttempts() == 0){
@@ -450,6 +452,17 @@ public class StatisticsTracker extends AbstractTracker{
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
         return shouldrun ? controller.getFrontier().failedFetchCount() : downloadFailures;
+    }
+
+    /**
+     * Get the total number of failed fetch attempts (connection failures -> give up, etc)
+     *
+     * @return The total number of failed fetch attempts
+     */
+    public long disregardedFetchAttempts() {
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().disregardedFetchCount() : downloadDisregards;
     }
 
     /**
