@@ -27,6 +27,9 @@
 ##                  to start the JVM JXM administration server on the SUN JDK
 ##                  1.5, set this variable to empty string.
 ##
+## JMX_PORT         Port you'd like the JVM JMX administration server to run
+##                  on. Default is 8849.
+##
 
 # Resolve links - $0 may be a softlink
 PRG="$0"
@@ -91,9 +94,14 @@ then
   JAVA_OPTS=" -Xmx256m"
 fi
 
+if [ -z "${JMX_PORT}" ]
+then
+    JMX_PORT=8849
+fi
+
 if [ -z "$JMX_OPTS" ]
 then
-  JMX_OPTS="-Dcom.sun.management.jmxremote.port=8849 \
+  JMX_OPTS="-Dcom.sun.management.jmxremote.port=${JMX_PORT} \
     -Dcom.sun.management.jmxremote.ssl=false \
     -Dcom.sun.management.jmxremote.password.file=${HERITRIX_HOME}/jmxremote.password"
 fi
