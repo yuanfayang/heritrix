@@ -28,6 +28,17 @@ package org.archive.io;
 /**
  * Marker interface for CharSequences which may depend on unstable backing
  * (eg a large buffer that could go away or be reused). 
+ * 
+ * Creators of UnstableCharSequences should clearly document their valid
+ * lifetime, and users of such CharSequences during their valid lifetime
+ * should be careful to only pass stabilized copies (or subsequences) to
+ * code that may run outside the documented lifetime. 
+ * 
+ * It is not intended that the backing go away at any arbitrary time,
+ * nor that isUnstable() be checked before each use. Rather, you would
+ * only check a sequence's stability while you know (by design contract)
+ * it is stable, when considering using (a form of) it in future operation
+ * when the backing's existence can no longer be assured. 
  *
  * @author gojomo
  * @see java.lang.CharSequence
