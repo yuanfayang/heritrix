@@ -559,6 +559,14 @@
             <include>*.xsl</include>
         </includes>
     </resource>
+    <resource>
+        <directory>${basedir}/src/conf/</directory>
+        <includes>
+            <include>heritrix.*</include>
+            <include>profiles/**</include>
+            <include>modules/**</include>
+        </includes>
+    </resource>
     </resources>
   </build>
 
@@ -572,9 +580,11 @@
             nor package.html files.
           -->
         <report>maven-license-plugin</report>
+        <!--Takes a long time. No one looks at it.  Comment in when wanted.
         <report>maven-changelog-plugin</report>
-        <report>maven-changes-plugin</report>
         <report>maven-checkstyle-plugin</report>
+        -->
+        <report>maven-changes-plugin</report>
         <!--
         <report>maven-jdepend-plugin</report>
         -->
