@@ -91,7 +91,7 @@
       and dumps a ruling into <filename>heritrix_out.log</filename>. See the
       <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/selftest/package-summary.html">org.archive.crawler.selftest</ulink>
-      package for more on how the selftest works. </para>
+      package for more on how the selftest works.</para>
     </sect2>
 
     <sect2>
@@ -184,6 +184,17 @@ ${package_declaration}</programlisting></para>
     </sect2>
 
     <sect2>
+      <title>Long versus int</title>
+
+      <para>We will be performing multi-billion resource crawls -- which may
+      have to pass up billions of pages that don't make the time/priority cut.
+      Our access tools will range over tens if not hundreds of billions of
+      resources. We may often archive resources larger than 2GB. Keep these in
+      mind when choosing between 'int' (max value: around 2 billion) and
+      'long' (max value: around 9 quintillion) in your code.</para>
+    </sect2>
+
+    <sect2>
       <title>Unit tests code in same package</title>
 
       <para>"[A ] popular convention is to place all test classes in a
@@ -255,8 +266,8 @@ ${package_declaration}</programlisting></para>
       along with any newly discovered URI's that the Frontier will evaluate
       for crawling.</para>
 
-      <para>The Frontier also keeps the state of the crawl. This includes, but
-      is not limited to:</para>
+      <para>It is the Frontier which keeps the state of the crawl. This
+      includes, but is not limited to:</para>
 
       <itemizedlist>
         <listitem>
@@ -269,10 +280,6 @@ ${package_declaration}</programlisting></para>
 
         <listitem>
           <para>What URIs have been processed</para>
-        </listitem>
-
-        <listitem>
-          <para>In what order unprocessed URIs will be processed</para>
         </listitem>
       </itemizedlist>
 
@@ -600,8 +607,10 @@ ${package_declaration}</programlisting></para>
         addElementToDefinition method returns the added Type so that it is
         easy to refine the configuration of the Type. Lets look at an example
         (also from the default Frontier) of an attribute
-        definiton.<programlisting linenumbering="numbered">public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE = "total-bandwidth-usage-KB-sec";
-private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE = new Integer(0);
+        definiton.<programlisting linenumbering="numbered">public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
+        "total-bandwidth-usage-KB-sec";
+private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
+        new Integer(0);
 ...
 
 Type t;
@@ -665,28 +674,31 @@ import org.archive.crawler.settings.Type;
 
 public class Foo extends ModuleType {
   private static Logger logger = Logger.getLogger("myModule.Foo"); <co
-          id="simpleEx_logger" />
+          id="simpleEx_logger" linkends="simpleEx_txt_logger" />
 
   public Foo(String name) {
-    Type mySimpleType1 = new SimpleType("name1", "Description1", new Integer(10)); <co
-          id="simpleEx_addSimpleType" />
+    Type mySimpleType1 = new SimpleType(
+                "name1", "Description1", new Integer(10)); <co
+          id="simpleEx_addSimpleType" linkends="simpleEx_txt_addSimpleType" />
     addElementToDefinition(mySimpleType1);
 
-    Type mySimpleType2 = new SimpleType("name2", "Description2", "defaultValue");
+    Type mySimpleType2 = new SimpleType(
+                "name2", "Description2", "defaultValue");
     addElementToDefinition(mySimpleType2);
-    mySimpleType2.addConstraint(new RegularExpressionConstraint(".*Val.*", Level.WARNING, <co
-          id="simpleEx_addConstraint" />
+    mySimpleType2.addConstraint(new RegularExpressionConstraint( <co
+          id="simpleEx_addConstraint" linkends="simpleEx_txt_addConstraint" />
+                ".*Val.*", Level.WARNING,
                 "This field must contain 'Val' as part of the string."));
 
     Type myMapType = new MapType("name3", "Description3", String.class); <co
-          id="simpleEx_addMap" />
+          id="simpleEx_addMap" linkends="simpleEx_txt_addMap" />
     addElementToDefinition(myMapType);
   }
 
   public void getMyTypeValue(CrawlURI curi) {
     try {
       int maxBandwidthKB = ((Integer) getAttribute("name1", curi)).intValue(); <co
-          id="simpleEx_getAttribute" />
+          id="simpleEx_getAttribute" linkends="simpleEx_txt_getAttribute" />
     } catch (AttributeNotFoundException e) {
       logger.warning(e.getMessage());
     }
@@ -695,10 +707,11 @@ public class Foo extends ModuleType {
   public void playWithMap(CrawlURI curi) {
     try {
       MapType myMapType = (MapType) getAttribute("name3", curi);
-      myMapType.addElement(null, new SimpleType("name", "Description", "defaultValue")); <co
-          id="simpleEx_addElement" />
+      myMapType.addElement(
+              null, new SimpleType("name", "Description", "defaultValue")); <co
+          id="simpleEx_addElement" linkends="simpleEx_txt_addElement" />
       myMapType.setAttribute(new Atrribute("name", "newValue")); <co
-          id="simpleEx_setAttribute" />
+          id="simpleEx_setAttribute" linkends="simpleEx_txt_setAttribute" />
     } catch (Exception e) {
       logger.warning(e.getMessage());
     }
@@ -706,19 +719,21 @@ public class Foo extends ModuleType {
 }</programlisting>
 
       <para>This example shows several things:<calloutlist>
-          <callout arearefs="simpleEx_logger">
+          <callout arearefs="simpleEx_logger" id="simpleEx_txt_logger">
             <para>One thing that we have not mentioned before is how we do
             general error logging. Heritrix uses the standard Java 1.4 logging
             facility. The convention is to initialize it with the
             classname.</para>
           </callout>
 
-          <callout arearefs="simpleEx_addSimpleType">
+          <callout arearefs="simpleEx_addSimpleType"
+                   id="simpleEx_txt_addSimpleType">
             <para>Here we define and add a SimpleType that takes an Integer as
             the argument and setting it to '10' as the default value.</para>
           </callout>
 
-          <callout arearefs="simpleEx_addConstraint">
+          <callout arearefs="simpleEx_addConstraint"
+                   id="simpleEx_txt_addConstraint">
             <para>It is possible to add constraints on fields. In addition to
             be constrained to only take strings, this field add a requirement
             that the string should contain 'Val' as part of the string. The
@@ -766,21 +781,23 @@ public class Foo extends ModuleType {
             class for more information.</para>
           </callout>
 
-          <callout arearefs="simpleEx_addMap">
+          <callout arearefs="simpleEx_addMap" id="simpleEx_txt_addMap">
             <para>This line defines a MapType allowing only Strings as
             values.</para>
           </callout>
 
-          <callout arearefs="simpleEx_getAttribute">
+          <callout arearefs="simpleEx_getAttribute"
+                   id="simpleEx_txt_getAttribute">
             <para>An example of how to read an attribute.</para>
           </callout>
 
-          <callout arearefs="simpleEx_addElement">
+          <callout arearefs="simpleEx_addElement" id="simpleEx_txt_addElement">
             <para>Here we add a new element to the MapType. This element is
             valid for this map because its default value is a String.</para>
           </callout>
 
-          <callout arearefs="simpleEx_setAttribute">
+          <callout arearefs="simpleEx_setAttribute"
+                   id="simpleEx_txt_setAttribute">
             <para>Now we change the value of the newly added attribute. JMX
             requires that the new value is wrapped in an object of type
             Attribute which holds both the name and the new value.</para>
@@ -795,23 +812,118 @@ public class Foo extends ModuleType {
   <sect1>
     <title>Some notes on the URI classes</title>
 
-    <para></para>
+    <para>URIs<footnote>
+        <para>URI (Uniform Resource Identifiers) defined by <ulink
+        url="http://www.ietf.org/rfc/rfc2396.txt">RFC 2396</ulink> is a way of
+        identifying resources. The relationship between URI, URL and URN is
+        described in the RFC: <citation>"A URI can be further classified as a
+        locator, a name, or both. The term "Uniform Resource Locator" (URL)
+        refers to the subset of URI that identify resources via a
+        representation of their primary access mechanism (e.g., their network
+        "location"), rather than identifying the resource by name or by some
+        other attribute(s) of that resource. The term "Uniform Resource Name"
+        (URN) refers to the subset of URI that are required to remain globally
+        unique and persistent even when the resource ceases to exist or
+        becomes unavailable."</citation> Although Heritrix uses URIs, only
+        URLs are supported at the moment. For more information on naming and
+        addressing of resources see: <ulink
+        url="http://www.w3.org/Addressing/">Naming and Addressing: URIs, URLs,
+        ...</ulink> on w3.org's website.</para>
+      </footnote> in Heritrix is represented be several classes. The basic
+    building block is the <ulink
+    url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">java.net.URI</ulink>
+    class. This class offers some normalisation of an URI in addition to
+    methods for accessing the different parts of the URI. The URI class,
+    according to its documentation, is meant to strictly conform to the <ulink
+    url="http://www.ietf.org/rfc/rfc2396.txt">RFC 2396</ulink>. This causes
+    som problems because the real world does not conform to the RFC. In
+    addition some bugs in the URI class has been discovered which restricts
+    its acceptance of some URIs further. To overcome these limitations we need
+    to, at some point, write a replacement for the java.net.URI.</para>
+
+    <para>Three different classes wraps the java.net.URI in Heritrix:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/UURI.html">UURI</ulink></term>
+
+        <listitem>
+          <para>Usable URI: a legal URI for our purposes. These instances will
+          always have been normalized (massaged in ways that by spec and in
+          practice, do not change the URI's meaning or function) and
+          rehabilitated (patched in riskless or necessary ways to be legal, eg
+          escaping spaces).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CandidateURI.html">CandidateURI</ulink></term>
+
+        <listitem>
+          <para>A URI, discovered or passed-in, that may be scheduled (and
+          thus become a CrawlURI). Contains just the fields necessary to
+          perform quick in-scope analysis. This class wraps an UURI
+          instance.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html">CrawlURI</ulink></term>
+
+        <listitem>
+          <para>Represents a candidate URI and the associated state it
+          collects as it is crawled. The CrawlURI is an subclass of
+          CandidateURI. It is instances of this class that is fed to the
+          processors.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
 
     <sect2>
-      <title>The CandidateURI's Attribute list</title>
+      <title>The CrawlURI's Attribute list</title>
 
-      <para></para>
+      <para>The CrawlURI offers a flexible attribute list which is used to
+      keep arbritary information about the URI while crawling. If you are
+      going to write a processor you almost certanly will use the attribute
+      list. The attribute list is a key/value-pair list accessed by the
+      methods <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getAList()">getAList()</ulink>
+      and <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#setAList(st.ata.util.AList)">setAList(st.ata.util.AList)</ulink>.
+      By convention the key values are picked from the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">CoreAttributeConstants</ulink>
+      interface which all processors implement. If you use other keys than
+      those listed in this interface, then you must add the handling of that
+      attribute to some other module as well.</para>
     </sect2>
 
     <sect2>
-      <title>The content stream</title>
+      <title>The recorder streams</title>
 
-      <para></para>
+      <para>The crawler wouldn't be of much use if it did not give access to
+      the HTTP request and response. For this purpose the CrawlURI has the
+      <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getHttpRecorder()">getHttpRecorder()</ulink>
+      method. The recorder is referenced by the CrawlURI and available to all
+      the processors. Se <xref linkend="writing_a_processor" /> for an
+      explanation on how to use the recorder.</para>
     </sect2>
   </sect1>
 
   <sect1>
-    <title>Writing a Frontier</title>
+    <title> Writing a Frontier</title>
+
+    <para>As mentioned before the URIFrontier is a pluggable module
+    responsible for deciding which URI to process next, and when. The Frontier
+    is also responsible for keeping track other aspects of the crawls internal
+    state which in turn can be used for logging and reporting. Even though the
+    responsibilities of the Frontier might not look overwhelming, it is one of
+    the hardest modules to write well. You should really investigate if your
+    needs could not be met by the existing Frontier. With these warnings in
+    mind, let's go ahead and create a really simple Frontier.</para>
 
     <para></para>
   </sect1>
@@ -842,7 +954,7 @@ public class Foo extends ModuleType {
   </sect1>
 
   <sect1>
-    <title>Writing a Processor</title>
+    <title id="writing_a_processor">Writing a Processor</title>
 
     <para></para>
   </sect1>
@@ -850,7 +962,8 @@ public class Foo extends ModuleType {
   <sect1>
     <title>Writing a Filter</title>
 
-    <para></para>
+    <para>A filter<footnoteref linkend="footnote_scope_problems" /> could be
+    used in several places in the crawler.</para>
   </sect1>
 
   <sect1>
@@ -858,6 +971,59 @@ public class Foo extends ModuleType {
 
     <para></para>
   </sect1>
+
+  <appendix>
+    <title>Future changes in the API</title>
+
+    <para>This appendix lists issues in the API that needs investigation and
+    eventually changes to be made. Read this so that you could avoid locking
+    yourself to dependencies that is likely to change.</para>
+
+    <sect1>
+      <title>The org.archive.crawler.datamodel.UURI class</title>
+
+      <para>The UURI class gives access to the java.net.URI it wraps. Because
+      of limitiations in the java.net.URI class it might be necessary to
+      substitute this with something else. UURI implements a lot of
+      convenience methods to get information from the URI. We might add more
+      of these methods and deprecate the getRawURI() method.</para>
+    </sect1>
+
+    <sect1>
+      <title>The org.archive.crawler.datamodel.CrawlURI class</title>
+
+      <para>The attribute list of the CrawlURI, manipulated trough the
+      getAList() and setAList(st.ata.util.AList) methods, might change. These
+      methods gives directly access to an implementation of st.ata.util.AList.
+      Two changes are possible:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Convenience methods for setting and getting elements in the
+          AList could be added to the CrawlURI.</para>
+        </listitem>
+
+        <listitem>
+          <para>The Alist could be moved somwhere into the org.archive package
+          tree.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>The Alist is an import part of many modules. It is therefore not
+      possible to avoid changes to modules if the API is changed in any of the
+      ways described.</para>
+    </sect1>
+
+    <sect1>
+      <title>The org.archive.util.HTTPRecorder class</title>
+
+      <para>The intention is to allow Heritrix to handle all relevant
+      protocols, not only hhtp/https. The naming of HTTPRecorder indicates
+      that it is only for HTTP. Hopefully it is not. We have not investigated
+      it fully yet, but it might be that changing the name of the class is all
+      there is to be done.</para>
+    </sect1>
+  </appendix>
 
   <appendix>
     <title>Version and Release Numbering</title>
