@@ -105,14 +105,14 @@ public class FPUURISet extends AbstractSet implements UURISet, Serializable {
     }
 
     /**
-     * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CrawlURI)
+     * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CandidateURI)
      */
     public void add(CandidateURI curi) {
         add(curi.getUURI());
     }
 
     /**
-     * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CrawlURI)
+     * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CandidateURI)
      */
     public void remove(CandidateURI curi) {
         remove(curi.getUURI());
