@@ -190,6 +190,7 @@ public class DiskStack implements Stack, Serializable {
         }
         if(raf!=null) {
             raf.close();
+            raf = null;
         }
     }
     
@@ -201,6 +202,18 @@ public class DiskStack implements Stack, Serializable {
     public void discard() throws IOException {
         close();
         storage.delete();
+    }
+    
+    /**
+     * 
+     */
+    public void disconnect() {
+        try {
+            close();
+        } catch (IOException e) {
+            DevUtils.logger.log(Level.SEVERE,"disconnect()" +
+                    DevUtils.extraInfo(),e);
+        }
     }
 
     /* (non-Javadoc)
@@ -241,4 +254,6 @@ public class DiskStack implements Stack, Serializable {
         // restore storage file
         coistream.restoreFile(storage);
     }
+
+
 }
