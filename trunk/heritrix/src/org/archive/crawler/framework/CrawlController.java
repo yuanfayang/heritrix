@@ -104,6 +104,7 @@ public class CrawlController {
 		CrawlURI curi = scheduler.curiFor(thread);
 		if (curi != null) {
 			curi.setNextProcessor(firstProcessor);
+			curi.setThreadNumber(thread.getSerialNumber());
 		}
 		return curi;
 	}
