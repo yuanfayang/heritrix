@@ -234,6 +234,7 @@ CoreAttributeConstants {
                 "adjust settings, while the crawl state is still available. " +
                 "Default is false.",
                 DEFAULT_PAUSE_AT_FINISH));
+        t.setOverrideable(false);
 
     }
     
