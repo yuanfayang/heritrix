@@ -27,18 +27,17 @@ package org.archive.util;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.io.StreamCorruptedException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
-import org.archive.io.DiskByteQueue;
+import org.apache.commons.collections.Predicate;
+import org.archive.io.*;
 import org.archive.io.DevNull;
+import org.archive.io.DiskByteQueue;
 
 /**
  * Queue which stores all its objects to disk using object
@@ -254,9 +253,9 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /** 
-     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
-    public long deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(Predicate matcher) {
         // While not processed as many items as there currently are in the queue
         //  dequeue item
         //  if it does not match, requeue it.
@@ -266,7 +265,7 @@ public class DiskQueue implements Queue, Serializable {
         long numberOfDeletes = 0;
         for ( int i = 0 ; i < itemsInQueue ; i++ ){
             Object o = dequeue();
-            if(matcher.match(o)==false){
+            if(matcher.evaluate(o)==false){
                 // Not supposed to delete this one, put it back
                 enqueue(o);
             } else {
@@ -281,47 +280,5 @@ public class DiskQueue implements Queue, Serializable {
         stream.defaultReadObject();
         // after deserialization, must reinitialize object streams from underlying bytestreams
         isInitialized = false; 
-    }
-    
-    class HeaderlessObjectOutputStream extends ObjectOutputStream {
-
-		/**
-		 * @param out
-		 * @throws IOException
-		 */
-		public HeaderlessObjectOutputStream(OutputStream out) throws IOException {
-			super(out);
-			// TODO Auto-generated constructor stub
-		}
-
-		/* (non-Javadoc)
-		 * @see java.io.ObjectOutputStream#writeStreamHeader()
-		 */
-		protected void writeStreamHeader() throws IOException {
-			// do nothing
-		}
-
-        
-    }
-    
-    class HeaderlessObjectInputStream extends ObjectInputStream {
-
-		/**
-		 * @param in
-		 * @throws IOException
-		 */
-		public HeaderlessObjectInputStream(InputStream in) throws IOException {
-			super(in);
-			// TODO Auto-generated constructor stub
-		}
-
-		/* (non-Javadoc)
-		 * @see java.io.ObjectInputStream#readStreamHeader()
-		 */
-		protected void readStreamHeader() throws IOException,
-				StreamCorruptedException {
-			// do nothing
-		}
-        
     }
 }
