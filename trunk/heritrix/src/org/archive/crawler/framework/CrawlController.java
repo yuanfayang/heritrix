@@ -122,11 +122,6 @@ public class CrawlController extends Thread{
 		setupToePool();
 		setupCrawlModules();
 		
-		// start periodic background logging of crawl statistics
-		Thread statLogger = new Thread(statistics);
-		statLogger.setName("StatLogger");
-		statLogger.start();
-		// TODO pause stat sampling when crawler paused
 	}
 	
 	/**
@@ -293,6 +288,12 @@ public class CrawlController extends Thread{
 		controlThread = Thread.currentThread();
 		controlThread.setName("crawlControl");
 		controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
+
+		// start periodic background logging of crawl statistics
+		Thread statLogger = new Thread(statistics);
+		statLogger.setName("StatLogger");
+		statLogger.start();
+
 		while(shouldCrawl()) {
 			 CrawlURI curi = frontier.next(timeout);
 			 if(curi != null) {
