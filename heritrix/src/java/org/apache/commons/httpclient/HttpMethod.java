@@ -62,10 +62,11 @@
  */
 
 package org.apache.commons.httpclient;
+
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.httpclient.params.*;
+// HERITRIX import.
 import org.archive.util.HttpRecorder;
 
 
@@ -137,15 +138,6 @@ public interface HttpMethod {
     URI getURI() throws URIException;
 
     /**
-     * Sets the URI for this method. 
-     * 
-     * @param uri URI to be set 
-     * 
-     * @throws URIException if a URI cannot be set
-     */
-    void setURI(URI uri) throws URIException;
-
-    /**
      * Defines how strictly the method follows the HTTP protocol specification.  
      * (See RFC 2616 and other relevant RFCs.) In the strict mode the method precisely
      * implements the requirements of the specification, whereas in non-strict mode 
@@ -168,25 +160,25 @@ public interface HttpMethod {
     boolean isStrictMode();
      
     /**
-     * Sets the specified request header, overwriting any
-     * previous value.
+     * Sets the specified request header, overwriting any previous value.
      * Note that header-name matching is case insensitive.
+     * 
      * @param headerName the header's name
      * @param headerValue the header's value
      *
-     * @see #setRequestHeader(Header)
+     * @see #setRequestHeader(Header) 
      * @see #getRequestHeader(String)
      * @see #removeRequestHeader(String)
      */
     void setRequestHeader(String headerName, String headerValue);
 
     /**
-     * Sets the specified request header, overwriting any
-     * previous value.
+     * Sets the specified request header, overwriting any previous value.
      * Note that header-name matching is case insensitive.
+     * 
      * @param header the header to be set
      *
-     * @see #setRequestHeader(String,String)
+     * @see #setRequestHeader(String,String) 
      * @see #getRequestHeader(String)
      * @see #removeRequestHeader(String)
      */
@@ -197,6 +189,7 @@ public interface HttpMethod {
      * If the same header is added multiple times, perhaps with different values,
      * multiple instances of that header will be sent in the HTTP request.
      * Note that header-name matching is case insensitive.
+     * 
      * @param headerName the header's name
      * @param headerValue the header's value
      * 
@@ -211,6 +204,7 @@ public interface HttpMethod {
      * If the same header is added multiple times, perhaps with different values,
      * multiple instances of that header will be sent in the HTTP request.
      * Note that header-name matching is case insensitive.
+     * 
      * @param header the header
      * 
      * @see #addRequestHeader(String,String)
@@ -222,8 +216,9 @@ public interface HttpMethod {
     /**
      * Gets the request header with the given name.
      * If there are multiple headers with the same name,
-     * there values will be combined with the ',' separator as specified by RFC2616.
+     * there values will be combined with the ',' separator as specified by RFC2616.     
      * Note that header-name matching is case insensitive.
+     * 
      * @param headerName the header name
      * @return the header
      */
@@ -232,6 +227,7 @@ public interface HttpMethod {
     /**
      * Removes all request headers with the given name.
      * Note that header-name matching is case insensitive.
+     * 
      * @param headerName the header name
      */
     void removeRequestHeader(String headerName);
@@ -250,7 +246,7 @@ public interface HttpMethod {
      * (status code 302, etc.)
      * 
      * @param followRedirects <tt>true</tt> if the method will automatically follow redirects,
-     * <tt>false</tt> otherwise.
+     * <tt>false</tt> otherwise
      */
     void setFollowRedirects(boolean followRedirects);
 
@@ -304,14 +300,6 @@ public interface HttpMethod {
      */
     Header[] getRequestHeaders();
 
-    /**
-     * Returns the request headers with the given name. Note that header-name matching is
-     * case insensitive.
-     * @param headerName the name of the headers to be returned.
-     * @return an array of zero or more headers
-     */
-    Header[] getRequestHeaders(String headerName);
-
     // ---------------------------------------------------------------- Queries
 
     /**
@@ -357,14 +345,6 @@ public interface HttpMethod {
      *         separator as specified by RFC2616.
      */
     Header getResponseHeader(String headerName);
-
-    /**
-     * Returns the response headers with the given name. Note that header-name matching is
-     * case insensitive.
-     * @param headerName the name of the headers to be returned.
-     * @return an array of zero or more headers
-     */
-    Header[] getResponseHeaders(String headerName);
 
     /**
      * Returns the response footers from the most recent execution of this request.
@@ -521,29 +501,15 @@ public interface HttpMethod {
      */
     void setDoAuthentication(boolean doAuthentication);
 
-
+    // HERITRIX HttpRecorder getter and setter for HttpMethod.
     /**
-     * Returns a collection of parameters associated with this method
-     * 
-     * @since 2.1
-     * 
-     * @see HttpMethodParams
-     * 
-     * @return HttpMethodParams
+     * @param httpRecorder HttpRecorder to set and record to.
      */
-    public HttpMethodParams getParams();
-
-	/**
-	 * Arrange for the provided HttpRecorder to record HTTP traffic.
-	 * 
-	 * @param recorder
-	 */
-	public void setHttpRecorder(HttpRecorder recorder);
-	
-	/**
-	 * Retreive the previously-supplied HttpRecorder
-	 * 
-	 * @return The http recorder.
-	 */
-	public HttpRecorder getHttpRecorder();
+    public void setHttpRecorder(HttpRecorder httpRecorder);
+    
+    /**
+     * @return Return saved instance of HttpRecorder.  May be null if was never
+     * set in the first place.
+     */
+    public HttpRecorder getHttpRecorder();
 }
