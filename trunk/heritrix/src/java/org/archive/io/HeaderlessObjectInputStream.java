@@ -31,21 +31,12 @@ import java.io.StreamCorruptedException;
 
 public class HeaderlessObjectInputStream extends ObjectInputStream {
 
-	/**
-	 * @param in
-	 * @throws IOException
-	 */
 	public HeaderlessObjectInputStream(InputStream in) throws IOException {
 		super(in);
-		// TODO Auto-generated constructor stub
 	}
 
-	/* (non-Javadoc)
-	 * @see java.io.ObjectInputStream#readStreamHeader()
-	 */
-	protected void readStreamHeader() throws IOException,
-			StreamCorruptedException {
+	protected void readStreamHeader()
+		throws IOException, StreamCorruptedException {
 		// do nothing
 	}
-
 }

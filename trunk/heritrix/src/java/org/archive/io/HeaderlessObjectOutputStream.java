@@ -30,21 +30,11 @@ import java.io.OutputStream;
 
 public class HeaderlessObjectOutputStream extends ObjectOutputStream {
 
-	/**
-	 * @param out
-	 * @throws IOException
-	 */
 	public HeaderlessObjectOutputStream(OutputStream out) throws IOException {
 		super(out);
-		// TODO Auto-generated constructor stub
 	}
 
-	/* (non-Javadoc)
-	 * @see java.io.ObjectOutputStream#writeStreamHeader()
-	 */
 	protected void writeStreamHeader() throws IOException {
 		// do nothing
 	}
-
-
 }
