@@ -24,9 +24,9 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.logging.Level;
-
-import javax.management.Attribute;
 
 
 /**
@@ -75,25 +75,25 @@ public abstract class Constraint implements Comparable {
      * 
      * @param owner the ComplexType owning the attribute to check.
      * @param definition the definition to check the attribute against.
-     * @param attribute the attribute to check.
+     * @param value the value to check.
      * @return null if ok, or an instance of {@link FailedCheck}if the check
      *         failed.
      */
     public final FailedCheck check(CrawlerSettings settings, ComplexType owner,
-            Type definition, Attribute attribute) {
-        return innerCheck(settings, owner, definition, attribute);
+            Type definition, Object value) {
+        return innerCheck(settings, owner, definition, value);
     }
     
     /** The method all subclasses should implement to do the actual checking.
      * 
      * @param owner the ComplexType owning the attribute to check.
      * @param definition the definition to check the attribute against.
-     * @param attribute the attribute to check.
+     * @param value the value to check.
      * @return null if ok, or an instance of {@link FailedCheck}if the check
      *         failed.
      */
     public abstract FailedCheck innerCheck(CrawlerSettings settings,
-            ComplexType owner, Type definition, Attribute attribute);
+            ComplexType owner, Type definition, Object value);
     
     /** Get the default message to return if a check fails.
      * 
@@ -113,6 +113,7 @@ public abstract class Constraint implements Comparable {
         private final ComplexType owner;
         private final Type definition;
         private final Object value;
+        protected final ArrayList messageArguments = new ArrayList();
         
         /**
          * Construct a new FailedCheck object.
@@ -121,17 +122,20 @@ public abstract class Constraint implements Comparable {
          *            executed.
          * @param owner the ComplexType owning the attribute to check.
          * @param definition the definition to check the attribute against.
-         * @param attribute the attribute to check.
+         * @param value the value to check.
          * @param msg a message describing what went wrong and possibly hints to
          *            the user on how to fix it.
          */
         public FailedCheck(CrawlerSettings settings, ComplexType owner,
-                Type definition, Attribute attr, String msg) {
+                Type definition, Object value, String msg) {
             this.msg = msg;
             this.settings = settings;
             this.owner = owner;
             this.definition = definition;
-            this.value = attr.getValue();
+            this.value = value;
+            this.messageArguments.add(definition.getName());
+            this.messageArguments.add(value);
+            this.messageArguments.add(owner.getName());
         }
         
         /**
@@ -142,11 +146,11 @@ public abstract class Constraint implements Comparable {
          *            executed.
          * @param owner the ComplexType owning the attribute to check.
          * @param definition the definition to check the attribute against.
-         * @param attribute the attribute to check.
+         * @param value the value to check.
          */
         public FailedCheck(CrawlerSettings settings, ComplexType owner,
-                Type definition, Attribute attr) {
-            this(settings, owner, definition, attr, getDefaultMessage());
+                Type definition, Object value) {
+            this(settings, owner, definition, value, getDefaultMessage());
         }
 
         /** Get the error message.
@@ -154,7 +158,7 @@ public abstract class Constraint implements Comparable {
          * @return the error message.
          */
         public String getMessage() {
-            return msg;
+            return MessageFormat.format(msg, messageArguments.toArray());
         }
         
         /** Get the severity level.

@@ -148,9 +148,12 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return object;
     }
 
-    private ComplexType replaceComplexType(CrawlerSettings settings, ComplexType object) throws InvalidAttributeValueException, AttributeNotFoundException {
+    private ComplexType replaceComplexType(CrawlerSettings settings,
+            ComplexType object) throws InvalidAttributeValueException,
+            AttributeNotFoundException {
         if (this.settingsHandler == null) {
-            throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
+            throw new IllegalStateException(
+                    "Can't add ComplexType to 'free' ComplexType");
         }
         String[] preservedFields = object.getPreservedFields();
         
@@ -558,7 +561,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         
         // Check if value is of correct type. If not, see if it is
         // a string and try to turn it into right type
-        Class typeClass = getDefinition(attribute).getLegalValueType();
+        Class typeClass = getDefinition(attribute.getName()).getLegalValueType();
         if (!(typeClass.isInstance(value)) && value instanceof String) {
             try {
                 value = SettingsHandler.StringToType((String) value,
@@ -570,15 +573,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             }
         }
 
-        // If it still isn't a legal type throw an error
-        if (!typeClass.isInstance(value)) {
-            throw new InvalidAttributeValueException("Value of illegal type: '"
-                    + value.getClass().getName() + "', '" + typeClass.getName()
-                    + "' was expected");
-        }
-        
         // Check if the attribute value is legal
-        FailedCheck error = checkValue(settings, attribute);
+        FailedCheck error = checkValue(settings, attribute.getName(), value);
         if (error != null) {
             if (error.getLevel() == Level.SEVERE) {
                 throw new InvalidAttributeValueException(error.getMessage());
@@ -606,11 +602,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     /**
      * Get the content type definition for an attribute.
      * 
-     * @param attribute the attribut to get the definition for.
+     * @param attributeName the name of the attribute to get definition for.
      * @return the content type definition for the attribute.
      */
-    Type getDefinition(Attribute attribute) {
-        return (Type) definitionMap.get(attribute.getName());
+    Type getDefinition(String attributeName) {
+        return (Type) definitionMap.get(attributeName);
     }
     
     /**
@@ -619,16 +615,19 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * 
      * @param settings the CrawlerSettings object for which this check was
      *            executed.
-     * @param attribute the attribute to check.
+     * @param attributeName the name of the attribute to check.
+     * @param value the value to check.
      * @return null if everything is ok, otherwise it returns a FailedCheck
      *         object with detailed information of what went wrong.
      */
-    public FailedCheck checkValue(CrawlerSettings settings, Attribute attribute) {
-        return checkValue(settings, getDefinition(attribute), attribute);
+    public FailedCheck checkValue(CrawlerSettings settings,
+            String attributeName, Object value) {
+        return checkValue(settings, attributeName,
+                getDefinition(attributeName), value);
     }
 
-    FailedCheck checkValue(CrawlerSettings settings, Type definition,
-            Attribute attribute) {
+    FailedCheck checkValue(CrawlerSettings settings, String attributeName,
+            Type definition, Object value) {
         FailedCheck res = null;
 
         // Check if value fulfills any constraints
@@ -637,7 +636,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             for (Iterator it = constraints.iterator(); it.hasNext()
                     && res == null;) {
                 res = ((Constraint) it.next()).check(settings, this,
-                        definition, attribute);
+                        definition, value);
             }
         }
 

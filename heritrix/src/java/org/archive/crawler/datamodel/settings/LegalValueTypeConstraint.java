@@ -26,12 +26,11 @@ package org.archive.crawler.datamodel.settings;
 import java.util.logging.Level;
 
 /**
- * A constraint that checks that an attribute value matches one of the items in
- * the list of legal values.
+ * A constraint that checks that an attribute value is of the right type
  * 
  * @author John Erik Halse
  */
-public class LegalValueListConstraint extends Constraint {
+public class LegalValueTypeConstraint extends Constraint {
 
     /**
      * Constructs a new LegalValueListConstraint.
@@ -39,7 +38,7 @@ public class LegalValueListConstraint extends Constraint {
      * @param level the severity level.
      * @param msg the default error message.
      */
-    public LegalValueListConstraint(Level level, String msg) {
+    public LegalValueTypeConstraint(Level level, String msg) {
         super(level, msg);
     }
 
@@ -49,8 +48,8 @@ public class LegalValueListConstraint extends Constraint {
      * 
      * @param msg the default error message.
      */
-    public LegalValueListConstraint(String msg) {
-        this(Level.WARNING, msg);
+    public LegalValueTypeConstraint(String msg) {
+        this(Level.SEVERE, msg);
     }
 
     /**
@@ -58,8 +57,8 @@ public class LegalValueListConstraint extends Constraint {
      * 
      * @param level
      */
-    public LegalValueListConstraint(Level level) {
-        this(level, "Value not in legal values list");
+    public LegalValueTypeConstraint(Level level) {
+        this(level, "Value of illegal type: ''{3}'', ''{4}'' was expected.");
     }
 
     /**
@@ -67,8 +66,8 @@ public class LegalValueListConstraint extends Constraint {
      * ({@link Level#WARNING}) and default error message.
      *
      */
-    public LegalValueListConstraint() {
-        this(Level.WARNING);
+    public LegalValueTypeConstraint() {
+        this(Level.SEVERE);
     }
 
     /*
@@ -82,19 +81,11 @@ public class LegalValueListConstraint extends Constraint {
             Object value) {
         FailedCheck res = null;
 
-        // If this attribute is constrained by a list of legal values,
-        // check that the value is in that list
-        Object legalValues[] = definition.getLegalValues();
-        if (legalValues != null) {
-            boolean found = false;
-            for (int i = 0; i < legalValues.length && !found; i++) {
-                if (legalValues[i].equals(value)) {
-                    found = true;
-                }
-            }
-            if (!found) {
-                res = new FailedCheck(settings, owner, definition, value);
-            }
+        // Check that the value is of right type
+        if (!definition.getLegalValueType().isInstance(value)) {
+            res = new FailedCheck(settings, owner, definition, value);
+            res.messageArguments.add(value.getClass().getName());
+            res.messageArguments.add(definition.getLegalValueType().getName());
         }
         return res;
     }

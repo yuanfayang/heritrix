@@ -43,7 +43,7 @@ public abstract class Type extends Attribute {
     /** True if this Type should only show up in expert mode in UI */
     private boolean isExpertSetting = false;
     /** List of constraint that apply for the values of this type */
-    private List constraints;
+    private List constraints = new ArrayList();
     /** The class the value of this type must be an instance of (or instance of
      * a subclass.
      */
@@ -57,6 +57,7 @@ public abstract class Type extends Attribute {
     public Type(String name, Object value) {
         super(name.intern(), value);
         legalValueType = value != null ? value.getClass() : this.getClass();
+        constraints.add(new LegalValueTypeConstraint());
     }
 
     /** Get the description of this type
@@ -147,7 +148,6 @@ public abstract class Type extends Attribute {
      * @param constraint the constraint to add.
      */
     public void addConstraint(Constraint constraint) {
-        if (constraints == null) constraints = new ArrayList();
         constraints.add(constraint);
         Collections.sort(constraints);
     }
