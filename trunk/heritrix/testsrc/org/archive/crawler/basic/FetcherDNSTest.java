@@ -4,12 +4,13 @@
  */
 package org.archive.crawler.basic;
 
+import java.net.URISyntaxException;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
-import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -55,9 +56,14 @@ public class FetcherDNSTest extends TestCase implements CoreAttributeConstants {
 		
 		fetcher 	= new FetcherDNS();
 		
-		curiBasic 				= new CrawlURI( UURI.createUURI("dns:parkert.com") );
-		curiWithHostPort 	= new CrawlURI( UURI.createUURI("dns://ns1.archive.org/parkert.com"));
-		curiWithQuery 		= new CrawlURI( UURI.createUURI("dns:parkert.com?TYPE=A&CLASS=IN"));
+		try {
+			curiBasic 				= new CrawlURI( UURI.createUURI("dns:parkert.com") );
+			curiWithHostPort 	= new CrawlURI( UURI.createUURI("dns://ns1.archive.org/parkert.com"));
+			curiWithQuery 		= new CrawlURI( UURI.createUURI("dns:parkert.com?TYPE=A&CLASS=IN"));
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		curiBasic.setHost( new CrawlHost("parkert.com"));
 	}
