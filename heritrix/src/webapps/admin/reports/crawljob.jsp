@@ -355,14 +355,21 @@
 		<table cellspacing="0">
 			<tr>
 				<th>
-					Hosts
+					Hosts&nbsp;
 				</th>
 				<th>
 					Documents&nbsp;
 				</th>
 				<th>
-				    Data
+				    Data&nbsp;
 				</th>
+				<% if (cjob.getStatus().equals(CrawlJob.STATUS_RUNNING) ||
+				 		cjob.getStatus().equals(CrawlJob.STATUS_PAUSED) ||
+				 		cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)){ %>
+					<th>
+						Time since last URI finished
+					</th>
+				<% } %>
 			</tr>
 			<%
 				TreeSet hostsDistribution = stats.getSortedByValue(stats.getHostsDistribution());
@@ -377,11 +384,18 @@
 							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=host.getKey()%>&grep=true"><%=host.getKey()%></a>&nbsp;
 						</td>
 						<td nowrap>
-							<%=((LongWrapper)host.getValue()).longValue%>
+							<%=((LongWrapper)host.getValue()).longValue%>&nbsp;
 						</td>
 						<td align="right" nowrap>
-		                    <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)host.getKey()))%>
+		                    <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)host.getKey()))%>&nbsp;
 						</td>
+						<% if (cjob.getStatus().equals(CrawlJob.STATUS_RUNNING) ||
+						 		cjob.getStatus().equals(CrawlJob.STATUS_PAUSED) ||
+						 		cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)){ %>
+							<td align="right">
+								<%=ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-stats.getHostLastFinished((String)host.getKey()))%>
+							</td>
+						<% } %>
 					</tr>
 			<%
 				    alt = !alt;

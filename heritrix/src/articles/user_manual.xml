@@ -21,6 +21,12 @@
 
         <surname>Stack</surname>
       </author>
+
+      <author>
+        <firstname>Igor</firstname>
+
+        <surname>Ranitovic</surname>
+      </author>
     </authorgroup>
   </articleinfo>
 
@@ -2254,7 +2260,12 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
       <para>In addition to the logs and reports generally available on all
       jobs (see <xref linkend="logs" /> and <xref linkend="reports" />) some
-      information is provided only for jobs being crawled.</para>
+      information is provided only for jobs being crawled.<note>
+          <para>The Crawl Report (see <xref linkend="crawlreport" />) contains
+          one bit of information only available on active crawls. That is the
+          amount of time that has elapsed since a URI belonging to each host
+          was last finished.</para>
+        </note></para>
 
       <sect3>
         <title>Internal reports on ongoing crawl</title>
@@ -2760,8 +2771,17 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         that file type is also displayed.</para>
 
         <para>Last a breakdown per host is provided. Number of URIs and amount
-        of data for each is presented. Especially in broad crawls, this list
-        can grow very large.</para>
+        of data for each is presented. The time that has elapsed since the
+        last URI was finished for each host is also displayed for ongoing
+        crawls. This value can provide valuable data on what hosts are still
+        being actively crawled. Note that this value is only available while
+        the crawl is in progress since it has no meaning afterwards. Also any
+        pauses made to the crawl may distort these values, at least in the
+        short term following resumption of crawling. Most noticably while
+        paused all of these values will continue to grow.</para>
+
+        <para>Especially in broad crawls, this list can grow very
+        large.</para>
       </sect3>
 
       <sect3 id="seedsreport">
@@ -3154,10 +3174,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         <glossterm>Frontier</glossterm>
 
         <glossdef>
-        <para>A Frontier is a plug-able module in Heritrix that maintains the
-        internal state of the crawl.  See 
-          <xref linkend="frontier" />.
-          </para>
+          <para>A Frontier is a plug-able module in Heritrix that maintains
+          the internal state of the crawl. See <xref
+          linkend="frontier" />.</para>
         </glossdef>
       </glossentry>
 
@@ -3277,11 +3296,11 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
       <glossentry id="server">
         <glossterm>Server</glossterm>
+
         <glossdef>
-          <para>A server is a service on a 
-          <xref linkend="host" />.
-          There might be more than one service on a host differentiated by
-          port number.</para>
+          <para>A server is a service on a <xref linkend="host" />. There
+          might be more than one service on a host differentiated by port
+          number.</para>
         </glossdef>
       </glossentry>
 
@@ -3331,16 +3350,17 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
       <glossentry id="toethreads">
         <glossterm>Toe Threads</glossterm>
+
         <glossdef>
           <para>When crawling Heritrix employs a configurable number of Toe
           Threads to process each URI.</para>
+
           <para>Each of these threads will request a URI from the Frontier
           (<xref linkend="frontier" />), apply each of the set Processors
           (<xref linkend="processors" />) to it and finally report it as
           completed back to the Frontier.</para>
         </glossdef>
       </glossentry>
-
     </glossdiv>
   </glossary>
 </article>
