@@ -46,7 +46,6 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
 	 */
 	public void endElement(String uri, String localName, String qName)
 		throws SAXException {
-		// TODO Auto-generated method stub
 		super.endElement(uri, localName, qName);
 		if (qName.equals("setting")) {
 			String field = currentModule + '#' + currentSetting;
@@ -69,9 +68,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
 		String qName,
 		Attributes attributes)
 		throws SAXException {
-		// TODO Auto-generated method stub
 		super.startElement(uri, localName, qName, attributes);
 
+        System.out.println("XXX START: " + qName);
 		if (qName.equals("setting")) {
 			currentSetting = attributes.getValue("name");
 		} else if(qName.equals("module")) {
