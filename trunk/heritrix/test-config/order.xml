@@ -41,7 +41,7 @@
   <processor 
     name="ExtractorHTML" 
     class="org.archive.crawler.extractor.ExtractorHTML"
-    next="ExtractorDOC">
+     next="ExtractorDOC">
   </processor>
   <processor
   	name="ExtractorDOC"
@@ -74,7 +74,7 @@
   </processor>
   <processor 
     name="Cacher" 
-    class="org.archive.crawler.basic.HostInfoUpdater">
+    class="org.archive.crawler.basic.CrawlStateUpdater">
   </processor>
  </processors>
  
@@ -84,7 +84,7 @@
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
-  <max-toe-threads value="1" />
+  <max-toe-threads value="4" />
   <max-link-depth value="3" />
  </limits>
 
