@@ -28,19 +28,19 @@
     <h2>Active Job - <i><%=handler.getCurrentJob().getJobName()%></i></h2>
     <ul>
         <li><a href="<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=handler.getCurrentJob().getUID()%>">
-        edit configuration</a>
+        Edit configuration</a>
         
         <li><a href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=handler.getCurrentJob().getUID()%>">
-        journal</a>
+        Journal</a>
         
         <li>View:<br> 
         <ul>
         <li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp">
-            crawl report</a></li>
+            Crawl report</a></li>
         <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp">
-            seeds report</a></li>
+            Seeds report</a></li>
         <li><a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">
-            crawl order (raw xml)</a></li>
+            Crawl order (raw xml)</a></li>
         </ul>
     </ul>
 <% } %>
@@ -48,11 +48,11 @@
 <h2>Create New Job</h2>
     <ul>
 	<li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp?type=jobs">
-	based on existing job</a></li>
+	Based on existing job</a></li>
 	<li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp">
-	based on a profile</a></li>
+	Based on a profile</a></li>
 	<li><a href="<%=request.getContextPath()%>/jobs/new.jsp">
-	with defaults</a></li>
+	With defaults</a></li>
     </ul>
 	
 <h2>Pending Jobs (<%=handler.getPendingJobs().size()%>)</h2>
