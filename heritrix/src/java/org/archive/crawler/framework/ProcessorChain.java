@@ -27,7 +27,7 @@ package org.archive.crawler.framework;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-import org.archive.crawler.settings.MapType;
+import org.archive.crawler.datamodel.settings.MapType;
 
 
 /** This class groups together a number of processors that logically fit

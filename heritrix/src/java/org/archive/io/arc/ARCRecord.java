@@ -33,7 +33,9 @@ import java.io.InputStream;
  *
  * @author stack
  */
-public class ARCRecord extends InputStream implements ARCConstants {
+public class ARCRecord
+    implements ARCConstants
+{
     /**
      * Map of record header fields.
      *
@@ -50,19 +52,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * Stream can only be read sequentially.  Will only return this records
      * content returning a -1 if you try to read beyond the end of the current
      * record.
-     * 
-     * <p>Streams can be markable or not.  If they are, we'll be able to roll
-     * back when we've read too far.  If not markable, assumption is that
-     * the underlying stream is managing our not reading too much (This pertains
-     * to the skipping over the end of the ARCRecord.  See {@link #skip()}.
      */
     private InputStream in = null;
 
     /**
-     * Position w/i the ARCRecord content, within <code>in</code>.
-     * 
-     * This position is relative within this ARCRecord.  Its not
-     * same as the arcfile position.
+     * Position w/i the ARCRecord content.
      */
     private long position = 0;
 
@@ -71,60 +65,64 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     private boolean eor = false;
 
+
     /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
      * @param metaData Meta data.
+     *
+     * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData) {
-        this(in, metaData, 0);
+    public ARCRecord(InputStream in, ARCRecordMetaData metaData)
+        throws IOException
+    {
+        this(in, metaData, false);
     }
-    
+
     /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
      * @param metaData Meta data.
-     * @param bodyOffset Offset into the body.  Usually 0.
+     * @param contentRead True if content has already been read.  Only case
+     * where this should be true is in the reading of the actual ARC file
+     * header.  If passed, the content position pointer is set to end-of-record.
+     *
+     * @throws IOException
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData,
-                int bodyOffset) {
+            boolean contentRead)
+        throws IOException
+    {
         this.in = in;
         this.metaData = metaData;
-        this.position = bodyOffset;
-    }
-    
-    /* (non-Javadoc)
-     * @see java.io.InputStream#markSupported()
-     */
-    public boolean markSupported() {
-        return false;
+        if (contentRead)
+        {
+            this.position = this.metaData.getLength();
+        }
     }
 
     /**
      * @return Meta data for this record.
      */
-    public ARCRecordMetaData getMetaData() {
+    public ARCRecordMetaData getMetaData()
+    {
         return this.metaData;
     }
 
     /**
      * Calling close on a record skips us past this record to the next record
      * in the stream.
-     * 
-     * It does not actually close the stream.  The underlying steam is probably
-     * being used by the next arc record.
      *
      * @throws IOException
      */
-    public void close() throws IOException {
-        if (this.in != null) {
-            skip();
-            this.in = null;
-        }
+    public void close()
+        throws IOException
+    {
+        skip();
     }
 
     /**
@@ -132,11 +130,15 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * this record.
      * @throws IOException
      */
-    public int read() throws IOException {
+    public int read()
+        throws IOException
+    {
         int c = -1;
-        if (available() > 0) {
+        if (isRemaining())
+        {
             c = this.in.read();
-            if (c == -1) {
+            if (c == -1)
+            {
                 throw new IOException("Premature EOF before end-of-record.");
             }
             this.position++;
@@ -144,48 +146,13 @@ public class ARCRecord extends InputStream implements ARCConstants {
 
         return c;
     }
-    
-    public int read(byte [] b, int offset, int length) throws IOException {
-        int read = Math.min(length - offset, available());
-        if (read == 0) {
-            read = -1;
-        } else {
-            read = this.in.read(b, offset, read);
-            if (read == -1) {
-                throw new IOException("Premature EOF before end-of-record.");
-            }
-            this.position += read;
-        }
-        return read;
-    }
 
     /**
-     * @return True if bytes remaining in record content.
+     * @return True if bytes remaing in record content.
      */
-    public int available() {
-        return (int)(this.metaData.getLength() - this.position);
-    }
-    
-    /* (non-Javadoc)
-     * @see java.io.InputStream#skip(long)
-     */
-    public long skip(long n) throws IOException {
-        final int SKIP_BUFFERSIZE = 1024 * 4;
-        byte [] b = new byte[SKIP_BUFFERSIZE];
-        long total = 0;
-        for (int read = 0; (total < n) && (read != -1);) {
-            read = Math.min(SKIP_BUFFERSIZE, (int)(n - total));
-            // TODO: Interesting is that reading from compressed stream, we only 
-            // read about 500 characters at a time though we ask for 4k.
-            // Look at this sometime.
-            read = read(b, 0, read);
-            if (read <= 0) {
-                read = -1;
-            } else {
-                total += read;
-            }
-        }
-        return total;
+    private boolean isRemaining()
+    {
+        return this.position < this.metaData.getLength();
     }
 
     /**
@@ -193,14 +160,18 @@ public class ARCRecord extends InputStream implements ARCConstants {
      *
      * @throws IOException
      */
-    private void skip() throws IOException {
-        if (!this.eor) {
-            // Read to the end of the body of the record.  Exhauste the stream.
-            // Can't skip to end because underlying stream may be compressed.
-            if (available() > 0) {
-                skip(available());
+    private void skip()
+        throws IOException
+    {
+        if (!this.eor)
+        {
+            while(read() != -1)
+            {
+                continue;
             }
-            if (this.in.available() > 0) {
+
+            if (this.in.available() > 0)
+            {
                 // If there's still stuff on the line, its the LINE_SEPARATOR
                 // that lies between records.  Lets read it so we're cue'd up
                 // aligned ready to read the next record.
@@ -216,19 +187,26 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 // Use the mark to go back if we read anything but
                 // LINE_SEPARATOR characters.
                 int c = -1;
-                while (this.in.available() > 0) {
-                    if (this.in.markSupported()) {
+                while (this.in.available() > 0)
+                {
+                    if (this.in.markSupported())
+                    {
                         this.in.mark(1);
                     }
                     c = this.in.read();
-                    if (c != -1) {
-                        if (c == LINE_SEPARATOR) {
+                    if (c != -1)
+                    {
+                        if (c == LINE_SEPARATOR)
+                        {
                             continue;
                         }
-                        if (this.in.markSupported()) {
+                        if (this.in.markSupported())
+                        {
                             this.in.reset();
                             break;
-                        } else {
+                        }
+                        else
+                        {
                             throw new IOException("Read " + (char)c +
                                 " when only" + LINE_SEPARATOR + " expected.");
                         }

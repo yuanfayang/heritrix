@@ -24,14 +24,11 @@
  */
 package org.archive.util;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
 import java.util.regex.Pattern;
 
@@ -56,8 +53,6 @@ public class FileUtils
      * @throws IOException
      */
     public static void copyFiles(File src, File dest) throws IOException {
-        // TODO: handle failures at any step
-        
         if (!src.exists()) {
             return;
         }
@@ -75,79 +70,25 @@ public class FileUtils
             }
 
         } else {
-            copyFile(src, dest);
-        }
-    }
 
-    /**
-     * Copy the src file to the destination.
-     * 
-     * @param src
-     * @param dest
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    public static boolean copyFile(File src, File dest)
-            throws FileNotFoundException, IOException {
-        return copyFile(src, dest, -1);
-    }
-
-	/**
-     * Copy up to extent bytes of the source file to the destination
-     * 
-     * @param src
-     * @param dest
-     * @param extent
-     *            maximum number of bytes to copy
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    public static boolean copyFile(File src, File dest, long extent)
-            throws FileNotFoundException, IOException {
-
-        if (dest.exists()) {
-            dest.delete();
-        }
-        FileInputStream fis = null;
-        FileOutputStream fos = null;
-        FileChannel fcin = null;
-        FileChannel fcout = null;
-        try {
             // get channels
-            fis = new FileInputStream(src);
-            fos = new FileOutputStream(dest);
-            fcin = fis.getChannel();
-            fcout = fos.getChannel();
-
-            if (extent < 0) {
-                extent = fcin.size();
-            }
+            FileInputStream fis = new FileInputStream(src);
+            FileOutputStream fos = new FileOutputStream(dest);
+            FileChannel fcin = fis.getChannel();
+            FileChannel fcout = fos.getChannel();
 
             // do the file copy
-            long trans = fcin.transferTo(0, extent, fcout);
-            if (trans < extent) {
-                return false;
-            }
-            return true;
-            
-        } finally {
+            fcin.transferTo(0, fcin.size(), fcout);
+
             // finish up
-            if (fcin != null) {
-                fcin.close();
-            }
-            if (fcout != null) {
-                fcout.close();
-            }
-            if (fis != null) {
-                fis.close();
-            }
-            if (fos != null) {
-                fos.close();
-            }
+            fcin.close();
+            fcout.close();
+            fis.close();
+            fos.close();
         }
     }
 
-	/** Deletes all files and subdirectories under dir.
+    /** Deletes all files and subdirectories under dir.
      * @param dir
      * @return true if all deletions were successful. If a deletion fails, the
      *          method stops attempting to delete and returns false.
@@ -166,29 +107,6 @@ public class FileUtils
         return dir.delete();
     }
 
-    
-
-    /**
-     * Utility method to read an entire file as a String.
-     * 
-     * @param file
-     * @return @throws
-     *         IOException
-     */
-    public static String readFileAsString(File file) throws IOException {
-        StringBuffer sb = new StringBuffer((int) file.length());
-        String line;
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-                new FileInputStream(file)));
-        line = br.readLine();
-        while (line != null) {
-            sb.append(line);
-            line = br.readLine();
-        }
-        br.close();
-        return sb.toString();
-    }
-    
     /**
      * Get a list of all files in directory that have passed prefix.
      *
@@ -221,14 +139,14 @@ public class FileUtils
         class RegexpFileFilter implements FileFilter {
             Pattern pattern;
 
-            protected RegexpFileFilter(String re) {
-                pattern = Pattern.compile(re);
+            public RegexpFileFilter(String regexp) {
+                pattern = Pattern.compile(regexp);
             }
 
             public boolean accept(File pathname) {
                 return pattern.matcher(pathname.getName()).matches();
             }
-        }
+        };
 
         return new RegexpFileFilter(regexp);
     }

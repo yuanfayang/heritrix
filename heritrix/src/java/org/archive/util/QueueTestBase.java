@@ -109,5 +109,5 @@ public abstract class QueueTestBase extends TmpDirTestCase {
      */
 
     /** the queue object to be tested */
-    protected Queue queue;
+    private Queue queue;
 }

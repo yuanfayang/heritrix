@@ -235,7 +235,7 @@ public class StatisticsTracker extends AbstractTracker
         }
 
         Date now = new Date();
-        controller.progressStats.log(
+        periodicLogger.log(
             Level.INFO,
             new PaddingStringBuffer()
                 .append(ArchiveUtils.TIMESTAMP14.format(now))
@@ -694,7 +694,7 @@ public class StatisticsTracker extends AbstractTracker
             this.allSeeds = new Vector();
             synchronized (seeds) {
                 for(Iterator i = seeds.iterator(); i.hasNext();) {
-                    this.allSeeds.add(((UURI)i.next()).toString());
+                    this.allSeeds.add(((UURI)i.next()).getURIString());
                 }
             }
         }

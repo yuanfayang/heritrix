@@ -95,8 +95,6 @@ public class CompositeIterator implements Iterator {
     /**
      * Convenience method for concatenating together
      * two iterators. 
-     * @param i1
-     * @param i2
      */
     public CompositeIterator(Iterator i1, Iterator i2) {
         this();

@@ -26,19 +26,19 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.OrFilter;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.util.DevUtils;
 
 /**
@@ -130,7 +130,7 @@ public class CrawlScope extends Filter {
      */
     public void initialize(CrawlController controller) {
         createSeedlist(getSeedfile(), getSettingsHandler().
-            getOrder().getController(), true);
+            getOrder().getController().uriErrors, true);
     }
     
     /**
@@ -143,10 +143,10 @@ public class CrawlScope extends Filter {
      * @param l Logger to use internally.
      * @param caching True if seed list created is to cache seeds.
      */
-    protected synchronized void createSeedlist(File seedfile, CrawlController c,
+    protected synchronized void createSeedlist(File seedfile, Logger l,
             boolean caching) {
         if (this.seedlist == null) {
-            this.seedlist = new SeedList(seedfile, c, caching);
+            this.seedlist = new SeedList(seedfile, l, caching);
         }
     }
 
@@ -197,7 +197,6 @@ public class CrawlScope extends Filter {
     public void refreshSeeds() {
         this.seedlist.refresh(getSeedfile());
     }
-        
     
     /**
      * @return Seed list file or null if problem getting settings file.
@@ -306,7 +305,7 @@ public class CrawlScope extends Filter {
      * @param o the URI to check.
      * @return True if exclude filter accepts passed object.
      */
-    protected boolean excludeAccepts(Object o) {
+    private boolean excludeAccepts(Object o) {
         if (this.excludeFilter.isEmpty(o)) {
             return exeedsMaxHops(o);
         } else {
@@ -327,23 +326,17 @@ public class CrawlScope extends Filter {
      * @param a First UURI of compare.
      * @param b Second UURI of compare.
      * @return True if UURIs are of same host.
-     * @throws URIException
      */
-    protected boolean isSameHost(UURI a, UURI b) {
+    protected boolean isSameHost(UURI a, UURI b)
+    {
         boolean isSameHost = false;
         if (a != null && b != null) {
             // getHost can come back null.  See
             // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-            try {
-                if (a.getHost() != null && b.getHost() != null) {
-                    if (a.getHost().equals(b.getHost())) {
-                        isSameHost = true;
-                    }
+            if (a.getHost() != null && b.getHost() != null) {
+                if (a.getHost().equals(b.getHost())) {
+                    isSameHost = true;
                 }
-            }
-            catch (URIException e) {
-                logger.severe("Failed compare of " + a + " " + b + ": " +
-                    e.getMessage());
             }
         }
         return isSameHost;

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 
 <!--
     On maven:
@@ -19,6 +19,8 @@
     or ant only.
 
     TODO: http://maven.apache.org/reference/plugins/statcvs/
+    TODO: Make a war file.
+    TODO: http://maven.apache.org/reference/plugins/docbook/
 
     Maven generates documentation using xdoc.  Xdoc is a dumbed down html
     written as xml.   There is no dtd so no validation.  The best description
@@ -54,7 +56,7 @@
        be picked up and appended to the currentVersion.  Handy for continuous
        builds if the version.build.suffix holds time of build.
     -->
-  <currentVersion>0.7.1${version.build.suffix}</currentVersion>
+  <currentVersion>0.8.0${version.build.suffix}</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
@@ -157,7 +159,6 @@
         <email>gojomo at archive dot org</email>
          <organization>Internet Archive</organization>
          <url>http://www.archive.org</url>
-         <timezone>-8</timezone>
     </developer>
     <developer>
         <name>Igor Ranitovic</name>
@@ -165,7 +166,6 @@
         <email>igor at archive dot org</email>
         <organization>Internet Archive</organization>
         <url>http://www.archive.org</url>
-         <timezone>-8</timezone>
     </developer>
     <developer>
         <name>John Erik Halse</name>
@@ -173,7 +173,6 @@
         <email>johnh at archive dot org</email>
         <organization>National Library of Norway</organization>
         <url>http://www.nb.no</url>
-         <timezone>-1</timezone>
     </developer>
     <developer>
         <name>Kristinn Sigurdsson</name>
@@ -181,13 +180,11 @@
         <email>kris at archive dot org</email>
         <organization>National and University Library of Iceland</organization>
         <url>http://www.bok.hi.is/</url>
-         <timezone>-0</timezone>
     </developer>
     <developer>
         <name>Raymie Stata</name>
         <id>rstata</id>
         <email>rstata at archive dot org</email>
-         <timezone>-8</timezone>
     </developer>
     <developer>
         <name>Michael Stack</name>
@@ -195,7 +192,6 @@
         <email>stack at archive dot org</email>
          <organization>Internet Archive</organization>
          <url>http://www.archive.org</url>
-         <timezone>-8</timezone>
     </developer>
   </developers>
 
@@ -212,10 +208,6 @@
     <contributor>
         <name>Judy Ma</name>
         <email>jma at archive dot org</email>
-    </contributor>
-    <contributor>
-        <name>Soren Vejrup Carlsen</name>
-        <email>svc at kb dot dk</email>
     </contributor>
 
   </contributors>
@@ -262,8 +254,8 @@
         </dependency>
         <dependency>
             <id>dnsjava</id>
-            <version>1.6.2</version>
-            <url>http://www.dnsjava.org/</url>
+            <version>1.5</version>
+            <url>http://www.xbill.org/dnsjava/</url>
             <properties>
                 <description>DNS Lookups.
                 </description>
@@ -282,11 +274,24 @@
             </properties>
         </dependency>
         <dependency>
-            <id>jetty</id>
+            <id>org.mortbay.jetty</id>
             <version>4.2.17</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>The Jetty servlet container.
+                </description>
+                <license>Jetty license,
+                    http://jetty.mortbay.org/jetty/LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>org.mortbay.jmx</id>
+            <version>4.2.17</version>
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty.  Seems to be jetty
+                mbeans.
                 </description>
                 <license>Jetty license,
                     http://jetty.mortbay.org/jetty/LICENSE.html
@@ -484,15 +489,6 @@
         <include>**/*Test.java</include>
       </includes>
     </unitTest>
-    <resources>
-    <resource>
-        <directory>${basedir}/src/resources</directory>
-        <includes>
-            <include>*.xsl</include>
-        </includes>
-    </resource>
-    </resources>
-
   </build>
 
     <!--List of reports to generate.

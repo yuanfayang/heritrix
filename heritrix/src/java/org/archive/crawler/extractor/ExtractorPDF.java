@@ -116,9 +116,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
         curi.linkExtractorFinished();
     }
 
-    /** 
-     * Provide a human-readable textual summary of this Processor's state.
-     * 
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
      */
     public String report() {

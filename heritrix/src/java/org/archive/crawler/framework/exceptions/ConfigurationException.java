@@ -40,9 +40,6 @@ public class ConfigurationException extends InitializationException {
     protected String file = null;
     protected String element = null;
 
-    /**
-     * default constructor
-     */
     public ConfigurationException() {
         super();
     }
@@ -105,30 +102,23 @@ public class ConfigurationException extends InitializationException {
     }
 
     /** Store the name of the configuration file that was being parsed
-     *  when this exception occured.
+     *  when this error occured.
      * @param name
      */
     public void setFile(String name){
         file = name;
     }
-    
-    /**
-     * @return name of configuration file being parsed when this exception occurred
-     */
     public String getFile(){
         return file;
     }
 
     /** Set the name of the element that was being parsed
-     *   when this exception occured.
+     *   when this error occured.
      * @param target
      */
     public void setElement(String target){
         element = target;
     }
-    /**
-     * @return name of the element being parsed when this exception occurred
-     */
     public String getElement(){
         return element;
     }

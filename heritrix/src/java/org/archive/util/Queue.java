@@ -26,8 +26,6 @@ package org.archive.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.collections.Predicate;
-
 
 /** An Abstract queue.  It should implement FIFO semantics.
  * @author gojomo
@@ -64,9 +62,6 @@ public interface Queue {
      */
     void release();
     
-    /**
-     * @return top object, without removing it
-     */
     Object peek();
     
     /**
@@ -76,7 +71,11 @@ public interface Queue {
      * unsafe.
      * <p>
      * Editing the queue while using the iterator is not safe.
-     * @param inCacheOnly
+     * @param limit the iterator to items in quick access cache (as opposed to
+     *              slow access mediums such as disks). What constitutes a
+     *              cache varies according to the implementation of each queue.
+     *              Queues that do not have multiple storage mediums should
+     *              always return all items. 
      * @return an iterator for the queue
      */
     Iterator getIterator(boolean inCacheOnly);
@@ -87,8 +86,8 @@ public interface Queue {
      * <p>
      * Making other changes to the queue while this method is being 
      * processed is not safe. 
-     * @param matcher a predicate
+     * @param matcher a queue item matcher
      * @return the number of deleted items
      */
-    long deleteMatchedItems(Predicate matcher);
+    long deleteMatchedItems(QueueItemMatcher matcher);
 }

@@ -1,7 +1,7 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
+<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.datamodel.settings.SettingsHandler,org.archive.crawler.datamodel.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
 
 <%
 	/* Various settings with default values (where applicable) */
@@ -53,12 +53,6 @@
 	{
 		settingsHandler = theJob.getSettingsHandler();
 		String diskPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_DISK_PATH);
-		String logsPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_LOGS_PATH);
-		if (diskPath.length()==0 || logsPath.length()==0) {
-		    diskPath = diskPath + logsPath;
-		} else {
-		    diskPath = diskPath + "/" + logsPath;
-		}
 		diskPath = settingsHandler.getPathRelativeToWorkingDirectory(diskPath).getAbsolutePath()+"/";
 
 		// Got a valid crawl order, find it's logs
@@ -72,7 +66,7 @@
 			}
 			catch(Exception e){/*Ignore*/}
 		  
-		    log = LogReader.getFromSeries(diskPath + fileName,linenumber,linesToShow);
+		    log = LogReader.get(diskPath + fileName,linenumber,linesToShow);
 		}
 		else if(mode != null && mode.equalsIgnoreCase("time"))
 		{
@@ -86,8 +80,8 @@
 			}	
 			else
 			{
-				int timestampLinenumber = LogReader.findFirstLineContainingFromSeries(diskPath+fileName,timestamp+".*");
-				log = LogReader.getFromSeries(diskPath + fileName,timestampLinenumber,linesToShow);
+				int timestampLinenumber = LogReader.findFirstLineContaining(diskPath+fileName,timestamp+".*");
+				log = LogReader.get(diskPath + fileName,timestampLinenumber,linesToShow);
 			}
 		}
 		else if(mode != null && mode.equalsIgnoreCase("regexpr"))
@@ -111,11 +105,11 @@
 				
 				if(indent)
 				{
-					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, " ", ln);
+					log = LogReader.getByRegExpr(diskPath + fileName, regexpr, " ", ln);
 				}
 				else
 				{
-					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, 0, ln);
+					log = LogReader.getByRegExpr(diskPath + fileName, regexpr, 0, ln);
 				}
 			}
 		}

@@ -10,7 +10,7 @@
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@page import="org.archive.crawler.framework.Filter" %>
-<%@page import="org.archive.crawler.settings.refinements.*"%>
+<%@page import="org.archive.crawler.datamodel.settings.refinements.*"%>
 
 
 <%@include file="/include/jobfilters.jsp"%>
@@ -19,21 +19,20 @@
 	// Load the job to manipulate	
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
 
-    // Load display level
-    String currDomain = request.getParameter("currDomain");
-    String reference = request.getParameter("reference");
-
 	if(theJob == null)
 	{
 		// Didn't find any job with the given UID or no UID given.
 		response.sendRedirect("/admin/jobs.jsp?message=No job selected");
 		return;
-	} else if(theJob.isReadOnly()){
+	} else if(theJob.isReadOnly() || theJob.isRunning()){
 		// Can't edit this job.
-		response.sendRedirect("/admin/jobs/refinements/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Can't edit filters on a read only job");
+		response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a running or read only job");
 		return;
 	}
 
+    // Load display level
+    String currDomain = request.getParameter("currDomain");
+    String reference = request.getParameter("reference");
 
     // Get the settings objects.
     XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();

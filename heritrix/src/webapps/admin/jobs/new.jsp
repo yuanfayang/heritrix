@@ -2,9 +2,9 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.settings.ComplexType" %>
-<%@ page import="org.archive.crawler.settings.CrawlerSettings" %>
-<%@ page import="org.archive.crawler.settings.XMLSettingsHandler" %>
+<%@ page import="org.archive.crawler.datamodel.settings.ComplexType" %>
+<%@ page import="org.archive.crawler.datamodel.settings.CrawlerSettings" %>
+<%@ page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler" %>
 
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.FileReader" %>

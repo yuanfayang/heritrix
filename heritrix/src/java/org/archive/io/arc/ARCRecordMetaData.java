@@ -57,10 +57,12 @@ public class ARCRecordMetaData
      * @throws IOException
      */
     public ARCRecordMetaData(Map headerFields)
-        throws IOException {
+        throws IOException
+    {
         // Make sure the minimum required fields are present,
         for (Iterator i = REQUIRED_VERSION_1_HEADER_FIELDS.iterator();
-            i.hasNext(); ) {
+            i.hasNext(); )
+        {
             testRequiredField(headerFields, (String)i.next());
         }
         this.headerFields = headerFields;
@@ -69,14 +71,13 @@ public class ARCRecordMetaData
     /**
      * Test required field is present in hash.
      *
-     * @param fields Map of fields.
-     * @param requiredField Field to test for.
-     * 
      * @exception IOException If required field is not present.
      */
     protected void testRequiredField(Map fields, String requiredField)
-        throws IOException {
-        if (!fields.containsKey(requiredField)) {
+        throws IOException
+    {
+        if (!fields.containsKey(requiredField))
+        {
             throw new IOException("Required field " + requiredField +
             " not in meta data.");
         }
@@ -85,7 +86,8 @@ public class ARCRecordMetaData
     /**
      * @return Header date.
      */
-    public long getDate() {
+    public long getDate()
+    {
         return Long.parseLong((String)this.headerFields.
             get(DATE_HEADER_FIELD_KEY));
     }
@@ -93,7 +95,8 @@ public class ARCRecordMetaData
     /**
      * @return Return length of the record.
      */
-    public long getLength() {
+    public long getLength()
+    {
         return Long.parseLong((String)this.headerFields.
             get(LENGTH_HEADER_FIELD_KEY));
     }
@@ -101,7 +104,8 @@ public class ARCRecordMetaData
     /**
      * @return Header url.
      */
-    public String getUrl() {
+    public String getUrl()
+    {
         return (String)this.headerFields.get(URL_HEADER_FIELD_KEY);
     }
 
@@ -116,22 +120,17 @@ public class ARCRecordMetaData
     /**
      * @return mimetype.
      */
-    public String getMimetype() {
+    public String getMimetype()
+    {
         return (String)this.headerFields.get(MIMETYPE_HEADER_FIELD_KEY);
     }
 
     /**
-     * @return Arcfile version.
+     * @return mimetype.
      */
-    public String getVersion() {
+    public String getVersion()
+    {
         return (String)this.headerFields.get(VERSION_HEADER_FIELD_KEY);
-    }
-    
-    /**
-     * @return Offse into arcfile at which this record begins.
-     */
-    public long getOffset() {
-        return ((Long)this.headerFields.get(ABSOLUTE_OFFSET_KEY)).longValue();
     }
 
     /**

@@ -127,11 +127,6 @@ public class SelfTestCrawlJobHandler
 
         finally
         {
-            // TODO: This technique where I'm calling shutdown directly means
-            // we bypass the running of other crawlended handlers.  Means
-            // that such as the statistics tracker have no chance to run so 
-            // reports are never generated.  Fix -- but preserve 0 or 1 exit
-            // code.
             logger.info((new Date()).toString() + " Selftest " +
                 (result != null && result.wasSuccessful()? "PASSED": "FAILED"));
             Heritrix.shutdown(((result !=  null) && result.wasSuccessful())?

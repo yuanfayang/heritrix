@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -33,7 +34,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -42,7 +42,11 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class SeedListTest extends TmpDirTestCase {   
+public class SeedListTest extends TmpDirTestCase {
+    
+    private static final Logger logger =
+        Logger.getLogger(SeedListTest.class.getName());
+   
     private static Set seeds = null;
     
     /**
@@ -58,8 +62,8 @@ public class SeedListTest extends TmpDirTestCase {
             } else if (o2 == null) {
                 result = 1;
             } else {
-                String s1 = ((UURI)o1).toString();
-                String s2 = ((UURI)o2).toString();
+                String s1 = ((UURI)o1).getURIString();
+                String s2 = ((UURI)o2).getURIString();
                 result = s1.compareTo(s2);
                 result = (result < 0)? result = -1:
                     (result > 0)? result = 1: 0;
@@ -84,14 +88,14 @@ public class SeedListTest extends TmpDirTestCase {
         // First create array of seeds and add to treeset.
         SeedListTest.seeds = new TreeSet(SeedListTest.CMP);
         UURI [] tmp = {
-            new UURI("http://www.google.com"),
-            new UURI("https://www.google.com"),
-            new UURI("gopher://www.google.com"),
-            new UURI("news://www.google.com"),
-            new UURI("rss://www.google.com"),
-            new UURI("telnet://www.google.com"),
-            new UURI("ftp://myname@example.com/etc/motd"),
-            new UURI("ftp://example.com/etc/motd2")
+            UURI.createUURI("http://www.google.com"),
+            UURI.createUURI("https://www.google.com"),
+            UURI.createUURI("gopher://www.google.com"),
+            UURI.createUURI("news://www.google.com"),
+            UURI.createUURI("rss://www.google.com"),
+            UURI.createUURI("telnet://www.google.com"),
+            UURI.createUURI("ftp://myname@example.com/etc/motd"),
+            UURI.createUURI("ftp://example.com/etc/motd2")
         };
         SeedListTest.seeds.addAll(Arrays.asList(tmp));
             
@@ -100,7 +104,7 @@ public class SeedListTest extends TmpDirTestCase {
             SeedListTest.class.getName() + ".seedfile");
         PrintWriter writer = new PrintWriter(new FileWriter(this.seedsfile));
         for (Iterator i = seeds.iterator(); i.hasNext();) {
-            writer.println(((UURI)i.next()).toString());
+            writer.println(((UURI)i.next()).toExternalForm());
         }
         writer.close();
     }
@@ -116,11 +120,11 @@ public class SeedListTest extends TmpDirTestCase {
         }
     }
     
-    public void testNoCaching() throws URIException {
+    public void testNoCaching() throws URISyntaxException {
         coreTest(false);
     }
     
-    public void testCaching() throws URIException {
+    public void testCaching() throws URISyntaxException {
         coreTest(true);
     }
     
@@ -133,7 +137,7 @@ public class SeedListTest extends TmpDirTestCase {
         fw.flush();
         fw.close();
         boolean found = false;
-        SeedList sl = new SeedList(this.seedsfile, null, false);
+        SeedList sl = new SeedList(this.seedsfile, SeedListTest.logger, false);
         for (Iterator i = sl.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
             if (uuri.getHost().equals(NOSCHEME)) {
@@ -144,11 +148,11 @@ public class SeedListTest extends TmpDirTestCase {
         assertTrue("Did not find " + NOSCHEME, found);
     }
 
-    public void coreTest(boolean caching) throws URIException {
+    public void coreTest(boolean caching) throws URISyntaxException {
         // First make sure that I can the seed set from seed file.
         SeedList sl = checkContent(SeedListTest.seeds, caching);
         // Now do add and see if get set matches seed file content.
-        final UURI uuri = new UURI("http://one.two.three");
+        final UURI uuri = UURI.createUURI("http://one.two.three");
         sl.add(uuri);
         Set set = new TreeSet(SeedListTest.CMP);
         set.addAll(SeedListTest.seeds);
@@ -162,13 +166,13 @@ public class SeedListTest extends TmpDirTestCase {
     
     private SeedList checkContent(SeedList sl, Set seedSet, boolean caching) {
         if (sl == null) {
-            sl = new SeedList(this.seedsfile, null, caching);
+            sl = new SeedList(this.seedsfile, SeedListTest.logger, caching);
         }
         int count = 0;
         for (Iterator i = sl.iterator(); i.hasNext();) {
             count++;
             UURI uuri = (UURI)i.next();
-            assertTrue("Does not contain: " + uuri.toString(),
+            assertTrue("Does not contain: " + uuri.toExternalForm(),
                 seedSet.contains(uuri));
         }
         assertTrue("Different sizes: " + count + ", " + seedSet.size(),

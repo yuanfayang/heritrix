@@ -27,11 +27,11 @@ package org.archive.crawler.frontier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.URIFrontier;
+import org.archive.util.QueueItemMatcher;
 
 
 /**
@@ -39,10 +39,10 @@ import org.archive.crawler.framework.URIFrontier;
  * queues used by the <code>Frontier</code>
  * @author Kristinn Sigurdsson
  * 
- * @see org.apache.commons.collections.Predicate
+ * @see org.archive.util.QueueItemMatcher
  * @see org.archive.crawler.frontier.Frontier
  */
-public class URIQueueMatcher implements Predicate {
+public class URIQueueMatcher implements QueueItemMatcher {
     
     private Pattern p;
     private boolean delete = false;
@@ -68,15 +68,15 @@ public class URIQueueMatcher implements Predicate {
     }
     
     /* (non-Javadoc)
-     * @see org.apache.commons.collections.Predicate#evaluate(java.lang.Object)
+     * @see org.archive.util.QueueItemMatcher#match(java.lang.Object)
      */
-    public boolean evaluate(Object o) {
+    public boolean match(Object o) {
         if(o instanceof CandidateURI){
             CandidateURI CaURI = (CandidateURI)o;
             Matcher m = p.matcher(CaURI.getURIString());
             if(m.matches()){
                 if(delete && frontier != null){
-                    CrawlURI tmp = new CrawlURI(CaURI,0);
+                    CrawlURI tmp = new CrawlURI(CaURI);
                     tmp.setFetchStatus(FetchStatusCodes.S_DELETED_BY_USER);
                     frontier.finished(tmp);
                 }

@@ -24,17 +24,15 @@
  */
 package org.archive.util;
 
-import java.io.Serializable;
-
 /**
  * Open-addressing in-memory hash set for holding primitive long fingerprints.
  *
  * @author Gordon Mohr
  */
-public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet, Serializable {
+public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
     static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
     static final float DEFAULT_LOAD_FACTOR = 0.75f;
-    
+    ;
     byte[] slots;
     long[] values;
 

@@ -13,7 +13,7 @@
 <%@include file="/include/jobconfigure.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@page import="org.archive.crawler.settings.refinements.*"%>
+<%@page import="org.archive.crawler.datamodel.settings.refinements.*"%>
 
 <%
 	// Load the job to configure.

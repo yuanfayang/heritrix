@@ -1,4 +1,4 @@
-<%@ page import="org.archive.crawler.settings.*" %>
+<%@ page import="org.archive.crawler.datamodel.settings.*" %>
 
 <%@ page import="java.util.ArrayList" %>
 

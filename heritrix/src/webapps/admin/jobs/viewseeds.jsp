@@ -2,7 +2,7 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*,java.io.*" %>
-<%@ page import="org.archive.crawler.settings.ComplexType"%>
+<%@ page import="org.archive.crawler.datamodel.settings.ComplexType"%>
 <%
 	String job = request.getParameter("job");
 	CrawlJob cjob = null;

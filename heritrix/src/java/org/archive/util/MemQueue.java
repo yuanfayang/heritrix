@@ -26,8 +26,6 @@ package org.archive.util;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.apache.commons.collections.Predicate;
-
 /** An in-memory implementation of a {@link Queue}.
  *
  * @author Gordon Mohr
@@ -39,36 +37,36 @@ public class MemQueue extends LinkedList implements Queue {
     public MemQueue() {
         super();
     }
-    
-    /**
-     * @see org.archive.util.Queue#enqueue(Object)
+    /* (non-javadoc)
+     * @see org.archive.util.Queue#enqueue()
+
      */
     public void enqueue(Object o) {
         add(o);
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
         return removeFirst();
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-        return size();
+        return (long)size();
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#release()
      */
     public void release() {
         // nothing to release
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
@@ -76,21 +74,21 @@ public class MemQueue extends LinkedList implements Queue {
     }
     
     
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return listIterator();
     }
     
-    /**
-     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public long deleteMatchedItems(Predicate matcher) {
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
         Iterator it = listIterator();
         long numberOfDeletes = 0;
         while(it.hasNext()){
-            if(matcher.evaluate(it.next())){
+            if(matcher.match(it.next())){
                 it.remove();
                 numberOfDeletes++;
             }

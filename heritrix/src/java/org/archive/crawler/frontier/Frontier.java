@@ -24,12 +24,9 @@
 package org.archive.crawler.frontier;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,18 +39,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 
-import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
-import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
@@ -64,9 +54,9 @@ import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.datamodel.settings.ModuleType;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DiskBackedQueue;
@@ -74,6 +64,7 @@ import org.archive.util.MemLongFPSet;
 import org.archive.util.MemQueue;
 import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
+import org.archive.util.QueueItemMatcher;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -96,14 +87,9 @@ import org.archive.util.Queue;
  */
 public class Frontier
     extends ModuleType
-    implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
-        CrawlStatusListener {
-    // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(Frontier.class,1);
+    implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlStatusListener {
 
-    private static final Logger logger =
-        Logger.getLogger(Frontier.class.getName());
-
+    private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
     /** always wait this long after one completion before recontacting 
@@ -119,8 +105,6 @@ public class Frontier
     public final static String ATTR_MAX_RETRIES = "max-retries";
     /** for retryable problems, seconds to wait before a retry */
     public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
-    /** maximum simultaneous requests in process to a host (queue) */
-    public final static String ATTR_HOST_VALENCE = "host-valence";
     /** maximum overall bandwidth usage */
     public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
         "total-bandwidth-usage-KB-sec";
@@ -128,55 +112,38 @@ public class Frontier
     public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
         "max-per-host-bandwidth-usage-KB-sec";
 
-    /** how many items to store in memory atop of the pending queue
-     * higher == more RAM used per active host; lower == more disk IO */
-    public final static String ATTR_PENDING_QUEUE_MEMORY_CAPACITY =
-        "pending-queue-memory-capacity";
-    /** maximum how many items to store in memory atop each keyedqueue
-     * higher == more RAM used per active host; lower == more disk IO */
-    public final static String ATTR_HOST_QUEUES_MEMORY_CAPACITY =
-        "host-queues-memory-capacity";
-
-
-    protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(500);
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
-    protected final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
-    protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
-    protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
-    protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
-    protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
+    private final static Float DEFAULT_DELAY_FACTOR = new Float(5);
+    private final static Integer DEFAULT_MIN_DELAY = new Integer(500);
+    private final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
+    private final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
+    private final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
+    private final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
+    private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
         new Integer(0);
-    protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
+    private final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
         new Integer(0);
-
-    protected final static Integer DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY =
-        new Integer(10000);
-    protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
-        new Integer(200);
-
+    private final static float KILO_FACTOR = 1.024F;
     
-    protected final static float KILO_FACTOR = 1.024F;
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.basic.Frontier");
 
-    protected final static String F_ADD = "F+ ";
-    protected final static String F_EMIT = "Fe ";
-    protected final static String F_RESCHEDULE = "Fr ";
-    protected final static String F_SUCCESS = "Fs ";
-    protected final static String F_FAILURE = "Ff ";
+    private final static String F_ADD = "F+ ";
+    private final static String F_EMIT = "Fe ";
+    private final static String F_RESCHEDULE = "Fr ";
+    private final static String F_SUCCESS = "Fs ";
+    private final static String F_FAILURE = "Ff ";
 
-    protected CrawlController controller;
+    CrawlController controller;
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
-    protected UURISet alreadyIncluded;
-    /** ordinal numbers to assign to created CrawlURIs */
-    protected long nextOrdinal = 1;
-    
+    UURISet alreadyIncluded;
+
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
     // every CandidateURI not yet in process or another queue;
     // all seeds start here; may contain duplicates
-    protected Queue pendingQueue; // of CandidateURIs
+    Queue pendingQueue; // of CandidateURIs
 
     // all active per-class queues
     HashMap allClassQueuesMap = new HashMap(); // of String (classKey) -> KeyedQueue
@@ -240,11 +207,6 @@ public class Frontier
                 "failed to be retrieved (seconds). ",
                 DEFAULT_RETRY_DELAY));
         Type t;
-        t = addElementToDefinition(new SimpleType(ATTR_HOST_VALENCE,
-                "Maximum number of simultaneous requests to a single" +
-                "host.",
-                DEFAULT_HOST_VALENCE));
-        t.setExpertSetting(true);
         t = addElementToDefinition(
             new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use. \n" +
@@ -253,7 +215,7 @@ public class Frontier
             "usage has been to high.\n0 means no bandwidth limitation.",
             DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
         t.setOverrideable(false);
-        t = addElementToDefinition(
+        addElementToDefinition(
             new SimpleType(ATTR_MAX_HOST_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use per " +
             "host. \nThe actual readspeed is not affected by this setting, " +
@@ -261,26 +223,6 @@ public class Frontier
             "bandwidth usage has been to high.\n0 means no bandwidth " +
             "limitation.",
             DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
-        t.setExpertSetting(true);
-        t = addElementToDefinition(
-                new SimpleType(ATTR_PENDING_QUEUE_MEMORY_CAPACITY,
-                "Size of the pending queue's in memory head.\n Once it grows " +
-                "beyond this size additional items will be written to a file " +
-                "on disk. Default value " + 
-                DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY + ". Higher value " +
-                "means more RAM used; lower means more disk I/O",
-                DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY));
-        t.setOverrideable(false);
-        t.setExpertSetting(true);
-        t = addElementToDefinition(
-                new SimpleType(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
-                "Size of each host queue's in memory head.\n Once each grows " +
-                "beyond this size additional items will be written to a file " +
-                "on disk. Default value " + DEFAULT_HOST_QUEUES_MEMORY_CAPACITY+
-                ". A high value means more RAM used per host queue while a low"+
-                " value will require more disk I/O.",
-                DEFAULT_HOST_QUEUES_MEMORY_CAPACITY));
-        t.setExpertSetting(true);
     }
 
     /**
@@ -290,80 +232,31 @@ public class Frontier
      */
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
-        this.controller = c;
 
-        pendingQueue = createPendingQueue(c.getStateDisk(),"pendingQ");
+        pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 
-        alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
-                "alreadyIncluded");
-        
-        loadSeeds();
-    }
-    
-    /**
-     * Create a queue that will serve as the pending queue.
-     * 
-     * @param dir Directory where pending queue files should be written
-     * @param filePrefix Prefix to names of pending queue files
-     * @param capacity In memory cache capacity.
-     * @return A queue that is usable as a pending queue.
-     * @throws IOException If problems occur creating files on disk
-     */
-    protected Queue createPendingQueue(File dir, String filePrefix)
-            throws IOException, FatalConfigurationException {
-        try {
-            return new DiskBackedQueue(
-                    dir,
-                    filePrefix,
-                    false,
-                    ((Integer) getAttribute(ATTR_PENDING_QUEUE_MEMORY_CAPACITY))
-                        .intValue());
-        } catch (AttributeNotFoundException e) {
-            throw new FatalConfigurationException("AttributeNotFoundException " +
-                    "encountered on reading " + 
-                    ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
-                    e.getMessage());
-        } catch (MBeanException e) {
-            throw new FatalConfigurationException("MBeanException " +
-                    "encountered on reading " + 
-                    ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
-                    e.getMessage());
-        } catch (ReflectionException e) {
-            throw new FatalConfigurationException("ReflectionException " +
-                    "encountered on reading " + 
-                    ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
-                    e.getMessage());
-        }
-    }
-    
-    /**
-     * Create a UURISet that will serve as record of already seen URIs.
-     * 
-     * @param dir Directory where the set's files should be written
-     * @param filePrefix Prefix to names of the set's files
-     * @return A UURISet that will serve as a record of already seen URIs
-     * @throws IOException If problems occur creating files on disk
-     */
-    protected UURISet createAlreadyIncluded(File dir, String filePrefix)
-            throws IOException, FatalConfigurationException {
-        // TODO: Make the uri set configurable? 
-        // Can be overridden by subclasses
-        return new FPUURISet(new MemLongFPSet(20,0.75f));
-        //return new PagedUURISet(c.getScratchDisk());
+        alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
+        //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
 
         // alternative: pure disk-based set
-        // return new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
+//        alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
 
         // alternative: disk-based set with in-memory cache supporting quick positive contains() checks
-        // return = new FPUURISet(
-        //         new CachingDiskLongFPSet(
-        //                 c.getScratchDisk(),
-        //                 "alreadyIncluded",
-        //                 23, // 8 million slots on disk (for start)
-        //                 0.75f,
-        //                 20, // 1 million slots in cache (always)
-        //                 0.75f));
+//        alreadyIncluded = new FPUURISet(
+//              new CachingDiskLongFPSet(
+//                      c.getScratchDisk(),
+//                      "alreadyIncluded",
+//                      23, // 8 million slots on disk (for start)
+//                      0.75f,
+//                      20, // 1 million slots in cache (always)
+//                      0.75f));
+//        wakerThread = new Thread(new Waker());
+//        wakerThread.setName("Frontier.Waker");
+//        wakerThread.start();
         
+        this.controller = c;
+        controller.addCrawlStatusListener(this);
+        loadSeeds();
     }
 
     /**
@@ -396,7 +289,7 @@ public class Frontier
         }
     }
 
-    private static class ThreadLocalQueue extends ThreadLocal implements Serializable {
+    private static class ThreadLocalQueue extends ThreadLocal {
         /* (non-Javadoc)
          * @see java.lang.ThreadLocal#initialValue()
          */
@@ -474,7 +367,7 @@ public class Frontier
         }
 
         if(caUri.needsImmediateScheduling()) {
-            enqueueToKeyed(asCrawlUri(caUri));
+            enqueueHigh(CrawlURI.from(caUri));
         } else {
             this.pendingQueue.enqueue(caUri);
         }
@@ -497,6 +390,7 @@ public class Frontier
      */
     private CrawlURI next() {
         long now = System.currentTimeMillis();
+        long waitMax = 0;
         CrawlURI curi = null;
 
         enforceBandwidthThrottle(now);
@@ -507,28 +401,18 @@ public class Frontier
         wakeReadyQueues(now);
 
         // now, see if any holding queues are ready with a CrawlURI
-        if (!this.readyClassQueues.isEmpty()) {
+        if (!readyClassQueues.isEmpty()) {
             curi = dequeueFromReady();
-            try {
-                return emitCuri(curi);
-            }
-            catch (URIException e) {
-                logger.severe("Failed holding emitcuri: " + e.getMessage());
-            }
+            return emitCuri(curi);
         }
 
         // if that fails to find anything, check the pending queue
         while ((caUri = dequeueFromPending()) != null) {
-            curi = asCrawlUri(caUri);
+            curi = CrawlURI.from(caUri);
             enqueueToKeyed(curi);
-            if (!this.readyClassQueues.isEmpty()) {
+            if (!readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
-                try {
-                    return emitCuri(curi);
-                }
-                catch (URIException e) {
-                    logger.severe("Failed dequeue emitcuri: " + e.getMessage());
-                }
+                return emitCuri(curi);
             }
         }
 
@@ -544,13 +428,6 @@ public class Frontier
         }
     }
     
-    private CrawlURI asCrawlUri(CandidateURI caUri) {
-        if(caUri instanceof CrawlURI) {
-            return (CrawlURI) caUri;
-        }
-        return CrawlURI.from(caUri,nextOrdinal++);
-    }
-
     private void enforceBandwidthThrottle(long now) {
         int maxBandwidthKB;
         try {
@@ -691,14 +568,14 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().toString(),
+            curi.getUURI().getURIString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
             controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().toString(),
+                curi.getUURI().getURIString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
@@ -738,7 +615,7 @@ public class Frontier
                 Object array[] = { curi, iter.next() };
                 controller.localErrors.log(
                     Level.WARNING,
-                    curi.getUURI().toString(),
+                    curi.getUURI().getURIString(),
                     array);
             }
             // once logged, discard
@@ -759,7 +636,7 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().toString(),
+            curi.getUURI().getURIString(),
             array);
 
         // note that CURI has passed out of scheduling
@@ -799,16 +676,16 @@ public class Frontier
                 logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
                 logger.severe(report());
             }
-            // assert awoken.getInProcessItem() == null : "false ready: class peer still in process";
+            assert awoken.getInProcessItem() == null : "false ready: class peer still in process";
             awoken.wake();
             updateQ(awoken);
         }
     }
 
     private void discardQueue(KeyedQueue q) {
-        allClassQueuesMap.remove(q.getClassKey());
+        allClassQueuesMap.remove(((KeyedQueue)q).getClassKey());
         q.discard();
-        q.release();
+        ((KeyedQueue)q).release();
         //assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
         assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q";
         assert !snoozeQueues.contains(q) : "snoozeQueues holding dead q";
@@ -817,9 +694,8 @@ public class Frontier
 
     private CrawlURI dequeueFromReady() {
         KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
-        assert firstReadyQueue.getState() == KeyedQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
+        assert firstReadyQueue.getState() == KeyedQueue.READY : "top ready queue not ready";
         CrawlURI readyCuri = (CrawlURI) firstReadyQueue.dequeue();
-        firstReadyQueue.checkEmpty();
         return readyCuri;
     }
 
@@ -828,27 +704,16 @@ public class Frontier
      * @param curi The CrawlURI
      * @return The CrawlURI
      * @see #noteInProcess(CrawlURI)
-     * @throws URIException
      */
-    private CrawlURI emitCuri(CrawlURI curi) throws URIException {
+    private CrawlURI emitCuri(CrawlURI curi) {
         if(curi != null) {
             noteInProcess(curi);
-            if (this.controller == null ||
-                    this.controller.getServerCache() == null ) {
-                logger.warning("Controller or ServerCache is null processing " +
-                    curi);
-            } else {
-                CrawlServer cs = this.controller.getServerCache().
-                    getServerFor(curi);
-                if (cs != null) {
-                    curi.setServer(cs);
-                }
-            }
+            curi.setServer(controller.getServerCache().getServerFor(curi));
         }
-        logger.finer(this + ".emitCuri(" + curi + ")");
-        this.controller.recover.info("\n"+F_EMIT+curi.getURIString());
+        logger.finer(this+".emitCuri("+curi+")");
+        controller.recover.info("\n"+F_EMIT+curi.getURIString());
         // One less URI in the queue.
-        this.queuedCount--;
+        queuedCount--;
         return curi;
     }
 
@@ -861,16 +726,14 @@ public class Frontier
         if(kq==null){
             return; // Couldn't find/create kq.
         }
-        
-        // assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
+            
+        assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
 
         assert kq.getState() == KeyedQueue.READY || kq.getState() == KeyedQueue.EMPTY : 
             "odd state "+ kq.getState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
 
         kq.noteInProcess(curi);
-        if(kq.getState()==KeyedQueue.BUSY || kq.getState() == KeyedQueue.EMPTY) {
-            readyClassQueues.remove(kq);
-        }
+        readyClassQueues.remove(kq);
     }
 
     /**
@@ -880,39 +743,20 @@ public class Frontier
      * @return The KeyedQueeu for the CrawlURI or null if it does not exist and
      *         an exception occured trying to create it.
      */
-    protected KeyedQueue keyedQueueFor(CrawlURI curi) {
-        KeyedQueue kq = null;
-        try {
-            kq = (KeyedQueue)this.allClassQueuesMap.get(curi.getClassKey());
-        }
-        catch (URIException e1) {
-            logger.severe("Failed to get class key: " + e1.getMessage() + " " +
-                curi);
-        }
+    private KeyedQueue keyedQueueFor(CrawlURI curi) {
+        KeyedQueue kq = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
         if (kq==null) {
             try {
-                try {
-					kq = new KeyedQueue(curi.getClassKey(), 
-					    this.controller.getStateDisk(),
-					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                                ,curi)).intValue());
-				} catch (AttributeNotFoundException e3) {
-                    logger.severe(e3.getMessage());
-				}
-                try {
-                    kq.setValence(((Integer)getAttribute(ATTR_HOST_VALENCE,curi)).intValue());
-                } catch (AttributeNotFoundException e2) {
-                    logger.severe(e2.getMessage());
-                }
+                kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
                 kq.activate(); // TODO: have only a subset of queues by active at any one time
-                this.allClassQueuesMap.put(kq.getClassKey(),kq);
+                allClassQueuesMap.put(kq.getClassKey(),kq);
             } catch (IOException e) {
                 // An IOException occured trying to make new KeyedQueue.
                 curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
                 Object array[] = { curi };
-                this.controller.runtimeErrors.log(
+                controller.runtimeErrors.log(
                         Level.SEVERE,
-                        curi.getUURI().toString(),
+                        curi.getUURI().getURIString(),
                         array);
             }
         }
@@ -920,10 +764,10 @@ public class Frontier
     }
 
     protected CandidateURI dequeueFromPending() {
-        if (this.pendingQueue.isEmpty()) {
+        if (pendingQueue.isEmpty()) {
             return null;
         }
-        return (CandidateURI)this.pendingQueue.dequeue();
+        return (CandidateURI)pendingQueue.dequeue();
     }
 
     /**
@@ -940,9 +784,11 @@ public class Frontier
             logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
-
-        kq.enqueue(curi);
-
+        if(curi.needsImmediateScheduling()) {
+            kq.enqueueHigh(curi);
+        } else {
+            kq.enqueue(curi);
+        }
         if(kq.checkEmpty()) {
             // if kq state changed, update frontier's internals
             updateQ(kq);
@@ -1001,6 +847,39 @@ public class Frontier
         kq.activate(); // TODO: implement active/inactive distinctions
     }
 
+    
+    /**
+     * @param curi
+     */
+    private void enqueueMedium(CrawlURI curi) {
+        KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            logger.severe("No workQueue found for "+curi);
+            return; // Couldn't find/create kq.
+        }
+            
+        kq.enqueueMedium(curi);
+        if(kq.checkEmpty()) {
+            updateQ(kq);
+        }
+    }
+
+    /**
+     * @param curi
+     */
+    private void enqueueHigh(CrawlURI curi) {
+        KeyedQueue kq = keyedQueueFor(curi);
+        if(kq==null){
+            logger.severe("No workQueue found for "+curi);
+            return; // Couldn't find/create kq.
+        }
+            
+        kq.enqueueHigh(curi);
+        if(kq.checkEmpty()) {
+            updateQ(kq);
+        }
+    }
+
     protected long earliestWakeTime() {
         if (!snoozeQueues.isEmpty()) {
             return ((KeyedQueue)snoozeQueues.first()).getWakeTime();
@@ -1021,12 +900,9 @@ public class Frontier
             logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
-        Object startState = kq.getState();
         kq.noteProcessDone(curi);
         updateScheduling(curi, kq);
-        if(startState!=kq.getState()) {
-            updateQ(kq);
-        }
+        updateQ(kq);
     }
 
     /**
@@ -1102,32 +978,60 @@ public class Frontier
      * @param curi The CrawlURI
      */
     private void failureDisposition(CrawlURI curi) {
-        //Let interested listeners know of failed disposition.
-        this.controller.fireCrawledURIFailureEvent(curi);
+        controller.fireCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
 
         // send to basic log
         curi.aboutToLog();
         Object array[] = { curi };
-        this.controller.uriProcessing.log(
+        controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().toString(),
+            curi.getUURI().getURIString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
-            this.controller.runtimeErrors.log(
+            controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().toString(),
+                curi.getUURI().getURIString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
-            this.failedCount++;
+            failedCount++;
             curi.stripToMinimal();
         }
-        this.controller.recover.info("\n"+F_FAILURE+curi.getURIString());
+        controller.recover.info("\n"+F_FAILURE+curi.getURIString());
+    }
+
+    /**
+     * Has the CrawlURI suffered a failure which completes
+     * its processing?
+     *
+     * @param curi
+     * @return True if failure.
+     */
+    private boolean isDispositiveFailure(CrawlURI curi) {
+        switch (curi.getFetchStatus()) {
+
+            case S_DOMAIN_UNRESOLVABLE :
+                // network errors; perhaps some of these
+                // should be scheduled for retries
+            case S_RUNTIME_EXCEPTION :
+                // something unexpectedly bad happened
+            case S_UNFETCHABLE_URI :
+                // no chance to fetch
+            case S_TOO_MANY_RETRIES :
+                // no success after configurable number of retries
+            case S_UNATTEMPTED :
+                // nothing happened to this URI: don't send it through again
+
+                return true;
+
+            default :
+                return false;
+        }
     }
 
     /**
@@ -1150,19 +1054,11 @@ public class Frontier
         switch (curi.getFetchStatus()) {
             case S_DEFERRED:
                 return true;
-                
             case HttpStatus.SC_UNAUTHORIZED:
-                // We can get here though usually a positive status code is
-                // a success.  We get here if there is rfc2617 credential data
-                // loaded and we're supposed to go around again.  See if any
-                // rfc2617 credential present and if there, assume it got
-                // loaded in FetchHTTP on expectation that we're to go around
-                // again.  If no rfc2617 loaded, we should not be here.
-                boolean loaded = curi.hasRfc2617CredentialAvatar();
-                if (!loaded) {
-                    logger.severe("Have 401 but no creds loaded " + curi);
-                }
-                return loaded;
+                // Check to see if we should let this 401 go around again?
+                // If any rfc2617 credential present, assume it got loaded in 
+                // FetchHTTP on expectation that we're to go around again.
+                return curi.hasRfc2617Credentials();
             
             default:
                 return false;
@@ -1231,8 +1127,7 @@ public class Frontier
     private void reschedule(CrawlURI curi) {
         // Eliminate state related to only prior processing passthrough.
         curi.processingCleanup();
-        curi.setSchedulingDirective(CandidateURI.MEDIUM);
-        enqueueToKeyed(curi);
+        enqueueMedium(curi);
         queuedCount++;
     }
 
@@ -1253,8 +1148,7 @@ public class Frontier
             snoozeQueues.remove(kq);
         } else if (kq.getState() == KeyedQueue.READY ) {
             readyClassQueues.remove(kq);
-        } 
-        
+        }
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.snooze();
@@ -1359,6 +1253,7 @@ public class Frontier
         if(allClassQueuesMap.size()!=0)
         {
             Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
             while(q.hasNext())
             {
                 keyqueueKeys.add(q.next());
@@ -1491,11 +1386,12 @@ public class Frontier
     public long deleteURIs(String match) {
         long numberOfDeletes = 0;
         // Create QueueItemMatcher
-        Predicate mat = new URIQueueMatcher(match, true, this);
+        QueueItemMatcher mat = new URIQueueMatcher(match, true, this);
         // Delete from all KeyedQueues
         if(allClassQueuesMap.size()!=0)
         {
             Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
             while(q.hasNext())
             {
                 KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
@@ -1508,7 +1404,6 @@ public class Frontier
         }
         // Delete from pendingQueue
         numberOfDeletes += pendingQueue.deleteMatchedItems(mat);
-        queuedCount -= numberOfDeletes;
         return numberOfDeletes;
     }
 
@@ -1541,6 +1436,7 @@ public class Frontier
         if(allClassQueuesMap.size()!=0)
         {
             Iterator q = allClassQueuesMap.keySet().iterator();
+            int i = 1;
             while(q.hasNext())
             {
                 KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
@@ -1580,11 +1476,8 @@ public class Frontier
         if(kq.getState()==KeyedQueue.SNOOZED) {
             rep.append("     Wakes in:  " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
         }
-        if(kq.getInProcessItems().size()>0) {
-            Iterator iter = kq.getInProcessItems().iterator();
-            while (iter.hasNext()) {
-                rep.append("     InProcess: " + iter.next() + "\n");
-            }
+        if(kq.getState()==KeyedQueue.IN_PROCESS) {
+            rep.append("     InProcess: " + kq.getInProcessItem() + "\n");
         }
         if(!kq.isEmpty()) {
             rep.append("     Top URI:   " + ((CrawlURI)kq.peek()).getURIString()+"\n");
@@ -1624,9 +1517,8 @@ public class Frontier
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        // Ok, if the CrawlController is exiting we delete our reference to it
-        // to facilitate gc.
-        this.controller = null;
+        // Ok, if the CrawlController is exiting we delete our reference to it to facilitate gc.
+        controller = null;
     }
 
     /** (non-Javadoc)
@@ -1640,50 +1532,33 @@ public class Frontier
             if(read.startsWith(F_SUCCESS)) {
                 UURI u;
                 try {
-                    u = new UURI(read.substring(3));
-                    this.alreadyIncluded.add(u);
-                } catch (URIException e) {
+                    u = UURI.createUURI(read.substring(3));
+                    alreadyIncluded.add(u);
+                } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
             }
         }
         reader.close();
-        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for
-        // visitation
+        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for visitation
         reader = new BufferedReader(new FileReader(pathToLog));
         while((read = reader.readLine()) != null) {
             if(read.startsWith(F_ADD)) {
                 UURI u;
                 try {
-                    u = new UURI(read.substring(3));
-                    if(!this.alreadyIncluded.contains(u)) {
+                    u = UURI.createUURI(read.substring(3));
+                    if(!alreadyIncluded.contains(u)) {
                         CandidateURI caUri = new CandidateURI(u);
                         caUri.setVia(pathToLog);
-                        // TODO: reevaluate if this is correct
-                        caUri.setPathFromSeed("L"); 
+                        caUri.setPathFromSeed("L"); // TODO: reevaluate if this is correct
                         schedule(caUri);
                     }
-                } catch (URIException e) {
+                } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
             }
         }
         reader.close();
 
-    }
-
-    // custom serialization
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        ObjectPlusFilesOutputStream coostream = (ObjectPlusFilesOutputStream)stream;
-        coostream.pushAuxiliaryDirectory("frontier");
-        coostream.defaultWriteObject();
-        coostream.popAuxiliaryDirectory();
-    }
-
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
-        coistream.pushAuxiliaryDirectory("frontier");
-        coistream.defaultReadObject();
-        coistream.popAuxiliaryDirectory();
     }
 }

@@ -26,202 +26,127 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.logging.Logger;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Predicate;
 
 
 /**
  * Queue which uses a DiskQueue ('tailQ') for spillover entries once a
- * in-memory LinkedList ('headQ') reaches a maximum size.
+ * MemQueue ('headQ') reaches a maximum size.
+ *
  *
  * @author Gordon Mohr
  */
-public class DiskBackedQueue implements Queue, Serializable {
-    /** if all contents would leave head less than this
-     * percent full, discard the backing file(s)*/
-    protected static final float DISCARD_BACKING_THRESHOLD = 0.25f;
-    private static Logger logger = 
-        Logger.getLogger(DiskBackedQueue.class.getName());
+public class DiskBackedQueue implements Queue {
+    private static Logger logger = Logger.getLogger("org.archive.util.DiskBackedQueue");
 
-    protected int headMax;
-    protected LinkedList headQ;
-    protected DiskQueue tailQ;
-    protected String name;
+    int headMax;
+    MemQueue headQ;
+    DiskQueue tailQ;
+    String name;
 
     /**
      * @param dir
      * @param name
-     * @param reuse whether to reuse any existing backing files
      * @param headMax
      * @throws IOException
      *
      */
-    public DiskBackedQueue(File dir, String name, boolean reuse, int headMax)
-            throws IOException {
+    public DiskBackedQueue(File dir, String name, int headMax) throws IOException {
         this.headMax = headMax;
         this.name = name;
-        this.headQ = new LinkedList();
-        this.tailQ = new DiskQueue(dir, name, reuse);
+        headQ = new MemQueue();
+        tailQ = new DiskQueue(dir, name);
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
         logger.finest(name+"("+length()+"): "+o);
         if (length()<headMax) {
             fillHeadQ();
-            headQ.addLast(o);
+            headQ.enqueue(o);
         } else {
             tailQ.enqueue(o);
         }
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
         return length()==0;
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
-        Object retObj = null;
         if (headQ.isEmpty()) {
-            // batch fill head if possible
             fillHeadQ();
         }
-        if (headQ.isEmpty()) {
-            // if still no memory head, get from backing
-            retObj = backingDequeue();
-        } else {
-            // get from memory head where possible
-            retObj = headQ.removeFirst();
-        }
-        logger.finest(name+"("+length()+"): "+retObj);
-        backingUpdate();
-        return retObj;
+        Object o = headQ.dequeue();
+        logger.finest(name+"("+length()+"): "+o);
+        return o;
     }
 
-    protected void backingUpdate() {
-        if(canDiscardBacking()) {
-            discardBacking();
+    /**
+     *
+     */
+    private void fillHeadQ() {
+        while (headQ.length()<headMax && tailQ.length()>0) {
+            headQ.enqueue(tailQ.dequeue());
         }
     }
 
-    /**
-     * 
-     */
-    protected void discardBacking() {
-        // Flush out the items on disk and close the
-        // files to free up file handles.
-        fillHeadQ();
-        if(tailQ.isEmpty()){
-            tailQ.release();
-        }
-    }
-
-    /**
-     * @return
-     */
-    protected boolean canDiscardBacking() {
-        // Check if less then a quarter of what can fit in the memory
-        // cache is left in the queue.
-        return length() <= headMax * DISCARD_BACKING_THRESHOLD
-                && tailQ.isInitialized();
-    }
-
-    protected void fillHeadQ() {
-        while (headQ.size()<headTargetSize() && headQ.size()<length()) {
-            headQ.addLast(backingDequeue());
-        }
-     }
-
-    /**
-     * @return
-     */
-    protected Object backingDequeue() {
-        return tailQ.dequeue();
-    }
-
-    /**
-     * @return
-     */
-    protected int headTargetSize() {
-        return headMax;
-    }
-
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-        return headQ.size()+tailQ.length();
+        return headQ.length()+tailQ.length();
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#release()
      */
     public void release() {
         tailQ.release();
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
-    	if(headQ.isEmpty()){
-    		fillHeadQ();
-    	} 
-    	return headQ.getFirst();
+         return headQ.peek();
     }
 
-    /**
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         if(inCacheOnly){
             // The headQ is a memory based structure and
             // that the tailQ is a disk based structure
-            return headQ.iterator();
+            return headQ.getIterator(true);
         } else {
             // Create and return a composite iterator over the two queues.
             Iterator it = new CompositeIterator(
-                    headQ.iterator(),
+                    headQ.getIterator(false),
                     tailQ.getIterator(false));
             
             return it;
         }
     }
 
-    /**
-     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public long deleteMatchedItems(Predicate matcher) {
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
         long numberOfDeletes = 0;
-        long oldSize = headQ.size();
-        CollectionUtils.filter(headQ,new Inverter(matcher));
-        numberOfDeletes += oldSize-headQ.size();
+        numberOfDeletes += headQ.deleteMatchedItems(matcher);
         numberOfDeletes += tailQ.deleteMatchedItems(matcher);
         return numberOfDeletes;
-    }
-
-    /**
-     * Set the maximum number of items to keep in memory
-     * at the structure's top. If more than that number are
-     * already in memory, they will remain in memory until 
-     * dequeued, and thereafter the max will not be exceeded.
-     * 
-     * @param hm
-     */
-    public void setHeadMax(int hm) {
-        headMax = hm;
     }
 
 }

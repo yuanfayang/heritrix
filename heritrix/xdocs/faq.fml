@@ -36,55 +36,6 @@ Eventually. For now, the crawler is still in early development, and only if you 
     </faq>
 
   </part>
-  <part id="problems">
-    <title>Common Problems</title>
-    <faq id="toomanyopenfiles">
-      <question>Why do I get
-      <i>java.io.FileNotFoundException...(Too many open files)</i>?
-      </question>
-      <answer>
-      <p>On linux the usual upper bound is 1024 file descriptors per
-      process.  To change this upper bound, there's a couple of things
-      you can do.</p>  
-      <p>If running the crawler as non-root (recommended), 
-      you can configure limits in 
-      <code>/etc/security/limits.conf</code>. For example you can
-      setup open files limit for all users in webcrawler group as:
-<source>
-# Each line describes a limit for a user in the form:
-#
-# domain    type    item    value
-#
-@webcrawler     hard    nofile  32768
-</source>
-      </p>
-      <p>Otherwise, running as root, you can do the following:
-    <code># (ulimit -n 4096; JAVA_OPTS=-Xmx320 bin/heritrix -p 9876)</code>
-        to up the ulimit for the heritrix process only.
-      </p>
-      <p>Below is a rough accounting of FDs used in heritrix.</p>
-      <p>In Heritrix, the number of concurrent threads is configurable.  The
-      default frontier implementation allocates a thread per server.  Per
-      server, the frontier keeps a disk-backed queue.  Disk-backed queues
-      maintain two backing files (One to read from while the other is
-      being written to).  So, per thread there will be at least two
-      file descriptors occupied.</p>
-      <p>Apart from the above per thread FD cost, there is 
-      a set FD cost instantiating the crawler:
-      <ul>
-      <li>The JVM, its native shared libs and jars count for about 40
-      FDs.</li>
-      <li>There are about 20 or so heritrix jars and 2 webapps.
-      </li>
-      <li>There are about 10-20 heritrix logging files counting
-      counting lock files.</li>
-      <li>Miscellaneous sockets, /dev/null and stderr/stdout make
-      for 10 or 20 more FDs.</li>
-          </ul>
-      </p>
-      </answer>
-      </faq>
-  </part>
 
   <part id="references">
     <title>References</title>

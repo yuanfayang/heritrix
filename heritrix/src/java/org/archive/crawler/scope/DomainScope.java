@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
@@ -71,8 +72,7 @@ public class DomainScope extends CrawlScope {
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
     public static final String ATTR_ADDITIONAL_FOCUS_FILTER = 
         "additionalScopeFocus";
-    public static final String DOT = ".";
-    
+
     Filter additionalFocusFilter;
     Filter transitiveFilter;
 
@@ -81,10 +81,10 @@ public class DomainScope extends CrawlScope {
         setDescription(
             "A scope for domain crawls. Crawls made with this scope will be " +
             "limited to the domain of it's seeds. It will however reach " +
-            "subdomains of the seeds' original domains. www[#].host is " +
-            "considered to be the same as host.");
+            "subdomains of the seeds' original domains. www[#].host is considered " +
+            "to be the same as host.");
 
-        this.additionalFocusFilter = (Filter) addElementToDefinition(
+        additionalFocusFilter = (Filter) addElementToDefinition(
                 new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
 
         this.transitiveFilter = (Filter) addElementToDefinition(
@@ -100,8 +100,6 @@ public class DomainScope extends CrawlScope {
     }
 
     /**
-     * Check if an URI is part of this scope.
-     * 
      * @param o An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
@@ -123,8 +121,7 @@ public class DomainScope extends CrawlScope {
             candidateDomain = u.getHostBasename();
         }
         catch (URIException e1) {
-            logger.severe(
-                "UURI getHostBasename failed for candidate URI: " + u);
+            logger.severe("Failed get host from " + u);
         }        
         if (candidateDomain == null) {
             // either an opaque, unfetchable, or unparseable URI
@@ -139,7 +136,7 @@ public class DomainScope extends CrawlScope {
                     seedDomain = s.getHostBasename();
                 }
                 catch (URIException e) {
-                    logger.severe("UURI getHostBasename failed for seed: " + s);
+                    logger.severe("Failed get host: " + s);
                 }
                 if (seedDomain == null) {
                     // GetHost can come back null.  See bug item 
@@ -152,9 +149,10 @@ public class DomainScope extends CrawlScope {
                     return true;
                 }
 
-                // Hosts are not same. Adjust seed basename to check if
-                // candidate domain ends with .seedDomain
-                seedDomain = DOT + seedDomain;               
+                // Hosts are not same. Now we can adjust seed basename to 
+                // include leading dot.
+                seedDomain = "." + seedDomain;
+                
                 if (seedDomain.regionMatches(0, candidateDomain,
                     candidateDomain.length() - seedDomain.length(),
                     seedDomain.length())) {
@@ -166,7 +164,7 @@ public class DomainScope extends CrawlScope {
         // if none found, fail
         return false;
     }
-    
+ 
     protected boolean additionalFocusAccepts(Object o) {
         return additionalFocusFilter.accepts(o);
     }

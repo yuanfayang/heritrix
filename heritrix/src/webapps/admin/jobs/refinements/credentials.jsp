@@ -11,7 +11,7 @@
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.CredentialStore" %>
-<%@page import="org.archive.crawler.settings.refinements.*"%>
+<%@page import="org.archive.crawler.datamodel.settings.refinements.*"%>
 
 <%@include file="/include/jobcredentials.jsp"%>
 
