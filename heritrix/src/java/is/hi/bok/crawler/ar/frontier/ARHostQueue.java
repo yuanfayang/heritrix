@@ -821,11 +821,8 @@ public class ARHostQueue implements ARAttributeConstants {
             if(isBusy()){
                 state = HQSTATE_BUSY;
             } else {
-                //System.out.println("nextReadyTime " + nextReadyTime);
                 long currentTime = System.currentTimeMillis();
-                //System.out.println("currentTime   " + currentTime);
                 long wakeTime = getEarliestWakeUpTimeSlot();
-                //System.out.println("wakeTime      " + wakeTime);
                 
                 if(wakeTime > currentTime || nextReadyTime > currentTime){
                     state = HQSTATE_SNOOZED;

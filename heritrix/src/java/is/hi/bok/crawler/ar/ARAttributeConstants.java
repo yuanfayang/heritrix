@@ -42,5 +42,6 @@ public interface ARAttributeConstants {
     public static final String A_WAIT_INTERVAL = "wait-interval";
     public static final String A_NUMBER_OF_VISITS = "number-of-visits";
     public static final String A_NUMBER_OF_VERSIONS = "number-of-versions";
+    public static final String A_FETCH_OVERDUE = "fetch-overdue";
 
 }
