@@ -47,8 +47,10 @@ import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
+import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 
@@ -698,10 +700,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return;
         }
         crawling = true;
-        controller.startCrawl();
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         currentJob.setRunning(true);
         currentJob.setStatisticsTracking(controller.getStatistics());
+        controller.startCrawl();
     }
 
     /**
@@ -837,4 +839,76 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return ret;
     }
+    
+    /**
+     * Returns a URIFrontierMarker for the current, paused, job. If there is no
+     * current job or it is not paused null will be returned.
+     * 
+     * @param regexpr
+     *            A regular expression that each URI must match in order to be
+     *            considered 'within' the marker.
+     * @param inCacheOnly
+     *            Limit marker scope to 'cached' URIs.
+     * @return a URIFrontierMarker for the current job.
+     * @see #getPendingURIsList(URIFrontierMarker, int, boolean)
+     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(String,
+     *      boolean)
+     * @see org.archive.crawler.framework.URIFrontierMarker
+     */
+    public URIFrontierMarker getInitialMarker(String regexpr,
+            boolean inCacheOnly) {
+        URIFrontierMarker tmp = null;
+        if (controller != null && controller.isPaused()) {
+            // Ok, get the marker.
+            tmp = controller.getFrontier().getInitialMarker(regexpr,
+                    inCacheOnly);
+        }
+        return tmp;
+    }
+    
+    /**
+     * Returns the frontiers URI list based on the provided marker. This method
+     * will return null if there is not current job or if the current job is
+     * not paused. Only when there is a paused current job will this method
+     * return a URI list.
+     * 
+     * @param marker
+     *            URIFrontier marker
+     * @param numberOfMatches
+     *            maximum number of matches to return
+     * @param verbose
+     *            should detailed info be provided on each URI?
+     * @return the frontiers URI list based on the provided marker
+     * @throws InvalidURIFrontierMarkerException
+     *             When marker is inconsistent with the current state of the
+     *             frontier.
+     * @see #getInitialMarker(String, boolean)
+     * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(URIFrontierMarker,
+     *      int, boolean)
+     * @see org.archive.crawler.framework.URIFrontierMarker
+     */
+    public ArrayList getPendingURIsList(URIFrontierMarker marker,
+            int numberOfMatches, boolean verbose)
+            throws InvalidURIFrontierMarkerException {
+        ArrayList tmp = null;
+        if (controller != null && controller.isPaused()) {
+            // Ok, get the list.
+            tmp = controller.getFrontier().getPendingURIsList(marker,
+                    numberOfMatches, verbose);
+        }
+        return tmp;
+    }
+    
+    /**
+     * Delete any URI from the frontier of the current (paused) job that match
+     * the specified regular expression. If the current job is not paused (or
+     * there is no current job) nothing will be done.
+     * @param regexpr Regular expression to delete URIs by.
+     */
+    public void deleteURIsFromPending(String regexpr){
+        if(controller != null && controller.isPaused()){
+            controller.getFrontier().deleteURIsFromPending(regexpr);
+        }
+    }
+
 }

@@ -29,8 +29,6 @@ package org.archive.crawler.extractor;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.TextUtils;
 
@@ -85,7 +83,8 @@ public class ExtractorHTML2 extends ExtractorHTML {
      */
     public void innerProcess(CrawlURI curi) {
 
-        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+        if (!curi.isHttpTransaction())
+        {
             return;
         }
 
@@ -97,16 +96,17 @@ public class ExtractorHTML2 extends ExtractorHTML {
             }
         }
 
-        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-        Header contentType = get.getResponseHeader("Content-Type");
-        if ((contentType==null)||(!contentType.getValue().startsWith("text/html"))) {
+        String contentType = curi.getContentType();
+        if ((contentType == null) || (!contentType.startsWith("text/html")))
+        {
             // nothing to extract for other types here
             return;
         }
 
         numberOfCURIsHandled++;
 
-        CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
+        CharSequence cs =
+            curi.getHttpRecorder().getRecordedInput().getCharSequence();
 
         if (cs==null) {
             // TODO: note problem

@@ -29,8 +29,6 @@ package org.archive.crawler.extractor;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -82,17 +80,14 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-        if (!curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+        if (!curi.isHttpTransaction()) {
             return;
         }
 
-        GetMethod get =
-            (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
-        Header contentType = get.getResponseHeader("Content-Type");
-        if ((contentType == null)) {
+        if ((curi.getContentType() == null)) {
             return;
         }
-        String mimeType = contentType.getValue();
+        String mimeType = curi.getContentType();
         if ((mimeType.toLowerCase().indexOf("css") < 0)
             && (!curi.getURIString().toLowerCase().endsWith(".css"))) {
             return;
@@ -100,7 +95,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         numberOfCURIsHandled++;
 
         CharSequence cs =
-            get.getHttpRecorder().getRecordedInput().getCharSequence();
+            curi.getHttpRecorder().getRecordedInput().getCharSequence();
 
         if (cs == null) {
             // TODO: note problem

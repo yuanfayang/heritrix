@@ -74,7 +74,7 @@
 								<b>Used memory:</b>&nbsp;
 							</td>
 							<td>
-								<%=(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024%> Kb
+								<%=(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024%> KB
 							</td>
 						</tr>
 						<tr>
@@ -82,7 +82,7 @@
 								<b>Heap size:</b>&nbsp;
 							</td>
 							<td>
-								<%=(Runtime.getRuntime().totalMemory())/1024%> Kb
+								<%=(Runtime.getRuntime().totalMemory())/1024%> KB
 							</td>
 						</tr>
 						<tr>
@@ -90,7 +90,7 @@
 								<b>Max heap size:</b>&nbsp;
 							</td>
 							<td>
-								<%=(Runtime.getRuntime().maxMemory())/1024%> Kb
+								<%=(Runtime.getRuntime().maxMemory())/1024%> KB
 							</td>
 						</tr>
 						<tr>
@@ -246,7 +246,11 @@
 			out.println(" | <a href='javascript:doTerminateCurrentJob()'>Terminate current job</a> | ");
 			if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))
 			{
-				out.println("<a href='/admin/console/action.jsp?action=resume'>Resume current job</a> ");
+                out.println("<a href='/admin/console/action.jsp?action=resume'>Resume current job</a>");
+	            if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED))
+	            {
+                    out.println(" | <a href='/admin/console/frontier.jsp'>Inspect frontier URIs</a> ");
+                }
 			}
 			else
 			{

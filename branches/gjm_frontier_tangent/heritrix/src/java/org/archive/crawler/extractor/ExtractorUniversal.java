@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 
 import javax.management.AttributeNotFoundException;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -51,15 +50,18 @@ import org.archive.util.TextUtils;
  *
  * @see org.archive.crawler.datamodel.CrawlURI#addSpeculativeEmbed(String)
  */
-public class ExtractorUniversal extends Processor implements CoreAttributeConstants{
-
+public class ExtractorUniversal extends Processor
+    implements CoreAttributeConstants
+{
     private static String ATTR_MAX_DEPTH_BYTES = "max-depth-bytes";
-    /** Default value for how far into an unknown document we should scan - 10k<br>
-     *  A value of 0 or lower will disable this.
+    
+    /** Default value for how far into an unknown document we should scan
+     * - 10k. A value of 0 or lower will disable this.
      */
     private static long DEFAULT_MAX_DEPTH_BYTES = 10240;
 
     private static String ATTR_MAX_URL_LENGTH = "max-url-length";
+    
     /** Maximum length for a URI that we try to match.*/
     private static long DEFAULT_MAX_URL_LENGTH = 2083;
 
@@ -348,13 +350,13 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      */
     public ExtractorUniversal(String name) {
         super(name, "Link extraction on unknown file types");
-        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES, "How deep to look into files for URI strings, in bytes", new Long(DEFAULT_MAX_DEPTH_BYTES)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH, "Max length of URIs in bytes", new Long(DEFAULT_MAX_URL_LENGTH)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES,
+            "How deep to look into files for URI strings, in bytes",
+            new Long(DEFAULT_MAX_DEPTH_BYTES)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH,
+            "Max length of URIs in bytes", new Long(DEFAULT_MAX_URL_LENGTH)));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
-     */
     protected void innerProcess(CrawlURI curi) {
 
         if(curi.hasBeenLinkExtracted()){
@@ -362,24 +364,28 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             return;
         }
 
-        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+        if (!curi.isHttpTransaction())
+        {
             // We only handle HTTP at the moment.
             return;
         }
+        
         numberOfCURIsHandled++;
 
-        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-
-        try{
-            InputStream instream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
+        try
+        {
+            InputStream instream = curi.getHttpRecorder().getRecordedInput().
+                getContentReplayInputStream();
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
             long counter = 0;
-            long maxdepth = ((Long)getAttribute(ATTR_MAX_DEPTH_BYTES,curi)).longValue();
+            long maxdepth = ((Long)getAttribute(ATTR_MAX_DEPTH_BYTES,curi)).
+                longValue();
             if(maxdepth<=0){
                 maxdepth = Long.MAX_VALUE;
             }
-            long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH,curi)).longValue();
+            long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH,curi)).
+                longValue();
             boolean foundDot = false;
             while(ch != -1 && ++counter <= maxdepth){
 
@@ -397,18 +403,22 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
                     lookat.append((char)ch);
                 } else if(lookat.length() > 3 && foundDot) {
                     // It takes a bare mininum of 4 characters to form a URL
-                    // Since we have at least that many let's try link extraction.
+                    // Since we have at least that many let's try link
+                    // extraction.
                     String newURL = lookat.toString();
                     if(looksLikeAnURL(newURL))
                     {
                         // Looks like we found something.
 
-                        // Let's start with a little cleanup as we may have junk in front or at the end.
+                        // Let's start with a little cleanup as we may have
+                        // junk in front or at the end.
                         if(newURL.toLowerCase().indexOf("http") > 0){
-                            // Got garbage in front of the protocol. Get rid of it.
-                            newURL = newURL.substring(newURL.toLowerCase().indexOf("http"));
+                            // Got garbage in front of the protocol. Remove.
+                            newURL = newURL.substring(newURL.toLowerCase().
+                                indexOf("http"));
                         }
-                        while(newURL.substring(newURL.length()-1).equals(".")){
+                        while(newURL.substring(newURL.length()-1).equals("."))
+                        {
                             // URLs can't end with a dot. Strip it off.
                             newURL = newURL.substring(0,newURL.length()-1);
                         }
@@ -444,7 +454,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      * within the string (possible at the end but not at the beginning) a TLD
      * (Top Level Domain) preceded by a dot.
      *
-     * @param lookat The string to examine in an effort to determine if it could be a URL
+     * @param lookat The string to examine in an effort to determine if it
+     * could be a URL
      * @return True if the string matches the above criteria for a URL.
      */
     private boolean looksLikeAnURL(String lookat) {
@@ -461,7 +472,9 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         if(dot!=0){//An URL can't start with a .tld.
             while(dot != -1 && dot < lookat.length()){
                 lookat = lookat.substring(dot+1);
-                if(isTLD(lookat.substring(0,lookat.length()<=6?lookat.length():6))){
+                if (isTLD(lookat.substring(0, lookat.length() <= 6?
+                    lookat.length(): 6)))
+                {
                     return true;
                 }
                 dot = lookat.indexOf(".");
@@ -474,7 +487,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     /**
      * Checks if a string is equal to known Top Level Domain. The string may
      * contain additional characters <i>after</i> the TLD but not before.
-     * @param potentialTLD The string (usually 2-6 chars) to check if it starts with a TLD.
+     * @param potentialTLD The string (usually 2-6 chars) to check if it starts
+     * with a TLD.
      * @return True if the given string starts with the name of a known TLD
      *
      * @see #TLDs
@@ -493,7 +507,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     /**
      * Determines if a char (as represented by an int in the range of 0-255) is
      * a character (in the Ansi character set) that can be present in a URL.
-     * This method takes a <b>strict</b> approach to what characters can be in a URL.
+     * This method takes a <b>strict</b> approach to what characters can be in
+     * a URL.
      * <p>
      * The following are considered to be 'URLable'<br>
      * <ul>
@@ -525,8 +540,10 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      */
     public String report() {
         StringBuffer ret = new StringBuffer();
-        ret.append("Processor: org.archive.crawler.extractor.ExtractorUniversal\n");
-        ret.append("  Function:          Link extraction on unknown file types.\n");
+        ret.append("Processor: org.archive.crawler.extractor." +
+            "ExtractorUniversal\n");
+        ret.append("  Function:          Link extraction on unknown file" +
+            " types.\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 

@@ -64,7 +64,7 @@ public class Alert {
      * Create a new alert
      * @param title short descriptive string that represents a title for the alert
      * @param body the alert message
-     * @param an error associated with the alert. It's content will be written to the body
+     * @param error an error associated with the alert. It's content will be written to the body
      */
     public Alert(String title, String body, Throwable error){
         alertTitle = title;

@@ -30,6 +30,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.TextUtils;
 
 /**
  * If set to recheck the crawl's scope, gives a yes/no on whether
@@ -42,70 +43,74 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class Preselector extends Processor implements FetchStatusCodes {
-    private boolean recheckScope;
 
-    private static String ATTR_RECHECK_SCOPE="scope";
-
-//    private static String XP_MAX_LINK_DEPTH="params/@max-link-depth";
-//    private static String XP_MAX_EMBED_DEPTH="params/@max-embed-depth";
-//    private int maxLinkDepth = -1;
-//    private int maxEmbedDepth = -1;
-
+    public static String ATTR_RECHECK_SCOPE = "recheck-scope";
+    public static String ATTR_BLOCK_ALL = "block-all";
+    public static String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
+    
     /**
      * @param name
      */
     public Preselector(String name) {
         super(name, "Preselector");
-        addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE, "Recheck scope", new Boolean(false)));
+        addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE,
+                "Recheck if uri is in scope. This is meaningfull if the scope" +
+                " is altered during a crawl. URIs are checked against the" +
+                " scope when they are added to queues. Setting this value to" +
+                " true forces the URI to be checked against the scope when it" +
+                " is comming out of the queue, possibly after the scope is" +
+                " altered.", new Boolean(false)));
+        
+        addElementToDefinition(new SimpleType(ATTR_BLOCK_ALL,
+                "Block all uris from beeing processed. This is most likely to" +
+                " be used in overrides to easily reject certain hosts from" +
+                " beeing processed.", new Boolean(false)));
+
+        addElementToDefinition(new SimpleType(ATTR_BLOCK_BY_REGEXP,
+                "Block all uris matching the regular expression from beeing" +
+                " processed.", ""));
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
      */
     protected void innerProcess(CrawlURI curi) {
+        // Check if uris should be blocked
         try {
-            recheckScope = ((Boolean) getAttribute(ATTR_RECHECK_SCOPE, curi)).booleanValue();
-        } catch (AttributeNotFoundException e) {
-            recheckScope = false;
-        }
-        if (recheckScope) {
-            CrawlScope scope = getController().getScope();
-            if(scope.accepts(curi)) {
-                return;
+            if (((Boolean) getAttribute(ATTR_BLOCK_ALL, curi)).booleanValue()) {
+                curi.setFetchStatus(S_BLOCKED_BY_USER);
+                curi.skipToProcessorChain(getController().getPostprocessorChain());
             }
-            // scope rejected
-            curi.setFetchStatus(S_OUT_OF_SCOPE);
-            curi.skipToProcessor(getController().getPostprocessor());
+        } catch (AttributeNotFoundException e) {
+            // Act as attribute was false, that is: do nothing.
         }
 
+        // Check if blocked by regular expression
+        try {
+            String regexp = (String) getAttribute(ATTR_BLOCK_BY_REGEXP, curi);
+            if (regexp != null && !regexp.equals("")) {
+                if (TextUtils.matches(regexp, curi.getURIString())) {
+                    curi.setFetchStatus(S_BLOCKED_BY_USER);
+                    curi.skipToProcessorChain(getController().getPostprocessorChain());
+                }
+            }
+        } catch (AttributeNotFoundException e) {
+            // Act as regexp was null, that is: do nothing.
+        }
 
-//        super.innerProcess(curi);
-//
-//        // check for too-deep
-//        if(maxLinkDepth>=0 && curi.getLinkHopCount()>maxLinkDepth) {
-//            curi.setFetchStatus(S_TOO_MANY_LINK_HOPS);
-//            curi.cancelFurtherProcessing();
-//            return;
-//        }
-//        if(maxEmbedDepth>=0 && curi.getEmbedHopCount()>maxEmbedDepth) {
-//            curi.setFetchStatus(S_TOO_MANY_EMBED_HOPS);
-//            curi.cancelFurtherProcessing();
-//            return;
-//        }
+        // Possibly recheck scope
+        try {
+            if (((Boolean) getAttribute(ATTR_RECHECK_SCOPE, curi)).booleanValue()) {
+                CrawlScope scope = getController().getScope();
+                if(!scope.accepts(curi)) {
+                    // scope rejected
+                    curi.setFetchStatus(S_OUT_OF_SCOPE);
+                    curi.skipToProcessorChain(getController().getPostprocessorChain());
+                }
+            }
+        } catch (AttributeNotFoundException e) {
+            // Act as attribute was false, that is: do nothing.
+        }
     }
-
-//    /* (non-Javadoc)
-//     * @see org.archive.crawler.framework.Processor#innerRejectProcess(org.archive.crawler.datamodel.CrawlURI)
-//     */
-//    protected void innerRejectProcess(CrawlURI curi) {
-//        super.innerRejectProcess(curi);
-//        // filter-rejection means out-of-scope for everything but embeds
-//        if (curi.getEmbedHopCount() < 1) {
-//            curi.setFetchStatus(S_OUT_OF_SCOPE);
-//            curi.cancelFurtherProcessing();
-//        } else {
-//            // never mind; scope filters don't apply
-//        }
-//    }
 
 }

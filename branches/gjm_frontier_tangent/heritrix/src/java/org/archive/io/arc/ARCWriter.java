@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.ReplayInputStream;
@@ -99,6 +100,12 @@ import org.archive.util.DevUtils;
 public class ARCWriter
     implements ARCConstants
 {
+    /**
+     * Logger.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriter");
+    
     /**
      * Max size we allow ARC files to be (bytes).
      *
@@ -251,12 +258,13 @@ public class ARCWriter
     {
         close();
         String now = ArchiveUtils.get14DigitDate();
-        String name = prefix + getUniqueBasename(now) + '.' +
+        String name = this.prefix + getUniqueBasename(now) + '.' +
             ARC_FILE_EXTENSION +
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
-        this.arcFile = new File(arcsDir, name);
+        this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
         this.out.write(generateARCFileMetaData(now));
+        logger.fine("Created new arc file: " + this.arcFile.getAbsolutePath());
     }
 
     /**

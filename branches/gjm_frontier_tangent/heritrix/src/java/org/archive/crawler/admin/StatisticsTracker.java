@@ -356,7 +356,7 @@ public class StatisticsTracker extends AbstractTracker{
     
     /**
      * Returns the accumulated number of bytes from files of a given file type.
-     * @param host name of the mime type
+     * @param filetype name of the mime type
      * @return the accumulated number of bytes from files of a given mime type
      */
     public long getBytesPerFileType(String filetype){
@@ -607,7 +607,7 @@ public class StatisticsTracker extends AbstractTracker{
             Iterator tmp = controller.getScope().getSeedsIterator();
             allSeeds = new Vector();
             while(tmp.hasNext()){
-                String s = ((UURI)tmp.next()).getUriString();
+                String s = ((UURI)tmp.next()).getURIString();
                 allSeeds.add(s);
             }
         }
