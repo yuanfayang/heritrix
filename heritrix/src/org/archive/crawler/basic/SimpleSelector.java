@@ -95,7 +95,6 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			
 	}
 
-
 	/**
 	 * @param curi
 	 */
@@ -103,6 +102,32 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		store.insertSnoozed(curi,retryDelay);
 	}
 
+	/**
+	 * Has the CrawlURI suffered a failure which completes
+	 * its processing?
+	 * 
+	 * @param curi
+	 * @return
+	 */
+	private boolean isDispositiveFailure(CrawlURI curi) {
+		switch(curi.getFetchStatus()){
+
+			case S_DOMAIN_UNRESOLVABLE:
+				// network errors; perhaps some of these 
+				// should be scheduled for retries
+			case S_ROBOTS_PRECLUDED:
+				// they don't want us to have it	
+			case S_INTERNAL_ERROR:
+				// something unexpectedly bad happened
+			case S_UNFETCHABLE_URI:
+				return true;
+			
+			case S_UNATTEMPTED:					
+				// this uri is virgin, let it carry on
+			default:
+				return false;
+		}
+	}
 
 	/**
 	 * @param curi
@@ -185,6 +210,10 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		
 		// note that CURI has passed out of scheduling
 		curi.setStoreState(URIStoreable.FINISHED);
+		if (curi.getDontRetryBefore()<0) {
+			// if not otherwise set, retire this URI forever
+			curi.setDontRetryBefore(Long.MAX_VALUE);
+		}
 		curi.stripToMinimal();
 	}
 
@@ -226,33 +255,6 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	}
 
 
-	/**
-	 * Has the CrawlURI suffered a failure which completes
-	 * its processing?
-	 * 
-	 * @param curi
-	 * @return
-	 */
-	private boolean isDispositiveFailure(CrawlURI curi) {
-		switch(curi.getFetchStatus()){
-
-			case S_CONNECT_FAILED:					
-			case S_CONNECT_LOST:
-			case S_DOMAIN_UNRESOLVABLE:
-				// network errors; perhaps some of these 
-				// should be scheduled for retries
-			case S_ROBOTS_PRECLUDED:
-			    // they don't want us to have it	
-			case S_INTERNAL_ERROR:
-				// something unexpectedly bad happened
-				return true;
-			
-			case S_UNATTEMPTED:					
-				// this uri is virgin, let it carry on
-			default:
-				return false;
-		}
-	}
 
 
 	protected void handleLinks(CrawlURI curi) {
@@ -369,6 +371,10 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				array);
 		}
 		curi.setStoreState(URIStoreable.FINISHED);
+		if (curi.getDontRetryBefore()<0) {
+			// if not otherwise set, retire this URI forever
+			curi.setDontRetryBefore(Long.MAX_VALUE);
+		}
 		curi.stripToMinimal();
 	}
 
