@@ -199,15 +199,16 @@ public class ARCWriterProcessor extends Processor
         } catch (AttributeNotFoundException e) {
             logger.warning(e.getLocalizedMessage());
         }
-
+        
         try {
             // Set up the pool of ARCWriters.
             this.pool =
                 new ARCWriterPool(this.outputDir,
                     this.arcPrefix,
+                    this.arcSuffix,
                     this.useCompression,
                     this.arcMaxSize,
-                    this.arcSuffix,
+                    null,
                     this.poolMaximumActive,
                     this.poolMaximumWait);
             
