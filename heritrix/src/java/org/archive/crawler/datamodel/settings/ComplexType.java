@@ -55,6 +55,8 @@ public abstract class ComplexType implements DynamicMBean, Type {
     private final List definition = new ArrayList();
     protected final Map definitionMap = new HashMap();
     private boolean initialized = false;
+    /** Should this ComplexType be serialized to persistent storage */
+    private boolean transitive = false;
 
     /**
      * Private constructor to make sure that no one 
@@ -255,13 +257,28 @@ public abstract class ComplexType implements DynamicMBean, Type {
 
     public void setAttribute(CrawlerSettings settings, Attribute attribute)
         throws InvalidAttributeValueException, AttributeNotFoundException {
+            setAttribute(settings, attribute.getName(), attribute.getValue());
+    }
+
+    public void setAttribute(Type element)
+        throws AttributeNotFoundException, InvalidAttributeValueException {
+        setAttribute(settingsHandler.getSettingsObject(null), element);
+    }
+
+    public void setAttribute(CrawlerSettings settings, Type element)
+        throws InvalidAttributeValueException, AttributeNotFoundException {
+            setAttribute(settings, element.getName(), element);
+    }
+
+    private void setAttribute(CrawlerSettings settings, String name, Object value)
+        throws InvalidAttributeValueException, AttributeNotFoundException {
         DataContainer data = getDataContainer(settings);
 
-        data.put(attribute.getName(), attribute.getValue());
+        data.put(name, value);
 
-        if (attribute.getValue() instanceof ComplexType) {
-            ComplexType object = (ComplexType) attribute.getValue();
-            setupVaiables((ComplexType) attribute.getValue());
+        if (value instanceof ComplexType) {
+            ComplexType object = (ComplexType) value;
+            setupVaiables((ComplexType) value);
             object.initializeComplexType(settings);
         }
 
@@ -283,10 +300,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
                 if (parentData == null) {
                     settings.addModule((CrawlerModule) this);
                 } else {
-                    globalSettings().getData(
-                        parent.getAbsoluteName()).copyAttributeInfo(
-                        getName(),
-                        parentData);
+                    globalSettings().getData(parent.getAbsoluteName()).copyAttributeInfo(getName(), parentData);
                 }
             }
 
@@ -400,17 +414,22 @@ public abstract class ComplexType implements DynamicMBean, Type {
             definitionMap.put(t.getName(), t);
             addElement(settings, t);
         }
-        initialize(settings);
+        earlyInitialize(settings);
         initialized = true;
     }
     
     /** This method can be overridden in subclasses to do local
      * initialisation.
      * 
+     * This method is run before the class has been updated with
+     * information from settings files. That implies that if you
+     * call getAttribute inside this method you will only get the
+     * default values.
+     * 
      * @param settings the CrawlerSettings object for which this
      *        complex type is defined.
      */
-    public void initialize(CrawlerSettings settings) {
+    public void earlyInitialize(CrawlerSettings settings) {
     }
 
     /** Returns true if this ComplexType is initialized.
@@ -424,4 +443,19 @@ public abstract class ComplexType implements DynamicMBean, Type {
     public Object[] getLegalValues() {
         return null;
     }
+    
+    /**
+     * @return
+     */
+    public boolean isTransitive() {
+        return transitive;
+    }
+
+    /**
+     * @param b
+     */
+    public void setTransitive(boolean b) {
+        transitive = b;
+    }
+
 }
