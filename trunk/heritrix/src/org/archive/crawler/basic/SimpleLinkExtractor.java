@@ -61,32 +61,39 @@ public class SimpleLinkExtractor extends Processor implements CoreAttributeConst
 		}
 		// extract BASE HREF
 		Pattern baseExtractor = Pattern.compile(
-			"(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|([\\S&&[^>]]*))(?:[^>]+)*>");
+			"(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|([\\S&&[^>]]*))(?:[^>]+)*>");
 		Matcher b = baseExtractor.matcher(cb);
 		if(b.find()) {
 			String baseHref;
-			if(b.group(1)!=null) {
-				// quoted href
+			if (b.group(1)!=null) {
+				// "" quoted attribute
 				baseHref = b.group(1);
-			} else {
+			} else if (b.group(2)!=null) {
+				//   quoted attribute
 				baseHref = b.group(2);
+			} else {
+				// unquoted attribute
+				baseHref = b.group(3);
 			}
 			curi.getAList().putString("html-base-href",baseHref);
 		}
 		
 		// extract links
 		Pattern linkExtractor = Pattern.compile(
-		 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|([\\S&&[^>]]*))(?:[^>]+)*>"
+		 "(?i)<[^<]+\\s(?:href)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|([\\S&&[^>]]*))(?:[^>]+)*>"
 		);
 		Matcher l = linkExtractor.matcher(cb);
 		while(l.find()) {
 			String match;
 			if (l.group(1)!=null) {
-				// quoted attribute
+				// "" quoted attribute
 				match = l.group(1);
+			} else if (l.group(2)!=null) {
+				//   quoted attribute
+				match = l.group(2);
 			} else {
 				// unquoted attribute
-				match = l.group(2);
+				match = l.group(3);
 			}
 			links.add(match);
 		}
@@ -97,17 +104,20 @@ public class SimpleLinkExtractor extends Processor implements CoreAttributeConst
 
 		// extract embeds
 		Pattern embedExtractor = Pattern.compile(
-		 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|([\\S&&[^>]]*))(?:[^>]+)*>"
+		 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|([\\S&&[^>]]*))(?:[^>]+)*>"
 		);
 		Matcher e = embedExtractor.matcher(cb);
 		while(e.find()) {
 			String match;
 			if (e.group(1)!=null) {
-				// quoted attribute
+				// "" quoted attribute
 				match = e.group(1);
+			} else if (e.group(2)!=null) {
+				//   quoted attribute
+				match = e.group(2);
 			} else {
 				// unquoted attribute
-				match = e.group(2);
+				match = e.group(3);
 			}
 			embeds.add(match);
 		}
