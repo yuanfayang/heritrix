@@ -37,6 +37,8 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	SimpleStore store;
 	ArrayList filters = new ArrayList();
 	private int maxLinkDepth = -1;
+	private int maxEmbedDepth = -1;
+
 	private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 	private int maxRetries = 3;
 	private int retryDelay = 15000;
@@ -79,13 +81,15 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 					handleHttpHeaders(curi);
 				}
 				// handle embeds 
-				if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+				if ((maxEmbedDepth >= 0)
+				    && (curi.getEmbedHopCount()<maxEmbedDepth)
+					&& curi.getAList().containsKey(A_HTML_EMBEDS)) {
 					handleEmbeds(curi);
 				}
 				// handle links, if not too deep
-				if ((maxLinkDepth >= 0)
-					 && (curi.getAList().getInt(A_DISTANCE_FROM_SEED) < maxLinkDepth)
-					 && curi.getAList().containsKey(A_HTML_LINKS)) {
+				if (curi.getAList().containsKey(A_HTML_LINKS)
+				    && ((maxLinkDepth == -1)
+				        || (curi.getLinkHopCount() < maxLinkDepth))) {
 					handleLinks(curi);
 				}
 				
@@ -173,7 +177,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				//if(filtersAccept(u)) {
 					logger.fine("inserting header at head "+u);
 					//store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
-					store.insert(u,curi,0);
+					store.insert(u,curi,true);
 				//}
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, e };
@@ -279,7 +283,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				UURI link = UURI.createUURI(l,curi.getBaseUri());
 				if(filtersAccept(link)) {
 					logger.fine("inserting link "+link+" "+curi.getStoreState());
-					store.insert(link,curi,1);
+					store.insert(link,curi,false);
 				} 
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, l };
@@ -303,7 +307,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				//if(filtersAccept(embed)) {
 					logger.fine("inserting embed at head "+embed);
 					// For now, insert at tail instead of head
-					store.insert(embed,curi,0);
+					store.insert(embed,curi,true);
 					/* 
 					store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
 					*/
@@ -332,7 +336,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			}
 			logger.fine("inserting prereq at head "+prereq);
 			//CrawlURI prereqCuri = store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
-			CrawlURI prereqCuri = store.insert(prereq,curi,0);
+			CrawlURI prereqCuri = store.insert(prereq,curi,false);
 			if (prereqCuri.getStoreState()==URIStoreable.FINISHED) {
 				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
 				failureDisposition(curi);
@@ -417,7 +421,8 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	public void initialize(CrawlController c) {
 		controller = c;
 		store = (SimpleStore)c.getStore();
-		maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value");
+		maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value", maxLinkDepth);
+		maxEmbedDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-embed-depth/@value", maxEmbedDepth);
 	
 		instantiateAllInto(XP_FILTERS,filters);
 		Iterator iter = filters.iterator();

@@ -359,7 +359,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	 * @param embed
 	 * @param i
 	 */
-	public CrawlURI insert(UURI uuri, CrawlURI sourceCuri, int extraHop) {
+	public CrawlURI insert(UURI uuri, CrawlURI sourceCuri, boolean embed) {
 		if(filteredOut(uuri)) return null;
 		CrawlURI curi = (CrawlURI)allCuris.get(uuri);
 		if(curi!=null) {
@@ -376,7 +376,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			curi = new CrawlURI(uuri);
 		}
 		
-		applyCarryforwards(curi,sourceCuri, extraHop );
+		applyCarryforwards(curi,sourceCuri, embed );
 		
 		allCuris.put(uuri,curi);
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
@@ -395,38 +395,31 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	 * @param curi
 	 * @param sourceCuri
 	 */
-	private void applyCarryforwards(CrawlURI curi, CrawlURI sourceCuri, int extraHop) {
-		int newDist = sourceCuri.getAList().getInt("distance-from-seed")+extraHop;
-		if(curi.getAList().containsKey(A_DISTANCE_FROM_SEED)) {
-			int oldDist = curi.getAList().getInt(A_DISTANCE_FROM_SEED);
-			if (oldDist>newDist) {
-				curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
-				curi.setVia(sourceCuri);
-			} // otherwise leave alone
+	private void applyCarryforwards(CrawlURI curi, CrawlURI sourceCuri, boolean embed) {
+		if (embed) {
+			curi.setViaEmbedFrom(sourceCuri);
 		} else {
-			curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
-			curi.setVia(sourceCuri);
+			curi.setViaLinkFrom(sourceCuri);
 		}
 
-		
-		int newChaffness = sourceCuri.getChaffness();
-		if(sourceCuri.getUURI().getUri().getHost()==null ||
-		   sourceCuri.getUURI().getUri().getHost().equals(curi.getUURI().getUri().getHost())) {
-			newChaffness = 0;
-		} else {
-			BitSet scratch = (BitSet) sourceCuri.getFuzzy().clone();
-			scratch.xor(curi.getFuzzy());
-			int fuzzyDiff = scratch.cardinality();
-			if(fuzzyDiff<2) {
-				newChaffness += 1;
-			} else {
-				newChaffness -= 1;
-			}
-		}
-		if(newChaffness<0) {
-			newChaffness = 0;
-		}
-		curi.setChaffness(newChaffness);
+//		int newChaffness = sourceCuri.getChaffness();
+//		if(sourceCuri.getUURI().getUri().getHost()==null ||
+//		   sourceCuri.getUURI().getUri().getHost().equals(curi.getUURI().getUri().getHost())) {
+//			newChaffness = 0;
+//		} else {
+//			BitSet scratch = (BitSet) sourceCuri.getFuzzy().clone();
+//			scratch.xor(curi.getFuzzy());
+//			int fuzzyDiff = scratch.cardinality();
+//			if(fuzzyDiff<2) {
+//				newChaffness += 1;
+//			} else {
+//				newChaffness -= 1;
+//			}
+//		}
+//		if(newChaffness<0) {
+//			newChaffness = 0;
+//		}
+//		curi.setChaffness(newChaffness);
 	}
 
 	/**
