@@ -62,35 +62,6 @@
 			</tr>
 			<tr>
 				<td>
-					<b>Stop crawl after</b>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Maximum time (sec):
-				</td>
-				<td>
-					<input name="<%=SimpleHandler.XP_MAX_TIME%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_TIME)%>" size="<%=iInputSize%>">
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Maximum bytes to download:
-				</td>
-				<td>
-					<input name="<%=SimpleHandler.XP_MAX_BYTES_DOWNLOAD%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_BYTES_DOWNLOAD)%>" size="<%=iInputSize%>">
-				</td>
-			</tr>
-			<tr>
-				<td>
-					Maximum documents to download:
-				</td>
-				<td>
-					<input name="<%=SimpleHandler.XP_MAX_DOCUMENT_DOWNLOAD%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_MAX_DOCUMENT_DOWNLOAD)%>" size="<%=iInputSize%>">
-				</td>
-			</tr>
-			<tr>
-				<td>
 					<b>Politeness</b>
 				</td>
 			</tr>
@@ -157,7 +128,7 @@
 			</tr>
 			<tr>
 				<td>
-					Max length (bytes):
+					Max lenght (bytes):
 				</td>
 				<td>
 					<input name="<%=SimpleHandler.XP_HTTPFETCH_MAX_LENGTH_BYTES%>" value="<%=crawlOrder.getStringAt(SimpleHandler.XP_HTTPFETCH_MAX_LENGTH_BYTES)%>" size="<%=iInputSize%>">

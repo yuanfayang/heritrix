@@ -42,7 +42,8 @@
 			else
 			{
 		%>
-			<iframe name="frmStatus" src="/admin/iframes/xml.jsp?file=<%=cjob.getCrawlOrderFile()%>" width="100%" height="100%" frameborder="0" ></iframe>
+			<p align="left"><a href="javascript:window.close()">Close window</a></p>
+			<iframe name="frmStatus" src="/admin/iframes/xml.jsp?file=<%=cjob.getCrawlOrderFile()%>" width="100%" height="90%" frameborder="0" ></iframe>
 		<%
 			} // End if(cjob==null)else clause
 		%>

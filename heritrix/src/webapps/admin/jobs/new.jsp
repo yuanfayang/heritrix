@@ -24,8 +24,8 @@
 
 	CrawlOrder crawlOrder = handler.getDefaultCrawlOrder();
 	int iInputSize = 50;
-	String title = "New crawl job";
-	int tab = 1;
+	String title = "New job";
+	int navigation = 1;
 %>
 
 <%@include file="/include/head.jsp"%>

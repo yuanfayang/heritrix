@@ -15,12 +15,9 @@
 </seeds>
  
  </scope>
-
+ 
  <behavior 
  	disk-path="disk" 
- 	max-bytes-download="0"
- 	max-document-download="0"
- 	max-time-sec="0"
  	max-toe-threads="100">
    
   <http-headers 

@@ -20,8 +20,8 @@
 	}	
 
 	Vector jobs = handler.getPendingJobs();
-	String title = "Pending crawl jobs";
-	int tab = 1;
+	String title = "Pending jobs";
+	int navigation = 2;
 %>
 
 <%@include file="/include/head.jsp"%>
