@@ -6,17 +6,11 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
 
 /**
@@ -45,15 +39,8 @@ import org.archive.util.DevUtils;
 public abstract class CrawlScope extends Filter {
 	// the xpath to extract seeds from the scope configuration element
 	public static final String XP_SEEDS = "seeds";
-	//  regexp for identifying URIs in seed input data
-	public static final Pattern DEFAULT_SEED_EXTRACTOR = 
-		Pattern.compile("(?i:(http(s)?://)?\\w+\\.\\w+(\\.\\w+)*(:\\d+)?(/\\S*)?)");
 	// a monotonically increasing version number, for scopes that may change
 	int version = 0;
-	// a list of all seeds
-	List seeds;
-	// pattern to extract seeds
-	Pattern seedExtractor = DEFAULT_SEED_EXTRACTOR;
 	// associated CrawlController
 	CrawlController controller;
 	
@@ -81,81 +68,33 @@ public abstract class CrawlScope extends Filter {
 	
 	
 	/**
-	 * Return the full list of seeds in this scope. 
+	 * Return an iterator of the seeds in this scope. The seed
+	 * input is taken from either the configuration file, or the 
+	 * external seed file it specifies.
 	 * 
 	 * @return
 	 */
-	public List getSeeds() {
-		if (seeds != null) {
-			return seeds;
-		}
-		readSeeds();
-		return seeds;
-	}
-
-	/**
-	 * Read seeds from either the configuration file, or the 
-	 * external seed file it specifies. Any lines where the
-	 * first non-whitespace character is '#' are considered
-	 * comments and ignored. 
-	 * 
-	 * Otherwise, anything on the line that looks like a URI or 
-	 * URI fragment (such as a dotted hostname, with or without 
-	 * a path-fragment) will be taken as a URI. If necessary,
-	 * "http://" will be prepended to URI-like strings lacking 
-	 * it. 
-	 */
-	private void readSeeds() {
-		seeds = new ArrayList();
+	public Iterator getSeedsIterator() {
 		try {
-			BufferedReader reader = nodeValueOrSrcReader(XP_SEEDS);
-			String read;
-			while ((read = reader.readLine()) != null) {
-				read = read.trim();
-				if (read.startsWith("#")) {
-					continue;
-				}
-				Matcher m = seedExtractor.matcher(read);
-				while(m.find()) {
-					String candidate = m.group();
-					if(m.group(1)==null) {
-						// naked hostname without scheme
-						candidate = "http://" + candidate;
-					}
-					try {
-						seeds.add(UURI.createUURI(candidate));
-					} catch (URISyntaxException e1) {
-						Object[] array = { null, candidate };
-						controller.uriErrors.log(Level.INFO,"reading seeds: "+e1.getMessage(), array );
-					}
-				}
-			}
-			reader.close();
+			return new SeedsInputIterator(nodeValueOrSrcReader(XP_SEEDS),controller);
 		} catch (IOException e) {
-			DevUtils.warnHandle(e, "throw runtime error? log something?");
+			DevUtils.warnHandle(e,"problem reading seeds");
+			return null;
 		}
 	}
 
-	/**
-	 * Clear the list of seeds. 
-	 * @param list
-	 */
-	public void clearSeeds() {
-		seeds = new ArrayList();
-	}
-
-	/**
-	 * Adds a seed to this scope -- and the associated crawl/frontier.
-	 * 
-	 * TODO determine if this is appropriate place for this
-	 * @param u
-	 */
-	public void addSeed(UURI u){
-		seeds.add(u);
-		CandidateURI caUri = new CandidateURI(u);
-		caUri.setIsSeed(true);
-		controller.getFrontier().schedule(caUri);
-	}
+//	/**
+//	 * Adds a seed to this scope -- and the associated crawl/frontier.
+//	 * 
+//	 * TODO determine if this is appropriate place for this
+//	 * @param u
+//	 */
+//	public void addSeed(UURI u){
+//		seeds.add(u);
+//		CandidateURI caUri = new CandidateURI(u);
+//		caUri.setIsSeed(true);
+//		controller.getFrontier().schedule(caUri);
+//	}
 	
 	/** 
 	 * Returns whether the given object (typically a CandidateURI) falls

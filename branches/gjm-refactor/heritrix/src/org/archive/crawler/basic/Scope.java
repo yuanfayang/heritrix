@@ -6,6 +6,10 @@
  */
 package org.archive.crawler.basic;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.filter.HopsFilter;
 import org.archive.crawler.filter.SeedExtensionFilter;
@@ -50,6 +54,7 @@ public class Scope extends CrawlScope {
 	Filter focusFilter; 
 	Filter transitiveFilter; 
 	Filter excludeFilter;
+	List seeds;
 	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize(org.archive.crawler.framework.CrawlController)
@@ -85,6 +90,17 @@ public class Scope extends CrawlScope {
 			excludeFilter = (Filter) instantiate("exclude");
 		}
 		excludeFilter.initialize(controller);
+	}
+
+	/**
+	 * 
+	 */
+	private void cacheSeeds() {
+		seeds = new ArrayList();
+		Iterator iter = super.getSeedsIterator();
+		while(iter.hasNext()) {
+			seeds.add(iter.next());
+		}
 	}
 
 	/** 
@@ -150,6 +166,21 @@ public class Scope extends CrawlScope {
 	 */
 	public Filter getTransitiveFilter() {
 		return transitiveFilter;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlScope#getSeedsIterator()
+	 */
+	public Iterator getSeedsIterator() {
+		if (focusFilter == null) {
+			// a cached seeds list isn't necessary for scope tests
+			return super.getSeedsIterator();
+		} 
+		// seeds should be in memory for scope tests
+		if (seeds==null) {
+			cacheSeeds();
+		}
+		return seeds.iterator();
 	}
 
 } 

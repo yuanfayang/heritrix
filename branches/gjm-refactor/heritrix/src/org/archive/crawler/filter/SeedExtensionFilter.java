@@ -51,7 +51,7 @@ public class SeedExtensionFilter extends Filter {
 		if(u==null) {
 			return false;
 		}
-		Iterator iter = controller.getScope().getSeeds().iterator();
+		Iterator iter = controller.getScope().getSeedsIterator();
 		while(iter.hasNext()) {
 			UURI s = (UURI)iter.next();
 			if(s.getUri().getHost().equals(u.getUri().getHost())) {
