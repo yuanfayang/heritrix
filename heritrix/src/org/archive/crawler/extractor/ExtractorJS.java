@@ -15,6 +15,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -65,12 +66,17 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 			return;
 		}
 		
-		Matcher likelyUris = TextUtils.getMatcher(JAVASCRIPT_LIKELY_URI_EXTRACTOR, cs);
-		while(likelyUris.find()) {
-			String code = likelyUris.group(2);
-			code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-			curi.addSpeculativeEmbed(code);
+		try {
+			Matcher likelyUris = TextUtils.getMatcher(JAVASCRIPT_LIKELY_URI_EXTRACTOR, cs);
+			while(likelyUris.find()) {
+				String code = likelyUris.group(2);
+				code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
+				curi.addSpeculativeEmbed(code);
+			}
+			TextUtils.freeMatcher(likelyUris);
+		} catch (StackOverflowError e) {
+			// TODO Auto-generated catch block
+			DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
 		}
-		TextUtils.freeMatcher(likelyUris);
 	}
 }
