@@ -134,5 +134,7 @@ w/ settings under the jetty etc/ dir (jetty.xml) and then did
 machines only allow web access on port 8080).
 
 + Run cruisecontrol.  See the start.sh in this directory for sample.
-Make sure its all running fine (Check the logs dir under CCBUILDDIR, 
-visit the website at HOST:8080, and visit the jmx server at HOST:8081).
+It sets up all environment variables and configuration including a custom
+jetty 'jetty.xml' file.  Make sure its all running fine. Check the logs dir
+under CCBUILDDIR, visit the website at HOST:8080, and visit the jmx server at
+HOST:8081.
