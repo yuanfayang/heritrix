@@ -1,4 +1,4 @@
-/* HeritrixX509TrustManager
+/* ConfigurableX509TrustManager
  * 
  * Created on Feb 18, 2004
  *
@@ -22,7 +22,6 @@
  */
 package org.archive.httpclient;
 
-import java.io.File;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -36,14 +35,15 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import org.archive.crawler.Heritrix;
-
 /**
- * The heritrix configurable trust manager.
+ * A configurable trust manager built on X509TrustManager.
  * 
  * If set to 'open' trust, the default, will get us into sites for whom we do 
  * not have the CA or any of intermediary CAs that go to make up the cert chain
- * of trust.  Will get us past selfsigned and expired certs.
+ * of trust.  Will also get us past selfsigned and expired certs.  'loose'
+ * trust will get us into sites w/ valid certs even if they are just
+ * selfsigned.  'normal' is any valid cert not including selfsigned.  'strict'
+ * means cert must be valid and the cert DN must match server name.
  * 
  * <p>Based on pointers in 
  * <a href="http://jakarta.apache.org/commons/httpclient/sslguide.html">SSL
@@ -55,13 +55,13 @@ import org.archive.crawler.Heritrix;
  * @author stack
  * @version $Id$
  */
-public class HeritrixX509TrustManager implements X509TrustManager
+public class ConfigurableX509TrustManager implements X509TrustManager
 {   
     /**
-     * Heritrix logging instance.
+     * Logging instance.
      */
-    protected static Logger logger
-        = Logger.getLogger("org.archive.httpclient.HeritrixX509TrustManager");
+    protected static Logger logger = Logger.getLogger(
+        "org.archive.httpclient.ConfigurableX509TrustManager");
     
     /**
      * Trust anything given us.
@@ -78,11 +78,6 @@ public class HeritrixX509TrustManager implements X509TrustManager
      * Trust any valid cert including self-signed certificates.
      */
     public final static String LOOSE = "loose";
-    
-    /**
-     * Default setting for trust level.
-     */
-    public final static String DEFAULT = OPEN;
     
     /**
      * Normal jsse behavior.
@@ -107,23 +102,28 @@ public class HeritrixX509TrustManager implements X509TrustManager
      * Levels as a list.
      */
     private static List LEVELS = Arrays.asList(LEVELS_AS_ARRAY);
+        
+    /**
+     * Default setting for trust level.
+     */
+    public final static String DEFAULT = OPEN;
     
     /**
      * Trust level.
      */
-    private String trustLevel = null;
+    private String trustLevel = DEFAULT;
     
    
     /**
-     * An instance of ths sun X509 X509TrustManager that we adapt depending 
-     * upon configuration.
+     * An instance of the SUNX509TrustManager that we adapt variously
+     * depending upon passed configuration.
      * 
      * We have it do all the work we don't want to.
      */
     private X509TrustManager standardTrustManager = null;
     
     
-    public HeritrixX509TrustManager()
+    public ConfigurableX509TrustManager()
         throws NoSuchAlgorithmException, KeyStoreException
     {
         this(DEFAULT);
@@ -132,16 +132,12 @@ public class HeritrixX509TrustManager implements X509TrustManager
     /**
      * Constructor.
      * 
-     * @param level Level of trust to effect.  Values can be 'strict',
-     * 'normal', 'loose', and 'open'.  The first confirms certs have servers DN. 
-     * 'normal' is what JSSE does w/o modification.  'loose' is 'normal plus
-     * trusting valid self-signed certificates.  'open' trusts any
-     * certificate offered.
+     * @param level Level of trust to effect.
      * 
      * @throws NoSuchAlgorithmException
      * @throws KeyStoreException
      */
-    public HeritrixX509TrustManager(String level)
+    public ConfigurableX509TrustManager(String level)
         throws NoSuchAlgorithmException, KeyStoreException
     {
         super();
@@ -164,8 +160,6 @@ public class HeritrixX509TrustManager implements X509TrustManager
         
         this.trustLevel =
             (LEVELS.contains(level.toLowerCase()))? level: DEFAULT;
-        
-        Heritrix.configureTrustStore();
     }
     
     public void checkClientTrusted(X509Certificate[] certificates, String type)
@@ -175,6 +169,7 @@ public class HeritrixX509TrustManager implements X509TrustManager
         {
             return;
         }
+        
         this.standardTrustManager.checkClientTrusted(certificates, type);
     }
     
@@ -194,6 +189,7 @@ public class HeritrixX509TrustManager implements X509TrustManager
                 logger.severe(STRICT + " not implemented.");
             }
         }
+        
         catch (CertificateException e)
         {
             if (this.trustLevel.equals(LOOSE) &&
@@ -206,12 +202,9 @@ public class HeritrixX509TrustManager implements X509TrustManager
             }
             else
             {
-                // If we got to here, then we're probably NORMAL. Rethrow
+                // If we got to here, then we're probably NORMAL. Rethrow.
                 throw e;
             }
-            
-            // No need to do any checks for NORMAL behavior.  NORMAL means
-            // don't interfere w/ X509TrustManager baseclass processing.
         }
     }
     
