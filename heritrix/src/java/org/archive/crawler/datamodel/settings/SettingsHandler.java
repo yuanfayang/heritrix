@@ -24,13 +24,16 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.Map.Entry;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -48,17 +51,15 @@ import org.archive.util.ArchiveUtils;
  * @author John Erik Halse
  */
 public abstract class SettingsHandler {
-    /** Registry of CrawlerModules in order file indexed on module name */
-    //private final Map moduleRegistry = new HashMap();
-    /** Registry of ComplexTypes in order file indexed on absolute name */
-    //private final Map complexTypesRegistry = new HashMap();
-
     /** Settings object referencing order file */
     private final CrawlerSettings globalSettings =
         new CrawlerSettings(this, null);
 
     /** Cached CrawlerSettings objects */
     private final Map settingsCache = new WeakHashMap();
+    
+    /** Maps hostname to effective settings object */
+    private final Map hostToSettings = new WeakHashMap(); 
     
     /** Reference to the order module */
     private final CrawlOrder order;
@@ -237,6 +238,27 @@ public abstract class SettingsHandler {
      *
      * If there is no specific settings for the host/domain, it will recursively
      * go up the hierarchy to find the settings object that should be used for
+     * this host/domain.<p>
+     * 
+     * This method will also check if there are different settings for servers
+     * on different port numbers on the same host. (Not implemented yet)
+     *
+     * @param host the host or domain to get the settings for.
+     * @param port the port of the server to get settings for.
+     * @return settings object in effect for the host/domain.
+     * @see #getSettings(String)
+     * @see #getSettingsObject(String)
+     * @see #getOrCreateSettingsObject(String)
+     */
+    public CrawlerSettings getSettings(String host, int port) {
+        // TODO: Doesn't honor port numbers yet.
+        return getSettings(host);
+    }
+
+    /** Get CrawlerSettings object in effect for a host or domain.
+     *
+     * If there is no specific settings for the host/domain, it will recursively
+     * go up the hierarchy to find the settings object that should be used for
      * this host/domain.
      *
      * @param host the host or domain to get the settings for.
@@ -245,12 +267,28 @@ public abstract class SettingsHandler {
      * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettings(String host) {
-        CrawlerSettings settings = getSettingsObject(host);
-        while (settings == null && host != null) {
-            host = getParentScope(host);
-            settings = getSettingsObject(host);
+        CrawlerSettings settings = null;
+        
+        // Try to get reference to settings from cache
+        WeakReference ref = (WeakReference) hostToSettings.get(host);
+        if (ref != null) {
+            // Reference exist, but can still have been garbage collected
+            settings = (CrawlerSettings) ref.get();
         }
-        settingsCache.put(host, settings);
+        
+        if (settings == null) {
+            settings = getSettingsObject(host);
+            while (settings == null && host != null) {
+                host = getParentScope(host);
+                settings = getSettingsObject(host);
+            }
+        }
+        
+        // Add the settings object to the cache
+        synchronized (hostToSettings) {
+            hostToSettings.put(host, new WeakReference(settings));
+        }
+
         return settings;
     }
 
@@ -267,16 +305,34 @@ public abstract class SettingsHandler {
      * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettingsObject(String scope) {
-        CrawlerSettings settings;
+        CrawlerSettings settings = null;
         if (scope == null || scope.equals("")) {
+            // No scopestring, return global settings
             settings = globalSettings;
-        } else if (settingsCache.containsKey(scope)) {
-            settings = (CrawlerSettings) settingsCache.get(scope);
         } else {
+            // Try to get settings object from cache
+            WeakReference ref = (WeakReference) settingsCache.get(scope);
+            if (ref != null) {
+                // Reference exist, but can still have been garbage collected
+                settings = (CrawlerSettings) ref.get();
+            }
+        }
+        
+        if (settings == null) {
+            // Reference not found
             settings = new CrawlerSettings(this, scope);
             // Try to read settings from persisten storage. If its not there
             // it will be set to null. 
             settings = readSettingsObject(settings);
+            if (settings != null) {
+                WeakReference ref = new  WeakReference(settings);
+                synchronized (settingsCache) {
+                    settingsCache.put(scope, ref);
+                }
+                synchronized (hostToSettings) {
+                    hostToSettings.put(scope, ref);
+                }
+            }
         }
         return settings;
     }
@@ -296,8 +352,21 @@ public abstract class SettingsHandler {
         CrawlerSettings settings;
         settings = getSettingsObject(scope);
         if (settings == null) {
+            // No existing settings object found, create one
             settings = new CrawlerSettings(this, scope);
-            settingsCache.put(scope, settings);
+            synchronized (settingsCache) {
+                settingsCache.put(scope, new WeakReference(settings));
+            
+                // Clean up all possible references to old objects
+                synchronized (hostToSettings) {
+                    hostToSettings.clear();
+                    Iterator it = settingsCache.entrySet().iterator();
+                    while (it.hasNext()) {
+                        Entry entry = (Entry) it.next();
+                        hostToSettings.put(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
         }
         return settings;
     }
@@ -322,7 +391,20 @@ public abstract class SettingsHandler {
      * @param settings the settings object to delete.
      */
     public void deleteSettingsObject(CrawlerSettings settings) {
-        settingsCache.remove(settings.getScope());
+        // Remove settings object from cache
+        synchronized (settingsCache) {
+            settingsCache.remove(settings.getScope());
+        }
+        
+        // Find all references to this settings object in the hostToSettings
+        // cache and remove them.
+        synchronized (hostToSettings) {
+            for (Iterator it = hostToSettings.values().iterator(); it.hasNext();) {
+                if (it.next().equals(settings)) {
+                    it.remove();
+                }
+            }
+        }
     }
 
     /** Get the CrawlOrder.

@@ -26,9 +26,12 @@ package org.archive.crawler.datamodel;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/**
+/** Represents a single remote "host".
+ * 
+ * An host is a name for which there is a dns record or an IP-address. This
+ * might be a machine or a virtual host.
+ * 
  * @author gojomo
- *
  */
 public class CrawlHost {
 	String name;

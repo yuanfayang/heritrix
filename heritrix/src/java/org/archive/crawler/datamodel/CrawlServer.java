@@ -33,19 +33,23 @@ import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
 
 /**
- * Represents a single remote "host". 
+ * Represents a single remote "server". 
+ * 
+ * A server is a service on a host. There might be more than one service on a
+ * host differentiated by a port number.
  * 
  * @author gojomo
- *
  */
 public class CrawlServer implements Serializable {
 	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 3*(1000*60*60*24); // three days
-	String server; // actually, host+port in the http case
-	CrawlHost host;
-    private CrawlerSettings settings;
+	private final String server; // actually, host+port in the http case
+    private int port;
+	private CrawlHost host;
+    private SettingsHandler settingsHandler;
 	RobotsExclusionPolicy robots;
 	long robotsExpires = -1;
 	Checksum robotstxtChecksum;
@@ -56,6 +60,16 @@ public class CrawlServer implements Serializable {
 	public CrawlServer(String h) {
 		// TODO: possibly check for illegal host string
 		server = h;
+        int colonIndex = server.lastIndexOf(":");
+        if(colonIndex < 0) {
+            port = -1;
+        } else {
+            try {
+                port = Integer.parseInt(server.substring(colonIndex + 1));
+            } catch (NumberFormatException e) {
+                port = -1;
+            }
+        }
 	}
 	
 	public long getRobotsExpires() {
@@ -96,11 +110,11 @@ public class CrawlServer implements Serializable {
             throws IOException {
 
         RobotsHonoringPolicy honoringPolicy =
-            settings.getSettingsHandler().getOrder().getRobotsHonoringPolicy();
+            settingsHandler.getOrder().getRobotsHonoringPolicy();
 
 		robotsExpires = System.currentTimeMillis()
             + DEFAULT_ROBOTS_VALIDITY_DURATION;
-		if (get.getStatusCode()!=200 || honoringPolicy.getType(settings)
+		if (get.getStatusCode()!=200 || honoringPolicy.getType(getSettings())
             == RobotsHonoringPolicy.IGNORE) {
 			// not found or other errors == all ok for now
 			// TODO: consider handling server errors, redirects differently
@@ -116,26 +130,38 @@ public class CrawlServer implements Serializable {
 //			return;
 //		}
 		ReplayInputStream contentBodyStream = null;
-		try {
-			BufferedReader reader;
-			if(honoringPolicy.getType(settings) == RobotsHonoringPolicy.CUSTOM) {
-				reader = new BufferedReader(new StringReader(honoringPolicy.getCustomRobots(settings)));
-			} else {
-				contentBodyStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
-				contentBodyStream.setToResponseBodyStart();
-				reader = new BufferedReader(
-					new InputStreamReader(contentBodyStream));
-			}
-			robots = RobotsExclusionPolicy.policyFor(settings, reader, honoringPolicy);
-		} catch (IOException e) {
-			robots = RobotsExclusionPolicy.ALLOWALL;
-			throw e; // rethrow
-		} finally {
-			if(contentBodyStream!=null) {
-				contentBodyStream.close();
-			}
-		}
-		return;
+        try {
+            BufferedReader reader;
+            if (honoringPolicy.getType(getSettings())
+                == RobotsHonoringPolicy.CUSTOM) {
+                reader =
+                    new BufferedReader(
+                        new StringReader(
+                            honoringPolicy.getCustomRobots(getSettings())));
+            } else {
+                contentBodyStream = get
+                        .getHttpRecorder()
+                        .getRecordedInput()
+                        .getContentReplayInputStream();
+                        
+                contentBodyStream.setToResponseBodyStart();
+                reader = new BufferedReader(
+                        new InputStreamReader(contentBodyStream));
+            }
+            robots = RobotsExclusionPolicy.policyFor(
+                    getSettings(),
+                    reader,
+                    honoringPolicy);
+                    
+        } catch (IOException e) {
+            robots = RobotsExclusionPolicy.ALLOWALL;
+            throw e; // rethrow
+        } finally {
+            if (contentBodyStream != null) {
+                contentBodyStream.close();
+            }
+        }
+        return;
 	}
 	
 	 
@@ -145,7 +171,11 @@ public class CrawlServer implements Serializable {
 		}
 		return false;
 	}
-	 
+
+    /** Get the server string which might include a port number.
+     * 
+     * @return the server string.
+     */ 
 	public String getServer(){
 	   return server;
 	}
@@ -159,13 +189,18 @@ public class CrawlServer implements Serializable {
 		return host;
 	}
 
-	/**
-	 * @param host
+	/** Set the CrawlHost for which this server is a service.
+     * 
+	 * @param host the CrawlHost.
 	 */
 	public void setHost(CrawlHost host) {
 		this.host = host;
 	}
 
+    /** Get the hostname for this server.
+     * 
+     * @return the hostname without any port numbers.
+     */
 	public String getHostname() {
 		int colonIndex = server.indexOf(":");
 		if(colonIndex < 0) {
@@ -174,6 +209,13 @@ public class CrawlServer implements Serializable {
 		return server.substring(0,colonIndex);
 	}
 
+    /** Get the port number for this server.
+     * 
+     * @return the port number or -1 if not known (uses default for protocol)
+     */
+    public int getPort() {
+        return port;
+    }
 
 	/**
 	 * Refuse to be serialized, but do not halt serialization:
@@ -199,17 +241,27 @@ public class CrawlServer implements Serializable {
 //	 	server = (String)reads.get("server",null);
 //	 }
 
-    /**
-     * @return Crawler settings.
+    /** Get the settings handler.
+     * 
+     * @return the settings handler.
+     */
+    public SettingsHandler getSettingsHandler() {
+        return settingsHandler;
+    }
+    
+    /** Get the settings object in effect for this server.
+     * 
+     * @return the settings object in effect for this server.
      */
     public CrawlerSettings getSettings() {
-        return settings;
+        return settingsHandler.getSettings(getHost().name, getPort());
     }
 
-    /**
-     * @param settings
+    /** Set the settings handler to be used by this server.
+     * 
+     * @param settingsHandler the settings handler to be used by this server.
      */
-    public void setSettings(CrawlerSettings settings) {
-        this.settings = settings;
+    public void setSettingsHandler(SettingsHandler settingsHandler) {
+        this.settingsHandler = settingsHandler;
     }
 }

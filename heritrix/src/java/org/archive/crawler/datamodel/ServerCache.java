@@ -48,8 +48,7 @@ public class ServerCache {
 		CrawlServer cserver = (CrawlServer) servers.get(h);
 		if (cserver==null) {
 			cserver = new CrawlServer(h);
-            cserver.setSettings(
-                settingsHandler.getSettings(cserver.getHostname()));
+            cserver.setSettingsHandler(settingsHandler);
 			servers.put(h,cserver);
 		}
 		String hostname = cserver.getHostname();
