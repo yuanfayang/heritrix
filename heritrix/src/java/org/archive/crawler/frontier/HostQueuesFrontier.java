@@ -43,7 +43,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -57,9 +56,9 @@ import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.FrontierMarker;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
@@ -168,6 +167,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     protected long nextOrdinal = 1;
 
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
+
+    /** Policy for assigning CrawlURIs to named queues */
+    protected QueueAssignmentPolicy queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
 
     /** 
      * All per-class queues.
@@ -519,12 +521,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // Now, see if any holding queues are ready with a CrawlURI
             if (!this.readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
-                try {
-                    return emitCuri(curi);
-                }
-                catch (URIException e) {
-                    logger.severe("Failed holding emitcuri: " + e.getMessage());
-                }
+                return emitCuri(curi);
             }
     
             // See if URIs exhausted
@@ -554,10 +551,34 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
 
     private CrawlURI asCrawlUri(CandidateURI caUri) {
-        return (caUri instanceof CrawlURI)?
-            (CrawlURI)caUri: CrawlURI.from(caUri,nextOrdinal++);
+        CrawlURI curi;
+        if(caUri instanceof CrawlURI) {
+            curi = (CrawlURI) caUri;
+        } else {
+            curi = CrawlURI.from(caUri,nextOrdinal++);
+        }
+        curi.setServer(getServer(curi));
+        curi.setClassKey(getClassKey(curi));
+        return curi;
     }
 
+    /**
+     * @param curi a CrawlURI
+     * @return a String token representing a queue
+     */
+    protected String getClassKey(CrawlURI curi) {
+        String queueKey = queueAssignmentPolicy.getClassKey(curi);
+        return queueKey;
+    }
+    
+    /**
+     * @param curi
+     * @return the CrawlServer to be associated with this CrawlURI
+     */
+    protected CrawlServer getServer(CrawlURI curi) {
+        return this.controller.getServerCache().getServerFor(curi);
+    }
+    
     /**
      * Ensure that any overall-bandwidth-usage limit is respected,
      * by pausing as long as necessary.
@@ -831,9 +852,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @param curi The CrawlURI
      * @return The CrawlURI
      * @see #noteInProcess(CrawlURI)
-     * @throws URIException
      */
-    protected CrawlURI emitCuri(CrawlURI curi) throws URIException {
+    protected CrawlURI emitCuri(CrawlURI curi) {
         if(curi != null) {
             noteInProcess(curi);
             if (this.controller == null ||
@@ -841,11 +861,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 logger.warning("Controller or ServerCache is null processing " +
                     curi);
             } else {
-                CrawlServer cs = this.controller.getServerCache().
-                    getServerFor(curi);
-                if (cs != null) {
-                    curi.setServer(cs);
-                }
+                curi.setServer(getServer(curi));
             }
         }
         logger.finer(this + ".emitCuri(" + curi + ")");

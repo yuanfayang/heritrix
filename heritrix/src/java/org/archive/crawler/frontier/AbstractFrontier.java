@@ -48,6 +48,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue;
 import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
@@ -107,6 +108,12 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     public final static String ATTR_MAX_RETRIES = "max-retries";
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
 
+    /** queue assignment to force onto CrawlURIs; intended to be overridden */
+    public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
+    protected final static String DEFAULT_FORCE_QUEUE = "";
+    protected final static String 
+        ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.]*"; // word chars, dash, period
+    
     // top-level stats
     private long queuedUriCount = 0;  // total URIs queued to be visited
     private long succeededFetchCount = 0; 
@@ -118,6 +125,9 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     long nextURIEmitTime = 0;
     long processedBytesAfterLastEmittedURI = 0;
     int lastMaxBandwidthKB = 0;
+
+    /** Policy for assigning CrawlURIs to named queues */
+    protected QueueAssignmentPolicy queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
     
     /**
      * @param name
@@ -169,6 +179,17 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             "limitation.",
             DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
         t.setExpertSetting(true);
+
+        t = addElementToDefinition(
+            new SimpleType(ATTR_FORCE_QUEUE,
+            "EXPERT SETTING. The queue name into which to force URIs. Should " +
+            "be left blank at global level, and ",
+            DEFAULT_FORCE_QUEUE));
+        t.setOverrideable(true);
+        t.setExpertSetting(true);
+        t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
+                Level.WARNING, "This field must contain only alphanumeric " +
+                        "characters plus period, dash, or underscore."));
     }
     
     
@@ -183,7 +204,6 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         shouldTerminate = true;
         unpause();
     }
-    
     
     /**
      * Frontier is empty only if all queues are empty and
@@ -304,10 +324,15 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     }
     
     protected CrawlURI asCrawlUri(CandidateURI caUri) {
+        CrawlURI curi;
         if(caUri instanceof CrawlURI) {
-            return (CrawlURI) caUri;
+            curi = (CrawlURI) caUri;
+        } else {
+            curi = CrawlURI.from(caUri,nextOrdinal++);
         }
-        return CrawlURI.from(caUri,nextOrdinal++);
+        curi.setServer(getServer(curi));
+        curi.setClassKey(getClassKey(curi));
+        return curi;
     }
     
     /**
@@ -378,15 +403,22 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
         curi.setHolder(q);
-        CrawlServer cs = this.controller.getServerCache().getServerFor(curi);
-        if (cs != null) {
-            curi.setServer(cs);
-        } else {
+        curi.setServer(getServer(curi)); // TODO: may be redundant
+        if (curi.getServer() == null) {
             // TODO: perhaps short-circuit the emit here, 
             // because URI will be rejected as unfetchable
         }
         this.controller.recover.emitted(curi);
     }
+
+    /**
+     * @param curi
+     * @return the CrawlServer to be associated with this CrawlURI
+     */
+    protected CrawlServer getServer(CrawlURI curi) {
+        return this.controller.getServerCache().getServerFor(curi);
+    }
+
 
     /**
      * @param curi
@@ -647,5 +679,18 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             default:
                 return false;
         }
+    }
+    
+    /**
+     * @param curi a CrawlURI
+     * @return a String token representing a queue
+     */
+    protected String getClassKey(CrawlURI curi) {
+        String queueKey = (String) getUncheckedAttribute(curi,ATTR_FORCE_QUEUE);
+        if("".equals(queueKey)) {
+            // typical case, barring overrides
+            queueKey = queueAssignmentPolicy.getClassKey(curi);
+        }
+        return queueKey;
     }
 }
