@@ -71,7 +71,7 @@ public class ServerCache {
             // set crawlhost to default nameserver
             String primaryDns = FindServer.server();
             if (primaryDns == null) {
-                settingsHandler.getOrder().getController()
+                this.settingsHandler.getOrder().getController()
                     .runtimeErrors.warning("Could not get primary DNS server.");
                 return null;
             } else {
@@ -80,12 +80,15 @@ public class ServerCache {
         }
 
         String hostOrAuthority = curi.getUURI().getUri().getAuthority();
-        if (hostOrAuthority != null) {
-            return getServerFor(hostOrAuthority);
-            // TODOSOMEDAY: make this robust against those rare cases
-            // where authority is not a hostname
-        } else {
-            return null;
+        if (hostOrAuthority != null && scheme.equals("https")) {
+            // If https and no port specified, add default https port to
+            // distinuish https from http server without a port.
+            if (!hostOrAuthority.matches(".+:[0-9]+")) {
+                hostOrAuthority += ":443";
+            }
         }
+        // TODOSOMEDAY: make this robust against those rare cases
+        // where authority is not a hostname.
+        return (hostOrAuthority != null)? getServerFor(hostOrAuthority): null;
     }
 }

@@ -43,7 +43,6 @@ public class CrawlHost implements Serializable {
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
     private long ipTTL = IP_NEVER_LOOKED_UP;
-    private boolean hasBeenLookedUp = false;
 
     // Used when bandwith constraint are used
     private long earliestNextURIEmitTime = 0;
