@@ -105,7 +105,7 @@
 					Seeds file:
 				</td>
 				<td>
-					<input name="<%="//seeds/@src"%>" value="<%=crawlOrder.getStringAt("//seeds/@src")%>" size="<%=iInputSize%>">
+					<input name="<%=handler.XP_SEEDS_FILE%>" value="<%=crawlOrder.getStringAt(handler.XP_SEEDS_FILE)%>" size="<%=iInputSize%>">
 				</td>
 			</tr>
 			<tr>
@@ -113,7 +113,7 @@
 					Seeds:
 				</td>
 				<td>
-					<textarea name="//seeds" rows="8" cols="<%=iInputSize%>"><%=crawlOrder.getStringAt("//seeds")%></textarea>
+					<textarea name="<%=handler.XP_SEEDS%>" rows="8" cols="<%=iInputSize%>"><%=crawlOrder.getStringAt(handler.XP_SEEDS)%></textarea>
 				</td>
 			</tr>
 		</table>
