@@ -647,9 +647,8 @@ public class CrawlController extends Thread {
             }
             synchronized(this) {
                 try {
-                    wait();
+                    wait(1000); // Wake in 1 sec to check if crawl is finished.
                 } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
