@@ -110,4 +110,32 @@ public class CrawlHost {
 		}
 		return;
 	}
+	
+	/**
+	 * @param InetAddress
+	 */
+	public void setIP(InetAddress address){
+		ip = address; 
+	}
+	
+	/**
+	 * @param expires
+	 */
+	 public void setIpExpires(long expires){
+	 	ipExpires = expires;
+	 }
+	 
+	 public void setIpExpiresFromTTL(long ttl){
+		long now = System.currentTimeMillis();
+		setIpExpires(now + ttl);
+	 }
+	 
+	 public InetAddress getIP(){
+	 	return ip;
+	 }
+	 
+	 public long getIpExpires(){ 
+	 	return ipExpires;
+	 }
+
 }
