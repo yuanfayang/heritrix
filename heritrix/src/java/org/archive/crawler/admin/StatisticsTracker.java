@@ -765,15 +765,14 @@ implements CrawlURIDispositionListener{
     }
 
     public void crawlEnded(String sExitMessage) {
-        logger.info("Reporting started.");
         CrawlController controller = this.controller;
         Iterator tmp = getSeeds(); // Need this before we do super.crawlEnded()
-
         super.crawlEnded(sExitMessage);
+        
         // Need to write some reports at the end of the crawl.
         String directory = controller.getDisk().getPath();
+        
         // seeds-report.txt
-
         int maxURILength = 0;
         while(tmp.hasNext()){
             String tmpString = (String)tmp.next();
@@ -999,10 +998,8 @@ implements CrawlURIDispositionListener{
                     Level.SEVERE));
             e.printStackTrace();
         }
-        logger.info("Reporting done.");
         // TODO: Save object to disk?
     }
-
 }
 
 

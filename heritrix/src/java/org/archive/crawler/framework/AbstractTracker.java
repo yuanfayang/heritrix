@@ -260,7 +260,7 @@ public abstract class AbstractTracker extends ModuleType
         logNote("CRAWL WAITING TO PAUSE");
     }
 
-    private void logNote(String note) {
+    protected void logNote(String note) {
         controller.progressStats.log(
                     Level.INFO,
                     new PaddingStringBuffer()
