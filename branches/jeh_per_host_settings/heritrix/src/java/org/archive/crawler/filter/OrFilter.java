@@ -23,10 +23,12 @@
  */
 package org.archive.crawler.filter;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.archive.crawler.framework.CrawlController;
+import javax.management.InvalidAttributeValueException;
+
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -39,17 +41,23 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class OrFilter extends Filter {
+    private MapType filters;
+
 	/**
-	 * XPath to any specified filters
-	 */
-	private static String XP_FILTERS = "filter";
-	ArrayList filters = new ArrayList();
+     * @param name
+     * @param description
+     */
+    public OrFilter(String name) {
+        super(name, "Or filter");
+        filters = new MapType("filters", "Filters that should be or'ed together");
+        addElementToDefinition(filters);
+    }
 
 	protected boolean innerAccepts(Object o) {
-		if (filters.isEmpty()) {
+		if (filters.isEmpty(globalSettings())) {
 			return true;
 		}
-		Iterator iter = filters.iterator();
+		Iterator iter = filters.iterator(globalSettings());
 		while(iter.hasNext()) {
 			Filter f = (Filter)iter.next();
 			if( f.accepts(o) ) {
@@ -59,23 +67,29 @@ public class OrFilter extends Filter {
 		return false;
 	}
 
-	public void addFilter(Filter f) {
-		filters.add(f);
+	public void addFilter(CrawlerSettings settings, Filter f) {
+		try {
+            filters.addElement(settings, f);
+        } catch (InvalidAttributeValueException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize()
 	 */
-	public void initialize(CrawlController c) {
-		super.initialize(c);
-		if(xNode!=null) {
-			instantiateAllInto(XP_FILTERS,filters);
-		}
-		Iterator iter = filters.iterator();
-		while(iter.hasNext()) {
-			Object o = iter.next();
-			Filter f = (Filter)o;
-			f.initialize(c);
-		}
+	public void initialize(CrawlerSettings settings) {
+		super.initialize(settings);
+        
+        Iterator iter = filters.iterator(settings);
+        while(iter.hasNext()) {
+            Filter f = (Filter) iter.next();
+            f.initialize(settings);
+        }
 	}
+    
+    public boolean isEmpty(CrawlerSettings settings) {
+        return filters.isEmpty(settings);
+    }
 }
