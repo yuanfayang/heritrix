@@ -55,7 +55,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         Object[] legalValues,
         Object defaultValue)
         throws InvalidAttributeValueException {
-        super(name, null, description, true, true, false);
+        super(name, type.getClass().getName(), description, true, true, false);
         setType(type);
         overrideable = isOverrideable;
         legalValueLists = legalValues;
