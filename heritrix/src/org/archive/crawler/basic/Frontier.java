@@ -377,7 +377,7 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public synchronized void finished(CrawlURI curi) {
-		//logger.fine(this+".finished("+curi+")");
+		logger.fine("Frontier.finished: "+curi.getURIString());
 		
 		// catch up on scheduling
 		batchFlush();
@@ -551,7 +551,7 @@ public class Frontier
 			noteInProcess(curi);
 			curi.setServer(controller.getServerCache().getServerFor(curi));
 		}
-		logger.fine(this+".emitCuri("+curi+")");
+		logger.finer(this+".emitCuri("+curi+")");
 		return curi;
 	}
 
@@ -737,7 +737,7 @@ public class Frontier
 			long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
 			durationToWait =
 				(long) (delayFactor
-					* completeTime);
+					* durationTaken);
 
 			if (minDelay > durationToWait) {
 				// wait at least the minimum
@@ -885,7 +885,7 @@ public class Frontier
 		}
 		if (delay>0) {
 			// snooze to future
-			logger.fine("inserting snoozed "+curi+" for "+delay);
+			logger.finer("inserting snoozed "+curi+" for "+delay);
 			insertSnoozed(curi,retryDelay);
 		} else {
 			// eligible for retry asap
