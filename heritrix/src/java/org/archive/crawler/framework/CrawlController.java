@@ -738,8 +738,6 @@ public class CrawlController implements Serializable {
     }
 
     private void completeStop() {
-        logger.warning("Started completeStop");
-        try {
         finishProcessors();
         writeManifest();
 
@@ -750,7 +748,6 @@ public class CrawlController implements Serializable {
                     i.hasNext();) {
                 // Let the listeners know that the crawler is finished.
                 CrawlStatusListener l = (CrawlStatusListener)i.next();
-                logger.warning("Sending exit message to " + l + " " + l.getClass().getName());
                 l.crawlEnded(this.sExit);
             }
             // Remove all listeners now we're done with them.
@@ -770,10 +767,6 @@ public class CrawlController implements Serializable {
         this.order = null;
         this.scope = null;
         this.serverCache = null;
-            logger.warning("End of completeStop");
-        } finally {
-            logger.warning("Finally completeStop");
-        }
     }
 
     private void writeManifest() {
@@ -883,18 +876,12 @@ public class CrawlController implements Serializable {
     }
 
     private void beginCrawlStop() {
-        logger.warning("Starting beginCrawlStop");
-        try {
-        	synchronized (this.registeredCrawlStatusListeners) {
-        		this.state = STOPPING;
-        		for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-        		        i.hasNext();) {
-        			((CrawlStatusListener)i.next()).crawlEnding(sExit);
-        		}
-        	}
-            logger.warning("End of beginCrawlStop");
-        } finally {
-        	logger.warning("Finally beginCrawlStop");
+        synchronized (this.registeredCrawlStatusListeners) {
+            this.state = STOPPING;
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                    i.hasNext();) {
+                ((CrawlStatusListener)i.next()).crawlEnding(sExit);
+            }
         }
     }
 
@@ -1190,8 +1177,6 @@ public class CrawlController implements Serializable {
      * @param thread
      */
     public void toeChanged(ToeThread thread) {
-        logger.warning("TOECHANGE STATE: " + state + " COUNT " +
-                getActiveToeCount());
         if (getActiveToeCount() == 0) {
             if (state==PAUSING) {
                 completePause();
