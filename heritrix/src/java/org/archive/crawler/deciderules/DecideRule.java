@@ -24,6 +24,8 @@
 */
 package org.archive.crawler.deciderules;
 
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.ModuleType;
 
 
@@ -40,9 +42,9 @@ import org.archive.crawler.settings.ModuleType;
  */
 public class DecideRule extends ModuleType {
     // enumeration of 'actions'
-    public static final String ACCEPT = "ACCEPT";
-    public static final String REJECT = "REJECT";
-    public static final String PASS = "PASS";
+    public static final Object ACCEPT = "ACCEPT";
+    public static final Object REJECT = "REJECT";
+    public static final Object PASS = "PASS";
 
     /**
      * Constructor.
@@ -67,5 +69,26 @@ public class DecideRule extends ModuleType {
      */
     public void kickUpdate() {
         // by default do nothing
+    }
+    
+    /**
+     * Utility method to coerce a CandidateURI or UURI to 
+     * plain string.
+     * 
+     * @param o
+     * @return Passed object as string.
+     */
+    protected String asString(Object o) {
+        String input;
+        // TODO consider changing this to ask o for its matchString.
+        if(o instanceof CandidateURI) {
+            input = ((CandidateURI)o).getURIString();
+        } else if (o instanceof UURI ){
+            input = ((UURI)o).toString();
+        } else {
+            //TODO handle other inputs
+            input = o.toString();
+        }
+        return input;
     }
 }

@@ -63,6 +63,9 @@ public class DecidingScope extends CrawlScope {
     }
 
     protected boolean innerAccepts(Object o) {
-        return getDecideRule(o).decisionFor(o) == DecideRule.ACCEPT;
+        // would like to use identity test '==' here, but at some
+        // step string is being copied, and 'legal-type' mechanism
+        // doesn't enforce/maintain identity
+        return getDecideRule(o).decisionFor(o).equals(DecideRule.ACCEPT);
     }
 }
