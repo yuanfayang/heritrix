@@ -8,7 +8,10 @@
 
 <%@include file="/include/head.jsp"%>
 
-
+<% if(request.getParameter("message")!=null && request.getParameter("message").length() >0){ %>
+	<p>
+		<font color="red"><b><%=request.getParameter("message")%></b></font>
+<% } %>
 <p>
 <b>New jobs</b><br>
 <ul>
@@ -21,7 +24,7 @@
 	<ul>
 		<li><a href="/admin/reports/crawljob.jsp">View crawl report</a>
 		<li><a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">View crawl order (xml file)</a>
-		<li><a href="/admin/jobs/jobconfig.jsp">Modify crawl order</a>
+		<li><a href="/admin/jobs/modify.jsp">Modify crawl order</a>
 	</ul>
 <% } %>
 
