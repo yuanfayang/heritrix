@@ -30,13 +30,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
-import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
-import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 
 import st.ata.util.AList;
@@ -58,11 +55,6 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
     implements CoreAttributeConstants, FetchStatusCodes {
-
-    /**
-     * When neat host-based class-key fails us
-     */
-    private static String DEFAULT_CLASS_KEY = "default...";
 
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
@@ -376,46 +368,12 @@ public class CrawlURI extends CandidateURI
      * what "class" this CrawlURI should be grouped with.
      */
     public String getClassKey() {
-        if(classKey == null) {
-            classKey = calculateClassKey();
-        }
         return classKey;
     }
 
-    private String calculateClassKey() {
-        String scheme = getUURI().getScheme();
-        String candidate = null;
-        try {
-            if (scheme.equals("dns")){
-                if (via != null) {
-                    // Special handling for DNS: treat as being
-                    // of the same class as the triggering URI.
-                    // When a URI includes a port, this ensures 
-                    // the DNS lookup goes atop the host:port
-                    // queue that triggered it, rather than 
-                    // some other host queue
-                    candidate = UURIFactory.getInstance(flattenVia()).
-                        getAuthorityMinusUserinfo();
-                } else {
-                    candidate= FetchDNS.parseTargetDomain(this);
-                }
-            } else {
-                candidate =  getUURI().getAuthorityMinusUserinfo();
-            }
-            
-            if(candidate == null || candidate.length() == 0) {
-                candidate = DEFAULT_CLASS_KEY;
-            }
-        } catch (URIException e) {
-            DevUtils.warnHandle(e, "Failed to get class key: " +
-                e.getMessage() + " " + this);
-            candidate = DEFAULT_CLASS_KEY;
-        }
-        // Ensure classKeys are safe as filenames on NTFS
-        candidate.replace(':','#');
-        return candidate;
+    public void setClassKey(String key) {
+        classKey = key;
     }
-
 
     /**
      * Get the attribute list.

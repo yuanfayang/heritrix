@@ -231,6 +231,17 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         applySpecialHandling(curi);
 
         incrementQueuedUriCount();
+        sendToQueue(curi);
+        // Update recovery log.
+        this.controller.recover.added(curi);
+    }
+
+    /**
+     * Send a CrawlURI to the appropriate subqueue.
+     * 
+     * @param curi
+     */
+    private void sendToQueue(CrawlURI curi) {
         BdbWorkQueue wq = getQueueFor(curi.getClassKey());
         synchronized (wq) {
             wq.enqueue(curi);
@@ -239,8 +250,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
                 readyQueue(wq);
             }
         }
-        // Update recovery log.
-        this.controller.recover.added(curi);
     }
 
     /**
@@ -291,7 +300,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @see org.archive.crawler.framework.Frontier#next()
      */
     public CrawlURI next() throws InterruptedException, EndedException {
-        while (true) {
+        while (true) { // loop left only by explicit return or exception
             long now = System.currentTimeMillis();
 
             // do common checks for pause, terminate, bandwidth-hold
@@ -302,16 +311,36 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             
             BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
             if (readyQ != null) {
-                synchronized(readyQ) {
-                    CrawlURI curi = readyQ.peek();
-                    if (curi != null) {
-                        noteAboutToEmit(curi, readyQ);
-                        inProcessQueues.add(readyQ);
-                        return curi;
-                    } else {
-                        // readyQ is empty and ready: release held, allowing
-                        // subsequent enqueues to ready
-                        readyQ.clearHeld();
+                while(true) { // loop left by explicit return or break on empty
+                    CrawlURI curi = null;
+                    synchronized(readyQ) {
+                        curi = readyQ.peek();
+                        curi.setServer(getServer(curi));
+                        if (curi != null) {
+                            // check if curi belongs in different queue
+                            String currentQueueKey = getClassKey(curi);
+                            if (currentQueueKey.equals(curi.getClassKey())) {
+                                noteAboutToEmit(curi, readyQ);
+                                inProcessQueues.add(readyQ);
+                                return curi;
+                            } else {
+                                // URI's assigned queue has changed since it
+                                // was queued (eg because its IP has become
+                                // known). Requeue to new queue.
+                                curi.setClassKey(currentQueueKey);
+                                readyQ.dequeue();
+                                curi.setHolderKey(null);
+                            }
+                        } else {
+                            // readyQ is empty and ready: release held, allowing
+                            // subsequent enqueues to ready
+                            readyQ.clearHeld();
+                            break;
+                        }
+                    }
+                    // if curi non-null, it's a requeue
+                    if(curi!=null) {
+                        sendToQueue(curi);
                     }
                 }
             }
@@ -498,7 +527,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         Iterator iter = curis.iterator();
         while(iter.hasNext()) {
             CrawlURI curi = (CrawlURI) iter.next();
-            results.add(curi.getLine());
+            results.add("["+curi.getClassKey()+"] "+curi.getLine());
         }
         return results;
     }
