@@ -396,7 +396,7 @@ public class XMLSettingsHandler extends SettingsHandler {
                     return true;
                 }
             }
-        } else if(f.getName().equals(settingsFilename)){
+        } else if(f.getName().equals(settingsFilename + "." + settingsFilenameSuffix)){
             // This is an override file (or sure looks like one in any case).
             return true;
         }
