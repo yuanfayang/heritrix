@@ -94,22 +94,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
     private String settingsFile = null;
     
     /**
-     *  Default webapp path.
-     */
-    public static final String DEFAULT_WEBAPP_PATH = "webapps";
-    
-    /**
-     * Name of system property whose specification overrides
-     * DEFAULT_WEBAPP_PATH.
-     */
-    public static final String WEBAPP_PATH_NAME = "heritrix.webapp.path";
-
-    /**
-     * Default name of admin webapp.
-     */
-    public static final String ADMIN_WEBAPP_NAME = "admin";
-
-    /**
      * Name of system property whose specification overrides default order file
      * used.
      * 
@@ -439,7 +423,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         try {
             writer = new BufferedWriter(new FileWriter(new File(newHandler.getPathRelativeToWorkingDirectory(seedfile))));
             if (writer != null) {
-                // TODO Read seeds from profile.
                 writer.write(seeds);
                 writer.close();
             }
