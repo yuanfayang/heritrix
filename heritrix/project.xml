@@ -280,7 +280,8 @@
             <version>4.2.15rc0</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
-                <description>This jar came w/ Jetty.
+                <description>This jar came w/ Jetty.  Seems to be jetty
+                mbeans.
                 </description>
                 <license>Jetty license,
                     http://jetty.mortbay.org/jetty/LICENSE.html
@@ -328,27 +329,24 @@
         <dependency>
             <id>jmxri</id>
             <version />
-            <url>http://jetty.mortbay.com/jetty/</url>
+            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
             <properties>
-                <description>This jar came w/ Jetty. Its JMX runtime.
-                TODO: Have marked it w/ the jetty version.
-                TODO: License must be something else than jetty.
+                <description>JMX Reference Implementation.
                 </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
+                <license>SUN Binary Code License
+                http://java.com/en/download/license.jsp
                 </license>
             </properties>
         </dependency>
         <dependency>
             <id>jmxtools</id>
             <version />
-            <url>http://jetty.mortbay.com/jetty/</url>
+            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
             <properties>
-                <description>This jar came w/ Jetty. Its JMX tools.
-                TODO: License must be something else than jetty.
+                <description>JMX tools.
                 </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
+                <license>SUN Binary Code License
+                http://java.com/en/download/license.jsp
                 </license>
             </properties>
         </dependency>
