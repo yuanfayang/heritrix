@@ -35,7 +35,10 @@
 			crawlOrder = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getCrawlOrder();
 		}
 	}
-	String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH)+"/";
+//	String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH)+"/";
+	String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH) + "/";
+	diskPath = crawlOrder.getPathRelativeToOrderFile(diskPath);
+	
 	
 	if(mode != null && mode.equalsIgnoreCase("number"))
 	{

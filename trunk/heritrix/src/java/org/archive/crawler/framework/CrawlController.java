@@ -141,7 +141,7 @@ public class CrawlController extends Thread {
 	 */
 	public void initialize(CrawlOrder o) throws InitializationException {
 		order = o;	
-		order.initialize();
+		//order.initialize();
 		
 		if(checkUserAgentAndFrom(order)==false){
 			throw new FatalConfigurationException(
@@ -350,16 +350,24 @@ public class CrawlController extends Thread {
 									XP_DISK_PATH
 			);
 		}
-		
-		if(! diskPath.endsWith(File.separator)){
+
+		if (!diskPath.endsWith(File.separator)) {
 			diskPath = diskPath + File.separator;
 		}
+
 		disk = new File(diskPath);
+		// If 'disk' path is not absolute, create 'disk' directory
+		// relative to the path of the order file
+		if (!disk.isAbsolute()) {
+			disk =
+				new File(
+					ArchiveUtils.getFilePath(order.getCrawlOrderFilename())
+						+ disk.toString());
+		}
 		disk.mkdirs();
-		scratchDisk = new File(diskPath,"scratch");
+		scratchDisk = new File(disk.getPath(), "scratch");
 		scratchDisk.mkdirs();
 	}
-
 
 	private void setupStatTracking() {
 		// the statistics object must be created before modules that use it if those 
