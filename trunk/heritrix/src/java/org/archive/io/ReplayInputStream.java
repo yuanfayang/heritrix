@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* ReplayInputStream
+ * 
+ * $Id$
+ * 
+ * Created on Sep 24, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ReplayInputStream.java
- * Created on Sep 24, 2003
- *
- * $Header$
  */
 package org.archive.io;
 
@@ -29,47 +30,66 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+
 /**
  * Replays the bytes recorded from a RecordingInputStream or
  * RecordingOutputStream. 
  * 
  * @author gojomo
- *
  */
-public class ReplayInputStream extends InputStream {
-	protected FileInputStream fileStream;
+public class ReplayInputStream extends InputStream
+{    
 	protected BufferedInputStream diskStream;
 	protected byte[] buffer;
 	protected long size;
-	protected long responseBodyStart; // where the response body starts, if marked
 	protected long position;
-	protected String backingFilename;
+    
+    /**
+     * Where the response body starts, if marked
+     */
+    protected long responseBodyStart;
 	
+    
 	/**
-	 * @param buffer
-	 * @param size
-	 * @param responseBodyStart
-	 * @param backingFilename
-	 * @throws IOException
+     * Constructor.
+     * 
+	 * @param buffer Buffer to read from.
+	 * @param size Size of data to replay.
+	 * @param responseBodyStart Start of the response body.
+     * @param backingFilename Backing file that sits behind the buffer.  If
+     * <code>size<code> > than buffer then we go to backing file to read 
+     * data that is beyond buffer.length.
+     * 
+	 * @throws IOException If we fail to open an input stream on 
+     * backing file.
 	 */
-	public ReplayInputStream(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
+	public ReplayInputStream(byte[] buffer, long size, long responseBodyStart,
+            String backingFilename)
+        throws IOException
+    {
 		this(buffer,size,backingFilename);
 		this.responseBodyStart = responseBodyStart;
 	}
 
 	/**
-	 * @param buffer
-	 * @param size
-	 * @param backingFilename
-	 * @throws IOException
+     * Constructor.
+     * 
+     * @param buffer Buffer to read from.
+     * @param size Size of data to replay.
+     * @param backingFilename Backing file that sits behind the buffer.  If
+     * <code>size<code> > than buffer then we go to backing file to read 
+     * data that is beyond buffer.length.
+     * @throws IOException If we fail to open an input stream on 
+     * backing file.
 	 */
-	public ReplayInputStream(byte[] buffer, long size, String backingFilename) throws IOException {
+	public ReplayInputStream(byte[] buffer, long size, String backingFilename)
+        throws IOException
+    {
 		this.buffer = buffer;
 		this.size = size;
-		if (size>buffer.length) {
-			this.backingFilename = backingFilename;
-			fileStream = new FileInputStream(backingFilename);
-			diskStream = new BufferedInputStream(fileStream,4096);
+		if (size > buffer.length) {
+            FileInputStream fis = new FileInputStream(backingFilename);
+			diskStream = new BufferedInputStream(fis, 4096);
 		}
 	}
 
@@ -82,16 +102,17 @@ public class ReplayInputStream extends InputStream {
 	 * @see java.io.InputStream#read()
 	 */
 	public int read() throws IOException {
-		if (position==size) {
+		if (position == size) {
 			return -1; // EOF
 		}
-		if (position<buffer.length) {
-			int c= (int)buffer[(int)position]&0xFF; // convert to unsigned int
+		if (position < buffer.length) {
+		    // Convert to unsigned int.
+			int c = (int)buffer[(int)position] & 0xFF;
 			position++;
 			return c; 
 		} else {
 			int c = diskStream.read();
-			if(c>=0) {
+			if(c >= 0) {
 				position++;
 			}
 			return c;
@@ -102,13 +123,14 @@ public class ReplayInputStream extends InputStream {
 	 * @see java.io.InputStream#read(byte[], int, int)
 	 */
 	public int read(byte[] b, int off, int len) throws IOException {
-		if (position==size) {
+		if (position == size) {
 			return -1; // EOF
 		}
-		if (position<buffer.length) {
-			int toCopy = (int) Math.min(size-position,Math.min(len,buffer.length-position));
-			System.arraycopy(buffer,(int)position,b,off,toCopy);
-			if(toCopy>0) {
+		if (position < buffer.length) {
+			int toCopy = (int)Math.min(size - position,
+                Math.min(len, buffer.length - position));
+			System.arraycopy(buffer, (int)position, b, off, toCopy);
+			if (toCopy > 0) {
 				position += toCopy;
 			} 
 			return toCopy;
@@ -120,7 +142,6 @@ public class ReplayInputStream extends InputStream {
 		}
 		return read;
 	}
-
 
 	public void readFullyTo(OutputStream os) throws IOException {
 		byte[] buf = new byte[4096];
@@ -136,14 +157,15 @@ public class ReplayInputStream extends InputStream {
 	 */
 	public void close() throws IOException {
 		super.close();
-		if(diskStream!=null) {
+		if(diskStream != null) {
 			diskStream.close();
 		} 
 	}
 	
+	/**
+	 * @return Amount THEORETICALLY remaining.
+	 */
 	public long remaining() {
-		// amount THEORETICALLY remaining; 
-		return size-position;
+		return size - position;
 	}
-
 }
