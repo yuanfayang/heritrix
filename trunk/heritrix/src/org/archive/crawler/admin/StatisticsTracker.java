@@ -4,68 +4,28 @@
  */
 package org.archive.crawler.admin;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlStatusListener;
+import org.archive.crawler.framework.AbstractTracker;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
 /**
- * StatisticsTracker has a reference to a CrawlController.  At specified 
- * intevals it will extract status information about the crawl that that
- * controller is managing.  Parts of this information will be written out
- * in a pre-determinate way to a log file. 
- * All of the information will be kept in memory from one update to another.
- * Outside classes can query the StatisticsTracker for this data and receive
- * the <i>last known</i> state.  Once the crawl controller has finished, the
- * StatisticsTracker thus contains information about the final state of the
- * crawl in a self contained manner.
- * 
- * 
- * Callers should be
- * aware that any "current" statistics (i.e. those involving calculation of 
- * rates) are good approximations, but work by looking at recently completed
- * CrawlURIs and thus may in some (rare and degenerative) cases return
- * data that is not useful, particularly with small/narrow crawls.  
- * 
  * @author Parker Thompson
+ * @author Kristinn Sigurdsson
+ * 
+ * This is an implementation of the AbstractTracker.  It logs the 
+ * following information at intervals specified in the crawl order:
+ * 
+ * 
+ * @see org.archive.crawler.framework.AbstractTracker
  */
-public class StatisticsTracker implements Runnable, CoreAttributeConstants, CrawlStatusListener{
+public class StatisticsTracker extends AbstractTracker implements CoreAttributeConstants{
 
-	// logging levels
-	public static final int MERCATOR_LOGGING = 0;
-	public static final int HUMAN_LOGGING = 1;
-	public static final int VERBOSE_LOGGING = 2;
-	
-	protected int logLevel = MERCATOR_LOGGING;
-
-	protected CrawlController controller;
-
-	//protected TimedFixedSizeList recentlyCompletedFetches = new TimedFixedSizeList(60);
-
-	protected Logger periodicLogger = null;
-	protected int logInterval = 20; // In seconds.
-
-	protected boolean shouldrun = true;
-	
-	// default start time to the time this object was instantiated
-	protected long crawlerStartTime;
-	protected long crawlerEndTime = -1; // Until crawl ends, this value is -1.
-	
-	protected long crawlerPauseStarted = 0;
-	protected long crawlerTotalPausedTime;
-	
-	// timestamp of when this logger last wrote something to the log
-	protected long lastLogPointTime;
 	protected long lastPagesFetchedCount = 0;
 	protected long lastProcessedBytesCount = 0;
 	
@@ -97,136 +57,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		super();
 	}
 
-	/** Construct a StatisticsTracker object by giving it a reference
-	 *  to a controller it can query for statistics.
-	 * 
-	 * @param controller
-	 */
-	public StatisticsTracker(CrawlController c) {
-		controller = c;
-		controller.addListener(this);
-		periodicLogger = c.progressStats;
-	}
-	
-	public StatisticsTracker(CrawlController c, int interval){
-		controller = c;
-		controller.addListener(this);
-		periodicLogger = c.progressStats;
-		logInterval = interval;
-	}
-	
-	public void setCrawlStartTime(long mili){
-		crawlerStartTime = mili;
-	}
-	public long getCrawlStartTime(){
-		return crawlerStartTime;
-	}
-	
-	/**
-	 * 
-	 * @return If crawl has ended it will return the time 
-	 *         it ended (given by System.currentTimeMillis() 
-	 * 		   at that time).
-	 *         If crawl is still going on it will return the
-	 *         same as System.currentTimeMillis()
-	 */
-	public long getCrawlEndTime()
-	{
-		if(crawlerEndTime==-1)
-		{
-			return System.currentTimeMillis();
-		}
-		
-		return crawlerEndTime;
-	}
-	
-	public long getCrawlTotalPauseTime()
-	{
-		return crawlerTotalPausedTime;
-	}
-	
-	public long getCrawlPauseStartedTime()
-	{
-		return crawlerPauseStarted;
-	}
-	
-	public long getCrawlerTotalElapsedTime()
-	{
-		if(getCrawlPauseStartedTime()!=0)
-		{
-			//Are currently paused, calculate time up to last pause
-			return getCrawlPauseStartedTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
-		}
-		else
-		{
-			//Not paused, calculate total time.
-			return getCrawlEndTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
-		}
-	}
-
-	public void setLogWriteInterval(int interval) {
-		if(interval < 0){
-			logInterval = 0;
-			return;
-		}
-		
-		logInterval = interval;
-	}
-	public int getLogWriteInterval() {
-		return logInterval;
-	}
-
-	/**
-	 * Terminates the logging done by the object. 
-	 * Calling this method will cause the run() method to exit. 
-	 */
-	public void stop()
-	{
-		crawlerEndTime = System.currentTimeMillis(); //Note the time when the crawl stops.
-		logActivity(); //Log end state		
-		shouldrun = false;
-	}
-
-	/** This object can be run as a thread to enable periodic loggin */
-	public void run() {
-		// don't start logging if we have no logger
-		if (periodicLogger == null) {
-			return;
-		}
-		
-		crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
-		lastLogPointTime = crawlerStartTime;
-		shouldrun = true; //If we are starting, this should always be true.
-		
-		// log the legend	
-		periodicLogger.log(Level.INFO,
-				"   [timestamp] [discovered]    [queued] [downloaded]"
-					+ " [doc/s(avg)]  [KB/s(avg)]"
-					+ " [dl-failures] [busy-thread] [mem-use-KB]"
-			);
-
-		// keep logging until someone calls stop()
-		while (shouldrun) 
-		{
-			// pause before writing the first entry (so we have real numbers)
-			// and then pause between entries 
-			try {
-				Thread.sleep(controller.getOrder().getIntAt(CrawlController.XP_STATS_INTERVAL, CrawlController.DEFAULT_STATISTICS_REPORT_INTERVAL) * 1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				controller.runtimeErrors.log(
-					Level.INFO,
-					"Periodic stat logger interrupted while sleeping.");
-			}
-			
-			if(shouldrun && getCrawlPauseStartedTime()==0) //In case stop() was invoked while the thread was sleeping or we are paused.
-			{
-				logActivity();
-			}
-		}
-	}
-
-	private synchronized void logActivity() {
+	protected synchronized void logActivity() {
 		// This method loads "snapshot" data.
 		discoveredPages = urisEncounteredCount();
 		pendingPages = urisInFrontierCount();
@@ -304,130 +135,17 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 			 .toString()
 		);
 		
-		if (logLevel >= HUMAN_LOGGING) {
-		
-			// some human readable stuff, in case we want to look at the log file
-			periodicLogger.log(Level.INFO, now.toString());
-			periodicLogger.log(
-				Level.INFO,
-				"\tURIs Completed:\t"
-					+ percentOfDiscoveredUrisCompleted()
-					+ "% (fetched/discovered)");
-			periodicLogger.log(
-				Level.INFO,
-				"\tDocument Processing Rate:\t"
-					+ currentKBPerSec
-					+ " kb/sec.");
-			periodicLogger.log(
-				Level.INFO,
-				"\tDocument Processing Rate:\t"
-					+ docsPerSecond
-					+ " documents/sec.");
-			periodicLogger.log(
-				Level.INFO,
-				"\tTotal Processed Bytes:\t"
-					+ (totalProcessedBytes / 1000000)
-					+ " mb");
-			periodicLogger.log(
-				Level.INFO,
-				"\tDiscovered URIs:\t" + urisEncounteredCount());
-			periodicLogger.log(
-				Level.INFO,
-				"\tFrontier (unfetched):\t" + urisInFrontierCount());
-			periodicLogger.log(
-				Level.INFO,
-				"\tFetch Attempts:\t" + totalFetchAttempts());
-			periodicLogger.log(
-				Level.INFO,
-				"\tSuccesses:\t" + successfulFetchAttempts());
-			periodicLogger.log(Level.INFO, "\tThreads:");
-			periodicLogger.log(Level.INFO, "\t\tTotal:\t" + threadCount());
-			periodicLogger.log(
-				Level.INFO,
-				"\t\tActive:\t" + activeThreadCount());
-		}
-		
-		if (logLevel >= VERBOSE_LOGGING) {
-		
-			// print file type distribution (mime types)
-			HashMap dist = getFileDistribution();
-			Object[] keys = dist.keySet().toArray();
-			Arrays.sort(keys);
-		
-			if (dist.size() > 0) {
-				//	Iterator keyIterator = t.iterator(); //dist.keySet().iterator();
-				periodicLogger.log(
-					Level.INFO,
-					"\tFetched Resources MIME Distribution:");
-		
-				for (int i = 0; i < keys.length; i++) {
-					String key = (String) keys[i];
-					String val = ((Integer) dist.get(key)).toString();
-					periodicLogger.log(
-						Level.INFO,
-						"\t\t" + val + "\t" + key);
-				}
-		
-			} else {
-				periodicLogger.log(
-					Level.INFO,
-					"\tNo mime statistics currently available.");
-			}
-		
-			// print status code distributions (e.g. 404, 200, etc)
-			HashMap codeDist = getStatusCodeDistribution();
-			Object[] cdKeys = codeDist.keySet().toArray();
-			Arrays.sort(cdKeys);
-		
-			if (codeDist.size() > 0) {
-				Iterator keyIterator = codeDist.keySet().iterator();
-		
-				periodicLogger.log(
-					Level.INFO,
-					"\tStatus Code Distribution:");
-		
-				for (int i = 0; i < cdKeys.length; i++) {
-					String key = (String) cdKeys[i];
-					String val = ((Integer) codeDist.get(key)).toString();
-		
-					periodicLogger.log(
-						Level.INFO,
-						"\t\t" + val + "\t" + key);
-				}
-		
-			} else {
-				periodicLogger.log(
-					Level.INFO,
-					"\tNo code sistribution statistics.");
-			}
-		}
+
 		lastLogPointTime = System.currentTimeMillis();
 	}
 	
-	/* Return the number of unique pages based on md5 calculations */
-	/*public int uniquePagesCount(){
-		//TODO implement sha1 checksum comparisions
-		return 0;
-	}*/
-	
+
 	/** Returns the number of documents that have been processed
 	 *  per second over the life of the crawl (as of last snapshot)
 	 * @return docsPerSec
 	 */
 	public int processedDocsPerSec(){
 		return docsPerSecond;
-	}
-	
-	/** Get the current logging level */
-	public int getLogLevel(){
-		return logLevel;
-	}
-	
-	/** Set the log level.  See statically defined logging levels in this class
-	 *  for potential values 
-	 */
-	public void setLogLevel(int ll){
-		logLevel = ll;
 	}
 	
 	/** Returns an estimate of recent document download rates
@@ -456,31 +174,6 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		return currentKBPerSec;
 	}
 	
-	/** Keep track of  "completed" URIs so we can caluculate 
-	 *  statistics based on when they were completed.
-	 * @param CrawlURI
-	 */
-	public synchronized void completedProcessing(CrawlURI curi){
-		
-		// make sure it has the attributes we need for processing
-		if(! curi.getAList().containsKey(A_FETCH_BEGAN_TIME)){
-			return;
-		}
-		
-		// get the size from the curi and make sure the size field is set
-		long curiSize = curi.getContentSize();
-		
-		// the selector is going to strip the original of its' alist, 
-		// so let's keep a copy instead with just what we need
-		ProcessedCrawlURIRecord record = new ProcessedCrawlURIRecord(curi);
-		
-		// store in the queue
-		//recentlyCompletedFetches.add(record);
-
-		totalProcessedBytes += curiSize;
-	}
-	
-
 	/** Returns a HashMap that contains information about distributions of 
 	 *  encountered mime types.  Key/value pairs represent 
 	 *  mime type -> count.
@@ -495,7 +188,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 *  as the logic concerned with storing them to this object.
 	 * @param mime
 	 */
-	public void incrementTypeCount(String mime) {
+	protected void incrementTypeCount(String mime) {
 
 		if (mime == null) {
 			mime = "unknown";
@@ -523,15 +216,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 *  generate histograms.
 	 * @param code
 	 */
-	public void incrementStatusCodeCount(int code) {
-		incrementStatusCodeCount((new Integer(code)).toString());
-	}
-
-	/** Keeps a count of processed uri's status codes so that we can
-	 *  generate histograms.
-	 * @param code
-	 */
-	public void incrementStatusCodeCount(String code) {
+	protected void incrementStatusCodeCount(String code) {
 
 		if (code == null) {
 			code = "unknown";
@@ -651,102 +336,35 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		return totalProcessedBytes;
 	}
 
+
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURISuccessful(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void crawlPausing(String statusMessage) {
-		periodicLogger.log(
-					Level.INFO,
-					new PaddingStringBuffer()
-					 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
-					 .raAppend(40,"CRAWL WAITING TO PAUSE")
-					 .toString()
-				);				
+	public void crawledURISuccessful(CrawlURI curi) {
+		incrementStatusCodeCount(Integer.toString(curi.getFetchStatus()));
+		incrementTypeCount(curi.getContentType());
+		totalProcessedBytes += curi.getContentSize();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURINeedRetry(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void crawlPaused(String statusMessage) {
-		crawlerPauseStarted = System.currentTimeMillis();
-		logActivity();
-		periodicLogger.log(
-					Level.INFO,
-					new PaddingStringBuffer()
-					 .append(ArchiveUtils.TIMESTAMP14.format(new Date(crawlerPauseStarted)))
-					 .raAppend(40,"CRAWL PAUSED")
-					 .toString()
-				);				
+	public void crawledURINeedRetry(CrawlURI curi) {
+		// Not keeping track of this at the moment
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIDisregard(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void crawlResuming(String statusMessage) {
-		crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
-		crawlerPauseStarted = 0;
-		periodicLogger.log(
-					Level.INFO,
-					new PaddingStringBuffer()
-					 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
-					 .raAppend(40,"CRAWL RESUMED")
-					 .toString()
-				);			
-		lastLogPointTime = System.currentTimeMillis();	
+	public void crawledURIDisregard(CrawlURI curi) {
+		// Not keeping track of this at the moment
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.CrawlListener#crawlEnding(java.lang.String)
+	 * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIFailure(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void crawlEnding(String sExitMessage) {
-		// Not interested in this event.
+	public void crawledURIFailure(CrawlURI curi) {
+		// Not keeping track of this at the moment
 	}
 
-
-	/**
-	 * Will be called once the crawl job we are monitoring has ended.
-	 * 
-	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
-	 */
-	public void crawlEnded(String sExitMessage) {
-		stop();
-	}
-
-
-	/** Returns the approximate rate at which we are writing uncompressed data
-	 *  to disk.
-	 */
-	 /*
-	public int approximateCompletionRate() {
-
-		if (recentlyCompletedFetches.size() < 2) {
-			return 0;
-		}
-
-		ProcessedCrawlURIRecord oldest = (ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst();
-		ProcessedCrawlURIRecord newest = (ProcessedCrawlURIRecord)recentlyCompletedFetches.getLast();
-
-		long period = newest.getEndTime() - oldest.getStartTime();
-	
-		int totalRecentBytes = 0;
-
-		Iterator recentURIs = recentlyCompletedFetches.iterator();
-
-		while (recentURIs.hasNext()) {
-			ProcessedCrawlURIRecord current = (ProcessedCrawlURIRecord) recentURIs.next();
-			totalRecentBytes += current.getSize();
-		}
-
-		// return bytes/sec
-		return (int) (1000 * totalRecentBytes / period);
-	}
-*/
-
-
-//	public long getCrawlURIStartTime(CrawlURI curi){
-//		return curi.getAList().getLong(A_FETCH_BEGAN_TIME);
-//	}
-//	public long getCrawlURIEndTime(CrawlURI curi){
-//		return curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
-//	}
 }

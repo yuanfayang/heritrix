@@ -1,4 +1,4 @@
-package org.archive.crawler.framework;
+package org.archive.crawler.event;
 
 /**
  * An Adapter class for the CrawlStatusListener interface. 

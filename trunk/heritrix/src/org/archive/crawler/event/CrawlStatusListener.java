@@ -1,4 +1,4 @@
-package org.archive.crawler.framework;
+package org.archive.crawler.event;
 
 /**
  * @author Kristinn Sigurdsson

@@ -11,10 +11,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.archive.crawler.basic.Frontier;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.CrawlJobHandler;
-import org.archive.crawler.framework.CrawlStatusListener;
+import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 import org.w3c.dom.Node;
@@ -217,8 +218,8 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		currentJob = (CrawlJob)pendingCrawlJobs.get(0);
 		pendingCrawlJobs.remove(0);
 		
-		controller = new CrawlController(); //Create new controller.
-		controller.addListener(this);		//Register as listener to get job finished notice.
+		controller = new CrawlController(); 		//Create new controller.
+		controller.addCrawlStatusListener(this);	//Register as listener to get job finished notice.
 
 		
 		try {
@@ -231,7 +232,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		}
 		controller.startCrawl();
 		currentJob.setStatus(CrawlJob.STATUS_RUNNING);
-		currentJob.setStatisticsTracker(getStatistics());
+		currentJob.setStatisticsTracking(getStatistics());
 		crawling = true;
 		statusMessage = CRAWLER_STARTED;
 	}
@@ -306,7 +307,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 		return crawling;
 	}
 	
-	public StatisticsTracker getStatistics()
+	public StatisticsTracking getStatistics()
 	{
 		return controller.getStatistics();
 	}

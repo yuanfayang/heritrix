@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -48,14 +47,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	//  the event multiple arcwriter exist and are creating files concurrently
 	private static int arcId = 0;						
 	
-	protected StatisticsTracker statistics = null;
-	
   	public void initialize(CrawlController c){
   		super.initialize(c);
   
 		readConfiguration();
-		
-		statistics = c.getStatistics();
 		
 		try{
 			createNewArcFile();		  		
@@ -177,10 +172,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		// store size since we've already calculated it and it can be used 
 		// to generate interesting statistics
 		//curi.setContentSize((long)recordLength);
-		
-		// note completion
-		statistics.completedProcessing(curi);
-  	}
+ 	}
   	
 	protected void createNewArcFile() throws IOException {
 

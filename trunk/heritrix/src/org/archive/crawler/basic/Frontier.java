@@ -25,8 +25,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlStatusListener;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -166,7 +166,7 @@ public class Frontier
 //				0.75f));
 		
 		this.controller = c;
-		controller.addListener(this);
+		controller.addCrawlStatusListener(this);
 		Iterator iter = c.getScope().getSeedsIterator();
 		while (iter.hasNext()) {
 			UURI u = (UURI) iter.next();
@@ -441,6 +441,8 @@ public class Frontier
 
 		// release any other curis that were waiting for this to finish
 		releaseHeld(curi);	
+		
+		controller.raiseCrawledURIFailureEvent(curi); //Let interested listeners know of disregard disposition.
 
 		// send to basic log 
 		Object array[] = { curi };
@@ -549,6 +551,7 @@ public class Frontier
 				curi.setDontRetryBefore(Long.MAX_VALUE);
 			}
 		}
+		controller.raiseCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
 		curi.stripToMinimal();
 		decrementScheduled();
 		controller.recover.info(F_SUCCESS+curi.getURIString());
@@ -858,7 +861,9 @@ public class Frontier
 
 		// release any other curis that were waiting for this to finish
 		releaseHeld(curi);	
-
+		
+		controller.raiseCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
+		
 		// send to basic log 
 		Object array[] = { curi };
 		controller.uriProcessing.log(
@@ -972,6 +977,7 @@ public class Frontier
 			// eligible for retry asap
 			pushToPending(curi);
 		}
+		controller.raiseCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
 		controller.recover.info(F_RESCHEDULE+curi.getURIString());
 	}
 	
