@@ -82,9 +82,8 @@ public class Processor extends CrawlerModule {
 	protected CrawlController controller;
 	
 	public final void process(CrawlURI curi) {
-        // Set which processor should be next.
+        // by default, arrange for curi to proceed to next processor
         curi.setNextProcessor(getDefaultNext(curi));
-
         // Check if this processor is enabled before processing
         try {
             if (!((Boolean) getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
@@ -94,7 +93,6 @@ public class Processor extends CrawlerModule {
             logger.severe(e.getMessage());
         }
         
-		// by default, simply forward curi along
 		if(filtersAccept(curi)) {
 			innerProcess(curi);
 		} else {
