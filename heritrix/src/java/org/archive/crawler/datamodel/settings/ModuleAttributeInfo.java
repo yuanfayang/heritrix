@@ -90,21 +90,22 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     public Object checkValue(Object value) throws InvalidAttributeValueException {
         // Check if value is of correct type. If not, see if it is
         // a string and try to turn it into right type
-            try {
-                if (!(Class.forName(getType()).isInstance(value))
-                    && value instanceof String) {
-                    value = SettingsHandler.StringToType(
-                       (String) value, SettingsHandler.getTypeName(getType()));
-                }
-            } catch (Exception e) {
-                throw new InvalidAttributeValueException(
-                    "Unable to decode string '" + value
-                        + "' into type '" + getType() + "'");
+        Class typeClass;
+        try {
+            typeClass = defaultValue == null ? Class.forName(type) : defaultValue.getClass();
+            if (!(typeClass.isInstance(value)) && value instanceof String) {
+                value = SettingsHandler.StringToType(
+                   (String) value, SettingsHandler.getTypeName(getType()));
             }
+        } catch (Exception e) {
+            throw new InvalidAttributeValueException(
+                "Unable to decode string '" + value
+                    + "' into type '" + getType() + "'");
+        }
 
         // If it still isn't a legal type throw an error
         try {
-            if (!Class.forName(getType()).isInstance(value)) {
+            if (!typeClass.isInstance(value)) {
                 throw new InvalidAttributeValueException();
             }
         } catch (Exception e) {
