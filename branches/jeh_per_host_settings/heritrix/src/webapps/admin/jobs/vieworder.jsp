@@ -1,7 +1,10 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="org.archive.crawler.framework.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
+<%@ page import="org.archive.crawler.datamodel.settings.*,java.io.File" %>
+
+
 <%
  
 	String job = request.getParameter("job");
@@ -42,7 +45,7 @@
 			else
 			{
 		%>
-			<iframe name="frmStatus" src="/admin/iframes/xml.jsp?file=<%=cjob.getCrawlOrderFile()%>" width="100%" height="100%" frameborder="0" ></iframe>
+			<iframe name="frmStatus" src="/admin/iframes/xml.jsp?file=<%=((XMLSettingsHandler)cjob.getSettingsHandler()).getOrderFile().getAbsolutePath()%>" width="100%" height="100%" frameborder="0" ></iframe>
 		<%
 			} // End if(cjob==null)else clause
 		%>

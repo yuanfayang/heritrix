@@ -1,4 +1,4 @@
-<%@ page import="org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.framework.CrawlJob" %>
+<%@ page import="org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.CrawlJob" %>
 <%
 	/**
 	 * An include file that handles the "look" and navigation of a web page. 
@@ -27,9 +27,9 @@
 
 	StatisticsTracker head_stats = null;
 
-	if(handler.isCrawling())
+	if(handler.getCurrentJob() != null)
 	{
-		head_stats = (StatisticsTracker)handler.getStatistics(); //Assume that StatisticsTracker is being used.
+		head_stats = (StatisticsTracker)handler.getCurrentJob().getStatisticsTracking(); //Assume that StatisticsTracker is being used.
 	}
 %>
 
@@ -72,11 +72,11 @@
 						</tr>
 						<tr>
 							<td nowrap>
-								<%=handler.shouldcrawl()?"Crawler is running":"Crawler is not running"%>
+								<%=handler.isRunning()?"Crawler is running":"Crawler is not running"%>
 							</td>
 							<td>
 								<%
-									if(handler.shouldcrawl() || handler.isCrawling())
+									if(handler.isRunning() || handler.isCrawling())
 									{
 										if(handler.isCrawling())
 										{

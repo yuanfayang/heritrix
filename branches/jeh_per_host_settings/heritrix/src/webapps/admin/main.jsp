@@ -1,6 +1,6 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.framework.CrawlJob" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 
 <%
@@ -20,8 +20,8 @@
 		}
 		else if(sAction.equalsIgnoreCase("terminate"))
 		{
-			// Tell handler to stop crawl job
-			handler.terminateJob();
+			// Delete current job
+			handler.deleteJob(handler.getCurrentJob().getUID());
 		}
 		else if(sAction.equalsIgnoreCase("pause"))
 		{
@@ -43,9 +43,9 @@
 
 	StatisticsTracker stats = null;
 
-	if(handler.isCrawling())
+	if(handler.getCurrentJob() != null)
 	{
-		stats = (StatisticsTracker)handler.getStatistics(); //Assume that StatisticsTracker is being used.
+		stats = (StatisticsTracker)handler.getCurrentJob().getStatisticsTracking(); //Assume that StatisticsTracker is being used.
 	}
 
 	String title = "Administrator Console";
@@ -65,7 +65,7 @@
 								<b>Crawler running:</b>&nbsp;
 							</td>
 							<td>
-								<%=handler.shouldcrawl()?"Yes":"No"%>
+								<%=handler.isRunning()?"Yes":"No"%>
 							</td>
 						</tr>
 						<tr>
@@ -246,7 +246,7 @@
 		</table>
 	</fieldset>
 	<%
-		if(handler.shouldcrawl())
+		if(handler.isRunning())
 		{
 			out.println("<a href='main.jsp?action=stop'>Stop crawling</a>");
 		}

@@ -370,7 +370,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         settingsHandler.initialize();
         try {
             controller.initialize(settingsHandler);
-        } catch (InitializationException e) {
+        } catch (Exception e) {
             currentJob.setStatus(CrawlJob.STATUS_MISCONFIGURED);
             completedCrawlJobs.add(currentJob);
             currentJob = null;

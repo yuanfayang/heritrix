@@ -26,20 +26,20 @@
 	CrawlOrder crawlOrder = null;
 	if(request.getParameter("job") != null && request.getParameter("job").length() > 0){
 		//Get logs for specific job. This assumes that the logs for each job are stored in a unique location.
-		crawlOrder = handler.getJob(request.getParameter("job")).getCrawlOrder();
+		crawlOrder = handler.getJob(request.getParameter("job")).getSettingsHandler().getOrder();
 	}else{
 		if(handler.getCurrentJob() != null){
 			// If no specific job then assume current one
-			crawlOrder = handler.getCurrentJob().getCrawlOrder();
+			crawlOrder = handler.getCurrentJob().getSettingsHandler().getOrder();
 		} else if(handler.getCompletedJobs().size() > 0){
 			// If no current job, use the latest completed job.
-			crawlOrder = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getCrawlOrder();
+			crawlOrder = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getSettingsHandler().getOrder();
 		}
 	}
 	
 	if(crawlOrder != null)
 	{
-		String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH) + "/";
+		String diskPath = (String)crawlOrder.getAttribute(CrawlOrder.ATTR_DISK_PATH,) + "/";
 		diskPath = crawlOrder.getPathRelativeToOrderFile(diskPath);
 		// Got a valid crawl order, find it's logs
 		if(mode != null && mode.equalsIgnoreCase("number"))
