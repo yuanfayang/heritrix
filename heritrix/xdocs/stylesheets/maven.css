@@ -9,23 +9,23 @@ body {
  }
 
 .app h4 {
- color: #000000;
- background-color: #EEEEFF;
+ color: #FFFFFF;
+ background-color: #888888;
  }
 
 .a td { 
- background: #FFFFFF;
+ background: #DDDDDD;
  color: #000000;
  }
 
 .b td { 
- background: #EEEEFF;
+ background: #EFEFEF;
  color: #000000;
  }
 
 .app th {
- background-color: #BBBBFF;
- color: #000000;
+ background-color: #BBBBBB;
+ color: #FFFFFF;
  }
 
 div#banner {
@@ -35,39 +35,40 @@ div#banner {
 
 #banner, #banner td { 
  background: #9999FF;
- color: #000000;
+ color: #ffffff;
  }
 
 #leftcol {
- background: #9999FF;
+ background: #eeeeee;
  color: #000000;
- border-right: 1px solid @UI_NAVCOL_BORDER_RIGHT@;
- border-bottom: 1px solid @UI_NAVCOL_BORDER_BOTTOM@;
- border-top: 1px solid @UI_NAVCOL_BORDER_TOP@;
+ border-right: 1px solid #aaaaaa;
+ border-bottom: 1px solid #aaaaaa;
+ border-top: 1px solid #ffffff;
 }
 
 #navcolumn {
- background: #9999FF;
- color: #FFFFFF;
+ background: #eeeeee;
+ color: #000000;
  border-right: none;
  border-bottom: none;
  border-top: none;
+ width: 160px;
  }
 
 #breadcrumbs {
- background-color: #FFFFFF;
+ background-color: #dddddd;
  color: #000000;
- border-top: 1px solid @UI_BREADCRUMBS_BORDER_TOP@;
- border-bottom: 1px solid @UI_BREADCRUMBS_BORDER_BOTTOM@;
+ border-top: 1px solid #ffffff;
+ border-bottom: 1px solid #aaaaaa;
  }
 
 #source {
  background-color: #FFFFFF;
  color: #000000;
- border-right: 1px solid @UI_SOURCE_BORDER_RIGHT@; 
- border-left: 1px solid @UI_SOURCE_BORDER_LEFT@; 
- border-top: 1px solid @UI_SOURCE_BORDER_TOP@; 
- border-bottom: 1px solid @UI_SOURCE_BORDER_BOTTOM@; 
+ border-right: 1px solid #888888; 
+ border-left: 1px solid #888888; 
+ border-top: 1px solid #888888; 
+ border-bottom: 1px solid #888888; 
  margin-right: 7px;
  margin-left: 7px;
  margin-top: 1em;
@@ -83,15 +84,15 @@ a[name]:hover, #leftcol a[name]:hover {
  }
 
 a:link, #breadcrumbs a:visited, #navcolumn a:visited, .app a:visited, .tasknav a:visited {
- color: #000000;
+ color: blue;
  }
 
 a:active, a:hover, #leftcol a:active, #leftcol a:hover {
- color: @UI_HREF_LINK_ACTIVE@ !important;
+ color: #ff3300 !important;
  }
 
 a:link.selfref, a:visited.selfref {
- color: @UI_HREF_LINK_SELFREF@ !important;
+ color: #555555 !important;
  }
 
 h3, h4 {
@@ -111,5 +112,4 @@ img.handle {
 
 #navcolumn div div {
   padding-left: 10px;
-  width: 160px;
 }
