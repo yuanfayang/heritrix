@@ -2617,30 +2617,28 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         <title>crawl.log</title>
 
         <para>For each URI that completes processing (and will not be retried)
-        will get an entry, regardless of success or failure. Each entry is two
-        lines.</para>
+        will get an entry, regardless of success or failure.</para>
 
         <para>An example of two consecutive entries:</para>
 
-        <para><programlisting>  20040422222643484     1         59 #3 dns:www.lockergnome.com 31 text/dns 
-    LLP http://www.lockergnome.com/
-  20040422222644093   200       8216 #3 http://www.lockergnome.com/ 609 text/html 2t
-    LL http://dmoz.org/about.html</programlisting></para>
+        <para><programlisting>20040721232940438   200        310 http://127.0.0.1:9999/selftest/Charset/charsetselftest_end.html LLLL http://127.0.0.1:9999/selftest/Charset/shiftjis.jsp text/html #000 10 -
+        20040721232940481   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 12 -</programlisting></para>
 
-        <para>The first line contains a time stamp. Then comes the status code
-        (<xref linkend="statuscodes" />). Next is the size of the downloaded
-        document in bytes, followed by the serial number of the toe thread
-        that handled this URI.</para>
+        <para>The first column is a time stamp. Then comes the status code
+        (<xref linkend="statuscodes" />) and the size of the downloaded
+        document in bytes.</para>
 
-        <para>Next up is the URI itself (this includes the protocol prefix).
-        Then comes the number of milliseconds that the actual fetching of the
-        document took. Then there follows the document's mime type and finally
-        (if needed) the number of times the URI had to be tried. If never
-        retried (i.e. just 1 try) then this is omitted.</para>
+        <para>Next comes the document URI itself (this includes the protocol
+        prefix).  Then the discovery path that got us to this URI (<xref
+        linkend="discoverypath" />) and then the URI that immediately
+        referenced this URI ('referrer').  Both of the latter two fields
+        will be empty for such as the seed URIs.</para>
 
-        <para>The second line contains the discovery path (<xref
-        linkend="discoverypath" />). Followed by the URIs parent URI.</para>
-      </sect3>
+        <para>Next up is the document mime type, the id of
+        the worker thread that downloaded this document, the time in
+        milliseconds to download the document, and finally
+        (if pertinent) the number of times the URI had to be tried. If never
+        retried (i.e. just 1 try) then this is '-'.</para>
 
       <sect3>
         <title>local-errors.log</title>
