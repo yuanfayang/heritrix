@@ -26,6 +26,7 @@ public interface FetchStatusCodes {
 	public static int S_TIMEOUT = -4;
 	public static int S_INTERNAL_ERROR = -5;
 	public static int S_PREREQUISITE_FAILURE = -6;
+	public static int S_UNFETCHABLE_URI = -7;
 	
 	public static int S_ROBOTS_PRECLUDED = -9998;
 	
