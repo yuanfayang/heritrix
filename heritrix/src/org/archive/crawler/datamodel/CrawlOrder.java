@@ -9,6 +9,7 @@ package org.archive.crawler.datamodel;
 import javax.xml.transform.TransformerException;
 
 import org.apache.xpath.XPathAPI;
+import org.archive.crawler.framework.*;
 import org.w3c.dom.Document;
 
 /**

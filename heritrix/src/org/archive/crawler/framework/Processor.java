@@ -13,8 +13,9 @@ import org.w3c.dom.Node;
  * 
  * @author Gordon Mohr
  */
-public class Processor {
+public class Processor extends XMLConfig {
 	CrawlController controller;
+	Processor defaultNext;
 	
 	public void process(CrawlURI curi) {
 		// by default, simply forward curi along
@@ -25,11 +26,15 @@ public class Processor {
 	 * 
 	 */
 	private Processor getDefaultNext() {
-		return null;
+		return defaultNext;
 		
 	}
 	
-	public void init(Node xNode, CrawlController c) {
+	public void initialize(CrawlController c) {
 		controller = c;
+		Node n;
+		if ((n=xNode.getAttributes().getNamedItem("next"))!=null) {
+			defaultNext = (Processor)c.getProcessors().get(n.getNodeValue());
+		}
 	}
 }

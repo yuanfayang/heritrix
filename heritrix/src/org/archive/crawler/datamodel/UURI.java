@@ -161,7 +161,7 @@ public class UURI {
 	/**
 	 * @return
 	 */
-	private URI getUri() {
+	public URI getUri() {
 		return uri;
 	}
 

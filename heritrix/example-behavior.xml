@@ -14,24 +14,29 @@
  <processors>
   <processor 
     name="Preprocessor" 
-    class="org.archive.crawler.basic.SimplePolitenessEnforcer">
+    class="org.archive.crawler.basic.SimplePolitenessEnforcer"
+    next="DNS">
    <param name="delay-factor" value="10" />
   </processor>
   <processor 
-    name="HTTP" 
-    class="org.archive.crawler.basic.SimpleHTTPFetcher">
-  </processor>
-  <processor 
     name="DNS" 
-    class="org.archive.crawler.basic.SimpleDNSFetcher">
+    class="org.archive.crawler.basic.SimpleDNSFetcher"
+    next="HTTP">
   </processor>
   <processor 
+    name="HTTP" 
+    class="org.archive.crawler.basic.SimpleHTTPFetcher"
+    next="Extractor">
+  </processor>
+   <processor 
     name="Extractor" 
-    class="org.archive.crawler.basic.SimpleLinkExtractor">
+    class="org.archive.crawler.basic.SimpleLinkExtractor"
+    next="Archiver">
   </processor>
   <processor 
     name="Archiver" 
-    class="org.archive.crawler.basic.ARCWriter">
+    class="org.archive.crawler.basic.ARCWriter"
+    next="Cacher">
   </processor>
   <processor 
     name="Cacher" 

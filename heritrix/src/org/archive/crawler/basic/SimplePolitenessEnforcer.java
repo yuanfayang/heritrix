@@ -6,6 +6,9 @@
  */
 package org.archive.crawler.basic;
 
+import java.util.logging.Logger;
+
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -13,5 +16,14 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class SimplePolitenessEnforcer extends Processor {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimplePolitenessEnforcer");
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+	 */
+	public void process(CrawlURI curi) {
+		super.process(curi);
+		logger.info("exit");
+	}
 
 }

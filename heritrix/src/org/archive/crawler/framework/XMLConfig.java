@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,7 +32,7 @@ import org.xml.sax.SAXException;
  *
  */
 public class XMLConfig {
-	Node xNode;
+	protected Node xNode;
 	
 	public static Document readDocumentFromFile(String filename) {
 		File f = new File(filename);
@@ -181,7 +181,7 @@ public class XMLConfig {
 	/**
 	 * @param n
 	 */
-	private void setNode(Node n) {
+	public void setNode(Node n) {
 		xNode = n;
 	}
 
@@ -205,7 +205,7 @@ public class XMLConfig {
 			Object currentObject = instantiate(currentNode);
 			if (first==null) first = currentObject;
 			String name = currentNode.getAttributes().getNamedItem("name").getNodeValue();
-			results.put(name,currentNode);
+			results.put(name,currentObject);
 		}
 		return first;
 	}

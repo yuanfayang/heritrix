@@ -17,8 +17,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 public class ToeThread extends Thread {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
-	private boolean paused;
-	private boolean shouldCrawl;
+	private boolean paused = false;
+	private boolean shouldCrawl = true;
 	CrawlController controller;
 	int serialNumber;
 	

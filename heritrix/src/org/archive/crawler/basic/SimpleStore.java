@@ -66,13 +66,19 @@ public class SimpleStore implements URIStore {
 			return;
 		}
 		CrawlURI curi = new CrawlURI(uuri);
-		curi.getAList().setInt("distance-from-seed",0);
+		curi.getAList().putInt("distance-from-seed",0);
+		allCuris.put(uuri,curi);
+		pendingQueue.addLast(curi);
+		curi.setStoreState(URIStoreable.PENDING);
 	}
 
 	/**
 	 * 
 	 */
 	public void wakeReadyQueues(long now) {
+		if(snoozeQueues.isEmpty()) {
+			return;
+		}
 		while(((URIStoreable)snoozeQueues.first()).getWakeTime()<now) {
 			URIStoreable awoken = (URIStoreable)snoozeQueues.first();
 			snoozeQueues.remove(awoken);
