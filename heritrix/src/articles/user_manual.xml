@@ -15,7 +15,7 @@
     possess at least a general familiarity with the concept of web
     crawling.</para>
 
-    <para>If you want to build heritrix from source or if you'd like to make
+    <para>If you want to build Heritrix from source or if you'd like to make
     contributions and would like to know about contribution conventions, etc.,
     see instead the Developer Manual.</para>
   </sect1>
@@ -44,7 +44,7 @@
       page</ulink>. Each release comes in four flavors, packaged as .tar.gz or
       .zip and including source or not.</para>
 
-      <para>For installation on linux get the file
+      <para>For installation on Linux get the file
       <filename>heritrix-?.?.?.tar.gz</filename> (where ?.?.? is the most
       recent version number).</para>
 
@@ -62,7 +62,7 @@
         <sect4>
           <title>Java Runtime Environment </title>
 
-          <para>The Heritrix crawler is implemented purely in java. This means
+          <para>The Heritrix crawler is implemented purely in Java. This means
           that the only true requirement for running it is that you have a JRE
           installed. </para>
 
@@ -71,10 +71,12 @@
 
           <para>We currently include all of the free/open source third-party
           libraries necessary to run Heritrix in the distribution package. See
-          dependencies for the complete list (Licenses for all of the listed
-          libraries are listed in the dependencies section of the raw
-          project.xml at the root of the src download or here on sourceforge
-          ). </para>
+          <ulink
+          url="http://crawler.archive.org/dependencies.html">dependencies</ulink>
+          for the complete list (Licenses for all of the listed libraries are
+          listed in the dependencies section of the raw project.xml at the
+          root of the <literal>src</literal> download or on Sourceforge).
+          </para>
 
           <sect5>
             <title>Installing Java</title>
@@ -94,7 +96,7 @@
               </listitem>
             </itemizedlist>
 
-            <para>It has been our experiance that running on Linux with the
+            <para>It has been our experience that running on Linux with the
             IBM Java virtual machine Heritrix performs better then with the
             Sun JavaVM (Java version 1.4.2). This may change in the future.
             There are no known problems with using either of the two.</para>
@@ -168,7 +170,7 @@
         <title>Command line options</title>
 
         <para>A quick overview of the most useful command line options. It is
-        not neccessary to specify any command line options to run the
+        not necessary to specify any command line options to run the
         crawler.</para>
 
         <sect4>
@@ -186,7 +188,7 @@
           <para><programlisting>  --admin=LOGIN:PASSWORD</programlisting></para>
 
           <para>Change the default admin username and password. If you do not
-          do this then the defaul username and password will be in effect.
+          do this then the default username and password will be in effect.
           Since they are widely known that may not be desirable. Default
           username is <literal>admin</literal> and the default password is
           <literal>letmein</literal>.</para>
@@ -199,13 +201,13 @@
         <sect4>
           <title>HERITRIX_HOME</title>
 
-          <para>Set this environment variable to point at the heritrix home
-          directory. For example, if you've unpacked heritrix in your home
-          directory and heritrix is sitting in the heritrix-0.5.2 directory,
+          <para>Set this environment variable to point at the Heritrix home
+          directory. For example, if you've unpacked Heritrix in your home
+          directory and Heritrix is sitting in the heritrix-0.5.2 directory,
           you'd set HERITRIX_HOME as follows. Assuming your shell is
           bash:<programlisting>  % export HERITRIX_HOME=~/heritrix-0.5.2</programlisting>If
-          you don't set this environment variable, the heritrix start script
-          makes a guess at the home for heritrix. It doesn't always guess
+          you don't set this environment variable, the Heritrix start script
+          makes a guess at the home for Heritrix. It doesn't always guess
           correctly.</para>
         </sect4>
 
@@ -222,9 +224,9 @@
         <sect4>
           <title>JAVA_OPTS</title>
 
-          <para>Pass options to the heritrix JVM by populating the JAVA_OPTS
+          <para>Pass options to the Heritrix JVM by populating the JAVA_OPTS
           environment variable with values. For example, if you want to have
-          heritrix run with a larger heap, say 512 megs, you could do either
+          Heritrix run with a larger heap, say 512 megs, you could do either
           of the following (assuming your shell is bash):<programlisting>  % export JAVA_OPTS="-Xmx512m"
   % $HERITRIX_HOME/bin/heritrix</programlisting>Or, you could do it all on the
           one line as follows:<programlisting>  % JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix</programlisting></para>
@@ -243,31 +245,35 @@
           <para>Set this property on the command-line (i.e.
           "-Dheritrix.development" or include as part of
           <literal>JAVA_OPTS</literal> environment value) when you want to run
-          the crawler from eclipse. When this property is set, the conf and
-          webapps directories will be found in their development locations and
-          startup messages will show on the console.</para>
+          the crawler from eclipse. When this property is set, the
+          <literal>conf</literal> and <literal>webapps</literal> directories
+          will be found in their development locations and startup messages
+          will show on the console.</para>
         </sect4>
 
         <sect4>
           <title>javax.net.ssl.trustStore</title>
 
-          <para>Heritrix has its own trust store at conf/heritrix.cacerts that
-          it uses if the FetcherHTTP is configured to use a trust level of
+          <para>Heritrix has its own trust store at
+          <literal>conf/heritrix.cacerts</literal> that it uses if the
+          <literal>FetcherHTTP</literal> is configured to use a trust level of
           other than open ( open is the default setting). In the unusual case
-          where you'd like to have heritrix use an alternate truststore, point
-          at the alternate by supplying the JSSE javax.net.ssl.trustStore
-          property on the command line: e.g. java
-          -Djavax.net.ssl.trustStore=/tmp/truststore
-          org.archive.crawler.Heritrix .</para>
+          where you'd like to have Heritrix use an alternate truststore, point
+          at the alternate by supplying the JSSE
+          <literal>javax.net.ssl.trustStore</literal> property on the command
+          line: e.g.</para>
+
+          <para><programlisting>  java -Djavax.net.ssl.trustStore=/tmp/truststore org.archive.crawler.Heritrix</programlisting></para>
         </sect4>
 
         <sect4>
           <title>java.util.logging.config.file</title>
 
-          <para>The heritrix <filename>conf</filename> directory includes a
-          file named <filename>heritrix.properties</filename> . A section of
-          this file specifies the default heritrix logging configuration. To
-          override these settings, point
+          <para>The Heritrix <filename><literal>conf</literal></filename>
+          directory includes a file named
+          <filename>heritrix.properties</filename> . A section of this file
+          specifies the default Heritrix logging configuration. To override
+          these settings, point
           <literal>java.util.logging.config.file</literal> at a properties
           file with an alternate logging configuration. Below we reproduce the
           default <filename>heritrix.properties</filename> for
@@ -923,7 +929,7 @@
         <sect4>
           <title>org.archive.crawler.filter.PathologicalPathFilter</title>
 
-          <para>Checks if a URI contains a repated pattern.</para>
+          <para>Checks if a URI contains a repeated pattern.</para>
 
           <para> This filter is checking if a pattern is repeated a specific
           number of times. The use is to avoid crawler traps where the server
@@ -939,7 +945,7 @@
         <sect4>
           <title>org.archive.crawler.filter.HopsFilter</title>
 
-          <para>Returns true for all CandidateURIs passed in with a <xref
+          <para>Returns true for all URIs passed in with a <xref
           linkend="link-hop-count" /> greater than the
           <literal>max-link-hops</literal> value. </para>
 
@@ -1342,7 +1348,7 @@
     run. To start a crawl the user must go to the Console page (via the
     Console tab).</para>
 
-    <sect2>
+    <sect2 id="console">
       <title>Console</title>
 
       <para>The Console presents on overview of the current status of the
@@ -1423,53 +1429,72 @@
           <listitem>
             <para><emphasis role="bold">Status</emphasis></para>
 
-            <para></para>
+            <para>The current status of the job in progress. Jobs being
+            crawled are either running, paused or waiting to pause.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Processed docs/sec</emphasis></para>
 
-            <para></para>
+            <para>There are two values. The first is the number of documents
+            downloaded per second between the last snapshot of the Frontier's
+            state and the one before that (typically about 10-20 seconds). It
+            gives some indication of the current rate of progress but can
+            fluctuate considerable, especially if the StatisticsTracker has
+            the log interval set to a low value. </para>
+
+            <para>The second value (in parenthasis) is the number of documents
+            downloaded per second since the crawl began.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Processed KB/sec</emphasis></para>
 
-            <para></para>
+            <para>These are two values comparable with the docs/sec ones. Only
+            these indicate the number of KB (see <xref linkend="bytes" />)
+            downloaded per second rather then documents.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Run time</emphasis></para>
 
-            <para></para>
+            <para>The amount of time that has elapsed since the crawl began
+            (excluding any time spent paused).</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Active thread count</emphasis></para>
 
-            <para></para>
+            <para>The number of threads that are processing a URI of the total
+            number of threads that have been created.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Total data written</emphasis></para>
 
-            <para></para>
+            <para>The amount of data downloaded since the crawl began. See
+            <xref linkend="bytes" />.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Downloaded/Queued document
             ratio</emphasis></para>
 
-            <para></para>
+            <para>This is the ratio between successfully downloaded (i.e. got
+            a response from the web server, may have been a 404 etc.) and the
+            total number of queued (i.e. waiting to be crawled) and
+            successfully downloaded URIs.</para>
+
+            <para>For broad crawls this will likely never increase, may in
+            fact decrease and is likely to stay at the 5-6% range.</para>
+
+            <para>For more limited crawls (domain or host scoped) this will
+            eventually reach 100% once the relevant scope is exhausted.</para>
           </listitem>
         </itemizedlist>
 
-        <para></para>
-
         <para>Some of this information is replicated in the head of each page
         (see <xref linkend="header" />).</para>
-
-        <para></para>
       </sect3>
 
       <sect3>
@@ -1563,10 +1588,49 @@
       </sect3>
     </sect2>
 
-    <sect2>
+    <sect2 id="pendingjobs">
       <title>Pending jobs</title>
 
-      <para></para>
+      <para>At any given time there can be any number of crawl jobs waiting
+      for their turn to be crawled. </para>
+
+      <para>From the Jobs tab the user can access a list these pending jobs
+      (it also possible to get to them from the header, see <xref
+      linkend="header" />).</para>
+
+      <para>The list displays the name of each job, it's status (currently all
+      pending jobs have the status 'Pending') and offers the following options
+      for each job:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">View order</emphasis></para>
+
+          <para>Opens up the actual XML configuration file in a seperate
+          window. Of interest to advanced users only.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Edit configuration</emphasis></para>
+
+          <para>Takes the user to the Settings page of the jobs configurations
+          (see <xref linkend="settings" />).</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Journal</emphasis></para>
+
+          <para>Takes the user to the job's Journal (see <xref
+          linkend="journal" />).</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Delete</emphasis></para>
+
+          <para>Deletes the job (will only be marked as deleted, does not
+          delete it from disk).</para>
+        </listitem>
+      </itemizedlist>
     </sect2>
 
     <sect2>
@@ -1574,10 +1638,77 @@
 
       <para></para>
 
+      <sect3>
+        <title>Internal reports on ongoing crawl</title>
+
+        <para>The following reports are only availible while the crawler is
+        running. They provide information about the internal status of certain
+        parts of the crawler. Generally this information is only of interest
+        to advanced users who possess detailed knowledge of the internal
+        workings of said modules.</para>
+
+        <para>These reports can be accessed from the Reports tab when a job is
+        being crawled.</para>
+
+        <sect4>
+          <title>Frontier report</title>
+
+          <para>A report on the internal state of the frontier.</para>
+        </sect4>
+
+        <sect4>
+          <title>Thread report</title>
+
+          <para>Contains information about what each toe thread is doing and
+          how long it's been doing it. Also allows users to terminate threads
+          that have become stuck. Terminated threads will not actually be
+          removed from memory, Java does not provide a way of doing that.
+          Instead they will be isolated from the rest of the program running
+          and the URI they are working on will be reported back to the
+          frontier as if it had failed to be processed.<caution>
+              <para>Terminating threads should only be done by advanced users
+              who understand the effect of doing so.</para>
+            </caution></para>
+        </sect4>
+
+        <sect4 id="processorsreport">
+          <title>Processors report</title>
+
+          <para>A report on each processor. Not all processors provide
+          reports. Typically these are numbers of URIs handled, links
+          extracted etc.</para>
+
+          <para>This report is saved to a file at the end of the crawl (see
+          <xref linkend="processorsreport.txt" />).</para>
+        </sect4>
+      </sect3>
+
       <sect3 id="failedtostart">
         <title>Job failed to start</title>
 
-        <para></para>
+        <para>If a job is misconfigured in such a way that it is not possible
+        to do any crawling it might seem as if it never started. In fact what
+        happens is that the crawl is started but on the initialization it is
+        immediately terminated and sent to the list of completed jobs (<xref
+        linkend="completedjobs" />). In those instances an explanation of what
+        went wrong is displayed on the completed jobs page. An alert will also
+        be created.</para>
+
+        <para>A common cause of this is forgetting to set the HTTP header's
+        <literal>user-agent</literal> and <literal>from</literal> attributes
+        to valid values. The <literal>from</literal> attribute must contain a
+        valid e-mail address and the <literal>user-agent</literal> most be in
+        the following form:</para>
+
+        <para><programlisting>  [name] (+[http-url])[optional-etc]</programlisting></para>
+
+        <para>If no processors are set on the job (or the modules otherwise
+        badly misconfigured) the job may succeed in initializing but
+        immediately exhaust the seed list, failing to actually download
+        anything. This will not trigger any errors but a review of the logs
+        for the job should highlight the problem. So if a job terminates
+        immediately after starting without errors, the configuration
+        (especially modules) should be reviewed for errors.</para>
       </sect3>
 
       <sect3 id="header">
@@ -1585,17 +1716,73 @@
 
         <para></para>
       </sect3>
+
+      <sect3>
+        <title id="alerts">Alerts</title>
+
+        <para>The number of existing and new alerts is displayed both in the
+        Console (<xref linkend="console" />) and the header of each page
+        (<xref linkend="header" />).</para>
+
+        <para>Clicking on the link made up of those numbers takes the user to
+        an overview of the alerts. The alerts are presented as messages, with
+        unread ones clearly marked in bold and offering the user the option of
+        reading them, marking as read and deleting them.</para>
+
+        <para>Clicking an alert brings up a screen with it's details.</para>
+
+        <para>Alerts are generated in response to an error or problem of some
+        form. Alerts have severity levels that mirror the Java log levels.
+        </para>
+
+        <para>Serious exception that occur will have a
+        <emphasis>Severe</emphasis> level. These may be indicative of bugs in
+        the code or problems with the configuration of a crawl job.</para>
+      </sect3>
     </sect2>
 
     <sect2>
       <title>Editing a running job</title>
 
-      <para></para>
+      <para>The configurations of a job can be edited while it is running.
+      This option is accessed from the Jobs tab (Current job/Edit
+      configuration). When selected the user is taken to the settings section
+      of the job's configuration (<xref linkend="settings" />).</para>
+
+      <para>When a configuration file is edited, the old version of it is
+      saved to a new file (new file is named
+      <filename>&lt;oldFilename&gt;_&lt;timestamp&gt;.xml</filename>) before
+      it is updated. This way a record is kept of any changes. This record is
+      only kept for changes made <emphasis>after</emphasis> crawling
+      begins.</para>
+
+      <para>It is not possible to edit all aspects of the configuration after
+      crawling starts. Most noticably the Modules section is disabled. Also,
+      although not enforced by the WUI, making changes to certain settings (in
+      particular filenames, directory locations etc.) will have no effect
+      (doing so is will not harm the crawl, it will simply be ignored).</para>
+
+      <para>However most settings can be changed. This includes the number of
+      threads being used and the seeds list and although it is not possible to
+      remove modules, most have the option to disable them. Settings a modules
+      <literal>enabled</literal> attribute to <literal>false</literal>
+      effectively removes them from the configuration.</para>
 
       <sect3>
-        <title>Journal</title>
+        <title id="journal">Journal</title>
 
-        <para></para>
+        <para>The user can add notes to a journal that is kept for each job.
+        No entries are made automatically in the journal, it is only for user
+        added comments.</para>
+
+        <para>It can be useful to use it to document reasons behind
+        configuration changes to preserve that information along with the
+        actual changes.</para>
+
+        <para>The journal can be accessed from the Pending jobs page (<xref
+        linkend="pendingjobs" />) for pending jobs, the Jobs tab for currently
+        running jobs and the Completed jobs page (<xref
+        linkend="completedjobs" />) for completed jobs.</para>
       </sect3>
     </sect2>
   </sect1>
@@ -1605,13 +1792,13 @@
 
     <para></para>
 
-    <sect2>
+    <sect2 id="completedjobs">
       <title>Completed jobs</title>
 
       <para></para>
     </sect2>
 
-    <sect2>
+    <sect2 id="logs">
       <title>Logs</title>
 
       <para></para>
@@ -1627,6 +1814,81 @@
       <title>Outside the user interface</title>
 
       <para></para>
+
+      <sect3>
+        <title>Generated files</title>
+
+        <para>In addition to the logs discussed before (see <xref
+        linkend="logs" />) the following files are generated.</para>
+
+        <sect4>
+          <title>heritrix_out.log</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4>
+          <title>crawl-manifest.txt</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4>
+          <title>crawl-report.txt</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4>
+          <title>hosts-report.txt</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4>
+          <title>mimetype-report.txt</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4 id="processorsreport.txt">
+          <title>processors-report.txt</title>
+
+          <para>Contains the processors report (see <xref
+          linkend="processorsreport" />) generated at the very end of the
+          crawl.</para>
+        </sect4>
+
+        <sect4>
+          <title>responsecode-report.txt</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4>
+          <title>seeds-report.txt</title>
+
+          <para></para>
+        </sect4>
+
+        <sect4>
+          <title>ARC files</title>
+
+          <para>Assuming that you are using the ARC writer that comes with
+          Heritrix a number of ARC files will be generated containing the
+          crawled pages.</para>
+
+          <para>It is possible to specify the location of these files on the
+          ARCWriter processor in settings page.</para>
+
+          <para>ARC files are named as follows:</para>
+
+          <para><programlisting>  [prefix]-[series#-padded-to-5-digits]-[12-digit-timestamp]-[Base32-of-crawler-IP].arc.gz</programlisting></para>
+
+          <para>The <literal>prefix</literal> is set by the user when he
+          configures the ARCWriter processor. By default it is IAH.</para>
+        </sect4>
+      </sect3>
     </sect2>
   </sect1>
 
@@ -1690,15 +1952,21 @@
         <glossterm>Bytes, KB and statistics</glossterm>
 
         <glossdef>
-          <para></para>
-        </glossdef>
-      </glossentry>
+          <para>Heritrix adheres to the following conventions for displaying
+          byte and bit amounts:</para>
 
-      <glossentry id="alerts">
-        <glossterm>Alerts</glossterm>
+          <para><programlisting>  Legend Type
+       B Bytes
+      KB Kilobytes - 1 KB = 1024 B
+      MB Megabytes - 1 MB = 1024 KB
+      GB Gigabytes - 1 GB = 1024 MB
+  
+       b bits
+      Kb Kilobits - 1 Kb = 1000 b
+      Mb Megabits - 1 Mb = 1000 Kb
+      Gb Gigabits - 1 Gb = 1000 Mb</programlisting></para>
 
-        <glossdef>
-          <para></para>
+          <para>This also applies to all logs.</para>
         </glossdef>
       </glossentry>
 
@@ -1726,6 +1994,8 @@
         <glossdef>
           <para>Each URI has a discovery path. The path contains one character
           for each link or embed followed from the seed.</para>
+
+          <para>The character legend is as follows.</para>
 
           <programlisting>  R - Redirect
   E - Embed
