@@ -75,17 +75,17 @@ public class CrawlURI
 		dontRetryBefore = expires;
 	}
 	
-	/**
-	 * Set the expire time.  This function only allows you to set a 
-	 * nearer expire time, not to increase it.  To set an arbitrary
-	 * expire time use setDontRetryBefore()
-	 * @param expires
-	 */
-	public void setDontRetryBeforeSmart(long expires){
-		if(expires < dontRetryBefore || dontRetryBefore < 0){
-			dontRetryBefore = expires;
-		}
-	}
+//	/**
+//	 * Set the expire time.  This function only allows you to set a 
+//	 * nearer expire time, not to increase it.  To set an arbitrary
+//	 * expire time use setDontRetryBefore()
+//	 * @param expires
+//	 */
+//	public void setDontRetryBeforeSmart(long expires){
+//		if(expires < dontRetryBefore || dontRetryBefore < 0){
+//			dontRetryBefore = expires;
+//		}
+//	}
 	
 	public long getDontRetryBefore(){
 		return dontRetryBefore;
@@ -212,7 +212,6 @@ public class CrawlURI
 	 * 
 	 */
 	public AList getAList() {
-		// TODO Auto-generated method stub
 		return alist;
 	}
 	
@@ -382,6 +381,16 @@ public class CrawlURI
 	 */
 	public void addLink(String u) {
 		addToNamedList(A_HTML_LINKS, u);
+	}
+
+	/**
+	 * 
+	 */
+	public void reconstitute() {
+		if (alist == null) {
+			alist = new HashtableAList();
+		}
+		setDontRetryBefore(-1);
 	}
 	
 /*	public boolean isFubared(){
