@@ -27,6 +27,7 @@ package org.archive.crawler.datamodel.settings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -98,6 +99,14 @@ public class DataContainer extends HashMap {
         return info;
     }
 
+    protected Iterator attributeInfoIterator() {
+        return attributes.iterator();
+    }
+    
+    protected boolean hasAttributes() {
+        return !attributes.isEmpty();
+    }
+    
     protected MBeanAttributeInfo getAttributeInfo(String name) {
         return (MBeanAttributeInfo) attributeNames.get(name);
     }
@@ -147,9 +156,10 @@ public class DataContainer extends HashMap {
      * @see java.util.Map#get(java.lang.Object)
      */
     public Object get(String key) throws AttributeNotFoundException {
-        if (complexType.definitionMap.get(key) == null) {
+        Object res = super.get(key);
+        if (res == null && complexType.definitionMap.get(key) == null) {
             throw new AttributeNotFoundException(key);
         }
-        return super.get(key);
+        return res;
     }
 }
