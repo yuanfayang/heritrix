@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">
+  <meta>
+    <name>heritrix-selftest</name>
+    <description>Heritrix Selftest</description>
+    <date>20040304205047</date>
+  </meta>
+  <controller>
+    <string name="settings-directory">settings</string>
+    <string name="disk-path">disk</string>
+    <long name="max-bytes-download">0</long>
+    <long name="max-document-download">0</long>
+    <long name="max-time-sec">0</long>
+    <integer name="max-toe-threads">5</integer>
+    <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
+      <boolean name="enabled">true</boolean>
+      <string name="seedsfile">seeds.txt</string>
+      <integer name="max-link-hops">5</integer>
+      <integer name="max-trans-hops">5</integer>
+      <newObject name="exclude-filter" 
+            class="org.archive.crawler.filter.OrFilter">
+        <boolean name="enabled">true</boolean>
+        <boolean name="if-matches-return">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+      <newObject name="transitiveFilter" 
+            class="org.archive.crawler.filter.TransclusionFilter">
+        <boolean name="enabled">true</boolean>
+        <integer name="max-speculative-hops">0</integer>
+        <integer name="max-referral-hops">0</integer>
+        <integer name="max-embed-hops">0</integer>
+      </newObject>
+    </newObject>
+    <map name="http-headers">
+      <string name="user-agent">selftest-heritrix/@VERSION@ (+http://localhost.localdomain)</string>
+      <string name="from">webmaster@localhost.localdomain</string>
+    </map>
+    <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
+      <string name="type">classic</string>
+      <boolean name="masquerade">false</boolean>
+      <string name="custom-robots"></string>
+      <stringList name="user-agents">
+      </stringList>
+    </newObject>
+    <newObject name="frontier" class="org.archive.crawler.basic.Frontier">
+      <float name="delay-factor">0</float>
+      <integer name="max-delay-ms">0</integer>
+      <integer name="min-delay-ms">0</integer>
+      <integer name="min-interval-ms">0</integer>
+      <integer name="max-retries">10</integer>
+      <long name="retry-delay-seconds">90</long>
+    </newObject>
+    <map name="pre-fetch-processors">
+      <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+        <boolean name="recheck-scope">false</boolean>
+        <boolean name="block-all">false</boolean>
+        <string name="block-by-regexp"></string>
+      </newObject>
+      <newObject name="Preprocessor" class="org.archive.crawler.basic.PreconditionEnforcer">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+    </map>
+    <map name="fetch-processors">
+      <newObject name="DNS" class="org.archive.crawler.fetcher.FetchDNS">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+      <newObject name="HTTP" class="org.archive.crawler.fetcher.FetchHTTP">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+        <integer name="timeout-seconds">120</integer>
+        <integer name="sotimeout-ms">20000</integer>
+        <long name="max-length-bytes">9223372036854775807</long>
+        <integer name="max-fetch-attempts">10</integer>
+        <boolean name="strict">false</boolean>
+        <string name="trust-level">open</string>
+      </newObject>
+    </map>
+    <map name="extract-processors">
+      <newObject name="ExtractorHTTP" class="org.archive.crawler.extractor.ExtractorHTTP">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+      <newObject name="ExtractorHTML" class="org.archive.crawler.extractor.ExtractorHTML">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+      <newObject name="ExtractorJS" class="org.archive.crawler.extractor.ExtractorJS">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+    </map>
+    <map name="write-processors">
+      <newObject name="Archiver" class="org.archive.crawler.basic.ARCWriterProcessor">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+        <boolean name="compress">true</boolean>
+        <string name="prefix">SELFTEST</string>
+        <integer name="max-size-bytes">100000000</integer>
+        <string name="path">arcs</string>
+        <integer name="pool-max-active">1</integer>
+        <integer name="pool-max-wait">300000</integer>
+      </newObject>
+    </map>
+    <map name="post-processors">
+      <newObject name="Updater" class="org.archive.crawler.basic.CrawlStateUpdater">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+      <newObject name="Postselector" class="org.archive.crawler.basic.Postselector">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
+    </map>
+    <map name="loggers">
+      <newObject name="crawl-statistics" class="org.archive.crawler.admin.StatisticsTracker">
+        <integer name="interval-seconds">20</integer>
+      </newObject>
+    </map>
+    <string name="recover-path"></string>
+  </controller>
+</crawl-order>
