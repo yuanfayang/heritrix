@@ -176,7 +176,8 @@ public class Heritrix
     public static void main(String[] args)
         throws Exception
     {
-        out = getOut();
+        Heritrix.out = new PrintWriter(isDevelopment()? System.out: 
+            new PrintStream(new FileOutputStream(new File(STARTLOG))));
         
         try
         {
@@ -196,21 +197,14 @@ public class Heritrix
             // Its important the STARTLOG output stream gets closed.  Its a 
             // signal to the shell that started us up that startup is done --
             // or that it failed -- and that it can move on from waiting.
-            out.close();
+            // BUT, don't close if development (We set STARTLOG to be System.out
+            // in the dev. environment).
+            if (!isDevelopment())
+            {
+                Heritrix.out.close();
+            }
         }
     }
-    
-    /**
-     * If in development we print on System.out else to STARTLOG.
-     * 
-     * @return Printwriter to use.
-     */
-	private static PrintWriter getOut() throws FileNotFoundException
-    {
-        return new PrintWriter(isDevelopment()?
-             System.out: 
-             new PrintStream(new FileOutputStream(new File(STARTLOG))));
-	}
 
 	private static void initialize()
         throws IOException
