@@ -2,9 +2,9 @@ ______________________________________________________________________________
 $Id$
 _______________________________________________________________________________
 
-This directory contains the cruisecontrol (cc) config file for the running of
-the Internet Archive ArchiveOpenCrawler (heritrix) continuous integration build
-as well as supporting ant files and this README.
+This submodule 'hertrix-cc' contains the cruisecontrol (cc) build directory
+and cc config files for the running of the Internet Archive ArchiveOpenCrawler
+(heritrix) continuous integration build.
 
 See http://cruisecontrol.sourceforge.net to learn about CruiseControl.
 See http://crawler.archive.org to learn about the Internet Archive heritrix
@@ -14,8 +14,8 @@ open crawler project.
 HOW-TO SETUP CRUISECONTROL (CC) BUILD
 
 Below, we first describe setting up ssh CVS access using the PKI keys of the
-user designated as the user who runs the build.  Once keys are all in place, we
-then describe install and configuration of cruisecontrol (cc).
+user designated running the build.  Once keys are all in place, we then
+describe install and configuration of cruisecontrol (cc).
 
 + Choose user who will be running the build.  This user will need to have 
 ssh CVS access to the sourceforge repository.
@@ -41,22 +41,24 @@ private/public key pair:
 + Once above is done, you need to pass sourceforge the public key.
 Here is the sourceforge guide on how to post your public key:
 http://sourceforge.net/docman/display_doc.php?docid=761&group_id=1
-After posting your key and waiting the requisite ten minutes, check that all
-is working by doing a ssh to shell.sourceforge.net from the build machine.  If
-you don't  have to type in a password to gain access, then your public key has
-been taken by sourceforge.  Test that CVS operations don't require a password
-by doing something like the following:
+After posting your key and waiting the requisite ten minutes (It often seems to
+take way longer than ten minutes), check that all is working by doing a ssh to
+shell.sourceforge.net from the build machine.  If you don't  have to type in a
+password to gain access, then your public key has been taken by sourceforge. 
+Test that CVS operations don't require a password by doing something like the
+following:
 
     % export CVS_RSH=ssh
-    % cvs -z3 -d:ext:developername@cvs.sourceforge.net:/cvsroot/archive-crawler\        co ArchiveOpenCrawler
+    % cvs -z3 -d:ext:LOGIN_NAME@cvs.sourceforge.net:/cvsroot/archive-crawler\        co ArchiveOpenCrawler
 
-Above should checkout the crawler w/o requiring a password.  See the end 
-of the sourceforge CVS page for more on ssh CVS access:
+Above should checkout the crawler w/o requiring a password (In the above the 
+LOGIN_NAME needs to be replaced by the name of the designated build user, the 
+user whos' key has been registered at sourceforge).  See the end of the
+sourceforge CVS page for more on ssh CVS access:
 http://sourceforge.net/cvs/?group_id=73833
 
-+ Install java.  Build requires SUN 1.4.2.  The IBM JVM fails copying binary
-data and fails finding default builtin parser.  Set JAVA_HOME.  You also have
-to add the java bin to your path:
++ Install java.  Set JAVA_HOME.  You also have to add the java bin to your 
+path:
 
     % export PATH=$PATH:$JAVA_HOME/bin
 
@@ -64,46 +66,52 @@ to add the java bin to your path:
 path:
 
     % export PATH=$PATH:$MAVEN_HOME/bin
-
-+ Install the maven sdocbook plugin by copying it to $MAVEN_HOME/plugins
-Its used generating docbook articles.  You'll also need to manually add
-the jimi jar to your maven repository. Its needed by sdocbook and its
-sun licensed so you'll have to go pull it down yourself.  Maven can't do 
-it for you.  I undid the JimiProClasses.zip file and redid is a jar called
-jimi-1.0.jar (You might be able to just rename the zip and have it work).
     
 + Install cruisecontrol.  This doc. was done w/ 2.1.4.  You have to build it
-after downloading (This is the best doc. I found on cruisecontrol setup:
-http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl).
+after downloading.
     
     % cd cruisecontrol-2.1.4/main
     % chmod u+x build.sh
     % ./build.sh
 
-+ After installing java and cruisecontrol, get the cc config file for 
-ArchiveOpenCrawler from sourceforge.  Its in the ArchiveOpenCrawler module
-under src/cc (This README.txt sits beside it).  Its named config.xml.
++ After installing java and cruisecontrol, checkout the 'heritrix/src/cc', This
+is the checked-in cruisecontrol directory structure  (This README.txt is in the
+root of the 'heritrix/src/cc' submodule).  Check it out to a location that can
+tolerate large files accumulating over time (The below checks out 
+'heritrix/src/cc' to a directory named 'cc'):
 
-+ Make a directory in which cc will do its building.  Make it in a location
-that can tolerate a large amount of accumulating data over time.
+    % export CVS_RSH=ssh
+    % cvs -z3 -d:ext:developername@cvs.sourceforge.net:/cvsroot/archive-crawler       co -d cc heritrix/src/cc
 
-    % cd /DIR/THAT/CAN/TOLERATE/LARGE/DATA/OVER/TIME
-    % mkdir cc
-    % export CCBUILDDIR=/DIR/THAT/CAN/TOLERATE/LARGE/DATA/OVER/TIME/cc
++ Once you've checked out 'heritrix/src/cc', go into the checked out dir and 
+create three directories: artifacts, checkout and logs (See 
+http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl).
 
-+ Once you've created 'cc' ($CCBUILDDIR), go into $CCBUILDDIR and create three
-directories: artifacts, checkout and logs (See 
-http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl for more).
-
-    % cd $CCBUILDDIR
+    % cd cc
     % mkdir artifacts checkout logs
 
-+ Now checkout the ArchiveOpenCrawler project under heritrix-cc/checkout dir.
++ Now checkout the ArchiveOpenCrawler project under cc/checkout dir.
 
+    % export CCBUILDDIR=/PATH/TO/YOUR/CHECKED/OUT/CC/DIR
     % cd $CCBUILDDIR/checkout
     % export CVS_RSH=ssh
     % cvs -z3 -d:ext:stack-sf@cvs.sourceforge.net:/cvsroot/archive-crawler \
         checkout ArchiveOpenCrawler
+
++ Once you've checkedout the crawler, you need to add to it a build.properties
+file that has overrides necessary to the continuous build environment.  Here is
+a sample:
+
+    #Updated by build-ArchiveOpenCrawler.xml
+    #Mon Apr 26 16:58:33 PDT 2004
+    version.build.suffix=-${version.build.timestamp}
+    maven.username=stack-sf
+    maven.repo.local=/0/cruisecontrol/maven_repository
+    version.build.timestamp=200404261658
+
+This file is updated by the continuous build as it runs.  It has the name
+of the user who's key is up at sourceforge and it has location of the 
+maven repository.
 
 + Now set up the continuous build webserver. See item 6, "Building the web app",
 on this page: http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl.
@@ -124,13 +132,9 @@ machines only allow web access on port 8080).
     export MAVEN_HOME=$HOME/bin/maven-1.0-rc1
     export CCDIR=$HOME/bin/cruisecontrol-2.1.4/main
     export JETTY_HOME=$HOME/bin/Jetty-4.2.15rc0/
-    export CCBUILDDIR=$HOME/cc
-    mkdir ${CCBUILDDIR}/logs
-    nohup $CCDIR/bin/cruisecontrol.sh -port 8081 \
-        &> ${CCBUILDDIR}/logs/stdout_err.log &
+    nohup $CCDIR/bin/cruisecontrol.sh -port 8081 &
     cd $JETTY_HOME
-    nohup $JAVA_HOME/bin/java -jar start.jar &>
-    ${CCBUILDDIR}/logs/jetty.log &
+    nohup $JAVA_HOME/bin/java -jar start.jar &
 
 Make sure its all running fine (Check the logs dir under CCBUILDDIR, 
 visit the website at HOST:8080, and visit the jmx server at HOST:8081).
