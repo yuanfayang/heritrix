@@ -76,6 +76,9 @@ public interface FetchStatusCodes {
     /** blocked from fetch by user setting. */
     public static final int S_BLOCKED_BY_USER = -5001;
 
+    /** deleted from frontier by user */
+    public static final int S_DELETED_BY_USER = -6000;
+    
     /** DNS success */
     public static final int S_DNS_SUCCESS = 1;
 
