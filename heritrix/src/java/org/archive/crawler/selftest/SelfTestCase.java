@@ -210,8 +210,8 @@ public class SelfTestCase extends TestCase
         testNonNullExists(SelfTestCase.logsDir);
         // Calculate the arcfile name.  Find it in the arcDir.  Should only be
         // one. Then make an instance of ARCReader and call the validate on it.
-        ComplexType arcWriterProcessor =
-            (ComplexType)crawlOrder.getProcessors().getAttribute("Archiver");
+        ComplexType arcWriterProcessor = 
+            (ComplexType)crawlOrder.getSettingsHandler().getModule("Archiver");
         String arcDirStr = (String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PATH);
         File arcDir = null;

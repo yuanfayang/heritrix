@@ -39,6 +39,7 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
+import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.URIFrontier;
 
 /**
@@ -63,13 +64,16 @@ public class CrawlOrder extends CrawlerModule {
     public static final String ATTR_HTTP_HEADERS = "http-headers";
     public static final String ATTR_USER_AGENT = "user-agent";
     public static final String ATTR_FROM = "from";
-    public static final String ATTR_PROCESSORS = "processors";
+    public static final String ATTR_PRE_FETCH_PROCESSORS = "pre-fetch-processors";
+    public static final String ATTR_FETCH_PROCESSORS = "fetch-processors";
+    public static final String ATTR_EXTRACT_PROCESSORS = "extract-processors";
+    public static final String ATTR_WRITE_PROCESSORS = "write-processors";
+    public static final String ATTR_POST_PROCESSORS = "post-processors";
     public static final String ATTR_LOGGERS = "loggers";
 
     String caseFlattenedUserAgent;
 
     private MapType httpHeaders;
-    private MapType processors;
     private MapType loggers;
 
     private CrawlController controller;
@@ -124,10 +128,34 @@ public class CrawlOrder extends CrawlerModule {
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
-        addElementToDefinition(new CrawlerModule(URIFrontier.ATTR_NAME, "Frontier"));
+        addElementToDefinition(new CrawlerModule(
+                URIFrontier.ATTR_NAME, "Frontier"));
 
-        processors = (MapType) addElementToDefinition(new MapType(
-                ATTR_PROCESSORS, "URI processors"));
+        e = addElementToDefinition(new MapType(
+                ATTR_PRE_FETCH_PROCESSORS, "Processors to be run prior to" +
+                        " fetching anything from the network.",
+                        Processor.class));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new MapType(
+                ATTR_FETCH_PROCESSORS, "Processors that fetches documents."
+                , Processor.class));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new MapType(
+                ATTR_EXTRACT_PROCESSORS, "Processors that extract new URIs" +
+                        " from fetched documents.", Processor.class));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new MapType(
+                ATTR_WRITE_PROCESSORS, "Processors that write documents" +
+                        " to archives.", Processor.class));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new MapType(
+                ATTR_POST_PROCESSORS, "Processors that do cleanup and feeds" +
+                        " the frontier with new URIs.", Processor.class));
+        e.setOverrideable(false);
 
         loggers = (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
                 "Loggers"));
@@ -227,12 +255,4 @@ public class CrawlOrder extends CrawlerModule {
         return loggers;
     }
 
-    /**
-     * Returns the Map of the URI Processor series as defined by the configuration
-     * that the current instance of this class is representing.
-     * @return Map of the URI Processor series.
-     */
-    public MapType getProcessors() {
-        return processors;
-    }
 }

@@ -220,9 +220,21 @@
 				// Do common stuff
 				String subitem = request.getParameter("subitem");
 				MapType map = null;
-				if(item.equals("Processors")){
+				if(item.equals("PreFetchProcessors")){
 					// Editing processors map
-					map = ((MapType)settingsHandler.getOrder().getAttribute("processors"));
+					map = ((MapType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS));
+                } else if(item.equals("Fetchers")){
+                    // Editing processors map
+                    map = ((MapType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_FETCH_PROCESSORS));
+                } else if(item.equals("Extractors")){
+                    // Editing processors map
+                    map = ((MapType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_EXTRACT_PROCESSORS));
+                } else if(item.equals("Writers")){
+                    // Editing processors map
+                    map = ((MapType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_WRITE_PROCESSORS));
+                } else if(item.equals("Postprocessors")){
+                    // Editing processors map
+                    map = ((MapType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_POST_PROCESSORS));
 				} else if(item.equals("StatisticsTracking")){
 					// Editing Statistics Tracking map
 					map = ((MapType)settingsHandler.getOrder().getAttribute("loggers"));
@@ -345,9 +357,25 @@
 				((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getMBeanInfo().getDescription())%>
 				
 		<p>
-			<b>Select Processors</b>
+			<b>Select Pre Processors</b> <i>Processors that should be run before any fetching occurs</i>
 		<p>
-			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("processors"), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Processors")%>
+			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "PreFetchProcessors")%>
+        <p>
+            <b>Select Fetchers</b> <i>Processors that fetch documents from various protocols</i>
+        <p>
+            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_FETCH_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Fetchers")%>
+        <p>
+            <b>Select Extractors</b> <i>Processors that extracts links from URIs</i>
+        <p>
+            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_EXTRACT_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Extractors")%>
+        <p>
+            <b>Select Writers</b> <i>Processors that write documents to archive files</i>
+        <p>
+            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_WRITE_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Writers")%>
+        <p>
+            <b>Select Post Processors</b> <i>Processors that do cleanup and feeds the frontier with new URIs</i>
+        <p>
+            <%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_POST_PROCESSORS), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Postprocessors")%>
 
 		<p>
 			<b>Select Statistics Tracking</b>

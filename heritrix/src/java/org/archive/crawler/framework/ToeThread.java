@@ -121,9 +121,15 @@ public class ToeThread extends Thread
             lastStartTime = System.currentTimeMillis();
 
             try {
-                while ( currentCuri.nextProcessor() != null ) {
-                    Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-                    currentProcessor.process(currentCuri);
+                while (currentCuri.nextProcessorChain() != null) {
+                    // Starting on a new processor chain.
+                    currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
+                    currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
+
+                    while (currentCuri.nextProcessor() != null) {
+                        Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+                        currentProcessor.process(currentCuri);
+                    }
                 }
             } catch (RuntimeException e) {
                 e.printStackTrace(System.err);

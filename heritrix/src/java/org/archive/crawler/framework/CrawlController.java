@@ -169,9 +169,15 @@ public class CrawlController extends Thread {
     CrawlOrder order;
     CrawlScope scope;
 
-    Processor firstProcessor;
-    Processor postprocessor;
-    MapType processors;
+    public ProcessorChain firstProcessorChain;
+    public ProcessorChain postprocessorChain;
+
+    public ProcessorChain preFetchProcessorChain;
+    public ProcessorChain fetchProcessorChain;
+    public ProcessorChain extractProcessorChain;
+    public ProcessorChain writeProcessorChain;
+    public ProcessorChain postProcessorChain;
+
     int nextToeSerialNumber = 0;
 
     ServerCache serverCache;
@@ -463,10 +469,12 @@ public class CrawlController extends Thread {
             order.setAttribute((Frontier) frontier);
         }
 
+        /*
         processors = order.getProcessors();
         if (processors.isEmpty(null)) {
             throw new FatalConfigurationException("No processors defined");
         }
+        */
 
         // try to initialize each scope and frontier from the config file
         //scope.initialize(this);
@@ -490,28 +498,21 @@ public class CrawlController extends Thread {
 
         serverCache = new ServerCache(getSettingsHandler());
 
-        Processor previous = null;
-        Iterator it = processors.iterator(null);
-        while (it.hasNext()) {
-            Processor p = (Processor) it.next();
+        // Setup processors
+        preFetchProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS));
+        fetchProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_FETCH_PROCESSORS));
+        extractProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_EXTRACT_PROCESSORS));
+        writeProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_WRITE_PROCESSORS));
+        postProcessorChain = new ProcessorChain((MapType) order.getAttribute(CrawlOrder.ATTR_POST_PROCESSORS));
 
-            if (previous == null) {
-                firstProcessor = p;
-            } else {
-                previous.setDefaultNextProcessor(p);
-            }
+        preFetchProcessorChain.initialize(fetchProcessorChain);
+        fetchProcessorChain.initialize(extractProcessorChain);
+        extractProcessorChain.initialize(writeProcessorChain);
+        writeProcessorChain.initialize(postProcessorChain);
+        postProcessorChain.initialize(null);
 
-            if (((Boolean) p.getAttribute(null, Processor.ATTR_POSTPROCESSOR))
-                 .booleanValue()) {
-                // I am the distinguished postprocessor earlier stage can skip to
-                setPostprocessor(p);
-            }
-
-            logger.info(
-                "Processor: " + p.getName() + " --> " + p.getClass().getName());
-
-            previous = p;
-        }
+        setFirstProcessorChain(preFetchProcessorChain);
+        setPostprocessorChain(postProcessorChain);
     }
 
     private void setupDisk() throws FatalConfigurationException,
@@ -696,7 +697,7 @@ public class CrawlController extends Thread {
 
             CrawlURI curi = frontier.next(timeout);
             if (curi != null) {
-                curi.setNextProcessor(firstProcessor);
+                curi.setNextProcessorChain(getFirstProcessorChain());
                 ToeThread toe = toePool.available();
                 //if (toe !=null) {
                 logger.fine(toe.getName() + " crawl: " + curi.getURIString());
@@ -736,9 +737,9 @@ public class CrawlController extends Thread {
         registeredCrawlStatusListeners = null;
         order = null;
         scope = null;
-        firstProcessor = null;
-        postprocessor = null;
-        processors = null;
+        firstProcessorChain = null;
+        postprocessorChain = null;
+        //processors = null;
         serverCache = null;
 
         logger.fine(getName() + " finished for order CrawlController");
@@ -851,9 +852,9 @@ public class CrawlController extends Thread {
         return order;
     }
 
-    public MapType getProcessors() {
-        return processors;
-    }
+//    public MapType getProcessors() {
+//        return processors;
+//    }
 
     public ServerCache getServerCache() {
         return serverCache;
@@ -940,15 +941,23 @@ public class CrawlController extends Thread {
         return scope;
     }
 
-    public Processor getPostprocessor() {
-        return postprocessor;
+    public ProcessorChain getFirstProcessorChain() {
+        return firstProcessorChain;
+    }
+
+    public void setFirstProcessorChain(ProcessorChain processorChain) {
+        firstProcessorChain = processorChain;
+    }
+
+    public ProcessorChain getPostprocessorChain() {
+        return postprocessorChain;
     }
 
     /**
      * @param processor
      */
-    public void setPostprocessor(Processor processor) {
-        postprocessor = processor;
+    public void setPostprocessorChain(ProcessorChain processorChain) {
+        postprocessorChain = processorChain;
     }
 
     public File getDisk() {
@@ -1013,14 +1022,29 @@ public class CrawlController extends Thread {
         rep.append("  Job being crawled:    " + getOrder().getCrawlOrderName()
                    + "\n");
 
-        rep.append("  Number of Processors: " + processors.size(null) + "\n");
+        int processorCount = preFetchProcessorChain.size()
+                             + fetchProcessorChain.size()
+                             + extractProcessorChain.size()
+                             + writeProcessorChain.size()
+                             + postProcessorChain.size();
+
+        rep.append("  Number of Processors: " + processorCount + "\n");
         rep.append("  NOTE: Some processors may not return a report!\n\n");
 
-        Iterator iter = processors.iterator(null);
-        while (iter.hasNext()) {
-            Processor p = (Processor) iter.next();
-            //Processor p = (Processor) ((Map.Entry)obj).getValue();
-            rep.append(p.report());
+        for (Iterator it = preFetchProcessorChain.iterator(); it.hasNext(); ) {
+            rep.append(((Processor) it.next()).report());
+        }
+        for (Iterator it = fetchProcessorChain.iterator(); it.hasNext(); ) {
+            rep.append(((Processor) it.next()).report());
+        }
+        for (Iterator it = extractProcessorChain.iterator(); it.hasNext(); ) {
+            rep.append(((Processor) it.next()).report());
+        }
+        for (Iterator it = writeProcessorChain.iterator(); it.hasNext(); ) {
+            rep.append(((Processor) it.next()).report());
+        }
+        for (Iterator it = postProcessorChain.iterator(); it.hasNext(); ) {
+            rep.append(((Processor) it.next()).report());
         }
 
         return rep.toString();

@@ -31,6 +31,7 @@ import java.util.Set;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.ProcessorChain;
 import org.archive.util.HttpRecorder;
 
 import st.ata.util.AList;
@@ -65,7 +66,8 @@ public class CrawlURI extends CandidateURI
     private long dontRetryBefore = -1;
 
     // Processing progress
-    Processor nextProcessor;
+    private Processor nextProcessor;
+    private ProcessorChain nextProcessorChain;
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
@@ -264,15 +266,24 @@ public class CrawlURI extends CandidateURI
         return fetchAttempts++;
     }
 
-     public Processor nextProcessor() {
-             return nextProcessor;
-     }
-     /**
-      * @param processor
-      */
-     public void setNextProcessor(Processor processor) {
-             nextProcessor = processor;
-     }
+    public Processor nextProcessor() {
+        return nextProcessor;
+    }
+    
+    public ProcessorChain nextProcessorChain() {
+        return nextProcessorChain;
+    }
+    
+    /**
+     * @param processor
+     */
+    public void setNextProcessor(Processor processor) {
+        nextProcessor = processor;
+    }
+    
+    public void setNextProcessorChain(ProcessorChain nextProcessorChain) {
+        this.nextProcessorChain = nextProcessorChain;
+    }
 
     /**
      * @return Token (usually the hostname) which indicates
@@ -614,10 +625,16 @@ public class CrawlURI extends CandidateURI
     /**
      * @param processor
      */
-    public void skipToProcessor(Processor processor) {
+    public void skipToProcessor(ProcessorChain processorChain, Processor processor) {
+        setNextProcessorChain(processorChain);
         setNextProcessor(processor);
     }
 
+    public void skipToProcessorChain(ProcessorChain processorChain) {
+        setNextProcessorChain(processorChain);
+        setNextProcessor(null);
+    }
+    
     /**
      * For completed HTTP transactions, the length of the content-body
      * (as given by the header or calculated)
