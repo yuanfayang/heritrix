@@ -348,16 +348,6 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
-     * Reset the number of fetch attempts back to zero. This is used by 
-     * Frontiers that repeatedly visit the same URIs. Thus they reset this
-     * counter each time it is visited <i>successfully</i>, making this a 
-     * count of attempts to fetch a URI successfully. 
-     */
-    public void resetFetchAttempts(){
-        fetchAttempts = 0;
-    }
-
-    /**
      * Get the next processor to process this URI.
      *
      * @return the processor that should process this URI next.
@@ -816,6 +806,11 @@ public class CrawlURI extends CandidateURI
         getAList().remove(A_HTTP_TRANSACTION);
         // Discard any ideas of prereqs -- may no longer be valid.
         getAList().remove(A_PREREQUISITE_URI);
+
+        contentState = CONTENT_UNKNOWN;
+        contentSize = UNCALCULATED;
+        contentLength = UNCALCULATED;
+        fetchAttempts = 0;
     }
 
     /**
