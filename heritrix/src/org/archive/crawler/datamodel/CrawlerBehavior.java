@@ -36,4 +36,11 @@ public class CrawlerBehavior extends XMLConfig {
 		return getStringAt("//http-headers/User-Agent");
 	}
 
+	/**
+	 * @return
+	 */
+	public String getFrom() {
+		return getStringAt("//http-headers/From");
+	}
+
 }
