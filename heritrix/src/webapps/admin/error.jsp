@@ -8,9 +8,11 @@
 
 <h2>An error occured</h2>
 
-<h3 style="color: red"><%= exception %></h3>
+<pre><h3 style="color: red"><%= exception %></h3></pre>
 
-<% exception.printStackTrace(new java.io.PrintWriter(out)); %>
+<pre><% exception.printStackTrace(new java.io.PrintWriter(out)); %></pre>
+
+<a href="javascript:history.back()">You may be able to recover by going back</a>
 
 </body>
 </html>
