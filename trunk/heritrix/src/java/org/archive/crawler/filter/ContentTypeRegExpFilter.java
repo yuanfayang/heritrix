@@ -33,9 +33,9 @@ import org.archive.util.TextUtils;
  */
 public class ContentTypeRegExpFilter extends URIRegExpFilter {
     private static final String DESCRIPTION = "ContentType regexp filter.\n" +
-        "Cannot be used until after fetcher processors (Only then is the" +
-        " Content-Type known). A good place for this filter is on at" +
-        " the writer step of the process.";
+        "Cannot be used until after fetcher processors. Only then is the" +
+        " Content-Type known. A good place for this filter is at" +
+        " the writer step processing.";
 
     /**
      * @param name Filter name.
