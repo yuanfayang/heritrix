@@ -306,7 +306,7 @@ public class CrawlScope extends Filter {
      * @param o the URI to check.
      * @return True if exclude filter accepts passed object.
      */
-    private boolean excludeAccepts(Object o) {
+    protected boolean excludeAccepts(Object o) {
         if (this.excludeFilter.isEmpty(o)) {
             return exeedsMaxHops(o);
         } else {
