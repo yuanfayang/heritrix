@@ -26,6 +26,7 @@ package org.archive.crawler.scope;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
@@ -112,27 +113,46 @@ public class DomainScope extends CrawlScope {
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
         List seeds = getSeedlist();
+        String seedDomain = null;
+        String candidateDomain =null;
+
+        // Get candidate domain where www[0-9]*\. is stripped.
+        try {
+            candidateDomain = u.getHostBasename();
+        }
+        catch (URIException e1) {
+            logger.severe("Failed get host from " + u);
+        }        
+        if (candidateDomain == null) {
+            // either an opaque, unfetchable, or unparseable URI
+            return false;
+        }
+
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI s = (UURI)i.next();
-                if(isSameHost(s, u)) {
-                    return true;
+                // Get seed domain where www[0-9]*\. is stripped.                
+                try {
+                    seedDomain = s.getHostBasename();
+                }
+                catch (URIException e) {
+                    logger.severe("Failed get host: " + s);
+                }
+                if (seedDomain == null) {
+                    // GetHost can come back null.  See bug item 
+                    // [ 910120 ] java.net.URI#getHost fails when leading digit
+                    continue;
                 }
                 
-                // Might be a close-enough match
-                String seedDomain = s.getHost();
-                if (seedDomain == null) {
-                    // GetHost can come back null.  See
-                    // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-                    continue;
+                // Check if stripped hosts are same. 
+                if (seedDomain.equals(candidateDomain)) {
+                    return true;
                 }
-                // Strip www[#]
-                seedDomain = seedDomain.replaceFirst("^www\\d*", "");
-                String candidateDomain = u.getHost();
-                if (candidateDomain == null) {
-                    // either an opaque, unfetchable, or unparseable URI
-                    continue;
-                }
+
+                // Hosts are not same. Now we can adjust seed basename to 
+                // include leading dot.
+                seedDomain = "." + seedDomain;
+                
                 if (seedDomain.regionMatches(0, candidateDomain,
                     candidateDomain.length() - seedDomain.length(),
                     seedDomain.length())) {
@@ -144,11 +164,7 @@ public class DomainScope extends CrawlScope {
         // if none found, fail
         return false;
     }
-    
-    /**
-     *  
-     * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
-     */
+ 
     protected boolean additionalFocusAccepts(Object o) {
         return additionalFocusFilter.accepts(o);
     }
