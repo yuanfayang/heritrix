@@ -294,7 +294,7 @@ public class FetchHTTP extends Processor
     private boolean canFetch(CrawlURI curi) {
         String scheme = curi.getUURI().getScheme();
          if (!(scheme.equals("http") || scheme.equals("https"))) {
-             // only handles plain http for now
+             // handles only plain http and https
              return false;
          }
 
