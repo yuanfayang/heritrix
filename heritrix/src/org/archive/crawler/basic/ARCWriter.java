@@ -20,7 +20,9 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.IAGZIPOutputStream;
+import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.DevUtils;
 import org.xbill.DNS.Record;
 
 /**
@@ -281,7 +283,17 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 
 		writeMetaLine(curi,  recordLength);
 		
-		get.getHttpRecorder().getRecordedInput().getReplayInputStream().readFullyTo(out);
+		ReplayInputStream capture = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
+		capture.readFullyTo(out);
+		long remaining = capture.remaining();
+		if(remaining>0) {
+			DevUtils.warnHandle(new Throwable("n/a"),"gap between expected and actual");
+			while(remaining>0) {
+				// pad with zeros
+				out.write(0);
+				remaining--;
+			}
+		}
 		out.write('\n'); // trailing newline
 		
 // OLD WAY
