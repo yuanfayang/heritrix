@@ -1,4 +1,5 @@
 <%@ page import="org.archive.crawler.admin.CrawlJobErrorHandler" %>
+<%@ page import="org.archive.crawler.admin.auth.User" %>
 <%@ page import="org.archive.crawler.settings.*" %>
 <%@ page import="javax.management.MBeanInfo"%>
 <%@ page import="javax.management.Attribute"%>
@@ -350,7 +351,8 @@
     }
     CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
     boolean expert = false;
-    if(getCookieValue(request.getCookies(), "expert", "false").equals("true")) {
+    if(User.getCookieValue(request.getCookies(), "expert", 
+            "false").equals("true")) {
         expert = true;
     }
     // Get the settings objects.
