@@ -14,7 +14,7 @@
         <session-timeout>120</session-timeout>
     </session-config>
     <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>/index.jsp</welcome-file>
     </welcome-file-list>
     <security-constraint>
         <display-name>Heritrix Console Constraint</display-name>
@@ -22,6 +22,12 @@
             <web-resource-name>Heritrix Console JSP pages</web-resource-name>
             <url-pattern>*.jsp</url-pattern>
         </web-resource-collection>
+        <auth-constraint>
+            <role-name>administrator</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <security-constraint>
+        <display-name>Heritrix Console Constraint</display-name>
         <web-resource-collection>
             <web-resource-name>Heritrix Console Root</web-resource-name>
             <url-pattern>/</url-pattern>
