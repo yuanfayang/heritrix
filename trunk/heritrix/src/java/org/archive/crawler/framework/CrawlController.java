@@ -466,6 +466,9 @@ public class CrawlController implements Serializable {
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
              MBeanException, ReflectionException {
+        
+        serverCache = new ServerCache(getSettingsHandler());
+
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
@@ -498,8 +501,6 @@ public class CrawlController implements Serializable {
                     "unable to initialize frontier: " + e);
             }
         }
-
-        serverCache = new ServerCache(getSettingsHandler());
 
         // Setup processors
         if (processorChains == null) {
