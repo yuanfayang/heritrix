@@ -205,6 +205,25 @@
         </answer>
       </faq>
 
+
+
+<faq id="toethreads">
+<question>Why are the main crawler worker threads called "ToeThreads"??
+</question>
+
+<answer>
+<p>While the mascots of web crawlers have usually been spider-related,
+I'd rather think of Heritrix as a centipede or millipede: fast and
+many-segmented.</p>
+
+<p>Anything that "crawls" over many things at once would presumably have
+a lot of feet and toes. Heritrix will often use many hundreds of worker
+threads to "crawl", but 'WorkerThread' or 'CrawlThread' seem mundane.</p>
+
+<p>So instead, we have 'ToeThreads'.  :)</p>
+</answer>
+</faq>
+
   </part>
 
   <part id="references">
