@@ -6,8 +6,8 @@
 	<classpathentry kind="lib" path="lib/commons-collections-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dnsjava-1.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/itext-1.0.0.jar"/>
-	<classpathentry kind="lib" path="lib/jasper-compiler-tomcat-4.1.24.jar"/>
-	<classpathentry kind="lib" path="lib/jasper-runtime-tomcat-4.1.24.jar"/>
+	<classpathentry kind="lib" path="lib/jasper-compiler-tomcat-4.1.30.jar"/>
+	<classpathentry kind="lib" path="lib/jasper-runtime-tomcat-4.1.30.jar"/>
 	<classpathentry kind="lib" path="lib/javaswf-CVS-SNAPSHOT-1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-2.0-RC1-20031102.jar"/>
 	<classpathentry kind="lib" path="lib/poi-scratchpad-2.0-RC1-20031102.jar"/>
@@ -18,7 +18,7 @@
 	<classpathentry kind="lib" path="lib/ant-1.5.4.jar"/>
 	<classpathentry kind="lib" path="src/conf"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.3.jar"/>
-	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-tomcat-4.1.30.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jmxri-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/jmxtools-1.2.1.jar"/>
