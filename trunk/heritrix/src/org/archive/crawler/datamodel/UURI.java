@@ -10,7 +10,10 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -44,7 +47,12 @@ public class UURI implements Serializable {
 	 */
 	private UURI(URI u) throws URISyntaxException {
 		uri = u;
-		uriString = u.toASCIIString();
+		try {
+			uriString = u.toASCIIString();
+		} catch (NullPointerException npe) {
+			DevUtils.warnHandle(npe,"URI problem with "+u);
+			throw new URISyntaxException(u.toString(),"URI.encode NPE");
+		}
 		if (uriString.length()>DEFAULT_MAX_URI_LENGTH) {
 			throw new URISyntaxException(uriString,"Too Long");
 		}
@@ -152,7 +160,7 @@ public class UURI implements Serializable {
 			u = new URI(u.getScheme().toLowerCase(), // case-flatten scheme
 			            canonizedAuthority, // case and port flatten
 			            fixedPath, // leave alone
-			            u.getRawQuery(), // leave alone
+			            u.getQuery(), // leave alone 
 		                null); // drop fragment
 		} else {
 			// opaque URI
