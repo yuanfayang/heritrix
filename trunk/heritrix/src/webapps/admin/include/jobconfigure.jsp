@@ -24,12 +24,17 @@
      *      @param name absolute name of the attribute
      *   doPop(text) - Displays text in a pop-up dialog of some sort.
      *      @param text the text that will be displayed.
-     *   doDeleteList(name) - Delete selected items from specified list.
+     *   doDeleteList(name) - Delete selected items from specified list. INCLUDED
      *      @param name the absolute name of the list attribute.
-     *   doAddList(name) - Add an entry to a list
+     *   doAddList(name) - Add an entry to a list INCLUDED
      *      @param name the absolute name of the list attribute to add to
      *                  name + ".add" will provide the element name of that
      *                  contains the new entry
+     *   doAddMap(name) - Add to a simple typed map. INCLUDED
+     *      @param name the absolute name of the map attribute to add to.
+     *   doDeleteMap(name, key) - Delete an entry from a simple typed map INCLUDED
+     *      @param name the absolute name of the map attribute to remove from
+     *      @param key the key of the item in the map that is to be removed.
      *
      * Override checkboxes are named with their respective attributes 
      * absolute name + ".override". 
@@ -163,7 +168,6 @@
                                 // Simple map
                                 MapType map = (MapType)currentAttribute;
                                 p.append("<table border='0' cellspacing='0' cellpadding='0'>\n");
-                                p.append("<tr>\n");
 						        
 						        MBeanInfo mapInfo = map.getMBeanInfo(settings);
 						        MBeanAttributeInfo mp[] = mapInfo.getAttributes();
@@ -182,10 +186,11 @@
 						            } catch (Exception e1) {
 						                p.append(e1.toString() + " " + e1.getMessage());
 						            }
-						            p.append("<td>" + mapAtt.getName() + "</td><td>" + currentAttribute + "</td>\n");
+						            p.append("<tr " + (alt?"bgcolor='#EEEEFF'":"") + "><td>" + mapAtt.getName() + "</td><td>&nbsp;-&gt;&nbsp</td><td>" + currentMapAttribute + "</td><td>&nbsp;<a href=\"javascript:doDeleteMap('"+attAbsoluteName+"','"+mapAtt.getName()+"')\">Remove</a></td></tr>\n");
+						            alt = !alt;
 						        }
-						        
-						        p.append("</tr></table>\n");
+						        p.append("<tr><td><input name='"+attAbsoluteName+".key' name='"+attAbsoluteName+".key'></td><td>&nbsp;->&nbsp;</td><td><input name='"+attAbsoluteName+".value' name='"+attAbsoluteName+".value'></td><td>&nbsp;<input type='button' value='Add' onClick=\"doAddMap('"+attAbsoluteName+"')\"></td></tr>");
+						        p.append("</table>\n");
                             } else if(legalValues != null && legalValues.length > 0) {
                                 //Have legal values. Build combobox.
                                 p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
@@ -221,6 +226,30 @@
                                 for(int i=0 ; i<list.size() ; i++){
                                     p.append(list.get(i)+"<br>\n");
                                 }
+                            } else if(simpleMap) {
+                                // Simple map
+                                MapType map = (MapType)currentAttribute;
+                                p.append("</td><td '" + (settings==null?"1":"2") + "'><table border='0' cellspacing='0' cellpadding='0'>\n");
+                                
+                                MBeanInfo mapInfo = map.getMBeanInfo(settings);
+                                MBeanAttributeInfo mp[] = mapInfo.getAttributes();
+
+                                // Printout modules in map.
+                                for(int n2=0; n2<mp.length; n2++) {
+                                    ModuleAttributeInfo mapAtt = (ModuleAttributeInfo)mp[n2]; //The attributes of the current attribute.
+
+                                    Object currentMapAttribute = null;
+                                    Object localMapAttribute = null;
+                        
+                                    try {
+                                        currentMapAttribute = map.getAttribute(settings,mapAtt.getName());
+                                        localMapAttribute = map.getLocalAttribute(settings,mapAtt.getName());
+                                    } catch (Exception e1) {
+                                        p.append(e1.toString() + " " + e1.getMessage());
+                                    }
+                                    p.append("<tr><td>" + mapAtt.getName() + "</td><td>&nbsp;-&gt;&nbsp</td><td>" + currentMapAttribute + "</td></tr>\n");
+                                }
+                                p.append("</table>\n");
                             } else {
                                 p.append("</td><td colspan='" + (settings==null?"1":"2") + "'>"+currentAttribute);                        
                             }
@@ -339,3 +368,37 @@
         }
     }
 %>
+
+
+<script type="text/javascript">
+	function doAddList(listName){
+		newItem = document.getElementById(listName+".add");
+		theList = document.getElementById(listName);
+		
+		if(newItem.value.length > 0){
+			insertLocation = theList.length;
+			theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
+			newItem.value = "";
+		}
+		setEdited(listName);
+	}
+	
+	function doDeleteList(listName){
+		theList = document.getElementById(listName);
+		theList.options[theList.selectedIndex] = null;
+		setEdited(listName);
+	}
+
+    function doAddMap(mapName){
+        document.frmConfig.action.value = "addMap";
+        document.frmConfig.update.value = mapName;
+        doSubmit();
+    }
+    
+    function doDeleteMap(mapName, key){
+        document.frmConfig.action.value = "deleteMap";
+        document.frmConfig.update.value = mapName;
+        document.frmConfig.item.value = key;
+        doSubmit();
+    }    		
+</script>
