@@ -22,7 +22,6 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.settings.CrawlerModule;
@@ -212,27 +211,12 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
 		}
 	}
 
-	public void setLogWriteInterval(int interval) {
-        Integer logInterval;
-		if(interval < 0){
-			logInterval = new Integer(0);
-		} else {
-            logInterval = new Integer(interval);
-		}
-        try {
-            setAttribute(new Attribute(ATTR_STATS_INTERVAL, logInterval));
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }		
-	}
-	
 	public int getLogWriteInterval() {
         int logInterval;
         try {
             logInterval = ((Integer) getAttribute(null, ATTR_STATS_INTERVAL)).intValue();
         } catch (AttributeNotFoundException e) {
-            logInterval = 0;
+            logInterval = 10;
         }
 		return logInterval;
 	}	
