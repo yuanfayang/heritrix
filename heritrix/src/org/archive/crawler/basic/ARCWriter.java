@@ -96,23 +96,13 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   		String scheme = curi.getUURI().getScheme();
   	
   		try{ 
-  			
-  			if(useCompression()){ 			
-	  			// zip each record individually
-				 ((IAGZIPOutputStream)out).startCompressionBlock();
-
-  			} // else skip the special gzip jive and just write to a FileOutputStream
-  			
+  			  			
   			if(scheme.equals("dns")){
   				writeDns(curi);
   			}else if(scheme.equals("http")){
 	  			writeHttp(curi);
   			}
-  			
-  			if(useCompression()){
-  				((IAGZIPOutputStream)out).endCompressionBlock();
-  			}
-    			
+  			    			
   		// catch disk write errors		
   		}catch(IOException e){
   			e.printStackTrace();
@@ -239,41 +229,27 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	protected void writeHttp(CrawlURI curi) throws IOException, InvalidRecordException {
 
 		if (curi.getFetchStatus()<=0) {
-			// error
-			// TODO: smarter handling
+			// error; do not write to ARC (for now) 
 			return;
 		}
 		GetMethod get =
 			(GetMethod) curi.getAList().getObject("http-transaction");
 			
-		if (get == null ) {
+		if (get == null) {
 			// some error occurred; nothing to write
 			// TODO: capture some network errors in the ARC file for posterity
 			return;
 		}
 		
 		int recordLength = 0;
-		
-// OLD WAY
-//		Header[] headers = get.getResponseHeaders();
-//		
-//		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//		baos.write(get.getStatusLine().toString().getBytes());	// get status line (it's not a header)
-//		baos.write("\n".getBytes());
-//		for(int i=0; i < headers.length; i++){
-//			baos.write(headers[i].toExternalForm().getBytes());
-//		}
-//		recordLength += baos.size();
-//		
-//		// get body so we can calc length for metaline
-//		byte[] body = get.getResponseBody();
-//		// don't forget the extra CRLF between headers and body
-//		recordLength += 2;
-		
-		// recordLength += get.getHttpRecorder().getRecordedInput().getSize();
-
 		recordLength += curi.getContentSize();
 
+		if (recordLength==0) {
+			// write nothing
+			return;
+		}
+		
+		prewrite();
 		writeMetaLine(curi,  recordLength);
 		
 		ReplayInputStream capture = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
@@ -292,6 +268,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			capture.close();
 		}
 		out.write('\n'); // trailing newline
+		postwrite();
 		
 // OLD WAY
 //		baos.writeTo(out);
@@ -300,6 +277,26 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 //		out.write("\n".getBytes());
 	}
 	
+	/**
+	 * Close GZIP compression, if necessary
+	 */
+	private void postwrite() throws IOException {
+		if(useCompression()){
+			((IAGZIPOutputStream)out).endCompressionBlock();
+		}
+	}
+
+	/**
+	 * Restart GZIP compression, if necessary
+	 */
+	private void prewrite() throws IOException {
+		if(useCompression()){ 			
+			// zip each record individually
+			 ((IAGZIPOutputStream)out).startCompressionBlock();
+
+		} // else skip the special gzip jive and just write to a FileOutputStream
+	}
+
 	protected void writeDns(CrawlURI curi) throws IOException, InvalidRecordException {
 	
 		int recordLength = 0;
@@ -326,7 +323,9 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 				baos.write("\n".getBytes());
 				recordLength += 1;	
 			}
-		}	
+		}
+		
+		prewrite();
 		writeMetaLine(curi, recordLength);
 	
 		// save the calculated contentSize for logging purposes
@@ -335,6 +334,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 		baos.writeTo(out);
 	 	out.write("\n".getBytes());
+	 	postwrite();
 	}
 	
 	// getters and setters		
