@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.anotherbigidea.flash.writers.ActionWriter;
-import com.anotherbigidea.flash.writers.TagWriter;
 
 /**
  * Extend the ActionWriter class (javaswf) for the purpose
