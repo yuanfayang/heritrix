@@ -107,6 +107,8 @@ public class ReplayInputStream extends InputStream
         this.size = size;
         if (size > buffer.length) {
             FileInputStream fis = new FileInputStream(backingFilename);
+            // Cannot use FastBufferedInputStream because it does not
+            // support marking of the stream.
             diskStream = new BufferedInputStream(fis, 4096);
         }
     }
@@ -125,19 +127,20 @@ public class ReplayInputStream extends InputStream
         }
         if (position < buffer.length) {
             // Convert to unsigned int.
-            int c = (int)buffer[(int)position] & 0xFF;
+            int c = buffer[(int) position] & 0xFF;
             position++;
             return c;
-        } else {
-            int c = diskStream.read();
-            if(c >= 0) {
-                position++;
-            }
-            return c;
         }
+        int c = diskStream.read();
+        if (c >= 0) {
+            position++;
+        }
+        return c;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.io.InputStream#read(byte[], int, int)
      */
     public int read(byte[] b, int off, int len) throws IOException {
@@ -180,20 +183,12 @@ public class ReplayInputStream extends InputStream
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#mark(int)
-     */
-    public synchronized void mark(int readlimit)
-    {
-        this.readlimit = readlimit;
+    public synchronized void mark(int limit) {
+        this.readlimit = limit;
         this.markpos = this.position;
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#markSupported()
-     */
-    public boolean markSupported()
-    {
+    public boolean markSupported() {
         return true;
     }
 

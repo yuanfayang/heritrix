@@ -24,7 +24,8 @@
  */
 package org.archive.io;
 
-import java.io.BufferedOutputStream;
+import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -74,7 +75,7 @@ public class RecordingOutputStream extends OutputStream {
     private long size = 0;
 
     private String backingFilename;
-    private BufferedOutputStream diskStream = null;
+    private OutputStream diskStream = null;
 
     /**
      * Buffer we write recordings to.
@@ -160,7 +161,7 @@ public class RecordingOutputStream extends OutputStream {
         // TODO: Fix so we only make file when its actually needed.
         if (this.diskStream == null) {
             FileOutputStream fis = new FileOutputStream(this.backingFilename);
-            this.diskStream = new BufferedOutputStream(fis, 4096);
+            this.diskStream = new FastBufferedOutputStream(fis);
         }
     }
 

@@ -26,6 +26,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -275,7 +276,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     private File writeFile(File file, byte [] buffer, int count)
             throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        OutputStream bos = new BufferedOutputStream(fos);
         for( int i = 0; i < count; i++) {
             bos.write(buffer);
         }

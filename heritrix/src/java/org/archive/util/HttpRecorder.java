@@ -326,6 +326,8 @@ public class HttpRecorder {
         if (encoding != null && encoding.length() > 0) {
             rec.setCharacterEncoding(encoding);
         }
+        // Do not use FastBufferedInputStream here.  It does not
+        // support mark.
         InputStream is = rec.inputWrap(new BufferedInputStream(in));
         final int BUFFER_SIZE = 1024 * 4;
         byte [] buffer = new byte[BUFFER_SIZE];
