@@ -735,7 +735,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             return;
         }
 
-        // curi will definitely be disposed of without retry, so remove from q
+        // Curi will definitely be disposed of without retry, so remove from q
         wq.dequeue(this.pendingUris);
         decrementQueuedCount(1);
         log(curi);

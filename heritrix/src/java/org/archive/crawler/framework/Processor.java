@@ -113,18 +113,22 @@ public class Processor extends ModuleType {
 
     /**
      * @param curi
+     * @throws InterruptedException
      */
-    protected void innerRejectProcess(CrawlURI curi) throws InterruptedException {
+    protected void innerRejectProcess(CrawlURI curi)
+    throws InterruptedException {
         // by default do nothing
     }
 
     /**
-     * Classes subclassing this one should override this method to perfrom
+     * Classes subclassing this one should override this method to perform
      * their custom actions on the CrawlURI.
      *
      * @param curi The CrawlURI being processed.
+     * @throws InterruptedException
      */
-    protected void innerProcess(CrawlURI curi) throws InterruptedException {
+    protected void innerProcess(CrawlURI curi)
+    throws InterruptedException {
         // by default do nothing
     }
 
@@ -198,7 +202,8 @@ public class Processor extends ModuleType {
         defaultNextProcessor = nextProcessor;
     }
 
-    /** Get the controller object.
+    /** 
+     * Get the controller object.
      *
      * @return the controller object.
      */
@@ -238,5 +243,38 @@ public class Processor extends ModuleType {
      */
     public String report(){
         return ""; // Default behavior.
+    }
+    
+    /**
+     * @param curi CrawlURI to examine.
+     * @return True if content to process -- content length is > 0 
+     * -- and links have not yet been extracted.
+     */
+    protected boolean isContentToProcess(CrawlURI curi) {
+        return !curi.hasBeenLinkExtracted() && curi.getContentLength() > 0;
+    }
+    
+    /**
+     * @param curi CrawlURI to examine.
+     * @return True if {@link #isContentToProcess(CrawlURI)} and
+     * the CrawlURI represents a successful http transaction.
+     */
+    protected boolean isHtmlTransactionContentToProcess(CrawlURI curi) {
+        return isContentToProcess(curi) &&
+            curi.isHttpTransaction() &&
+            curi.isSuccess();
+    }
+    
+    /**
+     * @param contentType Found content type.
+     * @param expectedPrefix String to find at start of contenttype: e.g.
+     * <code>text/html</code>.
+     * @return True if passed content-type begins with
+     * expected mimetype.
+     */
+    protected boolean isExpectedMimeType(String contentType,
+            String expectedPrefix) {
+        return contentType != null &&
+            contentType.toLowerCase().startsWith(expectedPrefix);
     }
 }

@@ -84,17 +84,12 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     public void innerProcess(CrawlURI curi) {
-        if (curi.hasBeenLinkExtracted()) {
-            // Some other extractor already handled this one. We'll pass on it.
-            return;
-        }
-        if (!curi.isHttpTransaction())
-        {
+        if (!isHtmlTransactionContentToProcess(curi)) {
             return;
         }
 
         String contentType = curi.getContentType();
-        if ((contentType==null)) {
+        if ((contentType == null)) {
             return;
         }
         if((contentType.indexOf("javascript")<0)

@@ -23,6 +23,7 @@ package org.archive.crawler.extractor;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import javax.management.AttributeNotFoundException;
@@ -53,8 +54,10 @@ import org.archive.util.TextUtils;
  * @author Kristinn Sigurdsson
  */
 public class ExtractorUniversal extends Processor
-    implements CoreAttributeConstants
-{
+implements CoreAttributeConstants {
+    private static final Logger logger =
+        Logger.getLogger(ExtractorUniversal.class.getName());
+    
     private static String ATTR_MAX_DEPTH_BYTES = "max-depth-bytes";
 
     /** Default value for how far into an unknown document we should scan
@@ -366,14 +369,7 @@ public class ExtractorUniversal extends Processor
     }
 
     protected void innerProcess(CrawlURI curi) {
-        if (curi.hasBeenLinkExtracted()) {
-            // Some other extractor already handled this one. We'll pass on it.
-            return;
-        }
-
-        if (!curi.isHttpTransaction())
-        {
-            // We only handle HTTP at the moment.
+        if (!isHtmlTransactionContentToProcess(curi)) {
             return;
         }
 

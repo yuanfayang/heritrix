@@ -88,20 +88,15 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      * @param curi Crawl URI to process.
      */
     public void innerProcess(CrawlURI curi) {
-        if (curi.hasBeenLinkExtracted()) {
-            // Some other extractor already handled this one. We'll pass on it.
-            return;
-        }
-        if (!curi.isHttpTransaction()) {
-            return;
-        }
-
-        if ((curi.getContentType() == null)) {
+        if (!isHtmlTransactionContentToProcess(curi)) {
             return;
         }
         String mimeType = curi.getContentType();
-        if ((mimeType.toLowerCase().indexOf("css") < 0)
-            && (!curi.getURIString().toLowerCase().endsWith(".css"))) {
+        if (mimeType == null) {
+            return;
+        }
+        if ((mimeType.toLowerCase().indexOf("css") < 0) &&
+                (!curi.getURIString().toLowerCase().endsWith(".css"))) {
             return;
         }
         this.numberOfCURIsHandled++;
