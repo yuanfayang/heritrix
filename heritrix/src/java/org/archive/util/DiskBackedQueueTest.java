@@ -67,7 +67,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
     
     protected Queue makeQueue() {
         try {
-            return new DiskBackedQueue(this.tmpDir, "foo", 10);
+            return new DiskBackedQueue(getTmpDir(), "foo", 10);
         } catch (final IOException e) {
             fail("Caught IO Exception on creation of queue : " + e.getMessage());
             // never gets here
