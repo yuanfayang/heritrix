@@ -95,7 +95,7 @@ implements Frontier,
             .classnameBasedUID(BdbFrontier.class, 1);
 
     /** truncate reporting of queues at some large but not unbounded number */
-    private static final int REPORT_MAX_QUEUES = 100;
+    private static final int REPORT_MAX_QUEUES = 1000;
 
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
@@ -106,6 +106,10 @@ implements Frontier,
     protected final static Integer DEFAULT_BDB_CACHE_PERCENT =
         new Integer(0);
     
+    /** whether to hold queues INACTIVE until needed for throughput */
+    public final static String ATTR_HOLD_QUEUES = "hold-queues";
+    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
+
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
 
@@ -126,6 +130,9 @@ implements Frontier,
     /** all per-class queues held in snoozed state, sorted by wake time */
     protected SortedSet snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet());
 
+    /** all 'inactive' queues, not yet in active rotation */
+    protected LinkedQueue inactiveQueues = new LinkedQueue();
+    
     /** moves waking items from snoozedClassQueues to readyClassQueues */
     protected ClockDaemon wakeDaemon = new ClockDaemon();
     
@@ -142,7 +149,7 @@ implements Frontier,
     protected Environment dbEnvironment;
 
     /** how long to wait for a ready queue when there's nothing snoozed */
-    private static final long DEFAULT_WAIT = 1000; // 1 seconds
+    private static final long DEFAULT_WAIT = 1000; // 1 second
     
     /**
      * Create the BdbFrontier
@@ -173,6 +180,18 @@ implements Frontier,
                 "or properties setting).",
                 DEFAULT_BDB_CACHE_PERCENT));
         t.setExpertSetting(true);
+        t.setOverrideable(false);
+        t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
+                "Whether to hold newly-created per-host URI work" +
+                " queues until needed to stay busy.\n If false (default)," +
+                " all queues may contribute URIs for crawling at all" +
+                " times. If true, queues begin (and collect URIs) in" +
+                " an 'inactive' state, and only when the Frontier needs" +
+                " another queue to keep all ToeThreads busy will new" +
+                " queues be activated.",
+                DEFAULT_HOLD_QUEUES));
+        t.setExpertSetting(true);
+        t.setOverrideable(false);
     }
 
     /**
@@ -312,9 +331,25 @@ implements Frontier,
             wq.enqueue(curi);
             if(!wq.isHeld()) {
                 wq.setHeld();
-                readyQueue(wq);
+                if(queuesStartAsReady()) {
+                    readyQueue(wq);
+                } else {
+                    deactivateQueue(wq);
+                }
             }
         }
+    }
+
+    /**
+     * Whether or not new queues should begin as ready, or be held for
+     * some later become-active step (as when necessary to keep threads
+     * busy)
+     * @return true if new queues should be placed in the ready queue
+     */
+    private boolean queuesStartAsReady() {
+        // true if 'hold-queues' is false 
+        return ((Boolean) getUncheckedAttribute(null, ATTR_HOLD_QUEUES))
+                .booleanValue() == false;
     }
 
     /**
@@ -332,6 +367,20 @@ implements Frontier,
         }
     }
 
+    /**
+     * Put the given queue on the inactiveQueues queue
+     * @param wq
+     */
+    private void deactivateQueue(BdbWorkQueue wq) {
+        try {
+            inactiveQueues.put(wq);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.err.println("unable to deactivate queue "+wq);
+            // propagate interrupt up 
+            throw new RuntimeException(e);
+        }
+    }
     /**
      * Return the work queue for the given classKey. URIs
      * are ordered and politeness-delayed within their 'class'.
@@ -369,8 +418,10 @@ implements Frontier,
             // do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             
-            // don't wait if there are items buffered in alreadyIncluded
-            long wait = alreadyIncluded.pending() > 0 ? 0 : DEFAULT_WAIT;
+            // don't wait if there are items buffered in alreadyIncluded or
+            // inactive queues
+            long wait = (alreadyIncluded.pending() > 0)
+                    || (!inactiveQueues.isEmpty()) ? 0 : DEFAULT_WAIT;
             
             BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
             if (readyQ != null) {
@@ -406,12 +457,27 @@ implements Frontier,
             }
 
             // Nothing was ready; ensure any piled-up scheduled URIs are considered
-            if (this.alreadyIncluded != null) {
-                this.alreadyIncluded.flush();
+            this.alreadyIncluded.flush(); 
+            
+            // if still nothing ready, activate an inactive queue, if available
+            if(readyClassQueues.isEmpty()) {
+                activateInactiveQueue();
             }
         }
     }
 
+
+    /**
+     * Activate an inactive queue, if any are available. 
+     * 
+     * @throws InterruptedException
+     */
+    private void activateInactiveQueue() throws InterruptedException {
+        BdbWorkQueue activatedQ = (BdbWorkQueue) inactiveQueues.poll(0);
+        if(activatedQ!=null) {
+            readyQueue(activatedQ);
+        }
+    }
 
     /**
      * Wake any queues sitting in the snoozed queue whose time has come
@@ -615,11 +681,19 @@ implements Frontier,
      * may be unwieldy. 
      */
     public String oneLineReport() {
+        int allCount = allQueues.size();
+        int inProcessCount = inProcessQueues.uniqueSet().size();
+        int readyCount = readyClassQueues.getCount();
+        int snoozedCount = snoozedClassQueues.size();
+        int activeCount = inProcessCount + readyCount + snoozedCount;
+        int inactiveCount = inactiveQueues.getCount();
         StringBuffer rep = new StringBuffer();
-        rep.append(allQueues.size() + " queues: " + 
-                inProcessQueues.uniqueSet().size() + " in-process; " +
-                readyClassQueues.getCount() + " ready; " + 
-                snoozedClassQueues.size() + " snoozed");
+        rep.append(allCount + " queues: " + 
+                activeCount + " active (" + 
+                inProcessCount + " in-process; " +
+                readyCount + " ready; " + 
+                snoozedCount + " snoozed); " +
+                inactiveCount +" inactive");
         return rep.toString();
     }
 
@@ -630,6 +704,12 @@ implements Frontier,
      * @return A report on the current status of the frontier.
      */
     public synchronized String report() {
+        int allCount = allQueues.size();
+        int inProcessCount = inProcessQueues.uniqueSet().size();
+        int readyCount = readyClassQueues.getCount();
+        int snoozedCount = snoozedClassQueues.size();
+        int activeCount = inProcessCount + readyCount + snoozedCount;
+        int inactiveCount = inactiveQueues.getCount();
         StringBuffer rep = new StringBuffer();
 
         rep.append("Frontier report - "
@@ -646,16 +726,27 @@ implements Frontier,
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.count()
                 + "\n");
-        rep.append("\n All class queues map size: " + allQueues.size() + "\n");
-        rep.append(  "         In-process queues: " + 
-                inProcessQueues.uniqueSet().size()  + "\n");
-        rep.append(  "              Ready queues: " + 
-                readyClassQueues.getCount() + "\n");
-        rep.append(  "            Snoozed queues: " + 
-                snoozedClassQueues.size() + "\n");
-        rep.append("\n -----===== READY QUEUES =====-----\n");
-        Iterator iter = readyClassQueues.iterator();
+        rep.append("\n All class queues map size: " + allCount + "\n");
+        rep.append(  "             Active queues: " + activeCount  + "\n");
+        rep.append(  "                    In-process: " + inProcessCount  + "\n");
+        rep.append(  "                         Ready: " + readyCount + "\n");
+        rep.append(  "                       Snoozed: " + snoozedCount + "\n");
+        rep.append(  "           Inactive queues: " + 
+                inactiveCount + "\n");
+        rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
+        Iterator iter = inProcessQueues.iterator();
         int count = 0; 
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(inProcessQueues.size()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(inProcessQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
+        }
+        rep.append("\n -----===== READY QUEUES =====-----\n");
+        iter = readyClassQueues.iterator();
+        count = 0; 
         while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
             BdbWorkQueue q = (BdbWorkQueue) iter.next();
             count++;
@@ -674,7 +765,18 @@ implements Frontier,
         }
         if(snoozedClassQueues.size()>REPORT_MAX_QUEUES) {
             rep.append("...and "+(snoozedClassQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
-        }    
+        }
+        rep.append("\n -----===== INACTIVE QUEUES =====-----\n");
+        iter = inactiveQueues.iterator();
+        count = 0; 
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(inactiveQueues.getCount()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(inactiveQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
+        }
         return rep.toString();
     }
 
