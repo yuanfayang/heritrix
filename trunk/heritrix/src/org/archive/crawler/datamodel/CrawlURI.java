@@ -34,7 +34,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI
-	implements URIStoreable, Comparable, CoreAttributeConstants, FetchStatusCodes {
+	implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
 	private long wakeTime;
 
 	public static final String CONTENT_TYPE_LABEL = "content-type";
@@ -351,22 +351,10 @@ public class CrawlURI
 	}
 
 	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 * @see org.archive.crawler.basic.URIStoreable#getSortFallback()
 	 */
-	public int compareTo(Object other) {
-		if(this==other) {
-			return 0; // for exact identity only
-		}
-		if (((URIStoreable)other).getWakeTime()> wakeTime) {
-			return -1;
-		} 
-		if (((URIStoreable)other).getWakeTime()< wakeTime) {
-			return 1;
-		} 
-		// at this point, the ordering is arbitrary, but still
-		// must be consistent/stable over time
-		// TODOSOON: fix this
-		return ((String)((URIStoreable)other).getClassKey()).compareTo(this.getClassKey());	
+	public String getSortFallback() {
+		return uuri.toString();
 	}
 	
 /*	public boolean isFubared(){
