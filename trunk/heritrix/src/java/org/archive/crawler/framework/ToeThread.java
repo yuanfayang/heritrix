@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -54,6 +55,7 @@ public class ToeThread extends Thread
     int serialNumber;
     HttpRecorder httpRecorder;
     HashMap localProcessors = new HashMap();
+    String currentProcessorName = "";
 
     CrawlURI currentCuri;
     long lastStartTime;
@@ -128,6 +130,7 @@ public class ToeThread extends Thread
 
                     while (currentCuri.nextProcessor() != null) {
                         Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+                        currentProcessorName = currentProcessor.getName();
                         currentProcessor.process(currentCuri);
                     }
                 }
@@ -228,7 +231,17 @@ public class ToeThread extends Thread
         {
             rep.append(currentCuri.getURIString());
             rep.append(" ("+currentCuri.getFetchAttempts()+" attempts)");
-            rep.append(" "+currentCuri.getPathFromSeed());
+            rep.newline();
+            rep.padTo(8);
+            rep.append(currentCuri.getPathFromSeed());
+            if(currentCuri.getVia() != null 
+                    && currentCuri.getVia() instanceof CandidateURI){
+                rep.append(" ");
+                rep.append(((CandidateURI)currentCuri.getVia()).getURIString());
+            }
+            rep.newline();
+            rep.padTo(8);
+            rep.append("Current processor: "+currentProcessorName);
         }
         else
         {
@@ -252,7 +265,7 @@ public class ToeThread extends Thread
         else if(lastStartTime > 0)
         {
             // We are working on something
-            rep.append("ACTIVE  for ");
+            rep.append("ACTIVE for ");
 
             time = now-lastStartTime;
         }
