@@ -36,7 +36,7 @@ import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
 
 
 /**
- * An implementation of the ValueErrorHandler by the UI.
+ * An implementation of the ValueErrorHandler for the UI.
  * 
  * <p>The UI uses this class to trap errors in the settings of it's jobs and
  * profiles and manage their presentation to the user.
