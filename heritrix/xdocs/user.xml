@@ -171,7 +171,8 @@ org.apache.commons.httpclient.level= SEVERE</source>
 
 <section name="Launching crawl jobs via the web UI">
 <p>
-	If the program is launched with a web UI.
+	If the program is launched with a web UI users can access the administrative 
+	interface with any regular browser. The admin section is password protected.
 </p>
 <p>
 	Once logged in the 'Console' (more on that later) is displayed. Near the top
@@ -301,11 +302,13 @@ org.apache.commons.httpclient.level= SEVERE</source>
 </p>
 </subsection>
 <subsection name="Run">
+<p>
 	Once a job is in the pending queue the user can go back to the Console and
 	start the crawler. The option to do so is presented just below the general
 	information on the state of the crawler to the far left. Once started the
 	console will offer summary information about the progress of the crawl and
 	the option of terminating it.
+</p>
 </subsection>
 </section>
 
