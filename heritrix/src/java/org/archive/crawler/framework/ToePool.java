@@ -83,7 +83,7 @@ public class ToePool extends ThreadGroup {
     public int getToeCount() {
         // TODO: only count true ToeThreads, not any stray
         // other threads that found their way into this group
-        return this.activeCount();
+        return this.activeCount() > targetSize ? targetSize : this.activeCount();
     }
     
     /**
