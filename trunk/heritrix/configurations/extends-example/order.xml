@@ -7,8 +7,8 @@
 	<crawler-behavior>
 
  		<http-headers>
- 			<User-Agent>Custom User Agent (your@address.here)</User-Agent>
-  			<From>your@address.here</From>
+ 			<User-Agent>Custom User Agent (+web-url-here)</User-Agent>
+  			<From>email-address-here</From>
  		</http-headers>
  
 		<processors>

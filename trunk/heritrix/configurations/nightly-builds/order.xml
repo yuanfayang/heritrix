@@ -23,7 +23,7 @@
 -->
  <http-headers>
   <User-Agent>Heritrix Nightly Build Crawl (+http://crawler.archive.org)</User-Agent>
-  <From>gojomo@archive.org</From>
+   <From>archive-crawler-agent@lists.sourceforge.net</From>
  </http-headers>
  
 <!-- 	Following is a list of artifical limits that may be placed on the crawler.
