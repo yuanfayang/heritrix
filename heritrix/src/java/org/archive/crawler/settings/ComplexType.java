@@ -1003,7 +1003,6 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
        public AttributeIterator(Object ctxt) {
            this.context = getSettingsFromObject(ctxt);
-
            Context c = new Context(context.settings, context.uri);
            DataContainer data = getDataContainerRecursive(c);
            while (data != null) {
@@ -1019,12 +1018,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
        public boolean hasNext() {
            if (this.currentIterator.hasNext()) {
                return true;
-           } else {
-               if (this.attributeStack.isEmpty()) {
-                   return false;
-               }
-               this.currentIterator = (Iterator) this.attributeStack.pop();
            }
+           if (this.attributeStack.isEmpty()) {
+               return false;
+           }
+           this.currentIterator = (Iterator) this.attributeStack.pop();
            return this.currentIterator.hasNext();
        }
 
