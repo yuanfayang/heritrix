@@ -148,19 +148,18 @@ public class ReplayCharSequenceFactory {
      * @return True if multibyte encoding.
      */
     private boolean isMultibyteEncoding(String encoding) {
-        boolean isMultibyte;
-
+        boolean isMultibyte = false;
         final Charset cs;
         try {
-            cs = Charset.forName(encoding);
-
-            if(cs.canEncode()) {
-                isMultibyte = cs.newEncoder().maxBytesPerChar() > 1;
-            } else {
-                isMultibyte = false;
-
-                logger.info("Encoding not fully supported: " + encoding
-                    + ".  Defaulting to single byte.");
+            if (encoding != null && encoding.length() > 0) {
+                cs = Charset.forName(encoding);
+                if(cs.canEncode()) {
+                    isMultibyte = cs.newEncoder().maxBytesPerChar() > 1;
+                } else {
+                    isMultibyte = false;
+                    logger.info("Encoding not fully supported: " + encoding
+                            + ".  Defaulting to single byte.");
+                }
             }
         } catch (IllegalCharsetNameException e) {
             // Unsupported encoding.  Default to singlebyte.
