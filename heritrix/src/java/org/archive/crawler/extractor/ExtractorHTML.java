@@ -77,17 +77,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * <li> 8: !-- comment --
      */
     static final String RELEVANT_TAG_EXTRACTOR =
-     "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
-
-
-//    // this pattern extracts 'href' or 'src' attributes from
-//    // any open-tag innards matched by the above
-//    static Pattern RELEVANT_ATTRIBUTE_EXTRACTOR = Pattern.compile(
-//     "(?is)(\\w+)(?:\\s+|(?:\\s.*?\\s))(?:(href)|(src))\\s*=(?:(?:\\s*\"(.+?)\")|(?:\\s*'(.+?)')|(\\S+))");
-//
-//    // this pattern extracts 'robots' attributes
-//    static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
-//     "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
+        "(?is)<(?:((script[^>]*+)>.*?</script)|((style[^>]*+)>[^<]*+</style)|(((meta)|(?:\\w+))\\s+[^>]*+)|(!--.*?--))>";
 
     // this pattern extracts attributes from any open-tag innards
     // matched by the above. attributes known to be URIs of various
