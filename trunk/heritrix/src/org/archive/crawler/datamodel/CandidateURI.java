@@ -174,4 +174,11 @@ public class CandidateURI implements Serializable, Lineable {
 		        +" "+pathFromSeed
 		        +" "+flattenVia();
 	}
+
+	/**
+		 * @return URI String
+		 */
+	public String getURIString() {
+		return getUURI().getUriString();
+	}
 }

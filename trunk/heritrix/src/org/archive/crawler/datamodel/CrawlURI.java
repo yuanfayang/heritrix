@@ -247,13 +247,6 @@ public class CrawlURI extends CandidateURI
 		return "CrawlURI("+getUURI()+")";
 	}
 	
-	/**
-	 * @return URI String
-	 */
-	public String getURIString(){
-		return getUURI().getUriString();
-	}
-	
 	public String getContentType(){
 		if (getAList().containsKey(A_CONTENT_TYPE)) {
 		 	return getAList().getString(A_CONTENT_TYPE);
