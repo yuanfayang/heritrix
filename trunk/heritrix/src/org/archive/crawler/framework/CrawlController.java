@@ -17,14 +17,16 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
+import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.HostCache;
+import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.io.CrawlErrorFormatter;
+import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
-import org.archive.crawler.io.StatisticsLogFormatter;
-import org.archive.crawler.basic.StatisticsTracker;
 
 /**
  * 
@@ -67,23 +69,32 @@ public class CrawlController {
 	}
 
 
-	public void initialize(CrawlOrder o) {
+	public void initialize(CrawlOrder o) throws InitializationException {
 		order = o;	
+		order.initialize();
 		
-		// don't start the crawl if they're using the default user-agent
-		String userAgent = order.getStringAt("//http-headers/User-Agent");
+		// don't let them use the default user agent
+		String userAgent = order.getStringAt("//http-headers/User-Agent/");
 		if(userAgent.equals(DEFAULT_USER_AGENT)){
-			System.out.println("Before using Heritrix you must " +
-				"change the default user agent in the Heritrix configuration " +
-				"file to something other than '" + DEFAULT_USER_AGENT +
-				"'.  Please see the documentation for more information."
-				);
-				System.exit(0);
+			throw new FatalConfigurationException(
+				"Default user agent must be changed.",
+				"order.xml",
+				"//http-headers/User-Agent"
+			);
 		}
-			
+		
+		String diskPath = order.getStringAt("//disk/@path");
+		if(diskPath == null || diskPath.length() == 0){
+
+			throw new FatalConfigurationException("No output Directory specified", 
+									order.crawlOrderFilename, 
+									"//disk/@path"
+			);
+		}
+		
 		// read from the configuration file
 		try {
-			String diskPath = order.getStringAt("//disk/@path");
+
 			if(! diskPath.endsWith(File.separator)){
 				diskPath = diskPath + File.separator;
 			}
@@ -112,8 +123,7 @@ public class CrawlController {
 			
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InitializationException("Unable to create log file(s): " + e.toString(), e);
 		}
 
 		// the statistics object must be created before modules that use it if those 
@@ -125,13 +135,38 @@ public class CrawlController {
 		store = (URIStore) order.getBehavior().instantiate("//store");
 		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
 		selector = (URISelector) order.getBehavior().instantiate("//selector");
-		
+
 		firstProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
-				
-		store.initialize(this);
-		scheduler.initialize(this);
-		selector.initialize(this);
 		
+		// try to initialize each of the store, schduler, and selector from the config file
+		try{
+			store.initialize(this);
+		}catch(NullPointerException e){
+			throw new FatalConfigurationException(
+				"Can't initialize store, class specified in configuration file not found", 
+				order.crawlOrderFilename, 
+				"//store"
+			);
+		}
+		try{
+			scheduler.initialize(this);
+		}catch(NullPointerException e){
+			throw new FatalConfigurationException(
+				"Can't initialize scheduler, class specified in configuration file not found", 
+				order.crawlOrderFilename, 
+				"//scheduler"
+			);
+		}
+		try{
+			selector.initialize(this);
+		}catch(NullPointerException e){
+			throw new FatalConfigurationException(
+				"Can't initialize selector, class specified in configuration file not found", 
+				order.crawlOrderFilename, 
+				"//selector"
+			);
+		}
+			
 		hostCache = new HostCache();
 		//kicker = new ThreadKicker();
 		//kicker.start();
@@ -147,7 +182,6 @@ public class CrawlController {
 		// start periodic background logging of crawl statistics
 		Thread statLogger = new Thread(statistics);
 		statLogger.start();
-
 	}
 	
 	/**

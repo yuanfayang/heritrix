@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.util.Sorts;
@@ -98,7 +99,11 @@ public class CrawlerHandler extends AbstractHttpHandler {
 						outputMessage(
 							"ERROR: Couldn't start a new crawl (crawler already running)",
 							response);
+					try{
 					_controller.initialize(_controller.getOrder());
+					}catch(InitializationException e){
+						//TODO do something appropriate here
+					}
 					outputMessage("Crawling Started", response);
 					_controller.startCrawl();
 					_crawling = true;

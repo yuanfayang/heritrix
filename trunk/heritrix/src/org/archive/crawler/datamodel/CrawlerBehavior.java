@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.archive.crawler.basic.CrawlerConfigurationContants;
 import org.archive.crawler.framework.XMLConfig;
 import org.w3c.dom.Node;
 
@@ -19,7 +20,7 @@ import org.w3c.dom.Node;
  * @author gojomo
  *
  */
-public class CrawlerBehavior extends XMLConfig {
+public class CrawlerBehavior extends XMLConfig implements CrawlerConfigurationContants {
 	List seeds = null;
 	String caseFlattenedUserAgent = null;
 
@@ -34,14 +35,25 @@ public class CrawlerBehavior extends XMLConfig {
 	 * @return
 	 */
 	public int getMaxToes() {
-		return getIntAt("//limits/max-toe-threads/@value");
+		int maxToes = getIntAt("//limits/max-toe-threads/@value");
+		
+		if(maxToes < 0 && parentConfigurationFile != null){
+			return ((CrawlOrder)parentConfigurationFile).getBehavior().getMaxToes();
+		}
+		return maxToes;
 	}
 	/**
 	 * @return
 	 */	
 	public int getMaxLinkDepth(){
-		return getIntAt("//limits/max-link-depth/@value");
+		int maxLinkD =  getIntAt("//limits/max-link-depth/@value");
+		
+		if(maxLinkD < 0 && parentConfigurationFile != null){
+			return ((CrawlOrder)parentConfigurationFile).getBehavior().getMaxLinkDepth();
+		}
+		return maxLinkD;
 	}
+	
 	/**
 	 * @return
 	 */
