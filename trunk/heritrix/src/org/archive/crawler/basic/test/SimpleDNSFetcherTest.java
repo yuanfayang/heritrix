@@ -79,7 +79,7 @@ public class SimpleDNSFetcherTest extends TestCase {
 		
 		CrawlHost host = curiBasic.getHost();	
 		
-		Record[] rrSet = (Record[])curiBasic.getAList().getObject(SimpleDNSFetcher.RRECORDS_ALIST_LABEL);
+		Record[] rrSet = (Record[])curiBasic.getAList().getObject(SimpleDNSFetcher.RRECORD_SET_LABEL);
 		
 		long expireTime = host.getIpExpires();
 		long timestamp = curiBasic.getAList().getLong(SimpleDNSFetcher.DNSFETCH_TIMESTAMP_LABEL);

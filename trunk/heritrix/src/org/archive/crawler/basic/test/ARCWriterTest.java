@@ -77,7 +77,7 @@ public class ARCWriterTest extends TestCase {
 
 			//fetcher.process(curi);
 			writer.setOutputDir(new String("/home/parkert/"));
-			writer.writeHttp(curi);
+			writer.process(curi);
 	
 			System.out.println("test ran, check " + writer.getOutputDir() + " for resulting arc(s).");
 						

@@ -16,13 +16,9 @@ import org.xbill.DNS.*;
  * @author gojomo
  *
  */
-public class SimpleDNSFetcher extends Processor {
+public class SimpleDNSFetcher extends Processor implements org.archive.crawler.datamodel.CoreAttributeConstants {
  	
-    // when storing dns info in a CrawlURI's AList use this label
-	public static final String RRECORDS_ALIST_LABEL 				= "dnsrecords";
-	public static final String DNSFETCH_TIMESTAMP_LABEL	= "dns_fetch_timestamp";	
-	
-	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
+ 	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
 	public static final boolean DO_CLASS_TYPE_CHECKING = true;
 
 	// defaults
@@ -38,7 +34,7 @@ public class SimpleDNSFetcher extends Processor {
 		super.process(curi);
 		
 		Record[] rrecordSet = null; 						// store retrieved dns records
-		long now = System.currentTimeMillis(); 	// the time this operation happened
+		long now; 													// the time this operation happened
 				
 				
 		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
@@ -48,8 +44,8 @@ public class SimpleDNSFetcher extends Processor {
 			
 			// only handles dns
 			//return;
-			
-		// for now handle html as well
+			// for now handle html as well
+
 		}else{	
 			DnsName = parseTargetDomain(curi);
 		}
@@ -59,9 +55,11 @@ public class SimpleDNSFetcher extends Processor {
 		} */
 
 		// do the lookup and store the results back to the curi
+		now = System.currentTimeMillis();
 		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
-		curi.getAList().putObject(SimpleDNSFetcher.RRECORDS_ALIST_LABEL, rrecordSet);
-		curi.getAList().putLong(SimpleDNSFetcher.DNSFETCH_TIMESTAMP_LABEL, now);
+		curi.getAList().putString(A_CONTENT_TYPE, DNS_CONTENT_TYPE);
+		curi.getAList().putObject(RRECORD_SET_LABEL, rrecordSet);
+		curi.getAList().putLong(FETCH_BEGAN_AT, now);
 
 		// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
 		// then update the CrawlHost
