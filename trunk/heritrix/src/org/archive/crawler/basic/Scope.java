@@ -116,9 +116,21 @@ public class Scope extends CrawlScope {
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
 	protected boolean innerAccepts(Object o) {
-		return ((isSeed(o)||focusAccepts(o))||transitiveAccepts(o))&&!excludeAccepts(o);
+		return ((isSeed(o)||
+				focusAccepts(o))||
+				transitiveAccepts(o))
+				&&!excludeAccepts(o);
 	}
 	
+//	/**
+//	 * @param o
+//	 * @return
+//	 */
+//	private boolean alwaysAccepts(Object o) {
+//		// TODO Auto-generated method stub
+//		return false;
+//	}
+
 	/**
 	 * @param o
 	 * @return
