@@ -251,12 +251,12 @@ HasUriReceiver,  CrawlStatusListener {
     
   
     public HostQueuesFrontier(String name) {
-        this(name,"HostQueuesFrontier. \nMaintains the internal" +
-                " state of the crawl. It dictates the order in which URIs" +
-                " will be scheduled. \nThis frontier is mostly a breadth-first"+
-                " frontier, which refrains from emitting more than one" +
-                " CrawlURI of the same \'key\' (host) at once, and respects" +
-                " minimum-delay and delay-factor specifications for" +
+        this(name,"HostQueuesFrontier. Maintains the internal " +
+                " state of the crawl. It dictates the order in which URIs " +
+                " will be scheduled. This frontier is mostly a breadth-first "+
+                " frontier, which refrains from emitting more than one " +
+                " CrawlURI of the same \'key\' (host) at once, and respects " +
+                " minimum-delay and delay-factor specifications for " +
                 " politeness.");
     }
 

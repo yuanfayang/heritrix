@@ -162,8 +162,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @param name
      */
     public BdbFrontier(String name) {
-        this(name, "BdbFrontier.\n" +
-            "A Frontier using BerkeleyDB Java Edition Databases for " +
+        this(name, "BdbFrontier. " +
+            "A Frontier using BerkeleyDB Java Edition databases for " +
             "persistence to disk.");
     }
 
