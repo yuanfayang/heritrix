@@ -68,41 +68,48 @@ public class ChangeEvaluator extends Processor implements ARAttributeConstants {
             return;
         }
         
-        String currentDigest = null;
-        Object digest = curi.getContentDigest();
-        if(digest!=null) {
-            currentDigest = Base32.encode((byte[])digest);
-        }
-
-        String oldDigest = null;
-        if(curi.containsKey(A_LAST_CONTENT_DIGEST)){
-            oldDigest = curi.getString(A_LAST_CONTENT_DIGEST);
-        }
-
-        // Compare the String representation of the byte arrays.
-        if (currentDigest == null && oldDigest == null) {
-            // Both are null, can't do a thing
-            logger.finer("On " + curi.getURIString() + " both digest are null");
-            return;
-        } else if(currentDigest != null && oldDigest != null 
-                && currentDigest.equals(oldDigest)){ 
-            // If equal, we have just downloaded a duplicate.
-            logger.finer("On " + curi.getURIString() + " both digest are " +
-                    "equal. Old: " + oldDigest + ", new: " + currentDigest);;
-            curi.setContentState(CrawlURI.CONTENT_UNCHANGED);
-            // TODO: In the future processors should take not of the content
-            //       state, removing the need for the following 'skip'
-            curi.skipToProcessorChain(getController().getPostprocessorChain());
-            // Set content size to zero, we are not going to 'write it to disk'
-            curi.setContentSize(0);
+        // If a mid fetch filter aborts the HTTP fetch because the headers
+        // predict no change, we can skip the whole comparing hashes.
+        if(curi.getContentState() != CrawlURI.CONTENT_UNCHANGED){
+            String currentDigest = null;
+            Object digest = curi.getContentDigest();
+            if(digest!=null) {
+                currentDigest = Base32.encode((byte[])digest);
+            }
+    
+            String oldDigest = null;
+            if(curi.containsKey(A_LAST_CONTENT_DIGEST)){
+                oldDigest = curi.getString(A_LAST_CONTENT_DIGEST);
+            }
+    
+            // Compare the String representation of the byte arrays.
+            if (currentDigest == null && oldDigest == null) {
+                // Both are null, can't do a thing
+                logger.finer("On " + curi.getURIString() + " both digest are null");
+                return;
+            } else if(currentDigest != null && oldDigest != null 
+                    && currentDigest.equals(oldDigest)){ 
+                // If equal, we have just downloaded a duplicate.
+                logger.finer("On " + curi.getURIString() + " both digest are " +
+                        "equal. Old: " + oldDigest + ", new: " + currentDigest);;
+                curi.setContentState(CrawlURI.CONTENT_UNCHANGED);
+                // TODO: In the future processors should take not of the content
+                //       state, removing the need for the following 'skip'
+                curi.skipToProcessorChain(getController().getPostprocessorChain());
+                // Set content size to zero, we are not going to 'write it to disk'
+                curi.setContentSize(0);
+            } else {
+                // Document has changed
+                logger.finer("On " + curi.getURIString() + " digest are not " +
+                        "equal. Old: " + (oldDigest==null? "null" : oldDigest) + 
+                        ", new: " + (currentDigest==null? "null" : currentDigest));
+                // currentDigest may be null, that probably means a failed download
+                curi.setContentState(CrawlURI.CONTENT_CHANGED);
+                curi.putString(A_LAST_CONTENT_DIGEST,currentDigest); 
+            }
         } else {
-            // Document has changed
-            logger.finer("On " + curi.getURIString() + " digest are not " +
-                    "equal. Old: " + (oldDigest==null? "null" : oldDigest) + 
-                    ", new: " + (currentDigest==null? "null" : currentDigest));
-            // currentDigest may be null, that probably means a failed download
-            curi.setContentState(CrawlURI.CONTENT_CHANGED);
-            curi.putString(A_LAST_CONTENT_DIGEST,currentDigest); 
+            logger.finer("On " + curi.getURIString() + " content state was " +
+                    "already set as UNCHANGED.");
         }
         
         /* Update visit and version counters */
