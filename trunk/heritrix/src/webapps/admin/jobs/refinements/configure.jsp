@@ -62,6 +62,7 @@
 	// Check for update.
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
+        errorHandler.clearErrors();
 		writeNewOrderFile(crawlOrder,orderfile,request,expert);
 		settingsHandler.writeSettingsObject(orderfile);
 	}
