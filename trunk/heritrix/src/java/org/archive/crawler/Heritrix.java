@@ -207,6 +207,8 @@ public class Heritrix
             if (!isDevelopment())
             {
                 Heritrix.out.close();
+            } else {
+                Heritrix.out.flush();
             }
         }
     }
