@@ -74,7 +74,7 @@
   </description>
   <!-- a short description of what the project does -->
   <shortDescription>
-  An open-source, extensible, web-scale, archival-quality web crawler project.
+  An open-source, extensible, web-scale crawler.
   </shortDescription>
 
   <!--TODO: the project home page.-->
@@ -274,24 +274,11 @@
             </properties>
         </dependency>
         <dependency>
-            <id>org.mortbay.jetty</id>
+            <id>jetty</id>
             <version>4.2.17</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>The Jetty servlet container.
-                </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
-            <id>org.mortbay.jmx</id>
-            <version>4.2.17</version>
-            <url>http://jetty.mortbay.com/jetty/</url>
-            <properties>
-                <description>This jar came w/ Jetty.  Seems to be jetty
-                mbeans.
                 </description>
                 <license>Jetty license,
                     http://jetty.mortbay.org/jetty/LICENSE.html
