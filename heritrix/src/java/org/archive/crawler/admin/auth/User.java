@@ -66,7 +66,7 @@ public class User
 
         if(sUsername!=null && sPassword != null)
         {
-            for(int i=0; i<logins.size(); i++)
+            for(int i=0; i < logins.size(); i++)
             {
                 Login login = (Login)logins.get(i);
                 if(login.username.equalsIgnoreCase(sUsername))
