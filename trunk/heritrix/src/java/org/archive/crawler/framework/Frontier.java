@@ -245,7 +245,7 @@ public interface Frontier {
      *
      * @return Number of <i>successfully</i> processed URIs.
      */
-    public long successfullyFetchedCount();
+    public long succeededFetchCount();
 
     /**
      * Number of URIs that <i>failed</i> to process.
@@ -261,16 +261,16 @@ public interface Frontier {
     public long failedFetchCount();
 
     /**
-     * Number of URIs that were successfully fetched but have been
+     * Number of URIs that were scheduled at one point but have been
      * <i>disregarded</i>.
      *
-     * <p>Counts any URI that is successfully fetched only to be disregarded
+     * <p>Counts any URI that is scheduled only to be disregarded
      * because it is determined to lie outside the scope of the crawl. Most
      * commonly this will be due to robots.txt exclusions.
      *
      * @return The number of URIs that have been disregarded.
      */
-    public long disregardedFetchCount();
+    public long disregardedUriCount();
 
     /**
      * Total number of bytes contained in all URIs that have been processed.

@@ -167,7 +167,7 @@ public class DomainSensitiveFrontier extends HostQueuesFrontier {
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
-            successCount++;
+            succeededFetchCount++;
             // dns:host gets same classkey as host, but we don't want to count
             // them
             if (!curi.getUURI().toString().startsWith("dns:")) {

@@ -536,7 +536,7 @@ implements CrawlURIDispositionListener{
     public long disregardedFetchAttempts() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().disregardedFetchCount() : downloadDisregards;
+        return shouldrun ? controller.getFrontier().disregardedUriCount() : downloadDisregards;
     }
 
     /**
@@ -552,7 +552,7 @@ implements CrawlURIDispositionListener{
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedUriCount;
+        return shouldrun ? controller.getFrontier().succeededFetchCount() : downloadedUriCount;
     }
 
     /**

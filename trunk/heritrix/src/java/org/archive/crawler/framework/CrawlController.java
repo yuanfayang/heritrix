@@ -841,7 +841,7 @@ public class CrawlController implements Serializable {
             return false;
         } else if (
             maxDocument > 0
-                && frontier.successfullyFetchedCount() >= maxDocument) {
+                && frontier.succeededFetchCount() >= maxDocument) {
             // Hit the max document download limit!
             sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
             return false;

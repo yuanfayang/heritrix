@@ -102,10 +102,10 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
 
     // top-level stats
-    long queuedCount = 0;  // total URIs queued to be visited
-    long successCount = 0; 
-    long failedCount = 0;
-    long disregardedCount = 0; //URIs that are disregarded (for example because of robot.txt rules)
+    private long queuedUriCount = 0;  // total URIs queued to be visited
+    private long succeededFetchCount = 0; 
+    private long failedFetchCount = 0;
+    private long disregardedUriCount = 0; //URIs that are disregarded (for example because of robot.txt rules)
 
     // Used when bandwidth constraint are used
     long totalProcessedBytes = 0;
@@ -178,42 +178,82 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      */
     public synchronized boolean isEmpty() {
         // TODO: consider synchronizing on something (allClassQueuesMap?)
-        return queuedCount == 0;
+        return queuedUriCount == 0;
+    }
+    
+    /**
+     * Increment the running count of queued URIs. Synchronized
+     * because operations on longs are not atomic. 
+     */
+    protected synchronized void incrementQueuedUriCount() {
+        queuedUriCount++;
+    }
+    
+    /**
+     * Note that a number of queued Uris have been deleted. 
+     * @param numberOfDeletes
+     */
+    protected synchronized void decrementQueuedCount(long numberOfDeletes) {
+        queuedUriCount -= numberOfDeletes;
     }
     
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount(){
-        return queuedCount;
+        return queuedUriCount;
     }
 
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        return successCount+failedCount+disregardedCount;
+        return succeededFetchCount+failedFetchCount+disregardedUriCount;
     }
 
+    /**
+     * Increment the running count of successfully fetched URIs. Synchronized
+     * because operations on longs are not atomic. 
+     */
+    protected synchronized void incrementSucceededFetchCount() {
+        succeededFetchCount++;
+    }
+    
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
      */
-    public long successfullyFetchedCount(){
-        return successCount;
+    public long succeededFetchCount(){
+        return succeededFetchCount;
     }
 
+    /**
+     * Increment the running count of failed URIs. Synchronized
+     * because operations on longs are not atomic. 
+     */
+    protected synchronized void incrementFailedFetchCount() {
+        failedFetchCount++;
+    }
+    
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount(){
-       return failedCount;
+       return failedFetchCount;
     }
 
+    /**
+     * Increment the running count of disregarded URIs. Synchronized
+     * because operations on longs are not atomic. 
+     */
+    protected synchronized void incrementDisregardedUriCount() {
+        disregardedUriCount++;
+    }
+    
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#disregardedFetchCount()
      */
-    public long disregardedFetchCount() {
-        return disregardedCount;
+    public long disregardedUriCount() {
+        return disregardedUriCount;
     }
 
     /** (non-Javadoc)
