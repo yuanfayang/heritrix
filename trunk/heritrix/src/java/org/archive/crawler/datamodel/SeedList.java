@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,11 +35,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.util.DevUtils;
 
 
@@ -50,7 +51,7 @@ import org.archive.util.DevUtils;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class SeedList extends AbstractList {
+public class SeedList extends AbstractList implements Serializable {
     
     /**
      * Regexp for identifying URIs in seed input data
@@ -67,11 +68,11 @@ public class SeedList extends AbstractList {
     private File seedfile = null;
     
     /**
-     * Where to log.
+     * Where to log, via controller.
      * 
      * Passed in to the constructor.
      */
-    final Logger logger;
+    final CrawlController controller;
     
     /**
      * Cache of seeds.
@@ -83,11 +84,12 @@ public class SeedList extends AbstractList {
      * Constructor
      * 
      * @param seedfile Default seed file to use.
-     * @param logger Logger to use logging seed problems.
+     * @param controller controller to provide logging
      * @param caching True if we're to cache the seed list.
      */
-    public SeedList(File seedfile, Logger logger, boolean caching) {
-        this.logger = logger;
+    public SeedList(File seedfile, CrawlController controller, boolean caching) {
+        //this.logger = logger;
+        this.controller = controller;
         this.seedfile = seedfile;
         if (caching) {
             this.cache = Collections.synchronizedList(new ArrayList());
@@ -101,7 +103,7 @@ public class SeedList extends AbstractList {
     private SeedList() {
         super();
         // Must initialize with something because logger is final.
-        this.logger = null;
+        this.controller = null;
     }
     
     /**
@@ -118,14 +120,14 @@ public class SeedList extends AbstractList {
         this.seedfile = seedfile;
     }
     
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see java.util.List#get(int)
      */
     public Object get(int index) {
         return (this.cache != null)? this.cache.get(index): null;
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see java.util.Collection#size()
      */
     public int size() {
@@ -161,7 +163,7 @@ public class SeedList extends AbstractList {
                 i = new SeedIterator();
             }
             catch (IOException e) {
-                this.logger.severe("Failed to get seed iterator: " + e);
+                this.controller.uriErrors.severe("Failed to get seed iterator: " + e);
             }
             
             if (i != null) {
@@ -228,7 +230,7 @@ public class SeedList extends AbstractList {
                 this.cache.iterator(): new SeedIterator();
         }
         catch (IOException e) {
-            this.logger.severe("Failed to get iterator: " + e);
+            controller.uriErrors.severe("Failed to get iterator: " + e);
         }
         return iterator;
     }
@@ -270,21 +272,21 @@ public class SeedList extends AbstractList {
                 new BufferedReader(new FileReader(getSeedfile()));
         }
         
-        /* (non-Javadoc)
+        /** (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
         public void remove() {
             throw new UnsupportedOperationException();
         }
         
-        /* (non-Javadoc)
+        /** (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
         public boolean hasNext() {
             return (this.next != null)? true: loadNext();
         }
         
-        /* (non-Javadoc)
+        /** (non-Javadoc)
          * @see java.util.Iterator#next()
          */
         public Object next() {
@@ -325,7 +327,7 @@ public class SeedList extends AbstractList {
                             return true;
                         } catch (URIException e1) {
                             Object[] array = { null, candidate };
-                            SeedList.this.logger.log(Level.INFO,
+                            SeedList.this.controller.uriErrors.log(Level.INFO,
                                 "Reading seeds: " + e1.getMessage(), array );
                             this.next = null;
                             // keep reading for valid seeds
@@ -333,7 +335,7 @@ public class SeedList extends AbstractList {
                         }
                     }
                     Object[] array = { null, read };
-                    SeedList.this.logger.log(Level.INFO, "bad seed line",
+                    SeedList.this.controller.uriErrors.log(Level.INFO, "bad seed line",
                         array);
                 }
                 close();
@@ -345,6 +347,10 @@ public class SeedList extends AbstractList {
             }
         }
         
+        /**
+         * As this iterator is backed by a reader, it should
+         * receive a close() so that it can close the reader.
+         */
         public void close() {
             if(this.reader != null) {
                 try {
@@ -352,7 +358,7 @@ public class SeedList extends AbstractList {
                     this.reader =  null;
                 }
                 catch (IOException e) {
-                    SeedList.this.logger.severe(
+                    SeedList.this.controller.uriErrors.severe(
                         "Failed close of the seed reader.");
                 }
             } 

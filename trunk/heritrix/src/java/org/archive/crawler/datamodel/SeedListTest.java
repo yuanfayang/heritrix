@@ -42,11 +42,7 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class SeedListTest extends TmpDirTestCase {
-    
-    private static final Logger logger =
-        Logger.getLogger(SeedListTest.class.getName());
-   
+public class SeedListTest extends TmpDirTestCase {   
     private static Set seeds = null;
     
     /**
@@ -137,7 +133,7 @@ public class SeedListTest extends TmpDirTestCase {
         fw.flush();
         fw.close();
         boolean found = false;
-        SeedList sl = new SeedList(this.seedsfile, SeedListTest.logger, false);
+        SeedList sl = new SeedList(this.seedsfile, null, false);
         for (Iterator i = sl.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
             if (uuri.getHost().equals(NOSCHEME)) {
@@ -166,7 +162,7 @@ public class SeedListTest extends TmpDirTestCase {
     
     private SeedList checkContent(SeedList sl, Set seedSet, boolean caching) {
         if (sl == null) {
-            sl = new SeedList(this.seedsfile, SeedListTest.logger, caching);
+            sl = new SeedList(this.seedsfile, null, caching);
         }
         int count = 0;
         for (Iterator i = sl.iterator(); i.hasNext();) {
