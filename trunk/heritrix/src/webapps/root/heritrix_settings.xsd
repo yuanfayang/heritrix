@@ -1,4 +1,14 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+        
+    <xs:annotation>
+        <xs:documentation xml:lang="en"> Schema for heritrix settings.
+        Crawl job order files are instances of this schema.
+
+        $Id: lucene.xsd,v 1.3 2004/03/23 18:23:19 stack Exp $ 
+        </xs:documentation>
+    </xs:annotation>
+
+
 
     <xs:element name="crawl-order">
         <xs:complexType>
