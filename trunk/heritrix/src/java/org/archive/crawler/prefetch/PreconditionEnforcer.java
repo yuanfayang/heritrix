@@ -431,7 +431,7 @@ public class PreconditionEnforcer
                             getController().getPostprocessorChain());
                     } catch (URIException e) {
                         logger.severe("unable to set credentials prerequisite "+prereq);
-                        getController().logUriError(e,curi,prereq);
+                        getController().logUriError(e,curi.getUURI(),prereq);
                         return false; 
                     }
                     result = true;

@@ -27,14 +27,18 @@
 package org.archive.crawler.extractor;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
+import org.archive.extractor.ExtractErrorListener;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
@@ -145,7 +149,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 try {
                     curi.createAndAddLink(cssUri,Link.EMBED_MISC,Link.EMBED_HOP);
                 } catch (URIException e) {
-                    controller.logUriError(e,curi,cssUri);
+                    controller.logUriError(e,curi.getUURI(),cssUri);
                 }
             }
         } catch (StackOverflowError e) {
@@ -155,6 +159,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         }
         return foundLinks;
     }
+
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorCSS\n");

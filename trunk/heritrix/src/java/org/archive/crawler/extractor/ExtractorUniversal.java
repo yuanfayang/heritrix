@@ -30,6 +30,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;

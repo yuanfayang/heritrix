@@ -67,7 +67,7 @@ implements CoreAttributeConstants {
             numberOfLinksExtracted++;
         } catch (URIException e) {
             e.printStackTrace();
-            getController().logUriError(e,curi,loc.getValue());
+            getController().logUriError(e,curi.getUURI(),loc.getValue());
         }
 
     }

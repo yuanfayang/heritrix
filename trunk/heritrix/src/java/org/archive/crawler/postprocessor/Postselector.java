@@ -164,7 +164,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 caURI.setIsSeed(considerAsSeed(curi, wref));
                 schedule(caURI);
             } catch (URIException e) {
-                getController().logUriError(e,curi,wref.getDestination().toString());
+                getController().logUriError(e,curi.getUURI(),wref.getDestination().toString());
             }
             
         }

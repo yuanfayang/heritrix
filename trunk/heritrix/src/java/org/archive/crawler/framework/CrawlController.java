@@ -58,6 +58,7 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -1499,7 +1500,7 @@ public class CrawlController implements Serializable {
      * @param u CrawlURI where problem occurred
      * @param l String which could not be interpreted as URI without exception
      */
-    public void logUriError(URIException e, CrawlURI u, String l) {
+    public void logUriError(URIException e, UURI u, CharSequence l) {
         Object[] array = {u, l};
         uriErrors.log(Level.INFO, e.getMessage(),array);
     }

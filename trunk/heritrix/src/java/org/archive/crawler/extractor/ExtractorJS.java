@@ -60,16 +60,8 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     // determines whether a string is likely URI
     // (no whitespace or '<' '>',  has an internal dot or some slash,
     // begins and ends with either '/' or a word-char)
-    static final String STRING_URI_EXTRACTOR =
+    static final String STRING_URI_DETECTOR =
         "(?:\\w|[\\.]{0,2}/)[\\S&&[^<>]]*(?:\\.|/)[\\S&&[^<>]]*(?:\\w|/)";
-
-    // finds strings in javascript likely to be URIs/paths
-    // guessing based on '.' in string, so if highly likely to
-    // get gifs/etc, unable to get many other paths
-    // will find false positives
-    // TODO: add '/' check, suppress strings being concatenated via '+'?
-    static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
-        "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
 
     protected long numberOfCURIsHandled = 0;
     protected static long numberOfLinksExtracted = 0;
@@ -145,7 +137,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
             CharSequence subsequence =
                 cs.subSequence(strings.start(2), strings.end(2));
             Matcher uri =
-                TextUtils.getMatcher(STRING_URI_EXTRACTOR, subsequence);
+                TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
             if(uri.matches()) {
                 String string = uri.group();
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
@@ -160,7 +152,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                     }
                 } catch (URIException e) {
                     if (controller != null) {
-                        controller.logUriError(e, curi, string);
+                        controller.logUriError(e, curi.getUURI(), string);
                     } else {
                         logger.warning(string + " from " + curi + " threw " +
                             e.getMessage());

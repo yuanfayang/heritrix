@@ -125,7 +125,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
             try {
                 curi.createAndAddLink(hyperlink,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
             } catch (URIException e1) {
-                getController().logUriError(e1,curi,hyperlink);
+                getController().logUriError(e1,curi.getUURI(),hyperlink);
             }
             numberOfLinksExtracted++;
             currentPos = page.indexOf("HYPERLINK", linkEnd + 1);

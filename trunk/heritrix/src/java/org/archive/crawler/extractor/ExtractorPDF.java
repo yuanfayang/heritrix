@@ -106,7 +106,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
                 try {
                     curi.createAndAddLink(uri,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
                 } catch (URIException e1) {
-                    getController().logUriError(e1,curi,uri);
+                    getController().logUriError(e1,curi.getUURI(),uri);
                 }
             }
             numberOfLinksExtracted += uris.size();
