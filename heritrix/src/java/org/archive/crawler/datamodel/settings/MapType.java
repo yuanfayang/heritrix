@@ -128,7 +128,7 @@ public class MapType extends ComplexType {
         Stack attributeStack = new Stack();
         Iterator currentIterator;
 
-        public It(MapType map, CrawlerSettings settings) {
+        public It(CrawlerSettings settings) {
             this.settings = settings;
 
             DataContainer data = getDataContainerRecursive(settings);
@@ -178,7 +178,7 @@ public class MapType extends ComplexType {
      */
     public Iterator iterator(CrawlerSettings settings) {
         settings = settings == null ? globalSettings() : settings;
-        return new It(this, settings);
+        return new It(settings);
     }
 
     /** Returns true if this map is empty.
