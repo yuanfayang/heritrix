@@ -196,7 +196,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
 		} catch (IllegalArgumentException e) {
 			DevUtils.logger.log(
-				Level.SEVERE,
+				Level.WARNING,
 				"processGeneralTag()\n"+
 				"codebase="+codebase+" res="+res+"\n"+
 				DevUtils.extraInfo(),
