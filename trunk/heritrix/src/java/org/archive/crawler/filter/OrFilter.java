@@ -51,7 +51,8 @@ public class OrFilter extends Filter {
      */
     public OrFilter(String name) {
         super(name, "Or filter");
-        filters = new MapType("filters", "Filters that should be or'ed together");
+        filters = new MapType("filters",
+            "Filters that should be or'ed together", Filter.class);
         addElementToDefinition(filters);
     }
 
