@@ -633,11 +633,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     enqueueToKeyed(curi);
                 }
             }
-    
+            
             // See if URIs exhausted
             if(isEmpty()) {
-                this.controller.requestCrawlStop();
-                throw new EndedException("exhausted");
+                continue; // next controller.checkFinish() will end cleanly
             } 
             
             if(alreadyIncluded.pending() > 0) {
