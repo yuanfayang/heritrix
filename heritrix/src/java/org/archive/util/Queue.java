@@ -23,22 +23,37 @@
  */
 package org.archive.util;
 
+import java.util.NoSuchElementException;
 
-/**
+
+/** An Abstract queue.  It should implement FIFO semantics.
  * @author gojomo
  *
  */
 public interface Queue {
 
-	/**
-	 * @param o
+	/** Add an entry to the end of queue
+	 * @param o the entry to queue
 	 */
 	void enqueue(Object o);
 
+    /** is the queue empty?
+     *
+     * @return <code>true</code> if the queue has no elements
+     */
 	boolean isEmpty();
 
-	Object dequeue();
+    /** remove an entry from the start of the  queue
+     *
+     * @return the object
+     * @throws java.util.NoSuchElementException
+     */
+	Object dequeue() throws NoSuchElementException;
 
+    /** get the number of elements in the queue
+     *
+     * @return the number of elements in the queue
+     */
 	long length();
 
 	/**
