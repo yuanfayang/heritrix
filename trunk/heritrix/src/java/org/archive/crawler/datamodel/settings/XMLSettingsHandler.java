@@ -150,6 +150,10 @@ public class XMLSettingsHandler extends SettingsHandler {
             return orderFile;
         } else {
             String elements[] = scope.split("\\.");
+            if (elements.length == 0) {
+                return orderFile;
+            }
+            
             StringBuffer path = new StringBuffer();
             for (int i = elements.length - 1; i > 0; i--) {
                 path.append(elements[i]);
