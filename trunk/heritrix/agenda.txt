@@ -4,10 +4,13 @@ import AList
 basic politeness
 simple http fetcher
 simple link extractor
+make HTTPfetcher threadsafe (perhaps by having an instance per thread)
 
 Next few things to do:
-make HTTPfetcher threadsafe (perhaps by having an instance per thread)
-integrate ARCwriter
+get to the bottom of HTTPClient "Recoverable exceptions" 
+implement Filters
+integrate ARCwriter (HTTP + DNS)
+collect better stats on system state (pending URIs, etc.) and progress (raw bytes, URI results)
 mercator-style progress log ("timings"?)
 create document of Alist keys/conventions
 ToeThread start/pause/stop cleanup
