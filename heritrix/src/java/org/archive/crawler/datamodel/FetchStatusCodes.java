@@ -55,9 +55,11 @@ public interface FetchStatusCodes {
     /** multiple retries all failed */
     public static final int S_TOO_MANY_RETRIES = -8;     //
 
-    /** severe java 'Error' conditions (OutOfMemoryError, StackOverflowError, etc.) during URI processing */
+    /** severe java 'Error' conditions (OutOfMemoryError, StackOverflowError,
+     *  etc.) during URI processing */
     public static final int S_SERIOUS_ERROR = -3000;     //
-    /** temporary status assigned URIs awaiting preconditions; appearance in logs is a bug */
+    /** temporary status assigned URIs awaiting preconditions; appearance in
+     *  logs is a bug */
     public static final int S_DEFERRED = -50;
 
     /** robots rules precluded fetch */
@@ -68,9 +70,15 @@ public interface FetchStatusCodes {
     public static final int S_TOO_MANY_LINK_HOPS = -4001;
     /** overstepped embed/trans hops */
     public static final int S_TOO_MANY_EMBED_HOPS = -4002;
-    /** out-of-scope upoin reexamination (only when scope changes during crawl) */
+    /** out-of-scope upoin reexamination (only when scope changes during
+     *  crawl) */
     public static final int S_OUT_OF_SCOPE = -5000;
+    /** blocked from fetch by user setting. */
+    public static final int S_BLOCKED_BY_USER = -5001;
 
+    /** deleted from frontier by user */
+    public static final int S_DELETED_BY_USER = -6000;
+    
     /** DNS success */
     public static final int S_DNS_SUCCESS = 1;
 

@@ -25,6 +25,8 @@ Mercator, the frequency with which the background thread performs a checkpoint
 is user-configurable; we typically checkpoint anywhere from 1 to 4 times per
 day.</source></p>
     </subsection>
+
+
     </section>
   </body>
 </document>

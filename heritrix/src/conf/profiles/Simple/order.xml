@@ -3,7 +3,7 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
-    <date>20040220181256</date>
+    <date>20040302203122</date>
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
@@ -17,9 +17,9 @@
       <string name="seedsfile">seeds.txt</string>
       <integer name="max-link-hops">25</integer>
       <integer name="max-trans-hops">5</integer>
-      <newObject name="excludeFilter" class="org.archive.crawler.filter.OrFilter">
+      <newObject name="exclude-filter" class="org.archive.crawler.filter.OrFilter">
         <boolean name="enabled">true</boolean>
-        <boolean name="make-filter-XOR">false</boolean>
+        <boolean name="if-matches-return">true</boolean>
         <map name="filters">
         </map>
       </newObject>
@@ -37,7 +37,7 @@
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
       <string name="type">classic</string>
       <boolean name="masquerade">false</boolean>
-      <string name="custom-robots"/>
+      <string name="custom-robots"></string>
       <stringList name="user-agents">
       </stringList>
     </newObject>
@@ -49,77 +49,78 @@
       <integer name="max-retries">10</integer>
       <long name="retry-delay-seconds">900</long>
     </newObject>
-    <map name="processors">
+    <map name="pre-fetch-processors">
       <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
-        <boolean name="scope">false</boolean>
+        <boolean name="recheck-scope">false</boolean>
+        <boolean name="block-all">false</boolean>
+        <string name="block-by-regexp"></string>
       </newObject>
       <newObject name="Preprocessor" class="org.archive.crawler.basic.PreconditionEnforcer">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
       </newObject>
+    </map>
+    <map name="fetch-processors">
       <newObject name="DNS" class="org.archive.crawler.fetcher.FetchDNS">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
       </newObject>
       <newObject name="HTTP" class="org.archive.crawler.fetcher.FetchHTTP">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
         <integer name="timeout-seconds">1200</integer>
         <integer name="sotimeout-ms">20000</integer>
         <long name="max-length-bytes">9223372036854775807</long>
         <integer name="max-fetch-attempts">10</integer>
-        <string name="cookies-file"/>
+        <string name="cookies-file"></string>
         <boolean name="strict">false</boolean>
+        <string name="trust-level">open</string>
       </newObject>
+    </map>
+    <map name="extract-processors">
       <newObject name="ExtractorHTTP" class="org.archive.crawler.extractor.ExtractorHTTP">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
       </newObject>
       <newObject name="ExtractorHTML" class="org.archive.crawler.extractor.ExtractorHTML">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
       </newObject>
       <newObject name="ExtractorJS" class="org.archive.crawler.extractor.ExtractorJS">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
       </newObject>
+    </map>
+    <map name="write-processors">
       <newObject name="Archiver" class="org.archive.crawler.basic.ARCWriterProcessor">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
         <boolean name="compress">true</boolean>
         <string name="prefix">IAH</string>
         <integer name="max-size-bytes">100000000</integer>
-        <string name="path"/>
+        <string name="path"></string>
         <integer name="pool-max-active">3</integer>
         <integer name="pool-max-wait">300000</integer>
       </newObject>
+    </map>
+    <map name="post-processors">
       <newObject name="Updater" class="org.archive.crawler.basic.CrawlStateUpdater">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">true</boolean>
         <map name="filters">
         </map>
       </newObject>
       <newObject name="Postselector" class="org.archive.crawler.basic.Postselector">
         <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
       </newObject>
@@ -129,5 +130,6 @@
         <integer name="interval-seconds">20</integer>
       </newObject>
     </map>
+    <string name="recover-path"></string>
   </controller>
 </crawl-order>

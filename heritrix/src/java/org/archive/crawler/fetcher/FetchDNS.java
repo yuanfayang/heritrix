@@ -170,7 +170,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
 
         if (rrecordSet != null) {
             curi.setFetchStatus(S_DNS_SUCCESS);
-            curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
+            curi.setContentType("text/dns");
             curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 
             // get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)

@@ -373,4 +373,12 @@ public class RecordingOutputStream extends OutputStream {
     public long getResponseContentLength() {
         return size-contentBeginMark;
     }
+
+    /**
+     * @return True if this ROS is open.
+     */
+    public boolean isOpen()
+    {
+        return this.out != null;
+    }
 }

@@ -44,10 +44,9 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class OrFilter extends Filter {
-    public static final String ATTR_INVERTED = "make-filter-XOR";
-
-    private MapType filters;
-
+    public static final String ATTR_MATCH_RETURN_VALUE = "if-matches-return";
+    public static final String ATTR_FILTERS = "filters";
+    
     public OrFilter(String name, String description) {
         this(name);
         setDescription(description);
@@ -59,23 +58,35 @@ public class OrFilter extends Filter {
     public OrFilter(String name) {
         super(
             name,
-            "OR Filter. \nA filter that serves as a placeholder for other filters who's functionality should be logically OR'ed together.");
-        filters =
-            new MapType(
-                "filters",
-                "This is a list of filters who's functionality should be logically or'ed together by the OrFilter.",
-                Filter.class);
+            "OR Filter. \nA filter that serves as a placeholder for other" +
+            " filters who's functionality should be logically OR'ed together.");
+
         addElementToDefinition(
             new SimpleType(
-                ATTR_INVERTED,
-                "Turn the filter into an XOR filter. \nIf true, instead of "
-                    + "filtering out anything that any of the filters added to it "
-                    + "matches, it will only filter out URIs that none of them "
-                    + "matches.",
-                new Boolean(false)));
-        addElementToDefinition(filters);
+                ATTR_MATCH_RETURN_VALUE,
+                "What to return when one of the filters matches. \nIf true, "
+                    + "this filter will return true if one of the subfilters "
+                    + "return true, false otherwise. If false, this filter " 
+                    + "will return false if one of the subfilters"
+                    + "return true, false otherwise.",
+                new Boolean(true)));
+        
+        addElementToDefinition(new MapType(ATTR_FILTERS,
+                "This is a list of filters who's functionality should be" +
+                " logically or'ed together by the OrFilter.", Filter.class));
     }
 
+    private MapType getFilters (Object o) {
+        try {
+            MapType filters = (MapType) getAttribute(
+                getSettingsFromObject(o), ATTR_FILTERS);
+            return filters;
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getLocalizedMessage());
+            return null;
+        }
+    }
+    
     protected boolean innerAccepts(Object o) {
         if (isEmpty(o)) {
             return true;
@@ -92,30 +103,29 @@ public class OrFilter extends Filter {
 
     public void addFilter(CrawlerSettings settings, Filter f) {
         try {
-            filters.addElement(settings, f);
+            getFilters(settings).addElement(settings, f);
         } catch (InvalidAttributeValueException e) {
             logger.severe(e.getMessage());
         }
     }
 
     public boolean isEmpty(Object o) {
-        return filters.isEmpty(getSettingsFromObject(o));
+        return getFilters(o).isEmpty(getSettingsFromObject(o));
     }
 
     public Iterator iterator(Object o) {
-        return filters.iterator(getSettingsFromObject(o));
+        return getFilters(o).iterator(getSettingsFromObject(o));
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#applyInversion()
      */
-    protected boolean applyInversion(CrawlURI curi) {
-       boolean inverter = false;
+    protected boolean returnTrueIfMatches(CrawlURI curi) {
        try {
-           inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
+           return ((Boolean) getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).booleanValue();
        } catch (AttributeNotFoundException e) {
            logger.severe(e.getMessage());
+           return true;
        }
-       return inverter;
     }
 }

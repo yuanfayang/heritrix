@@ -3,6 +3,7 @@
 
 <%@ page import="java.util.*" %>
 <%@ page import="org.archive.crawler.admin.LongWrapper"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%
 	/**
@@ -271,7 +272,10 @@
 				{
 					Map.Entry entry = (Map.Entry)statusCodes.next();
 					long count = ((LongWrapper)(entry.getValue())).longValue;
-					long displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+					long displaybarwidth = 0;
+					if(stats.successfulFetchAttempts()/6>0){
+					   displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+					} 
 					if(displaybarwidth==0){
 					   displaybarwidth=1;
 					}
@@ -279,7 +283,7 @@
 					<tr <%=alt?"bgcolor=#EEEEFF":""%>>
 						<td nowrap>
 							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true">
-                                <%=org.archive.crawler.datamodel.CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
+                                <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
                             </a>&nbsp;
 						</td>
 						<td colspan="2" nowrap>
@@ -312,7 +316,10 @@
 				{
 					Map.Entry file = (Map.Entry)files.next();
 					long count = ((LongWrapper)file.getValue()).longValue;
-                    long displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+                    long displaybarwidth = 0;
+                    if(stats.successfulFetchAttempts()/6>0){
+                       displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+                    } 
                     if(displaybarwidth==0){
                        displaybarwidth=1;
                     }

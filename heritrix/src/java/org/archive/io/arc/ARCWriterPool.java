@@ -124,7 +124,8 @@ public class ARCWriterPool
     /**
      * Check out an ARCWriter from the pool.
      *
-     * This method must be answered by a call to {@link #returnARCWriter}.
+     * This method must be answered by a call to
+     * {@link #returnARCWriter(ARCWriter)}.
      *
      * @return An ARCWriter checked out of a pool of ARCWriters.
      * @throws IOException Problem getting ARCWriter from pool (Converted
@@ -136,18 +137,14 @@ public class ARCWriterPool
         throws IOException
     {
         ARCWriter writer = null;
-        try
-        {
+        try {
             writer = (ARCWriter)this.pool.borrowObject();
-            logger.fine("Borrowed " + writer);
-        }
-        catch(NoSuchElementException e)
-        {
+            logger.fine("Borrowed " + writer + " (" + getNumActive() +
+                " active).");
+        } catch(NoSuchElementException e) {
             // Let this exception out.  Unit test at least depends on it.
             throw e;
-        }
-        catch(Exception e)
-        {
+        } catch(Exception e) {
             // Convert.
             throw new IOException("Failed getting ARCWriter from pool: " +
                 e.getMessage());
@@ -214,12 +211,13 @@ public class ARCWriterPool
          * The prefix to give new arc files.
          */
         private String prefix = null;
-
+        
         /**
          * Compress ARC files.
          */
         private boolean compress = ARCConstants.DEFAULT_COMPRESS;
 
+        
         /**
          * Constructor
          *
@@ -256,6 +254,5 @@ public class ARCWriterPool
             ((ARCWriter)arcWriter).close();
             super.destroyObject(arcWriter);
         }
-
     }
 }

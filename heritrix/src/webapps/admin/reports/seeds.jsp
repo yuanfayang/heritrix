@@ -2,6 +2,7 @@
 <%@include file="/include/secure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="org.archive.crawler.datamodel.UURI"%>
 
 <%
@@ -62,7 +63,7 @@
 					Seeds for job '<%=cjob.getJobName()%>'
 				</th>
 				<th>
-					Code
+					Status code
 				</th>
 				<th>
 					Disposition
@@ -74,7 +75,7 @@
 					String UriString = (String)seeds.next();
 					String disposition = stats.getSeedDisposition(UriString);
 					int code = stats.getSeedStatusCode(UriString);
-					String statusCode = code==0 ? "" : Integer.toString(code);
+					String statusCode = code==0 ? "" : CrawlURI.fetchStatusCodesToString(code);
 					String statusColor = "black";
 					if(code<0 || code >=400){
 						statusColor = "red";
@@ -86,8 +87,8 @@
 						<td>
 							<%=UriString%>
 						</td>
-						<td align="right">
-							<font color="<%=statusColor%>"><%=statusCode%></font>
+						<td align="left">
+							&nbsp;<font color="<%=statusColor%>"><%=statusCode%></font>&nbsp;
 						</td>
 						<td>
 							<a href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=UriString%>&grep=true" style="text-decoration: none;"><%=disposition%></a>

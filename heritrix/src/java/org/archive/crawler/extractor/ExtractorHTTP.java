@@ -37,7 +37,8 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
-    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
 
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
@@ -54,9 +55,11 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-        if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+        if(curi.isHttpTransaction())
+        {
             numberOfCURIsHandled++;
-            GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+            GetMethod get =
+                (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
             CrawlURI curi1 = curi;
             GetMethod get1 = get;
 

@@ -68,7 +68,7 @@ import org.archive.util.DevUtils;
 public class CrawlScope extends Filter {
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
-    public static final String ATTR_EXCLUDE_FILTER = "excludeFilter";
+    public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
@@ -92,6 +92,11 @@ public class CrawlScope extends Filter {
                 new Integer(5)));
         excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
+        
+        // Try to preserve the values of these attributes when we exchange
+        // scopes.
+        setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
+                ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER});
     }
 
     /** Default constructor.

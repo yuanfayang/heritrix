@@ -68,6 +68,8 @@ public class SimpleHttpServer
         this.port = port;
         SocketListener listener = new SocketListener();
         listener.setPort(port);
+        // Bumpt UI thread priority up 1 above the normal
+        listener.setThreadsPriority(Thread.NORM_PRIORITY);
         this.server.addListener(listener);
         this.server.setRootWebApp("root");
         this.contexts = server.addWebApplications(null, getWARSPath(), true);
@@ -114,7 +116,7 @@ public class SimpleHttpServer
     /**
      * Stop the running server.
      *
-     * @throws Exception
+     * @throws InterruptedException
      */
     public synchronized void stopServer() throws InterruptedException
     {
