@@ -109,4 +109,8 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
         slots[(int)index]=EMPTY;
         values[(int)index]=0;
     }
+    
+    public boolean quickContains(long fp) {
+        return contains(fp);
+    }
 }
