@@ -275,16 +275,17 @@ public class PreconditionEnforcer
             return false;
         }
 
+        // catch old "default" -1 settings that are now problematic,
+        // convert to new minimum
+        if (duration <= 0) {
+            duration = DEFAULT_IP_VALIDITY_DURATION.intValue();
+        }
+        
         long ttl = host.getIpTTL();
         if (ttl > duration) {
             // Use the larger of the operator-set minimum duration 
             // or the DNS record TTL
             duration = ttl;
-        }
-        
-        // catch old "default" settings that are now problematic
-        if (duration <= 0) {
-            duration = DEFAULT_IP_VALIDITY_DURATION.intValue();
         }
 
         // Duration and ttl are in seconds.  Convert to millis.
