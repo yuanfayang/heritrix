@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
  * @author gojomo
  *
  */
-public class UURI {
+public class UURI implements Serializable {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.UURI");
 
 	java.net.URI uri;
