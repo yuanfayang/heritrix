@@ -628,7 +628,7 @@ public class ARCWriter implements ARCConstants {
             try {
                 ris.readFullyTo(this.out);
                 long remaining = ris.remaining();
-                if (remaining > 0)
+                if (remaining != 0) // should be zero
                 {
                     // TODO: Move this DevUtils out of this class so no
                     // dependency upon it.
