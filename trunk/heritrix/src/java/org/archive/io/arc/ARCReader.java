@@ -25,6 +25,7 @@
 package org.archive.io.arc;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,8 +34,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -44,6 +47,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.PositionableStream;
 import org.archive.io.RandomAccessInputStream;
+import org.archive.util.InetAddressUtil;
 import org.archive.util.MimetypeUtils;
 
 
@@ -147,6 +151,34 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
     private boolean digest = true;
     
+    private static final byte [] outputBuffer = new byte[8 * 1024];
+
+    /**
+     * True if we are to fix space in metadata lines.
+     */
+    private boolean fixSpaceInMetadataLine = true;
+    
+    private static final String CDX_OUTPUT = "cdx";
+    private static final String DUMP_OUTPUT = "dump";
+    private static final String GZIP_DUMP_OUTPUT = "gzipdump";
+    private static final String NOHEAD_OUTPUT = "nohead";
+    
+    private static final String [] SUPPORTED_OUTPUT_FORMATS =
+        {CDX_OUTPUT, DUMP_OUTPUT, GZIP_DUMP_OUTPUT, NOHEAD_OUTPUT};
+    
+    private static final char SPACE = ' ';
+    
+    /**
+     * Size used to preallocate stringbuffer used outputting a cdx line.
+     * The numbers below are guesses at sizes of each of the cdx field.
+     * The ones in the below are spaces. Here is the legend used outputting
+     * the cdx line: CDX b e a m s c V n g.  Consult cdx documentation on
+     * meaning of each of these fields.
+     */
+    private static final int CDX_LINE_BUFFER_SIZE = 14 + 1 + 15 + 1 + 1024 +
+        1 + 24 + 1 + + 3 + 1 + 32 + 1 + 20 + 1 + 20 + 1 + 64;
+    
+    private static String cachedShortArcFileName = null;
 
     /**
      * Convenience method used by subclass constructors.
@@ -517,15 +549,24 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * @exception IOException  If no. of keys doesn't match no. of values.
      */
-    private ARCRecordMetaData computeMetaData(List keys,
-                ArrayList values, String v, long offset)
-            throws IOException {
+    private ARCRecordMetaData computeMetaData(List keys, List values, String v,
+            long offset)
+    throws IOException {
         if (keys.size() != values.size()) {
-            throw new IOException("Size of field name keys does" +
-            " not match count of field values: " + values);
+            List originalValues = values;
+            if (isFixSpaceInMetadataLine()) {
+                values = fixSpaceInMetadataLine(values, keys.size());
+            }
+            if (keys.size() != values.size()) {
+                throw new IOException("Size of field name keys does" +
+                        " not match count of field values: " + values);
+            }
+            // Note that field was fixed on stderr.
+            System.err.println("WARNING: Fixed spaces in metadata URL." +
+                " Original: " + originalValues + ", New: " + values);
         }
 
-        HashMap headerFields = new HashMap();
+        Map headerFields = new HashMap(keys.size() + 2);
         for (int i = 0; i < keys.size(); i++) {
             headerFields.put(keys.get(i), values.get(i));
         }
@@ -534,6 +575,57 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
         return new ARCRecordMetaData(this.arcFile, headerFields);
+    }
+    
+    /**
+     * Fix space in URLs.
+     * The ARCWriter used to write into the ARC URLs with spaces in them.
+     * This method does fix up on such headers converting all spaces found
+     * to '%20'.
+     * @param values List of metadata values.
+     * @param requiredSize Expected size of resultant values list.
+     * @return New list if we successfully fixed up values or original if
+     * fixup failed.
+     */
+    protected List fixSpaceInMetadataLine(List values, int requiredSize) {
+        // Do validity check. 4th from last is IP, all before the IP
+        // should be concatenated together with a '%20' joiner.
+        // In the below, '4' is 4th field from end which has the IP.
+        if (!(values.size() > requiredSize) || values.size() < 4) {
+            return values;
+        }
+        String ip = (String)values.get(values.size() - 4);
+        Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
+        if (ip == "-" || m.matches()) {
+            List newValues = new ArrayList(requiredSize);
+            StringBuffer url = new StringBuffer();
+            for (int i = 0; i < (values.size() - 4); i++) {
+                if (i > 0) {
+                    url.append("%20");
+                }
+                url.append(values.get(i));
+            } 
+            newValues.add(url.toString());
+            for (int i = values.size() - 4; i < values.size(); i++) {
+                newValues.add(values.get(i));
+            }
+            values =  newValues;
+        }
+        return values;
+    }
+    
+    /**
+     * @return Returns the fixSpaceInMetadataLine.
+     */
+    public boolean isFixSpaceInMetadataLine() {
+        return this.fixSpaceInMetadataLine;
+    }
+    
+    /**
+     * @param fixSpaceInMetadataLine The fixSpaceInMetadataLine to set.
+     */
+    public void setFixSpaceInMetadataLine(boolean fixSpaceInMetadataLine) {
+        this.fixSpaceInMetadataLine = fixSpaceInMetadataLine;
     }
 
     /**
@@ -630,7 +722,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     private static void usage(HelpFormatter formatter, Options options,
             int exitCode) {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
-            " [--digest=true|false] [--offset=# [--nohead]] ARCFILE",
+            " [--digest=true|false] \\\n" +
+            " [--space=true|false] [--format=cdx|dump|gzipdump|nohead] \\\n" +
+            " [--offset=#] ARCFILE",
                 options);
         System.exit(exitCode);
     }
@@ -643,64 +737,166 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
 
     /**
-     * Write the arc meta data in pseudo-CDX format.
+     * Write out the arcfile.
      * 
      * @param f Arc file to read.
      * @param digest Digest yes or no.
+     * @param space Whether to fix spaces in URLs in metadata lines.
+     * @param format Format to use outputting.
      * @throws IOException
      */
-    protected static void index(File f, boolean digest)
+    protected static void output(File f, boolean digest, boolean space,
+        String format)
     throws IOException {
         // long start = System.currentTimeMillis();
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
+        arc.setFixSpaceInMetadataLine(space);
         arc.setDigest(digest);
-        // Get arc header record, the first record in the file.
-        ARCRecord headerRecord = arc.get(0);
-        String arcFileName = headerRecord.getMetaData().getArcFile().getName();
-        arcFileName =
-            stripExtension(arcFileName, '.' + COMPRESSED_FILE_EXTENSION);
-        arcFileName = stripExtension(arcFileName, '.' + ARC_FILE_EXTENSION);
+        // Clear cache of calculated arc file name.
+        cachedShortArcFileName = null;
+        
         // Write output as pseudo-CDX file.  See
         // http://www.archive.org/web/researcher/cdx_legend.php
         // and http://www.archive.org/web/researcher/example_cdx.php.
         // Hash is hard-coded straight SHA-1 hash of content.
-        System.out.println("CDX b e a m s c " +
-                ((compressed)? "V": "v") + " n g");
-        StringBuffer buffer = null;
-        final char SPACE = ' ';
-        // Made by guessing size of each of the items to be appended.
-        final int BUFFER_SIZE = 14 + 1 + 15 + 1 + 1024 + 1 + 24 + 1 +
-            + 3 + 1 + 32 + 1 + 20 + 1 + 20 + 1 + 64;
+        if (format.charAt(0) == CDX_OUTPUT.charAt(0)) {
+            cdxOutput(arc, compressed);
+        } else if (format.charAt(0) == DUMP_OUTPUT.charAt(0)) {
+            dumpOutput(arc, false);
+        } else if (format.charAt(0) == GZIP_DUMP_OUTPUT.charAt(0)) {
+            dumpOutput(arc, true);
+        } else {
+            throw new IOException("Unsupported format: " + format);
+        }
+    }
+    
+    protected static void dumpOutput(ARCReader arc, boolean compressed)
+    throws IOException {
+        boolean firstRecord = true;
+        ARCWriter writer = null;
         for (Iterator ii = arc.iterator(); ii.hasNext();) {
             ARCRecord r = (ARCRecord)ii.next();
-            // Read the whole record so we get out a hash.
-            r.close();
+            // We're to dump the arc on stdout.
+            // Get the first record's data if any.
             ARCRecordMetaData meta = r.getMetaData();
-            String statusCode = (meta.getStatusCode() == null)?
-                    "-": meta.getStatusCode();
-            buffer = new StringBuffer(BUFFER_SIZE);
-            buffer.append(meta.getDate());
-            buffer.append(SPACE);
-            buffer.append(meta.getIp());
-            buffer.append(SPACE);
-            buffer.append(meta.getUrl());
-            buffer.append(SPACE);
-            buffer.append(meta.getMimetype());
-            buffer.append(SPACE);
-            buffer.append(statusCode);
-            buffer.append(SPACE);
-            buffer.append((meta.getDigest() == null)? "-": meta.getDigest());
-            buffer.append(SPACE);
-            buffer.append(meta.getOffset());
-            buffer.append(SPACE);
-            buffer.append(meta.getLength());
-            buffer.append(arcFileName);
-            System.out.println(buffer.toString());
+            if (firstRecord) {
+                firstRecord = false;
+                // Get an ARCWriter.
+                ByteArrayOutputStream baos =
+                    new ByteArrayOutputStream(r.available());
+                // This is slow but done only once at top of ARC.
+                while (r.available() > 0) {
+                    baos.write(r.read());
+                }
+                List listOfMetadata = new ArrayList();
+                listOfMetadata.add(baos.toString(ARCWriter.UTF8));
+                writer = new ARCWriter(System.out, meta.getArcFile(),
+                    compressed, listOfMetadata, meta.getDate());
+                continue;
+            }
+            
+            writer.write(meta.getUrl(), meta.getMimetype(), meta.getIp(),
+                Long.parseLong(meta.getDate()), (int)meta.getLength(), r);
+        }
+        // System.out.println(System.currentTimeMillis() - start);
+    }
+    
+    protected static void cdxOutput(ARCReader arc, boolean compressed)
+    throws IOException {
+        System.out.println("CDX b e a m s c " +
+            ((compressed)? "V": "v") + " n g");
+        for (Iterator ii = arc.iterator(); ii.hasNext();) {
+            ARCRecord r = (ARCRecord)ii.next();
+            outputARCRecordCdx(r);
+        }
+    }
+
+    /**
+     * @param meta ARCRecordMetaData instance.
+     * @return short name of arc.
+     */
+    protected static String getShortArcFileName(ARCRecordMetaData meta) {
+        if (cachedShortArcFileName == null) {
+        String arcFileName = meta.getArcFile().getName();
+        arcFileName =
+            stripExtension(arcFileName, '.' + COMPRESSED_FILE_EXTENSION);
+        cachedShortArcFileName =
+            stripExtension(arcFileName, '.' + ARC_FILE_EXTENSION);
+        }
+        return cachedShortArcFileName;
+    }
+    
+    /**
+     * Output passed record using passed format specifier.
+     * @param r ARCRecord instance to output.
+     * @param format What format to use outputting.
+     * @throws IOException
+     */
+    protected static void outputARCRecord(ARCRecord r, String format)
+    throws IOException {
+        if (format.charAt(0) == CDX_OUTPUT.charAt(0)) {
+            outputARCRecordCdx(r);
+        } else if(format.charAt(0) == DUMP_OUTPUT.charAt(0)) {
+            outputARCRecordDump(r);
+        } else if(format.charAt(0) == NOHEAD_OUTPUT.charAt(0)) {
+            outputARCRecordNohead(r);
+        } else {
+            throw new IOException("Unsupported format" +
+                " (or unsupported on a single record): " + format);
+        }
+    }
+    
+    /**
+     * @param r ARCRecord instance to output.
+     * @throws IOException
+     */
+    private static void outputARCRecordNohead(ARCRecord r)
+    throws IOException {
+        r.skipHttpHeader();
+        outputARCRecordDump(r);
+    }
+
+    /**
+     * @param r ARCRecord instance to output.
+     * @throws IOException
+     */
+    private static void outputARCRecordDump(ARCRecord r)
+    throws IOException {
+        int read = outputBuffer.length;
+        while ((read = r.read(outputBuffer, 0, outputBuffer.length)) != -1) {
+            System.out.write(outputBuffer, 0, read);
         }
         System.out.flush();
-        // System.out.println(System.currentTimeMillis() - start);
-    }   
+    }
+
+    protected static void outputARCRecordCdx(ARCRecord r)
+    throws IOException {
+        // Read the whole record so we get out a hash.
+        r.close();
+        ARCRecordMetaData meta = r.getMetaData();
+        String statusCode = (meta.getStatusCode() == null)?
+            "-": meta.getStatusCode();
+        StringBuffer buffer = new StringBuffer(CDX_LINE_BUFFER_SIZE);
+        buffer.append(meta.getDate());
+        buffer.append(SPACE);
+        buffer.append(meta.getIp());
+        buffer.append(SPACE);
+        buffer.append(meta.getUrl());
+        buffer.append(SPACE);
+        buffer.append(meta.getMimetype());
+        buffer.append(SPACE);
+        buffer.append(statusCode);
+        buffer.append(SPACE);
+        buffer.append((meta.getDigest() == null)? "-": meta.getDigest());
+        buffer.append(SPACE);
+        buffer.append(meta.getOffset());
+        buffer.append(SPACE);
+        buffer.append(meta.getLength());
+        buffer.append(getShortArcFileName(meta));
+        System.out.println(buffer.toString());
+        System.out.flush();
+    }
     
     /**
      * @param d True if we're to digest.
@@ -712,7 +908,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     /**
      * @return True if we're digesting as we read.
      */
-    private boolean getDigest() {
+    protected boolean getDigest() {
         return this.digest;
     }
 
@@ -721,9 +917,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * Here is the command-line interface:
      * <pre>
-     * usage: java org.archive.io.arc.ARCReader [--offset=# [--nohead]] ARCFILE
+     * usage: java org.archive.io.arc.ARCReader [--offset=#] ARCFILE
      *  -h,--help      Prints this message and exits.
-     *  -n,--nohead    Do not output request header as part of record.
      *  -o,--offset    Outputs record at this offset into arc file.</pre>
      *
      * <p>See in <code>$HERITRIX_HOME/bin/arcreader</code> for a script that'll
@@ -748,10 +943,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             "Prints this message and exits."));
         options.addOption(new Option("o","offset", true,
             "Outputs record at this offset into arc file."));
-        options.addOption(new Option("n","nohead", false,
-            "Do not output request header as part of record."));
         options.addOption(new Option("d","digest", true,
             "Calculate digest. Expensive. Default: true."));
+        options.addOption(new Option("s","space", true,
+            "Fix any spaces found in metadata URLs. Default: true."));
+        options.addOption(new Option("f","format", true,
+            "Output options: 'cdx', 'dump', 'gzipdump'," +
+            " or 'nohead'. Default: 'cdx'."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -765,8 +963,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
         // Now look at options passed.
         long offset = -1;
-        boolean nohead = false;
         boolean digest = true;
+        boolean space = true;
+        String format = "cdx";
         for (int i = 0; i < cmdlineOptions.length; i++) {
             switch(cmdlineOptions[i].getId()) {
                 case 'h':
@@ -777,17 +976,38 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     offset =
                         Long.parseLong(cmdlineOptions[i].getValue());
                     break;
-
-                case 'n':
-                    nohead = true;
-                    break;
                     
                 case 'd':
-                    String tmp = cmdlineOptions[i].getValue();
-                    if (tmp != null) {
-                        if ("false".equals(tmp.toLowerCase())) {
+                    if (cmdlineOptions[i].getValue() != null) {
+                        if (Boolean.FALSE.toString().
+                                equals(cmdlineOptions[i].getValue().
+                                    toLowerCase())) {
                             digest = false;
                         }
+                    }
+                    break;
+                    
+                case 's':
+                    if (cmdlineOptions[i].getValue() != null) {
+                        if (Boolean.FALSE.toString().
+                                equals(cmdlineOptions[i].getValue().
+                                        toLowerCase())) {
+                            space = false;
+                        }
+                    }
+                    break;
+                    
+                case 'f':
+                    format = cmdlineOptions[i].getValue().toLowerCase();
+                    boolean match = false;
+                    for (int ii = 0; ii < SUPPORTED_OUTPUT_FORMATS.length; ii++) {
+                        if (SUPPORTED_OUTPUT_FORMATS[ii].equals(format)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    if (!match) {
+                        usage(formatter, options, 1);
                     }
                     break;
 
@@ -796,7 +1016,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                         + cmdlineOptions[i].getId());
             }
         }
-
+        
         if (offset >= 0) {
             if (cmdlineArgs.size() != 1) {
                 System.out.println("Error: Pass one arcfile only.");
@@ -804,14 +1024,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             }
             ARCReader arc = ARCReaderFactory.
                 get(new File((String)cmdlineArgs.get(0)));
+            arc.setFixSpaceInMetadataLine(space);
             ARCRecord rec = arc.get(offset);
-            if (nohead) {
-                rec.skipHttpHeader();
-            }
-            for (int c = -1; (c = rec.read()) != -1;) {
-                System.out.write(c & 0xff);
-            }
-            System.out.flush();
+            outputARCRecord(rec, format);
         } else if (cmdlineOptions.length > 1) {
             System.out.println("Error: Unexpected # of options.");
             usage(formatter, options, 1);
@@ -819,7 +1034,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 File f = new File((String)i.next());
                 try {
-                    index(f, digest);
+                    output(f, digest, space, format);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
                     // debugging.  Then print stack trace and try to keep

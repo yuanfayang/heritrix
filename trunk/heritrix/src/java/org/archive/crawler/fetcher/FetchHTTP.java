@@ -307,9 +307,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         try {
             this.http.executeMethod(method);
         } catch (IOException e) {
-        	   failedExecuteCleanup(method, curi, e);
+        	failedExecuteCleanup(method, curi, e);
             method.releaseConnection();
-        	   return;
+        	return;
         } catch (ArrayIndexOutOfBoundsException e) {
             // For weird windows-only ArrayIndex exceptions in native
             // code... see

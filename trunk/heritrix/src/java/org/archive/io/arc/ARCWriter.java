@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -161,7 +162,35 @@ public class ARCWriter implements ARCConstants {
      * Suffix given to files currently being written by Heritrix.
      */
     public static final String OCCUPIED_SUFFIX = ".open";
+    
+    public static final String UTF8 = "UTF-8";
 
+    
+    /**
+     * Constructor.
+     * Takes a stream.
+     * @param out Where to write.
+     * @param arc What to use as arc file.
+     * @param cmprs Compress the ARC files written.  The compression is done
+     * by individually gzipping each record added to the ARC file: i.e. the
+     * ARC file is a bunch of gzipped records concatenated together.
+     * @param metadata Arc file meta data.  Can be null.  Is list of File and/or
+     * String objects.
+     * @param a14DigitDate If null, we'll write current time.
+     * @throws IOException
+     */
+    public ARCWriter(final PrintStream out, final File arc,
+            final boolean cmprs, final List metadata,
+            String a14DigitDate)
+    throws IOException {
+        this.settings = new ARCWriterSettingsImpl(cmprs, metadata);
+        this.out = out;
+        this.arcFile = arc;
+        a14DigitDate = (a14DigitDate == null)?
+            ArchiveUtils.get14DigitDate():a14DigitDate;
+        this.out.write(generateARCFileMetaData(a14DigitDate));
+    }
+    
     /**
      * Constructor.
      *
@@ -195,39 +224,8 @@ public class ARCWriter implements ARCConstants {
     public ARCWriter(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List meta) {
-        this.settings = new ARCWriterSettings() {
-            private final List arcDirs = dirs;
-            private final int arcMaxSize = maxSize;
-            private final String arcPrefix = prefix;
-            private final boolean compress = cmprs;
-            private final String arcSuffix = suffix;
-            private final List metadata = meta;
-            
-            public int getArcMaxSize() {
-                return this.arcMaxSize;
-            }
-            
-            public String getArcPrefix() {
-                return (this.arcPrefix == null)?
-                    DEFAULT_ARC_FILE_PREFIX: this.arcPrefix;
-            }
-            
-            public String getArcSuffix() {
-                return (this.arcSuffix == null)? "": this.arcSuffix;
-            }
-            
-            public List getOutputDirs() {
-                return this.arcDirs;
-            }
-            
-            public boolean isCompressed() {
-                return this.compress;
-            }
-            
-            public List getMetadata() {
-                return this.metadata;
-            }
-        };
+        this.settings =  new ARCWriterSettingsImpl(dirs, maxSize, prefix,
+            cmprs, suffix, meta);
     }
     
     /**
@@ -277,7 +275,8 @@ public class ARCWriter implements ARCConstants {
      */
     private void checkARCFileSize() throws IOException {
         if (this.out == null ||
-               (this.arcFile.length() > this.settings.getArcMaxSize())) {
+                (this.settings.getArcMaxSize() != -1 &&
+                   (this.arcFile.length() > this.settings.getArcMaxSize()))) {
             createARCFile();
         }
     }
@@ -425,13 +424,9 @@ public class ARCWriter implements ARCConstants {
         int metadataBodyLength = getMetadataLength();
         // If metadata body, then the minor part of the version is '1' rather
         // than '0'.
-        String minorVersionPart = (metadataBodyLength > 0)? "1": "0";
         String metadataHeaderLinesTwoAndThree =
-            LINE_SEPARATOR +
-            "1 " + minorVersionPart + " InternetArchive" +
-            LINE_SEPARATOR +
-            "URL IP-address Archive-date Content-type Archive-length" +
-            LINE_SEPARATOR;
+            getMetadataHeaderLinesTwoAndThree("1 " +
+                ((metadataBodyLength > 0)? "1": "0"));
         int recordLength = metadataBodyLength +
             metadataHeaderLinesTwoAndThree.getBytes(DEFAULT_ENCODING).length;
         String metadataHeaderStr = ARC_MAGIC_NUMBER + getArcName() +
@@ -450,8 +445,8 @@ public class ARCWriter implements ARCConstants {
             getBytes(DEFAULT_ENCODING));
         // Now get bytes of all just written and compress if flag set.
         byte [] bytes = metabaos.toByteArray();
-        if(this.settings.isCompressed())
-        {
+        
+        if(this.settings.isCompressed()) {
             // GZIP the header but catch the gzipping into a byte array so we
             // can add the special IA GZIP header to the product.  After
             // manipulations, write to the output stream (The JAVA GZIP
@@ -464,8 +459,7 @@ public class ARCWriter implements ARCConstants {
             gzipOS.write(bytes, 0, bytes.length);
             gzipOS.close();
             byte [] gzippedMetaData = baos.toByteArray();
-            if (gzippedMetaData[3] != 0)
-            {
+            if (gzippedMetaData[3] != 0) {
                 throw new IOException("The GZIP FLG header is unexpectedly " +
                     " non-zero.  Need to add smarter code that can deal " +
                     " when already extant extra GZIP header fields.");
@@ -489,6 +483,17 @@ public class ARCWriter implements ARCConstants {
             bytes = assemblyBuffer;
         }
         return bytes;
+    }
+    
+    public String getMetadataHeaderLinesTwoAndThree(String version) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(LINE_SEPARATOR);
+        buffer.append(version);
+        buffer.append(" InternetArchive");
+        buffer.append(LINE_SEPARATOR);
+        buffer.append("URL IP-address Archive-date Content-type Archive-length");
+        buffer.append(LINE_SEPARATOR);
+        return buffer.toString();
     }
 
     /**
@@ -590,12 +595,64 @@ public class ARCWriter implements ARCConstants {
             long fetchBeginTimeStamp, int recordLength,
             ByteArrayOutputStream baos)
     throws IOException {
-        String metaline = getMetaLine(uri, contentType, hostIP,
-            fetchBeginTimeStamp, recordLength);
         preWriteRecordTasks();
         try {
-            this.out.write(metaline.getBytes("UTF-8"));
+            this.out.write(getMetaLine(uri, contentType, hostIP,
+                fetchBeginTimeStamp, recordLength).getBytes(UTF8));
             baos.writeTo(this.out);
+            this.out.write(LINE_SEPARATOR);
+        } finally {
+            postWriteRecordTasks();
+        }
+    }
+    
+    /**
+     * Write a record to ARC file.
+     *
+     * @param uri URI of page we're writing metaline for.  Candidate URI would
+     *        be output of curi.getURIString().
+     * @param contentType Content type of content meta line describes.
+     * @param hostIP IP of host we got content from.
+     * @param fetchBeginTimeStamp Time at which fetch began.
+     * @param recordLength Length of the content fetched.
+     * @param in Where to read record content from.
+     * @throws IOException
+     *
+     * @throws IOException
+     */
+    public void write(String uri, String contentType, String hostIP,
+            long fetchBeginTimeStamp, int recordLength, InputStream in)
+    throws IOException {
+        write(uri, contentType, hostIP, fetchBeginTimeStamp,
+            recordLength, in, new byte[4 * 1024]);
+    }
+    
+    /**
+     * Write a record to ARC file.
+     *
+     * @param uri URI of page we're writing metaline for.  Candidate URI would
+     *        be output of curi.getURIString().
+     * @param contentType Content type of content meta line describes.
+     * @param hostIP IP of host we got content from.
+     * @param fetchBeginTimeStamp Time at which fetch began.
+     * @param recordLength Length of the content fetched.
+     * @param in Where to read record content from.
+     * @param buffer Buffer to use.
+     *
+     * @throws IOException
+     */
+    public void write(String uri, String contentType, String hostIP,
+            long fetchBeginTimeStamp, int recordLength,
+            InputStream in, byte [] buffer)
+    throws IOException {
+        preWriteRecordTasks();
+        try {
+            this.out.write(getMetaLine(uri, contentType, hostIP,
+                fetchBeginTimeStamp, recordLength).getBytes(UTF8));
+            int read = buffer.length;
+            while((read = in.read(buffer)) != -1) {
+                this.out.write(buffer, 0, read);
+            }
             this.out.write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
@@ -620,11 +677,10 @@ public class ARCWriter implements ARCConstants {
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength, ReplayInputStream ris)
     throws IOException {
-        String metaline = getMetaLine(uri, contentType, hostIP,
-                fetchBeginTimeStamp, recordLength);
         preWriteRecordTasks();
         try {
-            this.out.write(metaline.getBytes("UTF-8"));
+            this.out.write(getMetaLine(uri, contentType, hostIP,
+                fetchBeginTimeStamp, recordLength).getBytes(UTF8));
             try {
                 ris.readFullyTo(this.out);
                 long remaining = ris.remaining();
@@ -712,21 +768,27 @@ public class ARCWriter implements ARCConstants {
             throw new IOException("URI is empty: " + uri);
         }
 
-        String metaLineStr = uri + HEADER_FIELD_SEPARATOR + hostIP +
-            HEADER_FIELD_SEPARATOR +
-            ArchiveUtils.get14DigitDate(fetchBeginTimeStamp) +
-            HEADER_FIELD_SEPARATOR + MimetypeUtils.truncate(contentType) +
+        return validateMetaLine(makeMetaline(uri, hostIP, 
+            ArchiveUtils.get14DigitDate(fetchBeginTimeStamp),
+            MimetypeUtils.truncate(contentType),
+            Integer.toString(recordLength)));
+    }
+    
+    public String makeMetaline(String uri, String hostIP,
+            String timeStamp, String mimetype, String recordLength) {
+        return uri + HEADER_FIELD_SEPARATOR + hostIP +
+            HEADER_FIELD_SEPARATOR + timeStamp +
+            HEADER_FIELD_SEPARATOR + mimetype +
             HEADER_FIELD_SEPARATOR + recordLength + LINE_SEPARATOR;
-        validateMetaLine(metaLineStr);
-        return metaLineStr;
     }
     
     /**
      * Test that the metadata line is valid before writing.
      * @param metaLineStr
      * @throws IOException
+     * @return The passed in metaline.
      */
-    protected void validateMetaLine(String metaLineStr)
+    protected String validateMetaLine(String metaLineStr)
     throws IOException {
         if (metaLineStr.length() > MAX_METADATA_LINE_LENGTH) {
         	throw new IOException("Metadata line length is " +
@@ -738,6 +800,7 @@ public class ARCWriter implements ARCConstants {
         	throw new IOException("Metadata line doesn't match expected" +
                 " pattern: " + metaLineStr);
         }
+        return metaLineStr;
     }
 
     /**
@@ -757,7 +820,61 @@ public class ARCWriter implements ARCConstants {
     public File getArcFile() {
         return this.arcFile;
     }
-
+    
+    /**
+     * Class to hold ARCWriter settings.
+     * @author stack
+     * @version $Date$, $Revision$
+     */
+    protected class ARCWriterSettingsImpl
+    implements ARCWriterSettings {
+        private final List arcDirs;
+        private final int arcMaxSize;
+        private final String arcPrefix;
+        private final boolean compress;
+        private final String arcSuffix;
+        private final List metadata;
+        
+        protected ARCWriterSettingsImpl(boolean compress, List metadata) {
+            this(null, -1, null, compress, null, metadata);
+        }
+        
+        protected ARCWriterSettingsImpl(List dirs, int maxSize, String prefix, 
+                boolean compress, String suffix, List metadata) {
+            this.arcDirs = dirs;
+            this.arcMaxSize = maxSize;
+            this.arcPrefix = prefix;
+            this.compress = compress;
+            this.arcSuffix = suffix;
+            this.metadata = metadata;
+        }
+        
+        public int getArcMaxSize() {
+            return this.arcMaxSize;
+        }
+        
+        public String getArcPrefix() {
+            return (this.arcPrefix == null)?
+                DEFAULT_ARC_FILE_PREFIX: this.arcPrefix;
+        }
+        
+        public String getArcSuffix() {
+            return (this.arcSuffix == null)? "": this.arcSuffix;
+        }
+        
+        public List getOutputDirs() {
+            return this.arcDirs;
+        }
+        
+        public boolean isCompressed() {
+            return this.compress;
+        }
+        
+        public List getMetadata() {
+            return this.metadata;
+        }
+    }
+    
     /**
      * An override so we get access to underlying output stream.
      *
@@ -767,7 +884,7 @@ public class ARCWriter implements ARCConstants {
         public ARCWriterGZIPOutputStream(OutputStream out) throws IOException {
             super(out);
         }
-
+        
         /**
          * @return Reference to stream being compressed.
          */
