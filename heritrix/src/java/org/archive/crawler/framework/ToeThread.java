@@ -26,6 +26,8 @@ package org.archive.crawler.framework;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
+import org.archive.crawler.Heritrix;
+import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -124,12 +126,20 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
                 currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
                 // store exception temporarily for logging
                 currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+                String title = "RuntimeException occured processing '" + currentCuri.getURIString() + "'";
+                String message = "The following RuntimeException occure when trying " +
+                		"to process '" + currentCuri.getURIString() + "'\n";
+                Heritrix.addAlert(new Alert(title,message.toString(),e));
             } catch (Error err) {
                 // OutOfMemory & StackOverflow & etc.
                 System.err.println(err);
                 System.err.println(DevUtils.extraInfo());
                 err.printStackTrace(System.err);
                 currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+                String title = "Serious error occured processing '" + currentCuri.getURIString() + "'";
+                String message = "The following serious error occure when trying " +
+                		"to process '" + currentCuri.getURIString() + "'\n";
+                Heritrix.addAlert(new Alert(title,message.toString(),err));
             }
 
             controller.getFrontier().finished(currentCuri);

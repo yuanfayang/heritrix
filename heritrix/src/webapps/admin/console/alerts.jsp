@@ -65,13 +65,13 @@
 				Alert alert = (Alert)alerts.get(i);
 		%>
 				<tr <%=alt?"bgcolor='#EEEEFF'":""%> <%=alert.isNew()?"style='font-weight: bold'":""%>>
-					<td>
+					<td nowrap>
 						&nbsp;<input name="alerts" value="<%=alert.getID()%>" type="checkbox">&nbsp;
 					</td>
-					<td>
+					<td nowrap>
 						<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=sdf.format(alert.getTimeOfAlert())%> GMT</a>&nbsp;&nbsp;
 					</td>
-					<td>
+					<td nowrap>
 						<a style="color: #000000; text-decoration: none" href="/admin/console/readalert.jsp?alert=<%=alert.getID()%>"><%=alert.getTitle()%></a>
 					</td>
 				</tr>
