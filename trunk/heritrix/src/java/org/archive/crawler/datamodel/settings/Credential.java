@@ -40,11 +40,6 @@ package org.archive.crawler.datamodel.settings;
 public abstract class Credential extends ModuleType {
     
     /**
-     * The root URI that this credential is to go against.
-     */
-    private String credentialDomain = null;
-    
-    /**
      * Constructor.
      * 
      * @param name Name of this credential.
@@ -53,21 +48,9 @@ public abstract class Credential extends ModuleType {
     public Credential(String name, String description)
     {
         super(name, description);
-    }
-    
-    /**
-     * @return Returns the credentialDomain.
-     */
-    public String getCredentialDomain()
-    {
-        return this.credentialDomain;
-    }
-    
-    /**
-     * @param credentialDomain The credentialDomain to set.
-     */
-    public void setCredentialDomain(String credentialDomain)
-    {
-        this.credentialDomain = credentialDomain;
+        Type t = addElementToDefinition(new SimpleType("credential-domain",
+                "The root URI this credential goes against.", ""));
+            t.setOverrideable(false);
+            t.setExpertSetting(true);
     }
 }
