@@ -30,14 +30,15 @@ import org.archive.crawler.framework.Filter;
  * 
  * The focusFilter may be specified by either:
  *   - adding a 'mode' attribute to the 
- *     <scope> element, in which case a SeedExtensionFilter
- *     will be used, with the <scope> element
- *     providing its configuration 
+ *     <scope> element. mode="broad" is equivalent
+ *     to no focus; modes "path", "host", and "domain"
+ *     imply a SeedExtensionFilter will be used, with 
+ *     the <scope> element providing its configuration 
  *   - adding a <focus> subelement
  * If unspecified, the focusFilter will default to
  * an accepts-all filter.
  * 
- * The transitiveFilter may be specified by supploying
+ * The transitiveFilter may be specified by supplying
  * a <transitive> subelement. If unspecified, a 
  * TransclusionFilter will be used, with the <scope>
  * element providing its configuration.

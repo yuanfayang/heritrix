@@ -45,9 +45,7 @@ public class Heritrix {
 				case 1 :
 					crawlOrderFile = args[0];
 				case 0 :
-					order = CrawlOrder.readFromFile(crawlOrderFile);
-					controller.setOrder(order);
-					startServer(controller);
+					startServer();
 					break;
 				case 2 :
 					if (args[0].equals("-no-wui")) {
@@ -61,10 +59,6 @@ public class Heritrix {
 					usage();
 					return;
 			}
-//		} catch (IOException e) {
-//			System.out.println("Unable to read order file: " + e);
-//			return;
-
 		// catch all configuration exceptions, which at this level are fatal
 		}catch(InitializationException e){
 			System.out.println("Fatal configuration exception: " + e.toString());
@@ -79,10 +73,20 @@ public class Heritrix {
 		System.out.println(
 				"\t-no-wui start crawler without Web User Interface");
 	}
-	private void startServer(CrawlController c) {
-		SimpleHttpServer server = new SimpleHttpServer();
-		server.setControler(c);
+
+	private void startServer() {
 		try {
+			SimpleHttpServer server = new SimpleHttpServer();
+			server.startServer();
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+		}
+
+	}
+
+	private void startServer(CrawlController c) {
+		try {
+			SimpleHttpServer server = new SimpleHttpServer();
 			server.startServer();
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
