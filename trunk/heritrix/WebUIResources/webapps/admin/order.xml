@@ -52,7 +52,7 @@
   </processors>
  
   <loggers>
-   <crawl-statistics interval="10"/>
+   <crawl-statistics interval-seconds="10"/>
   </loggers>
  
  </behavior>

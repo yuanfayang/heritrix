@@ -53,7 +53,7 @@ public interface AdminConstants {
 	public static final String XP_ROBOTS_HONORING_POLICY_USER_AGENTS = "//behavior/robots-honoring-policy/user-agents/agent";
 	// From CrawlController
 	public static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
-	public static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval";
+	public static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval-seconds";
 	public static final String XP_DISK_PATH = "//behavior/@disk-path";
 	public static final String XP_PROCESSORS = "//behavior/processors/processor";
 	public static final String XP_FRONTIER = "//behavior/frontier";
