@@ -633,6 +633,8 @@ public class CrawlController {
      *
      */
     public void requestCrawlStart() {
+        runProcessorInitialTasks();
+        
         // assume Frontier state already loaded
         shouldCrawl = true;
         shouldPause = false;
@@ -1015,6 +1017,20 @@ public class CrawlController {
         return settingsHandler;
     }
     
+    /**
+     * This method iterates through processor chains to run processors' initial 
+     * tasks.
+     *
+     */
+    private void runProcessorInitialTasks(){
+        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
+            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
+                    ip.hasNext(); ) {
+                ((Processor) ip.next()).initialTasks();
+            }
+        }
+    }
+
     /**
      * This method iterates through processor chains to run processors' final 
      * tasks.
