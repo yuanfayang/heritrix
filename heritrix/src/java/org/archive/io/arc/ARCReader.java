@@ -36,6 +36,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.archive.io.Position;
 
 /**
@@ -557,16 +563,88 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
     
     /**
+     * 
+     * @param formatter Help formatter instance.
+     * @param options Usage options.
+     */
+    private static void usage(HelpFormatter formatter, Options options,
+            int exitCode) {
+        formatter.printHelp(
+            "java org.archive.io.arc.ARCReader [--offset=OFFSET] ARCFILE",
+            options);
+        System.exit(exitCode);
+    }
+    
+    /**
+     * Command-line interface to ARCReader.
+     * 
+     * Here is the command-line interface:
+     * <pre>usage: java org.archive.io.arc.ARCReader [--offset=OFFSET] ARCFILE
+     *  -h,--help      Prints this message and exits.
+     *  -o,--offset    Outputs record at this offset into arc file.
+     * </pre>
+     * 
+     * <p>See in <code>$HERITRIX_HOME/bin/arcreader</code> for a script that'll
+     * take care of classpaths and the calling of ARCReader.
+     * 
      * @param args Command-line arguments.
      * @throws IOException
      */
-    public static void main(String [] args) throws IOException {
-        if (args.length <= 0 || args[0].equals("-h") 
-                || args[0].equals("--help")) {
-            System.out.println("Usage: java ARCReader ARC1, ARC2, ...");
+    public static void main(String [] args)
+        throws IOException, ParseException {
+        
+        Options options = new Options();
+        options.addOption(new Option("h","help", false,
+            "Prints this message and exits."));
+        options.addOption(new Option("o","offset", true,
+            "Outputs record at this offset into arc file."));
+        PosixParser parser = new PosixParser();
+        CommandLine cmdline = parser.parse(options, args, false);
+        List cmdlineArgs = cmdline.getArgList();
+        Option [] cmdlineOptions = cmdline.getOptions();
+        HelpFormatter formatter = new HelpFormatter();
+        
+        // If no args, print help.
+        if (cmdlineArgs.size() <= 0) {
+            usage(formatter, options, 0);
+        }
+        
+        // Now look at options passed.
+        long offset = -1;
+        for (int i = 0; i < cmdlineOptions.length; i++) {
+            switch(cmdlineOptions[i].getId()) {
+                case 'h':
+                    usage(formatter, options, 0);
+                    break;
+                    
+                case 'o':
+                	    offset =
+                        Long.parseLong(cmdlineOptions[i].getValue());
+                	    break;
+                        
+                default:
+                    throw new RuntimeException("Unexpected option: " +
+                        + cmdlineOptions[i].getId());
+            }
+        }
+        
+        if (offset >= 0) {
+        	    if (cmdlineArgs.size() != 1) {
+        	    	    System.out.println("Error: Pass one arcfile only if" +
+                    " getting a record.");
+                usage(formatter, options, 1);
+            }
+            ARCReader arc = ARCReaderFactory.
+                get(new File((String)cmdlineArgs.get(0)));
+            ARCRecord rec = arc.get(offset);
+            int c = -1;
+            while ((c = rec.read()) != -1) {
+            	    System.out.print((char)c);
+            }
         } else {
-            for (int i = 0; i < args.length; i++) {
-                ARCReader arc = ARCReaderFactory.get(new File(args[i]));
+            for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
+                ARCReader arc =
+                    ARCReaderFactory.get(new File((String)i.next()));
                 for (Iterator ii = arc.iterator(); ii.hasNext();) {
                     ARCRecord r = (ARCRecord)ii.next();
                     ARCRecordMetaData meta = r.getMetaData();
@@ -575,6 +653,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                         meta.getIp() + " " +
                         meta.getMimetype() + " " +
                         meta.getUrl());
+                    r.close();
                 }
             }
         }
