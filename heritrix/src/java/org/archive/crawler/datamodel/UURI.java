@@ -28,7 +28,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
 
-//import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -66,7 +65,6 @@ public class UURI implements Serializable {
         try {
             uriString = u.toASCIIString();
         } catch (NullPointerException npe) {
-            // DevUtils.warnHandle(npe,"URI problem with "+u);
             throw new URISyntaxException(u.toString(),"URI.encode NPE");
         }
         if (uriString.length()>DEFAULT_MAX_URI_LENGTH) {
@@ -99,6 +97,14 @@ public class UURI implements Serializable {
 
     static final String DOTDOT = "^(/\\.\\.)+";
 
+    static final String SLASH = "/";
+    static final String HTTP = "http";
+    static final String HTTP_PORT = ":80";
+    static final String HTTPS = "https";
+    static final String HTTPS_PORT = ":443";
+    static final String DOT = ".";
+    static final String EMPTY_STRING = "";
+     
     /**
      * Normalize and derelativize
      *
@@ -118,61 +124,66 @@ public class UURI implements Serializable {
         URI u = new URI(es);
         if (!u.isAbsolute()) {
             if (parent==null) {
-                throw new URISyntaxException(s,"No parent supplied for relative URI.");
+                throw new URISyntaxException(
+                    s, "No parent supplied for relative URI.");
             }
             u = parent.resolve(es);
         }
         
 
         String scheme = u.getScheme().toLowerCase();
-        if (u.getRawSchemeSpecificPart().startsWith("/")) {
+        if (u.getRawSchemeSpecificPart().startsWith(SLASH)) {
             // hierarchical URI
-            u = u.normalize(); // factor out path cruft, according to official spec
+            // factor out path cruft, according to official spec
+            u = u.normalize(); 
             // now, go further and eliminate extra '..' segments
-            //String fixedPath = u.getRawPath().replaceFirst("^(/\\.\\.)+","");
-            String fixedPath = TextUtils.replaceFirst(DOTDOT, u.getPath(), "");
-            if ("".equals(fixedPath)) {
-//                ensure root URLs end with '/'
-                fixedPath = "/";
+            String fixedPath = 
+                TextUtils.replaceFirst(DOTDOT, u.getPath(), EMPTY_STRING);
+                
+            if (EMPTY_STRING.equals(fixedPath)) {
+                // ensure root URLs end with '/'
+                fixedPath = SLASH;
             }
+            
             String canonizedAuthority = u.getAuthority();
             if(canonizedAuthority==null) {
                 //logger.warning("bad URI: "+s+" relative to "+parent);
                 //return null;
-                throw new URISyntaxException(s,"uninterpretable relative to "+parent);
+                throw new URISyntaxException(
+                    s, "uninterpretable relative to " + parent);
             }
 
-            // TODO fix the fact that this might clobber case-sensitive
+            // TODO: fix the fact that this might clobber case-sensitive
             // user-info
-            if (scheme.equals("http")) {
+            if (scheme.equals(HTTP)) {
                 // case-flatten host, remove default port
                 canonizedAuthority = canonizedAuthority.toLowerCase();
                 // strip default port
-                if (canonizedAuthority.endsWith(":80")) {
+                if (canonizedAuthority.endsWith(HTTP_PORT)) {
                     canonizedAuthority =
                         canonizedAuthority.substring(
                             0,
                             canonizedAuthority.length() - 3);
                 }
                 // chop trailing '.'
-                if (canonizedAuthority.endsWith(".")) {
+                if (canonizedAuthority.endsWith(DOT)) {
                     canonizedAuthority =
                         canonizedAuthority.substring(
                             0,
                             canonizedAuthority.length() - 1);
                 }
                 // chop leading '.'
-                if (canonizedAuthority.startsWith(".")) {
+                if (canonizedAuthority.startsWith(DOT)) {
                     canonizedAuthority =
                         canonizedAuthority.substring(
                             1,
                             canonizedAuthority.length());
                 }
 
-            } else if (scheme.equals("https")) {
+            } else if (scheme.equals(HTTPS)) {
                 // case-flatten host, remove default port
                 canonizedAuthority = canonizedAuthority.toLowerCase();
-                if (canonizedAuthority.endsWith(":443")) {
+                if (canonizedAuthority.endsWith(HTTPS_PORT)) {
                     canonizedAuthority =
                         canonizedAuthority.substring(
                             0,
@@ -194,20 +205,36 @@ public class UURI implements Serializable {
         return u;
     }
 
+    static final String HTML_AMP_ENTITY = "&amp;";
+    static final String AMP = "&";   
     static final String NBSP = "\\xA0";
     static final String SPACE = " ";
+    static final String ESCAPED_SPACE = "%20";
     static final String PIPE = "\\|";
+    static final String ESCAPED_PIPE = "%7C";
     static final String CIRCUMFLEX = "\\^";
+    static final String ESCAPED_CIRCUMFLEX = "%5E";
     static final String QUOT = "\"";
+    static final String ESCAPED_QUOT = "%22";
     static final String SQUOT = "'";
+    static final String ESCAPED_SQUOT = "%27";
     static final String APOSTROPH = "`";
+    static final String ESCAPED_APOSTROPH = "%60";
     static final String LSQRBRACKET = "\\[";
+    static final String ESCAPED_LSQRBRACKET = "%5B";
     static final String RSQRBRACKET = "\\]";
+    static final String ESCAPED_RSQRBRACKET = "%5D";
     static final String LCURBRACKET = "\\{";
+    static final String ESCAPED_LCURBRACKET = "%7B";
     static final String RCURBRACKET = "\\}";
+    static final String ESCAPED_RCURBRACKET = "%7D";
     static final String BACKSLASH = "\\\\";
-    static final String IMPROPERESC = "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
+    static final String ESCAPED_BACKSLASH = "%5C";
     static final String NEWLINE = "\n+|\r+";
+    static final String IMPROPERESC_REPLACE = "%25$1";
+    static final String IMPROPERESC = 
+        "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
+        
 
     /** apply URI escaping where necessary
      *
@@ -221,68 +248,64 @@ public class UURI implements Serializable {
 
         // replace nbsp with normal spaces (so that they get
         // stripped if at ends, or encoded if in middle)
-        //s = s.replaceAll("\\xA0"," ");
-        s = TextUtils.replaceAll(NBSP, s, " ");
+        s = TextUtils.replaceAll(NBSP, s, SPACE);
         // strip ends whitespaces
         s = s.trim();
         // patch spaces
-        if (s.indexOf(" ") >= 0) {
-            //s = s.replaceAll(" ", "%20");
-            s = TextUtils.replaceAll(SPACE, s, "%20");
+        if (s.indexOf(SPACE) >= 0) {
+            s = TextUtils.replaceAll(SPACE, s, ESCAPED_SPACE);
+        }        
+        
+        // Replace HTML ampersand entity.
+        // TODO: decode more entities.
+        if (s.indexOf(HTML_AMP_ENTITY) >= 0){
+            s = TextUtils.replaceAll(HTML_AMP_ENTITY, s, AMP);
         }
         // escape  | ^ " ' ` [ ] { } \
         // (IE actually sends these unescaped, but they can't
         // be put into a java.net.URI instance)
-        if (s.indexOf("|") >= 0) {
-            //s = s.replaceAll("\\|","%7C");
-            s = TextUtils.replaceAll(PIPE, s, "%7C");
+        if (s.indexOf(PIPE) >= 0) {
+            s = TextUtils.replaceAll(PIPE, s, ESCAPED_PIPE);
         }
-        if (s.indexOf("^") >= 0) {
-            //s = s.replaceAll("\\^","%5E");
-            s = TextUtils.replaceAll(CIRCUMFLEX, s, "%5E");
+        if (s.indexOf(CIRCUMFLEX) >= 0) {
+            s = TextUtils.replaceAll(CIRCUMFLEX, s, ESCAPED_CIRCUMFLEX);
         }
-        if (s.indexOf("\"") >= 0) {
-            //s = s.replaceAll("\"","%22");
-            s = TextUtils.replaceAll(QUOT, s, "%22");
+        if (s.indexOf(QUOT) >= 0) {
+            s = TextUtils.replaceAll(QUOT, s, ESCAPED_QUOT);
         }
-        if (s.indexOf("'") >= 0) {
-            //s = s.replaceAll("'","%27");
-            s = TextUtils.replaceAll(SQUOT, s, "%27");
+        if (s.indexOf(SQUOT) >= 0) {
+            s = TextUtils.replaceAll(SQUOT, s, ESCAPED_SQUOT);
         }
-        if (s.indexOf("`") >= 0) {
-            //s = s.replaceAll("`","%60");
-            s = TextUtils.replaceAll(APOSTROPH, s, "%60");
+        if (s.indexOf(APOSTROPH) >= 0) {
+            s = TextUtils.replaceAll(APOSTROPH, s, ESCAPED_APOSTROPH);
         }
-        if (s.indexOf("[") >= 0) {
-            //s = s.replaceAll("\\[","%5B");
-            s = TextUtils.replaceAll(LSQRBRACKET, s, "%5B");
+        if (s.indexOf(LSQRBRACKET) >= 0) {
+            s = TextUtils.replaceAll(LSQRBRACKET, s, ESCAPED_LSQRBRACKET);
         }
-        if (s.indexOf("]") >= 0) {
-            //s = s.replaceAll("\\]","%5D");
-            s = TextUtils.replaceAll(RSQRBRACKET, s, "%5D");
+        if (s.indexOf(RSQRBRACKET) >= 0) {
+            s = TextUtils.replaceAll(RSQRBRACKET, s, ESCAPED_RSQRBRACKET);
         }
-        if (s.indexOf("{") >= 0) {
-            //s = s.replaceAll("\\{","%7B");
-            s = TextUtils.replaceAll(LCURBRACKET, s, "%7B");
+        if (s.indexOf(LCURBRACKET) >= 0) {
+            s = TextUtils.replaceAll(LCURBRACKET, s, ESCAPED_LCURBRACKET);
         }
-        if (s.indexOf("}") >= 0) {
-            //s = s.replaceAll("\\}","%7D");
-            s = TextUtils.replaceAll(RCURBRACKET, s, "%7D");
+        if (s.indexOf(RCURBRACKET) >= 0) {
+            s = TextUtils.replaceAll(RCURBRACKET, s, ESCAPED_RCURBRACKET);
         }
-        if (s.indexOf("\\") >= 0) {
-            //s = s.replaceAll("\\\\","%5C");
-            s = TextUtils.replaceAll(BACKSLASH, s, "%5C");
+        // IE acutally converts backslashes to slashes rather than to %5C.
+        // Since URIs that have backslases usually work only with IE, we will
+        // convert backslases to slases as well.
+        // TODO: Maybe we can first convert backslashes by specs and than by IE
+        // so that we fetch both versions. 
+        if (s.indexOf(BACKSLASH) >= 0) {
+            s = TextUtils.replaceAll(BACKSLASH, s, SLASH);
         }
         // escape improper escape codes; eg any '%' followed
         // by non-hex-digits or
-        //s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
-        s = TextUtils.replaceAll(IMPROPERESC, s, "%25$1");
+        s = TextUtils.replaceAll(IMPROPERESC, s, IMPROPERESC_REPLACE);
         // twice just to be sure (actually, to handle multiple %% in a row)
-        //s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
-        s = TextUtils.replaceAll(IMPROPERESC, s, "%25$1");
+        s = TextUtils.replaceAll(IMPROPERESC, s, IMPROPERESC_REPLACE);
         // kill newlines etc
-        //s = s.replaceAll("\n+|\r+","");
-        s = TextUtils.replaceAll(NEWLINE, s, "");
+        s = TextUtils.replaceAll(NEWLINE, s, EMPTY_STRING);
 
         return s;
     }
