@@ -53,7 +53,7 @@ public class CrawlerModule extends ComplexType {
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
      */
     public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
-        if(initialized()) {
+        if(isInitialized()) {
             throw new IllegalStateException("Not allowed to add elements to modules");
         }
         return super.addElement(settings, type);
