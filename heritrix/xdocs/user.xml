@@ -23,7 +23,7 @@
         </p>
     </section>
 
-    <section name="For those who have little patience...">
+    <section name="Launching Heritrix">
         <p>To run Heritrix, first do the following:
         <source>% export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</source></p>
 <p>...where <em>$HERITRIX_HOME</em> is the location of your built Heritrix
@@ -40,89 +40,252 @@ or under the untarred
 </source></p>
 
 <p>This should give you usage output like the following:
-<source>Usage: java org.archive.crawler.Heritrix --help|-h
-Usage: java org.archive.crawler.Heritrix --no-wui ORDER.XML
-Usage: java org.archive.crawler.Heritrix [--port=PORT] \
-            [ORDER.XML [--start|--wait|--set]]
+<source>Usage: heritrix --help
+Usage: heritrix --nowui ORDER_FILE
+Usage: heritrix [--port=PORT] [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]
+Usage: heritrix [--port=PORT] --selftest
+Version: 0.4.0
 Options:
-    --help|-h   Prints this message.
-    --no-wui    Start crawler without a web User Interface.
-    --port      PORT is port the web UI runs on. Default: 8080.
-    ORDER.XML   The crawl to launch. Optional if '--no-wui' NOT specified.
-    --start     Start crawling using specified ORDER.XML:
-    --wait      Load job specified by ORDER.XML but do not start. Default.
-    --set       Set specified ORDER.XML as the default.</source>
+ -a,--admin     Login and password for web user interface administration.
+                Default: admin/letmenin.
+ -h,--help      Prints this message and exits.
+ -n,--nowui     Put heritrix into run mode and begin crawl using ORDER_FILE. Do
+                not put up web user interface.
+ -p,--port      Port to run web user interface on.  Default: 8080.
+ -r,--run       Put heritrix into run mode. If ORDER_FILE begin crawl.
+ -s,--selftest  Run integrated self test.
+Arguments:
+ ORDER_FILE     Crawl order to run.</source>
 </p>
 
-<p>The usage output talks of the an <em>ORDER.XML</em> file.  The 
-ORDER.XML is the "master config file".  It
-specifies which modules will be used to  process URIs, in which order URIs will
-be processed, how and where files will ge written to disk, how "polite" the
-crawler should be, crawl limits, etc.  The configuration system is currently
-undergoing revision and the format of ORDER.XML will probably be changed.  The
-best thing to do meantime is to copy an existing <em>order.xml</em>  file.
-See under <em>docs/example-settings/broad-crawl</em> for an up-to-date sample
-configuration that does a broad crawl (If there is no 
-<em>docs/example-settings</em> in your built
-distribution, see <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/xdocs/example-settings/broad-crawl/">crawler.archive.org</a>).
+<p>Launch the crawler w/ the UI enabled by doing the following:
+<source>% $HERITRIX_HOME/bin/heritrix.sh</source></p>
+<p>This will start up heritrix printing out a startup message that looks like
+the following:
+<source>[b116-dyn-60 619] heritrix-0.4.0 > ./bin/heritrix.sh
+Tue Feb 10 17:03:01 PST 2004 Starting heritrix...
+Tue Feb 10 17:03:05 PST 2004 Heritrix 0.4.0 is running.
+Web UI is at: http://b116-dyn-60.archive.org:8080/admin
+Login and password: admin/letmein</source></p>
+<p>Browse to the location you see printed out on the command line and login 
+using the supplied login/password.  See 'Launching crawl jobs via the web UI',
+the next section, for how to create a job to run.
 </p>
-<p>Before you begin crawling you *MUST* at least change the default 
-"User-Agent" and "From" header fields in the order.xml (or via the
-administrative interface).  You should set these to something meaningful 
-that allows administrators of sites you'll be crawling to contact you.
-The software requires that User-Agent value be of the form...</p>
+</section>
 
-<source>
-	  [name] (+[http-url])[optional-etc]
-</source>
-
-<p>...where [name] is the crawler identifier and [http-url] is an URL 
-giving more information about your crawling efforts. If desired,
-additional info may be placed after the close-parenthesis.</p>
-
-<p>Also, the From value must be an email address.</p>
-   
-<p>(Please do not leave the Archive Open Crawler project's contact 
-information in these fields, we do not have the time or the resources to 
-field complaints about crawlers which we do not administer.)</p>
-
-<p>Once you have an order.xml file edited to your liking you can run the crawler
-by doing the following:
-<source>
-    $ cd docs/example-settings/broad-crawl
-    $ $HERITRIX_HOME/bin/heritrix.sh --no-wui order.xml
-</source></p>
-
-<p>You should see output showing the crawler running.  Tail the logs, specified
-in your order.xml, to monitor crawler progress.
+<section name="Launching crawl jobs via the web UI">
+<p>If the program is launched with a web UI users can access the administrative
+interface with any regular browser. The admin section is password protected.
 </p>
-<p>You can also control and configure the crawler via the UI.  To start the
-crawler w/ the UI enabled run the following:
-<source>
-    $ $HERITRIX_HOME/bin/heritrix.sh
-</source>
+<p>Once logged in, the 'Console' (more on that later) is displayed. Near the
+top of the page are several tabs. To create a new job, select the 'Jobs'
+tab.
 </p>
-<p>You should see output like the following:
-<source>
-    14:11:10.415 EVENT  Starting Jetty/4.2.15rc0
-    14:11:10.603 EVENT  Checking Resource aliases
-    14:11:10.832 EVENT  Started WebApplicationContext[/admin,Admin]
-    14:11:11.094 EVENT  Started SocketListener on 0.0.0.0:8080
-    14:11:11.095 EVENT  Started org.mortbay.jetty.Server@1f6f0bf
-    Heritrix is running
-            Web UI on port 8080
-</source></p>
-<p>Browse to the Web UI to start a crawl and to load and configure crawl jobs.
-</p>
-    </section>
-
-  <section name="Settings Files">
-  <p>The configuration system is currently undergoing extensive revision.
-Meantime, refer to the example settings files in the folder that sits under
-this doc. at example-settings.  The settings underbroad-crawl are the most 
-recent and more likely to work.
+<p>
+    The 'Jobs' page offers several ways of creating a new job.</p>
+<p>
+    <ul>
+        <li>Create new crawl job (This will be based on the default profile)</li>
+        <li>Create new crawl job based on a profile</li>
+        <li>Create new crawl job based on an existing job</li>
+    </ul>
 </p>
 
+<p>It is not possible to create jobs from scratch but you will be allowed to
+edit any configurable part of the profile or job selected to serve as a
+template for the new job. If running Heritrix for the first time there is only
+the supplied default profile to chose from.
+</p>
+<p>Having selected a profile/job the user will be asked to supply a name, 
+    description, and seed list for the job (A seed list the list of URLs the
+    crawler should start its crawl from). Once submitted the name can not be 
+    changed. The description and seed list can however be modified at a later 
+    date.
+</p>
+<p>
+    Below the data fields in the new job page, there are 
+    five  buttons.<br/>
+    <ul>
+        <li>Modules</li>
+        <li>Filters</li>
+        <li>Settings</li>
+        <li>Overrides</li>
+        <li>Submit job</li>
+    </ul>
+</p>
+<p>
+    Each of the first 4 corresponds to a section of the crawl configuration
+    that can 
+    be modified. <em>Modules</em> refers to selecting which pluggable modules 
+    (classes) to use. This includes the 'frontier' and 'processors'. It does
+    not include the use of pluggable filters which are configurable via the
+    second option.
+    <em>Settings</em> refers to setting the configurable values on modules
+    (pluggable or otherwise). <em>Overrides</em> refers to the ability
+    to set alternate values based on which domain the crawler is working on.
+    Clicking on any of these 4 will cause the job to be created but kept from
+    being run until the user finish configuring it. The user will be taken to
+    the relevant page.  More on these pages in a bit.
+</p>
+<p>
+    <em>Submit job</em> button 
+    will cause the job to be submitted to the pending queue
+    right away. It can still be edited while in the queue or even after it
+    starts crawling (although modules and filters can only be set prior to the
+    start of crawling). If the crawler is set to run and there is no other job
+    currently crawling, the new job will start crawling at once. Note that
+    some profiles may not contain entirely default valid settings.
+    In particular, 
+    <i>User-Agent</i> and <i>From</i> attributes in the 
+    the <em>http-headers</em> section -- see the <em>Settings</em> on your
+    job -- *MUST* be set to other than the default in the default profile 
+    for crawl to begin.
+    You should set these to something meaningful that allows administrators of
+    sites you'll be crawling to contact you. The software requires that
+    User-Agent value be of the form...  
+    <source>[name] (+[http-url])[optional-etc]</source></p>
+    <p>...where [name ] is the crawler identifier and [http-url ] is an URL
+    giving more information about your crawling efforts.  The From value must
+    be an email address.  (Please do not leave the Archive Open Crawler
+    project's contact
+    information in these fields, we do not have the time or the resources to
+    field complaints about crawlers which we do not administer.)</p>
+
+<p>Note, the term <i>running</i> generally means that the crawler will
+start crawling
+a job as soon as one is available and no job is crawling: i.e. it will accept
+new jobs to be crawled. While not running jobs will be held in the pending
+queue even if there is no current job crawling.  
+The term <i>crawling</i> generally refers to a job that is actually being
+executed (crawled). That is pages are being fetched, links extracted etc. If
+the crawler is set to not run, there can still be a job crawling! That is a
+job that started before the crawler was stopped. In that scenario once the
+current job is completed the next job will not be started.
+</p>
+
+<subsection name="Modules">
+<p>
+    This page allows the user to select what URIFrontier implementation to use 
+    (select from combobox) and to configure the chain of processors that 
+    are used when processing a URI. Note that the order of display (top to
+    bottom) is the order in which processors are run.
+    Options are provided for moving processors up, down,
+    removing them and adding those not currently in the chain.
+    Those that are 
+    added are placed at the end by default, generally the user should then move
+    them to their correct location. Detailed configuration of these modules is 
+    then performed by going to the 'Settings' page afterwards.
+</p>
+</subsection>
+<subsection name="Filters">
+<p>
+    Certain modules (Scope, all processors, the OrFilter for example) will
+    allow 
+    an arbitrary number of filters to be applied to them. This page presents a
+    treelike structure of the configuration with the ability to add remove and
+    reorder filters where they can be placed. For each grouping of filters the
+    options provided correspond to those that are provided for processors. Note
+    however that since filters can contain filters the lists can become 
+    complicated. As with modules, detailed configuration of the filters is 
+    done via the 'Settings' page.
+</p>
+</subsection>
+<subsection name="Settings">
+<p>
+    This page provides a treelike representation of the crawl configuration
+    similar
+    to the one the 'Filters' page does. Here however an input field is provided
+    for each configurable parameter of each module. Changes made will be saved 
+    when the user navigates to one of the other crawl configuration pages or 
+    selects 'Finished'. On all pages choosing 'Finish' will submit the job to
+    the
+    pending queue. Navigation to other parts of the admin interface will cause 
+    the job to be lost.
+</p>
+</subsection>
+<subsection name="Overrides">
+<p>
+    This page provides an iterative list of domains that contain override
+    settings,
+    that is values for parameters that override values in the global
+    configuration.
+    Users can navigate to any domain that has an override, create/edit the
+    overrides and delete them. When creating/editing them a page similar to the
+   'Settings' page is provided. The main difference is that each input field is
+    preceded by a checkbox. If a check is in that box it is an override. If
+    there
+    is no check the value being displayed is inherited from the current
+    domains'
+    super domain. To override a setting it is necessary to add a check in front
+    of it. Removing a check effectively removes the override. Changes made to
+    non-checked fields will be ignored.
+</p>
+<p>
+    It is not possible to override what modules are used in an override.
+    Some of that functionality can though be achieved via the 'enabled'
+    option that each
+    processor has. By overriding it and setting it to false you can disable
+    that
+    processor. It is even possible to have it set to false by default and only
+    enable it on select domains. Thus any arbitrary chain of processors can be
+    created for each domain with one major exception. It is not possible to
+    manipulate the order of the processors. It is possible to similarly 
+    disable/enable filters. It is also possible to add filters. You can not
+    affect the order of inherited filters, and you can not interject new
+    filters
+    among them. Override filters will be run after inherited filters.
+</p>
+</subsection>
+<subsection name="Run">
+<p>
+    Once a job is in the pending queue the user can go back to the Console and
+    start the crawler. The option to do so is presented just below the general
+    information on the state of the crawler to the far left. Once started the
+    console will offer summary information about the progress of the crawl and
+    the option of terminating it.
+</p>
+</subsection>
+</section>
+
+
+<section name="Monitoring the Crawler via the web UI">
+<p>
+    Once logged in the user will be taken to the Console.
+    It is the central page
+    for monitoring and affecting a running job. However more detailed reports
+    and actions are possible from other pages.
+</p>
+<p>
+    Every single page in the admin interface displays the same info header. It
+    tells you if the crawler is running or crawling a job. If a job is being
+    crawled it's name is displayed and minimal progress statistics. Information
+    about the number of pending and completed jobs is also provided.
+</p>
+<subsection name="Jobs">
+<p>
+    While a job is running this page allows users to view it's crawl order (the
+    actual XML configuration file), to view a crawl job report on it (both are
+    also available after the job is in the completed list) and the option to
+    edit the job. As noted in the chapter about launching jobs via the WUI you
+    cannot modify the pluggable modules but you can change the configurable
+    parameters that they possess. This page also gives access to a list of 
+    pending jobs.
+</p>
+</subsection>
+<subsection name="Logs">
+<p>
+    A very useful page that allows you to view any of the logs that are created
+    on a per-job basis. Log's can be viewed by line number, time stamp, regular
+    expression or 'tail' (show the last lines of the file).
+</p>
+</subsection>
+<subsection name="Reports">
+<p>
+    This page allows access to the same crawl job report mentioned in the
+    'Jobs' page section. This report details number of downloaded documents
+    and various associated statistics.
+</p>
+</subsection>
 </section>
 
 <section name="System Properties">
@@ -136,14 +299,15 @@ will be found in their development locations and startup messages will
 show on the console.
 </p>
 </subsection>
-
 <subsection name="java.util.logging.config.file">
-<p>The heritrix jar includes a file named <em>heritrix.properties</em>.  A 
-	section of this file specifies the default heritrix logging configuration.
-	To override, point
-	<em>java.util.logging.config.file</em> at a properties file w/ an alternate
-	logging configuration.  Below we reproduce the default for reference:
-	<source># Basic logging setup; to console, all levels
+<p>The heritrix conf directory
+    includes a file named <em>heritrix.properties</em>.  A 
+    section of this file specifies the default heritrix logging configuration.
+    To override, point
+    <em>java.util.logging.config.file</em> at a properties file w/ an
+    alternate logging configuration.  Below we reproduce the default for
+    reference:
+    <source># Basic logging setup; to console, all levels
 handlers= java.util.logging.ConsoleHandler
 java.util.logging.ConsoleHandler.level= ALL
 
@@ -163,190 +327,6 @@ org.apache.commons.httpclient.level= SEVERE</source>
 <p>Here's an example of how you might specify an override: 
     <source>% JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
         ./bin/heritrix.sh --no-wui order.xml</source> </p>
-</subsection>
-
-</section>
-
-<section name="Launching crawl jobs via the web UI">
-<p>
-	If the program is launched with a web UI users can access the administrative 
-	interface with any regular browser. The admin section is password protected.
-</p>
-<p>
-	Once logged in the 'Console' (more on that later) is displayed. Near the top
-	of the page are several tabs. To create a new job, select the 'Jobs' tab.
-</p>
-<p>
-	The 'Jobs' page offers several ways of creating a new job.<br/>
-	<ul>
-		<li>Create new crawl job (This will be based on the default profile)</li>
-		<li>Create new crawl job based on a profile</li>
-		<li>Create new crawl job based on an existing job</li>
-	</ul>
-</p>
-<p>
-	It is not possible to create jobs from scratch but you will be allowed to edit 
-	any configurable part of the profile or job selected to serve as a template for
-	the new job. If running Heritrix for the first time there is only the supplied
-	default profile to chose from.
-</p>
-<p>
-	Having selected a profile/job the user will be asked to supply a name, 
-	description and seed list for the job. Once submitted the name can not be 
-	changed. The description and seed list can however be modified at a later 
-	date.
-</p>
-<p>
-	Below those data field 5 options are provided.<br/>
-	<ul>
-		<li>Modules</li>
-		<li>Filters</li>
-		<li>Settings</li>
-		<li>Overrides</li>
-		<li>Submit job</li>
-	</ul>
-</p>
-<p>
-	Each of the first 4 corresponds to a section of the crawl configuration that can 
-	be modified. <em>Modules</em> refers to selecting which plugable modules 
-	(classes) to use. This includes the 'frontier' and 'processors'. It does not 
-	include the use of plugable filters which are configurable via the second option.
-	<em>Settings</em> refers to setting the values that any module (plugable or
-	otherwise) allows configurations of. <em>Overrides</em> refers to the ability
-	to set alternate values based on which domain the crawler is working on.
-	Clicking on any of these 4 will cause the job to be created but kept from being 
-	run until the user finish configuring it. The user will be taken the relevant page. 
-	More on those pages in a bit.
-</p>
-<p>
-	<em>Submit job</em> will cause the job to be submitted to the pending queue
-	right away. It can still be edited while in the queue or even after it starts
-	crawling (although modules and filters can only be set prior to the start of
-	crawling). If the crawler is set to run and there is no other job currently 
-	crawling, the new job will start crawling at once. Note that some profiles
-	may not contain entirely valid settings. A common example is that the HTTP
-	header information be invalid, forcing users to input their own values.
-</p>
-<p>
-	Note: The term 'running' generally means that the crawler will start crawling
-	a job as soon as one is available and no job is crawling. I.e. it will accept
-	new jobs to be crawled. While not running jobs will be held in the pending
-	queue even if there is no current job crawling.<br/>
-	The term crawling generally refers to a job that is actually being executed
-	(crawled). That is pages are being fetched, links extracted etc. If the crawler
-	is set to not run, there can still be a job crawling! That is a job that started
-	before the crawler was stopped. In that scenario once the current job is 
-	completed the next job will not be started.
-</p>
-<subsection name="Modules">
-<p>
-	This page allows the user to select what URIFrontier implementation to use 
-	(select from combobox) and to configure the chain of processors that is used
-	when processing a URI. Note that the order of display (top to bottom) is the
-	one that they are executed in. Options are provided for moving them up, down,
-	removing them and adding those not currently in the chain. Those that are 
-	added are placed at the end by default, generally the user should then move
-	them to their correct location. Detailed configuration of these modules is 
-	then performed by going to the 'Settings' page afterwards.
-</p>
-</subsection>
-<subsection name="Filters">
-<p>
-	Certain modules (Scope, all processors, the OrFilter for example) will allow 
-	an arbitrary number of filters to be applied to them. This page presents a
-	treelike structure of the configuration with the ability to add remove and
-	reorder filters where they can be placed. For each grouping of filters the
-	options provided correspond to those that are provided for processors. Note
-	however that since filters can contain filters the lists can become 
-	complicated. As with modules, detailed configuration of the filters is 
-	done via the 'Settings' page.
-</p>
-</subsection>
-<subsection name="Settings">
-<p>
-	This page provides a treelike representation of the crawl configuration similar
-	to the one the 'Filters' page does. Here however an input field is provided
-	for each configurable parameter of each module. Changes made will be saved 
-	when the user navigates to one of the other crawl configuration pages or 
-	selects 'Finished'. On all pages choosing 'Finish' will submit the job to the
-	pending queue. Navigation to other parts of the admin interface will cause 
-	the job to be lost.
-</p>
-</subsection>
-<subsection name="Overrides">
-<p>
-	This page provides an iterative list of domains that contain override settings,
-	that is values for parameters that override values in the global configuration.
-	Users can navigate to any domain that has an override, create/edit the
-	overrides and delete them. When creating/editing them a page similar to the
-	'Settings' page is provided. The main difference is that each input field is
-	preceded by a checkbox. If a check is in that box it is an override. If there
-	is no check the value being displayed is inherited from the current domains
-	super domain. To override a setting it is necessary to add a check in front
-	of it. Removing a check effectively removes the override. Changes made to
-	non-checked fields will be ignored.
-</p>
-<p>
-	It is not possible to override what modules are used in an override. Some of
-	that functionality can though be achieved via the 'enabled' option that each
-	processor has. By overriding it and setting it to false you can disable that
-	processor. It is even possible to have it set to false by default and only
-	enable it on select domains. Thus any arbitrary chain of processors can be
-	created for each domain with one major exception. It is not possible to
-	manipulate the order of the processors. It is possible to similarly 
-	disable/enable filters. It is also possible to add filters. You can not
-	affect the order of inherited filters, and you can not interject new filters
-	among them. Override filters will be run after inherited filters.
-</p>
-</subsection>
-<subsection name="Run">
-<p>
-	Once a job is in the pending queue the user can go back to the Console and
-	start the crawler. The option to do so is presented just below the general
-	information on the state of the crawler to the far left. Once started the
-	console will offer summary information about the progress of the crawl and
-	the option of terminating it.
-</p>
-</subsection>
-</section>
-
-
-<section name="Monitoring the Crawler via the web UI">
-<p>
-	Once logged in the user will be take to the Console. It is the central page
-	for monitoring and affecting a running job. However more detailed reports
-	and actions are possible from other pages.
-</p>
-<p>
-	Every single page in the admin interface displays the same info header. It
-	tells you if the crawler is running or crawling a job. If a job is being
-	crawled it's name is displayed and minimal progress statistics. Information
-	about the number of pending and completed jobs is also provided.
-</p>
-<subsection name="Jobs">
-<p>
-	While a job is running this page allows users to view it's crawl order (the
-	actual XML configuration file), to view a crawl job report on it (both are
-	also available after the job is in the completed list) and the option to
-	edit the job. As noted in the chapter about launching jobs via the WUI you
-	can not modify the plugable modules but you can change the configurable
-	parameters that they possess. This page also gives access to a list of 
-	pending jobs.
-</p>
-</subsection>
-<subsection name="Logs">
-<p>
-	A very useful page that allows you to view any of the logs that are created
-	on a per-job basis. Log's can be viewed by line number, time stamp, regular
-	expression or 'tail' (show the last lines of the file).
-</p>
-</subsection>
-<subsection name="Reports">
-<p>
-	This page allows access to the same crawl job report mentioned in the 'Jobs'
-	page section. This report details number of downloaded documents and various
-	associated statistics.
-</p>
 </subsection>
 </section>
 
