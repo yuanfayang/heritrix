@@ -58,17 +58,11 @@
 										<b>Processed docs/sec:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.processedDocsPerSec()%>
+										<%=stats.currentProcessedDocsPerSec()%> (<%=stats.processedDocsPerSec()%>)
+										&nbsp;&nbsp;&nbsp;
+										<b>KB/sec:</b>&nbsp;<%=stats.currentProcessedKBPerSec()%> (<%=stats.processedKBPerSec()%>)
 									</td>
 								</tr>
-								<!--tr>
-									<td>
-										<b>Current processed docs/sec:</b>&nbsp;
-									</td>
-									<td>
-										<%/*=stats.currentProcessedDocsPerSec()*/%>
-									</td>
-								</tr-->
 								<tr>
 									<td>
 										<b>Run time:</b>&nbsp;
