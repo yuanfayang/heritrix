@@ -44,17 +44,17 @@ import org.archive.io.ReplayInputStream;
  * @author gojomo
  */
 public class CrawlServer implements Serializable {
-    public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 3*(1000*60*60*24); // three days
     private final String server; // actually, host+port in the http case
     private int port;
     private CrawlHost host;
     private SettingsHandler settingsHandler;
     RobotsExclusionPolicy robots;
-    long robotsExpires = -1;
+    long robotsFetched = -1;
     Checksum robotstxtChecksum;
 
-    /**
-     * @param h
+    /** Creates a new CrawlServer object.
+     * 
+     * @param h the host string for the server.
      */
     public CrawlServer(String h) {
         // TODO: possibly check for illegal host string
@@ -71,23 +71,28 @@ public class CrawlServer implements Serializable {
         }
     }
 
-    public long getRobotsExpires() {
-        return robotsExpires;
-    }
-
-    /**
-     * @param l
+    /** Get the time when the fetched robots policy expires.
+     * 
+     * @return the time when the fetched robots policy expires.
      */
-    public void setRobotsExpires(long l) {
-        robotsExpires = l;
+    public long getRobotsExpires() {
+        RobotsHonoringPolicy honoringPolicy =
+            settingsHandler.getOrder().getRobotsHonoringPolicy();
+        long duration = honoringPolicy.getRobotsValidityDuration(getSettings());
+        return robotsFetched + duration;
     }
 
+    /** Get the robots exclusion policy for this server.
+     * 
+     * @return the robots exclusion policy for this server.
+     */
     public RobotsExclusionPolicy getRobots() {
         return robots;
     }
 
-    /**
-     * @param policy
+    /** Set the robots exclusion policy for this server.
+     * 
+     * @param policy the policy to set.
      */
     public void setRobots(RobotsExclusionPolicy policy) {
         robots = policy;
@@ -100,9 +105,9 @@ public class CrawlServer implements Serializable {
         return "CrawlServer("+server+")";
     }
 
-    /**
-     * @param get
-     * @param honoringPolicy
+    /** Update the robots exclusion policy.
+     * 
+     * @param curi the crawl URI containing the fetched robots.txt
      * @throws IOException
      */
     public void updateRobots(CrawlURI curi)
@@ -111,8 +116,7 @@ public class CrawlServer implements Serializable {
         RobotsHonoringPolicy honoringPolicy =
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
-        robotsExpires = System.currentTimeMillis()
-            + DEFAULT_ROBOTS_VALIDITY_DURATION;
+        robotsFetched = System.currentTimeMillis();
         if (curi.getFetchStatus() != 200 ||
                 honoringPolicy.getType(getSettings()) ==
                     RobotsHonoringPolicy.IGNORE)
@@ -165,9 +169,16 @@ public class CrawlServer implements Serializable {
         return;
     }
 
-
+    /** Is the robots policy expired.
+     *
+     * This method will also return true if we haven't tried to get the
+     * robots.txt for this server. 
+     * 
+     * @return true if the robots policy is expired.
+     */
     public boolean isRobotsExpired() {
-        if (robotsExpires >= 0 && robotsExpires < System.currentTimeMillis()) {
+        if (robotsFetched >= 0 &&
+                getRobotsExpires() < System.currentTimeMillis()) {
             return true;
         }
         return false;
