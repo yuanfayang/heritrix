@@ -17,7 +17,9 @@
 
     <para>If you want to build Heritrix from source or if you'd like to make
     contributions and would like to know about contribution conventions, etc.,
-    see instead the Developer's Manual.</para>
+    see instead the <ulink
+    url="http://crawler.archive.org/articles/developer_manual.html">Developer's
+    Manual</ulink>.</para>
   </sect1>
 
   <sect1>
@@ -34,7 +36,9 @@
 
     <para>This chapter also only covers installing and running the prepackaged
     binary distributions of Heritrix. For information about downloading and
-    compiling the source see the Developer's Manual.</para>
+    compiling the source see the <ulink
+    url="http://crawler.archive.org/articles/developer_manual.html">Developer's
+    Manual</ulink>.</para>
 
     <sect2>
       <title>Obtaining and installing Heritrix</title>
@@ -107,7 +111,7 @@
           <title>Hardware</title>
 
           <para> We recommend assigning at least 256MB RAM to the Java heap
-          (via the "-Xmx256MB" VM argument), which is usually suitable for
+          (via the "-Xmx256M" VM argument), which is usually suitable for
           crawls that range over hundreds of hosts.</para>
         </sect4>
 
@@ -227,7 +231,7 @@
           <para>Pass options to the Heritrix JVM by populating the JAVA_OPTS
           environment variable with values. For example, if you want to have
           Heritrix run with a larger heap, say 512 megs, you could do either
-          of the following (assuming your shell is bash):<programlisting>  % export JAVA_OPTS="-Xmx512m"
+          of the following (assuming your shell is bash):<programlisting>  % export JAVA_OPTS="-Xmx512M"
   % $HERITRIX_HOME/bin/heritrix</programlisting>Or, you could do it all on the
           one line as follows:<programlisting>  % JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix</programlisting></para>
         </sect4>
@@ -237,7 +241,9 @@
         <title>System properties</title>
 
         <para>Below we document the system properties passed on the
-        command-line that can influence Heritrix behavior.</para>
+        command-line that can influence Heritrix behavior. If you are using
+        the /bin/heritrix script to launch Heritrix you will have to edit it
+        to change/set these properties.</para>
 
         <sect4>
           <title>heritrix.development</title>
@@ -306,8 +312,8 @@
     <para>After Heritrix has been launched from the command line, the web
     based user interface (WUI) becomes accessible.</para>
 
-    <para>The path to it printed out on the console from which the program was
-    launched (typically http://&lt;host&gt;:8080/admin/).</para>
+    <para>The path to it is printed out on the console from which the program
+    was launched (typically http://&lt;host&gt;:8080/admin/).</para>
 
     <para>The WUI is password protected. The username is currently hardcoded
     to 'admin' with the default password of 'letmein'. The password can be
@@ -320,12 +326,12 @@
     Mozilla 5+ is recommended. IE 6+ should also work without problems.</para>
 
     <para>The initial login page takes the standard username/password
-    combination discussed before. In addition users can opt to have the WUI
+    combination discussed above. In addition users can opt to have the WUI
     remember their login by checking the appropriate box. If that is done then
     the login information will be stored in a cookie and read from it during
     future login attempts. If this option is not checked then the login is
-    only valid as long as the server's session. Once it times you, the user
-    will need to login again.</para>
+    only valid as long as the server's session. Once it times you out, the
+    user will need to login again.</para>
 
     <caution>
       <para>The access control to the WUI is not encrypted! Passwords will be
@@ -378,7 +384,7 @@
 
           <para>This option allows the user to create a job by basing it on
           any existing job, regardless of whether it has been crawled or not.
-          Can be useful for repeating crawls..</para>
+          Can be useful for repeating crawls.</para>
         </listitem>
       </orderedlist>
 
@@ -389,7 +395,7 @@
       them on profiles (see next chapter) or existing jobs.</para>
 
       <para>Once the proper profile/job has been chosen to base the new job
-      one a simple page will appear asking for the new jobs:</para>
+      on, a simple page will appear asking for the new jobs:</para>
 
       <orderedlist>
         <listitem>
@@ -428,6 +434,11 @@
           <para>Changes made afterwards to the original jobs or profiles that
           a new job is based on will <emphasis role="bold">not</emphasis> in
           any way affect the newly created job.</para>
+        </note><note>
+          <para>Jobs based on the default profile provided with Heritrix are
+          not ready to run <emphasis>as is</emphasis>. There HTTP header
+          information must be set to valid values. See <xref
+          linkend="httpheaders" /> for details.</para>
         </note></para>
     </sect2>
 
@@ -457,11 +468,11 @@
       can only be created based on other profiles. It is not possible to
       create profiles based on existing jobs.</para>
 
-      <para>The process from there on mirrors the creating of jobs. A page
+      <para>The process from there on mirrors the creation of jobs. A page
       will ask for the new profiles name, description and seeds list. Unlike
       job names, profile names <emphasis>must be unique</emphasis> from other
       profile names - jobs and a profile can share the same name - otherwise
-      the same rules apply.</para>
+      the same ras isules apply.</para>
 
       <para>The user then proceeds to the configuration pages (see <xref
       linkend="config" />) to modify the behavior of the new profile from that
@@ -484,7 +495,7 @@
     profiles. It does not matter if new ones are being created or existing
     ones are being edited. The interface is almost entirely the same, only the
     '<emphasis>Submit job</emphasis>'/'<emphasis>Finished</emphasis>' button
-    will vary slightly.</para>
+    will vary.</para>
 
     <para>Each page in the configuration section of the WUI will have a
     secondary row of tabs below the system ones. This secondary row is often
@@ -557,7 +568,7 @@
 
       <para>Heritrix has several types of pluggable modules. These modules,
       while having a fixed interface and a variable number of provided
-      implementation can also be third party plugins. This page allows the
+      implementation, can also be third party plugins. This page allows the
       user to select several types of these pluggable modules.</para>
 
       <para>Once modules have been added to the configuration they can be
@@ -643,7 +654,7 @@
 
         <para>Scopes usually allow for some flexibility in defining depth and
         possible transitive includes (that is getting items that would usually
-        be out of scope because of special circumstance such as them being
+        be out of scope because of special circumstance such as their being
         embedded). Most noticeably they can have filters applied to themselves
         in two different contexts (some filters may only have one these
         contexts).</para>
@@ -664,7 +675,7 @@
           </listitem>
         </orderedlist>
 
-        <para>Custom made Scopes may have different set of filters. Also some
+        <para>Custom made Scopes may have different sets of filters. Also some
         scopes have filters hardcoded into them. This allows you to edit their
         settings but not remove or replace them. For example most of the
         provided scopes have a <literal>Transclusion</literal> filter
@@ -765,8 +776,8 @@
         chains that is not currently enforced.</para>
 
         <para>Each URI taken off the Frontier queue runs through the
-        <literal>Processing Chains</literal> listed in the diagram shown on
-        the right. URIs are always processed in the order shown in the diagram
+        <literal>Processing Chains</literal> listed in the diagram shown
+        below. URIs are always processed in the order shown in the diagram
         unless a particular processor throws a fatal error. In this
         circumstance, processing skips to the end, to the Post-processing
         chain, for cleanup.</para>
@@ -777,7 +788,7 @@
         <literal>ExtractorJS</literal> , and the
         <literal>ExtractorUniversal</literal> processors. Within a processing
         step, the order in which processors are run is the order in which
-        processors are listed in the job order file.</para>
+        processors are listed on the modules page.</para>
 
         <para>Generally, particular processors only make sense with in the
         context of one particular processing chain. For example, it wouldn't
@@ -791,7 +802,7 @@
 
         <para>In the <literal>Pre Processing</literal> chain the following two
         processors should be included (or replacement modules that perform
-        similar operations:</para>
+        similar operations):</para>
 
         <itemizedlist>
           <listitem>
@@ -811,7 +822,7 @@
           </listitem>
         </itemizedlist>
 
-        <para>Similarly the <literal>Post Processing</literal> chain has to
+        <para>Similarly the <literal>Post Processing</literal> chain has two
         special purpose processors:</para>
 
         <itemizedlist>
@@ -830,9 +841,6 @@
             crawling.</para>
           </listitem>
         </itemizedlist>
-
-        <para>Within each chain the processors will be executed in the order
-        in which they are displayed on the settings page.</para>
       </sect3>
 
       <sect3 id="stattrack">
@@ -922,7 +930,7 @@
           <title>org.archive.crawler.filter.PathDeptFilter</title>
 
           <para>Returns true for all <xref linkend="crawluri" /> passed in
-          with a path depth less or equal than the
+          with a path depth less or equal to its
           <literal>max-path-depth</literal> value.</para>
         </sect4>
 
@@ -931,7 +939,7 @@
 
           <para>Checks if a URI contains a repeated pattern.</para>
 
-          <para> This filter is checking if a pattern is repeated a specific
+          <para> This filter checks if a if a pattern is repeated a specific
           number of times. The use is to avoid crawler traps where the server
           adds the same pattern to the requested URI like:</para>
 
@@ -1109,7 +1117,7 @@
           considered in the list itself. A value in the input box does not
           become a part of the list until the user clicks add. There is no way
           to edit existing values beyond removing them and replacing them with
-          correct values. It is also no possible to reorder the list.</para>
+          correct values. It is also not possible to reorder the list.</para>
         </listitem>
 
         <listitem>
@@ -1425,7 +1433,7 @@
         <para>A couple of the provided processors have settings that merit
         some extra attention.</para>
 
-        <para>As has been noted elsewhere each processor has a setting name
+        <para>As has been noted elsewhere each processor has a setting named
         <emphasis role="bold">enabled</emphasis>. This is set to true by
         default, but can be set to false to effectively remove it from
         consideration. Processors whose enabled setting is set to false will
@@ -1455,7 +1463,7 @@
               truncate file once this limit is reached. </para>
 
               <para>By default this value is set to extremely large value (in
-              the etobyte range).</para>
+              the exabyte range).</para>
             </listitem>
 
             <listitem>
@@ -1463,7 +1471,7 @@
 
               <para>Maximum number of immediate fetch attempts. Under some
               conditions a fetch will be attempted again at once if it fails.
-              This imposes a limit on that activity. This is therefor not
+              This imposes a limit on that activity. This is therefore not
               directly related to the Frontier's retry policy.</para>
             </listitem>
           </itemizedlist>
@@ -1538,7 +1546,7 @@
       <title>Overrides</title>
 
       <para>Overrides provide the ability to override individual settings on a
-      per domain bases. The overrides page provides an iterative list of
+      per domain basis. The overrides page provides an iterative list of
       domains that contain override settings, that is values for parameters
       that override values in the global configuration.</para>
 
@@ -1549,7 +1557,7 @@
       (crawler.archive.org). There is no limit for how deep into the sub
       domains the overrides can go.</para>
 
-      <para>When a URI is being processed the settings for it's host is then
+      <para>When a URI is being processed the settings for itss host is then
       first lookup up. If the needed setting is not available there it's super
       domains are checked until the settings is found (all settings exist at
       the global level at the very least).</para>
@@ -1580,7 +1588,7 @@
 
           <para>Add filters to the override. It is not possible to remove
           inherited filters or interject new filters among them. New filters
-          will be added after existing filters. All filters though have to
+          will be added after existing filters. All filters though have the
           option to disable them that can be set on the settings page.</para>
         </listitem>
 
@@ -1649,7 +1657,7 @@
         <listitem>
           <para>They incur a performance penalty.</para>
 
-          <para>This effect is small if there numbers are few but for each URI
+          <para>This effect is small if their numbers are few but for each URI
           encountered there must be a check made to see if it matches any of
           the existing criteria of defined refinements.</para>
 
@@ -1839,7 +1847,7 @@
             fluctuate considerable, especially if the StatisticsTracker has
             the log interval set to a low value. </para>
 
-            <para>The second value (in parenthasis) is the number of documents
+            <para>The second value (in parenthesis) is the number of documents
             downloaded per second since the crawl began.</para>
           </listitem>
 
@@ -2368,7 +2376,7 @@
         will get an entry, regardless of success or failure. Each entry is two
         lines. </para>
 
-        <para>An exmple of two consecutive entries:</para>
+        <para>An example of two consecutive entries:</para>
 
         <para><programlisting>  20040422222643484     1         59 #3 dns:www.lockergnome.com 31 text/dns 
     LLP http://www.lockergnome.com/
@@ -2411,8 +2419,7 @@
         <para>At configurable intervals a line about the progress of the crawl
         is written to this file.</para>
 
-        <para>From left to right the data contained on the line is as
-        follows:</para>
+        <para>The legends are as follows:</para>
 
         <itemizedlist>
           <listitem>
@@ -2519,19 +2526,19 @@
     <title>Outside the user interface</title>
 
     <para>While it is possible to do a great many things via Heritrix's WUI it
-    is worth taking a look at some of what is not available int it.</para>
+    is worth taking a look at some of what is not available in it.</para>
 
     <sect2>
       <title>Generated files</title>
 
-      <para>In addition to the logs discussed before (see <xref
+      <para>In addition to the logs discussed above (see <xref
       linkend="logs" />) the following files are generated. Some of the
       information in them is also available via the WUI.</para>
 
       <sect3>
         <title>heritrix_out.log</title>
 
-        <para>Captures what is written to the standard out and standard err
+        <para>Captures what is written to the standard out and standard error
         streams of the program. Mostly this consists of low level exceptions
         (usually indicative of bugs) and also some information from third
         party modules who do their own output logging.</para>
@@ -2872,6 +2879,14 @@
         <glossdef>
           <para>Number of link follow from the seed to the current URI. Seeds
           have a link hop count of 0.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry id="politeness">
+        <glossterm>Politeness</glossterm>
+
+        <glossdef>
+          <para></para>
         </glossdef>
       </glossentry>
 
