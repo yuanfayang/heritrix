@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-import java.util.logging.Level;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -85,16 +84,24 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 
 		SWFReader reader = new SWFReader( parser, in );
         
-		try{
-			reader.readFile();		
-		}catch(IOException e){
-			Object array[] = { curi };
-			controller.crawlErrors.log(Level.INFO, curi.getUURI().getUri().toString(), array);
+		try {
+			reader.readFile();
+		} catch (IOException e) {
+			// this couldn't possibly work: the crawlError log 
+			// currently expects a runtime error instance inside 
+			// the problem crawlURI
+//			Object array[] = { curi };
+//			controller.crawlErrors.log(
+//				Level.INFO,
+//				curi.getUURI().getUri().toString(),
+//				array);
+			curi.addLocalizedError(getName(),e);
+			
 		}
 		
 		links = iatp.getLinks();
 		if(links.size() > 0){
-			curi.getAList().putObject("html-links", links);
+			curi.getAList().putObject(A_HTML_LINKS, links);
 		}
 		
 		logger.fine(curi + " has " + links.size() + " links.");
