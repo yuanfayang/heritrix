@@ -27,6 +27,5 @@
 	<classpathentry kind="lib" path="lib/je-1.7.1-12115_11552.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/dsi-unimi-it-0.9.1.jar"/>
-	<classpathentry kind="lib" path="/home/stack/tmp/rules/jsr94-1.0/lib/jsr94.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
