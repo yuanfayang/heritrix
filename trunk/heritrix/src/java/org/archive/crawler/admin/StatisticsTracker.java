@@ -44,8 +44,6 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
-import com.sun.rsasign.g;
-
 /**
  * This is an implementation of the AbstractTracker. It is designed to function
  * with the WUI as well as performing various logging activity.
