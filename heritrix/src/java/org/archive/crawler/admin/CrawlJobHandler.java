@@ -480,12 +480,34 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     name,
                     description,
                     seeds,
-                    Heritrix.getJobsdir().getAbsolutePath() + File.separator +
-                        name + "-" + UID,
+                    getJobdir(name, UID).getAbsolutePath(),
                     "job-"+name+".xml",
                     "seeds-"+name+".txt"),
                 CrawlJob.PRIORITY_AVERAGE);
         return newJob;
+    }
+    
+    /**
+     * @param name Basename for job.
+     * @param UID Job unique ID.
+     * @return Job directory for passed job name and UID.
+     */
+    private File getJobdir(String name, String UID)
+    {
+        return new File(Heritrix.getJobsdir(), name + "-" + UID);
+    }
+    
+    /**
+     * Utility method that will return crawl job's directory output directory.
+     * 
+     * @param job Job whose directory we want.
+     * 
+     * @return CrawlJob's output directory.  Result is unpredictable if job
+     * was not created by this CrawlJobHandler.
+     */
+    public File getJobdir(CrawlJob job)
+    {
+        return getJobdir(job.getJobName(), job.getUID());
     }
     
     /**
@@ -796,5 +818,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if(controller!=null){
             controller.kickUpdate();
         }
+    }
+    
+    /**
+     * @return Returns the completedCrawlJobs.
+     */
+    protected Vector getCompletedCrawlJobs()
+    {
+        return this.completedCrawlJobs;
     }
 }
