@@ -61,11 +61,14 @@ public class FilePatternFilter extends URIRegExpFilter {
      */
     public FilePatternFilter(String name) {
         super(name);
-        setDescription("By default this filter is URI path suffix filter. " +
+        setDescription("A URI path suffix filter.\n " +
             "All URLs that end with the specified pattern(s) will be added " +
             "to the scope's focus. Default file patterns are:\n.avi, .bmp, " +
             ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .mp4, .mpeg, " +
-            ".pdf, .png, .ppt, .ram, .rm,.smil, .swf, .tif(f), .wav, .wmv");
+            ".pdf, .png, .ppt, .ram, .rm,.smil, .swf, .tif(f), .wav, .wmv\n" +
+            "It is also possible to specifiy custom regular expressions " +
+            "for this filter, turning it into (effectively) a generic " +
+            "regular expression filter.");
 
         String[] options = new String[] {ALL, IMAGES, AUDIO, VIDEO, MISC, 
                                             CUSTOM};
@@ -81,7 +84,13 @@ public class FilePatternFilter extends URIRegExpFilter {
                 "All", options));
                 
         addElementToDefinition(
-            new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
+            new SimpleType(ATTR_REGEXP, "Custom java regular expression.+n " +
+                    "This regular expression will be used instead of the " +
+                    "supplied pattern groups for matching.\nAn example " +
+                    "of such a regular expression (Miscellaneous):\n" +
+                    ".*(?i)(\\.(doc|pdf|ppt|swf))$\n" +
+                    "Any arbitrary reg.expr. is valid though and will be " +
+                    "applied to the URI.", ""));
 
 
     }
