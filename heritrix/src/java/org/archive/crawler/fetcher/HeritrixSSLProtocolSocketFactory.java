@@ -130,7 +130,6 @@ implements SecureProtocolSocketFactory {
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
-            socket.connect(address, timeout);
             try {
                 socket.connect(address, timeout);
             } catch (SocketTimeoutException e) {
