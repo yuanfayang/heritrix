@@ -108,13 +108,13 @@
       <i>java.io.FileNotFoundException...(Too many open files)</i>?
       </question>
       <answer>
-      <p>On linux the usual upper bound is 1024 file descriptors per
+      <p>On linux, a usual upper bound is 1024 file descriptors per
       process.  To change this upper bound, there's a couple of things
       you can do.</p>  
       <p>If running the crawler as non-root (recommended), 
-      you can configure limits in 
-      <code>/etc/security/limits.conf</code>. For example you can
-      setup open files limit for all users in webcrawler group as:
+      you can configure limits in <code>/etc/security/limits.conf</code>. For
+      example you can setup open files limit for all users in webcrawler group
+      as:
 <source>
 # Each line describes a limit for a user in the form:
 #
@@ -123,17 +123,19 @@
 @webcrawler     hard    nofile  32768
 </source>
       </p>
-      <p>Otherwise, running as root, you can do the following:
+      <p>Otherwise, running as root (You need to be root to up ulimits),
+      you can do the following:
     <code># (ulimit -n 4096; JAVA_OPTS=-Xmx320 bin/heritrix -p 9876)</code>
         to up the ulimit for the heritrix process only.
       </p>
-      <p>Below is a rough accounting of FDs used in heritrix.</p>
+      <p>Below is a rough accounting of FDs used in heritrix 1.0.x.</p>
       <p>In Heritrix, the number of concurrent threads is configurable.  The
       default frontier implementation allocates a thread per server.  Per
       server, the frontier keeps a disk-backed queue.  Disk-backed queues
-      maintain two backing files (One to read from while the other is
-      being written to).  So, per thread there will be at least two
-      file descriptors occupied.</p>
+      maintain three backing files with '.qin', '.qout', and '.top' suffixes
+      (One to read from while the other is being written to as well as queue
+      head file).  So, per thread there will be at least three
+      file descriptors occupied when queues need to persist to disk.</p>
       <p>Apart from the above per thread FD cost, there is 
       a set FD cost instantiating the crawler:
       <ul>
@@ -143,8 +145,9 @@
       </li>
       <li>There are about 10-20 heritrix logging files counting
       counting lock files.</li>
-      <li>Miscellaneous sockets, /dev/null and stderr/stdout make
-      for 10 or 20 more FDs.</li>
+      <li>Open ARC files.</li>
+      <li>Miscellaneous sockets, /dev/null, /dev/random, 
+      and stderr/stdout make for 10 or 20 more FDs.</li>
           </ul>
       </p>
       </answer>
