@@ -2,7 +2,6 @@
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
-<%@ page import="org.archive.crawler.datamodel.SeedList" %>
 <%@ page import="org.archive.crawler.settings.ComplexType" %>
 <%@ page import="org.archive.crawler.settings.CrawlerSettings" %>
 <%@ page import="org.archive.crawler.settings.XMLSettingsHandler" %>
