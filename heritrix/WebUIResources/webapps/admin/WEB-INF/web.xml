@@ -4,19 +4,9 @@
 	<display-name> Admin </display-name>
 	
 	<servlet>
-		<servlet-name>AdminController</servlet-name>
-		<servlet-class>org.archive.crawler.admin.AdminController</servlet-class>
-	</servlet>
-
-	<servlet>
 		<servlet-name>JSP</servlet-name>
 		<servlet-class>org.apache.jasper.servlet.JspServlet</servlet-class>
 	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>AdminController</servlet-name>
-		<url-pattern>/AdminController*</url-pattern>
-	</servlet-mapping>
 
 	<servlet-mapping>
 		<servlet-name>JSP</servlet-name>
