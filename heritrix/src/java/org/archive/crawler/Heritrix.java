@@ -324,7 +324,7 @@ public class Heritrix
             // rather than proceed.
             for (int i = 0; i < options.length; i++)
             {
-                if (options[i].getId() != 'p' || options[i].getId() != 's')
+                if (options[i].getId() != 'p' && options[i].getId() != 's')
                 {
                     clp.usage(1);
                 }
