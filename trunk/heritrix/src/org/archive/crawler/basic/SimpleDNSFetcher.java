@@ -104,8 +104,8 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 				e.printStackTrace();
 			}
 			
-			// TODO come up with some better way of signifying it's an ip and never dies,  Gordon?
-			targetHost.setIpExpiresFromTTL(10000000);
+			// don't expire IPs
+			targetHost.setIpExpiresFromTTL(Long.MAX_VALUE);
 			curi.setFetchStatus(1);
 			
 			// no need to continue with the lookup
