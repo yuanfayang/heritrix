@@ -57,7 +57,7 @@ java.net.SocketException: Socket is not connected
       </sect3>
     </sect2>
 
-    <sect2>
+    <sect2 id="1_2_0_changes">
       <title>Changes</title>
 
       <para><table>
