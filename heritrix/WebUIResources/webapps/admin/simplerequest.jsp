@@ -1,5 +1,5 @@
+<%@include file="/include/secure_limited.jsp"%>
 <%@include file="/include/handler.jsp"%>
-<%@include file="/include/secure.jsp"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob" %>
 
 <%
@@ -77,12 +77,12 @@
 							<input name="<%=handler.XP_MAX_LINK_HOPS%>"> (max value: 8)
 						</td>
 					</tr>
-					<!--tr>
+					<tr>
 						<td valign="top">
-							<strong>Max run time (min):</strong>
+							<strong>Max run time (sec):</strong>
 						</td>
 						<td>
-							<input> (max value: 1,800 min)
+							<input name="<%=handler.XP_MAX_TIME%>"> (max value: 36,000 (10 hours))
 						</td>
 					</tr>
 					<tr>
@@ -90,17 +90,17 @@
 							<strong>Max number of documents:</strong>
 						</td>
 						<td>
-							<input> (max value: 100,000)
+							<input name="<%=handler.XP_MAX_DOCUMENT_DOWNLOAD%>"> (max value: 500,000)
 						</td>
 					</tr>
 					<tr>
 						<td valign="top">
-							<strong>Max amount of data (Mb):</strong>
+							<strong>Max amount of data (bytes):</strong>
 						</td>
 						<td>
-							<input> (max value: 10,000 Mb)
+							<input name="<%=handler.XP_MAX_BYTES_DOWNLOAD%>"> (max value: 10,737,418,240 (10 Gb))
 						</td>
-					</tr-->
+					</tr>
 			<%
 				}
 				else
@@ -113,30 +113,45 @@
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"0\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"broad\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TIME+"\" value=\"600\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_DOCUMENT_DOWNLOAD+"\" value=\"2000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_BYTES_DOWNLOAD+"\" value=\"10485760\">");
 								 break;
 						case 2 : out.println("Description of a Page+1 crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - page+1\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"1\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"broad\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TIME+"\" value=\"1000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_DOCUMENT_DOWNLOAD+"\" value=\"3000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_BYTES_DOWNLOAD+"\" value=\"40485760\">");
 								 break;
 						case 3 : out.println("Description of a Path crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - path\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"3\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"path\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TIME+"\" value=\"6000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_DOCUMENT_DOWNLOAD+"\" value=\"20000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_BYTES_DOWNLOAD+"\" value=\"104857600\">");
 								 break;
 						case 4 : out.println("Description of a Host crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - host\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"host\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TIME+"\" value=\"10000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_DOCUMENT_DOWNLOAD+"\" value=\"100000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_BYTES_DOWNLOAD+"\" value=\"504857600\">");
 						         break;
 						case 5 : out.println("Description of a Domain crawl");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - domain\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"6\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
 								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"domain\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TIME+"\" value=\"36000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_DOCUMENT_DOWNLOAD+"\" value=\"500000\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_BYTES_DOWNLOAD+"\" value=\"10737418240\">");
 							     break;
 					}
 					out.println("</td></tr>");
