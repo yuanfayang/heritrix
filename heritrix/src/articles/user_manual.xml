@@ -342,10 +342,97 @@
   <sect1 id="tutorial">
     <title>A quick guide to running your first crawl job</title>
 
-    <para></para>
+    <para>Once you've installed Heritrix and logged into the WUI (see above)
+    you are presented with the Console page. Near the top there is a row of
+    tabs.</para>
+
+    <para><emphasis role="bold">Step 1.</emphasis> <emphasis>Create a
+    job</emphasis></para>
+
+    <para>To create a new job choose the Jobs tab, this will take you to the
+    Jobs page. Once there you are presented with three options for creating a
+    new job. Select the top one 'Create new crawl job'. This will create a new
+    job based on the default profile (see <xref linkend="profile" />). </para>
+
+    <para>On the screen that comes next you will be asked to supply a name,
+    description and a seed list for the new job.</para>
+
+    <para>For a name supply a short text with no special characters or spaces
+    (except dash and underscore). You can skip the description if you like. In
+    the seeds list type in the URL of the sites you are interested in. One URL
+    to a line. They can be with or without the protocol prefix
+    (http://).</para>
+
+    <para>Creating a job is covered in greater detail in <xref
+    linkend="creating" />.</para>
+
+    <para><emphasis role="bold">Step 2.</emphasis> <emphasis>Configure the
+    job</emphasis></para>
+
+    <para>Once you've entered this information in you are ready to go to the
+    configuration pages. Click the 'Modules' button in the row of buttons at
+    the bottom of the page.</para>
+
+    <para>This will take you to the modules configuration page (more details
+    in <xref linkend="modules" />). For now we are only interested in the
+    option second from the top named 'Select crawl scope'. It allows you to
+    specify the limits of the crawl. By default it is limited to the domains
+    that your seeds span. This may be suitable for your purposes. If not you
+    can choose a broad scope (not limited to the domains of it's seeds) or the
+    more restrictive host scope that limits the crawl to the hosts that it's
+    seeds span. For more on scopes refer to <xref linkend="scopes" />.</para>
+
+    <para>To change scopes, select the new one from the combobox and click the
+    <emphasis>Change </emphasis>button.</para>
+
+    <para>Next turn your attention to the second row of tabs at the top of the
+    page, below the usual tabs. You are currently on the far left tab. Now
+    select the tab called <emphasis>Settings</emphasis> near the middle of the
+    row.</para>
+
+    <para>This takes you to the Settings page. It allows you to configure
+    various details of the crawl. Exhaustive coverage of this page can be
+    found in <xref linkend="settings" />. For now we are only interested in
+    the two settings under <emphasis role="bold">http-headers</emphasis>.
+    These are the user-agent and from field of the HTTP headers in the
+    crawlers requests. You must set them to valid values before a crawl can be
+    run. The current values should indicate what needs replacing. If you have
+    trouble with that please refer to <xref linkend="httpheaders" /> for
+    what's regarded as valid values.</para>
+
+    <para>Once you've set the <emphasis role="bold">http-headers</emphasis>
+    settings to proper values (and made any other desired changes), you can
+    click the 'Submit job' tab at the far right of the second row of tabs. The
+    crawl job is now configured and ready to run.</para>
+
+    <para>Configuring a job is covered in greater detail in <xref
+    linkend="config" />.</para>
+
+    <para><emphasis role="bold">Step 3.</emphasis> <emphasis>Running the
+    job</emphasis></para>
+
+    <para>New jobs that have been submitted are placed in a queue of pending
+    jobs. The crawler does not start processing jobs from this queue until it
+    is started. Until then jobs are simply held.</para>
+
+    <para>To start the crawler, click on the Console tab. Once on the Console
+    page, you will find the option 'Start crawling pending jobs' to the far
+    left, below the 'Crawler status' box. Clicking this option will start the
+    crawler which will in turn start crawling the job you just finished
+    creating and configuring.</para>
+
+    <para>The Console will update to display progress information about the
+    ongoing crawl. Click the Refresh option to update this information.
+    </para>
+
+    <para>For more information about running a job see <xref
+    linkend="running" />.</para>
+
+    <para>Detailed information about monitoring the progress of a job can be
+    found in <xref linkend="analysis" />.</para>
   </sect1>
 
-  <sect1>
+  <sect1 id="creating">
     <title>Creating jobs and profiles</title>
 
     <para>In order to run a crawl a configuration must be created that defines
@@ -472,7 +559,7 @@
       will ask for the new profiles name, description and seeds list. Unlike
       job names, profile names <emphasis>must be unique</emphasis> from other
       profile names - jobs and a profile can share the same name - otherwise
-      the same ras isules apply.</para>
+      the same rules apply.</para>
 
       <para>The user then proceeds to the configuration pages (see <xref
       linkend="config" />) to modify the behavior of the new profile from that
@@ -2209,7 +2296,7 @@
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="analysis">
     <title>Analysis of jobs</title>
 
     <para>Heritrix offers several facilities for examining the details of a
