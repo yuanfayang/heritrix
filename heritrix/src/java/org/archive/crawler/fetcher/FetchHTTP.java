@@ -44,6 +44,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
+import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ConfigurableX509TrustManager;
@@ -162,13 +163,15 @@ public class FetchHTTP
         // Note begin time
         long now = System.currentTimeMillis();
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
-
-        // Get and configure a new GetMethod.
-        GetMethod get = new GetMethod(curi.getUURI().getUriString());
-        configureGetMethod(curi, get);
-
+        
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
+        
+        // Get and configure a new GetMethod.
+        HttpRecorderGetMethod get =
+            new HttpRecorderGetMethod(curi.getUURI().getUriString(), rec);
+        configureGetMethod(curi, get);
+
         
         try {
             // TODO: make this initial reading subject to the same

@@ -103,7 +103,7 @@ public class CrawlURI extends CandidateURI
      * May be null even on successfully fetched URI.
      */
     private String contentType = null;
-    
+
 
     /**
      * @param uuri
@@ -673,5 +673,22 @@ public class CrawlURI extends CandidateURI
     public boolean isHttpTransaction()
     {
         return getAList().containsKey(A_HTTP_TRANSACTION);
+    }
+
+    /**
+     * Clean up after a run through the processing chain.
+     * 
+     * Called on the end of processing chain by Frontier#finish.  Null out any
+     * state gathered during processing.
+     */
+    public void processingCleanup()
+    {
+        this.httpRecorder = null; 
+
+        // Allow get to be GC'd.
+        if (this.alist != null)
+        {
+            this.alist.remove(A_HTTP_TRANSACTION);
+        }
     }
 }
