@@ -483,7 +483,10 @@ public class ARCWriter implements ARCConstants {
     private String getArcName() {
         String name = this.arcFile.getName();
         if(isCompress() && name.endsWith(".gz")) {
-            return name.substring(0,name.length()-3);
+            return name.substring(0,name.length() - 3);
+        } else if(isCompress() && name.endsWith(".gz" + OCCUPIED_SUFFIX)) {
+            return name.substring(0, name.length() -
+                (3 + OCCUPIED_SUFFIX.length()));
         } else {
             return name;
         }
