@@ -371,9 +371,9 @@ public class ToeThread extends Thread
             rep.newline();
             rep.padTo(8);
             rep.append(c.getPathFromSeed());
-            if(c.getVia() != null && c.getVia() instanceof CandidateURI) {
+            if(c.getVia() != null) {
                 rep.append(" ");
-                rep.append(((CandidateURI)c.getVia()).getURIString());
+                rep.append(c.getVia().toString());
             }
             rep.newline();
             rep.padTo(8);
