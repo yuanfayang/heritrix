@@ -60,7 +60,7 @@ public class URIRegExpFilter extends Filter {
         addElementToDefinition(
                 new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
     }
-
+    
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
      */
@@ -75,13 +75,26 @@ public class URIRegExpFilter extends Filter {
             //TODO handle other inputs
             input = o.toString();
         }
-        CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
+        String regexp = getRegexp(o);
+        if (regexp == null) {
+            return false;
+        } else {
+            return TextUtils.matches(getRegexp(o), input);
+        }
+    }
+    
+    /** Get the regular expression string to match the URI against.
+     * 
+     * @param o the object for which the regular expression should be
+     *          matched against.
+     * @return the regular expression to match against.
+     */
+    protected String getRegexp(Object o) {
         try {
-            return TextUtils.matches(
-                    (String) getAttribute(ATTR_REGEXP, curi), input);
+            return (String) getAttribute(getSettingsFromObject(o), ATTR_REGEXP);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
-            return true;  // Basically the filter is inactive if this occurs.
+            return null;  // Basically the filter is inactive if this occurs.
         }
     }
     
