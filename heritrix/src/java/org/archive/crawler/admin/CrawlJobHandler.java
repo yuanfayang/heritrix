@@ -87,34 +87,19 @@ import org.archive.util.FileUtils;
  */
 
 public class CrawlJobHandler implements CrawlStatusListener {
-    /**
-     * Default order file.
-     * 
-     * Used whenever an order file has not been explicitly specified.
-     * 
-     * Default is WEBAPP_PATH + ADMIN_WEBAPP_NAME + 'order.xml'.  To
-     * override,  supply a system property of 'heritrix.default.orderfile' on
-     * the command line (Or supply alternate webapp path w/
-     * 'heritrix.webapp.path' system property). The specification of order file
-     * may be absolute or relative to the working directory of the executing
-     * crawler.
-     */
-    private String settingsFile = null;
     
     /**
-     * Name of system property whose specification overrides default order file
+     * Name of system property whose specification overrides default profile
      * used.
      * 
-     * Default is WEBAPP_PATH + ADMIN_WEBAPP_NAME 
-     * + DEFAULT_ORDER_FILE.  Pass an absolute or relative path.
      */
-    public static final String DEFAULT_ORDER_FILE_NAME 
-        = "heritrix.default.orderfile";
+    public static final String DEFAULT_PROFILE_NAME 
+        = "heritrix.default.profile";
     
     /**
-     * Default order file name.
+     * Default profile name.
      */
-    public static final String DEFAULT_ORDER_FILE = "order.xml";
+    public static final String DEFAULT_PROFILE = "Simple";
 
     /**
      * Job currently being crawled.
@@ -161,16 +146,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *
      */
     public CrawlJobHandler(){
-        // Look to see if a default order file system property has been
-        // supplied. If so, use it instead.
-        String aOrderFile = System.getProperty(DEFAULT_ORDER_FILE_NAME);
-        if (aOrderFile != null) {
-                settingsFile = aOrderFile;
-        }
-        else {
-            settingsFile = Heritrix.getHttpServer().getAdminWebappPath() +
-                DEFAULT_ORDER_FILE;
-        }
         loadProfiles();
     }
     
@@ -210,7 +185,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
         }
-        // TODO: set default profile (read from some properties).
+        // Look to see if a default profile system property has been
+        // supplied. If so, use it instead.
+        // TODO: Make changes to default profile durable across restarts.
+        defaultProfile = System.getProperty(DEFAULT_PROFILE_NAME);
+        if (defaultProfile == null) {
+            defaultProfile = DEFAULT_PROFILE;
+        }
     }
     
     /**
@@ -425,15 +406,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (controller != null) {
             controller.resumeCrawl();
         }
-    }
-
-    /**
-      * Returns the default settings filename. This includes path.
-      * 
-      * @return the default settings filename
-      */
-    public String getDefaultSettingsFilename() {
-        return settingsFile;
     }
 
     /**
