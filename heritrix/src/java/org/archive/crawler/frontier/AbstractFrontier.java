@@ -75,11 +75,11 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     /** always wait this long after one completion before recontacting
      * same server, regardless of multiple */
     public final static String ATTR_MIN_DELAY = "min-delay-ms";
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(3000); //2 seconds
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(3000); // 3 secs
     
     /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); //30 seconds
+    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); // 30 secs
 
     /** maximum per-host bandwidth usage */
     public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
@@ -95,7 +95,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     
     /** for retryable problems, seconds to wait before a retry */
     public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
-    protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
+    protected final static Long DEFAULT_RETRY_DELAY = new Long(900); // 15 mins
 
     /** maximum times to emit a CrawlURI without final disposition */
     public final static String ATTR_MAX_RETRIES = "max-retries";
