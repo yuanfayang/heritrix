@@ -259,15 +259,20 @@ public class CredentialDomain
                 "Credential that has all necessary" +
                 " for running a POST/GET to an HTML login form.");
             
-            Type t = addElementToDefinition(new SimpleType("loginuri",
+            Type t = addElementToDefinition(new SimpleType("url-pattern",
+                    "Pattern that defines the realm this login covers.", ""));
+                t.setOverrideable(true);
+                t.setExpertSetting(true);
+            
+            t = addElementToDefinition(new SimpleType("login-uri",
                 "URI of page that contains the HTML login form we're to apply" +
                 " these credentials too.", ""));
             t.setOverrideable(true);
             t.setExpertSetting(true);
 
             final String [] METHODS = {"POST", "GET"};
-            t = addElementToDefinition(new SimpleType("method", "GET or POST",
-                METHODS[0], METHODS));
+            t = addElementToDefinition(new SimpleType("http-method",
+                "GET or POST", METHODS[0], METHODS));
             t.setOverrideable(true);
             t.setExpertSetting(true);
             
@@ -297,7 +302,12 @@ public class CredentialDomain
         {
             super("Rfc2617Credential", "Basic/Digest Auth type credential.");
             
-            Type t = addElementToDefinition(new SimpleType("preempt",
+            Type t = addElementToDefinition(new SimpleType("realm",
+                "Basic/Digest Auth realm.", "Realm"));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+        
+            t = addElementToDefinition(new SimpleType("preempt",
                 "Preemptively offer credential in advance of 401 challenge.",
                 Boolean.FALSE));
             t.setOverrideable(true);
