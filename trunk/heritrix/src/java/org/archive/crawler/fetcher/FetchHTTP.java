@@ -48,9 +48,9 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
-import org.archive.httpclient.HeritrixGetMethod;
-import org.archive.httpclient.HeritrixHttpClient;
-import org.archive.httpclient.HeritrixHttpConnectionManager;
+import org.archive.httpclient.HttpRecorderGetMethod;
+import org.archive.httpclient.PatchedHttpClient;
+import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ConfigurableX509TrustManager;
@@ -107,7 +107,7 @@ public class FetchHTTP extends Processor
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 
-    HeritrixHttpClient http = null;
+    PatchedHttpClient http = null;
 
     private int soTimeout;
     
@@ -182,8 +182,8 @@ public class FetchHTTP extends Processor
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
         
         // Get and configure a new GetMethod.
-        HeritrixGetMethod get =
-            new HeritrixGetMethod(curi.getUURI().getURIString(), rec);
+        HttpRecorderGetMethod get =
+            new HttpRecorderGetMethod(curi.getUURI().getURIString(), rec);
         configureGetMethod(curi, get);
 
         int immediateRetries = 0;
@@ -340,9 +340,9 @@ public class FetchHTTP extends Processor
         {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-            HeritrixHttpConnectionManager connectionManager =
-                new HeritrixHttpConnectionManager();
-            this.http = new HeritrixHttpClient(connectionManager);
+            SingleHttpConnectionManager connectionManager =
+                new SingleHttpConnectionManager();
+            this.http = new PatchedHttpClient(connectionManager);
 
             try
             {

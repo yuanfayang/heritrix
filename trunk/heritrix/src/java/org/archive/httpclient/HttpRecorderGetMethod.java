@@ -1,4 +1,4 @@
-/* HeritrixGetMethod
+/* HttpRecorderGetMethod
  * 
  * Created on Feb 24, 2004
  * 
@@ -71,7 +71,7 @@ import org.archive.util.HttpRecorder;
  * @author stack
  * @version $Id$
  */
-public class HeritrixGetMethod extends GetMethod 
+public class HttpRecorderGetMethod extends GetMethod 
 {   
     /**
      * Instance of http recorder we're using recording this http get.
@@ -87,7 +87,7 @@ public class HeritrixGetMethod extends GetMethod
     private HttpConnection connection = null;
     
     
-	public HeritrixGetMethod(String uri, HttpRecorder recorder)
+	public HttpRecorderGetMethod(String uri, HttpRecorder recorder)
     {
 		super(uri);
         this.httpRecorder = recorder;
