@@ -48,4 +48,6 @@ public interface Type {
      * @return this type's default value
      */
     Object getDefaultValue();
+    
+    Object[] getLegalValues();
 }

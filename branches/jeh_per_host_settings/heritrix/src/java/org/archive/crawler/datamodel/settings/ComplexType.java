@@ -90,7 +90,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
             type.getName(),
             type.getDescription(),
             true,
-            null,
+            type.getLegalValues(),
             type.getDefaultValue());
         if (type instanceof ComplexType) {
             addComplexType(settings, (ComplexType) type);
@@ -394,5 +394,9 @@ public abstract class ComplexType implements DynamicMBean, Type {
 
     public boolean initialized() {
         return initialized;
+    }
+
+    public Object[] getLegalValues() {
+        return null;
     }
 }

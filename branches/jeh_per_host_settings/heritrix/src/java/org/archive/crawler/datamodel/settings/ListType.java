@@ -164,4 +164,11 @@ public abstract class ListType implements Type {
     public void clear() {
         listData.clear();
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getLegalValues()
+     */
+    public Object[] getLegalValues() {
+        return null;
+    }
 }
