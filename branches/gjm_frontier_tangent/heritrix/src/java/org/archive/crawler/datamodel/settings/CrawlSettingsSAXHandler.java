@@ -158,7 +158,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                     handler.startElement(qName, attributes);
                     skip.push(new Boolean(false));
                 } catch (SAXException e) {
-                    if (e.getException() instanceof InvocationTargetException) {
+                    if (e.getException() instanceof InvocationTargetException
+                            || e.getException()
+                            instanceof AttributeNotFoundException) {
                         skip.push(new Boolean(true));
                     } else {
                         skip.push(new Boolean(false));
@@ -279,7 +281,20 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                 try {
                     parentModule.setAttribute(settings, module);
                 } catch (AttributeNotFoundException e) {
-                    parentModule.addElement(settings, module);
+                    try {
+                        parentModule.addElement(settings, module);
+                    } catch (IllegalStateException ise) {
+                        // An attribute in the settings file is not in the
+                        // ComplexType's definition, log and skip.
+                        logger.warning("Module '" + moduleName
+                                + "' in '" + locator.getSystemId()
+                                + "', line: " + locator.getLineNumber()
+                                + ", column: " + locator.getColumnNumber()
+                                + " is not defined in '"
+                                + parentModule.getName() + "'.");
+                        throw new SAXException(
+                              new AttributeNotFoundException(ise.getMessage()));
+                    }
                 }
                 stack.push(module);
             } catch (InvocationTargetException e) {

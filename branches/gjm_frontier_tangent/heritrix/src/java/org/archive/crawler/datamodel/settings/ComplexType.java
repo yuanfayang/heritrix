@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -65,6 +66,9 @@ import org.archive.crawler.datamodel.UURI;
  * @author John Erik Halse
  */
 public abstract class ComplexType extends Type implements DynamicMBean {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.settings.ComplexType");
+
     private SettingsHandler settingsHandler;
     private ComplexType parent;
     private String description;
@@ -72,7 +76,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private final List definition = new ArrayList();
     protected final Map definitionMap = new HashMap();
     private boolean initialized = false;
-
+    private String[] preservedFields = new String[0];
+    
     /**
      * Private constructor to make sure that no one
      * instantiates this class with the empty constructor.
@@ -105,11 +110,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the global settings object.
      */
     public CrawlerSettings globalSettings() {
-        try {
-            return settingsHandler.getSettingsObject(null);
-        } catch (NullPointerException e) {
+        if (settingsHandler == null) {
             return null;
         }
+        return settingsHandler.getSettingsObject(null);
+        
+//        try {
+//            return settingsHandler.getSettingsObject(null);
+//        } catch (NullPointerException e) {
+//            return null;
+//        }
     }
 
     public Type addElement(CrawlerSettings settings, Type type)
@@ -128,14 +138,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return type;
     }
 
-    private ComplexType addComplexType(
-            CrawlerSettings settings, ComplexType object)
-            throws InvalidAttributeValueException {
+    private ComplexType addComplexType(CrawlerSettings settings,
+            ComplexType object) throws InvalidAttributeValueException {
 
         if (this.settingsHandler == null) {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
-        setupVaiables(object);
+        setupVariables(object);
         settings.addComplexType(object);
         if (!object.initialized) {
             Iterator it = object.definition.iterator();
@@ -148,6 +157,67 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         object.initialized = true;
 
         return object;
+    }
+
+    private ComplexType replaceComplexType(CrawlerSettings settings, ComplexType object) throws InvalidAttributeValueException, AttributeNotFoundException {
+        if (this.settingsHandler == null) {
+            throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
+        }
+        String[] preservedFields = object.getPreservedFields();
+        
+        setupVariables(object);
+        
+        DataContainer oldData = settings.getData(object);
+        settings.addComplexType(object);
+        DataContainer newData = settings.getData(object);
+        
+        if (!object.initialized) {
+            Iterator it = object.definition.iterator();
+            while (it.hasNext()) {
+                Type t = (Type) it.next();
+                
+                // Check if attribute should be copied from old object.
+                boolean found = false;
+                if (preservedFields.length > 0) {
+                    for (int i = 0; i < preservedFields.length; i++) {
+                        if (preservedFields[i].equals(t.getName())) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (found) {
+                    oldData.copyAttribute(t.getName(), newData);
+                    if (t instanceof ComplexType) {
+                        object.setupVariables((ComplexType) t);
+                    }
+                } else {
+                    object.addElement(settings, t);
+                }
+            }
+            object.earlyInitialize(settings);
+        }
+        object.initialized = true;
+
+        return object;
+    }
+    
+    /** Set a list of attribute names that the complex type should attempt to
+     * preserve if the module is exchanged with an other one.
+     * 
+     * @param preservedFields array of attributenames to preserve.
+     */
+    protected void setPreservedFields(String[] preservedFields) {
+        this.preservedFields = preservedFields;
+    }
+    
+    /** Get a list of attribute names that the complex type should attempt to
+     * preserve if the module is exchanged with an other one.
+     * 
+     * @return an array of attributenames to preserve.
+     */
+    protected String[] getPreservedFields() {
+        return this.preservedFields;
     }
 
     /** Get the active data container for this ComplexType for a specific
@@ -216,7 +286,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *
      * @param object to be set up.
      */
-    private void setupVaiables(ComplexType object) {
+    private void setupVariables(ComplexType object) {
         object.parent = this;
         object.settingsHandler = getSettingsHandler();
         object.absoluteName = getAbsoluteName() + '/' + object.getName();
@@ -256,12 +326,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             } catch (NullPointerException e) {
                 // The URI don't know its settings
             }
-        } else if (o instanceof UURI) {
+        } else if (o instanceof UURI || o instanceof CandidateURI) {
             // Try to get settings for URI that has no references to a
             // CrawlServer
             UURI uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
                     .getUURI() : (UURI) o;
-            settings = getSettingsHandler().getSettings(uri.getHost());
+            String hostName = uri.getHost() == null ? "" : uri.getHost();
+            settings = getSettingsHandler().getSettings(hostName);
         }
 
         // if settings could not be resolved use globals.
@@ -324,12 +395,17 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException {
         CrawlerSettings settings;
-        try {
-            settings = uri.getServer().getSettings();
-        } catch (NullPointerException e) {
-            // The URI don't know its settings, use globals
+        if(uri == null || uri.getServer() == null) {
             settings = globalSettings();
+        } else {
+            settings = uri.getServer().getSettings();
         }
+//        try {
+//            settings = uri.getServer().getSettings();
+//        } catch (NullPointerException e) {
+//            // The URI don't know its settings, use globals
+//            settings = globalSettings();
+//        }
         return getAttribute(settings, name);
     }
 
@@ -411,7 +487,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *         future.
      * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
      */
-    public void setAttribute(Attribute attribute)
+    public synchronized final void setAttribute(Attribute attribute)
         throws
             AttributeNotFoundException,
             InvalidAttributeValueException,
@@ -435,20 +511,21 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *         wrong type and cannot be converted to the right type.
      * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
      */
-    public void setAttribute(CrawlerSettings settings, Attribute attribute)
+    public synchronized final void setAttribute(CrawlerSettings settings, Attribute attribute)
         throws InvalidAttributeValueException, AttributeNotFoundException {
 
         DataContainer data = getOrCreateDataContainer(settings);
         Object value = attribute.getValue();
-        Object oldValue = data.put(attribute.getName(), value);
 
+        Object oldValue = data.put(attribute.getName(), value);
+        
         if (value instanceof ComplexType && value != oldValue) {
             ComplexType complex = (ComplexType) value;
-            setupVaiables(complex);
-            addComplexType(settings, complex);
+            //addComplexType(settings, complex);
+            replaceComplexType(settings, complex);
         }
     }
-
+    
     /** Unset an attribute on a per host level.
      *
      * This methods removes an override on a per host or per domain level.
@@ -502,8 +579,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                         try {
                             parent.setAttribute(settings, this);
                         } catch (AttributeNotFoundException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+                            logger.severe(e.getMessage());
                         }
                     }
                 } else {
