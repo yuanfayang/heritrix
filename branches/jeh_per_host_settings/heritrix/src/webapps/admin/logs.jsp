@@ -40,7 +40,7 @@
 	if(settingsHandler != null)
 	{
 		String diskPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_DISK_PATH);
-		diskPath = ((XMLSettingsHandler)settingsHandler).getPathRelativeToOrderFile(diskPath)+"/";
+		diskPath = settingsHandler.getPathRelativeToWorkingDirectory(diskPath)+"/";
 
 		// Got a valid crawl order, find it's logs
 		if(mode != null && mode.equalsIgnoreCase("number"))

@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -74,6 +76,7 @@ public abstract class CrawlScope extends Filter {
     }
 
     public void initialize(CrawlController controller) {
+        super.initialize(controller);
         // TODO let configuration info specify seedExtractor
     }
 
@@ -102,7 +105,7 @@ public abstract class CrawlScope extends Filter {
      */
     public Iterator getSeedsIterator() {
         try {
-            String fileName = (String) getAttribute(null, ATTR_SEEDS);
+            String fileName = controller.getSettingsHandler().getPathRelativeToWorkingDirectory((String)getAttribute(ATTR_SEEDS));
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
             return new SeedsInputIterator(reader,
                 getController());
@@ -111,6 +114,14 @@ public abstract class CrawlScope extends Filter {
             return null;
         } catch (AttributeNotFoundException e) {
             DevUtils.warnHandle(e, "problem reading seeds");
+            return null;
+        } catch (MBeanException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+            e.printStackTrace();
+            return null;
+        } catch (ReflectionException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+            e.printStackTrace();
             return null;
         }
     }

@@ -42,7 +42,7 @@ public abstract class Filter extends CrawlerModule {
     static final String ATTR_INVERTED = "inverted";
 
     // associated CrawlController
-    CrawlController controller;
+    protected CrawlController controller;
 
     /**
      * @param name
