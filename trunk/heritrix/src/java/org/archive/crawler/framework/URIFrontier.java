@@ -238,9 +238,9 @@ public interface URIFrontier {
      */
     public long deleteURIsFromPending(String match);
 
-    /**
-     * 
-     */
-    void start();
+//    /**
+//     * 
+//     */
+//    void start();
 
 }
