@@ -32,6 +32,20 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
             there was no recording of the dnsserver IP.
             </para>
         </sect3>
+        <sect3 id="mem_improvements">
+            <title>Memory Usage Improvements</title>
+
+        <para>Memory usage has been improved. RAM-based datastructures that
+        grew without bound now are disk-backed kept in berkeley db.
+        Long-running crawls that encounter many hosts over the life of a crawl,
+        or crawls started with hundreds-of-thousands-of seeds, or crawls that
+        encounter the unusual, say a page of a million seeds, will continue to
+        throw OutOfMemoryExceptions, but incidence should be less. 
+        </para>
+        <para>TODO: Add more specifics on how 
+        <xref xlink="upper_bounds" /> have changed.</para>
+        </sect3>
+
     </sect2>
     <sect2 id="1_4_0_limitations">
       <title>Known Limitations/Issues</title>
