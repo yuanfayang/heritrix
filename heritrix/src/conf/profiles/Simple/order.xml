@@ -136,6 +136,9 @@
       </newObject>
     </map>
     <map name="loggers">
+      <newObject name="crawl-statistics" class="org.archive.crawler.admin.StatisticsTracker">
+        <integer name="interval-seconds">20</integer>
+      </newObject>
     </map>
   </controller>
 </crawl-order>
