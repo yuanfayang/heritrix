@@ -73,11 +73,16 @@ import org.archive.util.ArchiveUtils;
  *
  * @author Gordon Mohr
  */
-public class CrawlController extends Thread {
+public class CrawlController {
+    // manifest support
+    /** abbrieviation label for config files in manifest */
     public static final char MANIFEST_CONFIG_FILE = 'C';
+    /** abbrieviation label for report files in manifest */
     public static final char MANIFEST_REPORT_FILE = 'R';
+    /** abbrieviation label for log files in manifest */
     public static final char MANIFEST_LOG_FILE = 'L';
-    
+
+    // key log names
     private static final String LOGNAME_PROGRESS_STATISTICS =
         "progress-statistics";
     private static final String LOGNAME_URI_ERRORS = "uri-errors";
@@ -86,26 +91,25 @@ public class CrawlController extends Thread {
     private static final String LOGNAME_CRAWL = "crawl";
     private static final String LOGNAME_RECOVER = "recover";
 
-    private SettingsHandler settingsHandler;
-
-    protected String sExit;
-
-    /**
-     * Comment for <code>DEFAULT_MASTER_THREAD_PRIORITY</code>
-     */
-    public static final int DEFAULT_MASTER_THREAD_PRIORITY =
-        Thread.NORM_PRIORITY + 1;
-
-    private int timeout = 1000;
-    // to wait for CrawlURI from frontier before spinning
-    private Thread controlThread;
+    // key subcomponents which define and implement a crawl in progress
+    private CrawlOrder order;
+    private CrawlScope scope;
+    private ProcessorChainList processorChains;
     private ToePool toePool;
     private URIFrontier frontier;
+    private ServerCache serverCache;
+    private SettingsHandler settingsHandler;
+
+    // crawl state: as requested or actual
+    private String sExit;                  // exit status
     private boolean shouldCrawl;
     private boolean shouldPause;
+    private boolean paused = false;
 
-    private File disk;
-    private File scratchDisk;
+    // disk paths
+    private File disk;        // overall disk path
+    private File stateDisk;   // for temp files representing state of crawler (eg queues)
+    private File scratchDisk; // for discardable temp files (eg fetch buffers)
     
     /** 
      * A manifest of all files used/created during this crawl. Written to file
@@ -179,20 +183,11 @@ public class CrawlController extends Thread {
     // And then switch to the array once there is more then one.
     protected ArrayList registeredCrawlURIDispositionListeners;
 
-    CrawlOrder order;
-    CrawlScope scope;
 
-    private ProcessorChainList processorChains;
 
-    int nextToeSerialNumber = 0;
-
-    ServerCache serverCache;
-
-    private boolean paused = false;
-    private boolean finished = false;
 
     /**
-     * 
+     * default constructor
      */
     public CrawlController() {
     }
@@ -505,14 +500,22 @@ public class CrawlController extends Thread {
     }
 
     private void setupDisk() throws FatalConfigurationException,
-                                    AttributeNotFoundException {
+    AttributeNotFoundException {
         String diskPath
-            = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
+        = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
         disk.mkdirs();
-
+        
+        String stateDiskPath
+        = (String) order.getAttribute(null, CrawlOrder.ATTR_STATE_PATH);
+        stateDisk = new File(stateDiskPath);
+        if (!stateDisk.isAbsolute()) {
+            stateDisk = new File(disk.getPath(), stateDiskPath);
+        }
+        stateDisk.mkdirs();
+        
         String scratchDiskPath
-            = (String) order.getAttribute(null, CrawlOrder.ATTR_SCRATCH_PATH);
+        = (String) order.getAttribute(null, CrawlOrder.ATTR_SCRATCH_PATH);
         scratchDisk = new File(scratchDiskPath);
         if (!scratchDisk.isAbsolute()) {
             scratchDisk = new File(disk.getPath(), scratchDiskPath);
@@ -629,64 +632,28 @@ public class CrawlController extends Thread {
     /**
      *
      */
-    public void startCrawl() {
+    public void requestCrawlStart() {
         // assume Frontier state already loaded
         shouldCrawl = true;
         shouldPause = false;
         logger.info("Should start Crawl");
 
-        this.start();
-    }
-
-    /** (non-Javadoc)
-     * @see java.lang.Thread#run()
-     */
-    public void run() {
-        logger.fine(getName() + " started for CrawlController");
         sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
         // A proper exit will change this value.
-        assert controlThread == null : "non-null control thread";
-        controlThread = Thread.currentThread();
-        controlThread.setName("crawlControl");
-        controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
 
         // start periodic background logging of crawl statistics
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
         statLogger.start();
 
+        // TODO: add 'start in pause' option?
         toePool.setShouldPause(false);
-//        frontier.start();
-        while (shouldCrawl()) {
-            if (shouldPause) {
-                pauseCrawl();
-            }
-            synchronized(this) {
-                try {
-                    wait(1000); // Wake in 1 sec to check if crawl is finished.
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    }
 
-        // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
-        Iterator iterator = registeredCrawlStatusListeners.iterator();
-        while (iterator.hasNext()) {
-            ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
-        }
-
-        // Wait for all ToeThreads to exit.
-        while (getActiveToeCount() > 0 ) {
-            synchronized(this){
-                try {
-                    wait(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
+    /** 
+     * 
+     */
+    private void completeStop() {
         // Ok, now we are ready to exit.
         while (registeredCrawlStatusListeners.size() > 0) {
             // Let the listeners know that the crawler is finished.
@@ -695,25 +662,23 @@ public class CrawlController extends Thread {
             registeredCrawlStatusListeners.remove(0);
         }
 
-        // Save processors report to file
-        try {
-            File procreport = new File(getDisk().getPath() +
-                    File.separator + "processors-report.txt");
-            FileWriter fw = new FileWriter(procreport);
-            fw.write(reportProcessors());
-            fw.flush();
-            fw.close();
-            addToManifest(procreport.getAbsolutePath(), MANIFEST_REPORT_FILE, true);
-        } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write processors-report.txt",
-                    "Unable to write processors-report.txt at the end of crawl.",
-                    e,Level.SEVERE));
-            e.printStackTrace();
-        }
+        finishProcessors();
+        writeManifest();
+        
+        logger.info("exiting a crawl run");
 
-        // Run processors' final tasks
-        runProcessorFinalTasks();
+        // Do cleanup to facilitate GC.
+        frontier = null;
+        disk = null;
+        scratchDisk = null;
+        toePool = null;
+        registeredCrawlStatusListeners = null;
+        order = null;
+        scope = null;
+        serverCache = null;
+    }
 
+    private void writeManifest() {
         // Complete manifest (write configuration files and any 
         // files managed by CrawlController to it - files managed by other 
         // classes, excluding the settings framework, are responsible for 
@@ -736,75 +701,42 @@ public class CrawlController extends Thread {
                     e,Level.SEVERE));
             e.printStackTrace();
         }
-        
-        
-        logger.info("exiting run");
-
-        //Do cleanup to facilitate GC.
-        controlThread = null;
-        frontier = null;
-        disk = null;
-        scratchDisk = null;
-        toePool = null;
-        registeredCrawlStatusListeners = null;
-        order = null;
-        scope = null;
-        serverCache = null;
-
-        logger.fine(getName() + " finished for order CrawlController");
     }
 
-    private synchronized void pauseCrawl() {
-        Iterator iterator = registeredCrawlStatusListeners.iterator();
-
-        // Wait until all ToeThreads are finished with their work
-        // The crawlPausing() event should have told them to pause.
-        while (getActiveToeCount() > 0 && shouldPause) {
-            try {
-                wait(200);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+    private void finishProcessors() {
+        // Save processors report to file
+        try {
+            File procreport = new File(getDisk().getPath() +
+                    File.separator + "processors-report.txt");
+            FileWriter fw = new FileWriter(procreport);
+            fw.write(reportProcessors());
+            fw.flush();
+            fw.close();
+            addToManifest(procreport.getAbsolutePath(), MANIFEST_REPORT_FILE, true);
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write processors-report.txt",
+                    "Unable to write processors-report.txt at the end of crawl.",
+                    e,Level.SEVERE));
+            e.printStackTrace();
         }
-        
-        if(shouldPause){
-            paused = true;
-            // Tell everyone that we have paused
-            logger.info("Crawl job paused");
-            iterator = registeredCrawlStatusListeners.iterator();
-            while (iterator.hasNext()) {
-                ((CrawlStatusListener) iterator.next()).crawlPaused(
-                        CrawlJob.STATUS_PAUSED);
-            }
-            
-            try {
-                wait(); // resumeCrawl() will wake us.
-                if(shouldCrawl==false){
-                    // woken to stop crawling
-                    return;
-                }
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        
-        // Been given an order to resume while waiting
-        // to pause
-        paused = false;
-        toePool.setShouldPause(false);
 
-        logger.info("Crawl job resumed");
-        
-        // Tell everyone that we have resumed from pause
+        // Run processors' final tasks
+        runProcessorFinalTasks();
+    }
+
+    private synchronized void completePause() {   
+        Iterator iterator;
+
+        paused = true;
+        // Tell everyone that we have paused
+        logger.info("Crawl job paused");
         iterator = registeredCrawlStatusListeners.iterator();
         while (iterator.hasNext()) {
-            ((CrawlStatusListener) iterator.next()).crawlResuming(
-                    CrawlJob.STATUS_RUNNING);
+            ((CrawlStatusListener) iterator.next()).crawlPaused(
+                    CrawlJob.STATUS_PAUSED);
         }
     }
-
+    
     private boolean shouldCrawl() {
         boolean frontierEmpty = frontier.isEmpty();
         if (frontierEmpty) {
@@ -856,12 +788,15 @@ public class CrawlController extends Thread {
     /**
      * 
      */
-    public synchronized void stopCrawl() {
+    public synchronized void requestCrawlStop() {
         sExit = CrawlJob.STATUS_ABORTED;
         shouldCrawl = false;
-        // If crawl is paused it should be resumed first so it
-        // can be stopped properly
-        notifyAll();
+
+        // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
+        Iterator iterator = registeredCrawlStatusListeners.iterator();
+        while (iterator.hasNext()) {
+            ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
+        }
     }
 
     /**
@@ -895,14 +830,25 @@ public class CrawlController extends Thread {
     /**
      * Resume crawl from paused state
      */
-    public synchronized void resumeCrawl() {
+    public synchronized void requestCrawlResume() {
         if (shouldPause==false) {
             // Can't resume if not been told to pause
             return;
         }
 
         shouldPause = false;
-        notify();
+        paused = false;
+        toePool.setShouldPause(false);
+
+        logger.info("Crawl job resumed");
+        
+        Iterator iterator;
+        // Tell everyone that we have resumed from pause
+        iterator = registeredCrawlStatusListeners.iterator();
+        while (iterator.hasNext()) {
+            ((CrawlStatusListener) iterator.next()).crawlResuming(
+                    CrawlJob.STATUS_RUNNING);
+        }
     }
 
     /**
@@ -989,6 +935,13 @@ public class CrawlController extends Thread {
      */
     public File getScratchDisk() {
         return scratchDisk;
+    }
+
+    /**
+     * @return State disk location.
+     */
+    public File getStateDisk() {
+        return stateDisk;
     }
 
     /**
@@ -1103,5 +1056,27 @@ public class CrawlController extends Thread {
      */
     public void addToManifest(String file, char type, boolean bundle){
         manifest.append(type+(bundle?"+":"-")+" "+file+"\n");
+    }
+
+    /**
+     * Note that a ToeThread is pausing; may receive more than one
+     * notification, if a thread is notify()d while paused. 
+     * 
+     * @param thread
+     */
+    public void toePausing(ToeThread thread) {
+        if (shouldPause && getActiveToeCount() == 0) {
+            completePause();
+        }
+    }
+
+    /**
+     * Note that a ToeThread is finished.
+     * @param thread
+     */
+    public void toeFinished(ToeThread thread) {
+        if(!shouldCrawl && getActiveToeCount() == 0) {
+            completeStop();
+        }
     }
 }
