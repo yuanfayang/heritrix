@@ -35,6 +35,12 @@ public interface CrawlJob
 	public static final String STATUS_FINISHED_DOCUMENT_LIMIT = "Finished - Maximum number of documents limit hit"; //Job finished normally when the specified number of documents had been fetched.
 	
 	/**
+	 * Each job needs to be assigned a unique number to ID it.
+	 *
+	 */
+	public int getUID();
+	
+	/**
 	 * 
 	 * @param jobname should be equal to the crawl-order xml's name attribute
 	 */
