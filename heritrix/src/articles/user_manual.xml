@@ -3139,6 +3139,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>The <literal>prefix</literal> is set by the user when he
         configures the ARCWriter processor. By default it is IAH.</para>
+        <para>If you see an ARC file with an extra <literal>.open</literal>
+        suffix, this means the ARC is currently in use being written to
+        by Heritrix (It usually has more than one ARC open at a time).</para>
 
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
