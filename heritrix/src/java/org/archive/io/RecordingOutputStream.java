@@ -104,20 +104,6 @@ public class RecordingOutputStream extends OutputStream {
 		}
 	}
 	
-//	/**
-//	 * Total reset -- discarding all 
-//	 */
-//	public void clear() {
-//		try {
-//			// diskStream.flush(); // redundant
-//			diskStream.close();
-//		} catch (IOException e) {
-//			// nothing
-//		}
-//		diskStream = null;
-//	}
-
-
 	/* (non-Javadoc)
 	 * @see java.io.OutputStream#write(int)
 	 */
@@ -142,7 +128,8 @@ public class RecordingOutputStream extends OutputStream {
 		wrappedStream.write(b,off,len);
 	}
 	
-	/**
+	/** Record the given byte for later recovery
+     * 
      * @param b
      */
     private void record(int b) throws IOException {
@@ -158,7 +145,8 @@ public class RecordingOutputStream extends OutputStream {
         position++;
     }
 	
-	/**
+	/** Record the given byte-array range for recovery later
+     * 
 	 * @param b
 	 * @param off
 	 * @param len
