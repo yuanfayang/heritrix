@@ -68,7 +68,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         this.description = description;
     }
 
-    protected void setAsController(SettingsHandler settingsHandler)
+    protected void setAsOrder(SettingsHandler settingsHandler)
         throws InvalidAttributeValueException {
         this.settingsHandler = settingsHandler;
         this.parent = null;
