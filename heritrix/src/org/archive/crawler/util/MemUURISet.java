@@ -4,9 +4,13 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.util;
 
 import java.util.HashSet;
+
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURISet;
 
 /**
  * @author gojomo

@@ -13,10 +13,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.StatisticsTracker;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.IAGZIPOutputStream;
