@@ -31,7 +31,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,15 +73,17 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.MemLongFPSet;
 import org.archive.util.PaddingStringBuffer;
 
+import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
+
 /**
  * A basic mostly breadth-first frontier, which refrains from
  * emitting more than one CrawlURI of the same 'key' (host) at
  * once, and respects minimum-delay and delay-factor specifications
  * for politeness.
  *
- * There is one generic 'pendingQueue', and then an arbitrary
- * number of other 'KeyedQueues' each representing a certain
- * 'key' class of URIs -- effectively, a single host (by hostname).
+ * There are an arbitrary number of 'KeyedQueues' each representing 
+ * a certain 'key' class of URIs -- effectively, a single host (by 
+ * hostname). 
  *
  * KeyedQueues may have an item in-process -- in which case they
  * do not provide any other items for processing. KeyedQueues may
@@ -105,51 +106,53 @@ public class Frontier
 
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
+    protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
+    
     /** always wait this long after one completion before recontacting
      * same server, regardless of multiple */
     public final static String ATTR_MIN_DELAY = "min-delay-ms";
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000); //2 seconds
+    
     /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
+    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); //30 seconds
+    
     /** maximum times to emit a CrawlURI without final disposition */
     public final static String ATTR_MAX_RETRIES = "max-retries";
+    protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
+
     /** for retryable problems, seconds to wait before a retry */
     public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
+    protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
+
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
+    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
+
     /** maximum simultaneous requests in process to a host (queue) */
     public final static String ATTR_HOST_VALENCE = "host-valence";
+    protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
+
     /** number of hops of embeds (ERX) to bump to front of host queue */
     public final static String ATTR_PREFERENCE_EMBED_HOPS = "preference-embed-hops";
+    protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
+
     /** maximum overall bandwidth usage */
     public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
         "total-bandwidth-usage-KB-sec";
+    protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
+        new Integer(0);
+
     /** maximum per-host bandwidth usage */
     public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
         "max-per-host-bandwidth-usage-KB-sec";
+    protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
+        new Integer(0);
 
-    /** how many items to store in memory atop of the pending queue
-     * higher == more RAM used per active host; lower == more disk IO */
-    public final static String ATTR_PENDING_QUEUE_MEMORY_CAPACITY =
-        "pending-queue-memory-capacity";
     /** maximum how many items to store in memory atop each keyedqueue
      * higher == more RAM used per active host; lower == more disk IO */
     public final static String ATTR_HOST_QUEUES_MEMORY_CAPACITY =
         "host-queues-memory-capacity";
-
-
-    protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000); //2 seconds
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); //30 seconds
-    protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
-    protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
-    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
-    protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
-    protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
-    protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
-        new Integer(0);
-    protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
-        new Integer(0);
-
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
 
@@ -166,17 +169,18 @@ public class Frontier
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
     // all per-class queues
-    HashMap allClassQueuesMap = new HashMap(); // of String (classKey) -> KeyedQueue
+    ConcurrentReaderHashMap allClassQueuesMap = new ConcurrentReaderHashMap(); // of String (classKey) -> KeyedQueue
 
     // all per-class queues whose first item may be handed out (that is, 
     // they are READY)
-    LinkedList readyClassQueues = new LinkedList(); // of KeyedQueue
+    LinkedList readyClassQueues = new LinkedList(); // of KeyedQueues
 
     // all per-class queues who are on hold until a certain time
     SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
     
-    // all per-class queues who are INACTIVE
-    LinkedList inactiveClassQueues = new LinkedList();
+    // all per-class queues who are INACTIVE; will be empty unless
+    // 'site-first'/'hold-queues' is set
+    LinkedList inactiveClassQueues = new LinkedList(); // of KeyedQueues
     
     // top-level stats
     long queuedCount = 0;
@@ -298,8 +302,6 @@ public class Frontier
         throws FatalConfigurationException, IOException {
         this.controller = c;
 
-//        pendingQueue = createPendingQueue(c.getStateDisk(),"pendingQ");
-
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
                 "alreadyIncluded");
 
@@ -316,11 +318,13 @@ public class Frontier
      */
     protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
             throws IOException, FatalConfigurationException {
-        // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
+        
         UriUniqFilter uuf = new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
         uuf.setDestination(this);
         return uuf;
+        
+        // some other possible ideas/experiments:
         
         //return new PagedUURISet(c.getScratchDisk());
 
@@ -347,7 +351,7 @@ public class Frontier
      *
      * @see org.archive.crawler.framework.CrawlController#kickUpdate()
      */
-    public void loadSeeds() {
+    public synchronized void loadSeeds() {
         // Get the seeds to refresh and then get an iterator inside a
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
@@ -361,7 +365,7 @@ public class Frontier
                 CandidateURI caUri = new CandidateURI(u);
                 caUri.setSeed();
                 caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-                schedule(caUri);
+                innerSchedule(caUri);
             }
         }
     }
@@ -386,7 +390,7 @@ public class Frontier
     /**
      * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
      */
-    public void batchSchedule(CandidateURI caUri) {
+    protected void batchSchedule(CandidateURI caUri) {
         threadWaiting.getQueue().enqueue(caUri);
     }
 
@@ -394,7 +398,7 @@ public class Frontier
      *
      * @see org.archive.crawler.framework.URIFrontier#batchFlush()
      */
-    public synchronized void batchFlush() {
+    protected void batchFlush() {
         innerBatchFlush();
     }
 
@@ -411,18 +415,8 @@ public class Frontier
      *
      * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
-    public synchronized void schedule(CandidateURI caUri) {
-        long start = System.currentTimeMillis();
-        innerSchedule(caUri);
-        long duration = System.currentTimeMillis()-start;
-        if (duration > 1000) {
-            int serialNumber =
-                (!(Thread.currentThread() instanceof ToeThread))? -1:
-                    ((ToeThread)Thread.currentThread()).getSerialNumber();
-            System.err.println("#" + serialNumber + " " + duration + "ms" +
-                " schedule(" + caUri.getURIString() + ") via " +
-                caUri.flattenVia());
-        }
+    public void schedule(CandidateURI caUri) {
+        batchSchedule(caUri);
     }
 
     /**
@@ -475,12 +469,7 @@ public class Frontier
             }
         }
 
-        if(enqueueToKeyed(curi)) {
-            this.alreadyIncluded.add(curi);
-            this.queuedCount++;
-            // Update recovery log.
-            this.controller.recover.added(curi);
-        } // else ignore: enqueueToKeyed already disposed of curi
+        enqueueToKeyed(curi);
     }
 
     /**
@@ -499,6 +488,8 @@ public class Frontier
             long now = System.currentTimeMillis();
             CrawlURI curi = null;
 
+            // check completion conditions
+            controller.checkFinish();
             // enforce operator pause
             while(shouldPause) {
                 controller.toePaused();
@@ -508,7 +499,7 @@ public class Frontier
             if(shouldTerminate) {
                 throw new EndedException("terminated");
             }
-            
+           
             enforceBandwidthThrottle(now);
             
             // Check for snoozing queues who are ready to wake up.
@@ -520,7 +511,7 @@ public class Frontier
             // TODO: (probably elsewhere) deactivate active queues that "have 
             // done enough for now" ("enough" to be defined)
             while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
-                URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
+                KeyedQueue kq = (KeyedQueue) inactiveClassQueues.removeFirst();
                 kq.activate();
                 assert kq.isEmpty() == false : "empty queue was waiting for activation";
                 kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
@@ -584,8 +575,9 @@ public class Frontier
      * while this pause is in effect.
      * 
      * @param now
+     * @throws InterruptedException
      */
-    private void enforceBandwidthThrottle(long now) {
+    private void enforceBandwidthThrottle(long now) throws InterruptedException {
         int maxBandwidthKB;
         try {
             maxBandwidthKB = ((Integer) getAttribute(
@@ -618,11 +610,8 @@ public class Frontier
                 synchronized(this) {
                     logger.fine("Frontier sleeps for: " + sleepTime
                             + "ms to respect bandwidth limit.");
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                        logger.warning(e.getLocalizedMessage());
-                    }
+                    Thread.sleep(sleepTime);
+
                 }
             }
         }
@@ -647,7 +636,12 @@ public class Frontier
         notify(); // new items might be available, let waiting threads know
         
         try {
-            noteProcessingDone(curi);
+            URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
+            Object startState = kq.getState();
+            curi.incrementFetchAttempts();
+            logLocalizedErrors(curi);
+            kq.noteProcessDone(curi);
+            updateScheduling(curi, kq);
 
             if (curi.isSuccess()) {
                 successDisposition(curi);
@@ -667,6 +661,9 @@ public class Frontier
                 failureDisposition(curi);
             }
 
+            if(startState!=kq.getState() || kq.isDiscardable()) {
+                updateQ(kq);
+            }
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
@@ -794,7 +791,6 @@ public class Frontier
      */
     public boolean isEmpty() {
         return 
-//            pendingQueue.isEmpty() &&
             alreadyIncluded.pending()==0 &&
             allClassQueuesMap.isEmpty();
     }
@@ -811,7 +807,6 @@ public class Frontier
                 logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
                 logger.severe(report());
             }
-            // assert awoken.getInProcessItem() == null : "false ready: class peer still in process";
             awoken.wake();
             updateQ(awoken);
         }
@@ -820,10 +815,8 @@ public class Frontier
     private void discardQueue(URIWorkQueue q) {
         allClassQueuesMap.remove(q.getClassKey());
         q.discard();
-        //assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
         assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q";
         assert !snoozeQueues.contains(q) : "snoozeQueues holding dead q";
-        //assert heldClassQueues.size()+readyClassQueues.size()+snoozeQueues.size() <= allClassQueuesMap.size() : "allClassQueuesMap discrepancy";
     }
 
     private CrawlURI dequeueFromReady() {
@@ -831,6 +824,7 @@ public class Frontier
         assert firstReadyQueue.getState() == URIWorkQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
         assert firstReadyQueue.isEmpty() == false : "top ready queue inexplicably empty";
         CrawlURI readyCuri = firstReadyQueue.dequeue();
+        readyCuri.setHolder(firstReadyQueue); // for future convenient reference
         firstReadyQueue.checkEmpty();
         return readyCuri;
     }
@@ -869,7 +863,7 @@ public class Frontier
      * @param curi The CrawlURI
      */
     protected void noteInProcess(CrawlURI curi) {
-        URIWorkQueue kq = keyedQueueFor(curi);
+        URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
         if(kq==null){
             logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
@@ -880,7 +874,8 @@ public class Frontier
 
         kq.noteInProcess(curi);
         if(kq.getState()==URIWorkQueue.BUSY || kq.getState() == URIWorkQueue.EMPTY) {
-            readyClassQueues.remove(kq);
+            assert readyClassQueues.getFirst() == kq : "readClassQueues head object unexpected";
+            readyClassQueues.removeFirst();
         }
     }
 
@@ -893,11 +888,14 @@ public class Frontier
      */
     protected URIWorkQueue keyedQueueFor(CrawlURI curi) {
         URIWorkQueue kq = null;
-        kq = (URIWorkQueue)this.allClassQueuesMap.get(curi.getClassKey());
-        if (kq==null) {
-            try {
+        synchronized (allClassQueuesMap) {
+            kq = (URIWorkQueue)this.allClassQueuesMap.get(curi.getClassKey());
+            if (kq==null) {
                 try {
                     String key = curi.getClassKey();
+                    // the creation of disk directories makes this a potentially
+                    // lengthy operation we don't want to hold full-frontier lock
+                    // for 
 					kq = new KeyedQueue(key,
                         this.controller.getServerCache().getServerFor(curi),
 					    scratchDirFor(key),
@@ -906,23 +904,29 @@ public class Frontier
                     kq.setValence(((Integer)getAttribute(ATTR_HOST_VALENCE,curi)).intValue());
                     this.allClassQueuesMap.put(kq.getClassKey(),kq);
                     if(((Boolean)getAttribute(ATTR_HOLD_QUEUES,curi)).booleanValue()) {
+                        // set inactive in-mem caps to 1/20th of active TODO: configurable
+                        ((KeyedQueue)kq).setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
+                                ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue()/20);
                         // leave inactive, add to inactive collection
-                        this.inactiveClassQueues.add(kq);
+                        // TODO: see if this can't be mvoed elsewhere
+                        this.inactiveClassQueues.addLast(kq);
                     } else {
+                        ((KeyedQueue)kq).setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
+                                ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
                         // make eligible for READY status immediately
                         kq.activate();
                     }
                 } catch (AttributeNotFoundException e2) {
                     logger.severe(e2.getMessage());
+                } catch (IOException e) {
+                    // An IOException occured trying to make new KeyedQueue.
+                    curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
+                    Object array[] = { curi };
+                    this.controller.runtimeErrors.log(
+                            Level.SEVERE,
+                            curi.getUURI().toString(),
+                            array);
                 }
-            } catch (IOException e) {
-                // An IOException occured trying to make new KeyedQueue.
-                curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
-                Object array[] = { curi };
-                this.controller.runtimeErrors.log(
-                        Level.SEVERE,
-                        curi.getUURI().toString(),
-                        array);
             }
         }
         return kq;
@@ -956,7 +960,7 @@ public class Frontier
      * @param curi The CrawlURI
      * @return wether CrawlURI was ssuccessfully enqueued
      */
-    protected boolean enqueueToKeyed(CrawlURI curi) {
+    protected void enqueueToKeyed(CrawlURI curi) {
         URIWorkQueue kq = keyedQueueFor(curi);
         if(kq==null){
             logger.severe("No workQueue found for "+curi);
@@ -965,52 +969,21 @@ public class Frontier
             // have problems.
             curi.setFetchStatus(S_UNQUEUEABLE); 
             failureDisposition(curi);
-            return false; // Couldn't find/create kq.
+            return; // Couldn't find/create kq.
         }
 
-        if(kq.getState()==URIWorkQueue.INACTIVE) {
-            // inactive queue: manage memory load
-            enqueueToKeyedInactive(kq, curi);
-            return true;
-        }
-        // active queue: may affect scheduling
         kq.enqueue(curi);
-        if(kq.checkEmpty()) {
-            // if kq state changed, update frontier's internals
-            updateQ(kq);
+        if(kq.getState()!=URIWorkQueue.INACTIVE) {
+            // active queue: may affect scheduling
+            if(kq.checkEmpty()) {
+                // if kq state changed, update frontier's internals
+                updateQ(kq);
+            }
         }
-        return true;
-    }
-
-    /**
-     * This method attempts to keep the overall number of items
-     * in memory from inactive queues (inactiveMemoryLoadTotal) 
-     * close to a target value (inactiveMemoryLoadTarget) by 
-     * varying a per-queue threshold (inactivePerQueueLoadThreshold)
-     * up and down. 
-     * 
-     * @param kq
-     * @param curi
-     */
-    private void enqueueToKeyedInactive(URIWorkQueue kq, CrawlURI curi) {
-        // note memory load & load target
-        if(inactiveQueuesMemoryLoadTotal>inactiveQueuesMemoryLoadTarget) {
-            inactivePerQueueLoadThreshold--;
-        } else {
-            inactivePerQueueLoadThreshold++;
-        }
-        
-        int oldQueueLoad = kq.memoryLoad();
-        // set load target
-        kq.setMaximumMemoryLoad(inactivePerQueueLoadThreshold);
-        
-        // enqueue
-        kq.enqueue(curi); // this may actually trigger a flush
-        
-        int newQueueLoad = kq.memoryLoad();
-        
-        // note memory load change
-        inactiveQueuesMemoryLoadTotal = inactiveQueuesMemoryLoadTotal - oldQueueLoad + newQueueLoad;
+        this.queuedCount++;
+        // Update recovery log.
+        this.controller.recover.added(curi);
+        return;
     }
 
     /**
@@ -1018,6 +991,7 @@ public class Frontier
      * Should only be called after state has changed.
      *
      * @param kq
+     * @throws InterruptedException
      */
     private void updateQ(URIWorkQueue kq) {
         Object state = kq.getState();
@@ -1028,7 +1002,7 @@ public class Frontier
         }
         if (state == URIWorkQueue.READY ) {
             // has become ready
-            readyClassQueues.add(kq);
+            readyClassQueues.addLast(kq);
             synchronized (this) {
                 notify(); // wake a waiting thread
             }
@@ -1038,59 +1012,11 @@ public class Frontier
         // TODO: verify this in only reached in sensible situations
     }
 
-    /**
-     * stop this queue from being actively scheduled
-     * essentially: a reaction to a serious connectivity
-     * problem or operator request
-     *
-     * @param kq
-     */ 
-    public synchronized void freezeQueue(URIWorkQueue kq) {
-        if(kq.getState()== URIWorkQueue.SNOOZED) {
-            snoozeQueues.remove(kq);
-        } else if (kq.getState() == URIWorkQueue.READY ) {
-            readyClassQueues.remove(kq);
-        }
-        kq.freeze();
-    }
-
-    /**
-     * allow this queue to be actively scheduled
-     * (by operator request)
-     *
-     * @param kq
-     */
-    public synchronized void unfreezeQueue(URIWorkQueue kq) {
-        kq.unfreeze();
-        //kq.activate(); // TODO: implement active/inactive distinctions
-    }
-
     protected long earliestWakeTime() {
         if (!snoozeQueues.isEmpty()) {
             return ((URIWorkQueue)snoozeQueues.first()).getWakeTime();
         }
         return Long.MAX_VALUE;
-    }
-
-    /**
-     *
-     * @param curi
-     * @throws AttributeNotFoundException
-     */
-    protected void noteProcessingDone(CrawlURI curi) throws AttributeNotFoundException {
-        curi.incrementFetchAttempts();
-        logLocalizedErrors(curi);
-        URIWorkQueue kq = keyedQueueFor(curi);
-        if(kq==null){
-            logger.severe("No workQueue found for "+curi);
-            return; // Couldn't find/create kq.
-        }
-        Object startState = kq.getState();
-        kq.noteProcessDone(curi);
-        updateScheduling(curi, kq);
-        if(startState!=kq.getState() || kq.isDiscardable()) {
-            updateQ(kq);
-        }
     }
 
     /**
@@ -1266,7 +1192,7 @@ public class Frontier
         if (delay>0) {
             // snooze to future
             logger.finer("inserting snoozed "+curi+" for "+delay);
-            URIWorkQueue kq = keyedQueueFor(curi);
+            URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
             if(kq!=null){
                 snoozeQueueUntil(kq,System.currentTimeMillis()+(delay*1000));
             }
@@ -1303,11 +1229,6 @@ public class Frontier
      * @param wake Time (in millisec.) when we want the queue to stop snoozing.
      */
     protected void snoozeQueueUntil(URIWorkQueue kq, long wake) {
-//      // FROZEN not yet implemented
-//        if(kq.getState()==URIWorkQueue.FROZEN) {
-//            // only explicit operator action my unfreeze a queue
-//            return;
-//        }
         if(kq.getState()== URIWorkQueue.INACTIVE) {
             // likely a brand new queue under a site-first mode of operation
             // must activate before snoozing
@@ -1377,15 +1298,6 @@ public class Frontier
      */
     public long finishedUriCount() {
         return successCount+failedCount+disregardedCount;
-    }
-
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
-     */
-    public long pendingUriCount() {
-        // Always zero. No URI is kept pending. All are processed as soon as
-        // they are scheduled.
-        return 0;
     }
 
     /** (non-Javadoc)
