@@ -829,22 +829,26 @@ public class ReplayCharSequenceFactory {
                 // Get a writer.  Output in our WRITE_ENCODING.
                 writer = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(unicode), WRITE_ENCODING));
-                
+                assert writer != null: "Writer is null: " + name;
                 CoderResult result = null;
                 ByteBuffer bb = null;
                 for (int i = 0; i < buffers.length; i++) {
                     bb = buffers[i];
+                    assert bb.hasRemaining(): "Buffer has nought in it: " + i;
                     while((result = decoder.decode(bb, cb, false))
                             == CoderResult.UNDERFLOW && bb.hasRemaining()) {
                         drainCharBuffer(cb, writer);
                     }
                     
                     if (result != CoderResult.UNDERFLOW) {
-                        throw new IOException("Unexpected reasult: " + result);
+                        throw new IOException("Unexpected result: " + result);
                     }
                 }
                 
-                result = decoder.decode(bb, cb, true);
+                if ((result = decoder.decode(bb, cb, true)) ==
+                        CoderResult.OVERFLOW) {
+                    drainCharBuffer(cb, writer);
+                }
             
                 // Flush any remaining state from the decoder, being careful
                 // to detect output buffer overflow(s)
