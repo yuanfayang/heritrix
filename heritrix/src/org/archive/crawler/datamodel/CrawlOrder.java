@@ -20,13 +20,15 @@ public class CrawlOrder extends XMLConfig {
 	String name;
 	CrawlerBehavior behavior;
 	String outputLocation;
-	
+	public String crawlOrderFilename;
 	/**
 	 * @param crawlOrderFile
 	 * @return
 	 */
 	public static CrawlOrder readFromFile(String crawlOrderFile) {
+		
 		Document doc = readDocumentFromFile(crawlOrderFile);
+		
 		return new CrawlOrder(doc);
 	}
 
@@ -60,10 +62,12 @@ public class CrawlOrder extends XMLConfig {
 	 * @return
 	 */
 	public String getName() {
-		return name;
+		return getNodeAt("/crawl-order/@name").getNodeValue();
+		//return name;
 	}
 
 	public String getOutputLocation(){
-		return outputLocation;
+		return getStringAt("//disk/@path");
+		//return outputLocation;
 	}
 }
