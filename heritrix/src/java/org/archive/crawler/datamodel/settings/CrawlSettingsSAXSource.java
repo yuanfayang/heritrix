@@ -1,0 +1,384 @@
+/* CrawlSettingsSAXSource
+ * 
+ * $Id$
+ * 
+ * Created on Dec 5, 2003
+ *
+ * Copyright (C) 2004 Internet Archive.
+ *
+ * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ * Heritrix is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * any later version.
+ *
+ * Heritrix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser Public License
+ * along with Heritrix; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+package org.archive.crawler.datamodel.settings;
+
+import java.io.IOException;
+import java.util.Iterator;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
+import javax.xml.transform.sax.SAXSource;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.AttributesImpl;
+
+/**
+ * @author John Erik Halse
+ *
+ */
+public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
+    private CrawlerSettings settings;
+    private ContentHandler handler;
+    private boolean orderFile = false;
+
+    /**
+     * 
+     */
+    public CrawlSettingsSAXSource(CrawlerSettings settings) {
+        super();
+        this.settings = settings;
+        if (settings.getParent() == null) {
+            orderFile = true;
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#getFeature(java.lang.String)
+     */
+    public boolean getFeature(String name)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+        return false;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#setFeature(java.lang.String, boolean)
+     */
+    public void setFeature(String name, boolean value)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#getProperty(java.lang.String)
+     */
+    public Object getProperty(String name)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#setProperty(java.lang.String, java.lang.Object)
+     */
+    public void setProperty(String name, Object value)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#setEntityResolver(org.xml.sax.EntityResolver)
+     */
+    public void setEntityResolver(EntityResolver resolver) {
+
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#getEntityResolver()
+     */
+    public EntityResolver getEntityResolver() {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#setDTDHandler(org.xml.sax.DTDHandler)
+     */
+    public void setDTDHandler(DTDHandler handler) {
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#getDTDHandler()
+     */
+    public DTDHandler getDTDHandler() {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#setContentHandler(org.xml.sax.ContentHandler)
+     */
+    public void setContentHandler(ContentHandler handler) {
+        this.handler = handler;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#getContentHandler()
+     */
+    public ContentHandler getContentHandler() {
+        return handler;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
+     */
+    public void setErrorHandler(ErrorHandler handler) {
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#getErrorHandler()
+     */
+    public ErrorHandler getErrorHandler() {
+        return null;
+    }
+
+    // We're not doing namespaces
+    private static final String nsu = ""; // NamespaceURI
+    private static final String schema = "heritrix_settings.xsd";
+    private static final String orderElement = "crawl-order";
+    private static final String hostSettingsElement = "crawl-settings";
+    private static final String controllerElement = "controller";
+    private static final String settingElement = "setting";
+    private static final String objectElement = "object";
+    private static final String newObjectElement = "newObject";
+    private static final String nameAttribute = "name";
+    private static final String typeAttribute = "type";
+    private static final String classAttribute = "class";
+    private static final String commentAttribute = "comment";
+
+    private static final char[] indentArray =
+        "\n                                          ".toCharArray();
+    // for readability!
+    private static final int indentAmount = 2;
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
+     */
+    public void parse(InputSource input) throws IOException, SAXException {
+        if (handler == null) {
+            throw new SAXException("No content handler");
+        }
+        handler.startDocument();
+        AttributesImpl atts = new AttributesImpl();
+        atts.addAttribute(
+            "http://www.w3.org/2001/XMLSchema-instance",
+            "xsi",
+            "xmlns:xsi",
+            nsu,
+            "http://www.w3.org/2001/XMLSchema-instance");
+        atts.addAttribute(
+            "http://www.w3.org/2001/XMLSchema-instance",
+            "noNamespaceSchemaLocation",
+            "xsi:noNamespaceSchemaLocation",
+            nsu,
+            schema);
+        String rootElement;
+        if (orderFile) {
+            rootElement = orderElement;
+        } else {
+            rootElement = hostSettingsElement;
+        }
+        Attributes nullAtts = new AttributesImpl();
+        handler.startElement(nsu, rootElement, rootElement, atts);
+        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
+        handler.startElement(nsu, "meta", "meta", nullAtts);
+        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount * 2);
+        handler.startElement(nsu, "name", "name", nullAtts);
+        handler.characters(
+            settings.getName().toCharArray(),
+            0,
+            settings.getName().length());
+        handler.endElement(nsu, "name", "name");
+        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount * 2);
+        handler.startElement(nsu, "description", "description", nullAtts);
+        handler.characters(
+            settings.getDescription().toCharArray(),
+            0,
+            settings.getDescription().length());
+        handler.endElement(nsu, "description", "description");
+        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
+        handler.endElement(nsu, "meta", "meta");
+
+        Iterator modules = settings.modules();
+        while (modules.hasNext()) {
+            ComplexType complexType = (ComplexType) modules.next();
+            parseComplexType(
+                complexType,
+                1 + indentAmount);
+        }
+        handler.ignorableWhitespace(indentArray, 0, 1);
+        handler.endElement(nsu, rootElement, rootElement);
+        handler.ignorableWhitespace(indentArray, 0, 1);
+        handler.endDocument();
+    }
+
+    private void parseComplexType(
+        ComplexType complexType,
+        int indent)
+        throws SAXException {
+        DataContainer data = settings.getData(complexType.getAbsoluteName());
+        MBeanInfo mbeanInfo = data.getMBeanInfo();
+        AttributesImpl atts = new AttributesImpl();
+        atts.addAttribute(nsu, nameAttribute, nameAttribute, nsu, complexType.getName());
+        atts.addAttribute(
+            nsu,
+            classAttribute,
+            classAttribute,
+            nsu,
+            mbeanInfo.getClassName());
+            
+        String objectElement = resolveElementName(complexType);
+        if (complexType.getParent() == null) {
+            atts = new AttributesImpl();
+        }
+        
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.startElement(nsu, objectElement, objectElement, atts);
+
+        MBeanAttributeInfo attsInfo[] = mbeanInfo.getAttributes();
+        for (int i = 0; i < attsInfo.length; i++) {
+            ModuleAttributeInfo attribute = (ModuleAttributeInfo) attsInfo[i];
+            Object value;
+            if (attribute.getComplexType() == null) {
+                value = data.get(attribute.getName());
+            } else {
+                value =
+                    settings.getData(
+                        attribute.getComplexType().getAbsoluteName());
+            }
+            if (orderFile || value != null) {
+                // Write only overridden values unless this is the order file
+                if (attribute.getComplexType() != null) {
+                    // Call method recursively for complex types
+                    parseComplexType(
+                        attribute.getComplexType(),
+                        indent + indentAmount);
+                } else {
+                    // Write element
+                    String elementName =
+                        AbstractSettingsHandler.getTypeName(
+                            attribute.getType());
+                    atts.clear();
+                    atts.addAttribute(
+                        nsu,
+                        nameAttribute,
+                        nameAttribute,
+                        nsu,
+                        attribute.getName());
+                    if (value == null) {
+                        try {
+                            value =
+                                complexType.getAttribute(attribute.getName());
+                        } catch (Exception e) {
+                            throw new SAXException(
+                                "Internal error in settings subsystem",
+                                e);
+                        }
+                    }
+                    if (value != null) {
+                        handler.ignorableWhitespace(
+                            indentArray,
+                            0,
+                            indent + indentAmount);
+                        handler.startElement(
+                            nsu,
+                            elementName,
+                            elementName,
+                            atts);
+                        if (value instanceof ListType) {
+                            parseListData(value, indent + indentAmount);
+                            handler.ignorableWhitespace(
+                                indentArray,
+                                0,
+                                indent + indentAmount);
+                        } else {
+                            char valueArray[] = value.toString().toCharArray();
+                            handler.characters(
+                                valueArray,
+                                0,
+                                valueArray.length);
+                        }
+                        handler.endElement(nsu, elementName, elementName);
+                    }
+                }
+            }
+        }
+
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.endElement(nsu, objectElement, objectElement);
+    }
+
+    private void parseListData(Object value, int indent) throws SAXException {
+        AttributesImpl atts = new AttributesImpl();
+        IntegerList list = (IntegerList) value;
+        Iterator it = list.iterator();
+        while (it.hasNext()) {
+            Object element = it.next();
+            String elementName =
+                AbstractSettingsHandler.getTypeName(
+                    element.getClass().getName());
+            handler.ignorableWhitespace(indentArray, 0, indent + indentAmount);
+            handler.startElement(nsu, elementName, elementName, atts);
+            char valueArray[] = element.toString().toCharArray();
+            handler.characters(valueArray, 0, valueArray.length);
+            handler.endElement(nsu, elementName, elementName);
+        }
+    }
+
+    private String resolveElementName(ComplexType complexType) {
+        String elementName;
+        if (complexType instanceof CrawlerModule) {
+            if (complexType.getParent() == null) {
+                // Top level controller element
+                elementName = controllerElement;
+            } else if (settings.getParent() != null && complexType.getSettingsHandler().getModuleFromRegistry(complexType.getName()) != null) {
+                // This is not the order file and we are referencing an object
+                elementName = objectElement;
+            } else {
+                // The object is not referenced before
+                elementName = newObjectElement;
+            }
+        } else {
+            // It's a map
+            elementName = AbstractSettingsHandler.getTypeName(complexType.getClass().getName());
+        }
+        return elementName;
+    }
+
+    /* (non-Javadoc)
+     * @see org.xml.sax.XMLReader#parse(java.lang.String)
+     */
+    public void parse(String systemId) throws IOException, SAXException {
+        System.out.println("1");
+    }
+
+    /* (non-Javadoc)
+     * @see javax.xml.transform.sax.SAXSource#getXMLReader()
+     */
+    public XMLReader getXMLReader() {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see javax.xml.transform.sax.SAXSource#getInputSource()
+     */
+    public InputSource getInputSource() {
+        return new InputSource();
+    }
+}
