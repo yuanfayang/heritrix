@@ -1,5 +1,5 @@
-<%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%
@@ -22,7 +22,8 @@
 
 <html>
 	<head>
-		<meta http-equiv=Refresh content="<%=iTime%> URL=/admin/status.jsp?time=<%=iTime%>">
+		<meta http-equiv=Refresh content="<%=iTime%> URL=status.jsp?time=<%=iTime%>">
+		<link rel="stylesheet" href="/admin/css/heritrix.css">
 	</head>
 
 	<body>

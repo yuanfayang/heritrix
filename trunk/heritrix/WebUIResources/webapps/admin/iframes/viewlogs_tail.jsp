@@ -1,9 +1,6 @@
-<%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob" %>
-
-<jsp:useBean id="textutils" class="org.archive.util.TextUtils" scope="application">
-</jsp:useBean>
+<%@include file="/include/handler.jsp"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,org.archive.util.LogReader" %>
 
 <%
 	int iTime = 10;
@@ -28,9 +25,9 @@
 
 <html>
 	<head>
-		<meta http-equiv=Refresh content="<%=iTime%> URL=/admin/options/viewlogs_crawl.jsp?time=<%=iTime%>&log=<%=request.getParameter("log")%>">
+		<meta http-equiv=Refresh content="<%=iTime%> URL=viewlogs_tail.jsp?time=<%=iTime%>&log=<%=request.getParameter("log")%>">
 	</head>
 	<body>
-		<pre><%= textutils.tail(diskPath + fileName,30).replaceAll(" ","&nbsp;") %></pre>
+		<pre><%= LogReader.tail(diskPath + fileName,30).replaceAll(" ","&nbsp;") %></pre>
 	</body>
 </html>

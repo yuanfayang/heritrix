@@ -3,14 +3,28 @@
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
 
 <%
-	Vector jobs = handler.getCompletedJobs();
+	String sAction = request.getParameter("action");
 
-	String title = "Completed job";
-	int navigation = 3;
+	if(sAction != null)
+	{
+		// Need to handle an action	
+		if(sAction.equalsIgnoreCase("delete"))
+		{
+			try
+			{
+				handler.removeJob(request.getParameter("job"));
+			}
+			catch(java.lang.NumberFormatException e){}
+		}
+		
+	}	
+
+	Vector jobs = handler.getPendingJobs();
+	String title = "Pending jobs";
+	int navigation = 2;
 %>
 
 <%@include file="/include/head.jsp"%>
-
 		<table border="0">
 			<tr>
 				<th>
@@ -35,8 +49,8 @@
 							<%=job.getStatus()%>
 						</td>
 						<td>
-							<a target="_blank" href="viewjob.jsp?job=<%=job.getUID()%>">View order</a>
-							<a href="viewstatistics.jsp?job=<%=job.getUID()%>&nav=3">View statistics</a>
+							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View</a>
+							<a href="/admin/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
 						</td>
 					</tr>
 			<%

@@ -1,14 +1,42 @@
+<%@include file="/include/secure.jsp"%>
+<%@include file="/include/handler.jsp"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.io.*,org.archive.util.ArchiveUtils" %>
+
 <%
-	/**
-	 * An include file that creates the configurable input fields for a crawl order.
-	 *
-	 * The following variables must exist prior to this file being included:
-	 *
-	 * CrawlOrder crawlOrder - The crawl order to use for default values in the input fields.
-	 *
-	 * @author Kristinn Sigurdsson
-	 */
+	CrawlJob job = handler.getCurrentJob(); // This page is only intended for updating the current job.  Warning: This may be unsafe if the current job terminates while edits are being made.
+
+	if(request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME) != null)
+	{
+		// Got something in the request.  Let's update!
+		String filename = ArchiveUtils.getFilePath(job.getCrawlOrderFile())+"job-"+request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME)+"-"+(job.getOrderVersion()+1)+".xml";
+		handler.createCrawlOrderFile(request,filename,"seeds-"+request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME)+".txt",true);
+		job.setCrawlOrder(filename);
+		handler.updateCrawlOrder();
+		response.sendRedirect("/admin/main.jsp");
+		return;
+	}
+	
+	CrawlOrder crawlOrder = null;
+	BufferedReader seeds = null;
+	int iInputSize = 50;
+
+	if(job != null)
+	{	
+		crawlOrder = job.getCrawlOrder();
+		seeds = new BufferedReader(new FileReader(new File(crawlOrder.getStringAt(SimpleHandler.XP_SEEDS_FILE))));
+	}
+
+	String title = "Update current job";
 %>
+
+<%@include file="/include/head.jsp"%>
+	
+	<% if(job == null) { %>
+		No current job
+	<% } else { %>
+
+		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="updatecurrent.jsp">
+
 		<table border="0">
 			<tr>
 				<td>
@@ -244,7 +272,21 @@
 					Seeds:
 				</td>
 				<td>
-					<textarea name="<%=SimpleHandler.XP_SEEDS%>" rows="8" cols="<%=iInputSize%>"><%=crawlOrder.getStringAt(SimpleHandler.XP_SEEDS)%></textarea>
+					<textarea name="<%=SimpleHandler.XP_SEEDS%>" rows="8" cols="<%=iInputSize%>"><%
+							String sout = seeds.readLine();
+							while(sout!=null){
+								out.println(sout);
+								sout = seeds.readLine();
+							}
+						%></textarea>
 				</td>
 			</tr>
 		</table>
+		
+		<input type="submit" value="Update job">
+		
+		</form>
+		
+	<% } %>
+	
+<%@include file="/include/foot.jsp"%>
