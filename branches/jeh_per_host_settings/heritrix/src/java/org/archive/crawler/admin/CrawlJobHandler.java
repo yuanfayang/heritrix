@@ -26,7 +26,6 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -378,12 +377,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
             running = false;
             return;
         }
-        controller.startCrawl();
-
+        crawling = true;
         controller.startCrawl();
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         currentJob.setStatisticsTracking(controller.getStatistics());
-        crawling = true;
     }
 
     /**
