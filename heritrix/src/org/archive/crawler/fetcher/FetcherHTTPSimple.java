@@ -47,7 +47,8 @@ public class FetcherHTTPSimple
 	 */
 	protected void innerProcess(CrawlURI curi) {
 
-		if(!curi.getUURI().getUri().getScheme().equals("http")) {
+		String scheme = curi.getUURI().getUri().getScheme();
+		if(!(scheme.equals("http")||scheme.equals("https"))) {
 			// only handles plain http for now
 			return;
 		}
