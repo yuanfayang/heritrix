@@ -7,7 +7,7 @@
 	 * (order.xml is rewritten)
 	 */
 
-	if(request.getParameter(handler.XP_HTTP_USER_AGENT) != null)
+	if(request.getParameter(handler.XP_CRAWL_ORDER_NAME) != null)
 	{
 		// Got something in the request.  Let's update!
 		handler.updateDefaultCrawlOrder(request);

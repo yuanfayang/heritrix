@@ -1,5 +1,5 @@
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob" %>
 
 <%
 	/**
@@ -10,9 +10,9 @@
 	if(request.getParameter(handler.XP_CRAWL_ORDER_NAME) != null)
 	{
 		// Got something in the request.  Let's update!
-		String filename = "job-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
+		String filename = "job-"+handler.getNextJobSerial()+"-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
 		handler.createCrawlOrderFile(request,filename);
-		handler.addJob(new CrawlJob(request.getParameter(handler.XP_CRAWL_ORDER_NAME),filename,handler.WEB_APP_PATH));
+		handler.addJob(new SimpleCrawlJob(request.getParameter(handler.XP_CRAWL_ORDER_NAME),handler.WEB_APP_PATH+filename,SimpleCrawlJob.PRIORITY_AVERAGE));
 		response.sendRedirect("/admin/main.jsp");
 	}
 
