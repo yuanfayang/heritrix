@@ -552,10 +552,10 @@ public class Heritrix
         }
         else if(runMode)
         {
-            // TODO: Put the crawler into 'run' mode though no file to crawl. 
             // The use case is that jobs are to be run on a schedule and that
             // if the crawler is in run mode, then the scheduled job will be 
             // run at appropriate time.  Otherwise, not.
+            jobHandler.startCrawler();
             status = "Crawler set to run mode but no order file to crawl";
         }
 
