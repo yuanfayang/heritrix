@@ -8,7 +8,7 @@ package org.archive.crawler.datamodel;
 
 import java.net.URI;
 
-import org.archive.crawler.basic.SimpleDNSFetcher;
+import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.Processor;
 
@@ -124,7 +124,7 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	public Object getClassKey() {
 		String scheme = getUURI().getUri().getScheme();
 		if (scheme.equals("dns")){
-			return SimpleDNSFetcher.parseTargetDomain(this);
+			return FetcherDNS.parseTargetDomain(this);
 		}
 		String authorityUsuallyHost = getUURI().getUri().getAuthority();
 		if (authorityUsuallyHost != null) {
