@@ -65,7 +65,6 @@ public class WagCostAssignmentPolicy extends CostAssignmentPolicy {
         // TODO: other potential hops-based penalties
         //  - more than X hops
         //  - each speculative hop
-        System.out.println(cost + " cost of " + uuri);
         return cost;
     }
 }
