@@ -241,10 +241,20 @@ public class SelfTestCase extends TestCase
                     " instead " + Integer.toString(arcs.length) + " files.");
             }
             SelfTestCase.arcFile = arcs[0];
-            if (SelfTestCase.arcFile.exists()) {
+            // If file is name with '.open' suffix, the rename hasn't
+            // happened yet.  Wait.
+            if (!SelfTestCase.arcFile.getName().
+                        endsWith(ARCWriter.OCCUPIED_SUFFIX)
+                    && SelfTestCase.arcFile.exists()) {
                 break;
             }
             Thread.sleep(1000);
+        }
+        if (SelfTestCase.arcFile.getName().
+                endsWith(ARCWriter.OCCUPIED_SUFFIX)) {
+            throw new FileNotFoundException("Waited " +
+                (System.currentTimeMillis() - start) + " ms but no rename " +
+                SelfTestCase.arcFile.getAbsolutePath());
         }
         if (!SelfTestCase.arcFile.exists()) {
             throw new FileNotFoundException("Waited " +
