@@ -814,10 +814,6 @@ public class ReplayCharSequenceFactory {
             }
             
             File unicode = new File(name);
-            // TODO: REMOVE this unnecessary creation.
-            unicode.createNewFile();
-            assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
-            
             Writer writer = null;
 
             // Place to catch decodings in memory. I'll then write to writer. If 
@@ -900,8 +896,6 @@ public class ReplayCharSequenceFactory {
             // being drained by calls to get(), a loop might be needed here.
             if (cb.hasRemaining()) {
                 writer.write (cb.array(), cb.arrayOffset(), cb.limit());
-                // TODO: Remove this unnecessary flush.
-                writer.flush();
             }
         
             cb.clear();        // Prepare buffer to be filled again
