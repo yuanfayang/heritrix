@@ -23,8 +23,6 @@
  */
 package org.archive.crawler.datamodel.settings;
 
-import javax.management.InvalidAttributeValueException;
-
 /**
  * 
  * @author John Erik Halse
@@ -113,14 +111,10 @@ public class IntegerList extends ListType {
      */
     public Object checkType(Object element) throws ClassCastException {
         if (!(element instanceof Integer)) {
-            try {
-                element =
-                    AbstractSettingsHandler.StringToType(
-                        (String) element,
-                        AbstractSettingsHandler.INTEGER);
-            } catch (InvalidAttributeValueException e) {
-                throw new ClassCastException("Element should be of type java.lang.Integer");
-            }
+            element =
+                AbstractSettingsHandler.StringToType(
+                    (String) element,
+                    AbstractSettingsHandler.INTEGER);
         }
         return element;
     }
