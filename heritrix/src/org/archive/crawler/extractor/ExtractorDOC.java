@@ -4,7 +4,6 @@
  */
 package org.archive.crawler.extractor;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -76,12 +75,11 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
 			w = new WordDocument( documentStream );
 			w.writeAllText(out);
-
-		}catch(IOException e){
-			curi.addLocalizedError(getName(),e,"ExtractorDOC IOException");
+		}catch(Exception e){
+			curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
 			return;
 		}
-		
+
 		// get doc text out of stream
 		String page = out.toString();
 		
