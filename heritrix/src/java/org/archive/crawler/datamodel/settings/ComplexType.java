@@ -509,6 +509,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     public synchronized final void setAttribute(CrawlerSettings settings,
             Attribute attribute) throws InvalidAttributeValueException,
             AttributeNotFoundException {
+        
+        if(settings==null){
+            settings = globalSettings();
+        }
 
         DataContainer data = getOrCreateDataContainer(settings);
         Object value = attribute.getValue();
