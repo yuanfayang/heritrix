@@ -45,11 +45,14 @@
             http://sourceforge.net/docman/display_doc.php?docid=761&group_id=1)
             and that this key has no password associated (Means that 
             we get ssh CVS access w/o having to supply password).
-            
+
             Note, this goal may give out a couple of lines like the below but
             these are harmless:
             
                 [exec] failed to set permissions on . : Operation not permitted
+
+            We use this new goal rather than 'site:sshdeploy' because we don't 
+            want to totally overwrite the htdoc content up on sourceforge.
          -->
         <exec executable="rsync" >
             <arg value="--quiet" />
