@@ -55,7 +55,8 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
     implements CoreAttributeConstants, FetchStatusCodes {
-
+    public static final int UNCALCULATED = -1;
+    
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
     // isSeed
@@ -78,8 +79,8 @@ public class CrawlURI extends CandidateURI
     private AList alist = new HashtableAList();
 
     // dynamic context
-    private int linkHopCount = -1; // from seeds
-    private int embedHopCount = -1; // from a sure link; reset upon any link traversal
+    private int linkHopCount = UNCALCULATED; // from seeds
+    private int embedHopCount = UNCALCULATED; // from a sure link; reset upon any link traversal
 
     // User agent to masquerade as when crawling this URI. If null, globals should be used
     private String userAgent = null;
@@ -90,8 +91,8 @@ public class CrawlURI extends CandidateURI
 ////////////////////////////////////////////////////////////////////
     private transient CrawlServer server;
 
-    private long contentSize = -1;
-    private long contentLength = -1;
+    private long contentSize = UNCALCULATED;
+    private long contentLength = UNCALCULATED;
 
     /**
      * Current http recorder.
@@ -999,6 +1000,7 @@ public class CrawlURI extends CandidateURI
 
     transient Object holder;
     transient Object holderKey;
+
     /**
      * Remember a 'holder' to which some enclosing/queueing
      * facility has assigned this CrawlURI
@@ -1048,7 +1050,7 @@ public class CrawlURI extends CandidateURI
     }
 
     /** spot for an integer cost to be placed by external facility (frontier) */
-    int holderCost = -1;
+    int holderCost = UNCALCULATED;
     /**
      * Return the 'holderCost' for convenience of external facility (frontier)
      * @return value of holderCost
