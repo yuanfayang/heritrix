@@ -1,7 +1,7 @@
 /* LongWrapper
- * 
+ *
  * $Id$
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
