@@ -61,8 +61,6 @@ public abstract class AbstractTracker extends ModuleType
     /** A reference to the CrawlContoller of the crawl that we are to track statistics for.*/
     protected CrawlController controller;
 
-    //protected Logger periodicLogger = null;
-
     // Keep track of time.
     protected long crawlerStartTime;
     protected long crawlerEndTime = -1; // Until crawl ends, this value is -1.
@@ -97,7 +95,6 @@ public abstract class AbstractTracker extends ModuleType
      */
     public void initalize(CrawlController c) {
         controller = c;
-        // periodicLogger = controller.progressStats;
 
         // Add listeners
         controller.addCrawlStatusListener(this);
