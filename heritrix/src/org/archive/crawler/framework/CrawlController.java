@@ -78,7 +78,7 @@ public class CrawlController implements CrawlerConfigurationContants{
 		String userAgent = order.getStringAt("//http-headers/User-Agent/");
 		if(userAgent.equals(DEFAULT_USER_AGENT)){
 			throw new FatalConfigurationException(
-				"Default user agent must be changed.",
+				"Default user agent must be changed from '" + DEFAULT_USER_AGENT + "'",
 				"order.xml",
 				"//http-headers/User-Agent"
 			);
