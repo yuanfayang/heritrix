@@ -37,7 +37,7 @@
     web-scale, archival-quality web crawler.</para>
 
     <para>This document explains how to create, configure and run crawls using
-    it. It is intended for users of the software and presumes that they
+    Heritrix. It is intended for users of the software and presumes that they
     possess at least a general familiarity with the concept of web
     crawling.</para>
 
@@ -52,13 +52,13 @@
     <title>Installing and running Heritrix</title>
 
     <para>This chapter will explain how to set up Heritrix. Some basic Linux
-    administration skills are needed for this.</para>
+    administration skills are needed.</para>
 
     <para>Because Heritrix is a pure Java program it can (in theory anyway) be
     run on any platform that has a Java 1.4 VM. However we are only committed
-    to supporting it's operation on Linux and so this chapter only covers
-    setup on that platform. Other chapters in the user manual are entirely
-    platform agnostic.</para>
+    to supporting its operation on Linux and so this chapter only covers setup
+    on that platform. Other chapters in the user manual are platform
+    agnostic.</para>
 
     <para>This chapter also only covers installing and running the prepackaged
     binary distributions of Heritrix. For information about downloading and
@@ -97,7 +97,7 @@
           installed.</para>
 
           <para>The Heritrix crawler makes use of Java 1.4 features so your
-          JRE must be at least of a 1.4.0 pedigree.</para>
+          JRE must be at least of a 1.4.x pedigree.</para>
 
           <para>We currently include all of the free/open source third-party
           libraries necessary to run Heritrix in the distribution package. See
@@ -138,7 +138,9 @@
 
           <para>We recommend assigning at least 256MB RAM to the Java heap
           (via the "-Xmx256M" VM argument), which is usually suitable for
-          crawls that range over hundreds of hosts.</para>
+          crawls that range over hundreds of hosts.Assign more of you
+          available RAM to the heap if you are crawling thousands of hosts or
+          experience Java out-of-memory problems.</para>
         </sect4>
 
         <sect4>
@@ -351,15 +353,15 @@
     <para>After Heritrix has been launched from the command line, the web
     based user interface (WUI) becomes accessible.</para>
 
-    <para>The path to it is printed out on the console from which the program
-    was launched (typically
+    <para>The URI to access the WUI is printed on the console from which the
+    program was launched (typically
     <literal>http://&lt;host&gt;:8080/admin/</literal>).</para>
 
-    <para>The WUI is password protected. The username is currently 'admin' by
-    default with the default password of 'letmein'. The username and password
-    can be specified at startup and users are encouraged to change them. The
-    currently valid username and password combination will be printed out to
-    the console along with the path.</para>
+    <para>The WUI is password protected. By default, the username is 'admin'
+    with the password of 'letmein'. The username and password can be specified
+    at startup and users are encouraged to change them. The currently valid
+    username and password combination will be printed out to the console along
+    with the path.</para>
 
     <para>The WUI can then be accessed via any browser. While we've
     endeavoured to make certain that it functions in all recent browsers,
@@ -455,8 +457,9 @@
     job</emphasis></para>
 
     <para>New jobs that have been submitted are placed in a queue of pending
-    jobs. The crawler does not start processing jobs from this queue until it
-    is started. While it's stopped jobs are simply held.</para>
+    jobs. The crawler does not start processing jobs from this queue until the
+    crawler is started. While the crawler is stopped, jobs are simply
+    held.</para>
 
     <para>To start the crawler, click on the Console tab. Once on the Console
     page, you will find the option <emphasis>Start crawling pending
@@ -523,9 +526,8 @@
       <para>Options 2 and 3 will display a list of available options.
       Initially there is only one profile and no existing jobs.</para>
 
-      <para>As should be clear by now, all crawl jobs are created by basing
-      them on profiles (see <xref linkend="profile" />) or existing
-      jobs.</para>
+      <para>All crawl jobs are created by basing them on profiles (see <xref
+      linkend="profile" />) or existing jobs.</para>
 
       <para>Once the proper profile/job has been chosen to base the new job
       on, a simple page will appear asking for the new job's:</para>
@@ -550,7 +552,7 @@
         <listitem>
           <para><emphasis role="bold">Seeds</emphasis></para>
 
-          <para>The seed URLs to use for the job. This list can be edited
+          <para>The seed URIs to use for the job. This list can be edited
           later along with the general configurations.</para>
         </listitem>
       </orderedlist>
@@ -578,12 +580,11 @@
     <sect2>
       <title id="profile">Profile</title>
 
-      <para>It's best to think of a profile as a template for a crawl job. It
-      contains all the configurations that a crawl job would, but is not
-      considered to be 'crawlable'. That is Heritrix will not allow you to
-      directly crawl a profile, only jobs based on profiles. The reason for
-      this is that while profiles may in fact be complete, they may also not
-      be.</para>
+      <para>A profile is a template for a crawl job. It contains all the
+      configurations that a crawl job would, but is not considered to be
+      'crawlable'. That is Heritrix will not allow you to directly crawl a
+      profile, only jobs based on profiles. The reason for this is that while
+      profiles may in fact be complete, they may also not be.</para>
 
       <para>A common example is leaving the HTTP headers
       (<literal>user-agent</literal>, <literal>from</literal>) in an illegal
@@ -726,15 +727,18 @@
         <title>URI Frontier</title>
 
         <para>The URI Frontier is a module that maintains the internal state
-        of the crawl. What URIs have been discovered, crawled etc. As such
-        it's selection greatly affects for instance the order in which
-        discovered URIs are crawled.</para>
+        of the crawl. What URIs have been discovered, crawled etc. As such its
+        selection greatly affects for instance the order in which discovered
+        URIs are crawled.</para>
 
         <para>There is only one Frontier per crawl job.</para>
 
-        <para>At present only one Frontier is provided with Heritrix. It
-        offers some options to influence it between site first and breadth
-        first crawling.</para>
+        <para>At present only one Frontier is provided with Heritrix. While it
+        visits URIs and sites discovered in a generally breadth-first manner,
+        it offers configuration options controlling how it throttles its
+        activity against particular hosts, and whether it has a bias towards
+        finishing hosts in progress ('site-first' crawling) or cycling among
+        all hosts with pending URIs. </para>
       </sect3>
 
       <sect3 id="scopes">
@@ -751,8 +755,7 @@
 
             <para>This scope allows for limiting the depth of a crawl (how
             many links away Heritrix should crawl) but does not impose any
-            limits on which domains or hosts discovered URIs must belong
-            to.</para>
+            limits on the hosts, domains, or URI paths crawled. </para>
           </listitem>
 
           <listitem>
@@ -796,9 +799,9 @@
         <para>Scopes usually allow for some flexibility in defining depth and
         possible transitive includes (that is getting items that would usually
         be out of scope because of special circumstance such as their being
-        embedded). Most noticeably they can have filters applied to themselves
-        in two different contexts (some scopes may only have one these
-        contexts).</para>
+        embedded in the display of an included resource). Most notably, every
+        scope can have additional filters applied in two different contexts
+        (some scopes may only have one these contexts).</para>
 
         <orderedlist>
           <listitem>
@@ -910,8 +913,9 @@
         <title id="processingchains">Processing Chains</title>
 
         <para>When a URI is crawled it is in fact passed through a series of
-        processors. This series is split up into five chains and the user can
-        add, remove and reorder the processors on each of these chains.</para>
+        processors. This series is split for convenience between five chains
+        and the user can add, remove and reorder the processors on each of
+        these chains.</para>
 
         <para>Each URI taken off the Frontier queue runs through the
         <literal>Processing Chains</literal> listed in the diagram shown
@@ -929,11 +933,11 @@
         step, the order in which processors are run is the order in which
         processors are listed on the modules page.</para>
 
-        <para>Generally, particular processors only make sense with in the
+        <para>Generally, particular processors only make sense within the
         context of one particular processing chain. For example, it wouldn't
         make sense to run the <literal>FetchHTTP</literal> processor in the
-        Post-processing chain. This is however not enforced, users must take
-        care to construct logical processor chains.</para>
+        Post-processing chain. This is however not enforced, so users must
+        take care to construct logical processor chains.</para>
 
         <graphic fileref="processing_steps.png" format="PNG" />
 
@@ -949,8 +953,8 @@
             <para><emphasis role="bold">Preselector</emphasis></para>
 
             <para>Last check if the URI should indeed be crawled. Can for
-            example recheck scope. Useful if it has been changed after the
-            crawl starts.</para>
+            example recheck scope. Useful if scope has been changed after the
+            crawl starts.(This processor is not strictly necessary.)</para>
           </listitem>
 
           <listitem>
@@ -958,7 +962,8 @@
 
             <para>Ensures that all preconditions for crawling a URI have been
             met. These currently include verifying that DNS and robots.txt
-            information has been fetched for the URI.</para>
+            information has been fetched for the URI. Should always be
+            included. </para>
           </listitem>
         </itemizedlist>
 
@@ -970,7 +975,8 @@
             <para><emphasis role="bold">CrawlStateUpdater</emphasis></para>
 
             <para>Updates the per-host information that may have been affected
-            by the fetch. This is currently robots and IP address info.</para>
+            by the fetch. This is currently robots and IP address info. Should
+            always be included. </para>
           </listitem>
 
           <listitem>
@@ -1032,7 +1038,9 @@
 
         <para>Adding a new filters requires giving it a unique name (for that
         list), selecting the class type of the filter from a combobox and
-        clicking the associated add button.</para>
+        clicking the associated add button. After the filter is added, its
+        custom settings, if any, will appear in the Settings page of the
+        configuration UI. </para>
 
         <para>Since filters can in turn contain other filters (the OrFilter
         being the best example of this) these lists can become quite complex
@@ -1068,7 +1076,7 @@
         </sect4>
 
         <sect4>
-          <title>org.archive.crawler.filter.PathDeptFilter</title>
+          <title>org.archive.crawler.filter.PathDepthFilter</title>
 
           <para>Returns true for all <xref linkend="crawluri" /> passed in
           with a path depth less or equal to its
@@ -1086,7 +1094,7 @@
 
           <para><programlisting>  http://host/img/img/img/img....</programlisting></para>
 
-          <para>Returns true if such a pattern is found. Sometimes used on
+          <para>Returns true if such a pattern is found. Sometimes used on a
           processor but is primarily of use in the exclude section of
           scopes.</para>
         </sect4>
@@ -1138,8 +1146,9 @@
       <note>
         <title>Logging</title>
 
-        <para>To enable logging of authentication interactions, set the
-        FetchHTTP log level to fine</para>
+        <para>To enable console logging of authentication interactions (for
+        example for debugging), set the FetchHTTP and PrconditionEnforcer log
+        levels to fine</para>
 
         <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
 org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting></para>
@@ -1440,8 +1449,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
             <listitem>
               <para><emphasis role="bold">classic</emphasis></para>
 
-              <para>Simply obey the <literal>robots.txt</literal>
-              rules.</para>
+              <para>Simply obey the <literal>robots.txt</literal> rules.
+              Recommended unless you have special permission to collect a site
+              more aggressively. </para>
             </listitem>
 
             <listitem>
@@ -1583,7 +1593,8 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
               time and very small files that take virtually no time.</para>
 
               <para>In all cases (this can vary from URI to URI) the more
-              restrictive of the two floor values is imposed.</para>
+              restrictive (delaying) of the two floor values is
+              imposed.</para>
             </listitem>
           </itemizedlist>
         </sect4>
@@ -1677,17 +1688,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
               <para>Maximum number of bytes to download per document. Will
               truncate file once this limit is reached.</para>
 
-              <para>By default this value is set to extremely large value (in
-              the exabyte range).</para>
-            </listitem>
-
-            <listitem>
-              <para><emphasis role="bold">max-fetch-attempts</emphasis></para>
-
-              <para>Maximum number of immediate fetch attempts. Under some
-              conditions a fetch will be attempted again at once if it fails.
-              This imposes a limit on that activity. This is therefore not
-              directly related to the Frontier's retry policy.</para>
+              <para>By default this value is set to an extremely large value
+              (in the exabyte range) that will never be reached in
+              practice.</para>
             </listitem>
           </itemizedlist>
         </sect4>
@@ -1740,10 +1743,12 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
             <listitem>
               <para><emphasis role="bold">pool-max-active</emphasis></para>
 
-              <para>The Archiver maintains a pool of ARC files who are all
-              ready to accept downloaded documents. This is done to improve
-              multi threaded behavior. This sets a limit to their numbers.
-              Default is 5.</para>
+              <para>The Archiver maintains a pool of ARC files which are each
+              ready to accept a downloaded documents, to prevent ARC writing
+              from being a bottleneck in multithreaded operation. This setting
+              establishes the maximum number of such files to keep ready.
+              Default is 5. For small crawls that you want to confine to a
+              single ARC file, this should be set to 1. </para>
             </listitem>
 
             <listitem>
@@ -1772,9 +1777,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       (crawler.archive.org). There is no limit for how deep into the sub
       domains the overrides can go.</para>
 
-      <para>When a URI is being processed the settings for it's host is then
-      first lookup up. If the needed setting is not available there it's super
-      domains are checked until the settings is found (all settings exist at
+      <para>When a URI is being processed the settings for its host is first
+      looked up. If the needed setting is not available there, its super
+      domains are checked until the setting is found (all settings exist at
       the global level at the very least).</para>
 
       <para>Creating a new override is done by simply typing in the domain in
@@ -1806,8 +1811,8 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           inherited filters or interject new filters among them. New filters
           will be added after existing filters.</para>
 
-          <para>Inherited filters though have the option to disable them. That
-          can be set on the settings page.</para>
+          <para>Inherited filters though have the option to locally disable
+          them. That can be set on the settings page.</para>
         </listitem>
 
         <listitem>
@@ -1895,9 +1900,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       overview page. The overview page displays a list of existing refinements
       on the current level and allows the user to create new ones.</para>
 
-      <para>To create a new override the user must supply a unique name for it
-      (name is limited to letters, numbers, dash and underscore) and a short
-      description that will be displayed underneath it on the overview
+      <para>To create a new refinement the user must supply a unique name for
+      it (name is limited to letters, numbers, dash and underscore) and a
+      short description that will be displayed underneath it on the overview
       page.</para>
 
       <para>Once created, refinements can be either removed or edited.</para>
@@ -2220,7 +2225,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       of these pending jobs (it also possible to get to them from the header,
       see <xref linkend="header" />).</para>
 
-      <para>The list displays the name of each job, it's status (currently all
+      <para>The list displays the name of each job, its status (currently all
       pending jobs have the status 'Pending') and offers the following options
       for each job:</para>
 
@@ -2282,7 +2287,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         <sect4>
           <title>Frontier report</title>
 
-          <para>A report on the internal state of the frontier.</para>
+          <para>A report on the internal state of the frontier.Can be unweildy
+          in size or the amount of time/memory it takes to compose in large
+          crawls (with thousands of hosts with pending URIs). </para>
         </sect4>
 
         <sect4>
@@ -2340,7 +2347,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         <title>All page status header</title>
 
         <para>At the top of every page in the WUI, right next to the Heritrix
-        logo, is a brief overview of it's current status.</para>
+        logo, is a brief overview of the crawler's current status.</para>
 
         <para>The three lines contain the following information (starting at
         the top left and working across and down).</para>
@@ -2408,13 +2415,19 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       crawling starts. Most noticably the Modules section is disabled. Also,
       although not enforced by the WUI, making changes to certain settings (in
       particular filenames, directory locations etc.) will have no effect
-      (doing so is will not harm the crawl, it will simply be ignored).</para>
+      (doing so will typically not harm the crawl, it will simply be
+      ignored).</para>
 
       <para>However most settings can be changed. This includes the number of
       threads being used and the seeds list and although it is not possible to
       remove modules, most have the option to disable them. Settings a modules
       <literal>enabled</literal> attribute to <literal>false</literal>
       effectively removes them from the configuration.</para>
+
+      <para>If changing more than an existing atomic value -- for example,
+      adding a new filter -- it is good practice to pause the crawl first, as
+      some modifications to composite configuration entities may not occur in
+      a thread-safe manner with respect to ongoing crawling otherwise. </para>
 
       <sect3>
         <title id="journal">Journal</title>
@@ -2551,7 +2564,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       <title>Logs</title>
 
       <para>Heritrix writes several logs as it crawls a job. Each crawl job
-      has it's own set of these logs.</para>
+      has its own set of these logs.</para>
 
       <para>The location where logs are written can be configured (expert
       setting). Otherwise refer to the <literal>crawl-manifest.txt</literal>
@@ -2728,7 +2741,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
       <sect3>
         <title>uri-errors.log</title>
 
-        <para>Contains errors in dealing with encountered URIs. Usually it's
+        <para>Contains errors in dealing with encountered URIs. Usually its
         caused by erroneous URIs. Generally only of interest to advanced users
         trying to explain unexpected crawl behavior.</para>
       </sect3>
@@ -2868,7 +2881,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         linkend="manifest_bundle.pl" />). In the example above the
         <literal>recover.log</literal> is marked for exclusion because it is
         generally only of interest if the job crashes and must be restarted.
-        It has negligible value once it's completed.</para>
+        It has negligible value once the job is completed.</para>
 
         <para>After this initial legend the filename with full path
         follows.</para>
@@ -2886,7 +2899,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         <xref linkend="stattrack" />)</para>
 
         <para>Written at the very end of the crawl only. See
-        <literal>crawl-manifest.txt</literal> for it's location.</para>
+        <literal>crawl-manifest.txt</literal> for its location.</para>
       </sect3>
 
       <sect3>
@@ -2966,7 +2979,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
         <para>ARC files are named as follows:</para>
 
-        <para><programlisting>  [prefix]-[series#-padded-to-5-digits]-[12-digit-timestamp]-[Base32-of-crawler-IP].arc.gz</programlisting></para>
+        <para><programlisting>  [prefix]-[12-digit-timestamp]-[series#-padded-to-5-digits]-[crawler-hostname].arc.gz</programlisting></para>
 
         <para>The <literal>prefix</literal> is set by the user when he
         configures the ARCWriter processor. By default it is IAH.</para>
@@ -3163,7 +3176,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
           <programlisting>  R - Redirect
   E - Embed
-  X - Speculative embed (aggressive link extraction)
+  X - Speculative embed (aggressive/Javascript link extraction)
   L - Link</programlisting>
 
           <para>The discovery path of seeds is an empty string.</para>
@@ -3329,7 +3342,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
      -7 URI recognized as unsupported or illegal)
      -8 Multiple retries all failed, retry limit reached
     -50 Temporary status assigned URIs awaiting preconditions; appearance in
-        logs is a bug.
+        logs may be a bug.
+    -60 Failure status assigned URIs which could not be queued by the 
+        Frontier (and may in fact be unfetchable).
   -3000 Severe Java 'Error' conditions (OutOfMemoryError?, StackOverflowError?,
         etc.) during URI processing.
   -4000 'chaff' detection of traps/content of negligible value applied
