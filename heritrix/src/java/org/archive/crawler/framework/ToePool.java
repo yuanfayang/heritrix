@@ -24,8 +24,10 @@
 package org.archive.crawler.framework;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.util.ArchiveUtils;
@@ -45,12 +47,33 @@ public class ToePool extends CrawlStatusAdapter {
     public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
 
     protected CrawlController controller;
-    protected ArrayList toes;
-    protected ArrayList killedToes = null;
+
     protected int effectiveSize = 0;
 
     protected boolean paused;
+    
+    /**
+     * List of toe threads.
+     * 
+     * All iterations need to synchronize on this object if they're to avoid
+     * concurrent modification exceptions.
+     * See {@link java.util.Collections#synchronizedList(List)}.
+     * 
+     * <p>TODO: Is this list needed?  Why not just put all toe threads into
+     * a group and then ask the thread group for the list of extant toe threads?
+     */
+    protected final List toes;
+    
+    /**
+     * List of killed toe threads.
+     * 
+     * All iterations need to synchronize on this object if they're to avoid
+     * concurrent modification exceptions.
+     * See {@link java.util.Collections#synchronizedList(List)}.
+     */
+    protected List killedToes;
 
+    
     /**
      * Constructor. Creates a pool of ToeThreads. Threads start in a paused
      * state.
@@ -59,48 +82,26 @@ public class ToePool extends CrawlStatusAdapter {
      * @param count The number of ToeThreads to start with
      */
     public ToePool(CrawlController c, int count) {
-        paused = true; // Begin in a paused state
-        controller = c;
-        controller.addCrawlStatusListener(this);
-        toes = new ArrayList(count);
+        // Begin in a paused state.
+        this.paused = true;
+        this.controller = c;
+        this.controller.addCrawlStatusListener(this);
+        this.toes = Collections.synchronizedList(new ArrayList(count));
         // TODO make number of threads self-optimizing
         setSize(count);
     }
 
-//  No longer used. Threads 'pull' work now. 
-//    public synchronized ToeThread available() {
-//        while(true) {
-//            for(int i=0; i < effectiveSize ; i++){
-//                if(((ToeThread)toes.get(i)).isAvailable()) {
-//                    return (ToeThread) toes.get(i);
-//                }
-//            }
-//            // nothing available
-//            try {
-//                wait(200);
-//            } catch (InterruptedException e) {
-//                DevUtils.logger.log(Level.SEVERE,"available()"+DevUtils.extraInfo(),e);
-//            }
-//        }
-//    }
-//
-//    /**
-//     * @param thread
-//     */
-//    public synchronized void noteAvailable(ToeThread thread) {
-//        notify();
-//    }
-
     /**
-     * @return The number of ToeThreads that are not available
+     * @return The number of ToeThreads that are not available (Approximation).
      */
     public int getActiveToeCount() {
         int count = 0;
-        // will be an approximation
-        for(int i=0; i < toes.size();i++){
-            ToeThread tt = (ToeThread)toes.get(i);
-            if(tt!=null && !tt.isIdleOrDead()) {
-                count++;
+        synchronized (this.toes) {
+            for(int i = 0; i < this.toes.size(); i++) {
+                ToeThread tt = (ToeThread)this.toes.get(i);
+                if(tt != null && !tt.isIdleOrDead()) {
+                    count++;
+                }
             }
         }
         return count;
@@ -111,12 +112,13 @@ public class ToePool extends CrawlStatusAdapter {
      *         that were not replaced.
      */
     public int getToeCount() {
-        return toes.size();
+        return this.toes.size();
     }
 
     /**
      * The crawl controller uses this method to notify the pool that the crawl 
      * has ended.
+     * 
      * All toe threads will be ordered to stop after current.
      * 
      * @param statusMessage Supplied status message is of no interest.
@@ -124,28 +126,31 @@ public class ToePool extends CrawlStatusAdapter {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(String)
      */
     public void crawlEnding(String statusMessage) {
-        Iterator it = toes.iterator();
-        while(it.hasNext())
-        {
-            ToeThread t = (ToeThread)it.next();
-            t.stopAfterCurrent();
+        // statusMessage is never used.
+        synchronized (this.toes) {
+            for(Iterator i = this.toes.iterator(); i.hasNext();) {
+                ToeThread t = (ToeThread)i.next();
+                t.stopAfterCurrent();
+            }
         }
     }
 
-    /** 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
-    public void crawlEnded(String statusMessage)
-    {
-        // Destory referances to facilitate GC.
-        toes.removeAll(toes); //Empty it
-        // toes = null; // gjm: superfluous
-        if(killedToes!=null){
-            killedToes.removeAll(killedToes);
+    public void crawlEnded(String statusMessage) {
+        // statusMessage is never used.
+        
+        // Destory references to facilitate GC.
+        synchronized (this.toes) {
+            this.toes.removeAll(this.toes);
         }
+
+        if(this.killedToes != null) {
+            synchronized (this.killedToes) {
+                this.killedToes.removeAll(this.killedToes);
+            }
+        }
+        
         // TODO Can anything more be done to ensure that the killed threads die?
-        // killedToes = null; // gjm: superfluous
-        controller = null;
+        this.controller = null;
     }
 
     /**
@@ -159,23 +164,27 @@ public class ToePool extends CrawlStatusAdapter {
         rep.append("Toe threads report - " + 
                 ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
         rep.append(" Job being crawled: " + 
-                controller.getOrder().getCrawlOrderName() + "\n");
+                this.controller.getOrder().getCrawlOrderName() + "\n");
         rep.append(" Number of toe threads in pool: " + 
             getToeCount() + " (" + getActiveToeCount() + " active)\n");
 
-        for (int i = 0; i < toes.size(); i++) {
-            ToeThread tt = (ToeThread)toes.get(i);
-            if(tt!=null) {
-                rep.append("   ToeThread #" + tt.getSerialNumber() + "\n");
-                rep.append(tt.report());
+        synchronized (this.toes) {
+            for (int i = 0; i < this.toes.size(); i++) {
+                ToeThread tt = (ToeThread)this.toes.get(i);
+                if(tt!=null) {
+                    rep.append("   ToeThread #" + tt.getSerialNumber() + "\n");
+                    rep.append(tt.report());
+                }
             }
         }
         
-        if (killedToes != null){
+        if (this.killedToes != null) {
             rep.append("\n --- Killed threads --- \n\n");
-            for (int i = 0; i < killedToes.size(); i++) {
-                rep.append("   Killed ToeThread #" + i + "\n");
-                rep.append(((ToeThread)killedToes.get(i)).report());
+            synchronized (this.killedToes) {
+                for (int i = 0; i < this.killedToes.size(); i++) {
+                    rep.append("   Killed ToeThread #" + i + "\n");
+                    rep.append(((ToeThread)this.killedToes.get(i)).report());
+                }
             }
         }
             
@@ -184,6 +193,7 @@ public class ToePool extends CrawlStatusAdapter {
     
     /**
      * Change the number of availible ToeThreads.
+     * 
      * @param newsize The new number of availible ToeThreads.
      */
     public void setSize(int newsize)
@@ -191,27 +201,23 @@ public class ToePool extends CrawlStatusAdapter {
         if(newsize > getToeCount())
         {
             // Adding more ToeThreads.
-            for(int i = getToeCount(); i<newsize; i++) {
-                ToeThread newThread = new ToeThread(controller,this,i);
-                newThread.setPriority(DEFAULT_TOE_PRIORITY);
-				// start paused if controller is paused.
-                newThread.setShouldPause(paused); 
-                toes.add(newThread);
-                newThread.start();
+            for(int i = getToeCount(); i < newsize; i++) {
+                startNewThread(i);
             }
-            effectiveSize = newsize;
+            this.effectiveSize = newsize;
         }
         else if(newsize < getToeCount())
         {
-            effectiveSize = newsize;
+            this.effectiveSize = newsize;
             // Removing some ToeThreads.
-            while(getToeCount()>newsize)
-            {
-                ToeThread t = (ToeThread)toes.get(newsize);
-                // Tell it to exit gracefully
-                t.stopAfterCurrent();
-                // and then remove it from the pool
-                toes.remove(newsize);
+            while(getToeCount() > newsize) {
+                synchronized(this.toes) {
+                    ToeThread t = (ToeThread)this.toes.get(newsize);
+                    // Tell it to exit gracefully
+                    t.stopAfterCurrent();
+                    // and then remove it from the pool
+                    this.toes.remove(newsize);
+                }
             }
         }
     }
@@ -225,10 +231,11 @@ public class ToePool extends CrawlStatusAdapter {
      * @param b New value for <tt>shouldPause</tt>
      */
     protected void setShouldPause(boolean b) {
-        Iterator iter = toes.iterator();
-        paused = b;
-        while(iter.hasNext()) {
-            ((ToeThread)iter.next()).setShouldPause(paused);
+        this.paused = b;
+        synchronized(this.toes) {
+            for (Iterator i = this.toes.iterator(); i.hasNext();) {
+                ((ToeThread)i.next()).setShouldPause(this.paused);
+            }
         }
     }
 
@@ -260,22 +267,37 @@ public class ToePool extends CrawlStatusAdapter {
      */
     public void killThread(int threadNumber, boolean replace){
         // Thread number should always be equal to it's placement in toes.
-        ToeThread toe = (ToeThread)toes.get(threadNumber);
-        toe.kill(threadNumber);
-        toes.remove(threadNumber);
-        if(killedToes==null){
-            killedToes = new ArrayList(1);
+        ToeThread toe = null;
+        synchronized (this.toes) {
+            toe = (ToeThread)this.toes.get(threadNumber);
+            toe.kill(threadNumber);
+            this.toes.remove(threadNumber);
         }
-        killedToes.add(toe);
+        if(this.killedToes == null) {
+            synchronized (this) {
+                if(this.killedToes == null) {
+                    this.killedToes =
+                        Collections.synchronizedList(new ArrayList(1));
+                }
+            }
+        }
+        synchronized (this.killedToes) {
+            this.killedToes.add(toe);
+        }
         if(replace){
-            // create a new toe thread to take it's place.
-            // Replace toe
-            ToeThread newThread = new ToeThread(controller,this,threadNumber);
-            newThread.setPriority(DEFAULT_TOE_PRIORITY);
-            // start paused if controller is paused.
-            newThread.setShouldPause(paused); 
-            toes.add(threadNumber,newThread);
-            newThread.start();
+            // Create a new toe thread to take it's place. Replace toe
+            startNewThread(threadNumber);
         } 
+    }
+    
+    private void startNewThread(int threadNo) {
+        ToeThread newThread = new ToeThread(this.controller, this, threadNo);
+        newThread.setPriority(DEFAULT_TOE_PRIORITY);
+        // start paused if controller is paused.
+        newThread.setShouldPause(this.paused);
+        synchronized (this.toes) {
+            this.toes.add(threadNo, newThread);
+        }
+        newThread.start();
     }
 }
