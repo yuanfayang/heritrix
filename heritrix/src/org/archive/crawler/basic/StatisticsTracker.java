@@ -4,14 +4,12 @@
  */
 package org.archive.crawler.basic;
 
-import org.apache.xalan.lib.Redirect;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.*;
-import java.util.List;
-import java.util.*;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.util.Queue;
 import org.archive.util.DiskWrite;
+import org.archive.util.Queue;
 
 /**
  * Tracks statistics that relate to the crawl in progress.
