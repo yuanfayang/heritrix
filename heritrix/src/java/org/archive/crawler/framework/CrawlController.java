@@ -481,6 +481,9 @@ public class CrawlController implements Serializable {
         	scope.initialize(this);
         }
         
+        this.serverCache =
+            ServerCacheFactory.getServerCache(getSettingsHandler());
+        
         if (frontier == null) {
             Object o = order.getAttribute(Frontier.ATTR_NAME);
             if (o instanceof Frontier) {
@@ -514,12 +517,6 @@ public class CrawlController implements Serializable {
                     "unable to initialize frontier: " + e);
             }
         }
-        
-        // Setup server cache after the frontier in case the frontier is using
-        // bdb.  If so, a bdb servercache will want to share the same bdb
-        // environment.
-        this.serverCache =
-            ServerCacheFactory.getServerCache(getSettingsHandler());
 
         // Setup processors
         if (processorChains == null) {
