@@ -264,7 +264,7 @@ public class RecordingInputStream
         return this.recordingOutputStream.getDigestValue();
     }
 
-    public ReplayCharSequence getReplayCharSequence() {
+    public ReplayCharSequence getReplayCharSequence() throws IOException {
         return getReplayCharSequence(null);
     }
 
@@ -272,8 +272,10 @@ public class RecordingInputStream
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
      * close on returned RCS when done.
+     * @throws IOException
      */
-    public ReplayCharSequence getReplayCharSequence(String characterEncoding) {
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding)
+    		throws IOException {
         return this.recordingOutputStream.
             getReplayCharSequence(characterEncoding);
     }

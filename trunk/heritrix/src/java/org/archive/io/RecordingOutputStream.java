@@ -372,7 +372,7 @@ public class RecordingOutputStream extends OutputStream {
         return this.digest.digest();
     }
 
-    public ReplayCharSequence getReplayCharSequence() {
+    public ReplayCharSequence getReplayCharSequence() throws IOException {
         return getReplayCharSequence(null);
     }
 
@@ -380,19 +380,14 @@ public class RecordingOutputStream extends OutputStream {
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
      * close on returned RCS when done.
+     * @throws IOException
      */
-    public ReplayCharSequence getReplayCharSequence(String characterEncoding) {
-
-        try {
-            return ReplayCharSequenceFactory.getInstance().
-                getReplayCharSequence(this.buffer, this.size,
-                    this.contentBeginMark, this.backingFilename,
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding)
+    		throws IOException {
+        return ReplayCharSequenceFactory.getInstance().
+        	getReplayCharSequence(this.buffer, this.size,
+        	        this.contentBeginMark, this.backingFilename,
                     characterEncoding);
-        } catch (IOException e) {
-            // TODO convert to runtime exception?
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public long getResponseContentLength() {
@@ -402,8 +397,7 @@ public class RecordingOutputStream extends OutputStream {
     /**
      * @return True if this ROS is open.
      */
-    public boolean isOpen()
-    {
+    public boolean isOpen() {
         return this.out != null;
     }
 }

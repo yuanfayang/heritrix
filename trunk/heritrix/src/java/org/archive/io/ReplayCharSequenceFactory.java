@@ -920,13 +920,11 @@ public class ReplayCharSequenceFactory {
 
             finally {
                 if (writer != null) {
+                    writer.flush();
                     writer.close();
                 }
                 if (isException) {
                     deleteFile(unicode);
-                } else {
-                    assert unicode.exists(): "No file: " +
-                        unicode.getAbsolutePath();
                 }
             }
 
