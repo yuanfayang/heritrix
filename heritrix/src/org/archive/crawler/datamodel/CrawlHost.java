@@ -7,6 +7,7 @@
 package org.archive.crawler.datamodel;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * @author gojomo
@@ -24,7 +25,26 @@ public class CrawlHost {
 	 */
 	public CrawlHost(String hostname) {
 		name = hostname;
-		// TODO: immediately handle numeric hosts
+		if (hostname.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+			try {
+				String[] octets = hostname.split("\\.");
+
+				setIP(
+					InetAddress.getByAddress(
+						hostname,
+						new byte[] {
+							(byte) (new Integer(octets[0])).intValue(),
+							(byte) (new Integer(octets[1])).intValue(),
+							(byte) (new Integer(octets[2])).intValue(),
+							(byte) (new Integer(octets[3])).intValue()})
+				);
+			} catch (UnknownHostException e) {
+				// this should never happen as a dns lookup is not made
+				e.printStackTrace();
+			}
+			// never expire numeric IPs
+			setIpExpires(Long.MAX_VALUE);
+		}
 	}
 		
 		
