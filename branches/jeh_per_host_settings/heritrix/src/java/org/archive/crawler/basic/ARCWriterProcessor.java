@@ -119,15 +119,16 @@ public class ARCWriterProcessor
             new SimpleType(ATTR_PATH, "Where to store arc files", outputDir));
     }
 
-    public void initialize(CrawlController c) {
+    public void initialize(CrawlController c) throws AttributeNotFoundException {
         super.initialize(c);
         
         // readConfiguration populates settings used creating ARCWriter.
         try {
             readConfiguration();
-        } catch (Exception e) {
-            e.printStackTrace();
-            // TODO: This is critical failure.  Should be let out.
+        } catch (MBeanException e) {
+            throw new AttributeNotFoundException(e.getMessage());
+        } catch (ReflectionException e) {
+            throw new AttributeNotFoundException(e.getMessage());
         }
 
         try

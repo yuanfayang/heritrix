@@ -85,13 +85,15 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
         addElementToDefinition(new SimpleType(ATTR_PATH, "Where to store arc files", outputDir));
     }
 
-  	public void initialize(CrawlController c){
+  	public void initialize(CrawlController c) throws AttributeNotFoundException{
   		super.initialize(c);
   
-		try {
+        try {
             readConfiguration();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (MBeanException e) {
+            throw new AttributeNotFoundException(e.getMessage());
+        } catch (ReflectionException e) {
+            throw new AttributeNotFoundException(e.getMessage());
         }
 		
 		try{
