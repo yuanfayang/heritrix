@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
 
 /**
@@ -19,7 +20,7 @@ import org.archive.crawler.datamodel.InstancePerThread;
  * 
  * @author Gordon Mohr
  */
-public class ToeThread extends Thread implements CoreAttributeConstants {
+public class ToeThread extends Thread implements CoreAttributeConstants, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
 	private boolean paused = false;
@@ -70,8 +71,14 @@ public class ToeThread extends Thread implements CoreAttributeConstants {
 			
 			if ( currentCuri != null ) {
 			
-				while ( currentCuri.nextProcessor() != null ) {
-					getProcessor(currentCuri.nextProcessor()).process(currentCuri);
+				try {
+					while ( currentCuri.nextProcessor() != null ) {
+						getProcessor(currentCuri.nextProcessor()).process(currentCuri);
+					}
+				} catch (RuntimeException e) {
+					currentCuri.setFetchStatus(S_INTERNAL_ERROR);
+					// store exception temporarily for logging
+					currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
 				}
 			
 				controller.getSelector().inter(currentCuri);
