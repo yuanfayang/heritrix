@@ -24,7 +24,6 @@ package org.archive.crawler.extractor;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-// import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -148,44 +147,71 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
     }
     
     /**
-     * Use this method to parse a page you've downloaded to the junit
-     * tmp dir.
-     * 
-     * Its commented out usually.  Comment it in when you want to
-     * try a page.  Name the page for this class.
+     * Test single net or local filesystem page parse.
+     * Set the uuri to be a net url or instead put in place a file
+     * named for this class under the unit test directory.
      * 
      * @throws IOException
      */
-//    public void testParseOfLocalPage() throws IOException {        
-//        ExtractorHTML extractor = new ExtractorHTML("html extractor");
-//        extractor.earlyInitialize(this.globalSettings);
-//        final String BASENAME = this.getClass().getName();
-//        File f = new File(getTmpDir(), BASENAME + ".html");
-//        if (!f.exists()) {
-//            throw new FileNotFoundException(f.getAbsolutePath());
+    public void testPageParse() throws IOException {
+        UURI uuri = null;
+        
+// DO
+//      uuri = UURIFactory.getInstance("http://www.xjmu.edu.cn/");
+// OR
+//        File f = new File(getTmpDir(), this.getClass().getName() +
+//        ".html");
+//        if (f.exists()) {
+//        	uuri = UURIFactory.getInstance("file://" +
+//        			f.getAbsolutePath());
 //        }
-//        final UURI baseUURI = UURIFactory.getInstance("file://" + f.getAbsolutePath());
-//        URL url = new URL(baseUURI.toString());
-//        this.recorder = setupRecorder(url, BASENAME);
-//        CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
-//        extractor.innerProcess(curi);
-//        Set links = (Set)curi.getAList().
-//            getObject(CoreAttributeConstants.A_HTML_LINKS);
-//        System.out.println("A_HTML_LINKS");
-//        if (links != null) {
-//            for (Iterator i = links.iterator(); i.hasNext();) {
-//                System.out.println((String)i.next());
-//            }
-//        }
-//        System.out.println("A_HTML_EMBEDS");
-//        links = (Set)curi.getAList().
-//			  getObject(CoreAttributeConstants.A_HTML_EMBEDS);
-//        if (links != null) {
-//            for (Iterator i = links.iterator(); i.hasNext();) {
-//                System.out.println((String)i.next());
-//            }
-//        }
-//    }
+        if (uuri != null) {
+        	runExtractor(uuri);
+        }
+    }
+    
+    protected void runExtractor(UURI baseUURI) throws IOException {
+        if (baseUURI == null) {
+        	return;
+        }
+        ExtractorHTML extractor = new ExtractorHTML("html extractor");
+        extractor.earlyInitialize(this.globalSettings);
+        URL url = new URL(baseUURI.toString());
+        this.recorder = setupRecorder(url, this.getClass().getName());
+        CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
+        extractor.innerProcess(curi);
+        Set links = (Set)curi.getAList().
+            getObject(CoreAttributeConstants.A_HTML_LINKS);
+        System.out.println("A_HTML_LINKS");
+        if (links != null) {
+            for (Iterator i = links.iterator(); i.hasNext();) {
+                System.out.println((String)i.next());
+            }
+        }
+        System.out.println("A_HTML_EMBEDS");
+        links = (Set)curi.getAList().
+			  getObject(CoreAttributeConstants.A_HTML_EMBEDS);
+        if (links != null) {
+            for (Iterator i = links.iterator(); i.hasNext();) {
+                System.out.println((String)i.next());
+            }
+        }
+        System.out.println("A_HTML_SPECULATIVE_EMBEDS");
+        links = (Set)curi.getAList().
+              getObject(CoreAttributeConstants.A_HTML_SPECULATIVE_EMBEDS);
+        if (links != null) {
+            for (Iterator i = links.iterator(); i.hasNext();) {
+                String u = (String)i.next();
+                if (u.indexOf(".HTM") > 0) {
+                	int l = u.length();
+                    byte [] c = u.getBytes();
+                    int xx = 0;
+                }
+                System.out.println(u + " " + curi.getUURI() + " " +
+                    UURIFactory.getInstance(curi.getUURI(), u));
+            }
+        }
+    }
 
     /**
      * Test a particular <embed src=...> construct that was suspicious in

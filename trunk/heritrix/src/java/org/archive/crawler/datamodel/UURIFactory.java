@@ -193,6 +193,11 @@ public class UURIFactory extends URI {
         Pattern.compile("^(https?://)/+(.*)");
     
     /**
+     * Pattern that looks for case of two or more slashes in a path.
+     */
+    final static Pattern MULTIPLE_SLASHES = Pattern.compile("//+");
+    
+    /**
      * Consider URIs too long for IE as illegal.
      */
     private final static int MAX_URL_LENGTH = 2083;
@@ -363,9 +368,28 @@ public class UURIFactory extends URI {
         String uriQuery = checkUriElement(matcher.group(8));
         // UNUSED String uriFragment = checkUriElement(matcher.group(10));
         
+        if (uriScheme != null && uriScheme.length() == 1) {
+            // Catch URLs that look like this:
+            // c:/Documents%20and%20Settings/Administrator.doc
+        	throw new URIException("Scheme is one-letter only: " + uri);
+        }
+        
         // Test if relative URI.  If so, need a base to resolve against.
-        if ((uriScheme == null || uriScheme.length() <= 0)  && base == null) {
-            throw new URIException("Relative URI but no base: " + uri);
+        if (uriScheme == null || uriScheme.length() <= 0) {
+        	if (base == null) {
+        		throw new URIException("Relative URI but no base: " + uri);
+            }
+        	if (uriPath != null) {
+        		// The parent class has a bug in that if dbl-slashes in a
+                // relative path, then it thinks all before the dbl-slashes
+                // a scheme -- it doesn't look for a colon.  Remove
+                // dbl-slashes in relative paths. Here is an example of what
+                // it does.  With a base of "http://www.archive.org/index.html"
+                // and a relative uri of "JIGOU//KYC//INDEX.HTM", its making
+                // a product of "http://KYC/INDEX.HTM".
+        		matcher = MULTIPLE_SLASHES.matcher(uriPath);
+        		uriPath = matcher.replaceAll("/");
+        	}
         }
         
         // Lowercase the host part of the uriAuthority; don't destroy any
