@@ -24,6 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.util.HashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
@@ -49,7 +50,8 @@ public class ToeThread extends Thread
     implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker
 {
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
-
+    private static int DEFAULT_TAKE_TIMEOUT = 3000;
+    
     private ToePool pool;
     private boolean shouldCrawl = true;
     CrawlController controller;
@@ -64,6 +66,9 @@ public class ToeThread extends Thread
     // in-process/on-hold curis? not for now
     // a queue of curis to do next? not for now
 
+    // debugging
+    int where = 0;
+    
     /**
      * @param c
      * @param p
@@ -79,12 +84,12 @@ public class ToeThread extends Thread
     }
 
 
-    public synchronized void crawl(CrawlURI curi) {
-        assert currentCuri == null : "attempt to clobber crawlUri";
-        currentCuri = curi;
-        currentCuri.setThreadNumber(serialNumber);
-        notify();
-    }
+//    public synchronized void crawl(CrawlURI curi) {
+//        assert currentCuri == null : "attempt to clobber crawlUri";
+//        currentCuri = curi;
+//        currentCuri.setThreadNumber(serialNumber);
+//        notify();
+//    }
 
     public boolean isAvailable() {
         return currentCuri == null;
@@ -96,18 +101,21 @@ public class ToeThread extends Thread
     public void run() {
         String name = controller.getOrder().getCrawlOrderName();
         logger.fine(getName()+" started for order '"+name+"'");
-        // OutOfMemory catch might interfere with usual IBM JVM
-        // heapdump: so commenting out. memory problems will be fatal
-        // try {
-            while ( shouldCrawl ) {
-                processingLoop();
+
+        while ( shouldCrawl ) {
+            where = 1;
+            try {
+                currentCuri = (CrawlURI) controller.getFrontier().newNext(DEFAULT_TAKE_TIMEOUT);
+            } catch (InterruptedException e1) {
+                currentCuri = null;
             }
-            controller.toeFinished(this);
-        //} catch (OutOfMemoryError e) {
-        //    e.printStackTrace();
-        //    logger.warning(getName()+" exitting: out of memory error");
-        //    shouldCrawl = false;
-        //}
+            if ( currentCuri != null ) {
+                processCrawlUri();
+            }
+            where = 16;
+        }
+        where = 17;
+        controller.toeFinished(this);
 
         // Do cleanup so that objects can be GC.
         pool = null;
@@ -119,58 +127,54 @@ public class ToeThread extends Thread
         logger.fine(getName()+" finished for order '"+name+"'");
     }
 
-    private synchronized void processingLoop() {
-        if ( currentCuri != null ) {
-            lastStartTime = System.currentTimeMillis();
-
-            try {
-                while (currentCuri.nextProcessorChain() != null) {
-                    // Starting on a new processor chain.
-                    currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
-                    currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
-
-                    while (currentCuri.nextProcessor() != null) {
-                        Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-                        currentProcessorName = currentProcessor.getName();
-                        currentProcessor.process(currentCuri);
-                    }
-                }
-            } catch (RuntimeException e) {
-                e.printStackTrace(System.err);
-                currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
-                // store exception temporarily for logging
-                currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
-                String title = "RuntimeException occured processing '" + currentCuri.getURIString() + "'";
-                String message = "The following RuntimeException occure when trying " +
-                		"to process '" + currentCuri.getURIString() + "'\n";
-                Heritrix.addAlert(new Alert(title,message.toString(),e));
-            } catch (Error err) {
-                // OutOfMemory & StackOverflow & etc.
-                System.err.println(err);
-                System.err.println(DevUtils.extraInfo());
-                err.printStackTrace(System.err);
-                currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-                String title = "Serious error occured processing '" + currentCuri.getURIString() + "'";
-                String message = "The following serious error occure when trying " +
-                		"to process '" + currentCuri.getURIString() + "'\n";
-                Heritrix.addAlert(new Alert(title,message.toString(),err));
-            }
-
-            controller.getFrontier().finished(currentCuri);
-            synchronized(pool) {
-                currentCuri = null;
-                lastFinishTime = System.currentTimeMillis();
-                pool.noteAvailable(this);
-            }
-        }
-
+    private void processCrawlUri() {
+        currentCuri.setThreadNumber(serialNumber);
+        lastStartTime = System.currentTimeMillis();
+        where = 3;
         try {
-            wait(); // until master thread gives a new work URI
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.warning(getName()+" interrupted");
+            while (currentCuri.nextProcessorChain() != null) {
+                where = 4;
+                // Starting on a new processor chain.
+                currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
+                currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
+
+                while (currentCuri.nextProcessor() != null) {
+                    where = 5;
+                    Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+                    currentProcessorName = currentProcessor.getName();
+                    currentProcessor.process(currentCuri);
+                }
+            }
+            where = 6;
+        } catch (RuntimeException e) {
+            where = 7;
+            e.printStackTrace(System.err);
+            currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
+            // store exception temporarily for logging
+            currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+            String title = "RuntimeException occured processing '" + currentCuri.getURIString() + "'";
+            String message = "The following RuntimeException occure when trying " +
+            		"to process '" + currentCuri.getURIString() + "'\n";
+            Heritrix.addAlert(new Alert(title,message.toString(),e, Level.SEVERE));
+        } catch (Error err) {
+            where = 8;
+            // OutOfMemory & StackOverflow & etc.
+            System.err.println(err);
+            System.err.println(DevUtils.extraInfo());
+            err.printStackTrace(System.err);
+            currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+            String title = "Serious error occured processing '" + currentCuri.getURIString() + "'";
+            String message = "The following serious error occure when trying " +
+            		"to process '" + currentCuri.getURIString() + "'\n";
+            Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
         }
+        where = 9;
+        controller.getFrontier().finished(currentCuri);
+        where = 10;
+        currentCuri = null;
+        lastFinishTime = System.currentTimeMillis();
     }
+
 
     /**
      * @param processor
@@ -221,7 +225,7 @@ public class ToeThread extends Thread
     /**
      * @return Compiles and returns a report on its status.
      */
-    public String report()
+    public synchronized String report()
     {
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
@@ -271,6 +275,8 @@ public class ToeThread extends Thread
             time = now-lastStartTime;
         }
         rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
+        rep.newline();
+        rep.append("where:"+where);
         rep.newline();
 
         return rep.toString();
