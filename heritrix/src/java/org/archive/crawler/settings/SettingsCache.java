@@ -71,11 +71,7 @@ public class SettingsCache {
      */
     public CrawlerSettings getSettingsObject(String scope, String refinement) {
         String key = computeKey(scope, refinement);
-        if (key == "") {
-            return globalSettings;
-        }
-        CrawlerSettings settings = settingsCache.get(key);
-        return settings;
+        return (key == "")? this.globalSettings: settingsCache.get(key);
     }
 
     /** Add a settings object to the cache.
