@@ -293,17 +293,28 @@ public class ReplayCharSequenceFactory {
         private byte[] prefixBuffer;
         
         /**
-         * Total length of stream to replay. Used to find EOS.
+         * Total length of character stream to replay minus the HTTP headers
+         * if present. 
+         * 
+         * Used to find EOS.
          */
         protected int length;
 
+        /**
+         * Absolute length of the stream.
+         * 
+         * Includes HTTP headers.  Needed doing calc. in the below figuring 
+         * how much to load into buffer.
+         */
+        private int absoluteLength = -1;
+   
         /**
          * Buffer window on to backing file.
          */
         private byte[] wraparoundBuffer;
         
         /**
-         * Index into underlying bytestream where wrap starts.
+         * Absolute index into underlying bytestream where wrap starts.
          */
         private int wrapOrigin;
         
@@ -349,7 +360,8 @@ public class ReplayCharSequenceFactory {
                 long responseBodyStart, String backingFilename)
             throws IOException {
             
-            this.length = (int)(size - responseBodyStart);     
+            this.length = (int)(size - responseBodyStart);
+            this.absoluteLength = (int)size;
             this.prefixBuffer = buffer;
             this.contentOffset = (int)responseBodyStart;
 
@@ -359,16 +371,15 @@ public class ReplayCharSequenceFactory {
                 this.backingFilename = backingFilename;
                 this.raFile = new RandomAccessFile(backingFilename, "r");
                 this.wraparoundBuffer = new byte[this.prefixBuffer.length];
-                this.wrapOrigin = this.prefixBuffer.length                                                                                     ;
+                this.wrapOrigin = this.prefixBuffer.length;                                                                                     
                 this.wrapOffset = 0;
                 loadBuffer();
             }
         }
         
-
-
         /**
-         * @return Length of stream to replay.
+         * @return Length of characters in stream to replay.  Starts counting
+         * at the HTTP header/body boundary.
          */
         public int length() {
             return this.length;
@@ -479,7 +490,7 @@ public class ReplayCharSequenceFactory {
                 this.raFile.seek(this.wrapOrigin - this.prefixBuffer.length);
                 this.raFile.readFully(this.wraparoundBuffer, 0,
                     Math.min(this.wraparoundBuffer.length,
-                    this.length - this.wrapOrigin));
+                         this.absoluteLength - this.wrapOrigin));
             } 
             
             catch (IOException e) {
@@ -812,6 +823,7 @@ public class ReplayCharSequenceFactory {
                 throw new IOException("Can't get array from CharBuffer.");
             }
             
+            boolean isException = false;
             try {
                 // Get a writer.  Output in our WRITE_ENCODING.
                 writer = new BufferedWriter(new OutputStreamWriter(
@@ -844,12 +856,16 @@ public class ReplayCharSequenceFactory {
             }
             
             catch (IOException e) {
-                deleteFile(unicode);
+                isException = true;
+                throw e;
             }
             
             finally {
                 if (writer != null) {
                     writer.close();
+                }
+                if (isException) {
+                    deleteFile(unicode);
                 }
             }
             return unicode;
