@@ -8,13 +8,17 @@
  <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
  <store class="org.archive.crawler.basic.SimpleStore" />
  <selector class="org.archive.crawler.basic.SimpleSelector">
-  <exclude name="pathological path" regexp=".*/(.*)/\1/\1/.*" />
+  <filter 
+   name="pathological-path" 
+   class="org.archive.crawler.util.URIRegExpFilter"
+   modifier="not"
+   regexp=".*/(.*)/\1/\1/.*" />
  </selector>
  
  <processors>
   <processor 
     name="Preprocessor" 
-    class="org.archive.crawler.basic.SimplePolitenessEnforcer"
+    class="org.archive.crawler.basic.SimplePreconditionEnforcer"
     next="DNS">
    <params delay-factor="20" />
   </processor>
@@ -38,6 +42,12 @@
     name="Archiver" 
     class="org.archive.crawler.basic.ARCWriter"
     next="Updater">
+     <compression use="true"/>
+	 <arc-files max-size-bytes="20000000"/>
+	 <filter 
+	  name="http-only"
+	  class="org.archive.crawler.util.URIRegExpFilter"
+	  regexp="^http://.*" />
   </processor>
   <processor 
     name="Updater" 
@@ -48,11 +58,11 @@
  <limits>
   <!-- actual enforcement of these limits may depend on choice 
        of SSS/processor instances that read and respect these limits -->
-  <max-link-depth value="3" /> <!-- zero means crawl seeds only -->
+  <max-link-depth value="10" /> <!-- zero means crawl seeds only -->
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
-  <max-toe-threads value="1" />
+  <max-toe-threads value="5" />
  </limits>
 
 </crawler-behavior>

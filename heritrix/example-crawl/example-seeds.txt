@@ -1,0 +1,19 @@
+# http://www.yahoo.com
+# http://www.google.com/dirhp
+# http://www.lycos.com
+# http://www.msn.com
+# http://www.cnn.com
+# http://www.drudgereport.com
+# http://www.aol.com
+# http://www.msnbc.com
+
+# http://www.archive.org
+# http://www.google.com
+# http://www.excite.com
+# http://dmoz.org
+
+# test garden
+http://crawl08.archive.org/
+
+# chunked
+# http://enterprise.lycos.com
