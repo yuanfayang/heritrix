@@ -239,7 +239,7 @@ public class UURI extends URI {
      */
     public String getSurtForm() {
         if (surtForm == null) {
-            surtForm = SURT.transform(this.toString());
+            surtForm = SURT.fromURI(this.toString());
         }
         return surtForm;
     }

@@ -51,9 +51,9 @@ import java.util.regex.Pattern;
  */
 public class SURT {
     static String DOT = ".";
-    static String BEGIN_TRANSFORMED_AUTHORITY = "#";
+    static String BEGIN_TRANSFORMED_AUTHORITY = "(";
     static String TRANSFORMED_HOST_DELIM = ",";
-    static String END_TRANSFORMED_AUTHORITY = "#";
+    static String END_TRANSFORMED_AUTHORITY = ")";
     
     // 1: scheme://
     // 2: userinfo (if present)
@@ -64,7 +64,7 @@ public class SURT {
     static Pattern URI_SPLITTER = Pattern.compile(
             "^(\\w+://)(?:(\\S+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$");
     
-    public static String transform(String s) {
+    public static String fromURI(String s) {
         Matcher m = URI_SPLITTER.matcher(s);
         if(!m.matches()) {
             // not an authority-based URI scheme; return unchanged

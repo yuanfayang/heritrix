@@ -69,24 +69,24 @@ public class SURTTest extends TestCase {
 
     public void testMisc() throws URIException {
         assertEquals("", 
-                "http://#org,archive,www,#/movies/movies.php",
-                SURT.transform("http://www.archive.org/movies/movies.php"));
+                "http://(org,archive,www,)/movies/movies.php",
+                SURT.fromURI("http://www.archive.org/movies/movies.php"));
 
         assertEquals("", 
-                "http://#org,archive,www,:8080#/movies/movies.php",
-                SURT.transform("http://www.archive.org:8080/movies/movies.php"));
+                "http://(org,archive,www,:8080)/movies/movies.php",
+                SURT.fromURI("http://www.archive.org:8080/movies/movies.php"));
 
         assertEquals("", 
-                "http://#org,archive,www,@user:pass#/movies/movies.php",
-                SURT.transform("http://user:pass@www.archive.org/movies/movies.php"));
+                "http://(org,archive,www,@user:pass)/movies/movies.php",
+                SURT.fromURI("http://user:pass@www.archive.org/movies/movies.php"));
 
         assertEquals("", 
-                "http://#org,archive,www,:8080@user:pass#/movies/movies.php",
-                SURT.transform("http://user:pass@www.archive.org:8080/movies/movies.php"));
+                "http://(org,archive,www,:8080@user:pass)/movies/movies.php",
+                SURT.fromURI("http://user:pass@www.archive.org:8080/movies/movies.php"));
         
         assertEquals("", 
-                "http://#org,archive,www,#/movies/movies.php#top",
-                SURT.transform("http://www.archive.org/movies/movies.php#top"));
+                "http://(org,archive,www,)/movies/movies.php#top",
+                SURT.fromURI("http://www.archive.org/movies/movies.php#top"));
 
     }
 }
