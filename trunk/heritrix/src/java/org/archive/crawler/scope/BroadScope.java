@@ -24,7 +24,6 @@
 package org.archive.crawler.scope;
 
 import java.io.File;
-import java.util.logging.Logger;
 
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
