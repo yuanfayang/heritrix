@@ -100,29 +100,6 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	}
 	
 	/**
-	 * The CrawlController calls this method once it's current job is finished 
-	 * or has been terminated for whatever reason (sExitMessage contains details).
-	 * This method implements the CrawlListener interface.
-	 * 
-	 * Once a job has started crawling, it is considered to be crawling until this
-	 * method is invoked.  It should only be invoked by the CrawlController in question
-	 * once it is exiting.
-	 */
-	public void crawlEnding(String sExitMessage)
-	{
-		crawling = false;
-		currentJob.setStatus(sExitMessage);
-		completedCrawlJobs.add(currentJob);
-		currentJob.setReadOnly(); //Further changes have no meaning
-		currentJob = null;
-		controller = null; // Remove the reference so that the old controller can be gc.
-		if(shouldcrawl)
-		{
-			startNextJob();		
-		}
-	}
-	
-	/**
 	 * Returns the Frontier report..
 	 * 
 	 * @return A report of the frontiers status.
@@ -470,5 +447,36 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlStat
 	 */
 	public void crawlResuming(String statusMessage) {
 		currentJob.setStatus(statusMessage);
+	}
+
+	/**
+	 * Once a job has started crawling, it is considered to be crawling until this
+	 * method is invoked.  It should only be invoked by the CrawlController in question
+	 * once it is exiting.
+	 * 
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnding(java.lang.String)
+	 */
+	public void crawlEnding(String sExitMessage)
+	{
+		crawling = false;
+		currentJob.setStatus(sExitMessage);
+		completedCrawlJobs.add(currentJob);
+		currentJob.setReadOnly(); //Further changes have no meaning
+		currentJob = null;
+		controller = null; // Remove the reference so that the old controller can be gc.
+		if(shouldcrawl)
+		{
+			startNextJob();		
+		}
+	}
+	
+	/**
+	 * The CrawlController calls this method once it's current job is finished (totally)
+	 * or has been terminated for whatever reason (sExitMessage contains details).
+	 * 
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
+	 */
+	public void crawlEnded(String sExitMessage) {
+		// Not interested.  Once the Controller tells us that it is ending it's crawl we will simply assume that that was indeed done.
 	}
 }

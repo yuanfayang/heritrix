@@ -345,18 +345,25 @@ public class CrawlController extends Thread {
 			 	//} 
 			 }
 		}
+
+		// Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
+		Iterator it = registeredListeners.iterator();
+		while(it.hasNext()) {
+			((CrawlStatusListener) it.next()).crawlEnding(sExit);
+		}
 		
-		controlThread = null;
-		logger.info("exitting run");
-		
-		//Do cleanup to facilitate GC.
+		// Ok, now we are ready to exit.		
 		while(registeredListeners.size()>0)
 		{
 			// Let the listeners know that the crawler is finished.
-			((CrawlStatusListener)registeredListeners.get(0)).crawlEnding(sExit);
+			((CrawlStatusListener)registeredListeners.get(0)).crawlEnded(sExit);
 			registeredListeners.remove(0);
 		}
 
+		logger.info("exitting run");
+
+		//Do cleanup to facilitate GC.
+		controlThread = null;
 		frontier = null;
 		disk = null;
 		scratchDisk = null;
