@@ -128,6 +128,14 @@ public class PaddingStringBufferTest extends TestCase {
         assertEquals("no padding for 0", "foo", buf.toString());
 
     }
+    
+    /** test the newline() */
+    public void testNewline(){
+        PaddingStringBuffer retBuf;
+        assertEquals("nothing should be in the buffer", "", buf.toString());
+        retBuf = buf.newline();
+        assertTrue("should contain newline", buf.toString().indexOf('\n')!=-1);
+    }
 
     /** check what happens when we right append, but the string is longer
      * than the space */
@@ -175,7 +183,7 @@ public class PaddingStringBufferTest extends TestCase {
 
     /** check that raAppend(long) works */
     public void testRaAppendLong() {
-// right-append '1' to column 5
+        // right-append '1' to column 5
         buf.raAppend(5, (long) 1);
         assertEquals("buf is '    1'", "    1", buf.toString());
         // try appending a too-long int

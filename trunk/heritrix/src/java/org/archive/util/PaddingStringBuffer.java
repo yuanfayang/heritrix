@@ -27,23 +27,30 @@ package org.archive.util;
  * StringBuffer-like utility which can add spaces to reach a certain column.  It
  * allows you to append {@link String}, <code>long</code> and <code>int</code>s
  * to the buffer.
- *
+ * <p>
  * Note: This class counts from 1, not 0.
- *
- * Current use of String concatenation is awfully inefficient, should be
- * changed at some point.
+ * <p>
+ * It uses a StringBuffer behind the scenes.
+ * <p>
+ * To write a string with multiple lines, it is advisible to use the 
+ * {@link #newline() newline()} function. Regular appending of strings with
+ * newlines (\n) character should be safe though. Right appending of strings
+ * with such characters is <i>not</i> safe.  
  *
  * @author Gordon Mohr
  */
 public final class PaddingStringBuffer {
-	// TODO: be more efficient
-	String buffer = "";
+    // The buffer.
+	StringBuffer buffer;
+    // Location in current line
+    int linePos;
 	
 	/** Create a new PaddingStringBuffer
 	 * 
 	 */
 	public PaddingStringBuffer() {
-		super();
+		buffer = new StringBuffer();
+        linePos=0; 
 	}
 
 	/** append a string directly to the buffer
@@ -51,7 +58,15 @@ public final class PaddingStringBuffer {
 	 * @return This wrapped buffer w/ the passed string appended.
 	 */
 	public PaddingStringBuffer append(String string) {
-		buffer += string;
+		buffer.append(string);
+        if ( string.indexOf('\n') == -1 ){
+            linePos+=string.length();
+        } else {
+            while ( string.indexOf('\n') == -1 ){
+                string = string.substring(string.indexOf('\n'));
+            }
+            linePos=string.length();
+        }
 		return this; 
 	}
 	
@@ -61,13 +76,13 @@ public final class PaddingStringBuffer {
      * the string
 	 * 
 	 * @param col the column to right-align to
-	 * @param string the string
+	 * @param string the string, must not contain multiple lines.
 	 * @return This wrapped buffer w/ append string, right-aligned to the
      * given column.
 	 */
 	public PaddingStringBuffer raAppend(int col, String string) {
 		padTo(col-string.length());
-		buffer += string;
+        append(string);
 		return this;
 	}
 
@@ -77,8 +92,9 @@ public final class PaddingStringBuffer {
 	 * @return The buffer padded to <code>i</code>.
 	 */
 	public PaddingStringBuffer padTo(int col) {
-		while(buffer.length()<col) {
-			buffer += " ";
+		while(linePos<col) {
+			buffer.append(" ");
+            linePos++;
 		}
 		return this;
 	}
@@ -88,7 +104,7 @@ public final class PaddingStringBuffer {
 	 * @return This wrapped buffer with <code>i</code> appended.
 	 */
 	public PaddingStringBuffer append(int i) {
-		buffer += i;
+		append(Integer.toString(i));
 		return this; 
 	}
 	
@@ -112,7 +128,7 @@ public final class PaddingStringBuffer {
 	 * @return This wrapped buffer w/ appended long.
 	 */
 	public PaddingStringBuffer append(long lo) {
-		buffer += lo;
+		append(Long.toString(lo));
 		return this; 
 	}
 	
@@ -130,14 +146,24 @@ public final class PaddingStringBuffer {
 
     /** reset the buffer back to empty */
     public void reset() {
-        buffer = "";
+        buffer = new StringBuffer();
+        linePos = 0;
     }
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return buffer;
+		return buffer.toString();
 	}
+
+    /**
+     * Forces a new line in the buffer.
+     */
+    public PaddingStringBuffer newline() {
+        buffer.append("\n");
+        linePos = 0;
+        return this;
+    }
 
 }
