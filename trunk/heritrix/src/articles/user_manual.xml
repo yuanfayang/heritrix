@@ -1114,7 +1114,8 @@
         <para>To enable logging of authentication interactions, set the
         FetchHTTP log level to fine</para>
 
-        <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE</programlisting></para>
+        <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
+org.archive.crawler.basic.PreconditionEnforcer.level = FINE</programlisting></para>
 
         <para>This is done by editing the
         <filename>heritrix.properties</filename> file under the
@@ -1127,8 +1128,8 @@
         url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
         DIGEST Auth)</title>
 
-        <para>Supply <ulink url="#cd">Credential Domain</ulink>, <ulink
-        url="realm">Realm</ulink>, login, and password.</para>
+        <para>Supply <ulink url="#cd">credential-domain</ulink>, <ulink
+        url="realm">realm</ulink>, login, and password.</para>
 
         <para>The way that the RFC2617 authentication works in Heritrix is
         that in response to a 401 response code (Unauthorized), Heritrix will
@@ -1146,8 +1147,7 @@
         natural 401 death.</para>
 
         <sect4 id="cd">
-          <title>Credential Domain</title>
-
+          <title>credential-domain</title>
           <para>This equates to the canonical root URI of RFC2617;
           effectively, in our case, its the CrawlServer name or <ulink
           url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
@@ -1155,7 +1155,7 @@
         </sect4>
 
         <sect4 id="realm">
-          <title>Realm</title>
+          <title>realm</title>
 
           <para>Realm as per <ulink
           url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink>. The
@@ -1188,7 +1188,69 @@
       <sect3>
         <title>HTML Form POST or GET</title>
 
-        <para></para>
+        <para>Supply <ulink url="#cdh">credential-domain</ulink>, 
+        <ulink url="httpmethod">http-method</ulink>, 
+        <ulink url="loginuri">login-uri</ulink>, 
+        and
+        <ulink url="formitems">form-items</ulink>, 
+        .</para>
+        <para>Before a <literal>uri</literal> is scheduled, we look for
+        preconditions.  Examples of preconditions are the getting of the the
+        dns record for the server that hosts the <literal>uri</literal> and the
+        fetching of the <literal>robots.txt</literal>: i.e.
+        we don't fetch any <literal>uri</literal> 
+        unless we first have gotten the <literal>robots.txt</literal> file.
+        The HTML Form Credentials are done as a precondition. If there are HTML
+        Form Credentials for a particular crawlserver in the credential store,
+        the uri specified in the HTML Form Credential login-uri field is
+        scheduled as a precondition for the site, 
+        after the fetching of the dns and robots preconditions.
+        </para>
+
+        <sect4 id="cdh">
+          <title>credential-domain</title>
+          <para>Same as the Rfc22617 Credential
+          <ulink url="#cd">credential-domain</ulink>.</para>
+        </sect4>
+        <sect4 id="loginuri">
+          <title>login-url</title>
+          <para>Relative or absolute URI to the page that the HTML Form
+          submits to (Not the page that contains the HTML Form).
+         </para>
+        </sect4>
+        <sect4 id="formitems">
+          <title>form-items</title>
+          <para>Listing of HTML Form key/value pairs.  Don't forget to include
+          the form submit button.</para>
+        </sect4>
+
+        <sect4>
+            <title>Known Limitations</title>
+                <sect5><title>Site is crawled logged in or not; cannot do
+                both</title>
+                    <para>
+        If a site has an HTML Form Credential associated,
+        the next thing done after the getting of the dns record and the 
+        robots.txt is that a login is performed against all listed HTML Form
+        Credential login-uris.  This means that the crawler will only ever 
+        view sites that have HTML Form Credentials from the 'logged-in' 
+        perspective.  There is no way currently of telling the crawler to 
+        crawl the site 'non-logged-in' and then, when done, log in and crawl
+        the site anew only this time from the 'logged-in' perspective (At 
+        least, not as part of the one crawl job).
+                    </para>
+                </sect5>
+
+                <sect5><title>No means of verifying or rerunning login</title>
+                <para>The login is run once only and the crawler continues
+                whether the login succeeded or not.  There is no means of 
+                telling the crawler retry upon unsuccessful authentication.
+                Neither is there a means for the crawler to report success or
+                otherwise (The operator is expected to study logs to see 
+                whether authentication ran successfully).
+                </para>
+                </sect5>
+            </sect4>
       </sect3>
     </sect2>
 

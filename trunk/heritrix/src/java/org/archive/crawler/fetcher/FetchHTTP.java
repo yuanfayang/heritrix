@@ -52,6 +52,7 @@ import org.apache.commons.httpclient.auth.MalformedChallengeException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -185,21 +186,17 @@ public class FetchHTTP extends Processor
         }
 
         this.curisHandled++;
+        
         // Note begin time
-        long now = System.currentTimeMillis();
-        curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+        curi.getAList().putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
         
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
-        
-        HttpMethod method = null;
-        if (curi.isPost()) {
-            method =
-                new HttpRecorderPostMethod(curi.getUURI().getURIString(), rec);
-        } else {
-            method =
-                new HttpRecorderGetMethod(curi.getUURI().getURIString(), rec);
-        }
+        HttpMethod method = curi.isPost()?
+            (HttpMethod)new HttpRecorderPostMethod(
+                curi.getUURI().getURIString(), rec):
+            (HttpMethod)new HttpRecorderGetMethod(
+                curi.getUURI().getURIString(), rec);
         configureMethod(curi, method);
         boolean addedCredentials = populateCredentials(curi, method);
         int immediateRetries = 0;
@@ -288,6 +285,12 @@ public class FetchHTTP extends Processor
             // so they are available for all subsequent CrawlURIs on this
             // server.
             promoteCredentials(curi);
+            if (logger.isLoggable(Level.FINE)) {
+                // Print out the cookie.  Might help with the debugging.
+                Header setCookie = method.getResponseHeader("set-cookie");
+                logger.fine((setCookie == null)? 
+                    null: setCookie.toString().trim());
+            }
         } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
             // 401 is not 'success'.
             handle401(method, curi);
@@ -382,13 +385,13 @@ public class FetchHTTP extends Processor
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         ((HttpMethodBase)method).setHttp11(false);
 
+        CrawlOrder order = getSettingsHandler().getOrder();
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
-            userAgent = getSettingsHandler().getOrder().getUserAgent(curi);
+            userAgent = order.getUserAgent(curi);
         }
         method.setRequestHeader("User-Agent", userAgent);
-        method.setRequestHeader("From",
-            getSettingsHandler().getOrder().getFrom(curi));
+        method.setRequestHeader("From", order.getFrom(curi));
     }
 
     /**
@@ -443,36 +446,12 @@ public class FetchHTTP extends Processor
         
         return result;
     }
-    
-    /**
-     * Add passed avatar credentials to passed <code>method</code>.
-     * 
-     * @param avatars Set of avatars whose credentials we're to add.
-     * @param curi Current CrawlURI.
-     * @param method The method to add to.
-     * @param everyTime If true, test if credential is of the everytime type.
-     * @return True if prepopulated <code>method</code> with credentials.
-     */
-    private boolean populateCredentials(Set avatars, CrawlURI curi,
-            HttpMethod method, boolean everyTime) {
-        boolean result = false;
-        if (avatars == null || avatars.size() <= 0) {
-            return result;
-        }
-        for (Iterator i = avatars.iterator(); i.hasNext();) {
-            CredentialAvatar ca = (CredentialAvatar)i.next();
-            Credential c = ca.getCredential(getSettingsHandler(), curi);
-            if (c.isEveryTime()) {
-                c.populate(curi, this.http, method, ca.getPayload());
-            }
-        }
-        return result;
-    }
 
     /**
      * Promote successful credential to the server.
      * 
      * @param curi CrawlURI whose credentials we are to promote.
+     * @param method Method used.
      */
     private void promoteCredentials(final CrawlURI curi) {
         if (!curi.hasCredentialAvatars()) {
@@ -670,16 +649,6 @@ public class FetchHTTP extends Processor
             res = (Integer) getAttribute(ATTR_TIMEOUT_SECONDS, curi);
         } catch (Exception e) {
             res = DEFAULT_TIMEOUT_SECONDS;
-        }
-        return res.intValue();
-    }
-
-    private int getMaxFetchAttempts(CrawlURI curi) {
-        Integer res;
-        try {
-            res = (Integer) getAttribute(ATTR_MAX_FETCH_ATTEMPTS, curi);
-        } catch (Exception e) {
-            res = DEFAULT_MAX_FETCH_ATTEMPTS;
         }
         return res.intValue();
     }
