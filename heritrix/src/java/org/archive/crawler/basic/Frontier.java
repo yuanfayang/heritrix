@@ -561,7 +561,9 @@ public class Frontier
             case S_TOO_MANY_EMBED_HOPS :
                  // too far from last true link
             case S_TOO_MANY_LINK_HOPS :
-                 // too far from seeds
+                // too far from seeds
+            case S_DELETED_BY_USER :
+                // user deleted
                 return true;
             default:
                 return false;
