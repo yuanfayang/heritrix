@@ -91,13 +91,57 @@ used in Heritrix.
 Guidelines</a>.</p>
 
 <subsection name="No Tabs">
-    <p>No tabs in source code.  Set you editor to indent w/ spaces.</p>
+    <p>No tabs in source code.  Set your editor to indent w/ spaces.</p>
 </subsection>
 <subsection name="Indent Width">
     <p>Indents are 4 charcters wide.</p>
 </subsection>
 </section>
 
+<section name="Version and Release Numbering">
+	<p>Heritrix uses a version numbering scheme modelled after the one
+		used for Linux kernels. Versions are 3 numbers:
+	</p>
+	<p>[major].[minor/mode].[patchlevel]
+	</p>
+	<p>The major version number, currently at zero, increments upon 
+		significant architectural changes or the achievement of 
+		important milestones in capabilities. The minor/mode version
+		number increments as progress is made within a major version,
+		with the added constraint that all external releases have an
+		even minor/mode version number, and all internal/development
+		versions have an odd minor/mode version number.
+	</p>
+	<p>The patchlevel number increments for small sets of changes, 
+		providing the most fine-grain timeline of software evolution. 
+		Patchlevels increment regularly for internal/development
+		(odd minor level) work, but only increment for external
+		releases when an official update to the previous release
+		version has been tested and packaged.
+	</p>
+	<p>In the CVS HEAD, version numbers are applied as tags of the form 
+		"heritrix-#_#_#". When a particular development-version is 
+		thought appropriate to become an external/"stable" release,
+		it is considered a "Release Candidate". If testing confirms
+		it is suitable for release, it is assigned the next even
+		minor/mode value (and a zero patchlevel), CVS version-labelled, 
+		and packaged for release. Immediately after release, and before 
+		additional coding occurs, the CVS HEAD is assigned the next odd 
+		minor/mode value (and a zero patchlevel) in project/source 
+		files.
+	</p>
+	<p>If patches are required to a released version, before the next
+		release is ready, they are applied to a CVS branch from the
+		release version tag, tested, and released as the subsequent
+		patchlevel.
+	</p>
+	<p>Keep in mind that each version number is an integer, not merely
+		a decimal digit. To use an extreme example: development version 
+		2.99.99 would be followed by either the 2.99.100 development 
+		version patchlevel or the 2.100.0 release. (And after such a 
+		release, the next development version would be 2.101.0.)
+	</p>
+</section>
 <section name="cruisecontrol">
 <p>See <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc">src/cc</a> for a <em>config.xml</em> that will run the 
 heritrix maven build under
