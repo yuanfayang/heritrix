@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.basic;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -25,7 +26,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.util.MemQueue;
+import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
 
 /**
@@ -48,7 +49,7 @@ public class Frontier
 	private static int DEFAULT_MAX_DELAY = 5000;
 
 	private static Logger logger =
-		Logger.getLogger("org.archive.crawler.basic.SimpleFrontier");
+		Logger.getLogger("org.archive.crawler.basic.Frontier");
 	CrawlController controller;
 	
 	// HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
@@ -99,14 +100,14 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#initialize(org.archive.crawler.framework.CrawlController)
 	 */
 	public void initialize(CrawlController c)
-		throws FatalConfigurationException {
+		throws FatalConfigurationException, IOException {
 		
 		delayFactor = getIntAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
 		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
 		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
 		
-		pendingQueue = new MemQueue(); // of CandidateURIs 
-	    pendingHighQueue = new MemQueue(); // of CandidateURIs 
+		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
+	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
 
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();
