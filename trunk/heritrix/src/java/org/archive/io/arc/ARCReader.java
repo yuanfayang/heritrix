@@ -66,7 +66,7 @@ import org.archive.io.PositionableStream;
  *
  * <p>Profiling java.io vs. memory-mapped ByteBufferInputStream shows the
  * latter slightly slower -- but not by much.  TODO: Test more.  Just
- * change {@link getInputStream(File)}.
+ * change {@link #getInputStream(File)}.
  *
  * <p>TODO: Testing of this reader class against ARC files harvested out in
  * the wilds.  This class has only been tested to date going against small
