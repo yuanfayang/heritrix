@@ -47,8 +47,11 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnection;
+import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
@@ -72,7 +75,9 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
+import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
@@ -148,6 +153,17 @@ public class FetchHTTP extends Processor
      * Would like to be 'long', but longs aren't atomic
      */
     private int curisHandled = 0;
+        
+    /**
+     * Filters to apply mid-fetch, just after receipt of the response
+     * headers before we start to download body.
+     */
+    public final static String MIDFETCH_ATTR_FILTERS = "midfetch-filters";
+
+    /**
+     * Instance of midfetchfilters.
+     */
+    private MapType midfetchfilters = null;
     
 
     /**
@@ -157,11 +173,18 @@ public class FetchHTTP extends Processor
      */
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");
-        Type e;
+        this.midfetchfilters = (MapType) addElementToDefinition(
+            new MapType(MIDFETCH_ATTR_FILTERS, "Filters applied after" +
+                " receipt of HTTP response headers but before we start to" +
+                " download the body.  If any filter returns" +
+                " FALSE, the fetch is aborted (Use filters to" +
+                " exclude content).", Filter.class));
+        this.midfetchfilters.setExpertSetting(true);
+        
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
             "If the fetch is not completed in this number of seconds,"
             + " give up.", DEFAULT_TIMEOUT_SECONDS));
-        e = addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
+        Type e = addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
             "If the socket is unresponsive for this number of milliseconds, "
             + "give up (and retry later).  Set to zero for no timeout.",
                 DEFAULT_SOTIMEOUT_MS));
@@ -209,7 +232,8 @@ public class FetchHTTP extends Processor
             e.setExpertSetting(true);
     }
 
-    protected void innerProcess(CrawlURI curi) throws InterruptedException {
+    protected void innerProcess(final CrawlURI curi)
+    throws InterruptedException {
         if (!canFetch(curi)) {
             // Cannot fetch this, due to protocol, retries, or other problems
             return;
@@ -233,11 +257,38 @@ public class FetchHTTP extends Processor
             rec.getRecordedInput().setDigest(null);
         }
         
-        HttpMethod method = curi.isPost()?
-            (HttpMethod)new HttpRecorderPostMethod(curi.getUURI().toString(),
-                rec):
-            (HttpMethod)new HttpRecorderGetMethod(curi.getUURI().toString(),
-                rec);
+        // Below we do two inner classes that add check of midfetch
+        // filters just as we're about to receive the response body.
+        String curiString = curi.getUURI().toString();
+        HttpMethod method = null;
+        if (curi.isPost()) {
+        	method = new HttpRecorderPostMethod(curiString, rec) {
+        		protected void readResponseBody(HttpState state,
+        		    HttpConnection connection)
+                throws IOException, HttpException {
+                    super.readResponseBody(state, connection);
+                    addResponseContent(this, curi);
+        			if(!filtersAccept(midfetchfilters, curi)) {
+                        curi.addAnnotation("midFetchAabort");
+        				abort();
+        			}
+        		}
+            };
+        } else {
+       	    method = new HttpRecorderGetMethod(curiString, rec) {
+                protected void readResponseBody(HttpState state,
+                    HttpConnection connection)
+                throws IOException, HttpException {
+                    super.readResponseBody(state, connection);
+                    addResponseContent(this, curi);
+                	if(!filtersAccept(midfetchfilters, curi)) {
+                        curi.addAnnotation("midFetchAbort");
+                        abort();
+                    }
+                }
+            };
+        }
+
         configureMethod(curi, method);
         
         // Populate credentials. Set config so auth. is not automatic.
@@ -295,18 +346,15 @@ public class FetchHTTP extends Processor
 
         // Set httpRecorder into curi for convenience of subsequent processors.
         curi.setHttpRecorder(rec);
-
+        
         int statusCode = method.getStatusCode();
         long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
         curi.setContentSize(contentSize);
-        curi.setFetchStatus(statusCode);
-        Header ct = method.getResponseHeader("content-type");
-        curi.setContentType((ct == null)? null: ct.getValue());
         curi.setContentDigest(rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.FINE)) {
             logger.fine((curi.isPost()? "POST": "GET") + " " +
-            		curi.getUURI().toString() + " " + statusCode + " " +
-                    contentSize + " " + curi.getContentType());
+                curi.getUURI().toString() + " " + statusCode + " " +
+                contentSize + " " + curi.getContentType());
         }
 
         if (curi.isSuccess() && addedCredentials) {
@@ -334,6 +382,18 @@ public class FetchHTTP extends Processor
                 " been closed by method release: " +
                 Thread.currentThread().getName());
         }
+    }
+    
+    /**
+     * This method populates <code>curi</code> with response status and
+     * content type.
+     * @param curi CrawlURI to populate.
+     * @param method Method to get response status and headers from.
+     */
+    protected void addResponseContent (HttpMethod method, CrawlURI curi) {
+        curi.setFetchStatus(method.getStatusCode());
+        Header ct = method.getResponseHeader("content-type");
+        curi.setContentType((ct == null)? null: ct.getValue());
     }
 
     /**

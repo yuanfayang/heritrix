@@ -1077,9 +1077,21 @@
 
         <sect4>
           <title>org.archive.crawler.filter.URIRegExpFilter</title>
-
           <para>Returns true if a URI matches the regular expression set for
           it. See <xref linkend="regexpr" /> for more about regular
+          expressions in Heritrix.</para>
+        </sect4>
+        <sect4>
+          <title>org.archive.crawler.filter.ContentTypeRegExpFilter</title>
+          <para>
+          This filter runs a regular expression against the
+          response <literal>Content-Type</literal> header.
+          Returns true if content type  matches the regular expression.
+          ContentType regexp filter cannot be used until after fetcher
+          processors have run.  Only then is the
+          Content-Type of the response known. A good place for this filter
+          is the writer step in processing.
+          See <xref linkend="regexpr" /> for more about regular
           expressions in Heritrix.</para>
         </sect4>
 
@@ -1133,14 +1145,13 @@
 
         <sect4>
           <title>org.archive.crawler.filter.TransclusionFilter</title>
-
           <para>Filter which returns true for <xref linkend="crawluri" />
           instances which contain more than zero but fewer than
           <literal>max-trans-hops</literal> embed entries at the end of their
           <xref linkend="discoverypath" />.</para>
-
           <para>Generally only used in scopes.</para>
         </sect4>
+
       </sect3>
     </sect2>
 
@@ -1743,6 +1754,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               practice.</para>
             </listitem>
           </itemizedlist>
+          <para id="midfetch">Its also possible to add in filters that are
+          checked after
+          the download of the HTTP response headers but before the response
+          content is read.  Use <literal>midfetch-filters</literal> to
+          abort the download of content-types other than those wanted (Aborted
+          fetches have an annotation <literal>midFetchAbort</literal>
+          appended to the <literal>crawl.log</literal> entry).  Note
+          that unless the same filters are applied at the writer processing
+          step, the response headers -- but not the content -- will show in
+          ARC files.</para>
         </sect4>
 
         <sect4>
