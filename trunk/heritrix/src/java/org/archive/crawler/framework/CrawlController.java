@@ -57,6 +57,7 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
+import org.archive.crawler.datamodel.ServerCacheFactory;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -460,9 +461,10 @@ public class CrawlController implements Serializable {
 
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
-             MBeanException, ReflectionException {
+             MBeanException, ReflectionException, ClassNotFoundException,
+             InstantiationException, IllegalAccessException {
         
-        serverCache = new ServerCache(getSettingsHandler());
+        serverCache = ServerCacheFactory.getServerCache(getSettingsHandler());
 
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
@@ -1177,13 +1179,14 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * @param cpContext
+     * @param context Context to use checkpointing.
      * @throws IOException
      */
-    public void checkpointTo(CheckpointContext cpContext) throws IOException {
-        Checkpoint checkpoint = new Checkpoint(cpContext.getCheckpointInProgressDirectory());
-
-        rotateLogFiles(cpContext.getNextCheckpoint());
+    public void checkpointTo(CheckpointContext context)
+    throws IOException {
+        Checkpoint checkpoint =
+            new Checkpoint(context.getCheckpointInProgressDirectory());
+        rotateLogFiles(context.getNextCheckpoint());
         checkpoint.writeObjectPlusToFile(this,DISTINGUISHED_FILENAME);
     }
 
