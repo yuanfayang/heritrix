@@ -31,6 +31,8 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
  	
  	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)
 	public static final boolean DO_CLASS_TYPE_CHECKING = true;
+	
+	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 
 	// defaults
  	private short ClassType = DClass.IN;
@@ -43,8 +45,6 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
   		
   		// lookup nameserver
 		String nameServer = FindServer.server();
-		
-
 		
 		try{
 			// if we're local get something more useful than the loopback
@@ -67,30 +67,33 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 		
 		Record[] rrecordSet = null; 		// store retrieved dns records
 		long now; 									// the time this operation happened
-				
+		CrawlHost targetHost = null;
+		String DnsName = parseTargetDomain(curi);	
+			
 		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
 			// only handles dns
 			return;
 		}
 		
-		String DnsName = parseTargetDomain(curi);	
-		
-		CrawlHost targetHost = null;
+		// make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
 		if(controller != null && controller.getHostCache() != null){
-
 			targetHost = controller.getHostCache().getHostFor(DnsName);
 		
-			if(targetHost.hasBeenLookedUp()){
-				return;			
-			}
-		
-		// standalone operation (operating without the controller/cache)
+		// standalone operation (mostly for test cases/potential other uses)
 		}else{
 			targetHost = new CrawlHost(DnsName);
-			curi.setHost(targetHost);
 		}
-			
+		
+		// we've successfully looked up this host, don't do it again
+		if(targetHost.hasBeenLookedUp() && targetHost.getIP() != null){
+			return;
+		}
+		
+		if(curi.getNumberOfFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+		}
+					
 		// give it a go    
 		curi.incrementFetchAttempts();
 
@@ -101,19 +104,19 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 		// add the nameserver as the curi's ip, to indicate the machine that did the lookup
 		curi.getHost().setIP(serverInetAddr);
 		
-		// do the lookup and store the results back to the curi
 		now = System.currentTimeMillis();
-		
-		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
 		curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
-		
-
-		//TODO define success status codes
-		curi.getHost().setHasBeenLookedUp();
-	
+			
+		// try to get the records for this host (assume domain name)
+		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
 		targetHost.setHasBeenLookedUp();
 		
+		// on failure check if it's an ip (silly looking but likely more 
+		// effecient than using a regexp to examine the uri for every call
+		if(rrecordSet==null){
+			rrecordSet = dns.getRecordsByAddress(DnsName, TypeType);
+		}
 		if(rrecordSet != null){
 
 			curi.setFetchStatus(1);
@@ -132,11 +135,11 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 				targetHost.setIpExpires( (long)AsA.getTTL() + now);
 
 				break; 	// only need to process one record
-			}
-			
+			}		
+
 		}else{
 				curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-		}
+		}		
 	}
 	
 	// TODO should throw some sort of exception if it's passed

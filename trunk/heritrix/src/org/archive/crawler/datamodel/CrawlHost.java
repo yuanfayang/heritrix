@@ -37,7 +37,7 @@ public class CrawlHost {
 		// did they give us a dotted quad?
 		// don't set the host or do the lookup
 		if( h.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") ){
-			return;
+			
 		}
 		
 		hostname = h;

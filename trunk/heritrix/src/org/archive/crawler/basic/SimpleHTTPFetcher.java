@@ -32,6 +32,7 @@ import org.archive.crawler.framework.Processor;
 public class SimpleHTTPFetcher extends Processor implements InstancePerThread, CoreAttributeConstants, FetchStatusCodes {
 	private static String XP_TIMEOUT_SECONDS = "//params/@timeout-seconds";
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
+	public static int MAX_HTTP_FETCH_ATTEMPTS = 3;
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
 	HttpClient http;
@@ -48,9 +49,22 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			return;
 		}
 		
+		// only try so many times...
+		if(curi.getNumberOfFetchAttempts() >= MAX_HTTP_FETCH_ATTEMPTS){
+			curi.setFetchStatus(S_CONNECT_FAILED);
+		}
+		
+		// give it a go
+		curi.incrementFetchAttempts();
+		
+		// make sure the dns lookup succeeded
+		if(curi.getHost().getIP() == null && curi.getHost().hasBeenLookedUp()){
+			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+			return;
+		}
+				
 		// attempt to get the page
 		long now = System.currentTimeMillis();
-		curi.incrementFetchAttempts();
 		
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME,now);
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
@@ -63,8 +77,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 		try {
 						
 			http.executeMethod(get);
-			
-			
+
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules
 			// 
@@ -102,8 +115,6 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 		} finally {
 			controller.getKicker().cancelKick(Thread.currentThread());
 		}
-		
-
 	}
 
 	/* (non-Javadoc)

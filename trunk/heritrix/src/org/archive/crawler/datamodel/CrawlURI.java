@@ -40,6 +40,7 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	Processor nextProcessor;
 	CrawlHost host;
 
+
 	private int fetchStatus = 0;	// default to unattempted
 	private int numberOfFetchAttempts = 0;	// the number of fetch attempts that have been made
 
@@ -270,5 +271,8 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	public int getThreadNumber() {
 		return threadNumber;
 	}
-
+	
+/*	public boolean isFubared(){
+		return ( fetchStatus < 0 && numberOfFetchAttempts >= 3);
+	}*/
 }
