@@ -888,9 +888,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                     "constructor.");
         }
         if (definitionMap.containsKey(type.getName())) {
-            definition.remove(type);
-            definitionMap.remove(type.getName());
+            definition.remove(definitionMap.remove(type.getName()));
         }
+            
         definition.add(type);
         definitionMap.put(type.getName(), type);
         return type;
