@@ -84,4 +84,11 @@ public class DiskBackedQueue implements Queue {
 		return headQ.length()+tailQ.length();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#release()
+	 */
+	public void release() {
+		tailQ.release();
+	}
+
 }
