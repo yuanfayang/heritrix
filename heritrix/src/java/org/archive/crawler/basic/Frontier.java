@@ -83,14 +83,14 @@ public class Frontier
 	private static String ATTR_MIN_INTERVAL = "min-interval-ms";
 
     private static String ATTR_MAX_RETRIES = "max-retries";
-    private static String ATTR_RETRY_DELAY = "retry-delay";
+    private static String ATTR_RETRY_DELAY = "retry-delay-seconds";
     
 	private static Float DEFAULT_DELAY_FACTOR = new Float(5);
 	private static Integer DEFAULT_MIN_DELAY = new Integer(500);
 	private static Integer DEFAULT_MAX_DELAY = new Integer(5000);
 	private static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
     private static Integer DEFAULT_MAX_RETRIES = new Integer(30);
-    private static Long DEFAULT_RETRY_DELAY = new Long(900000); //15 minutes
+    private static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
 	
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.basic.Frontier");
@@ -181,7 +181,7 @@ public class Frontier
             DEFAULT_MAX_RETRIES));
         addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
             "How long to wait by default until we retry fetching a URI that " +
-            "failed to be retrieved (millisec). ",
+            "failed to be retrieved (seconds). ",
             DEFAULT_RETRY_DELAY));
     }
     
@@ -1022,7 +1022,7 @@ public class Frontier
 			delay = curi.getAList().getInt(A_RETRY_DELAY);
 		} else {
 			// use overall default
-			delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue(); 
+			delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue()*1000; 
 		}
 		if (delay>0) {
 			// snooze to future
