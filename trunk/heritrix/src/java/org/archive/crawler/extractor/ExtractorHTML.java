@@ -350,7 +350,7 @@ implements CoreAttributeConstants {
         
         try {
 	       cs = curi.getHttpRecorder().getReplayCharSequence();
-        } catch(Exception e) {
+        } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e,
                 "Failed get of replay char sequence " + curi.toString() +
                     " " + e.getMessage());
