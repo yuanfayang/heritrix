@@ -131,9 +131,7 @@ public class RecordingOutputStream extends OutputStream {
      *
      * @throws IOException If failed creation of backing file.
      */
-    public void open()
-        throws IOException
-    {
+    public void open() throws IOException {
         this.open(null);
     }
 
@@ -146,9 +144,7 @@ public class RecordingOutputStream extends OutputStream {
      *
      * @throws IOException If failed creation of backing file.
      */
-    public void open(OutputStream wrappedStream)
-        throws IOException
-   {
+    public void open(OutputStream wrappedStream) throws IOException {
         assert this.out == null: "RecordingOutputStream still has old 'out'.";
         this.out = wrappedStream;
         this.position = 0;
@@ -160,9 +156,7 @@ public class RecordingOutputStream extends OutputStream {
     }
 
 
-    private void lateOpen()
-        throws FileNotFoundException
-    {
+    private void lateOpen() throws FileNotFoundException {
         // TODO: Fix so we only make file when its actually needed.
         if (this.diskStream == null) {
             FileOutputStream fis = new FileOutputStream(this.backingFilename);
@@ -278,20 +272,15 @@ public class RecordingOutputStream extends OutputStream {
     /* (non-Javadoc)
      * @see java.io.OutputStream#close()
      */
-    public void close()
-        throws IOException
-    {
-        if (this.out != null)
-        {
+    public void close() throws IOException {
+        if (this.out != null) {
             this.out.close();
             this.out = null;
         }
         closeRecorder();
     }
 
-    public void closeRecorder()
-        throws IOException
-    {
+    public void closeRecorder() throws IOException {
         if (this.diskStream != null) {
             this.diskStream.close();
             this.diskStream = null;
@@ -308,8 +297,7 @@ public class RecordingOutputStream extends OutputStream {
      * @see java.io.OutputStream#flush()
      */
     public void flush() throws IOException {
-        if (this.out != null)
-        {
+        if (this.out != null) {
             this.out.flush();
         }
         if (this.diskStream != null) {
@@ -319,7 +307,7 @@ public class RecordingOutputStream extends OutputStream {
 
     public ReplayInputStream getReplayInputStream() throws IOException {
         // If this method is being called, then assumption must be that the
-        // stream is closed (If it ain't, then the stream gotten won't work
+        // stream is closed. If it ain't, then the stream gotten won't work
         // -- the size will zero so any attempt at a read will get back EOF.
         assert this.out == null: "Stream is still open.";
         return new ReplayInputStream(this.buffer, this.size,
@@ -327,7 +315,7 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     /**
-     * Return a replay stream, cued up to beginning of content
+     * Return a replay stream, cued up to begining of content
      *
      * @throws IOException
      * @return An RIS.

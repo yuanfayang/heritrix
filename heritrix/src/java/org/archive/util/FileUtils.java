@@ -200,10 +200,8 @@ public class FileUtils
      *
      * @return List of files in dir that start w/ passed basename.
      */
-    public static File [] getFilesWithPrefix(File dir, final String prefix)
-    {
-        FileFilter prefixFilter = new FileFilter()
-            {
+    public static File [] getFilesWithPrefix(File dir, final String prefix) {
+        FileFilter prefixFilter = new FileFilter() {
                 public boolean accept(File pathname)
                 {
                     return pathname.getName().toLowerCase().

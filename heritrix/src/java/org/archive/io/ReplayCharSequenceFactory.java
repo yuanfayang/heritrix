@@ -81,8 +81,7 @@ public class ReplayCharSequenceFactory {
      *
      * Private ensures only one singleton instance.
      */
-    private ReplayCharSequenceFactory()
-    {
+    private ReplayCharSequenceFactory() {
         super();
     }
 
@@ -90,7 +89,6 @@ public class ReplayCharSequenceFactory {
      * @return Instance of the singleton ReplayCharSequenceFactory.
      */
     public static ReplayCharSequenceFactory getInstance() {
-
         return ReplayCharSequenceFactory.factory;
     }
 
@@ -443,8 +441,10 @@ public class ReplayCharSequenceFactory {
          * @param index Index of character to access.
          */
         private void recenterBuffer(int index) {
-            logger.info("Recentering around " + index + " in " +
-                this.backingFilename);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Recentering around " + index + " in " +
+                    this.backingFilename);
+            }
             this.wrapOrigin = index - (this.wraparoundBuffer.length / 2);
             if(this.wrapOrigin < this.prefixBuffer.length) {
                 this.wrapOrigin = this.prefixBuffer.length;
@@ -687,7 +687,6 @@ public class ReplayCharSequenceFactory {
         private MultiByteReplayCharSequence(byte[] buffer, long size,
                 long responseBodyStart, String backingFilename, String encoding)
             throws IOException {
-
             super();
             if (encoding == null) {
                 throw new NullPointerException("Character encoding is null.");
@@ -733,7 +732,6 @@ public class ReplayCharSequenceFactory {
                 charBuffer =
                     decodeInMemory(buffer, size, responseBodyStart, encoding);
             } else {
-
                 File backingFile = new File(backingFilename);
                 if (!backingFile.exists()) {
                     throw new FileNotFoundException(backingFilename +
