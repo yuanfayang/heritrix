@@ -28,25 +28,43 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.framework.URIFrontier;
 import org.archive.util.QueueItemMatcher;
 
 
 /**
- * An implementation ofthe <code>QueueItemMatcher</code> suitible for the  
+ * An implementation of the <code>QueueItemMatcher</code> suitible for the  
  * queues used by the <code>Frontier</code>
  * @author Kristinn Sigurdsson
+ * 
+ * @see org.archive.util.QueueItemMatcher
+ * @see org.archive.crawler.basic.Frontier
  */
 public class URIQueueMatcher implements QueueItemMatcher {
     
     private Pattern p;
+    private boolean delete = false;
+    private URIFrontier frontier;
     
     /**
      * Constructor. 
      * @param pattern A regular expression that will be applied to the 
      *                CandidateURIs' URIstring to determine if they 'match'.
+     * @param delete If true then each time a match is hit, the related 
+     *                CandidateURI will have it's fetch status set to 
+     *                {@link org.archive.crawler.datamodel.FetchStatusCodes#S_DELETED_BY_USER
+     *                'Deleted by user'} and sent to the frontier's 
+     *                <code>finish</code> method for final disposition.
+     * @param frontier The parent frontier. This can be null if delete is false.
+     *                Must be valid if delete is true.
+     * @see Frontier#finished(CrawlURI);
      */
-    public URIQueueMatcher(String pattern){
+    public URIQueueMatcher(String pattern, boolean delete, URIFrontier frontier){
         p = Pattern.compile(pattern);
+        this.delete = delete;
+        this.frontier = frontier;
     }
     
     /* (non-Javadoc)
@@ -57,10 +75,14 @@ public class URIQueueMatcher implements QueueItemMatcher {
             CandidateURI CaURI = (CandidateURI)o;
             Matcher m = p.matcher(CaURI.getURIString());
             if(m.matches()){
+                if(delete && frontier != null){
+                    CrawlURI tmp = new CrawlURI(CaURI);
+                    tmp.setFetchStatus(FetchStatusCodes.S_DELETED_BY_USER);
+                    frontier.finished(tmp);
+                }
                 return true;
             }
         }
         return false;
     }
-
 }

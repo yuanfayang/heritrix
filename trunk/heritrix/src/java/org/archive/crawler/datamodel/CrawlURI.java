@@ -207,6 +207,8 @@ public class CrawlURI extends CandidateURI
             // Heritrix internal codes (all negative numbers
             case S_BLOCKED_BY_USER:
                 return "Heritrix(" + S_BLOCKED_BY_USER + ")-Blocked by user";
+            case S_DELETED_BY_USER:
+                return "Heritrix(" + S_DELETED_BY_USER + ")-Deleted by user";
             case S_CONNECT_FAILED:
                 return "Heritrix(" + S_CONNECT_FAILED + ")-Connection failed";
             case S_CONNECT_LOST:

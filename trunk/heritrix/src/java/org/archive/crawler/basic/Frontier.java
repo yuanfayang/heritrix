@@ -561,7 +561,9 @@ public class Frontier
             case S_TOO_MANY_EMBED_HOPS :
                  // too far from last true link
             case S_TOO_MANY_LINK_HOPS :
-                 // too far from seeds
+                // too far from seeds
+            case S_DELETED_BY_USER :
+                // user deleted
                 return true;
             default:
                 return false;
@@ -1283,7 +1285,7 @@ public class Frontier
      */
     public void deleteURIsFromPending(String match) {
         // Create QueueItemMatcher
-        QueueItemMatcher mat = new URIQueueMatcher(match);
+        QueueItemMatcher mat = new URIQueueMatcher(match,true,this);
         // Delete from pendingHigh
         pendingHighQueue.deleteMatchedItems(mat);
         // Delete from all KeyedQueues
