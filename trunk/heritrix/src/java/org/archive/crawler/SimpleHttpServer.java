@@ -26,6 +26,11 @@
 package org.archive.crawler;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.mortbay.http.HttpServer;
@@ -54,16 +59,37 @@ public class SimpleHttpServer
     /**
      * Webapp contexts returned out of a server start.
      */
-    private WebApplicationContext [] contexts = null;
+    private List contexts = new ArrayList();
+    
+    /**
+     * Name of the root webapp.
+     */
+    private static final String ROOT_WEBAPP = "root";
+    
+    /**
+     * Name of the admin webapp.
+     */
+    private static final String ADMIN_WEBAPP = "admin";
+    
+    /**
+     * List of webapps to deploy.
+     */
+    private static final List webapps =
+        Arrays.asList(new String [] {ROOT_WEBAPP, ADMIN_WEBAPP});
 
 
-    public SimpleHttpServer() throws Exception
-    {
+    public SimpleHttpServer() throws Exception {
+        
         this(DEFAULT_PORT);
     }
+    
+    public SimpleHttpServer(int port) throws Exception {
+        
+        this(SimpleHttpServer.webapps, port);
+    }
 
-    public SimpleHttpServer(int port) throws Exception
-    {
+    public SimpleHttpServer(List webapps, int port) throws Exception {
+        
         this.server = new Server();
         this.port = port;
         SocketListener listener = new SocketListener();
@@ -71,8 +97,30 @@ public class SimpleHttpServer
         // Bumpt UI thread priority up 1 above the normal
         listener.setThreadsPriority(Thread.NORM_PRIORITY);
         this.server.addListener(listener);
-        this.server.setRootWebApp("root");
-        this.contexts = server.addWebApplications(null, getWARSPath(), true);
+        // Add each of the webapps in turn. If we're passed the root webapp,
+        // give it special handling -- assume its meant to be server root and
+        // its meant to be mounted on '/'.  The below also favors the war file
+        // if its present.
+        for (Iterator i = webapps.iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            File ptr = new File(getWARSPath(), name + ".war");
+            if (!ptr.exists()) {
+                ptr = new File(getWARSPath(), name);
+                if (!ptr.exists()) {
+                    throw new FileNotFoundException(ptr.getAbsolutePath());
+                }
+            }
+            // If webapp name is for root, mount it on '/', else '/WEBAPP_NAME'.
+            String context = "/" + ((name.equals(ROOT_WEBAPP))? "": name);
+            WebApplicationContext c =
+                this.server. addWebApplication(context, ptr.getAbsolutePath());
+            if (name.equals(ROOT_WEBAPP)) {
+                // If we've just mounted the root webapp, make it the root.
+                this.server.setRootWebApp(name);
+            }
+            c.setExtractWAR(true);
+            this.contexts.add(c);
+        }
 
         // Have accesses go into the stdout/stderr log for now.  Later, if
         // demand, we'll have accesses go into their own file.
@@ -91,8 +139,8 @@ public class SimpleHttpServer
      *
      * @return Return webapp path (Path returned has a trailing '/').
      */
-    private static String getWARSPath()
-    {
+    private static String getWARSPath() {
+        
         String webappsPath = Heritrix.getWarsdir().getAbsolutePath();
         if (!webappsPath.endsWith(File.separator))
         {
@@ -108,18 +156,18 @@ public class SimpleHttpServer
      * started.
      */
     public synchronized void startServer()
-        throws Exception
-    {
+        throws Exception {
+        
         this.server.start();
     }
 
     /**
      * Stop the running server.
      *
-     * @throws Exception
+     * @throws InterruptedException
      */
-    public synchronized void stopServer() throws InterruptedException
-    {
+    public synchronized void stopServer() throws InterruptedException {
+        
         if (this.server != null)
         {
             this.server.stop();
@@ -130,8 +178,8 @@ public class SimpleHttpServer
      * @see java.lang.Object#finalize()
      */
     protected void finalize()
-        throws Throwable
-    {
+        throws Throwable {
+        
         stopServer();
         super.finalize();
     }
@@ -139,16 +187,16 @@ public class SimpleHttpServer
     /**
      * @return Port server is running on.
      */
-    public int getPort()
-    {
+    public int getPort() {
+        
         return this.port;
     }
 
     /**
      * @return Server reference.
      */
-    public HttpServer getServer()
-    {
+    public HttpServer getServer() {
+        
         return this.server;
     }
 
@@ -158,8 +206,8 @@ public class SimpleHttpServer
      *
      * @return named context.
      */
-    private WebApplicationContext getContext(String contextName)
-    {
+    private WebApplicationContext getContext(String contextName) {
+        
         WebApplicationContext context = null;
 
         if (this.contexts == null)
@@ -167,11 +215,12 @@ public class SimpleHttpServer
             throw new NullPointerException("No contexts available.");
         }
 
-        for (int i = 0; i < contexts.length; i++)
+        for (Iterator i = this.contexts.iterator(); i.hasNext();)
         {
-            if (contexts[i].getHttpContextName().equals(contextName))
+            WebApplicationContext c = (WebApplicationContext)i.next();
+            if (c.getHttpContextName().equals(contextName))
             {
-                context = contexts[i];
+                context = c;
                 break;
             }
         }
@@ -191,8 +240,8 @@ public class SimpleHttpServer
      *
      * @return Path to deployed webapp.
      */
-    public File getWebappPath(String name)
-    {
+    public File getWebappPath(String name) {
+        
         if (this.server == null)
         {
             throw new NullPointerException("Server does not exist");
@@ -201,5 +250,13 @@ public class SimpleHttpServer
             (name.equals(this.server.getRootWebApp()))? "/": "/" + name;
         return new
             File(getContext(contextName).getServletHandler().getRealPath("/"));
+    }
+    
+    /**
+     * @return Returns the root webapp name.
+     */
+    public static String getRootWebappName()
+    {
+        return ROOT_WEBAPP;
     }
 }

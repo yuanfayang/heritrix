@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -543,31 +544,34 @@ public class Heritrix
     /**
      * Run the selftest
      *
-     * @param selfTestName Name of a test if we are to run one only rather than
-     * the default running all tests.
+     * @param oneSelfTestName Name of a test if we are to run one only rather
+     * than the default running all tests.
      * @param port Port number to use for web UI.
      *
      * @exception Exception
      */
-    private static void selftest(String selfTestName, int port) throws Exception
-    {
-        // Put up the webserver.  It has the selftest to go against.
-        Heritrix.httpServer = new SimpleHttpServer(port);
+    private static void selftest(String oneSelfTestName, int port)
+        throws Exception {
+        // Put up the webserver w/ the root and selftest webapps only.
+        final String SELFTEST = "selftest";
+        List webapps = Arrays.asList(
+            new String [] {SimpleHttpServer.getRootWebappName(),SELFTEST});
+        Heritrix.httpServer = new SimpleHttpServer(webapps, port);
         Heritrix.httpServer.startServer();
-        File selftestDir = new File(getConfdir(), "selftest");
+        File selftestDir = new File(getConfdir(), SELFTEST);
         File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
-        Heritrix.jobHandler = new SelfTestCrawlJobHandler(selfTestName);
+        Heritrix.jobHandler = new SelfTestCrawlJobHandler(oneSelfTestName);
         // Create a job based off the selftest order file.  Then use this as
         // a template to pass jobHandler.newJob().  Doing this gets our
         // selftest output to show under the jobs directory.
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.getSelftestURL =
-            "http://127.0.0.1:" + Integer.toString(port) + "/selftest/";
-        if (selfTestName != null && selfTestName.length() > 0) {
-            getSelftestURL += (selfTestName + "/");
+            "http://127.0.0.1:" + Integer.toString(port) + '/' + SELFTEST + '/';
+        if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
+            getSelftestURL += (oneSelfTestName + '/');
         }
-        job = Heritrix.jobHandler.newJob(job, "selftest",
+        job = Heritrix.jobHandler.newJob(job, SELFTEST,
             "Integration self test", getSelftestURL, CrawlJob.PRIORITY_CRITICAL);
         Heritrix.jobHandler.addJob(job);
         Heritrix.jobHandler.startCrawler();
