@@ -440,4 +440,12 @@ public final class FPGenerator {
     /** A standard 32-bit fingerprint generator using
         <code>polynomials[0][32]</code>. */
     public static final FPGenerator std32 = make(polynomials[32][0], 32);
+    
+    // Below added by St.Ack on 09/30/2004.
+    /** A standard 40-bit fingerprint generator using
+        <code>polynomials[0][40]</code>. */
+    public static final FPGenerator std40 = make(polynomials[40][0], 40);
+    /** A standard 24-bit fingerprint generator using
+        <code>polynomials[0][24]</code>. */
+    public static final FPGenerator std24 = make(polynomials[24][0], 24);
 }
