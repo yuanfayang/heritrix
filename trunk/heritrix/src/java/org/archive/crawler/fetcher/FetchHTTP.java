@@ -680,7 +680,7 @@ public class FetchHTTP extends Processor
                 // Log it as a warning.  Not much we can do about it.  Return
                 // null.  We'll get the 401 in the arcs and a page that says
                 // something like 'Access denied'.
-                logger.warning(curi + ": " + uoe);
+                logger.info(curi + ": " + uoe);
             }
         }
         return result;
