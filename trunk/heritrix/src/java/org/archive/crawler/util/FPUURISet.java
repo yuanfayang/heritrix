@@ -69,7 +69,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
 		long fp = fpgen.fp(u.getUriString());
 		boolean retVal = fpset.contains(fp);
 		if(retVal) {
-			logger.fine("Already contains "+fp+" "+u);
+			logger.finest("Already contains "+fp+" "+u);
 		}
 		return retVal;
 	}
@@ -86,7 +86,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
 	 */
 	public void add(UURI u) {
 		long fp = fpgen.fp(u.getUriString());
-		logger.fine("Adding "+fp+" "+u);
+		logger.finest("Adding "+fp+" "+u);
 		fpset.add(fp);
 	}
 
@@ -133,7 +133,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
 		long fp = fpgen.fp(u.getUriString());
 		boolean retVal = fpset.quickContains(fp);
 		if(retVal) {
-			logger.fine("Already quickContains "+fp+" "+u);
+			logger.finest("Already quickContains "+fp+" "+u);
 		}
 		return retVal;
 	}

@@ -91,7 +91,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 * @return true if set has changed
 	 */
 	public boolean add(long val) {
-		logger.fine("Adding "+val);
+		logger.finest("Adding "+val);
 		long i = indexFor(val);
 		if (i>=0) {
 			// positive index indicates already in set
