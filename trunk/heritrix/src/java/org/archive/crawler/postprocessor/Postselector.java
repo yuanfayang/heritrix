@@ -95,7 +95,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         // handle http headers
         if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
             handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
-                CandidateURI.HIGH);
+                CandidateURI.MEDIUM);
         }
         // handle embeds
         if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
