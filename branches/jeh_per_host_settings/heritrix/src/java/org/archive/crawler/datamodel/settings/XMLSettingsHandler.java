@@ -91,7 +91,7 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.datamodel.settings.AbstractSettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
 	 */
-	public void writeSettingsObject(CrawlerSettings settings) {
+	public final void writeSettingsObject(CrawlerSettings settings) {
         File filename;
         if (settings.getScope() == null) {
             filename = orderFile;
@@ -103,7 +103,7 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 		writeSettingsObject(settings, filename);
 	}
 
-	public void writeSettingsObject(CrawlerSettings settings, File filename) {
+	public final void writeSettingsObject(CrawlerSettings settings, File filename) {
 		try {
 			StreamResult result =
 				new StreamResult(
@@ -120,7 +120,7 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.datamodel.settings.AbstractSettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
 	 */
-	protected CrawlerSettings readSettingsObject(CrawlerSettings settings) {
+	protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
 		CrawlerSettings parent = settings.getParent();
 		String scope = settings.getScope();
 		if (parent == null) {

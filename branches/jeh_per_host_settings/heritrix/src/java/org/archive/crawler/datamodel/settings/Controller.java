@@ -38,19 +38,18 @@ public class Controller extends CrawlerModule {
 	 */
 	public Controller() {
 		super("controller", "Heritrix crawl controller");
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.settings.ComplexType#setDefaults()
-	 */
-	protected void setDefaults() {
-		addElementType("settings-directory", "Directory where per host settings are kept", "settings");
-        addElementType("foo", "Just for testing", "bar");
-        addElementType("list", "List Test", new IntegerList(new int[] {10, 20}));
-		ComplexType c = addComplexType(new ComplexType("Processors", "URI processors"));
-		c.addComplexType(new CrawlerModule("Processors2", "URI processors"));
-		addComplexType(new CrawlerModule("TestModule", "TESTMODULE"));
-		addComplexType(new CrawlerModule("TestModule2", "TESTMODULE"));
-		addComplexType(new CrawlerModule("TestModule3", "TESTMODULE3"));
+        
+        addElementToDefinition(new SimpleType("settings-directory", "Directory where per host settings are kept", "settings"));
+        addElementToDefinition(new SimpleType("foo", "Just for testing", "bar"));
+        addElementToDefinition(new SimpleType("int1", "Just for testing", new Integer(1)));
+        addElementToDefinition(new IntegerList("list", "List Test", new int[] {10, 20}));
+        
+        MapType procMap = (MapType) addElementToDefinition(new MapType("Processors", "URI processors"));
+        procMap.addElementToDefinition(new CrawlerModule("Processor1", "URI processors"));
+        procMap.addElementToDefinition(new SimpleType("firstProcessor", "First processor to run URI trough", "Processor1"));
+        
+        addElementToDefinition(new CrawlerModule("TestModule", "TESTMODULE"));
+        addElementToDefinition(new CrawlerModule("TestModule2", "TESTMODULE"));
+        addElementToDefinition(new CrawlerModule("TestModule3", "TESTMODULE3"));
 	}
 }

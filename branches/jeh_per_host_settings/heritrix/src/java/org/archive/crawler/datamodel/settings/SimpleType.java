@@ -1,8 +1,8 @@
-/* CrawlerModule
+/* SimpleType
  * 
  * $Id$
  * 
- * Created on Dec 17, 2003
+ * Created on Jan 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
  *
@@ -25,27 +25,43 @@
 package org.archive.crawler.datamodel.settings;
 
 /**
- * Superclass of all modules that should be configurable.
  * 
  * @author John Erik Halse
+ *
  */
-public class CrawlerModule extends ComplexType {
-	/**
-	 * @param parent
-	 * @param name
-	 * @param description
-	 */
-	public CrawlerModule(String name, String description) {
-		super(name, description);
-	}
+public class SimpleType implements Type {
+    private final String name;
+    private final String description;
+    private final Object defaultValue;
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
+    /**
+     * 
      */
-    public Type addElement(CrawlerSettings settings, Type type) {
-        if(initialized()) {
-            throw new IllegalStateException("Not allowed to add elements to modules");
-        }
-        return super.addElement(settings, type);
+    public SimpleType(String name, String description, Object defaultValue) {
+        this.name = name;
+        this.description = description;
+        this.defaultValue = defaultValue;
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getName()
+     */
+    public String getName() {
+        return name;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getDescription()
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getDefaultValue()
+     */
+    public Object getDefaultValue() {
+        return defaultValue;
+    }
+
 }
