@@ -65,6 +65,7 @@ public class MemPoolManager {
     this.lowerBlockSize = lowerBlockSize;
     // ToDo: Should trim off the last reminder chunk.
     int numBlocks = memSizeInBytes / upperBlockSize;
+    mFreeBlocks = new LinkedList();
     for (int i = 0; i < numBlocks; i++) {
         mFreeBlocks.add(new Integer(i));
     }

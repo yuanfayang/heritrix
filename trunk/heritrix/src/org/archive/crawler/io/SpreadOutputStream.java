@@ -181,7 +181,7 @@ public class SpreadOutputStream extends OutputStream {
   public void close() throws IOException {
     flush();
     long length = 0;
-    if (mMemArea != null) 
+    if (mMemArea != null)
       length = mMemArea.getLength();
     else if (mAugmentedDataArray != null)
       length = mAugmentLength;
