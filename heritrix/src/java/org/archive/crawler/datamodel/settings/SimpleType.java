@@ -32,6 +32,7 @@ package org.archive.crawler.datamodel.settings;
 public class SimpleType extends Type {
     private final String description;
     private Object[] legalValues = null;
+    private boolean overrideable;
     
     /**
      * @param name
@@ -42,11 +43,25 @@ public class SimpleType extends Type {
     public SimpleType(String name, String description, Object defaultValue) {
         super(name, defaultValue);
         this.description = description;
+        overrideable = true;
+    }
+
+    public SimpleType(String name, String description, Object defaultValue, boolean isOverrideable) {
+        super(name, defaultValue);
+        this.description = description;
+        overrideable = isOverrideable;
     }
     
     public SimpleType(String name, String description, Object defaultValue, Object[] legalValues) {
         this(name, description, defaultValue);
         this.legalValues = legalValues;
+        overrideable = true;
+    }
+
+    public SimpleType(String name, String description, Object defaultValue, Object[] legalValues, boolean isOverrideable) {
+        this(name, description, defaultValue);
+        this.legalValues = legalValues;
+        overrideable = isOverrideable;
     }
 
     /* (non-Javadoc)
@@ -66,4 +81,12 @@ public class SimpleType extends Type {
     public Object[] getLegalValues() {
         return legalValues;
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getOverrideable()
+     */
+    public boolean getOverrideable() {
+        return overrideable;
+    }
+
 }
