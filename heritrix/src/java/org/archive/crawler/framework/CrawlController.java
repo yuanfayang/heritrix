@@ -664,6 +664,9 @@ public class CrawlController {
     }
 
     private void completeStop() {
+        finishProcessors();
+        writeManifest();
+        
         synchronized (this.registeredCrawlStatusListeners) {
             // Ok, now we are ready to exit.
             this.state = FINISHED;
@@ -676,9 +679,6 @@ public class CrawlController {
             this.registeredCrawlStatusListeners.
                 removeAll(this.registeredCrawlStatusListeners);
         }
-
-        finishProcessors();
-        writeManifest();
         
         logger.info("exiting a crawl run");
 
