@@ -584,10 +584,10 @@ public class ReplayCharSequenceFactory {
             } 
             if (offset >= this.prefixBuffer.length) {
                 // TODO: Maybe better performance can be gained by reading 
-                //       blocks from files.
-                int to=offset+length;
-                for(int i=offset ; i<to ; i++){
-                    ret.append(charAt(i)-this.contentOffset);
+                // blocks from files.
+                int to = offset + length;
+                for(int i = offset ; i < to ; i++) {
+                    ret.append(charAt(i - this.contentOffset));
                 }
             }
             
