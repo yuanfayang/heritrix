@@ -54,7 +54,6 @@ public class Preselector extends Processor implements FetchStatusCodes {
 
     /**
      * @param name
-     * @param description
      */
     public Preselector(String name) {
         super(name, "Preselector");

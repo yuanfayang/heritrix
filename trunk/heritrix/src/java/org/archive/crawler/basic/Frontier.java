@@ -158,7 +158,6 @@ public class Frontier
 
     /**
      * @param name
-     * @param description
      */
     public Frontier(String name) {
         // The frontier should always have the same name.

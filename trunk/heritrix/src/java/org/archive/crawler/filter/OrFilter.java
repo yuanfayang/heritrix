@@ -47,7 +47,6 @@ public class OrFilter extends Filter {
 
 	/**
      * @param name
-     * @param description
      */
     public OrFilter(String name) {
         super(name, "Or filter");

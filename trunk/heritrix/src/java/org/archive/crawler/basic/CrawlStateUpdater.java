@@ -48,7 +48,6 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 
     /**
      * @param name
-     * @param description
      */
     public CrawlStateUpdater(String name) {
         super(name, "Crawl state updater");

@@ -41,7 +41,6 @@ import org.archive.crawler.framework.Filter;
 public class HopsFilter extends Filter {
 	/**
      * @param name
-     * @param description
      */
     public HopsFilter(String name) {
         super(name, "Hops filter");

@@ -73,7 +73,6 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorJS(String name) {
         super(name, "Java Script extractor");

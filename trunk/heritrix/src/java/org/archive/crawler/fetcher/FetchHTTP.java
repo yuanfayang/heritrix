@@ -79,7 +79,6 @@ public class FetchHTTP
 
     /**
      * @param name
-     * @param description
      */
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");

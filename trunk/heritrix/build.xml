@@ -26,28 +26,25 @@
     <property name="version" value="0.3.0" />
 
     <property name="src.libdir" value="lib" />
+    <property name="src.confdir" value="src/conf" />
+    <property name="src.webappsdir" value="src/webapps" />
     <target name="help">
         <echo message="Type 'ant -projecthelp' for more info." />  
     </target>
 
-  <property name="defaulttargetdir" value="target">
-  </property>
-  <property name="libdir" value="target/lib">
-  </property>
-  <property name="classesdir" value="target/classes">
-  </property>
-  <property name="testclassesdir" value="target/test-classes">
-  </property>
-  <property name="testreportdir" value="target/test-reports">
-  </property>
-    <property name="testtmpdir" value="target/test-tmp" />
-  <property name="distdir" value="dist">
-  </property>
-  <property name="javadocdir" value="dist/docs/api">
-  </property>
-  <property name="final.name" value="heritrix-${version}">
-  </property>
-  <target name="init" description="o Initializes some properties">
+  <property name="targetdir" value="target" />
+  <property name="libdir" value="target/lib" />
+  <property name="confdir" value="target/conf" />
+  <property name="webappsdir" value="target/webapps" />
+  <property name="classesdir" value="target/classes" />
+  <property name="testclassesdir" value="target/test-classes" />
+  <property name="testreportdir" value="target/test-reports" />
+  <property name="testtmpdir" value="target/test-tmp" />
+  <property name="distdir" value="dist" />
+  <property name="javadocdir" value="dist/docs/api" />
+  <property name="final.name" value="heritrix-${version}" />
+
+  <target name="init" description="Create initial setup under ${targetdir}">
     <mkdir dir="${libdir}">
     </mkdir>
     <copy todir="${libdir}" >
@@ -56,8 +53,25 @@
         </include>
       </fileset>
     </copy>
+
+    <filter token="VERSION" value="${version}" />
+    <mkdir dir="${confdir}">
+    </mkdir>
+    <copy todir="${confdir}" filtering="true">
+      <fileset dir="${src.confdir}" >
+        <include name="**/*" />
+      </fileset>
+    </copy>
+    <mkdir dir="${webappsdir}">
+    </mkdir>
+    <copy todir="${webappsdir}" filtering="true">
+      <fileset dir="${src.webappsdir}">
+        <include name="**/*" />
+      </fileset>
+    </copy>
   </target>
-  <target name="compile" description="o Compile the code" depends="init">
+
+  <target name="compile" description="Compile code" depends="init">
     <mkdir dir="${classesdir}">
     </mkdir>
     <javac destdir="${classesdir}" deprecation="true" debug="true"
@@ -73,64 +87,76 @@
         </fileset>
       </classpath>
     </javac>
-    <filter token="VERSION" value="${version}" />
-    <copy todir="${classesdir}" filtering="true">
-      <fileset dir="src/conf">
-        <include name="*.properties">
-        </include>
-      </fileset>
-    </copy>
   </target>
-  <target name="jar" description="o Create the jar" depends="compile,test">
-    <jar jarfile="target/${final.name}.jar" excludes="**/package.html" basedir="${classesdir}">
-        <manifest>
-            <attribute name="Main-Class" value="org.archive.crawler.Heritrix"/>
-            <attribute name="Class-Path" value="lib/ant-1.5.4 lib/commons-logging-1.0.3.jar lib/dnsjava-1.5.0.jar lib/httpclient-20031002.jar lib/itext-1.0.0.jar lib/jasper-compiler-tomcat-4.1.24.jar lib/jasper-runtime-tomcat-4.1.24.jar lib/javaswf-CVS-SNAPSHOT-1.jar lib/servlet-2.3.jar lib/jmxri-4.2.15rc0.jar lib/jmxtools-4.2.15rc0.jar lib/junit-3.8.1.jar lib/org.mortbay.jetty-4.2.15rc0.jar lib/org.mortbay.jmx-4.2.15rc0.jar lib/poi-scratchpad-2.0-RC1-20031102.jar lib/stataclasses-0.1.0.jar lib/commons-pool-1.1.jar lib/commons-collections-2.1.jar"/>
-        </manifest>
-    </jar>
+  
+  <target name="jar" description="Create jars and wars" depends="compile,test">
+    <jar jarfile="target/${final.name}.jar" excludes="**/package.html"
+            basedir="${classesdir}" />
+    <war destfile="target/webapps/admin.war"
+            webxml="target/webapps/admin/WEB-INF/web.xml"
+            basedir="target/webapps/admin" />
+    <war destfile="target/webapps/garden.war"
+            webxml="target/webapps/garden/WEB-INF/web.xml"
+            basedir="target/webapps/garden" />
+    <war destfile="target/webapps/root.war"
+            webxml="target/webapps/root/WEB-INF/web.xml"
+            basedir="target/webapps/root" />
   </target>
-  <target name="clean" description="o Clean up the generated directories">
-    <delete dir="${defaulttargetdir}">
+
+  <target name="clean" description="Clean up the generated directories">
+    <delete dir="${targetdir}">
     </delete>
-    <delete dir="${distdir}">
-    </delete>
+    <delete dir="${distdir}" />
   </target>
-  <target name="dist" description="o Create a distribution" 
+
+  <target name="dist" description="Create a distribution" 
         depends="jar, javadoc">
     <mkdir dir="dist">
     </mkdir>
-    <copy todir="dist">
-      <fileset dir="${defaulttargetdir}" includes="*.jar">
-      </fileset>
+    <copy todir="dist" filtering="true">
       <fileset dir="${basedir}" includes="LICENSE*, README*">
       </fileset>
     </copy>
+    <!--Copy over the heritrix jar.-->
+    <copy todir="dist" >
+        <fileset dir="${targetdir}">
+            <include name="*.jar" />
+        </fileset>
+    </copy>
     <copy todir="dist/lib" >
-        <fileset dir="lib" />
+        <fileset dir="${src.libdir}" />
     </copy>
-    <filter token="VERSION" value="${version}" />
-    <copy todir="dist/webapps" filtering="true">
-        <fileset dir="src/webapps" />
+    <copy todir="dist/conf" >
+        <fileset dir="${confdir}" />
     </copy>
+    <copy todir="dist/webapps">
+        <fileset dir="${webappsdir}" >
+            <include name="**/*.war" />
+        </fileset>
+    </copy>
+    <!--Copy in the startup scripts and set their permissions.-->
     <copy todir="dist/bin">
         <fileset dir="src/scripts">
-            <include name="heritrix*.sh"/>
+            <include name="heritrix*"/>
         </fileset>
    </copy>
-    <!--Set permission on scripts just copied.-->
     <chmod perm="ugo+rx" >
       <fileset dir="dist/bin">
-        <include name="heritrix*.sh"/>
+        <include name="heritrix*"/>
       </fileset>
     </chmod>
   </target>
-  <target name="test" description="o Run the test cases" if="test.failure" depends="internal-test">
+
+
+  <target name="test" description="o Run the test cases" if="test.failure"
+        depends="internal-test">
     <fail message="There were test failures.">
     </fail>
   </target>
   <target name="internal-test" depends="compile-tests">
     <mkdir dir="${testreportdir}" />
-    <junit dir="./" failureproperty="test.failure" printSummary="yes" fork="true" haltonerror="true">
+    <junit dir="./" failureproperty="test.failure" printSummary="yes"
+        fork="true" haltonerror="true">
       <sysproperty key="basedir" value="." />
       <sysproperty key="testtmpdir" value="${testtmpdir}" />
       <formatter type="xml">
@@ -151,7 +177,7 @@
         <fileset dir="src/java">
           <include name="**/*Test.java">
           </include>
-          <exclude name="**/NaughtyTest.java">
+          <exclude name="**/*SelfTest.java">
           </exclude>
         </fileset>
       </batchtest>

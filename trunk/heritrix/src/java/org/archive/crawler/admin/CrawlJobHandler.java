@@ -36,6 +36,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
@@ -82,7 +83,7 @@ import org.archive.util.FileUtils;
  * 
  * @author Kristinn Sigurdsson
  * 
- * @see org.archive.crawler.framework.CrawlJob
+ * @see org.archive.crawler.admin.CrawlJob
  */
 
 public class CrawlJobHandler implements CrawlStatusListener {
@@ -177,8 +178,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return the directory where profiles are stored. 
      */
     private String getProfilesDirectory(){
-        // TODO: FIX THIS! (Profiles directory)
-        return "src/conf/profiles";
+        return Heritrix.getConfDir().getAbsolutePath() + File.separator +
+            "profiles";
     }
     
     /**
@@ -459,8 +460,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param description
      * @param seeds
      * @return The new crawl job.
+     * @throws FatalConfigurationException
      */
-    public CrawlJob newJob(CrawlJob baseOn, String name, String description, String seeds) throws FatalConfigurationException{
+    public CrawlJob newJob(CrawlJob baseOn, String name, String description, String seeds)
+        throws FatalConfigurationException{
         if( newJob !=null){
             //There already is a new job. Discard it.
             discardNewJob();
@@ -492,8 +495,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param description Description of the new profile
      * @param seeds The contents of the new profiles' seed file 
      * @return The new profile.
+     * @throws FatalConfigurationException
      */
-    public CrawlJob newProfile(CrawlJob baseOn, String name, String description, String seeds) throws FatalConfigurationException{
+    public CrawlJob newProfile(CrawlJob baseOn, String name, String description, String seeds)
+        throws FatalConfigurationException{
     CrawlJob newProfile =
         new CrawlJob(
             name,

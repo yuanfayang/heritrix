@@ -188,6 +188,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * 
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved.
+     * @throws AttributeNotFoundException
+     * @throws MBeanException
+     * @throws ReflectionException
      */
     public Object getAttribute(String name)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
@@ -207,6 +210,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param uri the CrawlURI that this attribute should be valid for.
      * @return The value of the attribute retrieved.
      * @see #getAttribute(CrawlerSettings settings, String name)
+     * @throws AttributeNotFoundException
      */
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException {
@@ -230,6 +234,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved.
      * @see CrawlerSettings
+     * @throws AttributeNotFoundException
      */
     public Object getAttribute(CrawlerSettings settings, String name)
         throws AttributeNotFoundException {
@@ -264,6 +269,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved.
      * @see CrawlerSettings
+     * @throws AttributeNotFoundException
      */
     public Object getLocalAttribute(CrawlerSettings settings, String name)
         throws AttributeNotFoundException {

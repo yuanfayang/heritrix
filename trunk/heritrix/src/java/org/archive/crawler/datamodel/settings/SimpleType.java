@@ -34,6 +34,9 @@ public class SimpleType extends Type {
     private Object[] legalValues = null;
     
     /**
+     * @param name
+     * @param description
+     * @param defaultValue
      * 
      */
     public SimpleType(String name, String description, Object defaultValue) {

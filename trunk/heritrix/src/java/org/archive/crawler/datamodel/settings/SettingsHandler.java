@@ -107,6 +107,7 @@ public abstract class SettingsHandler {
 
     /** Create a new SettingsHandler object.
      * 
+     * @throws InvalidAttributeValueException
      */
     public SettingsHandler() throws InvalidAttributeValueException {
         order = new CrawlOrder();

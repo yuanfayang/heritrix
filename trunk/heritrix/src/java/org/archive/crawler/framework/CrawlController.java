@@ -141,7 +141,7 @@ public class CrawlController extends Thread {
      * Starting from nothing, set up CrawlController and associated
      * classes to be ready for crawling. 
      * 
-     * @param o CrawlOrder
+     * @param settingsHandler
      * @throws InitializationException
      */
     public void initialize(SettingsHandler settingsHandler)

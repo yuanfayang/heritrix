@@ -54,7 +54,6 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorSWF(String name) {
         super(name, "Flash extractor");

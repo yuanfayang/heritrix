@@ -127,7 +127,12 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
 
     /**
     * Start of an element. Decide what handler to use, and call it.
-    */
+    * @param uri
+     * @param localName
+     * @param qName
+     * @param attributes
+     * @throws SAXException
+     */
     public void startElement(
         String uri,
         String localName,
@@ -148,7 +153,11 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
 
     /**
     * End of an element.
-    */
+    * @param uri
+     * @param localName
+     * @param qName
+     * @throws SAXException
+     */
     public void endElement(String uri, String localName, String qName)
         throws SAXException {
         value = buffer.toString().trim();
@@ -174,6 +183,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private class ElementHandler {
         /**
          * Start of an element
+         * @param name
+         * @param atts
+         * @throws SAXException
          */
         public void startElement(String name, Attributes atts)
             throws SAXException {
@@ -181,7 +193,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
 
         /**
         * End of an element
-        */
+        * @param name
+         * @throws SAXException
+         */
         public void endElement(String name) throws SAXException {
         }
     }

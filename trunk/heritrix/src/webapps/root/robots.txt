@@ -1,0 +1,7 @@
+# This robots.txt is used by the RobotsExclusion heritrix integration self test.
+# Browse to the /garden webapp on this server or see 
+# http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/crawler/garden/package.html?rev=1
+# for more on the heritrix self test.
+User-agent: heritrix_selftest(+http://www.archive.org)
+Disallow: /garden/RobotsExclusion/excluded.html
+Disallow: /garden/RobotsExclusion/excluded/

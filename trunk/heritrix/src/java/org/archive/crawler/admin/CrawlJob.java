@@ -108,8 +108,7 @@ public class CrawlJob
      * A constructor for profiles. Any job created with this constructor will be
      * considered a profile.
      * @param UIDandName A unique ID for this job. For profiles this is the same as name
-     * @param settingsHandler 
-     * @param priority
+     * @param settingsHandler
      */
     public CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler) {
         this.UID = UIDandName;
@@ -125,6 +124,7 @@ public class CrawlJob
      * Advanced constructor. If given proper values this will create a CrawlJob
      * that is ready to be crawled at once.
      * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
+     * @param name
      * @param settingsHandler
      * @param priority
      */
@@ -152,7 +152,7 @@ public class CrawlJob
      * Set the 'name' of this job. The name corrisponds to the 'name' tag in the
      * 'meta' section of the settings file.
 	 * 
-	 * @param The 'name' of the job.
+	 * @param jobname The 'name' of the job.
 	 */
 	protected void setJobName(String jobname){
         this.name = jobname; 

@@ -56,7 +56,6 @@ public class TransclusionFilter extends Filter {
 	
     /**
      * @param name
-     * @param description
      */
     public TransclusionFilter(String name) {
         super(name, "Transclusion filter");

@@ -47,7 +47,6 @@ public class PathDepthFilter extends Filter {
 	
     /**
      * @param name
-     * @param description
      */
     public PathDepthFilter(String name) {
         super(name, "Path depth filter");

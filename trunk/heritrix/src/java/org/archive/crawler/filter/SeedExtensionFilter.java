@@ -56,7 +56,6 @@ public class SeedExtensionFilter extends Filter {
 	
     /**
      * @param name
-     * @param description
      */
     public SeedExtensionFilter(String name) {
         super(name, "Seed extension filter");

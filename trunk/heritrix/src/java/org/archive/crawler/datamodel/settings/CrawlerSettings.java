@@ -121,7 +121,7 @@ public class CrawlerSettings {
 
     /** Set the description of this CrawlerSettings object.
      * 
-     * @param the description to be set for this CrawlerSettings object.
+     * @param string the description to be set for this CrawlerSettings object.
      */
     public void setDescription(String string) {
         description = string;
@@ -129,7 +129,7 @@ public class CrawlerSettings {
 
     /** Set the name of this CrawlerSettings object.
      * 
-     * @param the name to be set for this CrawlerSettings object.
+     * @param string the name to be set for this CrawlerSettings object.
      */
     public void setName(String string) {
         name = string;

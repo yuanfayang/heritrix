@@ -26,37 +26,59 @@
 package org.archive.crawler;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.management.InvalidAttributeValueException;
 
-import org.archive.crawler.admin.CrawlJob;
-import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.admin.SimpleHttpServer;
+import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.framework.exceptions.InitializationException;
+import org.archive.crawler.garden.AllGardenSelfTests;
 
 
 /**
  * Main class for Heritrix crawler.
  * 
- * See {@link #usage() usage()} for how to launch the program.
+ * Heritrix is launched by a shell script that backgrounds heritrix and
+ * that redirects all stdout and stderr emitted by heritrix to a log file.  So
+ * that startup messages emitted subsequent to the redirection of stdout and
+ * stderr show on the console, this class prints usage or startup output 
+ * such as where the web ui can be found, etc., to a STARTLOG that the shell
+ * script is waiting on.  As soon as the shell script sees output in this file,
+ * it prints its content and breaks out of its wait.  See heritrix.sh.
  * 
  * @author gojomo
  * @author Kristinn Sigurdsson
  *
  */
-public class Heritrix {
-
+public class Heritrix
+{    
+    /**
+     * Name of the heritrix home system property.
+     */
+    private static final String HOME = "heritrix.home";
+    
+    /**
+     * Name of the heritrix property whose presence says we're running w/ 
+     * development file locations: i.e conf, webapps, and profiles are under
+     * the src directory rather than at top-level.
+     */
+    private static final String DEVELOPMENT = "heritrix.development";
+    
     /**
      * Name of the heritrix properties file.
      *
@@ -68,6 +90,17 @@ public class Heritrix {
      * Name of the heritrix version property.
      */
     private static final String VERSION = "heritrix.version";
+    
+    /**
+     * The heritrix home directory.
+     * 
+     * Need this location so we can get at our configuration.  Default to 
+     * where we're launched from.
+     */
+    private static File heritrixHome = null;
+    
+    private static File confDir = null;
+    private static File webappsDir = null;
 
     /**
      * Heritrix logging instance.
@@ -90,219 +123,316 @@ public class Heritrix {
     protected static CrawlJobHandler jobHandler;
 
     /**
-     * Heritirx start log file.
+     * Heritrix start log file.
      * 
-     * This files contains standard out produces by this main class.
-     * Soley used by heritris.sh shell script.
+     * This file contains standard out produced by this main class.
+     * Soley used by heritrix shell script.
      */
-	private static final String STARTLOG = "start.log";
+	private static final String STARTLOG = "heritrix_dmesg.log";
 	
-	private static FileOutputStream startLog = null;
+    /**
+     * Where to write this classes startup output.
+     */
+	private static PrintWriter out = null;
+    
 
     /**
      * Launch program
      * 
-     * @param args See usage() for details.
+     * @param args Command line arguments.
      * 
-     * @see #usage()
+     * @throws Exception
      */
-    public static void main(String[] args) {
-        loadProperties();
-        patchLogging();
-        boolean noWUI = false;
-        int port = -1;
-        String crawlOrderFile = null;
-        String admin = "admin:letmein";
-        String user = "user:archive";
-        // 0 = no crawl order specified, 1 = start, 2 = wait, 3 = set as default.
-        int crawllaunch = -1;
+    public static void main(String[] args)
+        throws Exception
+    {
+        out = new PrintWriter(new FileOutputStream(new File(STARTLOG)));
         
-        if(args.length > 7){
-            // Too many arguments. Display usage
-            usage();
-            return;
+        try
+        {
+            findHeritrixHome();
+            loadProperties();
+            patchLogging();
+            doStart(args);
         }
-        else {
-            for(int i=0 ; i < args.length ; i++) {
-                String arg = args[i];
-                if(arg.indexOf("-") == 0) {
-                    // This is a command, not the crawl order file.
-                    if(arg.equalsIgnoreCase("--no-wui")){
-                        if(port != -1){
-                            // If the port set you can't specify no web UI.
-                            usage();
-                            return;
-                        }
-                        else{
-                            noWUI = true;            
-                        }
-                    }
-                    else if(arg.indexOf("--port=") == 0){
-                        //Defining web UI port.
-                        if(port != -1){
-                            // Can't double define port.
-                            usage();
-                            return;
-                        }
-                        else{
-                            try{
-                                String p = arg.substring(7);
-                                port = Integer.parseInt(p);
-                            }
-                            catch(NumberFormatException e){
-                                usage();
-                                return;
-                            }
-                        }
-                    }
-                    else if(arg.equals("--start")){
-                        if(crawllaunch != -1){
-                            // Can't define crawllaunch twice.
-                            usage();
-                            return;
-                        }
-                        else{
-                            crawllaunch = 1;
-                        }
-                    }
-                    else if(arg.equals("--wait")){
-                        if(crawllaunch != -1){
-                            // Can't define crawllaunch twice.
-                            usage();
-                            return;
-                        }
-                        else{
-                            crawllaunch = 2;
-                        }
-                    }
-                    else if(arg.equals("--set")){
-                        if(crawllaunch != -1){
-                            // Can't define crawllaunch twice.
-                            usage();
-                            return;
-                        }
-                        else{
-                            crawllaunch = 3;
-                        }
-                    }
-                    else if(arg.equals("--admin")){
-                    	// Overwriting the default admin login options.
-                    	if(args[i+1].indexOf("-") != 0 
-                    	   && args[i+1].indexOf(":")>0 
-                    	   && args[i+1].indexOf(":") < args[i+1].length()){
-							// Ok everything looks right. Increment i and overwrite admin login.
-							admin = args[++i];
-                    	} else {
-							// The next argument sould be the new login info but it doesn't look right.
-							// Should not start with "-" and must contain ":" somewhere (but not at the 
-							// front of the string or at the end.
-							usage();
-							return;
-                    	}
-                    }
-					else if(arg.equals("--user")){
-						// Overwriting the default user login options.
-						if(args[i+1].indexOf("-") != 0 
-						   && args[i+1].indexOf(":")>0 
-						   && args[i+1].indexOf(":") < args[i+1].length()){
-							// Ok everything looks right. Increment i and overwrite user login.
-							admin = args[++i];
-					    } else {
-							// The next argument sould be the new login info but it doesn't look right.
-							// Should not start with "-" and must contain ":" somewhere (but not at the 
-							// front of the string or at the end.
-							usage();
-							return;
-						}
-					}
-                    else{
-                        //Unknown or -?
-                        usage();
-                        return;
-                    }
-                }
-                else {
-                    // Must be the crawl order file.
-                    if(crawlOrderFile != null){
-                        // Trying to set the crawl order file for the second
-                        // time. This is an error.
-                        usage();
-                        return;
-                    }
-                    else{
-                        // Must end with '.xml'
-                        if(arg.length() > 4 && 
-                            arg.substring(arg.length()-4)
-                                .equalsIgnoreCase(".xml"))
-                        {
-                            crawlOrderFile = arg;
-                        }
-                        else
-                        {
-                            usage();
-                            return;
-                        }
-                    }
-                }
-            }
-            
-            if(crawlOrderFile == null){
-                if(noWUI){
-                    // Can't do anything.
-                    usage();
-                    return;
-                }
-                crawllaunch = 0;
-            }
-            
-            if(port == -1){
-                // No port, use default.
-                port = SimpleHttpServer.DEFAULT_PORT;
-            }
-            
-            if(crawllaunch == -1 && crawlOrderFile != null && noWUI == false)
+        
+        catch(Exception e)
+        {
+            // Show any exceptions in STARTLOG.
+            e.printStackTrace(out);
+            throw e;
+        }
+        
+        finally
+        {
+            // Its important the STARTLOG output stream gets closed.  Its a 
+            // signal to the shell that started us up that startup is done --
+            // or that it failed -- and that it can move on from waiting.
+            out.close();
+        }
+    }
+    
+    private static void doStart(String [] args)
+        throws Exception
+    {
+        boolean noWui = false;
+        int port = SimpleHttpServer.DEFAULT_PORT;
+        String crawlOrderFile = null;
+        String adminLoginPassword = "admin:letmein";
+        boolean runMode = false;
+        boolean selfTest = false;
+ 
+        CommandLineParser clp = new CommandLineParser(args, out);
+        List arguments = clp.getCommandLineArguments();
+        Option [] options = clp.getCommandLineOptions();
+        
+        // Check passed argument.  Only one argument, the ORDER_FILE is allowed.
+        // If one argument, make sure exists and xml suffix.
+        if (arguments.size() > 1)
+        {
+            clp.usage(1);
+        }
+        else if (arguments.size() == 1)
+        {
+            crawlOrderFile = (String)arguments.get(0);
+            if (!(new File(crawlOrderFile).exists()))
             {
-                //Set default crawllaunch behavior
-                crawllaunch = 2;
+                clp.usage("ORDER_FILE <" + crawlOrderFile +
+                    "> specified does not exist.", 1);
             }
-            // Ok, we should now have everything to launch the program.
+            // Must end with '.xml'
+            if (crawlOrderFile.length() > 4 &&
+                    !crawlOrderFile.substring(crawlOrderFile.length() - 4).
+                        equalsIgnoreCase(".xml"))
+            {
+                clp.usage("ORDER_FILE <" + crawlOrderFile +
+                    "> does not have required '.xml' suffix.", 1);
+            }
+        }
+        
+        // Now look at options passed.
+        for (int i = 0; i < options.length; i++)
+        {
+            switch(options[i].getId())
+            {
+                case 'h':
+                    clp.usage();
+                    break;
+                
+                case 'v': 
+                    clp.message(getVersion(), 0);
+                    break;
+                
+                case 'a':
+                    adminLoginPassword = options[i].getValue();
+                    if (!isValidLoginPasswordString(adminLoginPassword))
+                    {
+                        clp.usage("Invalid admin login/password value.", 1);
+                    }
+                    break;
+                
+                case 'n':
+                    if (crawlOrderFile == null)
+                    {
+                        clp.usage("You must specify an ORDER_FILE with" +
+                            " '--nowui' option.", 1);
+                    }
+                    if (options.length > 1)
+                    {
+                        // If more than just '--nowui' passed, then there is 
+                        // confusion on what is being asked of us.  Print usage
+                        // rather than proceed.
+                        clp.usage(1);
+                    }
+                    noWui = true;
+                    break;
+                
+                case 'p':
+                    try
+                    {
+                        port = Integer.parseInt(options[i].getValue());
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        clp.usage("Failed parse of port number: " +
+                            options[i].getValue(), 1);
+                    }
+                    if (port <= 0)
+                    {
+                        clp.usage("Nonsensical port number: " +
+                            options[i].getValue(), 1);
+                    }
+                    break;
+                
+                case 'r':
+                    runMode = true;
+                    break;
+                
+                case 's':
+                    if (options.length > 1)
+                    {
+                        // If more than just '--nowui' passed, then there is 
+                        // confusion on what is being asked of us.  Print usage
+                        // rather than proceed.
+                        clp.usage(1);
+                    }
+                    selfTest = true;
+                    break;
+                
+                default:
+                    assert false: options[i].getId();
+            }
+        }    
             
-            if(noWUI){
-                launch(crawlOrderFile);
-            }
-            else{
-                launch(port,crawlOrderFile,crawllaunch,admin,user);
-            }
+        // Ok, we should now have everything to launch the program.
+        if (selfTest)
+        {
+            launch();
+        }
+        else if (noWui)
+        {
+            launch(crawlOrderFile);
+        }
+        else
+        {
+            launch(crawlOrderFile, runMode, port, adminLoginPassword);
         }
     }
     
     /**
-     * If the user hasn't altered the default logging parameters,
-     * tighten them up somewhat: some of our libraries are way
-     * too verbose at the INFO or WARNING levels. 
+     * Test string is valid login/password string.
+     * 
+     * A valid login/password string has the login and password compounded
+     * w/ a ':' delimiter.
+     * 
+     * @param str String to test.
+     * @return True if valid password/login string.
      */
-    private static void patchLogging() {
-        if (System.getProperty("java.util.logging.config.class")!=null) {
-            return;
-        }
-        if (System.getProperty("java.util.logging.config.file")!=null) {
-            return;
-        }
-        // no user-set logging properties established; use defaults 
-        // from distribution-packaged 'heritrix.properties'
-        InputStream properties 
-            = ClassLoader.getSystemResourceAsStream(PROPERTIES);
-        if (properties != null ) {
-            try {
-                LogManager.getLogManager().readConfiguration(properties);
-            } catch (SecurityException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+    private static boolean isValidLoginPasswordString(String str)
+    {
+        boolean isValid = false;
+        StringTokenizer tokenizer = new StringTokenizer(str,  ":");
+        if (tokenizer.countTokens() == 2)
+        {
+            String login = (String)tokenizer.nextElement();
+            String password = (String)tokenizer.nextElement();
+            if (login.length() > 0 && password.length() > 0)
+            {
+                isValid = true;
             }
         }
+        return isValid;
+    }
+    
+    private static void findHeritrixHome()
+        throws IOException
+    {
+        String home = System.getProperty(HOME);
+        if (home == null || home.length() <= 0)
+        {
+            home = ".";
+        }
+        
+        heritrixHome = new File(home);
+        if (!heritrixHome.exists())
+        {
+            throw new IOException("HERITRIX_HOME <" + home +
+                "> does not exist.");
+        }
+        
+        // Make sure of conf dir.
+        File dir = new File(heritrixHome,
+                isDevelopment()? "src" + File.separator + "conf": "conf");
+        if (!dir.exists())
+        {
+            throw new IOException("Cannot find conf dir: " + dir);
+        }
+        confDir = dir;
+        
+        // Make sure of webapps dir.
+        dir = new File(heritrixHome,
+                isDevelopment()? "src" + File.separator + "webapps": "webapps");
+        if (!dir.exists())
+        {
+            throw new IOException("Cannot find webapps dir: " + dir);
+        }
+        webappsDir = dir;
+    }
+    
+    private static boolean isDevelopment()
+    {
+        return System.getProperty(DEVELOPMENT) != null;  
+    }
+    
+    /**
+     * @return The conf directory under HERITRIX_HOME.
+     */
+    public static File getConfDir()
+    {
+        return confDir;
+    }
+    
+    /**
+     * @return The webapps directory under HERITRIX_HOME.
+     */
+    public static File getWebappsDir()
+    {
+        return webappsDir;
+    }
+    
+    private static void loadProperties()
+        throws IOException
+    {    
+        InputStream is =
+            new FileInputStream(new File(getConfDir(), PROPERTIES));
+        if (is != null)
+        {
+            properties = new Properties();
+            properties.load(is);
+        }
+    }
+
+    /**
+     * If the user hasn't altered the default logging parameters, tighten them
+     * up somewhat: some of our libraries are way too verbose at the INFO or
+     * WARNING levels.
+     * 
+     * @throws IOException
+     * @throws SecurityException
+     */
+    private static void patchLogging()
+        throws SecurityException, IOException
+    {   
+        if (System.getProperty("java.util.logging.config.class") != null)
+        {
+            return;
+        }
+        
+        if (System.getProperty("java.util.logging.config.file") != null)
+        {
+            return;
+        }
+        
+        // No user-set logging properties established; use defaults 
+        // from distribution-packaged 'heritrix.properties'
+        InputStream is =
+            new FileInputStream(new File(getConfDir(), PROPERTIES));
+        if (is != null)
+        {
+            LogManager.getLogManager().readConfiguration(is);
+        }
+    }
+    
+    /**
+     * Run the selftest
+     *
+     */
+    private static void launch()
+    {
+        // TODO: DO THIS PROPERLY.
+        // TODO: If an error starting up I shouldn't run the tests.
+        out.println("Starting SelfTest");
+        junit.textui.TestRunner.run(AllGardenSelfTests.suite());       
     }
 
     /**
@@ -310,163 +440,83 @@ public class Heritrix {
      * 
      * @param crawlOrderFile The crawl order to crawl.
      */
-    protected static void launch(String crawlOrderFile){
-        try {
-            XMLSettingsHandler handler = new XMLSettingsHandler(new File(crawlOrderFile));
-            handler.initialize();
-            CrawlController controller = new CrawlController();
-            controller.initialize(handler);
-            controller.startCrawl();
-
-
-
-            //CrawlController controller = new CrawlController();
-            //CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
-            //controller.initialize(order);
-            //controller.startCrawl();
-            // catch all configuration exceptions, which at this level are fatal
-        } catch (InitializationException e){
-            print("Fatal configuration exception: " + 
-                    e.toString() + "\n");
-            return; 
-        } catch (InvalidAttributeValueException e) {
-            print("Fatal configuration exception: " + 
-                    e.toString() + "\n");
-            return; 
-        }
-        print("Heritrix " + getVersion() + " is running.\n");
-        print("\tNo web UI\n");
-        print("\tCrawling " + crawlOrderFile + "\n");
+    private static void launch(String crawlOrderFile)
+        throws InitializationException, IOException,
+            InvalidAttributeValueException
+    {
+        XMLSettingsHandler handler =
+            new XMLSettingsHandler(new File(crawlOrderFile));
+        handler.initialize();
+        CrawlController controller = new CrawlController();
+        controller.initialize(handler);
+        controller.startCrawl();
+        out.println("Heritrix " + getVersion() + " is crawling " +
+            crawlOrderFile + ".");
     }
     
     /**
-     * Launch the crawler with a web UI
+     * Launch the crawler with a web UI.
      * 
-     * @param port The port that the web UI will run on
-     * @param crawlOrderFile A crawl order file to use
-     * @param crawllaunch How to use the crawl order file 
-     *                       (1 = start crawling, 
-     *                     2 = ready for crawl but don't start,
-     *                     3 = set as default configuration,
-     *                        Any other = no crawl order specified)
+     * @param crawlOrderFile File to crawl.  May be null.
+     * @param runMode Whether crawler should be set to run mode.
+     * @param port Port number to use for web UI.
+     * @param adminLoginPassword Compound of login and password.
+     * 
+     * @exception Exception
+     * 
      */
-    protected static void launch(
-        int port,
-        String crawlOrderFile,
-        int crawllaunch,
-        String admin,
-        String user) {
+    private static void launch(String crawlOrderFile, boolean runMode, 
+            int port, String adminLoginPassword)
+        throws Exception
+    {
         jobHandler = new CrawlJobHandler();
-        String status = "";
-
-        // Deconstruction of login permissions.
-        String adminUN = admin.substring(0, admin.indexOf(":"));
-        String adminPW = admin.substring(admin.indexOf(":") + 1);
-        User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
-        String userUN = user.substring(0, user.indexOf(":"));
-        String userPW = user.substring(user.indexOf(":") + 1);
-        User.addLogin(userUN, userPW, User.USER);
-
-        if (crawllaunch == 3) {
-            // Set crawl order file as new default 
-            // TODO: Allow this via profiles.
-            //jobHandler.setDefaultSettingsFilename(crawlOrderFile);
-            status =
-                "\t- default crawl order updated to match: " + crawlOrderFile;
-        } else if (crawllaunch == 1 || crawllaunch == 2) {
-            try {
-                CrawlJob cjob =
-                    new CrawlJob(
-                        jobHandler.getNextJobUID(),
-                        "Auto launched",
-                        new XMLSettingsHandler(new File(crawlOrderFile)),
-                        CrawlJob.PRIORITY_HIGH);
-                jobHandler.addJob(cjob);
-            } catch (InvalidAttributeValueException e) {
-                System.out.println(
-                    "Fatal configuration exception: " + e.toString());
-                return;
-            }
-            status = "\t1 crawl job ready and pending: " + crawlOrderFile;
-            if (crawllaunch == 1) {
+        String status = null;
+ 
+        String adminUN =
+            adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
+        String adminPW =
+            adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
+		User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
+		
+        if (crawlOrderFile != null)
+        {
+            CrawlJob cjob = new CrawlJob(jobHandler.getNextJobUID(),
+                "Auto launched",
+                new XMLSettingsHandler(new File(crawlOrderFile)),
+                CrawlJob.PRIORITY_HIGH);
+            jobHandler.addJob(cjob);
+            if(runMode)
+            {
                 jobHandler.startCrawler();
-                status = "\t1 job being crawled: " + crawlOrderFile;
+                status = "Job being crawled: " + crawlOrderFile;
+            }
+            else if(crawlOrderFile != null)
+            {
+                status = "Crawl job ready and pending: " + crawlOrderFile;
             }
         }
-
-        try {
-            SimpleHttpServer server = new SimpleHttpServer(port);
-            server.startServer();
-        } catch (Exception e) {
-            print("Fatal IO error: " + e.getMessage() + "\n");
-            return;
+        else if(runMode)
+        {
+            // TODO: Put the crawler into 'run' mode though no file to crawl. 
+            // The use case is that jobs are to be run on a schedule and that
+            // if the crawler is in run mode, then the scheduled job will be 
+            // run at appropriate time.  Otherwise, not.
         }
-        print("Heritrix is running\n");
-        print(" Web UI on port " + port + "\n");
-        try {
-            InetAddress addr = InetAddress.getLocalHost();
 
-            // Get hostname
-            String hostname = addr.getHostName();
-            print(" http://" + hostname + ":" + port + "/admin\n");
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
+        SimpleHttpServer server = new SimpleHttpServer(port);
+        server.startServer();
+
+        InetAddress addr = InetAddress.getLocalHost();
+        String uiLocation = "http://" + addr.getHostName() + ":" + port +
+            "/admin";
+
+        out.println("Heritrix " + getVersion() + " is running.");
+        out.println("Web UI is at: " + uiLocation);
+        out.println("Login and password: " + adminUN + "/" + adminPW);
+        if (status != null)
+        {
+            out.println(status);
         }
-            print(
-               " operator login/password = " + adminUN + "/" + adminPW + "\n");
-            print(status + "\n");
-    }
-
-    /**
-     * Print out the command line argument usage for this program.
-     * <p>
-     * <pre>
-     * Usage: java org.archive.crawler.Heritrix --help
-     * Usage: java org.archive.crawler.Heritrix --no-wui ORDER.XML
-     * Usage: java org.archive.crawler.Heritrix [--port=PORT] \
-     *       [--admin username:password] [--user username:password] \ 
-     *       [ORDER.XML [--start|--wait|--set]]
-     * Options:
-     * --help|-h   Prints this message.
-     * --no-wui    Start crawler without a web User Interface.
-     * --port      PORT is port the web UI runs on. Default: 8080.
-     * --admin     Set the username and password for the WUI administrator.
-     * --user      Set the username and password for the WUI lesser access. 
-     * ORDER.XML   The crawl to launch. Optional if '--no-wui' NOT specified.
-     * --start     Start crawling using specified ORDER.XML:
-     * --wait      Load job specified by ORDER.XML but do not start. Default.
-     * --set       Set specified ORDER.XML as the default.
-     *</pre>
-     */
-    protected static void usage() {
-        print("Heritrix version " + getVersion() + "\n");
-        print("Usage: java org.archive.crawler.Heritrix");
-        print(" --help|-h\n");
-        print("Usage: java org.archive.crawler.Heritrix");
-        print(" --no-wui ORDER.XML\n");
-        print("Usage: java org.archive.crawler.Heritrix");
-        print(" [--port=PORT] \\\n");
-        print("\t\t\t[--admin username:password] [--user username:password]" +
-        	"\\\n");
-		print("\t\t\t[ORDER.XML [--start|--wait|--set]]\n");
-        print("Options:\n");
-        print("  --help|-h\tPrints this message.\n");
-        print("  --no-wui\t");
-        print("Start crawler without a web User Interface.\n");
-		print("  --admin\t");
-		print("Set the username and password for the WUI administrator.\n");
-		print("  --user\t");
-		print("Set the username and password for the WUI lesser access.\n");
-        print("  ORDER.XML\t\n");
-        print("The crawl to launch. Optional if '--no-wui'");
-        print(" NOT specified.\n");
-        print("  --start\t");
-        print("Start crawling using specified ORDER.XML:\n");
-        print("  --wait\t");
-        print("Load job specified by ORDER.XML but do not start.");
-        print(" Default.\n");
-        print("  --set\t\t");
-        print("Set specified ORDER.XML as the default.\n");
     }
 
     /**
@@ -489,47 +539,7 @@ public class Heritrix {
     public static Properties getProperties()
     {
     	return properties;
-    }
-    
-    protected static void loadProperties()
-    {
-    	InputStream is = ClassLoader.getSystemResourceAsStream(PROPERTIES);
-        if (is == null)
-        {
-            logger.warning("Failed to find heritrix.properties on classpath.");
-        }
-        else
-        {
-        	properties = new Properties();
-        	try
-    		{
-                properties.load(is);
-        	}
-                
-        	catch(IOException e)
-			{
-        		logger.warning("Failed loading heritrix properties: " +
-                     e.getMessage());
-        	}
-        }
     }   
-
-	/**
-	 * Prints a string to both standard output and start.log file.
-	 * 
-	 * @param string
-	 */
-	public static void print (String string){
-		try {
-			if (startLog == null) {
-				startLog = new FileOutputStream(new File(STARTLOG));
-			}
-			System.out.print(string);
-			startLog.write(string.getBytes());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
     /**
      * Get the job handler

@@ -50,7 +50,6 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorDOC(String name) {
         super(name, "DOC Extractor");

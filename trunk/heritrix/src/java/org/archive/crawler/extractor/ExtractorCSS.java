@@ -74,7 +74,6 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
     
     /**
      * @param name
-     * @param description
      */
     public ExtractorCSS(String name) {
         super(name, "CSS Extractor");

@@ -349,7 +349,6 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorUniversal(String name) {
         super(name, "Link extraction on unknown file types");

@@ -68,8 +68,6 @@ public class CrawlOrder extends CrawlerModule {
     private CrawlController controller;
 
     /** Construct a CrawlOrder instance given a Document.
-     * @param doc
-     * @throws InitializationException
      */
     public CrawlOrder() {
         super("crawl-order", "Heritrix crawl order");
@@ -171,6 +169,7 @@ public class CrawlOrder extends CrawlerModule {
      * 
      * If this method is called repeatedly it will return the same instance each time.
      * 
+     * @param curi
      * @return the new RobotsHonoringPolicy
      */
     public RobotsHonoringPolicy getRobotsHonoringPolicy(CrawlURI curi) {

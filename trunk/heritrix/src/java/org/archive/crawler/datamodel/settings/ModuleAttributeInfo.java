@@ -44,6 +44,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
      * @param isOverrideable
      * @param legalValues
      * @param defaultValue
+     * @throws InvalidAttributeValueException
      * @throws java.lang.IllegalArgumentException
      */
     public ModuleAttributeInfo(

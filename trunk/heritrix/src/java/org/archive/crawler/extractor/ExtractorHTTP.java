@@ -44,7 +44,6 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorHTTP(String name) {
         super(name, "HTTP extractor");

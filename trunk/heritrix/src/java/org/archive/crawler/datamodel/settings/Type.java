@@ -32,8 +32,8 @@ import javax.management.Attribute;
  */
 public abstract class Type extends Attribute {
     /**
-     * @param arg0
-     * @param arg1
+     * @param name
+     * @param value
      */
     public Type(String name, Object value) {
         super(name, value);

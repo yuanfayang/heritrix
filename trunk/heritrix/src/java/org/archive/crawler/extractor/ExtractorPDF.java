@@ -52,7 +52,6 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorPDF(String name) {
         super(name, "PDF extractor");

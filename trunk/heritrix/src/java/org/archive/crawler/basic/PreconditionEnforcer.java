@@ -49,7 +49,6 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 
     /**
      * @param name
-     * @param description
      */
     public PreconditionEnforcer(String name) {
         super(name, "Precondition enforcer");

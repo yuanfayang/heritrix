@@ -85,7 +85,8 @@ public class FileUtils {
     }
     
     /** Deletes all files and subdirectories under dir.
-     *  @return true if all deletions were successful. If a deletion fails, the 
+     *  @param dir
+     * @return true if all deletions were successful. If a deletion fails, the 
      *          method stops attempting to delete and returns false.
      */
     public static boolean deleteDir(File dir) {

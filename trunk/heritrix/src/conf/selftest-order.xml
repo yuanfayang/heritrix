@@ -1,0 +1,68 @@
+<crawl-order name="selftest" comment="Run the selftest crawl." >
+
+    <scope class="org.archive.crawler.basic.Scope" mode="host"
+            max-link-hops="50" max-trans-hops="5" >
+        <seeds>http://localhost:8080/garden/</seeds>
+    </scope>
+ 
+    <behavior disk-path="selftest" max-toe-threads="3" >
+        <!--This robots.txt used by the RobotsExclusion test has a dependency
+            on the user-agent name used herein.  Couple any changes made to 
+            the user-agent here w/ the robots.txt that is under the 
+            root webapp (Yes, thats the root webapp.  Its the robots.txt
+            that the Robots test actually uses).
+         -->
+        <http-headers User-Agent="heritrix_selftest(+http://www.archive.org)"
+            From="archive-crawler-agent@lists.sourceforge.net" />
+        <frontier class="org.archive.crawler.basic.Frontier"
+            delay-factor="1" min-delay-ms="0" max-delay-ms="1000" />
+        <processors>
+            <processor name="Preselector" 
+                class="org.archive.crawler.basic.Preselector"
+                next="Preprocessor" />
+            <processor name="Preprocessor" 
+                class="org.archive.crawler.basic.PreconditionEnforcer"
+                next="DNS" />
+            <processor name="DNS" 
+                class="org.archive.crawler.fetcher.FetchDNS"
+                next="HTTP" />
+            <processor name="HTTP" 
+                class="org.archive.crawler.fetcher.FetchHTTP"
+                next="ExtractorHTTP" 
+                timeout-seconds="60"
+                sotimeout-ms="10000"
+                max-length-bytes="1048576"
+                max-fetch-attempts="5" />
+            <processor name="ExtractorHTTP" 
+                class="org.archive.crawler.extractor.ExtractorHTTP"
+                next="ExtractorHTML" />
+            <processor name="ExtractorHTML" 
+                class="org.archive.crawler.extractor.ExtractorHTML"
+                next="ExtractorDOC" />
+            <processor name="ExtractorDOC"
+                class="org.archive.crawler.extractor.ExtractorDOC"
+                next="ExtractorSWF" />
+            <processor name="ExtractorSWF"
+                class="org.archive.crawler.extractor.ExtractorSWF"
+                next="ExtractorPDF" />
+            <processor name="ExtractorPDF"
+                class="org.archive.crawler.extractor.ExtractorPDF"
+                next="Archiver" />
+            <processor name="Archiver" 
+                class="org.archive.crawler.basic.ARCWriterProcessor"
+                next="Updater" 
+                path="arcs"
+                compress="yes"
+                max-arc-size="20000000" />
+            <processor name="Updater" 
+                class="org.archive.crawler.basic.CrawlStateUpdater"
+                postprocessor="defined"
+                next="Postselector" /> 
+            <processor name="Postselector" 
+                class="org.archive.crawler.basic.Postselector" />
+        </processors>
+        <loggers>
+            <crawl-statistics interval-seconds="20" />
+        </loggers>
+    </behavior>
+</crawl-order>
