@@ -81,4 +81,9 @@ public interface StatisticsTracking extends Runnable {
      * Start the tracker's crawl timing. 
      */
     public void noteStart();
+
+    /**
+     * Called at end of crawl job so tracker can do cleanup.
+     */
+    public void cleanup();
 }

@@ -76,6 +76,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.MapType;
@@ -103,7 +104,7 @@ import org.archive.util.HttpRecorder;
  * @version $Id$
  */
 public class FetchHTTP extends Processor
-implements CoreAttributeConstants, FetchStatusCodes {
+implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
@@ -814,6 +815,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
     public void initialTasks() {
         super.initialTasks();
+        this.getController().addCrawlStatusListener(this);
         configureHttp();
 
         // load cookies from a file if specified in the order file.
@@ -1207,5 +1209,48 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 getHttp().getState().addCookie(cookies[i]);
             }
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
+     */
+    public void crawlEnding(String sExitMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        this.http = null;
+        this.midfetchfilters = null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+     */
+    public void crawlPaused(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        // TODO Auto-generated method stub
     }
 }

@@ -172,4 +172,20 @@ public class ServerCache {
     public boolean containsHost(String hostKey) {
         return (CrawlHost) hosts.get(hostKey) != null; 
     }
+
+    /**
+     * Called when shutting down the cache so we can do clean up.
+     */
+    public void cleanup() {
+        if (this.hosts != null) {
+            // If we're using a bdb bigmap, the call to clear will
+            // close down the bdb database.
+            this.hosts.clear();
+            this.hosts = null;
+        }
+        if (this.servers != null) { 
+            this.servers.clear();
+            this.servers = null;
+        }
+    }
 }

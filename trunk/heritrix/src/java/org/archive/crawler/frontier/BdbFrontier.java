@@ -247,6 +247,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // all references because frontier instances stick around
         // betweeen crawls so the UI can build new jobs based off
         // the old and so old jobs can be looked at.
+        this.allQueues.clear();
         this.allQueues = null;
         this.inProcessQueues = null;
         if (this.alreadyIncluded != null) {

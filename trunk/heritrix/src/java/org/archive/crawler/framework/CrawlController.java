@@ -875,16 +875,21 @@ public class CrawlController implements Serializable {
         this.runtimeErrors = null;
         this.progressStats = null;
 
-        logger.info("Finished crawl.");
-
         // Do cleanup.
+        if (this.statistics != null) {
+            this.statistics.cleanup();
+            this.statistics = null;
+        }
         this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;
         this.toePool = null;
         this.order = null;
         this.scope = null;
-        this.serverCache = null;
+        if (this.serverCache != null) {
+            this.serverCache.cleanup();
+            this.serverCache = null;
+        }
         this.cpContext = null;
         if (this.classCatalogDB != null) {
             try {
@@ -902,6 +907,8 @@ public class CrawlController implements Serializable {
             }
             this.bdbEnvironment = null;
         }
+
+        logger.info("Finished crawl.");
     }
 
     private void completePause() {
