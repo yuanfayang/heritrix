@@ -30,7 +30,8 @@ import java.util.List;
 
 import javax.management.Attribute;
 
-/** Interface implemented by all element types.
+/**
+ * Interface implemented by all element types.
  *
  * @author John Erik Halse
  */
@@ -152,6 +153,8 @@ public abstract class Type extends Attribute {
     }
     
     /**
+     * Get the class values of this Type must be an instance of.
+     * 
      * @return Returns the legalValueType.
      */
     public Class getLegalValueType() {
@@ -159,15 +162,22 @@ public abstract class Type extends Attribute {
     }
     
     /**
+     * Set the class values of this Type must be an instance of.
+     * 
      * @param legalValueType The legalValueType to set.
      */
     public void setLegalValueType(Class legalValueType) {
         this.legalValueType = legalValueType;
     }
     
+    /**
+     * The implementation of equals consider to Types as equal if name and
+     * value are equal. Description is allowed to differ.
+     */
     public boolean equals(Object o) {
         return this == o
-                || (o instanceof Type && this.getValue().equals(
-                        ((Type) o).getValue()));
+                || (o instanceof Type
+                        && this.getName().equals(((Type) o).getName()) && this
+                        .getValue().equals(((Type) o).getValue()));
     }
 }
