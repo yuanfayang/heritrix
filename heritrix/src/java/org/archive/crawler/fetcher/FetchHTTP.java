@@ -98,14 +98,12 @@ public class FetchHTTP extends Processor
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
-    public static final String ATTR_MAX_FETCH_ATTEMPTS = "max-fetch-attempts";
     public static final String ATTR_LOAD_COOKIES = "load-cookies-from-file";
     public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
 
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
     private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
-    private static Integer DEFAULT_MAX_FETCH_ATTEMPTS = new Integer(10);
 
     /**
      * HTTP protocol adherence strictness.
@@ -160,8 +158,6 @@ public class FetchHTTP extends Processor
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
             "Max length in bytes to fetch (truncate at this length)",
             DEFAULT_MAX_LENGTH_BYTES));
-        addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS,
-            "Max number of fetches to attempt", DEFAULT_MAX_FETCH_ATTEMPTS));
         e = addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
         e.setExpertSetting(true);
