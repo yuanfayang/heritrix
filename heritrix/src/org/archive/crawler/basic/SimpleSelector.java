@@ -259,6 +259,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 
 
 	protected void handleLinks(CrawlURI curi) {
+		if (curi.getFetchStatus() >= 400) return;
 		Collection links = (Collection)curi.getAList().getObject("html-links");
 		Iterator iter = links.iterator();
 		while(iter.hasNext()) {
@@ -278,6 +279,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 
 
 	protected void handleEmbeds(CrawlURI curi) {
+		if (curi.getFetchStatus() >= 400) return;
 		Collection embeds = (Collection)curi.getAList().getObject("html-embeds");
 		Iterator iter = embeds.iterator();
 		while(iter.hasNext()) {
