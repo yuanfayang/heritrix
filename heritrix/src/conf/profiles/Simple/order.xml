@@ -3,11 +3,12 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
-    <date>20040302203122</date>
+    <date>20040325235526</date>
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
     <string name="disk-path">disk</string>
+    <string name="scratch-path">scratch</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
@@ -23,6 +24,12 @@
         <map name="filters">
         </map>
       </newObject>
+      <newObject name="additionalScopeFocus" class="org.archive.crawler.filter.FilePatternFilter">
+        <boolean name="enabled">true</boolean>
+        <boolean name="if-match-return">true</boolean>
+        <string name="use-default-patterns">All</string>
+        <string name="regexp"/>
+      </newObject>
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
         <boolean name="enabled">true</boolean>
         <integer name="max-speculative-hops">1</integer>
@@ -37,7 +44,7 @@
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
       <string name="type">classic</string>
       <boolean name="masquerade">false</boolean>
-      <string name="custom-robots"></string>
+      <string name="custom-robots"/>
       <stringList name="user-agents">
       </stringList>
     </newObject>
@@ -48,6 +55,8 @@
       <integer name="min-interval-ms">1000</integer>
       <integer name="max-retries">10</integer>
       <long name="retry-delay-seconds">900</long>
+      <integer name="total-bandwidth-usage-KB-sec">0</integer>
+      <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
     </newObject>
     <map name="pre-fetch-processors">
       <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
@@ -56,12 +65,14 @@
         </map>
         <boolean name="recheck-scope">false</boolean>
         <boolean name="block-all">false</boolean>
-        <string name="block-by-regexp"></string>
+        <string name="block-by-regexp"/>
       </newObject>
       <newObject name="Preprocessor" class="org.archive.crawler.basic.PreconditionEnforcer">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
+        <integer name="ip-validity-duration-m">-1</integer>
+        <integer name="robot-validity-duration-m">4320</integer>
       </newObject>
     </map>
     <map name="fetch-processors">
@@ -78,8 +89,8 @@
         <integer name="sotimeout-ms">20000</integer>
         <long name="max-length-bytes">9223372036854775807</long>
         <integer name="max-fetch-attempts">10</integer>
-	  	<string name="load-cookies-from-file"/>
-  		<string name="save-cookies-to-file"/>
+        <string name="load-cookies-from-file"/>
+        <string name="save-cookies-to-file"/>
         <boolean name="strict">false</boolean>
         <string name="trust-level">open</string>
       </newObject>
@@ -109,7 +120,7 @@
         <boolean name="compress">true</boolean>
         <string name="prefix">IAH</string>
         <integer name="max-size-bytes">100000000</integer>
-        <string name="path"></string>
+        <string name="path"/>
         <integer name="pool-max-active">3</integer>
         <integer name="pool-max-wait">300000</integer>
       </newObject>
@@ -124,6 +135,7 @@
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
+        <boolean name="seed-redirects-new-seed">true</boolean>
       </newObject>
     </map>
     <map name="loggers">
@@ -131,6 +143,6 @@
         <integer name="interval-seconds">20</integer>
       </newObject>
     </map>
-    <string name="recover-path"></string>
+    <string name="recover-path"/>
   </controller>
 </crawl-order>
