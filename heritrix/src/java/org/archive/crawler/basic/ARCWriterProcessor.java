@@ -58,7 +58,28 @@ import org.xbill.DNS.Record;
  */
 public class ARCWriterProcessor 
     extends Processor implements CoreAttributeConstants, ARCConstants
-{    
+{   
+    /**
+     * Key to use asking settings for compression value.
+     */
+    public static final String ATTR_COMPRESS = "compress";
+    
+    /**
+     * Key to use asking settings for prefix value.
+     */
+    public static final String ATTR_PREFIX = "prefix";
+    
+    /**
+     * Key to use asking settings for max size value. 
+     */
+    public static final String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
+    
+    /**
+     * Key to use asking settings for arc path value.
+     */
+    public static final String ATTR_PATH ="path";
+    
+    
     /**
      * Max size we want ARC files to be (bytes).
      * 
@@ -92,11 +113,6 @@ public class ARCWriterProcessor
      */
     ARCWriterPool pool = null;
 
-    // Constants for this methods attribute names
-    private final static String ATTR_COMPRESS = "compress";
-    private final static String ATTR_PREFIX = "prefix";
-    private final static String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
-    private final static String ATTR_PATH = "path";
 
     /**
      * @param name
