@@ -42,6 +42,8 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
      */
     private static String DEFAULT_CLASS_KEY = "default...";
     
+    private static final String DNS = "dns";
+    
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.QueueAssignmentPolicy#getClassKey(org.archive.crawler.datamodel.CrawlURI)
      */
@@ -49,7 +51,7 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
         String scheme = curi.getUURI().getScheme();
         String candidate = null;
         try {
-            if (scheme.equals("dns")){
+            if (scheme.equals(DNS)){
                 if (curi.getVia() != null) {
                     // Special handling for DNS: treat as being
                     // of the same class as the triggering URI.
