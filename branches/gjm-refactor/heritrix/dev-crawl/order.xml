@@ -5,7 +5,7 @@
 
  <scope 
    class="org.archive.crawler.basic.Scope"
-   mode="broad"
+   mode="domain"
    max-link-hops="1"
    max-trans-hops="5">
    
