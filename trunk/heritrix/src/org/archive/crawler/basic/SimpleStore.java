@@ -164,7 +164,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		}
 		readyClassQueues.add(classQueue);
 		classQueue.setStoreState(URIStoreable.READY);
-		// TODO: since usually, queue will be snoozed, this juggling is usually superfluous
+		// TODO: since usually, queue will be snoozed, this juggling is often superfluous
 	}
 	
 	/**
