@@ -63,7 +63,7 @@ public interface StatisticsTracking extends Runnable
      *
      * @param c The {@link CrawlController CrawlController} running the crawl that this class is to gather statistics on.
      */
-    public void initalize(CrawlController c);
+    public void initialize(CrawlController c);
 
     /**
      * Returns how long the current crawl has been running (excluding any time

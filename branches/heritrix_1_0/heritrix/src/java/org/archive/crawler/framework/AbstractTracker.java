@@ -84,7 +84,7 @@ public abstract class AbstractTracker extends ModuleType
     }
 
     /**
-     * Set's up the Logger (including logInterval) and registers with the CrawlController
+     * Sets up the Logger (including logInterval) and registers with the CrawlController
      * for CrawlStatus and CrawlURIDisposition events.
      *
      * @param c A crawl controller instance.
@@ -92,13 +92,20 @@ public abstract class AbstractTracker extends ModuleType
      * @see CrawlStatusListener
      * @see org.archive.crawler.event.CrawlURIDispositionListener
      */
-    public void initalize(CrawlController c) {
+    public void initialize(CrawlController c) {
         controller = c;
 
         // Add listeners
         controller.addCrawlStatusListener(this);
     }
-
+    
+    /**
+     * Run the reports.
+     * @param c A CrawlController instance.
+     * @param exitMessage Message to log into the crawl report exit status.
+     */
+    public abstract void report(CrawlController c, String exitMessage);
+    
     /**
      * Start thread.  Will call logActivity() at intervals specified by
      * logInterval
@@ -110,7 +117,6 @@ public abstract class AbstractTracker extends ModuleType
             return;
         }
 
-        crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
         shouldrun = true; //If we are starting, this should always be true.
 
         // log the legend
@@ -141,6 +147,15 @@ public abstract class AbstractTracker extends ModuleType
                 logActivity();
             }
         }
+    }
+
+    /**
+     * Notify tracker that crawl has begun. Must be called
+     * outside tracker's own thread, to ensure it is noted
+     * before other threads start interacting with tracker. 
+     */
+    public void noteStart() {
+        crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
     }
 
     /**
@@ -252,7 +267,7 @@ public abstract class AbstractTracker extends ModuleType
         logNote("CRAWL WAITING TO PAUSE");
     }
 
-    private void logNote(String note) {
+    protected void logNote(String note) {
         controller.progressStats.log(
                     Level.INFO,
                     new PaddingStringBuffer()
@@ -301,7 +316,7 @@ public abstract class AbstractTracker extends ModuleType
         logActivity(); //Log end state
         logNote("CRAWL ENDED - " + sExitMessage);
         shouldrun = false;
-        controller = null; //Facilitate GC.
+        controller = null; // Facilitate GC.
     }
 
     /**
@@ -310,5 +325,4 @@ public abstract class AbstractTracker extends ModuleType
     public long crawlDuration() {
         return getCrawlerTotalElapsedTime();
     }
-
 }

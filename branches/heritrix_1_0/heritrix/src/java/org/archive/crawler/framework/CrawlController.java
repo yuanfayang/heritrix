@@ -570,7 +570,7 @@ public class CrawlController implements Serializable {
         Iterator it = loggers.iterator(null);
         while (it.hasNext()) {
             StatisticsTracking tracker = (StatisticsTracking) it.next();
-            tracker.initalize(this);
+            tracker.initialize(this);
             if (statistics == null) {
                 statistics = tracker;
             }
