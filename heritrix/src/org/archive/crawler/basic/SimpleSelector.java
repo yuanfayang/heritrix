@@ -163,10 +163,10 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			String e = (String)iter.next();
 			try {
 				UURI u = UURI.createUURI(e,curi.getBaseUri());
-				if(filtersAccept(u)) {
+				//if(filtersAccept(u)) {
 					logger.fine("inserting header at head "+u);
 					store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
-				}
+				//}
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, e };
 				controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
