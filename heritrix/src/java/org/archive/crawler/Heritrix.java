@@ -213,6 +213,7 @@ public class Heritrix {
         }catch(InitializationException e){
             System.out.println("Fatal configuration exception: " + 
                     e.toString());
+            return; 
         }
         System.out.println("Heritrix is running.");
         System.out.println("\tNo web UI");
@@ -258,6 +259,7 @@ public class Heritrix {
             server.startServer();
         } catch (Exception e) {
             System.out.println("Fatal IO error: " + e.getMessage());
+            return;
         }
         System.out.println("Heritrix is running");
         System.out.println(" Web UI on port " + port);
