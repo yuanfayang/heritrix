@@ -224,7 +224,7 @@ public class PDFParser {
 
 					// dereference the "pointer" and process the object				
 					PdfReader reader = indirect.getReader();
-					PdfObject direct = reader.getPdfObject(indirect);
+					PdfObject direct = PdfReader.getPdfObject(indirect);
 			
 					this.extractURIs(direct);
 			}	
