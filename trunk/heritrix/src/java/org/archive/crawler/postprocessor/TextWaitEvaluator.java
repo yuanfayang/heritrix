@@ -49,7 +49,13 @@ public class TextWaitEvaluator extends ContentBasedWaitEvaluator {
                 "text document (^text/.*$).\n" +
                 "Typically, this processor should be in the post processing " +
                 "chain. It will pass if another wait evaluator has already " +
-                "processed the CrawlURI.", DEFAULT_CONTENT_REGEXPR);
+                "processed the CrawlURI.", 
+                DEFAULT_CONTENT_REGEXPR,
+                DEFAULT_INITIAL_WAIT_INTERVAL,
+                DEFAULT_MAX_WAIT_INTERVAL,
+                DEFAULT_MIN_WAIT_INTERVAL,
+                DEFAULT_UNCHANGED_FACTOR,
+                DEFAULT_CHANGED_FACTOR);
     }
 
 
