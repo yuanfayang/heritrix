@@ -180,7 +180,9 @@ public class RecordingInputStream
             timeoutTime = Long.MAX_VALUE;
         }
 
-        int buffersize = Math.min(4096, (int)maxLength);
+        final int BUFFER_SIZE = 4096;
+        int buffersize = (maxLength > 0)?
+            Math.min(BUFFER_SIZE, (int)maxLength): BUFFER_SIZE;
         byte[] buf = new byte[buffersize];
         long bytesRead = -1;
         while (true) {
