@@ -439,9 +439,9 @@ public class CrawlURI
 	 * @param string
 	 * @param e
 	 */
-	public void addLocalizedError(String processorName, Exception ex) {
+	public void addLocalizedError(String processorName, Exception ex, String message) {
 		// TODO implement
-		
+		System.out.println("CrawlURI.addLocalizedError() says: \"Implement me!\"");
 	}
 	
 /*	public boolean isFubared(){
