@@ -50,8 +50,6 @@ public class SelfTestCrawlJobHandler
      */
     private static final String SELFTEST_WEBAPP = "selftest";
 
-
-
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.admin.SelftestCrawlJobHandler");
 
@@ -79,7 +77,7 @@ public class SelfTestCrawlJobHandler
             {
                 CrawlJob job = (CrawlJob)completedCrawlJobs.lastElement();
                 Test test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
-                        job, getJobdir(job),
+                        job, job.getDirectory(),
                         Heritrix.getHttpServer().
                             getWebappPath(SELFTEST_WEBAPP));
                 result = junit.textui.TestRunner.run(test);

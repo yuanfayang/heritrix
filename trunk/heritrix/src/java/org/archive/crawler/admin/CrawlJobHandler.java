@@ -29,9 +29,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.TreeSet;
 import java.util.Vector;
+import java.util.logging.Level;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
@@ -127,13 +130,15 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * A list of pending CrawlJobs.
      */
-    private Vector pendingCrawlJobs = new Vector();
+    //private Vector pendingCrawlJobs = new Vector();
+    private TreeSet pendingCrawlJobs;
 
     /**
      * A list of completed CrawlJobs
      */
-    private Vector completedCrawlJobs = new Vector();
-
+    //private Vector completedCrawlJobs = new Vector();
+    private TreeSet completedCrawlJobs;
+    
     /**
      * A list of profile CrawlJobs.
      */
@@ -168,6 +173,24 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param loadProfiles If true then any applicable profiles will be loaded.
      */
     public CrawlJobHandler(boolean loadJobs, boolean loadProfiles){
+        // Make a comparator for CrawlJobs.
+        Comparator comp = new Comparator(){
+            public int compare(Object o1, Object o2) {
+                CrawlJob job1 = (CrawlJob)o1;
+                CrawlJob job2 = (CrawlJob)o2;
+                if( job1.getJobPriority() < job2.getJobPriority() ){
+                    return -1;
+                } else if( job1.getJobPriority() > job2.getJobPriority() ){
+                    return 1;
+                } else {
+                    // Same priority, use UID (which should be a timestamp).
+                    // Lower UID (string compare) means earlier time.
+                    return job1.getUID().compareTo(job2.getUID());
+                }
+            }
+        };
+        pendingCrawlJobs = new TreeSet(comp);
+        completedCrawlJobs = new TreeSet(comp);
         if(loadProfiles){
             loadProfiles();
         }
@@ -184,25 +207,87 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * must contain valid job information. 
      */
     private void loadJobs() {
-        // TODO Implement load jobs.
-        
-        // TODO: If we encounter jobs set as running, paused or waiting to pause - need handling policy
+        File jobDir = Heritrix.getJobsdir();
+        File[] jobs = jobDir.listFiles();
+        for (int i = 0; i < jobs.length; i++) {
+            if (jobs[i].isDirectory()) {
+                // Need to find job file ('name'.job).
+                File[] jobFiles = jobs[i].listFiles();
+                for (int j = 0; j < jobFiles.length; j++) {
+                    File job = jobFiles[j];
+                    if (job.getName().matches(".*\\.job") && job.canRead()) {
+                        // Found a potential job file. Try loading it.
+                        loadJob(job);
+                    }
+                }
+            }
+        }
+        // Look to see if a default profile system property has been
+        // supplied. If so, use it instead.
+        // TODO: Make changes to default profile durable across restarts.
+        defaultProfile = System.getProperty(DEFAULT_PROFILE_NAME);
+        if (defaultProfile == null) {
+            defaultProfile = DEFAULT_PROFILE;
+        }
+    }
+
+    /**
+     * Loads a job given a specific job file. The loaded job will be placed in
+     * the list of completed jobs or pending queue depending on it's status.
+     * Running jobs will have their status set to 'finished abnormally' and put
+     * into the completed list.
+     * @param job the job file of the job to load.
+     */
+    protected void loadJob(File job) {
+        CrawlJob cjob = null;
+        try {
+            // Load the CrawlJob
+            cjob = new CrawlJob(job);
+        } catch (InvalidJobFileException e) {
+            Heritrix.addAlert( new Alert(
+                    "InvalidJobFileException for " + job.getName(),
+                    "Invalid job file for " + job.getAbsolutePath(),
+                    e, Level.INFO) );
+            return;
+        } catch (IOException e) {
+            Heritrix.addAlert( new Alert(
+                    "IOException for " + job.getName(),
+                    "An IO exception occured while reading from job file " +
+                        job.getAbsolutePath(),
+                    e, Level.INFO) );
+            return;
+        }
+        // Check job status and place it accordingly.
+        if( cjob.getStatus().equals(CrawlJob.STATUS_RUNNING)
+                || cjob.getStatus().equals(CrawlJob.STATUS_PAUSED)
+                || cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE) ){
+            // Was a running job.
+            // TODO: Consider checking for checkpoints and offering resume?
+            cjob.setStatus(CrawlJob.STATUS_FINISHED_ABNORMAL);
+            completedCrawlJobs.add(cjob);
+        } else if( cjob.getStatus().equals(CrawlJob.STATUS_PENDING) ){
+            // Was a pending job.
+            pendingCrawlJobs.add(cjob);
+        } else {
+            // Must have been completed.
+            completedCrawlJobs.add(cjob);
+        }
     }
 
     /**
      * Returns the directory where profiles are stored.
      * @return the directory where profiles are stored.
      */
-    private String getProfilesDirectory(){
-        return Heritrix.getConfdir().getAbsolutePath() + File.separator +
-            "profiles";
+    private File getProfilesDirectory(){
+        return new File(Heritrix.getConfdir().getAbsolutePath() + 
+                File.separator + "profiles");
     }
 
     /**
      * Loads all profiles found on disk.
      */
     private void loadProfiles() {
-        File profileDir = new File(getProfilesDirectory());
+        File profileDir = getProfilesDirectory();
         File[] profiles = profileDir.listFiles();
         for (int i = 0; i < profiles.length; i++) {
             if (profiles[i].isDirectory()) {
@@ -313,7 +398,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * No promises are made about the order of the list
      */
     public Vector getPendingJobs() {
-        return pendingCrawlJobs;
+        Vector tmp = new Vector(pendingCrawlJobs.size());
+        tmp.addAll(pendingCrawlJobs);
+        return tmp;
     }
 
     /**
@@ -331,7 +418,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return A list of all finished jobs as a Vector.
      */
     public Vector getCompletedJobs() {
-        return completedCrawlJobs;
+        Vector tmp = new Vector(completedCrawlJobs.size());
+        tmp.addAll(completedCrawlJobs);
+        return tmp;
     }
 
     /**
@@ -414,17 +503,27 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return; // We're not going to find another job with the same UID
         }
         // Ok, it isn't the current job, let's check the pending jobs.
-        for (int i = 0; i < pendingCrawlJobs.size(); i++) {
-            CrawlJob cj = (CrawlJob) pendingCrawlJobs.get(i);
+        Iterator it = pendingCrawlJobs.iterator();
+        while ( it.hasNext() ) {
+            CrawlJob cj = (CrawlJob) it.next();
             if (cj.getUID().equals(jobUID)) {
                 // Found the one to delete.
                 cj.setStatus(CrawlJob.STATUS_DELETED);
-                pendingCrawlJobs.remove(i);
-                completedCrawlJobs.add(cj);
+                pendingCrawlJobs.remove(cj);
+                //completedCrawlJobs.add(cj);
                 return; // We're not going to find another job with the same UID
             }
         }
-        // TODO: If completed job, delete from list and delete job settings file or mark it in such a way that we wont reload it.
+        // And finally the completed jobs.
+        it = completedCrawlJobs.iterator();
+        while (it.hasNext()) {
+            CrawlJob cj = (CrawlJob) it.next();
+            if (cj.getUID().equals(jobUID)) {
+                // Found the one to delete.
+                cj.setStatus(CrawlJob.STATUS_DELETED);
+                completedCrawlJobs.remove(cj);
+            }
+        }
     }
 
     /**
@@ -454,16 +553,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
             controller.resumeCrawl();
         }
     }
-
     /**
      * Returns a unique job ID.
      * <p>
      * No two calls to this method (on the same instance of this class) can ever
-     * return the same value.<br>
-     * Currently implemented to return a time stamp. That is subject to change though.
-     *
+     * return the same value. <br>
+     * Currently implemented to return a time stamp. That is subject to change
+     * though.
+     * 
      * @return A unique job ID.
-     *
+     * 
      * @see ArchiveUtils#TIMESTAMP17
      */
     public String getNextJobUID() {
@@ -471,159 +570,167 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Creates a new job. The new job will be returned and also registered as the
-     * handler's 'new job'. The new job will be based on the settings provided but
-     * created in a new location on disk.
-     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the
-     *               template for the new job.
-     * @param name The name of the new job.
+     * Creates a new job. The new job will be returned and also registered as
+     * the handler's 'new job'. The new job will be based on the settings
+     * provided but created in a new location on disk.
+     * 
+     * @param baseOn
+     *            A CrawlJob (with a valid settingshandler) to use as the
+     *            template for the new job.
+     * @param name
+     *            The name of the new job.
      * @param description
      * @param seeds
      * @return The new crawl job.
      * @throws FatalConfigurationException
      */
-    public CrawlJob newJob(CrawlJob baseOn, String name, String description,
-            String seeds)
-        throws FatalConfigurationException
-    {
-        if (newJob !=null){
+    public CrawlJob newJob(CrawlJob baseOn, 
+                           String name, 
+                           String description,
+                           String seeds) 
+                    throws FatalConfigurationException {
+        if (newJob != null) {
             //There already is a new job. Discard it.
             discardNewJob();
         }
         String UID = getNextJobUID();
-        newJob =
-            new CrawlJob(
-                UID,
-                name,
-                makeNew(
-                    baseOn,
-                    name,
-                    description,
-                    seeds,
-                    getJobdir(name, UID).getAbsolutePath(),
-                    "job-"+name+".xml",
-                    "seeds-"+name+".txt"),
-                CrawlJob.PRIORITY_AVERAGE,
-                getJobdir(name, UID));
+        File jobDir = new File(Heritrix.getJobsdir(), name + "-" + UID);
+        newJob = new CrawlJob(UID, name,
+                makeNew(baseOn, 
+                        name, 
+                        description, 
+                        seeds, 
+                        jobDir, 
+                        "job-" + name + ".xml", 
+                        "seeds-" + name + ".txt"),
+                CrawlJob.PRIORITY_AVERAGE, jobDir);
         return newJob;
     }
 
     /**
-     * Return the directory containing a job with the specified name and UID
-     * is stored.
-     * @param name Basename for job.
-     * @param UID Job unique ID.
-     * @return Job directory for passed job name and UID.
-     */
-    private File getJobdir(String name, String UID)
-    {
-        // TODO: reconsider this. Is only valid for creating new jobs...
-        return new File(Heritrix.getJobsdir(), name + "-" + UID);
-    }
-
-    /**
-     * Utility method that will return crawl job's directory output directory.
-     *
-     * @param job Job whose directory we want.
-     *
-     * @return CrawlJob's output directory.  Result is unpredictable if job
-     * was not created by this CrawlJobHandler.
-     */
-    public File getJobdir(CrawlJob job)
-    {
-        // TODO: Job keeps this info.
-        return getJobdir(job.getJobName(), job.getUID());
-    }
-
-    /**
-     * Creates a new profile. The new profile will be returned and also registered as the
-     * handler's 'new job'. The new profile will be based on the settings provided but
-     * created in a new location on disk.
-     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the
-     *               template for the new profile.
-     * @param name The name of the new profile.
-     * @param description Description of the new profile
-     * @param seeds The contents of the new profiles' seed file
+     * Creates a new profile. The new profile will be returned and also
+     * registered as the handler's 'new job'. The new profile will be based on
+     * the settings provided but created in a new location on disk.
+     * 
+     * @param baseOn
+     *            A CrawlJob (with a valid settingshandler) to use as the
+     *            template for the new profile.
+     * @param name
+     *            The name of the new profile.
+     * @param description
+     *            Description of the new profile
+     * @param seeds
+     *            The contents of the new profiles' seed file
      * @return The new profile.
      * @throws FatalConfigurationException
      */
-    public CrawlJob newProfile(CrawlJob baseOn, String name, String description, String seeds)
-        throws FatalConfigurationException{
-    CrawlJob newProfile =
-        new CrawlJob(
-            name,
-            makeNew(
-                baseOn,
-                name,
-                description,
-                seeds,
-                getProfilesDirectory() + File.separator + name,
-                "order.xml",
-                "seeds.txt"));
-       addProfile(newProfile);
-       return newProfile;
+    public CrawlJob newProfile(CrawlJob baseOn, 
+                               String name,
+                               String description, 
+                               String seeds)
+                        throws FatalConfigurationException {
+        File profileDir = new File(getProfilesDirectory().getAbsoluteFile()
+                + File.separator + name);
+        CrawlJob newProfile = new CrawlJob(name, 
+                makeNew(baseOn, 
+                        name,
+                        description, 
+                        seeds, 
+                        profileDir, 
+                        "order.xml", 
+                        "seeds.txt"));
+        addProfile(newProfile);
+        return newProfile;
     }
 
     /**
-     * Creates a new settings handler based on an existing job. Basically all the
-     * settings file for the 'based on' will be copied to the specified directory.
-     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the
-     *               template for the new profile.
-     * @param name Name for the new settings
-     * @param description Description of the new settings.
-     * @param seeds The contents of the new settings' seed file.
-     * @param path The directory where the new settings should be stored.
+     * Creates a new settings handler based on an existing job. Basically all
+     * the settings file for the 'based on' will be copied to the specified
+     * directory.
+     * 
+     * @param baseOn
+     *            A CrawlJob (with a valid settingshandler) to use as the
+     *            template for the new profile.
+     * @param name
+     *            Name for the new settings
+     * @param description
+     *            Description of the new settings.
+     * @param seeds
+     *            The contents of the new settings' seed file.
+     * @param path
+     *            The directory where the new settings should be stored.
      * @return The new settings handler.
-     * @throws FatalConfigurationException If there are problems with reading the
-     *         'base on' configuration, with writing the new configuration or it's
-     *         seed file.
+     * @throws FatalConfigurationException
+     *             If there are problems with reading the 'base on'
+     *             configuration, with writing the new configuration or it's
+     *             seed file.
      */
-    private XMLSettingsHandler makeNew(CrawlJob baseOn,
+    private XMLSettingsHandler makeNew(CrawlJob baseOn, 
                                        String name,
-                                       String description,
-                                       String seeds,
-                                       String path,
-                                       String filename,
+                                       String description, 
+                                       String seeds, 
+                                       File newSettingsDir,
+                                       String filename, 
                                        String seedfile)
-                                       throws FatalConfigurationException{
+                                throws FatalConfigurationException {
         XMLSettingsHandler newHandler;
 
         try {
-            newHandler = new XMLSettingsHandler(baseOn.getSettingsHandler().getOrderFile());
+            newHandler = new XMLSettingsHandler(baseOn.getSettingsHandler()
+                    .getOrderFile());
             newHandler.initialize();
         } catch (InvalidAttributeValueException e2) {
-            throw new FatalConfigurationException("InvalidAttributeValueException occured while creating new settings handler for new job/profile\n" + e2.getMessage());
+            throw new FatalConfigurationException(
+                    "InvalidAttributeValueException occured while creating new settings handler for new job/profile\n"
+                            + e2.getMessage());
         }
 
-        // Create filenames etc.
-        File newSettingsDir = new File(path);
+        // Make sure the directory exists.
         newSettingsDir.mkdirs();
 
         try {
             // Set the seed file
-            ((ComplexType)newHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
+            ((ComplexType) newHandler.getOrder().getAttribute("scope"))
+                    .setAttribute(new Attribute("seedsfile", seedfile));
         } catch (AttributeNotFoundException e1) {
-            throw new FatalConfigurationException("AttributeNotFoundException occured while setting seed file for new job/profile\n" + e1.getMessage());
+            throw new FatalConfigurationException(
+                    "AttributeNotFoundException occured while setting seed" +
+                    " file for new job/profile\n" + e1.getMessage());
         } catch (InvalidAttributeValueException e1) {
-            throw new FatalConfigurationException("InvalidAttributeValueException occured while setting seed file for new job/profile\n" + e1.getMessage());
+            throw new FatalConfigurationException(
+                    "InvalidAttributeValueException occured while setting" +
+                    " seed file for new job/profile\n"  + e1.getMessage());
         } catch (MBeanException e1) {
-            throw new FatalConfigurationException("MBeanException occured while setting seed file for new job/profile\n" + e1.getMessage());
+            throw new FatalConfigurationException(
+                    "MBeanException occured while setting seed file for new" +
+                    " job/profile\n" + e1.getMessage());
         } catch (ReflectionException e1) {
-            throw new FatalConfigurationException("ReflectionException occured while setting seed file for new job/profile\n" + e1.getMessage());
+            throw new FatalConfigurationException(
+                    "ReflectionException occured while setting seed file for" +
+                    " new job/profile\n" + e1.getMessage());
         }
 
-        File newFile = new File(path,filename);
+        File newFile = new File(newSettingsDir.getAbsolutePath(), filename);
 
         try {
-            newHandler.copySettings(newFile,(String)newHandler.getOrder().getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
+            newHandler.copySettings(newFile, (String) newHandler.getOrder()
+                    .getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
         } catch (IOException e3) {
-            throw new FatalConfigurationException("IOException occured while writing new settings files for new job/profile\n" + e3.getMessage());
+            throw new FatalConfigurationException(
+                    "IOException occured while writing new settings files" +
+                    " for new job/profile\n" + e3.getMessage());
         } catch (AttributeNotFoundException e) {
-            throw new FatalConfigurationException("AttributeNotFoundException occured while writing new settings files for new job/profile\n" + e.getMessage());
+            throw new FatalConfigurationException(
+                    "AttributeNotFoundException occured while writing new" +
+                    " settings files for new job/profile\n" + e.getMessage());
         } catch (MBeanException e) {
-            throw new FatalConfigurationException("MBeanException occured while writing new settings files for new job/profile\n" + e.getMessage());
+            throw new FatalConfigurationException(
+                    "MBeanException occured while writing new settings files" +
+                    " for new job/profile\n" + e.getMessage());
         } catch (ReflectionException e) {
-            throw new FatalConfigurationException("ReflectionException occured while writing new settings files for new job/profile\n" + e.getMessage());
+            throw new FatalConfigurationException(
+                    "ReflectionException occured while writing new settings" +
+                    " files for new job/profile\n" + e.getMessage());
         }
         CrawlerSettings orderfile = newHandler.getSettingsObject(null);
 
@@ -632,13 +739,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
         BufferedWriter writer;
         try {
-            writer = new BufferedWriter(new FileWriter(newHandler.getPathRelativeToWorkingDirectory(seedfile)));
+            writer = new BufferedWriter(new FileWriter(newHandler
+                    .getPathRelativeToWorkingDirectory(seedfile)));
             if (writer != null) {
                 writer.write(seeds);
                 writer.close();
             }
         } catch (IOException e) {
-            throw new FatalConfigurationException("IOException occured while writing seed file for new job/profile\n" + e.getMessage());
+            throw new FatalConfigurationException(
+                    "IOException occured while writing seed file for new" +
+                    " job/profile\n" + e.getMessage());
         }
         return newHandler;
     }
@@ -648,7 +758,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * written to disk.
      */
     public void discardNewJob(){
-        FileUtils.deleteDir(new File(newJob.getDirectory()));
+        FileUtils.deleteDir(new File(newJob.getSettingsDirectory()));
     }
 
     /**
@@ -707,8 +817,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return;
         }
 
-        currentJob = (CrawlJob) pendingCrawlJobs.get(0);
-        pendingCrawlJobs.remove(0);
+        currentJob = (CrawlJob) pendingCrawlJobs.first();
+        assert pendingCrawlJobs.contains(currentJob) : "pendingCrawlJobs is in an illegal state";
+        pendingCrawlJobs.remove(currentJob);
 
         // Create new controller.
         controller = new CrawlController();

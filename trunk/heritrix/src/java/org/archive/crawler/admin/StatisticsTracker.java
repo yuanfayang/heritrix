@@ -606,6 +606,8 @@ public class StatisticsTracker extends AbstractTracker
                 mime = mime.substring(0, semicolonLoc);
             }
             mime = mime.toLowerCase();
+        } else {
+            mime = "not set";
         }
         incrementMapCount(mimeTypeDistribution, mime);
         incrementMapCount(mimeTypeBytes,mime,curi.getContentSize());

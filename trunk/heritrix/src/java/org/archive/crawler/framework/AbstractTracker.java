@@ -102,7 +102,7 @@ public abstract class AbstractTracker extends CrawlerModule
     }
 
     /**
-     * Start thread.  Will call logActivity() at intvals specified by
+     * Start thread.  Will call logActivity() at intervals specified by
      * logInterval
      *
      */
@@ -157,10 +157,6 @@ public abstract class AbstractTracker extends CrawlerModule
      * part.
      */
     protected abstract void logActivity();
-
-//    public void setCrawlStartTime(long mili){
-//        crawlerStartTime = mili;
-//    }
 
     /**
      * Get the starting time of the crawl (as given by 
