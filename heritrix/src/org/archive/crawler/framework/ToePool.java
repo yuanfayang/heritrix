@@ -17,7 +17,7 @@ import org.archive.util.DevUtils;
  * @author gojomo
  *
  */
-public class ToePool implements CrawlListener {
+public class ToePool extends CrawlStatusAdapter {
 	public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
 	
 	protected CrawlController controller;

@@ -15,7 +15,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlListener;
+import org.archive.crawler.framework.CrawlStatusListener;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -39,7 +39,7 @@ import org.archive.util.PaddingStringBuffer;
  * 
  * @author Parker Thompson
  */
-public class StatisticsTracker implements Runnable, CoreAttributeConstants, CrawlListener{
+public class StatisticsTracker implements Runnable, CoreAttributeConstants, CrawlStatusListener{
 
 	// logging levels
 	public static final int MERCATOR_LOGGING = 0;
@@ -61,6 +61,8 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	protected long crawlerStartTime;
 	protected long crawlerEndTime = -1; // Until crawl ends, this value is -1.
 	
+	protected long crawlerPauseStarted;
+	protected long crawlerTotalPausedTime;
 	
 	// timestamp of when this logger last wrote something to the log
 	protected long lastLogPointTime;
@@ -137,6 +139,30 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		
 		return crawlerEndTime;
 	}
+	
+	public long getCrawlTotalPauseTime()
+	{
+		return crawlerTotalPausedTime;
+	}
+	
+	public long getCrawlPauseStartedTime()
+	{
+		return crawlerPauseStarted;
+	}
+	
+	public long getCrawlerTotalElapsedTime()
+	{
+		if(getCrawlPauseStartedTime()!=0)
+		{
+			//Are currently paused, calculate time up to last pause
+			return getCrawlPauseStartedTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
+		}
+		else
+		{
+			//Not paused, calculate total time.
+			return getCrawlEndTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
+		}
+	}
 
 	public void setLogWriteInterval(int interval) {
 		if(interval < 0){
@@ -204,7 +230,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 					"Periodic stat logger interrupted while sleeping.");
 			}
 			
-			if(shouldrun) //In case stop() was invoked while the thread was sleeping.
+			if(shouldrun && getCrawlPauseStartedTime()==0) //In case stop() was invoked while the thread was sleeping or we are paused.
 			{
 				logActivity();
 			}
@@ -224,8 +250,8 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		}
 		else
 		{
-			docsPerSecond = (int)(downloadedPages / ((System.currentTimeMillis() - crawlerStartTime) / 1000) + .5); // rounded to nearest int
-			totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((System.currentTimeMillis() - crawlerStartTime)	/ 1000)) + .5 ); // round to nearest long
+			docsPerSecond = (int)(downloadedPages / ((getCrawlerTotalElapsedTime()) / 1000) + .5); // rounded to nearest int
+			totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())	/ 1000)) + .5 ); // round to nearest long
 		}
 		
 		busyThreads = activeThreadCount();
@@ -237,13 +263,14 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 			// "current" data when the interval is long enough or shouldrun is true.
 			currentDocsPerSecond = 0;
 			currentKBPerSec = 0;
+
+			// Note time.
+			long currentTime = System.currentTimeMillis();
+			long sampleTime = currentTime - lastLogPointTime;
 			
 			// if we haven't done anyting or there isn't a reasonable sample size give up.
-			if(totalFetchAttempts() != 0)
+			if(sampleTime >= 1000)
 			{
-				// Note time.
-				long currentTime = System.currentTimeMillis();
-				long sampleTime = currentTime - lastLogPointTime;
 
 				// Update docs/sec snapshot
 				long currentPageCount = successfulFetchAttempts();
@@ -639,8 +666,44 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
 	 */
 	public void crawlPausing(String statusMessage) {
-		// TODO Auto-generated method stub
-		
+		periodicLogger.log(
+					Level.INFO,
+					new PaddingStringBuffer()
+					 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+					 .raAppend(40,"CRAWL WAITING TO PAUSE")
+					 .toString()
+				);				
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
+	 */
+	public void crawlPaused(String statusMessage) {
+		crawlerPauseStarted = System.currentTimeMillis();
+		logActivity();
+		periodicLogger.log(
+					Level.INFO,
+					new PaddingStringBuffer()
+					 .append(ArchiveUtils.TIMESTAMP14.format(new Date(crawlerPauseStarted)))
+					 .raAppend(40,"CRAWL PAUSED")
+					 .toString()
+				);				
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
+	 */
+	public void crawlResuming(String statusMessage) {
+		crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
+		crawlerPauseStarted = 0;
+		periodicLogger.log(
+					Level.INFO,
+					new PaddingStringBuffer()
+					 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+					 .raAppend(40,"CRAWL RESUMED")
+					 .toString()
+				);			
+		lastLogPointTime = System.currentTimeMillis();	
 	}
 
 

@@ -26,7 +26,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlListener;
+import org.archive.crawler.framework.CrawlStatusListener;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -48,7 +48,7 @@ import org.archive.util.Queue;
  */
 public class Frontier
 	extends XMLConfig 
-	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlListener {
+	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlStatusListener {
 	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
 	// how many multiples of last fetch elapsed time to wait before recontacting same server
 	private static String XP_DELAY_FACTOR = "@delay-factor";
@@ -1132,7 +1132,24 @@ public class Frontier
 	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
 	 */
 	public void crawlPausing(String statusMessage) {
-		// TODO Auto-generated method stub
-		
+		// We are not interested in the crawlPausing event
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
+	 */
+	public void crawlPaused(String statusMessage) {
+		// We are not interested in the crawlPaused event
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
+	 */
+	public void crawlResuming(String statusMessage) {
+		// We are not interested in the crawlResuming event
 	}
 }
