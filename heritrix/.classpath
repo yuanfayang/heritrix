@@ -5,5 +5,7 @@
     <classpathentry kind="src" path="/StataUtils"/>
     <classpathentry kind="src" path="/httpclient"/>
     <classpathentry kind="lib" path="lib/binaries/commons-logging.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/commons-httpclient.jar"/>
+    <classpathentry kind="lib" path="lib/binaries/stataclasses.jar"/>
     <classpathentry kind="output" path="bin"/>
 </classpath>
