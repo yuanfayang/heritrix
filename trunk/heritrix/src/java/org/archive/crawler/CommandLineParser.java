@@ -176,7 +176,7 @@ public class CommandLineParser
                 new HeritrixHelpFormatter(this.version);
             formatter.printHelp(this.out, 80, NAME, "Options:", this.options,
                 1, 2, "Arguments:", false);
-            this.out.println(" ORDER.XML     Crawl order to run.\n");
+            this.out.println(" ORDER.XML       Crawl order to run.\n");
         }
 
         // Close printwriter so stream gets flushed.

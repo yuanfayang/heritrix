@@ -185,18 +185,21 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Constructor.
-     *
+     * @throws IOException
      */
-    public CrawlJobHandler(){
-        this(true,true);
+    public CrawlJobHandler()
+    throws IOException{
+        this(true, true);
     }
 
     /**
      * Constructor allowing for optional loading of profiles and jobs.
      * @param loadJobs If true then any applicable jobs will be loaded.
      * @param loadProfiles If true then any applicable profiles will be loaded.
+     * @throws IOException
      */
-    public CrawlJobHandler(boolean loadJobs, boolean loadProfiles){
+    public CrawlJobHandler(boolean loadJobs, boolean loadProfiles)
+    throws IOException{
         // Make a comparator for CrawlJobs.
         Comparator comp = new Comparator(){
             public int compare(Object o1, Object o2) {
@@ -230,8 +233,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * <p>
      * Availible jobs are any directory containing a file called
      * <code>state.job</code>. The file must contain valid job information.
+     * @throws IOException
      */
-    private void loadJobs() {
+    private void loadJobs() throws IOException {
         File jobDir = Heritrix.getJobsdir();
         jobDir.mkdirs();
         File[] jobs = jobDir.listFiles();
@@ -300,8 +304,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Looks in conf dir for a profiles dir.
      * @return the directory where profiles are stored else null if none
      * available
+     * @throws IOException
      */
-    private File getProfilesDirectory(){
+    private File getProfilesDirectory() throws IOException {
         return (Heritrix.getConfdir() == null)? null:
             new File(Heritrix.getConfdir().getAbsolutePath(),
                 PROFILES_DIR_NAME);
@@ -312,8 +317,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private void loadProfiles() {
         boolean loadedDefault = false;
-        File profileDir = getProfilesDirectory();
-        if (profileDir != null) {
+        File profileDir = null;
+		try {
+			profileDir = getProfilesDirectory();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (profileDir != null) {
             File[] ps = profileDir.listFiles();
             if (ps != null && ps.length > 0) {
                 for (int i = 0; i < ps.length; i++) {
@@ -658,13 +668,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new crawl job.
      * @throws FatalConfigurationException If a problem occurs creating the
      *             settings.
+     * @throws IOException
      */
     public CrawlJob newJob(CrawlJob baseOn,
                            String name,
                            String description,
                            String seeds,
                            int priority)
-                    throws FatalConfigurationException {
+                    throws FatalConfigurationException, IOException {
         if (newJob != null) {
             //There already is a new job. Discard it.
             discardNewJob();
@@ -694,12 +705,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *            The contents of the new profiles' seed file
      * @return The new profile.
      * @throws FatalConfigurationException
+     * @throws IOException
      */
     public CrawlJob newProfile(CrawlJob baseOn,
                                String name,
                                String description,
                                String seeds)
-                        throws FatalConfigurationException {
+                        throws FatalConfigurationException, IOException {
         File profileDir = new File(getProfilesDirectory().getAbsoluteFile()
                 + File.separator + name);
 

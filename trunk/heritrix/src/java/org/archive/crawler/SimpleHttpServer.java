@@ -132,6 +132,7 @@ public class SimpleHttpServer
      * Add a webapp.
      * @param name Name of webapp to add.
      * @param context Context to add the webapp on.
+     * @param expand True if we should expand the webapps.
      * @throws IOException
      * @Param expand True if we're to expand the webapp.
      */
@@ -162,7 +163,7 @@ public class SimpleHttpServer
     /**
      * Initialize the server.
      * Called from constructors.
-     * @return Returns a server instance.
+     * @param port Port to start the server on.
      */
     protected void initialize(int port) {
         this.server = new Server();
@@ -180,7 +181,7 @@ public class SimpleHttpServer
     protected RequestLog getServerLogging() throws Exception {
         // Have accesses go into the stdout/stderr log for now.  Later, if
         // demand, we'll have accesses go into their own file.
-        NCSARequestLog a = new NCSARequestLog(Heritrix.HERITRIX_OUT_FILE);
+        NCSARequestLog a = new NCSARequestLog(Heritrix.getHeritrixOut());
         a.setRetainDays(90);
         a.setAppend(true);
         a.setExtended(false);
@@ -194,9 +195,9 @@ public class SimpleHttpServer
      * Return the directory that holds the WARs we're to deploy.
      *
      * @return Return webapp path (Path returned has a trailing '/').
+     * @throws IOException
      */
-    private static String getWARSPath() {
-
+    private static String getWARSPath() throws IOException {
         String webappsPath = Heritrix.getWarsdir().getAbsolutePath();
         if (!webappsPath.endsWith(File.separator))
         {
@@ -306,6 +307,7 @@ public class SimpleHttpServer
      * If null, we'll use the realm name as context name.
      * @param authProperties Path to file that holds the auth login and
      * password.
+     * @return Hash of user realms.
      *
      * @throws IOException
      */
@@ -343,8 +345,7 @@ public class SimpleHttpServer
      */
     public File getWebappPath(String name) {
 
-        if (this.server == null)
-        {
+        if (this.server == null) {
             throw new NullPointerException("Server does not exist");
         }
         String contextName =

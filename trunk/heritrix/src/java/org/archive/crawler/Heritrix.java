@@ -88,18 +88,6 @@ public class Heritrix implements HeritrixMBean {
      */
     private static final Logger logger =
         Logger.getLogger(Heritrix.class.getName());
-    
-    /**
-     * Name of the heritrix home system property.
-     */
-    private static final String HOME_KEY = "heritrix.home";
-
-    /**
-     * Name of the heritrix property whose presence says we're running w/
-     * development file locations: i.e conf, webapps, and profiles are under
-     * the src directory rather than on the CLASSPATH.
-     */
-    private static final String DEVELOPMENT_KEY = "heritrix.development";
 
     /**
      * Name of the heritrix properties file.
@@ -113,47 +101,18 @@ public class Heritrix implements HeritrixMBean {
     private static final String PROPERTIES_KEY = PROPERTIES;
 
     /**
-     * Name of the heritrix version property.
-     */
-    private static final String VERSION_KEY = "heritrix.version";
-
-    /**
-     * Key to pull the heritrix jobs directory location from properties file.
-     */
-    private static final String JOBSDIR_KEY = "heritrix.jobsdir";
-
-    /**
-     * Default jobs dir location.
-     */
-    private static final String JOBSDIR_DEFAULT = "jobs";
-
-    /**
-     * The heritrix home directory.
-     *
-     * Need this location so we can get at our configuration.  Is current
-     * working dir if no heritrix.home property supplied.
-     */
-    private static File heritrixHome = null;
-
-    private static File confdir = null;
-    private static File jobsdir = null;
-
-    /**
-     * Where to find WAR files to deploy under servlet container.
-     */
-    private static File warsdir = null;
-
-    /**
-     * Instance of web server if one was started.
-     */
-    private static SimpleHttpServer httpServer = null;
-
-    /**
      * Heritrix properties.
      *
      * Read from properties file on startup and cached thereafter.
      */
     private static Properties properties = null;
+    
+    private static File jobsdir = null;
+
+    /**
+     * Instance of web server if one was started.
+     */
+    private static SimpleHttpServer httpServer = null;
 
     /**
      * CrawlJob handler. Manages multiple crawl jobs at runtime.
@@ -187,15 +146,11 @@ public class Heritrix implements HeritrixMBean {
      *
      * This file should have nothing in it except messages over which we have
      * no control (JVM stacktrace, 3rd-party lib emissions).  The wrapper
-     * startup script directs stderr/stdout here. This is a DEPENDENCY the shell
-     * wrapper has on this here java heritrix.
+     * startup script directs stderr/stdout here. This is an INTERDEPENDENCY
+     * this program has with the wrapper shell script.  Shell can actually
+     * pass us an alternate to use for this file.
      */
-    static String HERITRIX_OUT_FILE = "heritrix_out.log";
-    
-    /**
-     * Key used to get name of the HERITRIX_OUT_FILE from system properties.
-     */
-    private static final String HERITRIX_OUT_FILE_KEY = "heritrix.out";
+    private static String DEFAULT_HERITRIX_OUT = "heritrix_out.log";
 
     /**
      * Where to write this classes startup output.
@@ -216,13 +171,6 @@ public class Heritrix implements HeritrixMBean {
     private static Vector alerts = new Vector();
 
     /**
-     * Key for the truststore property.
-     *
-     * This must be defined somewhere in JSSE but can't find reference.
-     */
-    private static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
-
-    /**
      * The crawler package.
      */
 	private static final String CRAWLER_PACKAGE = Heritrix.class.getName().
@@ -237,11 +185,6 @@ public class Heritrix implements HeritrixMBean {
      * Set to true if application is running from a command line.
      */
     private static boolean commandLine = false;
-    
-    /**
-     * Name of our conf directory.
-     */
-    private static final String CONF_DIR = "conf";
     
     /**
      * JMX Server instance.
@@ -267,10 +210,12 @@ public class Heritrix implements HeritrixMBean {
     
     /**
      * Constructor.
-     * TODO: Move {@link #initialize()} in here.
+     * @throws IOException
      */
-    public Heritrix() {
+    public Heritrix() throws IOException {
         super();
+        Heritrix.loadProperties();
+        Heritrix.patchLogging();
     }
 
     /**
@@ -283,19 +228,19 @@ public class Heritrix implements HeritrixMBean {
     public static void main(String[] args)
     throws Exception {
         Heritrix.commandLine = true;
-        String tmp = System.getProperty(HERITRIX_OUT_FILE_KEY);
-        if (tmp != null && tmp.length() > 0) {
-            Heritrix.HERITRIX_OUT_FILE = tmp;
-        }
+        
+        // Set timezone here.  Would be problematic doing it if we're running
+        // inside in a container.
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+        
         File startLog = new File(getHeritrixHome(), STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? 
-            System.out:
-            new PrintStream(new FileOutputStream(startLog)));
+            System.out: new PrintStream(new FileOutputStream(startLog)));
         
         try {
-            Heritrix.confdir = getSubDir(CONF_DIR);
-            Heritrix.warsdir = getSubDir("webapps");
-            initialize();
+            loadProperties();
+            patchLogging();
+            configureTrustStore();
             String status = doCmdLineArgs(args);
             if (status != null) {
                 Heritrix.out.println(status);
@@ -322,115 +267,6 @@ public class Heritrix implements HeritrixMBean {
                 }
             }
         }
-    }
-
-    /**
-     * @return Heritrix home directory.
-     * @throws IOException
-     */
-    public static File getHeritrixHome()
-    throws IOException {
-        if (Heritrix.heritrixHome == null) {
-            calculateHome();
-        }
-        return Heritrix.heritrixHome;
-    }
-
-    /**
-     * Exploit <code>-Dheritrix.home</code> if available to us.
-     * @throws IOException
-     */
-    protected static void calculateHome()
-    throws IOException {
-        if (Heritrix.heritrixHome != null) {
-            return;
-        }
-        String home = System.getProperty(HOME_KEY);
-        if (home != null && home.length() > 0) {
-            heritrixHome = new File(home);
-            if (!heritrixHome.exists()) {
-                throw new IOException("HERITRIX_HOME <" + home +
-                    "> does not exist.");
-            }
-        } else {
-            Heritrix.heritrixHome = new File(new File("").getAbsolutePath());
-        }
-    }
-
-    public static void initialize()
-    throws IOException {
-        // We can come in here without calling getHeritrixHome if we
-        // came via the webapp initialization rather than via Heritrix.main.
-        if (Heritrix.heritrixHome == null) {
-            Heritrix.heritrixHome = getHeritrixHome();
-        }
-        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
-        loadProperties();
-        patchLogging();
-        configureTrustStore();
-        String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
-        Heritrix.jobsdir = jobsdirStr.startsWith(File.separator)?
-            new File(jobsdirStr): new File(getHeritrixHome(), jobsdirStr);
-    }
-
-    /**
-     * Get and check for existence of expected subdir.
-     *
-     * If development flag set, then look for dir under src dir.
-     *
-     * @param subdirName Dir to look for.
-     * @return The extant subdir.  Otherwise null if we're running
-     * in a webapp context where there is no conf directory available.
-     * @throws IOException if unable to find expected subdir.
-     */
-    protected static File getSubDir(String subdirName)
-    throws IOException {
-        return getSubDir(subdirName, true);
-    }
-    
-    /**
-     * Get and optionally check for existence of subdir.
-     *
-     * If development flag set, then look for dir under src dir.
-     *
-     * @param subdirName Dir to look for.
-     * @param fail True if we are to fail if directory does not
-     * exist; false if we are to return false if the directory does not exist.
-     * @return The extant subdir.  Otherwise null if we're running
-     * in a webapp context where there is no subdir directory available.
-     * @throws IOException if unable to find expected subdir.
-     */
-    protected static File getSubDir(String subdirName, boolean fail)
-    throws IOException {
-        String path = isDevelopment()?
-            "src" + File.separator + subdirName:
-            subdirName;
-        File dir = new File(getHeritrixHome(), path);
-        if (!dir.exists()) {
-            if (fail) {
-                throw new IOException("Cannot find subdir: " + subdirName);
-            }
-            dir = null;
-        }
-        return dir;
-    }
-    
-    /**
-     * @param key Property key.
-     * @return Named property or null if the property is null or empty.
-     */
-    protected static String getPropertyOrNull(String key) {
-        String value = (String)Heritrix.properties.get(key);
-        return (value == null || value.length() <= 0)? null: value;
-    }
-    
-    /**
-     * @param key Property key.
-     * @return Boolean value or false if null or unreadable.
-     */
-    protected static boolean getBooleanProperty(String key) {
-        return (getPropertyOrNull(key) == null)?
-            false: Boolean.valueOf(getPropertyOrNull(key)).booleanValue();
     }
 
     protected static String doCmdLineArgs(String [] args)
@@ -544,7 +380,6 @@ public class Heritrix implements HeritrixMBean {
             }
         }
 
-        Heritrix heritrix = new Heritrix();
         String status = null;
         // Ok, we should now have everything to launch the program.
         if (selfTest) {
@@ -561,7 +396,7 @@ public class Heritrix implements HeritrixMBean {
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
-            status = heritrix.selftest(selfTestName, port);
+            status = (new Heritrix()).selftest(selfTestName, port);
         } else if (Heritrix.noWui) {
             if (options.length > 1) {
                 // If more than just '--nowui' passed, then there is
@@ -572,20 +407,124 @@ public class Heritrix implements HeritrixMBean {
             if (jmxServer) {
                 startJmxServer(jmxServerPort);
             }
-            status = heritrix.doOneCrawl(crawlOrderFile);
+            status = (new Heritrix()).doOneCrawl(crawlOrderFile);
         } else {
             status = startEmbeddedWebserver(port, adminLoginPassword);
             if (jmxServer) {
                 startJmxServer(jmxServerPort);
             }
-            String tmp = heritrix.launch(crawlOrderFile, runMode);
+            String tmp = (new Heritrix()).launch(crawlOrderFile, runMode);
             if (tmp != null) {
                 status += ('\n' + tmp);
             }
         }
         return status;
     }
+    
+    /**
+     * @return The file we dump stdout and stderr into.
+     */
+    public static String getHeritrixOut() {
+            String tmp = System.getProperty("heritrix.out");
+            if (tmp != null && tmp.length() > 0) {
+                    tmp = Heritrix.DEFAULT_HERITRIX_OUT;
+            }
+        return tmp;
+    }
 
+    /**
+     * Exploit <code>-Dheritrix.home</code> if available to us.
+     * Is current working dir if no heritrix.home property supplied.
+     * @return Heritrix home directory.
+     * @throws IOException
+     */
+    protected static File getHeritrixHome()
+    throws IOException {
+        File heritrixHome = null;
+        String home = System.getProperty("heritrix.home");
+        if (home != null && home.length() > 0) {
+            heritrixHome = new File(home);
+            if (!heritrixHome.exists()) {
+                throw new IOException("HERITRIX_HOME <" + home +
+                    "> does not exist.");
+            }
+        } else {
+            heritrixHome = new File(new File("").getAbsolutePath());
+        }
+        return heritrixHome;
+    }
+    
+    /**
+     * @return The directory into which we put jobs.
+     * @throws IOException
+     */
+    public static File getJobsdir() throws IOException {
+        String jobsdirStr = getProperty("heritrix.jobsdir", "jobs");
+        return jobsdirStr.startsWith(File.separator)?
+            new File(jobsdirStr):
+            new File(getHeritrixHome(), jobsdirStr);
+    }
+    
+    /**
+     * Get and check for existence of expected subdir.
+     *
+     * If development flag set, then look for dir under src dir.
+     *
+     * @param subdirName Dir to look for.
+     * @return The extant subdir.  Otherwise null if we're running
+     * in a webapp context where there is no conf directory available.
+     * @throws IOException if unable to find expected subdir.
+     */
+    protected static File getSubDir(String subdirName)
+    throws IOException {
+        return getSubDir(subdirName, true);
+    }
+    
+    /**
+     * Get and optionally check for existence of subdir.
+     *
+     * If development flag set, then look for dir under src dir.
+     *
+     * @param subdirName Dir to look for.
+     * @param fail True if we are to fail if directory does not
+     * exist; false if we are to return false if the directory does not exist.
+     * @return The extant subdir.  Otherwise null if we're running
+     * in a webapp context where there is no subdir directory available.
+     * @throws IOException if unable to find expected subdir.
+     */
+    protected static File getSubDir(String subdirName, boolean fail)
+    throws IOException {
+        String path = isDevelopment()?
+            "src" + File.separator + subdirName:
+            subdirName;
+        File dir = new File(getHeritrixHome(), path);
+        if (!dir.exists()) {
+            if (fail) {
+                throw new IOException("Cannot find subdir: " + subdirName);
+            }
+            dir = null;
+        }
+        return dir;
+    }
+    
+    /**
+     * @param key Property key.
+     * @return Named property or null if the property is null or empty.
+     */
+    protected static String getPropertyOrNull(String key) {
+        String value = (String)Heritrix.properties.get(key);
+        return (value == null || value.length() <= 0)? null: value;
+    }
+    
+    /**
+     * @param key Property key.
+     * @return Boolean value or false if null or unreadable.
+     */
+    protected static boolean getBooleanProperty(String key) {
+        return (getPropertyOrNull(key) == null)?
+            false: Boolean.valueOf(getPropertyOrNull(key)).booleanValue();
+    }
+    
     /**
      * Test string is valid login/password string.
      *
@@ -609,7 +548,7 @@ public class Heritrix implements HeritrixMBean {
     }
 
     protected static boolean isDevelopment() {
-        return System.getProperty(DEVELOPMENT_KEY) != null;
+        return System.getProperty("heritrix.development") != null;
     }
 
     /**
@@ -623,6 +562,9 @@ public class Heritrix implements HeritrixMBean {
      */
     protected static void loadProperties()
     throws IOException {
+        if (Heritrix.properties != null) {
+            return;   
+        }
         Heritrix.properties = new Properties();
         Heritrix.properties.load(getPropertiesInputStream());
         
@@ -670,6 +612,10 @@ public class Heritrix implements HeritrixMBean {
      * If the user hasn't altered the default logging parameters, tighten them
      * up somewhat: some of our libraries are way too verbose at the INFO or
      * WARNING levels.
+     * 
+     * This might be a problem running inside in someone else's
+     * container.  Container's seem to prefer commons logging so we
+     * ain't messing them doing the below.
      *
      * @throws IOException
      * @throws SecurityException
@@ -702,10 +648,18 @@ public class Heritrix implements HeritrixMBean {
      * store, we'll use the 'default' -- either the JVMs or the containers).
      */
     protected static void configureTrustStore() {
+        // Below must be defined in jsse somewhere but can' find it.
+        final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
         String value = getProperty(TRUSTSTORE_KEY);
-        if ((value == null || value.length() <= 0) && getConfdir() != null) {
+        File confdir = null;
+        try {
+			confdir = getConfdir();
+		} catch (IOException e) {
+			logger.warning("Failed to get confdir.");
+		}
+        if ((value == null || value.length() <= 0) && confdir != null) {
             // Use the heritrix store if it exists on disk.
-            File heritrixStore = new File(getConfdir(), "heritrix.cacerts");
+            File heritrixStore = new File(confdir, "heritrix.cacerts");
             if(heritrixStore.exists()) {
                 value = heritrixStore.getAbsolutePath();
             }
@@ -801,7 +755,8 @@ public class Heritrix implements HeritrixMBean {
             selftestURL += (oneSelfTestName + '/');
         }
         job = Heritrix.jobHandler.newJob(job, SELFTEST,
-            "Integration self test", selftestURL, CrawlJob.PRIORITY_CRITICAL);
+            "Integration self test", Heritrix.selftestURL,
+            CrawlJob.PRIORITY_CRITICAL);
         Heritrix.jobHandler.addJob(job);
         // Before we start, need to change some items in the settings file.
         CredentialStore cs = (CredentialStore)job.getSettingsHandler().
@@ -815,7 +770,7 @@ public class Heritrix implements HeritrixMBean {
         buffer.append("\nSelftest first crawls " + getSelftestURL() +
             " and then runs an analysis.");
         buffer.append("\nResult of analysis printed to " +
-            HERITRIX_OUT_FILE + " when done.");
+            getHeritrixOut() + " when done.");
         buffer.append("\nSelftest job directory for logs and arcs:\n" +
             job.getDirectory().getAbsolutePath());
         return buffer.toString();
@@ -939,7 +894,8 @@ public class Heritrix implements HeritrixMBean {
      * @return The heritrix version.  May be null.
      */
     public static String getVersion() {
-        return (properties != null)? properties.getProperty(VERSION_KEY): null;
+        return (properties != null)?
+            properties.getProperty("heritrix.version"): null;
     }
 
     /**
@@ -968,17 +924,11 @@ public class Heritrix implements HeritrixMBean {
      * Get the configuration directory.
      * @return The conf directory under HERITRIX_HOME or null if none can
      * be found.
+     * @throws IOException
      */
-    public static File getConfdir() {
-        return Heritrix.confdir;
-    }
-
-    /**
-     * @return The directory into which we put jobs.
-     */
-    public static File getJobsdir()
-    {
-        return jobsdir;
+    public static File getConfdir()
+    throws IOException {
+        return getSubDir("conf");
     }
 
     /**
@@ -995,18 +945,18 @@ public class Heritrix implements HeritrixMBean {
      * @return Returns the selftestWebappURL.  This method returns null if
      * we are not in selftest.  URL has a trailing '/'.
      */
-    public static String getSelftestURL()
-    {
+    public static String getSelftestURL() {
         return selftestURL;
     }
 
     /**
+     * @throws IOException
      * @return Returns the directory under which reside the WAR files
      * we're to load into the servlet container.
      */
     public static File getWarsdir()
-    {
-        return warsdir;
+    throws IOException {
+        return getSubDir("webapps");
     }
 
     /**
@@ -1214,7 +1164,6 @@ public class Heritrix implements HeritrixMBean {
         // Don't start if already started.
         if (!Heritrix.isCommandLine() && !isStarted()) {
             try {
-                Heritrix.initialize();
                 launch();
             } catch (Exception e) {
                 e.printStackTrace();

@@ -164,7 +164,7 @@
                         Seeds:
                     </td>
                     <td><font size="-1">Fill in seed URIs below, one per line.
-                    Comment lines begin with the '#' character.</font></br>
+                    Comment lines begin with '#'.</font></br>
                         <textarea name="seeds" style="width: 440px" rows="8"><%
                             if(error == null) {
                                 JobConfigureUtils.
