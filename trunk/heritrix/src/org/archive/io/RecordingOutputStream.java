@@ -7,6 +7,7 @@
 package org.archive.io;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,7 +29,8 @@ import java.io.OutputStream;
  *
  */
 public class RecordingOutputStream extends OutputStream {
-	protected long size;
+//	boolean locksize = false; 
+	protected long size = 0;
 	protected int maxSize;
 	protected String backingFilename;
 	protected BufferedOutputStream diskStream;
@@ -56,8 +58,11 @@ public class RecordingOutputStream extends OutputStream {
 	public void open(OutputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
 		this.position = 0;
-		//lateOpen();
+		this.size=0;
+		// locksize=false;
 		diskStream=null; 
+		lateOpen();
+ 
 	}
 
 
@@ -111,7 +116,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	private void record(int b) throws IOException {
 		if(position>=buffer.length){
-			lateOpen();
+			//lateOpen();
 			diskStream.write(b);
 		} else {
 			buffer[(int)position] = (byte)b;
@@ -126,7 +131,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	private void record(byte[] b, int off, int len) throws IOException {
 		if(position>=buffer.length){
-			lateOpen();
+			//lateOpen();
 			diskStream.write(b,off,len);
 			position += len;
 		} else {
@@ -145,12 +150,16 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void close() throws IOException {
 		super.close();
-		wrappedStream.close();
+		if(wrappedStream != null) {
+			wrappedStream.close();
+			wrappedStream=null;
+		} 
 		// diskStream.flush(); // redundant
 		if (diskStream != null) {
 			diskStream.close();
-		} 
-		this.size = position;
+			diskStream=null;
+		}
+		if(size==0) size = position;
 	}
 
 	/* (non-Javadoc)
@@ -161,13 +170,23 @@ public class RecordingOutputStream extends OutputStream {
 		if (diskStream != null) {
 			diskStream.flush();
 		}
-		wrappedStream.flush();
+		if (wrappedStream != null) {
+			wrappedStream.flush();
+		}
 	}
 	
 	public ReplayInputStream getReplayInputStream() throws IOException {
 		return new ReplayInputStream(buffer,size,responseBodyStart,backingFilename);
 	}
 
+	/**
+	 * Return a replay stream, cued up to beginning of content
+	 */
+	public ReplayInputStream getContentReplayInputStream() throws IOException {
+		ReplayInputStream replay = getReplayInputStream();
+		replay.skip(responseBodyStart);
+		return replay;
+	}
 
 	/**
 	 * @return
@@ -213,29 +232,41 @@ public class RecordingOutputStream extends OutputStream {
 		// diskStream.flush(); // redundant, close includes flush
 		if (diskStream != null) {
 			diskStream.close();
+			diskStream=null;
 		}
-		this.size = position;
+//		if(locksize) {
+//			System.out.println("gotcha");
+//		}
+		if(size==0) size = position;
 	}
 
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#finalize()
-	 */
-	protected void finalize() throws Throwable {
-		if (fileStream != null) {
-			assert !fileStream.getFD().valid() : "valid fileStream reached finalize";
-		}
-		super.finalize();
-	}
-
+//	/* (non-Javadoc)
+//	 * @see java.lang.Object#finalize()
+//	 */
+//	protected void finalize() throws Throwable {
+//		if (fileStream != null) {
+//			assert !fileStream.getFD().valid() : "valid fileStream reached finalize";
+//		}
+//		super.finalize();
+//	}
 
 	/**
-	 * Return a replay stream, cued up to beginning of 
+	 * 
 	 */
-	public ReplayInputStream getContentReplayInputStream() throws IOException {
-		ReplayInputStream replay = getReplayInputStream();
-		replay.skip(responseBodyStart);
-		return replay;
+	public void verify() {
+		if(size>buffer.length) {
+			File f = new File(backingFilename);
+			assert f.exists();
+			assert f.length() == size - buffer.length;
+			System.out.println(
+			backingFilename+".length()="+
+			f.length()+" size="+size+
+			" size-buffer.length=" + (size - buffer.length));
+			//locksize = true;
+		}
 	}
+
+
 
 }
