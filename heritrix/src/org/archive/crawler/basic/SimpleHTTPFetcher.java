@@ -21,6 +21,9 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 
 
 /**
+ * Basic class for using the Apache Jakarta HTTPClient library
+ * for fetching an HTTP URI. 
+ * 
  * @author gojomo
  *
  */
@@ -64,10 +67,11 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			}
 			
 		} catch (HttpException e) {
-			logger.warning(e+" at "+curi);
+			logger.warning(e+" on "+curi);
 			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		} catch (IOException e) {
+			logger.warning(e+" on "+curi);
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		}
 	}
