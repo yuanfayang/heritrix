@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 /**
  * Ordered collection of items with the same "classKey". The 
@@ -17,6 +18,9 @@ import java.util.LinkedList;
  *
  */
 public class KeyedQueue extends LinkedList implements URIStoreable, Comparable {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
+
+	
 	public static Object READY = new Object();
 	public static Object HOLDING = new Object();
 	public static Object SLEEPING = new Object();
@@ -88,13 +92,21 @@ public class KeyedQueue extends LinkedList implements URIStoreable, Comparable {
 		if (((KeyedQueue)other).getWakeTime()< wakeTime) {
 			return 1;
 		} 
-		if (other.hashCode() > hashCode()) {
-			return -1;
-		} else {
-			return 1;
+		// at this point, the ordering is arbitrary, but still
+		// must be consistent/stable over time
+		if(((KeyedQueue)other).getClassKey().equals(this.getClassKey())) {
+			logger.severe("KeyedQueue classKey collision");
 		}
+		return ((String)((KeyedQueue)other).getClassKey()).compareTo(this.getClassKey());	
 	}
 	
 	
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "KeyedQueue[classKey="+getClassKey()+"]";
+	}
 
 }
