@@ -108,10 +108,15 @@ implements Frontier,
     
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
-    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
+    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
 
-    // budgetted rotation support
-    private static int DEFAULT_BUDGET_REFRESH_INCREMENT = 5000;
+    /** whether to hold queues INACTIVE until needed for throughput */
+    public final static String ATTR_USE_BUDGETTED_ROTATION = "use-budgetted-rotation";
+    protected final static Boolean DEFAULT_USE_BUDGETTED_ROTATION = new Boolean(true); 
+
+    /** whether to hold queues INACTIVE until needed for throughput */
+    public final static String ATTR_BUDGET_REPLENISH_AMOUNT = "budget-replenish-amount";
+    protected final static Integer DEFAULT_BUDGET_REPLENISH_AMOUNT = new Integer(3000);
     
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
@@ -195,6 +200,25 @@ implements Frontier,
                 DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
+        t = addElementToDefinition(new SimpleType(ATTR_USE_BUDGETTED_ROTATION,
+                "Whether to rotate queues out of active status based on " +
+                "a budgetting mechanism. If true, an active queue will move " +
+                "to inactive status -- making room for a waiting inactive queue " +
+                "to become active -- when its budget is depleted. When its " +
+                "turn to reactivate comes up, it will be given a refreshed " +
+                "budget. Each URI attempted from a queue depletes its budget by " +
+                "some amount. Default is true. ",
+                DEFAULT_USE_BUDGETTED_ROTATION));
+        t.setExpertSetting(true);
+        t.setOverrideable(true);
+        t = addElementToDefinition(new SimpleType(ATTR_BUDGET_REPLENISH_AMOUNT,
+                "Amount to replenish a queue's budget when it becomes active. " +
+                "Larger amounts mean more URIs will be tried from the queue " +
+                "before it is deactivated in favor of waiting queues. Default " +
+                "is 3000",
+                DEFAULT_BUDGET_REPLENISH_AMOUNT));
+        t.setExpertSetting(true);
+        t.setOverrideable(true);
     }
 
     /**
@@ -481,20 +505,11 @@ implements Frontier,
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
         // TODO Auto-generated method stub
         super.noteAboutToEmit(curi, q);
-        if(employBudgetRotation()) {
+        if (((Boolean) getUncheckedAttribute(curi, ATTR_USE_BUDGETTED_ROTATION))
+                .booleanValue()) {
+            // only dock budget if rotation is in effect
             q.decrementBudget(getCost(curi));
         }
-    }
-    
-    /** 
-     * Whether to use a budgeting process to rotate queues into and
-     * out of active status. 
-     * 
-     * @return true if budgetted rotation should be used, false otherwise
-     */
-    private boolean employBudgetRotation() {
-        // TODO for now, always do apply budget rotation
-        return true;
     }
 
     /**
@@ -529,7 +544,12 @@ implements Frontier,
      * @param activatedQ queue to replenish
      */
     private void replenishBudget(BdbWorkQueue queue) {
-        queue.incrementBudget(DEFAULT_BUDGET_REFRESH_INCREMENT);
+        // get a CrawlURI for override context purposes
+        CrawlURI contextUri = queue.peek(); 
+        // TODO: consider confusing cross-effects of this and IP-based politeness
+        queue.incrementBudget(((Integer) getUncheckedAttribute(contextUri,
+                ATTR_BUDGET_REPLENISH_AMOUNT)).intValue());
+        queue.unpeek(); // don't insist on that URI being next released
     }
 
     /**
@@ -652,7 +672,7 @@ implements Frontier,
      * @param wq
      */
     private void reenqueueQueue(BdbWorkQueue wq) {
-        if(employBudgetRotation() && wq.getBudget() <= 0) {
+        if(wq.getBudget() <= 0) {
             logger.info("DEACTIVATED queue: "+wq.classKey);
             deactivateQueue(wq);
         } else {
