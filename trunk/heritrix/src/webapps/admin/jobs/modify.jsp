@@ -192,6 +192,23 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Robots.txt</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Honoring policy:
+				</td>
+				<td>
+					<select name="<%=SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME%>">
+						<option value="classic" <%=crawlOrder.getStringAt(SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME).equals("classic")?"selected":""%>>Classic</option>
+						<option value="ignore" <%=crawlOrder.getStringAt(SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME).equals("ignore")?"selected":""%>>Ignore</option>
+						<option value="most-favored" <%=crawlOrder.getStringAt(SimpleHandler.XP_ROBOTS_HONORING_POLICY_NAME).equals("most-favored")?"selected":""%>>Most favored</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>
 					<b>HTTP Fetch</b>
 				</td>
 			</tr>
@@ -348,6 +365,7 @@
 			</tr>
 		</table>
 		
+		<b>Note:</b> Not all changes made to running crawls will have an effect.
 		<input type="submit" value="Update job">
 		
 		</form>
