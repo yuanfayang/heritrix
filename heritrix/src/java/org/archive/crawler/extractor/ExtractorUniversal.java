@@ -37,14 +37,19 @@ import org.archive.util.TextUtils;
  * anything that <i>looks</i> like a link. If used, it should always be specified
  * as the last link extractor in the order file.
  * <p>
- * To accomplish this we will scan through the bytecode and try and build up 
+ * To accomplish this it will scan through the bytecode and try and build up 
  * strings of consecutive bytes that all represent characters that are valid
- * in a URL. Once we hit the end of such a string (i.e. find a character that
- * should not be in a URL) we will try and determine if we have a URL using
- * a regular expression (assuming the string is long enough).  If the regular
- * expression matches we will consider the string a URL.
+ * in a URL (see {@link #isURLableChar(int) isURLableChar()} for details). 
+ * Once it hits the end of such a string (i.e. finds a character that
+ * should not be in a URL) it will try to determine if it has found a URL using
+ * a regular expression ({@link #LIKELY_URL_EXTRACTOR LIKELY_URL_EXTRACTOR}). 
+ * Strings under 4 characters in length will not be considered.  If the regular
+ * expression matches we will consider the string a URL and add it to the 
+ * CrawlURI as a speculative embed.
  * 
  * @author Kristinn Sigurdsson
+ * 
+ * @see org.archive.crawler.datamodel.CrawlURI#addSpeculativeEmbed(String)
  */
 public class ExtractorUniversal extends Processor implements CoreAttributeConstants{
 
@@ -56,7 +61,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      * A pattern to determine if a string might be a URL.
      * 
      * Has an internal dot or some slash, begins and ends with either '/' or a word-char
-     * Finds plenty of false postitives.
+     * <br>
+     * NOTE: Finds plenty of false postitives.
      */
     static final Pattern LIKELY_URL_EXTRACTOR = Pattern.compile(
         "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)"); //TODO: IMPROVE THIS    
@@ -121,23 +127,23 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     /**
      * Determines if a char (as represented by an int in the range of 0-255) is
      * a character (in the Ansi character set) that can be present in a URL. 
-     * This method takes a STRICT approach to what characters can be in a URL.
+     * This method takes a <b>strict</b> approach to what characters can be in a URL.
      * <p>
      * The following are considered to be 'URLable'<br>
      * <ul>
-     *  <li> # $ % & + , - . / values 35-38,43-47
-     *  <li> [0-9] values 48-57
-     *  <li> : ; = ? @ value 58-59,61,63-64
-     *  <li> [A-Z] : values 65-90 
-     *  <li> [a-z] : values 97-122
-     *  <li> ~ : value 126
+     *  <li> <code># $ % & + , - . /</code> values 35-38,43-47
+     *  <li> <code>[0-9]</code> values 48-57
+     *  <li> <code>: ; = ? @</code> value 58-59,61,63-64
+     *  <li> <code>[A-Z]</code> values 65-90 
+     *  <li> <code>[a-z]</code> values 97-122
+     *  <li> <code>~</code> value 126
      * </ul>
      * <p>
      * To summerize, the following ranges are considered URLable:<br>
      * 35-38,43-59,61,63-90,97-122,126
      * 
      * @param ch The character (represented by an int) to test.
-     * @return True if it is a printable character, false otherwise.
+     * @return True if it is a URLable character, false otherwise.
      */
     private boolean isURLableChar(int ch) {
         return (ch>=35 && ch<=38) 
