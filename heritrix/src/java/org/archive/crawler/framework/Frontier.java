@@ -72,9 +72,9 @@ import org.archive.crawler.frontier.FrontierJournal;
  *     <li> {@link #discoveredUriCount() Discovered URIs}
  *     <li> {@link #queuedUriCount() Queued URIs}
  *     <li> {@link #finishedUriCount() Finished URIs}
- *     <li> {@link #successfullyFetchedCount() Successfully processed URIs}
+ *     <li> {@link #succeededFetchCount() Successfully processed URIs}
  *     <li> {@link #failedFetchCount() Failed to process URIs}
- *     <li> {@link #disregardedFetchCount() Disregarded URIs}
+ *     <li> {@link #disregardedUriCount() Disregarded URIs}
  *     <li> {@link #totalBytesWritten() Total bytes written}
  * </ul>
  *
@@ -142,8 +142,6 @@ public interface Frontier {
      * Get the next URI that should be processed. If no URI becomes availible
      * during the time specified null will be returned.
      *
-     * @param timeout how long the calling thread is willing to wait for the
-     * next URI to become available (milliseconds).
      * @return the next URI that should be processed.
      * @throws InterruptedException
      */
