@@ -6,27 +6,27 @@
  */
 package org.archive.crawler.basic;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URISelector;
-import org.archive.crawler.io.FetchFormatter;
 
 /**
  * @author gojomo
  *
  */
-public class SimpleSelector implements URISelector, CoreAttributeConstants {
+public class SimpleSelector implements URISelector, CoreAttributeConstants, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleSelector");
-	private static Logger fetchLogger = Logger.getLogger("fetchLogger");
 
 	CrawlController controller;
 	SimpleStore store;
@@ -100,26 +100,40 @@ public class SimpleSelector implements URISelector, CoreAttributeConstants {
 			
 			// note completions
 			// TODO: dont' count/retry certain errors
-			if(curi.getAList().containsKey("http-transaction")) {
-				GetMethod get = (GetMethod) curi.getAList().getObject("http-transaction");
-				// allow get to be GC'd
-				curi.getAList().remove("http-transaction");
-				//
+			if(curi.getFetchStatus()>0) {
+				// SUCCESS: note & log
+
 				completionCount++;
-				if ( (completionCount % 25) == 0) {
+				if ( (completionCount % 50) == 0) {
 					logger.info("==========> " +
 						completionCount+" <========== HTTP URIs completed");
 				}
-				
-				int statusCode = -1;
+
 				String length = "n/a";
-				try {
-					statusCode = get.getStatusCode();
-					length = get.getResponseHeader("Content-Length").getValue();
-				} catch (NullPointerException npe ) {
+				if ( curi.getAList().containsKey("http-transaction")) {
+					GetMethod get = (GetMethod) curi.getAList().getObject("http-transaction");
+					// allow get to be GC'd
+					curi.getAList().remove("http-transaction");
+					
+					if (get.getResponseHeader("Content-Length")!=null) {
+						length = get.getResponseHeader("Content-Length").getValue();
+					}
 				}
-				Object array[] = { new Integer(curi.getThreadNumber()), new Integer(statusCode), length, curi.getUURI().getUri() };
-				fetchLogger.log(Level.INFO,curi.getUURI().getUri().toString(),array);
+				Object array[] = { new Integer(curi.getThreadNumber()), new Integer(curi.getFetchStatus()), length, curi.getUURI().getUri() };
+				controller.successLogger.log(Level.INFO,curi.getUURI().getUri().toString(),array);
+			} else {
+				// FAILURE: note and log
+				if(curi.getFetchStatus()==S_INTERNAL_ERROR) {
+					RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
+					StringWriter sw = new StringWriter();
+					e.printStackTrace(new PrintWriter(sw));
+					controller.failureLogger.info(
+						e+" on "+curi+"\n"+
+							   sw.toString());
+				} else {
+					controller.failureLogger.warning(
+						curi.getFetchStatus()+" "+curi);
+				}
 			}
 			// note that CURI has passed out of scheduling
 			curi.setStoreState(URIStoreable.FINISHED);
@@ -136,11 +150,6 @@ public class SimpleSelector implements URISelector, CoreAttributeConstants {
 		controller = c;
 		store = (SimpleStore)c.getStore();
 		maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value");
-		
-		ConsoleHandler ch = new ConsoleHandler();
-		ch.setFormatter(new FetchFormatter());
-		fetchLogger.addHandler(ch);
-		fetchLogger.setUseParentHandlers(false);
 	}
 
 }
