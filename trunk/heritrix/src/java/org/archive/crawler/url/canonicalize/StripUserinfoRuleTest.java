@@ -47,12 +47,14 @@ public class StripUserinfoRuleTest extends TestCase {
             expectedResult.equals(result));
         url = "http://stack:pass@@@@@@word@WWW.aRchive.Org/index.html";
         result = (new StripUserinfoRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+            canonicalize(url, 
+                UURIFactory.getInstance("http://archive.org"));
         assertTrue("Didn't get to last @ " + result,
             expectedResult.equals(result));
         url = "ftp://stack:pass@@@@@@word@archive.org/index.html";
         result = (new StripUserinfoRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+            canonicalize(url,
+                UURIFactory.getInstance("http://archive.org"));
         assertTrue("Didn't get to last @ " + result,
             "ftp://archive.org/index.html".equals(result));
     }
