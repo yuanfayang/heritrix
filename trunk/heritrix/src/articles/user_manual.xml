@@ -524,7 +524,8 @@
 
           <para>This option allows the user to create a job by basing it on
           any existing job, regardless of whether it has been crawled or not.
-          Can be useful for repeating crawls.</para>
+          Can be useful for repeating crawls or recovering a crawl that 
+          had problems. (See <xref linkend="recover" /></para>
         </listitem>
       </orderedlist>
 
@@ -3420,17 +3421,32 @@ collapsed in this lookup).</para>
       but is usually much quicker then repeating a crawl.</para>
 
       <para>To run the recovery process, relaunch the crashed crawler. Create
-      a new crawl order job based on the crawl that crashed. Make any
-      adjustments. Before submitting the job, browse to the settings panel of
-      the crawl order job configuration. Towards the end of the list of
-      settings options, there is a <literal>recover-path</literal> option.
-      Fill in the full path to the recover.gz journal file that you want
-      replayed. Submit the job. The submission will hang a long time as the
-      recover.gz file is read by the frontier. Eventually the submit should
-      complete. The crawl should pick up from close to where the crash
-      occurred. There is no marking in the logs that this crawl was started by
-      reading a recover log (Be sure to mark this was done in the crawl
-      journal).</para>
+      a new crawl order job based on the crawl that crashed. If you choose
+      the "Recover" link after the job in the completed job list, the new
+      job will automatically be set up to use the original job's recovery 
+      journal to bootstrap its Frontier state (of completed and queued URIs).
+      Further, if the recovered job attempts to reuse any already-full 'logs'
+      or 'state' directories, new paths for these directories will be chosen
+      with as many '-R' suffixes as are necessary to specify a new empty 
+      directory.</para>
+      
+      <para>(If you simply base your new job on the old job without using 
+      the 'Recover' link, you must manually enter the full path of the original
+      crawl's recovery journal into the <literal>recover-path</literal> setting,
+      near the end of all settings. You must also adjust the 'logs' and 'state'
+      directory settings, if they were specified using absolute paths that would
+      cause the new crawl to reuse the directories of the original job.)</para>
+      
+      <para>After making any further adjustments to the crawl settings, submit 
+      the new job. The submission will hang a long time as the
+      recover.gz file is read in its entirety by the frontier. (This can take
+      hours for a crawl that has run for a long time, and during this time
+      the crawler control panel will appear idle, with no job pending or
+      in progress, but the machine will be busy.) Eventually the submit and
+      crawl job launche should complete. The crawl should pick up from close to 
+      where the crash occurred. There is no marking in the logs that this crawl 
+      was started by reading a recover log (Be sure to mark this was done in the 
+      crawl journal).</para>
 
       <para>The recovery log is gzipped because it gets very large otherwise
       and because of the reptition of terms, it compresses very well. On
