@@ -30,9 +30,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
@@ -1123,27 +1125,35 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public static ArrayList loadOptions(String file)
     throws IOException {
-        InputStream is = CrawlJob.class.getResourceAsStream("/" +
-                "modules" + "/" + file);
-        if (is == null) {
+        ArrayList ret = new ArrayList();
+        Enumeration resources = CrawlJob.class.getClassLoader().getResources("modules/" + file);
+
+        boolean noFileFound = true;
+        while (resources.hasMoreElements()) {
+            InputStream is = ((URL) resources.nextElement()).openStream();
+            noFileFound = false;
+
+            String line = null;
+            BufferedReader bf =
+                new BufferedReader(new InputStreamReader(is), 8192);
+            try {
+                while ((line = bf.readLine()) != null) {
+                    line = line.trim();
+                    if(line.indexOf('#')<0 && line.length()>0){
+                        // Looks like a valid line.
+                        ret.add(line);
+                    }
+                }
+            } finally {
+                bf.close();
+            }
+        }
+        
+        if (noFileFound) {
             throw new IOException("Failed to get " + file + " from the " +
                 " CLASSPATH");
         }
-        ArrayList ret = new ArrayList();
-        String line = null;
-        BufferedReader bf =
-            new BufferedReader(new InputStreamReader(is), 8192);
-        try {
-            while ((line = bf.readLine()) != null) {
-                line = line.trim();
-                if(line.indexOf('#')<0 && line.length()>0){
-                    // Looks like a valid line.
-                    ret.add(line);
-                }
-            }
-        } finally {
-            bf.close();
-        }
+
         return ret;
     }
 
