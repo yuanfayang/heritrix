@@ -51,46 +51,53 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				
 		synchronized(store) {		
 			
-			store.noteProcessingDone(curi);
-			// snooze queues as necessary
-			updateScheduling(curi);
-
-			// consider errors which halt further processing
-			if (isDispositiveFailure(curi)) {
+			try {
+				store.noteProcessingDone(curi);
+				// snooze queues as necessary
+				updateScheduling(curi);
+				
+				// consider errors which halt further processing
+				if (isDispositiveFailure(curi)) {
+					failureDisposition(curi);
+					return;
+				}
+				
+				// handle any prerequisites
+				if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
+					handlePrerequisites(curi);
+					return;
+				}
+				
+				// consider errors which can be retried
+				if (needsRetrying(curi)) {
+					scheduleForRetry(curi);
+					return;
+				}
+				
+				// handle http headers 
+				if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
+					handleHttpHeaders(curi);
+				}
+				// handle embeds 
+				if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+					handleEmbeds(curi);
+				}
+				// handle links, if not too deep
+				if ((maxLinkDepth >= 0)
+					 && (curi.getAList().getInt(A_DISTANCE_FROM_SEED) < maxLinkDepth)
+					 && curi.getAList().containsKey(A_HTML_LINKS)) {
+					handleLinks(curi);
+				}
+				
+				
+				// SUCCESS: note & log
+				successDisposition(curi);
+			} catch (RuntimeException e) {
+				curi.setFetchStatus(S_INTERNAL_ERROR);
+				// store exception temporarily for logging
+				curi.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
 				failureDisposition(curi);
-				return;
-			}
-			
-			// handle any prerequisites
-			if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
-				handlePrerequisites(curi);
-				return;
-			}
-			
-			// consider errors which can be retried
-			if (needsRetrying(curi)) {
-				scheduleForRetry(curi);
-				return;
-			}
-
-			// handle http headers 
-			if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
-				handleHttpHeaders(curi);
-			}
-			// handle embeds 
-			if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
-				handleEmbeds(curi);
-			}
-			// handle links, if not too deep
-			if ((maxLinkDepth >= 0)
-				 && (curi.getAList().getInt(A_DISTANCE_FROM_SEED) < maxLinkDepth)
-				 && curi.getAList().containsKey(A_HTML_LINKS)) {
-				handleLinks(curi);
-			}
-			
-			
-			// SUCCESS: note & log
-			successDisposition(curi);	
+			}	
 		} 
 			
 	}

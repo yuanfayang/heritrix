@@ -79,6 +79,9 @@ public class UURI {
 		String es = patchEscape(s);
 		URI u = new URI(es);
 		if (!u.isAbsolute()) {
+			if (parent==null) {
+				throw new URISyntaxException(s,"No parent supplied for relative URI.");
+			}
 			u = parent.resolve(es);
 		}
 		if (u.getSchemeSpecificPart().startsWith("/")) {
