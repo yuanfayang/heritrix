@@ -115,12 +115,14 @@ public class PathScope extends CrawlScope {
         Iterator iter = getSeedsIterator();
         while (iter.hasNext()) {
             UURI s = (UURI) iter.next();
-            if (s.getHost().equals(u.getHost())) {
-                // hosts match
-                if (s
-                    .getPath()
-                    .regionMatches(
-                        0, u.getPath(), 0, s.getPath().lastIndexOf('/'))) {
+            if (isSameHost(s, u)) {
+                // Protect against non-parseable URIs. See
+                // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+                if (s.getPath() == null || u.getPath() == null) {
+                    continue;
+                }
+                if (s.getPath().regionMatches(0, u.getPath(), 0, 
+                    s.getPath().lastIndexOf('/'))) {
                     // matches up to last '/'
                     return true;
                 } else {

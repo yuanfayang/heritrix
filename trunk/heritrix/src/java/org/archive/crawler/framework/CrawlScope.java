@@ -25,6 +25,7 @@ package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.filter.OrFilter;
@@ -140,10 +142,15 @@ public class CrawlScope extends Filter {
             seedIterator = seeds.iterator();
         } else {
             try {
-                File fileName = getSettingsHandler()
-                .getPathRelativeToWorkingDirectory(
+                File file = getSettingsHandler()
+                    .getPathRelativeToWorkingDirectory(
                         (String)getAttribute(ATTR_SEEDS));
-                BufferedReader reader = new BufferedReader(new FileReader(fileName));
+                if (!file.exists())
+                {
+                    throw new FileNotFoundException("Seeds file " +
+                       file.getAbsolutePath() + " does not exist.");
+                }
+                BufferedReader reader = new BufferedReader(new FileReader(file));
                 seedIterator = new SeedsInputIterator(reader,
                         getSettingsHandler().getOrder().getController());
             } catch (IOException e) {
@@ -270,4 +277,23 @@ public class CrawlScope extends Filter {
         return o instanceof CandidateURI && ((CandidateURI) o).getIsSeed();
     }
 
+    /**
+     * @param a First UURI of compare.
+     * @param b Second UURI of compare.
+     * @return True if UURIs are of same host.
+     */
+    protected boolean isSameHost(UURI a, UURI b)
+    {
+        boolean isSameHost = false;
+        if (a != null && b != null) {
+            // getHost can come back null.  See
+            // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+            if (a.getHost() != null && b.getHost() != null) {
+                if (a.getHost().equals(b.getHost())) {
+                    isSameHost = true;
+                }
+            }
+        }
+        return isSameHost;
+    }
 }
