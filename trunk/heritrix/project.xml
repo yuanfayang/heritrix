@@ -161,6 +161,14 @@
          <timezone>-8</timezone>
     </developer>
     <developer>
+        <name>Michele Kimpton</name>
+        <id>michele</id>
+        <email>michele at archive dot org</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
+    </developer>
+    <developer>
         <name>Igor Ranitovic</name>
         <id>ia_igor</id>
         <email>igor at archive dot org</email>
@@ -251,6 +259,7 @@
             <distribution>repo</distribution>
        </license>
     </licenses>
+
 
     <!--For now, refer to local jars.  Later when (if) we deceide to go
         all-out maven, we'll pull common jars from remote repository.
@@ -505,8 +514,8 @@
         </includes>
     </resource>
     </resources>
-
   </build>
+
 
     <!--List of reports to generate.
         Some are not working.  Fix.
@@ -527,6 +536,8 @@
         <report>maven-jxr-plugin</report>
         <report>maven-pmd-plugin</report>
         <report>maven-tasklist-plugin</report>
+        <!--<report>maven-findbugs-plugin</report>
+         -->
         <!--<report>maven-developer-activity-plugin</report>-->
         <!--TODO: <report>maven-file-activity-plugin</report>-->
         <!--TODO: OOME and takes long time.
