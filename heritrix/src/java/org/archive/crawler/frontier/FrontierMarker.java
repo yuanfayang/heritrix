@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.frontier;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -36,7 +36,7 @@ import org.archive.crawler.framework.URIFrontierMarker;
  * @author Kristinn Sigurdsson
  * @see org.archive.crawler.framework.URIFrontierMarker
  * @see org.archive.crawler.framework.URIFrontier
- * @see org.archive.crawler.basic.Frontier
+ * @see org.archive.crawler.frontier.Frontier
  */
 public class FrontierMarker implements URIFrontierMarker {
 

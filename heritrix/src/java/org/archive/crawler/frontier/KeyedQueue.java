@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.frontier;
 
 import java.io.File;
 import java.io.IOException;
