@@ -112,6 +112,8 @@ import org.archive.util.MimetypeUtils;
  *
  * <p>You can also do <code>gzip -t FILENAME</code> and it will tell you if the
  * ARC makes sense to GZIP.
+ * 
+ * <p>While being written, ARCs have a '.open' suffix appended.
  *
  * @author stack
  */
@@ -190,6 +192,11 @@ public class ARCWriter implements ARCConstants {
      */
     private static final Pattern METADATA_LINE_PATTERN =
         Pattern.compile("^[^ ]+ [^ ]+ [^ ]+ [^ ]+ [^ ]+");
+
+    /**
+     * Suffix given to files currently being written by Heritrix.
+     */
+    private static final String OCCUPIED_SUFFIX = ".open";
 
     /**
      * Constructor.
@@ -281,7 +288,15 @@ public class ARCWriter implements ARCConstants {
             this.out.close();
             this.out = null;
             if (this.arcFile != null && this.arcFile.exists()) {
-                logger.info("Closed " + this.arcFile.getAbsolutePath());
+                String name = this.arcFile.getAbsolutePath();
+                if (name.endsWith(OCCUPIED_SUFFIX)) {
+                    if (!this.arcFile.renameTo(new File(name.substring(0,
+                            name.length() - OCCUPIED_SUFFIX.length())))) {
+                        logger.warning("Failed rename of " + name);
+                    }
+                }
+                logger.info("Closed " + this.arcFile.getAbsolutePath() +
+                    ", size " + this.arcFile.length());
             }
         }
     }
@@ -313,7 +328,8 @@ public class ARCWriter implements ARCConstants {
             ((this.suffix == null || this.suffix.length() <= 0)?
                 "": "-" + this.suffix) +
             '.' + ARC_FILE_EXTENSION +
-            ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
+            ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "") +
+            OCCUPIED_SUFFIX;
         this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
         this.out.write(generateARCFileMetaData(tsn.getNow()));

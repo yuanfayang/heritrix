@@ -77,7 +77,7 @@ import org.xbill.DNS.Record;
  * @author Parker Thompson
  */
 public class ARCWriterProcessor extends Processor
-        implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
+implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
     /**
      * Logger.
      */
@@ -537,6 +537,7 @@ public class ARCWriterProcessor extends Processor
 	public void crawlEnding(String sExitMessage) {
 		// sExitMessage is unused.
 		ARCWriter.resetSerialNo();
+        this.pool.close();
 	}
 
 	/* (non-Javadoc)

@@ -167,6 +167,10 @@ public class ARCWriterPool {
                 metadata),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
     }
+    
+    public void close() {
+        this.pool.clear();
+    }
 
     /**
      * Check out an ARCWriter from the pool.
@@ -239,7 +243,6 @@ public class ARCWriterPool {
         }
         return buffer.toString();
     }
-    
 
     /**
      * @return Number of ARCWriters checked out of the ARCWriter pool.
@@ -281,7 +284,7 @@ public class ARCWriterPool {
                     e.getMessage());
         }
     }
-
+    
     /**
      * Factory that creates ARCWriters.
      *
