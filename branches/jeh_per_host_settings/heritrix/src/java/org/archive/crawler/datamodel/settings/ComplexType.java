@@ -86,21 +86,23 @@ public abstract class ComplexType implements DynamicMBean, Type {
             true,
             null,
             type.getDefaultValue());
-        if(type instanceof ComplexType) {
+        if (type instanceof ComplexType) {
             addComplexType(settings, (ComplexType) type);
             ((ComplexType) type).initialize();
         }
         return type;
     }
 
-    private ComplexType addComplexType(CrawlerSettings settings, ComplexType object) {
-        if(this.settingsHandler == null) {
+    private ComplexType addComplexType(
+        CrawlerSettings settings,
+        ComplexType object) {
+        if (this.settingsHandler == null) {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
         object.parent = this;
         object.settingsHandler = getSettingsHandler();
         object.absoluteName = getAbsoluteName() + '/' + object.getName();
-        
+
         if (settings.getScope() == null) {
             // We're working with the global order file
             getSettingsHandler().addToComplexTypeRegistry(object);
@@ -134,29 +136,45 @@ public abstract class ComplexType implements DynamicMBean, Type {
      */
     public Object getAttribute(String name)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
-        //return null;
-        return ((ModuleAttributeInfo) getAttributeInfo(name)).getDefaultValue();
+        //return ((ModuleAttributeInfo) getAttributeInfo(name)).getDefaultValue();
+        return getAttribute(null, name);
     }
 
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
-        //return null;
+            // TODO: FIX THIS
         return ((ModuleAttributeInfo) getAttributeInfo(name)).getDefaultValue();
     }
 
-    /*
     public Object getAttribute(CrawlerSettings settings, String name) {
-        DataContainer data = settings.getData(getAbsoluteName());
-        if(data == null) {
-            try {
-                return getAttribute(name);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("XXX");
+        Object res = getLocalAttribute(settings, name);
+
+        if (res == null && settings != null && settings.getScope() != null) {
+            res = getLocalAttribute(null, name);
+        }
+
+        if (res == null) {
+            ModuleAttributeInfo attInfo =
+                (ModuleAttributeInfo) getAttributeInfo(settings, name);
+            if (attInfo == null) {
+                attInfo = (ModuleAttributeInfo) getAttributeInfo(name);
             }
+            res = attInfo.getDefaultValue();
+        }
+
+        return res;
+    }
+
+    public Object getLocalAttribute(CrawlerSettings settings, String name) {
+        if (settings == null) {
+            settings = globalSettings();
+        }
+        DataContainer data = settings.getData(getAbsoluteName());
+        if (data == null) {
+            return null;
         }
         return data.get(name);
     }
-    */
 
     /* (non-Javadoc)
      * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
@@ -189,7 +207,10 @@ public abstract class ComplexType implements DynamicMBean, Type {
                 if (parentData == null) {
                     settings.addModule((CrawlerModule) type);
                 } else {
-                    globalSettings().getData(parent.getAbsoluteName()).copyAttributeInfo(getName(), parentData);
+                    globalSettings().getData(
+                        parent.getAbsoluteName()).copyAttributeInfo(
+                        getName(),
+                        parentData);
                 }
             }
             data = settings.addComplexType(type);
@@ -234,7 +255,11 @@ public abstract class ComplexType implements DynamicMBean, Type {
     protected MBeanAttributeInfo getAttributeInfo(
         CrawlerSettings settings,
         String name) {
-        return settings.getData(getAbsoluteName()).getAttributeInfo(name);
+        try {
+            return settings.getData(getAbsoluteName()).getAttributeInfo(name);
+        } catch (NullPointerException e) {
+            return null;
+        }
     }
 
     protected MBeanAttributeInfo getAttributeInfo(String name) {
@@ -281,7 +306,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         }
         initialized = true;
     }
-    
+
     public boolean initialized() {
         return initialized;
     }
