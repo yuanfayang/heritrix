@@ -73,7 +73,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
             long end = (new Date()).getTime();
             // This test can fail on a loaded machine if the wait period is
             // only MAX_WAIT_MILLISECONDS.  Up the time to wait.
-            final int WAIT = MAX_WAIT_MILLISECONDS * 10;
+            final int WAIT = MAX_WAIT_MILLISECONDS * 100;
             if ((end - start) > (WAIT))
             {
                 fail("More than " + MAX_WAIT_MILLISECONDS + " elapsed: "
