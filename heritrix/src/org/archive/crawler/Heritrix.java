@@ -6,6 +6,7 @@
  */
 package org.archive.crawler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,28 +45,34 @@ public class Heritrix {
 		CrawlOrder order;
 		CrawlController controller = new CrawlController();
 
-		switch (args.length) {
-			case 1 :
-				crawlOrderFile = args[0];
-			case 0 :
-				order = CrawlOrder.readFromFile(crawlOrderFile);
-				controller.setOrder(order);
-				startServer(controller);
-				break;
-			case 2 :
-				if (args[0].equals("-no-wui")) {
-					crawlOrderFile = args[1];
+		try {
+			switch (args.length) {
+				case 1 :
+					crawlOrderFile = args[0];
+				case 0 :
 					order = CrawlOrder.readFromFile(crawlOrderFile);
-					controller.initialize(order);
-					controller.startCrawl();
+					controller.setOrder(order);
+					startServer(controller);
 					break;
-				}
-			default :
-				usage();
-				return;
+				case 2 :
+					if (args[0].equals("-no-wui")) {
+						crawlOrderFile = args[1];
+						order = CrawlOrder.readFromFile(crawlOrderFile);
+						controller.initialize(order);
+						controller.startCrawl();
+						break;
+					}
+				default :
+					usage();
+					return;
+			}
+		} catch (IOException e) {
+			System.out.println("Unable to read order file: " + e);
+			return;
 		}
 		logger.info("exitting main thread");
 	}
+	
 	private void usage() {
 		System.out.println(
 			"USAGE: java Heritrix [-no-wui] order.xml");

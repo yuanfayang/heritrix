@@ -48,13 +48,15 @@ public class XMLConfig {
 	protected HashMap cachedIntegers = new HashMap(); // String -> Integer
 	protected HashMap cachedStrings = new HashMap(); // String -> String
 
+	protected String defaultFilePath = null;
+
 	/**
 	 * Convenience method for reading an XML file into a Document instance
 	 * 
 	 * @param filename
 	 * @return
 	 */
-	public static Document readDocumentFromFile(String filename) {
+	public static Document readDocumentFromFile(String filename) throws IOException {
 		File f = new File(filename);
 		try {
 			DocumentBuilderFactory factory =
@@ -71,13 +73,46 @@ public class XMLConfig {
 		} catch (SAXException e) {
 			// parsing error
 			e.printStackTrace();
-
 		} catch (IOException e) {
 			// i/o error
 			e.printStackTrace();
-
+			throw e;
 		}
 		return null;
+	}
+	
+	public void setDefaultFileLocation(String loc){
+		defaultFilePath = loc;
+	}
+	public String getDefaultFileLocation(){
+		return defaultFilePath;
+	}
+	
+	/** Same as readDocumentFromFile, but will use default path
+	 *  if the file specified has no path information (relative or abs)
+	 *  AND cannot be found in the current working directory.
+	 * @param filename
+	 * @return document
+	 */
+	public static Document readDocumentFromFile(String filename, String path) throws IOException {
+		
+		if(	path == null 
+				|| isAbsoluteFilePath(filename) )
+		{
+			return readDocumentFromFile(filename);
+		}else{
+			return readDocumentFromFile(path + File.separator + filename);
+		}
+	}
+	
+	/** Determines if a string represents an absolute path (e.g. /usr/local/file) */
+	protected static boolean isAbsoluteFilePath(String path){
+		if (path.matches("^\\/") // abs unix path
+			|| path.matches("^\\w:\\\\")) { // abs windows path
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -99,9 +134,30 @@ public class XMLConfig {
 			// TODO something maybe
 			te.printStackTrace();
 
+		} catch (IOException e){
+			e.printStackTrace();
 		}
+		
 		return node;
 
+	}
+	
+	public static Node nodeOrSrc(Node node, String path) throws IOException {
+		
+		try {
+			Node srcNode = XPathAPI.selectSingleNode(node, "@src");
+			if (srcNode != null) {
+				return (Node) readDocumentFromFile(srcNode.getNodeValue(), path);
+			}
+		} catch (TransformerException te) {
+			// TODO something maybe
+			te.printStackTrace();
+
+		} catch (IOException e){
+			throw e;
+		}
+		
+		return node;
 	}
 
 	/**
@@ -114,8 +170,12 @@ public class XMLConfig {
 	 * @param xpath
 	 * @return
 	 */
-	public BufferedReader nodeValueOrSrcReader(String xpath) {
+	public BufferedReader nodeValueOrSrcReader(String xpath) throws IOException {
 		return nodeValueOrSrcReader(getNodeAt(xpath));
+	}
+	
+	public BufferedReader nodeValueOrSrcReader(String xpath, String path) throws IOException {
+		return nodeValueOrSrcReader(getNodeAt(xpath), path);
 	}
 
 	/**
@@ -150,7 +210,7 @@ public class XMLConfig {
 	 * @param node
 	 * @return
 	 */
-	public static BufferedReader nodeValueOrSrcReader(Node node) {
+	public static BufferedReader nodeValueOrSrcReader(Node node) throws IOException{
 
 		try {
 			Node srcNode = XPathAPI.selectSingleNode(node, "@src");
@@ -158,9 +218,7 @@ public class XMLConfig {
 				return new BufferedReader(
 					new FileReader(srcNode.getNodeValue()));
 			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -170,8 +228,47 @@ public class XMLConfig {
 		}
 
 		return new BufferedReader(new StringReader(node.getNodeValue()));
-
 	}
+	
+	public static BufferedReader nodeValueOrSrcReader(Node node, String path) throws IOException {
+			
+		if(path==null){
+			return nodeValueOrSrcReader(node);
+		}
+		
+		try {
+			Node srcNode = XPathAPI.selectSingleNode(node, "@src");
+			if (srcNode != null) {
+				String srcFile;
+				if(isAbsoluteFilePath(srcNode.getNodeValue())){
+					srcFile = srcNode.getNodeValue();
+				}else{
+					srcFile = path + File.separator + srcNode.getNodeValue();
+				}
+				
+				return new BufferedReader(
+					new FileReader(srcFile));
+
+			}else{
+				String value = node.getNodeValue();
+				
+				if(isAbsoluteFilePath(value)){
+					return new BufferedReader(new StringReader(value) );
+				}else{
+					return new BufferedReader(new StringReader(path + File.separator + value));
+				}
+			}
+		} catch (DOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
 
 	/**
 	 * Retrieve a (positive) integer value from the given xpath;
