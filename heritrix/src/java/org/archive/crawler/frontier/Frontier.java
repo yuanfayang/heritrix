@@ -243,24 +243,24 @@ public class Frontier
             "If zero, the crawler will get the robots.txt only.",
             DEFAULT_MAX_RETRIES));
         addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
-                "How long to wait by default until we retry fetching a URI that " +
-                "failed to be retrieved (seconds). ",
+                "How long to wait by default until we retry fetching a" +
+                " URI that failed to be retrieved (seconds). ",
                 DEFAULT_RETRY_DELAY));
         Type t;
         t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
                 "Whether to hold newly-created per-host URI work" +
-                "queues until needed to stay busy. If false (default)," +
-                "all queues may contribute URIs for crawling at all" +
-                "times. If true, queues begin (and collect URIs) in" +
-                "an 'inactive' state, and only when the Frontier needs" +
-                "another queue to keep all ToeThreads busy will new" +
-                "queues be activated.",
+                " queues until needed to stay busy\n. If false (default)," +
+                " all queues may contribute URIs for crawling at all" +
+                " times. If true, queues begin (and collect URIs) in" +
+                " an 'inactive' state, and only when the Frontier needs" +
+                " another queue to keep all ToeThreads busy will new" +
+                " queues be activated.",
                 DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
         t = addElementToDefinition(new SimpleType(ATTR_HOST_VALENCE,
                 "Maximum number of simultaneous requests to a single" +
-                "host.",
+                " host.",
                 DEFAULT_HOST_VALENCE));
         t.setExpertSetting(true);
         t = addElementToDefinition(
