@@ -198,8 +198,8 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         path.append('L');
         candidate = new CandidateURI(uuri, path.toString(), null, null);
         decision = this.rule.decisionFor(candidate);
-        assertTrue("Expect ACCEPT but got " + decision,
-                decision == DecideRule.ACCEPT);
+        assertTrue("Expect REJECT but got " + decision,
+                decision == DecideRule.REJECT);
     }
     
     protected DecideRule addDecideRule(DecideRule dr)
