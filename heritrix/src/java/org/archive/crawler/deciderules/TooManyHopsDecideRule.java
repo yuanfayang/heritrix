@@ -33,6 +33,7 @@ import org.archive.crawler.settings.Type;
 /**
  * Rule REJECTs any CrawlURIs whose total number of hops (length of the 
  * hopsPath string, traversed links of any type) is over a threshold.
+ * Otherwise returns PASS.
  *
  * @author gojomo
  */
@@ -79,6 +80,7 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
     }
 
     /**
+     * @param obj Conext object.
      * @return hops cutoff threshold
      */
     private int getThresholdHops(Object obj) {

@@ -174,32 +174,72 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
     public void testHops()
     throws InvalidAttributeValueException, URIException {
         addDecideRule(new TooManyHopsDecideRule("HOPS"));
+        testHopLimit(TooManyHopsDecideRule.DEFAULT_MAX_HOPS.intValue(), 'L',
+            DecideRule.PASS, DecideRule.REJECT);
+    }
+    
+    public void testTransclusion()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new TransclusionDecideRule("TRANSCLUSION"));
+        final int max =
+            TransclusionDecideRule.DEFAULT_MAX_TRANS_HOPS.intValue();
+        final char pathExpansion = 'X';
         UURI uuri = UURIFactory.getInstance("http://archive.org");
         CandidateURI candidate = new CandidateURI(uuri);
         Object decision = this.rule.decisionFor(candidate);
-        assertTrue("Expect PASS but got " + decision,
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
             decision == DecideRule.PASS);
-        StringBuffer path = new StringBuffer(
-            TooManyHopsDecideRule.DEFAULT_MAX_HOPS.intValue());
-        for (int i = 0;
-                i < (TooManyHopsDecideRule.DEFAULT_MAX_HOPS.intValue() - 1);
-                i++) {
-            path.append("L");
+        StringBuffer path = new StringBuffer(max);
+        for (int i = 0; i < (max - 1); i++) {
+            path.append(pathExpansion);
         }
         candidate = new CandidateURI(uuri, path.toString(), null, null);
         decision = this.rule.decisionFor(candidate);
-        assertTrue("Expect PASS but got " + decision,
+        assertTrue("Expect " + DecideRule.ACCEPT + " but got " + decision,
+            decision == DecideRule.ACCEPT);
+        String pathCopy = path.toString();
+        path.append(pathExpansion);
+        candidate = new CandidateURI(uuri, path.toString(), null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.ACCEPT + " but got " + decision,
+            decision == DecideRule.ACCEPT);
+        path.append(pathExpansion);
+        candidate = new CandidateURI(uuri, path.toString(), null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
             decision == DecideRule.PASS);
-        path.append('L');
+        candidate = new CandidateURI(uuri, pathCopy + 'L', null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+            decision == DecideRule.PASS);
+    }
+    
+    protected void testHopLimit(final int max, final char pathExpansion,
+        final String defaultDecision, final String overLimitDecision)
+    throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://archive.org");
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + defaultDecision + " but got " + decision,
+            decision == defaultDecision);
+        StringBuffer path = new StringBuffer(max);
+        for (int i = 0; i < (max - 1); i++) {
+            path.append(pathExpansion);
+        }
         candidate = new CandidateURI(uuri, path.toString(), null, null);
         decision = this.rule.decisionFor(candidate);
-        assertTrue("Expect PASS but got " + decision,
-                decision == DecideRule.PASS);
-        path.append('L');
+        assertTrue("Expect " + defaultDecision + " but got " + decision,
+            decision == defaultDecision);
+        path.append(pathExpansion);
         candidate = new CandidateURI(uuri, path.toString(), null, null);
         decision = this.rule.decisionFor(candidate);
-        assertTrue("Expect REJECT but got " + decision,
-                decision == DecideRule.REJECT);
+        assertTrue("Expect " + defaultDecision + " but got " + decision,
+            decision == defaultDecision);
+        path.append(pathExpansion);
+        candidate = new CandidateURI(uuri, path.toString(), null, null);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + overLimitDecision + " but got " + decision,
+            decision == overLimitDecision);       
     }
     
     protected DecideRule addDecideRule(DecideRule dr)
