@@ -302,9 +302,10 @@ public class CrawlController extends Thread{
 			 if(curi != null) {
 				curi.setNextProcessor(firstProcessor);
 			 	ToeThread toe = toePool.available();
-			 	if (toe !=null) {
+			 	//if (toe !=null) {
+			 		logger.fine(toe.getName()+" crawl: "+curi.getURIString());
 			 		toe.crawl(curi);
-			 	} 
+			 	//} 
 			 }
 		}
 		controlThread = null;
