@@ -364,6 +364,7 @@ public class CrawlController implements Serializable {
             // je.properties value
             envConfig.setCachePercent(bdbCachePercent);
         }
+        envConfig.setLockTimeout(5000000); // 5 seconds
         try {
             this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
             if (logger.isLoggable(Level.INFO)) {
