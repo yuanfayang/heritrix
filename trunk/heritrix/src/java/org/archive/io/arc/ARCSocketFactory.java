@@ -164,6 +164,13 @@ public class ARCSocketFactory extends SocketFactory
      */
     private static int id = 0;
     
+    /**
+     * Constructor to block access to default constructor.
+     */
+    private ARCSocketFactory()
+    {
+        // Inaccessible constructor.
+    }
     
 	/**
      * Constructor.
