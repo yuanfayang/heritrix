@@ -64,7 +64,7 @@ public abstract class SettingsHandler {
     private final CrawlOrder order;
     
     private Set valueErrorHandlers = Collections.synchronizedSet(new HashSet());
-    private int errorReportingLevel = Level.INFO.intValue();
+    private int errorReportingLevel = Level.ALL.intValue();
 
     /** Datatypes supported by the settings framwork */
     final static String INTEGER = "integer";
