@@ -391,16 +391,10 @@ CoreAttributeConstants {
         disregardedUriCount++;
     }
     
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#disregardedUriCount()
-     */
     public long disregardedUriCount() {
         return disregardedUriCount;
     }
 
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#totalBytesWritten()
-     */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }
@@ -419,7 +413,7 @@ CoreAttributeConstants {
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
         List seeds = this.controller.getScope().getSeedlist();
-        synchronized(seeds) {
+        synchronized (seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI u = (UURI)i.next();
                 CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
@@ -611,12 +605,10 @@ CoreAttributeConstants {
      * @param now
      * @throws InterruptedException
      */
-    private void enforceBandwidthThrottle(long now) throws InterruptedException {
-        int maxBandwidthKB;
-
-        maxBandwidthKB = ((Integer) getUncheckedAttribute(null,
+    private void enforceBandwidthThrottle(long now)
+    throws InterruptedException {
+        int maxBandwidthKB = ((Integer) getUncheckedAttribute(null,
                 ATTR_MAX_OVERALL_BANDWIDTH_USAGE)).intValue();
-
         if (maxBandwidthKB > 0) {
             // Make sure that new bandwidth setting doesn't affect total crawl
             if (maxBandwidthKB != lastMaxBandwidthKB) {
@@ -626,7 +618,6 @@ CoreAttributeConstants {
 
             // Enforce bandwidth limit
             long sleepTime = nextURIEmitTime - now;
-
             float maxBandwidth = maxBandwidthKB * 1.024F; // Kilo_factor
             long processedBytes =
                 totalProcessedBytes - processedBytesAfterLastEmittedURI;
@@ -635,12 +626,11 @@ CoreAttributeConstants {
             nextURIEmitTime = (long) (processedBytes / maxBandwidth)
                     + now + shouldHaveEmittedDiff;
             processedBytesAfterLastEmittedURI = totalProcessedBytes;
-
             if (sleepTime > 0) {
                 long targetTime = now + sleepTime; 
                 now = System.currentTimeMillis();
-                while(now<targetTime) {
-                    synchronized(this) {
+                while (now < targetTime) {
+                    synchronized (this) {
                         if (logger.isLoggable(Level.FINE)) {
                             logger.fine("Frontier waits for: " + sleepTime
                                 + "ms to respect bandwidth limit.");
