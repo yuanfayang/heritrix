@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -23,6 +24,9 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
+import org.archive.io.RecorderLengthExceededException;
+import org.archive.io.RecorderTimeoutException;
+import org.archive.util.HttpRecorder;
 
 /**
  * Basic class for using the Apache Jakarta HTTPClient library
@@ -35,15 +39,18 @@ public class FetchHTTP
 	extends Processor
 	implements CoreAttributeConstants, FetchStatusCodes {
 	private static String XP_TIMEOUT_SECONDS = "@timeout-seconds";
+	private static String XP_SOTIMEOUT_MS = "@sotimeout-ms";
 	private static String XP_MAX_LENGTH_BYTES = "@max-length-bytes";
 	private static String XP_MAX_FETCH_ATTEMPTS = "@max-fetch-attempts";
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
+	private static int DEFAULT_SOTIMEOUT_MS = 5000;
 	private static long DEFAULT_MAX_LENGTH_BYTES = Long.MAX_VALUE;
 	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 3;
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetchHTTP");
 	HttpClient http;
 	private long timeout;
+	private int soTimeout;
 	private long maxLength;
 	private int maxTries;
 
@@ -93,26 +100,31 @@ public class FetchHTTP
 			"From",
 			controller.getOrder().getFrom());
 		
-		get.setHttpRecorder(((ToeThread)Thread.currentThread()).getHttpRecorder());
-		//controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
+		HttpRecorder rec = ((ToeThread)Thread.currentThread()).getHttpRecorder();
+		get.setHttpRecorder(rec);
 
 		try {
-						
+				
+		    // TODO: make this initial reading subject to the same
+		    // length/timeout limits; currently only the soTimeout
+		    // is effective here, once the connection succeeds
 			http.executeMethod(get);
 
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules
-			// 
-			// (if we weren't planning to get the whole thing
-			// anyway -- for example if we weren't an archival
-			// spider, just one doing some indexing/analysis --
-			// this might be wasteful. As it is, it just moves 
-			// the cost here rather than elsewhere. )
-			//InputStream is = get.getResponseBodyAsStream(); 
-			//while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
-			if(get.getHttpRecorder().getRecordedInput().readFullyOrUntil(maxLength,timeout)) {
-				logger.info("time or size exceeded for "+curi);
+			
+			try {
+				rec.getRecordedInput().readFullyOrUntil(maxLength,timeout);
+			} catch (RecorderTimeoutException ex) {
+				logger.info(curi.getUURI().getUri()+": time limit exceeded");
+				// but, continue processing whatever was retrieved
+				// TODO: set indicator in curi
+			} catch (RecorderLengthExceededException ex) {
+				logger.info(curi.getUURI().getUri()+": length limit exceeded");
+				// but, continue processing whatever was retrieved
+				// TODO: set indicator in curi
 			}
+
 			get.getHttpRecorder().close();
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
@@ -131,16 +143,24 @@ public class FetchHTTP
 				curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
 			}
 
+		} catch (HttpRecoverableException e) {
+			// transient exception; only display in fine logging mode
+			logger.fine(e + " on " + curi);
+			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
+			curi.setFetchStatus(S_CONNECT_FAILED);
 		} catch (HttpException e) {
-			logger.warning(e+" on "+curi);
+			logger.warning(e + " on " + curi);
+			//e.printStackTrace();
 			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		} catch (IOException e) {
-			logger.warning(e+" on "+curi);
+			logger.warning(e + " on " + curi);
+			//e.printStackTrace();
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		} finally {
 			//controller.getKicker().cancelKick(Thread.currentThread());
 			get.releaseConnection();
+			rec.close();
 		}
 	}
 
@@ -150,6 +170,7 @@ public class FetchHTTP
 	public void initialize(CrawlController c) {
 		super.initialize(c);
 		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
+		soTimeout = getIntAt(XP_SOTIMEOUT_MS, DEFAULT_SOTIMEOUT_MS);
 		maxLength = getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES);
 		maxTries = getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS);
 		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
@@ -161,7 +182,7 @@ public class FetchHTTP
 		//((HttpClientParams)http.getParams()).setConnectionTimeout((int)timeout);
 		// set per-read() timeout: overall timeout will be checked at least this
 		// frequently
-		((HttpClientParams)http.getParams()).setSoTimeout(1000);
+		((HttpClientParams)http.getParams()).setSoTimeout(soTimeout);
 	}
 
 }
