@@ -105,22 +105,11 @@ public class FetchHTTP extends Processor
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
     private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
 
-    /**
-     * HTTP protocol adherence strictness.
-     *
-     * Can be true or false.
+   /**
+     * Default setting for HttpClient's "strict mode".
+     * In strict mode, Cookies are served on a single header.
      */
-    public static final String ATTR_STRICT = "strict";
-
-    /**
-     * Default setting for protocol strictness.
-     */
-    private static final boolean DEFAULT_STRICT = false;
-
-    /**
-     * Setting for protocol strictness.
-     */
-    private boolean strict = DEFAULT_STRICT;
+    private static final boolean DEFAULT_HTTPCLIENT_STRICT = true;
 
     /**
      * SSL trust level setting attribute name.
@@ -163,11 +152,6 @@ public class FetchHTTP extends Processor
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_SAVE_COOKIES,
             "When crawl finishes save cookies to this file", ""));
-        e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_STRICT,
-                "Strict adherence to HTTP protocol.  At a minimum all cookies"
-                + " will be served on one line only",
-                new Boolean(this.strict)));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_TRUST,
             "SSL certificate trust level.  Range is from the default 'open'"
@@ -384,7 +368,7 @@ public class FetchHTTP extends Processor
 
         // Set strict on the client; whatever the client's mode overrides
         // the methods mode inside in the depths of executeMethod.
-        this.http.setStrictMode(getStrict(curi));
+        this.http.setStrictMode(DEFAULT_HTTPCLIENT_STRICT);
 
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         ((HttpMethodBase)method).setHttp11(false);
@@ -657,16 +641,6 @@ public class FetchHTTP extends Processor
         // frequently
         this.http.setTimeout(this.soTimeout);
 	}
-
-	private boolean getStrict(CrawlURI curi) {
-        Boolean isStrict = null;
-        try {
-            isStrict = (Boolean) getAttribute(ATTR_STRICT, curi);
-        } catch (Exception e) {
-            isStrict = new Boolean(DEFAULT_STRICT);
-        }
-        return isStrict.booleanValue();
-    }
 
     private int getSoTimeout(CrawlURI curi) {
         Integer res;
