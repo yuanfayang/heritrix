@@ -263,6 +263,7 @@ implements Comparable, Serializable {
         } catch (DatabaseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
         unpeek();
         count--;
