@@ -218,16 +218,13 @@ public class UURIFactory extends URI {
      */
     private UURIFactory() {
         super();
-        String s = System.getProperty(this.getClass().getName() +
-            SCHEMES_KEY);
-        s = System.getProperty(this.getClass().getName() +
-            SCHEMES_KEY);
+        String s = System.getProperty(this.getClass().getName() + SCHEMES_KEY);
         if (s != null && s.length() > 0) {
-        	String [] candidates = s.split(",| ");
+            String[] candidates = s.split(",| ");
             for (int i = 0; i < candidates.length; i++) {
-            	if (candidates[i] != null && candidates[i].length() > 0) {
-            		if (this.schemes == null) {
-            			this.schemes = new ArrayList(candidates.length);
+                if (candidates[i] != null && candidates[i].length() > 0) {
+                    if (this.schemes == null) {
+                        this.schemes = new ArrayList(candidates.length);
                     }
                     this.schemes.add(candidates[i]);
                 }
@@ -283,8 +280,7 @@ public class UURIFactory extends URI {
      */
     private UURI create(String uri, String charset) throws URIException {
         boolean e = isEscaped(uri);
-        UURI uuri  = new UURIImpl(fixup(uri, null, e),
-            e, charset);
+        UURI uuri  = new UURIImpl(fixup(uri, null, e), e, charset);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("URI " + uri +
                 " PRODUCT " + uuri.toString() +
@@ -360,20 +356,21 @@ public class UURIFactory extends URI {
     throws URIException {
         if (uri == null) {
             throw new NullPointerException();
-        } else if (uri.length() == 0 && base == null){
+        } else if (uri.length() == 0 && base == null) {
             throw new URIException("URI length is zero (and not relative).");
         }
         
         if (uri.length() > UURI.MAX_URL_LENGTH) {
-            // TODO: Would  make sense to test against for excessive length
-            // after all the fixup and normalization has been done.
-            throw new URIException("URI length > " + UURI.MAX_URL_LENGTH + ": " +
-                uri);
+            // We check length here and again later after all convertions.
+            throw new URIException("URI length > " + UURI.MAX_URL_LENGTH +
+                ": " + uri);
         }
         
         // Replace nbsp with normal spaces (so that they get stripped if at
         // ends, or encoded if in middle)
-        uri = TextUtils.replaceAll(NBSP, uri, SPACE);
+        if (uri.indexOf(NBSP) >= 0) {
+            uri = TextUtils.replaceAll(NBSP, uri, SPACE);
+        }
         
         // Get rid of any trailing spaces or new-lines. 
         uri = uri.trim();
@@ -388,7 +385,9 @@ public class UURIFactory extends URI {
         }
         
         // Kill newlines etc
-        uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
+        if (uri.indexOf(NEWLINE) >= 0) {
+            uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
+        }
         
         // Test for the case of more than two slashes after the http(s) scheme.
         // Replace with two slashes as mozilla does if found.
@@ -424,7 +423,7 @@ public class UURIFactory extends URI {
             if (base == null) {
                 throw new URIException("Relative URI but no base: " + uri);
             }
-            if (uriPath != null) {
+            if (uriPath != null && uriPath.length() > 0) {
                 // The parent class has a bug in that if dbl-slashes in a
                 // relative path, then it thinks all before the dbl-slashes
                 // a scheme -- it doesn't look for a colon. Remove
@@ -455,8 +454,8 @@ public class UURIFactory extends URI {
                 uriAuthority = checkDomainlabel(uriAuthority.toLowerCase());
             } else {
                 uriAuthority = uriAuthority.substring(0, index) +
-                	COMMERCIAL_AT + checkDomainlabel(
-                	    uriAuthority.substring(index + 1).toLowerCase());
+                    COMMERCIAL_AT + checkDomainlabel(uriAuthority.
+                        substring(index + 1).toLowerCase());
             }
         }
 
