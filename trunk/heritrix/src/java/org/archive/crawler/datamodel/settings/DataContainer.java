@@ -25,6 +25,8 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +46,7 @@ public class DataContainer extends HashMap {
     private ComplexType complexType;
 
     /** The Settings object for which this data is valid */
-    private CrawlerSettings settings;
+    private Reference settings;
 
     /** The attributes defined for this DataContainers combination of
      * ComplexType and CrawlerSettings.
@@ -63,7 +65,7 @@ public class DataContainer extends HashMap {
      */
     public DataContainer(CrawlerSettings settings, ComplexType module) {
         super();
-        this.settings = settings;
+        this.settings = new WeakReference(settings);
         this.complexType = module;
         attributes = new ArrayList();
         attributeNames = new HashMap();
@@ -186,7 +188,7 @@ public class DataContainer extends HashMap {
         throws InvalidAttributeValueException, AttributeNotFoundException {
 
         ModuleAttributeInfo attrInfo = (ModuleAttributeInfo) complexType
-                .getAttributeInfo(settings.getParent(), (String) key);
+                .getAttributeInfo(getSettings().getParent(), (String) key);
 
         ModuleAttributeInfo localAttrInfo =
             (ModuleAttributeInfo) getAttributeInfo((String) key);
@@ -300,7 +302,7 @@ public class DataContainer extends HashMap {
      * @return the settings object for which this DataContainers data are valid.
      */
     protected CrawlerSettings getSettings() {
-        return settings;
+        return (CrawlerSettings) settings.get();
     }
 
 }
