@@ -110,11 +110,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the global settings object.
      */
     public CrawlerSettings globalSettings() {
-        try {
-            return settingsHandler.getSettingsObject(null);
-        } catch (NullPointerException e) {
+        if (settingsHandler==null) {
             return null;
         }
+        return settingsHandler.getSettingsObject(null);
+        
+//        try {
+//            return settingsHandler.getSettingsObject(null);
+//        } catch (NullPointerException e) {
+//            return null;
+//        }
     }
 
     public Type addElement(CrawlerSettings settings, Type type)
@@ -386,12 +391,17 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     public Object getAttribute(String name, CrawlURI uri)
         throws AttributeNotFoundException {
         CrawlerSettings settings;
-        try {
-            settings = uri.getServer().getSettings();
-        } catch (NullPointerException e) {
-            // The URI don't know its settings, use globals
+        if(uri==null||uri.getServer()==null) {
             settings = globalSettings();
+        } else {
+            settings = uri.getServer().getSettings();
         }
+//        try {
+//            settings = uri.getServer().getSettings();
+//        } catch (NullPointerException e) {
+//            // The URI don't know its settings, use globals
+//            settings = globalSettings();
+//        }
         return getAttribute(settings, name);
     }
 
