@@ -61,7 +61,7 @@ public class RobotsExclusionPolicy {
 					read = read.trim(); 
 					if (read.matches("(?i)^User-agent:.*")) {
 						String ua = read.substring(11).trim().toLowerCase();
-						if(current==null||current.size()==0) {
+						if(current==null||current.size()!=0) {
 							// only create new rules-list if necessary
 							// otherwise share with previous user-agent
 							current = new ArrayList();
