@@ -69,7 +69,7 @@ public class Processor extends XMLConfig {
 	/**
 	 * @return
 	 */
-	private String getName() {
+	protected String getName() {
 		return name;
 	}
 
