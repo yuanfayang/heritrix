@@ -117,8 +117,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			
   			if(scheme.equals("dns")){
   				// this breaks the tools, don't do it for now
-  				return;
-  				//writeDns(curi);
+  				//return;
+  				writeDns(curi);
   				
   			}else if(scheme.equals("http")){
 	  			writeHttp(curi);
@@ -167,8 +167,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 				throw new InvalidRecordException("missing data elements");
 			}		
 			
-			String metaLineStr = "\n"
-					+ curi.getURIString()
+			String metaLineStr = 
+					curi.getURIString()
 					+ " "
 					+ hostIP
 					+ " "
