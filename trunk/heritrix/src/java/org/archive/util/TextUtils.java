@@ -183,7 +183,7 @@ public class TextUtils {
      * @return The same string escaped.
      */
     public static String escapeForJavascript(String s) {
-        if(s.indexOf('\'') < 0 ){
+        if(s.indexOf('\'') < 0 && s.indexOf('\n') < 0){
             return s;
         }
         StringBuffer buffer = new StringBuffer(s.length() + 10);
