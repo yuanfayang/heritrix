@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import org.archive.crawler.datamodel.*;
+
 /** 
  * Represents the collection of URIs ready/wanted 
  * for fetching. 

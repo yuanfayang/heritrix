@@ -4,9 +4,11 @@
  *
  * $Header$
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.datamodel;
 
 import java.net.InetAddress;
+
+import org.archive.crawler.framework.RobotsExclusionPolicy;
 
 /**
  * Represents a 

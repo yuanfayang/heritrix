@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import org.archive.crawler.datamodel.*;
+
 /**
  * Decides how incoming CrawlURIs and associated URI strings
  * should be handled by the URIManager.

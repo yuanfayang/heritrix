@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import org.archive.crawler.datamodel.*;
+
 
 /**
  * Represents a collection of URIs.
@@ -19,10 +21,11 @@ package org.archive.crawler.framework;
  *
  */
 public interface URISet /* extends Set ??? */ {
-	public boolean contains(NormalizedURIString u);
+	public boolean contains(UURI u);
+	public boolean contains(CrawlURI curi);
 	
-	public void add(NormalizedURIString u);
-	public void remove(NormalizedURIString u);
+	public void add(UURI u);
+	public void remove(UURI u);
 	
 	public void add(CrawlURI curi);
 	public void remove(CrawlURI curi);
