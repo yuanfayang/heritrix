@@ -72,7 +72,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 			controller.toeFinished(this);
 		} catch (OutOfMemoryError e) {
 			e.printStackTrace();
-			logger.warning(getName()+" pausing: out of memory error");
+			logger.warning(getName()+" exitting: out of memory error");
 			shouldCrawl = false;
 		}
 		logger.fine(getName()+" finished for order '"+controller.getOrder().getName()+"'");
@@ -94,10 +94,12 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 			}
 		
 			controller.getFrontier().finished(currentCuri);
-			currentCuri = null;
 			lastFinishTime = System.currentTimeMillis();
+			synchronized(pool) {
+				currentCuri = null;
+				pool.noteAvailable(this);
+			}
 		}
-		pool.noteAvailable(this);
 		
 		try {
 			wait(); // until master thread gives a new work URI
