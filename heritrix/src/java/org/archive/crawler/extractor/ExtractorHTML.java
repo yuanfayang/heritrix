@@ -187,7 +187,7 @@ implements CoreAttributeConstants {
                             // Controller can be null: e.g. when running
                             // ExtractorTool.
                             getController().
-                                logUriError(e, curi, value.toString());
+                                logUriError(e, curi.getUURI(), value.toString());
                         } else {
                             logger.info("Failed set base uri: " +
                                 curi + ", " + value.toString() + ": " +
@@ -311,8 +311,11 @@ implements CoreAttributeConstants {
     static final String JAVASCRIPT = "(?i)^javascript:.*";
 
     /**
+     * Handle generic HREF cases.
+     * 
      * @param curi
      * @param value
+     * @param context
      */
     protected void processLink(CrawlURI curi, CharSequence value, CharSequence context) {
         String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
@@ -332,7 +335,7 @@ implements CoreAttributeConstants {
             curi.createAndAddLinkRelativeToBase(uri, context, hopType);
         } catch (URIException e) {
             if (getController() != null) {
-                getController().logUriError(e, curi, uri);
+                getController().logUriError(e, curi.getUURI(), uri);
             } else {
                 logger.info("Failed createAndAddLinkRelativeToBase " +
                     curi + ", " + uri + ", " + context + ", " + hopType +
@@ -566,7 +569,7 @@ implements CoreAttributeConstants {
                     Link.REFER_HOP);
             } catch (URIException e) {
                 if (getController() != null) {
-                    getController().logUriError(e, curi, refreshUri);
+                    getController().logUriError(e, curi.getUURI(), refreshUri);
                 } else {
                     logger.info("Failed createAndAddLinkRelativeToBase " +
                         curi + ", " + cs + ", " + refreshUri + ": " + e);

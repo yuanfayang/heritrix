@@ -27,7 +27,7 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -40,12 +40,12 @@ public class UriErrorFormatter extends Formatter implements CoreAttributeConstan
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
      */
     public String format(LogRecord lr) {
-        CrawlURI curi = (CrawlURI) lr.getParameters()[0];
+        UURI uuri = (UURI) lr.getParameters()[0];
         String problem = (String) lr.getParameters()[1];
 
         return ArchiveUtils.get17DigitDate()
         + " "
-        + ( (curi ==null) ? "n/a" : curi.getURIString() )
+        + ( (uuri ==null) ? "n/a" : uuri.toString() )
         + " \""
         + lr.getMessage()
         + "\" "
