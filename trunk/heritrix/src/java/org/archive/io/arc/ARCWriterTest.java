@@ -182,7 +182,8 @@ public class ARCWriterTest
 
     public void testGetOutputDir() throws IOException {
         ARCWriter arcWriter = new ARCWriter(getTmpDir(),
-            "getOutputDir-" + PREFIX, false, DEFAULT_MAX_ARC_FILE_SIZE);
+            "getOutputDir-" + PREFIX, null, false, DEFAULT_MAX_ARC_FILE_SIZE,
+            null);
         assertEquals(getTmpDir(), arcWriter.getArcsDir());
         arcWriter.close();
     }

@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
@@ -78,7 +79,7 @@ public class ARCWriterPool {
     public ARCWriterPool(File arcsDir, String prefix)
         throws IOException
     {
-        this(arcsDir, prefix, ARCConstants.DEFAULT_COMPRESS,
+        this(arcsDir, prefix, null, ARCConstants.DEFAULT_COMPRESS,
             ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE, null, DEFAULT_MAX_ACTIVE,
             DEFAULT_MAXIMUM_WAIT);
     }
@@ -97,10 +98,11 @@ public class ARCWriterPool {
     public ARCWriterPool(File arcsDir, String prefix, boolean compress)
         throws IOException
     {
-        this(arcsDir, prefix, compress, ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE,
-            null, DEFAULT_MAX_ACTIVE, DEFAULT_MAXIMUM_WAIT);
+        this(arcsDir, prefix, null, compress,
+            ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE, null,
+            DEFAULT_MAX_ACTIVE, DEFAULT_MAXIMUM_WAIT);
     }
-
+    
     /**
      * Constructor
      *
@@ -108,8 +110,6 @@ public class ARCWriterPool {
      * @param prefix ARC file prefix to use.
      * @param compress Whether to compress the ARCs made.
      * @param arcMaxSize Maximum size for arcs.
-     * @param suffix Suffix to tag on to arc file names.  May be null.  If
-     * '${HOSTNAME}' will interpolate hostname.
      * @param maxActive Maximum active ARCWriters.  Tactic is to block waiting
      * a maximum of MAXIMUM_WAIT till an ARC comes available.
      * @param maxWait Time to wait on an ARCWriter when pool is all checked
@@ -118,14 +118,43 @@ public class ARCWriterPool {
      * to create the directory.
      */
     public ARCWriterPool(File arcsDir, String prefix, boolean compress,
-            int arcMaxSize, String suffix, int maxActive, int maxWait)
+            int arcMaxSize, int maxActive, int maxWait) throws IOException {
+        this(arcsDir, prefix, null, compress, arcMaxSize, null, maxActive,
+            maxWait);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param arcsDir Directory we dump ARC files to.
+     * @param prefix ARC file prefix to use.
+     * @param suffix Suffix to tag on to arc file names.  May be null.  If
+     * '${HOSTNAME}' will interpolate hostname.
+     * @param compress Whether to compress the ARCs made.
+     * @param arcMaxSize Maximum size for arcs.
+     * @param metadata Arc file meta data.  Can be null.  Is list of File and/or
+     * String objects.
+     * @param maxActive Maximum active ARCWriters.  Tactic is to block waiting
+     * a maximum of MAXIMUM_WAIT till an ARC comes available.
+     * @param maxWait Time to wait on an ARCWriter when pool is all checked
+     * out (Milliseconds).
+     * @throws IOException Passed directory is not writeable or we were unable
+     * to create the directory.
+     */
+    public ARCWriterPool(File arcsDir, String prefix, String suffix,
+            boolean compress, int arcMaxSize, List metadata, int maxActive,
+            int maxWait)
         throws IOException
     {
-        logger.fine("Configuration: prefix=" + prefix + ", compress=" +
-                compress + ", maxActive=" + maxActive + ", maxWait=" + 
-                maxWait);
+        logger.fine("Configuration: prefix=" + prefix +
+                ", suffix=" + suffix +
+                ", compress=" + compress +
+                ", maxSize=" + arcMaxSize +
+                ", maxActive=" + maxActive +
+                ", maxWait=" + maxWait);
         this.pool = new GenericObjectPool(
-            new ARCWriterFactory(arcsDir, prefix, compress, arcMaxSize, suffix),
+            new ARCWriterFactory(arcsDir, prefix, suffix, compress, arcMaxSize,
+                metadata),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
     }
 
@@ -238,6 +267,13 @@ public class ARCWriterPool {
          */
         private static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
 
+        /**
+         * Arc file meta data list.
+         * 
+         * Can be null.  Else list of string and/or file objects.
+         */
+        private final List metadata;
+
         
         /**
          * Constructor
@@ -248,12 +284,14 @@ public class ARCWriterPool {
          * @param arcMaxSize Maximum size for arc file.
          * @param suffix Suffix to tag on to arc file names.  May be null.  If
          * '${HOSTNAME}' will interpolate hostname.
+         * @param metadata Arc file meta data.  Can be null.  Is list of File
+         * and/or String objects.
          *
          * @throws IOException Passed directory is not writeable or we were
          * unable to create the directory.
          */
-        public ARCWriterFactory(File arcsDir, String prefix, boolean compress,
-                int arcMaxSize, String suffix)
+        public ARCWriterFactory(File arcsDir, String prefix, String suffix,
+                boolean compress, int arcMaxSize, List metadata)
             throws IOException
         {
             super();
@@ -271,12 +309,13 @@ public class ARCWriterPool {
                 suffix = str;
             }
             this.suffix = suffix;
+            this.metadata = metadata;
         }
 
         public Object makeObject() throws Exception
         {
-            return new ARCWriter(this.arcsDir, this.prefix, this.compress,
-                this.arcMaxSize, this.suffix);
+            return new ARCWriter(this.arcsDir, this.prefix, this.suffix,
+                this.compress, this.arcMaxSize, this.metadata);
         }
 
         public void destroyObject(Object arcWriter) throws Exception

@@ -79,7 +79,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * @param metaData Meta data.
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData) {
-        this(in, metaData, false);
+        this(in, metaData, 0);
     }
     
     /**
@@ -88,18 +88,13 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
      * @param metaData Meta data.
-     * @param contentRead True if all content has been read already before the
-     * making of this arc record.  Update the body position so it points to end
-     * of the record.  This flag is only needed creating the arcfile meta data
-     * record.  It has not content.  Its all meta info.
+     * @param bodyOffset Offset into the body.  Usually 0.
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData,
-                boolean contentRead) {
+                int bodyOffset) {
         this.in = in;
         this.metaData = metaData;
-        if (contentRead) {
-            this.position = metaData.getLength();
-        }
+        this.position = bodyOffset;
     }
     
     /* (non-Javadoc)

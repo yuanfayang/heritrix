@@ -38,7 +38,7 @@ import java.nio.MappedByteBuffer;
  * @author stack
  */
 public class MappedByteBufferInputStream extends InputStream
-    implements Position {
+        implements Position {
 	
     /**
      * The mapped byte buffer we're feeding this stream from.
