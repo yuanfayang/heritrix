@@ -4,8 +4,9 @@
     "http://java.sun.com/j2ee/dtds/web-app_2_3.dtd">
 
 <web-app>
-    <display-name>Heritrix Selftest</display-name>
-
+    <display-name>Selftest</display-name>
+    <description>Suite of tests for a web crawler.</description>
+    <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
     <security-constraint>
         <display-name>Basic auth constraint.</display-name>
        <web-resource-collection>

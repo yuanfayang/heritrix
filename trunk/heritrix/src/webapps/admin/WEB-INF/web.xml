@@ -9,6 +9,10 @@
     </icon>
     <display-name>Heritrix Console</display-name>
     <description>Heritrix Administration Console</description>
+    <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
+    <session-config>
+        <session-timeout>120</session-timeout>
+    </session-config>
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
