@@ -170,6 +170,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * A list of profile CrawlJobs.
      */
     private TreeSet profileJobs;
+    
     // The UIDs of profiles should be NOT be timestamps. A descriptive name is ideal.
     private String defaultProfile = null;
 
@@ -392,15 +393,26 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Add a new profile
      * @param profile The new profile
      */
-    public void addProfile(CrawlJob profile){
+    public synchronized void addProfile(CrawlJob profile){
         profileJobs.add(profile);
+    }
+    
+    public synchronized void deleteProfile(CrawlJob cj) throws IOException {
+        File d = getProfilesDirectory();
+        File p = new File(d, cj.getJobName());
+        if (!p.exists()) {
+            throw new IOException("No profile named " + cj.getJobName() +
+                " at " + d.getAbsolutePath());
+        }
+        FileUtils.deleteDir(p);
+        this.profileJobs.remove(cj);
     }
 
     /**
      * Returns a List of all known profiles.
      * @return a List of all known profiles.
      */
-    public List getProfiles(){
+    public synchronized List getProfiles(){
         ArrayList tmp = new ArrayList(profileJobs.size());
         tmp.addAll(profileJobs);
         return tmp;
@@ -435,10 +447,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * profiles exist it will return null
      * @return the default profile.
      */
-    public CrawlJob getDefaultProfile(){
-        if(defaultProfile!=null){
-            Iterator it = profileJobs.iterator();
-            while( it.hasNext() ){
+    public synchronized CrawlJob getDefaultProfile(){
+        if(defaultProfile != null){
+            for(Iterator it = profileJobs.iterator(); it.hasNext();) {
                 CrawlJob item = (CrawlJob)it.next();
                 if(item.getJobName().equals(defaultProfile)){
                     // Found it.
@@ -446,7 +457,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
         }
-        if(profileJobs.size()>0){
+        if(profileJobs.size() > 0){
             return (CrawlJob)profileJobs.first();
         }
         return null;
@@ -533,9 +544,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
             }
 
             // And finally check the profiles.
-            Iterator itProfile = profileJobs.iterator();
-            while (itProfile.hasNext()) {
-                CrawlJob cj = (CrawlJob) itProfile.next();
+            for (Iterator i = getProfiles().iterator(); i.hasNext();) {
+                CrawlJob cj = (CrawlJob) i.next();
                 if (cj.getUID().equals(jobUID)) {
                     return cj;
                 }
@@ -715,9 +725,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                         throws FatalConfigurationException, IOException {
         File profileDir = new File(getProfilesDirectory().getAbsoluteFile()
                 + File.separator + name);
-
         CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE);
-
         CrawlJob newProfile = new CrawlJob(name,
             makeNew(baseOn, name, description, seeds, profileDir, cjseh,
                 "order.xml", "seeds.txt"),
