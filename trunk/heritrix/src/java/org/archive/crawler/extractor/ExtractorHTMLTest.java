@@ -249,8 +249,8 @@ implements CoreAttributeConstants {
         extractor.extract(curi,cs);
         assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
             public boolean evaluate(Object object) {
-                return ((Link) object).getDestination().toString().contains(
-                        "/documents/prem/18/1/graphics/qtvr/hall.mov");
+                return ((Link) object).getDestination().toString().indexOf(
+                        "/documents/prem/18/1/graphics/qtvr/hall.mov")>=0;
             }
         }));
     }
@@ -274,8 +274,8 @@ implements CoreAttributeConstants {
         assertTrue("Not stripping new lines", CollectionUtils.exists(curi
                 .getOutLinks(), new Predicate() {
             public boolean evaluate(Object object) {
-                return ((Link) object).getDestination().toString().contains(
-                        "http://www.carsound.dk/");
+                return ((Link) object).getDestination().toString().indexOf(
+                        "http://www.carsound.dk/")>=0;
             }
         }));
     }
