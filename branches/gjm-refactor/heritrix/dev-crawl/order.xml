@@ -26,7 +26,7 @@
  
  <behavior
    disk-path="disk"
-   max-toe-threads="25"
+   max-toe-threads="20"
    >
    
   <http-headers
