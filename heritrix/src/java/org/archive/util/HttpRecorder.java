@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
 import org.archive.io.ReplayCharSequence;
+import org.archive.io.ReplayInputStream;
 
 
 /**
@@ -297,6 +298,14 @@ public class HttpRecorder {
     public ReplayCharSequence getReplayCharSequence() throws IOException {
         return getRecordedInput().
             getReplayCharSequence(this.characterEncoding);
+    }
+    
+    /**
+     * @return A replay input stream.
+     * @throws IOException
+     */
+    public ReplayInputStream getReplayInputStream() throws IOException {
+        return getRecordedInput().getReplayInputStream();
     }
     
     /**

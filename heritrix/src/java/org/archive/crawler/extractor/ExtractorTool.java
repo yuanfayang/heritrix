@@ -259,8 +259,15 @@ public class ExtractorTool {
                     break;
 
                 case 'e':
-                    extractors =
-                        cmdlineOptions[i].getValue().split(",");
+                    String value = cmdlineOptions[i].getValue();
+                    if (value == null || value.length() <= 0) {
+                        // Allow saying NO extractors so we can see
+                        // how much it costs just reading through
+                        // ARCs.
+                        extractors = new String [0];
+                    } else {
+                        extractors = value.split(",");
+                    }
                     break;
                     
                 case 's':
