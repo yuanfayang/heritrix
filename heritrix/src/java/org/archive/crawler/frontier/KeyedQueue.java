@@ -133,7 +133,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
         }
         this.crawlServer = server;
         String tmpName = key;
-        this.innerQ = new TieredQueue(3);
+        this.innerQ = new TieredQueue(4);
         this.innerQ.initializeDiskBackedQueues(scratchDir,tmpName,300);
         this.state = INACTIVE;
     }
@@ -323,13 +323,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      */
     public void enqueue(CrawlURI curi) {
      
-        if(curi.needsImmediateScheduling()) {
-            innerQ.enqueue(curi,0);
-        } else if (curi.needsSoonScheduling()) {
-            innerQ.enqueue(curi,1);
-        } else {
-            innerQ.enqueue(curi,2);
-        }
+        innerQ.enqueue(curi,curi.getSchedulingDirective());
         lastQueued = curi.getURIString();
     }
 

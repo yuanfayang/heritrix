@@ -111,7 +111,12 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     protected Environment dbEnvironment;
     // TODO: investigate using multiple environments to split disk accesses
     // across separate physical disks
-
+    
+    /**
+     * Create the BdbFrontier
+     * 
+     * @param name
+     */
     public BdbFrontier(String name) {
         this(name, "BdbFrontier. EXPERIMENTAL - MAY NOT BE RELIABLE. " +
                 "A Frontier using BerkeleyDB Java Edition Databases for " +
@@ -123,6 +128,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * Create the BdbFrontier
      * 
      * @param name
+     * @param description
      */
     public BdbFrontier(String name, String description) {
         // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
@@ -165,10 +171,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * Create a memory-based UriUniqFilter that will serve as record 
      * of already seen URIs.
      *
-     * @param dir Directory where the set's files should be written
-     * @param filePrefix Prefix to names of the set's files
      * @return A UURISet that will serve as a record of already seen URIs
-     * @throws IOException If problems occur creating files on disk
      * @throws DatabaseException
      */
     protected UriUniqFilter createAlreadyIncluded() throws DatabaseException {
@@ -268,7 +271,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      *
      * @return next CrawlURI to be processed. Or null if none is available.
      *
-     * @see org.archive.crawler.framework.Frontier#next(int)
+     * @see org.archive.crawler.framework.Frontier#next()
      */
     public CrawlURI next() throws InterruptedException, EndedException {
         while (true) {
@@ -309,7 +312,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * via the next next() call, as a result of finished().
      *
      *  (non-Javadoc)
-     * @throws InterruptedException
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public void finished(CrawlURI curi) {
@@ -428,7 +430,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
             boolean verbose) throws InvalidFrontierMarkerException {
-        List curis;
+        List curis; 
         try {
             curis = pendingUris.getFrom(marker,numberOfMatches);
         } catch (DatabaseException e) {
@@ -552,7 +554,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         /**
          * Create the multi queue in the given environment. 
          * 
-         * @param object
+         * @param env bdb environment to use
          * @throws DatabaseException
          */
         public BdbMultiQueue(Environment env) throws DatabaseException {
@@ -570,6 +572,8 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          * Delete all CrawlURIs matching the given expression.
          * 
          * @param match
+         * @return count of deleted items
+         * @throws DatabaseException
          */
         public long deleteMatching(String match) throws DatabaseException {
             long deletedCount = 0;
@@ -600,13 +604,14 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         }
 
         /**
-         * @param marker
-         * @param numberOfMatches
-         * @return
+         * @param m marker
+         * @param maxMatches
+         * @return list of matches starting from marker position
          * @throws DatabaseException
          */
         public List getFrom(FrontierMarker m, int maxMatches) throws DatabaseException {
             int matches = 0;
+            int tries = 0;
             ArrayList results = new ArrayList(maxMatches);
             BdbFrontierMarker marker = (BdbFrontierMarker) m;
             
@@ -625,6 +630,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
                         results.add(curi);
                         matches++;
                     }
+                    tries++;
                     result = cursor.getNext(key,value,null);
                 }
             } finally {
@@ -724,15 +730,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         private DatabaseEntry calculateInsertKey(CrawlURI curi) {
             byte[] keyData = new byte[16];
             long fp = FPGenerator.std64.fp(curi.getClassKey()) & 0xFFFFFFFFFFFFFFF0L;
-            if (curi.needsImmediateScheduling()) {
-                // leave last 4 bits 0
-            } else if (curi.needsSoonScheduling()) {
-                // prio = 1
-                fp = fp | 0x0000000000000001L;
-            } else {
-                // prio = 2
-                fp = fp | 0x0000000000000002L;
-            }
+            fp = fp | curi.getSchedulingDirective();
             ArchiveUtils.longIntoByteArray(fp, keyData, 0);
             ArchiveUtils.longIntoByteArray(curi.getOrdinal(), keyData, 8);
             return new DatabaseEntry(keyData);
@@ -742,7 +740,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          * Delete the given CrawlURI from persistent store. Requires
          * the key under which it was stored be available. 
          * 
-         * @param peekItem
+         * @param item
          * @throws DatabaseException
          */
         public void delete(CrawlURI item) throws DatabaseException {
@@ -934,10 +932,11 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
         /**
          * Create the WakeTask for the given queue
+         * @param q queue to wake
          */
-        public WakeTask(BdbWorkQueue o) {
+        public WakeTask(BdbWorkQueue q) {
             super();
-            waker = o;
+            waker = q;
         }
 
         /* (non-Javadoc)
@@ -987,7 +986,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         }
 
         /**
-         * @param object
+         * @param key position for marker
          */
         public void setStartKey(DatabaseEntry key) {
             startKey = key;

@@ -157,7 +157,12 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             UURI prereq = UURIFactory.getInstance(getBaseURI(curi),
                 (String)curi.getPrerequisiteUri());
             CandidateURI caUri = new CandidateURI(prereq);
-            caUri.setSchedulingDirective(CandidateURI.HIGH);
+            int prereqPriority = curi.getSchedulingDirective()-1;
+            if (prereqPriority < 0) {
+                prereqPriority = 0;
+                logger.severe("unable to promote prerequisite "+caUri+" above "+curi);
+            }
+            caUri.setSchedulingDirective(curi.getSchedulingDirective()-1);
             caUri.setForceFetch(true);
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
@@ -210,7 +215,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
      * @param directive how should URIs be scheduled
      */
     private void handleLinkCollection(CrawlURI curi, UURI baseUri,
-            String collection, char linkType, String directive)
+            String collection, char linkType, int directive)
     {
         if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
             // do not follow links of error pages
