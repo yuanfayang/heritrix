@@ -65,6 +65,12 @@ public class DataContainer extends HashMap {
         if (attributeNames.containsKey(name)) {
             throw new IllegalArgumentException("Duplicate field: " + name);
         }
+        if (defaultValue == null) {
+            throw new InvalidAttributeValueException(
+                "null is not allowed as default value for attribute '"
+                + name + "' in class '"
+                + complexType.getClass().getName() + "'");
+        }
         MBeanAttributeInfo attribute =
             new ModuleAttributeInfo(
                 name,
