@@ -1399,7 +1399,7 @@ public class Frontier
         rep.append(" Finished:      " + finishedUriCount() + "\n");
         rep.append("  Successfully: " + successCount + "\n");
         rep.append("  Failed:       " + failedCount + "\n");
-        rep.append("  Disregarded:  " + discoveredCount + "\n");
+        rep.append("  Disregarded:  " + disregardedCount + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.size()+"\n");
         rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
