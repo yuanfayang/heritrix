@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.util;
+package org.archive.queue;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -41,6 +41,7 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.io.*;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.io.RandomAccessOutputStream;
+import org.archive.util.DevUtils;
 
 
 /**

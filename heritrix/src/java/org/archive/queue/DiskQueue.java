@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.util;
+package org.archive.queue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,6 +38,7 @@ import org.apache.commons.collections.Predicate;
 import org.archive.io.*;
 import org.archive.io.DevNull;
 import org.archive.io.DiskByteQueue;
+import org.archive.util.DevUtils;
 
 /**
  * Queue which stores all its objects to disk using object
@@ -140,7 +141,7 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#enqueue(java.lang.Object)
+     * @see org.archive.queue.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o){
         //logger.finest(name+"("+length+"): "+o);
@@ -167,14 +168,14 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#isEmpty()
+     * @see org.archive.queue.Queue#isEmpty()
      */
     public boolean isEmpty() {
         return length==0;
     }
 
     /**
-     * @see org.archive.util.Queue#dequeue()
+     * @see org.archive.queue.Queue#dequeue()
      */
     public Object dequeue() {
         if (isEmpty()) {
@@ -199,14 +200,14 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#length()
+     * @see org.archive.queue.Queue#length()
      */
     public long length() {
         return length;
     }
 
     /**
-     * @see org.archive.util.Queue#release()
+     * @see org.archive.queue.Queue#release()
      */
     public void release() {
  //       if(prefix.equals("DMO.info")) System.out.println("releasing DiskQueue "+prefix);
@@ -269,7 +270,7 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#peek()
+     * @see org.archive.queue.Queue#peek()
      */
     public Object peek() {
         // TODO Auto-generated method stub
@@ -277,7 +278,7 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#getIterator(boolean)
+     * @see org.archive.queue.Queue#getIterator(boolean)
      * @return iterator
      */
     public Iterator getIterator(boolean inCacheOnly) {
@@ -303,7 +304,7 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
     public long deleteMatchedItems(Predicate matcher) {
         // While not processed as many items as there currently are in the queue
