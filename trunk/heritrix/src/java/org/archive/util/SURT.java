@@ -24,12 +24,18 @@
 */ 
 package org.archive.util;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.SortedSet;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Sort-friendly Reversible URI Transform
+ * Sort-friendly Reversible URI Transform.
  * 
  * Converts URIs of the form:
  * 
@@ -37,9 +43,9 @@ import java.util.regex.Pattern;
  * 
  * ...into...
  * 
- *   scheme://#tld,domain,:port@userinfo#/path?query#fragment
+ *   scheme://(tld,domain,:port@userinfo)/path?query#fragment
  * 
- * The '#' characters serve as an unambiguous notice that the so-called 
+ * The '(' ')' characters serve as an unambiguous notice that the so-called 
  * 'authority' portion of the URI ([userinfo@]host[:port] in http URIs) has 
  * been transformed; the commas prevent confusion with regular hostnames.
  * 
@@ -90,5 +96,48 @@ public class SURT {
     
     private static String emptyIfNull(String string) {
         return string == null ? "" : string;
+    }
+
+    /**
+     * Read a set of SURT prefixes from a file; return sorted and 
+     * with redundant entries removed.
+     * 
+     * @param attribute
+     * @return
+     * @throws IOException
+     */
+    public static SortedSet importPrefixSetFrom(String path) throws IOException {
+        TreeSet surts = new TreeSet();
+        BufferedReader reader = new BufferedReader(new FileReader(path));
+        String read;
+        while ((read = reader.readLine()) != null) {
+            read = read.trim();
+            if (read.length() == 0 || read.startsWith("#")) {
+                continue;
+            }
+            surts.add(read);
+        }
+        reader.close();
+        consolidate(surts);
+        return surts;
+    }
+
+    /**
+     * Remove redundant entries in a SURT prefix list (those that are a strict
+     * extension of the preceding item). 
+     * 
+     * @param surts
+     */
+    private static void consolidate(TreeSet surts) {
+        TreeSet copy = (TreeSet) surts.clone();
+        Iterator iter = copy.iterator();
+        String prev = " ";
+        while(iter.hasNext()) {
+            String curr = (String) iter.next();
+            if(curr.startsWith(prev)) {
+                surts.remove(curr);
+            }
+            prev = curr;
+        }
     }
 }
