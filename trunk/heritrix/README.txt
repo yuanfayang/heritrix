@@ -67,7 +67,8 @@ See ./docs/articles/developer_manual.html or
 |         |            | proxy, adding of headers to request, improved|
 |         |            | out-of-the-box defaults, hash of content to  |
 |         |            | crawl log and to arcreader output, and many  |
-|         |            | bug fixes.                                   |
+|         |            | bug fixes.  Also see Known Limitations at    |
+|         |            | ./docs/articles/limitations.html.            |
 |---------+------------+----------------------------------------------|
 |         |            | Release for second heritrix workshop,        |
 |         |            | Copenhagen 06/2004 (1.0.0 first release      |
