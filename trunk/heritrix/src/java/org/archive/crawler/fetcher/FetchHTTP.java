@@ -171,6 +171,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
     
+    /**
+     * Gets set in {@link #checkAbort(CrawlURI)}.
+     */
+    private boolean abort = false;
+    
 
     /**
      * Constructor.
@@ -276,9 +281,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     addResponseContent(this, curi);
                     // The marking of body begin is skipped if we abort.
                     this.httpRecorderMethod.markContentBegin(conn);
-                    if (checkAbort(curi)) {
-                        abort();
-                    } else {
+                    if (!checkAbort(curi)) {
                         super.readResponseBody(state, conn);
                     }
         		}
@@ -291,9 +294,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     addResponseContent(this, curi);
                     // This step is skipped if we abort.
                     this.httpRecorderMethod.markContentBegin(conn);
-                    if (checkAbort(curi)) {
-                        abort();
-                    } else {
+                    if (!checkAbort(curi)) {
                         super.readResponseBody(state, conn);
                     }
                 }
@@ -307,6 +308,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         method.setDoAuthentication(addedCredentials);
         
         try {
+            this.abort = false;
         	this.http.executeMethod(method);
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
@@ -318,41 +320,39 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
         	// treating as if it were an IOException
         	failedExecuteCleanup(method, curi, e);
-            method.releaseConnection();
+        	method.releaseConnection();
         	return;
         }
         
-        if (((HttpMethodBase)method).isAborted()) {
-            rec.close();
-        } else {
-            try {
-                // Force read-to-end, so that any socket hangs occur here,
-                // not in later modules.
-                rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
-                        1000 * getTimeout(curi));
-            } catch (RecorderTimeoutException ex) {
-                curi.addAnnotation("timeTrunc");
-                method.releaseConnection();
+        try {
+            // Force read-to-end, so that any socket hangs occur here,
+            // not in later modules.
+            rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
+                    1000 * getTimeout(curi));
+        } catch (RecorderTimeoutException ex) {
+            curi.addAnnotation("timeTrunc");
+            method.releaseConnection();
+            method.abort();
+        } catch (RecorderLengthExceededException ex) {
+            curi.addAnnotation("lenTrunc");
+            method.releaseConnection();
+            method.abort();
+        } catch (IOException e) {
+            cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // For weird windows-only ArrayIndex exceptions from native code
+            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // treating as if it were an IOException
+            cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+            return;
+        } finally {
+            if (this.abort) {
+                rec.close();
                 method.abort();
-            } catch (RecorderLengthExceededException ex) {
-                curi.addAnnotation("lenTrunc");
+                curi.addAnnotation(MIDFETCH_ABORT_LOG);
+            } else {
                 method.releaseConnection();
-                method.abort();
-            } catch (IOException e) {
-                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-                return;
-            } catch (ArrayIndexOutOfBoundsException e) {
-                // For weird windows-only ArrayIndex exceptions from native code
-                // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-                // treating as if it were an IOException
-                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-                return;
-            } finally {
-                if (((HttpMethodBase)method).isAborted()) {
-                    rec.close();
-                } else {
-                    method.releaseConnection();
-                }
             }
         }
 
@@ -403,17 +403,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
     }
     
-    /**
-     * @param method
-     * @param curi 
-     * @param connection Current connection
-     * @return True if we are to abort.
-     */
     protected boolean checkAbort(CrawlURI curi) {
         if (filtersAccept(midfetchfilters, curi)) {
             return false;
         }
-        curi.addAnnotation(MIDFETCH_ABORT_LOG);
+        this.abort = true;
         return true;
     }
     
