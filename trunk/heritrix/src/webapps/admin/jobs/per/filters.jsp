@@ -26,9 +26,9 @@
 		// Didn't find any job with the given UID or no UID given.
 		response.sendRedirect("/admin/jobs.jsp?message=No job selected");
 		return;
-	} else if(theJob.isReadOnly() || theJob.isRunning()){
+	} else if(theJob.isReadOnly()){
 		// Can't edit this job.
-		response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a running or read only job");
+		response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Can't edit filters on a read only job");
 		return;
 	}
 
