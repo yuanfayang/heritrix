@@ -60,6 +60,7 @@ import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
@@ -199,8 +200,8 @@ public class Heritrix implements HeritrixMBean {
                 Heritrix.prepareHeritrixShutDown();
             }
         });
-    }
-
+    } 
+    
     /**
      * Launch program.
      *
@@ -748,13 +749,33 @@ public class Heritrix implements HeritrixMBean {
      * @return Status string.
      */
     protected String doOneCrawl(String crawlOrderFile)
-        throws InitializationException, InvalidAttributeValueException
-    {
+    throws InitializationException, InvalidAttributeValueException {
+        return doOneCrawl(crawlOrderFile, null);
+    }
+    
+    /**
+     * Launch the crawler without a web UI.
+     * 
+     * Run the passed crawl only.
+     *
+     * @param crawlOrderFile The crawl order to crawl.
+     * @param listener Register this crawl status listener before starting
+     * crawl (You can use this listener to notice end-of-crawl).
+     * @throws InitializationException
+     * @throws InvalidAttributeValueException
+     * @return Status string.
+     */
+    protected String doOneCrawl(String crawlOrderFile,
+        CrawlStatusListener listener)
+    throws InitializationException, InvalidAttributeValueException {
         XMLSettingsHandler handler =
             new XMLSettingsHandler(new File(crawlOrderFile));
         handler.initialize();
         CrawlController controller = new CrawlController();
         controller.initialize(handler);
+        if (listener != null) {
+            controller.addCrawlStatusListener(listener);
+        }
         controller.requestCrawlStart();
         return "Crawl started using " + crawlOrderFile + ".";
     }
