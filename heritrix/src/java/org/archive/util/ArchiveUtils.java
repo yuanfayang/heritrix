@@ -413,5 +413,20 @@ public class ArchiveUtils {
         String callingClassname = class1.getName();
         return (long)callingClassname.hashCode() << 32 + version;
     }
+    
+    /**
+     * Copy the raw bytes of a long into a byte array, starting at
+     * the specified offset.
+     * 
+     * @param l
+     * @param array
+     * @param offset
+     */
+    public static void longIntoByteArray(long l, byte[] array, int offset) {
+        int i, shift;
+                  
+        for(i = 0, shift = 56; i < 8; i++, shift -= 8)
+        array[offset+i] = (byte)(0xFF & (l >> shift));
+    }
 }
 
