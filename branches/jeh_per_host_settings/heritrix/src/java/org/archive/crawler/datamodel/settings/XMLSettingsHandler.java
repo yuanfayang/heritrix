@@ -24,17 +24,24 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
+import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
 
 /**
  * 
@@ -42,6 +49,20 @@ import javax.xml.transform.stream.StreamResult;
  *
  */
 public class XMLSettingsHandler extends AbstractSettingsHandler {
+    // XML element name constants
+    protected static final String XML_SCHEMA = "heritrix_settings.xsd";
+    protected static final String XML_ROOT_ORDER = "crawl-order";
+    protected static final String XML_ROOT_HOST_SETTINGS = "crawl-settings";
+    protected static final String XML_ELEMENT_CONTROLLER = "controller";
+    protected static final String XML_ELEMENT_META = "meta";
+    protected static final String XML_ELEMENT_NAME = "name";
+    protected static final String XML_ELEMENT_DESCRIPTION = "description";
+    protected static final String XML_ELEMENT_DATE = "date";
+    protected static final String XML_ELEMENT_OBJECT = "object";
+    protected static final String XML_ELEMENT_NEW_OBJECT = "newObject";
+    protected static final String XML_ATTRIBUTE_NAME = "name";
+    protected static final String XML_ATTRIBUTE_CLASS = "class";
+
 	private File orderFile;
 	private File settingsDirectory;
 	private final static String settingsFilename = "settings.xml";
@@ -121,35 +142,31 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 	 * @see org.archive.crawler.datamodel.settings.AbstractSettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
 	 */
 	protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
-		CrawlerSettings parent = settings.getParent();
-		String scope = settings.getScope();
-		if (parent == null) {
-			// Read order file
-		
-		} else {
-			// Read per host file
-		}
+        File filename;
+        if (settings.getScope() == null) {
+            // Read order file
+            filename = orderFile;
+        } else {
+            // Read per host file
+            File dirname = scopeToFile(settings.getScope());
+            filename = new File(dirname, settingsFilename);
+        }
+        System.out.print("XXX  TRY TO READ: " + filename.getAbsolutePath());
+        if(filename.exists()) {
+            System.out.println("  XXX  FOUND");
+            try {
+                XMLReader parser = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+                InputStream file = new BufferedInputStream(new FileInputStream(filename));
+                parser.setContentHandler(new CrawlSettingsSAXHandler(settings));             
+                parser.parse(new InputSource(file));
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("  XXX  NOT FOUND");
+            settings = null;
+        }
 		return settings;
-		/*
-				File filename = new File(scopeToFile(scope), configurationFilename);
-				System.out.print("READING: " + filename.getAbsolutePath());
-				if(filename.exists()) {
-					CrawlConfiguration config = new CrawlConfiguration(parent, scope);
-					try {
-						XMLReader parser = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
-						InputStream file = new BufferedInputStream(new FileInputStream(filename));
-						parser.setContentHandler(new CrawlConfigurationSAXHandler(config));				
-						parser.parse(new InputSource(file));
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					System.out.println("  OK");
-					return config;
-				} else {
-					System.out.println("  NOT FOUND");
-					return null;
-				}
-		*/
 	}
 }

@@ -30,6 +30,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.xml.transform.sax.SAXSource;
 
+import org.archive.util.ArchiveUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
@@ -47,6 +48,9 @@ import org.xml.sax.helpers.AttributesImpl;
  *
  */
 public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
+    // for prettyprinting XML file
+    private static final int indentAmount = 2;
+
     private CrawlerSettings settings;
     private ContentHandler handler;
     private boolean orderFile = false;
@@ -150,22 +154,8 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
 
     // We're not doing namespaces
     private static final String nsu = ""; // NamespaceURI
-    private static final String schema = "heritrix_settings.xsd";
-    private static final String orderElement = "crawl-order";
-    private static final String hostSettingsElement = "crawl-settings";
-    private static final String controllerElement = "controller";
-    private static final String settingElement = "setting";
-    private static final String objectElement = "object";
-    private static final String newObjectElement = "newObject";
-    private static final String nameAttribute = "name";
-    private static final String typeAttribute = "type";
-    private static final String classAttribute = "class";
-    private static final String commentAttribute = "comment";
-
     private static final char[] indentArray =
         "\n                                          ".toCharArray();
-    // for readability!
-    private static final int indentAmount = 2;
 
     /* (non-Javadoc)
      * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
@@ -187,33 +177,32 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             "noNamespaceSchemaLocation",
             "xsi:noNamespaceSchemaLocation",
             nsu,
-            schema);
+            XMLSettingsHandler.XML_SCHEMA);
         String rootElement;
         if (orderFile) {
-            rootElement = orderElement;
+            rootElement = XMLSettingsHandler.XML_ROOT_ORDER;
         } else {
-            rootElement = hostSettingsElement;
+            rootElement = XMLSettingsHandler.XML_ROOT_HOST_SETTINGS;
         }
         Attributes nullAtts = new AttributesImpl();
         handler.startElement(nsu, rootElement, rootElement, atts);
+
+        // Write meta information
         handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
-        handler.startElement(nsu, "meta", "meta", nullAtts);
-        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount * 2);
-        handler.startElement(nsu, "name", "name", nullAtts);
-        handler.characters(
-            settings.getName().toCharArray(),
-            0,
-            settings.getName().length());
-        handler.endElement(nsu, "name", "name");
-        handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount * 2);
-        handler.startElement(nsu, "description", "description", nullAtts);
-        handler.characters(
-            settings.getDescription().toCharArray(),
-            0,
-            settings.getDescription().length());
-        handler.endElement(nsu, "description", "description");
+        handler.startElement(nsu, XMLSettingsHandler.XML_ELEMENT_META, XMLSettingsHandler.XML_ELEMENT_META, nullAtts);
+
+        // Write settings name
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_NAME, settings.getName(), null, 1 + indentAmount * 2);
+
+        // Write settings description
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION, settings.getDescription(), null, 1 + indentAmount * 2);
+
+        // Write file date
+        String dateStamp = ArchiveUtils.get14DigitDate();
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DATE, dateStamp, null, 1 + indentAmount * 2);
+
         handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
-        handler.endElement(nsu, "meta", "meta");
+        handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_META, XMLSettingsHandler.XML_ELEMENT_META);
 
         Iterator modules = settings.modules();
         while (modules.hasNext()) {
@@ -235,11 +224,11 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         DataContainer data = settings.getData(complexType.getAbsoluteName());
         MBeanInfo mbeanInfo = data.getMBeanInfo();
         AttributesImpl atts = new AttributesImpl();
-        atts.addAttribute(nsu, nameAttribute, nameAttribute, nsu, complexType.getName());
+        atts.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_NAME, XMLSettingsHandler.XML_ATTRIBUTE_NAME, nsu, complexType.getName());
         atts.addAttribute(
             nsu,
-            classAttribute,
-            classAttribute,
+            XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
+            XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
             nsu,
             mbeanInfo.getClassName());
             
@@ -277,8 +266,8 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
                     atts.clear();
                     atts.addAttribute(
                         nsu,
-                        nameAttribute,
-                        nameAttribute,
+                        XMLSettingsHandler.XML_ATTRIBUTE_NAME,
+                        XMLSettingsHandler.XML_ATTRIBUTE_NAME,
                         nsu,
                         attribute.getName());
                     if (value == null) {
@@ -333,11 +322,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             String elementName =
                 AbstractSettingsHandler.getTypeName(
                     element.getClass().getName());
-            handler.ignorableWhitespace(indentArray, 0, indent + indentAmount);
-            handler.startElement(nsu, elementName, elementName, atts);
-            char valueArray[] = element.toString().toCharArray();
-            handler.characters(valueArray, 0, valueArray.length);
-            handler.endElement(nsu, elementName, elementName);
+            writeSimpleElement(elementName, element.toString(), null, indent + indentAmount);
         }
     }
 
@@ -346,13 +331,13 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         if (complexType instanceof CrawlerModule) {
             if (complexType.getParent() == null) {
                 // Top level controller element
-                elementName = controllerElement;
+                elementName = XMLSettingsHandler.XML_ELEMENT_CONTROLLER;
             } else if (settings.getParent() != null && complexType.getSettingsHandler().getModule(complexType.getName()) != null) {
                 // This is not the order file and we are referencing an object
-                elementName = objectElement;
+                elementName = XMLSettingsHandler.XML_ELEMENT_OBJECT;
             } else {
                 // The object is not referenced before
-                elementName = newObjectElement;
+                elementName = XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT;
             }
         } else {
             // It's a map
@@ -361,6 +346,16 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         return elementName;
     }
 
+    private void writeSimpleElement(String elementName, String value, Attributes atts, int indent) throws SAXException {
+        if (atts == null) {
+            atts = new AttributesImpl();
+        }
+        handler.ignorableWhitespace(indentArray, 0, indent);
+        handler.startElement(nsu, elementName, elementName, atts);
+        handler.characters(value.toCharArray(), 0, value.length());
+        handler.endElement(nsu, elementName, elementName);
+    }
+    
     /* (non-Javadoc)
      * @see org.xml.sax.XMLReader#parse(java.lang.String)
      */
