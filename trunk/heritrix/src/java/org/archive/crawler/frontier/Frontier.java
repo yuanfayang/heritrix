@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -47,6 +48,8 @@ import javax.management.AttributeNotFoundException;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.Heritrix;
+import org.archive.crawler.admin.Alert;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -487,8 +490,9 @@ public class Frontier
         }
         
         // now, see if any holding queues are ready with a CrawlURI
-        if (!this.readyClassQueues.isEmpty()) {
+        while (!this.readyClassQueues.isEmpty() && curi == null) {
             curi = dequeueFromReady();
+
             try {
                 return emitCuri(curi);
             }
@@ -782,7 +786,23 @@ public class Frontier
     private CrawlURI dequeueFromReady() {
         URIWorkQueue firstReadyQueue = (URIWorkQueue)readyClassQueues.getFirst();
         assert firstReadyQueue.getState() == URIWorkQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
-        CrawlURI readyCuri = firstReadyQueue.dequeue();
+        CrawlURI readyCuri = null;
+        try {
+            readyCuri = firstReadyQueue.dequeue();
+        } catch (NoSuchElementException e) {
+            firstReadyQueue.freeze(); // Do not want to do anything more with the queue
+            StringBuffer alertbody = new StringBuffer();
+            alertbody.append("A NoSuchElementException occured while trying to dequeue " +
+                    "an item from " +firstReadyQueue.getClassKey() + "\n" +
+                    "Queue report follows:\n");
+            appendKeyedQueue(alertbody,(KeyedQueue)firstReadyQueue,System.currentTimeMillis());
+            Heritrix.addAlert(
+                    new Alert("NoSuchElementException while dequeing from " + 
+                                    firstReadyQueue.getClassKey(),
+                            alertbody.toString(),
+                            e,
+                            Level.SEVERE));
+        }
         firstReadyQueue.checkEmpty();
         return readyCuri;
     }
@@ -1566,11 +1586,13 @@ public class Frontier
     }
 
 
-    private void appendKeyedQueue(StringBuffer rep, KeyedQueue kq, long now) {
+    private void appendKeyedQueue(StringBuffer rep, URIWorkQueue kq, long now) {
         rep.append("    KeyedQueue  " + kq.getClassKey() + "\n");
         rep.append("     Length:        " + kq.length() + "\n");
 //        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
-        rep.append("     Status:        " + kq.state.toString() + "\n");
+        if(kq instanceof KeyedQueue){
+        	rep.append("     Status:        " + ((KeyedQueue)kq).state.toString() + "\n");
+        }
         if(kq.getState()==URIWorkQueue.SNOOZED) {
             rep.append("     Wakes in:      " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
         }
