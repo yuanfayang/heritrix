@@ -118,22 +118,19 @@ public class ARCWriterTest
     private void validate(File arcFile, int recordCount)
         throws FileNotFoundException, IOException
     {
-        ARCReader reader = new ARCReader(arcFile);
+        ARCReader reader = ARCReaderFactory.get(arcFile);
         assertNotNull(reader);
         List metaDatas = null;
-        if (recordCount == -1)
-        {
+        if (recordCount == -1) {
             metaDatas = reader.validate();
-        }
-        else
-        {
-        		metaDatas = reader.validate(recordCount);
+        } else {
+                metaDatas = reader.validate(recordCount);
         }
         reader.close();
         assertTrue("Metadatas not equal", metaDatas.size() == recordCount);
         for (Iterator i = metaDatas.iterator(); i.hasNext();) {
-        		ARCRecordMetaData r = (ARCRecordMetaData)i.next();
-        		assertTrue("Record is empty", r.getLength() > 0);
+                ARCRecordMetaData r = (ARCRecordMetaData)i.next();
+                assertTrue("Record is empty", r.getLength() > 0);
         }
     }
 
