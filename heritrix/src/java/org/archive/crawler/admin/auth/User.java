@@ -18,29 +18,67 @@
  */
 package org.archive.crawler.admin.auth;
 
+import java.util.Vector;
+
 /**
- * @author Kristinn Sigurdsson
- *
  * A simple class for user authentication.  The class also defines the availible user roles.
+ * On startup, all valid logins should be added using the {@link #addLogin(String, String, int) addLogin()}
+ * method. Logins can be added and removed at any time.
+ * <p>
+ * The login add/remove methods are static. To handle user authentication, create a new instance of the class
+ * giving the login info (username/password) to the constructor. The method {@link #authenticate()} will then
+ * return the user role or if login fails, the INVALID_USER.
+ * <p>
+ * 
+ * @see #INVALID_USER
+ * @see #ADMINISTRATOR
+ * @see #USER
+ * 
+ * @author Kristinn Sigurdsson
  */
 public class User
 {
 	// Defined roles
-	private static final String USER_PASSWORD = "archive";
-  private static final String USER_USERNAME = "user";
-  private static final String OPERATOR_PASSWORD = "letmein";
-  private static final String OPERATOR_USERNAME = "admin";
-  public static final int INVALID_USER = -1; 	//Failed login
-	public static final int ADMINISTRATOR = 0;	//Super user, full permissions
-	public static final int USER = 1;			//General user, minimum permissions
+  	/** A failed login */
+  	public static final int INVALID_USER = -1;
+	/** Super user, full permissions */
+	public static final int ADMINISTRATOR = 0;
+	/** General user, minimum permissions */
+	public static final int USER = 1;
+
+	//Known valid logins
+	private static Vector logins = new Vector();
 	
 	String sUsername;
 	String sPassword;
+	int iRole = INVALID_USER;
 	
+	/**
+	 * Constructor to authenticate a new login. Username and password are <b>not</b> case sensitive.
+	 * 
+	 * @param name Username
+	 * @param password Password
+	 */
 	public User(String name, String password)
 	{
 		sUsername = name;
 		sPassword = password;
+		
+		if(sUsername!=null && sPassword != null)
+		{
+			for(int i=0; i<logins.size(); i++)
+			{
+				Login login = (Login)logins.get(i);
+				if(login.username.equalsIgnoreCase(sUsername))
+				{
+					if(login.password.equalsIgnoreCase(sPassword))
+					{
+						iRole = login.role;
+					}
+					return;
+				}
+			}
+		}
 	}
 
 	/**
@@ -49,25 +87,70 @@ public class User
 	 */
 	public int authenticate()
 	{
-		if(sUsername!=null && sPassword != null)
-		{
-			if (sUsername.equalsIgnoreCase(getOperatorUsername()) && sPassword.equalsIgnoreCase(getOperatorPassword()))
-			{
-				return ADMINISTRATOR;
-			}	
-			else if(sUsername.equalsIgnoreCase(USER_USERNAME) && sPassword.equalsIgnoreCase(USER_PASSWORD))
-			{
-				return USER;
-			}
-		}
-		return INVALID_USER;
+		return iRole;
 	}
 
-  public static String getOperatorPassword() {
-    return OPERATOR_PASSWORD;
-  }
- 
-  public static String getOperatorUsername() {
-    return OPERATOR_USERNAME;
-  }
+	/**
+	 * Add a new user to list of allowed logins.<br>
+	 * If given username already exist this method will overwrite it.
+	 * 
+	 * @param username Username
+	 * @param password Password
+	 * @param role Role
+	 * 
+	 * @see #ADMINISTRATOR
+	 * @see #USER
+	 */
+	public static void addLogin(String username, String password, int role)
+	{	
+		removeLogin(username); // In case it already exist.
+		logins.add(new Login(username, password, role));
+	}
+	
+	/**
+	 * Remove a login by it's username.
+	 * 
+	 * @param username Username
+	 */
+	public static void removeLogin(String username)
+	{
+		for(int i=0; i<logins.size(); i++)
+		{
+			Login login = (Login)logins.get(i);
+			if(login.username.equalsIgnoreCase(username))
+			{
+				logins.remove(i);
+				return;
+			}
+		}
+	}
+}
+
+/**
+ * Internal class for the User class. This class is essentially a struct to contain one valid login.
+ * Username + password + role.
+ * 
+ * @see org.archive.crawler.admin.auth.User
+ * 
+ * @author Kristinn Sigurdsson
+ */
+class Login
+{
+	protected String username;
+	protected String password;
+	protected int role; 
+
+	/**
+	 * Constructor.  A quick way of setting all the attributes
+	 * 
+	 * @param username Username
+	 * @param password Password
+	 * @param role Role
+	 */
+	public Login(String username, String password, int role)
+	{
+		this.username =username;
+		this.password = password;
+		this.role = role;
+	}
 }
