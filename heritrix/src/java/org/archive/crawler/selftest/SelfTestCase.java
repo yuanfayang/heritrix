@@ -403,9 +403,11 @@ public class SelfTestCase extends TestCase
      */
     public void testFilesInArc(List files, List foundFiles)
     {
-        assertTrue("All files are on disk", filesExist(files));
-        assertTrue("All found", foundFiles.containsAll(files));
-        assertTrue("Same size", foundFiles.size() == files.size());
+        assertTrue("All files are on disk: " + files, filesExist(files));
+        assertTrue("All found: " + files + ", " + foundFiles,
+            foundFiles.containsAll(files));
+        assertTrue("Same size: " + files + ", " + foundFiles,
+            foundFiles.size() == files.size());
     }
 
     /**
