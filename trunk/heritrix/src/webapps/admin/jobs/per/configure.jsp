@@ -99,7 +99,7 @@
 						// Create override
 						p.append("<td valign='top'>");
 						if (att.isOverrideable()) {
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true'");
+							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true' onChange='setUpdate()'");
 							if(localAttribute != null){
 								 p.append(" checked");
 							}
@@ -126,11 +126,11 @@
 						p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
 						p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
 						p.append(TextUtils.escapeForJavascript(att.getDescription()));
-						p.append("')\">?</a>&nbsp;</td><td>\n");
+						p.append("')\">?</a>&nbsp;</td><td valign='top'>\n");
 	
 						// Create override
 						if (att.isOverrideable()) {
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true'");
+							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true' onChange='setUpdate()'");
 							if(localAttribute != null){
 								 p.append(" checked");
 							}
@@ -140,7 +140,7 @@
 	
 						if(legalValues != null && legalValues.length > 0){
 							//Have legal values. Build combobox.
-							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
+							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' onChange='setUpdate()'>\n");
 							for(int i=0 ; i < legalValues.length ; i++){
 								p.append("<option value='"+legalValues[i]+"'");
 								if(currentAttribute.equals(legalValues[i])){
@@ -152,20 +152,20 @@
 						}
 						else if(currentAttribute instanceof Boolean){
 							// Boolean value
-							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
+							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' onChange='setUpdate()'>\n");
 							p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
 							p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
 							p.append("</select>\n");
 						}
 						else if(currentAttribute instanceof TextField){
 							// Text area
-							p.append("<textarea name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' rows='4'>");
+							p.append("<textarea name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' rows='4' onChange='setUpdate()'>");
 							p.append(currentAttribute);
 							p.append("</textarea>\n");
 						}
 						else{
 							//Input box
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px'>\n");
+							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px' onChange='setUpdate()'>\n");
 						}
 						
 						p.append("</td></tr>\n");
@@ -274,23 +274,27 @@
 	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(currDomain);
 
-	// Check for actions.
+	// Check for update.
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
 		writeNewOrderFile(crawlOrder,orderfile,request,expert);
 		settingsHandler.writeSettingsObject(orderfile);
-		
-		if(request.getParameter("action").equals("done")){
+	}
+	
+	// Check for actions
+    String action = request.getParameter("action");
+    if(action != null){
+		if(action.equals("done")){
 			if(theJob.isRunning()){
 				handler.kickUpdate();
 			}
 			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
             return;
-		}else if(request.getParameter("action").equals("goto")){
+		}else if(action.equals("goto")){
             // Goto another page of the job/profile settings
 			response.sendRedirect(request.getParameter("where")+"&currDomain="+currDomain);
             return;
-        }else if(request.getParameter("action").equals("updateexpert")){
+        }else if(action.equals("updateexpert")){
             if(request.getParameter("expert") != null){
                 if(request.getParameter("expert").equals("true")){
                     expert = true;
@@ -329,11 +333,13 @@
 				theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
 				newItem.value = "";
 			}
+			setUpdate();
 		}
 		
 		function doDeleteList(listName){
 			theList = document.getElementById(listName);
 			theList.options[theList.selectedIndex] = null;
+			setUpdate();
 		}
 		
 		function doSubmit(){
@@ -364,6 +370,10 @@
             document.frmConfig.expert.value = val;
             document.frmConfig.action.value="updateexpert";
             doSubmit();
+        }
+        
+        function setUpdate(){
+            document.frmConfig.update.value = "true";
         }
 	</script>
 
