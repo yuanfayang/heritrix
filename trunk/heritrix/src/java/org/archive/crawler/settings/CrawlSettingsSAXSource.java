@@ -29,7 +29,6 @@ import java.text.ParseException;
 import java.util.Iterator;
 
 import javax.management.AttributeNotFoundException;
-import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.xml.transform.sax.SAXSource;
 
@@ -353,9 +352,9 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         }
         handler.ignorableWhitespace(indentArray, 0, indent);
         handler.startElement(nsu, objectElement, objectElement, atts);
-        MBeanAttributeInfo attsInfo[] = mbeanInfo.getAttributes();
-        for (int i = 0; i < attsInfo.length; i++) {
-            ModuleAttributeInfo attribute = (ModuleAttributeInfo) attsInfo[i];
+        for (Iterator it = complexType.getAttributeInfoIterator(settings); it
+                .hasNext();) {
+            ModuleAttributeInfo attribute = (ModuleAttributeInfo) it.next();
             if (!attribute.isTransient()) {
                 parseAttribute(complexType, attribute, indent);
             }
