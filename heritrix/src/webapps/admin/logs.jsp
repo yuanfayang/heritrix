@@ -247,7 +247,8 @@
 							</td>
 						</tr>
 						<tr>
-							<td>
+							<td align="right">
+								<font size="-2">(<a href="/admin/help/regexpr.jsp">about java reg.expr.</a>)</font>&nbsp;
 							</td>
 							<td nowrap>
 								<input name="ln" value="true" type="checkbox" <%=request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true")?"checked":""%>>
