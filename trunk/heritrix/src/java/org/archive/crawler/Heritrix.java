@@ -479,7 +479,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    private static String getProperty(String key)
+    public static String getProperty(String key)
     {
         return getProperty(key, null);
     }
@@ -494,7 +494,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    private static String getProperty(String key, String fallback)
+    public static String getProperty(String key, String fallback)
     {
         String value = System.getProperty(key);
         if (value == null && properties !=  null)
