@@ -652,9 +652,6 @@ public class CrawlController {
         toePool.setShouldPause(false);
     }
 
-    /** 
-     * 
-     */
     private void completeStop() {
         // Ok, now we are ready to exit.
         while (registeredCrawlStatusListeners.size() > 0) {
@@ -787,9 +784,6 @@ public class CrawlController {
         return shouldCrawl && (frontier.isEmpty()==false);
     }
 
-    /**
-     * 
-     */
     public synchronized void requestCrawlStop() {
         sExit = CrawlJob.STATUS_ABORTED;
         shouldCrawl = false;

@@ -36,6 +36,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -50,6 +51,8 @@ import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.admin.auth.User;
+import org.archive.crawler.datamodel.CredentialStore;
+import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
@@ -583,15 +586,22 @@ public class Heritrix
         // a template to pass jobHandler.newJob().  Doing this gets our
         // selftest output to show under the jobs directory.
         // Pass as a seed a pointer to the webserver we just put up.
+        final String ROOTURI = "127.0.0.1:" + Integer.toString(port);
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.getSelftestURL =
-            "http://127.0.0.1:" + Integer.toString(port) + '/' + SELFTEST + '/';
+            "http://" + ROOTURI + '/' + SELFTEST + '/';
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
             getSelftestURL += (oneSelfTestName + '/');
         }
         job = Heritrix.jobHandler.newJob(job, SELFTEST,
             "Integration self test", getSelftestURL, CrawlJob.PRIORITY_CRITICAL);
         Heritrix.jobHandler.addJob(job);
+        // Before we start, need to change some items in the settings file.
+        CredentialStore cs = (CredentialStore)job.getSettingsHandler().
+            getOrder().getAttribute(CredentialStore.ATTR_NAME);
+        for (Iterator i = cs.iterator(null); i.hasNext();) {
+            ((Credential)i.next()).setCredentialDomain(null, ROOTURI);
+        }
         Heritrix.jobHandler.startCrawler();
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
             " selftest started.");

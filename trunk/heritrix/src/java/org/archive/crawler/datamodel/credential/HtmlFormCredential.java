@@ -49,12 +49,7 @@ public class HtmlFormCredential extends Credential {
         super(name, "Credential that has all necessary" +
             " for running a POST/GET to an HTML login form.");
         
-        Type t = addElementToDefinition(new SimpleType("url-pattern",
-                "Pattern that defines the realm this login covers.", ""));
-            t.setOverrideable(false);
-            t.setExpertSetting(true);
-        
-        t = addElementToDefinition(new SimpleType("login-uri",
+        Type t = addElementToDefinition(new SimpleType("login-uri",
             "URI of page that contains the HTML login form we're to apply" +
             " these credentials too.", ""));
         t.setOverrideable(false);
@@ -70,12 +65,5 @@ public class HtmlFormCredential extends Credential {
             String.class));
         t.setOverrideable(false);
         t.setExpertSetting(true);       
-        
-        t = addElementToDefinition(new SimpleType("cookie-name",
-            "Name of cookie that pertains to this authentication.\n" +
-            "This field will be logged before, if present, and after" +
-            " authentication attempt.  To aid debugging only.", ""));
-        t.setOverrideable(false);
-        t.setExpertSetting(true);
     }
 }

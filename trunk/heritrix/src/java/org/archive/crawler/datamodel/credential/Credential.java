@@ -27,9 +27,12 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
@@ -78,6 +81,15 @@ public abstract class Credential extends ModuleType {
     public String getCredentialDomain(CrawlURI context)
             throws AttributeNotFoundException {
         return (String)getAttribute(ATTR_CREDENTIAL_DOMAIN, context);  
+    }
+    
+    /**
+     * @param context Context to use when searching for credential domain.
+     * @param domain New domain.
+     */
+    public void setCredentialDomain(CrawlerSettings context, String domain)
+            throws InvalidAttributeValueException, AttributeNotFoundException {
+        setAttribute(context, new Attribute(ATTR_CREDENTIAL_DOMAIN, domain));
     }
     
     /**
