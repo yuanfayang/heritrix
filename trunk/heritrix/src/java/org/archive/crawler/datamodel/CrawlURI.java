@@ -1046,4 +1046,23 @@ public class CrawlURI extends CandidateURI
     public long getOrdinal() {
         return ordinal;
     }
+
+    /** spot for an integer cost to be placed by external facility (frontier) */
+    int holderCost = -1;
+    /**
+     * Return the 'holderCost' for convenience of external facility (frontier)
+     * @return value of holderCost
+     */
+    public int getHolderCost() {
+        return holderCost;
+    }
+
+    /**
+     *  Remember a 'holderCost' which some enclosing/queueing
+     * facility has assigned this CrawlURI
+     * @param cost value to remember
+     */
+    public void setHolderCost(int cost) {
+        holderCost = cost;
+    }
 }

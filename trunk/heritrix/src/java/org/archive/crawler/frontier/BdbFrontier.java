@@ -158,6 +158,8 @@ implements Frontier,
 
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
+
+    private CostAssignmentPolicy costAssignmentPolicy = new UnitCostAssignmentPolicy();
     
     /**
      * Create the BdbFrontier
@@ -520,8 +522,12 @@ implements Frontier,
      * @return the associated cost
      */
     private int getCost(CrawlURI curi) {
-        // for now, all CrawlURI have cost of 1
-        return 1;
+        int cost = curi.getHolderCost();
+        if (cost == -1) {
+            cost = costAssignmentPolicy.costOf(curi);
+            curi.setHolderCost(cost);
+        }
+        return cost;
     }
     
     /**
