@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* BdbFrontier
+ * 
+ * $Header$
+* 
+ * Created on Sep 24, 2004
+ *
+ *  Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,11 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SimpleFrontier.java
- * Created on Oct 1, 2003
- *
- * $Header$
- */
+  */
 package org.archive.crawler.frontier;
 
 import java.io.File;
@@ -88,24 +90,27 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
 
-    // those UURIs which are already in-process (or processed), and
-    // thus should not be rescheduled
+    /** those UURIs which are already in-process (or processed), and
+     thus should not be rescheduled */
     protected UriUniqFilter alreadyIncluded;
 
     // TODO: BDBify
-    HashMap allQueues = new HashMap(); // of classKey -> BDBWorkQueue
+    /** all known queues */
+    protected HashMap allQueues = new HashMap(); // of classKey -> BDBWorkQueue
 
-    // all per-class queues whose first item may be handed out 
-    LinkedQueue readyClassQueues = new LinkedQueue(); // of KeyedQueues
+    /** all per-class queues whose first item may be handed out */
+    protected LinkedQueue readyClassQueues = new LinkedQueue(); // of KeyedQueues
 
-    // daemon to wake (put in ready queue) WorkQueues at the appropriate time
-    ClockDaemon daemon = new ClockDaemon();
+    /** daemon to wake (put in ready queue) WorkQueues at the appropriate time */
+    protected ClockDaemon daemon = new ClockDaemon();
 
     public BdbFrontier(String name) {
         this(name, "BdbFrontier. NOT YET FUNCTIONAL. DO NOT USE.");
     }
 
     /**
+     * Create the BdbFrontier
+     * 
      * @param name
      */
     public BdbFrontier(String name, String description) {
@@ -131,7 +136,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * Create the single object (within which is one BDB database)
      * inside which all the other queues live. 
      * 
-     * @return
+     * @return the created BdbMultiQueue
      */
     private BdbMultiQueue createMultiQueue() {
         return new BdbMultiQueue(controller.getStateDisk());
@@ -204,7 +209,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * are ordered and politeness-delayed within their 'class'.
      * 
      * @param classKey
-     * @return
+     * @return the found or created BdbWorkQueue
      */
     private BdbWorkQueue getQueueFor(String classKey) {
         BdbWorkQueue wq;
@@ -238,7 +243,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @see org.archive.crawler.framework.Frontier#next(int)
      */
     public CrawlURI next() throws InterruptedException, EndedException {
-        long wait = 0;
         while (true) {
             long now = System.currentTimeMillis();
 
@@ -690,20 +694,29 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public class BdbWorkQueue {
         String classKey;
-
-        BdbMultiQueue masterQueue; // where items are really stored
-
+        
+        /** where items are really stored, for now */
+        BdbMultiQueue masterQueue; 
+        
+        /** total number of stored items */
         long count = 0;
 
+        /** whether the queue has recently become ready */
         boolean hasBecomeReady = false;
 
+        /** whether the queue is snoozed (held unready even if items
+         *  available */
         boolean snoozed = false;
 
+        /** the next item to be returned */ 
         CrawlURI peekItem = null;
 
-        byte[] origin; // key coordinate to begin seeks to find queue head
+        /** key coordinate to begin seeks, to find queue head */
+        byte[] origin; 
 
         /**
+         * Create a virtual queue inside the given BdbMultiQueue 
+         * 
          * @param classKey
          * @param pendingUris
          */
@@ -756,7 +769,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          * 
          * TODO: evaluate if this is really necessary
          * 
-         * @return
+         * @return topmost queue item
          */
         public CrawlURI peek() {
             if (peekItem == null && count > 0) {
@@ -792,7 +805,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         /**
          * check-and-clear whether queue has just become ready
          * 
-         * @return
+         * @return whether the queue had just become ready
          */
         public boolean hasBecomeReady() {
             boolean retVal = hasBecomeReady;
@@ -823,7 +836,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         BdbWorkQueue waker;
 
         /**
-         * 
+         * Create the WakeTask for the given queue
          */
         public WakeTask(BdbWorkQueue o) {
             super();
