@@ -34,22 +34,22 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.settings.MapType;
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.RegularExpressionConstraint;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.RegularExpressionConstraint;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 
 /**
  * Represents the 'root' of the settings hierarchy. Contains those settings that
  * do not belong to any specific module, but rather relate to the crawl as a
  * whole (much of this is used by the CrawlController directly or indirectly).
  *
- * @see org.archive.crawler.datamodel.settings.ModuleType
+ * @see org.archive.crawler.settings.ModuleType
  */
 public class CrawlOrder extends ModuleType {
     private static Logger logger =

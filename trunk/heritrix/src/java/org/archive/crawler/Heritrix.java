@@ -53,10 +53,10 @@ import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.credential.Credential;
-import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
+import org.archive.crawler.settings.XMLSettingsHandler;
 
 
 /**

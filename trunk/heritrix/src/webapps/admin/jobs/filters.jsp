@@ -11,7 +11,7 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.datamodel.settings.*" %>
+<%@ page import="org.archive.crawler.settings.*" %>
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.crawler.framework.Filter" %>
 

@@ -40,9 +40,9 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.filter.OrFilter;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
 
@@ -353,7 +353,7 @@ public class CrawlScope extends Filter {
     }
     
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.ModuleType#listUsedFiles(java.util.List)
+     * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
     public void listUsedFiles(List list){
         // Add seed file

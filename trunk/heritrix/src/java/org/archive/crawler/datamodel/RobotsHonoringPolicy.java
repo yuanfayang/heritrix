@@ -27,11 +27,11 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.StringList;
-import org.archive.crawler.datamodel.settings.TextField;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.StringList;
+import org.archive.crawler.settings.TextField;
 
 /**
  * This class represent the policy to which Robots.txt files is

@@ -36,9 +36,9 @@ import java.util.zip.Checksum;
 import javax.security.auth.Subject;
 
 import org.archive.crawler.datamodel.credential.Credential;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.framework.ToeThread;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
 
 /**

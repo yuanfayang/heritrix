@@ -30,9 +30,9 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 ;
 
 /**

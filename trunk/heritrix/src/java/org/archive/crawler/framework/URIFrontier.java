@@ -89,7 +89,7 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  * interested in by examining the completed URIs. 
  * 
  * <p>All URI Frontiers inherit from 
- * {@link org.archive.crawler.datamodel.settings.ModuleType ModuleType}
+ * {@link org.archive.crawler.settings.ModuleType ModuleType}
  * and therefore creating settings follows the usual pattern of pluggable modules
  * in Heritrix.  
  * 
@@ -104,7 +104,7 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.ToeThread
  * @see org.archive.crawler.framework.URIFrontierHostStatistics
- * @see org.archive.crawler.datamodel.settings.ModuleType
+ * @see org.archive.crawler.settings.ModuleType
  */
 public interface URIFrontier {
    
@@ -114,7 +114,7 @@ public interface URIFrontier {
      * used in a given crawl order and since there can only be one Frontier
      * per crawl order a fixed, unique name for Frontiers is optimal.
      * 
-     * @see org.archive.crawler.datamodel.settings.ModuleType#ModuleType(String) 
+     * @see org.archive.crawler.settings.ModuleType#ModuleType(String) 
      */
     public static final String ATTR_NAME = "frontier";
     

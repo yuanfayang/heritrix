@@ -34,8 +34,8 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.credential.Credential;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.SettingsFrameworkTestCase;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.SettingsFrameworkTestCase;
 
 
 /**

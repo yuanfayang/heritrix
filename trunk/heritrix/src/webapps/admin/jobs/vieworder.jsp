@@ -2,7 +2,7 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
-<%@ page import="org.archive.crawler.datamodel.settings.*,java.io.File" %>
+<%@ page import="org.archive.crawler.settings.*,java.io.File" %>
 
 
 <%

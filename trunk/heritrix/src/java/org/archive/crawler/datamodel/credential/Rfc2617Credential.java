@@ -31,8 +31,8 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.auth.AuthScheme;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 
 
 
@@ -45,7 +45,7 @@ import org.archive.crawler.datamodel.settings.Type;
 public class Rfc2617Credential extends Credential {
     
     private static Logger logger = Logger.getLogger(
-        "org.archive.crawler.datamodel.settings.Rfc2617Credential");
+        "org.archive.crawler.datamodel.credential.Rfc2617Credential");
 
     private static final String ATTR_REALM = "realm";
     private static final String ATTR_LOGIN = "login";

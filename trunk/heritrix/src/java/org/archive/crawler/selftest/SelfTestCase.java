@@ -36,7 +36,7 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.settings.ComplexType;
+import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCRecordMetaData;

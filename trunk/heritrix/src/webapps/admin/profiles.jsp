@@ -3,7 +3,7 @@
 
 <%@page import="java.util.List"%>
 <%@page import="org.archive.crawler.admin.CrawlJob"%>
-<%@page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler"%>
+<%@page import="org.archive.crawler.settings.XMLSettingsHandler"%>
 
 <%
 	if(request.getParameter("default")!=null){

@@ -32,10 +32,10 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.datamodel.settings.Type;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 
 
 
@@ -55,7 +55,7 @@ import org.archive.crawler.datamodel.settings.Type;
 public abstract class Credential extends ModuleType {
     
     private static Logger logger = Logger.getLogger(
-        "org.archive.crawler.datamodel.settings.Credential");
+        "org.archive.crawler.datamodel.credential.Credential");
     
     private static final String ATTR_CREDENTIAL_DOMAIN = "credential-domain";
     

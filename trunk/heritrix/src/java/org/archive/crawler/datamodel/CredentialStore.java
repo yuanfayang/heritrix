@@ -36,11 +36,11 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.credential.*;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.MapType;
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.SettingsHandler;
-import org.archive.crawler.datamodel.settings.Type;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.SettingsHandler;
+import org.archive.crawler.settings.Type;
 
 
 /**

@@ -28,8 +28,8 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.settings.SimpleType;
 
 /**
  * Accepts all urls passed in with a path depth

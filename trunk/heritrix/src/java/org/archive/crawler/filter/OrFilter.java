@@ -29,10 +29,10 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
-import org.archive.crawler.datamodel.settings.MapType;
-import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.SimpleType;
 
 /**
  * OrFilter allows any number of other filters to be set up
