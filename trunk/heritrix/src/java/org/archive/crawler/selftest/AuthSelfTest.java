@@ -36,7 +36,7 @@ import java.util.List;
 public class AuthSelfTest
     extends SelfTestCase
 {
-    private static final File DIGEST = new File("digest");
+    private static final File BASIC = new File("basic");
     private static final File FORM = new File("form");
     private static final File GET = new File(FORM, "get");
     private static final File POST = new File(FORM, "post");
@@ -46,8 +46,8 @@ public class AuthSelfTest
      */
     private static final List FILES_TO_FIND =
         Arrays.asList(new File[] {
-                DIGEST,
-                new File(DIGEST, "digest-loggedin.html"),
+                BASIC,
+                new File(BASIC, "basic-loggedin.html"),
                 FORM,
                 new File(POST, "success.jsp"),
                 new File(POST, "index.html"),
