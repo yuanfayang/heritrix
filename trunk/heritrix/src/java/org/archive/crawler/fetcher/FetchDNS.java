@@ -16,7 +16,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SimpleDNSFetcher.java
+ * FetchDNS
  * Created on Jun 5, 2003
  *
  * $Header$
@@ -25,6 +25,7 @@ package org.archive.crawler.fetcher;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
@@ -54,7 +55,7 @@ import org.xbill.DNS.dns;
 public class FetchDNS extends Processor
 implements CoreAttributeConstants, FetchStatusCodes {
     private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
+        Logger.getLogger(FetchDNS.class.getName());
 
     // Defaults.
     private short ClassType = DClass.IN;
@@ -66,7 +67,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     private static final Boolean DEFAULT_ACCEPT_NON_DNS_RESOLVES =
         Boolean.FALSE;
     private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
-        = 6*60*60; // 6 hrs
+        = 6 * 60 * 60; // 6 hrs
 
     /** 
      * Create a new instance of FetchDNS.
@@ -74,7 +75,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param name the name of this attribute.
      */
     public FetchDNS(String name) {
-        super(name, "DNS Fetcher. \nHandles DNS lookups.");
+        super(name, "DNS Fetcher. Handles DNS lookups.");
         org.archive.crawler.settings.Type e =
             addElementToDefinition(new SimpleType(ATTR_ACCEPT_NON_DNS_RESOLVES,
                 "If a DNS lookup fails, whether or not to fallback to " +
@@ -89,7 +90,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
             return;
         }
         Record[] rrecordSet = null; // Store retrieved dns records
-        long now; // The time this operation happened
         String dnsName = null;
         try {
             dnsName = curi.getUURI().getReferencedHost();
@@ -116,7 +116,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
         if (matcher != null && matcher.matches()) {
             // Ideally this branch would never be reached: no CrawlURI
             // would be created for numerical IPs
-            logger.warning("Unnecessary DNS CrawlURI created: " + curi);
+            if (logger.isLoggable(Level.WARNING)) {
+                logger.warning("Unnecessary DNS CrawlURI created: " + curi);
+            }
             try {
                 targetHost.setIP(InetAddress.getByAddress(dnsName,
                         new byte[] {
@@ -135,22 +137,30 @@ implements CoreAttributeConstants, FetchStatusCodes {
             return;
         }
 
-        now = System.currentTimeMillis();
-        curi.putLong(A_FETCH_BEGAN_TIME, now);
+        curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
 
         // Try to get the records for this host (assume domain name)
         // TODO: Bug #935119 concerns potential hang here
         rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
-        
         if (rrecordSet != null) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Found recordset for " + dnsName);
+            }
             curi.setFetchStatus(S_DNS_SUCCESS);
             curi.setContentType("text/dns");
             curi.putObject(A_RRECORD_SET_LABEL, rrecordSet);
             // Get TTL and IP info from the first A record (there may be
             // multiple, e.g. www.washington.edu) then update the CrawlServer
             ARecord arecord = getFirstARecord(rrecordSet);
+            if (arecord == null) {
+                throw new NullPointerException("Got null arecord for " +
+                    dnsName);
+            }
             targetHost.setIP(arecord.getAddress(), arecord.getTTL());
         } else {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Failed find of recordset for " + dnsName);
+            }
             if (((Boolean)getUncheckedAttribute(null,
                     ATTR_ACCEPT_NON_DNS_RESOLVES)).booleanValue()) {
                 // Do lookup that bypasses javadns.
@@ -163,7 +173,15 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 if (address != null) {
                     targetHost.setIP(address, DEFAULT_TTL_FOR_NON_DNS_RESOLVES);
                     curi.setFetchStatus(S_GETBYNAME_SUCCESS);
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("Found address for " + dnsName +
+                            " using native dns.");
+                    }
                 } else {
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("Failed find of address for " + dnsName +
+                            " using native dns.");
+                    }
                     setUnresolvable(curi, targetHost);
                 }
             } else {
@@ -183,10 +201,18 @@ implements CoreAttributeConstants, FetchStatusCodes {
     protected ARecord getFirstARecord(Record[] rrecordSet) {
         ARecord arecord = null;
         if (rrecordSet == null || rrecordSet.length == 0) {
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("rrecordSet is null or zero length: " +
+                    rrecordSet);
+            }
             return arecord;
         }
         for (int i = 0; i < rrecordSet.length; i++) {
             if (rrecordSet[i].getType() != Type.A) {
+                if (logger.isLoggable(Level.FINEST)) {
+                    logger.finest("Record " + Integer.toString(i) +
+                        " is not A type but " + rrecordSet[i].getType());
+                }
                 continue;
             }
             arecord = (ARecord) rrecordSet[i];
