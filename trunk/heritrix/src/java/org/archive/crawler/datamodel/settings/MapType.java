@@ -217,8 +217,8 @@ public class MapType extends ComplexType {
      *                 are valid.
      * @return an iterator over all the elements in this map.
      */
-    public Iterator iterator(CrawlerSettings settings) {
-        settings = settings == null ? globalSettings() : settings;
+    public Iterator iterator(Object context) {
+        CrawlerSettings settings = getSettingsFromObject(context);
         return new It(settings);
     }
 
@@ -228,8 +228,8 @@ public class MapType extends ComplexType {
      *                 are valid.
      * @return true if this map is empty.
      */
-    public boolean isEmpty(CrawlerSettings settings) {
-        settings = settings == null ? globalSettings() : settings;
+    public boolean isEmpty(Object context) {
+        CrawlerSettings settings = getSettingsFromObject(context);
 
         DataContainer data = getDataContainerRecursive(settings, null, -1);
         while (data != null) {
@@ -247,8 +247,8 @@ public class MapType extends ComplexType {
      *                 are valid.
      * @return the number of elements in this map.
      */
-    public int size(CrawlerSettings settings) {
-        settings = settings == null ? globalSettings() : settings;
+    public int size(Object context) {
+        CrawlerSettings settings = getSettingsFromObject(context);
 
         int size = 0;
         DataContainer data = getDataContainerRecursive(settings, null, -1);

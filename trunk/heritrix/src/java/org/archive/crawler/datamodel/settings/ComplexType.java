@@ -313,7 +313,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *            returned settings object.
      * @return the settings object valid for the URI.
      */
-    public CrawlerSettings getSettingsFromObject(Object o, String attributeName) {
+    CrawlerSettings getSettingsFromObject(Object o, String attributeName) {
         CrawlerSettings settings;
 
         if (o == null) {
@@ -354,7 +354,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     * @param o possible {@link CrawlURI}.
     * @return the settings object valid for the URI.
     */
-    public CrawlerSettings getSettingsFromObject(Object o) {
+    CrawlerSettings getSettingsFromObject(Object o) {
         return getSettingsFromObject(o, null);
     }
 
@@ -429,9 +429,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @see CrawlerSettings
      * @throws AttributeNotFoundException
      */
-    public Object getAttribute(CrawlerSettings settings, String name)
+    public Object getAttribute(Object context, String name)
         throws AttributeNotFoundException {
-        settings = settings == null ? globalSettings() : settings;
+        CrawlerSettings settings = getSettingsFromObject(context);
 
         // If settings is not set, return the default value
         if (settings == null) {
