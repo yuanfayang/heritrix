@@ -112,7 +112,8 @@ public class ToeThread extends Thread
                 pause();
             }
             try {
-                currentCuri = (CrawlURI) controller.getFrontier().newNext(DEFAULT_TAKE_TIMEOUT);
+//                currentCuri = (CrawlURI) controller.getFrontier().newNext(DEFAULT_TAKE_TIMEOUT);
+                currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
             } catch (InterruptedException e1) {
                 currentCuri = null;
             }
