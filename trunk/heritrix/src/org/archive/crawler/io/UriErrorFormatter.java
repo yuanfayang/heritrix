@@ -6,8 +6,6 @@
  */
 package org.archive.crawler.io;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -30,10 +28,10 @@ public class UriErrorFormatter extends Formatter implements CoreAttributeConstan
 				
 		return ArchiveUtils.get17DigitDate()
 		+ " "
-		+ curi
-		+ " "
+		+ curi.getURIString()
+		+ " \""
 		+ lr.getMessage()
-		+ " "
+		+ "\" "
 		+ problem
 		+ "\n";
 	}
