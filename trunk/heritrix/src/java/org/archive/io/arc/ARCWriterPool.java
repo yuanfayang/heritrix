@@ -170,42 +170,42 @@ public class ARCWriterPool {
 
     /**
      * Check out an ARCWriter from the pool.
-     *
+     * 
      * This method must be answered by a call to
      * {@link #returnARCWriter(ARCWriter)}.
-     *
+     * 
      * @return An ARCWriter checked out of a pool of ARCWriters.
-     * @throws IOException Problem getting ARCWriter from pool (Converted
-     * from Exception to IOException so this pool can live as a good
-     * citizen down in depths of ARCSocketFactory).
-     * @throws NoSuchElementException If we time out waiting on a pool member.
+     * @throws IOException
+     *             Problem getting ARCWriter from pool (Converted from Exception
+     *             to IOException so this pool can live as a good citizen down
+     *             in depths of ARCSocketFactory).
+     * @throws NoSuchElementException
+     *             If we time out waiting on a pool member.
      */
-    public ARCWriter borrowARCWriter()
-        throws IOException
-    {
+    public ARCWriter borrowARCWriter() throws IOException {
         ARCWriter writer = null;
         for (int i = 0; writer == null; i++) {
-        long waitStart = System.currentTimeMillis();
-        try {
-            writer = (ARCWriter)this.pool.borrowObject();
-            logger.fine("Borrowed " + writer + " (Pool State: " +
-                getPoolState(waitStart) + ").");
-        } catch(NoSuchElementException e) {
-            // Let this exception out.  Unit test at least depends on it.
-            // Log current state of the pool.
-            logger.severe(e.getMessage() + ": Retry #" + i + " of " +
-                " max of " + this.arbitraryRetryMax +
-                ": NSEE Pool State: " + getPoolState(waitStart));
-            if (i >= this.arbitraryRetryMax) {
-                throw e;
+            long waitStart = System.currentTimeMillis();
+            try {
+                writer = (ARCWriter) this.pool.borrowObject();
+                logger.fine("Borrowed " + writer + " (Pool State: "
+                        + getPoolState(waitStart) + ").");
+            } catch (NoSuchElementException e) {
+                // Let this exception out. Unit test at least depends on it.
+                // Log current state of the pool.
+                logger.severe(e.getMessage() + ": Retry #" + i + " of "
+                        + " max of " + this.arbitraryRetryMax
+                        + ": NSEE Pool State: " + getPoolState(waitStart));
+                if (i >= this.arbitraryRetryMax) {
+                    throw e;
+                }
+            } catch (Exception e) {
+                // Convert.
+                logger.severe(e.getMessage() + ": E Pool State: "
+                        + getPoolState(waitStart));
+                throw new IOException("Failed getting ARCWriter from pool: "
+                        + e.getMessage());
             }
-        } catch(Exception e) {
-            // Convert.
-            logger.severe(e.getMessage() + ": E Pool State: " +
-                getPoolState(waitStart));
-            throw new IOException("Failed getting ARCWriter from pool: " +
-                e.getMessage());
-        }
         }
         return writer;
     }
