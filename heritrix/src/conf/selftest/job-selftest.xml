@@ -159,6 +159,8 @@
         <boolean name="compress">true</boolean>
         <string name="prefix">IAH</string>
         <integer name="max-size-bytes">100000000</integer>
+        <!--One arc file only.  The selftest depends on this.-->
+        <integer name="pool-max-active">1</integer>
         <string name="path">arcs</string>
       </newObject>
       <newObject name="Updater" 
