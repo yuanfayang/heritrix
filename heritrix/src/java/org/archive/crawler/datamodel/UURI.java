@@ -48,6 +48,11 @@ import org.archive.util.TextUtils;
  * <p>This class tries to cache calculated strings such as the extracted host
  * and this class as a string rather than have the parent class rerun its
  * calculation everytime.
+ * 
+ * <p>Do not allow any of data members be serializable until
+ * <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=982813&group_id=73833&atid=539099">[ 982813 ]
+ * CCE deserializing diskqueue [Was: IllegalArgumentExcepti...]</a> is properly
+ * addressed.  For now all data members are marked transient.
  *
  * @author gojomo
  * @author stack
@@ -64,7 +69,7 @@ public class UURI extends URI implements Serializable {
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
      */
-    private String cachedHost = null;
+    transient private String cachedHost = null;
 
     /**
      * Cache of this uuri escaped as a string.
@@ -72,7 +77,7 @@ public class UURI extends URI implements Serializable {
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
      */
-    private String cachedEscapedURI = null;
+    transient private String cachedEscapedURI = null;
 
     /**
      * Cache of this uuri escaped as a string.
@@ -80,12 +85,12 @@ public class UURI extends URI implements Serializable {
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
      */
-    private String cachedString = null;
+    transient private String cachedString = null;
 
     /**
      * Cache of this uuri in SURT format
      */
-    private String surtForm = null;
+    transient private String surtForm = null;
 
 
     /**
@@ -206,7 +211,11 @@ public class UURI extends URI implements Serializable {
      */
     public String toString() {
         if (this.cachedString == null) {
-            this.cachedString = super.toString();
+            synchronized (this) {
+                if (this.cachedString == null) {
+                    this.cachedString = super.toString();
+                }
+            }
         }
         return this.cachedString;
     }
