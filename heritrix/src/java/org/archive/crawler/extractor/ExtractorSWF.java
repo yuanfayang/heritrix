@@ -252,12 +252,10 @@ implements CoreAttributeConstants {
                 if (glyphs.isEmpty()) {
                     vectors.done();
                 } else {
-                    for (Enumeration enum = glyphs.elements(); enum
-                            .hasMoreElements();) {
-                        byte [] glyphBytes = (byte [])enum.nextElement();
-
+                    for (Enumeration e = glyphs.elements();
+                            e.hasMoreElements();) {
+                        byte [] glyphBytes = (byte [])e.nextElement();
                         InStream glyphIn = new InStream(glyphBytes);
-
                         parseShape(glyphIn, vectors, false, false);
                     }
                 }
