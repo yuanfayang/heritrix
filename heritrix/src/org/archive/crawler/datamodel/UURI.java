@@ -102,8 +102,9 @@ public class UURI implements Serializable {
 			}
 			String canonizedAuthority = u.getAuthority();
 			if(canonizedAuthority==null) {
-				logger.warning("bad URI: "+s+" relative to "+parent);
-				return null;
+				//logger.warning("bad URI: "+s+" relative to "+parent);
+				//return null;
+				throw new URISyntaxException(s,"uninterpretable relative to "+parent);
 			}
 		
 			// TODO fix the fact that this might clobber case-sensitive user-info
