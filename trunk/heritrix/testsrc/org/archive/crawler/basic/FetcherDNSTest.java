@@ -12,7 +12,7 @@ import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.xbill.DNS.Record;
@@ -65,7 +65,7 @@ public class FetcherDNSTest extends TestCase implements CoreAttributeConstants {
 			e.printStackTrace();
 		}
 
-		curiBasic.setHost( new CrawlHost("parkert.com"));
+		curiBasic.setServer( new CrawlServer("parkert.com"));
 	}
 	
 	public void tearDown(){
@@ -89,11 +89,11 @@ public class FetcherDNSTest extends TestCase implements CoreAttributeConstants {
 		
 		fetcher.process(curiBasic);
 		
-		CrawlHost host = curiBasic.getHost();	
+		CrawlServer crawlserver = curiBasic.getServer();	
 		
 		Record[] rrSet = (Record[])curiBasic.getAList().getObject(A_RRECORD_SET_LABEL);
 		
-		long expireTime = host.getIpExpires();
+		long expireTime = crawlserver.getHost().getIpExpires();
 		long timestamp = curiBasic.getAList().getLong(A_FETCH_BEGAN_TIME);
 		
 		// we should have at least one record
