@@ -57,7 +57,12 @@ public class ContentBasedWaitEvaluator extends WaitEvaluator {
                 "regular expression set.\n" +
                 "Typically, this processor should be in the post processing " +
                 "chain. It will pass if another wait evaluator has already " +
-                "processed the CrawlURI.", DEFAULT_CONTENT_REGEXPR);
+                "processed the CrawlURI.", DEFAULT_CONTENT_REGEXPR,
+                DEFAULT_INITIAL_WAIT_INTERVAL,
+                DEFAULT_MAX_WAIT_INTERVAL,
+                DEFAULT_MIN_WAIT_INTERVAL,
+                DEFAULT_UNCHANGED_FACTOR,
+                DEFAULT_CHANGED_FACTOR);
     }
 
     /**
@@ -65,10 +70,28 @@ public class ContentBasedWaitEvaluator extends WaitEvaluator {
      * 
      * @param name The name of the module
      * @param description Description of the module
+     * @param default_inital_wait_interval The default value for initial wait
+     *           time
+     * @param default_max_wait_interval The maximum value for wait time
+     * @param default_min_wait_interval The minimum value for wait time
+     * @param default_unchanged_factor The factor for changing wait times of
+     *           unchanged documents (will be multiplied by this value)
+     * @param default_changed_factor The factor for changing wait times of
+     *           changed documents (will be divided by this value)
      */
     public ContentBasedWaitEvaluator(String name, String description,
-            String defaultRegExpr){
-        super(name,description);
+            String defaultRegExpr,
+            Long default_inital_wait_interval,
+            Long default_max_wait_interval,
+            Long default_min_wait_interval,
+            Double default_unchanged_factor,
+            Double default_changed_factor){
+        super(name,description,
+                default_inital_wait_interval,
+                default_max_wait_interval,
+                default_min_wait_interval,
+                default_unchanged_factor,
+                default_changed_factor);
 
         addElementToDefinition(new SimpleType(ATTR_CONTENT_REGEXPR,
                 "Only URIs whose content type matches this regular " +

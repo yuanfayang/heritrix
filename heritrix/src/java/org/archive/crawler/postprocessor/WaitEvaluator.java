@@ -84,19 +84,38 @@ implements AdaptiveRevisitAttributeConstants {
      * @param name The name of the module
      */
     public WaitEvaluator(String name) {
-        this(name, "Evaluates how long to wait before fetching a URI again. " +
+        this(name, 
+                "Evaluates how long to wait before fetching a URI again. " +
                 "Typically, this processor should be in the post processing " +
                 "chain. It will pass if another wait evaluator has already " +
-                "processed the CrawlURI.");
+                "processed the CrawlURI.",
+                DEFAULT_INITIAL_WAIT_INTERVAL,
+                DEFAULT_MAX_WAIT_INTERVAL,
+                DEFAULT_MIN_WAIT_INTERVAL,
+                DEFAULT_UNCHANGED_FACTOR,
+                DEFAULT_CHANGED_FACTOR);
     }
-    
+
     /**
      * Constructor
      * 
      * @param name The name of the module
      * @param description Description of the module
+     * @param default_inital_wait_interval The default value for initial wait
+     *           time
+     * @param default_max_wait_interval The maximum value for wait time
+     * @param default_min_wait_interval The minimum value for wait time
+     * @param default_unchanged_factor The factor for changing wait times of
+     *           unchanged documents (will be multiplied by this value)
+     * @param default_changed_factor The factor for changing wait times of
+     *           changed documents (will be divided by this value)
      */
-    public WaitEvaluator(String name, String description){
+    public WaitEvaluator(String name, String description,
+            Long default_inital_wait_interval,
+            Long default_max_wait_interval,
+            Long default_min_wait_interval,
+            Double default_unchanged_factor,
+            Double default_changed_factor){
         super(name, description);
         
         addElementToDefinition(new SimpleType(ATTR_INITIAL_WAIT_INTERVAL,
@@ -104,7 +123,7 @@ implements AdaptiveRevisitAttributeConstants {
                 "updated according to crawler experiance. I.e. shorter " +
                 "wait, visit more often, if document has changed between " +
                 "visits, and vica versa.",
-                DEFAULT_INITIAL_WAIT_INTERVAL));
+                default_inital_wait_interval));
         addElementToDefinition(new SimpleType(ATTR_MAX_WAIT_INTERVAL,
                 "The maximum settable wait time between revisits. Once a " +
                 "URIs wait time reaches this value, it will not grow " +
@@ -113,13 +132,13 @@ implements AdaptiveRevisitAttributeConstants {
                 "does not wait any longer, since the crawler might be " +
                 "'behind,' forcing a URI to wait until other URIs, " +
                 "scheduled for earlier are completed..",
-                DEFAULT_MAX_WAIT_INTERVAL));
+                default_max_wait_interval));
         addElementToDefinition(new SimpleType(ATTR_MIN_WAIT_INTERVAL,
                 "The minum settable wait time between revisits. Once a " +
                 "URIs wait time reaches this value, it will not be shortened " +
                 "further, regardlesss of subsequent visits that discover " +
                 "changes.",
-                DEFAULT_MIN_WAIT_INTERVAL));
+                default_min_wait_interval));
         addElementToDefinition(new SimpleType(ATTR_DEFAULT_WAIT_INTERVAL,
                 "Fixed wait time for 'unknown' change status. I.e. wait time " +
                 "for URIs whose content change detection is not available.",
@@ -128,12 +147,12 @@ implements AdaptiveRevisitAttributeConstants {
                 "The factor by which a URIs wait time is increased when a " +
                 "revisit reveals an unchanged document. A value of 1 will " +
                 "leave it unchanged, a value of 2 will double it etc.",
-                DEFAULT_UNCHANGED_FACTOR));
+                default_unchanged_factor));
         addElementToDefinition(new SimpleType(ATTR_CHANGED_FACTOR,
                 "The factor by which a URIs wait time is decreased when a " +
                 "revisit reveals a changed document. A value of 1 will leave " +
                 "it unchanged, a value of two will half it etc.",
-                DEFAULT_CHANGED_FACTOR));
+                default_changed_factor));
         addElementToDefinition(new SimpleType(ATTR_USE_OVERDUE_TIME,
                 "Indicates if the amount of time the URI was overdue should " +
                 "be added to the wait time before the new wait time is " +
