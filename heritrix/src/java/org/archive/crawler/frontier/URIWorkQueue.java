@@ -48,7 +48,7 @@ public interface URIWorkQueue {
     /** FROZEN: not considered as URI source until operator intervention */
     public static final Object FROZEN = "FROZEN".intern();
 
-    /** IN_PROCESS: on hold until one or more URIs in progress are finished */
+    /** BUSY: on hold until one or more URIs in progress are finished */
     public static final Object BUSY = "BUSY".intern();
 
     /** SNOOZED: on hold until a specific time interval has passed */
