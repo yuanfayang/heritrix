@@ -27,14 +27,17 @@ package org.archive.util;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.io.StreamCorruptedException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
-import org.archive.crawler.framework.Savable;
-import org.archive.io.DiskBackedByteQueue;
+import org.archive.io.DiskByteQueue;
 import org.archive.io.DevNull;
 
 /**
@@ -51,8 +54,7 @@ import org.archive.io.DevNull;
  *
  * @author Gordon Mohr
  */
-public class DiskQueue implements Queue, Savable {
-
+public class DiskQueue implements Queue, Serializable {
     /** the directory used to create the temporary files */
     private File scratchDir;
 
@@ -65,11 +67,11 @@ public class DiskQueue implements Queue, Savable {
     /**
      * The object which deals with serializing the actual bytes to/from disk.
      */
-    DiskBackedByteQueue bytes;
+    DiskByteQueue bytes;
 
-    ObjectOutputStream testStream; // to verify that object is serializable
-    ObjectOutputStream tailStream;
-    ObjectInputStream headStream;
+    transient ObjectOutputStream testStream; // to verify that object is serializable
+    transient ObjectOutputStream tailStream;
+    transient ObjectInputStream headStream;
 
     /**
      * A flag which marks when the lazy initialization is finished, and the
@@ -79,13 +81,15 @@ public class DiskQueue implements Queue, Savable {
 
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
-     * given directory, with a given prefix.
+     * given directory, with a given prefix, and reuse any prexisting backing
+     * files as directed.
      *
      * @param dir the directory in which to create the data files
      * @param prefix
-     * @throws FileNotFoundException if we cannot create an appropriate file
+     * @param reuse whether to reuse any existing backing files
+     * @throws IOException if we cannot create an appropriate file
      */
-    public DiskQueue(File dir, String prefix) throws FileNotFoundException {
+    public DiskQueue(File dir, String prefix, boolean reuse) throws IOException {
         if(dir == null || prefix == null) {
             throw new FileNotFoundException("null arguments not accepted");
         }
@@ -93,20 +97,29 @@ public class DiskQueue implements Queue, Savable {
         length = 0;
         this.prefix = prefix;
         this.scratchDir = dir;
-        bytes = new DiskBackedByteQueue(scratchDir, this.prefix);
-        bytes.initializeStreams();
+        bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
+        bytes.initializeStreams(0);
         // TODO someday: enable queue to already be filled
+    }
+
+    /** Create a new {@link DiskQueue} which creates its temporary files in a
+     * given directory, with a given prefix. 
+     * @param file
+     * @param file_prefix
+     */
+    public DiskQueue(File file, String file_prefix) throws IOException {
+        this(file,file_prefix,false);
     }
 
     private void lateInitialize() throws FileNotFoundException, IOException {
         testStream = new ObjectOutputStream(new DevNull());        
-        tailStream = new ObjectOutputStream(bytes.getTailStream());
-        headStream = new ObjectInputStream(bytes.getHeadStream());
-        tailStream.flush();
+        tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
+        headStream = new HeaderlessObjectInputStream(bytes.getHeadStream());
+        tailStream.flush(); // ??
         isInitialized = true;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o){
@@ -129,14 +142,14 @@ public class DiskQueue implements Queue, Savable {
         }
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
         return length==0;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
@@ -145,6 +158,9 @@ public class DiskQueue implements Queue, Savable {
         }
         Object o;
         try {
+             if(!isInitialized) {
+                lateInitialize();
+            }
             o = headStream.readObject();
         } catch (IOException e) {
             e.printStackTrace();
@@ -158,14 +174,14 @@ public class DiskQueue implements Queue, Savable {
         return o;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#length()
      */
     public long length() {
         return length;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#release()
      */
     public void release() {
@@ -173,7 +189,8 @@ public class DiskQueue implements Queue, Savable {
             try {
                 if(headStream != null) headStream.close();
                 if(tailStream != null) tailStream.close();
-                bytes.discard();
+                bytes.close();
+                // bytes.discard();
             } catch (IOException e) {
                 // TODO: convert to runtime?
                 e.printStackTrace();
@@ -181,22 +198,7 @@ public class DiskQueue implements Queue, Savable {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Savable#save(java.io.File, java.lang.String)
-     */
-    public void save(File directory, String key) throws IOException {
-        bytes.save(directory, key);
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Savable#restore(java.io.File, java.lang.String)
-     */
-    public void restore(File directory, String key) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
-
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
@@ -204,8 +206,9 @@ public class DiskQueue implements Queue, Savable {
         throw new UnsupportedOperationException();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#getIterator(boolean)
+     * @return iterator
      */
     public Iterator getIterator(boolean inCacheOnly) {
         // There are no levels of storage so we will return all items.
@@ -216,7 +219,7 @@ public class DiskQueue implements Queue, Savable {
         } catch (IOException e) {
             e.printStackTrace();
             it = new Iterator(){
-                public void remove() { ; }
+                public void remove() { /** unimplemented */ }
                 public boolean hasNext() { return false; }
                 public Object next() { throw new NoSuchElementException(); }
             };        
@@ -225,7 +228,7 @@ public class DiskQueue implements Queue, Savable {
         return it;
     }
 
-    /* (non-Javadoc)
+    /** 
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
@@ -248,4 +251,52 @@ public class DiskQueue implements Queue, Savable {
         return numberOfDeletes;
     }
 
+    // custom serialization
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        // after deserialization, must reinitialize object streams from underlying bytestreams
+        isInitialized = false; 
+    }
+    
+    class HeaderlessObjectOutputStream extends ObjectOutputStream {
+
+		/**
+		 * @param out
+		 * @throws IOException
+		 */
+		public HeaderlessObjectOutputStream(OutputStream out) throws IOException {
+			super(out);
+			// TODO Auto-generated constructor stub
+		}
+
+		/* (non-Javadoc)
+		 * @see java.io.ObjectOutputStream#writeStreamHeader()
+		 */
+		protected void writeStreamHeader() throws IOException {
+			// do nothing
+		}
+
+        
+    }
+    
+    class HeaderlessObjectInputStream extends ObjectInputStream {
+
+		/**
+		 * @param in
+		 * @throws IOException
+		 */
+		public HeaderlessObjectInputStream(InputStream in) throws IOException {
+			super(in);
+			// TODO Auto-generated constructor stub
+		}
+
+		/* (non-Javadoc)
+		 * @see java.io.ObjectInputStream#readStreamHeader()
+		 */
+		protected void readStreamHeader() throws IOException,
+				StreamCorruptedException {
+			// do nothing
+		}
+        
+    }
 }
