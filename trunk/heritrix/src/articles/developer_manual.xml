@@ -345,7 +345,7 @@ ${package_declaration}</programlisting></para>
         </listitem>
       </itemizedlist>
 
-      <para>The Frontier implements the URIFrontier interface and can be
+      <para>The Frontier implements the Frontier interface and can be
       replaced by any Frontier that implements this interface. It should be
       noted though that writing a Frontier is not a trivial task.</para>
 
@@ -720,15 +720,15 @@ ${package_declaration}</programlisting></para>
         case the constructor might choose to ignore the name string and
         substitute it with a hard coded one. This is for example the case with
         the Frontier. The name of the Frontier should always be the string
-        "frontier". For this reason the URIFrontier interface that all
+        "frontier". For this reason the Frontier interface that all
         Frontiers should implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
         implementations of the Frontier use instead of the string argument
         submitted to the constructor. Here is the part of the default
         Frontiers constructor that shows how this should be
         done.<programlisting>public Frontier(String name) {
-    //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
+    //The 'name' of all frontiers should be the same (Frontier.ATTR_NAME)
     //therefore we'll ignore the supplied parameter. 
-    super(URIFrontier.ATTR_NAME, "Frontier. \nMaintains the internal" +
+    super(Frontier.ATTR_NAME, "HostQueuesFrontier. \nMaintains the internal" +
         " state of the crawl. It dictates the order in which URIs" +
         " will be scheduled. \nThis frontier is mostly a breadth-first" +
         " frontier, which refrains from emitting more than one" +
@@ -1063,7 +1063,7 @@ public class Foo extends ModuleType {
   <sect1>
     <title>Writing a Frontier</title>
 
-    <para>As mentioned before, the URIFrontier is a pluggable module
+    <para>As mentioned before, the Frontier is a pluggable module
     responsible for deciding which URI to process next, and when. The Frontier
     is also responsible for keeping track of other aspects of the crawls
     internal state which in turn can be used for logging and reporting. Even
@@ -1087,17 +1087,17 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.URIFrontier;
-import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
 
 
 /**
  * A simple Frontier implementation for tutorial purposes
  */
-public class MyFrontier extends ModuleType implements URIFrontier,
+public class MyFrontier extends ModuleType implements Frontier,
         FetchStatusCodes {
     // A list of the discovered URIs that should be crawled.
     List pendingURIs = new ArrayList();
@@ -1122,7 +1122,7 @@ public class MyFrontier extends ModuleType implements URIFrontier,
     long totalProcessedBytes = 0;
 
     public MyFrontier(String name) {
-        super(URIFrontier.ATTR_NAME, "A simple frontier.");
+        super(Frontier.ATTR_NAME, "A simple frontier.");
     }
 
     public void initialize(CrawlController controller)
@@ -1222,10 +1222,6 @@ public class MyFrontier extends ModuleType implements URIFrontier,
         return successCount + failedCount + disregardedCount;
     }
 
-    public long pendingUriCount() {
-        return 0;
-    }
-
     public long successfullyFetchedCount() {
         return successCount;
     }
@@ -1250,13 +1246,13 @@ public class MyFrontier extends ModuleType implements URIFrontier,
         throw new UnsupportedOperationException();
     }
 
-    public URIFrontierMarker getInitialMarker(String regexpr,
+    public FrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {
         return null;
     }
 
-    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches,
-            boolean verbose) throws InvalidURIFrontierMarkerException {
+    public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
+            boolean verbose) throws InvalidFrontierMarkerException {
         return null;
     }
 
@@ -1283,19 +1279,19 @@ public class MyFrontier extends ModuleType implements URIFrontier,
     Frontier would also be aware of the fact that Heritrix is multi threaded
     and try to process as many URIs simultaneously as allowed by the number of
     threads without breaking the politeness rules. Take a look at <ulink
-    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/Frontier.html">Frontier</ulink>
+    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/HostQueuesFrontier.html">Frontier</ulink>
     <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/Frontier.html">(javadoc)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/HostQueuesFrontier.html">(javadoc)</ulink>
     to see how a full blown Frontier might look like.</para>
 
-    <para>All Frontiers must implement the URIFrontier interface. Most
+    <para>All Frontiers must implement the Frontier interface. Most
     Frontiers will also implement the FetchStatusCodes because these codes are
     used to determine what to do with a URI after it has returned from the
     processing cycle. In addition you might want to implement the <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlStatusListener.html">CrawlStatusListener</ulink>
     which enables the Frontier to be aware of starts, stops, and pausing of a
     crawl. For this simple example we don't care about that. The most
-    important methods in the URIFrontier interface are:<orderedlist>
+    important methods in the Frontier interface are:<orderedlist>
         <listitem>
           <para>next(int timeout)</para>
         </listitem>
@@ -1385,7 +1381,7 @@ public class MyFrontier extends ModuleType implements URIFrontier,
           this time, we should wait the timeout before returning null. But if
           a URI becomes available during this time it should wake up from the
           wait and hand it out. See the javadoc for <ulink
-          url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#next(int)">next(timeout)</ulink>
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#next(int)">next(timeout)</ulink>
           to get an explanation.</para>
         </callout>
       </calloutlist></para>
@@ -1396,10 +1392,10 @@ public class MyFrontier extends ModuleType implements URIFrontier,
     been postponed. The PostSelector iterates through all new URIs
     (prerequisites and/or extracted URIs) added to the CrawlURI and, if they
     are within the scope, adds them to Frontier by calling the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
     method. There is also a batch version of the schedule method for
     efficiency, see the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html">javadoc</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html">javadoc</ulink>
     for more information. This simple Frontier treats them the
     same.<programlisting>    public synchronized void schedule(CandidateURI caURI) {
         // Schedule a uri for crawling if it is not already crawled
@@ -1438,7 +1434,7 @@ public class MyFrontier extends ModuleType implements URIFrontier,
 
     <para>After all the processors are finished (including the PostSelector's
     scheduling of new URIs), the ToeThread calls the Frontiers <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
     method submitting the CrawlURI that was sent through the
     chain.<programlisting>    public synchronized void finished(CrawlURI cURI) {
         uriInProcess = false;
@@ -2152,7 +2148,7 @@ public class SimpleExtractor extends Processor
     part of the crawl.</para>
 
     <para>Generally statistics trackers gather information by either querying
-    the data exposed by the URIFrontier or by listening for <ulink
+    the data exposed by the Frontier or by listening for <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlURIDispositionListener.html">CrawlURI
     disposition events</ulink> and <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlStatusListener.html">crawl

@@ -32,7 +32,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 
 
 /**
@@ -361,7 +361,7 @@ public interface Frontier {
      *            information about each URI beyond their names.
      * @return a list of all pending URIs falling within the specification
      *            of the marker
-     * @throws InvalidURIFrontierMarkerException when the
+     * @throws InvalidFrontierMarkerException when the
      *            <code>URIFronterMarker</code> does not match the internal
      *            state of the frontier. Tolerance for this can vary
      *            considerably from one URIFrontier implementation to the next.
@@ -371,7 +371,7 @@ public interface Frontier {
     public ArrayList getURIsList(FrontierMarker marker,
                                  int numberOfMatches,
                                  boolean verbose)
-                             throws InvalidURIFrontierMarkerException;
+                             throws InvalidFrontierMarkerException;
 
     /**
      * Delete any URI that matches the given regular expression from the list

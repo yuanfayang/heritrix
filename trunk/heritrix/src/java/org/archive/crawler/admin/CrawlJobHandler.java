@@ -52,7 +52,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -1119,7 +1119,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param verbose
      *            should detailed info be provided on each URI?
      * @return the frontiers URI list based on the provided marker
-     * @throws InvalidURIFrontierMarkerException
+     * @throws InvalidFrontierMarkerException
      *             When marker is inconsistent with the current state of the
      *             frontier.
      * @see #getInitialMarker(String, boolean)
@@ -1127,7 +1127,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public ArrayList getPendingURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
-            throws InvalidURIFrontierMarkerException {
+            throws InvalidFrontierMarkerException {
         ArrayList tmp = null;
         if (controller != null && controller.isPaused()) {
             // Ok, get the list.

@@ -52,7 +52,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
+import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.util.FPUriUniqFilter;
 import org.archive.queue.TieredQueue;
 import org.archive.util.ArchiveUtils;
@@ -650,12 +650,12 @@ public class NewFrontier
      * @param numberOfMatches
      * @param verbose
      * @return List of URIS.
-     * @throws InvalidURIFrontierMarkerException
+     * @throws InvalidFrontierMarkerException
      */
     public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
-            boolean verbose) throws InvalidURIFrontierMarkerException {
+            boolean verbose) throws InvalidFrontierMarkerException {
         if(marker instanceof HostQueuesFrontierMarker == false){
-            throw new InvalidURIFrontierMarkerException();
+            throw new InvalidFrontierMarkerException();
         }
 
         HostQueuesFrontierMarker mark = (HostQueuesFrontierMarker)marker;
@@ -667,7 +667,7 @@ public class NewFrontier
                 get(mark.getCurrentQueue());
             KeyedQueue keyq = (KeyedQueue)allClassQueuesMap.get(queueKey);
             if(keyq==null){
-                throw new InvalidURIFrontierMarkerException();
+                throw new InvalidFrontierMarkerException();
             }
 
             numberOfMatches -= inspectQueue(keyq,"hostQueue("+queueKey+")",list,mark,verbose, numberOfMatches);
@@ -693,7 +693,7 @@ public class NewFrontier
      * @param numberOfMatches
      *            maximum number of matches to add to list
      * @return the number of matches found
-     * @throws InvalidURIFrontierMarkerException
+     * @throws InvalidFrontierMarkerException
      */
     private int inspectQueue( KeyedQueue queue,
                               String queueName,
@@ -701,10 +701,10 @@ public class NewFrontier
                               HostQueuesFrontierMarker marker,
                               boolean verbose,
                               int numberOfMatches)
-                          throws InvalidURIFrontierMarkerException{
+                          throws InvalidFrontierMarkerException{
         if(queue.length() < marker.getAbsolutePositionInCurrentQueue()) {
             // Not good. Invalid marker.
-            throw new InvalidURIFrontierMarkerException();
+            throw new InvalidFrontierMarkerException();
         }
 
         if(queue.length()==0){
