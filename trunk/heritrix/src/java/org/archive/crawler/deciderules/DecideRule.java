@@ -42,9 +42,9 @@ import org.archive.crawler.settings.ModuleType;
  */
 public class DecideRule extends ModuleType {
     // enumeration of 'actions'
-    public static final Object ACCEPT = "ACCEPT";
-    public static final Object REJECT = "REJECT";
-    public static final Object PASS = "PASS";
+    public static final String ACCEPT = "ACCEPT";
+    public static final String REJECT = "REJECT";
+    public static final String PASS = "PASS";
 
     /**
      * Constructor.
