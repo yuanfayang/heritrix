@@ -119,6 +119,7 @@
         </map>
         <boolean name="compress">true</boolean>
         <string name="prefix">IAH</string>
+        <string name="suffix">${HOSTNAME}</string>
         <integer name="max-size-bytes">100000000</integer>
         <string name="path"/>
         <integer name="pool-max-active">5</integer>

@@ -58,8 +58,13 @@ import org.xbill.DNS.Record;
  * @author Parker Thompson
  */
 public class ARCWriterProcessor extends Processor
-    implements CoreAttributeConstants, ARCConstants, CrawlStatusListener
-{
+        implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
+    /**
+     * Logger.
+     */
+    private static final Logger logger =
+        Logger.getLogger(ARCWriterProcessor.class.getName());
+    
     /**
      * Key to use asking settings for compression value.
      */
@@ -69,6 +74,11 @@ public class ARCWriterProcessor extends Processor
      * Key to use asking settings for prefix value.
      */
     public static final String ATTR_PREFIX = "prefix";
+    
+    /**
+     * Key to use asking settings for suffix value.
+     */
+    public static final String ATTR_SUFFIX = "suffix";
 
     /**
      * Key to use asking settings for max size value.
@@ -108,6 +118,11 @@ public class ARCWriterProcessor extends Processor
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
+    
+    /**
+     * File suffix for arcs.
+     */
+    private String arcSuffix = null;
 
     /**
      * Use compression flag.
@@ -147,6 +162,10 @@ public class ARCWriterProcessor extends Processor
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_PREFIX, "Prefix", this.arcPrefix));
+        e = addElementToDefinition(
+            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto arc files.\n" +
+                "If value is '${HOSTNAME}', will use hostname for suffix.",
+                "${HOSTNAME}.  If empty, no suffix will be added."));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
@@ -166,9 +185,6 @@ public class ARCWriterProcessor extends Processor
     }
 
     public synchronized void initialTasks() {
-        Logger logger = getSettingsHandler().getOrder().getController()
-            .runtimeErrors;
-        
         // Add this class to crawl state listeners
         getSettingsHandler().getOrder().getController().
             addCrawlStatusListener(this);
@@ -191,6 +207,7 @@ public class ARCWriterProcessor extends Processor
                     this.arcPrefix,
                     this.useCompression,
                     this.arcMaxSize,
+                    this.arcSuffix,
                     this.poolMaximumActive,
                     this.poolMaximumWait);
             
@@ -206,6 +223,7 @@ public class ARCWriterProcessor extends Processor
         setUseCompression(
             ((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
         setArcPrefix((String) getAttribute(ATTR_PREFIX));
+        setArcSuffix((String) getAttribute(ATTR_SUFFIX));
         setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
         setOutputDir((String) getAttribute(ATTR_PATH));
         setPoolMaximumActive(
@@ -334,6 +352,10 @@ public class ARCWriterProcessor extends Processor
 
     public void setArcPrefix(String buffer) {
         this.arcPrefix = buffer;
+    }
+    
+    public void setArcSuffix(String suffix) {
+        this.arcSuffix = suffix;
     }
 
     public void setUseCompression(boolean use) {
