@@ -25,6 +25,7 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 
 import org.apache.commons.collections.Predicate;
@@ -33,7 +34,7 @@ import org.apache.commons.collections.Predicate;
 /**
  * @author gojomo
  */
-public class DiskBackedDeque extends DiskBackedQueue implements Deque {
+public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializable {
     protected DiskStack stack;
     /**
      * @param dir
@@ -104,11 +105,11 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque {
     }
     
     /* (non-Javadoc)
-     * @see org.archive.util.DiskBackedQueue#backingUpdate()
+     * @see org.archive.util.DiskBackedQueue#discardBacking()
      */
-    protected void backingUpdate() {
-        // TODO Auto-generated method stub
-        super.backingUpdate();
+    protected void discardBacking() {
+        super.discardBacking();
+        stack.release();
     }
     
     /* (non-Javadoc)
@@ -118,6 +119,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque {
         // TODO Auto-generated method stub
         return super.deleteMatchedItems(matcher);
     }
+
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
