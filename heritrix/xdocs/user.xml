@@ -169,9 +169,144 @@ org.apache.commons.httpclient.level= SEVERE</source>
 
 </section>
 
-<section name="Crawling">
-<p>TODO
+<section name="Launching crawl jobs via the web UI">
+<p>
+	If the program is launched with a web UI.
 </p>
+<p>
+	Once logged in the 'Console' (more on that later) is displayed. Near the top
+	of the page are several tabs. To create a new job, select the 'Jobs' tab.
+</p>
+<p>
+	The 'Jobs' page offers several ways of creating a new job.<br/>
+	<ul>
+		<li>Create new crawl job (This will be based on the default profile)</li>
+		<li>Create new crawl job based on a profile</li>
+		<li>Create new crawl job based on an existing job</li>
+	</ul>
+</p>
+<p>
+	It is not possible to create jobs from scratch but you will be allowed to edit 
+	any configurable part of the profile or job selected to serve as a template for
+	the new job. If running Heritrix for the first time there is only the supplied
+	default profile to chose from.
+</p>
+<p>
+	Having selected a profile/job the user will be asked to supply a name, 
+	description and seed list for the job. Once submitted the name can not be 
+	changed. The description and seed list can however be modified at a later 
+	date.
+</p>
+<p>
+	Below those data field 5 options are provided.<br/>
+	<ul>
+		<li>Modules</li>
+		<li>Filters</li>
+		<li>Settings</li>
+		<li>Overrides</li>
+		<li>Submit job</li>
+	</ul>
+</p>
+<p>
+	Each of the first 4 corresponds to a section of the crawl configuration that can 
+	be modified. <em>Modules</em> refers to selecting which plugable modules 
+	(classes) to use. This includes the 'frontier' and 'processors'. It does not 
+	include the use of plugable filters which are configurable via the second option.
+	<em>Settings</em> refers to setting the values that any module (plugable or
+	otherwise) allows configurations of. <em>Overrides</em> refers to the ability
+	to set alternate values based on which domain the crawler is working on.
+	Clicking on any of these 4 will cause the job to be created but kept from being 
+	run until the user finish configuring it. The user will be taken the relevant page. 
+	More on those pages in a bit.
+</p>
+<p>
+	<em>Submit job</em> will cause the job to be submitted to the pending queue
+	right away. It can still be edited while in the queue or even after it starts
+	crawling (although modules and filters can only be set prior to the start of
+	crawling). If the crawler is set to run and there is no other job currently 
+	crawling, the new job will start crawling at once. Note that some profiles
+	may not contain entirely valid settings. A common example is that the HTTP
+	header information be invalid, forcing users to input their own values.
+</p>
+<p>
+	Note: The term 'running' generally means that the crawler will start crawling
+	a job as soon as one is available and no job is crawling. I.e. it will accept
+	new jobs to be crawled. While not running jobs will be held in the pending
+	queue even if there is no current job crawling.<br/>
+	The term crawling generally refers to a job that is actually being executed
+	(crawled). That is pages are being fetched, links extracted etc. If the crawler
+	is set to not run, there can still be a job crawling! That is a job that started
+	before the crawler was stopped. In that scenario once the current job is 
+	completed the next job will not be started.
+</p>
+<subsection name="Modules">
+<p>
+	This page allows the user to select what URIFrontier implementation to use 
+	(select from combobox) and to configure the chain of processors that is used
+	when processing a URI. Note that the order of display (top to bottom) is the
+	one that they are executed in. Options are provided for moving them up, down,
+	removing them and adding those not currently in the chain. Those that are 
+	added are placed at the end by default, generally the user should then move
+	them to their correct location. Detailed configuration of these modules is 
+	then performed by going to the 'Settings' page afterwards.
+</p>
+</subsection>
+<subsection name="Filters">
+<p>
+	Certain modules (Scope, all processors, the OrFilter for example) will allow 
+	an arbitrary number of filters to be applied to them. This page presents a
+	treelike structure of the configuration with the ability to add remove and
+	reorder filters where they can be placed. For each grouping of filters the
+	options provided correspond to those that are provided for processors. Note
+	however that since filters can contain filters the lists can become 
+	complicated. As with modules, detailed configuration of the filters is 
+	done via the 'Settings' page.
+</p>
+</subsection>
+<subsection name="Settings">
+<p>
+	This page provides a treelike representation of the crawl configuration similar
+	to the one the 'Filters' page does. Here however an input field is provided
+	for each configurable parameter of each module. Changes made will be saved 
+	when the user navigates to one of the other crawl configuration pages or 
+	selects 'Finished'. On all pages choosing 'Finish' will submit the job to the
+	pending queue. Navigation to other parts of the admin interface will cause 
+	the job to be lost.
+</p>
+</subsection>
+<subsection name="Overrides">
+<p>
+	This page provides an iterative list of domains that contain override settings,
+	that is values for parameters that override values in the global configuration.
+	Users can navigate to any domain that has an override, create/edit the
+	overrides and delete them. When creating/editing them a page similar to the
+	'Settings' page is provided. The main difference is that each input field is
+	preceded by a checkbox. If a check is in that box it is an override. If there
+	is no check the value being displayed is inherited from the current domains
+	super domain. To override a setting it is necessary to add a check in front
+	of it. Removing a check effectively removes the override. Changes made to
+	non-checked fields will be ignored.
+</p>
+<p>
+	It is not possible to override what modules are used in an override. Some of
+	that functionality can though be achieved via the 'enabled' option that each
+	processor has. By overriding it and setting it to false you can disable that
+	processor. It is even possible to have it set to false by default and only
+	enable it on select domains. Thus any arbitrary chain of processors can be
+	created for each domain with one major exception. It is not possible to
+	manipulate the order of the processors. It is possible to similarly 
+	disable/enable filters. It is also possible to add filters. You can not
+	affect the order of inherited filters, and you can not interject new filters
+	among them. Override filters will be run after inherited filters.
+</p>
+</subsection>
+<subsection name="Run">
+	Once a job is in the pending queue the user can go back to the Console and
+	start the crawler. The option to do so is presented just below the general
+	information on the state of the crawler to the far left. Once started the
+	console will offer summary information about the progress of the crawl and
+	the option of terminating it.
+</subsection>
 </section>
 <section name="Monitoring the Crawler">
     <p>TODO</p>
