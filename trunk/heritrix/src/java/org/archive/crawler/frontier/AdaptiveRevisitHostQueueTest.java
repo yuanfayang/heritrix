@@ -29,6 +29,8 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.util.TmpDirTestCase;
 
+import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 
@@ -42,7 +44,8 @@ import com.sleepycat.je.EnvironmentConfig;
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitHostQueueTest
-extends TmpDirTestCase implements AdaptiveRevisitAttributeConstants {
+extends TmpDirTestCase
+implements AdaptiveRevisitAttributeConstants {
     public void testHQ() throws Exception {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setTransactional(true); 
@@ -50,8 +53,14 @@ extends TmpDirTestCase implements AdaptiveRevisitAttributeConstants {
         File envDir = new File(getTmpDir() + File.separator + "AR" + File.separator);
         envDir.mkdirs();
         Environment env = new Environment(envDir, envConfig);
+        // Open the class catalog database. Create it if it does not
+        // already exist. 
+        DatabaseConfig dbConfig = new DatabaseConfig();
+        dbConfig.setAllowCreate(true);
+        StoredClassCatalog catalog =
+            new StoredClassCatalog(env.openDatabase(null, "classes", dbConfig));
         AdaptiveRevisitHostQueue hq =
-            new AdaptiveRevisitHostQueue("bok.hi.is",env,1);
+            new AdaptiveRevisitHostQueue("bok.hi.is", env, catalog, 1);
 
 
         // Make the CrawlUris
@@ -282,7 +291,7 @@ extends TmpDirTestCase implements AdaptiveRevisitAttributeConstants {
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_BUSY);
         hq.close();
         
-        hq = new AdaptiveRevisitHostQueue("bok.hi.is",env,2);
+        hq = new AdaptiveRevisitHostQueue("bok.hi.is", env, catalog, 2);
         
         assertEquals("Size of HQ after reopening should now be 4",
                 4, hq.getSize());
@@ -343,6 +352,7 @@ extends TmpDirTestCase implements AdaptiveRevisitAttributeConstants {
          * Close the ARHostQueue and the Environment
          */
         hq.close();
+        catalog.close();
         env.close();
         cleanUpOldFiles("AR");
     }
