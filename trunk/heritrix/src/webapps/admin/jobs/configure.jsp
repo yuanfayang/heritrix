@@ -176,11 +176,13 @@
 				}
 			}
 			else{
-				try{
-					mbean.setAttribute(new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
-				} catch (Exception e1) {
-					e1.printStackTrace();
-					return;
+			    if (att.isTransient() == false) {
+				    try{
+					   mbean.setAttribute(new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
+    				} catch (Exception e1) {
+	   				    e1.printStackTrace();
+					   return;
+				    }
 				}
 			}
 		}
