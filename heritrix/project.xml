@@ -366,7 +366,7 @@
         </dependency>
         <dependency>
             <id>jetty</id>
-            <version>4.2.21</version>
+            <version>4.2.23</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>The Jetty servlet container.
