@@ -3493,7 +3493,7 @@ collapsed in this lookup).</para>
         SUN 1.5.0 JDK. See the <ulink
         url="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient project</ulink> to learn more about this
         script's capabilities and how to use it.
-        See also <xref linkend="mon_con" />.
+        See also <xref linkend="mon_com" />.
         </para>
     </sect3>
 
@@ -3561,10 +3561,10 @@ collapsed in this lookup).</para>
         To see whats available via JMX, use the SUN 1.5.0 JDK jconsole
         application -- its in $JAVA_HOME/bin -- or use
         <xref linkend="jmxclient" />.  To learn more about the SUN 1.5.0 JDK
-        JMX managements and jconsole, see <a
-        href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management Using JMX</a>.  This O'Reilly article is also 
+        JMX managements and jconsole, see <ulink
+        url="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management Using JMX</ulink>.  This O'Reilly article is also 
         a good place for getting started : 
-        <xlink href="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring Local and Remote Applications Using JMX 1.2 and JConsole</xlink>.
+        <ulink url="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring Local and Remote Applications Using JMX 1.2 and JConsole</ulink>.
         </para>
     </sect2>
 
