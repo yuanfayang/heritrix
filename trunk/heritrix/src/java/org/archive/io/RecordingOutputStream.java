@@ -75,7 +75,15 @@ public class RecordingOutputStream extends OutputStream {
 
     private String backingFilename;
     private BufferedOutputStream diskStream;
+    
+    /**
+     * Buffer we write recordings to.
+     * 
+     * We write all recordings here first till its full.  Thereafter we 
+     * write the backing file.
+     */
     private byte[] buffer;
+    
     private long position;
     private boolean shouldDigest = false;
     private MessageDigest digest;
@@ -127,7 +135,7 @@ public class RecordingOutputStream extends OutputStream {
     public void open(OutputStream wrappedStream)
         throws IOException
    {
-        assert this.out == null : "RecordingOutputStream still has old 'out' stream";
+        assert this.out == null: "RecordingOutputStream still has old 'out'.";
         this.out = wrappedStream;
         this.position = 0;
         this.size = 0;
@@ -142,8 +150,8 @@ public class RecordingOutputStream extends OutputStream {
         throws FileNotFoundException
     {
         // TODO: Fix so we only make file when its actually needed.
-        if (diskStream == null) {
-            FileOutputStream fis = new FileOutputStream(backingFilename);
+        if (this.diskStream == null) {
+            FileOutputStream fis = new FileOutputStream(this.backingFilename);
             this.diskStream = new BufferedOutputStream(fis, 4096);
         }
     }
@@ -189,18 +197,18 @@ public class RecordingOutputStream extends OutputStream {
      * @exception IOException Failed write to backing file.
      */
     private void record(int b) throws IOException {
-        if (shouldDigest) {
-            digest.update((byte)b);
+        if (this.shouldDigest) {
+            this.digest.update((byte)b);
         }
-        if (position >= buffer.length) {
+        if (this.position >= this.buffer.length) {
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Protect ourselves against this.
-            diskStream.write(b);
+            this.diskStream.write(b);
         } else {
-            buffer[(int) position] = (byte) b;
+            this.buffer[(int) this.position] = (byte) b;
         }
-        position++;
+        this.position++;
     }
 
     /**
@@ -213,19 +221,19 @@ public class RecordingOutputStream extends OutputStream {
      * @exception IOException Failed write to backing file.
      */
     private void record(byte[] b, int off, int len) throws IOException {
-        if(shouldDigest) {
-            digest.update(b, off, len);
+        if(this.shouldDigest) {
+            this.digest.update(b, off, len);
         }
-        if(position >= buffer.length){
+        if(this.position >= this.buffer.length){
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Lets protect ourselves against this.
-            diskStream.write(b, off, len);
-            position += len;
+            this.diskStream.write(b, off, len);
+            this.position += len;
         } else {
-            int toCopy = (int)Math.min(buffer.length - position, len);
-            System.arraycopy(b, off, buffer, (int)position, toCopy);
-            position += toCopy;
+            int toCopy = (int)Math.min(this.buffer.length - this.position, len);
+            System.arraycopy(b, off, this.buffer, (int)this.position, toCopy);
+            this.position += toCopy;
             // TODO verify these are +1 -1 right
             if (toCopy < len) {
                 record(b, off + toCopy, len - toCopy);
@@ -250,16 +258,16 @@ public class RecordingOutputStream extends OutputStream {
     public void closeRecorder()
         throws IOException
     {
-        if (diskStream != null) {
-            diskStream.close();
-            diskStream = null;
+        if (this.diskStream != null) {
+            this.diskStream.close();
+            this.diskStream = null;
         }
 
         // This setting of size is important.  Its passed to ReplayInputStream
         // on creation.  It uses it to know EOS.
-        if (size == 0)
+        if (this.size == 0)
         {
-            size = position;
+            this.size = this.position;
         }
     }
 
@@ -271,8 +279,8 @@ public class RecordingOutputStream extends OutputStream {
         {
             this.out.flush();
         }
-        if (diskStream != null) {
-            diskStream.flush();
+        if (this.diskStream != null) {
+            this.diskStream.flush();
         }
     }
 
@@ -281,8 +289,8 @@ public class RecordingOutputStream extends OutputStream {
         // stream is closed (If it ain't, then the stream gotten won't work
         // -- the size will zero so any attempt at a read will get back EOF.
         assert this.out == null: "Stream is still open.";
-        return new ReplayInputStream(buffer, size, contentBeginMark,
-            backingFilename);
+        return new ReplayInputStream(this.buffer, this.size,
+            this.contentBeginMark, this.backingFilename);
     }
 
     /**
@@ -293,12 +301,12 @@ public class RecordingOutputStream extends OutputStream {
      */
     public ReplayInputStream getContentReplayInputStream() throws IOException {
         ReplayInputStream replay = getReplayInputStream();
-        replay.skip(contentBeginMark);
+        replay.skip(this.contentBeginMark);
         return replay;
     }
 
     public long getSize() {
-        return size;
+        return this.size;
     }
 
     /**
@@ -307,7 +315,7 @@ public class RecordingOutputStream extends OutputStream {
      * replays after the headers.
      */
     public void markContentBegin() {
-        contentBeginMark = position;
+        this.contentBeginMark = this.position;
     }
 
     /**
@@ -315,9 +323,9 @@ public class RecordingOutputStream extends OutputStream {
      * set.
      */
     public void startDigest() {
-        if (digest != null) {
-            digest.reset();
-            shouldDigest = true;
+        if (this.digest != null) {
+            this.digest.reset();
+            this.shouldDigest = true;
         }
     }
 
@@ -342,7 +350,7 @@ public class RecordingOutputStream extends OutputStream {
      * @param md Message digest function to use.
      */
     public void setDigest(MessageDigest md) {
-        digest = md;
+        this.digest = md;
     }
 
     /**
@@ -353,16 +361,17 @@ public class RecordingOutputStream extends OutputStream {
      * @return the digest final value
      */
     public byte[] getDigestValue() {
-        if(digest == null) {
+        if(this.digest == null) {
             return null;
         }
-        return digest.digest();
+        return this.digest.digest();
     }
 
     public CharSequence getReplayCharSequence() {
+
         try {
-            return new ReplayCharSequence(buffer, size, contentBeginMark,
-                backingFilename);
+            return new ReplayCharSequence(this.buffer, this.size,
+                this.contentBeginMark, this.backingFilename);
         } catch (IOException e) {
             // TODO convert to runtime exception?
             e.printStackTrace();
@@ -371,7 +380,7 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public long getResponseContentLength() {
-        return size-contentBeginMark;
+        return this.size - this.contentBeginMark;
     }
 
     /**

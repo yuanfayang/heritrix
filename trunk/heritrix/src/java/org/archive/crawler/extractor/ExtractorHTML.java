@@ -280,11 +280,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         curi.addEmbed(embed);
     }
 
-
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
-     */
     public void innerProcess(CrawlURI curi) {
 
         if (!curi.isHttpTransaction())
