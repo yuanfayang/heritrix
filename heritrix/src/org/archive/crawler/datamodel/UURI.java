@@ -142,19 +142,56 @@ public class UURI {
 		// but it may only be partially escaped, so patch it 
 		// up where necessary
 
-		// for now, just patch spaces -- but in the
-		// future, it could make sense to look for any
-		// of the rfc2396 'delims' or 'unwise' characters
-		// and escape them, as well as other special 
-		// handling of '%' and '+'
-
+		// replace nbsp with normal spaces (so that they get
+		// stripped if at ends, or encoded if in middle)
+		s = s.replaceAll("\\xA0"," ");
+		// strip ends whitespaces
 		s = s.trim();
+		// patch spaces
 		if (s.indexOf(" ") >= 0) {
 			s = s.replaceAll(" ", "%20");
 		}
+		// escape  | ^ " ' ` [ ] { } \
+		// (IE actually sends these unescaped, but they can't
+		// be put into a java.net.URI instance)
 		if (s.indexOf("|") >= 0) {
 			s = s.replaceAll("\\|","%7C");
 		}
+		if (s.indexOf("^") >= 0) {
+			s = s.replaceAll("\\^","%5E");
+		}
+		if (s.indexOf("\"") >= 0) {
+			s = s.replaceAll("\"","%22");
+		}
+		if (s.indexOf("'") >= 0) {
+			s = s.replaceAll("'","%27");
+		}
+		if (s.indexOf("`") >= 0) {
+			s = s.replaceAll("`","%60");
+		}
+		if (s.indexOf("[") >= 0) {
+			s = s.replaceAll("\\[","%5B");
+		}
+		if (s.indexOf("]") >= 0) {
+			s = s.replaceAll("\\]","%5D");
+		}
+		if (s.indexOf("{") >= 0) {
+			s = s.replaceAll("\\{","%7B");
+		}
+		if (s.indexOf("}") >= 0) {
+			s = s.replaceAll("\\}","%7D");
+		}
+		if (s.indexOf("\\") >= 0) {
+			s = s.replaceAll("\\\\","%5C");
+		}
+		// escape improper escape codes; eg any '%' followed
+		// by non-hex-digits or 
+		s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
+		// twice just to be sure (actually, to handle multiple %% in a row)
+		s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
+		// kill newlines etc
+		s = s.replaceAll("\n+|\r+","");
+		
 		return s; 
 	}
 	
