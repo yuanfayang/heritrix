@@ -115,24 +115,6 @@ public class CrawlScope extends Filter {
     }
 
     /**
-     * @param o An instance of UURI or of CandidateURI.
-     * @return Make into a UURI.
-     */
-    protected UURI getUURI(final Object o) {
-        UURI u = null;
-        if (o instanceof UURI) {
-            u = (UURI)o;
-        } else if (o instanceof CandidateURI) {
-            u = ((CandidateURI) o).getUURI();
-        } else {
-            if (o != null) {
-                throw new IllegalArgumentException("Passed wrong type: " + o);
-            }
-        }
-        return u;
-    }
-
-    /**
      * Refresh seeds.
      *
      */
@@ -143,7 +125,7 @@ public class CrawlScope extends Filter {
     /**
      * @return Seed list file or null if problem getting settings file.
      */
-    protected File getSeedfile() {
+    public File getSeedfile() {
         File file = null;
         try {
             file = getSettingsHandler().getPathRelativeToWorkingDirectory(
