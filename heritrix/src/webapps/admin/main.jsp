@@ -2,6 +2,7 @@
 <%@include file="/include/handler.jsp"%>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
+<%@ page import="org.archive.util.ArchiveUtils" %>
 
 <%
 	StatisticsTracker stats = null;
@@ -119,7 +120,7 @@
 										<b>Processed docs/sec:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.currentProcessedDocsPerSec()%> (<%=stats.processedDocsPerSec()%>)
+										<%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
 										&nbsp;&nbsp;&nbsp;
 										<b>KB/sec:</b>&nbsp;<%=stats.currentProcessedKBPerSec()%> (<%=stats.processedKBPerSec()%>)
 									</td>

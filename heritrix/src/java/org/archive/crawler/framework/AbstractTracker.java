@@ -126,7 +126,7 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
     	// log the legend
     	periodicLogger.log(Level.INFO,
     			"   [timestamp] [discovered]    [queued] [downloaded]"
-    				+ " [doc/s(avg)]  [KB/s(avg)]"
+    				+ "   [doc/s(avg)]  [KB/s(avg)]"
     				+ " [dl-failures] [busy-thread] [mem-use-KB]"
     		);
 

@@ -80,8 +80,8 @@ public class StatisticsTracker extends AbstractTracker{
     protected long discoveredPages = 0;
     protected long pendingPages = 0;
     protected long downloadedPages = 0;
-    protected int docsPerSecond = 0;
-    protected int currentDocsPerSecond = 0;
+    protected double docsPerSecond = 0;
+    protected double currentDocsPerSecond = 0;
     protected int currentKBPerSec = 0;
     protected long totalKBPerSec = 0;
     protected long downloadFailures = 0;
@@ -148,7 +148,7 @@ public class StatisticsTracker extends AbstractTracker{
             return; //Not enough time has passed for a decent snapshot.
         }
         else{
-    		docsPerSecond = (int)(downloadedPages / ((getCrawlerTotalElapsedTime()) / 1000) + .5); // rounded to nearest int
+    		docsPerSecond = (double) downloadedPages / (double)(getCrawlerTotalElapsedTime() / 1000);
     		totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())	/ 1000)) + .5 ); // round to nearest long
     	}
 
@@ -174,7 +174,7 @@ public class StatisticsTracker extends AbstractTracker{
     			long currentPageCount = successfulFetchAttempts();
     			long samplePageCount = currentPageCount - lastPagesFetchedCount;
 
-    			currentDocsPerSecond = (int) (samplePageCount / (sampleTime / 1000) + .5);
+    			currentDocsPerSecond = (double) samplePageCount / (double)(sampleTime / 1000);
 
     			lastPagesFetchedCount = currentPageCount;
 
@@ -196,11 +196,11 @@ public class StatisticsTracker extends AbstractTracker{
                 .raAppend(26, discoveredPages)
                 .raAppend(38, pendingPages)
                 .raAppend(51, downloadedPages)
-                .raAppend(64, currentDocsPerSecond + "(" + docsPerSecond + ")")
-                .raAppend(77, currentKBPerSec + "(" + totalKBPerSec + ")")
-                .raAppend(91, downloadFailures)
-                .raAppend(105, busyThreads)
-                .raAppend(118, Runtime.getRuntime().totalMemory() / 1024)
+                .raAppend(66, ArchiveUtils.doubleToString(currentDocsPerSecond,2) + "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
+                .raAppend(79, currentKBPerSec + "(" + totalKBPerSec + ")")
+                .raAppend(93, downloadFailures)
+                .raAppend(107, busyThreads)
+                .raAppend(120, Runtime.getRuntime().totalMemory() / 1024)
                 .toString());
 
 
@@ -214,7 +214,7 @@ public class StatisticsTracker extends AbstractTracker{
      *
      * @return  The rate per second of documents gathered so far
      */
-    public int processedDocsPerSec(){
+    public double processedDocsPerSec(){
     	return docsPerSecond;
     }
 
@@ -224,7 +224,7 @@ public class StatisticsTracker extends AbstractTracker{
      *
      * @return The rate per second of documents gathered during the last snapshot
      */
-    public int currentProcessedDocsPerSec(){
+    public double currentProcessedDocsPerSec(){
     	return currentDocsPerSecond;
     }
 

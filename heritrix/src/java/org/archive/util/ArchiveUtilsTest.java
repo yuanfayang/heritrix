@@ -200,6 +200,20 @@ public class ArchiveUtilsTest extends TestCase {
         assertTrue("same contents", ArchiveUtils.byteArrayEquals(foo, foo2));
         assertFalse("different contents", ArchiveUtils.byteArrayEquals(foo, bar2));
     }
+    
+    /** test doubleToString() */
+    public void testDoubleToString(){
+        double test = 12.345;
+        assertTrue(
+            "cecking zero precision",
+            ArchiveUtils.doubleToString(test, 0).equals("12"));
+        assertTrue(
+            "cecking 2 character precision",
+            ArchiveUtils.doubleToString(test, 2).equals("12.34"));
+        assertTrue(
+            "cecking precision higher then the double has",
+            ArchiveUtils.doubleToString(test, 65).equals("12.345"));
+    }
 
     /*
      * helper methods
