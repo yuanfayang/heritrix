@@ -2506,18 +2506,66 @@
     <sect2>
       <title>Reports</title>
 
-      <para></para>
+      <para>Heritrix's WUI offers a couple of reports on ongoing and completed
+      crawl jobs.</para>
+
+      <para>Both are accessible via the Reports tab.<note>
+          <para>Although jobs are loaded after restarts of the software, their
+          statistics are not reloaded with them. That means that these reports
+          are only available as long as Heritrix is not shut down. All of the
+          information is however replicated in report files at the end of each
+          crawl for permanent storage.</para>
+        </note></para>
 
       <sect3 id="crawlreport">
         <title>Crawl report</title>
 
-        <para></para>
+        <para> At the top of the crawl report some general statistics about
+        the crawl are printed out. All of these replicate data from the
+        Console so you should refer to <xref linkend="console" /> for more
+        information on them.</para>
+
+        <para>Next in line are statistics about the number of URIs pending
+        discovered, currently queued, downloaded etc. Question marks after
+        most of the values provides pop up descriptions of those
+        metrics.</para>
+
+        <para>Following that is a breakdown of the distribution of status
+        codes among URIs. It is sorted from most frequent to least. The number
+        of URIs found for each status code is displayed. Only successful
+        fetches are counted here.</para>
+
+        <para>A similar breakdown for file types (mime types) follows. In
+        addition to the number of URIs per file type, the amount of data for
+        that file type is also displayed.</para>
+
+        <para>Last a breakdown per host is provided. Number of URIs and amount
+        of data for each is presented. Especially in broad crawls, this list
+        can grow very large.</para>
       </sect3>
 
       <sect3 id="seedsreport">
         <title>Seeds report</title>
 
-        <para></para>
+        <para>This report lists all the seeds in the seeds file and also any
+        <emphasis>discovered</emphasis> seeds if that option is enabled (that
+        is treat redirects from seeds as new seeds). For each seed the status
+        code for the fetch attempt is presented in verbose form (that is with
+        minimum textual description of it's meaning). Following that is the
+        seeds disposition, a quick look at if the seed was successfully
+        crawled, not attempted, or failed to crawl. </para>
+
+        <para>Successfully crawled seeds are any that Heritrix had no internal
+        errors crawling, the seem may never the less have generated a 404
+        (file not found) error.</para>
+
+        <para>Failed to crawl might be because of a bug in Heritrix or an
+        invalid seed (commonly DNS lookup will have failed).</para>
+
+        <para>If the report is examined before the crawl is finished there
+        might still be seeds not yet attempted. Especially if there is trouble
+        getting their prerequisites or if the seed list is exceptionally
+        large.</para>
       </sect3>
     </sect2>
   </sect1>
@@ -2683,6 +2731,10 @@
 
         <para>The <literal>prefix</literal> is set by the user when he
         configures the ARCWriter processor. By default it is IAH.</para>
+
+        <para>For more on ARC files refer to the <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
+        Javadoc</ulink>.</para>
       </sect3>
     </sect2>
 
@@ -2882,11 +2934,31 @@
         </glossdef>
       </glossentry>
 
+      <glossentry>
+        <glossterm>Pending URIs</glossterm>
+
+        <glossdef>
+          <para>Number of URIs that are awaiting detailed processing.</para>
+
+          <para>Number of discovered URIs that have not been inspected for
+          scope or duplicates. Depending on the implementation of the
+          URIFrontier this might always be zero. It may also be an adjusted
+          number that tries to account for duplicates by estimation. </para>
+        </glossdef>
+      </glossentry>
+
       <glossentry id="politeness">
         <glossterm>Politeness</glossterm>
 
         <glossdef>
-          <para></para>
+          <para>Politeness refers to attempts by the crawler software to limit
+          load on a site. Without politeness restrictions the crawler might
+          otherwise overwhelm smaller sites and even cause moderately sized
+          sites to slow down significantly.</para>
+
+          <para>Unless you have express permission to crawl a site
+          aggressively you should apply strict politeness rules to any
+          crawl.</para>
         </glossdef>
       </glossentry>
 
