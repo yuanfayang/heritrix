@@ -72,6 +72,12 @@ do
     CP=${CP}:${jar}
 done
 
+# cygwin path translation
+if expr `uname` : 'CYGWIN*' > /dev/null; then
+    CP=`cygpath -p -w "$CP"`
+    HERITRIX_HOME=`cygpath -p -w "$HERITRIX_HOME"`
+fi
+
 # Make sure of java opts.
 if [ -z "$JAVA_OPTS" ]
 then
