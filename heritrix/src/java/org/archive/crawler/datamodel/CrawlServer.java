@@ -129,10 +129,9 @@ public class CrawlServer implements Serializable {
             // robots.txt lookup failed.
             validRobots = false;
             return;
-        } else {
-            validRobots = true;
         }
-
+        validRobots = true;
+        
         if (curi.getFetchStatus() != 200 ||
                 honoringPolicy.getType(getSettings(curi.getUURI())) ==
                     RobotsHonoringPolicy.IGNORE)
