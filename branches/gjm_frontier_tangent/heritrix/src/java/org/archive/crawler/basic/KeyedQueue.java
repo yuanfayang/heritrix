@@ -25,8 +25,10 @@ package org.archive.crawler.basic;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
 
@@ -45,6 +47,9 @@ public class KeyedQueue implements Queue, URIStoreable {
     Object classKey;
     Object state;
 
+    Object inProcessItem;
+    
+    LinkedList innerStack;
     Queue innerQ;
 
     /**
@@ -59,6 +64,7 @@ public class KeyedQueue implements Queue, URIStoreable {
         if (key instanceof String) {
             tmpName = (String) key;
         }
+        innerStack = new LinkedList();
 //        innerQ = new MemQueue();
         try {
             innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
@@ -143,13 +149,16 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
-        return innerQ.isEmpty();
+        return innerStack.isEmpty() && innerQ.isEmpty();
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
+        if (!innerStack.isEmpty()) {
+            return innerStack.removeFirst();
+        }
         return innerQ.dequeue();
     }
 
@@ -165,6 +174,33 @@ public class KeyedQueue implements Queue, URIStoreable {
      */
     public void release() {
         innerQ.release();
+    }
+
+    /**
+     * @return
+     */
+    public Object getInProcessItem() {
+       return inProcessItem;
+    }
+
+    /**
+     * @param curi
+     */
+    public void setInProcessItem(CrawlURI curi) {
+        inProcessItem = curi;
+    }
+
+    /**
+     * @param curi
+     */
+    public void enqueueMedium(CrawlURI curi) {
+        innerStack.addLast(curi);
+    }
+    /**
+     * @param curi
+     */
+    public void enqueueHigh(CrawlURI curi) {
+        innerStack.addFirst(curi);
     }
 
 }
