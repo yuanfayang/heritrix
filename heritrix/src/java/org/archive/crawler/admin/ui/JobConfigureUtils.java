@@ -416,7 +416,7 @@ public class JobConfigureUtils {
     public static boolean seedsEdittableSize(SettingsHandler h)
             throws AttributeNotFoundException, MBeanException,
             ReflectionException {
-        return getSeedFile(h).length() <= (2 ^ 15); // 32K
+        return getSeedFile(h).length() <= (32 * 1024); // 32K
     }
     /**
      * @param hndlr Settings handler.
