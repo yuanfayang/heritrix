@@ -43,8 +43,16 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
   		
   		// lookup nameserver
 		String nameServer = FindServer.server();
+		
+
+		
 		try{
-			serverInetAddr = InetAddress.getByName(nameServer);
+			// if we're local get something more useful than the loopback
+			if(nameServer.equals("127.0.0.1")){
+				serverInetAddr = InetAddress.getLocalHost();	
+			}else{
+				serverInetAddr = InetAddress.getByName(nameServer);
+			}
 		}catch(UnknownHostException e){
 			e.printStackTrace();
 		}	
