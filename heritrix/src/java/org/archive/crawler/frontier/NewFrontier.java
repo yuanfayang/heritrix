@@ -95,7 +95,8 @@ public class NewFrontier
     // thus should not be rescheduled
     protected UriUniqFilter alreadyIncluded;
 
-    // default 
+    // initial holding place for all regularly-scheduled URIs, until the
+    // get moved to an active per-host queue
     TieredQueue mainQueue;
     
     //
@@ -111,7 +112,7 @@ public class NewFrontier
     SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime     
 
     public NewFrontier(String name){
-        this(name,"NewFrontier. \nMaintains the internal" +
+        this(name,"NewFrontier. NOT YET FUNCTIONAL. DO NOT USE.\nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
                 " will be scheduled. \nThis frontier is mostly a breadth-first"+
                 " frontier, which refrains from emitting more than one" +
@@ -166,9 +167,7 @@ public class NewFrontier
      */
     protected TieredQueue createMainQueue(File stateDisk, String string) throws IOException {
         TieredQueue tq = new TieredQueue(3);
-        // SETTING TO -1 SO ITS OBVIOUSLY BROKEN.  SOMETHING
-        // MISSING HERE.  MAKING THIS COMMIT SO BUILD SUCCEEDS.
-        tq.initializeDiskBackedQueues(stateDisk,string, -1);
+        tq.initializeDiskBackedQueues(stateDisk,string,300);
         return tq;
     }
 
