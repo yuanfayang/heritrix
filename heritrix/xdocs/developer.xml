@@ -98,6 +98,14 @@ Guidelines</a>.</p>
 </subsection>
 </section>
 
+<section name="cruisecontrol">
+<p>See <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc">src/cc</a> for a <em>config.xml</em> that will run the 
+heritrix maven build under
+<a href="http://cruisecontrol.sourceforge.net/">cruisecontrol</a>
+(See the README.txt in the same directory for how to set up continuous
+building using cc).
+</p>
+</section>
 
 </body>
 </document>
