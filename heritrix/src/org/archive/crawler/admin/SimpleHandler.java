@@ -81,7 +81,6 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 			}
 		}
 
-		controller = new CrawlController();
 		orderTransform = new OrderTransformation(); // Used to convert HTML forms into an XML
 
 		try {
@@ -109,7 +108,13 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	}
 	
 	/**
-	 * The CrawlController calls this method once it's current job is finished.
+	 * The CrawlController calls this method once it's current job is finished 
+	 * or has been terminated for whatever reason (sExitMessage contains details).
+	 * This method implements the CrawlListener interface.
+	 * 
+	 * Once a job has started crawling, it is considered to be crawling until this
+	 * method is invoked.  It should only be invoked by the CrawlController in question
+	 * once it is exiting.
 	 */
 	public void crawlEnding(String sExitMessage)
 	{
@@ -117,6 +122,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		currentJob.setStatus(sExitMessage);
 		completedCrawlJobs.add(currentJob);
 		currentJob = null;
+		controller = null; // Remove the reference so that the old controller can be gc.
 		if(shouldcrawl)
 		{
 			startNextJob();		
@@ -197,7 +203,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 			statusMessage = "No jobs in queue";
 			return;
 		}
-		else if(crawling)
+		else if(isCrawling())
 		{
 			// Already crawling.
 			statusMessage = CRAWLER_RUNNING_ERR;
@@ -236,15 +242,17 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	 */
 	public void terminateJob()
 	{
-		if(crawling == false)
+		if(isCrawling()==false)
 		{
 			//Not crawling
 			statusMessage = CRAWLER_NOT_RUNNING_ERR;
 		}
-		
-		controller.stopCrawl();
-		statusMessage = CRAWLER_STOPPED;
-		crawling = false;
+		else
+		{
+			controller.stopCrawl(); //This will cause crawlEnding to be invoked. It will handle the clean up.
+			statusMessage = CRAWLER_STOPPED;
+			crawling = false;
+		}
 	}
 	
 	/**
