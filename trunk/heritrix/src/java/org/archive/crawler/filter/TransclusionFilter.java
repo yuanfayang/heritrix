@@ -116,9 +116,13 @@ public class TransclusionFilter extends Filter {
                     break loop;
                 }
                 case 'P': {
-                    // always consider a P as a 1-hop trans inclusion; disregard previous hops
-                    transCount++;
-                    break loop;
+                    if(transCount==0) {
+                        // always consider a trailing P as a 1-hop trans inclusion; disregard previous hops
+                        transCount++;
+                        break loop;
+                    }
+                    // otherwise, just count as another regular trans hop
+                    break;
                 }
                 case 'X': {
                     specCount++;
