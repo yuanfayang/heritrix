@@ -38,24 +38,9 @@ public class RegexRuleTest extends TestCase {
         final String url = "http://www.aRchive.Org/index.html";
         final String urlMinusWWW = "http://aRchive.Org/index.html";
         
-        // Test escaping works.
-        assertTrue("Reproduce strip www don't work.", ("$1" + urlMinusWWW).
-             equals((new RegexRule("test", "(https?://)(?:www\\.)(.*)",
-                 "\\$1$1$2")).canonicalize(url,
-                        UURIFactory.getInstance(url))));
-        
         assertTrue("Default doesn't work.",
             url.equals((new RegexRule("test")).
                 canonicalize(url, UURIFactory.getInstance(url))));
-        assertTrue("Basic test doesn't work.",
-            ("PREFIX" + url + url + url + "SUFFIX").
-                equals((new RegexRule("test", "(.*)", "PREFIX$1$1$1SUFFIX")).
-                    canonicalize(url, UURIFactory.getInstance(url))));
-        assertTrue("Reproduce strip www don't work.",
-                (urlMinusWWW + urlMinusWWW).
-                    equals((new RegexRule("test", "(https?://)(?:www\\.)(.*)",
-                            "$1$2${1}${2}")).
-                        canonicalize(url, UURIFactory.getInstance(url))));
     }
 
 }

@@ -22,36 +22,48 @@
  */
 package org.archive.crawler.url;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import junit.framework.TestCase;
+import java.io.File;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.url.canonicalize.FixupQueryStr;
 import org.archive.crawler.url.canonicalize.LowercaseRule;
 import org.archive.crawler.url.canonicalize.StripSessionIDs;
 import org.archive.crawler.url.canonicalize.StripUserinfoRule;
 import org.archive.crawler.url.canonicalize.StripWWWRule;
+import org.archive.util.TmpDirTestCase;
 
 /**
  * Test canonicalization.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class CanonicalizerTest extends TestCase {
+public class CanonicalizerTest extends TmpDirTestCase {
+    private File orderFile;
+    private CrawlerSettings globalSettings;
+    protected XMLSettingsHandler settingsHandler;
 
-    private List rules = null;
+    private MapType rules = null;
     
     protected void setUp() throws Exception {
         super.setUp();
-        this.rules = new ArrayList();
-        this.rules.add(new LowercaseRule("lowercase"));
-        this.rules.add(new StripUserinfoRule("userinfo"));
-        this.rules.add(new StripWWWRule("www"));
-        this.rules.add(new StripSessionIDs("ids"));
-        this.rules.add(new FixupQueryStr("querystr"));
+        this.orderFile = new File(getTmpDir(), this.getClass().getName() +
+            ".order.xml");
+        this.settingsHandler = new XMLSettingsHandler(orderFile);
+        this.settingsHandler.initialize();
+        
+        this.rules = (MapType)(settingsHandler.getSettingsObject(null)).
+            getModule(CrawlOrder.ATTR_NAME).
+               getAttribute(CrawlOrder.ATTR_RULES);
+        this.rules.addElement(null, new LowercaseRule("lowercase"));
+        this.rules.addElement(null, new StripUserinfoRule("userinfo"));
+        this.rules.addElement(null, new StripWWWRule("www"));
+        this.rules.addElement(null, new StripSessionIDs("ids"));
+        this.rules.addElement(null, new FixupQueryStr("querystr"));
     }
     
     public void testCanonicalize() throws URIException {
@@ -60,15 +72,15 @@ public class CanonicalizerTest extends TestCase {
         final String result = scheme + nonQueryStr;
         assertTrue("Mangled original", result.equals(
             Canonicalizer.canonicalize(UURIFactory.getInstance(result),
-                this.rules.iterator())));
+                this.rules.iterator(UURIFactory.getInstance(result)))));
         String tmp = scheme + "www." + nonQueryStr;
         assertTrue("Mangled www", result.equals(
             Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
-                this.rules.iterator())));
+                this.rules.iterator(UURIFactory.getInstance(result)))));
         tmp = scheme + "www." + nonQueryStr +
             "?jsessionid=01234567890123456789012345678901";
         assertTrue("Mangled sessionid", result.equals(
             Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
-                this.rules.iterator())));
+                this.rules.iterator(UURIFactory.getInstance(result)))));
     }
 }
