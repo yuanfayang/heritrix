@@ -119,7 +119,7 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 			return;
 		}
 		
-		if(curi.getNumberOfFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+		if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
 			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 		}
 					
