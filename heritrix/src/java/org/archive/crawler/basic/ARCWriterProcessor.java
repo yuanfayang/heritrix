@@ -34,6 +34,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -225,16 +226,13 @@ public class ARCWriterProcessor
         }
 
         // Find the write protocol and write this sucker
-        String scheme = curi.getUURI().getScheme().toLowerCase();
+        String scheme = curi.getUURI().getScheme();
 
         try
         {
-            if (scheme.equals("dns"))
-            {
+            if (scheme.equals("dns")) {
                 writeDns(curi);
-            }
-            else if (scheme.equals("http") || scheme.equals("https"))
-            {
+            } else if (scheme.equals("http")) {
                 writeHttp(curi);
             }
         }
@@ -247,9 +245,18 @@ public class ARCWriterProcessor
     protected void writeHttp(CrawlURI curi)
         throws IOException
     {
-        if (curi.getFetchStatus() <= 0 && curi.isHttpTransaction())
+        if (curi.getFetchStatus() <= 0)
         {
             // Error; do not write to ARC (for now)
+            return;
+        }
+
+        GetMethod get = (GetMethod) curi.getAList().
+            getObject("http-transaction");
+        if (get == null)
+        {
+            // Some error occurred; nothing to write.
+            // TODO: capture some network errors in the ARC file for posterity
             return;
         }
 
@@ -266,8 +273,7 @@ public class ARCWriterProcessor
             writer.write(curi.getURIString(), curi.getContentType(),
                curi.getServer().getHost().getIP().getHostAddress(),
                curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
-               curi.getHttpRecorder().getRecordedInput().
-                   getReplayInputStream());
+               get.getHttpRecorder().getRecordedInput().getReplayInputStream());
         }
         finally
         {

@@ -27,6 +27,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -63,20 +65,19 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
     protected void innerProcess(CrawlURI curi) {
 
         ArrayList links  = new ArrayList();
+        GetMethod get = null;
         InputStream documentStream = null;
         Writer out = null;
 
         // assumes swfs will be coming in through http
         //TODO make htis more general (currently we're only fetching via http so it doesn't matter)
-        if (!curi.isHttpTransaction())
-        {
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             return;
         }
+         get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 
-        String contentType = curi.getContentType();
-        if ((contentType == null) ||
-            (!contentType.startsWith("application/x-shockwave-flash")))
-        {
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)||(!contentType.getValue().startsWith("application/x-shockwave-flash"))) {
             // nothing to extract for other types here
             return;
         }
@@ -84,10 +85,8 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
         numberOfCURIsHandled++;
 
         // get the swf as a File
-        try
-        {
-            documentStream = curi.getHttpRecorder().getRecordedInput().
-                getContentReplayInputStream();
+        try{
+            documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
         }catch(IOException e){
             e.printStackTrace();
         }

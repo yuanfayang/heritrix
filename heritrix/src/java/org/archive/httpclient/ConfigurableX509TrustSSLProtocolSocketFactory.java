@@ -1,4 +1,4 @@
-/* ConfigurableTrustManagerProtocolSocketFactory
+/* ConfigurableX509TrustSSLProtocolSocketFactory
  * 
  * Created on Feb 18, 2004
  *
@@ -30,25 +30,27 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
-import org.archive.util.ConfigurableX509TrustManager;
 
 
 /**
- * Implementation of the commons-httpclient SSLProtocolSocketFactory so we 
- * can return SSLSockets whose trust manager is
- * {@link org.archive.util.ConfigurableX509TrustManager}.
+ * Implementation of the commons-httpclient SecureProtocolSocketFactory so we 
+ * can insert our own configurable trust manager. 
+ * 
+ * Based on suggestions found up on commons-httpclient: 
+ * <a href="http://jakarta.apache.org/commons/httpclient/sslguide.html">SSL
+ * Guide</a>.
+ * 
+ * <p>Should be only one instance of this factory per JVM.
  * 
  * @author stack
  * @version $Id$
- * @see org.archive.util.ConfigurableX509TrustManager
  */
-public class ConfigurableTrustManagerProtocolSocketFactory
+public class ConfigurableX509TrustSSLProtocolSocketFactory
     implements SecureProtocolSocketFactory
 {   
     /**
@@ -58,10 +60,10 @@ public class ConfigurableTrustManagerProtocolSocketFactory
      * to be used -- one instance out of which all sockets are given or
      * do we get a factory each time we need sockets?
      */
-    private SSLSocketFactory sslfactory = null;
+    private SSLSocketFactory factory = null;
     
     
-    public ConfigurableTrustManagerProtocolSocketFactory()
+    public ConfigurableX509TrustSSLProtocolSocketFactory()
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -77,7 +79,7 @@ public class ConfigurableTrustManagerProtocolSocketFactory
      * @throws KeyStoreException
      * @see ConfigurableX509TrustManager
      */
-    public ConfigurableTrustManagerProtocolSocketFactory(String level)
+    public ConfigurableX509TrustSSLProtocolSocketFactory(String level)
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -85,32 +87,37 @@ public class ConfigurableTrustManagerProtocolSocketFactory
         
         // Get an SSL context and initialize it.
         SSLContext context = SSLContext.getInstance("SSL");
-        
-        // I tried to get the default KeyManagers but doesn't work unless you 
-        // point at a physical keystore. Passing null seems to do the right
-        // thing so we'll go w/ that.
+        // I tried to get the default KeyManagers but below doesn't work, at 
+        // least on IBM JVM.  Passing in null seems to do the right thing so 
+        // we'll go w/ that.
+        //  KeyManagerFactory kmf = KeyManagerFactory.
+        //      getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        //  // Get default KeyStore.  Assume empty string password.
+        // kmf.init(KeyStore.getInstance(KeyStore.getDefaultType()), 
+        //      "".toCharArray());
         context.init(null,
             new TrustManager[] {new ConfigurableX509TrustManager(level)}, null);
-        this.sslfactory = context.getSocketFactory();
+        this.factory = context.getSocketFactory();
     }
 
     public Socket createSocket(String host, int port, InetAddress clientHost,
             int clientPort)
         throws IOException, UnknownHostException
     {
-        return this.sslfactory.createSocket(host, port, clientHost, clientPort);
+        return this.factory.createSocket(host, port,
+            clientHost, clientPort);
     }
 
     public Socket createSocket(String host, int port)
         throws IOException, UnknownHostException
     {
-        return this.sslfactory.createSocket(host, port);
+        return this.factory.createSocket(host, port);
     }
 
     public Socket createSocket(Socket socket, String host, int port,
             boolean autoClose)
         throws IOException, UnknownHostException
     {
-        return this.sslfactory.createSocket(socket, host, port, autoClose);
+        return this.factory.createSocket(socket, host, port, autoClose);
     }
 }

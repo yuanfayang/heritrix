@@ -60,11 +60,8 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         }
 
         // make sure we only process schemes we understand (i.e. not dns)
-        String scheme = curi.getUURI().getScheme().toLowerCase(); 
-        if (! (scheme.equals("http") || scheme.equals("https")))
-        {
-            logger.fine("PolitenessEnforcer doesn't understand uri's of type " +
-                scheme + " (ignoring)");
+        if(! (curi.getUURI().getScheme().equals("http") | curi.getUURI().getScheme().equals("https"))){
+            logger.fine("PolitenessEnforcer doesn't understand uri's of type "+curi.getUURI().getScheme() + " (ignoring)");
             return;
         }
 

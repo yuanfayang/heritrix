@@ -33,7 +33,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.util.DevUtils;
-import org.archive.util.HttpRecorderMarker;
 import org.archive.util.HttpRecorder;
 import org.archive.util.PaddingStringBuffer;
 
@@ -43,9 +42,7 @@ import org.archive.util.PaddingStringBuffer;
  *
  * @author Gordon Mohr
  */
-public class ToeThread extends Thread
-    implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker
-{
+public class ToeThread extends Thread implements CoreAttributeConstants, FetchStatusCodes {
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
     private ToePool pool;
@@ -126,7 +123,6 @@ public class ToeThread extends Thread
                     currentProcessor.process(currentCuri);
                 }
             } catch (RuntimeException e) {
-                e.printStackTrace(System.err);
                 currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
                 // store exception temporarily for logging
                 currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);

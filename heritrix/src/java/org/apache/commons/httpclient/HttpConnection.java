@@ -717,26 +717,22 @@ public class HttpConnection {
             if (sendBufferSize != -1) {
                 socket.setSendBufferSize(sendBufferSize);
             }
-            // START HERITRIX Change
-            // Insert HERITRIX input wrappers.
-            HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
+            // Insert HERITRIX inputstream wrapper.
             InputStream is = socket.getInputStream();
-            if (httpRecorder != null)
+            if (this.httpRecorder != null)
             {
-                is = httpRecorder.inputWrap(is);
+                is = this.httpRecorder.inputWrap(is);
             }
             inputStream = new PushbackInputStream(is);
             outputStream = new BufferedOutputStream(
                 new WrappedOutputStream(socket.getOutputStream()),
                 socket.getSendBufferSize()
             );
-            // Insert HERITRIX output wrapper.
-            if (httpRecorder != null)
+            // Insert HERITRIX inputstream wrapper.
+            if (this.httpRecorder != null)
             {
-                outputStream = httpRecorder.outputWrap(outputStream);
+                outputStream = this.httpRecorder.outputWrap(outputStream);
             }
-            // END HERITRIX change.
-            
             isOpen = true;
             used = false;
         } catch (IOException e) {
@@ -1471,4 +1467,15 @@ public class HttpConnection {
 
     /** The local interface on which the connection is created, or null for the default */
     private InetAddress localAddress;
+
+    // Instance variable for HERITRIX
+    /**
+     * HttpRecorder instance.
+     */
+    protected HttpRecorder httpRecorder = null;
+
+    public void setHttpRecorder(HttpRecorder httpRecorder)
+    {
+        this.httpRecorder = httpRecorder;
+    }
 }

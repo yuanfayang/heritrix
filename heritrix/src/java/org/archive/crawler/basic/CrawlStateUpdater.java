@@ -1,8 +1,4 @@
-/* CrawlStateUpdater
- * 
- * Created on Jun 5, 2003
- * 
- * Copyright (C) 2003 Internet Archive.
+/* Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -19,56 +15,62 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * HostCacheMaintainer.java
+ * Created on Jun 5, 2003
+ *
+ * $Header$
  */
 package org.archive.crawler.basic;
 
 import java.io.IOException;
 
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 
-
 /**
- * A step, late in the processing of a CrawlURI, for updating the per-host
- * information that may have been affected by the fetch. This will initially
- * be robots and ip address info; it could include other per-host stats that
- * would affect the crawl (like total pages visited at the site) as well.
+ * A step, late in the processing of a CrawlURI, for
+ * updating the per-host information that may have
+ * been affected by the fetch. This will initially
+ * be robots and ip address info; it could include
+ * other per-host stats that would affect the crawl
+ * (like total pages visited at the site) as well.
  *
  * @author gojomo
- * @version $Id$
+ *
  */
-public class CrawlStateUpdater
-    extends Processor implements CoreAttributeConstants, FetchStatusCodes
-{
+public class CrawlStateUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
+
     public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 
-    
-    public CrawlStateUpdater(String name)
-    {
+    /**
+     * @param name
+     */
+    public CrawlStateUpdater(String name) {
         super(name, "Crawl state updater");
     }
 
-    protected void innerProcess(CrawlURI curi)
-    {
-        String scheme = curi.getUURI().getScheme().toLowerCase();
-    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+     */
+    protected void innerProcess(CrawlURI curi) {
+
         // if it's a dns entry set the expire time
-        if(scheme.equals("dns"))
-        {
+        if(curi.getUURI().getScheme().equals("dns")){
+
             // if we've looked up the host update the expire time
-            if(curi.getServer().getHost().hasBeenLookedUp())
-            {
+            if(curi.getServer().getHost().hasBeenLookedUp()){
                 long expires = curi.getServer().getHost().getIpExpires();
 
-                if(expires > 0)
-                {
+                if(expires > 0){
                     curi.setDontRetryBefore(expires);
                 }
-            }
-            else
-            {
+
+            }else{
+
                 // TODO: resolve several issues here:
                 //   (1) i don't think this else clause is ever reached;
                 //       won't every DNS uri that gets this far imply
@@ -80,40 +82,30 @@ public class CrawlStateUpdater
                 //       maybe at each success
 
 
+
                 // if we've tried too many times give up
-                if (curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+                if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
                     curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
                 }
             }
-            // If not dns make sure it's http, 'cause we don't know nuthin' else
-        }
-        else if (scheme.equals("http") || scheme.equals("https"))
-        {
-            if (curi.getFetchStatus() > 0 &&
-                (curi.getUURI().getPath() != null) && 
-                    curi.getUURI().getPath().equals("/robots.txt"))
-            {
-                // Update host with robots info
-                if(curi.isHttpTransaction())
-                {
-                    try
-                    {
-                        curi.getServer().updateRobots(curi);
-                    }
-                    catch (IOException e)
-                    {
-                        curi.addLocalizedError(getName(), e,
-                            "robots.txt parsing IOException");
+
+        // if it's not dns make sure it's http, 'cause we don't know nuthin' else
+        }else if(curi.getUURI().getScheme().equals("http")){
+
+            if ( curi.getFetchStatus()>0 && (curi.getUURI().getPath() != null) && curi.getUURI().getPath().equals("/robots.txt")) {
+                // update host with robots info
+                if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+                    GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+                    try {
+                        curi.getServer().updateRobots(get);
+                    } catch (IOException e) {
+                        curi.addLocalizedError(getName(),e,"robots.txt parsing IOException");
                     }
 
                     // curi can be refetched once robots data expires
-                    curi.setDontRetryBefore(curi.getServer().
-                        getRobotsExpires());
+                    curi.setDontRetryBefore(curi.getServer().getRobotsExpires());
                 }
             }
         }
-        
-        // Clear out the http recorder that was set into the CrawlURI.
-        curi.setHttpRecorder(null);
     }
 }

@@ -92,11 +92,6 @@ public class CrawlScope extends Filter {
                 new Integer(5)));
         excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
-        
-        // Try to preserve the values of these attributes when we exchange
-        // scopes.
-        setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
-                ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER});
     }
 
     /** Default constructor.

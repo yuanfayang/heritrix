@@ -43,10 +43,11 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
-import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
+import org.archive.crawler.framework.ToeThread;
+import org.archive.httpclient.ConfigurableX509TrustSSLProtocolSocketFactory;
+import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
-import org.archive.util.ConfigurableX509TrustManager;
 import org.archive.util.HttpRecorder;
 
 /**
@@ -147,29 +148,29 @@ public class FetchHTTP
         addElementToDefinition(trustLevel);
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+     */
     protected void innerProcess(CrawlURI curi) {
         initialize();
-        
-        // Clear any httpRecorder so subsequent processing doesn't mistakenly 
-        // think it current.
-        curi.setHttpRecorder(null);
-        
+
         if (!canFetch(curi)) {
             // cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
-        // Note begin time
+        // note begin time
         long now = System.currentTimeMillis();
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
-        // Get and configure a new GetMethod.
+        // setup GET
         GetMethod get = new GetMethod(curi.getUURI().getUriString());
-        configureGetMethod(curi, get);
+        setupGet(curi, get);
 
-        // Get a reference to the HttpRecorder that is set into this ToeThread.
-        HttpRecorder rec = HttpRecorder.getHttpRecorder();
-        
+        // setup recording of data -- for subsequent processor modules
+        HttpRecorder rec =
+            ((ToeThread) Thread.currentThread()).getHttpRecorder();
+        get.setHttpRecorder(rec);
         try {
             // TODO: make this initial reading subject to the same
             // length/timeout limits; currently only the soTimeout
@@ -218,24 +219,22 @@ public class FetchHTTP
             get.releaseConnection();
         }
 
-        // Note completion time
-        curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
+        // note completion time
+        curi.getAList().putLong(
+            A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
-        // Set current httpRecorder into curi for convenience of subsequent
-        // processors.
-        curi.setHttpRecorder(rec);
-        
-        long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
+        long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
         logger.fine(curi.getUURI().getUriString() + ": " +
             get.getStatusCode() + " " + contentSize);
-        curi.setContentSize(contentSize);
-        curi.setFetchStatus(get.getStatusCode());
-        Header ct = get.getResponseHeader("content-type");
-        curi.setContentType((ct == null)? null: ct.getValue());
 
-        // Save off the GetMethod just in case needed by subsequent processors.
+        curi.setFetchStatus(get.getStatusCode());
+        curi.setContentSize(contentSize);
         curi.getAList().putObject(A_HTTP_TRANSACTION, get);
+        Header ct = get.getResponseHeader("content-type");
+        if (ct != null) {
+            curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
+        }
     }
 
     /**
@@ -269,13 +268,12 @@ public class FetchHTTP
     }
 
     /**
-     * Configure the GetMethod setting options and headers.
+     * Configure the GetMethod as necessary, setting options and headers.
      *
-     * @param curi CrawlURI from which we pull configuration.
-     * @param get The GetMethod to configure.
+     * @param curi
+     * @param get
      */
-    private void configureGetMethod(CrawlURI curi, GetMethod get)
-    {
+    private void setupGet(CrawlURI curi, GetMethod get) {
         // don't auto-follow redirects
         get.setFollowRedirects(false);
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
@@ -285,8 +283,7 @@ public class FetchHTTP
         this.http.setStrictMode(getStrict(curi));
 
         String userAgent = curi.getUserAgent();
-        if (userAgent == null)
-        {
+        if (userAgent == null) {
             userAgent = getSettingsHandler().getOrder().getUserAgent(curi);
         }
         get.setRequestHeader("User-Agent", userAgent);
@@ -294,25 +291,30 @@ public class FetchHTTP
             getSettingsHandler().getOrder().getFrom(curi));
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
+     */
     public void initialize()
     {
-        if (!this.initialized)
-        {
+        if (!this.initialized) {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
             MultiThreadedHttpConnectionManager connectionManager =
                 new MultiThreadedHttpConnectionManager();
-            // Ensure there will be as many http connections available as
+            // ensure there will be as many http connections available as
             // worker threads
             connectionManager.setMaxTotalConnections(getController().
                 getToeCount());
             this.http = new HttpClient(connectionManager);
-
+            
             try
             {
+                // Register our heritrix sslsocketfactory.
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
-                Protocol.registerProtocol("https", new Protocol("https", 
-                    new ConfigurableTrustManagerProtocolSocketFactory(trustLevel), 443));
+                Protocol.registerProtocol("https", 
+                    new Protocol("https", 
+                        new ConfigurableX509TrustSSLProtocolSocketFactory(trustLevel),
+                    443));
             }
             
             catch (Exception e)
@@ -322,7 +324,7 @@ public class FetchHTTP
                 throw new RuntimeException("Failed setting SSL Protocol: " +
                     e.getMessage());
             }
-            
+
             // load cookies from a file if specified in the order file.
             try {
                 loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));

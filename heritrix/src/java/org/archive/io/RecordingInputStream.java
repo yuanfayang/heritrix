@@ -256,12 +256,4 @@ public class RecordingInputStream
         fos.close();
         ris.close();
     }
-    
-    /**
-     * @return True if we've been opened.
-     */
-    public boolean isOpen()
-    {
-        return this.in != null;
-    }
 }

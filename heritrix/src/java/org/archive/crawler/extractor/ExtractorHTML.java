@@ -31,6 +31,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
@@ -287,8 +289,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-        if (!curi.isHttpTransaction())
-        {
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             return;
         }
 
@@ -300,17 +301,17 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             }
         }
 
-        String contentType = curi.getContentType();
-        if ((contentType==null) || (!contentType.startsWith("text/html")))
-        {
+
+        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)||(!contentType.getValue().startsWith("text/html"))) {
             // nothing to extract for other types here
             return;
         }
 
         numberOfCURIsHandled++;
 
-        CharSequence cs =
-           curi.getHttpRecorder().getRecordedInput().getCharSequence();
+        CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 
         if (cs==null) {
             // TODO: note problem

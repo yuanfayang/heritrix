@@ -30,6 +30,7 @@ import junit.framework.Test;
 import junit.framework.TestResult;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.SimpleHttpServer;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
 

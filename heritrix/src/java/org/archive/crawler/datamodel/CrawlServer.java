@@ -26,11 +26,12 @@ package org.archive.crawler.datamodel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
-import java.io.StringReader;
 import java.util.zip.Checksum;
 
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
@@ -105,7 +106,7 @@ public class CrawlServer implements Serializable {
      * @param honoringPolicy
      * @throws IOException
      */
-    public void updateRobots(CrawlURI curi)
+    public void updateRobots(GetMethod get)
             throws IOException {
 
         RobotsHonoringPolicy honoringPolicy =
@@ -113,10 +114,8 @@ public class CrawlServer implements Serializable {
 
         robotsExpires = System.currentTimeMillis()
             + DEFAULT_ROBOTS_VALIDITY_DURATION;
-        if (curi.getFetchStatus() != 200 ||
-                honoringPolicy.getType(getSettings()) ==
-                    RobotsHonoringPolicy.IGNORE)
-        {
+        if (get.getStatusCode()!=200 || honoringPolicy.getType(getSettings())
+            == RobotsHonoringPolicy.IGNORE) {
             // not found or other errors == all ok for now
             // TODO: consider handling server errors, redirects differently
             robots = RobotsExclusionPolicy.ALLOWALL;
@@ -139,15 +138,15 @@ public class CrawlServer implements Serializable {
                     new BufferedReader(
                         new StringReader(
                             honoringPolicy.getCustomRobots(getSettings())));
-            }
-            else
-            {
-                contentBodyStream = curi.getHttpRecorder().getRecordedInput()
-                    .getContentReplayInputStream();
+            } else {
+                contentBodyStream = get
+                        .getHttpRecorder()
+                        .getRecordedInput()
+                        .getContentReplayInputStream();
 
                 contentBodyStream.setToResponseBodyStart();
                 reader = new BufferedReader(
-                    new InputStreamReader(contentBodyStream));
+                        new InputStreamReader(contentBodyStream));
             }
             robots = RobotsExclusionPolicy.policyFor(
                     getSettings(),

@@ -121,9 +121,6 @@ public class UURI implements Serializable {
             }
             u = parent.resolve(es);
         }
-        
-
-        String scheme = u.getScheme().toLowerCase();
         if (u.getRawSchemeSpecificPart().startsWith("/")) {
             // hierarchical URI
             u = u.normalize(); // factor out path cruft, according to official spec
@@ -141,9 +138,8 @@ public class UURI implements Serializable {
                 throw new URISyntaxException(s,"uninterpretable relative to "+parent);
             }
 
-            // TODO fix the fact that this might clobber case-sensitive
-            // user-info
-            if (scheme.equals("http")) {
+            // TODO fix the fact that this might clobber case-sensitive user-info
+            if (u.getScheme().equals("http")) {
                 // case-flatten host, remove default port
                 canonizedAuthority = canonizedAuthority.toLowerCase();
                 // strip default port
@@ -168,7 +164,7 @@ public class UURI implements Serializable {
                             canonizedAuthority.length());
                 }
 
-            } else if (scheme.equals("https")) {
+            } else if (u.getScheme().equals("https")) {
                 // case-flatten host, remove default port
                 canonizedAuthority = canonizedAuthority.toLowerCase();
                 if (canonizedAuthority.endsWith(":443")) {
@@ -178,14 +174,14 @@ public class UURI implements Serializable {
                             canonizedAuthority.length() - 4);
                 }
             }
-            u = new URI(scheme, // case-flatten scheme
+            u = new URI(u.getScheme().toLowerCase(), // case-flatten scheme
                         canonizedAuthority, // case and port flatten
                         fixedPath, // leave alone
                         u.getQuery(), // leave alone
                         null); // drop fragment
         } else {
             // opaque URI
-            u = new URI(scheme, // case-flatten scheme
+            u = new URI(u.getScheme().toLowerCase(), // case-flatten scheme
                         u.getSchemeSpecificPart(), // leave alone
                         null); // drop fragment
         }

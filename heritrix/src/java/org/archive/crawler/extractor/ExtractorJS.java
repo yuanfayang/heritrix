@@ -26,6 +26,8 @@ package org.archive.crawler.extractor;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -80,28 +82,27 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-        if (!curi.isHttpTransaction())
-        {
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             return;
         }
 
-        String contentType = curi.getContentType();
+        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+        Header contentType = get.getResponseHeader("Content-Type");
         if ((contentType==null)) {
             return;
         }
-        if((contentType.indexOf("javascript")<0)
-            &&(contentType.indexOf("jscript")<0)
-            &&(contentType.indexOf("ecmascript")<0)) {
+        String mimeType = contentType.getValue();
+        if((mimeType.indexOf("javascript")<0)
+            &&(mimeType.indexOf("jscript")<0)
+            &&(mimeType.indexOf("ecmascript")<0)) {
             return;
         }
 
         numberOfCURIsHandled++;
 
-        CharSequence cs =
-            curi.getHttpRecorder().getRecordedInput().getCharSequence();
+        CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 
-        if (cs == null)
-        {
+        if (cs==null) {
             // TODO: note problem
             return;
         }

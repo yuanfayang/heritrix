@@ -28,6 +28,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.poi.hdf.extractor.WordDocument;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -61,32 +63,28 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
     protected void innerProcess(CrawlURI curi){
 
         ArrayList links  = new ArrayList();
+        GetMethod get = null;
         InputStream documentStream = null;
         Writer out = null;
 
-        // Assumes docs will be coming in through http
-        // TODO make htis more general (currently we're only fetching via http
-        // so it doesn't matter)
-        if (!curi.isHttpTransaction())
-        {
+        // assumes docs will be coming in through http
+        //TODO make htis more general (currently we're only fetching via http so it doesn't matter)
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             return;
         }
+         get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 
-        String contentType = curi.getContentType();
-        if ((contentType==null) || 
-            (!contentType.startsWith("application/msword")))
-        {
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)||(!contentType.getValue().startsWith("application/msword"))) {
             // nothing to extract for other types here
             return;
         }
 
         numberOfCURIsHandled++;
 
-        // Get the doc as a File
-        try
-        {
-            documentStream = curi.getHttpRecorder().getRecordedInput().
-                getContentReplayInputStream();
+        // get the doc as a File
+        try{
+              documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 
             if (documentStream==null) {
                 // TODO: note problem
