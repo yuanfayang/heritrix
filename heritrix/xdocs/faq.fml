@@ -60,12 +60,6 @@
       the conf/hertrix.properties for how to enable console logging going to
       a FileHandler as well as to heritrix_out.log.</answer>
     </faq>
-    <faq id="html_only">
-      <question>How do I crawl html only?</question>
-      <answer>Tom Emerson describes one technique here, 
-      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">Focusing on HTML</a>.</answer>
-    </faq>
-
     <faq id="limitations">
       <question>Are there known limitations?</question>
       <answer>See the 
@@ -82,8 +76,10 @@
 
     <faq id="midfetch">
       <question>I only want to download <code>text/html</code> and nothing else.  Can I do it?</question>
-      <answer>You can add filter that excludes all filters that end
-      in other than 'html|htm', etc., or, because you want to instead
+      <answer>Tom Emerson describes one technique here, 
+      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">Focusing on HTML</a>.</answer>
+      <answer>You can also add a filter that excludes all filters that end
+      in other than 'html|htm', etc., or, if you want to instead
       look at document mimetypes, you can Add a 
       <code>ContentTypeRegExpFilter</code>  filter
       as a <code>midfetch</code> filter to the http fetcher.
@@ -199,6 +195,17 @@
         </p>
         </answer>
       </faq>
+      <faq id="mirror">
+        <question>Does Heritrix have to write ARC files?</question>
+        <answer>
+        <p>See MirrorWriterProcessor.  It writes a file per
+        URL to the filesystem using a name that is a derivative of the
+        requested URL.
+        </p>
+        </answer>
+      </faq>
+
+
       <faq id="eclipse_assert">
         <question>Why when
         running heritrix in eclipse does it complain about the
