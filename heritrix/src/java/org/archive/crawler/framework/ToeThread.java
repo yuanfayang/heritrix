@@ -350,6 +350,14 @@ public class ToeThread extends Thread
         }
     }
     
+    /** Get the CrawlController acossiated with this thread.
+     * 
+     * @return Returns the CrawlController.
+     */
+    public CrawlController getController() {
+        return controller;
+    }
+    
     /**
      * Terminates a thread.
      * 
