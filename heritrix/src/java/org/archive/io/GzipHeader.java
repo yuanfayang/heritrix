@@ -47,6 +47,11 @@ import java.util.zip.GZIPInputStream;
  * @author stack
  */
 public class GzipHeader {
+    
+    /**
+     * Total length of the gzip header.
+     */
+    protected int length = 0;
 
     /**
      * The GZIP header FLG byte.
@@ -91,7 +96,7 @@ public class GzipHeader {
      * 
      * @param in InputStream to read from.
      */
-    protected GzipHeader(InputStream in) throws IOException {
+    public GzipHeader(InputStream in) throws IOException {
         super();
         
         CRC32 crc = new CRC32();
@@ -99,35 +104,43 @@ public class GzipHeader {
    
         if (readShort(in, crc) != GZIPInputStream.GZIP_MAGIC) {
             throw new IOException("Failed to find GZIP MAGIC");
-        }   
+        }
+        this.length += 2;
    
         if (readByte(in, crc) != Deflater.DEFLATED) {
             throw new IOException("Unknown compression");
-        }   
+        }
+        this.length++;
        
         // Get gzip header flag.
         this.flg = readByte(in, crc);
+        this.length++;
         
         // Get MTIME.
         this.mtime = readInt(in, crc);
+        this.length += 4;
         
         // Read XFL and OS.
         this.xfl = readByte(in, crc);
+        this.length++;
         this.os = readByte(in, crc);
+        this.length++;
         
         // Skip optional extra field -- stuff w/ alexa stuff in it.
         final int FLG_FEXTRA = 4;
         if ((this.flg & FLG_FEXTRA) == FLG_FEXTRA) {
             int count = readShort(in, crc);
+            this.length +=2;
             this.fextra = new byte[count];
             readByte(in, crc, this.fextra, 0, count);
+            this.length += count;
         }   
         
         // Skip file name.  It ends in null.
         final int FLG_FNAME  = 8;
         if ((this.flg & FLG_FNAME) == FLG_FNAME) {
             while (readByte(in, crc) != 0) {
-                continue;
+                this.length++;
             }
         }   
         
@@ -135,7 +148,7 @@ public class GzipHeader {
         final int FLG_FCOMMENT = 16;   // File comment
         if ((this.flg & FLG_FCOMMENT) == FLG_FCOMMENT) {
             while (readByte(in, crc) != 0) {
-                continue;
+                this.length++;
             }
         }
         
@@ -146,6 +159,7 @@ public class GzipHeader {
             if (readShort(in, crc) != calcCrc) {
                 throw new IOException("Bad header CRC");
             }
+            this.length += 2;
         }
     }
     
@@ -263,4 +277,11 @@ public class GzipHeader {
 	public int getMtime() {
 		return this.mtime;
 	}
+	
+    /**
+     * @return Returns the length.
+     */
+    public int getLength() {
+        return length;
+    }
 }
