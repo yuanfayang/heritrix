@@ -16,6 +16,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlListener;
 import org.archive.util.PaddingStringBuffer;
 import org.archive.util.TimedFixedSizeList;
 
@@ -29,7 +30,7 @@ import org.archive.util.TimedFixedSizeList;
  * @author Parker Thompson
  *
  */
-public class StatisticsTracker implements Runnable, CoreAttributeConstants{
+public class StatisticsTracker implements Runnable, CoreAttributeConstants, CrawlListener{
 
 	// logging levels
 	public static final int MERCATOR_LOGGING = 0;
@@ -52,6 +53,8 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	protected Logger periodicLogger = null;
 	protected int logInterval = 60;
 
+	protected boolean shouldrun = true;
+	
 	// default start time to the time this object was instantiated
 	protected long crawlerStartTime = System.currentTimeMillis();
 
@@ -66,11 +69,13 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 */
 	public StatisticsTracker(CrawlController c) {
 		controller = c;
+		controller.addListener(this);
 		periodicLogger = c.progressStats;
 	}
 	
 	public StatisticsTracker(CrawlController c, int interval){
 		controller = c;
+		controller.addListener(this);
 		periodicLogger = c.progressStats;
 		logInterval = interval;
 	}
@@ -94,6 +99,26 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 		return logInterval;
 	}
 
+	/**
+	 * Terminates the logging done by the object. 
+	 * Calling this method will cause the run() method to exit. 
+	 */
+	public void stop()
+	{
+		shouldrun = false;
+	}
+
+	/**
+	 * Will be called once the crawl job we are monitoring has ended.
+	 * 
+	 *  (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlListener#crawlEnding(java.lang.String)
+	 */
+	public void crawlEnding(String sExitMessage) {
+		stop();		
+	}
+
+
 	/** This object can be run as a thread to enable periodic loggin */
 	public void run() {
 		// don't start logging if we have no logger
@@ -101,6 +126,8 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 			return;
 		}
 	
+		shouldrun = true; //If we are starting, this should always be true.
+		
 		// log the legend	
 		periodicLogger.log(Level.INFO,
 				"   [timestamp] [discovered]   [pending] [downloaded]"
@@ -108,8 +135,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 					+ " [dl-failures] [stall-thrds] [mem-use-KB]"
 			);
 
-		// keep logging as long as this thang is running
-		while (true) {
+		// keep logging until someone calls stop()
+		while (shouldrun) 
+		{
 			// pause before writing the first entry (so we have real numbers)
 			// and then pause between entries 
 			try {
@@ -588,6 +616,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 		// return bytes/sec
 		return (int) (1000 * totalRecentBytes / period);
 	}
+
 
 //	public long getCrawlURIStartTime(CrawlURI curi){
 //		return curi.getAList().getLong(A_FETCH_BEGAN_TIME);

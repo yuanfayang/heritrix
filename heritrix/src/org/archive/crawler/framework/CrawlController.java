@@ -14,8 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
+import java.util.ArrayList;
 
-import org.archive.crawler.admin.SimpleHandler;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -83,7 +83,7 @@ public class CrawlController extends Thread{
 	// create a statistic tracking object and have it write to the log every 
 	protected StatisticsTracker statistics = null;
 	
-	private SimpleHandler owner;
+	private ArrayList registeredListeners;	
 
 	CrawlOrder order;
 	CrawlScope scope;
@@ -141,9 +141,13 @@ public class CrawlController extends Thread{
 	 * 
 	 * @param owner
 	 */
-	public void setOwner(SimpleHandler owner)
+	public void addListener(CrawlListener cl)
 	{
-		this.owner = owner;	
+		if(registeredListeners == null)
+		{
+			registeredListeners = new ArrayList();	
+		}
+		registeredListeners.add(cl);
 	}
 
 	private void setupCrawlModules() throws FatalConfigurationException {
@@ -305,12 +309,11 @@ public class CrawlController extends Thread{
 		controlThread = null;
 		logger.info("exitting run");
 		
-		if(owner!=null)
+		for(int i=0 ; i<registeredListeners.size() ; i++)
 		{
-			// Let the owner know that the crawler is finished.
-			owner.jobFinished(sExit);
+			// Let the listeners know that the crawler is finished.
+			((CrawlListener)registeredListeners.get(i)).crawlEnding(sExit);
 		}
-		
 		logger.fine(getName()+" finished for order CrawlController");
 	}
 
