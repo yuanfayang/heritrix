@@ -47,9 +47,11 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
 	private OutputStream arcOut = null;		// for writing to files
-	private IAGzipOutputStream out = null;	// compressed output stream
+	private OutputStream out = null;
+	private boolean useCompression = true;	// should we compress the output?
 	
-	//	append to arc files to assure uniqueness across threads. 
+	//	append to arc files to assure uniqueness across threads in 
+	//  the event multiple arcwriter exist and are creating files concurrently
 	private static int arcId = 0;						
 	
 	
@@ -70,11 +72,15 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		CrawlOrder order = controller.getOrder();
 		CrawlerBehavior behavior = order.getBehavior();
 		
-		
 		// retrieve any nodes we think we need from the dom(s)
 		Node filePrefix = order.getNodeAt("/crawl-order/arc-file/@prefix");
 		Node maxSize = getNodeAt("./arc-files/@max-size-bytes");
 		Node path = order.getNodeAt("//disk/@path");
+		Node compression = getNodeAt("./compression/@use");
+		
+		setUseCompression(
+			( (compression==null) ? true : compression.getNodeValue().equals("true"))
+		); 
 		
 		setArcPrefix( 
 			( (filePrefix==null) ? arcPrefix : filePrefix.getNodeValue() )
@@ -101,10 +107,15 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   		// find the write protocol and write this sucker
   		String scheme = curi.getUURI().getUri().getScheme();
   	
-  		try{  			
-  			// zip each record individually
-			out.startCompressionBlock();
-			
+  		try{ 
+  			
+  			if(useCompression()){ 			
+	  			// zip each record individually
+				IAGzipOutputStream gout = (IAGzipOutputStream)out;
+				gout.startCompressionBlock();
+
+  			} // else skip the special gzip jive and just write to a FileOutputStream
+  			
   			if(scheme.equals("dns")){
   				writeDns(curi);
   				
@@ -180,7 +191,12 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		String date = get14DigitDate();
 		int uniqueIdentifier = getNextArcId();
 		
-		String fileName = outputDir + arcPrefix + date +  "-" + uniqueIdentifier + ".arc.gz";
+		String fileExtension = ".arc";
+		if(useCompression()){
+			fileExtension += ".gz";
+		}
+			
+		String fileName = outputDir + arcPrefix + date +  "-" + uniqueIdentifier + fileExtension;
 		
 		try {
 			if(out != null){
@@ -189,8 +205,13 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 							
 			file = new File(fileName);
 			arcOut = new FileOutputStream(file);
-			out = new IAGzipOutputStream(arcOut);
 			
+			if(useCompression()){
+				out = new IAGzipOutputStream(arcOut);
+			}else{
+				out = arcOut;
+			}
+					
 			String arcFileDesc =
 				"filedesc://"
 					+ fileName
@@ -213,6 +234,14 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			return false;
 		}
 	}		
+	
+	public void setUseCompression(boolean use){
+		useCompression = use;
+	}
+	
+	public boolean useCompression(){
+		return useCompression;
+	}
 	
 	protected void writeHttp(CrawlURI curi) throws IOException, InvalidRecordException {
 
