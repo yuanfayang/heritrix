@@ -73,5 +73,6 @@ public interface AdminConstants {
 	public static String XP_MAX_ARC_SIZE = "//@max-arc-size";
 	
 	public static final String XP_CRAWL_COMMENT = "//crawl-order/@comment";
-	
+	public static final String XP_SEEDS = "//seeds";
+	public static final String XP_SEEDS_FILE = "//seeds/@src";
 }
