@@ -11,7 +11,7 @@ package org.archive.crawler.framework;
  * 
  * @author Gordon Mohr
  */
-public class RegExpURIFilter implements Filter {
+public class RegExpURIFilter extends Filter {
 	String name;
 
 	/* (non-Javadoc)

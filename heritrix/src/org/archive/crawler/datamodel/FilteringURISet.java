@@ -15,6 +15,14 @@ import org.archive.crawler.framework.Filter;
  * @author gojomo
  *
  */
-public interface FilteringURISet extends Filter, UURISet {
+public class FilteringURISet extends Filter {
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
+	 */
+	public boolean accepts(Object o) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 }
