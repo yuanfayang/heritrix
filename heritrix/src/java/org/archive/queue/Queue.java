@@ -40,7 +40,7 @@ public interface Queue {
     /** Add an entry to the end of queue
      * @param o the entry to queue
      */
-    void enqueue(Object o);
+    void enqueue(Object obj);
 
     /** is the queue empty?
      *
