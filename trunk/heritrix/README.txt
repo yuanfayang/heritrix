@@ -1,8 +1,9 @@
 Archive Open Crawler README.txt
 
-This document is a work in progress.  Hopefully it should be enough to get you at least up and running, but if you 
-run into major confusions please bring them to the mailing list so we can what types of issues users are facing
-and either address them in the code or here in the documentation.
+This document is a work in progress.  Hopefully it should be enough to get you
+at least up and running, but if you run into major confusions please bring them
+to the mailing list so we can what types of issues users are facing and either
+address them in the code or here in the documentation.
 
 Table of Contents
 
@@ -13,10 +14,13 @@ II. Getting Started
   a. Fetching from CVS
   b. Building
   
-III.  Configuration
+III.  Configuration Files
   a. Configuration File Manifest
   b. order.xml
-  c. Sample Configuration Files
+  c. environment.txt
+  d. build.xml
+  e. build.properties
+  f.  Sample Configuration Files
 
 IV. Crawling
    a. The Graphical User Interface
@@ -29,98 +33,165 @@ a.  Requirements
 
 i. Java Runtime Environment
 
-The Archive Open Crawler is implemented purely in java.  This means that the only true requirement for running it
-is that you have a JRE installed.  We recommend the IBM JRE as it has proven to be much more effecient than 
-other implementations, but the Sun JRE should work as well.
+The Archive Open Crawler is implemented purely in java.  This means that the
+only true requirement for running it is that you have a JRE installed.  We
+recommend the IBM JRE as it has proven to be much more effecient than other
+implementations, but the Sun JRE should work as well.
 
 ii. Ant (recommended)
 
-We also recommend that you download and install ant, a build tool for java applications.  This is not strictly 
-required, but it will make your life much easier, and we have written several scripts that should keep you from
-ever having to worry about all the ugly realities of java development (think classpaths).  All this and more can 
-be yours, but, as I mentioned, you need to install ant.
+We also recommend that you download and install ant, a build tool for java
+applications.  This is not strictly required, but it will make your life much
+easier, and we have written several scripts that should keep you from ever
+having to worry about all the ugly realities of java development (think
+classpaths).  All this and more can be yours, but, as I mentioned, you need to
+install ant.
   
 II.  Getting Started
 
-If you're reading this it probably means you've already checked out the crawler code from CVS. But, for the sake
-of completeness let's go though it all.
+If you're reading this it probably means you've already checked out the crawler
+code from CVS. But, for the sake of completeness let's go though it all.
 
 a.  Fetching from CVS
 
-Note:  Because this project is hosted at sourceforge, fetching from CVS is slightly idosyncratic.  By default if you check out
-a project anonymously you will get a nightly snapshot of the project, rather than the latest-greatest source at the time
-you start the checkout. 
+Note:  Because this project is hosted at sourceforge, fetching from CVS is
+slightly idosyncratic.  By default if you check out a project anonymously you
+will get a nightly snapshot of the project, rather than the latest-greatest
+source at the time you start the checkout. 
 
-How you get the source from CVS is up to you.  If you are not familiar with CVS, or you're just lazy (it's ok we are too)
-the easiest way to get started is to do the following:
+How you get the source from CVS is up to you.  If you are not familiar with CVS,
+or you're just lazy (it's ok we are too) the easiest way to get started is to do
+the following:
 
 1.  Install a JRE and ant (see Getting Started)
 
 2.  Browse Sourceforge CVS repository via http:
-	http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/archive-crawler/ArchiveOpenCrawler/
+  
+ http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/archive-crawler/ArchiveOpenCrawler/
 
 2. Grab build.xml and build.properties from the repository.
 
-3.  Open build.properties and modify per the instructions provided in the comments.  This should be straightforward.
+3.  Open build.properties and modify per the instructions provided in the
+comments. This should be straightforward.
 
-4.  Grab startbuild.sh or startbuild.bat (depending on your os of choice).  You will also need to modify the java and 
-ant paths in this file.
+4.  Grab startbuild.sh or startbuild.bat (depending on your os of choice) and
+environment.txt.  Open and modify environment.txt to suit your local enviroment
+per the instructions included in the comments.
 
 5.  Run startbuild[sh,bat] checkout-core
 
-Note:  If you are using anonymous CVS you may receive errors during this last step that indicate a failure to
-connect to CVS.  This often happens, particularly during periods of heavy-usage.  Just keep trying, or setup
-a sourceforge account and modify build.properties to use this (see example in build.properties).
+Note:  If you are using anonymous CVS you may receive errors during this last
+step that indicate a failure to connect to CVS.  This often happens,
+particularly during periods of heavy-usage.  Just keep trying, or setup a
+sourceforge account and modify build.properties to use this (see example in
+build.properties).
 
-And that's it.  You should now be able to see a directory within your checkout directory (where you ran this script 
-from) that is called 'CVSCheckoutDir' and contains the Archive Open Crawler source.  
+And that's it.  You should now be able to see a directory within your checkout
+directory (where you ran this script from) that is called 'CVSCheckoutDir' and
+contains the Archive Open Crawler source.  
 
 b. Building
 
-If you've followed the above instructions for fetching from CVS you're one command away from having the crawler
-built.  If you have the source, but did not fetch it via the startbuild script you'll need to follow the instructions in
+If you've followed the above instructions for fetching from CVS you're one
+command away from having the crawler built.  If you have the source, but did not
+fetch it via the startbuild script you'll need to follow the instructions in
 'Fetching From CVS' steps 3-4.
 
-Note:  If you didn't fetch from CVS using the build script you'll need to run startbuild[sh,bat] init to create the appropriate
-directory structure, then move the source tree into the newly-created ./CVSCheckoutDir/ArchiveOpenCrawler'.  
+Note:  If you didn't fetch from CVS using the build script you'll need to run
+'startbuild[sh,bat] init' to create the appropriate directory structure, then
+move the source tree into the newly-created
+./CVSCheckoutDir/ArchiveOpenCrawler'.  
 
-Now, all you need to do to start a build is run 'startbuild[sh,bat] package'.  This will compile all the classes needed to
-run the crawler, and deposit the class files in the 'build' directory.  It will then create a jar file of everything needed 
-to run the crawler and deposit this file in a directory called 'RunThis'. 
+Now, all you need to do to start a build is run 'startbuild[sh,bat] package'.
+This will compile all the classes needed to run the crawler, and deposit the
+class files in the 'build' directory.  It will then create a jar file of
+everything needed to run the crawler and deposit this file in a directory called
+'RunThis'. 
 
-To see other build possibilities look for <target> elements in build.xml.  There are serveral options not discussed 
-here that may be very useful.  Specifically, once you set up authenticated CVS, you may find the 'nightlybuild' 
-target useful.
+To see other build possibilities look for <target> elements in build.xml.  There
+are serveral options not discussed here that may be very useful.  Specifically,
+once you set up authenticated CVS, you may find the 'nightlybuild' target
+useful.
 
 
 III. Configuration
 
-By default the crawler should be set up to run on a single machine out-of-the-box with very little configuration.  
+By default the crawler should be set up to run on a single machine
+out-of-the-box with very little configuration.  
 
 a.  Configuration File Manifest
 
-Following is a list of requisite configuration files and a brief description of why they exist:
+Following is a list of requisite configuration files and a brief description of
+why they exist:
 
-order.xml - This is the "master config file".  It specifies which modules will be used to process URIs, in which
-order URIs will be processed, how and where files will ge written to disk, how "polite" the crawler should be,
-etc.  
+  order.xml - 	This is the "master config file".  It specifies which modules
+	will be used to  process URIs, in which order URIs will be processed, 
+	how and where files will ge written to disk, how "polite" the crawler 
+	should be, etc.  
 
-seeds.txt - This file specifies a one-per-line list of URIs with which to seed the crawl.  
+  seeds.txt - This file specifies a one-per-line list of URIs with which to 
+	seed the crawl.  
+
+  environment.txt – This file specifies several environment variables that the 
+	build scripts will need to work on your local system.
+
+  build.xml – This file is used by and in the build process.  
+
+  build.properties – Defines variables used by ant when building targets 
+	defined in build.xml.
 
 b.  order.xml
 
 <develop a detailed description of order.xml elements/attributes after the schema has settled down>
 
-c.  Sample Configuration Files
+c. environment.txt
 
-<create some generic config files and put them somewhere useful>
+This file is meant as a one-stop configuration location.  Because many scripts
+will need to know about things like the location of java, the location of ant,
+etc, this file was created so these only need be defined once.  
 
+d. build.xml
+
+This is a standard ant configuration file and will be used if you use ant to
+build Heritrix.  It specifies a number of targets.  You will probably be
+interested in the following targets:
+
+  all – build it all, package it up, get it ready to run (fetches latest from cvs).
+  localbuild – build from local source.
+  run-unit-testcases – run unit tests against the source.
+  clean – clean up after the build.
+  checkout-core – get the lastest source from cvs.
+  compile-core – create class files.
+  
+e. build.properties 
+
+build.properties is ant's solution to seperating content and business logic.
+While build.xml is the business logic that makes the builds happen,
+build.properties specifies the content to plug into these directives.  This is
+where output directories are defined, cvs usernames/passwords/authentication
+methods are defined, etc.
+
+f.  Sample Configuration Files
+
+Sample configuration files can be found in cvs.  Build configuration files
+(build.xml, environment.txt, build.properties) can be found in the cvs root
+directory.  Various examples of order.xml and seeds.txt files can be found under
+the configurations directory within cvs.
 
 IV. Crawling
 
-Starting a crawl should be relatively painless operation.  Currently there are two ways to start a crawl, graphically,
-or using a shell script.  For most crawls both methods should be easy to use, though if you want to make configuration
-changes without having to hand-edit files the graphical interface may be the better choice.
+Starting a crawl should be relatively painless operation.  Currently there are
+two ways to start a crawl, graphically, or using a shell script.  For most
+crawls both methods should be easy to use, though if you want to make
+configuration changes without having to hand-edit files the graphical interface
+may be the better choice.
+
+Note:  Before you beging crawling you must change the default user agent in
+order.xml. You should set this to something meaningful that allows
+administrators of sites you'll be crawling to contact you.  Please do not leave
+the Archive Open Crawler project's contact information in this field, we do not
+have the time or the resources to field complaints about crawlers which we are
+not in control of.
 
 a.  The Graphical User Interface
 
@@ -128,13 +199,5 @@ a.  The Graphical User Interface
 
 b.  Command Line Interface
 
-If you have an aversion to GUIs there's also a shell script called startcrawl.[sh,bat] that may be used to start
-a crawl.  
-
-<make this script slightly more generic, then include instructions for use>
-
-
-
-
-
-
+If you have an aversion to GUIs there's also a shell script called
+startcrawl.[sh,bat] that may be used to start a crawl.  
