@@ -75,27 +75,27 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
         // handle http headers
         if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
             handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
-                CandidateURI.HIGH_PRIORITY);
+                CandidateURI.HIGH);
         }
         // handle embeds
         if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
             handleLinkCollection(curi, baseUri, A_HTML_EMBEDS, 'E',
-                CandidateURI.NORMAL_PRIORITY);
+                CandidateURI.NORMAL);
         }
         // handle speculative embeds
         if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
             handleLinkCollection(curi, baseUri,A_HTML_SPECULATIVE_EMBEDS, 'X',
-                CandidateURI.NORMAL_PRIORITY);
+                CandidateURI.NORMAL);
         }
         // handle links
         if (curi.getAList().containsKey(A_HTML_LINKS)) {
             handleLinkCollection(
-                curi, baseUri, A_HTML_LINKS, 'L', CandidateURI.NORMAL_PRIORITY);
+                curi, baseUri, A_HTML_LINKS, 'L', CandidateURI.NORMAL);
         }
         // handle css links
         if (curi.getAList().containsKey(A_CSS_LINKS)) {
             handleLinkCollection(
-                curi, baseUri, A_CSS_LINKS, 'E', CandidateURI.NORMAL_PRIORITY);
+                curi, baseUri, A_CSS_LINKS, 'E', CandidateURI.NORMAL);
         }
         // handle js file links
         if (curi.getAList().containsKey(A_JS_FILE_LINKS)) {
@@ -103,14 +103,14 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
             if (curi.flattenVia() != null) {
                 try {
                     viaURI = URI.create(curi.flattenVia());
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                     Object[] array = { curi, curi.flattenVia() };
                     getController().uriErrors.log(
                         Level.INFO, e.getMessage(), array);
                 }
             }
             handleLinkCollection( curi, viaURI, 
-                A_JS_FILE_LINKS, 'X', CandidateURI.NORMAL_PRIORITY);
+                A_JS_FILE_LINKS, 'X', CandidateURI.NORMAL);
         }
         
     }
@@ -134,43 +134,25 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
+        if ( curi.getDeferrals() > maxDeferrals ) {
+            // too many deferrals, equals failure
+            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+            //failureDisposition(curi);
+            return;
+        }
+        
         try {
-            if ( curi.getDeferrals() > maxDeferrals ) {
-                // too many deferrals, equals failure
-                curi.setFetchStatus(S_PREREQUISITE_FAILURE);
-                //failureDisposition(curi);
-                return;
-            }
-            
-            // convert prerequisite to UURI for convenience of Frontier
-            UURI prereqUURI = null;
-            Object prereqObject = curi.getPrerequisiteUri();
-            if (prereqObject instanceof String){
-                prereqUURI = UURI.createUURI(
+            // create and schedule prerequisite
+            UURI prereq = UURI.createUURI(
                     (String)curi.getPrerequisiteUri(), getBaseURI(curi));
-                                    
-            } else if (prereqObject instanceof UURI){
-                prereqUURI = (UURI)prereqObject;
-            } else {
-                assert false : "Prereqisute is not String or UURI";
-            }
-
-            assert (prereqUURI != null) : "In postselector prerequisite URIs " +
-                "should not be null!";
-
-            // Schedule of prerequisites with forced-fetch priority.                
-            CandidateURI caUri = new CandidateURI(
-                prereqUURI, CandidateURI.FORCED_FETCH_PRIORITY);                
-                
-            curi.setPrerequisiteUri(prereqUURI);
+            CandidateURI caUri = new CandidateURI(prereq);
+            caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);                              
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
-
-            if (!scheduleURI(caUri)) {
+            if (!schedule(caUri)) {
                 // prerequisite cannot be scheduled (perhaps excluded by scope)
                 // must give up on
                 curi.setFetchStatus(S_PREREQUISITE_FAILURE);
-                //failureDisposition(curi);
                 return;
             }
             // leave PREREQ in place so frontier can properly defer this curi
@@ -184,18 +166,17 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
     /**
      * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
      *
-     * @param caURI The CandidateURI to be scheduled
+     * @param caUri The CandidateURI to be scheduled
      *
      * @return true if CandidateURI was accepted by crawl scope, false otherwise
      */
-
-    private boolean scheduleURI (CandidateURI caURI) {
-        if(getController().getScope().accepts(caURI)) {
-            logger.finer("URI accepted: " + caURI);
-            getController().getFrontier().batchScheduleURI(caURI);
+    private boolean schedule(CandidateURI caUri) {
+        if(getController().getScope().accepts(caUri)) {
+            logger.finer("URI accepted: "+caUri);
+            getController().getFrontier().batchSchedule(caUri);
             return true;
         }
-        logger.finer("URI rejected: " + caURI);
+        logger.finer("URI rejected: " + caUri);
         return false;
     }
         
@@ -210,7 +191,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @param priority Scheduling priority of links.
      */    
     private void handleLinkCollection(CrawlURI curi, URI baseUri,
-            String collection, char linkType, int priority)
+            String collection, char linkType, String directive)
     {
         if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
             // do not follow links of error pages
@@ -222,13 +203,14 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
             String link = (String)iter.next();
             try {
                 UURI uuri = UURI.createUURI(link, baseUri);
-                CandidateURI caURI = new CandidateURI(uuri, priority);
+                CandidateURI caURI = new CandidateURI(uuri);
+                caURI.setSchedulingDirective(directive);
                 caURI.setVia(curi);
                 caURI.setPathFromSeed(curi.getPathFromSeed()+ linkType);
                 logger.finest("inserting link from " + collection + " of type "
                     + linkType + " at head " + uuri);
                     
-                scheduleURI(caURI);
+                schedule(caURI);
             } catch (URISyntaxException ex) {
                 Object[] array = { curi, link };
                 getController().uriErrors.log(

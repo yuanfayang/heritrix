@@ -38,7 +38,7 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.protocol.Protocol;
@@ -48,6 +48,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.util.MultiHttpConnectionProvider;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.io.RecorderLengthExceededException;
@@ -63,6 +64,7 @@ import org.archive.util.HttpRecorder;
  * @author Gordon Mohr
  * @author Igor Ranitovic
  * @author others
+ * @version $Id$
  */
 public class FetchHTTP extends Processor
     	implements CoreAttributeConstants, FetchStatusCodes {
@@ -113,7 +115,12 @@ public class FetchHTTP extends Processor
      * If this processor has been initialized.
      */
     private boolean initialized = false;
-
+    
+    /**
+     * How many 'instant retries' of HttpRecoverableExceptions have occurred
+     */
+    private int recoveryRetries = 0; // would like to be 'long', but longs aren't atomic
+    private int curisHandled = 0; // would like to be 'long', but longs aren't atomic
     
     /**
      * Constructor.
@@ -166,6 +173,7 @@ public class FetchHTTP extends Processor
             return;
         }
 
+        curisHandled++;
         // Note begin time
         long now = System.currentTimeMillis();
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
@@ -178,26 +186,44 @@ public class FetchHTTP extends Processor
             new HttpRecorderGetMethod(curi.getUURI().getURIString(), rec);
         configureGetMethod(curi, get);
 
-        try {
-            // TODO: make this initial reading subject to the same
-            // length/timeout limits; currently only the soTimeout
-            // is effective here, once the connection succeeds
-            this.http.executeMethod(get);
-        } catch (IOException e) {
-            curi.addLocalizedError(this.getName(), e, "executeMethod");
-            curi.setFetchStatus(S_CONNECT_FAILED);
-            rec.closeRecorders();
-            get.releaseConnection();
-            return;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // for weird windows-only ArrayIndex exceptions from native code
-            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-            // treating as if it were an IOException
-            curi.addLocalizedError(this.getName(), e, "executeMethod");
-            curi.setFetchStatus(S_CONNECT_FAILED);
-            rec.closeRecorders();
-            get.releaseConnection();
-            return;
+        int immediateRetries = 0;
+        while (true) { // retry until success (break) or unrecoverable exception (early return)
+            try {
+                // TODO: make this initial reading subject to the same
+                // length/timeout limits; currently only the soTimeout
+                // is effective here, once the connection succeeds
+                this.http.executeMethod(get);
+                break;
+            } catch (HttpRecoverableException e) {
+                if (immediateRetries < getMaxImmediateRetries()) {
+                    recoveryRetries++;
+                    immediateRetries++;
+                    continue;
+                } else {
+                    // treat as connect failed
+                    curi.addLocalizedError(this.getName(), e, "executeMethod");
+                    curi.setFetchStatus(S_CONNECT_FAILED);
+                    rec.closeRecorders();
+                    get.releaseConnection();
+                    return;
+                }
+            } catch (IOException e) {
+                curi.addLocalizedError(this.getName(), e, "executeMethod");
+                curi.setFetchStatus(S_CONNECT_FAILED);
+                rec.closeRecorders();
+                get.releaseConnection();
+                return;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                // for weird windows-only ArrayIndex exceptions in native
+                // code... see
+                // http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+                // treating as if it were an IOException
+                curi.addLocalizedError(this.getName(), e, "executeMethod");
+                curi.setFetchStatus(S_CONNECT_FAILED);
+                rec.closeRecorders();
+                get.releaseConnection();
+                return;
+            }
         }
 
         try {
@@ -247,6 +273,14 @@ public class FetchHTTP extends Processor
 
         // Save off the GetMethod just in case needed by subsequent processors.
         curi.getAList().putObject(A_HTTP_TRANSACTION, get);
+    }
+
+    /**
+     * @return
+     */
+    private int getMaxImmediateRetries() {
+        // TODO make configurable
+        return 5;
     }
 
     /**
@@ -310,16 +344,18 @@ public class FetchHTTP extends Processor
         {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+            MultiHttpConnectionProvider connectionManager =
+                new MultiHttpConnectionProvider();
             // We use the multithreaded connection manager because, at the
             // least, cookies will be shared across clients.  It also seems
             // SimpleConnectionManager is unsafe run in an environment running
             // multiple instances (to be verified).
-            MultiThreadedHttpConnectionManager connectionManager =
-                new MultiThreadedHttpConnectionManager();
-            // Ensure there will be as many http connections available as
-            // worker threads
-            connectionManager.setMaxTotalConnections(getController().
-                getToeCount());
+//            MultiThreadedHttpConnectionManager connectionManager =
+//                new MultiThreadedHttpConnectionManager();
+//            // Ensure there will be as many http connections available as
+//            // worker threads
+//            connectionManager.setMaxTotalConnections(getController().
+//                getToeCount());
             this.http = new HttpClient(connectionManager);
 
             try
@@ -482,7 +518,21 @@ public class FetchHTTP extends Processor
             }
         }
     }
-    
+        
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.fetcher.FetchHTTP\n");
+        ret.append("  Function:          Fetch HTTP URIs\n");
+        ret.append("  CrawlURIs handled: " + curisHandled + "\n");
+        ret.append("  Recovery retries:   " + recoveryRetries + "\n\n");
+
+        return ret.toString();
+    }
+
+
     /**
      * Load cookies from the file specified in the order file.
      * 
