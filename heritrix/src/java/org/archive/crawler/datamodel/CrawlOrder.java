@@ -86,6 +86,19 @@ public class CrawlOrder extends ModuleType {
     private MapType loggers;
 
     private CrawlController controller;
+    
+
+    /**
+     * Regex for acceptable user-agent format.
+     */
+    private static String ACCEPTABLE_USER_AGENT =
+        "\\S+.*\\(.*\\+http(s)?://\\S+\\.\\S+.*\\).*";
+    
+    /**
+     * Regex for acceptable from address.
+     */
+    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
+    
 
     /** Construct a CrawlOrder.
      */
@@ -168,20 +181,27 @@ public class CrawlOrder extends ModuleType {
                         "the crawler's HTTP requests."));
 
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
-                "User agent to act as. \nThis field must contain a valid " +
-                "URL leading to the website of the person or organization " +
-                "responsible for this crawl.",
-                "os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"));
-        e.addConstraint(new RegularExpressionConstraint(
-                "\\S+.*\\(\\+http://\\S*\\).*", Level.WARNING,
+                "User agent to act as.\n Field must contain valid URL " +
+                "that links to website of person or organization " +
+                "running the crawl. Replace 'PROJECT_URL_HERE' in " +
+                "initial template. E.g. If organization " +
+                "is Library of Congress, a valid user agent would be:" +
+                "'Mozilla/5.0 (compatible; loc-crawler/0.11.0 " +
+                "+http://loc.gov)'. " +
+                "Note, you must preserve the '+' before 'http' " +
+                "and if present, '@VERSION@' is replaced by version.",
+                "Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)"));
+        e.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_USER_AGENT,
+                Level.WARNING,
                 "This field must contain a valid URL leading to the website " +
                 "of the person or organization responsible for this crawl."));
 
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
-                "Contact information. \nThis field must contain a valid" +
+                "Contact information. \nThis field must contain a valid " +
                 "e-mail address for the person or organization responsible" +
-                "for this crawl.", "CONTACT_EMAIL_ADDRESS_HERE"));
-        e.addConstraint(new RegularExpressionConstraint("\\S+@\\S+\\.\\S+",
+                "for this crawl: e.g. 'webmaster@loc.gov'",
+                "CONTACT_EMAIL_ADDRESS_HERE"));
+        e.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FROM,
                 Level.WARNING, "This field must contain a valid e-mail " +
                         "address for the person or organization responsible " +
                         "for this crawl."));
@@ -335,12 +355,6 @@ public class CrawlOrder extends ModuleType {
     public MapType getLoggers() {
         return loggers;
     }
-
-    // must include a bot name and info URL
-    private static String ACCEPTABLE_USER_AGENT =
-        "\\S+.*\\(\\+http://\\S*\\).*";
-    // must include a contact email address
-    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
 
     /**
      * Checks if the User Agent and From field are set 'correctly' in

@@ -121,7 +121,7 @@
 						Name of new job:
 					</td>
 					<td>
-						<input maxlength="38" name="meta/name" value="<%=error==null?orderfile.getName():metaName%>" style="width: 320px">
+						<input maxlength="38" name="meta/name" value="<%=error==null?orderfile.getName():metaName%>" style="width: 440px">
 					</td>
 				</tr>
 				<% if(error != null){ %>
@@ -138,7 +138,7 @@
 						Description:
 					</td>
 					<td>
-						<input name="meta/description" value="<%=error==null?orderfile.getDescription():request.getParameter("meta/description")%>" style="width: 320px">
+						<input name="meta/description" value="<%=error==null?orderfile.getDescription():request.getParameter("meta/description")%>" style="width: 440px">
 					</td>
 				</tr>
 				<tr>
@@ -146,7 +146,7 @@
 						Seeds:
 					</td>
 					<td>
-						<textarea name="seeds" style="width: 320px" rows="8"><%
+						<textarea name="seeds" style="width: 440px" rows="8"><%
 							if(error==null){
 								BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
 								String sout = seeds.readLine();
