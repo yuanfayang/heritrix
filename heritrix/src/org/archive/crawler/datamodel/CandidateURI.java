@@ -181,4 +181,21 @@ public class CandidateURI implements Serializable, Lineable {
 	public String getURIString() {
 		return getUURI().getUriString();
 	}
+
+	/**
+	 * @param curi
+	 * @return
+	 */
+	public boolean sameDomainAs(CandidateURI other) {
+		String domain = getUURI().getHost();
+		if (domain==null) return false;
+		while(domain.lastIndexOf('.')>domain.indexOf('.')) {
+			// while has more than one dot, lop off first segment
+			domain = domain.substring(domain.indexOf('.')+1);
+		}
+		if(other.getUURI().getHost()==null ) {
+			return false;
+		}
+		return other.getUURI().getHost().endsWith(domain);
+	}
 }
