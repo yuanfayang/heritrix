@@ -47,10 +47,10 @@ public class FetchHTTP
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 	HttpClient http;
-	private long timeout;
+//	private long timeout;
 	private int soTimeout;
-	private long maxLength;
-	private int maxTries;
+//	private long maxLength;
+//	private int maxTries;
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -70,7 +70,7 @@ public class FetchHTTP
 //		}
 		
 		// only try so many times...
-		if(curi.getFetchAttempts() >= maxTries){
+		if(curi.getFetchAttempts() >= controller.getOrder().getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)){
 			curi.setFetchStatus(S_TOO_MANY_RETRIES);
 			return; 
 		}
@@ -154,7 +154,7 @@ public class FetchHTTP
 		try {
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules			
-			rec.getRecordedInput().readFullyOrUntil(maxLength,timeout);
+			rec.getRecordedInput().readFullyOrUntil(controller.getOrder().getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES), 1000*controller.getOrder().getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
 		} catch (RecorderTimeoutException ex) {
 			logger.warning(curi.getUURI().getUriString()+": time limit exceeded");
 			// but, continue processing whatever was retrieved
@@ -217,10 +217,10 @@ public class FetchHTTP
 	 */
 	public void initialize(CrawlController c) {
 		super.initialize(c);
-		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
+//		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
 		soTimeout = getIntAt(XP_SOTIMEOUT_MS, DEFAULT_SOTIMEOUT_MS);
-		maxLength = getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES);
-		maxTries = getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS);
+//		maxLength = getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES);
+//		maxTries = getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS);
 		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
 		
 		MultiThreadedHttpConnectionManager connectionManager = 
