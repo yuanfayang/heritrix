@@ -46,6 +46,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
@@ -61,7 +62,6 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.frontier.BdbFrontier;
 import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -558,12 +558,7 @@ public class CrawlController implements Serializable {
         
         if (frontier == null) {
             Object o = order.getAttribute(Frontier.ATTR_NAME);
-            if (o instanceof Frontier) {
-                frontier = (Frontier)o;
-            } else {
-                frontier = new BdbFrontier(Frontier.ATTR_NAME);
-                order.setAttribute((BdbFrontier)frontier);
-            }
+            frontier = (Frontier)o;
 
             // Try to initialize frontier from the config file
             try {
@@ -1494,5 +1489,18 @@ public class CrawlController implements Serializable {
             addToManifest((String)it.next(),
                 CrawlController.MANIFEST_CONFIG_FILE, true);
         }
+    }
+    
+    /**
+     * Log a URIException from deep inside other components to the crawl's
+     * shared log. 
+     * 
+     * @param e URIException encountered
+     * @param u CrawlURI where problem occurred
+     * @param l String which could not be interpreted as URI without exception
+     */
+    public void logUriError(URIException e, CrawlURI u, String l) {
+        Object[] array = {u, l};
+        uriErrors.log(Level.INFO, e.getMessage(),array);
     }
 }
