@@ -23,6 +23,7 @@ public interface FetchStatusCodes {
 	public static int S_DOMAIN_UNRESOLVABLE = -1;
 	public static int S_CONNECT_FAILED = -2;
 	public static int S_CONNECT_LOST = -3;
+	public static int S_TIMEOUT = -4;
 	
 	public static int S_ROBOTS_PRECLUDED = -9998;
 	
