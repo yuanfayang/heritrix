@@ -256,8 +256,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 processEmbed(curi, res);
             }
         } catch (URISyntaxException e) {
-            //System.out.println("BAD CODEBASE "+codebase+" at "+curi);
-            // e.printStackTrace();
             curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
         } catch (IllegalArgumentException e) {
             DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
@@ -281,7 +279,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
         String code = cs.toString();
-        // escaping is done by ExtractorJS
+        // Escaping is now done in UURI.normalize();
         // code = TextUtils.replaceAll(ESCAPED_AMP, code, "&"); 
         
         this.numberOfLinksExtracted +=
@@ -294,27 +292,26 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param curi
      * @param value
      */
-    protected void processLink(CrawlURI curi, CharSequence value) {
-        //String link = value.toString();
-        //link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-        String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-        //if(link.matches("(?i)^javascript:.*")) {
+    protected void processLink(CrawlURI curi, CharSequence link) {
+        // Escaping is now done in UURI.normalaize();
+        // String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+        
         if(TextUtils.matches(JAVASCRIPT, link)) {
-            processScriptCode(curi,value.subSequence(11, value.length()));
+            processScriptCode(curi, link.subSequence(11, link.length()));
         } else {
-            logger.finest("link: "+link+ " from "+curi);
+            logger.finest("link: " + link + " from " + curi);
             this.numberOfLinksExtracted++;
-            curi.addLinkToCollection(link, A_HTML_LINKS);
+            curi.addLinkToCollection(link.toString(), A_HTML_LINKS);
         }
     }
 
-    protected void processEmbed(CrawlURI curi, CharSequence value) {
-        //String embed = value.toString();
-        //embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-        String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-        logger.finest("embed: "+embed+ " from "+curi);
+    protected void processEmbed(CrawlURI curi, CharSequence embed) {
+        // Escaping is now done in UURI.normalaize();
+        // String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+        
+        logger.finest("embed: " + embed + " from "+curi);
         this.numberOfLinksExtracted++;
-        curi.addLinkToCollection(embed, A_HTML_EMBEDS);
+        curi.addLinkToCollection(embed.toString(), A_HTML_EMBEDS);
     }
 
     public void innerProcess(CrawlURI curi) {
@@ -516,9 +513,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param sequence
      * @param endOfOpenTag
      */
-    protected void processStyle(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
+    protected void processStyle(CrawlURI curi, CharSequence sequence,
+            int endOfOpenTag)
+    {            
         // First, get attributes of script-open tag as per any other tag.
-        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
+        processGeneralTag(curi, sequence.subSequence(0,6), 
+            sequence.subSequence(0,endOfOpenTag));
     
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
@@ -538,6 +538,5 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         return ret.toString();
     }
-
 }
 
