@@ -264,10 +264,11 @@ public class Frontier
             "How often to retry fetching a URI that failed to be retrieved. ",
             DEFAULT_MAX_RETRIES));
         addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
-            "How long to wait by default until we retry fetching a URI that " +
-            "failed to be retrieved (seconds). ",
-            DEFAULT_RETRY_DELAY));
-        Type t = addElementToDefinition(
+                "How long to wait by default until we retry fetching a URI that " +
+                "failed to be retrieved (seconds). ",
+                DEFAULT_RETRY_DELAY));
+        Type t;
+        t = addElementToDefinition(
             new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use. \n" +
             "The actual readspeed is not affected by this setting, it only " +
@@ -392,6 +393,16 @@ public class Frontier
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
         }
+        
+        if(caUri.isSeed() && caUri.getVia() != null 
+                && caUri.getVia().toString().length()>0){
+            // The only way a seed can have a non empty via is if it is the 
+            // result of a seed redirect. Add it to the seeds list.
+            controller.getScope().addSeed(caUri.getUURI());
+            // And it needs immediate scheduling.
+            caUri.setSchedulingDirective(CandidateURI.HIGH);
+        }
+        
         if(caUri.needsImmediateScheduling()) {
             enqueueHigh(CrawlURI.from(caUri));
         } else {
@@ -594,7 +605,7 @@ public class Frontier
             long earliestWake = earliestWakeTime();
             // Sleep to timeout or earliestWakeup time, whichever comes first
             long sleepuntil = earliestWake < until ? earliestWake : until;
-            if(sleepuntil > 0){
+            if(sleepuntil > now){
                 wait(sleepuntil-now); // If new URIs are scheduled, we will be woken
             }
             now = System.currentTimeMillis();
@@ -652,7 +663,7 @@ public class Frontier
             if(curi.getFetchStatus() != S_DELETED_BY_USER){
                 noteProcessingDone(curi);
             }
-
+            
             if (curi.getFetchStatus() > 0) {
                 // Regard any status larger then 0 as success.
                 successDisposition(curi);
