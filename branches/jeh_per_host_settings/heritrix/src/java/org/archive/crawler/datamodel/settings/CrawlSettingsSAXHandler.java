@@ -24,13 +24,14 @@
  */
 package org.archive.crawler.datamodel.settings;
 
-import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 import javax.management.OperationsException;
 
 import org.xml.sax.Attributes;
@@ -217,18 +218,16 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             String moduleClass =
                 atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
             try {
-                Class cl = Class.forName(moduleClass);
-                Constructor co =
-                    cl.getConstructor(new Class[] { String.class });
-                CrawlerModule module =
-                    (CrawlerModule) co.newInstance(new Object[] { moduleName });
+                CrawlerModule module = SettingsHandler.instantiateCrawlerModuleFromClassName(moduleName, moduleClass);
                 try {
                     parentModule.setAttribute(settings, module);
                 } catch (AttributeNotFoundException e) {
                     parentModule.addElement(settings, module);
                 }
                 stack.push(module);
-            } catch (Exception e) {
+            } catch (InvocationTargetException e) {
+                throw new SAXException(e);
+            } catch (InvalidAttributeValueException e) {
                 throw new SAXException(e);
             }
         }
