@@ -25,16 +25,12 @@
 package org.archive.crawler.datamodel.settings;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.Map.Entry;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -57,10 +53,7 @@ public abstract class SettingsHandler {
         new CrawlerSettings(this, null);
 
     /** Cached CrawlerSettings objects */
-    private final Map settingsCache = new WeakHashMap();
-
-    /** Maps hostname to effective settings object */
-    private final Map hostToSettings = new WeakHashMap();
+    private final SettingsCache settingsCache = new SettingsCache();
 
     /** Reference to the order module */
     private final CrawlOrder order;
@@ -268,32 +261,24 @@ public abstract class SettingsHandler {
      * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettings(String host) {
-        if (host != null) {
+        if (host == null || host.equals("")) {
+            // No scopestring, return global settings
+            return globalSettings;
+        } else {
             host = host.intern();
         }
         
-        CrawlerSettings settings = null;
-
-        // Try to get reference to settings from cache
-        WeakReference ref = (WeakReference) hostToSettings.get(host);
-        if (ref != null) {
-            // Reference exist, but can still have been garbage collected
-            settings = (CrawlerSettings) ref.get();
-        }
+        CrawlerSettings settings = settingsCache.getSettings(host);
 
         if (settings == null) {
-            settings = getSettingsObject(host);
-            while (settings == null && host != null) {
-                host = getParentScope(host);
-                settings = getSettingsObject(host);
+            String tmpHost = host;
+            settings = getSettingsObject(tmpHost);
+            while (settings == null && tmpHost != null) {
+                tmpHost = getParentScope(tmpHost);
+                settings = getSettingsObject(tmpHost);
             }
-        }
-
-        // Add the settings object to the cache
-        if (ref == null) {
-            synchronized (hostToSettings) {
-                hostToSettings.put(host, new WeakReference(settings));
-            }
+            
+            settingsCache.putSettings(host, settings);
         }
 
         return settings;
@@ -318,15 +303,9 @@ public abstract class SettingsHandler {
             settings = globalSettings;
         } else {
             scope = scope.intern();
-            
-            // Try to get settings object from cache
-            WeakReference ref = (WeakReference) settingsCache.get(scope);
-            if (ref != null) {
-                // Reference exist, but can still have been garbage collected
-                settings = (CrawlerSettings) ref.get();
-            }
+            settings = settingsCache.getSettingsObject(scope);
         }
-
+        
         if (settings == null) {
             // Reference not found
             settings = new CrawlerSettings(this, scope);
@@ -334,13 +313,7 @@ public abstract class SettingsHandler {
             // it will be set to null.
             settings = readSettingsObject(settings);
             if (settings != null) {
-                WeakReference ref = new  WeakReference(settings);
-                synchronized (settingsCache) {
-                    settingsCache.put(scope, ref);
-                }
-                synchronized (hostToSettings) {
-                    hostToSettings.put(scope, ref);
-                }
+                settingsCache.putSettings(scope, settings);
             }
         }
         return settings;
@@ -365,19 +338,7 @@ public abstract class SettingsHandler {
             
             // No existing settings object found, create one
             settings = new CrawlerSettings(this, scope);
-            synchronized (settingsCache) {
-                settingsCache.put(scope, new WeakReference(settings));
-
-                // Clean up all possible references to old objects
-                synchronized (hostToSettings) {
-                    hostToSettings.clear();
-                    Iterator it = settingsCache.entrySet().iterator();
-                    while (it.hasNext()) {
-                        Entry entry = (Entry) it.next();
-                        hostToSettings.put(entry.getKey(), entry.getValue());
-                    }
-                }
-            }
+            settingsCache.refreshHostToSettings();
         }
         return settings;
     }
@@ -402,20 +363,7 @@ public abstract class SettingsHandler {
      * @param settings the settings object to delete.
      */
     public void deleteSettingsObject(CrawlerSettings settings) {
-        // Remove settings object from cache
-        synchronized (settingsCache) {
-            settingsCache.remove(settings.getScope());
-        }
-
-        // Find all references to this settings object in the hostToSettings
-        // cache and remove them.
-        synchronized (hostToSettings) {
-            for (Iterator it = hostToSettings.values().iterator(); it.hasNext();) {
-                if (it.next().equals(settings)) {
-                    it.remove();
-                }
-            }
-        }
+        settingsCache.deleteSettingsObject(settings);
     }
 
     /** Get the CrawlOrder.
