@@ -2337,7 +2337,14 @@ public class SimpleExtractor extends Processor
 
       <para>Tom Emerson of Basis Technology has put up a project on
       sourceforge to host a BSD-Licensed C++ ARC reader called <ulink
-      url="http://sourceforge.net/projects/libarc/">libarc</ulink>.</para>
+      url="http://sourceforge.net/projects/libarc/">libarc</ulink> (Its since
+      been moved to
+      <ulink url="http://archive-access.sourceforge.net/">archive-access</ulink>).</para>
+
+      <para>The French National Library (BnF) has also released a GPL perl/c
+      ARC Reader available at
+      <ulink url="http://bibnum.bnf.fr/downloads/bat/BAT-0.03.tar.gz">BAT</ulink>.
+      </para>
     </sect2>
 
     <sect2 id="arcwriter">
