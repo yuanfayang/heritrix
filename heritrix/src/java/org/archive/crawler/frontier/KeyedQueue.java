@@ -386,7 +386,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Remove an item in the default manner
      *
      * @see org.archive.util.Queue#dequeue()
-     * @return
+     * @return A crawl uri.
      */
     public CrawlURI dequeue() {
         CrawlURI candidate = null;
