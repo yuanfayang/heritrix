@@ -143,7 +143,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
 
     /** whether to reassign URIs to IP-address based queues when IP known */
-    public final static String ATTR_IP_POLITENESS = "ip_politeness";
+    public final static String ATTR_IP_POLITENESS = "ip-politeness";
     // TODO: change default to true once well-tested
     protected final static Boolean DEFAULT_IP_POLITENESS = new Boolean(false); 
     
@@ -316,10 +316,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 DEFAULT_IP_POLITENESS));
         t.setExpertSetting(true);
         t.setOverrideable(false);
-        t = addElementToDefinition(
-                new SimpleType(ATTR_FORCE_QUEUE,
-                "EXPERT SETTING. The queue name into which to force URIs. Should " +
-                "be left blank at global level, and ",
+        t = addElementToDefinition(new SimpleType(ATTR_FORCE_QUEUE,
+                "The queue name into which to force URIs.\nShould " +
+                "be left blank at global level.  Specify a " +
+                "per-domain/per-host override to force URIs into " +
+                "a particular named queue, regardless of the assignment " +
+                "policy in effect (domain or ip-based politeness). " +
+                "This could be used on domains known to all be from " +
+                "the same small set of IPs (eg blogspot, dailykos, etc.) "+
+                "to simulate IP-based politeness, or it could be used if " +
+                "you wanted to enforce politeness over a whole domain, even " +
+                "though the subdomains are split across many IPs.",
                 DEFAULT_FORCE_QUEUE));
         t.setOverrideable(true);
         t.setExpertSetting(true);
