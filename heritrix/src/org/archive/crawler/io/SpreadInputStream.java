@@ -161,6 +161,8 @@ public class SpreadInputStream extends SeekableInputStream {
   }
 
   public synchronized void seek(long loc) throws IOException {
+    if (loc < 0 || loc >= mDBuff.getSize())
+      throw new IndexOutOfBoundsException();
     mPosition = loc;
   }
   
