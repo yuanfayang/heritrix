@@ -39,4 +39,5 @@ public interface HeritrixMBean {
     public boolean scheduleSeed(String url);
     public String scheduleFile(String path);
     public String scheduleFileForceFetch(String path);
+    public String interrupt(String threadName);
 }
