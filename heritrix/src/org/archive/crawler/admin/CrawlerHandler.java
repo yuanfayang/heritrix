@@ -10,19 +10,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
-
-import org.mortbay.http.HttpException;
-import org.mortbay.http.HttpFields;
-import org.mortbay.http.HttpRequest;
-import org.mortbay.http.HttpResponse;
-import org.mortbay.http.handler.AbstractHttpHandler;
-import org.mortbay.util.StringUtil;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.UURI;
@@ -30,9 +20,12 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.util.Sorts;
 import org.archive.crawler.util.StringIntPair;
 import org.archive.crawler.util.StringIntPairComparator;
-import org.archive.crawler.util.StringIntPairComparator;
-
-import sun.security.provider.certpath.CollectionCertStore;
+import org.mortbay.http.HttpException;
+import org.mortbay.http.HttpFields;
+import org.mortbay.http.HttpRequest;
+import org.mortbay.http.HttpResponse;
+import org.mortbay.http.handler.AbstractHttpHandler;
+import org.mortbay.util.StringUtil;
 
 /**
  * @author Administrator

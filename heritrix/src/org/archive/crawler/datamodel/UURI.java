@@ -12,8 +12,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.httpclient.HttpConnection;
-
 /**
  * Usable URI: a legal URI for our purposes.
  * 
