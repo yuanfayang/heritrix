@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <title>Heritrix user manual</title>
+
+  <sect1>
+    <title>Introduction</title>
+
+    <para>Heritrix is the Internet Archive's open-source, extensible,
+    web-scale, archival-quality web crawler. This document explains how to
+    create, configure and run crawls using it.</para>
+  </sect1>
+
+  <sect1>
+    <title>Installing and launching Heritrix</title>
+
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Web based user interface</title>
+
+    <para>After Heritrix has been launched from the command line, the web
+    based user interface (WUI) becomes accessible.</para>
+
+    <para>The path to it printed out on the console from which the program was
+    launched (typically http://&lt;host&gt;:8080/admin/).</para>
+
+    <para>The WUI is password protected. The username is currently hardcoded
+    to 'admin' with the default password of 'letmein'. The password can be
+    specified at startup and users are encouraged to change it. The currently
+    valid password will be printed out to the console along with the
+    path.</para>
+
+    <para>The WUI can then be accessed via any browser. While we've
+    endeavoured to make certain that it functions in all recent browsers,
+    Mozilla 5+ is recommended. IE 6+ should also work without problems.</para>
+
+    <para>The inital login page takes the standard username/password
+    comibnation discuessed before. In addition users can opt to have the WUI
+    remember their login by checking the appropriate box. If that is done then
+    the login information will be stored in a cookie and read from it during
+    future login attempts. If this option is not checked then the login is
+    only valid as long as the server's session. Once it times you, the user
+    will need to login again.</para>
+
+    <caution>
+      <para>The access control to the WUI is not encrypted! Passwords will be
+      submitted over the network in plain text.</para>
+    </caution>
+  </sect1>
+
+  <sect1>
+    <title>A quick guide to running your first crawl job</title>
+
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Creating jobs and profiles</title>
+
+    <para>In order to run a crawl a configuration must be created that defines
+    it. In Heritrix such a configuration is called a Crawl job.</para>
+
+    <sect2>
+      <title>Crawl job</title>
+
+      <para>A Crawl job encompassses the configurations needed to run a single
+      crawl. It also contains some additional elements such as logs, status
+      etc. </para>
+
+      <para>Once logged onto the WUI new jobs can be created by going to the
+      <emphasis>Jobs</emphasis> tab. Once the Jobs page loads users can create
+      jobs by choosing of the following three options:</para>
+
+      <orderedlist>
+        <listitem>
+          <para><emphasis role="bold">Create new crawl job</emphasis></para>
+
+          <para>This option creates a new crawl job based on the currently set
+          default profile.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Create new crawl job based on a
+          profile</emphasis></para>
+
+          <para>This option allows the user to create a job by basing it on
+          one of the profiles offered up.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Create new crawl job based on an
+          existing job</emphasis></para>
+
+          <para>This option allows the user to create a job by basing it on
+          any existing job, regardless of wether it has been crawled or not.
+          Can be usefull for repeating crawls..</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Options 2 and 3 will display a list of availible options.
+      Initially there is only one profile and no existing jobs.</para>
+
+      <para>As should be clear by now, all crawl jobs are created by basing
+      them on profiles (see next chapter) or existing jobs. </para>
+
+      <para>Once the proper profile/job has been chosen to base the new job
+      one a simple page will appear asking for the new jobs:</para>
+
+      <orderedlist>
+        <listitem>
+          <para><emphasis role="bold">Name</emphasis></para>
+
+          <para>The name must only contain letters, numbers, dash (-) and
+          underscore (_). No other characters are allowed. This name will be
+          used to identify the crawl in the UI but it need not be unique. The
+          name can not be changed later</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Description</emphasis></para>
+
+          <para>A short description of the job. This can be edited
+          later.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Seeds</emphasis></para>
+
+          <para>The seed URLs to use for the job. This list can be edited
+          later along with the general configurations.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Below these input fields there are several buttons. The last one
+      Submit job will immediately submit the job and (assuming that it's
+      properly configured) it will be ready to run (see <xref
+      linkend="running" />). The other buttons will take the user</para>
+    </sect2>
+
+    <sect2>
+      <title>Profile</title>
+
+      <para></para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Configuring jobs and profiles</title>
+
+    <para></para>
+
+    <sect2>
+      <title>Settings</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Modules</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Filters</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Credentials</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Overrides</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Refinements</title>
+
+      <para></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="running">
+    <title>Running a job</title>
+
+    <para></para>
+
+    <sect2>
+      <title>Console</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Pending jobs</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Monitoring a running job</title>
+
+      <para></para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Analysis of jobs</title>
+
+    <para></para>
+
+    <sect2>
+      <title>Completed jobs</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Logs</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Reports</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Outside the user interface</title>
+
+      <para></para>
+    </sect2>
+  </sect1>
+</article>
