@@ -889,16 +889,13 @@ public class Frontier
             try {
                 kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
             } catch (IOException e) {
+                // An IOException occured trying to make new KeyedQueue.
+                curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
+                Object array[] = { curi };
                 controller.runtimeErrors.log(
                         Level.SEVERE,
-                        "IOException occured while trying to make a new " +
-                        "KeyedQueue for CURI " + curi.getURIString() + 
-                        " found via " + 
-                        (curi.getVia() instanceof CandidateURI ?
-                                ((CandidateURI)curi.getVia()).getURIString() :
-                                "-via missing-") +
-                        ". URI will most likely be lost as a result."
-                        ,e);
+                        curi.getUURI().getURIString(),
+                        array);
             }
             kq.setStoreState(URIStoreable.EMPTY);
             allClassQueuesMap.put(kq.getClassKey(),kq);
