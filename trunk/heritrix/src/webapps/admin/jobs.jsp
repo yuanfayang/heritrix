@@ -7,8 +7,10 @@
 
 <%@include file="/include/head.jsp"%>
 
-<% if(request.getParameter("message")!=null &&
-        request.getParameter("message").length() >0){ %>
+<% 
+    if(request.getParameter("message") != null &&
+        request.getParameter("message").length() > 0) {
+%>
     <p>
         <font color="red"><b><%=request.getParameter("message")%></b></font>
 <% } %>
