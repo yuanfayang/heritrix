@@ -123,7 +123,7 @@ public class UURIFactory extends URI {
     final static Pattern RFC2396REGEX = Pattern.compile(
         "^(([^:/?#]+):)?((//([^/?#]*))?([^?#]*)(\\?([^#]*))?)?(#(.*))?");
 
-    public static final String DOTDOT = "^(/\\.\\.)+";
+    public static final String SLASHDOTDOTSLASH = "^(/\\.\\./)+";
     public static final String SLASH = "/";
     public static final String HTTP = "http";
     public static final String HTTP_PORT = ":80";
@@ -409,7 +409,7 @@ public class UURIFactory extends URI {
         
         // If a scheme, is it a supported scheme?
         if (uriScheme != null && uriScheme.length() > 0 &&
-        this.schemes != null) {
+        		this.schemes != null) {
         	if (!this.schemes.contains(uriScheme)) {
         		throw new UnsupportedUriSchemeException(
                      "Unsupported scheme: " + uriScheme);
@@ -453,8 +453,8 @@ public class UURIFactory extends URI {
                 uriSchemeSpecificPart.startsWith(SLASH)) {
             if (uriPath != null) {
                 // Eliminate '..' if its first thing in the path.  IE does this.
-                uriPath = TextUtils.replaceFirst(DOTDOT, uriPath,
-                    EMPTY_STRING);
+                uriPath = TextUtils.replaceFirst(SLASHDOTDOTSLASH, uriPath,
+                    SLASH);
             }
             // Ensure root URLs end with '/': browsers always send "/"
             // on the request-line, so we should consider "http://host"

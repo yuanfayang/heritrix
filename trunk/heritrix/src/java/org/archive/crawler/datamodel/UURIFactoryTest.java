@@ -42,26 +42,26 @@ public class UURIFactoryTest extends TestCase {
 	public final void testEscaping() throws URIException {
 		// Note: single quote is not being escaped by URI class.
 		final String ESCAPED_URISTR = "http://archive.org/" +
-		UURIFactory.ESCAPED_SPACE +
-		UURIFactory.ESCAPED_SPACE +
-		UURIFactory.ESCAPED_PIPE +
-		UURIFactory.ESCAPED_CIRCUMFLEX +
-		UURIFactory.ESCAPED_QUOT +
-		UURIFactory.SQUOT +
-		UURIFactory.ESCAPED_APOSTROPH +
-		UURIFactory.ESCAPED_LSQRBRACKET +
-		UURIFactory.ESCAPED_RSQRBRACKET +
-		UURIFactory.ESCAPED_LCURBRACKET +
-		UURIFactory.ESCAPED_RCURBRACKET +
-		UURIFactory.SLASH + "a.gif"; // NBSP and SPACE should be trimmed;
+		    UURIFactory.ESCAPED_SPACE +
+			UURIFactory.ESCAPED_SPACE +
+			UURIFactory.ESCAPED_PIPE +
+			UURIFactory.ESCAPED_CIRCUMFLEX +
+			UURIFactory.ESCAPED_QUOT +
+			UURIFactory.SQUOT +
+			UURIFactory.ESCAPED_APOSTROPH +
+			UURIFactory.ESCAPED_LSQRBRACKET +
+			UURIFactory.ESCAPED_RSQRBRACKET +
+			UURIFactory.ESCAPED_LCURBRACKET +
+			UURIFactory.ESCAPED_RCURBRACKET +
+			UURIFactory.SLASH + "a.gif"; // NBSP and SPACE should be trimmed;
 		
 		final String URISTR = "http://archive.org/.././" + "\u00A0" +
-		UURIFactory.SPACE + UURIFactory.PIPE + UURIFactory.CIRCUMFLEX +
-		UURIFactory.QUOT + UURIFactory.SQUOT +
-		UURIFactory.APOSTROPH + UURIFactory.LSQRBRACKET +
-		UURIFactory.RSQRBRACKET + UURIFactory.LCURBRACKET +
-		UURIFactory.RCURBRACKET + UURIFactory.BACKSLASH +
-		"test/../a.gif" + "\u00A0" + UURIFactory.SPACE;
+		    UURIFactory.SPACE + UURIFactory.PIPE + UURIFactory.CIRCUMFLEX +
+			UURIFactory.QUOT + UURIFactory.SQUOT +
+			UURIFactory.APOSTROPH + UURIFactory.LSQRBRACKET +
+			UURIFactory.RSQRBRACKET + UURIFactory.LCURBRACKET +
+			UURIFactory.RCURBRACKET + UURIFactory.BACKSLASH +
+			"test/../a.gif" + "\u00A0" + UURIFactory.SPACE;
 		
 		UURI uuri = UURIFactory.getInstance(URISTR);
 		final String uuriStr = uuri.toString();
@@ -143,6 +143,15 @@ public class UURIFactoryTest extends TestCase {
         assertTrue("Double slash not working " + uuri.toString(),
                 uuri.getPath().equals("/JIGOU/KYC/INDEX.HTM"));
 	}
+    
+    public final void testBadBaseResolve() throws URIException {
+        UURI base = UURIFactory.getInstance("http://license.joins.com/board/" +
+            "etc_board_list.asp?board_name=new_main&b_type=&nPage=" +
+            "2&category=G&lic_id=70&site=changeup&g_page=changeup&g_sPage=" +
+            "notice&gate=02");
+        UURI uuri = UURIFactory.getInstance(base, "http://www.changeup.com/...</a");
+        int i = 0;
+    }
 	
 	public final void testTrimSpaceNBSP() throws URIException {
 		final String uri = "   http://archive.org/DIR WITH SPACES/" +
