@@ -152,6 +152,7 @@
         function setExpert(val){
             document.frmConfig.expert.value = val;
             document.frmConfig.action.value="updateexpert";
+            setUpdate();
             doSubmit();
         }
         
