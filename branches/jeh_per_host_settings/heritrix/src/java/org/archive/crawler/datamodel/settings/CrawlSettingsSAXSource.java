@@ -26,6 +26,8 @@ package org.archive.crawler.datamodel.settings;
 
 import java.io.IOException;
 import java.util.Iterator;
+
+import javax.management.AttributeNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.xml.transform.sax.SAXSource;
@@ -223,16 +225,21 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         throws SAXException {
         DataContainer data = settings.getData(complexType.getAbsoluteName());
         MBeanInfo mbeanInfo = data.getMBeanInfo();
+        String objectElement = resolveElementName(complexType);
+
         AttributesImpl atts = new AttributesImpl();
         atts.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_NAME, XMLSettingsHandler.XML_ATTRIBUTE_NAME, nsu, complexType.getName());
-        atts.addAttribute(
-            nsu,
-            XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
-            XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
-            nsu,
-            mbeanInfo.getClassName());
+        
+        if (objectElement == XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT) {       
+            // Only 'newObject' elements have a class attribute
+            atts.addAttribute(
+                nsu,
+                XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
+                XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
+                nsu,
+                mbeanInfo.getClassName());
+        }
             
-        String objectElement = resolveElementName(complexType);
         if (complexType.getParent() == null) {
             atts = new AttributesImpl();
         }
@@ -245,7 +252,11 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             ModuleAttributeInfo attribute = (ModuleAttributeInfo) attsInfo[i];
             Object value;
             if (attribute.getComplexType() == null) {
-                value = data.get(attribute.getName());
+                try {
+                    value = data.get(attribute.getName());
+                } catch (AttributeNotFoundException e) {
+                    throw new SAXException(e);
+                }
             } else {
                 value =
                     settings.getData(

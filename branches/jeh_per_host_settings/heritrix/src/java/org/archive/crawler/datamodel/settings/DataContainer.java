@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 
@@ -38,7 +40,7 @@ import javax.management.MBeanInfo;
  * @author John Erik Halse
  */
 public class DataContainer extends HashMap {
-    private ComplexType complexType;
+    protected ComplexType complexType;
     private List attributes;
     private Map attributeNames;
 
@@ -57,7 +59,7 @@ public class DataContainer extends HashMap {
         String description,
         boolean overrideable,
         Object[] legalValues,
-        Object defaultValue) {
+        Object defaultValue) throws InvalidAttributeValueException {
         if (attributeNames.containsKey(name)) {
             throw new IllegalArgumentException("Duplicate field: " + name);
         }
@@ -98,14 +100,22 @@ public class DataContainer extends HashMap {
         destination.attributeNames.put(name, attribute);
     }
     
+    public Object put(Object key, Object value) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public Object get(Object key) {
+        throw new UnsupportedOperationException();
+    }
+    
     /* (non-Javadoc)
      * @see java.util.Map#put(java.lang.Object, java.lang.Object)
      */
-    public Object put(Object key, Object value) {
+    protected Object put(String key, Object value) throws InvalidAttributeValueException, AttributeNotFoundException {
         ModuleAttributeInfo attrInfo =
             (ModuleAttributeInfo) complexType.getAttributeInfo((String) key);
         if (attrInfo == null) {
-            throw new IllegalArgumentException("Name not defined: " + key);
+            throw new AttributeNotFoundException(key);
         }
         value = attrInfo.checkValue(value);
 
@@ -114,15 +124,16 @@ public class DataContainer extends HashMap {
             attributes.add(attrInfo);
             attributeNames.put(key, attrInfo);
         }
+        
         return super.put(key, value);
     }
 
     /* (non-Javadoc)
      * @see java.util.Map#get(java.lang.Object)
      */
-    public Object get(Object key) {
+    public Object get(String key) throws AttributeNotFoundException {
         if (complexType.getAttributeInfo((String) key) == null) {
-            throw new IllegalArgumentException("Name not defined: " + key);
+            throw new AttributeNotFoundException(key);
         }
         return super.get(key);
     }

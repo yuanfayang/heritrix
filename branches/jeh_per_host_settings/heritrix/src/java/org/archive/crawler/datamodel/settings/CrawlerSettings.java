@@ -109,19 +109,21 @@ public class CrawlerSettings {
 			throw new IllegalArgumentException("Duplicate complex type: " + type.getAbsoluteName());
 		} else {
             DataContainer data = new DataContainer(type);
-			localComplexTypes.put(type.getAbsoluteName(), new Object[] {type, data});
+			localComplexTypes.put(type.getAbsoluteName(), data);
             return data;
 		}
 	}
 
+    /*
 	public Object[] getComplexType(String absoluteName) {
 		return (Object[]) localComplexTypes.get(absoluteName);
 	}
-
+    */
+    
 	public DataContainer getData(String absoluteName) {
-        Object[] data = (Object[]) localComplexTypes.get(absoluteName);
+        DataContainer data = (DataContainer) localComplexTypes.get(absoluteName);
         if(data != null) {
-            return (DataContainer) data[1];
+            return data;
         } else {
             return null;
         }

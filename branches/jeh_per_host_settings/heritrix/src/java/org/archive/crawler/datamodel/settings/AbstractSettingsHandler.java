@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import javax.management.InvalidAttributeValueException;
+
 /**
  * 
  * @author John Erik Halse
@@ -88,7 +90,7 @@ public abstract class AbstractSettingsHandler {
 	/**
 	 * 
 	 */
-	public AbstractSettingsHandler() {
+	public AbstractSettingsHandler() throws InvalidAttributeValueException {
         controller = new Controller(); // TODO: Change this to real controller
         controller.setAsController(this);
 	}
@@ -163,6 +165,19 @@ public abstract class AbstractSettingsHandler {
 		return (String) name2class.get(typeName);
 	}
 	
+    protected static Object StringToType(String stringValue, String typeName) throws InvalidAttributeValueException {
+        Object value;
+        if (typeName == AbstractSettingsHandler.INTEGER) {
+            value = Integer.decode(stringValue);
+        } else if (typeName == AbstractSettingsHandler.LONG) {
+            value = Long.decode(stringValue);
+            // TODO: Add more convertions
+        } else {
+            throw new InvalidAttributeValueException();
+        }
+        return value;
+    }
+    
 	/**
 	 * Get configuration object for a host.
 	 * 

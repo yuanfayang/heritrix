@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 import javax.xml.parsers.FactoryConfigurationError;
@@ -76,7 +77,8 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
 	/**
 	 * 
 	 */
-	public XMLSettingsHandler(File orderFile) {
+	public XMLSettingsHandler(File orderFile) throws InvalidAttributeValueException {
+        super();
         this.orderFile = orderFile;
 	}
 
@@ -157,9 +159,7 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
             File dirname = scopeToFile(settings.getScope());
             filename = new File(dirname, settingsFilename);
         }
-        System.out.print("XXX  TRY TO READ: " + filename.getAbsolutePath());
         if(filename.exists()) {
-            System.out.println("  XXX  FOUND");
             try {
                 XMLReader parser = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
                 InputStream file = new BufferedInputStream(new FileInputStream(filename));
@@ -181,7 +181,6 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("  XXX  NOT FOUND");
             settings = null;
         }
 		return settings;

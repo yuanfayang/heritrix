@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import javax.management.InvalidAttributeValueException;
+
 /**
  * 
  * @author John Erik Halse
@@ -51,7 +53,7 @@ public class MapType extends ComplexType {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
      */
-    public Type addElement(CrawlerSettings settings, Type type) {
+    public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
         if(!(type instanceof MapType)) {
             return super.addElement(settings, type);
         } else {
