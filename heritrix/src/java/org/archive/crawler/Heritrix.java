@@ -36,7 +36,6 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -201,12 +200,6 @@ public class Heritrix
      * This must be defined somewhere in JSSE but can't find reference.
      */
     private static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
-
-    /**
-     * The crawler package.
-     */
-	private static final String CRAWLER_PACKAGE = Heritrix.class.getName().
-        substring(0, Heritrix.class.getName().lastIndexOf('.'));
 
 
     /**
@@ -469,15 +462,6 @@ public class Heritrix
         return System.getProperty(DEVELOPMENT_KEY) != null;
     }
 
-    /**
-     * Loads the heritrix.properties file.
-     * 
-     * Also loads any property that starts with
-     * <code>CRAWLER_PACKAGE</code> into system properties
-     * (except logging '.level' directives).
-     * 
-     * @throws IOException
-     */
     protected static void loadProperties()
         throws IOException
     {
@@ -485,19 +469,6 @@ public class Heritrix
             new FileInputStream(getPropertiesFile());
         properties = new Properties();
         properties.load(is);
-        
-        // Any property that begins with CRAWLER_PACKAGE, make it
-        // into a system property.
-        for (Enumeration e = properties.keys(); e.hasMoreElements();) {
-            String key = (String)e.nextElement();
-        	if (key.startsWith(CRAWLER_PACKAGE)) {
-                // Don't add the heritrix.properties entries that are
-                // changing the logging level of particular classes.
-                if (key.indexOf(".level") < 0) {
-                	System.setProperty(key, properties.getProperty(key));
-                }
-            }
-        }
     }
 
     protected static File getPropertiesFile() throws FileNotFoundException {
@@ -718,7 +689,9 @@ public class Heritrix
             {
                 status = "Crawl job ready and pending: " + crawlOrderFile;
             }
-        } else if(runMode) {
+        }
+        else if(runMode)
+        {
             // The use case is that jobs are to be run on a schedule and that
             // if the crawler is in run mode, then the scheduled job will be
             // run at appropriate time.  Otherwise, not.
@@ -733,7 +706,8 @@ public class Heritrix
             " is running.");
         out.println("Web UI is at: " + uiLocation);
         out.println("Login and password: " + adminUN + "/" + adminPW);
-        if (status != null) {
+        if (status != null)
+        {
             out.println(status);
         }
     }

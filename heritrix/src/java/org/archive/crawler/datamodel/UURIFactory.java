@@ -25,10 +25,8 @@
 package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -195,41 +193,15 @@ public class UURIFactory extends URI {
         Pattern.compile("^(https?://)/+(.*)");
     
     /**
-     * Pattern that looks for case of two or more slashes in a path.
-     */
-    final static Pattern MULTIPLE_SLASHES = Pattern.compile("//+");
-    
-    /**
      * Consider URIs too long for IE as illegal.
      */
     private final static int MAX_URL_LENGTH = 2083;
-    
-    /**
-     * System property key for list of supported schemes.
-     */
-    private static final String SCHEMES_KEY = ".schemes";
-    
-    private List schemes = null;
-        
     
     /**
      * Protected constructor.
      */
     private UURIFactory() {
         super();
-        String schemes = System.getProperty(this.getClass().getName() +
-            SCHEMES_KEY);
-        if (schemes != null && schemes.length() > 0) {
-        	String [] candidates = schemes.split(",| ");
-            for (int i = 0; i < candidates.length; i++) {
-            	if (candidates[i] != null && candidates[i].length() > 0) {
-            		if (this.schemes == null) {
-            			this.schemes = new ArrayList(candidates.length);
-                    }
-                    this.schemes.add(candidates[i]);
-                }
-            }
-        }
     }
     
     /**
@@ -348,8 +320,7 @@ public class UURIFactory extends URI {
         if (uri.length() > MAX_URL_LENGTH) {
             // TODO: Would  make sense to test against for excessive length
             // after all the fixup and normalization has been done.
-            throw new URIException("URI length > " + MAX_URL_LENGTH + ": " +
-                uri);
+            throw new URIException("URI length > " + MAX_URL_LENGTH);
         }
         
         // Replace nbsp with normal spaces (so that they get stripped if at
@@ -392,31 +363,9 @@ public class UURIFactory extends URI {
         String uriQuery = checkUriElement(matcher.group(8));
         // UNUSED String uriFragment = checkUriElement(matcher.group(10));
         
-        // If a scheme, is it a supported scheme?
-        if (uriScheme != null && uriScheme.length() > 0 &&
-        this.schemes != null) {
-        	if (!this.schemes.contains(uriScheme)) {
-        		throw new UnsupportedUriSchemeException(
-                     "Unsupported scheme: " + uriScheme);
-            }
-        }
-        
         // Test if relative URI.  If so, need a base to resolve against.
-        if (uriScheme == null || uriScheme.length() <= 0) {
-        	if (base == null) {
-        		throw new URIException("Relative URI but no base: " + uri);
-            }
-        	if (uriPath != null) {
-        		// The parent class has a bug in that if dbl-slashes in a
-                // relative path, then it thinks all before the dbl-slashes
-                // a scheme -- it doesn't look for a colon.  Remove
-                // dbl-slashes in relative paths. Here is an example of what
-                // it does.  With a base of "http://www.archive.org/index.html"
-                // and a relative uri of "JIGOU//KYC//INDEX.HTM", its making
-                // a product of "http://KYC/INDEX.HTM".
-        		matcher = MULTIPLE_SLASHES.matcher(uriPath);
-        		uriPath = matcher.replaceAll("/");
-        	}
+        if ((uriScheme == null || uriScheme.length() <= 0)  && base == null) {
+            throw new URIException("Relative URI but no base: " + uri);
         }
         
         // Lowercase the host part of the uriAuthority; don't destroy any
@@ -464,8 +413,7 @@ public class UURIFactory extends URI {
             uriAuthority = stripPrefix(uriAuthority, DOT);
         }
 
-        // Preallocate big.
-        StringBuffer buffer = new StringBuffer(1024 * 4);
+        StringBuffer buffer = new StringBuffer();
         appendNonNull(buffer, uriScheme, ":", true);
         appendNonNull(buffer, uriAuthority, "//", false);
         appendNonNull(buffer, uriPath, "", false);
@@ -644,17 +592,5 @@ public class UURIFactory extends URI {
             super(base, relative);
             normalize();
         }
-    }
-    
-    /**
-     * Exception thrown when we come across unsupported scheme.
-     */
-    private class UnsupportedUriSchemeException extends URIException {
-		/**
-		 * @param reason For exception.
-		 */
-		public UnsupportedUriSchemeException(String reason) {
-			super(reason);
-		}
     }
 }

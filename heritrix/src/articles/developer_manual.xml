@@ -122,7 +122,7 @@
       how to run the built Heritrix.</para>
     </sect2>
 
-    <sect2 id="eclipse">
+    <sect2>
       <title>Eclipse</title>
 
       <para>The development team uses Eclipse as the development environment.
@@ -171,7 +171,7 @@
     </sect2>
   </sect1>
 
-  <sect1 id="conventions">
+  <sect1>
     <title>Coding conventions</title>
 
     <para>Heritrix baselines on SUN's Code Conventions for the Java™
@@ -345,7 +345,7 @@ ${package_declaration}</programlisting></para>
         </listitem>
       </itemizedlist>
 
-      <para>The Frontier implements the Frontier interface and can be
+      <para>The Frontier implements the URIFrontier interface and can be
       replaced by any Frontier that implements this interface. It should be
       noted though that writing a Frontier is not a trivial task.</para>
 
@@ -720,15 +720,15 @@ ${package_declaration}</programlisting></para>
         case the constructor might choose to ignore the name string and
         substitute it with a hard coded one. This is for example the case with
         the Frontier. The name of the Frontier should always be the string
-        "frontier". For this reason the Frontier interface that all
+        "frontier". For this reason the URIFrontier interface that all
         Frontiers should implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
         implementations of the Frontier use instead of the string argument
         submitted to the constructor. Here is the part of the default
         Frontiers constructor that shows how this should be
         done.<programlisting>public Frontier(String name) {
-    //The 'name' of all frontiers should be the same (Frontier.ATTR_NAME)
+    //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
     //therefore we'll ignore the supplied parameter. 
-    super(Frontier.ATTR_NAME, "HostQueuesFrontier. \nMaintains the internal" +
+    super(URIFrontier.ATTR_NAME, "Frontier. \nMaintains the internal" +
         " state of the crawl. It dictates the order in which URIs" +
         " will be scheduled. \nThis frontier is mostly a breadth-first" +
         " frontier, which refrains from emitting more than one" +
@@ -1024,17 +1024,6 @@ public class Foo extends ModuleType {
         </listitem>
       </varlistentry>
     </variablelist>
-    <sect2 id="urischemes">
-      <title>Supported Schemes (UnsupportedUriSchemeException)</title>
-      <para>A property in <literal>heritrix.properties</literal> 
-      named <literal>org.archive.crawler.datamodel.UURIFactory.schemes</literal>
-      lists supported schemes.  Any scheme not listed here will cause an
-      UnsupportedUriSchemeException which will be reported in
-      uri-errors.log with a 'Unsupported scheme' prefix.  If you add a
-      fetcher for a scheme, you'll need to add to this list of supported
-      schemes (Later, Heritrix can ask its fetchers what schemes are
-      supported).</para>
-    </sect2>
 
     <sect2>
       <title>The CrawlURI's Attribute list</title>
@@ -1074,7 +1063,7 @@ public class Foo extends ModuleType {
   <sect1>
     <title>Writing a Frontier</title>
 
-    <para>As mentioned before, the Frontier is a pluggable module
+    <para>As mentioned before, the URIFrontier is a pluggable module
     responsible for deciding which URI to process next, and when. The Frontier
     is also responsible for keeping track of other aspects of the crawls
     internal state which in turn can be used for logging and reporting. Even
@@ -1098,17 +1087,17 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.framework.FrontierMarker;
+import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
 
 
 /**
  * A simple Frontier implementation for tutorial purposes
  */
-public class MyFrontier extends ModuleType implements Frontier,
+public class MyFrontier extends ModuleType implements URIFrontier,
         FetchStatusCodes {
     // A list of the discovered URIs that should be crawled.
     List pendingURIs = new ArrayList();
@@ -1133,7 +1122,7 @@ public class MyFrontier extends ModuleType implements Frontier,
     long totalProcessedBytes = 0;
 
     public MyFrontier(String name) {
-        super(Frontier.ATTR_NAME, "A simple frontier.");
+        super(URIFrontier.ATTR_NAME, "A simple frontier.");
     }
 
     public void initialize(CrawlController controller)
@@ -1233,6 +1222,10 @@ public class MyFrontier extends ModuleType implements Frontier,
         return successCount + failedCount + disregardedCount;
     }
 
+    public long pendingUriCount() {
+        return 0;
+    }
+
     public long successfullyFetchedCount() {
         return successCount;
     }
@@ -1257,13 +1250,13 @@ public class MyFrontier extends ModuleType implements Frontier,
         throw new UnsupportedOperationException();
     }
 
-    public FrontierMarker getInitialMarker(String regexpr,
+    public URIFrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {
         return null;
     }
 
-    public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
-            boolean verbose) throws InvalidFrontierMarkerException {
+    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches,
+            boolean verbose) throws InvalidURIFrontierMarkerException {
         return null;
     }
 
@@ -1290,19 +1283,19 @@ public class MyFrontier extends ModuleType implements Frontier,
     Frontier would also be aware of the fact that Heritrix is multi threaded
     and try to process as many URIs simultaneously as allowed by the number of
     threads without breaking the politeness rules. Take a look at <ulink
-    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/HostQueuesFrontier.html">Frontier</ulink>
+    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/Frontier.html">Frontier</ulink>
     <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/HostQueuesFrontier.html">(javadoc)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/Frontier.html">(javadoc)</ulink>
     to see how a full blown Frontier might look like.</para>
 
-    <para>All Frontiers must implement the Frontier interface. Most
+    <para>All Frontiers must implement the URIFrontier interface. Most
     Frontiers will also implement the FetchStatusCodes because these codes are
     used to determine what to do with a URI after it has returned from the
     processing cycle. In addition you might want to implement the <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlStatusListener.html">CrawlStatusListener</ulink>
     which enables the Frontier to be aware of starts, stops, and pausing of a
     crawl. For this simple example we don't care about that. The most
-    important methods in the Frontier interface are:<orderedlist>
+    important methods in the URIFrontier interface are:<orderedlist>
         <listitem>
           <para>next(int timeout)</para>
         </listitem>
@@ -1392,7 +1385,7 @@ public class MyFrontier extends ModuleType implements Frontier,
           this time, we should wait the timeout before returning null. But if
           a URI becomes available during this time it should wake up from the
           wait and hand it out. See the javadoc for <ulink
-          url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#next(int)">next(timeout)</ulink>
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#next(int)">next(timeout)</ulink>
           to get an explanation.</para>
         </callout>
       </calloutlist></para>
@@ -1403,10 +1396,10 @@ public class MyFrontier extends ModuleType implements Frontier,
     been postponed. The PostSelector iterates through all new URIs
     (prerequisites and/or extracted URIs) added to the CrawlURI and, if they
     are within the scope, adds them to Frontier by calling the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
     method. There is also a batch version of the schedule method for
     efficiency, see the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html">javadoc</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html">javadoc</ulink>
     for more information. This simple Frontier treats them the
     same.<programlisting>    public synchronized void schedule(CandidateURI caURI) {
         // Schedule a uri for crawling if it is not already crawled
@@ -1445,7 +1438,7 @@ public class MyFrontier extends ModuleType implements Frontier,
 
     <para>After all the processors are finished (including the PostSelector's
     scheduling of new URIs), the ToeThread calls the Frontiers <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/URIFrontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
     method submitting the CrawlURI that was sent through the
     chain.<programlisting>    public synchronized void finished(CrawlURI cURI) {
         uriInProcess = false;
@@ -1574,9 +1567,9 @@ public class MyFrontier extends ModuleType implements Frontier,
     method. Because of the planned overhaul of the scopes and filters, we will
     not provide a extensive example of how to create a filter at this point.
     It should be pretty easy though to follow the directions in the
-    javadoc. For your filter to show in the application interface, you'll need
-    to edit <filename>src/conf/modules/filters.options</filename></para>
+    javadoc.</para>
 
+    <para></para>
   </sect1>
 
   <sect1>
@@ -2159,7 +2152,7 @@ public class SimpleExtractor extends Processor
     part of the crawl.</para>
 
     <para>Generally statistics trackers gather information by either querying
-    the data exposed by the Frontier or by listening for <ulink
+    the data exposed by the URIFrontier or by listening for <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlURIDispositionListener.html">CrawlURI
     disposition events</ulink> and <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/event/CrawlStatusListener.html">crawl
@@ -2413,7 +2406,7 @@ public class SimpleExtractor extends Processor
     </sect1>
   </appendix>
 
-  <appendix id="release_numbering">
+  <appendix>
     <title>Version and Release Numbering</title>
 
     <para>Heritrix uses a version numbering scheme modeled after the one used
@@ -2431,18 +2424,14 @@ public class SimpleExtractor extends Processor
 
     <para>The patchlevel number increments for small sets of changes,
     providing the most fine-grain time line of software evolution. Patchlevels
-    increment regularly for internal/development (odd minor level) work, but
+    increment regularly for internal/development(odd minor level) work, but
     only increment for external releases when an official update to the
     previous release version has been tested and packaged.</para>
 
-    <para>In CVS, version numbers are applied as tags of the form
-    "heritrix-#_#_#".  Branches occur at major transistions and are labeled
-    with the form "heritrix_#_#'.</para> 
-
-    <para>When a particular development-version is thought
+    <para>In the CVS HEAD, version numbers are applied as tags of the form
+    "heritrix-#_#_#". When a particular development-version is thought
     appropriate to become an external/"st able" release, it is considered a
-    "Release Candidate" (No where is this written in versions). If testing
-    confirms it is suitable for release, it is
+    "Release Candidate". If testing confirms it is suitable for release, it is
     assigned the next even minor/mode value (and a zero patchlevel), CVS
     version-labelled, and packaged for release. Immediately after release, and
     before additional coding occurs, the CVS HEAD is assigned the next odd
@@ -2463,12 +2452,9 @@ public class SimpleExtractor extends Processor
     <title>Making a Heritrix Release</title>
 
     <para>Before initiating a release, its assumed that the current HEAD
-    or BRANCH version has been run through the integration self test, 
-    that all unit tests pass, that the embryonic 
-    <ulink url="http://crawler.archive.org/cgi-bin/wiki.pl?CrawlTestPlan">test
-    plan</ulink> has been exercised,
-    and that general usage shows HEAD -- or BRANCH --to be release
-    worthy.</para>
+    version has been run through the integration self test, that all unit
+    tests pass, that the (as yet non-existent) test suite has been exercised,
+    and that general usage shows HEAD to be release worthy.</para>
 
     <orderedlist>
       <listitem>
@@ -2477,15 +2463,19 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Up the project.xml 'currentVersion' element value (See
-        <ulink url="#release_numbering">Version and Release Numbering</ulink>
-        for guidance on what version number to use)</para>
+        <para>Up the project.xml 'currentVersion' element and the build.xml
+        'version' property. Ensure they are the same version number. (See
+        Version and Release Numbering on this page for guidance on what
+        version number to use)</para>
       </listitem>
 
       <listitem>
         <para>Update xdocs/changes.xml with bugs and RFEs closed since last
-        release (Looking at CVS history to figure what's changed is too
-        hard; All major changes should have associated BUG and RFE).</para>
+        release.</para>
+      </listitem>
+
+      <listitem>
+        <para>(TODO: Changelog based off CVS history).</para>
       </listitem>
 
       <listitem>
@@ -2570,19 +2560,10 @@ public class SimpleExtractor extends Processor
 
   <appendix>
     <title>Settings XML Schema</title>
+
     <para>The XML Schema that describes the crawler job order file can be
     viewed as xhtml here, <ulink
     url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/webapps/root/heritrix_settings.html?rev=1">heritrix_settings.html</ulink>.</para>
-  </appendix>
-
-  <appendix id="profiling">
-    <title>Profiling Heritrix</title>
-    <para>Heritrix uses <ulink url="http://www.ej-technologies.com/products/jprofiler/overview.html">JProfiler</ulink>.
-    See <ulink 
-    url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1002336&amp;group_id=73833&amp;atid=539102">[ 1002336 ] Figure what profiler to use</ulink> for
-    a (rambling) log of experience with the various profilers and of 
-    how we arrived at this choice.
-    </para>
   </appendix>
 
   <bibliography>

@@ -14,7 +14,6 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="java.io.FileReader" %>
 <%@ page import="java.io.FileWriter" %>
 <%@ page import="java.io.BufferedReader" %>
@@ -22,25 +21,48 @@
 <%@ page import="java.io.IOException" %>
 
 <% 
+	// Load the job to configure.
+	CrawlJob theJob = handler.getJob(request.getParameter("job"));
+    CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
+	
+	boolean expert = false;
+    if(getCookieValue(request.getCookies(),"expert","false").equals("true")){
+        expert = true;
+    }
+    
+	if(theJob == null)
+	{
+		// Didn't find any job with the given UID or no UID given.
+		response.sendRedirect("/admin/jobs.jsp?message=No job selected "+request.getParameter("job"));
+		return;
+	} else if(theJob.isReadOnly()){
+		// Can't edit this job.
+		response.sendRedirect("/admin/jobs.jsp?message=Can't configure a read only job");
+		return;
+	}
+
+	// Get the settings objects.
+	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
+
+	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
 
     // Should we update with changes.
-	if(request.getParameter("update") != null &&
-            request.getParameter("update").equals("true")) {
+	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
 		errorHandler.clearErrors();
-		JobConfigureUtils.writeNewOrderFile(crawlOrder, null, request, expert);
+		writeNewOrderFile(crawlOrder,null,request,expert);
 		orderfile.setDescription(request.getParameter("meta/description"));
 		orderfile.setOperator(request.getParameter("meta/operator"));
 		orderfile.setOrganization(request.getParameter("meta/organization"));
 		orderfile.setAudience(request.getParameter("meta/audience"));
+		
 		settingsHandler.writeSettingsObject(orderfile);
+		
         BufferedWriter writer;
         try {
-			String seedfile = (String)((ComplexType)settingsHandler.getOrder().
-                getAttribute("scope")).getAttribute("seedsfile");
-            writer = new BufferedWriter(new FileWriter(settingsHandler.
-                getPathRelativeToWorkingDirectory(seedfile)));
+			String seedfile = (String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile");
+            writer = new BufferedWriter(new FileWriter(settingsHandler.getPathRelativeToWorkingDirectory(seedfile)));
             if (writer != null) {
                 // TODO Read seeds from profile.
                 writer.write(request.getParameter("seeds"));
@@ -54,72 +76,65 @@
     
     // Check for actions.
     String action = request.getParameter("action");
-    if(action != null) {
-		if(action.equals("done")) {
+    if(action != null){
+		if(action.equals("done")){
 			if(theJob.isNew()){			
 				handler.addJob(theJob);
 				response.sendRedirect("/admin/jobs.jsp?message=Job created");
 			}else{
-				if(theJob.isRunning()) {
+				if(theJob.isRunning()){
 					handler.kickUpdate();
 				}
-				if(theJob.isProfile()) {
-					response.sendRedirect(
-                        "/admin/profiles.jsp?message=Profile modified");
-				}else {
-					response.sendRedirect(
-                        "/admin/jobs.jsp?message=Job modified");
+				if(theJob.isProfile()){
+					response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
+				}else{
+					response.sendRedirect("/admin/jobs.jsp?message=Job modified");
 				}
 			}
             return;
-		} else if(action.equals("goto")) {
+		}else if(action.equals("goto")){
             // Goto another page of the job/profile settings
 			response.sendRedirect(request.getParameter("item"));
             return;
         } else if (action.equals("addMap")) {
             // Adding to a simple map
             String mapName = request.getParameter("update");
-            MapType map = (MapType)settingsHandler.
-                getComplexTypeByAbsoluteName(orderfile, mapName);
-            String key = request.getParameter(mapName + ".key");
-            String value = request.getParameter(mapName + ".value");
-            SimpleType t = new SimpleType(key, "", value);
-            map.addElement(orderfile, t);
+            MapType map = (MapType)settingsHandler.getComplexTypeByAbsoluteName(orderfile,mapName);
+            String key = request.getParameter(mapName+".key");
+            String value = request.getParameter(mapName+".value");
+            SimpleType t = new SimpleType(key,"",value);
+            map.addElement(orderfile,t);
             response.sendRedirect("configure.jsp?job="+theJob.getUID());
             return;
         } else if (action.equals("deleteMap")) {
             // Removing from a simple map
             String mapName = request.getParameter("update");
             String key = request.getParameter("item");
-            MapType map = (MapType)settingsHandler.
-                getComplexTypeByAbsoluteName(orderfile, mapName);
+            MapType map = (MapType)settingsHandler.getComplexTypeByAbsoluteName(orderfile,mapName);
             map.removeElement(orderfile,key);
-            response.sendRedirect("configure.jsp?job=" + theJob.getUID());
+            response.sendRedirect("configure.jsp?job="+theJob.getUID());
             return;
-		} else if(action.equals("updateexpert")) {
-		    if(request.getParameter("expert") != null) {
-		        if(request.getParameter("expert").equals("true")) {
+		}else if(action.equals("updateexpert")){
+		    if(request.getParameter("expert") != null){
+		        if(request.getParameter("expert").equals("true")){
 		            expert = true;
 		        } else {
 		            expert = false;
 		        }
 		        // Save to cookie.
-		        Cookie operatorCookie = new Cookie("expert", 
-                    Boolean.toString(expert));
-		        operatorCookie.setMaxAge(60*60*24*365); //One year
+		        Cookie operatorCookie = new Cookie("expert", Boolean.toString(expert));
+		        operatorCookie.setMaxAge(60*60*24*365);//One year
 		        response.addCookie(operatorCookie);
 		    }
 		}
 	}	
 
+
 	// Get the HTML code to display the settigns.
 	StringBuffer listsBuffer = new StringBuffer();
-	String inputForm = printMBean(crawlOrder, null, "", listsBuffer, expert,
-        errorHandler);
+	String inputForm=printMBean(crawlOrder,null,"",listsBuffer,expert,errorHandler);
 	// The listsBuffer will have a trailing comma if not empty. Strip it off.
-	String lists = listsBuffer.toString().substring(0, 
-        (listsBuffer.toString().length() > 0? 
-            listsBuffer.toString().length() - 1: 0));
+	String lists = listsBuffer.toString().substring(0,(listsBuffer.toString().length()>0?listsBuffer.toString().length()-1:0));
 
 	// Settings for the page header
 	String title = "Configure settings";
@@ -199,9 +214,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/description" 
-                        value="<%=orderfile.getDescription()%>"
-                        style="width: 440px">
+					<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 440px">
 				</td>
 			</tr>
 			<tr>
@@ -210,9 +223,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/operator"
-                        value="<%=orderfile.getOperator()%>" 
-                        style="width: 440px">
+					<input name="meta/operator" value="<%=orderfile.getOperator()%>" style="width: 440px">
 				</td>
 			</tr>
 			<tr>
@@ -221,9 +232,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/organization" 
-                        value="<%=orderfile.getOrganization()%>" 
-                        style="width: 440px">
+					<input name="meta/organization" value="<%=orderfile.getOrganization()%>" style="width: 440px">
 				</td>
 			</tr>
 			<tr>
@@ -232,9 +241,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/audience" 
-                        value="<%=orderfile.getAudience()%>" 
-                        style="width: 440px">
+					<input name="meta/audience" value="<%=orderfile.getAudience()%>" style="width: 440px">
 				</td>
 			</tr>
 			<%=inputForm%>
@@ -249,11 +256,10 @@
 				</td>
                 <td></td>
 				<td>
-					<textarea name="seeds" style="width: 440px" 
-                        rows="8" onChange="setUpdate()"><%
+					<textarea name="seeds" style="width: 440px" rows="8" onChange="setUpdate()"><%
 						BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
 						String sout = seeds.readLine();
-						while(sout!=null) {
+						while(sout!=null){
 							out.println(sout);
 							sout = seeds.readLine();
 						}

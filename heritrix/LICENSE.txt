@@ -1,12 +1,9 @@
 Heritrix is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser Public license (LGPL) reproduced below.  
-
-Heritrix includes libraries it depends upon.  These can be found under the 
-'lib' directory.  Each of these libraries has its own licensing terms.
-The libraries used and their licenses are listed here
-http://crawler.archive.org/dependencies.html or see the accompanying project.xml
-dependencies section.
-
+the terms of the GNU Lesser Public license (LGPL) reproduced below.  Heritrix
+includes libraries it depends upon.  These can be found under the 'lib' 
+directory.  Each of these libraries has its own licensing terms.  See the 
+dependeny section of accompanyin project.xml for what license goes with what
+included library.
 
 		  GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999
@@ -510,3 +507,5 @@ necessary.  Here is a sample; alter the names:
   Ty Coon, President of Vice
 
 That's all there is to it!
+
+

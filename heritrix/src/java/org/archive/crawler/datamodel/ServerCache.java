@@ -23,13 +23,12 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.lang.ref.SoftReference;
-import java.util.WeakHashMap;
-import java.util.logging.Logger;
-//import java.util.logging.Level;
+import java.util.HashMap;
+import java.util.logging.Level;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.SettingsHandler;
+import org.xbill.DNS.FindServer;
 
 /**
  * All CrawlServer instances created by a crawl are held here,
@@ -39,96 +38,62 @@ import org.archive.crawler.settings.SettingsHandler;
  *
  */
 public class ServerCache {
-    private static Logger logger =
-        Logger.getLogger(ServerCache.class.getName());
-    
     private final SettingsHandler settingsHandler;
-    // hostname[:port] -> SoftReference(CrawlServer)
-    private WeakHashMap servers = new WeakHashMap();
-    // hostname -> SoftReference(CrawlHost)
-    private WeakHashMap hosts = new WeakHashMap();
+    private HashMap servers = new HashMap(); // hostname[:port] -> CrawlServer
+    private HashMap hosts = new HashMap(); // hostname -> CrawlHost
 
     public ServerCache(SettingsHandler settingsHandler) {
         this.settingsHandler = settingsHandler;
     }
 
     public CrawlServer getServerFor(String h) {
-        SoftReference serverRef = (SoftReference)servers.get(h);
-        CrawlServer cserver = (CrawlServer) ((serverRef==null) ?
-            null : serverRef.get());
-        if (cserver == null) {
-            String skey = new String(h); // ensure key is private object
-            cserver = new CrawlServer(skey);
+        CrawlServer cserver = (CrawlServer) servers.get(h);
+        if (cserver==null) {
+            cserver = new CrawlServer(h);
             cserver.setSettingsHandler(settingsHandler);
-            
-            String hostname = cserver.getHostname();
-            SoftReference hostRef = (SoftReference) hosts.get(hostname);
-            CrawlHost host = (CrawlHost)((hostRef == null) ?
-                null: hostRef.get());
-            if (host == null) {
-                String hkey = new String(hostname); 
-                host = new CrawlHost(hkey);
-                hosts.put(hkey,new SoftReference(host));
-            }
-            cserver.setHost(host);
-            
-            servers.put(skey,new SoftReference(cserver));
+            servers.put(h,cserver);
         }
+        String hostname = cserver.getHostname();
+        CrawlHost host = (CrawlHost) hosts.get(hostname);
+        if (host==null) {
+            host = new CrawlHost(hostname);
+            hosts.put(hostname,host);
+        }
+        cserver.setHost(host);
         return cserver;
     }
 
     /**
      * @param curi CrawlURI we're to get server from.
-     * @return CrawlServer instance that matches the passed CrawlURI.
+     * @return CrawlServer
+     * @throws URIException
      */
-    public CrawlServer getServerFor(CrawlURI curi) {
-        CrawlServer hostOrAuthority = null;
-        try {
-            // TODO: evaluate if this is really necessary -- why not 
-            // make the server of a dns CrawlURI the looked-up domain,
-            // also simplifying FetchDNS?
-            String hostOrAuthorityStr =
-                curi.getUURI().getAuthorityMinusUserinfo();
-            if (hostOrAuthorityStr == null) {
-                // Fallback for cases where getAuthority() fails (eg dns:)
-                hostOrAuthorityStr = curi.getUURI().getCurrentHierPath();
-                if(hostOrAuthorityStr != null &&
-                    !hostOrAuthorityStr.matches("[\\w\\.:]+")) {
-                    // Not just word chars and dots and colons; throw away
-                    hostOrAuthorityStr = null;
-                }
+    public CrawlServer getServerFor(CrawlURI curi) throws URIException {
+        String scheme = curi.getUURI().getScheme();
+        if (scheme.equals("dns")) {
+            // set crawlhost to default nameserver
+            String primaryDns = FindServer.server();
+            if (primaryDns == null) {
+                Object [] curiArray = {curi};
+                this.settingsHandler.getOrder().getController()
+                    .runtimeErrors.log(Level.WARNING,
+                        "Could not get primary DNS server.", curiArray);
+                return null;
+            } else {
+                return getServerFor(primaryDns);
             }
-            if (hostOrAuthorityStr != null &&
-                    curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
-                // If https and no port specified, add default https port to
-                // distinuish https from http server without a port.
-                if (!hostOrAuthorityStr.matches(".+:[0-9]+")) {
-                    hostOrAuthorityStr += ":" + UURIFactory.HTTPS_PORT;
-                }
-            }
-            // TODOSOMEDAY: make this robust against those rare cases
-            // where authority is not a hostname.
-            if (hostOrAuthorityStr != null) {
-            	hostOrAuthority = getServerFor(hostOrAuthorityStr);
-            }
-        } catch (URIException e) {
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            logger.severe("NullPointerException with " + curi);
-            npe.printStackTrace();
         }
-        return hostOrAuthority;
-    }
-    
-    public boolean containsServer(String serverKey) {
-        SoftReference serverRef = (SoftReference) servers.get(serverKey);
-        CrawlServer cserver = (CrawlServer) ((serverRef==null) ? null : serverRef.get());
-        return cserver != null; 
-    }
-    
-    public boolean containsHost(String hostKey) {
-        SoftReference hostRef = (SoftReference) hosts.get(hostKey);
-        CrawlHost chost = (CrawlHost) ((hostRef==null) ? null : hostRef.get());
-        return chost != null; 
+
+        String hostOrAuthority = curi.getUURI().getAuthority();
+        if (hostOrAuthority != null && scheme.equals(UURIFactory.HTTP_PORT)) {
+            // If https and no port specified, add default https port to
+            // distinuish https from http server without a port.
+            if (!hostOrAuthority.matches(".+:[0-9]+")) {
+                hostOrAuthority += ":" + UURIFactory.HTTPS_PORT;
+            }
+        }
+        // TODOSOMEDAY: make this robust against those rare cases
+        // where authority is not a hostname.
+        return (hostOrAuthority != null)? getServerFor(hostOrAuthority): null;
     }
 }

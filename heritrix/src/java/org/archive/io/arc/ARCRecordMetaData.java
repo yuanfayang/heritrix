@@ -24,7 +24,6 @@
  */
 package org.archive.io.arc;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
@@ -63,28 +62,15 @@ public class ARCRecordMetaData
      */
     private String statusCode = null;
     
-    /**
-     * The arc file this metadata came out.
-     */
-    private File arcFile = null;
-    
-    /**
-     * Shut down the default constructor.
-     */
-    protected ARCRecordMetaData() {
-        super();
-    }
-    
 
     /**
      * Constructor.
      *
-     * @param arcFile The arc file this metadata came out of.
      * @param headerFields Hash of meta fields.
      *
      * @throws IOException
      */
-    public ARCRecordMetaData(File arcFile, Map headerFields)
+    public ARCRecordMetaData(Map headerFields)
         throws IOException {
         // Make sure the minimum required fields are present,
         for (Iterator i = REQUIRED_VERSION_1_HEADER_FIELDS.iterator();
@@ -92,7 +78,6 @@ public class ARCRecordMetaData
             testRequiredField(headerFields, (String)i.next());
         }
         this.headerFields = headerFields;
-        this.arcFile = arcFile;
     }
 
     /**
@@ -112,17 +97,11 @@ public class ARCRecordMetaData
     }
 
     /**
-     * Get the time when the record was harvested.
-     * <p>
-     * Returns the date in Heritrix 14 digit time format (UTC). See the
-     * {@link org.archive.util.ArchiveUtils} class for converting to Java
-     * dates.
-     * 
-     * @return Header date in Heritrix 14 digit format.
-     * @see org.archive.util.ArchiveUtils#parse14DigitDate(String)
+     * @return Header date.
      */
-    public String getDate() {
-        return (String) this.headerFields.get(DATE_HEADER_FIELD_KEY);
+    public long getDate() {
+        return Long.parseLong((String)this.headerFields.
+            get(DATE_HEADER_FIELD_KEY));
     }
 
     /**
@@ -192,13 +171,6 @@ public class ARCRecordMetaData
     public Map getHeaderFields()
     {
         return this.headerFields;
-    }
-    
-    /**
-     * @return Returns the arcFile.
-     */
-    public File getArcFile() {
-        return arcFile;
     }
     
     /**

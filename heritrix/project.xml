@@ -54,7 +54,7 @@
        be picked up and appended to the currentVersion.  Handy for continuous
        builds if the version.build.suffix holds time of build.
     -->
-  <currentVersion>1.1.0${version.build.suffix}</currentVersion>
+  <currentVersion>1.0.4${version.build.suffix}</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
@@ -161,14 +161,6 @@
          <timezone>-8</timezone>
     </developer>
     <developer>
-        <name>Michele Kimpton</name>
-        <id>michele</id>
-        <email>michele at archive dot org</email>
-         <organization>Internet Archive</organization>
-         <url>http://www.archive.org</url>
-         <timezone>-8</timezone>
-    </developer>
-    <developer>
         <name>Igor Ranitovic</name>
         <id>ia_igor</id>
         <email>igor at archive dot org</email>
@@ -244,11 +236,6 @@
         <email>junklight at sourceforge dot net</email>
          <organization>British Library</organization>
     </contributor>
-    <contributor>
-        <name>Oskar Grenholm</name>
-        <email>oskar at kb dot se</email>
-         <organization>Swedish Royal Library</organization>
-    </contributor>
 
   </contributors>
 
@@ -259,7 +246,6 @@
             <distribution>repo</distribution>
        </license>
     </licenses>
-
 
     <!--For now, refer to local jars.  Later when (if) we deceide to go
         all-out maven, we'll pull common jars from remote repository.
@@ -273,19 +259,6 @@
 
     -->
     <dependencies>
-        <dependency>
-            <id>bdb</id>
-            <version>1.5.3</version>
-            <url>http://www.sleepycat.com/products/je.shtml</url>
-            <properties>
-                <description>Berkeley DB Java Edition.  
-                Copyright (c) 1990-2004 Sleepycat Software.  
-                All rights reserved.  See above link for how to obtain source.  
-                </description>
-                <license>http://www.sleepycat.com/download/jeoslicense.html
-                </license>
-            </properties>
-        </dependency>
         <dependency>
             <id>commons-httpclient</id>
             <version>2.0-final</version>
@@ -527,8 +500,8 @@
         </includes>
     </resource>
     </resources>
-  </build>
 
+  </build>
 
     <!--List of reports to generate.
         Some are not working.  Fix.
@@ -549,8 +522,6 @@
         <report>maven-jxr-plugin</report>
         <report>maven-pmd-plugin</report>
         <report>maven-tasklist-plugin</report>
-        <!--<report>maven-findbugs-plugin</report>
-         -->
         <!--<report>maven-developer-activity-plugin</report>-->
         <!--TODO: <report>maven-file-activity-plugin</report>-->
         <!--TODO: OOME and takes long time.

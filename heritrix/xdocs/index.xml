@@ -30,9 +30,8 @@
         to disrupt normal website activity.
         </p>
         
-        <p>If you notice our crawler behaving poorly -- The Internet Archive
-        uses <b>archive.org_bot</b> as User Agent when crawling --
-        please send us email at:
+        <p>If you notice our crawler behaving poorly, please send us
+        email at:
         </p>
         
         <p><img src="/images/crawler-problem-report-email.gif"
@@ -44,9 +43,10 @@
     </section>
     <section name="News and Status">
 
-    <subsection name="Release 1.0.2 09/14/2004">
-        <p>Bug fixes. 
-        See <a href="/changes-report.html">Changes</a> log for detail
+    <subsection name="Release 1.0.4 09/22/2004">
+        <p>Bug fix. Crawl.log and ARC metadata lines could have whitespace
+        in URIs and mimetype fields.  See
+        <a href="/changes-report.html">Changes</a> log for detail
         and <a href="articles/limitations.html">Known Limitations</a>.
         </p>
     </subsection>
@@ -57,13 +57,13 @@
         crawling via a http proxy, 
         adding of headers to request,
         improved out-of-the-box defaults,
+
         hash of content to crawl log and to arcreader output,
         and many bug fixes.
         See <a href="/changes-report.html">Changes</a> log for detail
         and <a href="articles/limitations.html">Known Limitations</a>.
         </p>
     </subsection>
-
     <subsection name="1.0.0 first release candidate, 0.10.0 06/04/2004">
         <p>Release for second heritrix workshop, Copenhagen 06/2004
         (1.0.0 first release candidate). Added site-first prioritization,

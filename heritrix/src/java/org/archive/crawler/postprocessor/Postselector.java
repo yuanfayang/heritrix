@@ -151,6 +151,11 @@ public class Postselector extends Processor implements CoreAttributeConstants,
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
+//        if ( curi.getDeferrals() > maxDeferrals ) {
+//            // too many deferrals, equals failure
+//            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+//            return;
+//        }
 
         try {
             // create and schedule prerequisite
@@ -191,8 +196,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
     private boolean schedule(CandidateURI caUri) {
         if(getController().getScope().accepts(caUri)) {
             logger.finer("URI accepted: "+caUri);
-            //getController().getFrontier().batchSchedule(caUri);
-            getController().getFrontier().schedule(caUri);
+            getController().getFrontier().batchSchedule(caUri);
             return true;
         }
         logger.finer("URI rejected: " + caUri);

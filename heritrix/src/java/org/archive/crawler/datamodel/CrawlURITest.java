@@ -30,8 +30,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.queue.DiskStack;
-import org.archive.queue.Stack;
+import org.archive.util.DiskStack;
+import org.archive.util.Stack;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -137,17 +137,4 @@ public class CrawlURITest extends TmpDirTestCase {
         assertTrue("Host is empty",
             host != null && host.length() > 0);
     }
-    
-    public void testCalculateClassKey() throws URIException {
-        final String uri = "http://mprsrv.agri.gov.cn";
-        CrawlURI curi = new CrawlURI(UURIFactory.getInstance(uri));
-        String key = curi.getClassKey();
-        assertTrue("Key1 is bad " + key,
-            key.equals(curi.getUURI().getAuthorityMinusUserinfo()));
-    	final String baduri = "ftp://pfbuser:pfbuser@mprsrv.agri.gov.cn/clzreceive/";
-        curi = new CrawlURI(UURIFactory.getInstance(baduri));
-        key = curi.getClassKey();
-        assertTrue("Key2 is bad " + key,
-            key.equals(curi.getUURI().getAuthorityMinusUserinfo()));
-	}
 }

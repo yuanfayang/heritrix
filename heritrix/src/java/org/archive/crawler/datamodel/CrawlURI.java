@@ -324,7 +324,6 @@ public class CrawlURI extends CandidateURI
      *         URI.
      */
     public int incrementFetchAttempts() {
-        // TODO: rename, this is actually processing-loop-attempts
         return fetchAttempts++;
     }
 
@@ -366,7 +365,7 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Get the token (usually the hostname + port) which indicates
+     * Get the token (usually the hostname) which indicates
      * what "class" this CrawlURI should be grouped with,
      * for the purposes of ensuring only one item of the
      * class is processed at once, all items of the class
@@ -376,7 +375,7 @@ public class CrawlURI extends CandidateURI
      * what "class" this CrawlURI should be grouped with.
      */
     public String getClassKey() {
-        if(classKey == null) {
+        if(classKey==null) {
             classKey = calculateClassKey();
         }
         return classKey;
@@ -387,32 +386,30 @@ public class CrawlURI extends CandidateURI
         String candidate = null;
         try {
             if (scheme.equals("dns")){
-                if (via != null) {
+                if (via!=null) {
                     // Special handling for DNS: treat as being
-                    // of the same class as the triggering URI.
+                    // of the same class as the triggering URI
                     // When a URI includes a port, this ensures 
                     // the DNS lookup goes atop the host:port
                     // queue that triggered it, rather than 
                     // some other host queue
-                    candidate = UURIFactory.getInstance(flattenVia()).
-                        getAuthorityMinusUserinfo();
+                    candidate =
+                        UURIFactory.getInstance(flattenVia()).getAuthority();
                 } else {
                     candidate= FetchDNS.parseTargetDomain(this);
                 }
             } else {
-                candidate =  getUURI().getAuthorityMinusUserinfo();
+                candidate =  getUURI().getAuthority();
             }
-            
-            if(candidate == null || candidate.length() == 0) {
+            if(candidate==null || candidate.length()==0) {
                 candidate = DEFAULT_CLASS_KEY;
             }
         } catch (URIException e) {
-            DevUtils.warnHandle(e, "Failed to get class key: " +
-                e.getMessage() + " " + this);
+            DevUtils.warnHandle(e,"Failed to get class key: " 
+                    + e.getMessage() + " " + this);
             candidate = DEFAULT_CLASS_KEY;
         }
-        // Ensure classKeys are safe as filenames on NTFS
-        candidate.replace(':','#');
+        candidate.replace(':','#'); // ensure classKeys are safe as filenames on NTFS
         return candidate;
     }
 
@@ -1028,23 +1025,5 @@ public class CrawlURI extends CandidateURI
      */
     public Object getContentDigest() {
         return contentDigest;
-    }
-
-    transient Object holder;
-    /**
-     * Remember a 'holder' to which some enclosing/queueing
-     * facility has assigned this CrawlURI
-     * .
-     * @param obj
-     */
-    public void setHolder(Object obj) {
-        holder=obj;
-    }
-
-    /**
-     * @return
-     */
-    public Object getHolder() {
-        return holder;
     }
 }
