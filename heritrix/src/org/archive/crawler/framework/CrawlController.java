@@ -183,6 +183,13 @@ public class CrawlController {
 			((ToeThread)iter.next()).unpause();
 		}
 	}
+
+	public void stopCrawl() {
+			// stop toes
+			for (int i = 0; i < toes.size(); i++)
+				((ToeThread)toes.get(i)).stopAfterCurrent();
+		}	
+
 	
 	public int getActiveToeCount(){
 		List toes = getToes();
@@ -248,6 +255,10 @@ public class CrawlController {
 	//	return kicker;
 	//}
 
+
+	public void setOrder(CrawlOrder o){
+		order = o;	
+	}
 
 	/** Print to stdout basic statistics about the crawl (for stat testing) */
 	public void printStatistics(){
