@@ -27,10 +27,6 @@ package org.archive.util;
 
 import java.util.NoSuchElementException;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
-
 /**
  * JUnit test suite for Queue.  It's an abstract class which is implemented by
  * each queue implementation
@@ -46,24 +42,6 @@ public abstract class QueueTestBase extends TmpDirTestCase {
      */
     public QueueTestBase(final String testName) {
         super(testName);
-    }
-
-    /**
-     * run all the tests for PaddingStringBufferTest
-     *
-     * @param argv the command line arguments
-     */
-    public static void main(String argv[]) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    /**
-     * return the suite of tests for PaddingStringBufferTest
-     *
-     * @return the suite of test
-     */
-    public static Test suite() {
-        return new TestSuite(PaddingStringBufferTest.class);
     }
 
     public void setUp() throws Exception {

@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* DiskLongFPSet
+ * 
+ * $Id$
+ * 
+ * Created on Oct 20, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * DiskLongFPSet.java
- * Created on Oct 20, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -35,7 +36,8 @@ import java.util.logging.Logger;
  *
  */
 public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
-	private static Logger logger = Logger.getLogger("org.archive.util.DiskLongFPSet");
+	private static Logger logger =
+        Logger.getLogger("org.archive.util.DiskLongFPSet");
 	static final int DEFAULT_CAPACITY_POWER_OF_TWO = 4;
 	static final float DEFAULT_LOAD_FACTOR = 0.75f;
 	File disk;
@@ -58,9 +60,11 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 * @param loadFactor
 	 * @throws IOException
 	 */
-	public DiskLongFPSet(File dir, String name, int capacityPowerOfTwo, float loadFactor) throws IOException {
-		this.capacityPowerOfTwo = capacityPowerOfTwo;
-		this.loadFactor = loadFactor;
+	public DiskLongFPSet(File dir, String name, int capacityPowerOfTwo,
+                float loadFactor)
+        throws IOException
+    {
+		super(capacityPowerOfTwo, loadFactor);
 		disk = new File(dir, name+".fps");
 		if(disk.exists()) {
 			disk.delete();
@@ -70,7 +74,6 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			rawRafile.writeByte(EMPTY);
 			rawRafile.writeLong(0);
 		}
-		count = 0;
 	}
 
 	/**
@@ -153,7 +156,7 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	/* (non-Javadoc)
 	 * @see org.archive.util.AbstractLongFPSet#relocate(long, long, long)
 	 */
-	void relocate(long value, long fromIndex, long toIndex) {
+	protected void relocate(long value, long fromIndex, long toIndex) {
 		clearAt(fromIndex);
 		setAt(toIndex,value);
 	}
@@ -181,7 +184,8 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			rawRafile.writeByte(EMPTY);
 		} catch (IOException e) {
 			// TODO convert to runtime exception
-			DevUtils.logger.log(Level.SEVERE,"clearAt("+index+")"+DevUtils.extraInfo(),e);
+			DevUtils.logger.log(Level.SEVERE,"clearAt("+index+")" + 
+                 DevUtils.extraInfo(),e);
 		}
 	}
 
