@@ -3,6 +3,7 @@
 
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%@ page import="org.archive.crawler.framework.CrawlJob" %>
+<%@ page import="org.archive.util.JavaLiterals" %>
 
 <%
 	String sAction = request.getParameter("action");
@@ -68,6 +69,14 @@
 		<link rel="stylesheet" href="/admin/css/heritrix.css">
 	</head>
 	<body>
+		<%
+			String alert = handler.consumeAlertMessage();
+			if (alert!=null) {
+				out.println("<script language=\"Javascript\">\n"
+				           +"alert(\""+JavaLiterals.escape(alert)+"\")\n"
+				           +"</script>");
+			}
+		%>
 		<table border="0" cellspacing="0" cellpadding="0" height="100%">
 			<tr>
 				<td class="dataheader" nowrap>
