@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
@@ -327,5 +328,74 @@ public class XMLSettingsHandler extends SettingsHandler {
         }
         // If path is absolute, we return it itself.
         return path;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.SettingsHandler#getDomainOverrides(java.lang.String)
+     */
+    public ArrayList getDomainOverrides(String rootDomain) {
+        File settingsDir = getSettingsDirectory();
+        
+        //Find the right start directory.
+        ArrayList domains = new ArrayList();
+        //First we deconstruct the rootDomain string
+        while(rootDomain != null && rootDomain.length()>0){
+            if(rootDomain.indexOf('.')<0){
+                // Last level.
+                domains.add(rootDomain);
+                break; //We're done.
+            } else {
+                // Got more then one level left.
+                domains.add(rootDomain.substring(0,rootDomain.indexOf('.')));
+                // Strip down rootDomain.
+                rootDomain = rootDomain.substring(rootDomain.indexOf('.')+1);
+            }
+        }
+        //Build up a proper path
+        //Since the domains are right to left, we start at the end of the array.
+        StringBuffer subDir = new StringBuffer();
+        for(int i=(domains.size()-1) ; i>=0 ; i--){
+            subDir.append(File.separator+domains.get(i));
+        }
+        //Then we move to the approprite directory.
+        settingsDir = new File(settingsDir.getPath()+subDir);
+        ArrayList confirmedSubDomains = new ArrayList();
+        if(settingsDir.exists()){
+            // Found our place! Search through it's subdirs.
+            File[] possibleSubDomains = settingsDir.listFiles();
+            for (int i = 0; i < possibleSubDomains.length; i++) {
+                if (possibleSubDomains[i].isDirectory()
+                    && isOverride(possibleSubDomains[i])) {
+                    // Found one!
+                    confirmedSubDomains.add(possibleSubDomains[i].getName());
+                }
+            }
+        }
+        return confirmedSubDomains;
+    }
+
+    /**
+     * Checks if a file is a a 'per host' override or if it's a directory if it
+     * or it's subdirectories  contains a 'per host' override file. 
+     * @param f The file or directory to check
+     * @return True if the file is an override or it's a directory that contains
+     *         such a file.
+     */    
+    private boolean isOverride(File f){
+        if(f.isDirectory()){
+            // Have a directory, check it's contents.
+            File[] subs = f.listFiles();
+            for(int i=0 ; i < subs.length ; i++){
+                if(isOverride(subs[i])){
+                    // Found one. Can stop looking.
+                    return true;
+                }
+            }
+        } else if(f.getName().equals(settingsFilename)){
+            // This is an override file (or sure looks like one in any case).
+            return true;
+        }
+        // Didn't find an override.
+        return false;
     }
 }

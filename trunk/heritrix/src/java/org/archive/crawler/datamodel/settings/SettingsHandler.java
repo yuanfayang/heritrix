@@ -27,6 +27,7 @@ package org.archive.crawler.datamodel.settings;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -377,4 +378,16 @@ public abstract class SettingsHandler {
      *         location that is considered the working directory for these settings.
      */
     public abstract String getPathRelativeToWorkingDirectory(String path);
+    
+    /**
+     * Will return an array of strings with domains that contain 'per' domain
+     * overrides (or their subdomains contain them). The domains considered are
+     * limited to those that are subdomains of the supplied domain. If null or
+     * empty string is supplied the TLDs will be considered.
+     * @param rootDomain The domain to get domain overrides for. Examples:  
+     *                   'org', 'archive.org', 'crawler.archive.org' etc.
+     * @return An array of domains that contain overrides. If rootDomain does not
+     *         exist an empty array will be returned.
+     */
+    public abstract ArrayList getDomainOverrides(String rootDomain);
 }
