@@ -357,4 +357,15 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 	public CrawlURI getExistingCrawlURI(UURI u) {
 		return (CrawlURI) allCuris.get(u);
 	}
+
+	/**
+	 * Revisit the CrawlURI -- but not before delay time has passed.
+	 * @param curi
+	 * @param retryDelay
+	 */
+	public void insertSnoozed(CrawlURI curi, long retryDelay) {
+		curi.setWakeTime(System.currentTimeMillis()+retryDelay );
+		curi.setStoreState(URIStoreable.SNOOZED);
+		snoozeQueues.add(curi);
+	}
 }
