@@ -13,6 +13,7 @@
 	String timestamp = null;
 	String regexpr = null;
 	boolean ln = false;
+	boolean grep = false;
 	boolean indent = false;
 	
 	/* Which log to display */
@@ -85,7 +86,12 @@
 			else
 			{
 				ln = request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true");
+				grep = request.getParameter("grep")!=null&&request.getParameter("grep").equalsIgnoreCase("true");
 				indent = request.getParameter("indent")!=null&&request.getParameter("indent").equalsIgnoreCase("true");
+				
+				if(grep){
+					regexpr = ".*" + regexpr + ".*";
+				}
 				
 				if(indent)
 				{
@@ -249,11 +255,25 @@
 							<td nowrap>
 								&nbsp;Line numbers&nbsp;&nbsp;
 							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
 							<td nowrap>
 								<input name="indent" value="true" type="checkbox" <%=request.getParameter("indent")!=null&&request.getParameter("indent").equalsIgnoreCase("true")?"checked":""%>>
 							</td>
-							<td width="100%">
+							<td width="100%" colspan="3">
 								&nbsp;Include following indented lines&nbsp;&nbsp;
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td nowrap>
+								<input name="grep" value="true" type="checkbox" <%=request.getParameter("grep")!=null&&request.getParameter("grep").equalsIgnoreCase("true")?"checked":""%>>
+							</td>
+							<td nowrap>
+								&nbsp;Grep stype&nbsp;&nbsp;
 							</td>
 						</tr>
 					</table>
