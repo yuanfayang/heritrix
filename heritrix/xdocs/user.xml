@@ -8,10 +8,10 @@
 
   <body>
     <section name="User Manual Introduction">
-        <p>This manual is targetted at those who just want to run the 
+        <p>This manual is targeted at those who just want to run the 
         crawler.  The user has downloaded a Heritrix binary and they need 
-        to konw about configuration file formats and how to sourcep and run 
-        a crawl.  If you want to build Heritrix from source or if you'd like
+        to know about configuration file formats and how to source and run 
+        a crawl.  If you want to build heritrix from source or if you'd like
         to make contributions and would like to know about contribution 
         conventions, etc., see instead the <a href="developer.html">Developer
         Manual</a>.
@@ -26,10 +26,11 @@
     <section name="For those who have little patience...">
         <p>To run Heritrix, first do the following:
         <source>% export $HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</source></p>
-<p>...where $HERITRIX_HOME is the location of your built Heritrix (i.e.  under
-the 'dist' dir if you built w/ Ant, or under the untarred
-target/distribution/heritrix.?.?.?.tar.gz dir if you built w/ Maven, or
-under the untarred heritrix.?.?.?.tar.gz if you pulled a packaged binary).</p>
+<p>...where <em>$HERITRIX_HOME</em> is the location of your built Heritrix
+(i.e.  under the <em>dist</em> dir if you built w/ Ant, or under the untarred
+<em>target/distribution/heritrix.?.?.?.tar.gz</em> dir if you built w/ Maven,
+or under the untarred 
+<em>heritrix.?.?.?.tar.gz</em> if you pulled a packaged binary).</p>
                                                                                 
 <p>Next run:
 <source>
@@ -38,22 +39,36 @@ under the untarred heritrix.?.?.?.tar.gz if you pulled a packaged binary).</p>
     % $HERITRIX_HOME/bin/heritrix --help
 </source></p>
 
-<p>This should give you usage output.
+<p>This should give you usage output like the following:
+<source>Usage: java org.archive.crawler.Heritrix --help|-h
+Usage: java org.archive.crawler.Heritrix --no-wui ORDER.XML
+Usage: java org.archive.crawler.Heritrix [--port=PORT] \
+            [ORDER.XML [--start|--wait|--set]]
+Options:
+    --help|-h   Prints this message.
+    --no-wui    Start crawler without a web User Interface.
+    --port      PORT is port the web UI runs on. Default: 8080.
+    ORDER.XML   The crawl to launch. Optional if '--no-wui' NOT specified.
+    --start     Start crawling using specified ORDER.XML:
+    --wait      Load job specified by ORDER.XML but do not start. Default.
+    --set       Set specified ORDER.XML as the default.</source>
 </p>
 
-<p>The Usage output will talk of the '&lt;crawl order file>' file.  The 
-'&lt;crawl order file>' or 'order.xml' is the "master config file".  It
+<p>The usage output talks of the an <em>ORDER.XML</em> file.  The 
+ORDER.XML is the "master config file".  It
 specifies which modules will be used to  process URIs, in which order URIs will
 be processed, how and where files will ge written to disk, how "polite" the
 crawler should be, crawl limits, etc.  The configuration system is currently
-undergoing revision and the format of order.xml will probably be changed.  The
-best thing to do meantime is to copy an existing "order.xml" file.  See under
-'docs/example-settings/broad-crawl' for an up-to-date sample configuration that
-does a broad crawl (If there is no docs/example-settings in your built
-distribution, see crawler.archive.org TODO: Insert url here).
+undergoing revision and the format of ORDER.XML will probably be changed.  The
+best thing to do meantime is to copy an existing <em>order.xml</em>  file.
+See under <em>docs/example-settings/broad-crawl</em> for an up-to-date sample
+configuration that does a broad crawl (If there is no 
+<em>docs/example-settings</em> in your built
+distribution, see <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/xdocs/example-settings/broad-crawl/">crawler.archive.org</a>).
 </p>
 <p>Before you begin crawling you *MUST* at least change the default user agent
-in the order.xml.  You should set this to something meaningful that allows
+in the <em>order.xml</em>.  You should set this to something meaningful that
+allows
 administrators of sites you'll be crawling to contact you.  Please do not leave
 the Archive Open Crawler project's contact information in this field, we do not
 have the time or the resources to field complaints about crawlers which we are
@@ -103,6 +118,21 @@ recent and more likely to work.
 </section>
 <section name="Monitoring the Crawler">
     <p>TODO</p>
+</section>
+<section name="System Properties">
+<p>Below we document system properties passed on the command-line that 
+can influence Heritrix behavior.
+</p>
+<subsection name="heritrix.webapp.path">
+    Path to webapp directory.  Default: <em>webapps</em>.  
+    Set to <em>src/webapps</em> if you want to
+    run the webapp inside eclipse, etc.
+</subsection>
+<subsection name="heritrix.default.orderfile">
+    Default order.xml file to use when making jobs via the web UI.
+    Default: <em>webapp/admin/order.xml</em>.
+</subsection>
+
 </section>
 
 </body>
