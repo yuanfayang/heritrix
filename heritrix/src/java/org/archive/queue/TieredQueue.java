@@ -178,16 +178,26 @@ public class TieredQueue implements Queue {
     }
 
     /**
-     * Initialize all innerQueues to be DiskQueues in the given 
+     * Initialize all innerQueues to be DiskBackedQueues in the given 
      * scratch directory, using the timpName prefix. 
      * 
      * @param scratchDir
      * @param tmpName
      * @throws IOException
      */
-    public void initializeDiskBackedQueues(File scratchDir, String tmpName) throws IOException {
+    public void initializeDiskBackedQueues(File scratchDir, String tmpName, int inMemCap) throws IOException {
         for(int i = 0; i <= lastQueue; i++) {
-            innerQueues[i] = new DiskBackedQueue(scratchDir, tmpName+i, false, 100);
+            innerQueues[i] = new DiskBackedQueue(scratchDir, tmpName+i, false, inMemCap/(lastQueue+1));
+        }
+    }
+
+    /**
+     * @param i
+     */
+    public void setMemoryResidentQueueCap(int inMemCap) {
+        // assumes subqueues are DiskBackedQueues
+        for(int i = 0; i <= lastQueue; i++) {
+            ((DiskBackedQueue)innerQueues[i]).setHeadMax(inMemCap/(lastQueue+1));
         }
     }
 
