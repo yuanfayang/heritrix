@@ -100,7 +100,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		pool.noteAvailable(this);
 		
 		try {
-			wait();
+			wait(); // until master thread gives a new work URI
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			logger.warning(getName()+" interrupted");
