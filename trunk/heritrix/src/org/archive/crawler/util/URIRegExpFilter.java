@@ -15,6 +15,8 @@ import org.archive.crawler.framework.Filter;
 
 
 /**
+ * Compares passed object -- a CrawlURI, UURI, or String --
+ * against a regular expression, accepting matches. 
  * 
  * @author Gordon Mohr
  */

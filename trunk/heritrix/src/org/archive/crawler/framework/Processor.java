@@ -59,7 +59,7 @@ public class Processor extends XMLConfig {
 		while(iter.hasNext()) {
 			Filter f = (Filter)iter.next();
 			if( !f.accepts(curi) ) {
-				logger.info("Filter "+f+" rejected "+curi+" in Processor "+getName());
+				logger.info(f+" rejected "+curi+" in Processor "+getName());
 				return false; 
 			}
 		}
