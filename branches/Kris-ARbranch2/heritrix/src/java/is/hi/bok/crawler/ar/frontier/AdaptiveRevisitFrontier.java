@@ -357,19 +357,26 @@ public class AdaptiveRevisitFrontier extends ModuleType
             // Populate CURI with 'transient' variables such as server.
             curi.setServer(getServer(curi));
             logger.fine("Issuing "+curi.getURIString());
+            long temp = curi.getAList().getLong(A_TIME_OF_NEXT_PROCESSING);
+            long currT = System.currentTimeMillis();
+            long overdue = (currT-temp);
             if(logger.isLoggable(Level.FINER)){
                 String waitI = "not set";
                 if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
                     waitI = ArchiveUtils.formatMillisecondsToConventional(
                             curi.getAList().getLong(A_WAIT_INTERVAL));
                 }
-                long temp = curi.getAList().getLong(A_TIME_OF_NEXT_PROCESSING);
-                long currT = System.currentTimeMillis();
                 logger.finer("Wait interval: " + waitI + 
                         ", Time of next proc: " + temp +
                         ", Current time: " + currT +
-                        ", Overdue by: " + (currT-temp) + "ms");
+                        ", Overdue by: " + overdue + "ms");
             }
+            if(overdue < 0){
+                // This should never happen.
+                logger.severe("Time overdue for " + curi.getURIString() + 
+                        "is negative (" + overdue + ")!");
+            }
+            curi.getAList().putLong(A_FETCH_OVERDUE,overdue);
             return curi;
         } catch (IOException e) {
             // TODO: Need to handle this in an intelligent manner. 
@@ -504,24 +511,34 @@ public class AdaptiveRevisitFrontier extends ModuleType
     protected void successDisposition(CrawlURI curi) {
         totalProcessedBytes += curi.getContentSize();
         curi.aboutToLog();
+        
         if(curi.getAList().containsKey(A_WAIT_INTERVAL)){
-            curi.addAnnotation(ArchiveUtils.formatMillisecondsToConventional(
+            curi.addAnnotation("wt:" + 
+                    ArchiveUtils.formatMillisecondsToConventional(
                     (curi.getAList().getLong(A_WAIT_INTERVAL))));
+        } else {
+            logger.severe("Missing wait interval for " + curi.getURIString() +
+                    " WaitEvaluator may be missing.");
         }
         if(curi.getAList().containsKey(A_NUMBER_OF_VISITS)){
             curi.addAnnotation(Integer.toString(
                     curi.getAList().getInt(A_NUMBER_OF_VISITS)) + "vis");
         }
         if(curi.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
-        curi.addAnnotation(Integer.toString(
-                curi.getAList().getInt(A_NUMBER_OF_VERSIONS)) + "ver");
+            curi.addAnnotation(Integer.toString(
+                    curi.getAList().getInt(A_NUMBER_OF_VERSIONS)) + "ver");
         }
+        if(curi.getAList().containsKey(A_FETCH_OVERDUE)){
+            curi.addAnnotation("ov:" +
+                    ArchiveUtils.formatMillisecondsToConventional(
+                    (curi.getAList().getLong(A_FETCH_OVERDUE))));
+        }
+        
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
             curi.getUURI().toString(),
             array);
-        // TODO: Maybe we will need some additional logging 
 
         succeededFetchCount++;
         totalProcessedBytes += curi.getContentSize();
@@ -532,12 +549,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
         
         curi.setSchedulingDirective(CrawlURI.NORMAL);
 
-        if(curi.getAList().containsKey(A_WAIT_INTERVAL)==false){
-            logger.severe("Missing wait interval for " + curi.getURIString() +
-                    " WaitEvaluator may be missing.");
-        }
-        
         long waitInterval = curi.getAList().getLong(A_WAIT_INTERVAL);
+
         // Set time of next processing
         curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+waitInterval);
