@@ -246,9 +246,8 @@ public class SimpleHandler
     /**
      * Find a crawl job with a matching UID and return it.
      * 
-     * @param Job UID to search for.
+     * @param jobUID to search for.
      * @return Crawljob.
-     * @see org.archive.crawler.framework.CrawlJobHandler#getJob(int)
      */
     public CrawlJob getJob(String jobUID) 
     {
@@ -518,7 +517,7 @@ public class SimpleHandler
      * 
      * @param filename Filename (including path) for where this new crawl order
      * file is to be created.
-     * @see createCrawlOrderFile(HttpServletRequest, String)
+     * @see #createCrawlOrderFile(HttpServletRequest, String)
      */
     public void createCrawlOrderFile(HttpServletRequest req, String filename)
     {
@@ -616,9 +615,6 @@ public class SimpleHandler
      * @param jobUID Job to remove.
      * 
      * @return True if we found the job to remove.
-     *
-     * @see org.archive.crawler.framework.CrawlJobHandler#removeJob(
-     * org.archive.crawler.framework.CrawlJob)
      */
     public boolean removeJob(String jobUID) {
         for(int i=0 ; i<pendingCrawlJobs.size() ; i++)
