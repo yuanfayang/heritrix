@@ -98,7 +98,7 @@
       Content-Type desired.  Apply the same filter at the
       writer stage of processing to eliminate recording of
       response headers in ARCs.  See the
-      <a href="articles/user_manaul.html#midfetch">User Manual</a>
+      <a href="articles/user_manual.html#midfetch">User Manual</a>
       (Prerequisite URLs by-pass the midfetch filters so it is not possible
       to filter out robots.txt using this mechanism).
       </answer>
