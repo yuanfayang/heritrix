@@ -57,8 +57,10 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
@@ -169,6 +171,7 @@ public class ARCWriterProcessor extends Processor
      * Reference to an ARCWriter.
      */
     transient private ARCWriterPool pool = null;
+    
 
     /**
      * @param name
@@ -257,34 +260,23 @@ public class ARCWriterProcessor extends Processor
      * null.
      */
     protected List getMetadata() {
-        List settingsFiles = getSettingsHandler().getListOfAllFiles();
-        if (settingsFiles ==  null || settingsFiles.size() <= 0) {
-            // Early return.
-            return null;
+        List result = null;
+        if (!XMLSettingsHandler.class.isInstance(getSettingsHandler())) {
+            logger.warning("Expected xml settings handler (No arcmetadata).");
+            // Early return
+            return result;
         }
-        List metadata = null;
-        final String XML_TAIL = ".xml";
-        for (Iterator i = settingsFiles.iterator(); i.hasNext();) {
-            String str = (String)i.next();
-            if (str == null || str.length() <= 0) {
-                continue;
-            }
-            if (str.length() <= XML_TAIL.length() ||
-                !str.toLowerCase().endsWith(XML_TAIL)) {
-                continue;
-            }
-            File f = new File(str);
-            if (!f.exists() || !f.canRead()) {
-                logger.severe("File " + str + " is does not exist or is" +
-                " not readable.");
-                continue;
-            }
-            if (metadata == null) {
-                metadata = new ArrayList(settingsFiles.size());
-            }
-            metadata.add(getMetadataBody(f));
+        
+        XMLSettingsHandler xsh = (XMLSettingsHandler)getSettingsHandler();
+        File orderFile = xsh.getOrderFile();
+        if (!orderFile.exists() || !orderFile.canRead()) {
+        	    logger.severe("File " + orderFile.getAbsolutePath() +
+        	        " is does not exist or is not readable.");
+        } else {
+        	    result = new ArrayList(1);
+        	    result.add(getMetadataBody(orderFile));
         }
-        return metadata;
+        return result;
     }
 
     /**
