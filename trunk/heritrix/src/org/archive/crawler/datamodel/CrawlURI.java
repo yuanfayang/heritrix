@@ -9,6 +9,9 @@ package org.archive.crawler.datamodel;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.Processor;
 
+import st.ata.util.AList;
+import st.ata.util.HashtableAList;
+
 
 /**
  * Represents a URI and the associated state it collects as
@@ -24,7 +27,7 @@ import org.archive.crawler.framework.Processor;
  * @author Gordon Mohr
  */
 public class CrawlURI implements URIStoreable {
-	AList alist;
+	AList alist = new HashtableAList();
 	UURI uuri; 
 	Processor nextProcessor;
 	CrawlHost host;
@@ -34,9 +37,8 @@ public class CrawlURI implements URIStoreable {
 	/**
 	 * @param uuri
 	 */
-	public CrawlURI(UURI uuri) {
-	
-		// TODO Auto-generated constructor stub
+	public CrawlURI(UURI u) {
+		uuri=u;
 	}
 	
 	/**

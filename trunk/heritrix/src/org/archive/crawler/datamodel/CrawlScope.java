@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.archive.crawler.framework.*;
 import org.w3c.dom.Node;
 
 /**

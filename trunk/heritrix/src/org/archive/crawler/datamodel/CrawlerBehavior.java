@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.archive.crawler.framework.*;
 import org.w3c.dom.Node;
 
 /**

@@ -7,7 +7,9 @@
 package org.archive.crawler.framework;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,8 +28,8 @@ public class CrawlController {
 	URIStore store;
 	URISelector selector;
 	
-	Processor entryProcessor;
-	HashMap processors = new HashMap(); 
+	Processor firstProcessor;
+	LinkedHashMap processors = new LinkedHashMap(); 
 	List toes = new LinkedList(); /* of ToeThreads */;
 	int nextToeSerialNumber = 0;
 	
@@ -43,13 +45,19 @@ public class CrawlController {
 		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
 		selector = (URISelector) order.getBehavior().instantiate("//selector");
 		
-		entryProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
+		firstProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
 		
 		store.initialize(this);
 		scheduler.initialize(this);
 		selector.initialize(this);
 		
-		// TODO: initialize processors?
+		Iterator iter = processors.entrySet().iterator();
+		while (iter.hasNext()) {
+			Object obj = iter.next();
+			System.out.println(obj);
+			Processor p = (Processor) ((Map.Entry)obj).getValue();
+			p.initialize(this);
+		}
 	}
 	
 	/**
@@ -93,7 +101,7 @@ public class CrawlController {
 		}
 		CrawlURI curi = scheduler.curiFor(thread);
 		// TODO consider possible case where curi is null
-		curi.setNextProcessor(entryProcessor);
+		curi.setNextProcessor(firstProcessor);
 		return curi;
 	}
 	/**
@@ -132,6 +140,13 @@ public class CrawlController {
 	 */
 	public URIStore getStore() {
 		return store;
+	}
+
+	/**
+	 * 
+	 */
+	public HashMap getProcessors() {
+		return processors;
 	}
 
 }

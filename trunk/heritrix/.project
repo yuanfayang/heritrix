@@ -3,6 +3,8 @@
 	<name>ArchiveOpenCrawler</name>
 	<comment></comment>
 	<projects>
+		<project>StataUtils</project>
+		<project>httpclient</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
