@@ -59,8 +59,6 @@ public class CrawlerModule extends ComplexType {
     public Type addElement(CrawlerSettings settings, Type type)
             throws InvalidAttributeValueException {
         if (isInitialized()) {
-            String scope = settings.getScope() == null ? "global" : settings
-                    .getScope();
             throw new IllegalStateException(
                     "Not allowed to add elements to modules after"
                             + " initialization. (Module: " + getName()
