@@ -308,6 +308,7 @@ public class CrawlController implements Serializable {
         }
 
         setupToePool();
+        setThresholds();
         
         reserveMemory = new LinkedList();
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
@@ -673,6 +674,34 @@ public class CrawlController implements Serializable {
         }
     }
 
+
+    /**
+     * Sets the values for max bytes, docs and time based on crawl order. 
+     */
+    private void setThresholds() {
+        try {
+            maxBytes =
+                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_BYTES_DOWNLOAD))
+                    .longValue();
+        } catch (Exception e) {
+            maxBytes = 0;
+        }
+        try {
+            maxDocument =
+                ((Long) order
+                    .getAttribute(CrawlOrder.ATTR_MAX_DOCUMENT_DOWNLOAD))
+                    .longValue();
+        } catch (Exception e) {
+            maxDocument = 0;
+        }
+        try {
+            maxTime =
+                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_TIME_SEC))
+                    .longValue();
+        } catch (Exception e) {
+            maxTime = 0;
+        }
+    }
 
     /**
      * @return Object this controller is using to track crawl statistics
@@ -1055,32 +1084,10 @@ public class CrawlController implements Serializable {
         if (this.frontier instanceof Frontier) {
             ((Frontier)this.frontier).loadSeeds();
         }
-        // update thresholds
-        try {
-            maxBytes =
-                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_BYTES_DOWNLOAD))
-                    .longValue();
-        } catch (Exception e) {
-            maxBytes = 0;
-        }
-        try {
-            maxDocument =
-                ((Long) order
-                    .getAttribute(CrawlOrder.ATTR_MAX_DOCUMENT_DOWNLOAD))
-                    .longValue();
-        } catch (Exception e) {
-            maxDocument = 0;
-        }
-        try {
-            maxTime =
-                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_TIME_SEC))
-                    .longValue();
-        } catch (Exception e) {
-            maxTime = 0;
-        }
+        setThresholds();
     }
 
-    /**
+	/**
      * @return The settings handler.
      */
     public SettingsHandler getSettingsHandler() {
