@@ -283,7 +283,7 @@ implements CrawlURIDispositionListener {
         controller.progressStats.log(
             Level.INFO,
             new PaddingStringBuffer()
-                .append(ArchiveUtils.TIMESTAMP14.format(now))
+                .append(ArchiveUtils.TIMESTAMP14ISO8601Z.format(now))
                 .raAppend(26, discoveredUriCount)
                 .raAppend(38, queuedUriCount)
                 .raAppend(51, downloadedUriCount)
@@ -497,13 +497,13 @@ implements CrawlURIDispositionListener {
 
     /**
      * Get the number of active (non-paused) threads.
-     * <p>
-     * If crawl not running (paused or stopped) this will return the value of the last snapshot.
-     *
+     * 
      * @return The number of active (non-paused) threads
      */
     public int activeThreadCount() {
-        return shouldrun ? controller.getActiveToeCount() : busyThreads;
+        return controller.getActiveToeCount();
+        // note: reuse of old busy value seemed misleading: anyone asking
+        // for thread count when paused or stopped still wants accurate reading
     }
 
     /**
@@ -745,10 +745,8 @@ implements CrawlURIDispositionListener {
     protected List getSeeds(CrawlController c) {
         List seeds = c.getScope().getSeedlist();
         List seedsCopy = new Vector();
-        synchronized (seeds) {
-            for(Iterator i = seeds.iterator(); i.hasNext();) {
-                seedsCopy.add(((UURI)i.next()).toString());
-            }
+        for(Iterator i = seeds.iterator(); i.hasNext();) {
+            seedsCopy.add(((UURI)i.next()).toString());
         }
         return seedsCopy;
     }

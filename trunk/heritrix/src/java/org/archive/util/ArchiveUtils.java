@@ -29,11 +29,7 @@ package org.archive.util;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
 import java.util.TimeZone;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Miscellaneous useful methods.
@@ -55,7 +51,16 @@ public class ArchiveUtils {
      * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
      */
     public static final SimpleDateFormat TIMESTAMP17;
-    
+    /**
+     * Log-style date stamp in the format yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+     * UTC time zone is assumed.
+     */
+    public static final SimpleDateFormat TIMESTAMP17ISO8601Z;
+    /**
+     * Log-style date stamp in the format yyyy-MM-dd'T'HH:mm:ss'Z'
+     * UTC time zone is assumed.
+     */
+    public static final SimpleDateFormat TIMESTAMP14ISO8601Z;
     /**
      * Default character to use padding strings.
      */
@@ -71,8 +76,10 @@ public class ArchiveUtils {
         TIMESTAMP14.setTimeZone(TZ);
         TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
         TIMESTAMP17.setTimeZone(TZ);
+        TIMESTAMP17ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        TIMESTAMP14ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     }
-
+    
     /**
      * Utility function for creating arc-style date stamps
      * in the format yyyMMddHHmmssSSS.
@@ -103,6 +110,30 @@ public class ArchiveUtils {
         return TIMESTAMP12.format(new Date());
     }
 
+    /**
+     * Utility function for creating log timestamps, in
+     * W3C/ISO8601 format, assuming UTC. 
+     * 
+     * Format is yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+     * 
+     * @return the date stamp
+     */
+    public static String getLog17Date(long date){
+        return TIMESTAMP17ISO8601Z.format(new Date(date));
+    }
+    
+    /**
+     * Utility function for creating log timestamps, in
+     * W3C/ISO8601 format, assuming UTC. 
+     * 
+     * Format is yyyy-MM-dd'T'HH:mm:ss'Z'
+     * 
+     * @return the date stamp
+     */
+    public static String getLog14Date(long date){
+        return TIMESTAMP14ISO8601Z.format(new Date(date));
+    }
+    
     /**
      * Utility function for creating arc-style date stamps
      * in the format yyyMMddHHmmssSSS.
