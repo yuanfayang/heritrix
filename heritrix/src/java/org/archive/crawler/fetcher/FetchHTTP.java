@@ -139,7 +139,6 @@ public class FetchHTTP
 		HttpRecorder rec =
 			((ToeThread) Thread.currentThread()).getHttpRecorder();
 		get.setHttpRecorder(rec);
-
 		try {
 			// TODO: make this initial reading subject to the same
 			// length/timeout limits; currently only the soTimeout
@@ -254,10 +253,12 @@ public class FetchHTTP
     private void setupGet(CrawlURI curi, GetMethod get) {
         // don't auto-follow redirects
         get.setFollowRedirects(false); 
-        // use only HTTP/1.0 (to avoid receiving chunked responses)
+        // Use only HTTP/1.0 (to avoid receiving chunked responses)
         get.setHttp11(false);
-        // Set non-strict http protocol mode.
-        get.setStrictMode(getStrict(curi));
+        // Set strict on the client; whatever the client's mode overrides 
+        // the methods mode inside in the depths of executeMethod.
+        http.setStrictMode(getStrict(curi));
+
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
         	userAgent = controller.getOrder().getUserAgent(curi);
