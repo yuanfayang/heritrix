@@ -185,4 +185,15 @@ public class ReplayCharSequence implements CharSequence {
 //		return sb.toString();
 //	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#finalize()
+	 */
+	protected void finalize() throws Throwable {
+		super.finalize();
+//		if(raFile.getFD().valid()) {
+//			System.out.println("finalize-closing raFile");
+//		}
+		raFile.close();
+	}
+
 }

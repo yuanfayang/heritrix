@@ -31,6 +31,7 @@ public class RecordingOutputStream extends OutputStream {
 	protected int maxSize;
 	protected String backingFilename;
 	protected BufferedOutputStream diskStream;
+	protected FileOutputStream fileStream;
 	protected OutputStream wrappedStream;
 	protected byte[] buffer;
 	protected long position;
@@ -38,7 +39,7 @@ public class RecordingOutputStream extends OutputStream {
 
 	
 	/**
-	 * Create a new RecordingInputStream with the specified parameters.
+	 * Create a new RecordingPutputStream with the specified parameters.
 	 * 
 	 * @param bufferSize
 	 * @param backingFile
@@ -54,7 +55,8 @@ public class RecordingOutputStream extends OutputStream {
 	public void open(OutputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
 		this.position = 0;
-		diskStream = new BufferedOutputStream(new FileOutputStream(backingFilename),4096);
+		fileStream = new FileOutputStream(backingFilename);
+		diskStream = new BufferedOutputStream(fileStream,4096);
 	}
 	
 	/**
@@ -142,6 +144,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void flush() throws IOException {
 		super.flush();
+		diskStream.flush();
 		wrappedStream.flush();
 	}
 	
@@ -196,5 +199,13 @@ public class RecordingOutputStream extends OutputStream {
 		this.size = position;
 	}
 
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#finalize()
+	 */
+	protected void finalize() throws Throwable {
+		assert !fileStream.getFD().valid() : "valid fileStream reached finalize";
+		super.finalize();
+	}
 
 }
