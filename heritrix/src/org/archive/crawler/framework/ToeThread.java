@@ -46,6 +46,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		serialNumber = sn;
 		setName("ToeThread #"+serialNumber);
 		httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
+		lastFinishTime = System.currentTimeMillis();
 	}
 
 
@@ -169,5 +170,63 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	public void setHttpRecorder(HttpRecorder recorder) {
 		httpRecorder = recorder;
 	}
-
+	
+	/**
+	 * Compiles and returns a report on it's status.
+	 * 
+	 * @return
+	 */
+	public String report()
+	{
+		StringBuffer rep = new StringBuffer();
+		
+		rep.append("     Serial number: "+serialNumber+"\n");
+		
+		long now = System.currentTimeMillis();
+		
+		if(lastFinishTime > lastStartTime)
+		{
+			// That means we finished something after we last started something
+			// or in other words we are not working on anything.
+			String time = Long.toString((now-lastFinishTime)/10);
+			int timelength = time.length();
+			rep.append("     Status:    WAITING\n");
+			if(timelength>3)
+			{
+				time = time.substring(0,(timelength-3))+"."+time.substring((timelength-3),timelength)+" sek ago";			
+			}
+			else
+			{
+				time = time + " msek ago";
+			}
+			rep.append("     Finished:  "+time+"\n");
+		}
+		else if(lastStartTime > 0)
+		{
+			// We are working on something
+			rep.append("     Status:    ACTIVE\n");
+			String time = Long.toString((now-lastStartTime)/10);
+			int timelength = time.length();
+			if(timelength>3)
+			{
+				time = time.substring(0,(timelength-3))+"."+time.substring((timelength-3),timelength)+" sek ago";			
+			}
+			else
+			{
+				time = time + " msek ago";
+			}
+			rep.append("     Started:   "+time+"\n");
+			if(currentCuri!=null)
+			{
+				rep.append("     CrawlURI:  "+currentCuri.getURIString()+"\n");
+				rep.append("       Fetch attempts: "+currentCuri.getFetchAttempts()+"\n");
+			}
+			else
+			{
+				rep.append("     CrawlURI:  null\n");
+			}
+		}
+		
+		return rep.toString();		
+	}
 }
