@@ -27,6 +27,7 @@ package org.archive.queue;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -35,9 +36,9 @@ import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
 import org.apache.commons.collections.Predicate;
-import org.archive.io.*;
-import org.archive.io.DevNull;
 import org.archive.io.DiskByteQueue;
+import org.archive.io.HeaderlessObjectInputStream;
+import org.archive.io.HeaderlessObjectOutputStream;
 import org.archive.util.DevUtils;
 
 /**
@@ -55,32 +56,27 @@ import org.archive.util.DevUtils;
  * @author Gordon Mohr
  */
 public class DiskQueue implements Queue, Serializable {
-    /** the directory used to create the temporary files */
-    private File scratchDir;
-
-    /** the prefix for the files created in the scratchDir */
-    String prefix;
-
     /** the number of elements currently in the queue */
     long length;
-
-    /**
-     * The object which deals with serializing the actual bytes to/from disk.
-     */
+    /** top item in queue, pulled into memory for peek() */
+    Object headObject = null;
+    
+    /** the directory used to create the temporary files */
+    private File scratchDir;
+    /** the prefix for the files created in the scratchDir */
+    String prefix;
+    /** The object which shuffles raw bytes to/from disk. */
     DiskByteQueue bytes;
-
-    transient ObjectOutputStream testStream; // to verify that object is serializable
+    // streams for serializing/deserializing
     transient ObjectOutputStream tailStream;
     transient ObjectInputStream headStream;
-
     /**
      * A flag which marks when the lazy initialization is finished, and the
      * object is ready for use
      */
     private boolean isInitialized = false;
-
+    /** whether to reuse any existing pbacking files found */
     private boolean reuse;
-
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
      * given directory, with a given prefix, and reuse any prexisting backing
@@ -122,17 +118,10 @@ public class DiskQueue implements Queue, Serializable {
 
     private void lazyInitialize() throws FileNotFoundException, IOException {
         if(bytes==null) {
- //           if(prefix.equals("DMO.info")) System.out.println("(re)instantiating DiskQueue bytes "+prefix);
             bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
-//          bytes.initializeStreams(0);
-        } else {
- //           if(prefix.equals("DMO.info")) System.out.println("reconnecting DiskQueue bytes "+prefix);
- //           bytes.connect();
-        }
-        testStream = new ObjectOutputStream(new DevNull());
+        } 
         tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
         headStream = new HeaderlessObjectInputStream(bytes.getHeadStream());
-        // tailStream.flush(); // ??
         isInitialized = true;
     }
 
@@ -144,16 +133,17 @@ public class DiskQueue implements Queue, Serializable {
      * @see org.archive.queue.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o){
-        //logger.finest(name+"("+length+"): "+o);
         try {
             if(!isInitialized) {
                 lazyInitialize();
             }
-            // TODO: optimize this, for example by serializing to buffer, then
-            // writing to disk on success
-            testStream.writeObject(o);
-            testStream.reset();
-            tailStream.writeObject(o);
+            try {
+                tailStream.writeObject(o);
+            } catch (NotSerializableException e) {
+                // TODO rewind stream to recoverable point?
+                e.printStackTrace();
+                throw e;
+            }
             tailStream.reset(); // forget state with each enqueue
             length++;
         } catch (NullPointerException npe) {
@@ -178,27 +168,51 @@ public class DiskQueue implements Queue, Serializable {
      * @see org.archive.queue.Queue#dequeue()
      */
     public Object dequeue() {
-        if (isEmpty()) {
-            throw new NoSuchElementException();
-        }
-        Object o;
-        try {
-             if(!isInitialized) {
-                lazyInitialize();
-            }
-            o = headStream.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new NoSuchElementException();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new NoSuchElementException();
-        }
-        // logger.finest(name+"("+length+"): "+o);
+        Object o = peek();
+        headObject = null;
         length--;
         return o;
     }
 
+    /**
+     * @see org.archive.queue.Queue#peek()
+     */
+    public Object peek() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        if(headObject==null) {
+            loadHead();
+        }
+        return headObject;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.queue.Queue#unpeek()
+     */
+    public void unpeek() {
+        // nothing necessary; this queue is never reordered
+        // by later adds (as a priority/tiered queue might be)
+    }
+    
+    /**
+     * 
+     */
+    private void loadHead() {
+        try {
+            if(!isInitialized) {
+               lazyInitialize();
+           }
+           headObject = headStream.readObject();
+       } catch (IOException e) {
+           e.printStackTrace();
+           throw new NoSuchElementException();
+       } catch (ClassNotFoundException e) {
+           e.printStackTrace();
+           throw new NoSuchElementException();
+       }      
+    }
+    
     /**
      * @see org.archive.queue.Queue#length()
      */
@@ -210,7 +224,6 @@ public class DiskQueue implements Queue, Serializable {
      * @see org.archive.queue.Queue#release()
      */
     public void release() {
- //       if(prefix.equals("DMO.info")) System.out.println("releasing DiskQueue "+prefix);
         if (bytes != null) {
             try {
                 releaseStreams();
@@ -228,10 +241,6 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     private void releaseStreams() throws IOException {
-        if(testStream != null) {
-            testStream.close();
-            testStream = null;
-        }
         if(headStream != null) {
             headStream.close();
             headStream = null;
@@ -267,14 +276,6 @@ public class DiskQueue implements Queue, Serializable {
      */
     public void connect() {
         // do nothing -- allow lazy initialization to connect when necessary
-    }
-
-    /**
-     * @see org.archive.queue.Queue#peek()
-     */
-    public Object peek() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
     }
 
     /**
