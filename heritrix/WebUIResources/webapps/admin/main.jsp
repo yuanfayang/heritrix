@@ -1,5 +1,5 @@
-<%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%
 	String sAction = request.getParameter("action");
@@ -58,19 +58,19 @@
 		<%
 			if(handler.isCrawling())
 			{
-				out.println("<a href='main.jsp?action=terminate'>Terminate current job</a> | <a href='options/viewcurrentjob.jsp'>View current job</a> |");
+				out.println("<a href='main.jsp?action=terminate'>Terminate current job</a> | <a href='options/viewcurrentjob.jsp'>View current job</a> | <a href='updatejob.jsp'>Update current job</a> | ");
 			}
 		%>
 		<a href="newjob.jsp">New job</a>
-		| <a href="pendingjobs.jsp">View pending jobs</a> 
-		| <a href="completedjobs.jsp">View completed jobs</a>
-		| <a href="main.jsp?action=gc">Garbage collect</a>
 	<p> OPTIONS
 	
 		<ul>
+			<li><a href="pendingjobs.jsp">View pending jobs</a></li>
+			<li><a href="completedjobs.jsp">View completed jobs</a></li>
 			<li><a href="/admin/options/defaultconf.jsp">Change default job configurations</a></li>
 			<li><a href="/admin/options/viewlogs.jsp">View logs</a></li>
 			<li><a href="#">Update access tool</a></li>
+			<li><a href="main.jsp?action=gc">Garbage collect</a></li>
 		</ul>
 	
 	</body>
