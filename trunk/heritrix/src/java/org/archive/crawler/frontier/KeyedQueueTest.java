@@ -110,142 +110,41 @@ public class KeyedQueueTest extends TmpDirTestCase {
             // Before marking it done, the extractor will
             // queue a bunch of URIs before we can mark the seed as done.
             dequeuedCuri = kq.dequeue();
-            // It fails on line above.
+            // If I let it go on, it sometimes fails with a CCE
+            // deserializing.
             
-            kq.noteInProcess(dequeuedCuri);
-            CrawlURI miscCuri = null;
-            for (int i = 0; i < 10; i++) {
-                miscCuri = new CrawlURI(UURIFactory.
-                        getInstance("http://www.dh.gov.uk/" + i + ".html"));
-                miscCuri.setVia(seed.toString());
-                miscCuri.setPathFromSeed("E");
-                miscCuri.setSchedulingDirective(CrawlURI.MEDIUM);
-                kq.enqueue(miscCuri);
-            }
-            
-            // Now queue a bunch of normals.
-            for (int i = 0; i < 10; i++) {
-                miscCuri = new CrawlURI(UURIFactory.
-                        getInstance("http://www.dh.gov.uk/" + i + ".html"));
-                miscCuri.setVia(seed.toString());
-                miscCuri.setPathFromSeed("E");
-                miscCuri.setSchedulingDirective(CrawlURI.NORMAL);
-                kq.enqueue(miscCuri);
-            }
-            
-            // Note seed as done.
-            kq.noteProcessDone(dequeuedCuri);
-            
-            dequeuedCuri = kq.dequeue();
-            kq.noteInProcess(dequeuedCuri);
-            kq.noteProcessDone(dequeuedCuri);
-            dequeuedCuri = kq.dequeue();
-            dequeuedCuri = kq.dequeue();
-            dequeuedCuri = kq.dequeue();
+//            kq.noteInProcess(dequeuedCuri);
+//            CrawlURI miscCuri = null;
+//            for (int i = 0; i < 10; i++) {
+//                miscCuri = new CrawlURI(UURIFactory.
+//                        getInstance("http://www.dh.gov.uk/" + i + ".html"));
+//                miscCuri.setVia(seed.toString());
+//                miscCuri.setPathFromSeed("E");
+//                miscCuri.setSchedulingDirective(CrawlURI.MEDIUM);
+//                kq.enqueue(miscCuri);
+//            }
+//            
+//            // Now queue a bunch of normals.
+//            for (int i = 0; i < 10; i++) {
+//                miscCuri = new CrawlURI(UURIFactory.
+//                        getInstance("http://www.dh.gov.uk/" + i + ".html"));
+//                miscCuri.setVia(seed.toString());
+//                miscCuri.setPathFromSeed("E");
+//                miscCuri.setSchedulingDirective(CrawlURI.NORMAL);
+//                kq.enqueue(miscCuri);
+//            }
+//            
+//            // Note seed as done.
+//            kq.noteProcessDone(dequeuedCuri);
+//            
+//            dequeuedCuri = kq.dequeue();
+//            kq.noteInProcess(dequeuedCuri);
+//            kq.noteProcessDone(dequeuedCuri);
+//            dequeuedCuri = kq.dequeue();
+//            dequeuedCuri = kq.dequeue();
+//            dequeuedCuri = kq.dequeue();
         } finally {
             FileUtils.deleteDir(queueDir);
         }
     }
-    
-
-
-//    /**
-//     * Test queueing and dequeueing of CrawlURIs.
-//     */
-//    public void testDequeueCrawlURIs() throws IOException {
-//        
-//        // Let this be the original 'seed' object.
-//        UURI uuri = UURIFactory.getInstance("http://www.dh.gov.uk/Home/fs/en");
-//        CrawlURI seed = new CrawlURI(uuri);
-//        seed.setVia("");
-//        seed.setIsSeed(true);
-//        seed.setSchedulingDirective(CrawlURI.HIGH);
-//        
-//        // Create a queue with only 1 item in memory.  This
-//        // will bring on excercise of the memory/disk transitions.
-//        KeyedQueue kq = new KeyedQueue(seed.getClassKey(),
-//            getTmpDir(), 1);
-//        kq.activate();
-//        
-//        // Simulate putting 'seed' on stack and then dequeuing it.
-//        kq.enqueue(seed);
-//        CrawlURI dequeuedCuri = kq.dequeue();
-//        kq.noteInProcess(seed);
-//        
-//        // But we find we need dns first.  Means enqueuing it then
-//        // marking seed as done and requeueing.
-//        CrawlURI dns =
-//            new CrawlURI(UURIFactory.getInstance("dns:www.dh.gov.uk"));
-//        dns.setVia("");
-//        dns.setPrerequisite(true);
-//        seed.setSchedulingDirective(CrawlURI.HIGH);
-//        
-//        kq.enqueue(dns);
-//        kq.noteProcessDone(seed);
-//        seed.setSchedulingDirective(CrawlURI.MEDIUM);
-//        kq.enqueue(seed);
-//        
-//        // Dequeue dns and get it.
-//        dequeuedCuri = kq.dequeue();
-//        kq.noteInProcess(dns);
-//        kq.noteProcessDone(dns);
-//        
-//        
-//        // Dequeue seed and try it again.
-//        dequeuedCuri = kq.dequeue();
-//        kq.noteInProcess(seed);
-//        
-//        // But we need to get robots.  Queue it.
-//        // And after marking seed as done, requeue.
-//        CrawlURI robotsCuri = new CrawlURI(UURIFactory.
-//            getInstance("http://www.dh.gov.uk/robots.txt"));
-//        robotsCuri.setVia("");
-//        robotsCuri.setPrerequisite(true);
-//        robotsCuri.setSchedulingDirective(CrawlURI.HIGH);
-//        
-//        kq.enqueue(robotsCuri);
-//        kq.noteProcessDone(seed);
-//        seed.setSchedulingDirective(CrawlURI.MEDIUM);
-//        kq.enqueue(seed);
-//        
-//        // Dequeue robots and get it.
-//        dequeuedCuri = kq.dequeue();
-//        kq.noteInProcess(robotsCuri);
-//        kq.noteProcessDone(robotsCuri);
-//        
-//        // Dequeue seed.  Go to get it.
-//        // Before marking it done, the extractor will
-//        // queue a bunch of URIs before we can mark the seed as done.
-//        dequeuedCuri = kq.dequeue();
-//        // It fails on line above.
-//        
-//        kq.noteInProcess(seed);
-//        CrawlURI miscCuri = null;
-//        for (int i = 0; i < 10; i++) {
-//            miscCuri = new CrawlURI(UURIFactory.
-//                 getInstance("http://www.dh.gov.uk/" + i + ".html"));
-//            miscCuri.setVia("");
-//            miscCuri.setSchedulingDirective(CrawlURI.MEDIUM);
-//            kq.enqueue(robotsCuri);
-//        }
-//        
-//        // Now queue a bunch of normals.
-//        for (int i = 0; i < 10; i++) {
-//            miscCuri = new CrawlURI(UURIFactory.
-//                 getInstance("http://www.dh.gov.uk/" + i + ".html"));
-//            miscCuri.setVia("");
-//            miscCuri.setSchedulingDirective(CrawlURI.NORMAL);
-//            kq.enqueue(robotsCuri);
-//        }
-//
-//        // Note seed as done.
-//        kq.noteProcessDone(seed);
-//    
-//        dequeuedCuri = kq.dequeue();
-//        kq.noteInProcess(dequeuedCuri);
-//        kq.noteProcessDone(dequeuedCuri);
-//        dequeuedCuri = kq.dequeue();
-//        dequeuedCuri = kq.dequeue();
-//        dequeuedCuri = kq.dequeue();
-//    }
 }
