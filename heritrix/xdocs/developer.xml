@@ -108,6 +108,21 @@
                 <p>Indents are 4 charcters wide.</p>
             </subsection>
 
+            <subsection name="Function/Block Bracket Open on Same Line">
+                <p>Preference is to have the bracket that opens functions
+                and blocks on same line as function declaration or 
+                block test rather than on a new line on of its ownsome.  
+                For example:<source>if (true) {
+    return true;
+}
+                    </source>
+                    and
+                    <source>public void main (String [] args) {
+    System.println("Hello world");
+}</source>
+                    </p>
+            </subsection>
+
             <subsection name="File comment">
                 <p>Here is the eclipse
                     template we use for the file header comment:
