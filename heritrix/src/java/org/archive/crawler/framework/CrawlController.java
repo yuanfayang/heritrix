@@ -479,11 +479,11 @@ public class CrawlController implements Serializable {
                 order.setAttribute((Frontier) frontier);
             }
 
-            // try to initialize each scope and frontier from the config file
-            //scope.initialize(this);
+            // try to initialize frontier from the config file
             try {
                 frontier.initialize(this);
 
+                // TODO: make recover path relative to job root dir
                 String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
                 if(recoverPath.length()>0) {
                     try {

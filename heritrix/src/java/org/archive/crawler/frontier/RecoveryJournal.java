@@ -141,16 +141,16 @@ public class RecoveryJournal {
      * Utility method for scanning a recovery journal and applying it to
      * a Frontier.
      * 
-     * @param pathToLog Recover log path.
+     * @param source Recover log path.
      * @param frontier Frontier reference.
      * 
      * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
      */
-    public static void importRecoverLog(String pathToLog, URIFrontier frontier)
+    public static void importRecoverLog(File source, URIFrontier frontier)
             throws IOException {
         // scan log for all 'Fs' lines: add as 'alreadyIncluded'
         BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new GZIPInputStream(new FileInputStream(pathToLog))));
+                new GZIPInputStream(new FileInputStream(source))));
         String read;
         try {
             while ((read = reader.readLine()) != null) {
@@ -174,7 +174,7 @@ public class RecoveryJournal {
         // scan log for all 'F+' lines: if not alreadyIncluded, schedule for
         // visitation
         reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(
-                new FileInputStream(pathToLog))));
+                new FileInputStream(source))));
         try {
             while ((read = reader.readLine()) != null) {
                 if (read.startsWith(F_ADD)) {
@@ -192,7 +192,7 @@ public class RecoveryJournal {
                             caUri.setVia(args[3]);
                         } else {
                             // filler
-                            caUri.setVia(pathToLog);
+                            caUri.setVia(source.getPath());
                         }
                         frontier.schedule(caUri);
                     } catch (URIException e) {
