@@ -1,4 +1,4 @@
-/* HttpRecorderSSLProtocolSocketFactory
+/* ConfigurableTrustManagerProtocolSocketFactory
  * 
  * Created on Feb 18, 2004
  *
@@ -41,35 +41,14 @@ import org.archive.util.ConfigurableX509TrustManager;
 
 /**
  * Implementation of the commons-httpclient SSLProtocolSocketFactory so we 
- * can return SSLSockets whose streams are wrapped in HttpRecorders and
- * whose trust manager is {@link org.archive.util.ConfigurableX509TrustManager}.
- * 
- * Implementation is done by getting insecure sockets from a 
- * {@link org.archive.httpclient.HttpRecorderSocketFactory} and then wrapping
- * these in ssl using the SSLSocketFactory#createSocket method that takes 
- * an insecure socket.
- * 
- * <p>Alternate implementations were awkward and different from the pattern used
- * for insecure sockets because SSLSockets and SSLSocketFactories are not
- * overrideable.  SSLSocket is an abstract type which means
- * need to keep around an instance of SSLSocket so have means for
- * realizing the abstract methods.  SSLSocketFactory is also awkward for same
- * reason in that it has abstract methods that need implementations.
- * 
- * <p>In an alternate implementation we first made our own SSLContext w/ an
- * amended TrustManger installed.  From here we then got a SSLSocketFactory.
- * Then, on each socket returned out of this factory, we wrapped it w/ a new
- * socket class wherein we had to implement every method adapting all calls to
- * our new socket so they made it through to the wrapped socket just so we could 
- * intercept the getting of socket input/output streams.  Putting this
- * implementation under httpclient generated complaints from its socket
- * pooling on close; it was saying the socket had never been opened by the pool.
+ * can return SSLSockets whose trust manager is
+ * {@link org.archive.util.ConfigurableX509TrustManager}.
  * 
  * @author stack
  * @version $Id$
- * @see org.archive.httpclient.HttpRecorderSocketFactory
+ * @see org.archive.util.ConfigurableX509TrustManager
  */
-public class HttpRecorderSSLProtocolSocketFactory
+public class ConfigurableTrustManagerProtocolSocketFactory
     implements SecureProtocolSocketFactory
 {   
     /**
@@ -81,21 +60,8 @@ public class HttpRecorderSSLProtocolSocketFactory
      */
     private SSLSocketFactory sslfactory = null;
     
-    /**
-     * An insecure socket factory that gives out sockets that records all 
-     * reads and writes via a HttpRecorder.
-     */
-    private SocketFactory factory = HttpRecorderSocketFactory.getDefault();
     
-    /**
-     * Autoclose setting.
-     * 
-     * Set it to true for now.
-     */
-    private static final boolean AUTOCLOSE = true;
-    
-    
-    public HttpRecorderSSLProtocolSocketFactory()
+    public ConfigurableTrustManagerProtocolSocketFactory()
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -111,7 +77,7 @@ public class HttpRecorderSSLProtocolSocketFactory
      * @throws KeyStoreException
      * @see ConfigurableX509TrustManager
      */
-    public HttpRecorderSSLProtocolSocketFactory(String level)
+    public ConfigurableTrustManagerProtocolSocketFactory(String level)
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -132,16 +98,13 @@ public class HttpRecorderSSLProtocolSocketFactory
             int clientPort)
         throws IOException, UnknownHostException
     {
-        return createSocket(
-            this.factory.createSocket(host, port, clientHost, clientPort),
-                host, port, AUTOCLOSE);
+        return this.sslfactory.createSocket(host, port, clientHost, clientPort);
     }
 
     public Socket createSocket(String host, int port)
         throws IOException, UnknownHostException
     {
-        return createSocket(this.factory.createSocket(host, port), host, port,
-            AUTOCLOSE);
+        return this.sslfactory.createSocket(host, port);
     }
 
     public Socket createSocket(Socket socket, String host, int port,

@@ -43,7 +43,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
-import org.archive.httpclient.HttpRecorderSSLProtocolSocketFactory;
+import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ConfigurableX509TrustManager;
@@ -167,9 +167,8 @@ public class FetchHTTP
         GetMethod get = new GetMethod(curi.getUURI().getUriString());
         configureGetMethod(curi, get);
 
-        // Setup recording of data -- for subsequent processor modules
+        // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
-        get.setHttpRecorder(rec);
         
         try {
             // TODO: make this initial reading subject to the same
@@ -223,17 +222,17 @@ public class FetchHTTP
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
-        long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
+        // Set current httpRecorder into curi for convenience of subsequent
+        // processors.
+        curi.setHttpRecorder(rec);
+        
+        long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
         logger.fine(curi.getUURI().getUriString() + ": " +
             get.getStatusCode() + " " + contentSize);
         curi.setContentSize(contentSize);
         curi.setFetchStatus(get.getStatusCode());
         Header ct = get.getResponseHeader("content-type");
         curi.setContentType((ct == null)? null: ct.getValue());
-        
-        // Set current httpRecorder into curi for convenience of subsequent
-        // processors.
-        curi.setHttpRecorder(rec);
 
         // Save off the GetMethod just in case needed by subsequent processors.
         curi.getAList().putObject(A_HTTP_TRANSACTION, get);
@@ -308,20 +307,12 @@ public class FetchHTTP
             connectionManager.setMaxTotalConnections(getController().
                 getToeCount());
             this.http = new HttpClient(connectionManager);
-            
-            // Register our own protocol handlers for http and https.
-            /*
-            Protocol.registerProtocol("http", new Protocol("http", 
-                new HttpRecorderProtocolSocketFactory(), 80));
-                */
+
             try
             {
-                // Register our heritrix sslsocketfactory.
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
-                Protocol.registerProtocol("https", 
-                    new Protocol("https", 
-                        new HttpRecorderSSLProtocolSocketFactory(trustLevel),
-                    443));
+                Protocol.registerProtocol("https", new Protocol("https", 
+                    new ConfigurableTrustManagerProtocolSocketFactory(trustLevel), 443));
             }
             
             catch (Exception e)

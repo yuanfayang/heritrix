@@ -112,5 +112,8 @@ public class CrawlStateUpdater
                 }
             }
         }
+        
+        // Clear out the http recorder that was set into the CrawlURI.
+        curi.setHttpRecorder(null);
     }
 }

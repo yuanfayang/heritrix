@@ -7,14 +7,14 @@
 	apache <a href="http://jakarta.apache.org/commons/httpclient/">jakarta
 	commons httpclient</a>.
 	
-	<h3>HttpRecorderProtocolSocketFactory</h3>
-	<p>Returns sockets that have their streams wrapped by 
-	{@link org.archive.util.HttpRecorder}.</p>
-
-	<h3>HttpRecorderSSLProtocolSocketFactory</h3>
-	<p>Returns sockets that have their streams wrapped by 
-	{@link org.archive.util.HttpRecorder} AND they have configurable
-    TrustManager.  Built upon HttpRecorderProtocolSocketFactory.</p>
+	<h3>HttpRecorderGetMethod</h3>
+	<p>Class that the passed HttpRecorder w/ boundary between
+	HTTP header and content.  Also forces a close on the response on
+	call to releaseConnection.</p>
+	
+	<h3>ConfigurableTrustManagerProtocolSocketFactory</h3>
+	<p>A protocol socket factory that allows setting of trust level on
+	construction.</p>
 
     <h3>References</h3>
     <p><a
