@@ -1,9 +1,9 @@
 /* ArchiveUtilsTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created Tue Jan 20 14:17:59 PST 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -33,14 +33,14 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for ArchiveUtils
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $Id$
  */
 public class ArchiveUtilsTest extends TestCase {
     /**
      * Create a new ArchiveUtilsTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public ArchiveUtilsTest(final String testName) {
@@ -49,7 +49,7 @@ public class ArchiveUtilsTest extends TestCase {
 
     /**
      * run all the tests for ArchiveUtilsTest
-     * 
+     *
      * @param argv the command line arguments
      */
     public static void main(String argv[]) {
@@ -58,7 +58,7 @@ public class ArchiveUtilsTest extends TestCase {
 
     /**
      * return the suite of tests for ArchiveUtilsTest
-     * 
+     *
      * @return the suite of test
      */
     public static Test suite() {
@@ -108,9 +108,9 @@ public class ArchiveUtilsTest extends TestCase {
         assertEquals("first fourteen digits same as date14", date14, date17.substring(0, 14));
     }
 
-    /** 
+    /**
      * Check that parseXXDigitDate() works
-     * 
+     *
      * @throws ParseException
      */
     public void testParseXXDigitDate() throws ParseException {

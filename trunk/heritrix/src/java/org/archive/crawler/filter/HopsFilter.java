@@ -33,13 +33,13 @@ import org.archive.crawler.framework.Filter;
 /**
  * Accepts (returns  for)) for all CandidateURIs passed in
  * with a link-hop-count greater than the max-link-hops
- * value. 
- * 
+ * value.
+ *
  * @author gojomo
  *
  */
 public class HopsFilter extends Filter {
-	/**
+    /**
      * @param name
      */
     public HopsFilter(String name) {
@@ -47,25 +47,25 @@ public class HopsFilter extends Filter {
     }
 
     int maxLinkHops = Integer.MAX_VALUE;
-	int maxTransHops = Integer.MAX_VALUE;
-	
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
-	 */
-	protected boolean innerAccepts(Object o) {
-		if(! (o instanceof CandidateURI)) {
-			return false;
-		}
-		String path = ((CandidateURI)o).getPathFromSeed();
-		int linkCount = 0;
-		int transCount = 0;
-		for(int i=path.length()-1;i>=0;i--) {
-			if(path.charAt(i)=='L') {
-				linkCount++;
-			} else if (linkCount==0) {
-				transCount++;
-			}
-		}
+    int maxTransHops = Integer.MAX_VALUE;
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
+     */
+    protected boolean innerAccepts(Object o) {
+    	if(! (o instanceof CandidateURI)) {
+    		return false;
+    	}
+    	String path = ((CandidateURI)o).getPathFromSeed();
+    	int linkCount = 0;
+    	int transCount = 0;
+    	for(int i=path.length()-1;i>=0;i--) {
+    		if(path.charAt(i)=='L') {
+    			linkCount++;
+    		} else if (linkCount==0) {
+    			transCount++;
+    		}
+    	}
         if (o instanceof CrawlURI) {
             CrawlURI curi = (CrawlURI) o;
             Scope scope = (Scope) globalSettings().getModule(Scope.ATTR_NAME);
@@ -77,13 +77,13 @@ public class HopsFilter extends Filter {
                 e.printStackTrace();
             }
         }
-        
-		return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
-	}
+
+    	return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
+    }
 
 /*
-	public void initialize(CrawlerSettings settings) {
-		super.initialize(settings);
+    public void initialize(CrawlerSettings settings) {
+    	super.initialize(settings);
         Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
         try {
             maxLinkHops = ((Integer) scope.getAttribute(settings, Scope.ATTR_MAX_LINK_HOPS)).intValue();
@@ -92,6 +92,6 @@ public class HopsFilter extends Filter {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-	}
+    }
 */
 }

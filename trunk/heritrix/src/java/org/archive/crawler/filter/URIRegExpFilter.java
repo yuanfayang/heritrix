@@ -35,8 +35,8 @@ import org.archive.util.TextUtils;
 
 /**
  * Compares passed object -- a CrawlURI, UURI, or String --
- * against a regular expression, accepting matches. 
- * 
+ * against a regular expression, accepting matches.
+ *
  * @author Gordon Mohr
  */
 public class URIRegExpFilter extends Filter {
@@ -51,20 +51,20 @@ public class URIRegExpFilter extends Filter {
                 new SimpleType(ATTR_REGEXP, "Regular expression", ""));
     }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
-	 */
-	protected boolean innerAccepts(Object o) {
-		String input = null;
-		// TODO consider changing this to ask o for its matchString
-		if(o instanceof CandidateURI) {
-			input = ((CandidateURI)o).getURIString();
-		} else if (o instanceof UURI ){
-			input = ((UURI)o).getUriString();
-		} else {
-			//TODO handle other inputs
-			input = o.toString();
-		}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
+     */
+    protected boolean innerAccepts(Object o) {
+    	String input = null;
+    	// TODO consider changing this to ask o for its matchString
+    	if(o instanceof CandidateURI) {
+    		input = ((CandidateURI)o).getURIString();
+    	} else if (o instanceof UURI ){
+    		input = ((UURI)o).getUriString();
+    	} else {
+    		//TODO handle other inputs
+    		input = o.toString();
+    	}
         CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
         try {
             return TextUtils.matches(
@@ -72,5 +72,5 @@ public class URIRegExpFilter extends Filter {
         } catch (AttributeNotFoundException e) {
             return true;
         }
-	}
+    }
 }

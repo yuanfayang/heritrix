@@ -1,23 +1,23 @@
 /* ARCWriterPoolTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 22, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -45,7 +45,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
         cleanUpOldFiles("TEST");
-        ARCWriterPool pool = new ARCWriterPool(getTmpDir(), "TEST", 
+        ARCWriterPool pool = new ARCWriterPool(getTmpDir(), "TEST",
             true, MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
         ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
         final String CONTENT = "Any old content";
@@ -58,7 +58,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase
             writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
                 1234567890, CONTENT.length(), baos);
         }
-        
+
         // Pool is maxed out.  Try and get a new ARCWriter.  We'll block for
         // MAX_WAIT_MILLISECONDS.  Should get exception.
         long start = (new Date()).getTime();
@@ -81,13 +81,13 @@ public class ARCWriterPoolTest extends TmpDirTestCase
             }
         }
         assertTrue("Did not get NoSuchElementException", isException);
-        
+
         for (int i = (MAX_ACTIVE - 1); i >= 0; i--)
         {
             pool.returnARCWriter(writers[i]);
             assertEquals("Number active", i, pool.getNumActive());
             assertEquals("Number idle", MAX_ACTIVE - pool.getNumActive(),
-                    pool.getNumIdle());           
-        }     
+                    pool.getNumIdle());
+        }
     }
 }

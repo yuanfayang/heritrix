@@ -1,7 +1,7 @@
 /* CrawlSettingsSAXHandler
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 8, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -40,9 +40,9 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /** An SAX element handler that updates a CrawlerSettings object.
- * 
+ *
  * This is a helper class for the XMLSettingsHandler.
- * 
+ *
  * @author John Erik Halse
  */
 public class CrawlSettingsSAXHandler extends DefaultHandler {
@@ -60,7 +60,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private String value;
 
     /** Creates a new CrawlSettingsSAXHandler.
-     * 
+     *
      * @param settings the settings object that should be updated from
      *        this handler.
      */
@@ -175,9 +175,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     }
 
     /** Superclass of all the elementhandlers.
-     * 
+     *
      * This class should be subclassed for the different XML-elements.
-     * 
+     *
      * @author John Erik Halse
      */
     private class ElementHandler {
@@ -201,9 +201,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     }
 
     /** Handle the root element.
-     * 
+     *
      * This class checks that the root element is of the right type.
-     * 
+     *
      * @author John Erik Halse
      */
     private class RootHandler extends ElementHandler {

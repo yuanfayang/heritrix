@@ -34,7 +34,7 @@ import org.archive.crawler.datamodel.settings.StringList;
 /**
  * This class represent the policy to which Robots.txt files is
  * to honored.
- * 
+ *
  * Five kinds of policies exist:
  * <dl>
  * <dt>classic:</dt>
@@ -43,14 +43,14 @@ import org.archive.crawler.datamodel.settings.StringList;
  *   <dd>ignore robots.txt directives entirely</dd>
  * <dt>custom:</dt>
  *   <dd>obey a specific operator-entered set of robots.txt directives for a given host</dd>
- * <dt>most-favored:</dt>  
+ * <dt>most-favored:</dt>
  *   <dd>obey the most liberal restrictions offered (if *any* crawler is allowed to get a page, get it)</dd>
  * <dt>most-favored-set:</dt>
  *   <dd>given some set of user-agent patterns, obey the most liberal restriction offered to any</dd>
  * </dl>
- * 
+ *
  * The two last ones has the opportunity of adopting a different user-agent to reflect the restrictions we've opted to use.
- * 
+ *
  * @author John Erik Halse
  *
  */
@@ -58,45 +58,45 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.RobotsHonoringPolicy");
 
-	public final static int CLASSIC = 0;
-	public final static int IGNORE = 1;
-	public final static int CUSTOM = 2;
-	public final static int MOST_FAVORED = 3;
-	public final static int MOST_FAVORED_SET = 4;
-	
+    public final static int CLASSIC = 0;
+    public final static int IGNORE = 1;
+    public final static int CUSTOM = 2;
+    public final static int MOST_FAVORED = 3;
+    public final static int MOST_FAVORED_SET = 4;
+
     static final String ATTR_NAME = "robots-honoring-policy";
     static final String ATTR_TYPE = "type";
     static final String ATTR_MASQUERADE = "masquerade";
     static final String ATTR_CUSTOM_ROBOTS = "custom-robots";
     static final String ATTR_USER_AGENTS = "user-agents";
 
-	/**
-	 * Creates a new instance of RobotsHonoringPolicy.
-	 * 
-	 * @param name the name of the RobotsHonoringPolicy attirubte.
-	 */
-	public RobotsHonoringPolicy(String name) {
+    /**
+     * Creates a new instance of RobotsHonoringPolicy.
+     *
+     * @param name the name of the RobotsHonoringPolicy attirubte.
+     */
+    public RobotsHonoringPolicy(String name) {
         super(name, "Robots honoring policy");
 
         String[] allowedTypes = new String[] {"classic", "ignore", "custom", "most-favored", "most-favored-set"};
-        
+
         addElementToDefinition(new SimpleType(ATTR_TYPE, "Policy type", "classic", allowedTypes));
         addElementToDefinition(new SimpleType(ATTR_MASQUERADE, "Should we masquerade as another user agent", new Boolean(false)));
         addElementToDefinition(new SimpleType(ATTR_CUSTOM_ROBOTS, "Custom robots to use if type is custom", ""));
         addElementToDefinition(new StringList(ATTR_USER_AGENTS, "User agents"));
-	}
-    
+    }
+
     public RobotsHonoringPolicy() {
         this(ATTR_NAME);
     }
-	
-	/**
-	 * If policy-type is most favored crawler of set, then this method
-	 * gets a list of all useragents in that set.
-	 * 
-	 * @return List of Strings with user agents
-	 */
-	public StringList getUserAgents(CrawlerSettings settings) {
+
+    /**
+     * If policy-type is most favored crawler of set, then this method
+     * gets a list of all useragents in that set.
+     *
+     * @return List of Strings with user agents
+     */
+    public StringList getUserAgents(CrawlerSettings settings) {
         if (isType(settings, RobotsHonoringPolicy.MOST_FAVORED_SET)) {
             try {
                 return (StringList) getAttribute(settings, ATTR_USER_AGENTS);
@@ -104,18 +104,18 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
                 logger.severe(e.getMessage());
             }
         }
-		return null;
-	}
-	
-	/**
-	 * This method returns true if the crawler should masquerade as the user agent
-	 * which restrictions it opted to use.
-	 * 
-	 * (Only relevant for  policy-types: most-favored and most-favored-set).
-	 * 
-	 * @return true if we should masquerade
-	 */
-	public boolean shouldMasquerade(CrawlURI curi) {
+    	return null;
+    }
+
+    /**
+     * This method returns true if the crawler should masquerade as the user agent
+     * which restrictions it opted to use.
+     *
+     * (Only relevant for  policy-types: most-favored and most-favored-set).
+     *
+     * @return true if we should masquerade
+     */
+    public boolean shouldMasquerade(CrawlURI curi) {
         try {
             return ((Boolean) getAttribute(
                 getSettingsFromObject(curi), ATTR_MASQUERADE)).booleanValue();
@@ -123,14 +123,14 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
             logger.severe(e.getMessage());
             return false;
         }
-	}
-	
-	/**
-	 * Get the supplied custom robots.txt
-	 * 
-	 * @return String with content of alternate robots.txt 
-	 */
-	public String getCustomRobots(CrawlerSettings settings) {
+    }
+
+    /**
+     * Get the supplied custom robots.txt
+     *
+     * @return String with content of alternate robots.txt
+     */
+    public String getCustomRobots(CrawlerSettings settings) {
         if(isType(settings, RobotsHonoringPolicy.CUSTOM)) {
             try {
                 return (String) getAttribute(settings, ATTR_CUSTOM_ROBOTS);
@@ -138,21 +138,21 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
                 logger.severe(e.getMessage());
             }
         }
-		return null;
-	}
+    	return null;
+    }
 
-	/**
-	 * Get the policy-type.
-	 * 
-	 * @see #CLASSIC
-	 * @see #IGNORE
-	 * @see #CUSTOM
-	 * @see #MOST_FAVORED
-	 * @see #MOST_FAVORED_SET
-	 * 
-	 * @return policy type
-	 */
-	public int getType(CrawlerSettings settings) {
+    /**
+     * Get the policy-type.
+     *
+     * @see #CLASSIC
+     * @see #IGNORE
+     * @see #CUSTOM
+     * @see #MOST_FAVORED
+     * @see #MOST_FAVORED_SET
+     *
+     * @return policy type
+     */
+    public int getType(CrawlerSettings settings) {
         int type = CLASSIC;
         try {
             String typeName = (String) getAttribute(settings, "type");
@@ -172,16 +172,16 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-		return type;
-	}
-	
-	/**
-	 * Check if policy is of a certain type.
-	 * 
+    	return type;
+    }
+
+    /**
+     * Check if policy is of a certain type.
+     *
      * @param An object that can be resolved into a settings object.
-	 * @param type the type to check against.
-	 * @return true if the policy is of the submitted type
-	 */
+     * @param type the type to check against.
+     * @return true if the policy is of the submitted type
+     */
     public boolean isType(Object o, int type) {
         return type == getType(getSettingsFromObject(o));
     }

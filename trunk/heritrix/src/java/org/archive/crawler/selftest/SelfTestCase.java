@@ -317,7 +317,7 @@ public class SelfTestCase extends TestCase
     {
         return SelfTestCase.htdocs;
     }
-    
+
     /**
      * @return Returns the crawlJob.
      */

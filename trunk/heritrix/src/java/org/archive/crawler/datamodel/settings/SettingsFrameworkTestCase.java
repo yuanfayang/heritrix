@@ -1,7 +1,7 @@
 /* SettingsFrameworkTestCase
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Feb 2, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -36,7 +36,7 @@ import org.archive.util.TmpDirTestCase;
 
 /** Set up a couple of settings to test different functions of the settings
  * framework.
- * 
+ *
  * @author John Erik Halse
  */
 public class SettingsFrameworkTestCase extends TmpDirTestCase {
@@ -76,13 +76,13 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase {
         perHostSettings = settingsHandler.getOrCreateSettingsObject("www.archive.org");
 
         ServerCache serverCache = new ServerCache(getSettingsHandler());
-        
+
         unMatchedURI = new CrawlURI(UURI.createUURI("http://localhost.com/index.html"));
         unMatchedURI.setServer(serverCache.getServerFor(unMatchedURI));
-        
+
         matchDomainURI = new CrawlURI(UURI.createUURI("http://audio.archive.org/index.html"));
         matchDomainURI.setServer(serverCache.getServerFor(matchDomainURI));
-        
+
         matchHostURI = new CrawlURI(UURI.createUURI("http://www.archive.org/index.html"));
         matchHostURI.setServer(serverCache.getServerFor(matchHostURI));
     }

@@ -36,16 +36,16 @@ import org.archive.util.TextUtils;
 
 /**
  * Processes Javascript files for strings that are likely to be
- * crawlable URIs. 
- * 
+ * crawlable URIs.
+ *
  * @author gojomo
  *
  */
 public class ExtractorJS extends Processor implements CoreAttributeConstants {
     private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
-	static final String ESCAPED_AMP = "&amp;";
-	static final String WHITESPACE = "\\s";
+    static final String ESCAPED_AMP = "&amp;";
+    static final String WHITESPACE = "\\s";
 
     // finds strings in Javascript
     // (areas between paired ' or " characters, possibly backslash-quoted
@@ -59,13 +59,13 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     static final String STRING_URI_EXTRACTOR =
      "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)";
 
-	// finds strings in javascript likely to be URIs/paths
-	// guessing based on '.' in string, so if highly likely to 
-	// get gifs/etc, unable to get many other paths
-	// will find false positives
-	// TODO: add '/' check, suppress strings being concatenated via '+'?
-	static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
-	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";	
+    // finds strings in javascript likely to be URIs/paths
+    // guessing based on '.' in string, so if highly likely to
+    // get gifs/etc, unable to get many other paths
+    // will find false positives
+    // TODO: add '/' check, suppress strings being concatenated via '+'?
+    static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
+     "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
 
     protected long numberOfCURIsHandled = 0;
     protected static long numberOfLinksExtracted = 0;
@@ -77,52 +77,52 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         super(name, "Java Script extractor");
     }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
-	 */
-	public void innerProcess(CrawlURI curi) {
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public void innerProcess(CrawlURI curi) {
 
-		if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-			return;
-		}
-		
-		GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-		Header contentType = get.getResponseHeader("Content-Type");
-		if ((contentType==null)) {
-			return;
-		}
-		String mimeType = contentType.getValue();
-		if((mimeType.indexOf("javascript")<0)
-		    &&(mimeType.indexOf("jscript")<0)
-		    &&(mimeType.indexOf("ecmascript")<0)) {
-			return;
-		}
-        
+    	if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+    		return;
+    	}
+
+    	GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+    	Header contentType = get.getResponseHeader("Content-Type");
+    	if ((contentType==null)) {
+    		return;
+    	}
+    	String mimeType = contentType.getValue();
+    	if((mimeType.indexOf("javascript")<0)
+    	    &&(mimeType.indexOf("jscript")<0)
+    	    &&(mimeType.indexOf("ecmascript")<0)) {
+    		return;
+    	}
+
         numberOfCURIsHandled++;
-				
-		CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
-		
-		if (cs==null) {
-			// TODO: note problem
-			return;
-		}
-		
-		try {
+
+    	CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
+
+    	if (cs==null) {
+    		// TODO: note problem
+    		return;
+    	}
+
+    	try {
             numberOfLinksExtracted += considerStrings(curi, cs);
-		} catch (StackOverflowError e) {
-			// TODO Auto-generated catch block
-			DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
-		}
+    	} catch (StackOverflowError e) {
+    		// TODO Auto-generated catch block
+    		DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
+    	}
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-	}
-    
+    }
+
     public static long considerStrings(CrawlURI curi, CharSequence cs) {
         long foundLinks = 0;
         Matcher strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
         while(strings.find()) {
-        	CharSequence subsequence = cs.subSequence(strings.start(2), strings.end(2));
+            CharSequence subsequence = cs.subSequence(strings.start(2), strings.end(2));
             Matcher uri = TextUtils.getMatcher(STRING_URI_EXTRACTOR, subsequence);
-        	if(uri.matches()) {
+            if(uri.matches()) {
                 String string = uri.group();
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, "&");
                 foundLinks++;
@@ -145,7 +145,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         ret.append("  Function:          Link extraction on JavaScript code\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-        
+
         return ret.toString();
     }
 }

@@ -1,23 +1,23 @@
 /* TmpDirTestCase
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 31, 2003.
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,9 @@ import junit.framework.TestCase;
 
 
 /**
- * Base class for TestCases that want access to a tmp dir for the writing 
+ * Base class for TestCases that want access to a tmp dir for the writing
  * of files.
- * 
+ *
  * @author stack
  */
 public class TmpDirTestCase extends TestCase
@@ -43,24 +43,24 @@ public class TmpDirTestCase extends TestCase
      * which we can safely write files.
      */
     private static final String TEST_TMP_SYSTEM_PROPERTY_NAME = "testtmpdir";
-    
+
     /**
      * Default test tmp.
      */
     private static final String DEFAULT_TEST_TMP_DIR = File.separator + "tmp" +
         File.separator + "heritrix-junit-tests";
-    
+
     /**
      * Directory to write temporary files to.
      */
     private File tmpDir = null;
-    
+
     /**
-     * Store in here the file prefix for filefiltering done by some of the 
+     * Store in here the file prefix for filefiltering done by some of the
      * unit tests.
      */
     private String fileFilterPrefix = null;
-    
+
 
     public TmpDirTestCase()
     {
@@ -71,7 +71,7 @@ public class TmpDirTestCase extends TestCase
     {
         super(testName);
     }
-    
+
     /*
      * @see TestCase#setUp()
      */
@@ -85,14 +85,14 @@ public class TmpDirTestCase extends TestCase
         {
             tmpDir.mkdirs();
         }
-        
+
         if (!tmpDir.canWrite())
         {
             throw new IOException(tmpDir.getAbsolutePath() +
                  " is unwriteable.");
         }
     }
-    
+
     /*
      * @see TestCase#tearDown()
      */
@@ -100,7 +100,7 @@ public class TmpDirTestCase extends TestCase
     {
         super.tearDown();
     }
-    
+
     /**
      * @return Returns the tmpDir.
      */
@@ -108,20 +108,20 @@ public class TmpDirTestCase extends TestCase
     {
         return tmpDir;
     }
-      
+
     /**
      * Delete any files left over from previous run.
-     * 
+     *
      * @param basename Base name of files we're to clean up.
      */
     public void cleanUpOldFiles(String basename)
     {
         cleanUpOldFiles(getTmpDir(), basename);
     }
-    
+
     /**
      * Delete any files left over from previous run.
-     * 
+     *
      * @param prefix Base name of files we're to clean up.
      * @param basedir Directory to start cleaning in.
      */

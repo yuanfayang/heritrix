@@ -65,11 +65,11 @@ import org.archive.util.ArchiveUtils;
  * CrawlController collects all the classes which cooperate to
  * perform a crawl, provides a high-level interface to the
  * running crawl, and executes the "master thread" which doles
- * out URIs from the Frontier to the ToeThreads. 
- * 
- * As the "global context" for a crawl, subcomponents will 
- * usually reach each other through the CrawlController. 
- * 
+ * out URIs from the Frontier to the ToeThreads.
+ *
+ * As the "global context" for a crawl, subcomponents will
+ * usually reach each other through the CrawlController.
+ *
  * @author Gordon Mohr
  */
 public class CrawlController extends Thread {
@@ -99,71 +99,71 @@ public class CrawlController extends Thread {
 
     private File disk;
     private File scratchDisk;
-    
+
     /**
      * Messges from the crawlcontroller.
-     * 
+     *
      * They appear on console.
      */
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.CrawlController");
-    
+
     /**
      * Crawl progress logger.
-     * 
-     * No exceptions.  Logs summary result of each url processing. 
+     *
+     * No exceptions.  Logs summary result of each url processing.
      */
     public Logger uriProcessing;
-    
+
     /**
      * This logger contains unexpected runtime errors.
-     * 
+     *
      * Would contain errors trying to set up a job or failures inside
      * processors that they are not prepared to recover from.
      */
     public Logger runtimeErrors;
-    
+
     /**
      * This logger is for job-scoped logging, specifically errors which
-     * happen and are handled within a particular processor. 
-     * 
+     * happen and are handled within a particular processor.
+     *
      * Examples would be socket timeouts, exceptions thrown by extractors, etc.
      */
     public Logger localErrors;
-    
+
     /**
      * Special log for URI format problems, wherever they may occur.
      */
     public Logger uriErrors;
-    
+
     /**
      * Statistics tracker writes here at regular intervals.
      */
     public Logger progressStats;
-    
+
     /**
-     * Crawl replay logger. 
-     * 
+     * Crawl replay logger.
+     *
      * Currently captures Frontier/URI transitions but recovery is unimplemented.
      */
     public Logger recover;
-    
+
     /**
      * Logger to hold job summary report.
-     * 
-     * Large state reports made at infrequent intervals (e.g. job ending) go 
+     *
+     * Large state reports made at infrequent intervals (e.g. job ending) go
      * here.
      */
     public Logger reports;
-    
-    // create a statistic tracking object and have it write to the log every 
+
+    // create a statistic tracking object and have it write to the log every
     protected StatisticsTracking statistics = null;
 
     protected ArrayList registeredCrawlStatusListeners;
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
     CrawlURIDispositionListener registeredCrawlURIDispositionListener;
-    // And then switch to the array once there is more then one.	
+    // And then switch to the array once there is more then one.
     protected ArrayList registeredCrawlURIDispositionListeners;
 
     CrawlOrder order;
@@ -185,8 +185,8 @@ public class CrawlController extends Thread {
 
     /**
      * Starting from nothing, set up CrawlController and associated
-     * classes to be ready for crawling. 
-     * 
+     * classes to be ready for crawling.
+     *
      * @param settingsHandler
      * @throws InitializationException
      */
@@ -196,7 +196,7 @@ public class CrawlController extends Thread {
         order = settingsHandler.getOrder();
         order.setController(this);
         sExit = "";
-        
+
         if (checkUserAgentAndFrom(order) == false) {
             String message = "You must set the User-Agent and From HTTP" +
             " header values to acceptable strings before proceeding. \n" +
@@ -204,7 +204,7 @@ public class CrawlController extends Thread {
             " From: [email-address]";
             throw new FatalConfigurationException(message);
         }
-        
+
         try {
             setupDisk();
         } catch (FatalConfigurationException e) {
@@ -222,7 +222,7 @@ public class CrawlController extends Thread {
                 "Unable to create log file(s): " + e.toString(),
                 e);
         }
-        
+
         try {
             setupStatTracking();
         } catch (InvalidAttributeValueException e) {
@@ -255,9 +255,9 @@ public class CrawlController extends Thread {
 
     /**
      * Register for CrawlStatus events.
-     * 
+     *
      * @param cl a class implementing the CrawlStatusListener interface
-     * 
+     *
      * @see CrawlStatusListener
      */
     public void addCrawlStatusListener(CrawlStatusListener cl) {
@@ -269,9 +269,9 @@ public class CrawlController extends Thread {
 
     /**
      * Register for CrawlURIDisposition events.
-     * 
+     *
      * @param cl a class implementing the CrawlURIDispostionListener interface
-     * 
+     *
      * @see CrawlURIDispositionListener
      */
     public void addCrawlURIDispositionListener(CrawlURIDispositionListener cl) {
@@ -290,9 +290,9 @@ public class CrawlController extends Thread {
      * Allows an external class to raise a CrawlURIDispostion
      * crawledURISuccessful event that will be broadcast to all listeners that
      * have registered with the CrawlController.
-     * 
+     *
      * @param curi - The CrawlURI that will be sent with the event notification.
-     * 
+     *
      * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
      */
     public void throwCrawledURISuccessfulEvent(CrawlURI curi) {
@@ -319,9 +319,9 @@ public class CrawlController extends Thread {
      * Allows an external class to raise a CrawlURIDispostion
      * crawledURINeedRetry event that will be broadcast to all listeners that
      * have registered with the CrawlController.
-     * 
+     *
      * @param curi - The CrawlURI that will be sent with the event notification.
-     * 
+     *
      * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
      */
     public void throwCrawledURINeedRetryEvent(CrawlURI curi) {
@@ -348,9 +348,9 @@ public class CrawlController extends Thread {
      * Allows an external class to raise a CrawlURIDispostion
      * crawledURIDisregard event that will be broadcast to all listeners that
      * have registered with the CrawlController.
-     * 
+     *
      * @param curi - The CrawlURI that will be sent with the event notification.
-     * 
+     *
      * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
      */
     public void throwCrawledURIDisregardEvent(CrawlURI curi) {
@@ -376,9 +376,9 @@ public class CrawlController extends Thread {
     /**
      * Allows an external class to raise a CrawlURIDispostion crawledURIFailure event
      * that will be broadcast to all listeners that have registered with the CrawlController.
-     * 
+     *
      * @param curi - The CrawlURI that will be sent with the event notification.
-     * 
+     *
      * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
      */
     public void throwCrawledURIFailureEvent(CrawlURI curi) {
@@ -439,7 +439,7 @@ public class CrawlController extends Thread {
             } else {
                 previous.setDefaultNextProcessor(p);
             }
-            
+
             p.initialize(this);
             logger.info(
                 "Processor: " + p.getName() + " --> " + p.getClass().getName());
@@ -474,8 +474,8 @@ public class CrawlController extends Thread {
     }
 
     private void setupStatTracking() throws InvalidAttributeValueException {
-        // the statistics object must be created before modules that use it if those 
-        // modules retrieve the object from the controller during initialization 
+        // the statistics object must be created before modules that use it if those
+        // modules retrieve the object from the controller during initialization
         // (which some do).  So here we go with that.
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
@@ -553,7 +553,7 @@ public class CrawlController extends Thread {
     /**
      * Checks if the User Agent and From field are set 'correctly' in
      * the specified Crawl Order.
-     * 
+     *
      * @param order The Crawl Order to check
      * @return true if it passes, false otherwise.
      */
@@ -572,7 +572,7 @@ public class CrawlController extends Thread {
         // for now do nothing
     }
 
-    /** 
+    /**
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
@@ -580,7 +580,7 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * 
+     *
      */
     public void startCrawl() {
         // assume Frontier state already loaded
@@ -601,7 +601,7 @@ public class CrawlController extends Thread {
         controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
 
         Iterator iterator = null;
-        
+
         // start periodic background logging of crawl statistics
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
@@ -649,7 +649,7 @@ public class CrawlController extends Thread {
                 //if (toe !=null) {
                 logger.fine(toe.getName() + " crawl: " + curi.getURIString());
                 toe.crawl(curi);
-                //} 
+                //}
             }
         }
 
@@ -659,7 +659,7 @@ public class CrawlController extends Thread {
             ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
         }
 
-        // Ok, now we are ready to exit.		
+        // Ok, now we are ready to exit.
         while (registeredCrawlStatusListeners.size() > 0) {
             // Let the listeners know that the crawler is finished.
             (
@@ -816,66 +816,66 @@ public class CrawlController extends Thread {
 
     /** Print to stdout basic statistics about the crawl (for stat testing) * @return
      */
-    //	public void printStatistics(){
-    //	
-    //		//System.out.println(":");
-    //		//System.out.println("\t:\t" + statistics.);
-    //		
-    //		System.out.println("Fetch Progress:");
-    //		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
-    //		
-    //		int kPerSec = statistics.currentProcessedKBPerSec()/1000;
-    //		System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
-    //		
-    //		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
-    //		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
-    //		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
-    //		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-    //		//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
+    //    public void printStatistics(){
     //
-    //		System.out.println("Threads:");
-    //	
-    //		System.out.println("\tTotal:\t" + statistics.threadCount());
-    //		System.out.println("\tActive:\t" + statistics.activeThreadCount());
+    //    	//System.out.println(":");
+    //    	//System.out.println("\t:\t" + statistics.);
     //
+    //    	System.out.println("Fetch Progress:");
+    //    	System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
     //
-    //		HashMap dist = statistics.getFileDistribution();
-    //		
-    //		if(dist.size() > 0){
-    //			Iterator keyIterator = dist.keySet().iterator();
+    //    	int kPerSec = statistics.currentProcessedKBPerSec()/1000;
+    //    	System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
     //
-    //			System.out.println("Fetched Resources MIME Distribution:");
-    //	
-    //			while(keyIterator.hasNext()){
-    //				String key = (String)keyIterator.next();
-    //				String val = ((Integer)dist.get(key)).toString();
-    //				
-    //				System.out.println("\t" + key + "\t" + val);	
-    //			}
-    //		}else{
-    //			System.out.println("No mime statistics");
-    //		}
-    //		
-    //		HashMap codeDist = statistics.getStatusCodeDistribution();
-    //		
-    //		if(codeDist.size() > 0){
-    //			
-    //			Iterator keyIterator = codeDist.keySet().iterator();
+    //    	System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
+    //    	System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
+    //    	System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
+    //    	System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
+    //    	//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
     //
-    //			System.out.println("Status Code Distribution:");
-    //	
-    //			while(keyIterator.hasNext()){
-    //				String key = (String)keyIterator.next();
-    //				String val = ((Integer)codeDist.get(key)).toString();
-    //				
-    //				System.out.println("\t" + key + "\t" + val);	
-    //			}
-    //		}else{
-    //			System.out.println("No code distribution statistics.");
-    //		}
+    //    	System.out.println("Threads:");
+    //
+    //    	System.out.println("\tTotal:\t" + statistics.threadCount());
+    //    	System.out.println("\tActive:\t" + statistics.activeThreadCount());
     //
     //
-    //	}
+    //    	HashMap dist = statistics.getFileDistribution();
+    //
+    //    	if(dist.size() > 0){
+    //    		Iterator keyIterator = dist.keySet().iterator();
+    //
+    //    		System.out.println("Fetched Resources MIME Distribution:");
+    //
+    //    		while(keyIterator.hasNext()){
+    //    			String key = (String)keyIterator.next();
+    //    			String val = ((Integer)dist.get(key)).toString();
+    //
+    //    			System.out.println("\t" + key + "\t" + val);
+    //    		}
+    //    	}else{
+    //    		System.out.println("No mime statistics");
+    //    	}
+    //
+    //    	HashMap codeDist = statistics.getStatusCodeDistribution();
+    //
+    //    	if(codeDist.size() > 0){
+    //
+    //    		Iterator keyIterator = codeDist.keySet().iterator();
+    //
+    //    		System.out.println("Status Code Distribution:");
+    //
+    //    		while(keyIterator.hasNext()){
+    //    			String key = (String)keyIterator.next();
+    //    			String val = ((Integer)codeDist.get(key)).toString();
+    //
+    //    			System.out.println("\t" + key + "\t" + val);
+    //    		}
+    //    	}else{
+    //    		System.out.println("No code distribution statistics.");
+    //    	}
+    //
+    //
+    //    }
 
     /**
      * @return The frontier.
@@ -909,7 +909,7 @@ public class CrawlController extends Thread {
 
     /**
      * @return The number of ToeThreads
-     * 
+     *
      * @see ToePool#getToeCount()
      */
     public int getToeCount() {
@@ -949,7 +949,7 @@ public class CrawlController extends Thread {
     /**
      * Compiles and returns a human readable report on the active processors.
      * @return human readable report on the active processors.
-     * 
+     *
      * @see org.archive.crawler.framework.Processor#report()
      */
     public String reportProcessors() {

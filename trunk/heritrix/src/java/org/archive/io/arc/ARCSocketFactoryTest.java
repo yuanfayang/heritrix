@@ -1,25 +1,25 @@
 
-/* 
+/*
  * ARCSocketFactoryTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 15, 2003.
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -55,53 +55,53 @@ import org.archive.util.TmpDirTestCase;
 
 /**
  * Test the ARCSocketFactory.
- * 
+ *
  * Tests put ARCSocketFactory under httpclient and makes requests of google.
  * To do this, it implements the ProtocolSocketFactory interface from
  * httpclient.
  *
  * @author stack
  */
-public class ARCSocketFactoryTest 
+public class ARCSocketFactoryTest
     extends TmpDirTestCase
     implements ProtocolSocketFactory
 {
     /**
      * Factory instance.
-     * 
+     *
      * Created on setup.
      */
     private SocketFactory factory = null;
-    
+
     /**
      * The socket we're running on.
-     * 
+     *
      * Socket close is never called by httpclient. For testing purposes, call
      * it myself directly.
      */
     private Socket socket = null;
-    
-	/*
-	 * @see TestCase#setUp()
-	 */
-	protected void setUp() throws Exception
-	{
-		super.setUp();
+
+    /*
+     * @see TestCase#setUp()
+     */
+    protected void setUp() throws Exception
+    {
+    	super.setUp();
         Properties properties = new Properties();
         properties.setProperty(ARCSocketFactory.DUMPDIR_KEY,
             getTmpDir().getAbsolutePath());
         ARCSocketFactory.initialize(properties);
         this.factory = ARCSocketFactory.getInstance();
-	}
+    }
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
-	protected void tearDown() throws Exception
-	{
-		super.tearDown();
-	}
-    
+    /*
+     * @see TestCase#tearDown()
+     */
+    protected void tearDown() throws Exception
+    {
+    	super.tearDown();
+    }
+
     /**
      * @param testName
      */
@@ -112,13 +112,13 @@ public class ARCSocketFactoryTest
 
     /**
      * Test of httpclient using ARCSocketFactory.
-     * 
+     *
      * Gets some pages and verifies produced ARC files.
-     * 
+     *
      * @exception HttpException
      * @exception IOException
      */
-    public void testSimpleHttpclient() 
+    public void testSimpleHttpclient()
         throws HttpException, IOException
     {
         Protocol httpProtocol = new Protocol("http", this, 80);
@@ -150,13 +150,13 @@ public class ARCSocketFactoryTest
 
     /**
      * Go GET content via httpclient.
-     * 
+     *
      * @param url URL of page to get content off.
      *
      * @exception HttpException
      * @exception IOException
      */
-    private void getURLContent(String url) 
+    private void getURLContent(String url)
         throws HttpException, IOException
     {
         HttpClient client = new HttpClient();
@@ -164,34 +164,34 @@ public class ARCSocketFactoryTest
         // Setting this flag should force closing of socket but doesn't.
         // Doesn't do what I want and its deprecated so leave it out.
         // ((HttpMethodBase)method).setHttp11(false);
-    
+
         // Retry GET up to 3 times.
         int statusCode = -1;
         final int RETRY_MAX = 3;
-        for(int i = 0; statusCode == -1 && i < RETRY_MAX; i++) 
+        for(int i = 0; statusCode == -1 && i < RETRY_MAX; i++)
         {
-            try 
+            try
             {
                 statusCode = client.executeMethod(method);
-            } 
-            catch(HttpRecoverableException e) 
+            }
+            catch(HttpRecoverableException e)
             {
-                System.err.println("Recoverable exception: Retrying " + 
+                System.err.println("Recoverable exception: Retrying " +
                         e.getMessage());
             }
             // Let JUnit catch other (IOExceptions) exceptions.
         }
 
-        if(statusCode == -1) 
-        {   
-            throw new IOException("Failed after " + Integer.toString(RETRY_MAX)  
+        if(statusCode == -1)
+        {
+            throw new IOException("Failed after " + Integer.toString(RETRY_MAX)
                 + " attempts");
         }
 
         // Get response though I ignore it.
         method.getResponseBody();
         method.releaseConnection();
-        
+
         // Have to force the close myself.  httpclient doesn't call socket
         // close.  It wants to recycle.  It doesn't even call close on streams.
         // It doesn't expect to get an EOF out of stream; rather it
@@ -206,30 +206,30 @@ public class ARCSocketFactoryTest
     public Socket createSocket(String host, int port)
         throws IOException, UnknownHostException
     {
-        // Wrap whats returned out of ARCSocketFactory w/ a recorder that 
+        // Wrap whats returned out of ARCSocketFactory w/ a recorder that
         // will capture all read and written on the socket.  Helps debugging.
         this.socket = new ARCSocketFactoryTestSocket(
                 this.factory.createSocket(host, port));
         return this.socket;
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.commons.httpclient.protocol.ProtocolSocketFactory#createSocket(java.lang.String, int, java.net.InetAddress, int)
      */
     public Socket createSocket(String host, int port, InetAddress clientHost,
             int clientPort)
         throws IOException, UnknownHostException
-    {   
-        // Wrap whats returned out of ARCSocketFactory w/ a recorder that 
+    {
+        // Wrap whats returned out of ARCSocketFactory w/ a recorder that
         // will capture all read and written on the socket.  Helps debugging.
         this.socket = new ARCSocketFactoryTestSocket(
                 this.factory.createSocket(host, port, clientHost, clientPort));
         return this.socket;
     }
-    
+
     /**
      * Select tests to run.
-     * 
+     *
      * @return Test to run for ARCSocketFactory.
      */
     public static Test suite()
@@ -238,11 +238,11 @@ public class ARCSocketFactoryTest
         suite.addTest(new ARCSocketFactoryTest("testSimpleHttpclient"));
         return suite;
     }
-    
+
     /**
-     * A socket wrapper that writes all read and written to files to help 
+     * A socket wrapper that writes all read and written to files to help
      * testing/debugging.
-     * 
+     *
      * @author stack
      */
     private class ARCSocketFactoryTestSocket extends Socket
@@ -252,23 +252,23 @@ public class ARCSocketFactoryTest
          */
         private static final String OUT_FILENAME =
             "arcsocketfactorytest_out.txt";
-        
+
         /**
          * Name of the file we duplicate all socket reads to.
          */
         private static final String IN_FILENAME =
             "arcsocketfactorytest_in.txt";
-        
+
         /**
          * The socket output stream.
-         * 
+         *
          * Implementation will duplicate all socket writes in a file.
          */
         private OutputStream out = null;
 
         /**
          * The socket input stream.
-         * 
+         *
          * Implementation will duplicate all socket reads in a file.
          */
         private InputStream in = null;
@@ -276,9 +276,9 @@ public class ARCSocketFactoryTest
 
         /**
          * Constructor.
-         * 
+         *
          * @param wrappedSocket Socket to wrap.
-         * 
+         *
          * @throws FileNotFoundException
          */
         private ARCSocketFactoryTestSocket(Socket wrappedSocket)
@@ -290,7 +290,7 @@ public class ARCSocketFactoryTest
             this.in = new TeeInputStream(wrappedSocket.getInputStream(),
                 new File(getTmpDir(), IN_FILENAME), true);
         }
-        
+
         /* (non-Javadoc)
          * @see java.net.Socket#getInputStream()
          */
@@ -320,12 +320,12 @@ public class ARCSocketFactoryTest
         }
 
     }
-    
+
     /**
      * An output stream that tees all writes to a file.
-     * 
+     *
      * @author stack
-     */ 
+     */
     private class TeeOutputStream
         extends FileOutputStream
     {
@@ -333,16 +333,16 @@ public class ARCSocketFactoryTest
          * Stream whose writes we tee.
          */
         private OutputStream teedStream = null;
-        
-        
+
+
         private TeeOutputStream(OutputStream teedStream, File teeFile,
-                boolean append) 
+                boolean append)
             throws FileNotFoundException
         {
             super(teeFile, append);
             this.teedStream = teedStream;
         }
-        
+
         /* (non-Javadoc)
          * @see java.io.FileOutputStream#write(byte[])
          */
@@ -351,7 +351,7 @@ public class ARCSocketFactoryTest
             super.write(buffer);
             this.teedStream.write(buffer);
         }
-        
+
         /* (non-Javadoc)
          * @see java.io.FileOutputStream#write(byte[], int, int)
          */
@@ -361,7 +361,7 @@ public class ARCSocketFactoryTest
             super.write(buffer, offset, length);
             this.teedStream.write(buffer, offset, length);
         }
-        
+
         /* (non-Javadoc)
          * @see java.io.FileOutputStream#write(int)
          */
@@ -374,14 +374,14 @@ public class ARCSocketFactoryTest
 
     /**
      * An inputstream stream that tees all reads to a file.
-     * 
-     * This class needs to subclass FilterInputStream so method calls other 
+     *
+     * This class needs to subclass FilterInputStream so method calls other
      * than the overridden reads go through to the wrapped stream (See how we
-     * give the tee'd stream to our superclass -- we can't do that w/ a 
+     * give the tee'd stream to our superclass -- we can't do that w/ a
      * straight InputStream).
-     * 
+     *
      * @author stack
-     */ 
+     */
     private class TeeInputStream
         extends FilterInputStream
     {
@@ -389,16 +389,16 @@ public class ARCSocketFactoryTest
          * Output stream we tee all reads to.
          */
         private FileOutputStream teeStream = null;
-        
-        
+
+
         private TeeInputStream(InputStream teedStream, File teeFile,
-                boolean append) 
+                boolean append)
         throws FileNotFoundException
         {
             super(teedStream);
             this.teeStream = new FileOutputStream(teeFile, append);
         }
-        
+
         /* (non-Javadoc)
          * @see java.io.FilterInputStream#read()
          */
@@ -409,7 +409,7 @@ public class ARCSocketFactoryTest
             this.teeStream.write(c);
             return c;
         }
-        
+
         /* (non-Javadoc)
          * @see java.io.FilterInputStream#read(byte[], int, int)
          */
@@ -420,7 +420,7 @@ public class ARCSocketFactoryTest
             this.teeStream.write(buffer, offset, length);
             return result;
         }
-        
+
         /* (non-Javadoc)
          * @see java.io.FilterInputStream#read(byte[])
          */
@@ -432,9 +432,9 @@ public class ARCSocketFactoryTest
             return result;
         }
     }
-    
+
     public static void main(String args[])
-    { 
+    {
         junit.textui.TestRunner.run(suite());
     }
 }

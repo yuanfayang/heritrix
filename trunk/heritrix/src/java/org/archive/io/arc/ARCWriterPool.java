@@ -1,23 +1,23 @@
 /* ARCWriterManager
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 22, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,7 +37,7 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * A pool of ARCWriters.
- * 
+ *
  * @author stack
  */
 public class ARCWriterPool
@@ -46,29 +46,29 @@ public class ARCWriterPool
      * Default maximum active number of ARCWriters in the pool.
      */
     public static final int DEFAULT_MAX_ACTIVE = 3;
- 
+
     /**
      * Maximum time to wait on a free ARCWriter.
      */
     public static final int DEFAULT_MAXIMUM_WAIT = 1000 * 60 * 5;
-    
+
     /**
      * Pool instance.
      */
     private ObjectPool pool = null;
-    
+
     /**
      * Logger instance used by this class.
      */
     private static Logger logger =
         Logger.getLogger("org.archive.io.arc.ARCWriterPool");
 
-   
+
     /**
      * Constructor
-     * 
+     *
      * Makes a pool w/ a maximum of DEFAULT_MAX_ACTIVE ARCWriters.
-     * 
+     *
      * @param arcsDir Directory we dump ARC files to.
      * @param prefix ARC file prefix to use.
      * @throws IOException Passed directory is not writeable or we were unable
@@ -80,12 +80,12 @@ public class ARCWriterPool
         this(arcsDir, prefix, ARCConstants.DEFAULT_COMPRESS, DEFAULT_MAX_ACTIVE,
             DEFAULT_MAXIMUM_WAIT);
     }
-   
+
     /**
      * Constructor
-     * 
+     *
      * Makes a pool w/ a maximum of DEFAULT_MAX_ACTIVE ARCWriters.
-     * 
+     *
      * @param arcsDir Directory we dump ARC files to.
      * @param prefix ARC file prefix to use.
      * @param compress Whether to compress the ARCs made.
@@ -98,10 +98,10 @@ public class ARCWriterPool
         this(arcsDir, prefix, compress, DEFAULT_MAX_ACTIVE,
             DEFAULT_MAXIMUM_WAIT);
     }
-    
+
     /**
      * Constructor
-     * 
+     *
      * @param arcsDir Directory we dump ARC files to.
      * @param prefix ARC file prefix to use.
      * @param compress Whether to compress the ARCs made.
@@ -112,7 +112,7 @@ public class ARCWriterPool
      * @throws IOException Passed directory is not writeable or we were unable
      * to create the directory.
      */
-    public ARCWriterPool(File arcsDir, String prefix, boolean compress, 
+    public ARCWriterPool(File arcsDir, String prefix, boolean compress,
             int maxActive, int maxWait)
         throws IOException
     {
@@ -120,15 +120,15 @@ public class ARCWriterPool
             new ARCWriterFactory(arcsDir, prefix, compress),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
     }
-    
+
     /**
      * Check out an ARCWriter from the pool.
-     * 
+     *
      * This method must be answered by a call to {@link #returnARCWriter}.
-     * 
+     *
      * @return An ARCWriter checked out of a pool of ARCWriters.
      * @throws IOException Problem getting ARCWriter from pool (Converted
-     * from Exception to IOException so this pool can live as a good 
+     * from Exception to IOException so this pool can live as a good
      * citizen down in depths of ARCSocketFactory).
      * @throws NoSuchElementException If we time out waiting on a pool member.
      */
@@ -178,7 +178,7 @@ public class ARCWriterPool
     /**
      * @param writer ARCWriter to return to the pool.
      * @throws IOException Problem getting ARCWriter from pool (Converted
-     * from Exception to IOException so this pool can live as a good 
+     * from Exception to IOException so this pool can live as a good
      * citizen down in depths of ARCSocketFactory).
      */
     public void returnARCWriter(ARCWriter writer)
@@ -195,10 +195,10 @@ public class ARCWriterPool
                     e.getMessage());
         }
     }
-    
+
     /**
      * Factory that creates ARCWriters.
-     * 
+     *
      * @author stack
      * @see ARCWriterPool
      */
@@ -208,25 +208,25 @@ public class ARCWriterPool
         /**
          * Directory into which we drop ARC files.
          */
-        private File arcsDir = null;  
-        
+        private File arcsDir = null;
+
         /**
          * The prefix to give new arc files.
          */
         private String prefix = null;
-        
+
         /**
          * Compress ARC files.
          */
         private boolean compress = ARCConstants.DEFAULT_COMPRESS;
-        
+
         /**
          * Constructor
-         * 
+         *
          * @param arcsDir Directory we drop ARC files into.
          * @param prefix ARC file prefix to use.
          * @param compress True if ARC files should be compressed.
-         * 
+         *
          * @throws IOException Passed directory is not writeable or we were unable
          * to create the directory.
          */
@@ -244,10 +244,10 @@ public class ARCWriterPool
          */
         public Object makeObject() throws Exception
         {
-            return new ARCWriter(this.arcsDir, this.prefix, this.compress, 
+            return new ARCWriter(this.arcsDir, this.prefix, this.compress,
                 ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE);
         }
-        
+
         /* (non-Javadoc)
          * @see org.apache.commons.pool.PoolableObjectFactory#destroyObject(java.lang.Object)
          */

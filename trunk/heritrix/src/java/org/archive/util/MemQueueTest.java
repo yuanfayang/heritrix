@@ -1,9 +1,9 @@
 /* MemQueueTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created Tue Jan 20 14:17:59 PST 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -30,14 +30,14 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for MemQueue
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $ Id$
  */
 public class MemQueueTest extends QueueTestBase {
     /**
      * Create a new MemQueueTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public MemQueueTest(final String testName) {
@@ -46,7 +46,7 @@ public class MemQueueTest extends QueueTestBase {
 
     /**
      * run all the tests for MemQueueTest
-     * 
+     *
      * @param argv the command line arguments
      */
     public static void main(String argv[]) {
@@ -55,7 +55,7 @@ public class MemQueueTest extends QueueTestBase {
 
     /**
      * return the suite of tests for MemQueueTest
-     * 
+     *
      * @return the suite of test
      */
     public static Test suite() {

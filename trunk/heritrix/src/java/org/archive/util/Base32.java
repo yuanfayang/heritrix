@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.util;
 
 /**
@@ -29,7 +29,7 @@ package org.archive.util;
  * (see http://www.faqs.org/rfcs/rfc3548.html )
  *
  * Imported public-domain code of Bitzi.
- * 
+ *
  * @author Robert Kaye
  * @author Gordon Mohr
  */
@@ -51,7 +51,7 @@ public class Base32 {
 
     /**
      * Encodes byte array to Base32 String.
-     * 
+     *
      * @param bytes
      * @return
      */
@@ -59,10 +59,10 @@ public class Base32 {
         int i = 0, index = 0, digit = 0;
         int currByte, nextByte;
         StringBuffer base32 = new StringBuffer((bytes.length + 7) * 8 / 5);
-    
+
         while (i < bytes.length) {
             currByte = (bytes[i] >= 0) ? bytes[i] : (bytes[i] + 256); // unsign
-    
+
             /* Is the current digit going to span a byte boundary? */
             if (index > 3) {
                 if ((i + 1) < bytes.length) {
@@ -71,7 +71,7 @@ public class Base32 {
                 } else {
                     nextByte = 0;
                 }
-    
+
                 digit = currByte & (0xFF >> index);
                 index = (index + 5) % 8;
                 digit <<= index;
@@ -85,35 +85,35 @@ public class Base32 {
             }
             base32.append(base32Chars.charAt(digit));
         }
-    
+
         return base32.toString();
     }
-    
+
     /**
-     * Decodes the given Base32 String to a raw byte array. 
-     * 
+     * Decodes the given Base32 String to a raw byte array.
+     *
      * @param base32
      * @return
      */
     static public byte[] decode(final String base32) {
         int i, index, lookup, offset, digit;
         byte[] bytes = new byte[base32.length() * 5 / 8];
-    
+
         for (i = 0, index = 0, offset = 0; i < base32.length(); i++) {
             lookup = base32.charAt(i) - '0';
-    
+
             /* Skip chars outside the lookup table */
             if (lookup < 0 || lookup >= base32Lookup.length) {
                 continue;
             }
-    
+
             digit = base32Lookup[lookup];
-    
+
             /* If this digit is not in the table, ignore it */
             if (digit == 0xFF) {
                 continue;
             }
-    
+
             if (index <= 3) {
                 index = (index + 5) % 8;
                 if (index == 0) {
@@ -128,7 +128,7 @@ public class Base32 {
                 index = (index + 5) % 8;
                 bytes[offset] |= (digit >>> index);
                 offset++;
-    
+
                 if (offset >= bytes.length) {
                     break;
                 }
@@ -140,7 +140,7 @@ public class Base32 {
 
     /** For testing, take a command-line argument in Base32, decode, print in hex,
      * encode, print
-     * 
+     *
      * @param args
      */
     static public void main(String[] args) {

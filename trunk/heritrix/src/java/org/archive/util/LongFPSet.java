@@ -1,7 +1,7 @@
 /* LongSet
  *
  * $Id$
- *  
+ *
  * Created on Oct 19, 2003
  *
  * Copyright (C) 2003 Internet Archive.
@@ -25,8 +25,8 @@
 package org.archive.util;
 
 /**
- * Set for holding primitive long fingerprints. 
- * 
+ * Set for holding primitive long fingerprints.
+ *
  * @author Gordon Mohr
  */
 public interface LongFPSet {
@@ -37,40 +37,40 @@ public interface LongFPSet {
      *
      * In particular, you cannot on the {@link #count()} method returning
      * 1 greater than before the addition.
-     * 
+     *
      * @param l the fingerprint to add
      * @return <code>true</code> if set has changed with this addition
      */
-	boolean add(long l);
+    boolean add(long l);
 
     /**
      *  Does this set contain a given fingerprint.
      * @param l the fingerprint to check for
      * @return <code>true</code> if the fingerprint is in the set
      */
-	boolean contains(long l);
+    boolean contains(long l);
 
     /**
      *  Remove a fingerprint from the set, if it is there
      * @param l the fingerprint to remove
      * @return <code>true</code> if we removed the fingerprint
      */
-	boolean remove(long l);
+    boolean remove(long l);
 
     /** get the number of elements in the Set
      * @return the number of elements in the Set
      */
-	long count();
-	
-	/**
-	 * Do a contains() check that doesn't require laggy
-	 * activity (eg disk IO). If this returns true, 
-	 * fp is definitely contained; if this returns 
-	 * false, fp  *MAY* still be contained -- must use
-	 * full-cost contains() to be sure. 
-	 * 
-	 * @param fp the fingerprint to check for
-	 * @return <code>true</code> if contains the fingerprint
-	 */
-	boolean quickContains(long fp);
+    long count();
+
+    /**
+     * Do a contains() check that doesn't require laggy
+     * activity (eg disk IO). If this returns true,
+     * fp is definitely contained; if this returns
+     * false, fp  *MAY* still be contained -- must use
+     * full-cost contains() to be sure.
+     *
+     * @param fp the fingerprint to check for
+     * @return <code>true</code> if contains the fingerprint
+     */
+    boolean quickContains(long fp);
 }

@@ -35,65 +35,65 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
  */
 public interface URIFrontier {
     final static String ATTR_NAME = "frontier";
-    
-	void initialize(CrawlController c) throws FatalConfigurationException, IOException;
 
-	void schedule(CandidateURI caUri);
-	CrawlURI next(int timeout);
-	void finished(CrawlURI curi);
-	
-	boolean isEmpty();
+    void initialize(CrawlController c) throws FatalConfigurationException, IOException;
 
-	/**
-	 * Schedule at top priority (for example, before any
-	 * subsequently finished() items that must be retried) 
-	 * 
-	 * @param caUri
-	 */
-	void scheduleHigh(CandidateURI caUri);
+    void schedule(CandidateURI caUri);
+    CrawlURI next(int timeout);
+    void finished(CrawlURI curi);
 
-	long successfullyFetchedCount();
+    boolean isEmpty();
 
-	long discoveredUriCount();
+    /**
+     * Schedule at top priority (for example, before any
+     * subsequently finished() items that must be retried)
+     *
+     * @param caUri
+     */
+    void scheduleHigh(CandidateURI caUri);
 
-	/**
-	 * @return Estimated number of URIs scheduled for prcoessing..
-	 */
-	long pendingUriCount();
+    long successfullyFetchedCount();
 
-	long failedFetchCount();
+    long discoveredUriCount();
 
-	/**
-	 * Put caUri into a queue of items to be scheduled 
-	 * later (that is, avoid synchronization overhead)
-	 * @param caUri
-	 */
-	void batchSchedule(CandidateURI caUri);
+    /**
+     * @return Estimated number of URIs scheduled for prcoessing..
+     */
+    long pendingUriCount();
 
-	/**
-	 * @param caUri
-	 */
-	void batchScheduleHigh(CandidateURI caUri);
-	
-	/**
-	 * Force all batch-scheduled candidates to be 
-	 * actually scheduled. 
-	 * 
-	 */
-	void batchFlush();
-	
-	/**
-	* The total amounts of bytes written (uncompressed)
-	* 
-	* @return The total amounts of bytes written
-	*/
-	public long totalBytesWritten();
-	
-	/**
-	* This methods compiles a human readable report on the status of the frontier
-	* at the time of the call. 
-	* 
-	* @return A report on the current status of the frontier.
-	*/
-	public String report();
+    long failedFetchCount();
+
+    /**
+     * Put caUri into a queue of items to be scheduled
+     * later (that is, avoid synchronization overhead)
+     * @param caUri
+     */
+    void batchSchedule(CandidateURI caUri);
+
+    /**
+     * @param caUri
+     */
+    void batchScheduleHigh(CandidateURI caUri);
+
+    /**
+     * Force all batch-scheduled candidates to be
+     * actually scheduled.
+     *
+     */
+    void batchFlush();
+
+    /**
+    * The total amounts of bytes written (uncompressed)
+    *
+    * @return The total amounts of bytes written
+    */
+    public long totalBytesWritten();
+
+    /**
+    * This methods compiles a human readable report on the status of the frontier
+    * at the time of the call.
+    *
+    * @return A report on the current status of the frontier.
+    */
+    public String report();
 }

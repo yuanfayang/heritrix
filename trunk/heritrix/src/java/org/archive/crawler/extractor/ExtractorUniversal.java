@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * Created on Jan 15, 2004
  *
  */
@@ -39,16 +39,16 @@ import org.archive.util.TextUtils;
  * anything that <i>looks</i> like a link. If used, it should always be specified
  * as the last link extractor in the order file.
  * <p>
- * To accomplish this it will scan through the bytecode and try and build up 
+ * To accomplish this it will scan through the bytecode and try and build up
  * strings of consecutive bytes that all represent characters that are valid
- * in a URL (see {@link #isURLableChar(int) isURLableChar()} for details). 
+ * in a URL (see {@link #isURLableChar(int) isURLableChar()} for details).
  * Once it hits the end of such a string (i.e. finds a character that
  * should not be in a URL) it will try to determine if it has found a URL. This is
- * done be seeing if the string is an IP address prefixed with http(s):// or 
+ * done be seeing if the string is an IP address prefixed with http(s):// or
  * contains a dot followed by a Top Level Domain and end of string or a slash.
- * 
+ *
  * @author Kristinn Sigurdsson
- * 
+ *
  * @see org.archive.crawler.datamodel.CrawlURI#addSpeculativeEmbed(String)
  */
 public class ExtractorUniversal extends Processor implements CoreAttributeConstants{
@@ -64,9 +64,9 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     private static long DEFAULT_MAX_URL_LENGTH = 2083;
 
     /**
-     * Matches any string that begins with http:// or https:// followed by 
+     * Matches any string that begins with http:// or https:// followed by
      * something that looks like an ip address (four numbers, none longer then
-     * 3 chars seperated by 3 dots). Does <b>not</b> ensure that the numbers are 
+     * 3 chars seperated by 3 dots). Does <b>not</b> ensure that the numbers are
      * each in the range 0-255.
      */
     static final String IP_ADDRESS =
@@ -75,7 +75,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     /**
      * Matches any string that begins with a TLD (no .) followed by a '/' slash
      * or end of string. If followed by slash then nothing after the slash is
-     * of consequence. 
+     * of consequence.
      */
     public static final String TLDs =
           "(ac(/.*)?)"  // ac  Ascension Island
@@ -123,7 +123,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         + "|(cg(/.*)?)" // cg  Congo, Republic of
         + "|(ch(/.*)?)" // ch  Switzerland
         + "|(ci(/.*)?)" // ci  Cote d'Ivoire (Ivory Coast)
-        + "|(ck(/.*)?)" // ck  Cook Islands               
+        + "|(ck(/.*)?)" // ck  Cook Islands
         + "|(cl(/.*)?)" // cl  Chile
         + "|(cm(/.*)?)" // cm  Cameroon
         + "|(cn(/.*)?)" // cn  China
@@ -215,7 +215,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         + "|(li(/.*)?)" // li  Liechtenstein
         + "|(lk(/.*)?)" // lk  Sri Lanka
         + "|(lr(/.*)?)" // lr  Liberia
-        + "|(ls(/.*)?)" // ls  Lesotho        
+        + "|(ls(/.*)?)" // ls  Lesotho
         + "|(lt(/.*)?)" // lt  Lithuania
         + "|(lu(/.*)?)" // lu  Luxembourg
         + "|(lv(/.*)?)" // lv  Latvia
@@ -356,18 +356,18 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
      */
     protected void innerProcess(CrawlURI curi) {
-        
+
         if(curi.hasBeenLinkExtracted()){
             //Some other extractor already handled this one. We'll pass on it.
             return;
         }
-        
+
         if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             // We only handle HTTP at the moment.
             return;
         }
         numberOfCURIsHandled++;
-        
+
         GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 
         try{
@@ -381,8 +381,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             }
             long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH,curi)).longValue();
             boolean foundDot = false;
-            while(ch != -1 && ++counter <= maxdepth){   
-                
+            while(ch != -1 && ++counter <= maxdepth){
+
                 if(lookat.length()>maxURLLength){
                     //Exceeded maximum length of a URL. Start fresh.
                     lookat = new StringBuffer();
@@ -402,7 +402,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
                     if(looksLikeAnURL(newURL))
                     {
                         // Looks like we found something.
-                        
+
                         // Let's start with a little cleanup as we may have junk in front or at the end.
                         if(newURL.toLowerCase().indexOf("http") > 0){
                             // Got garbage in front of the protocol. Get rid of it.
@@ -412,7 +412,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
                             // URLs can't end with a dot. Strip it off.
                             newURL = newURL.substring(0,newURL.length()-1);
                         }
-                        
+
                         // And add the URL to speculative embeds.
                         numberOfLinksExtracted++;
                         curi.addSpeculativeEmbed(newURL);
@@ -440,10 +440,10 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     /**
      * This method takes a look at a string and determines if it could be a URL.
      * To qualify the string must either begin with "http://" (https would also
-     * work) followed by something that looks like an IP address or contain 
-     * within the string (possible at the end but not at the beginning) a TLD 
+     * work) followed by something that looks like an IP address or contain
+     * within the string (possible at the end but not at the beginning) a TLD
      * (Top Level Domain) preceded by a dot.
-     * 
+     *
      * @param lookat The string to examine in an effort to determine if it could be a URL
      * @return True if the string matches the above criteria for a URL.
      */
@@ -456,43 +456,43 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
                 return true;
             }
         }
-        
+
         int dot = lookat.indexOf(".");
         if(dot!=0){//An URL can't start with a .tld.
             while(dot != -1 && dot < lookat.length()){
                 lookat = lookat.substring(dot+1);
                 if(isTLD(lookat.substring(0,lookat.length()<=6?lookat.length():6))){
                     return true;
-                }               
+                }
                 dot = lookat.indexOf(".");
             }
         }
-        
+
         return false;
     }
 
     /**
      * Checks if a string is equal to known Top Level Domain. The string may
-     * contain additional characters <i>after</i> the TLD but not before. 
+     * contain additional characters <i>after</i> the TLD but not before.
      * @param potentialTLD The string (usually 2-6 chars) to check if it starts with a TLD.
      * @return True if the given string starts with the name of a known TLD
-     * 
+     *
      * @see #TLDs
      */
     private boolean isTLD(String potentialTLD) {
         if(potentialTLD.length()<2){
             return false;
         }
-        
+
         potentialTLD.toLowerCase();
         Matcher uri = TextUtils.getMatcher(TLDs, potentialTLD);
-        boolean ret = uri.matches(); 
+        boolean ret = uri.matches();
         return ret;
     }
 
     /**
      * Determines if a char (as represented by an int in the range of 0-255) is
-     * a character (in the Ansi character set) that can be present in a URL. 
+     * a character (in the Ansi character set) that can be present in a URL.
      * This method takes a <b>strict</b> approach to what characters can be in a URL.
      * <p>
      * The following are considered to be 'URLable'<br>
@@ -500,21 +500,21 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      *  <li> <code># $ % & + , - . /</code> values 35-38,43-47
      *  <li> <code>[0-9]</code> values 48-57
      *  <li> <code>: ; = ? @</code> value 58-59,61,63-64
-     *  <li> <code>[A-Z]</code> values 65-90 
+     *  <li> <code>[A-Z]</code> values 65-90
      *  <li> <code>[a-z]</code> values 97-122
      *  <li> <code>~</code> value 126
      * </ul>
      * <p>
      * To summerize, the following ranges are considered URLable:<br>
      * 35-38,43-59,61,63-90,97-122,126
-     * 
+     *
      * @param ch The character (represented by an int) to test.
      * @return True if it is a URLable character, false otherwise.
      */
     private boolean isURLableChar(int ch) {
-        return (ch>=35 && ch<=38) 
-            || (ch>=43 && ch<=59) 
-            || (ch==61) 
+        return (ch>=35 && ch<=38)
+            || (ch>=43 && ch<=59)
+            || (ch==61)
             || (ch>=63 && ch<=90)
             || (ch>=97 && ch<=122)
             || (ch==126);
@@ -529,7 +529,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         ret.append("  Function:          Link extraction on unknown file types.\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-        
+
         return ret.toString();
     }
 }

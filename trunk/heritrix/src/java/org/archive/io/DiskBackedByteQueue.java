@@ -36,50 +36,50 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * FIFO byte queue, using disk space as needed.
- * 
+ *
  * TODO: add maximum size?
- * 
- * Flips between two backing files: as soon as reading head 
- * reaches beginning of one, writing tail flips to other. 
- * 
+ *
+ * Flips between two backing files: as soon as reading head
+ * reaches beginning of one, writing tail flips to other.
+ *
  * @author gojomo
  *
  */
 public class DiskBackedByteQueue implements Savable {
     File tempDir;
     String backingFilenamePrefix;
-	FlipFileInputStream headStream;
-	FlipFileOutputStream tailStream;
+    FlipFileInputStream headStream;
+    FlipFileOutputStream tailStream;
 
-	public DiskBackedByteQueue(File tempDir, String backingFilenamePrefix) throws FileNotFoundException {
-		super();
-		this.tempDir = tempDir;
+    public DiskBackedByteQueue(File tempDir, String backingFilenamePrefix) throws FileNotFoundException {
+    	super();
+    	this.tempDir = tempDir;
         this.backingFilenamePrefix=backingFilenamePrefix;
- 	}
+     }
 
     public void initializeStreams() throws FileNotFoundException {
         tailStream = new FlipFileOutputStream(tempDir,backingFilenamePrefix);
         headStream = new FlipFileInputStream(tailStream);
     }
-	public InputStream getHeadStream() {
-		return headStream;
-	}
+    public InputStream getHeadStream() {
+    	return headStream;
+    }
 
-	public OutputStream getTailStream() {
-		return tailStream;
-	}
+    public OutputStream getTailStream() {
+    	return tailStream;
+    }
 
-	/**
-	 * @throws IOException
-	 */
-	public void close() throws IOException {
-		headStream.close();
-		tailStream.close();
-	}
+    /**
+     * @throws IOException
+     */
+    public void close() throws IOException {
+    	headStream.close();
+    	tailStream.close();
+    }
 
-	public void discard() {
-		tailStream.discard();
-	}
+    public void discard() {
+    	tailStream.discard();
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Checkpointable#prepare(int, java.io.File)
@@ -103,7 +103,7 @@ public class DiskBackedByteQueue implements Savable {
      * @see org.archive.crawler.framework.Savable#restore(java.io.File, java.lang.String)
      */
     public void restore(File directory, String key) throws IOException {
-        
+
     }
 
 }

@@ -1,7 +1,7 @@
 /* FileUtils
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Feb 2, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -34,19 +34,19 @@ import java.util.regex.Pattern;
 
 
 /** Utility methods for manipulating files and directories.
- * 
+ *
  * @author John Erik Halse
  */
 public class FileUtils
 {
     /** Constructor made private because all methods of this class are static.
-     * 
+     *
      */
     private FileUtils() {
     }
 
     /** Recursively copy all files from one directory to another.
-     * 
+     *
      * @param src file or directory to copy from.
      * @param dest file or directory to copy to.
      * @throws IOException
@@ -59,7 +59,7 @@ public class FileUtils
         if (src.isDirectory()) {
             // Create destination directory
             dest.mkdirs();
-            
+
             // Go trough the contents of the directory
             String list[] = src.list();
             for (int i = 0; i < list.length; i++) {
@@ -67,7 +67,7 @@ public class FileUtils
                 File dest1 = new File(dest, list[i]);
                 copyFiles(src1 , dest1);
             }
-            
+
         } else {
 
             // get channels
@@ -86,10 +86,10 @@ public class FileUtils
             fos.close();
         }
     }
-    
+
     /** Deletes all files and subdirectories under dir.
      * @param dir
-     * @return true if all deletions were successful. If a deletion fails, the 
+     * @return true if all deletions were successful. If a deletion fails, the
      *          method stops attempting to delete and returns false.
      */
     public static boolean deleteDir(File dir) {
@@ -105,13 +105,13 @@ public class FileUtils
         // The directory is now empty so delete it
         return dir.delete();
     }
-    
+
     /**
      * Get a list of all files in directory that have passed prefix.
-     * 
+     *
      * @param dir Dir to look in.
      * @param prefix Basename of files to look for. Compare is case insensitive.
-     * 
+     *
      * @return List of files in dir that start w/ passed basename.
      */
     public static File [] getFilesWithPrefix(File dir, final String prefix)
@@ -129,7 +129,7 @@ public class FileUtils
 
     /** Get a @link java.io.FileFilter that filters files based on a regular
      * expression.
-     * 
+     *
      * @param regexp the regular expression the files must match.
      * @return the newly created filter.
      */
@@ -137,11 +137,11 @@ public class FileUtils
         // Inner class defining the RegexpFileFilter
         class RegexpFileFilter implements FileFilter {
             Pattern pattern;
-            
+
             public RegexpFileFilter(String regexp) {
                 pattern = Pattern.compile(regexp);
             }
-            
+
             public boolean accept(File pathname) {
                 return pattern.matcher(pathname.getName()).matches();
             }

@@ -1,9 +1,9 @@
 /* QueueTestBase
- * 
+ *
  * $Id$
- * 
+ *
  * Created Tue Jan 20 14:17:59 PST 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).

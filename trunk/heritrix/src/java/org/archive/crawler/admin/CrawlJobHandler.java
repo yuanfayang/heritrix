@@ -1,7 +1,7 @@
 /* CrawlJobHandler
- * 
+ *
  * $Id$
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -52,7 +52,7 @@ import org.archive.util.FileUtils;
 /**
  * This class manages CrawlJobs. Submitted crawl jobs are queued up and run
  * in order when the crawler is running.<br>
- * Basically this provides a layer between any potential user interface and 
+ * Basically this provides a layer between any potential user interface and
  * the CrawlController and the details of a crawl.
  * <p>
  * The jobs managed by the handler can be divided into the following:
@@ -60,9 +60,9 @@ import org.archive.util.FileUtils;
  *  <li> <code>Pending</code> - Jobs that are ready to run and are waiting their
  *                              turn. These can be edited, viewed, deleted etc.
  *  <li> <code>Running</code> - Only one job can be running at a time. There may
- *                              be no job running. The running job can be viewed 
- *                              and edited to some extent. It can also be 
- *                              terminated. This job should have a 
+ *                              be no job running. The running job can be viewed
+ *                              and edited to some extent. It can also be
+ *                              terminated. This job should have a
  *                              StatisticsTracking module attached to it for more
  *                              details on the crawl.
  * <li><code>Completed</code> - Jobs that have finished crawling or have been
@@ -70,32 +70,32 @@ import org.archive.util.FileUtils;
  *                              while running. They can not be edited but can be
  *                              viewed. They retain the StatisticsTracking
  *                              module from their run.
- *  <li> <code>New job</code> - At any given time their can be one 'new job' the 
+ *  <li> <code>New job</code> - At any given time their can be one 'new job' the
  *                              new job is not considered ready to run. It can
  *                              be edited or discarded (in which case it will be
  *                              totally destroyed, including any files on disk).
- *                              Once an operator deems the job ready to run it 
+ *                              Once an operator deems the job ready to run it
  *                              can be moved to the pending queue.
- * <li> <code>Profiles</code> - Jobs under profiles are not actual jobs. They can 
+ * <li> <code>Profiles</code> - Jobs under profiles are not actual jobs. They can
  *                              be edited normally but can not be submitted to
- *                              the pending queue. New jobs can be created 
- *                              using a profile as it's template. 
- * 
+ *                              the pending queue. New jobs can be created
+ *                              using a profile as it's template.
+ *
  * @author Kristinn Sigurdsson
- * 
+ *
  * @see org.archive.crawler.admin.CrawlJob
  */
 
 public class CrawlJobHandler implements CrawlStatusListener {
-    
+
     /**
      * Name of system property whose specification overrides default profile
      * used.
-     * 
+     *
      */
-    public static final String DEFAULT_PROFILE_NAME 
+    public static final String DEFAULT_PROFILE_NAME
         = "heritrix.default.profile";
-    
+
     /**
      * Default profile name.
      */
@@ -120,7 +120,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * A list of completed CrawlJobs
      */
     private Vector completedCrawlJobs = new Vector();
-    
+
     /**
      * A list of profile CrawlJobs.
      */
@@ -148,16 +148,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public CrawlJobHandler(){
         loadProfiles();
     }
-    
+
     /**
-     * Returns the directory where profiles are stored. 
-     * @return the directory where profiles are stored. 
+     * Returns the directory where profiles are stored.
+     * @return the directory where profiles are stored.
      */
     private String getProfilesDirectory(){
         return Heritrix.getConfdir().getAbsolutePath() + File.separator +
             "profiles";
     }
-    
+
     /**
      * Loads all profiles found on disk.
      */
@@ -193,7 +193,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             defaultProfile = DEFAULT_PROFILE;
         }
     }
-    
+
     /**
      * Add a new profile
      * @param profile The new profile
@@ -201,24 +201,24 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void addProfile(CrawlJob profile){
         profileJobs.add(profile);
     }
-    
+
     /**
      * Returns all known profiles.
-     * @return a Vector of all known profiles. 
+     * @return a Vector of all known profiles.
      */
     public Vector getProfiles(){
         return profileJobs;
     }
 
     /**
-     * Submit a job to the handler. Job will be scheduled for crawling. At present 
+     * Submit a job to the handler. Job will be scheduled for crawling. At present
      * it will not take the job's* priority into consideration.
-     * 
+     *
      * @param job A new job for the handler
      */
     public void addJob(CrawlJob job) {
         if(job.isProfile()){
-            return;     // Can't crawl profiles. 
+            return;     // Can't crawl profiles.
         }
         job.setStatus(CrawlJob.STATUS_PENDING);
         if(job.isNew()){
@@ -233,10 +233,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
             startNextJob();
         }
     }
-    
+
     /**
      * Returns the default profile. If no default profile has been set it will
-     * return the first profile that was set/loaded and still exists. If no 
+     * return the first profile that was set/loaded and still exists. If no
      * profiles exist it will return null
      * @return the default profile.
      */
@@ -253,14 +253,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if(profileJobs.size()>0){
             return (CrawlJob)profileJobs.get(0);
         }
-        return null;    
+        return null;
     }
-    
+
     /**
      * Set the default profile.
      * @param profile The new default profile. The following must apply to it.
-     *                profile.isProfile() should return true and 
-     *                this.getProfiles() should contain it. 
+     *                profile.isProfile() should return true and
+     *                this.getProfiles() should contain it.
      */
     public void setDefaultProfile(CrawlJob profile){
         defaultProfile = profile.getJobName();
@@ -268,8 +268,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * A list of all pending jobs
-     *  
-     * @return A list of all pending jobs in an ArrayList.  
+     *
+     * @return A list of all pending jobs in an ArrayList.
      * No promises are made about the order of the list
      */
     public Vector getPendingJobs() {
@@ -278,8 +278,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Get the job that is currently being crawled.
-     * 
-     * @return The job currently being crawled.   
+     *
+     * @return The job currently being crawled.
      */
     public CrawlJob getCurrentJob() {
         return currentJob;
@@ -287,7 +287,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * A list of all finished jobs
-     * 
+     *
      * @return A list of all finished jobs as a Vector.
      */
     public Vector getCompletedJobs() {
@@ -295,10 +295,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Return a job with the given UID.  
+     * Return a job with the given UID.
      * Doesn't matter if it's pending, currently running,has finished running is
      * new or a profile.
-     * 
+     *
      * @param jobUID The unique ID of the job.
      * @return The job with the UID or null if no such job is found
      */
@@ -330,7 +330,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     return cj;
                 }
             }
-            
+
             // And finally check the profiles.
             Iterator itProfile = profileJobs.iterator();
             while (itProfile.hasNext()) {
@@ -344,26 +344,26 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * The specified job will be removed from the pending queue or aborted if 
+     * The specified job will be removed from the pending queue or aborted if
      * currently running.  It will be placed in the list of completed jobs with
      * approprite status info. If the job is already in the completed list or
      * no job with the given UID is found, no action will be taken.
-     * 
+     *
      * @param jobUID The UID (unique ID) of the job that is to be deleted.
-     * 
+     *
      */
     public void deleteJob(String jobUID) {
         // First check to see if we are deleting the current job.
         if (currentJob != null && jobUID.equals(currentJob.getUID())) {
             // Need to terminate the current job.
-            controller.stopCrawl(); // This will cause crawlEnding to be invoked. 
+            controller.stopCrawl(); // This will cause crawlEnding to be invoked.
                                     // It will handle the clean up.
             crawling = false;
 
             synchronized (this) {
                 try {
-                    // Take a few moments so that the controller can change 
-                    // states before the UI updates. The CrawlEnding event 
+                    // Take a few moments so that the controller can change
+                    // states before the UI updates. The CrawlEnding event
                     // will wake us if it occurs sooner than this.
                     wait(3000);
                 } catch (InterruptedException e) {
@@ -387,7 +387,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Cause the current job to pause. If no current job is crawling this method 
+     * Cause the current job to pause. If no current job is crawling this method
      * will have to effect. If the job is already paused it may cause the status
      * of the job to be incorrectly states as 'Waiting to pause'.
      *
@@ -402,10 +402,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Cause the current job to resume crawling if it was paused. Will have no 
+     * Cause the current job to resume crawling if it was paused. Will have no
      * effect if the current job was not paused or if there is no current job.
      * If the current job is still waiting to pause, this will not take effect
-     * until the job has actually paused. At which time it will immeditatly 
+     * until the job has actually paused. At which time it will immeditatly
      * resume crawling.
      */
     public void resumeJob() {
@@ -417,25 +417,25 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * Returns a unique job ID.
      * <p>
-     * No two calls to this method (on the same instance of this class) can ever 
+     * No two calls to this method (on the same instance of this class) can ever
      * return the same value.<br>
      * Currently implemented to return a time stamp. That is subject to change though.
-     * 
+     *
      * @return A unique job ID.
-     * 
+     *
      * @see ArchiveUtils#TIMESTAMP17
      */
     public String getNextJobUID() {
         return ArchiveUtils.TIMESTAMP17.format(new Date());
     }
-    
+
     /**
      * Creates a new job. The new job will be returned and also registered as the
      * handler's 'new job'. The new job will be based on the settings provided but
      * created in a new location on disk.
-     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the 
+     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the
      *               template for the new job.
-     * @param name The name of the new job. 
+     * @param name The name of the new job.
      * @param description
      * @param seeds
      * @return The new crawl job.
@@ -465,7 +465,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 CrawlJob.PRIORITY_AVERAGE);
         return newJob;
     }
-    
+
     /**
      * @param name Basename for job.
      * @param UID Job unique ID.
@@ -475,12 +475,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
     {
         return new File(Heritrix.getJobsdir(), name + "-" + UID);
     }
-    
+
     /**
      * Utility method that will return crawl job's directory output directory.
-     * 
+     *
      * @param job Job whose directory we want.
-     * 
+     *
      * @return CrawlJob's output directory.  Result is unpredictable if job
      * was not created by this CrawlJobHandler.
      */
@@ -488,16 +488,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
     {
         return getJobdir(job.getJobName(), job.getUID());
     }
-    
+
     /**
      * Creates a new profile. The new profile will be returned and also registered as the
      * handler's 'new job'. The new profile will be based on the settings provided but
      * created in a new location on disk.
-     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the 
+     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the
      *               template for the new profile.
-     * @param name The name of the new profile. 
+     * @param name The name of the new profile.
      * @param description Description of the new profile
-     * @param seeds The contents of the new profiles' seed file 
+     * @param seeds The contents of the new profiles' seed file
      * @return The new profile.
      * @throws FatalConfigurationException
      */
@@ -517,11 +517,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
        addProfile(newProfile);
        return newProfile;
     }
-    
+
     /**
      * Creates a new settings handler based on an existing job. Basically all the
      * settings file for the 'based on' will be copied to the specified directory.
-     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the 
+     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the
      *               template for the new profile.
      * @param name Name for the new settings
      * @param description Description of the new settings.
@@ -532,13 +532,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *         'base on' configuration, with writing the new configuration or it's
      *         seed file.
      */
-    private XMLSettingsHandler makeNew(CrawlJob baseOn, 
-                                       String name, 
-                                       String description, 
-                                       String seeds, 
+    private XMLSettingsHandler makeNew(CrawlJob baseOn,
+                                       String name,
+                                       String description,
+                                       String seeds,
                                        String path,
                                        String filename,
-                                       String seedfile) 
+                                       String seedfile)
                                        throws FatalConfigurationException{
         XMLSettingsHandler newHandler;
 
@@ -552,7 +552,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // Create filenames etc.
         File newSettingsDir = new File(path);
         newSettingsDir.mkdirs();
-        
+
         try {
             // Set the seed file
             ((ComplexType)newHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
@@ -565,9 +565,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         } catch (ReflectionException e1) {
             throw new FatalConfigurationException("ReflectionException occured while setting seed file for new job/profile\n" + e1.getMessage());
         }
-        
+
         File newFile = new File(path,filename);
-        
+
         try {
             newHandler.copySettings(newFile,(String)newHandler.getOrder().getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
         } catch (IOException e3) {
@@ -578,12 +578,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
             throw new FatalConfigurationException("MBeanException occured while writing new settings files for new job/profile\n" + e.getMessage());
         } catch (ReflectionException e) {
             throw new FatalConfigurationException("ReflectionException occured while writing new settings files for new job/profile\n" + e.getMessage());
-        } 
+        }
         CrawlerSettings orderfile = newHandler.getSettingsObject(null);
- 
+
         orderfile.setName(name);
         orderfile.setDescription(description);
-        
+
         BufferedWriter writer;
         try {
             writer = new BufferedWriter(new FileWriter(new File(newHandler.getPathRelativeToWorkingDirectory(seedfile))));
@@ -604,7 +604,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void discardNewJob(){
         FileUtils.deleteDir(new File(newJob.getDirectory()));
     }
-    
+
     /**
      * Get the handler's 'new job'
      * @return the handler's 'new job'
@@ -612,7 +612,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public CrawlJob getNewJob(){
         return newJob;
     }
-    
+
     /**
      * Is the crawler accepting crawl jobs to run?
      * @return True if the next availible CrawlJob will be crawled. False otherwise.
@@ -623,7 +623,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Is a crawl job being crawled?
-     * @return True if a job is actually being crawled (even if it is paused). 
+     * @return True if a job is actually being crawled (even if it is paused).
      *         False if no job is being crawled.
      */
     public boolean isCrawling() {
@@ -643,7 +643,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Stop future jobs from being crawled.
-     * 
+     *
      * This action will not affect the current job.
      */
     public void stopCrawler() {
@@ -651,8 +651,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Start next crawl job.  
-     * 
+     * Start next crawl job.
+     *
      * If a is job already running this method will do nothing.
      */
     protected void startNextJob() {
@@ -692,9 +692,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Returns the Frontier report for the running crawl. If no crawl is running  
+     * Returns the Frontier report for the running crawl. If no crawl is running
      * a message to that effect will be returned instead.
-     * 
+     *
      * @return A report of the frontier's status.
      */
     public String getFrontierReport() {
@@ -706,7 +706,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Get the CrawlControllers ToeThreads report for the running crawl. If no 
+     * Get the CrawlControllers ToeThreads report for the running crawl. If no
      * crawl is running a message to that effect will be returned instead.
      * @return The CrawlControllers ToeThreads report
      */
@@ -719,7 +719,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Get the Processors report for the running crawl. If no crawl is running a 
+     * Get the Processors report for the running crawl. If no crawl is running a
      * message to that effect will be returned instead.
      * @return The Processors report for the running crawl.
      */
@@ -733,7 +733,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * @param statusMessage Message to display.
-     * 
+     *
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
@@ -742,7 +742,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * @param statusMessage Message to display.
-     * 
+     *
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
      */
     public void crawlPaused(String statusMessage) {
@@ -751,7 +751,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * @param statusMessage Message to display.
-     * 
+     *
      * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
@@ -760,7 +760,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * @param sExitMessage Exit message to display.
-     * 
+     *
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
      */
     public void crawlEnding(String sExitMessage) {
@@ -788,7 +788,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void crawlEnded(String sExitMessage) {
         // Not interested in this event.
     }
-    
+
     /**
      * Forward a 'kick' update to current controller if any.
      * @see CrawlController#kickUpdate()

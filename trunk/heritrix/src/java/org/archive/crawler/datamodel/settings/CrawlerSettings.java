@@ -1,7 +1,7 @@
 /* CrawlerSettings
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 16, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -30,17 +30,17 @@ import java.util.Map;
 
 /**
  * Class representing a settings file.
- * 
+ *
  * More precisely it represents a collection of settings valid in a particular
  * scope. The scope is either the global settings, or the settings to be used
- * for a particular domain or host. For scopes other than global, the instance 
- * will only contain those settings that are different from the global. 
- * 
+ * for a particular domain or host. For scopes other than global, the instance
+ * will only contain those settings that are different from the global.
+ *
  * In the default implementation this is a one to one mapping from a file to
  * an instance of this class, but in other implementations the information in
- * an instance of this class might be stored in a different way (for example 
+ * an instance of this class might be stored in a different way (for example
  * in a RDBMS).
- *  
+ *
  * @author John Erik Halse
  */
 public class CrawlerSettings {
@@ -72,13 +72,13 @@ public class CrawlerSettings {
     private String description = "";
 
     /** Constructs a new CrawlerSettings object.
-     * 
+     *
      * Application code should not call the constructor directly, but use the
      * methods in SettingsHandler instead.
-     * 
+     *
      * @param handler The SettingsHandler this object belongs to.
      * @param scope The scope of this settings object (ie. host or domain).
-     * 
+     *
      * @see SettingsHandler#getSettings(String)
      * @see SettingsHandler#getSettingsObject(String)
      */
@@ -88,7 +88,7 @@ public class CrawlerSettings {
     }
 
     /** Get the description of this CrawlerSettings object.
-     * 
+     *
      * @return the description of this CrawlerSettings object.
      */
     public String getDescription() {
@@ -96,7 +96,7 @@ public class CrawlerSettings {
     }
 
     /** Get the name of this CrawlerSettings object.
-     * 
+     *
      * @return the name of this CrawlerSettings object.
      */
     public String getName() {
@@ -104,7 +104,7 @@ public class CrawlerSettings {
     }
 
     /** Get the scope of this CrawlerSettings object.
-     * 
+     *
      * @return the scope of this CrawlerSettings object.
      */
     public String getScope() {
@@ -112,7 +112,7 @@ public class CrawlerSettings {
     }
 
     /** Set the description of this CrawlerSettings object.
-     * 
+     *
      * @param string the description to be set for this CrawlerSettings object.
      */
     public void setDescription(String string) {
@@ -120,7 +120,7 @@ public class CrawlerSettings {
     }
 
     /** Set the name of this CrawlerSettings object.
-     * 
+     *
      * @param string the name to be set for this CrawlerSettings object.
      */
     public void setName(String string) {
@@ -166,7 +166,7 @@ public class CrawlerSettings {
     }
 
     /** Get the parent of this CrawlerSettings object.
-     * 
+     *
      * @return the parent of this CrawlerSettings object.
      */
     public CrawlerSettings getParent() {
@@ -177,7 +177,7 @@ public class CrawlerSettings {
     }
 
     /** Get the SettingHandler this CrawlerSettings object belongs to.
-     * 
+     *
      * @return the SettingHandler this CrawlerSettings object belongs to.
      */
     public SettingsHandler getSettingsHandler() {

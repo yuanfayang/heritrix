@@ -1,7 +1,7 @@
 /* SettingsHandler
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 16, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -42,12 +42,12 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.util.ArchiveUtils;
 
 /** An instance of this class holds a hierarchy of settings.
- * 
+ *
  * More than one instance in memory is allowed so that a new CrawlJob could
  * be configured while another job is running.
- * 
+ *
  * This class should be subclassed to adapt to a persistent storage.
- * 
+ *
  * @author John Erik Halse
  */
 public abstract class SettingsHandler {
@@ -57,10 +57,10 @@ public abstract class SettingsHandler {
 
     /** Cached CrawlerSettings objects */
     private final Map settingsCache = new WeakHashMap();
-    
+
     /** Maps hostname to effective settings object */
-    private final Map hostToSettings = new WeakHashMap(); 
-    
+    private final Map hostToSettings = new WeakHashMap();
+
     /** Reference to the order module */
     private final CrawlOrder order;
 
@@ -109,7 +109,7 @@ public abstract class SettingsHandler {
     }
 
     /** Create a new SettingsHandler object.
-     * 
+     *
      * @throws InvalidAttributeValueException
      */
     public SettingsHandler() throws InvalidAttributeValueException {
@@ -118,7 +118,7 @@ public abstract class SettingsHandler {
     }
 
     /** Initialize the SettingsHandler.
-     * 
+     *
      * This method reads the default settings from the persistent storage.
      */
     public void initialize() {
@@ -126,7 +126,7 @@ public abstract class SettingsHandler {
     }
 
     /** Strip off the leftmost part of a domain name.
-     * 
+     *
      * @param scope the domain name.
      * @return scope with everything before the first dot ripped off.
      */
@@ -140,10 +140,10 @@ public abstract class SettingsHandler {
     }
 
     /** Get a module by name.
-     * 
+     *
      * All modules in the order should have unique names. This method makes it
      * possible to get the modules of the order by its name.
-     *  
+     *
      * @param name the modules name.
      * @return the module the name references.
      */
@@ -152,10 +152,10 @@ public abstract class SettingsHandler {
     }
 
     /** Get a complex type by its absolute name.
-     * 
+     *
      * The absolute name is the complex types name and the path leading to
      * it.
-     * 
+     *
      * @param settings the settings object to query.
      * @param absoluteName the absolute name of the complex type to get.
      * @return the complex type referenced by the absolute name or null if
@@ -166,7 +166,7 @@ public abstract class SettingsHandler {
     public ComplexType getComplexTypeByAbsoluteName(
             CrawlerSettings settings, String absoluteName)
             throws AttributeNotFoundException {
-                
+
         settings = settings == null ? globalSettings : settings;
 
         DataContainer data = settings.getData(absoluteName);
@@ -191,7 +191,7 @@ public abstract class SettingsHandler {
     }
 
     /** Convert a String object to an object of <code>typeName</code>.
-     * 
+     *
      * @param stringValue string to convert.
      * @param typeName type to convert to. typeName should be one of the
      *        supported types represented by constants in this class.
@@ -239,7 +239,7 @@ public abstract class SettingsHandler {
      * If there is no specific settings for the host/domain, it will recursively
      * go up the hierarchy to find the settings object that should be used for
      * this host/domain.<p>
-     * 
+     *
      * This method will also check if there are different settings for servers
      * on different port numbers on the same host. (Not implemented yet)
      *
@@ -268,14 +268,14 @@ public abstract class SettingsHandler {
      */
     public CrawlerSettings getSettings(String host) {
         CrawlerSettings settings = null;
-        
+
         // Try to get reference to settings from cache
         WeakReference ref = (WeakReference) hostToSettings.get(host);
         if (ref != null) {
             // Reference exist, but can still have been garbage collected
             settings = (CrawlerSettings) ref.get();
         }
-        
+
         if (settings == null) {
             settings = getSettingsObject(host);
             while (settings == null && host != null) {
@@ -283,7 +283,7 @@ public abstract class SettingsHandler {
                 settings = getSettingsObject(host);
             }
         }
-        
+
         // Add the settings object to the cache
         synchronized (hostToSettings) {
             hostToSettings.put(host, new WeakReference(settings));
@@ -293,11 +293,11 @@ public abstract class SettingsHandler {
     }
 
     /** Get CrawlerSettings object for a host or domain.
-     * 
-     * The difference between this method and the 
+     *
+     * The difference between this method and the
      * <code>getSettings(String host)</code> is that this method will return
-     * null if there is no settings for particular host or domain. 
-     * 
+     * null if there is no settings for particular host or domain.
+     *
      * @param scope the host or domain to get the settings for.
      * @return settings object for the host/domain or null if no
      *         settings exist for the host/domain.
@@ -317,12 +317,12 @@ public abstract class SettingsHandler {
                 settings = (CrawlerSettings) ref.get();
             }
         }
-        
+
         if (settings == null) {
             // Reference not found
             settings = new CrawlerSettings(this, scope);
             // Try to read settings from persisten storage. If its not there
-            // it will be set to null. 
+            // it will be set to null.
             settings = readSettingsObject(settings);
             if (settings != null) {
                 WeakReference ref = new  WeakReference(settings);
@@ -338,11 +338,11 @@ public abstract class SettingsHandler {
     }
 
     /** Get or create CrawlerSettings object for a host or domain.
-     * 
+     *
      * This method is similar to {@link #getSettingsObject(String)} except that
      * if there is no settings for this particular host or domain a new settings
      * object will be returned.
-     * 
+     *
      * @param scope the host or domain to get or create the settings for.
      * @return settings object for the host/domain.
      * @see #getSettings(String)
@@ -356,7 +356,7 @@ public abstract class SettingsHandler {
             settings = new CrawlerSettings(this, scope);
             synchronized (settingsCache) {
                 settingsCache.put(scope, new WeakReference(settings));
-            
+
                 // Clean up all possible references to old objects
                 synchronized (hostToSettings) {
                     hostToSettings.clear();
@@ -372,22 +372,22 @@ public abstract class SettingsHandler {
     }
 
     /** Write the CrawlerSettings object to persistent storage.
-     * 
+     *
      * @param settings the settings object to write.
      */
     public abstract void writeSettingsObject(CrawlerSettings settings);
 
     /** Read the CrawlerSettings object from persistent storage.
-     * 
+     *
      * @param settings the settings object to be updated with data from the
      *                 persistent storage.
      * @return the updated settings object or null if there was no data for this
      *         in the persistent storage.
      */
     protected abstract CrawlerSettings readSettingsObject(CrawlerSettings settings);
-    
+
     /** Delete a settings object from persistent storage.
-     * 
+     *
      * @param settings the settings object to delete.
      */
     public void deleteSettingsObject(CrawlerSettings settings) {
@@ -395,7 +395,7 @@ public abstract class SettingsHandler {
         synchronized (settingsCache) {
             settingsCache.remove(settings.getScope());
         }
-        
+
         // Find all references to this settings object in the hostToSettings
         // cache and remove them.
         synchronized (hostToSettings) {
@@ -408,19 +408,19 @@ public abstract class SettingsHandler {
     }
 
     /** Get the CrawlOrder.
-     * 
+     *
      * @return the CrawlOrder
      */
     public CrawlOrder getOrder() {
         return order;
     }
-    
+
     /** Instatiate a new CrawlerModule given its name and className.
-     * 
+     *
      * @param name the name for the new ComplexType.
      * @param className the class name of the new ComplexType.
      * @return an instance of the class identified by className.
-     * 
+     *
      * @throws InvocationTargetException
      */
     public static CrawlerModule instantiateCrawlerModuleFromClassName(
@@ -452,23 +452,23 @@ public abstract class SettingsHandler {
         }
         return module;
     }
-    
+
     /**
-     * Transforms a relative path so that it is relative to a location that is 
-     * regarded as a working dir for these settings. If an absolute path is given, 
+     * Transforms a relative path so that it is relative to a location that is
+     * regarded as a working dir for these settings. If an absolute path is given,
      * it will be returned unchanged.
      * @param path A relative path to a file (or directory)
      * @return The same path modified so that it is relative to the file level
      *         location that is considered the working directory for these settings.
      */
     public abstract String getPathRelativeToWorkingDirectory(String path);
-    
+
     /**
      * Will return an array of strings with domains that contain 'per' domain
      * overrides (or their subdomains contain them). The domains considered are
      * limited to those that are subdomains of the supplied domain. If null or
      * empty string is supplied the TLDs will be considered.
-     * @param rootDomain The domain to get domain overrides for. Examples:  
+     * @param rootDomain The domain to get domain overrides for. Examples:
      *                   'org', 'archive.org', 'crawler.archive.org' etc.
      * @return An array of domains that contain overrides. If rootDomain does not
      *         exist an empty array will be returned.

@@ -37,16 +37,16 @@ import org.apache.commons.httpclient.Header;
 
 /** Allows the caller to process a CrawlURI representing a PDF
  *  for the purpose of extracting URIs
- * 
- * @author Parker Thompson 
+ *
+ * @author Parker Thompson
  *
  */
 public class ExtractorPDF extends Processor implements CoreAttributeConstants {
     private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
-	private long maxSizeToParse = DEFAULT_MAX_SIZE_TO_PARSE; // TODO: make configurable
+    private long maxSizeToParse = DEFAULT_MAX_SIZE_TO_PARSE; // TODO: make configurable
 
-	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
-	
+    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
+
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -57,57 +57,57 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
         super(name, "PDF extractor");
     }
 
-	protected void innerProcess(CrawlURI curi){
+    protected void innerProcess(CrawlURI curi){
 
-		if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {
-			// TODO: generalize for when codes other than 200 might have good content
-			return;
-		}
-		
-		GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+    	if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {
+    		// TODO: generalize for when codes other than 200 might have good content
+    		return;
+    	}
 
-		Header contentType = get.getResponseHeader("Content-Type");		
-		if ((contentType==null)||(!contentType.getValue().startsWith("application/pdf"))) {
-			// nothing to extract for other types here
-			return;
-		} 
-        
+    	GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+
+    	Header contentType = get.getResponseHeader("Content-Type");
+    	if ((contentType==null)||(!contentType.getValue().startsWith("application/pdf"))) {
+    		// nothing to extract for other types here
+    		return;
+    	}
+
         numberOfCURIsHandled++;
-        
-		File tempFile;
-		
-		if(get.getHttpRecorder().getRecordedInput().getSize()>maxSizeToParse) {
-			return;
-		}
-		
-		int sn = ((ToeThread)Thread.currentThread()).getSerialNumber();
-		tempFile = new File(controller.getScratchDisk(),"tt"+sn+"tmp.pdf");
-			
-		PDFParser parser;
-		ArrayList uris;
-		try {
-			get.getHttpRecorder().getRecordedInput().copyContentBodyTo(tempFile);
-			parser = new PDFParser(tempFile.getAbsolutePath());
-			uris = parser.extractURIs();
-		} catch (IOException e) {
-			curi.addLocalizedError(getName(), e, "ExtractorPDF IOException");
-			return;
-		} catch (RuntimeException e) {
-			// truncated/corrupt  PDFs may generate ClassCast exceptions, or other problems
-			curi.addLocalizedError(getName(), e, "ExtractorPDF RuntimeException");
-			return;
-		} finally {
-			tempFile.delete();
-		}
-		
-		if(uris!=null && uris.size()>0) {
+
+    	File tempFile;
+
+    	if(get.getHttpRecorder().getRecordedInput().getSize()>maxSizeToParse) {
+    		return;
+    	}
+
+    	int sn = ((ToeThread)Thread.currentThread()).getSerialNumber();
+    	tempFile = new File(controller.getScratchDisk(),"tt"+sn+"tmp.pdf");
+
+    	PDFParser parser;
+    	ArrayList uris;
+    	try {
+    		get.getHttpRecorder().getRecordedInput().copyContentBodyTo(tempFile);
+    		parser = new PDFParser(tempFile.getAbsolutePath());
+    		uris = parser.extractURIs();
+    	} catch (IOException e) {
+    		curi.addLocalizedError(getName(), e, "ExtractorPDF IOException");
+    		return;
+    	} catch (RuntimeException e) {
+    		// truncated/corrupt  PDFs may generate ClassCast exceptions, or other problems
+    		curi.addLocalizedError(getName(), e, "ExtractorPDF RuntimeException");
+    		return;
+    	} finally {
+    		tempFile.delete();
+    	}
+
+    	if(uris!=null && uris.size()>0) {
             numberOfLinksExtracted += uris.size();
             curi.getAList().putObject("html-links", uris);
-		}
-		
-		logger.fine(curi+" has "+uris.size()+" links.");
+    	}
+
+    	logger.fine(curi+" has "+uris.size()+" links.");
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-	}
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
@@ -118,7 +118,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
         ret.append("  Function:          Link extraction on PDF documents\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-        
+
         return ret.toString();
     }
 }

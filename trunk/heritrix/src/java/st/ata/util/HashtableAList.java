@@ -40,7 +40,7 @@ public class HashtableAList implements MutableAList, Serializable {
 
     /**
      * Deep Clone.
-     * 
+     *
      * Limited implementation
      * @return The cloned object.
      */
@@ -417,7 +417,7 @@ public class HashtableAList implements MutableAList, Serializable {
     public AList newAList() {
         return new HashtableAList();
     }
-    
+
     public String toString() {
         return mTable.toString();
     }

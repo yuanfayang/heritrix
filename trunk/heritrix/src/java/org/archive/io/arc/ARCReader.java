@@ -1,23 +1,23 @@
 /* ARCReader
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 6, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,14 +38,14 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * ARC file reader.
- * 
- * ARC files are described here: 
+ *
+ * ARC files are described here:
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
  * File Format</a>.  This class does version 1 of the ARC file format only.
- * 
+ *
  * <p>This class knows how to parse an ARC file and has accessors for all of
  * the ARC file content. It can parse ARC Version 1 and 2.
- * 
+ *
  * <p>{@link java.util.zip.GZIPInputStream} can't deal w/ a GZIP file made of
  * multiple GZIP members.   An instance finds the first GZIP member only.
  * Worse, when its done, its taken the underlying input stream to EOF.  So, it
@@ -55,12 +55,12 @@ import java.util.zip.GZIPInputStream;
  * instance of GZIPInputStream to consume (I had trouble developing a reliable
  * reset of an extant instance -- it seems to read the header in the
  * constructor only).
- * 
+ *
  * <p>ASSUMPTIONS:
  * <ul>
  * <li>That the line delimiter character is '&lt;nl&gt; (0x0A) in ARC files
  * only (The alexa c-code does this so this should be safe assumption).</li>
- * <li>No multibyte content in ARC file record headers.  Assumption is 
+ * <li>No multibyte content in ARC file record headers.  Assumption is
  * ASCII only.</li>
  * </ul>
  * <p>LIMITATIONS:
@@ -68,10 +68,10 @@ import java.util.zip.GZIPInputStream;
  * <li>Currently you can only read through the ARC file sequentially.  There
  * is no mechanism for backing up the stream.</li>
  * </ul>
- * 
+ *
   * <p>I wanted to use java.nio memory-mapped files rather than old-school
  * java.io because:
- * 
+ *
  * "Accessing a file through the memory-mapping mechanism can be far more
  * efficient than reading or writing data by conventional means, even when
  * using channels. No explicit system calls need to be made, which can be
@@ -83,9 +83,9 @@ import java.util.zip.GZIPInputStream;
  * system call to get the data. Large, structured files that contain indexes or
  * other sections that are referenced or updated frequently can benefit
  * tremendously from memory mapping....", from the OReilly Java NIO By Ron
- * Hitchens. 
+ * Hitchens.
  *
- * <p>Needing to manage buffers for the spoon feeding of GZIP members to 
+ * <p>Needing to manage buffers for the spoon feeding of GZIP members to
  * GZIPInputStream made me look again at java.nio.  Using a ByteBuffer that
  * holds the whole ARC file for sure makes the code simpler and the nice thing
  * about using memory-mapped buffers for reading is that the memory used is
@@ -98,39 +98,39 @@ import java.util.zip.GZIPInputStream;
  * about  unable to allocate the memory.  So, a channel based reader would
  * limited only by memory characteristics of the machine its running on (swap
  * and physical memory -- not JVM heap size) ONLY, I discovered the following.
- * 
+ *
  * <p>Really big files generated complaint out of FileChannel.map saying the
  * size parameter was > Integer.MAX_VALUE which is also odd considering the
- * type is long.  This must be an nio bug.  Means there is an upperbound of 
+ * type is long.  This must be an nio bug.  Means there is an upperbound of
  * Integer.MAX_VALUE (about 2.1G or so).  This is unfortunate -- particularly
- * as the c-code tools for ARC manipulations, see alexa/common/a_arcio.c, 
- * support > 2.1G -- but its good enough for now (ARC files are usually 
+ * as the c-code tools for ARC manipulations, see alexa/common/a_arcio.c,
+ * support > 2.1G -- but its good enough for now (ARC files are usually
  * 100M).
- * 
+ *
  * <p>The committee seems to still be out regards general nio
  * performance.  See <a
  * href="http://forum.java.sun.com/thread.jsp?forum=4&thread=227539&message=806443">NIO
- * ByteBuffer slower than BufferedInputStream</a>.  It can be 4 times slower 
+ * ByteBuffer slower than BufferedInputStream</a>.  It can be 4 times slower
  * than java.io or 40% faster.
- * 
+ *
  * <p>My first cut at an ARC reader was a ChannelScanARCReader class that got
  * a channel on to the ARC file and from this allocated a memory-mapped buffer
  * to hold the total ARC content.  This buffer was then wrapped by a
  * ByteBufferInputStream and it managed the doling out of
  * GZIP members to the child GZIPInputStream.  It was finding GZIP boundaries
  * by scanning ahead which is probably less optimial than technique used below.
- * 
+ *
  * <p>TODO: Profiling of the two techniques -- java.io vs. memory-mapped
  * ByteBufferInputStream to see which is faster.  As is, ARCReader is SLOW.
- * 
- * <p>TODO: Testing of this reader class against ARC files harvested out in 
+ *
+ * <p>TODO: Testing of this reader class against ARC files harvested out in
  * the wilds.  This class has only been tested to date going against small
- * files made by unit tests.  The class needs to be tested that it might 
+ * files made by unit tests.  The class needs to be tested that it might
  * develop robustness.
- * 
+ *
  * <p>TODO: Currently its an instance per file.  Maybe later add an open
  * method so can use one instance to open and close multiple files.
- * 
+ *
  * @author stack
  */
 public class ARCReader
@@ -138,7 +138,7 @@ public class ARCReader
 {
     /**
      * Assumed maximum size of a record meta header line.
-     * 
+     *
      * This 100k which seems massive but its the same as the LINE_LENGTH from
      * <code>alexa/include/a_arcio.h</code>:
      * <pre>
@@ -146,49 +146,49 @@ public class ARCReader
      * </pre>
      */
     private static final int MAX_HEADER_LINE_LENGTH = 1024 * 100;
-    
+
     /**
      * The ARC file.
      */
     private File arcFile = null;
-    
+
     /**
      * True if the file we are reading is compressed.
      */
     private boolean compressed = false;
-    
+
     /**
      * ARC file input stream.
-     * 
+     *
      * Keep it around so we can close it when done.
      */
     private InputStream in = null;
 
     /**
      * The ARCRecord currently being read.
-     * 
+     *
      * You can only go serially through the file.  This is pointer to current
      * ARCRecord.
      */
     private ARCRecord currentRecord = null;
-    
+
     /**
      * ARC file version.
      */
     private String version = null;
-    
+
     /**
-     * An array of the header field names found in the ARC file header on 
+     * An array of the header field names found in the ARC file header on
      * the 3rd line.
      */
     private ArrayList headerFieldNameKeys = null;
 
     /**
      * List of all read metadatas.
-     * 
+     *
      * As we read records, we add a reference to the read metadata.
-     * 
-     * Upon instantiation, will have at least the metadata for the ARC file 
+     *
+     * Upon instantiation, will have at least the metadata for the ARC file
      * itself.
      */
     private List metaDatas = new ArrayList();
@@ -199,24 +199,24 @@ public class ARCReader
     {
         this(new File(arcFile));
     }
-    
+
     /**
      * Constructor.
-     * 
-     * Opens the passed ARC file and reads in the ARC file header.  When done, 
+     *
+     * Opens the passed ARC file and reads in the ARC file header.  When done,
      * we're cue'd up to read ARC records.
-     * 
+     *
      * ARC file header looks like this:
-     * 
+     *
      * <pre>filedesc://testIsBoundary-JunitIAH200401070157520.arc 0.0.0.0 \\
      *      20040107015752 text/plain 77
      * 1 0 InternetArchive
      * URL IP-address Archive-date Content-type Archive-length</pre>
-     * 
+     *
      * @param arcFile ARC file to read.
-     * 
-     * @throws IOException If file is unreadable or trouble reading first 
-     * few bytes as we test if passed file is legal ARC or if this is not an 
+     *
+     * @throws IOException If file is unreadable or trouble reading first
+     * few bytes as we test if passed file is legal ARC or if this is not an
      * ARC file.
      */
     public ARCReader(File arcFile)
@@ -232,7 +232,7 @@ public class ARCReader
             }
         }
         this.arcFile = arcFile;
-        
+
         // Apart from any buffering benefits, there is a dependency on being
         // able to mark and reset the stream if the ARC if uncompressed.
         // See the ARCRecord.skip() method.
@@ -242,14 +242,14 @@ public class ARCReader
             this.in = new ARCReaderGZIPInputStream(
                 new GZIPMemberPushbackInputStream(this.in));
         }
-        
+
         // Read in the first ARC record.  Its the meta info for the ARC file.
-        // Immediately close it since it doesn't have any content but the 
-        // meta info itself.  Closing cues us up at the next ARC record in 
+        // Immediately close it since it doesn't have any content but the
+        // meta info itself.  Closing cues us up at the next ARC record in
         // the file.
         createARCRecord().close();
     }
-    
+
     /**
      * @param arcFile File to test.
       * @exception IOException If file does not exist or is not unreadable.
@@ -262,24 +262,24 @@ public class ARCReader
             throw new FileNotFoundException(arcFile.getAbsolutePath() +
                 " does not exist.");
         }
-        
+
         if (!arcFile.canRead())
         {
             throw new FileNotFoundException(arcFile.getAbsolutePath() +
                 " is not readable.");
-        }        
+        }
     }
-    
+
     /**
      * Check file is compressed and in ARC GZIP format.
-     * 
-     * @param arcFile File to test if its Internet Archive ARC file 
+     *
+     * @param arcFile File to test if its Internet Archive ARC file
      * GZIP compressed.
-     * 
+     *
      * @return True if this is an Internet Archive GZIP'd ARC file (It begins
-     * w/ the Internet Archive GZIP header and has the 
+     * w/ the Internet Archive GZIP header and has the
      * COMPRESSED_ARC_FILE_EXTENSION suffix).
-     * 
+     *
      * @exception IOException If file does not exist or is not unreadable.
      */
     public static boolean testCompressedARCFile(File arcFile)
@@ -315,20 +315,20 @@ public class ARCReader
                 }
             }
         }
-        
+
         return compressedARCFile;
     }
-    
+
     /**
      * Check file is uncompressed ARC file.
-     * 
-     * @param arcFile File to test if its Internet Archive ARC file 
+     *
+     * @param arcFile File to test if its Internet Archive ARC file
      * uncompressed.
-     * 
+     *
      * @return True if this is an Internet Archive GZIP'd ARC file (It begins
-     * w/ the Internet Archive GZIP header and has the 
+     * w/ the Internet Archive GZIP header and has the
      * COMPRESSED_ARC_FILE_EXTENSION suffix).
-     * 
+     *
      * @exception IOException If file does not exist or is not unreadable.
      */
     public static boolean testUncompressedARCFile(File arcFile)
@@ -349,34 +349,34 @@ public class ARCReader
                 {
                     beginStr.append((char)b[i]);
                 }
-                
+
                 if (beginStr.toString().equalsIgnoreCase(ARC_MAGIC_NUMBER))
                 {
                     uncompressedARCFile = true;
-                }            
+                }
             }
         }
-        
+
         return uncompressedARCFile;
     }
-        
+
     public void close()
         throws IOException
-    {   
+    {
         if (this.in != null)
         {
             this.in.close();
             this.in = null;
         }
     }
-    
+
     protected void finalize()
         throws Throwable
     {
         close();
         super.finalize();
     }
-    
+
     /**
      * @return True if we have more ARC records to read.
      * @throws IOException
@@ -389,26 +389,26 @@ public class ARCReader
         {
             // Only come in here if we've emptied out the stream.
             // Ask the stream that underlays the GZIPInputStream if there
-            // are more GZIP members to be read.  
-            ARCReaderGZIPInputStream agis 
+            // are more GZIP members to be read.
+            ARCReaderGZIPInputStream agis
                 = (ARCReaderGZIPInputStream)this.in;
             GZIPMemberPushbackInputStream gmpis
                 = (GZIPMemberPushbackInputStream)agis.getIn();
             hasNext = gmpis.hasNext();
         }
-        
+
         return hasNext;
     }
-    
+
     /**
-     * Return the next record.  
-     * 
+     * Return the next record.
+     *
      * <p>Its unpredictable what will happen if you do not call hasNext before
-     * you come in here for another record (This method does not call 
+     * you come in here for another record (This method does not call
      * hasNext for you).
-     * 
+     *
      * @return Next ARCRecord else null if no more records left.
-     * 
+     *
      * @throws IOException
      */
     public ARCRecord next()
@@ -420,7 +420,7 @@ public class ARCReader
             // any content not yet read.
             this.currentRecord.close();
         }
-        
+
         if (isCompressed())
         {
             ARCReaderGZIPInputStream agis = (ARCReaderGZIPInputStream)this.in;
@@ -436,13 +436,13 @@ public class ARCReader
             // Make it so no bones about GC'ing old GZIPInputStream instance.
             agis = null;
         }
-        
+
         return createARCRecord();
     }
-    
+
     /**
      * Create new arc record.
-     * 
+     *
      * Encapsulate housekeeping that has to do w/ creating a new record.
      */
     private ARCRecord createARCRecord()
@@ -467,30 +467,30 @@ public class ARCReader
             //
             this.version = ((String)getTokenizedHeaderLine().get(0));
             this.headerFieldNameKeys = computeHeaderFieldNameKeys();
-            
+
             // There is no content in the ARC file meta record or, rather,
             // there is but its the lines 2 and 3 that we just read above
-            // so set contentRead to true so ARCRecord content position 
+            // so set contentRead to true so ARCRecord content position
             // pointer doesn't get out of whack.
             contentRead = true;
         }
-        
+
         this.currentRecord = new ARCRecord(this.in,
             computeMetaData(this.headerFieldNameKeys, values, this.version),
-            contentRead); 
+            contentRead);
         // Add reference to metadata into a list of metadatas.
         this.metaDatas.add(this.currentRecord.getMetaData());
         return this.currentRecord;
     }
-    
+
     /**
      * Get a record header line as list of tokens.
      *
      * We keep reading till we find a LINE_SEPARATOR or we reach the end
      * of file w/o finding a LINE_SEPARATOR or the line length is crazy.
-     * 
+     *
      * @return List of string tokens.
-     * 
+     *
      * @exception IOException If problem reading stream or no line separator
      * found or EOF before EOL or we didn't get minimum header fields.
      */
@@ -505,16 +505,16 @@ public class ARCReader
             if (i > MAX_HEADER_LINE_LENGTH)
             {
                 throw new IOException("Header line longer than max allowed " +
-                        " -- " + String.valueOf(MAX_HEADER_LINE_LENGTH) + 
+                        " -- " + String.valueOf(MAX_HEADER_LINE_LENGTH) +
                 " -- or passed buffer doesn't contain a line.");
             }
-            
+
             c = this.in.read();
             if (c == -1)
             {
                 throw new IOException("Hit EOF before header EOL.");
             }
-            
+
             if (c == LINE_SEPARATOR)
             {
                 if (list.size() == 0 && buffer.length() == 0)
@@ -522,7 +522,7 @@ public class ARCReader
                     // Empty line at start of buffer.  Skip it and try again.
                     continue;
                 }
-                
+
                 list.add(buffer.toString());
                 // LOOP TERMINATION.
                 break;
@@ -533,29 +533,29 @@ public class ARCReader
                 buffer = new StringBuffer();
             }
             else
-            {    
+            {
                 buffer.append((char)c);
             }
         }
-        
+
         // List must have at least 3 elements in it and no more than 10.  If
         // it has other than this, then bogus parse.
         if (list.size() < 3 || list.size() > 10)
         {
             throw new IOException("Empty header line.");
         }
-        
+
         return list;
     }
 
     /**
      * Get the header field names lowercased.
-     * 
+     *
      * Assumption is that we're cue'd up to read the 3rd line of the ARC file
      * record when this method is called.
      *
      * @return Lowercased field names parsed from 3rd line of the ARC file.
-     * 
+     *
      * @exception IOException If we fail reading ARC file meta line no. 3.
      */
     private ArrayList computeHeaderFieldNameKeys()
@@ -572,18 +572,18 @@ public class ARCReader
 
     /**
      * Compute metadata fields.
-     * 
+     *
      * Here we check the meta field has right number of items in it.
-     * 
+     *
      * @param headerFieldNameKeys Keys to use composing headerFields map.
      * @param values Values to set into the headerFields map.
      * @param version The version of this ARC file.
-     * 
+     *
      * @return Metadata structure for this record.
-     * 
+     *
      * @exception IOException  If no. of keys doesn't match no. of values.
      */
-    private ARCRecordMetaData computeMetaData(ArrayList headerFieldNameKeys, 
+    private ARCRecordMetaData computeMetaData(ArrayList headerFieldNameKeys,
             ArrayList values, String version)
         throws IOException
     {
@@ -592,24 +592,24 @@ public class ARCReader
             throw new IOException("Size of field name keys does " +
             " not match count of field values.");
         }
-        
+
         HashMap headerFields = new HashMap();
         for (int i = 0; i < headerFieldNameKeys.size(); i++)
         {
             headerFields.put(headerFieldNameKeys.get(i), values.get(i));
         }
-        
+
         headerFields.put(VERSION_HEADER_FIELD_KEY, version);
-        
+
         return new ARCRecordMetaData(headerFields);
     }
 
     /**
      * Validate the arcFile.
-     * 
-     * This method iterates over the file throwing exception if it fails 
+     *
+     * This method iterates over the file throwing exception if it fails
      * to successfully parse.
-     * 
+     *
      * @throws IOException
      */
     public void validate()
@@ -617,16 +617,16 @@ public class ARCReader
     {
         validate(-1);
     }
-        
+
     /**
      * Validate the arcFile.
-     * 
-     * This method iterates over the file throwing exception if it fails 
+     *
+     * This method iterates over the file throwing exception if it fails
      * to successfully parse.
-     * 
+     *
      * @param noRecords Number of records expected.  Pass -1 if number is
      * unknown.
-     * 
+     *
      * @throws IOException
      */
     public void validate(int noRecords)
@@ -636,15 +636,15 @@ public class ARCReader
         for(; hasNext(); count++)
         {
             ARCRecord r = next();
-            if (r.getMetaData().getLength() <= 0 
+            if (r.getMetaData().getLength() <= 0
                 && r.getMetaData().getMimetype().equals(NO_TYPE_MIMETYPE))
             {
                 throw new IOException("ARCRecord content is empty.");
             }
-            
+
             r.close();
         }
-        
+
         if (noRecords != -1)
         {
             if (count != noRecords)
@@ -655,7 +655,7 @@ public class ARCReader
             }
         }
     }
-    
+
     /**
      * @return True if file can be successfully parsed.
      */
@@ -672,10 +672,10 @@ public class ARCReader
             // File is not valid if exception thrown parsing.
             valid = false;
         }
-        
+
         return valid;
     }
-    
+
     /**
      * @return True if we are using compression.
      */
@@ -683,7 +683,7 @@ public class ARCReader
     {
         return this.compressed;
     }
-    
+
     /**
      * @return The current ARC record or null if none.
      */
@@ -691,23 +691,23 @@ public class ARCReader
     {
         return this.currentRecord;
     }
-    
+
     /**
-     * Returns list of all metadatas read so far. 
-     * 
+     * Returns list of all metadatas read so far.
+     *
      * On instantiation, will have the ARC files metadata only.  As file is
      * read, we add the metadata of ARCRecords found to this list.
-     * 
+     *
      * @return Returns the metaDatas.
      */
     public List getMetaDatas()
     {
         return this.metaDatas;
     }
-    
+
     /**
      * Override that gives access to underlying input stream.
-     * 
+     *
      * @author stack
      */
     public class ARCReaderGZIPInputStream
@@ -727,11 +727,11 @@ public class ARCReader
             return this.in;
         }
     }
-    
+
     /**
-     * Use this main to pass the ARCReader files to test its ability at 
+     * Use this main to pass the ARCReader files to test its ability at
      * parse/reading.
-     * 
+     *
      * @param args List of files to validate.
      * @throws FileNotFoundException
      * @throws IOException

@@ -32,10 +32,10 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
 
 /**
- * Accepts all urls passed in with a path depth 
+ * Accepts all urls passed in with a path depth
  * less or equal than the max-path-depth
- * value. 
- * 
+ * value.
+ *
  * @author Igor Ranitovic
  *
  */
@@ -43,8 +43,8 @@ public class PathDepthFilter extends Filter {
     static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
     Integer maxPathDepth = new Integer(Integer.MAX_VALUE);
     char slash = '/';
-	String path;
-	
+    String path;
+
     /**
      * @param name
      */
@@ -53,28 +53,28 @@ public class PathDepthFilter extends Filter {
         addElementToDefinition(new SimpleType(ATTR_MAX_PATH_DEPTH, "Max path depth", maxPathDepth));
     }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
-	 */
-	protected boolean innerAccepts(Object o) {
-		if(o instanceof CandidateURI) {
-			path = ((CandidateURI)o).getUURI().getPath();
-		} else if (o instanceof UURI ){
-			path = ((UURI)o).getPath();
-		}else{
-			path = null;
-		}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
+     */
+    protected boolean innerAccepts(Object o) {
+    	if(o instanceof CandidateURI) {
+    		path = ((CandidateURI)o).getUURI().getPath();
+    	} else if (o instanceof UURI ){
+    		path = ((UURI)o).getPath();
+    	}else{
+    		path = null;
+    	}
 
-		if (path == null){
-			return true;
-		}
-		
-		int count = 0;
-		for (int i = path.indexOf(slash);
-			i != -1;
-			i = path.indexOf(slash, i + 1)) {
-			count++;
-		}
+    	if (path == null){
+    		return true;
+    	}
+
+    	int count = 0;
+    	for (int i = path.indexOf(slash);
+    		i != -1;
+    		i = path.indexOf(slash, i + 1)) {
+    		count++;
+    	}
         if (o instanceof CrawlURI) {
             try {
                 maxPathDepth = (Integer) getAttribute(ATTR_MAX_PATH_DEPTH, (CrawlURI) o);
@@ -83,7 +83,7 @@ public class PathDepthFilter extends Filter {
                 e.printStackTrace();
             }
         }
-		return (count <= maxPathDepth.intValue());
-	}
+    	return (count <= maxPathDepth.intValue());
+    }
 
 }

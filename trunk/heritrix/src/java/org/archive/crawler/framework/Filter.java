@@ -37,12 +37,12 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * Several classes allow 'filters' to be applied to them. Filters are classes
  * that, based on an arbitrary object passed to them, return a boolean stating
  * if if passes the filter. Thus applying filters can affect the behavior of
- * those classes. This class provides the basic framework for filters. All 
+ * those classes. This class provides the basic framework for filters. All
  * detailed implementation of filters inherit from it and it is considered to
  * be a 'null' filter (always returns true).
- * 
+ *
  * @author Gordon Mohr
- * 
+ *
  * @see org.archive.crawler.framework.Processor
  */
 public class Filter extends CrawlerModule {
@@ -56,7 +56,7 @@ public class Filter extends CrawlerModule {
     protected CrawlController controller;
 
     /** Creates a new 'null' filter.
-     * 
+     *
      * @param name the name of the filter.
      * @param description an description of the filter suitable for showing in
      *        the user interface.
@@ -72,7 +72,7 @@ public class Filter extends CrawlerModule {
     }
 
     /** Creates a new 'null' filter.
-     * 
+     *
      * @param name the name of the filter.
      */
     public Filter(String name) {
@@ -99,12 +99,12 @@ public class Filter extends CrawlerModule {
         }
         return inverter ^ innerAccepts(o);
     }
-    
+
     /**
      * Classes subclassing this one should override this method to perfrom
      * their custom determination of whether or not the object given to it.
-     * 
-     * @param o The object 
+     *
+     * @param o The object
      * @return True if it passes the filter.
      */
     protected boolean innerAccepts(Object o) {

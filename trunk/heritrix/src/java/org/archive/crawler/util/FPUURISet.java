@@ -38,109 +38,109 @@ import st.ata.util.FPGenerator;
  * UURISet which only stores 64-bit UURI fingerprints, using an
  * internal LongFPSet instance. (This internal instance may be
  * disk or memory based.)
- * 
+ *
  * @author gojomo
  *
  */
 public class FPUURISet extends AbstractSet implements UURISet {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.util.FPUURISet");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.util.FPUURISet");
 
-	LongFPSet fpset;
-	FPGenerator fpgen = FPGenerator.std64;
-	
-	
-	public FPUURISet(LongFPSet fpset) {
-		this.fpset = fpset;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#count()
-	 */
-	public long count() {
-		return fpset.count();
-	}
+    LongFPSet fpset;
+    FPGenerator fpgen = FPGenerator.std64;
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.UURI)
-	 */
-	public boolean contains(UURI u) {
-		long fp = fpgen.fp(u.getUriString());
-		boolean retVal = fpset.contains(fp);
-		if(retVal) {
-			logger.finest("Already contains "+fp+" "+u);
-		}
-		return retVal;
-	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.CandidateURI)
-	 */
-	public boolean contains(CandidateURI curi) {
-		return contains(curi.getUURI());
-	}
+    public FPUURISet(LongFPSet fpset) {
+    	this.fpset = fpset;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.UURI)
-	 */
-	public void add(UURI u) {
-		long fp = fpgen.fp(u.getUriString());
-		logger.finest("Adding "+fp+" "+u);
-		fpset.add(fp);
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#count()
+     */
+    public long count() {
+    	return fpset.count();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.UURI)
-	 */
-	public void remove(UURI u) {
-		fpset.remove(fpgen.fp(u.getUriString()));
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.UURI)
+     */
+    public boolean contains(UURI u) {
+    	long fp = fpgen.fp(u.getUriString());
+    	boolean retVal = fpset.contains(fp);
+    	if(retVal) {
+    		logger.finest("Already contains "+fp+" "+u);
+    	}
+    	return retVal;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CrawlURI)
-	 */
-	public void add(CandidateURI curi) {
-		add(curi.getUURI());
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.CandidateURI)
+     */
+    public boolean contains(CandidateURI curi) {
+    	return contains(curi.getUURI());
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CrawlURI)
-	 */
-	public void remove(CandidateURI curi) {
-		remove(curi.getUURI());
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.UURI)
+     */
+    public void add(UURI u) {
+    	long fp = fpgen.fp(u.getUriString());
+    	logger.finest("Adding "+fp+" "+u);
+    	fpset.add(fp);
+    }
 
-	/* (non-Javadoc)
-	 * @see java.util.AbstractCollection#size()
-	 */
-	public int size() {
-		return (int)count();
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.UURI)
+     */
+    public void remove(UURI u) {
+    	fpset.remove(fpgen.fp(u.getUriString()));
+    }
 
-	/* (non-Javadoc)
-	 * @see java.util.AbstractCollection#iterator()
-	 */
-	public Iterator iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public void add(CandidateURI curi) {
+    	add(curi.getUURI());
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
-	 */
-	public boolean quickContains(UURI u) {
-		long fp = fpgen.fp(u.getUriString());
-		boolean retVal = fpset.quickContains(fp);
-		if(retVal) {
-			logger.finest("Already quickContains "+fp+" "+u);
-		}
-		return retVal;
-	}
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public void remove(CandidateURI curi) {
+    	remove(curi.getUURI());
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.CandidateURI)
-	 */
-	public boolean quickContains(CandidateURI curi) {
-		return quickContains(curi.getUURI());
-	}
+    /* (non-Javadoc)
+     * @see java.util.AbstractCollection#size()
+     */
+    public int size() {
+    	return (int)count();
+    }
+
+    /* (non-Javadoc)
+     * @see java.util.AbstractCollection#iterator()
+     */
+    public Iterator iterator() {
+    	// TODO Auto-generated method stub
+    	return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
+     */
+    public boolean quickContains(UURI u) {
+    	long fp = fpgen.fp(u.getUriString());
+    	boolean retVal = fpset.quickContains(fp);
+    	if(retVal) {
+    		logger.finest("Already quickContains "+fp+" "+u);
+    	}
+    	return retVal;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.CandidateURI)
+     */
+    public boolean quickContains(CandidateURI curi) {
+    	return quickContains(curi.getUURI());
+    }
 
 }

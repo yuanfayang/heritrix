@@ -1,9 +1,9 @@
 /* PaddingStringBufferTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created Tue Jan 20 14:17:59 PST 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -31,14 +31,14 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for PaddingStringBuffer
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $Id$
  */
 public class PaddingStringBufferTest extends TestCase {
     /**
      * Create a new PaddingStringBufferTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public PaddingStringBufferTest(final String testName) {
@@ -47,7 +47,7 @@ public class PaddingStringBufferTest extends TestCase {
 
     /**
      * run all the tests for PaddingStringBufferTest
-     * 
+     *
      * @param argv the command line arguments
      */
     public static void main(String argv[]) {
@@ -56,7 +56,7 @@ public class PaddingStringBufferTest extends TestCase {
 
     /**
      * return the suite of tests for PaddingStringBufferTest
-     * 
+     *
      * @return the suite of test
      */
     public static Test suite() {
@@ -128,7 +128,7 @@ public class PaddingStringBufferTest extends TestCase {
         assertEquals("no padding for 0", "foo", buf.toString());
 
     }
-    
+
     /** test the newline() */
     public void testNewline(){
         PaddingStringBuffer retBuf;

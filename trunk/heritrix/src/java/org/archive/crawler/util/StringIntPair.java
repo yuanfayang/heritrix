@@ -30,34 +30,34 @@ package org.archive.crawler.util;
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class StringIntPair {
-	private String stringValue;
-	private int intValue;
-	
-	public StringIntPair(String s, int i){
-		stringValue = s;
-		intValue = i;
-	}
+    private String stringValue;
+    private int intValue;
 
-	public int getIntValue() {
-		return intValue;
-	}
+    public StringIntPair(String s, int i){
+    	stringValue = s;
+    	intValue = i;
+    }
 
-	public String getStringValue() {
-		return stringValue;
-	}
+    public int getIntValue() {
+    	return intValue;
+    }
 
-	/**
-	 * @param i
-	 */
-	public void setIntValue(int i) {
-		intValue = i;
-	}
+    public String getStringValue() {
+    	return stringValue;
+    }
 
-	/**
-	 * @param string
-	 */
-	public void setStringValue(String string) {
-		stringValue = string;
-	}
+    /**
+     * @param i
+     */
+    public void setIntValue(int i) {
+    	intValue = i;
+    }
+
+    /**
+     * @param string
+     */
+    public void setStringValue(String string) {
+    	stringValue = string;
+    }
 
 }

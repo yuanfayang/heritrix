@@ -1,10 +1,10 @@
-/* 
+/*
  * Heritrix
- * 
+ *
  * $Id$
- * 
+ *
  * Created on May 15, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -55,70 +55,70 @@ import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 
 /**
  * Main class for Heritrix crawler.
- * 
+ *
  * Heritrix is launched by a shell script that backgrounds heritrix and
  * that redirects all stdout and stderr emitted by heritrix to a log file.  So
  * that startup messages emitted subsequent to the redirection of stdout and
- * stderr show on the console, this class prints usage or startup output 
+ * stderr show on the console, this class prints usage or startup output
  * such as where the web ui can be found, etc., to a STARTLOG that the shell
  * script is waiting on.  As soon as the shell script sees output in this file,
  * it prints its content and breaks out of its wait.  See heritrix.sh.
- * 
+ *
  * @author gojomo
  * @author Kristinn Sigurdsson
  *
  */
 public class Heritrix
-{    
+{
     /**
      * Name of the heritrix home system property.
      */
     private static final String HOME_KEY = "heritrix.home";
-    
+
     /**
-     * Name of the heritrix property whose presence says we're running w/ 
+     * Name of the heritrix property whose presence says we're running w/
      * development file locations: i.e conf, webapps, and profiles are under
      * the src directory rather than at top-level.
      */
     private static final String DEVELOPMENT_KEY = "heritrix.development";
-    
+
     /**
      * Name of the heritrix properties file.
      */
     private static final String PROPERTIES = "heritrix.properties";
-    
+
     /**
      * Name of the heritrix version property.
      */
     private static final String VERSION_KEY = "heritrix.version";
-    
+
     /**
      * Key to pull the heritrix jobs directory location from properties file.
      */
     private static final String JOBSDIR_KEY = "heritrix.jobsdir";
-    
+
     /**
      * Default jobs dir location.
      */
     private static final String JOBSDIR_DEFAULT = "jobs";
-    
+
     /**
      * The heritrix home directory.
-     * 
-     * Need this location so we can get at our configuration.  Is null if 
-     * dir is where the JVM was launched from and no heritrix.home property 
+     *
+     * Need this location so we can get at our configuration.  Is null if
+     * dir is where the JVM was launched from and no heritrix.home property
      * supplied.
      */
     private static File heritrixHome = null;
-    
+
     private static File confdir = null;
     private static File jobsdir = null;
-    
+
     /**
      * Where to find WAR files to deploy under servlet container.
      */
     private static File warsdir = null;
-    
+
     /**
      * Instance of web server if one was started.
      */
@@ -129,14 +129,14 @@ public class Heritrix
      */
     protected static Logger logger
         = Logger.getLogger("org.archive.crawler.Heritrix");
-            
+
     /**
      * Heritrix properties.
-     * 
+     *
      * Read from properties file on startup and cached thereafter.
      */
     protected static Properties properties = null;
-    
+
     /**
      * CrawlJob handler. Manages multiple crawl jobs at runtime.
      */
@@ -146,19 +146,19 @@ public class Heritrix
      * CrawlController, used when running jobs without a WUI.
      */
     protected static CrawlController controller = null;
-    
+
     /**
      * Heritrix start log file.
-     * 
+     *
      * This file contains standard out produced by this main class.
      * Soley used by heritrix shell script.
      */
-	private static final String STARTLOG = "heritrix_dmesg.log";
-	
+    private static final String STARTLOG = "heritrix_dmesg.log";
+
     /**
      * Where to write this classes startup output.
      */
-	private static PrintWriter out = null;
+    private static PrintWriter out = null;
 
     /**
      * Name of the file to which heritrix logs stdout and stderr.
@@ -169,37 +169,37 @@ public class Heritrix
      * When running selftest, we set in here the URL for the selftest.
      */
     private static String getSelftestURL = null;
-    
+
 
     /**
      * Launch program
-     * 
+     *
      * @param args Command line arguments.
-     * 
+     *
      * @throws Exception
      */
     public static void main(String[] args)
         throws Exception
     {
-        Heritrix.out = new PrintWriter(isDevelopment()? System.out: 
+        Heritrix.out = new PrintWriter(isDevelopment()? System.out:
             new PrintStream(new FileOutputStream(new File(STARTLOG))));
-        
+
         try
         {
             initialize();
             doStart(args);
         }
-        
+
         catch(Exception e)
         {
             // Show any exceptions in STARTLOG.
             e.printStackTrace(out);
             throw e;
         }
-        
+
         finally
         {
-            // Its important the STARTLOG output stream gets closed.  Its a 
+            // Its important the STARTLOG output stream gets closed.  Its a
             // signal to the shell that started us up that startup is done --
             // or that it failed -- and that it can move on from waiting.
             // BUT, don't close if development (We set STARTLOG to be System.out
@@ -213,7 +213,7 @@ public class Heritrix
         }
     }
 
-	private static void initialize()
+    private static void initialize()
         throws IOException
     {
         String home = System.getProperty(HOME_KEY);
@@ -233,14 +233,14 @@ public class Heritrix
         String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
         jobsdir =
             (jobsdirStr.startsWith(File.separator) || heritrixHome == null)?
-                new File(jobsdirStr): new File(heritrixHome, jobsdirStr); 
+                new File(jobsdirStr): new File(heritrixHome, jobsdirStr);
     }
-    
+
     /**
      * Check for existence of expected subdir.
-     * 
+     *
      * If development flag set, then look for dir under src dir.
-     * 
+     *
      * @param subdirName Dir to look for.
      * @return The extant subdir.
      * @throws IOException if unable to find expected subdir.
@@ -268,11 +268,11 @@ public class Heritrix
         String adminLoginPassword = "admin:letmein";
         boolean runMode = false;
         boolean selfTest = false;
- 
+
         CommandLineParser clp = new CommandLineParser(args, out, getVersion());
         List arguments = clp.getCommandLineArguments();
         Option [] options = clp.getCommandLineOptions();
-        
+
         // Check passed argument.  Only one argument, the ORDER_FILE is allowed.
         // If one argument, make sure exists and xml suffix.
         if (arguments.size() > 1)
@@ -296,7 +296,7 @@ public class Heritrix
                     "> does not have required '.xml' suffix.", 1);
             }
         }
-        
+
         // Now look at options passed.
         for (int i = 0; i < options.length; i++)
         {
@@ -305,7 +305,7 @@ public class Heritrix
                 case 'h':
                     clp.usage();
                     break;
-                
+
                 case 'a':
                     adminLoginPassword = options[i].getValue();
                     if (!isValidLoginPasswordString(adminLoginPassword))
@@ -313,7 +313,7 @@ public class Heritrix
                         clp.usage("Invalid admin login/password value.", 1);
                     }
                     break;
-                
+
                 case 'n':
                     if (crawlOrderFile == null)
                     {
@@ -322,7 +322,7 @@ public class Heritrix
                     }
                     noWui = true;
                     break;
-                
+
                 case 'p':
                     try
                     {
@@ -339,20 +339,20 @@ public class Heritrix
                             options[i].getValue(), 1);
                     }
                     break;
-                
+
                 case 'r':
                     runMode = true;
                     break;
-                
+
                 case 's':
                     selfTest = true;
                     break;
-                
+
                 default:
                     assert false: options[i].getId();
             }
-        }    
-            
+        }
+
         // Ok, we should now have everything to launch the program.
         if (selfTest)
         {
@@ -366,7 +366,7 @@ public class Heritrix
                     clp.usage(1);
                 }
             }
-            
+
             if (arguments.size() > 0)
             {
                 // No arguments accepted by selftest.
@@ -378,7 +378,7 @@ public class Heritrix
         {
             if (options.length > 1)
             {
-                // If more than just '--nowui' passed, then there is 
+                // If more than just '--nowui' passed, then there is
                 // confusion on what is being asked of us.  Print usage
                 // rather than proceed.
                 clp.usage(1);
@@ -390,13 +390,13 @@ public class Heritrix
             launch(crawlOrderFile, runMode, port, adminLoginPassword);
         }
     }
-    
+
     /**
      * Test string is valid login/password string.
-     * 
+     *
      * A valid login/password string has the login and password compounded
      * w/ a ':' delimiter.
-     * 
+     *
      * @param str String to test.
      * @return True if valid password/login string.
      */
@@ -415,15 +415,15 @@ public class Heritrix
         }
         return isValid;
     }
-    
+
     private static boolean isDevelopment()
     {
-        return System.getProperty(DEVELOPMENT_KEY) != null;  
+        return System.getProperty(DEVELOPMENT_KEY) != null;
     }
-    
+
     private static void loadProperties()
         throws IOException
-    {    
+    {
         InputStream is =
             new FileInputStream(new File(getConfdir(), PROPERTIES));
         if (is != null)
@@ -437,24 +437,24 @@ public class Heritrix
      * If the user hasn't altered the default logging parameters, tighten them
      * up somewhat: some of our libraries are way too verbose at the INFO or
      * WARNING levels.
-     * 
+     *
      * @throws IOException
      * @throws SecurityException
      */
     private static void patchLogging()
         throws SecurityException, IOException
-    {   
+    {
         if (System.getProperty("java.util.logging.config.class") != null)
         {
             return;
         }
-        
+
         if (System.getProperty("java.util.logging.config.file") != null)
         {
             return;
         }
-        
-        // No user-set logging properties established; use defaults 
+
+        // No user-set logging properties established; use defaults
         // from distribution-packaged 'heritrix.properties'
         InputStream is =
             new FileInputStream(new File(getConfdir(), PROPERTIES));
@@ -466,26 +466,26 @@ public class Heritrix
 
     /**
      * Get a property value from the properties file or from system properties.
-     * 
+     *
      * System property overrides content of heritrix.properties file.
-     * 
+     *
      * @param key Key for property to find.
-     * 
+     *
      * @return Property if found or default if no such property.
      */
     private static String getProperty(String key)
     {
         return getProperty(key, null);
     }
-    
+
     /**
      * Get a property value from the properties file or from system properties.
-     * 
+     *
      * System property overrides content of heritrix.properties file.
-     * 
+     *
      * @param key Key for property to find.
      * @param fallback Default value to use if property not found.
-     * 
+     *
      * @return Property if found or default if no such property.
      */
     private static String getProperty(String key, String fallback)
@@ -497,10 +497,10 @@ public class Heritrix
         }
         return (value != null)? value: fallback;
     }
-    
+
     /**
      * Run the selftest
-     * 
+     *
      * @param port Port number to use for web UI.
      *
      * @exception Exception
@@ -515,7 +515,7 @@ public class Heritrix
         Heritrix.jobHandler = new SelfTestCrawlJobHandler();
         // Create a job based off the selftest order file.  Then use this as
         // a template to pass jobHandler.newJob().  Doing this gets our
-        // selftest output to show under the jobs directory. 
+        // selftest output to show under the jobs directory.
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.getSelftestURL =
@@ -536,7 +536,7 @@ public class Heritrix
 
     /**
      * Launch the crawler without a web UI
-     * 
+     *
      * @param crawlOrderFile The crawl order to crawl.
      */
     private static void launch(String crawlOrderFile)
@@ -552,28 +552,28 @@ public class Heritrix
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
             " crawl started using " + crawlOrderFile + ".");
     }
-    
+
     /**
      * Launch the crawler with a web UI.
-     * 
+     *
      * @param crawlOrderFile File to crawl.  May be null.
      * @param runMode Whether crawler should be set to run mode.
      * @param port Port number to use for web UI.
      * @param adminLoginPassword Compound of login and password.
-     * 
+     *
      * @exception Exception
-     * 
+     *
      */
-    private static void launch(String crawlOrderFile, boolean runMode, 
+    private static void launch(String crawlOrderFile, boolean runMode,
             int port, String adminLoginPassword)
         throws Exception
-    { 
+    {
         String adminUN =
             adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
-		User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
-        
+    	User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
+
         String status = null;
 
         httpServer = new SimpleHttpServer(port);
@@ -598,7 +598,7 @@ public class Heritrix
         else if(runMode)
         {
             // The use case is that jobs are to be run on a schedule and that
-            // if the crawler is in run mode, then the scheduled job will be 
+            // if the crawler is in run mode, then the scheduled job will be
             // run at appropriate time.  Otherwise, not.
             jobHandler.startCrawler();
             status = "Crawler set to run mode but no order file to crawl";
@@ -616,7 +616,7 @@ public class Heritrix
             out.println(status);
         }
     }
-    
+
     private static CrawlJob createCrawlJob(CrawlJobHandler jobHandler,
             File crawlOrderFile, String descriptor)
         throws InvalidAttributeValueException, FileNotFoundException
@@ -640,29 +640,29 @@ public class Heritrix
     {
         return (properties != null)? properties.getProperty(VERSION_KEY): null;
     }
-    
+
     /**
-     * Return heritrix properties. 
-     * 
-     * @return The returned Properties contains the content of 
-     * heritrix.properties.  May be null if we failed initial read of 
+     * Return heritrix properties.
+     *
+     * @return The returned Properties contains the content of
+     * heritrix.properties.  May be null if we failed initial read of
      * 'heritrix.properties'.
      */
     public static Properties getProperties()
     {
-    	return properties;
-    }   
+        return properties;
+    }
 
     /**
      * Get the job handler
-     * 
+     *
      * @return The CrawlJobHandler being used.
-     */    
+     */
     public static CrawlJobHandler getJobHandler()
     {
-        return jobHandler;    
+        return jobHandler;
     }
-    
+
     /**
      * @return The conf directory under HERITRIX_HOME.
      */
@@ -670,7 +670,7 @@ public class Heritrix
     {
         return confdir;
     }
-    
+
     /**
      * @return The directory into which we put jobs.
      */
@@ -678,7 +678,7 @@ public class Heritrix
     {
         return jobsdir;
     }
-    
+
     /**
      * @return Returns the httpServer. May be null if one was not started.
      */
@@ -686,27 +686,27 @@ public class Heritrix
     {
         return httpServer;
     }
-    
+
     /**
      * Returns the selftest URL.
-     * 
-     * @return Returns the selftestWebappURL.  This method returns null if 
+     *
+     * @return Returns the selftestWebappURL.  This method returns null if
      * we are not in selftest.  URL has a trailing '/'.
      */
     public static String getSelftestURL()
     {
         return getSelftestURL;
     }
-    
+
     /**
-     * @return Returns the directory under which reside the WAR files 
+     * @return Returns the directory under which reside the WAR files
      * we're to load into the servlet container.
      */
     public static File getWarsdir()
     {
         return warsdir;
     }
-    
+
     /**
      * @return Returns the HERITRIX_OUT_FILE.
      */
@@ -714,11 +714,11 @@ public class Heritrix
     {
         return HERITRIX_OUT_FILE;
     }
-    
+
     /**
      * Prepars for program shutdown. This method does it's best to prepare the
      * program so that it can exit normally. It will kill the httpServer and
-     * terminate any running job.<br> 
+     * terminate any running job.<br>
      * It is advisible to wait a few (~1000) millisec after calling this method
      * and before calling performHeritrixShutDown() to allow as many threads as
      * possible to finish what they are doing.
@@ -729,7 +729,7 @@ public class Heritrix
             try {
                 httpServer.stopServer();
             } catch (InterruptedException e) {
-                // Generally this can be ignored, but we'll print a stack trace 
+                // Generally this can be ignored, but we'll print a stack trace
                 // just in case.
                 e.printStackTrace();
             }
@@ -743,7 +743,7 @@ public class Heritrix
             controller.stopCrawl();
         }
     }
-    
+
     /**
      * Exit program. Recommended that prepareHeritrixShutDown() be invoked
      * prior to this method.

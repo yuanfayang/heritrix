@@ -34,82 +34,82 @@ import java.io.InputStream;
  *
  */
 public class FlipFileInputStream extends InputStream {
-	FlipFileOutputStream source;
+    FlipFileOutputStream source;
     FileInputStream fileStream;
-	InputStream inStream;
-	
-	/**
-	 * @param tailStream
-	 */
-	public FlipFileInputStream(FlipFileOutputStream tailStream) {
-		source = tailStream;
-	}
+    InputStream inStream;
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read()
-	 */
-	public int read() throws IOException {
-		int c;
-		if(inStream==null || (c = inStream.read()) == -1) {
-			getNewInStream();
-			if((c = inStream.read()) == -1) {
-				// if both old and new streams were exhausted, return EOF
-				return -1;
-			}
-		}
-		return c;
-	}
+    /**
+     * @param tailStream
+     */
+    public FlipFileInputStream(FlipFileOutputStream tailStream) {
+    	source = tailStream;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read(byte[])
-	 */
-	public int read(byte[] b) throws IOException {
-		int count;
-		if (inStream==null || (count = inStream.read(b)) == -1 ) {
-			getNewInStream();
-			if((count = inStream.read(b)) == -1) {
-				// if both old and new stream were exhausted, return EOF
-				return -1;
-			}
-		}
-		return count;
-	}
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read()
+     */
+    public int read() throws IOException {
+    	int c;
+    	if(inStream==null || (c = inStream.read()) == -1) {
+    		getNewInStream();
+    		if((c = inStream.read()) == -1) {
+    			// if both old and new streams were exhausted, return EOF
+    			return -1;
+    		}
+    	}
+    	return c;
+    }
 
-
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read(byte[], int, int)
-	 */
-	public int read(byte[] b, int off, int len) throws IOException {
-		int count;
-		if (inStream==null || (count = inStream.read(b,off,len)) == -1 ) {
-			getNewInStream();
-			if((count = inStream.read(b,off,len)) == -1) {
-				// if both old and new stream were exhausted, return EOF
-				return -1;
-			}
-		}
-		return count;
-	}
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read(byte[])
+     */
+    public int read(byte[] b) throws IOException {
+    	int count;
+    	if (inStream==null || (count = inStream.read(b)) == -1 ) {
+    		getNewInStream();
+    		if((count = inStream.read(b)) == -1) {
+    			// if both old and new stream were exhausted, return EOF
+    			return -1;
+    		}
+    	}
+    	return count;
+    }
 
 
-	/**
-	 * 
-	 */
-	private void getNewInStream() throws FileNotFoundException, IOException {
-		if(inStream!=null) {
-			inStream.close();
-		} 
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read(byte[], int, int)
+     */
+    public int read(byte[] b, int off, int len) throws IOException {
+    	int count;
+    	if (inStream==null || (count = inStream.read(b,off,len)) == -1 ) {
+    		getNewInStream();
+    		if((count = inStream.read(b,off,len)) == -1) {
+    			// if both old and new stream were exhausted, return EOF
+    			return -1;
+    		}
+    	}
+    	return count;
+    }
+
+
+    /**
+     *
+     */
+    private void getNewInStream() throws FileNotFoundException, IOException {
+    	if(inStream!=null) {
+    		inStream.close();
+    	}
         fileStream = new FileInputStream(source.getInputFile());
-		inStream = new BufferedInputStream(fileStream,4096);
-	}
+    	inStream = new BufferedInputStream(fileStream,4096);
+    }
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#close()
-	 */
-	public void close() throws IOException {
-		super.close();
-		inStream.close();
-	}
+    /* (non-Javadoc)
+     * @see java.io.InputStream#close()
+     */
+    public void close() throws IOException {
+    	super.close();
+    	inStream.close();
+    }
 
     /**
      * @return Stream position.

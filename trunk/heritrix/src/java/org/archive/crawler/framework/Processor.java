@@ -39,31 +39,31 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * Base class for URI processing classes.
  * <p>
  * Each URI is processed be a user defined series of processors. This class
- * provides the basic infrastructure for these but does not actually do 
+ * provides the basic infrastructure for these but does not actually do
  * anything. New processors can be easily created by subclassing this class.
- * 
+ *
  * @author Gordon Mohr
  */
 public class Processor extends CrawlerModule {
     /**
      * Key to use asking settings for filters value.
      */
-	public final static String ATTR_FILTERS = "filters";
-    
+    public final static String ATTR_FILTERS = "filters";
+
     /**
      * Key to use asking settings for enabled value.
      */
     public final static String ATTR_ENABLED = "enabled";
-    
+
     /**
      * Key to use asking settings for postprocessor value.
      */
     public final static String ATTR_POSTPROCESSOR = "postprocessor";
-    
+
     private MapType filters;
     private Processor defaultNextProcessor = null;
 
-	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.Processor");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.framework.Processor");
 
     /**
      * @param name
@@ -79,9 +79,9 @@ public class Processor extends CrawlerModule {
             "Filters", Filter.class));
     }
 
-	protected CrawlController controller;
-	
-	public final void process(CrawlURI curi) {
+    protected CrawlController controller;
+
+    public final void process(CrawlURI curi) {
         // by default, arrange for curi to proceed to next processor
         curi.setNextProcessor(getDefaultNext(curi));
         // Check if this processor is enabled before processing
@@ -92,66 +92,66 @@ public class Processor extends CrawlerModule {
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        
-		if(filtersAccept(curi)) {
-			innerProcess(curi);
-		} else {
-			innerRejectProcess(curi);
-		}
-	}
-	
-	/**
-	 * @param curi
-	 */
-	protected void innerRejectProcess(CrawlURI curi) {
-		// by default do nothing
-	}
 
-	/**
+    	if(filtersAccept(curi)) {
+    		innerProcess(curi);
+    	} else {
+    		innerRejectProcess(curi);
+    	}
+    }
+
+    /**
+     * @param curi
+     */
+    protected void innerRejectProcess(CrawlURI curi) {
+    	// by default do nothing
+    }
+
+    /**
      * Classes subclassing this one should override this method to perfrom
      * their custom actions on the CrawlURI.
-     * 
-	 * @param curi The CrawlURI being processed.
-	 */
-	protected void innerProcess(CrawlURI curi) {
-		// by default do nothing
-	}
+     *
+     * @param curi The CrawlURI being processed.
+     */
+    protected void innerProcess(CrawlURI curi) {
+    	// by default do nothing
+    }
 
-	/**
-	 * Do all specified filters (if any) accept this CrawlURI? 
-	 *  
-	 * @param curi
-	 * @return True if all filters accept this CrawlURI.
-	 */
-	protected boolean filtersAccept(CrawlURI curi) {
+    /**
+     * Do all specified filters (if any) accept this CrawlURI?
+     *
+     * @param curi
+     * @return True if all filters accept this CrawlURI.
+     */
+    protected boolean filtersAccept(CrawlURI curi) {
         CrawlerSettings settings = getSettingsFromObject(curi);
-		if (filters.isEmpty(settings)) {
-			return true;
-		}
-		Iterator iter = filters.iterator(settings);
-		while(iter.hasNext()) {
-			Filter f = (Filter)iter.next();
-			if( !f.accepts(curi) ) {
-				logger.info(f+" rejected "+curi+" in Processor "+getName());
-				return false; 
-			}
-		}
-		return true;
-	}
+    	if (filters.isEmpty(settings)) {
+    		return true;
+    	}
+    	Iterator iter = filters.iterator(settings);
+    	while(iter.hasNext()) {
+    		Filter f = (Filter)iter.next();
+    		if( !f.accepts(curi) ) {
+    			logger.info(f+" rejected "+curi+" in Processor "+getName());
+    			return false;
+    		}
+    	}
+    	return true;
+    }
 
-	/**
-	 * Returns the next processor for the given CrawlURI in the processor chain.
+    /**
+     * Returns the next processor for the given CrawlURI in the processor chain.
      * @param curi The CrawlURI that we want to find the next processor for.
      * @return The next processor for the given CrawlURI in the processor chain.
-	 */
-	private Processor getDefaultNext(CrawlURI curi) {
+     */
+    private Processor getDefaultNext(CrawlURI curi) {
         return defaultNextProcessor;
-	}
-    
+    }
+
     public void setDefaultNextProcessor(Processor nextProcessor) {
         defaultNextProcessor = nextProcessor;
     }
-	
+
     private Processor getPostprocessor(CrawlURI curi) {
         String processorName;
         Processor processor = null;
@@ -163,9 +163,9 @@ public class Processor extends CrawlerModule {
         }
         return processor;
     }
-    
-	public void initialize(CrawlController c) throws AttributeNotFoundException {
-		controller = c;
+
+    public void initialize(CrawlController c) throws AttributeNotFoundException {
+    	controller = c;
         if (((Boolean) getAttribute(null, ATTR_POSTPROCESSOR)).booleanValue()) {
             // I am the distinguished postprocessor earlier stage can skip to
             controller.setPostprocessor(this);
@@ -175,11 +175,11 @@ public class Processor extends CrawlerModule {
         while (iter.hasNext()) {
             ((Filter) iter.next()).initialize(c);
         }
-	}
+    }
 
-	public Processor spawn(int serialNum) {
-		Processor newInstance = null;
-		try {
+    public Processor spawn(int serialNum) {
+    	Processor newInstance = null;
+    	try {
             Constructor co =
                 getClass().getConstructor(new Class[] { String.class });
             newInstance =
@@ -188,14 +188,14 @@ public class Processor extends CrawlerModule {
                     });
             getParent().setAttribute(newInstance);
             newInstance.setTransient(true);
-			newInstance.initialize(controller);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+    		newInstance.initialize(controller);
+    	} catch (Exception e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
         }
-		return newInstance;
-	}
-    
+    	return newInstance;
+    }
+
     /**
      * Compiles and returns a report (in human readable form) about the status
      * of the processor.  The processor's name (of implementing class) should
@@ -205,7 +205,7 @@ public class Processor extends CrawlerModule {
      * * Number of CrawlURIs handled.<br>
      * * Number of links extracted (for link extractors)<br>
      * etc.
-     * 
+     *
      * @return A human readable report on the processor's state.
      */
     public String report(){

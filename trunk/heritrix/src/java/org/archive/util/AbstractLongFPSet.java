@@ -1,9 +1,9 @@
 /* AbstractLongFPSet
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Oct 20, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -30,12 +30,12 @@ import java.util.logging.Logger;
  * Shell of functionality for a Set of primitive long fingerprints, held
  * in an array of possibly-empty slots. The implementation of that holding
  * array is delegated to subclasses.
- * 
- * Capacity is always a power of 2. 
- * 
- * Fingerprints are already assumed to be well-distributed, so the 
- * hashed position for a value is just its high-order bits. 
- * 
+ *
+ * Capacity is always a power of 2.
+ *
+ * Fingerprints are already assumed to be well-distributed, so the
+ * hashed position for a value is just its high-order bits.
+ *
  * @author gojomo
  *
  */
@@ -72,7 +72,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     }
 
     /** Does this set contain the given value?
-     * 
+     *
      * @see org.archive.util.LongFPSet#contains(long)
      */
     public boolean contains(long val) {
@@ -85,23 +85,23 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     }
 
     /** Check the state of a slot in the storage.
-     * 
+     *
      * @param i the index of the slot to check
-     * @return -1 if slot is filled; nonegative if full. 
+     * @return -1 if slot is filled; nonegative if full.
      */
     protected abstract int getSlotState(long i);
 
     /** Note access (hook for subclass cache-replacement strategies)
-     * 
+     *
      * @param index
      */
     private void noteAccess(long index) {
         // by default do nothing
-        // cache subclasses may use to update access counts, etc.	
+        // cache subclasses may use to update access counts, etc.
     }
 
     /** Return the number of entries in this set.
-     * 
+     *
      * @see org.archive.util.LongFPSet#count()
      */
     public long count() {
@@ -109,7 +109,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     }
 
     /** Add the given value to this set
-     * 
+     *
      * @see org.archive.util.LongFPSet#add(long)
      */
     public boolean add(long val) {
@@ -139,23 +139,23 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     /**
      * Make additional space to keep the load under the target
      * loadFactor level. Subclasses may grow or discard entries
-     * to satisfy. 
-     * 
+     * to satisfy.
+     *
      */
     protected abstract void makeSpace();
 
     /**
-     * Set the stored value at the given slot. 
-     * 
+     * Set the stored value at the given slot.
+     *
      * @param i the slot index
      * @param l the value to set
      */
     protected abstract void setAt(long i, long l);
 
-    /** Get the stored value at the given slot. 
-     * 
+    /** Get the stored value at the given slot.
+     *
      * @param i the slot index
-     * @return The stored value at the given slot. 
+     * @return The stored value at the given slot.
      */
     protected abstract long getAt(long i);
 
@@ -163,13 +163,13 @@ public abstract class AbstractLongFPSet implements LongFPSet {
      * will return the index where the value resides.  Otherwise it return
      * an encoded index, which is a possible storage location for the value.
      *
-     * Note, if we have a loading factor less than 1.0, there should always 
+     * Note, if we have a loading factor less than 1.0, there should always
      * be an empty location where we can store the value
      *
      * @param val the fingerprint value to check for
-     * @return The (positive) index where the value already resides, 
+     * @return The (positive) index where the value already resides,
      * or an empty index where it could be inserted (encoded as a
-     * negative number). 
+     * negative number).
      */
     private long indexFor(long val) {
         long candidateIndex = startIndexFor(val);
@@ -190,12 +190,12 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     }
 
     /**
-     * Return the recommended storage index for the given value. 
+     * Return the recommended storage index for the given value.
      * Assumes values are already well-distributed; merely uses
-     * high-order bits. 
-     * 
+     * high-order bits.
+     *
      * @param val
-     * @return The recommended storage index for the given value. 
+     * @return The recommended storage index for the given value.
      */
     private long startIndexFor(long val) {
         return (val >>> (64 - capacityPowerOfTwo));
@@ -216,8 +216,8 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 
     /**
      * Remove the value at the given index, relocating its
-     * successors as necessary. 
-     * 
+     * successors as necessary.
+     *
      *  @param index
      */
     protected void removeAt(long index) {
@@ -229,7 +229,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
                 probeIndex = 0; //wraparound
             }
             if (getSlotState(probeIndex) < 0) {
-                // vacant 
+                // vacant
                 break;
             }
             long val = getAt(probeIndex);
@@ -249,14 +249,14 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     protected abstract void clearAt(long index);
 
     /**
-     * 
+     *
      */
     protected abstract void relocate(long value, long fromIndex, long toIndex);
 
-    /** 
+    /**
      * Low-cost, non-definitive (except when true) contains
      * test. Default answer of false is acceptable.
-     * 
+     *
      * @see org.archive.util.LongFPSet#quickContains(long)
      */
     public boolean quickContains(long fp) {

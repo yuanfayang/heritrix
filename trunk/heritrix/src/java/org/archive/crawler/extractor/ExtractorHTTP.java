@@ -49,36 +49,36 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         super(name, "HTTP extractor");
     }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
-	 */
-	public void innerProcess(CrawlURI curi) {
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public void innerProcess(CrawlURI curi) {
 
-		if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+    	if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
             numberOfCURIsHandled++;
             GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-			CrawlURI curi1 = curi;
-			GetMethod get1 = get;
-			
-			ArrayList uris = new ArrayList();
-			Header loc = get1.getResponseHeader("Location");
-			if ( loc != null ) {
-				uris.add(loc.getValue());
-			} 
-			loc = get1.getResponseHeader("Content-Location");
-			if ( loc != null ) {
-				uris.add(loc.getValue());
-			} 
-			// TODO: consider possibility of multiple headers
-			if(uris.size()>0) {
-                numberOfLinksExtracted += uris.size();
-				curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
-				logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
+    		CrawlURI curi1 = curi;
+    		GetMethod get1 = get;
 
-			}
-		}
-	}
-    
+    		ArrayList uris = new ArrayList();
+    		Header loc = get1.getResponseHeader("Location");
+    		if ( loc != null ) {
+    			uris.add(loc.getValue());
+    		}
+    		loc = get1.getResponseHeader("Content-Location");
+    		if ( loc != null ) {
+    			uris.add(loc.getValue());
+    		}
+    		// TODO: consider possibility of multiple headers
+    		if(uris.size()>0) {
+                numberOfLinksExtracted += uris.size();
+    			curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
+    			logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
+
+    		}
+    	}
+    }
+
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
      */
@@ -88,7 +88,7 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         ret.append("  Function:          Link extraction on HTTP headers\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-        
+
         return ret.toString();
     }
 }
