@@ -34,10 +34,17 @@
     </section>
     <section name="News and Status">
 
+    <subsection name="Release 0.6.0 03/25/2004">
+        <p>See <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.6.0</a>.  Lots of fixes and features.
+        See the <a href="/changes-report.html">Changes</a> log.
+        We've also spent some time optimizing.</p>
+    </subsection>
+
     <subsection name="Point Release 0.4.1 02/12/2004">
         <p>Released <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.4.1</a> to fix 
         <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=895955&amp;group_id=73833&amp;atid=539099">URIRegExpFilter retains memory</a>.</p>
     </subsection>
+
     <subsection name="Release 0.4.0 02/10/2004">
         <p>See <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.4.0</a>.</p>
     </subsection>
