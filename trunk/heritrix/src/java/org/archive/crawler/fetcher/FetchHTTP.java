@@ -82,7 +82,6 @@ import org.archive.util.HttpRecorder;
 public class FetchHTTP extends Processor
     	implements CoreAttributeConstants, FetchStatusCodes {
     
-
     private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
     
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
@@ -181,7 +180,7 @@ public class FetchHTTP extends Processor
         e.setExpertSetting(true);
     }
 
-    protected void innerProcess(CrawlURI curi) {
+    protected void innerProcess(CrawlURI curi) throws InterruptedException {
         if (!canFetch(curi)) {
             // Cannot fetch this, due to protocol, retries, or other problems
             return;
@@ -211,6 +210,7 @@ public class FetchHTTP extends Processor
                 this.http.executeMethod(get);
                 break;
             } catch (HttpRecoverableException e) {
+                checkForInterrupt();
                 if (immediateRetries < getMaxImmediateRetries()) {
                     // See "[ 910219 ] [httpclient] unable...starting with"
                     // http://sourceforge.net/tracker/?group_id=73833&atid=539099&func=detail&aid=910219
@@ -313,6 +313,7 @@ public class FetchHTTP extends Processor
             final Exception exception, final String message, final int status) {
         curi.addLocalizedError(this.getName(), exception, message);
         curi.setFetchStatus(status);
+
         // Its ok if releaseConnection is called multiple times: i.e. here and
         // in the finally that is at end of one of the innerProcess blocks
         // above.

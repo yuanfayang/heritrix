@@ -83,6 +83,12 @@ public class Processor extends ModuleType {
             "Filters applied to this processor", Filter.class));
     }
 
+    /**
+     * Perform processing on the given CrawlURI. 
+     * 
+     * @param curi
+     * @throws InterruptedException
+     */
     public final void process(CrawlURI curi) throws InterruptedException {
         // by default, arrange for curi to proceed to next processor
         curi.setNextProcessor(getDefaultNextProcessor(curi));
@@ -100,6 +106,12 @@ public class Processor extends ModuleType {
             innerProcess(curi);
         } else {
             innerRejectProcess(curi);
+        }
+    }
+    
+    protected void checkForInterrupt() throws InterruptedException {
+        if (Thread.interrupted()) {
+            throw new InterruptedException("interrupted");
         }
     }
 
