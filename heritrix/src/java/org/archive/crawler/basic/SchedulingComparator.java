@@ -38,16 +38,16 @@ public class SchedulingComparator implements Comparator {
         if(o1==o2) {
             return 0; // for exact identity only
         }
-        if (((URIStoreable)o1).getWakeTime() > ((URIStoreable)o2).getWakeTime()) {
+        if (((KeyedQueue)o1).getWakeTime() > ((KeyedQueue)o2).getWakeTime()) {
             return 1;
         }
-        if (((URIStoreable)o1).getWakeTime() < ((URIStoreable)o2).getWakeTime()) {
+        if (((KeyedQueue)o1).getWakeTime() < ((KeyedQueue)o2).getWakeTime()) {
             return -1;
         }
         // at this point, the ordering is arbitrary, but still
         // must be consistent/stable over time
 
-        return ((URIStoreable)o1).getSortFallback().compareTo(((URIStoreable)o2).getSortFallback());
+        return ((KeyedQueue)o1).getSortFallback().compareTo(((KeyedQueue)o2).getSortFallback());
     }
 
 }

@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
@@ -52,7 +51,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI extends CandidateURI
-    implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
+    implements CoreAttributeConstants, FetchStatusCodes {
     private static String DEFAULT_CLASS_KEY = "default..."; // when neat host-based class-key fails us
     
     // INHERITED FROM CANDIDATEURI
@@ -298,30 +297,30 @@ public class CrawlURI extends CandidateURI
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#getStoreState()
-     */
-    public Object getStoreState() {
-        return state;
-    }
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
-     */
-    public void setStoreState(Object s) {
-        state = s;
-    }
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
-     */
-    public long getWakeTime() {
-        return wakeTime;
-    }
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
-     */
-    public void setWakeTime(long w) {
-        wakeTime = w;
-    }
+//    /* (non-Javadoc)
+//     * @see org.archive.crawler.basic.URIStoreable#getStoreState()
+//     */
+//    public Object getStoreState() {
+//        return state;
+//    }
+//    /* (non-Javadoc)
+//     * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
+//     */
+//    public void setStoreState(Object s) {
+//        state = s;
+//    }
+//    /* (non-Javadoc)
+//     * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
+//     */
+//    public long getWakeTime() {
+//        return wakeTime;
+//    }
+//    /* (non-Javadoc)
+//     * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
+//     */
+//    public void setWakeTime(long w) {
+//        wakeTime = w;
+//    }
 
     public AList getAList() {
         return alist;

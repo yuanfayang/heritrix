@@ -43,8 +43,23 @@ import org.archive.util.QueueItemMatcher;
  * @author gojomo
  *
  */
-public class KeyedQueue implements Queue, URIStoreable {
+public class KeyedQueue implements Queue {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
+
+    /** INACTIVE: not considered as URI source until activated by policy */
+    public static final Object INACTIVE = "INACTIVE".intern();
+    /** READY: eligible and able to supply a new work URI on demand */
+    public static final Object READY = "READY".intern();
+    /** FROZEN: not considered as URI source until operator intervention */
+    public static final Object FROZEN = "FROZEN".intern();
+    /** IN_PROCESS: on hold until a URI in progress is finished */
+    public static final Object IN_PROCESS = "IN_PROCESS".intern();
+    /** SNOOZED: on hold until a specific time interval has passed */
+    public static final Object SNOOZED = "SNOOZED".intern();
+    /** EMPTY: eligible to supply URIs, but without any to supply */
+    public static final Object EMPTY = "EMPTY".intern();
+    /** FINISHED: discarded because empty (not irreversible) */
+    public static final Object FINISHED = "FINISHED".intern();
 
     long wakeTime;
     String classKey;
@@ -79,6 +94,9 @@ public class KeyedQueue implements Queue, URIStoreable {
         // frozenQ = new DiskBackedQueue(scratchDir,tmpName+".frozen",headMax);
     }
 
+    /**
+     * @return
+     */
     public boolean isReady() {
         return System.currentTimeMillis() > wakeTime;
     }
@@ -91,43 +109,43 @@ public class KeyedQueue implements Queue, URIStoreable {
     }
 
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#getStoreState()
+    /** (non-Javadoc)
+     * @return
      */
     public Object getStoreState() {
         return state;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
+    /** (non-Javadoc)
+     * @param s
      */
     public void setStoreState(Object s) {
         state=s;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
+    /** (non-Javadoc)
+     * @return
      */
     public long getWakeTime() {
         return wakeTime;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
+    /** (non-Javadoc)
+     * @param w
      */
     public void setWakeTime(long w) {
         wakeTime = w;
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     public String toString() {
         return "KeyedQueue[classKey="+getClassKey()+"]";
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.basic.URIStoreable#getSortFallback()
+    /** (non-Javadoc)
+     * @return
      */
     public String getSortFallback() {
         return classKey.toString();
@@ -143,14 +161,14 @@ public class KeyedQueue implements Queue, URIStoreable {
         return this == o;
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
         innerQ.enqueue(o);
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
@@ -158,7 +176,7 @@ public class KeyedQueue implements Queue, URIStoreable {
         // return innerStack.isEmpty() && innerQ.isEmpty() && frozenQ.isEmpty();
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
@@ -168,7 +186,7 @@ public class KeyedQueue implements Queue, URIStoreable {
         return innerQ.dequeue();
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
     public long length() {
@@ -182,14 +200,14 @@ public class KeyedQueue implements Queue, URIStoreable {
         innerQ.release();
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return new CompositeIterator(innerStack.iterator(),innerQ.getIterator(inCacheOnly));
     }
 
-    /* (non-Javadoc)
+    /** (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
@@ -234,6 +252,9 @@ public class KeyedQueue implements Queue, URIStoreable {
         innerStack.addFirst(curi);
     }
 
+    /**
+     * @param curi
+     */
     public void enqueueFrozen(CrawlURI curi) {
         // frozenQ.enqueue(curi);
     }
