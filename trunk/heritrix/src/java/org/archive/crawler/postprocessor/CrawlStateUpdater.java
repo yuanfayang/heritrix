@@ -39,11 +39,10 @@ import org.archive.crawler.framework.Processor;
  * would affect the crawl (like total pages visited at the site) as well.
  *
  * @author gojomo
- * @version $Id$
+ * @version $Date$, $Revision$
  */
 public class CrawlStateUpdater extends Processor implements
         CoreAttributeConstants, FetchStatusCodes {
-
     private static final Logger logger =
         Logger.getLogger(CrawlStateUpdater.class.getName());
 
@@ -53,17 +52,16 @@ public class CrawlStateUpdater extends Processor implements
 
     protected void innerProcess(CrawlURI curi) {
         String scheme = curi.getUURI().getScheme().toLowerCase();
-
-        if (scheme.equals("http") || scheme.equals("https")) {
-
-            // update connection problems counter
-            if(curi.getFetchStatus()==S_CONNECT_FAILED) {
+        if (scheme.equals("http") || scheme.equals("https") &&
+                curi.getServer() != null) {
+            // Update connection problems counter
+            if(curi.getFetchStatus() == S_CONNECT_FAILED) {
                 curi.getServer().incrementConsecutiveConnectionErrors();
-            } else if (curi.getFetchStatus()>0){
+            } else if (curi.getFetchStatus() > 0){
                 curi.getServer().resetConsecutiveConnectionErrors();
             }
 
-            // update robots info
+            // Update robots info
             try {
                 if (curi.getUURI().getPath() != null &&
                         curi.getUURI().getPath().equals("/robots.txt")) {
