@@ -155,10 +155,6 @@ public class ARHostQueue implements ARAttributeConstants {
     /** A binding for the CrawlURIARWrapper object */
     protected EntryBinding crawlURIBinding;
     // Cursors into databases
-    /** A cursor into the secondaryUriDB. The first item here is the head of 
-     *  this HQ's priority queue. The cursors position at any given time is
-     *  undefined. Methods using it must seek the proper position themselves.*/
-//    protected Cursor secondaryCursor;
 
     
     
@@ -243,9 +239,6 @@ public class ARHostQueue implements ARAttributeConstants {
                                                        hostName+"/timeOfProcessing",
                                                        primaryUriDB,
                                                        secConfig);
-            
-            // Open a cursor into the secondary database;
-//            secondaryCursor = secondaryUriDB.openCursor(null,null);
             
             // Check if we are opening an existing DB...
             size = countCrawlURIs();
@@ -862,11 +855,7 @@ public class ARHostQueue implements ARAttributeConstants {
             return; // Early return when no owner is set.
         }
         long curr = getNextReadyTime(); // current 'published' value;
-        //if(curr != oldValue){
-            // The published value of next ready time (including politness)
-            // has changed. Notify the autorities.
         owner.reorder(this);
-        //}
     }
 
 
@@ -921,7 +910,6 @@ public class ARHostQueue implements ARAttributeConstants {
      */
     public void close() throws IOException{
         try{
-//            secondaryCursor.close();
             secondaryUriDB.close();
             processingUriDB.close();
             classCatalogDB.close();

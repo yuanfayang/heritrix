@@ -353,6 +353,11 @@ public class AdaptiveRevisitFrontier extends ModuleType
             }
             hq = hostQueues.getTopHQ(); //A busy hq may have become 'unbusy'
         }             
+
+        if(shouldTerminate){
+            // May have been terminated while thread was waiting for IO
+            throw new EndedException("terminated");
+        }
         
         try {
             CrawlURI curi = hq.next();
@@ -607,6 +612,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
         // TODO: Either allow for update with delete, or set time in the distant future for retry
         
         // Put the failed URI at the very back of the queue.
+        curi.setSchedulingDirective(CrawlURI.NORMAL);
         curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); // TODO: reconsider this
         discardUnneededCrawlURIInfo(curi);
 
@@ -795,7 +801,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        // TODO Auto-generated method stub
         return succeededFetchCount+failedFetchCount+disregardedUriCount;
     }
 
@@ -803,7 +808,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
     public long succeededFetchCount() {
-        // TODO Auto-generated method stub
         return succeededFetchCount;
     }
 
@@ -811,7 +815,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount() {
-        // TODO Auto-generated method stub
         return failedFetchCount;
     }
 
@@ -819,7 +822,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#disregardedUriCount()
      */
     public long disregardedUriCount() {
-        // TODO Auto-generated method stub
         return disregardedUriCount++;
     }
 
@@ -834,7 +836,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#oneLineReport()
      */
     public synchronized String oneLineReport() {
-        // TODO Auto-generated method stub
         return hostQueues.oneLineReport();
     }
 
@@ -842,16 +843,14 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#report()
      */
     public synchronized String report() {
-        // TODO Auto-generated method stub
         return hostQueues.report();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#importRecoverLog(java.lang.String)
+    /**
+     * Method is not supported by this Frontier implementation..
      */
     public void importRecoverLog(String pathToLog) throws IOException {
-        // TODO Auto-generated method stub
-
+        
     }
 
     /* (non-Javadoc)
@@ -917,6 +916,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
     }
     synchronized public void terminate() { 
         shouldTerminate = true;
+        hostQueues.close();
         // TODO: On terminate, close env and dbs
     }  
 
@@ -941,12 +941,11 @@ public class AdaptiveRevisitFrontier extends ModuleType
             return (Queue)super.get();
         }
     }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#importRecoverLog(java.lang.String, boolean)
+    
+    /**
+     * This method is not supported by this Frontier implementation
      */
     public void importRecoverLog(String pathToLog, boolean retainFailures) throws IOException {
-        // TODO Auto-generated method stub
         
     }
 
