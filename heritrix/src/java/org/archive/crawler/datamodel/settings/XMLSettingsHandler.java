@@ -48,7 +48,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -131,7 +130,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             e.printStackTrace();
         }
 
-        return new File(getPathRelativeToWorkingDirectory(settingsDirectoryName));
+        return getPathRelativeToWorkingDirectory(settingsDirectoryName);
     }
 
     /** Resolves a scope (host/domain) into a file path.
@@ -300,8 +299,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         }
         writeSettingsObject(getSettingsObject(null));
 
-        File newDir = new File(
-            getPathRelativeToWorkingDirectory(newSettingsDirectory));
+        File newDir = getPathRelativeToWorkingDirectory(newSettingsDirectory);
 
         // Copy the per host files
         FileUtils.copyFiles(oldSettingsDirectory, newDir);
@@ -316,19 +314,14 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @return The same path modified so that it is relative to the file level
      *         location of the order file for the settings handler.
      */
-    public String getPathRelativeToWorkingDirectory(String path){
-        if (!path.endsWith(File.separator)) {
-            path = path + File.separator;
-        }
+    public File getPathRelativeToWorkingDirectory(String path){
         File f = new File(path);
         // If path is not absolute, set f's directory
         // relative to the path of the order file
         if (!f.isAbsolute()) {
-            return ArchiveUtils.getFilePath(this.getOrderFile().getAbsolutePath())
-                   + f.toString();
+            f = new File(this.getOrderFile().getParent(), path);
         }
-        // If path is absolute, we return it itself.
-        return path;
+        return f;
     }
 
     /* (non-Javadoc)

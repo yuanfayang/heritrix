@@ -24,6 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -137,7 +138,7 @@ public class CrawlScope extends Filter {
             seedIterator = seeds.iterator();
         } else {
             try {
-                String fileName = getSettingsHandler()
+                File fileName = getSettingsHandler()
                 .getPathRelativeToWorkingDirectory(
                         (String)getAttribute(ATTR_SEEDS));
                 BufferedReader reader = new BufferedReader(new FileReader(fileName));

@@ -171,7 +171,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             if (profiles[i].isDirectory()) {
                 // Each directory in the profiles directory should contain the file order.xml.
                 File profile =
-                    new File(profiles[i].getPath() + File.separator + "order.xml");
+                    new File(profiles[i], "order.xml");
                 if (profile != null && profile.canRead()) {
                     // Ok, got the order file for this profile.
                     try {
@@ -589,7 +589,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
         BufferedWriter writer;
         try {
-            writer = new BufferedWriter(new FileWriter(new File(newHandler.getPathRelativeToWorkingDirectory(seedfile))));
+            writer = new BufferedWriter(new FileWriter(newHandler.getPathRelativeToWorkingDirectory(seedfile)));
             if (writer != null) {
                 writer.write(seeds);
                 writer.close();
@@ -805,16 +805,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Loads options from a file. Typically these are a list of availible 
-     * modules that can be plugged into some part of the configuration. 
+     * Loads options from a file. Typically these are a list of availible
+     * modules that can be plugged into some part of the configuration.
      * For examples Processors, Frontiers, Filters etc. Leading and trailing
      * spaces are trimmed from each line.
-     * @param file the name of the option file (it is presumed to reside in the 
+     * @param file the name of the option file (it is presumed to reside in the
      *             Heritrix conf directory
-     * @return The option file with each option line as a seperate entry in the 
+     * @return The option file with each option line as a seperate entry in the
      *         ArrayList.
      * @throws IOException when there is trouble reading the file.
-     */    
+     */
     public static ArrayList loadOptions(String file) throws IOException{
         File optionfile = new File(Heritrix.getConfdir()+File.separator+file);
         BufferedReader bf = new BufferedReader(new FileReader(optionfile), 8192);
