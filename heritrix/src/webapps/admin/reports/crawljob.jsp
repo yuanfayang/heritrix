@@ -198,7 +198,7 @@
 					%>
 							<tr>
 								<td>
-									<%=entry.getKey()%>
+									<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true"><%=entry.getKey()%></a>
 								</td>
 								<td width="600" colspan="2">
 									<table width="600" cellspacing="0" cellpadding="0" border="0">
@@ -240,7 +240,7 @@
 					%>
 							<tr>
 								<td nowrap>
-									<%=file.getKey()%>
+									<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=file.getKey()%>&grep=true"><%=file.getKey()%></a>
 								</td>
 								<td width="600" colspan="2">
 									<table width="600" cellspacing="0" cellpadding="0" border="0">
@@ -277,7 +277,7 @@
 			%>
 					<tr>
 						<td>
-							<%=host.getKey()%>
+							<a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=host.getKey()%>&grep=true"><%=host.getKey()%></a>
 						</td>
 						<td>
 							<%=((LongWrapper)host.getValue()).longValue%>
