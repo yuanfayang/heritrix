@@ -29,7 +29,7 @@ package org.archive.io;
  * @author gojomo
  * @version $Revision$, $Date$
  */
-public class CharSubSequence implements UnstableCharSequence {
+public class CharSubSequence implements CharSequence {
 
     CharSequence inner;
     int start;
@@ -91,25 +91,4 @@ public class CharSubSequence implements UnstableCharSequence {
         }
         return sb.toString();
     }
-
-    /* (non-Javadoc)
-     * @see org.archive.io.UnstableCharSequence#isUnstable()
-     */
-    public boolean isUnstable() {
-        if (inner instanceof UnstableCharSequence) {
-            return ((UnstableCharSequence)inner).isUnstable();
-        }                              
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.io.UnstableCharSequence#stabilize()
-     */
-    public CharSequence stabilize() {
-        if(isUnstable()) {
-            return toString();
-        }
-        return this;
-    }
-
 }

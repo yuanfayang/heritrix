@@ -26,7 +26,6 @@ package org.archive.crawler.extractor;
 
 import java.io.Serializable;
 
-import org.archive.io.UnstableCharSequence;
 
 /**
  * Link represents one discovered "edge" of the web graph: the source
@@ -86,24 +85,10 @@ public class Link implements Serializable {
     public Link(CharSequence source, CharSequence destination,
             CharSequence context, char hopType) {
         super();
-        this.source = stabilize(source);
-        this.destination = stabilize(destination);
-        this.context = stabilize(context);
+        this.source = source;
+        this.destination = destination;
+        this.context = context;
         this.hopType = hopType;
-    }
-    
-    /**
-     * Ensure any CharSequences stored are 'stable' -- will outlive
-     * any backing buffers they're currently reliant upon.
-     * 
-     * @param cs CharSequence to stabilize 
-     * @return CharSequence.
-     */
-    private CharSequence stabilize(CharSequence cs) {
-        if(cs instanceof UnstableCharSequence) {
-            return ((UnstableCharSequence)cs).stabilize();
-        }
-        return cs;
     }
 
     /**

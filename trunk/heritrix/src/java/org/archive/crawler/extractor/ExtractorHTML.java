@@ -321,14 +321,16 @@ implements CoreAttributeConstants {
      * @param value
      * @param context
      */
-    protected void processLink(CrawlURI curi, CharSequence value, CharSequence context) {
+    protected void processLink(CrawlURI curi, CharSequence value,
+            CharSequence context) {
         String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-
         if(TextUtils.matches(JAVASCRIPT, link)) {
-            processScriptCode(curi,value.subSequence(11, value.length()));
-        } else {
-            logger.finest("link: " + link + " from " + curi);
-            addLinkFromString(curi, link, context,'L');
+            processScriptCode(curi, value. subSequence(11, value.length()));
+        } else {    
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("link: " + link + " from " + curi);
+            }
+            addLinkFromString(curi, link, context, 'L');
             this.numberOfLinksExtracted++;
         }
     }
@@ -336,7 +338,12 @@ implements CoreAttributeConstants {
     private void addLinkFromString(CrawlURI curi, String uri,
             CharSequence context, char hopType) {
         try {
-            curi.createAndAddLinkRelativeToBase(uri, context, hopType);
+            // We do a 'toString' on context because its a sequence from
+            // the underlying ReplayCharSequence and the link its about
+            // to become a part of is expected to outlive the current
+            // ReplayCharSequence.
+            curi.createAndAddLinkRelativeToBase(uri, context.toString(),
+                hopType);
         } catch (URIException e) {
             if (getController() != null) {
                 getController().logUriError(e, curi.getUURI(), uri);
@@ -348,11 +355,13 @@ implements CoreAttributeConstants {
         }
     }
 
-    protected void processEmbed(CrawlURI curi, CharSequence value, CharSequence context) {
+    protected void processEmbed(CrawlURI curi, CharSequence value,
+            CharSequence context) {
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-
-        logger.finest("embed: " + embed + " from " + curi);
-        addLinkFromString(curi, embed, context,Link.EMBED_HOP);
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.finest("embed: " + embed + " from " + curi);
+        }
+        addLinkFromString(curi, embed, context, Link.EMBED_HOP);
         this.numberOfLinksExtracted++;
     }
 
@@ -414,7 +423,14 @@ implements CoreAttributeConstants {
         }
     }
 
-    // this method extracted, pacakage visible to ease testing
+    /**
+     * Run extractor.
+     * This method is package visible to ease testing.
+     * @param curi CrawlURI we're processing.
+     * @param cs Sequence from underlying ReplayCharSequence. This
+     * is TRANSIENT data. Make a copy if you want the data to live outside
+     * of this extractors' lifetime.
+     */
     void extract(CrawlURI curi, CharSequence cs) {
         Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
         while(tags.find()) {
@@ -525,13 +541,19 @@ implements CoreAttributeConstants {
             curi, sequence.subSequence(endOfOpenTag, sequence.length()));
     }
 
+    /**
+     * Process metadata tags.
+     * @param curi CrawlURI we're processing.
+     * @param sequence Sequence from underlying ReplayCharSequence. This
+     * is TRANSIENT data. Make a copy if you want the data to live outside
+     * of this extractors' lifetime.
+     * @return True robots exclusion metatag.
+     */
     protected boolean processMeta(CrawlURI curi, CharSequence cs) {
         Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
-
         String name = null;
         String httpEquiv = null;
         String content = null;
-
         while (attr.find()) {
             int valueGroup =
                 (attr.start(12) > -1) ? 12 : (attr.start(13) > -1) ? 13 : 14;
@@ -569,7 +591,7 @@ implements CoreAttributeConstants {
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                curi.createAndAddLinkRelativeToBase(refreshUri, cs,
+                curi.createAndAddLinkRelativeToBase(refreshUri, cs.toString(),
                     Link.REFER_HOP);
             } catch (URIException e) {
                 if (getController() != null) {
@@ -584,8 +606,11 @@ implements CoreAttributeConstants {
     }
 
     /**
-     * @param curi
-     * @param sequence
+     * Process style text.
+     * @param curi CrawlURI we're processing.
+     * @param sequence Sequence from underlying ReplayCharSequence. This
+     * is TRANSIENT data. Make a copy if you want the data to live outside
+     * of this extractors' lifetime.
      * @param endOfOpenTag
      */
     protected void processStyle(CrawlURI curi, CharSequence sequence,
