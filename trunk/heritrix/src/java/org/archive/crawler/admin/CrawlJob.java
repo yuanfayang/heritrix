@@ -30,10 +30,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
 
+import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.settings.XMLSettingsHandler;
 
@@ -649,5 +653,29 @@ public class CrawlJob
 
         // mark as resume, remember checkpoint
         resumeFrom  = cp;
+    }
+
+    /**
+     * Returns the absolute path of the specified log.
+     * Note: If crawl has not begun, this file may not exist.
+     * @return the absolute path for the specified log.
+     * @throws AttributeNotFoundException
+     * @throws ReflectionException
+     * @throws MBeanException
+     */
+    public String getLogPath(String log) 
+    throws AttributeNotFoundException, MBeanException, ReflectionException {
+        String logsPath = (String)settingsHandler.getOrder().
+            getAttribute(CrawlOrder.ATTR_LOGS_PATH);
+        CrawlOrder order = settingsHandler.getOrder();
+        String diskPath = (String) order.getAttribute(null,
+            CrawlOrder.ATTR_DISK_PATH);
+        File disk = settingsHandler.
+            getPathRelativeToWorkingDirectory(diskPath);
+        File f = new File(logsPath, log);
+        if (!f.isAbsolute()) {
+            f = new File(disk.getPath(), f.getPath());
+        }
+        return f.getAbsolutePath();
     }
 }

@@ -49,33 +49,17 @@
     }
     
     if(theJob != null) {
-        settingsHandler = theJob.getSettingsHandler();
-        String logsPath = (String)settingsHandler.getOrder().
-            getAttribute(CrawlOrder.ATTR_LOGS_PATH);
-        File f = new File(logsPath);
-        if (f.isAbsolute()) {
-            fileName = (new File(f, fileName)).getAbsolutePath(); 
-        } else {
-            f = settingsHandler.getOrder().getController().
-                getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
-            fileName = (new File(f, fileName)).getAbsolutePath();
-        }
-
         // Got a valid crawl order, find it's logs
-        if(mode != null && mode.equalsIgnoreCase("number"))
-        {
+        if(mode != null && mode.equalsIgnoreCase("number")) {
             /* Get log by line number */
-        
-            try
-            {
-                linenumber = Integer.parseInt(request.getParameter("linenumber"));
+            try {
+                linenumber = Integer.
+                    parseInt(request.getParameter("linenumber"));
             }
             catch(Exception e){/*Ignore*/}
-          
-            log = LogReader.getFromSeries(fileName, linenumber, linesToShow);
-        }
-        else if(mode != null && mode.equalsIgnoreCase("time"))
-        {
+            log = LogReader.getFromSeries(theJob.getLogPath(fileName),
+                linenumber, linesToShow);
+        } else if(mode != null && mode.equalsIgnoreCase("time")) {
             /* View by timestamp */
             timestamp = request.getParameter("timestamp");
         
@@ -89,8 +73,8 @@
                 int timestampLinenumber = LogReader.
                     findFirstLineContainingFromSeries(fileName,
                         timestamp + ".*");
-                log = LogReader.getFromSeries(fileName, 
-                        timestampLinenumber, linesToShow);
+                log =  LogReader.getFromSeries(theJob.getLogPath(fileName),
+                    timestampLinenumber, linesToShow);
             }
         }
         else if(mode != null && mode.equalsIgnoreCase("regexpr"))
@@ -118,20 +102,17 @@
                     regexpr = ".*" + regexpr + ".*";
                 }
                 
-                if(indent)
-                {
-                    log = LogReader.getByRegExprFromSeries(fileName, 
-                        regexpr, " ", ln,linesToSkip-1,linesToShow);
-                }
-                else
-                {
-                    log = LogReader.getByRegExprFromSeries(fileName, regexpr,
-                            0, ln,linesToSkip-1,linesToShow);
+                if(indent) {
+                    log = LogReader.
+                        getByRegExprFromSeries(theJob.getLogPath(fileName),
+                            regexpr, " ", ln,linesToSkip-1, linesToShow);
+                } else {
+                    log = LogReader.
+                        getByRegExprFromSeries(theJob.getLogPath(fileName),
+                            regexpr, 0, ln,linesToSkip-1, linesToShow);
                 }
             }
-        }
-        else
-        {
+        } else {
             /* View by tail (default) */
             mode = "tail";
     
@@ -140,8 +121,7 @@
                 iTime = Integer.parseInt(request.getParameter("time"));
             }
             catch(Exception e){/* Ignore - default value will do */}
-            
-            log = LogReader.tail(fileName, linesToShow);
+            log = LogReader.tail(theJob.getLogPath(fileName), linesToShow);
         }
     } 
     else 
