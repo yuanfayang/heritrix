@@ -117,9 +117,8 @@ public class Heritrix
     /**
      * The heritrix home directory.
      *
-     * Need this location so we can get at our configuration.  Is null if
-     * dir is where the JVM was launched from and no heritrix.home property
-     * supplied.
+     * Need this location so we can get at our configuration.  Is current
+     * working dir if no heritrix.home property supplied.
      */
     private static File heritrixHome = null;
 
@@ -214,9 +213,7 @@ public class Heritrix
         throws Exception
     {
         calculateHome();
-        File startLog = (Heritrix.heritrixHome != null)? 
-            new File(Heritrix.heritrixHome, STARTLOG):
-            new File(STARTLOG);
+        File startLog = new File(getHeritrixHome(), STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? System.out:
             new PrintStream(new FileOutputStream(startLog)));
 
@@ -244,6 +241,13 @@ public class Heritrix
     }
     
     /**
+     * @return Heritrix home directory.
+     */
+    public static File getHeritrixHome() {
+        return Heritrix.heritrixHome;
+    }
+
+    /**
      * Exploit <code>-Dheritrix.home</code> if available to us.
      * @throws IOException
      */
@@ -255,6 +259,8 @@ public class Heritrix
                 throw new IOException("HERITRIX_HOME <" + home +
                     "> does not exist.");
             }
+        } else {
+            Heritrix.heritrixHome = new File(".");
         }
     }
 
@@ -267,11 +273,10 @@ public class Heritrix
         configureTrustStore();
         warsdir = getSubDir("webapps");
         String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
-        jobsdir =
-            (jobsdirStr.startsWith(File.separator) || heritrixHome == null)?
-                new File(jobsdirStr): new File(heritrixHome, jobsdirStr);
+        jobsdir = jobsdirStr.startsWith(File.separator)?
+            new File(jobsdirStr): new File(getHeritrixHome(), jobsdirStr);
     }
-
+    
     /**
      * Check for existence of expected subdir.
      *
@@ -286,8 +291,7 @@ public class Heritrix
     {
         String path = isDevelopment()?
             "src" + File.separator + subdirName: subdirName;
-        File dir = (heritrixHome != null)?
-            new File(heritrixHome, path): new File(path);
+        File dir = new File(getHeritrixHome(), path);
         if (!dir.exists())
         {
             throw new IOException("Cannot find subdir: " + subdirName);

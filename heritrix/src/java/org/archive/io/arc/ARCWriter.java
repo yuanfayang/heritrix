@@ -125,7 +125,7 @@ public class ARCWriter implements ARCConstants {
     /**
      * Tail to add to arc file name.
      */
-    private String tail = "";
+    private String suffix = "";
 
     /**
      * Directory into which we drop ARC files.
@@ -200,13 +200,13 @@ public class ARCWriter implements ARCConstants {
      * by individually gzipping each record added to the ARC file: i.e. the
      * ARC file is a bunch of gzipped records concatenated together.
      * @param maxSize Maximum size for ARC files written.
-     * @param tail ARC file tail to use.  If null, unused.
+     * @param suffix ARC file tail to use.  If null, unused.
      *
      * @exception IOException If passed directory does not exist or is not
      * a directory.
      */
     public ARCWriter(File arcsDir, String prefix, boolean compress,
-            int maxSize, String tail)
+            int maxSize, String suffix)
         throws IOException
     {
         this.arcsDir = ArchiveUtils.ensureWriteableDirectory(arcsDir);
@@ -218,8 +218,8 @@ public class ARCWriter implements ARCConstants {
                 Integer.toString(maxSize));
         }
         this.maxSize = maxSize;
-        if (tail != null) {
-        	    this.tail = tail;
+        if (suffix != null) {
+            this.suffix = suffix;
         }
     }
 
@@ -299,8 +299,10 @@ public class ARCWriter implements ARCConstants {
     {
         close();
         String now = ArchiveUtils.get14DigitDate();
-        String name = this.prefix + getUniqueBasename(now) + this.tail + '.' +
-            ARC_FILE_EXTENSION +
+        String name = this.prefix + getUniqueBasename(now) +
+            ((this.suffix == null || this.suffix.length() <= 0)? 
+                "": "-" + this.suffix) +
+            '.' + ARC_FILE_EXTENSION +
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
         this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));

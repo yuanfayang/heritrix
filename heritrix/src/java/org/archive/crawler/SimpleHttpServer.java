@@ -250,6 +250,8 @@ public class SimpleHttpServer
      * @param webappName Name of webapp to configure.
      * @param authProperties Path to file that holds the auth login and
      * password.
+     * 
+     * @throws IOException
      */
     public void setAuthentication(String webappName, File authProperties)
             throws IOException {
