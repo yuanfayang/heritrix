@@ -134,6 +134,11 @@ public class Frontier
     public final static String ATTR_HOST_QUEUES_MEMORY_CAPACITY =
         "host-queues-memory-capacity";
 
+    /** power of 2 number of slots to preallocate the 
+     * alreadyIncluded structure */
+    public final static String ATTR_ALREADY_INCLUDED_SIZE_EXPONENT =
+        "already-included-size-exponent";
+
 
     protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
     protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000);
@@ -150,7 +155,9 @@ public class Frontier
 
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
-
+    protected final static Integer DEFAULT_ALREADY_INCLUDED_SIZE_EXPONENT = 
+        new Integer(23);
+    
     protected final static float KILO_FACTOR = 1.024F;
 
     protected CrawlController controller = null;
@@ -291,6 +298,19 @@ public class Frontier
                 " value will require more disk I/O.",
                 DEFAULT_HOST_QUEUES_MEMORY_CAPACITY));
         t.setExpertSetting(true);
+        t = addElementToDefinition(
+                new SimpleType(ATTR_ALREADY_INCLUDED_SIZE_EXPONENT,
+                "The initial size of the crawler's already-included URI" +
+                "structure, as a power of 2. The default value of 23 " +
+                "preallocates a 8 million slot structure, which can be" +
+                "75% filled before it grows (doubles in size). Each slot" +
+                "requires 9 bytes, so the default structure takes 72MB. " +
+                "If you know your crawl will schedule more than 6 million" +
+                "URIs, it is wise to preallocate a larger structure, so that" +
+                "the crawler does not need to acquire new giant chunks of" +
+                "memory during the crawl.",
+                DEFAULT_ALREADY_INCLUDED_SIZE_EXPONENT));
+        t.setExpertSetting(true);
     }
 
     /**
@@ -329,7 +349,9 @@ public class Frontier
             throws IOException, FatalConfigurationException {
         // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
-        return new FPUURISet(new MemLongFPSet(23,0.75f));
+        int sizeExponent = ((Integer) getUncheckedAttribute(null,
+                ATTR_ALREADY_INCLUDED_SIZE_EXPONENT)).intValue();
+        return new FPUURISet(new MemLongFPSet(sizeExponent,0.75f));
     }
 
     /**
