@@ -1,4 +1,4 @@
-# Availible Scopes. 
+# Availible Scopes.
 # Each processor class should be listed with full package info
 # Lines beginning with # and empty lines are ignored
 org.archive.crawler.filter.HopsFilter
@@ -10,3 +10,4 @@ org.archive.crawler.filter.PathologicalPathFilter
 org.archive.crawler.filter.SurtPrefixFilter
 org.archive.crawler.filter.ContentTypeRegExpFilter
 org.archive.crawler.filter.HTTPMidFetchUnchangedFilter
+org.archive.crawler.deciderules.DecidingFilter

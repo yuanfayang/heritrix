@@ -1,0 +1,6 @@
+# Available DecideRules.
+# Lines beginning with # and empty lines are ignored
+org.archive.crawler.deciderules.AcceptDecideRule
+org.archive.crawler.deciderules.RejectDecideRule
+org.archive.crawler.deciderules.TooManyHopsDecideRule
+org.archive.crawler.deciderules.PrerequisiteAcceptDecideRule

@@ -1,4 +1,4 @@
-# Availible processors. 
+# Availible processors.
 # Each processor class should be listed with full package info
 # followed by a '|' and a descriptive name (containing only [a-z,A-z])
 # Lines beginning with # and empty lines are ignored
@@ -23,6 +23,3 @@ org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
 org.archive.crawler.postprocessor.Postselector|Postselector
 org.archive.crawler.postprocessor.LowDiskPauseProcessor|LowDiskPause
 org.archive.crawler.postprocessor.WaitEvaluator|WaitEvaluator
-org.archive.crawler.postprocessor.ContentBasedWaitEvaluator|ContentBasedWaitEvaluator
-org.archive.crawler.postprocessor.TextWaitEvaluator|TextWaitEvaluator
-org.archive.crawler.postprocessor.ImageWaitEvaluator|ImageWaitEvaluator
