@@ -751,7 +751,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	} else if (key.equals("digest")) {
         		authscheme = new DigestScheme();
         	} else {
-        		logger.warning("Unexpected scheme: " + key);
+        		logger.warning("Unsupported scheme: " + key);
         		continue;
         	}
             
