@@ -8,9 +8,12 @@ package org.archive.crawler;
 
 import java.util.logging.Logger;
 
+import org.archive.crawler.admin.SimpleCrawlJob;
+import org.archive.crawler.admin.SimpleHandler;
 import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.exceptions.InitializationException;
 
 /**
@@ -29,19 +32,27 @@ import org.archive.crawler.framework.exceptions.InitializationException;
 public class Heritrix {
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.Heritrix");
+		
+	// TODO: Make implementation of CrawlJobHandler configurable
+	private static SimpleHandler handler;
 
 	public static void main(String[] args) {
 		(new Heritrix()).instanceMain(args);
 	}
 
 	public void instanceMain(String[] args) {
-		// Default crawlOrder
 		String crawlOrderFile = "test-config/order.xml";
 
 		try {
 			switch (args.length) {
 				case 1 :
 					crawlOrderFile = args[0];
+					handler = new SimpleHandler();
+				
+					CrawlJob cjob = new SimpleCrawlJob(handler.getNextJobUID(),"Auto launched",crawlOrderFile, CrawlJob.PRIORITY_HIGH);
+				
+					handler.addJob(cjob);
+					handler.startCrawler();
 				case 0 :
 					startServer();
 					break;
@@ -64,6 +75,7 @@ public class Heritrix {
 		}
 		
 		logger.info("exitting main thread");
+		
 	}
 	
 	private void usage() {
@@ -90,6 +102,10 @@ public class Heritrix {
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 		}
-
+	}
+	
+	public static SimpleHandler getHandler()
+	{
+		return handler;	
 	}
 }
