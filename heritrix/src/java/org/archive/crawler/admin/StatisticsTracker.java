@@ -93,10 +93,12 @@ public class StatisticsTracker extends AbstractTracker{
      */
     /** Keep track of the file types we see (mime type -> count) */
     protected Hashtable mimeTypeDistribution = new Hashtable();
+    protected Hashtable mimeTypeBytes = new Hashtable();
     /** Keep track of fetch status codes */
     protected Hashtable statusCodeDistribution = new Hashtable();
     /** Keep track of hosts */
     protected Hashtable hostsDistribution = new Hashtable();
+    protected Hashtable hostsBytes = new Hashtable();
 
     /** Keep track of processed seeds disposition*/
     protected Hashtable processedSeedsDisposition = new Hashtable();
@@ -272,13 +274,16 @@ public class StatisticsTracker extends AbstractTracker{
      *            increment the counter "unknown".
      */
     protected static void incrementMapCount(Hashtable map, String key) {
-
+    	incrementMapCount(map,key,1);
+    }
+    
+    protected static void incrementMapCount(Hashtable map, String key, long increment) {
         if (key == null) {
             key = "unknown";
         }
 
         if (map.containsKey(key)) {
-            ((LongWrapper) map.get(key)).longValue++;
+            ((LongWrapper) map.get(key)).longValue+=increment;
 
         } else {
             // if we didn't find this key add it
@@ -287,6 +292,7 @@ public class StatisticsTracker extends AbstractTracker{
             }
         }
     }
+
 
     /**
      * Sort the entries of the given HashMap in descending order
@@ -326,15 +332,33 @@ public class StatisticsTracker extends AbstractTracker{
         return statusCodeDistribution;
     }
 
-    /** Return a HashMap representing the distribution of hosts for
+    /** Return a Hashtable representing the distribution of hosts for
      *  successfully fetched curis, as represented by a hashmap where
      *  key -> val represents (string)code -> (integer)count
      * <p>
      * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
-     * @return Hosts distribution as a HashMap
+     * @return Hosts distribution as a Hashtable
      */
     public Hashtable getHostsDistribution() {
         return hostsDistribution;
+    }
+    
+    /**
+     * Returns the accumulated number of bytes downloaded from a given host.
+     * @param host name of the host
+     * @return the accumulated number of bytes downloaded from a given host
+     */
+    public long getBytesPerHost(String host){
+        return ((LongWrapper)hostsBytes.get(host)).longValue;
+    }
+    
+    /**
+     * Returns the accumulated number of bytes from files of a given file type.
+     * @param host name of the mime type
+     * @return the accumulated number of bytes from files of a given mime type
+     */
+    public long getBytesPerFileType(String filetype){
+        return ((LongWrapper)mimeTypeBytes.get(filetype)).longValue;
     }
 
     /**
@@ -521,15 +545,17 @@ public class StatisticsTracker extends AbstractTracker{
             mime = mime.toLowerCase();
         }
         incrementMapCount(mimeTypeDistribution, mime);
+        incrementMapCount(mimeTypeBytes,mime,curi.getContentSize());
 
         // Save hosts
         if(curi.getFetchStatus()==1){
             // DNS Lookup, handle it differently.
             incrementMapCount(hostsDistribution, "dns:");
+            incrementMapCount(hostsBytes,"dns:",curi.getContentSize());
         } else {
-        incrementMapCount(hostsDistribution, curi.getServer().getHostname());
-
-    }
+        	incrementMapCount(hostsDistribution, curi.getServer().getHostname());
+            incrementMapCount(hostsBytes,curi.getServer().getHostname(),curi.getContentSize());
+        }
     }
 
     /* (non-Javadoc)
