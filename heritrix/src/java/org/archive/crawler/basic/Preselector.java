@@ -118,7 +118,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
 	 */
-	public void initialize(CrawlController c) {
+	public void initialize(CrawlController c) throws AttributeNotFoundException {
 		super.initialize(c);
 	    //recheckScope = getBooleanAt("@scope",false);
 		
