@@ -28,6 +28,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -39,6 +43,7 @@ import org.apache.commons.httpclient.params.HttpClientParams;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
@@ -50,26 +55,40 @@ import org.archive.util.HttpRecorder;
  * Basic class for using the Apache Jakarta HTTPClient library
  * for fetching an HTTP URI. 
  * 
- * @author gojomo, igor, others
+ * @author Gordon Mohr
+ * @author Igor Ranitovic
+ * @author others
  *
  */
 public class FetchHTTP
 	extends Processor
 	implements CoreAttributeConstants, FetchStatusCodes {
-	private static String XP_TIMEOUT_SECONDS = "@timeout-seconds";
-	private static String XP_SOTIMEOUT_MS = "@sotimeout-ms";
-	private static String XP_MAX_LENGTH_BYTES = "@max-length-bytes";
-	private static String XP_MAX_FETCH_ATTEMPTS = "@max-fetch-attempts";
-	private static String XP_LOAD_COOKIES = "//cookies/@src";
-	private static int DEFAULT_TIMEOUT_SECONDS = 10;
-	private static int DEFAULT_SOTIMEOUT_MS = 5000;
-	private static long DEFAULT_MAX_LENGTH_BYTES = Long.MAX_VALUE;
-	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 30;
-
-	private static Logger logger =
-		Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
+    private static String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
+	private static String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
+	private static String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
+	private static String ATTR_MAX_FETCH_ATTEMPTS = "max-fetch-attempts";
+    private static String ATTR_LOAD_COOKIES = "cookies-file";
+	private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(10);
+	private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(5000);
+	private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
+	private static Integer DEFAULT_MAX_FETCH_ATTEMPTS = new Integer(30);
+	
+	private static Logger logger = Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 	HttpClient http;
 	private int soTimeout;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public FetchHTTP(String name) {
+        super(name, "HTTP Fetcher");
+        addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS, "Timeout seconds", DEFAULT_TIMEOUT_SECONDS));
+        addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS, "So timeout milliseconds", DEFAULT_SOTIMEOUT_MS));
+        addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES, "Max length in bytes", DEFAULT_MAX_LENGTH_BYTES));
+        addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS, "Max fetch attempts", DEFAULT_MAX_FETCH_ATTEMPTS));
+        addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES, "File to load cookies from", ""));
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -127,8 +146,8 @@ public class FetchHTTP
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules			
 			rec.getRecordedInput().readFullyOrUntil(
-				getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES),
-				1000 * getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
+				getMaxLength(curi),
+				1000 * getTimeout(curi));
 		} catch (RecorderTimeoutException ex) {
 			curi.addAnnotation("timeTrunc");
 		} catch (RecorderLengthExceededException ex) {
@@ -184,8 +203,7 @@ public class FetchHTTP
          }
 
          // only try so many times...
-         if (curi.getFetchAttempts()
-             >= getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)) {
+         if (curi.getFetchAttempts() >= getMaxFetchAttempts(curi)) {
              curi.setFetchStatus(S_TOO_MANY_RETRIES);
              return false;
          }
@@ -214,21 +232,18 @@ public class FetchHTTP
         get.getParams().makeLenient();
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
-        	userAgent = controller.getOrder().getUserAgent();
+        	userAgent = controller.getOrder().getUserAgent(curi);
         }
         get.setRequestHeader("User-Agent", userAgent);
-        get.setRequestHeader("From", controller.getOrder().getFrom());
+        get.setRequestHeader("From", controller.getOrder().getFrom(curi));
     }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
 	 */
-	public void initialize(CrawlController c) {
+	public void initialize(CrawlController c) throws AttributeNotFoundException {
 		super.initialize(c);
-		//		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
-		soTimeout = getIntAt(XP_SOTIMEOUT_MS, DEFAULT_SOTIMEOUT_MS);
-		//		maxLength = getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES);
-		//		maxTries = getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS);
+        soTimeout = getSoTimeout(null);
 		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
 		MultiThreadedHttpConnectionManager connectionManager =
 			new MultiThreadedHttpConnectionManager();
@@ -237,7 +252,13 @@ public class FetchHTTP
 		http = new HttpClient(connectionManager);
 		
 		// load cookies from a file if specified in the order file.
-		loadCookies(getStringAt(XP_LOAD_COOKIES));
+            try {
+                loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
+            } catch (MBeanException e) {
+                throw new AttributeNotFoundException(e.getMessage());
+            } catch (ReflectionException e) {
+                throw new AttributeNotFoundException(e.getMessage());
+            }
 		
 		// set connection timeout: considered same as overall timeout, for now
 		// TODO: restore this when HTTPClient stops using monitor thread
@@ -246,6 +267,46 @@ public class FetchHTTP
 		// frequently
 		 ((HttpClientParams) http.getParams()).setSoTimeout(soTimeout);
 	}
+
+    private int getSoTimeout(CrawlURI curi) {
+        Integer res;
+        try {
+            res = (Integer) getAttribute(ATTR_SOTIMEOUT_MS, curi);
+        } catch (Exception e) {
+            res = DEFAULT_SOTIMEOUT_MS;
+        }
+        return res.intValue();
+    }
+
+    private int getTimeout(CrawlURI curi) {
+        Integer res;
+        try {
+            res = (Integer) getAttribute(ATTR_TIMEOUT_SECONDS, curi);
+        } catch (Exception e) {
+            res = DEFAULT_TIMEOUT_SECONDS;
+        }
+        return res.intValue();
+    }
+
+    private int getMaxFetchAttempts(CrawlURI curi) {
+        Integer res;
+        try {
+            res = (Integer) getAttribute(ATTR_MAX_FETCH_ATTEMPTS, curi);
+        } catch (Exception e) {
+            res = DEFAULT_MAX_FETCH_ATTEMPTS;
+        }
+        return res.intValue();
+    }
+
+    private long getMaxLength(CrawlURI curi) {
+        Long res;
+        try {
+            res = (Long) getAttribute(ATTR_MAX_LENGTH_BYTES, curi);
+        } catch (Exception e) {
+            res = DEFAULT_MAX_LENGTH_BYTES;
+        }
+        return res.longValue();
+    }
 
 	/**
 	 * Load cookies from a file before the first fetch.
@@ -313,7 +374,7 @@ public class FetchHTTP
 				"Could not find file: "
 					+ cookiesFile
 					+ " (Element: "
-					+ XP_LOAD_COOKIES
+					+ ATTR_LOAD_COOKIES
 					+ ")");
 		} catch (IOException e) {
 			// We should probably throw FatalConfigurationException.

@@ -70,7 +70,15 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
     private long numberOfCURIsHandled = 0;
-    private long numberOfLinksExtracted= 0;
+    private long numberOfLinksExtracted = 0;
+    
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorCSS(String name) {
+        super(name, "CSS Extractor");
+    }
 
 	/**
 	 * @param curi

@@ -29,9 +29,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.arc.ARCConstants;
@@ -80,21 +85,52 @@ public class ARCWriterProcessor
     /**
      * Where to drop ARC files.
      */
-    protected String outputDir = null;         
-    
+    protected String outputDir = "";
+
     /**
      * Reference to an ARCWriter.
      */
     ARCWriterPool pool = null;
-    
-    
-    public void initialize(CrawlController c)
-    {
+
+    // Constants for this methods attribute names
+    private final static String ATTR_COMPRESS = "compress";
+    private final static String ATTR_PREFIX = "prefix";
+    private final static String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
+    private final static String ATTR_PATH = "path";
+
+    /**
+     * @param name
+     */
+    public ARCWriterProcessor(String name) {
+        super(name, "ARCWriter processor");
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_COMPRESS,
+                "Compress arc files",
+                new Boolean(useCompression)));
+        addElementToDefinition(
+            new SimpleType(ATTR_PREFIX, "Prefix", arcPrefix));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_SIZE_BYTES,
+                "Max size of arc file",
+                new Integer(arcMaxSize)));
+        addElementToDefinition(
+            new SimpleType(ATTR_PATH, "Where to store arc files", outputDir));
+    }
+
+    public void initialize(CrawlController c) throws AttributeNotFoundException {
         super.initialize(c);
         
         // readConfiguration populates settings used creating ARCWriter.
-        readConfiguration();
-        
+        try {
+            readConfiguration();
+        } catch (MBeanException e) {
+            throw new AttributeNotFoundException(e.getMessage());
+        } catch (ReflectionException e) {
+            throw new AttributeNotFoundException(e.getMessage());
+        }
+
         try
         {
             // Set up the pool of ARCWriters.
@@ -110,12 +146,13 @@ public class ARCWriterProcessor
     }
       
     protected void readConfiguration()
-    {
+        throws AttributeNotFoundException, MBeanException, ReflectionException {
         // set up output directory
-        setUseCompression(getBooleanAt("@compress",false));
-        setArcPrefix(getStringAt("@prefix",arcPrefix));
-        setArcMaxSize(getIntAt("@max-size-bytes",arcMaxSize));
-        setOutputDir(getStringAt("@path",outputDir));
+        setUseCompression(
+            ((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
+        setArcPrefix((String) getAttribute(ATTR_PREFIX));
+        setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
+        setOutputDir((String) getAttribute(ATTR_PATH));
     }
 
     /**

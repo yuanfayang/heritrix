@@ -40,12 +40,22 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
  *
  */
 public class PreconditionEnforcer extends Processor implements CoreAttributeConstants, FetchStatusCodes {
-	private static String XP_DELAY_FACTOR = "params/@delay-factor";
-	private static String XP_MINIMUM_DELAY = "params/@minimum-delay";
-	private static int DEFAULT_DELAY_FACTOR = 10;
-	private static int DEFAULT_MINIMUM_DELAY = 2000;
+    //private static String ATTR_DELAY_FACTOR = "delay-factor";
+	//private static String ATTR_MINIMUM_DELAY = "minimum-delay";
+	//private static Integer DEFAULT_DELAY_FACTOR = new Integer(10);
+	//private static Integer DEFAULT_MINIMUM_DELAY = new Integer(2000);
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimplePolitenessEnforcer");
+
+    /**
+     * @param name
+     * @param description
+     */
+    public PreconditionEnforcer(String name) {
+        super(name, "Precondition enforcer");
+        //addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR, "Delay factor", DEFAULT_DELAY_FACTOR));
+        //addElementToDefinition(new SimpleType(ATTR_MINIMUM_DELAY, "Minimum delay", DEFAULT_MINIMUM_DELAY));
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -100,7 +110,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 			return true;
 		}
 		// test against robots.txt if available
-		String ua = controller.getOrder().getUserAgent();
+		String ua = controller.getOrder().getUserAgent(curi);
 		if( curi.getServer().getRobots().disallows(curi, ua)) {
 			// don't fetch
 			curi.skipToProcessor(controller.getPostprocessor());  // turn off later stages
@@ -162,18 +172,14 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 		return false;
 	}
 
-	/**
-	 * 
-	 */
+	/*
 	private int getMinimumDelayFor(CrawlURI curi) {
 		return getIntAt(XP_MINIMUM_DELAY,DEFAULT_MINIMUM_DELAY);		
 	}
 
-	/**
-	 * 
-	 */
 	private int getDelayFactorFor(CrawlURI curi) {
 		return getIntAt(XP_DELAY_FACTOR, DEFAULT_DELAY_FACTOR);
 	}
+    */
 
 }

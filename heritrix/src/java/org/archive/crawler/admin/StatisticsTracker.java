@@ -31,7 +31,8 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
 /**
- * This is an implementation of the AbstractTracker.   
+ * This is an implementation of the AbstractTracker. It is designed to function 
+ * with the WUI as well as performing various logging activity. 
  * <p>
  * At the end of each snapshot a line is written to the progress-statistics.log file.
  * <p>
@@ -91,8 +92,8 @@ public class StatisticsTracker extends AbstractTracker{
 	/** Keep track of hosts */
 	protected HashMap hostsDistribution = new HashMap();
 	
-	public StatisticsTracker() {
-		super();
+	public StatisticsTracker(String name) {
+		super(name, "Statistics tracker");
 	}
 
 	/* (non-Javadoc)

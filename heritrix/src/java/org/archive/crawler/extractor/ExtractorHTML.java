@@ -49,7 +49,7 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
-	protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
+    protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
 
@@ -116,8 +116,16 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	static final Pattern WHITESPACE = Pattern.compile("\\s");
 	
     protected long numberOfCURIsHandled = 0;
-    protected long numberOfLinksExtracted= 0;
-    
+    protected long numberOfLinksExtracted = 0;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorHTML(String name) {
+        super(name, "HTML extractor");
+    }
+
 	/**
 	 */
 	protected void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
@@ -410,7 +418,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		
 		if("robots".equalsIgnoreCase(name) && content != null ) {
 			curi.getAList().putString(A_META_ROBOTS,content);
-			RobotsHonoringPolicy policy = controller.getOrder().getRobotsHonoringPolicy();
+			RobotsHonoringPolicy policy = controller.getOrder().getRobotsHonoringPolicy(curi);
 			if ((policy == null
 				|| (!policy.isType(RobotsHonoringPolicy.IGNORE)
 					&& !policy.isType(RobotsHonoringPolicy.CUSTOM)))

@@ -36,8 +36,23 @@ import org.mortbay.jetty.Server;
  * Wrapper for embedded Jetty server.
  */
 public class SimpleHttpServer 
-    implements AdminConstants 
 {
+    /**
+     *  Default webapp path.
+     */
+    public static final String DEFAULT_WEBAPP_PATH = "webapps";
+    
+    /**
+     * Name of system property whose specification overrides
+     * DEFAULT_WEBAPP_PATH.
+     */
+    public static final String WEBAPP_PATH_NAME = "heritrix.webapp.path";
+
+    /**
+     * Default name of admin webapp.
+     */
+    public static final String ADMIN_WEBAPP_NAME = "admin";
+
     private int _port;
     private Server _server = null;
     public static final int DEFAULT_PORT = 8080;
@@ -66,7 +81,7 @@ public class SimpleHttpServer
      * Return the admin webapp path.
      * 
      * Looks at system properties to see if default has been overridden.  This
-     * method is used by SimpleHandler also.
+     * method is used by CrawlJobHandler also.
      * 
      * @return Return admin webapp path (Path returned has a trailing '/').
      */

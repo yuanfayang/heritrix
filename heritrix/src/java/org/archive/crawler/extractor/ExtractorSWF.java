@@ -47,10 +47,18 @@ import com.anotherbigidea.io.InStream;
  */
 public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 
-	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorSWF");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorSWF");
 
     protected long numberOfCURIsHandled = 0;
-    protected long numberOfLinksExtracted= 0;
+    protected long numberOfLinksExtracted = 0;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorSWF(String name) {
+        super(name, "Flash extractor");
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)

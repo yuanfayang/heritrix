@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
 
 <%
 	String sAction = request.getParameter("action");
@@ -12,7 +12,7 @@
 		{
 			try
 			{
-				handler.removeJob(request.getParameter("job"));
+				handler.deleteJob(request.getParameter("job"));
 			}
 			catch(java.lang.NumberFormatException e){}
 		}
@@ -51,7 +51,7 @@
 						</td>
 						<td>
 							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
-							<a href="/admin/jobs/modify.jsp?job=<%=job.getUID()%>">Modify</a>
+							<a href="/admin/jobs/configure.jsp?job=<%=job.getUID()%>">Modify</a>
 							<a href="/admin/jobs/poweredit.jsp?job=<%=job.getUID()%>">Power edit</a>
 							<a href="/admin/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
 						</td>

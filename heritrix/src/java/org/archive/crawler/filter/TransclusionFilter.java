@@ -23,8 +23,11 @@
  */
 package org.archive.crawler.filter;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -35,10 +38,10 @@ import org.archive.crawler.framework.Filter;
  * @author Gordon Mohr
  */
 public class TransclusionFilter extends Filter {
-	private static final String XP_MAX_TRANS_HOPS = "@max-trans-hops";
-	private static final String XP_MAX_SPECULATIVE_HOPS = "@max-speculative-hops";
-	private static final String XP_MAX_REFERRAL_HOPS = "@max-referral-hops";
-	private static final String XP_MAX_EMBED_HOPS = "@max-embed-hops";
+    private static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
+	private static final String ATTR_MAX_SPECULATIVE_HOPS = "max-speculative-hops";
+	private static final String ATTR_MAX_REFERRAL_HOPS = "max-referral-hops";
+	private static final String ATTR_MAX_EMBED_HOPS = "max-embed-hops";
 	private static final int DEFAULT_MAX_TRANS_HOPS = 4;
 	private static final int DEFAULT_MAX_SPECULATIVE_HOPS = 1; // no more than 1
 	private static final int DEFAULT_MAX_REFERRAL_HOPS = Integer.MAX_VALUE; // no limit beside the overall trans limit
@@ -51,6 +54,19 @@ public class TransclusionFilter extends Filter {
 //	// 1-3 trailing P(recondition)/R(eferral)/E(mbed)/X(speculative-embed) hops
 //	private static final String TRANSCLUSION_PATH = ".*[PREX][PREX]?[PREX]?$";
 	
+    /**
+     * @param name
+     * @param description
+     */
+    public TransclusionFilter(String name) {
+        super(name, "Transclusion filter");
+
+        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS, "", new Integer(DEFAULT_MAX_TRANS_HOPS)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_SPECULATIVE_HOPS, "", new Integer(DEFAULT_MAX_SPECULATIVE_HOPS)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_REFERRAL_HOPS, "", new Integer(DEFAULT_MAX_REFERRAL_HOPS)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_EMBED_HOPS, "", new Integer(DEFAULT_MAX_EMBED_HOPS)));
+    }
+
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
@@ -89,6 +105,11 @@ public class TransclusionFilter extends Filter {
 			}
 			transCount++;
 		}
+        
+        if (o instanceof CrawlURI) {
+            readMaxValues((CrawlURI) o);
+        }
+        
 		return (transCount > 0) // this is a case of possible transclusion
 				&& (transCount <= maxTransHops) // and the overall number of hops isn't too high
 				&& (specCount <= maxSpeculativeHops) // and the number of spec-hops isn't too high
@@ -96,12 +117,16 @@ public class TransclusionFilter extends Filter {
 				&& (embedCount <= maxEmbedHops);  // and the number of embed-hops isn't too high
 	}
 
-	public void initialize(CrawlController c) {
-		super.initialize(c);
-		maxTransHops = getIntAt(XP_MAX_TRANS_HOPS,maxTransHops);
-		maxSpeculativeHops = getIntAt(XP_MAX_SPECULATIVE_HOPS,maxSpeculativeHops);
-		maxReferralHops = getIntAt(XP_MAX_REFERRAL_HOPS,maxReferralHops);
-		maxEmbedHops = getIntAt(XP_MAX_EMBED_HOPS,maxEmbedHops);
+	public void readMaxValues(CrawlURI curi) {
+		try {
+            maxTransHops = ((Integer) getAttribute(ATTR_MAX_TRANS_HOPS, curi)).intValue();
+            maxSpeculativeHops = ((Integer) getAttribute(ATTR_MAX_SPECULATIVE_HOPS, curi)).intValue();
+            maxReferralHops = ((Integer) getAttribute(ATTR_MAX_REFERRAL_HOPS, curi)).intValue();
+            maxEmbedHops = ((Integer) getAttribute(ATTR_MAX_EMBED_HOPS, curi)).intValue();
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 	}
 
 }

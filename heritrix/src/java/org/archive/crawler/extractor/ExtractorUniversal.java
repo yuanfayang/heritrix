@@ -26,9 +26,14 @@ import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.TextUtils;
 
@@ -53,13 +58,13 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorUniversal extends Processor implements CoreAttributeConstants{
 
-    private static String XP_MAX_DEPTH_BYTES = "@max-depth-bytes";
+    private static String ATTR_MAX_DEPTH_BYTES = "max-depth-bytes";
     /** Default value for how far into an unknown document we should scan - 10k<br>
      *  A value of 0 or lower will disable this.
      */
     private static long DEFAULT_MAX_DEPTH_BYTES = 10240;
 
-    private static String XP_MAX_URL_LENGTH = "@max-url-length";
+    private static String ATTR_MAX_URL_LENGTH = "max-url-length";
     /** Maximum length for a URI that we try to match.*/
     private static long DEFAULT_MAX_URL_LENGTH = 2083;
 
@@ -342,6 +347,16 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted= 0;
 
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorUniversal(String name) {
+        super(name, "Link extraction on unknown file types");
+        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES, "Max depth in bytes", new Long(DEFAULT_MAX_DEPTH_BYTES)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH, "Max length of URLs in bytes", new Long(DEFAULT_MAX_URL_LENGTH)));
+    }
+
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
      */
@@ -365,11 +380,11 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
             long counter = 0;
-            long maxdepth = getLongAt(XP_MAX_DEPTH_BYTES, DEFAULT_MAX_DEPTH_BYTES);
+            long maxdepth = ((Long)getAttribute(ATTR_MAX_DEPTH_BYTES)).longValue();
             if(maxdepth<=0){
                 maxdepth = Long.MAX_VALUE;
             }
-            long maxURLLength = getLongAt(XP_MAX_URL_LENGTH, DEFAULT_MAX_URL_LENGTH);
+            long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH)).longValue();
             boolean foundDot = false;
             while(ch != -1 && ++counter <= maxdepth){   
                 
@@ -419,6 +434,15 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             }
         } catch(IOException e){
             //TODO: Handle this exception.
+            e.printStackTrace();
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 

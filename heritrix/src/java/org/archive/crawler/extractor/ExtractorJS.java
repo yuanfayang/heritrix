@@ -43,7 +43,7 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorJS extends Processor implements CoreAttributeConstants {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
 	static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
 	static final Pattern WHITESPACE = Pattern.compile("\\s");
@@ -69,7 +69,15 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");	
 
     protected long numberOfCURIsHandled = 0;
-    protected static long numberOfLinksExtracted= 0;
+    protected static long numberOfLinksExtracted = 0;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorJS(String name) {
+        super(name, "Java Script extractor");
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
