@@ -204,6 +204,19 @@
 			</tr>
 			<tr>
 				<td>
+					<b>Logging</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Crawl statistics interval (sec):
+				</td>
+				<td>
+					<input name="<%="//loggers/crawl-statistics/@interval-seconds"%>" value="<%=crawlOrder.getStringAt("//loggers/crawl-statistics/@interval-seconds")%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
 					<b>Seeds</b>
 				</td>
 			</tr>
