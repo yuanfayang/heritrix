@@ -38,12 +38,12 @@ import org.archive.crawler.settings.SimpleType;
  *
  * Roughly, its logic is captured in innerAccept(). A URI is 
  * included if:
- *
+ * <pre>
  *    ((isSeed(uri) 
  *       || focusAccepts(uri)) 
  *       || additionalFocusAccepts(uri) 
  *       || transitiveAccepts(uri))
- *     && !excludeAccepts(uri);
+ *     && !excludeAccepts(uri);</pre>
  *
  * Subclasses should override focusAccepts, additionalFocusAccepts,
  * and transitiveAccepts. 
@@ -73,19 +73,18 @@ public class ClassicScope extends CrawlScope {
      */
     public ClassicScope(String name) {
         super(name);
-        addElementToDefinition(new SimpleType(
-                ATTR_MAX_LINK_HOPS,
-                "Max link hops to include. URIs more than this number "
-                        + "of links from a seed will not be ruled in-scope. (Such "
-                        + "determination does not preclude later inclusion if a "
-                        + "shorter path is later discovered.)", new Integer(25)));
-        addElementToDefinition(new SimpleType(
-                ATTR_MAX_TRANS_HOPS,
-                "Max transitive hops (embeds, referrals, preconditions) to include. "
-                        + "URIs reached by more than this number of transitive hops will not "
-                        + "be ruled in-scope, even if otherwise on an in-focus site. (Such "
-                        + "determination does not preclude later inclusion if a "
-                        + "shorter path is later discovered.)", new Integer(5)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
+            "Max link hops to include. URIs more than this number "
+            + "of links from a seed will not be ruled in-scope. (Such "
+            + "determination does not preclude later inclusion if a "
+            + "shorter path is later discovered.)", new Integer(25)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
+            "Max transitive hops (embeds, referrals, preconditions) to " +
+            "include. URIs reached by more than this number of transitive " +
+            "hops will not be ruled in-scope, even if otherwise on an " +
+            "in-focus site. (Such determination does not preclude later " +
+            " inclusion if a shorter path is later discovered.)", 
+            new Integer(5)));
         this.excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
 
@@ -112,8 +111,8 @@ public class ClassicScope extends CrawlScope {
      *         this scope.
      */
     protected final boolean innerAccepts(Object o) {
-        return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) || transitiveAccepts(o))
-                && !excludeAccepts(o);
+        return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
+                transitiveAccepts(o)) && !excludeAccepts(o);
     }
 
     /**
