@@ -91,7 +91,7 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 		}
 		
 		// print statistics
-		if ( (statistics.successfulFetchAttempts() % 50) == 0) {
+		if ( (statistics.totalFetchAttempts() == 25) || (statistics.totalFetchAttempts() % 1000) == 0) {
 			controller.printStatistics();
 		}
 		

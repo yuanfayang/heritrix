@@ -359,7 +359,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			// already inserted
 			// TODO: perhaps yank to front?
 			// if curi is still locked out, ignore request to schedule
-			if(curi.dontFetchYet()){
+			if(curi.getStoreState()!=URIStoreable.FINISHED || curi.dontFetchYet()){
 				return;
 			} 
 			// yank URI back into scheduling if necessary
@@ -367,7 +367,11 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 		} else {
 			curi = new CrawlURI(uuri);
 		}
-		curi.getAList().putInt("distance-from-seed",dist);
+		int newDist = dist;
+		if(curi.getAList().containsKey(A_DISTANCE_FROM_SEED)) {
+			newDist = Math.max(dist,curi.getAList().getInt(A_DISTANCE_FROM_SEED));
+		}
+		curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
 		allCuris.put(uuri,curi);
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if ( classQueue == null ) {
