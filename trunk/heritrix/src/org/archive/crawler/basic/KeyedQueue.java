@@ -6,8 +6,13 @@
  */
 package org.archive.crawler.basic;
 
-import java.util.LinkedList;
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
+
+import org.archive.util.DiskBackedQueue;
+import org.archive.util.MemQueue;
+import org.archive.util.Queue;
 
 /**
  * Ordered collection of items with the same "classKey". The 
@@ -17,19 +22,32 @@ import java.util.logging.Logger;
  * @author gojomo
  *
  */
-public class KeyedQueue extends LinkedList implements URIStoreable {
+public class KeyedQueue implements Queue, URIStoreable {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
 
 	long wakeTime;
 	Object classKey;
 	Object state;
 	
+	Queue innerQ;
+	
 	/**
 	 * 
 	 */
-	public KeyedQueue(Object key) {
+	public KeyedQueue(Object key, File scratchDir, int headMax) {
 		super();
 		classKey = key;
+		String tmpName = null;
+		if (key instanceof String) {
+			tmpName = (String) key;
+		}
+		innerQ = new MemQueue();
+//		try {
+//			innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
+//		} catch (IOException e) {
+//			// TODO Convert to runtime exception?
+//			e.printStackTrace();
+//		}
 	}
 	
 	/**
@@ -89,7 +107,6 @@ public class KeyedQueue extends LinkedList implements URIStoreable {
 		return classKey.toString();
 	}
 
-
 	/**
 	 * The only equals() that matters for KeyedQueues is
 	 * object equivalence.
@@ -98,6 +115,34 @@ public class KeyedQueue extends LinkedList implements URIStoreable {
 	 */
 	public boolean equals(Object o) {
 		return this == o;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#enqueue(java.lang.Object)
+	 */
+	public void enqueue(Object o) {
+		innerQ.enqueue(o);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#isEmpty()
+	 */
+	public boolean isEmpty() {
+		return innerQ.isEmpty();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#dequeue()
+	 */
+	public Object dequeue() {
+		return innerQ.dequeue();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.Queue#length()
+	 */
+	public long length() {
+		return innerQ.length();
 	}
 
 }
