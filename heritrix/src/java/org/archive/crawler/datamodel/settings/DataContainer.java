@@ -219,6 +219,8 @@ public class DataContainer extends HashMap {
      * @param key name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
      *              at the top.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with the submitted key.
      */
     protected boolean moveElementUp(String key) throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);
@@ -242,6 +244,8 @@ public class DataContainer extends HashMap {
      * @param key name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
      *              at bottom.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with the submitted key.
      */
     protected boolean moveElementDown(String key) throws AttributeNotFoundException {
         MBeanAttributeInfo element = getAttributeInfo(key);
@@ -258,5 +262,23 @@ public class DataContainer extends HashMap {
         attributes.add(prevIndex+1, element);
         
         return true;
+    }
+
+    /** Remove an attribute from the map.
+     * 
+     * @param key name of the attribute to remove.
+     * @return the element that was removed.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with the submitted key.
+     */
+    public Type removeElement(String key) throws AttributeNotFoundException {
+        MBeanAttributeInfo element = getAttributeInfo(key);
+        if (element == null) {
+            throw new AttributeNotFoundException(key);
+        }
+
+        attributes.remove(element);
+        attributeNames.remove(element.getName());
+        return (Type) super.remove(element.getName()); 
     }
 }
