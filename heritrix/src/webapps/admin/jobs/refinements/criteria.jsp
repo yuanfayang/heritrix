@@ -84,6 +84,7 @@
             if(newCrit != null){
                 refinement.addCriteria(newCrit);
             }
+            settingsHandler.writeSettingsObject(localSettings);
         } else if(action.equals("delete")){
             // Delete criteria
             try{
@@ -91,6 +92,7 @@
             } catch(NumberFormatException e){
                 message = "Invalid criteria number!!!"; // This should normally not happen.
             }
+            settingsHandler.writeSettingsObject(localSettings);
         } else if(action.equals("goto")){
             // Goto another page of the job/profile settings
             response.sendRedirect(item+"&currDomain="+currDomain+"&reference="+reference);
