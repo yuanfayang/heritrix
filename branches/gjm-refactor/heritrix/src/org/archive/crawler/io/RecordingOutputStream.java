@@ -74,12 +74,26 @@ public class RecordingOutputStream extends OutputStream {
 	 * @see java.io.OutputStream#write(int)
 	 */
 	public void write(int b) throws IOException {
-		wrappedStream.write(b);
 		record(b);
+		wrappedStream.write(b);
 	}
 	
-	// TODO implement other forms of write() for efficiency
-
+	/* (non-Javadoc)
+	 * @see java.io.OutputStream#write(byte[])
+	 */
+	public void write(byte[] b) throws IOException {
+		record(b,0,b.length);
+		wrappedStream.write(b);
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.io.OutputStream#write(byte[], int, int)
+	 */
+	public void write(byte[] b, int off, int len) throws IOException {
+		record(b,off,len);
+		wrappedStream.write(b,off,len);
+	}
+	
 	/**
 	 * @param b
 	 */
@@ -92,7 +106,25 @@ public class RecordingOutputStream extends OutputStream {
 		position++;
 	}
 	
-	// TODO implement other forms of record() for efficiency
+	/**
+	 * @param b
+	 * @param off
+	 * @param len
+	 */
+	private void record(byte[] b, int off, int len) throws IOException {
+		if(position>=buffer.length){
+			diskStream.write(b,off,len);
+			position += len;
+		} else {
+			int toCopy = (int)Math.min(buffer.length-position,len);
+			System.arraycopy(b,off,buffer,(int)position,toCopy);
+			position += toCopy;
+			// TODO verify these are +1 -1 right
+			if (toCopy<len) {
+				record(b,off+toCopy,len-toCopy);
+			}
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see java.io.OutputStream#close()
@@ -145,5 +177,14 @@ public class RecordingOutputStream extends OutputStream {
 		}
 		return null;
 	}
+
+
+	/**
+	 * @return
+	 */
+	public long getResponseContentLength() {
+		return size-responseBodyStart;
+	}
+
 
 }

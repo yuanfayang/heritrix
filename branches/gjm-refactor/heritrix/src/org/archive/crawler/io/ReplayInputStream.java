@@ -72,15 +72,33 @@ public class ReplayInputStream extends InputStream {
 		}
 	}
 	
-	// TODO: implement other read()s for efficiency
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#read(byte[], int, int)
+	 */
+	public int read(byte[] b, int off, int len) throws IOException {
+		if (position==size) {
+			return -1; // EOF
+		}
+		if (position<buffer.length) {
+			int toCopy = (int) Math.min(size-position,Math.min(len,buffer.length-position));
+			System.arraycopy(buffer,(int)position,b,off,toCopy);
+			position += toCopy;
+			return toCopy;
+		}
+		// into disk zone
+		int read = diskStream.read(b,off,len);
+		position += read;
+		return read;
+	}
 
 
 	public void readFullyTo(OutputStream os) throws IOException {
-		// TODO make this more efficient
-		int c = read();
+		byte[] buf = new byte[4096];
+		int c = read(buf);
 		while (c != -1) {
-			os.write(c);
-			c = read();
+			os.write(buf,0,c);
+			c = read(buf);
 		}
 	}
+
 }

@@ -136,50 +136,48 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	protected void writeMetaLine(CrawlURI curi, int recordLength) throws InvalidRecordException, IOException{
 
 		// TODO sanity check the passed curi before writing
-		if (true){	
-			
-			// figure out content type, truncate at delimiter ';'
-			String contentType = curi.getContentType();
-			if(contentType==null) {
-				contentType = "no-type"; // per ARC spec
-			} else if(curi.getContentType().indexOf(';') >= 0 ){
-				contentType = contentType.substring(0,contentType.indexOf(';'));
-			}
-			
-			String hostIP = curi.getServer().getHost().getIP().getHostAddress();
-			String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
-			
-			// fail if we're missing anythign critical
-			if(hostIP == null || dateStamp == null){
-				throw new InvalidRecordException("missing data elements");
-			}		
-			
-			String metaLineStr = 
-					curi.getURIString()
-					+ " "
-					+ hostIP
-					+ " "
-					+ dateStamp
-					+ " "
-					+  contentType
-					+ " "
-					+ recordLength
-					+ "\n";	
-					
-			try{	
-			out.write(metaLineStr.getBytes());  		
-			
-			}catch(IOException e){
-				e.printStackTrace();
-			}
+
+		// figure out content type, truncate at delimiter ';'
+		String contentType = curi.getContentType();
+		if(contentType==null) {
+			contentType = "no-type"; // per ARC spec
+		} else if(curi.getContentType().indexOf(';') >= 0 ){
+			contentType = contentType.substring(0,contentType.indexOf(';'));
+		}
+		
+		String hostIP = curi.getServer().getHost().getIP().getHostAddress();
+		String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
+		
+		// fail if we're missing anythign critical
+		if(hostIP == null || dateStamp == null){
+			throw new InvalidRecordException("missing data elements");
+		}		
+		
+		String metaLineStr = 
+				curi.getURIString()
+				+ " "
+				+ hostIP
+				+ " "
+				+ dateStamp
+				+ " "
+				+  contentType
+				+ " "
+				+ recordLength
+				+ "\n";	
 				
-			// store size since we've already calculated it and it can be used 
-			// to generate interesting statistics
-			curi.setContentSize(recordLength);
+		try{	
+			out.write(metaLineStr.getBytes());  		
+		
+		}catch(IOException e){
+			e.printStackTrace();
+		}
 			
-			// note completion
-			statistics.completedProcessing(curi);
-  		}
+		// store size since we've already calculated it and it can be used 
+		// to generate interesting statistics
+		//curi.setContentSize((long)recordLength);
+		
+		// note completion
+		statistics.completedProcessing(curi);
   	}
   	
 	protected void createNewArcFile() throws IOException {
@@ -277,7 +275,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 //		// don't forget the extra CRLF between headers and body
 //		recordLength += 2;
 		
-		recordLength += get.getHttpRecorder().getRecordedInput().getSize();
+		recordLength += curi.getContentSize();
 
 		writeMetaLine(curi,  recordLength);
 		
@@ -319,6 +317,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}
 		}	
 		writeMetaLine(curi, recordLength);
+	
+		// save the calculated contentSize for logging purposes
+		// TODO handle this need more sensibly
+		curi.setContentSize((long)recordLength);
 	
 		baos.writeTo(out);
 	 	out.write("\n".getBytes());

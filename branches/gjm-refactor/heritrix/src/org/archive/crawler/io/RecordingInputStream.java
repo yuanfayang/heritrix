@@ -41,8 +41,32 @@ public class RecordingInputStream extends InputStream {
 	 */
 	public int read() throws IOException {
 		int b = wrappedStream.read();
-		recordingOutputStream.write(b);
+		if (b != -1) {
+			recordingOutputStream.write(b);
+		} 
 		return b;
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#read(byte[], int, int)
+	 */
+	public int read(byte[] b, int off, int len) throws IOException {
+		int count = wrappedStream.read(b,off,len);
+		if (count>0) {
+			recordingOutputStream.write(b,off,count);
+		} 
+		return count;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#read(byte[])
+	 */
+	public int read(byte[] b) throws IOException {
+		int count = wrappedStream.read(b);
+		if (count>0) {
+			recordingOutputStream.write(b,0,count);
+		} 
+		return count;
 	}
 	
 	/* (non-Javadoc)
@@ -59,7 +83,8 @@ public class RecordingInputStream extends InputStream {
 	}
 
 	public long readFully() throws IOException {
-		while(read()!=-1) {
+		byte[] buf = new byte[4096];
+		while(read(buf)!=-1) {
 		}
 		return recordingOutputStream.getSize();
 		
@@ -85,6 +110,13 @@ public class RecordingInputStream extends InputStream {
 	 */
 	public CharSequence getCharSequence() {
 		return recordingOutputStream.getCharSequence();
+	}
+
+	/**
+	 * @return
+	 */
+	public long getResponseContentLength() {
+		return recordingOutputStream.getResponseContentLength();
 	}
 
 }

@@ -15,7 +15,7 @@ public class ProcessedCrawlURIRecord implements CoreAttributeConstants{
 	private int fetchStatus = 0;	// default to unattempted
 	private int deferrals = 0;
 	private int fetchAttempts = 0;	// the number of fetch attempts that have been made
-	private int contentSize = -1;
+	private long contentSize = -1;
 	protected long fetchStartTime = -1;
 	protected long fetchEndTime = -1;
 	
@@ -40,7 +40,7 @@ public class ProcessedCrawlURIRecord implements CoreAttributeConstants{
 		return fetchEndTime;
 	}
 	
-	public int getSize(){
+	public long getSize(){
 		return contentSize;
 	}
 

@@ -103,8 +103,9 @@ public class FetcherHTTPSimple
 			// spider, just one doing some indexing/analysis --
 			// this might be wasteful. As it is, it just moves 
 			// the cost here rather than elsewhere. )
-			InputStream is = get.getResponseBodyAsStream(); 
-			while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
+			//InputStream is = get.getResponseBodyAsStream(); 
+			//while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
+			get.getHttpRecorder().getRecordedInput().readFully();
 			get.getHttpRecorder().close();
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
@@ -115,6 +116,7 @@ public class FetcherHTTPSimple
 
 			// TODO consider errors more carefully
 			curi.setFetchStatus(get.getStatusCode());
+			curi.setContentSize(get.getHttpRecorder().getRecordedInput().getSize());
 			curi.getAList().putObject(A_HTTP_TRANSACTION,get);
 			curi.getAList().putLong(A_FETCH_COMPLETED_TIME,System.currentTimeMillis());
 			Header ct = get.getResponseHeader("content-type");

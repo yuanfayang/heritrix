@@ -57,12 +57,14 @@ public class Scope extends CrawlScope {
 	public void initialize(CrawlController controller) {
 		super.initialize(controller);
 		// setup focusFilter
-		if(getNodeAt("@mode")!=null) {
+		if(getStringAt("@mode")==null) {
+			focusFilter = (Filter) instantiate("focus");
+		} else if (getStringAt("@mode").equalsIgnoreCase("broad")){
+			focusFilter = null;
+		} else {
 			// SeedExtensionFilter implied
 			focusFilter = new SeedExtensionFilter();
 			focusFilter.setNode(xNode);
-		} else {
-			focusFilter = (Filter) instantiate("focus");
 		}
 		if(focusFilter != null) {
 			focusFilter.initialize(controller);
