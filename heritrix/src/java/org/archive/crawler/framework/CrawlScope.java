@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -281,7 +282,7 @@ public class CrawlScope extends Filter {
      * @return true if URI is a seed.
      */
     private boolean isSeed(Object o) {
-        return o instanceof CandidateURI && ((CandidateURI) o).getIsSeed();
+        return o instanceof CandidateURI && ((CandidateURI) o).isSeed();
     }
 
     /**
@@ -313,5 +314,43 @@ public class CrawlScope extends Filter {
      */
     protected boolean additionalFocusAccepts(Object o){
         return false; 
+    }
+    
+    /**
+     * Add a URI to the list of seeds. Includes adding the URI to the seed file.
+     * @param newSeed The new seed.
+     */
+    public void addSeed(UURI newSeed){
+        // Add to cached list if exists.
+        if(seedsCached){
+            synchronized(seeds){
+                seeds.add(newSeed);
+            }
+        }
+        // TODO: Write to seedfile.
+        try{
+            File file = getSettingsHandler().getPathRelativeToWorkingDirectory(
+                    (String)getAttribute(ATTR_SEEDS));
+            if (!file.exists())
+            {
+                throw new FileNotFoundException("Seeds file " +
+                   file.getAbsolutePath() + " does not exist.");
+            }
+            // Open file for reading (append)
+            FileWriter fw = new FileWriter(file,true);
+            // Write to new (last) line the URL.
+            fw.write("\n");
+            fw.write(newSeed.getURIString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        } catch (AttributeNotFoundException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        } catch (MBeanException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        } catch (ReflectionException e) {
+            DevUtils.warnHandle(e, "problem writing new seed");
+        }
     }
 }

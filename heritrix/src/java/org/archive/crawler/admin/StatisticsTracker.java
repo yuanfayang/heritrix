@@ -584,7 +584,7 @@ public class StatisticsTracker extends AbstractTracker
      * @param disposition The dispositino of the CrawlURI.
      */
     private void handleSeed(CrawlURI curi, String disposition) {
-        if(curi.getIsSeed()){
+        if(curi.isSeed()){
             processedSeedsDisposition.put(curi.getURIString(),disposition);
             processedSeedsStatusCodes.put(curi.getURIString(),new Integer(curi.getFetchStatus()));
         }

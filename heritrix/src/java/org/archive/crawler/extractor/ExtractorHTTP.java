@@ -33,8 +33,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 
 /**
+ * Extracts URIs from HTTP response headers.
  * @author gojomo
- *
  */
 public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
     private static Logger logger =
@@ -47,7 +47,7 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
      * @param name
      */
     public ExtractorHTTP(String name) {
-        super(name, "HTTP extractor. \nLink extraction on HTTP headers.");
+        super(name, "HTTP extractor. \nExtracts URIs from HTTP response headers.");
     }
 
     /* (non-Javadoc)
@@ -77,7 +77,6 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
                 numberOfLinksExtracted += uris.size();
                 curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
                 logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
-
             }
         }
     }
@@ -88,7 +87,7 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTTP\n");
-        ret.append("  Function:          Link extraction on HTTP headers\n");
+        ret.append("  Function:          Extracts URIs from HTTP response headers\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 

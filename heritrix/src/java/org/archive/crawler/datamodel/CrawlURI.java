@@ -121,7 +121,7 @@ public class CrawlURI extends CandidateURI
      */
     public CrawlURI(CandidateURI caUri) {
         super(caUri.getUURI());
-        setIsSeed(caUri.getIsSeed());
+        setIsSeed(caUri.isSeed());
         setPathFromSeed(caUri.getPathFromSeed());
         setVia(caUri.getVia());
     }

@@ -30,11 +30,17 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -48,6 +54,11 @@ import org.archive.crawler.framework.Processor;
 public class Postselector extends Processor implements CoreAttributeConstants, FetchStatusCodes {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.Postselector");
 
+    private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS = 
+        new Boolean(true);
+    private final static String ATTR_SEED_REDIRECTS_NEW_SEEDS = 
+        "seed-redirects-new-seed";
+    
     // limits on retries TODO: separate into retryPolicy?
     private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 
@@ -57,6 +68,12 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
     public Postselector(String name) {
         super(name, "Post selector. \nDetermines which extracted links and " +
                 "other related information gets fed back to the Frontier.");
+        Type t;
+        t = addElementToDefinition(new SimpleType(ATTR_SEED_REDIRECTS_NEW_SEEDS,
+                "If enabled, any URL found because a seed redirected to it " +
+                "(seed returned 301 or 302) will be treated as a seed.",
+                DEFAULT_SEED_REDIRECTS_NEW_SEEDS));
+        t.setExpertSetting(true);
     }
 
     /* (non-Javadoc)
@@ -149,6 +166,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
             caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);                              
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
+
             if (!schedule(caUri)) {
                 // prerequisite cannot be scheduled (perhaps excluded by scope)
                 // must give up on
@@ -204,12 +222,38 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
         }
         Collection links = (Collection)curi.getAList().getObject(collection);
         Iterator iter = links.iterator();
+        
+        // Check if this is a seed with a 301 or 302.
+        boolean seed = false;
+        if(curi.isSeed() 
+                && (curi.getFetchStatus()==301 
+                        || curi.getFetchStatus()==302)){
+            try {
+                // Check if redirects from seeds should be treated as seeds.
+                if(((Boolean) getAttribute(
+                        ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue()){
+                    // Treat any discovered URIs as seeds. Should only be 1.
+                    seed = true;
+                }
+            } catch (MBeanException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (ReflectionException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (AttributeNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
         while(iter.hasNext()) {
             String link = (String)iter.next();
             try {
                 UURI uuri = UURI.createUURI(link, baseUri);
                 CandidateURI caURI = new CandidateURI(uuri);
                 caURI.setSchedulingDirective(directive);
+                caURI.setIsSeed(seed);
                 caURI.setVia(curi);
                 caURI.setPathFromSeed(curi.getPathFromSeed()+ linkType);
                 logger.finest("inserting link from " + collection + " of type "
