@@ -10,10 +10,10 @@
     /**
      * This page allows users to inspect URIs in the Frontier of a paused
      * crawl. It also allows them to delete those URIs based on regular
-     * expressions.
+     * expressions, or add URIs from an external file. 
      */
     
-    String title = "Inspect Frontier";
+    String title = "View/Edit Frontier";
     int tab = 0;
     
 %>
@@ -40,6 +40,8 @@
         boolean verbose = request.getParameter("verbose") != null && request.getParameter("verbose").equals("true");
 
         boolean grep = request.getParameter("grep") != null && request.getParameter("grep").equals("true");
+        
+        String action = request.getParameter("action");    
 %>
     <script type="text/javascript">
         function doDisplayInitial(){
@@ -64,6 +66,60 @@
 			}
         }
     </script>
+    
+    <b>Add URIs</b>
+<%        
+    if("add".equals(action)) {
+        String resultMessage = handler.importUris(
+            request.getParameter("file"),
+            request.getParameter("style"),
+            request.getParameter("forceRevisit"));
+        out.println("<br><font color='red'>"+resultMessage+"</font><br>");
+        // don't do anything else 
+        action = null;
+    }
+%>
+    <form name="frmFrontierAdd" method="POST" action="frontier.jsp">
+    <input type="hidden" name="action" value="add">
+    <table cellspacing="0" cellpadding="0" width="100%">
+        <tr>
+            <td nowrap valign="right">
+                Import from file:
+            </td>
+            <td>
+                <input name="file" size="33" value="">
+            </td>
+            <td nowrap>
+               &nbsp;<input type="submit" value="Import URIs">
+            </td>
+            <td width="100%">
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="2" nowrap>
+                <input type="radio" name="style" checked value="perLine">one URI per line 
+                <input type="radio" name="style" value="crawlLog">crawl.log style
+                <input type="radio" name="style" value="recoveryJournal">recovery journal style
+            </td>
+            <td width="100%">
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="2">
+                <input type="checkbox" name="forceRevisit" value="true" name="verbose">
+                Force revisit
+            </td>
+            <td width="100%">
+            </td>
+        </tr>
+
+    </table>
+    </form>
+    
+    <hr>
+    <b>View or Delete URIs</b>
     <form name="frmFrontierList" method="POST" action="frontier.jsp">
     <input type="hidden" name="action" value="">
     <table cellspacing="0" cellpadding="0" width="100%">
@@ -112,7 +168,6 @@
             </td>
         </tr>
 <%        
-                String action = request.getParameter("action");
                 StringBuffer outputString = new StringBuffer();
                 if ( action != null ) {
                     
