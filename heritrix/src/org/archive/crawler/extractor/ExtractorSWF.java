@@ -58,7 +58,7 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 		
 		// get the swf as a File
 		try{
-			documentStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
+			documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 		}catch(IOException e){
 			e.printStackTrace();
 		}
@@ -96,7 +96,12 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 //				curi.getUURI().getUri().toString(),
 //				array);
 			curi.addLocalizedError(getName(),e,null);
-			
+		} finally {
+			try {
+				documentStream.close();
+			} catch (IOException ignored) {
+
+			}
 		}
 		
 		links = iatp.getLinks();
