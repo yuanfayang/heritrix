@@ -7,7 +7,7 @@
 <!-- The following elements determinethe directory to which ouptut files (arcs, logs, etc)
  		are written, and the prefix given to arc files (disk and arc-file elements, respectively).
 -->
-  <disk path="../../output/" />
+  <disk path="output/" />
  <arc-file prefix="CRAWL-" />
  
  
