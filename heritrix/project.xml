@@ -175,11 +175,14 @@
     <dependencies>
         <dependency>
             <!--TODO: We're using a version between RC2 and RC1, not what is
-            listed here.
+            listed here.  I've tried to update our httpclient to RC2 but
+            it seems to be missing the complete org.apache.httpclient.params
+            package.  I tried building from src but this also generated a jar
+            w/o the params package though the params pkg still exists as src.
              -->
             <id>commons-httpclient</id>
             <version>2.0-rc2</version>
-            <url>http://www.junit.org/</url>
+            <url>http://jakarta.apache.org/commons/httpclient/downloads.html</url>
             <properties>
                 <description>This package is used for fetching URIs via http.
                 </description>

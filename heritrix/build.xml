@@ -85,7 +85,7 @@
             excludes="**/package.html" basedir="${classesdir}" >
         <manifest>
             <attribute name="Main-Class" value="org.archive.crawler.Heritrix"/>
-            <attribute name="Class-Path" value="lib/commons-logging.jar lib/dnsjava.jar lib/httpclient-cvs-20031002.jar lib/itext.jar lib/jasper-compiler.jar lib/jasper-runtime.jar lib/javaswf.jar lib/javax.servlet.jar lib/jmxri.jar lib/jmxtools.jar lib/junit.jar lib/org.mortbay.jetty.jar lib/org.mortbay.jmx.jar lib/poi.jar lib/stataclasses.jar"/>
+            <attribute name="Class-Path" value="lib/commons-logging.jar lib/dnsjava.jar lib/httpclient-20031002.jar lib/itext.jar lib/jasper-compiler.jar lib/jasper-runtime.jar lib/javaswf.jar lib/javax.servlet.jar lib/jmxri.jar lib/jmxtools.jar lib/junit.jar lib/org.mortbay.jetty.jar lib/org.mortbay.jmx.jar lib/poi.jar lib/stataclasses.jar"/>
         </manifest>
     </jar>
   </target>
