@@ -180,6 +180,7 @@ public class ReplayCharSequenceFactory {
                     encodingLowerCase.startsWith("xeuc")        ||
                     encodingLowerCase.startsWith("shift")       ||
                     encodingLowerCase.startsWith("sjis")        ||
+                    encodingLowerCase.startsWith("x-sjis")      ||
                     encodingLowerCase.startsWith("iso2022")     ||
                     encodingLowerCase.startsWith("windows31")   ||
                     encodingLowerCase.startsWith("big5")        ||
@@ -191,6 +192,7 @@ public class ReplayCharSequenceFactory {
                     encodingLowerCase.startsWith("cp10")        ||
                     encodingLowerCase.startsWith("gb180")       ||
                     encodingLowerCase.startsWith("gbk")         ||
+                    encodingLowerCase.startsWith("ksc_56")      ||
                     encodingLowerCase.startsWith("iscii") ) {
 
                     isMultibyte = true;
