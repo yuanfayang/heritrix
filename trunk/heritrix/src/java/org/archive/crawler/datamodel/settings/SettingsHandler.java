@@ -164,11 +164,28 @@ public abstract class SettingsHandler {
     protected void addToComplexTypeRegistry(ComplexType type) {
         complexTypesRegistry.put(type.getAbsoluteName(), type);
     }
-
-    protected ComplexType getComplexTypeFromRegistry(String absoluteName) {
-        return (ComplexType) complexTypesRegistry.get(absoluteName);
-    }
     */
+
+    /** Get a complex type by its absolute name.
+     * 
+     * The absolute name is the complex types name and the path leading to
+     * it.
+     * 
+     * @param settings the settings object to query.
+     * @param absoluteName the absolute name of the complex type to get.
+     * @return the complex type referenced by the absolute name or null if
+     *         the complex type could not be found in this settings object.
+     */
+    public ComplexType getComplexTypeByAbsoluteName(
+            CrawlerSettings settings, String absoluteName) {
+                
+        DataContainer data = settings.getData(absoluteName);
+        if (data == null) {
+            return null;
+        } else {
+            return data.complexType;
+        }
+    }
 
     protected static String getTypeName(String className) {
         return (String) class2name.get(className);

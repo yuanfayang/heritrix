@@ -154,8 +154,12 @@ public class CrawlerSettings {
     }
 
     protected DataContainer getData(ComplexType complex) {
+        return getData(complex.getAbsoluteName());
+    }
+
+    protected DataContainer getData(String absoluteName) {
         DataContainer data =
-            (DataContainer) localComplexTypes.get(complex.getAbsoluteName());
+            (DataContainer) localComplexTypes.get(absoluteName);
         if (data != null) {
             return data;
         } else {
