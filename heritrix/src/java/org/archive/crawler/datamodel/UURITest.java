@@ -316,4 +316,18 @@ public class UURITest extends TestCase {
                 uuri.equals(new UURI(value)));
         }
     }
+    
+    /**
+     * A UURI should always be without a 'fragment' segment, which is
+     * unused and irrelevant for network fetches. 
+     *  
+     * [ 970666 ] #anchor links not trimmed, and thus recrawled 
+     * 
+     * @throws URIException
+     */
+    public final void testAnchors() throws URIException {
+        UURI uuri = new UURI("http://www.example.com/path?query#anchor");
+        assertEquals("Not equal", "http://www.example.com/path?query",
+                uuri.toString());
+    }
 }

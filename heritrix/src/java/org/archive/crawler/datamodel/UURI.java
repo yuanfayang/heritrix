@@ -46,12 +46,13 @@ import org.archive.util.TextUtils;
  *
  * <p>Instances of this class are always normalized -- massaged in
  * ways that by spec and in practice, do not change the URI's meaning nor
- * function -- i.e. we call {@link #normalize()} is called in the constructor --
- * and URIs are rehabilitated: i.e. patched in riskless or necessary ways to be
- * legal, eg escaping spaces).  Other things done are the removal of any
+ * function. The superclass {@link #normalize()} is only one part of this
+ * process; URIs are also rehabilitated by patching in riskless or necessary ways 
+ * to be legal (eg escaping spaces).  Other things done are the removal of any
  * '..' if its first thing in the path as per IE, removal of trailing
- * whitespace, conversion of backslash to forward slash. This class will also
- * fail URIs if they are longer than IE's allowed maximum length.
+ * whitespace, conversion of backslash to forward slash, and discarding any
+ * 'fragment'/anchor portion of the URI. This class will also fail URIs if they 
+ * are longer than IE's allowed maximum length.
  *
  * <p>This class tries to cache calculated strings such as the extracted host
  * and this class as a string rather than have the parent class rerun its
@@ -210,7 +211,7 @@ public class UURI extends URI {
     private String cachedEscapedURI = null;
 
     /**
-     * Cache of this uuri escaped with fragment if present as a string.
+     * Cache of this uuri escaped as a string.
      *
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
@@ -351,7 +352,7 @@ public class UURI extends URI {
         }
 
         return reassemble(uriScheme, uriAuthority, uriPath, uriQuery,
-            uriFragment);
+            null);
     }
 
     /**
@@ -536,10 +537,7 @@ public class UURI extends URI {
         if (!equals(this._query, another._query)) {
             return false;
         }
-        // has_fragment?  should be careful of the only fragment case.
-        if (!equals(this._fragment, another._fragment)) {
-            return false;
-        }
+        // UURIs do not have fragments
         return true;
     }
 
@@ -561,19 +559,12 @@ public class UURI extends URI {
     }
 
     /**
-     * Override because superclass drops fragment if present.
-     * @return String representation of this URI WITH the fragment if present.
+     * Override to cache result
+     * @return String representation of this URI 
      */
     public String toString() {
         if (this.cachedString == null) {
-            synchronized (this) {
-                if (this.cachedString == null) {
-                    String frgmnt = getEscapedFragment();
-                    this.cachedString = super.toString() +
-                        ((frgmnt == null || frgmnt.length() <= 0)? "":
-                            "#" + frgmnt);
-                }
-            }
+            this.cachedString = super.toString();
         }
         return this.cachedString;
     }
