@@ -2402,7 +2402,7 @@ public class SimpleExtractor extends Processor
     </sect1>
   </appendix>
 
-  <appendix>
+  <appendix id="release_numbering">
     <title>Version and Release Numbering</title>
 
     <para>Heritrix uses a version numbering scheme modeled after the one used
@@ -2452,9 +2452,12 @@ public class SimpleExtractor extends Processor
     <title>Making a Heritrix Release</title>
 
     <para>Before initiating a release, its assumed that the current HEAD
-    version has been run through the integration self test, that all unit
-    tests pass, that the (as yet non-existent) test suite has been exercised,
-    and that general usage shows HEAD to be release worthy.</para>
+    or BRANCH version has been run through the integration self test, 
+    that all unit tests pass, that the embryonic 
+    <ulink url="http://crawler.archive.org/cgi-bin/wiki.pl?CrawlTestPlan">test
+    plan</ulink> has been exercised,
+    and that general usage shows HEAD -- or BRANCH --to be release
+    worthy.</para>
 
     <orderedlist>
       <listitem>
@@ -2463,19 +2466,15 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Up the project.xml 'currentVersion' element and the build.xml
-        'version' property. Ensure they are the same version number. (See
-        Version and Release Numbering on this page for guidance on what
-        version number to use)</para>
+        <para>Up the project.xml 'currentVersion' element value (See
+        <ulink url="#release_numbering">Version and Release Numbering</ulink>
+        for guidance on what version number to use)</para>
       </listitem>
 
       <listitem>
         <para>Update xdocs/changes.xml with bugs and RFEs closed since last
-        release.</para>
-      </listitem>
-
-      <listitem>
-        <para>(TODO: Changelog based off CVS history).</para>
+        release (Looking at CVS history to figure what's changed is too
+        hard; All major changes should have associated BUG and RFE).</para>
       </listitem>
 
       <listitem>
