@@ -4,28 +4,23 @@
  */
 package org.archive.crawler.basic;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.Processor;
-
-import org.archive.util.NullOutputStream;
-import org.archive.util.IATagParser;
-
-import com.anotherbigidea.io.InStream;
-import com.anotherbigidea.flash.readers.TagParser;
-import com.anotherbigidea.flash.readers.SWFReader;
-import com.anotherbigidea.flash.writers.TagWriter;
-import com.anotherbigidea.flash.writers.SWFWriter;
-
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.Header;
-
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
-import java.io.IOException;
 import java.util.ArrayList;
+
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.Processor;
+import org.archive.util.IATagParser;
+import org.archive.util.NullOutputStream;
+
+import com.anotherbigidea.flash.readers.SWFReader;
+import com.anotherbigidea.flash.readers.TagParser;
+import com.anotherbigidea.flash.writers.SWFWriter;
+import com.anotherbigidea.io.InStream;
 
 /**
  * Extract URIs from SWF (flash/shockwave) files.
