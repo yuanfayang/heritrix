@@ -327,8 +327,8 @@ public class Frontier
 		// block until something changes, or timeout occurs
 		waitMax = Math.min(earliestWakeTime()-now,timeout);
 		try {
-			if(waitMax<0) {
-				logger.warning("negative wait "+waitMax+" ignored");
+			if(waitMax<1) {
+				logger.warning("negative or zero wait "+waitMax+" ignored");
 			} else {
 				synchronized(this) {
 					wait(waitMax);
