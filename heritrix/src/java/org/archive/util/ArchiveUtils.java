@@ -326,6 +326,10 @@ public class ArchiveUtils {
      * Displays as kilobytes (KB): 1024 - 2097151 (~2Mb)
      * Displays as megabytes (MB): 2097152 - 4294967295 (~4Gb)
      * Displays as gigabytes (GB): 4294967296 - infinity
+     * <p>
+     * Negative numbers will be returned as '0 B'.
+     * <p>
+     * All values will be approximated down (i.e. 2047 bytes are 1 KB)
      * 
      * @param amount the amount of bytes
      * @return A string containing the amount, properly formated.
@@ -333,20 +337,23 @@ public class ArchiveUtils {
     public static String formatBytesForDisplay(long amount){
         long kbStartAt = 1024;
         long mbStartAt = 1024*1024*2;
-        long gbStartAt = 1024*1024*1024*4;
+        long gbStartAt = ((long)1024*1024)*1024*4;
         
-        if(amount < 1024){
+        if(amount < 0){
+            return "0 B";
+        }
+        else if(amount < kbStartAt){
             // Display as bytes.
             return amount + " B";
-        } else if(amount < 2097151) {
+        } else if(amount < mbStartAt) {
             // Display as kilobytes
-            return Long.toString((long)(((double)amount/1024)+0.5))+" KB";
+            return Long.toString((long)(((double)amount/1024)))+" KB";
         } else if(amount < gbStartAt) {
             // Display as megabytes
-            return Long.toString((long)(((double)amount/(1024*1024))+0.5))+" MB";
+            return Long.toString((long)(((double)amount/(1024*1024))))+" MB";
         } else {
             // Display as gigabytes
-            return Long.toString((long)(((double)amount/(1024*1024*1024))+0.5))+" GB";
+            return Long.toString((long)(((double)amount/(1024*1024*1024))))+" GB";
         }
     }
 }
