@@ -107,6 +107,7 @@ public class CrawlStateUpdater
                     }
 
                     // curi can be refetched once robots data expires
+                    // In the current implementation this has no effect
                     curi.setDontRetryBefore(curi.getServer().
                         getRobotsExpires());
                 }
