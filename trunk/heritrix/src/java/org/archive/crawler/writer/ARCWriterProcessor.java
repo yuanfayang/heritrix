@@ -165,7 +165,6 @@ public class ARCWriterProcessor
     }
 
     public synchronized void initialTasks() {
-        System.out.println("XXX - ARCWriterProcessor:initialTasks:   ");
         Logger logger = getSettingsHandler().getOrder().getController()
             .runtimeErrors;
 
