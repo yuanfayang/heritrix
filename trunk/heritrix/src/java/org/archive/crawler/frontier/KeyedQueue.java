@@ -108,6 +108,10 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      */
     Queue frozenQ = null;
 
+    // useful for reporting
+    private String lastQueued; // last URI enqueued
+    private String lastDequeued; // last URI dequeued
+
     /**
      * @param key A unique identifier used to distingush files related to this
      *           objects disk based data structures (will be a part of their
@@ -308,6 +312,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(CrawlURI curi) {
+        
         if(curi.needsImmediateScheduling()) {
             enqueueHigh(curi);
         } else if (curi.needsSoonScheduling()) {
@@ -320,6 +325,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
                 this.unqueued.addLast(curi);
             } 
         }
+        lastQueued = curi.getURIString();
         enforceMemoryLoad();
     }
 
@@ -381,15 +387,19 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @return
      */
     public CrawlURI dequeue() {
+        CrawlURI candidate = null;
         // first try 'unqueued' buffer
         if(!this.unqueued.isEmpty()) {
-            CrawlURI candidate = dequeueFromUnqueued();
-            if (candidate != null ) {
-                return candidate;
-            }
+            candidate = dequeueFromUnqueued();
         }
-        // otherwise consult innerQ
-        return (CrawlURI) this.innerQ.dequeue();
+        if (candidate == null) {
+            // otherwise consult innerQ
+            candidate = (CrawlURI) this.innerQ.dequeue();
+        }
+        if (candidate != null) {
+            lastDequeued = candidate.getURIString();
+        }
+        return candidate;
     }
 
     /**
@@ -429,14 +439,6 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
         }
     }
 
-//    /**
-//     * Ensure entire contents are stored on disk.
-//     */
-//    public void flushCompletely() {
-//        enqueueUnqueued();
-//        innerQ.setHeadMax(0);
-//        // TODO: store other state/statistics?
-//    }
     
     /** 
      * Total number of available items. (Does not include
@@ -509,26 +511,6 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * Return, without removing, the top available item.
-     *
-     * @return The top available item.
-     */
-    public CrawlURI peek() {
-        CrawlURI candidate;
-        Iterator iter = unqueued.iterator();
-        while(iter.hasNext()) {
-            candidate = (CrawlURI) iter.next();
-            if(candidate.needsImmediateScheduling()|| candidate.needsSoonScheduling()) {
-                return candidate;
-            }
-        }
-        if(!this.innerQ.isEmpty()) {
-            return (CrawlURI) this.innerQ.peek();
-        }
-        return null;
-    }
-
-    /**
      * May this KeyedQueue be completely discarded.
      *
      * It may be discarded only if empty of available and frozen items, and
@@ -567,5 +549,25 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
         } else {
             innerQ.setHeadMax(load);
         }
+    }
+
+    /**
+     * Return the last enqueued URI; useful for
+     * assessing queue state.
+     * 
+     * @return
+     */
+    public String getLastQueued() {
+        return lastQueued;
+    }
+
+    /**
+     * Return the last dequeued URI; useful
+     * for assessing queue state.
+     * @return
+     */
+    public String getLastDequeued() {
+        // TODO Auto-generated method stub
+        return lastDequeued;
     }
 }
