@@ -35,9 +35,9 @@
     
     <subsection name="Linux">
         <p>The Heritrix crawler has been built and tested primarily on Linux. 
-        It has seen some informal use on Windows 2000 and Windows XP, but
-        is not tested, packaged, or supported on platforms other than Linux
-        at this time.</p>
+        It has seen some informal use on Macintosh, Windows 2000 and
+        Windows XP, but is not tested, packaged, nor supported on platforms
+        other than Linux at this time.</p>
     </subsection>
   </section>
 
