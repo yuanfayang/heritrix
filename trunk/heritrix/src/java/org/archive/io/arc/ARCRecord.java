@@ -33,7 +33,7 @@ import java.io.InputStream;
  *
  * @author stack
  */
-public class ARCRecord implements ARCConstants {
+public class ARCRecord extends InputStream implements ARCConstants {
     /**
      * Map of record header fields.
      *
@@ -101,6 +101,13 @@ public class ARCRecord implements ARCConstants {
             this.position = metaData.getLength();
         }
     }
+    
+    /* (non-Javadoc)
+     * @see java.io.InputStream#markSupported()
+     */
+    public boolean markSupported() {
+        return false;
+    }
 
     /**
      * @return Meta data for this record.
@@ -113,8 +120,8 @@ public class ARCRecord implements ARCConstants {
      * Calling close on a record skips us past this record to the next record
      * in the stream.
      * 
-     * It does not close the stream.  The underlying steam is probably being
-     * used by the next arc record.
+     * It does not actually close the stream.  The underlying steam is probably
+     * being used by the next arc record.
      *
      * @throws IOException
      */
@@ -132,7 +139,7 @@ public class ARCRecord implements ARCConstants {
      */
     public int read() throws IOException {
         int c = -1;
-        if (isRemaining()) {
+        if (available() > 0) {
             c = this.in.read();
             if (c == -1) {
                 throw new IOException("Premature EOF before end-of-record.");
@@ -142,12 +149,48 @@ public class ARCRecord implements ARCConstants {
 
         return c;
     }
+    
+    public int read(byte [] b, int offset, int length) throws IOException {
+        int read = Math.min(length - offset, available());
+        if (read == 0) {
+            read = -1;
+        } else {
+            read = this.in.read(b, offset, read);
+            if (read == -1) {
+                throw new IOException("Premature EOF before end-of-record.");
+            }
+            this.position += read;
+        }
+        return read;
+    }
 
     /**
      * @return True if bytes remaining in record content.
      */
-    private boolean isRemaining() {
-        return this.position < this.metaData.getLength();
+    public int available() {
+        return (int)(this.metaData.getLength() - this.position);
+    }
+    
+    /* (non-Javadoc)
+     * @see java.io.InputStream#skip(long)
+     */
+    public long skip(long n) throws IOException {
+        final int SKIP_BUFFERSIZE = 1024 * 4;
+        byte [] b = new byte[SKIP_BUFFERSIZE];
+        long total = 0;
+        for (int read = 0; (total < n) && (read != -1);) {
+            read = Math.min(SKIP_BUFFERSIZE, (int)(n - total));
+            // TODO: Interesting is that reading from compressed stream, we only 
+            // read about 500 characters at a time though we ask for 4k.
+            // Look at this sometime.
+            read = read(b, 0, read);
+            if (read <= 0) {
+                read = -1;
+            } else {
+                total += read;
+            }
+        }
+        return total;
     }
 
     /**
@@ -157,9 +200,10 @@ public class ARCRecord implements ARCConstants {
      */
     private void skip() throws IOException {
         if (!this.eor) {
-            // Read to the end of the body of the record.
-            while(read() != -1) {
-                continue;
+            // Read to the end of the body of the record.  Exhauste the stream.
+            // Can't skip to end because underlying stream may be compressed.
+            if (available() > 0) {
+                skip(available());
             }
             if (this.in.available() > 0) {
                 // If there's still stuff on the line, its the LINE_SEPARATOR
