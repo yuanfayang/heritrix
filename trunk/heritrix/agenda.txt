@@ -1,11 +1,16 @@
-Next few things to do:
-
+Recently done:
 CrawlURI instantiation
 import AList
+basic politeness
+simple http fetcher
+simple link extractor
+
+Next few things to do:
+make HTTPfetcher threadsafe (perhaps by having an instance per thread)
+integrate ARCwriter
+mercator-style progress log ("timings"?)
 create document of Alist keys/conventions
 ToeThread start/pause/stop cleanup
-noop politeness
-simple http fetcher
 VirtualBuffer (chained buffer, etc.) impl & cleanup
 link markup conventions
-simple link extractor
+
