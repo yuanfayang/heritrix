@@ -2,7 +2,7 @@
  * Created on Jun 23, 2003
  *
  */
-package org.archive.util;
+package org.archive.io;
 
 import java.io.IOException;
 import java.io.OutputStream;

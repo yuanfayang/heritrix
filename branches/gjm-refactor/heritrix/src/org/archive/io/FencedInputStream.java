@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.util;
+package org.archive.io;
 
 import java.io.FilterInputStream;
 import java.io.IOException;

@@ -19,8 +19,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.StatisticsTracker;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
+import org.archive.io.IAGZIPOutputStream;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.IAGZIPOutputStream;
 import org.xbill.DNS.Record;
 
 /**
@@ -275,6 +275,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 //		// don't forget the extra CRLF between headers and body
 //		recordLength += 2;
 		
+		// recordLength += get.getHttpRecorder().getRecordedInput().getSize();
+
 		recordLength += curi.getContentSize();
 
 		writeMetaLine(curi,  recordLength);

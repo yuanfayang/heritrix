@@ -4,13 +4,14 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.archive.util.TimedFixedSizeList;
 
 /** When a CrawlURI has been processed a ProcessedCrawlURIRecord
  *  can be created to store meta-data about the URI that can be extracted
  *  from the CrawlURI before it is 
  * @author Parker Thompson
  */
-public class ProcessedCrawlURIRecord implements CoreAttributeConstants{
+public class ProcessedCrawlURIRecord implements CoreAttributeConstants, TimedFixedSizeList.TimedItem {
 
 	private int fetchStatus = 0;	// default to unattempted
 	private int deferrals = 0;
@@ -42,6 +43,13 @@ public class ProcessedCrawlURIRecord implements CoreAttributeConstants{
 	
 	public long getSize(){
 		return contentSize;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.TimedFixedSizeList.TimedItem#getTime()
+	 */
+	public long getTime() {
+		return getEndTime();
 	}
 
 }

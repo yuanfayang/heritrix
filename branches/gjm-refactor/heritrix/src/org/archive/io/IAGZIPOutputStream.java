@@ -4,13 +4,14 @@
  * To change the template for this generated file go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-package org.archive.util;
+package org.archive.io;
 
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.Deflater;
 import java.io.OutputStream;
 import java.io.IOException;
-import org.archive.util.NullOutputStream;
+
+import org.archive.io.NullOutputStream;
 
 /**
  * @author Parker Thompson

@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.io;
+package org.archive.io;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
