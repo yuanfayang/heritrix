@@ -47,7 +47,7 @@ public class ARCReader
     protected ARCResource lastResource;
     protected int resourcePosition;
     protected long filePosition;
-	
+    
     /**
      * 
      */
@@ -55,17 +55,19 @@ public class ARCReader
         super();
     }
 
-	public void open(String filename) throws IOException {
-		String flattenedFilename = filename.toLowerCase();
-		assert flattenedFilename.endsWith(".arc") || flattenedFilename.endsWith(".arc.gz") : "non-arc filename extension";
-		arcStream = new FileInputStream(filename);
-		inStream = new BufferedInputStream(arcStream,4096);
-	    if (flattenedFilename.endsWith(".gz")) {
-	    	inStream = new GZIPInputStream(inStream);
-	    }
-	}
-	
-	public ARCResource getNextResource() {
-		return null;
-	}
+    public void open(String filename) throws IOException {
+        String flattenedFilename = filename.toLowerCase();
+        assert flattenedFilename.endsWith(".arc") || 
+            flattenedFilename.endsWith(".arc.gz") : 
+                "non-arc filename extension";
+        arcStream = new FileInputStream(filename);
+        inStream = new BufferedInputStream(arcStream,4096);
+        if (flattenedFilename.endsWith(".gz")) {
+            inStream = new GZIPInputStream(inStream);
+        }
+    }
+    
+    public ARCResource getNextResource() {
+        return null;
+    }
 }
