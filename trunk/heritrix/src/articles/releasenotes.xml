@@ -159,8 +159,6 @@ java.net.SocketException: Socket is not connected
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1012642">1012642</ulink></entry><entry>Fix</entry><entry>selftest hanging because no crawl stop event</entry><entry>2004-08-19</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1036720">1036720</ulink></entry><entry>Fix</entry><entry>NPE in ArcWriterProcessor.writeDns()</entry><entry>2004-09-28</entry><entry>stack-sf</entry>
-</row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=931565">931565</ulink></entry><entry>Fix</entry><entry>CrawlStateUpdater - NullPointerException</entry><entry>2004-04-08</entry><entry>stack-sf</entry>
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=973294">973294</ulink></entry><entry>Fix</entry><entry>NoSuchElementException in URI queues halts crawling</entry><entry>2004-06-15</entry><entry>gojomo</entry>
