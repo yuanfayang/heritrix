@@ -42,9 +42,10 @@ import org.archive.crawler.settings.Type;
 import org.archive.util.IoUtils;
 
 /**
- * Processor module which uses 'df', where available, to monitor
- * available disk space and pause the crawl if free space on 
- * monitored filesystems falls below certain thresholds
+ * Processor module which uses 'df -k', where available and with
+ * the expected output format (on Linux), to monitor available 
+ * disk space and pause the crawl if free space on  monitored 
+ * filesystems falls below certain thresholds.
  */
 public class LowDiskPauseProcessor extends Processor {
     /**
@@ -71,9 +72,11 @@ public class LowDiskPauseProcessor extends Processor {
     public static final String ATTR_RECHECK_THRESHOLD = "recheck-threshold-kb";
     public static final int DEFAULT_RECHECK_THRESHOLD = 200 * 1024; // 200MB
     
-    int contentSinceCheck = 0;
-    List monitoredMounts;
+    protected int contentSinceCheck = 0;
+    protected List monitoredMounts;
     
+    public static final Pattern VALID_DF_OUTPUT = 
+        Pattern.compile("(?s)^Filesystem\\s+1K-blocks\\s+Used\\s+Available\\s+Use%\\s+Mounted on\\n.*");
     public static final Pattern AVAILABLE_EXTRACTOR = 
         Pattern.compile("(?m)\\s(\\d+)\\s+\\d+%\\s+(\\S+)$");
     
@@ -143,8 +146,13 @@ public class LowDiskPauseProcessor extends Processor {
     private void checkAvailableSpace(CrawlURI curi) {
         try {
             String df = IoUtils.readFullyAsString(Runtime.getRuntime().exec(
-                    "df").getInputStream());
-            Matcher matcher = AVAILABLE_EXTRACTOR.matcher(df);
+                    "df -k").getInputStream());
+            Matcher matcher = VALID_DF_OUTPUT.matcher(df);
+            if(!matcher.matches()) {
+                logger.severe("'df -k' output unacceptable for low-disk checking");
+                return;
+            }
+            matcher = AVAILABLE_EXTRACTOR.matcher(df);
             while (matcher.find()) {
                 String mount = matcher.group(2);
                 if (monitoredMounts.contains(mount)) {
