@@ -225,6 +225,13 @@ public interface URIFrontier {
      * been 'forgotten' (deemed out of scope when trying to fetch,
      * most likely due to operator changing scope definition).
      * 
+     * <p><b>Note:</b> This only counts discovered URIs. Since the same
+     * URI can (at least in most frontiers) be fetched multiple times, this
+     * number may be somewhat lower then the combined <i>queued</i>,
+     * <i>in process</i> and <i>finished</i> items combined due to duplicate
+     * URIs being queued and processed. This variance is likely to be especially
+     * high in Frontiers implementing 'revist' strategies. 
+     * 
      * @return Number of discovered URIs.
      */
     public long discoveredUriCount();
@@ -234,7 +241,7 @@ public interface URIFrontier {
      * 
      * <p>This includes any URIs that failed but will be retried. Basically this
      * is any <i>discovered</i> URI that has not either been processed or is  
-     * being processed.
+     * being processed. The same discovered URI can be queued multiple times.
      * 
      * @return Number of queued URIs.
      */

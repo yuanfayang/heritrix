@@ -82,7 +82,7 @@
 							</td>
 							<td>
 								<%
-									long time = (stats.getCrawlEndTime()-stats.getCrawlStartTime())/1000;
+                                    long time = (stats.getCrawlerTotalElapsedTime())/1000;
 									if(time>3600)
 									{
 										//got hours.
@@ -168,82 +168,82 @@
 		
 		<p>
 		
-		<table>
+		<table width="400">
             <tr>
                 <td colspan="6">
                     <table>
                         <tr>
                             <td valign="center" ><img src="/admin/images/blue.jpg" height="1" width="40"></td>
 			                <td align="center"><i>URIs</i></td>
-			                <td valign="center" ><img src="/admin/images/blue.jpg" height="1" width="400"></td>
+			                <td valign="center" ><img src="/admin/images/blue.jpg" height="1" width="300"></td>
                         </tr>
                     </table>
                 </td>
             </tr>
             <tr>
-                <td>
+                <td nowrap>
                     <b>Pending:</b>
                 </td>
                 <td align="right">
                     <%=stats.pendingUriCount()%>
                 </td>
-                <td colspan="4">
-                    &nbsp;<font size="-2">(URIs found but not yet verified as in scope)</font>
+                <td colspan="3">
+                    &nbsp;<a class='help' href="javascript:alert('URIs found but not yet verified as in scope. \nSome frontiers will delay detailed examination of links extracted from documents until it is actually needed. Until that is done there is no way of knowing if the URI is of any interest and so it is marked as \'pending\'. \nFrontiers that check the URIs as they get them will always have 0 pending URIs.')">?</a>
+                </td>
+                <td width="100%">
                 </td>
             </tr>
             <tr>
-                <td>
+                <td nowrap>
                     <b>Discovered:</b>
                 </td>
                 <td align="right">
                     <%=stats.discoveredUriCount()%>
                 </td>
-                <td colspan="4">
-                    &nbsp;<font size="-2">(URIs that the crawler has confirmed to be within scope)</font>
+                <td colspan="3">
+                    &nbsp;<a class='help' href="javascript:alert('URIs that the crawler has discovered and confirmed to be within scope. \nNOTE: Because the same URI can be fetched multiple times this number may be lower then the number of queued, in process and finished URIs.')">?</a>
                 </td>
             </tr>
             <tr>
-                <td>
+                <td nowrap>
                     &nbsp;&nbsp;<b>Queued:</b>
                 </td>
                 <td align="right">
                     <%=stats.queuedUriCount()%>
                 </td>
-                <td colspan="4">
-                    &nbsp;<font size="-2">(Discovered URIs that are waiting to be processed)</font>
+                <td colspan="3">
+                    &nbsp;<a class='help' href="javascript:alert('URIs that are waiting to be processed. \nThat is all URI that have been discovered (or should be revisited) that are waiting for processing.')">?</a>
                 </td>
             </tr>
             <tr>
-                <td>
+                <td nowrap>
                     &nbsp;&nbsp;<b>In progress:</b>
                 </td>
                 <td align="right">
                     <%=stats.activeThreadCount()%>
                 </td>
-                <td colspan="4">
-                    &nbsp;<font size="-2">(Estimated based on number of active threads)</font>
+                <td colspan="3">
+                    &nbsp;<a class='help' href="javascript:alert('Number of URIs being processed at the moment. \nThis is based on the number of active threads.')">?</a>
                 </td>
             </tr>
             <tr>
                 <td>
                 </td>
-                <td align="right">
+                <td align="right" width="1" nowrap>
                     &nbsp;&nbsp;<i>Total</i>
                 </td>
-                <td align="right">
+                <td align="right" width="1" nowrap>
                     &nbsp;&nbsp;<i>Successfully</i>
                 </td>
-                <td align="right">
+                <td align="right" width="1" nowrap>
                     &nbsp;&nbsp;<i>Failed</i>
                 </td>
-                <td align="right">
+                <td align="right" width="1" nowrap>
                     &nbsp;&nbsp;<i>Disregarded</i>
-                </td>
-                <td>
                 </td>
             </tr>
             <tr>
-                <td>
+                <td nowrap>
                     &nbsp;&nbsp;<b>Finished:</b>
                 </td>
                 <td align="right">

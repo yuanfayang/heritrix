@@ -150,7 +150,6 @@ public class Frontier
     SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
     
     // top-level stats
-    long discoveredCount = 0;
     long queuedCount = 0;
     
     long successCount = 0;
@@ -323,7 +322,6 @@ public class Frontier
             pendingQueue.enqueue(caUri);
         }
         alreadyIncluded.add(caUri);
-        discoveredCount++;
         queuedCount++;
         // Update recovery log.
         controller.recover.info("\n"+F_ADD+caUri.getURIString());
@@ -1157,7 +1155,6 @@ public class Frontier
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting "+curi);
         alreadyIncluded.remove(curi.getUURI());
-        discoveredCount--;
         curi.setStoreState(URIStoreable.FORGOTTEN);
     }
 
@@ -1165,7 +1162,7 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
-        return discoveredCount;
+        return alreadyIncluded.size();
     }
     
     /* (non-Javadoc)
@@ -1394,7 +1391,7 @@ public class Frontier
         rep.append(" Job being crawled: "
                    + controller.getOrder().getCrawlOrderName() + "\n");
         rep.append("\n -----===== STATS =====-----\n");
-        rep.append(" Discovered:    " + discoveredCount + "\n");
+        rep.append(" Discovered:    " + discoveredUriCount() + "\n");
         rep.append(" Queued:        " + queuedCount + "\n");
         rep.append(" Finished:      " + finishedUriCount() + "\n");
         rep.append("  Successfully: " + successCount + "\n");
@@ -1505,7 +1502,6 @@ public class Frontier
                 try {
                     u = UURI.createUURI(read.substring(3));
                     alreadyIncluded.add(u);
-                    discoveredCount++;
                 } catch (URISyntaxException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
