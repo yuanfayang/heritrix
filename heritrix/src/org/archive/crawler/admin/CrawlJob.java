@@ -1,7 +1,7 @@
 package org.archive.crawler.admin;
 
 /**
- * @author Kristinn Sigurðsson
+ * @author Kristinn Sigurdsson
  *
  * This class encapsulates a crawl job.  This includes, a crawl order filename,
  * a name for the crawl, it's status etc.
