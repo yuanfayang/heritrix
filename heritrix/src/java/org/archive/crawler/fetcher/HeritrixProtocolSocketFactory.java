@@ -1,4 +1,4 @@
-/* DNSJavaProtocolSocketFactory
+/* HeritrixProtocolSocketFactory
  * 
  * Created on Oct 8, 2004
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.httpclient;
+package org.archive.crawler.fetcher;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,26 +31,35 @@ import java.net.UnknownHostException;
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.archive.crawler.datamodel.CrawlServer;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.util.DNSJavaUtil;
 
 
 /**
- * Version of protocol socket factory that uses dnsjava to do dns lookups
- * (The address should already be in the dnsjava cache by the time we
- * get here).
+ * Version of protocol socket factory that tries to get IP from heritrix IP
+ * cache.
  * 
- * Copied the guts of DefaultProtocolSocketFactory.
+ * Copied the guts of DefaultProtocolSocketFactory.  This factory gets
+ * setup by {@link FetchHTTP}.
  * 
  * @author stack
  * @version $Date$, $Revision$
  */
-public class DNSJavaProtocolSocketFactory
+public class HeritrixProtocolSocketFactory
 implements ProtocolSocketFactory {
     /**
      * The factory singleton.
      */
-    private static final DNSJavaProtocolSocketFactory factory =
-        new DNSJavaProtocolSocketFactory();
+    private static final HeritrixProtocolSocketFactory factory =
+        new HeritrixProtocolSocketFactory();
+    
+    /**
+     * A crawlcontroller instance.
+     * 
+     * Used to get at cache of IPs.
+     */
+	private static CrawlController controller;
 
     /**
      * @return a ProtocolSocketFactory
@@ -60,11 +69,29 @@ implements ProtocolSocketFactory {
     }
     
     /**
-     * Constructor for DNSJavaProtocolSocketFactory.
+     * Constructor.
      * Private so only can be used internally creating singleton.
      */
-    private DNSJavaProtocolSocketFactory() {
+    private HeritrixProtocolSocketFactory() {
         super();
+    }
+    
+    /**
+     * Initialize this factory.
+     * Must be answered by a call to {@link #cleanup} so we can release
+     * referenced resources.
+     * @param c A crawlcontroller instance.
+     */
+    public static void initialize(CrawlController c) {
+    	    controller = c;
+    }
+    
+    /**
+     * Cleanup this factory.
+     * Call when done with this factory.  Releases any held references.
+     */
+    public static void cleanup() {
+        controller = null;
     }
 
     /**
@@ -76,7 +103,7 @@ implements ProtocolSocketFactory {
         InetAddress localAddress,
         int localPort
     ) throws IOException, UnknownHostException {
-        InetAddress hostAddress = DNSJavaUtil.getHostAddress(host);
+        InetAddress hostAddress = getHostAddress(host);
         // If we didn't get a remoteHost, fall back on the old manner
         // of obtaining a socket.
         return (hostAddress == null)?
@@ -136,7 +163,7 @@ implements ProtocolSocketFactory {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
             socket = new Socket();
-            InetAddress hostAddress = DNSJavaUtil.getHostAddress(host);
+            InetAddress hostAddress = getHostAddress(host);
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
@@ -145,13 +172,35 @@ implements ProtocolSocketFactory {
         }
         return socket;
     }
+    
+    /**
+     * @param host Host whose address we're to fetch.
+     * @return an IP address for this host or null if one can't be found
+     * in caches.
+     */
+    protected InetAddress getHostAddress(String host) {
+        InetAddress result = null;
+        if (controller != null) {
+        	    CrawlServer cs = controller.getServerCache().
+                getServerFor(host);
+            if (cs != null) {
+            	    result = cs.getHost().getIP();
+            }
+        }
+        if (result ==  null) {
+        	    // Failed to get address from heritrix cache.  Do next best
+            // thing.  Go to the dnsjava cache.
+            result = DNSJavaUtil.getHostAddress(host);
+        }
+        return result;
+    }
 
     /**
      * @see ProtocolSocketFactory#createSocket(java.lang.String,int)
      */
     public Socket createSocket(String host, int port)
             throws IOException, UnknownHostException {
-        InetAddress hostAddress = DNSJavaUtil.getHostAddress(host);
+        InetAddress hostAddress = getHostAddress(host);
         // If we didn't get a remoteHost, fall back on the old manner
         // of obtaining a socket.
         return (hostAddress == null)?
@@ -163,13 +212,13 @@ implements ProtocolSocketFactory {
      */
     public boolean equals(Object obj) {
         return ((obj != null) &&
-            obj.getClass().equals(DNSJavaProtocolSocketFactory.class));
+            obj.getClass().equals(HeritrixProtocolSocketFactory.class));
     }
 
     /**
      * All instances of DefaultProtocolSocketFactory have the same hash code.
      */
     public int hashCode() {
-        return DNSJavaProtocolSocketFactory.class.hashCode();
+        return HeritrixProtocolSocketFactory.class.hashCode();
     }
 }

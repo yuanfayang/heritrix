@@ -110,7 +110,7 @@ public class ServerCache {
             // TODOSOMEDAY: make this robust against those rare cases
             // where authority is not a hostname.
             if (hostOrAuthorityStr != null) {
-            	hostOrAuthority = getServerFor(hostOrAuthorityStr);
+            	    hostOrAuthority = getServerFor(hostOrAuthorityStr);
             }
         } catch (URIException e) {
             e.printStackTrace();
