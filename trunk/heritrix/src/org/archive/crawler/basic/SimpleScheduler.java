@@ -45,7 +45,7 @@ public class SimpleScheduler implements URIScheduler {
 						return emitCuri(curi);
 					}
 				}
-				if(store.getHeldClassQueues().isEmpty() && store.getSnoozeQueues().isEmpty()) {
+				if(store.isEmpty()) {
 					// nothing left to crawl
 					logger.info("nothing left to crawl");
 					return null;
