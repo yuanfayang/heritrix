@@ -69,6 +69,27 @@
         a SUN JVM, the connection fails.  See issue 1093962for more.
         </para>
       </sect3>
+      <sect3 id="old_jobs_profiles">
+        <title>Using old jobs or profiles with 1.4</title>
+        <para>You'll need to make one change to make your old order.xml
+        files and profiles to run with Heritrix 1.4.x.  Below is a
+        diff that shows the change that needs to be made (The
+type of the <literal>path</literal> changed from <literal>string</literal>
+to <literal>stringList</literal>):
+<programlisting><![CDATA[+++ order.xml   2005-02-01 13:12:34.000000000 -0800
+@@ -162,7 +162,9 @@
+         <string name="prefix">BT</string>
+         <string name="suffix"></string>
+         <integer name="max-size-bytes">100000000</integer>
+-        <string name="path">arcs</string>
++        <stringList name="path">
++          <string>arcs</string>
++        </stringList>
+         <integer name="pool-max-active">5</integer>
+         <integer name="pool-max-wait">300000</integer>
+       </newObject>]]></programlisting>
+        </para>
+      </sect3>
     </sect2>
   </sect1>
 
