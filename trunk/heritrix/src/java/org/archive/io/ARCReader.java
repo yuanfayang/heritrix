@@ -48,12 +48,12 @@ public class ARCReader
     protected int resourcePosition;
     protected long filePosition;
 	
-	/**
-	 * 
-	 */
-	public ARCReader() {
-		super();
-	}
+    /**
+     * 
+     */
+    public ARCReader() {
+        super();
+    }
 
 	public void open(String filename) throws IOException {
 		String flattenedFilename = filename.toLowerCase();
