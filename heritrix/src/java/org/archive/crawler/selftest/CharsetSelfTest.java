@@ -38,7 +38,7 @@ public class CharsetSelfTest extends SelfTestCase
      * Files to find as an array.
      */
     private static final String [] FILES_TO_FIND_AS_ARRAY =
-        {"utf8.html", "shiftjis.html", "charsetselftest_end.html"};
+        {"utf8.jsp", "shiftjis.jsp", "charsetselftest_end.html"};
 
     /**
      * Files to find as a list.
