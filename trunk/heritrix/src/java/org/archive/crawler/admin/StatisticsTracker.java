@@ -93,7 +93,7 @@ public class StatisticsTracker extends AbstractTracker{
 	protected HashMap hostsDistribution = new HashMap();
 	
 	public StatisticsTracker(String name) {
-		super(name, "Statistics tracker");
+		super(name, "A statistics tracker that's been designed to work well with the web UI and creates the progress-statistics log.");
 	}
 
 	/* (non-Javadoc)

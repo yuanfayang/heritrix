@@ -81,7 +81,12 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      */
     public AbstractTracker(String name, String description) {
         super(name, description);
-        addElementToDefinition(new SimpleType(ATTR_STATS_INTERVAL, "Statistics interval", DEFAULT_STATISTICS_REPORT_INTERVAL));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_STATS_INTERVAL,
+                "The interval between writing progress information to log.",
+                DEFAULT_STATISTICS_REPORT_INTERVAL,
+                false));
     }
 
 	/**
