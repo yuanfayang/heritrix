@@ -200,6 +200,12 @@ public class PreconditionEnforcer
      * @return true if no further processing in this module should occur
      */
     private boolean considerDnsPreconditions(CrawlURI curi) {
+        if(curi.getUURI().getScheme().equals("dns")){
+            // DNS URIs never have a DNS precondition
+            curi.setPrerequisite(true);
+            return false; 
+        }
+        
         CrawlServer cs = getController().getServerCache().getServerFor(curi);
         if(cs == null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
@@ -230,11 +236,7 @@ public class PreconditionEnforcer
                 getController().getPostprocessorChain());
             return true;
         }
-
-        if(curi.getUURI().getScheme().equals("dns")){
-            curi.setPrerequisite(true);
-        }
-
+        
         // DNS preconditions OK
         return false;
     }
