@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.archive.util.TextUtils;
 
 /**
  * Usable URI: a legal URI for our purposes.
@@ -67,6 +68,8 @@ public class UURI implements Serializable {
 		return normalize(u,null);
 	}
 	
+	static final Pattern DOTDOT = Pattern.compile("^(/\\.\\.)+");
+
 	/**
 	 * Normalize and derelativize
 	 * 
@@ -93,7 +96,8 @@ public class UURI implements Serializable {
 			// hierarchical URI
 			u = u.normalize(); // factor out path cruft, according to official spec
 			// now, go further and eliminate extra '..' segments
-			String fixedPath = u.getRawPath().replaceFirst("^(/\\.\\.)+","");
+			//String fixedPath = u.getRawPath().replaceFirst("^(/\\.\\.)+","");
+			String fixedPath = TextUtils.replaceFirst(DOTDOT, u.getRawPath(), "");
 			if ("".equals(fixedPath)) {
 //				ensure root URLs end with '/'
 				fixedPath = "/"; 
@@ -159,6 +163,21 @@ public class UURI implements Serializable {
 		}
 	}
 	
+	static final Pattern NBSP = Pattern.compile("\\xA0");
+	static final Pattern SPACE = Pattern.compile(" ");
+	static final Pattern PIPE = Pattern.compile("\\|");
+	static final Pattern CIRCUMFLEX = Pattern.compile("\\^");
+	static final Pattern QUOT = Pattern.compile("\"");
+	static final Pattern SQUOT = Pattern.compile("'");
+	static final Pattern APOSTROPH = Pattern.compile("`");
+	static final Pattern LSQRBRACKET = Pattern.compile("\\[");
+	static final Pattern RSQRBRACKET = Pattern.compile("\\]");
+	static final Pattern LCURBRACKET = Pattern.compile("\\{");
+	static final Pattern RCURBRACKET = Pattern.compile("\\}");
+	static final Pattern BACKSLASH = Pattern.compile("\\\\");
+	static final Pattern IMPROPERESC = Pattern.compile("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))");
+	static final Pattern NEWLINE = Pattern.compile("\n+|\r+");
+	
 	/** apply URI escaping where necessary
 	 * 
 	 * @param s
@@ -171,53 +190,68 @@ public class UURI implements Serializable {
 
 		// replace nbsp with normal spaces (so that they get
 		// stripped if at ends, or encoded if in middle)
-		s = s.replaceAll("\\xA0"," ");
+		//s = s.replaceAll("\\xA0"," ");
+		s = TextUtils.replaceAll(NBSP, s, " ");
 		// strip ends whitespaces
 		s = s.trim();
 		// patch spaces
 		if (s.indexOf(" ") >= 0) {
-			s = s.replaceAll(" ", "%20");
+			//s = s.replaceAll(" ", "%20");
+			s = TextUtils.replaceAll(SPACE, s, "%20");
 		}
 		// escape  | ^ " ' ` [ ] { } \
 		// (IE actually sends these unescaped, but they can't
 		// be put into a java.net.URI instance)
 		if (s.indexOf("|") >= 0) {
-			s = s.replaceAll("\\|","%7C");
+			//s = s.replaceAll("\\|","%7C");
+			s = TextUtils.replaceAll(PIPE, s, "%7C");
 		}
 		if (s.indexOf("^") >= 0) {
-			s = s.replaceAll("\\^","%5E");
+			//s = s.replaceAll("\\^","%5E");
+			s = TextUtils.replaceAll(CIRCUMFLEX, s, "%5E");
 		}
 		if (s.indexOf("\"") >= 0) {
-			s = s.replaceAll("\"","%22");
+			//s = s.replaceAll("\"","%22");
+			s = TextUtils.replaceAll(QUOT, s, "%22");
 		}
 		if (s.indexOf("'") >= 0) {
-			s = s.replaceAll("'","%27");
+			//s = s.replaceAll("'","%27");
+			s = TextUtils.replaceAll(SQUOT, s, "%27");
 		}
 		if (s.indexOf("`") >= 0) {
-			s = s.replaceAll("`","%60");
+			//s = s.replaceAll("`","%60");
+			s = TextUtils.replaceAll(APOSTROPH, s, "%60");
 		}
 		if (s.indexOf("[") >= 0) {
-			s = s.replaceAll("\\[","%5B");
+			//s = s.replaceAll("\\[","%5B");
+			s = TextUtils.replaceAll(LSQRBRACKET, s, "%5B");
 		}
 		if (s.indexOf("]") >= 0) {
-			s = s.replaceAll("\\]","%5D");
+			//s = s.replaceAll("\\]","%5D");
+			s = TextUtils.replaceAll(RSQRBRACKET, s, "%5D");
 		}
 		if (s.indexOf("{") >= 0) {
-			s = s.replaceAll("\\{","%7B");
+			//s = s.replaceAll("\\{","%7B");
+			s = TextUtils.replaceAll(LCURBRACKET, s, "%7B");
 		}
 		if (s.indexOf("}") >= 0) {
-			s = s.replaceAll("\\}","%7D");
+			//s = s.replaceAll("\\}","%7D");
+			s = TextUtils.replaceAll(RCURBRACKET, s, "%7D");
 		}
 		if (s.indexOf("\\") >= 0) {
-			s = s.replaceAll("\\\\","%5C");
+			//s = s.replaceAll("\\\\","%5C");
+			s = TextUtils.replaceAll(BACKSLASH, s, "%5C");
 		}
 		// escape improper escape codes; eg any '%' followed
 		// by non-hex-digits or 
-		s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
+		//s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
+		s = TextUtils.replaceAll(IMPROPERESC, s, "%25$1");
 		// twice just to be sure (actually, to handle multiple %% in a row)
-		s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
+		//s = s.replaceAll("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))","%25$1");
+		s = TextUtils.replaceAll(IMPROPERESC, s, "%25$1");
 		// kill newlines etc
-		s = s.replaceAll("\n+|\r+","");
+		//s = s.replaceAll("\n+|\r+","");
+		s = TextUtils.replaceAll(NEWLINE, s, "");
 		
 		return s; 
 	}
@@ -269,7 +303,7 @@ public class UURI implements Serializable {
 		return createUURI(normalize(string,uri));
 	}
 
-	static Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
+	static final Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
 	/**
 	 * @param string
 	 * @return
@@ -319,5 +353,4 @@ public class UURI implements Serializable {
 	public String getHost() {
 		return uri.getHost();
 	}
-
 }
