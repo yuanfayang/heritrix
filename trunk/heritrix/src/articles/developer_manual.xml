@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <title>Heritrix developer documentation</title>
+
+  <sect1>
+    <title>Introduction</title>
+
+    <para>This manual is intended to be a starting point for users and
+    contributors who wants to learn about the internals of the Heritrix web
+    crawler and possibly write additions or contribute to the core of the
+    software. The <ulink
+    url="http://crawler.archive.org/apidocs/index.html">javadoc API
+    documentation</ulink> is supposed to be the main developer documentation,
+    but this document should help you get started and guide you to the
+    interesting parts of the Javadoc documentation.</para>
+  </sect1>
+
+  <sect1>
+    <title>Obtaining and building Heritrix</title>
+
+    <para></para>
+
+    <sect2>
+      <title>Obatining Heritrix</title>
+
+      <para>Heritrix can be obtained as packaged binary or source downloaded
+      from the crawler <ulink
+      url="http://sourceforge.net/projects/archive-crawler">sourceforge home
+      page</ulink>, or via CVS checkout from cvs.sourceforge.net. See the
+      crawler <ulink
+      url="http://sourceforge.net/cvs/?group_id=73833">sourceforge cvs
+      page</ulink> for how to fetch from CVS (Note, anonymous access does not
+      give you the current HEAD but a snapshot that can some times be up to 24
+      hours behind HEAD). The packaged binary is named heritrix-?.?.?.tar.gz
+      (or heritrix-?.?.?.zip) and the packaged source is named
+      heritrix-?.?.?-src.tar.gz (or heritrix-?.?.?-src.zip) where ?.?.? is the
+      heritrix release version.</para>
+    </sect2>
+
+    <sect2>
+      <title>Building Heritrix</title>
+
+      <para>You can build Heritrix from source using Maven. The Heritrix build
+      uses maven 1.0-rc1. See <ulink
+      url="http://maven.apache.org">maven.apache.org</ulink> for how to obtain
+      the binary and setup of your maven environment.</para>
+
+      <para>To build a CVS source checkout with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
+% $MAVEN_HOME/bin/maven dist</programlisting>In the target/distribution
+      subdir, you will find packaged source and binary builds. Run
+      $MAVEN_HOME/bin/maven -g for other Maven possibilities.</para>
+    </sect2>
+
+    <sect2>
+      <title>Running Heritrix</title>
+
+      <para>See the User Manual <xref linkend="heritrix_user_manual" /> for
+      how to run the built Heritrix.</para>
+    </sect2>
+
+    <sect2>
+      <title>Eclipse</title>
+
+      <para>The developement team uses Eclipse as the developement
+      environment. This is of course optional, but for those who want to use
+      Eclipse you can, at the head of the CVS tree, find Eclipse
+      <emphasis>.project</emphasis> and <emphasis>.classpath</emphasis>
+      configuration files that should make integrating the CVS checkout into
+      your Eclipse development environment straight-forward.</para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Coding conventions</title>
+
+    <para>Heritrix baselines on SUN's Code Conventions for the JavaTM
+    Programming Language <xref linkend="sun_code_conventions" />. It'd be hard
+    not to they say so little. They at least say <ulink
+    url="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum
+    line length of 80 characters</ulink>.</para>
+
+    <para>We also will favor much of what is written in the document, Java
+    Programming Style Guidelines <xref
+    linkend="programming_style_guidelines" />.</para>
+
+    <sect2>
+      <title>Tightenings on the SUN conventions</title>
+
+      <para>Below are tightenings on the SUN conventions used in
+      Heritrix.</para>
+
+      <sect3>
+        <title>No Tabs</title>
+
+        <para>No tabs in source code. Set your editor to indent with
+        spaces.</para>
+      </sect3>
+
+      <sect3>
+        <title>Indent Width</title>
+
+        <para>Indents are 4 charcters wide.</para>
+      </sect3>
+
+      <sect3>
+        <title>Function/Block Bracket Open on Same Line</title>
+
+        <para>Preference is to have the bracket that opens functions and
+        blocks on same line as function declaration or block test rather than
+        on a new line on of its ownsome. For example:<programlisting>if (true) {
+    return true;
+}</programlisting>and<programlisting>public void main (String [] args) {
+    System.println("Hello world");
+}</programlisting></para>
+      </sect3>
+
+      <sect3>
+        <title>File comment</title>
+
+        <para>Here is the eclipse template we use for the file header
+        comment:<programlisting>/* ${type_name}
+ * 
+ * $$Id$$
+ * 
+ * Created on ${date}
+ *
+ * Copyright (C) ${year} Internet Archive.
+ * 
+ * This file is part of the Heritrix web crawler (crawler.archive.org).
+ * 
+ * Heritrix is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * any later version.
+ * 
+ * Heritrix is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser Public License
+ * along with Heritrix; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+${package_declaration}</programlisting></para>
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Unit tests code in same package</title>
+
+      <para>"[A ] popular convention is to place all test classes in a
+      parallel directory structure. This allows you to use the same Java
+      package names for your tests, while keeping the source files separate.
+      To be honest, we do not like this approach because you must look in two
+      different directories to find files." from <emphasis>Section 4.11.3,
+      Java Extreme Programming Cookbook, By Eric M. Burke, Brian M.
+      Coyner</emphasis>. We agree with the above so we put Unit Test classes
+      beside the classes they are testing in the source tree giving them the
+      name of the Class they are testing with a Test suffix.</para>
+
+      <para>Another advantage is that test classes of the same package can get
+      at testee's default access methods and members, something a test in
+      another package would not be able to do.</para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Overview of the crawler</title>
+
+    <para>The Heritrix Web Crawler is designed to be modular. Which modules to
+    use can be set at runtime from the user interface. Our hope is that if you
+    want the crawler to behave different from the default, it should only be a
+    matter of writing a new module as a replacement or in addition to the
+    modules shipped with the crawler.</para>
+
+    <para>The rest of this document assumes you have a basic understanding of
+    how to run a crawl (see: <xref linkend="heritrix_user_manual" />). Since
+    the crawler is written in the Java™ programming language, you also need a
+    fairly good understanding of Java.</para>
+
+    <para>The crawler consists of <emphasis>core classes</emphasis> and
+    <emphasis>pluggable modules</emphasis>. The core classes can be
+    configured, but not replaced. The pluggable classes can be substituted by
+    altering the configuration of the crawler. A set of basic pluggable
+    classes are shipped with the crawler, but if you have needs not met by
+    these classes you could write your own.</para>
+
+    <figure pgwide="0">
+      <title>Crawler overview</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata contentwidth="622" fileref="crawler_overview1.png"
+                     scalefit="0" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <sect2>
+      <title>The CrawlController</title>
+
+      <para>The CrawlController collects all the classes which cooperate to
+      perform a crawl, provides a high-level interface to the running crawl,
+      and executes the "master thread" which doles out URIs from the Frontier
+      to the ToeThreads. As the "global context" for a crawl, subcomponents
+      will usually reach each other through the CrawlController.</para>
+    </sect2>
+
+    <sect2>
+      <title>The Frontier</title>
+
+      <para>The Frontier is responsible for handling out the next URI to be
+      crawled. It does so by consulting the CrawlScope to see if the URI is
+      within this crawl's scope. It is also responsible for maintaining
+      politeness, that is making sure that no web server is crawled to
+      heavily. After a URI is crawled, it is handled back to the Frontier
+      along with any newly discovered URI's that the Frontier will evaluate
+      for crawling.</para>
+
+      <para>The Frontier also keeps the state of the crawl. This includes, but
+      is not limited to:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>What URIs have been discovered</para>
+        </listitem>
+
+        <listitem>
+          <para>What URIs are being processed (fetched)</para>
+        </listitem>
+
+        <listitem>
+          <para>What URIs have been processed</para>
+        </listitem>
+
+        <listitem>
+          <para>In what order unprocessed URIs will be processed</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>The Frontier implements the URIFrontier interface and can be
+      replaced by any Frontier that implements this interface. It should be
+      noted though that writing a Frontier is not a trivial task.</para>
+    </sect2>
+
+    <sect2>
+      <title>ToeThreads</title>
+
+      <para>The Heritrix web crawler is multithreaded. Every URI is handled by
+      its own thread called ToeThreads. A ToeThread asks the Frontier for a
+      new URI, sends it trough all the processors and the asks for a new
+      URI.</para>
+    </sect2>
+
+    <sect2>
+      <title>Processors</title>
+
+      <para>Processors are grouped into processor chains (<xref
+      linkend="processor_chains" />). Each chain does some processing on a
+      URI. When a Processor is finnished with a URI the ToeThread sends the
+      URI to the next Processor until the URI has been processed by all the
+      Processors.</para>
+
+      <figure id="processor_chains">
+        <title>Processor chains</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="processing_steps.png" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>The task performed by the different processing chains are as
+      follows:</para>
+
+      <para></para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Settings</title>
+
+    <para>The settings framework is designed to be a flexible way to configure
+    a crawl with special treatment for subparts of the web without adding to
+    much performance overhead. If you want to write a module which should be
+    configurable thru the user interface, it is important to have a basic
+    understanding of the Settings framework. At the core the settings
+    framework is a way to keep persistent, context sensitive configuration
+    settings for any class in the crawler.</para>
+
+    <para>All classes in the crawler that has configurable settings subclasses
+    <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html">ComplexType</ulink>
+    or one of its descendants. The ComplexType implements the
+    javax.management.DynamicMBean interface. This gives you a way to ask the
+    object for what attributes it supports and standard methods for getting
+    and setting these attributes.</para>
+
+    <para>The entry point into the settings framework is the <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/SettingsHandler.html">SettingsHandler</ulink>.
+    This class is responsible for loading and saving from persistent storage
+    and for interconnecting the different parts of the framework.</para>
+
+    <figure id="settings_overview">
+      <title>Schematic view of the Settings Framework</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="settings1.png" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <sect2>
+      <title>Settings hierarchy</title>
+
+      <para>The settings framework supports a hierarchy of settings. This
+      hierarchy is built by <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/CrawlerSettings.html">CrawlerSettings</ulink>
+      objects. On the top there is a settings object representing the global
+      settings. This consist of all the settings that a crawl job needs for
+      running. Beneath this global object there is one "per" settings object
+      for each host/domain which has settings that should override the order
+      for that particular host or domain.</para>
+
+      <para>When the settings framework is asked for an attribute for a
+      specific host, it will first try to see if this attribute is set for
+      this particular host. If it is, the value will be returned. If not, it
+      will go up one level recursively until it eventually reach the order
+      object and returns the global value. If no value is set here either
+      (normally it would be), a hardcoded default value is returned.</para>
+
+      <para>All per domain/host settings objects does only contain those
+      settings which are to be overridden for this particular domain/host. The
+      convention is to name the top level object "global settings" and the
+      objects beneath "per settings".</para>
+
+      <para>To further complicate the picture, there is also settings objects
+      called refinements. An object of this type belongs to a global or per
+      settings object and overrides the settings in it's owners object if some
+      criteria is met. These critera could be that the URI in question
+      conforms to a regular expression or that it the settings are consulted
+      at a specific time of day limited by a time span.</para>
+    </sect2>
+
+    <sect2>
+      <title>ComplexType hierarchy</title>
+
+      <para>All the configurable modules in the crawler subclasses ComplexType
+      or one of its descendants. The ComplexType is responsible for keeping
+      the definition of the configurable attributes of the module. The actual
+      values are stored in an instance of DataContainer. The DataContainer is
+      never accessed directly from user code. Instead the user accesses the
+      attributes through methods in the ComplexType. The attributes are
+      accessed in different ways depending if it is from the UI or from inside
+      a running crawl.</para>
+
+      <para>When an attribute is accessed from the URI (either reading or
+      writing) you want to make sure that you are editing the attribute in the
+      right context. When trying to override an attribute, you don't want the
+      settings framework to traverse up to effective value for the attribute,
+      but instead want to know that the attribute is not set on this level. To
+      achieve this there is getLocalAttribute and setAttribute methods taking
+      a settings object as a parameter. These methods works only on the
+      supplied settings object.</para>
+
+      <para>Getting an attribute within a crawl is different in that way that
+      you always want to get a value if its set for this context or not. That
+      means that the settings framework should work its way up the settings
+      hierarchy to find the value in effect for the context. The <xref
+      linkend="get_attribute_flow" /> shows how the settings framework finds
+      the effective value given a context.</para>
+
+      <figure id="get_attribute_flow">
+        <title>Flow of getting an attribute</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="settings2.png" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Writing a Frontier</title>
+
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Writing a Scope</title>
+
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Writing a Processor</title>
+
+    <para></para>
+
+    <sect2>
+      <title>The URI's Attribute list</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>The URI's content stream</title>
+
+      <para></para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Writing a Filter</title>
+
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Writing a Statistics Tracker</title>
+
+    <para></para>
+  </sect1>
+
+  <bibliography>
+    <biblioentry id="heritrix_user_manual">
+      <abbrev>Heritrix User Guide</abbrev>
+
+      <title><ulink url="http://crawler.archive.org/user.html">Heritrix User
+      Guide</ulink></title>
+
+      <publisher>
+        <publishername><ulink url="http://www.archive.org">Internet
+        Archive</ulink></publishername>
+      </publisher>
+    </biblioentry>
+
+    <biblioentry id="sun_code_conventions">
+      <abbrev>Sun Code Conventions</abbrev>
+
+      <title><ulink
+      url="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Code
+      Conventions for the Java™ Programming Language</ulink></title>
+
+      <publisher>
+        <publishername>Sun Microsystems, Inc.</publishername>
+      </publisher>
+    </biblioentry>
+
+    <biblioentry id="programming_style_guidelines">
+      <abbrev>Java Programming Style Guidelines</abbrev>
+
+      <title><ulink url="http://geosoft.no/javastyle.html">Java Programming
+      Style Guidelines</ulink></title>
+
+      <publisher>
+        <publishername>Geotechnical Software Services</publishername>
+      </publisher>
+    </biblioentry>
+  </bibliography>
+</article>
