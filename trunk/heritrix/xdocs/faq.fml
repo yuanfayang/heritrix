@@ -160,8 +160,9 @@ Eventually. For now, the crawler is still in early development, and only if you 
         of the shape of its content. Its recommend that you first "flatten"
         the local errors file.  Here's an example :
         <source>% cat  local-errors.log | tr -d \\\n | perl -pe 's/([0-9]{17} )/\n$1/g'</source>
+        </p>
 
-         This will remove all new lines and then add a new line in front of 17-digit dates (hopefully only 17-digit tokens followed by a space are dates.).  The result is one line per entry with a 17-digit
+         <p>This will remove all new lines and then add a new line in front of 17-digit dates (hopefully only 17-digit tokens followed by a space are dates.).  The result is one line per entry with a 17-digit
          date prefix. Makes it easier to parse.
          </p>
 
