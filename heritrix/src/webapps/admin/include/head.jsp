@@ -60,7 +60,7 @@
 					&nbsp;&nbsp;
 				</td>
 				<td width="100%">
-					<table border="0" cellspacing="0" cellpadding="0" height="60" width="100%">
+					<table border="0" cellspacing="0" cellpadding="0" height="60">
 						<tr>
 							<td colspan="2">
 								<%
