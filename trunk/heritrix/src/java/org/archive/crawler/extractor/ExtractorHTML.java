@@ -235,13 +235,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		String code = cs.toString();
 		//code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-		Matcher candidates = TextUtils.getMatcher(JAVASCRIPT_LIKELY_URI_EXTRACTOR, code);
-		while (candidates.find()) {
-			logger.finest("script: "+candidates.group(2)+ " from "+curi);
-			curi.addSpeculativeEmbed(candidates.group(2));
-			// TODO: treat "looks like" html URIs as links?
-		}
-		TextUtils.freeMatcher(candidates);
+		ExtractorJS.considerStrings(curi,code);
 	}
 
 	static final Pattern JAVASCRIPT = Pattern.compile("(?i)^javascript:.*");
