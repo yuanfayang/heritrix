@@ -20,8 +20,9 @@ import java.io.OutputStream;
 public class FlipFileOutputStream extends OutputStream {
 	BufferedOutputStream outStream;
 	String pathPrefix;
-	String currentFile;
-	boolean next1;
+	File file0;
+	File file1;
+	File currentFile;
 	
 	/**
 	 * @param tempDir
@@ -30,9 +31,10 @@ public class FlipFileOutputStream extends OutputStream {
 	public FlipFileOutputStream(File tempDir, String backingFilenamePrefix) throws FileNotFoundException {
 		tempDir.mkdirs();
 	    pathPrefix = tempDir.getPath()+File.separatorChar+backingFilenamePrefix;
-		currentFile = pathPrefix + ".ff0";
+		file0 = new File(pathPrefix + ".ff0");
+		file1 = new File(pathPrefix + ".ff1");
+		currentFile = file0;
 		outStream = new BufferedOutputStream(new FileOutputStream(currentFile), 4096);
-		next1 = true;
 	}
 
 	/* (non-Javadoc)
@@ -42,10 +44,25 @@ public class FlipFileOutputStream extends OutputStream {
 		outStream.write(b);
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.io.OutputStream#write(byte[], int, int)
+	 */
+	public void write(byte[] b, int off, int len) throws IOException {
+		outStream.write(b, off, len);
+	}
+
+	/* (non-Javadoc)
+	 * @see java.io.OutputStream#write(byte[])
+	 */
+	public void write(byte[] b) throws IOException {
+		outStream.write(b);
+	}
+
+	
 	// TODO other write()s for efficiency
 	
-	public String getInputFile() throws IOException {
-		String lastFile = currentFile;
+	public File getInputFile() throws IOException {
+		File lastFile = currentFile;
 		flip();
 		return lastFile;
 	}
@@ -55,9 +72,25 @@ public class FlipFileOutputStream extends OutputStream {
 	 */
 	private void flip() throws IOException {
 		outStream.flush();
-		currentFile = pathPrefix + (next1 ? ".ff1" : ".ff0");
-		next1 = !next1;
+		currentFile = (currentFile == file0) ? file1 : file0;
 		outStream = new BufferedOutputStream(new FileOutputStream(currentFile), 4096);
 	}
+
+	/**
+	 * 
+	 */
+	public void discard() {
+		file0.delete();
+		file1.delete();
+	}
+
+	/* (non-Javadoc)
+	 * @see java.io.OutputStream#close()
+	 */
+	public void close() throws IOException {
+		super.close();
+		outStream.close();
+	}
+
 
 }
