@@ -59,6 +59,9 @@
 
 <%  
     List jobs = handler.getPendingJobs();
+    boolean alt = true;
+    // If no pending jobs, don't show table headings.
+    if (jobs.size() > 0) {
 %>
         <table border="0" cellspacing="0" cellpadding="1">
             <tr>
@@ -73,7 +76,7 @@
                 </th>
             </tr>
             <%
-                boolean alt = true;
+                alt = true;
                 for(int i=0 ; i    < jobs.size() ; i++)
                 {
                     CrawlJob job = (CrawlJob)jobs.get(i);
@@ -103,12 +106,18 @@
         </table>
 
 
+<%
+    // End of if block that tests that there are pending jobs to show.
+    }
+%>
 
 
 <h2>Completed Jobs (<%=handler.getCompletedJobs().size()%>)</h2>
 
 <%  
     jobs = handler.getCompletedJobs();
+    // If no completed jobs, don't show table headings.
+    if (jobs.size() > 0) {
 %>
         <table border="0" cellspacing="0" cellpadding="1"> 
             <tr>
@@ -171,6 +180,10 @@
                 }
             %>
         </table>
+<%
+    // End of if block that tests if there are completed jobs to show.
+    }
+%>
 
 
 <%@include file="/include/foot.jsp"%>
