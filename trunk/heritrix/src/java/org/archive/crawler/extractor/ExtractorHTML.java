@@ -182,8 +182,17 @@ implements CoreAttributeConstants {
                 if (element.toString().equalsIgnoreCase(BASE)) {
                     try {
                         curi.setBaseURI(value.toString());
-                    } catch (URIException e1) {
-                        getController().logUriError(e1,curi,value.toString());
+                    } catch (URIException e) {
+                        if (getController() != null) {
+                            // Controller can be null: e.g. when running
+                            // ExtractorTool.
+                            getController().
+                                logUriError(e, curi, value.toString());
+                        } else {
+                            logger.info("Failed set base uri: " +
+                                curi + ", " + value.toString() + ": " +
+                                e.getMessage());
+                        }
                     }
                 }
             } else if (attr.start(3) > -1) {
@@ -314,21 +323,21 @@ implements CoreAttributeConstants {
             logger.finest("link: " + link + " from " + curi);
             addLinkFromString(curi, link, context,'L');
             this.numberOfLinksExtracted++;
-//            curi.addLinkToCollection(link, A_HTML_LINKS);
         }
     }
 
-    /**
-     * @param curi
-     * @param uri
-     * @param context
-     */
     private void addLinkFromString(CrawlURI curi, String uri,
             CharSequence context, char hopType) {
         try {
             curi.createAndAddLinkRelativeToBase(uri, context, hopType);
         } catch (URIException e) {
-            getController().logUriError(e, curi, uri);
+            if (getController() != null) {
+                getController().logUriError(e, curi, uri);
+            } else {
+                logger.info("Failed createAndAddLinkRelativeToBase " +
+                    curi + ", " + uri + ", " + context + ", " + hopType +
+                    ": " + e);
+            }
         }
     }
 
@@ -553,9 +562,15 @@ implements CoreAttributeConstants {
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                curi.createAndAddLinkRelativeToBase(refreshUri,cs,Link.REFER_HOP);
+                curi.createAndAddLinkRelativeToBase(refreshUri, cs,
+                    Link.REFER_HOP);
             } catch (URIException e) {
-                getController().logUriError(e,curi,refreshUri);
+                if (getController() != null) {
+                    getController().logUriError(e, curi, refreshUri);
+                } else {
+                    logger.info("Failed createAndAddLinkRelativeToBase " +
+                        curi + ", " + cs + ", " + refreshUri + ": " + e);
+                }
             }
         }
         return false;

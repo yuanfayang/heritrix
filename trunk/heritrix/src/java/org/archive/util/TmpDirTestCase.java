@@ -69,8 +69,7 @@ public class TmpDirTestCase extends TestCase
     /*
      * @see TestCase#setUp()
      */
-    protected void setUp() throws Exception
-    {
+    protected void setUp() throws Exception {
         super.setUp();
         String tmpDirStr = System.getProperty(TEST_TMP_SYSTEM_PROPERTY_NAME);
         tmpDirStr = (tmpDirStr == null)? DEFAULT_TEST_TMP_DIR: tmpDirStr;
@@ -108,8 +107,7 @@ public class TmpDirTestCase extends TestCase
      *
      * @param basename Base name of files we're to clean up.
      */
-    public void cleanUpOldFiles(String basename)
-    {
+    public void cleanUpOldFiles(String basename) {
         cleanUpOldFiles(getTmpDir(), basename);
     }
 
@@ -119,13 +117,10 @@ public class TmpDirTestCase extends TestCase
      * @param prefix Base name of files we're to clean up.
      * @param basedir Directory to start cleaning in.
      */
-    public void cleanUpOldFiles(File basedir, String prefix)
-    {
+    public void cleanUpOldFiles(File basedir, String prefix) {
         File [] files = FileUtils.getFilesWithPrefix(basedir, prefix);
-        if (files != null)
-        {
-            for (int i = 0; i < files.length; i++)
-            {
+        if (files != null) {
+            for (int i = 0; i < files.length; i++) {
                 FileUtils.deleteDir(files[i]);
             }
         }

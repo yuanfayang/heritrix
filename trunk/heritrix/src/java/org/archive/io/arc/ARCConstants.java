@@ -62,6 +62,12 @@ public interface ARCConstants {
      * ARC file extention.
      */
     public static final String ARC_FILE_EXTENSION = "arc";
+    
+    /**
+     * Dot ARC file extension.
+     */
+    public static final String DOT_ARC_FILE_EXTENSION =
+        "." + ARC_FILE_EXTENSION;
 
     /**
      * Compressed file extention.
@@ -77,8 +83,14 @@ public interface ARCConstants {
     /**
      * Compressed arc file extension.
      */
-    public static final String COMPRESSED_ARC_FILE_EXTENSION = ARC_FILE_EXTENSION
-            + '.' + COMPRESSED_FILE_EXTENSION;
+    public static final String COMPRESSED_ARC_FILE_EXTENSION =
+        ARC_FILE_EXTENSION + DOT_COMPRESSED_FILE_EXTENSION;
+    
+    /**
+     * Compressed dot arc file extension.
+     */
+    public static final String DOT_COMPRESSED_ARC_FILE_EXTENSION =
+        DOT_ARC_FILE_EXTENSION + DOT_COMPRESSED_FILE_EXTENSION;
 
     /**
      * Encoding to use getting bytes from strings.

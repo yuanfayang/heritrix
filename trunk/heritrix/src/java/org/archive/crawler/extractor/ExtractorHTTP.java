@@ -23,9 +23,6 @@
  */
 package org.archive.crawler.extractor;
 
-import java.util.ArrayList;
-import java.util.logging.Logger;
-
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
@@ -38,15 +35,9 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  */
 public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
-
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
-    /**
-     * @param name
-     */
     public ExtractorHTTP(String name) {
         super(name,
             "HTTP extractor. \nExtracts URIs from HTTP response headers.");
@@ -59,21 +50,16 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         }
         numberOfCURIsHandled++;
         HttpMethod method = (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
-        ArrayList uris = new ArrayList();
         Header loc = method.getResponseHeader("Location");
-        if ( loc != null ) {
-            addHeaderLink(curi,loc);
+        if (loc != null) {
+            addHeaderLink(curi, loc);
         }
         loc = method.getResponseHeader("Content-Location");
-        if ( loc != null ) {
-            addHeaderLink(curi,loc);
+        if (loc != null) {
+            addHeaderLink(curi, loc);
         }
     }
 
-    /**
-     * @param curi
-     * @param loc
-     */
     private void addHeaderLink(CrawlURI curi, Header loc) {
         // TODO: consider possibility of multiple headers
         try {
@@ -87,9 +73,6 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#report()
-     */
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTTP\n");

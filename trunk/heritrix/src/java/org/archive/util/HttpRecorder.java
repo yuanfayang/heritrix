@@ -49,7 +49,6 @@ import org.archive.io.ReplayCharSequence;
  * @author gojomo
  */
 public class HttpRecorder {
-
     protected static Logger logger =
         Logger.getLogger("org.archive.util.HttpRecorder");
 
@@ -81,7 +80,15 @@ public class HttpRecorder {
      */
     private String characterEncoding = null;
 
-
+    /**
+     * Constructor with limited access.
+     * Used internally for case where we're wrapping an already
+     * downloaded stream with a HttpRecorder.
+     */
+    protected HttpRecorder() {
+        super();
+    }
+    
     /**
      * Create an HttpRecorder.
      *
@@ -90,9 +97,12 @@ public class HttpRecorder {
      * @param backingFilenameBase Backing filename base to which we'll append
      * suffices <code>ris</code> for recorded input stream and
      * <code>ros</code> for recorded output stream.
+     * @param outBufferSize Size of output buffer to use.
+     * @param inBufferSize Size of input buffer to use.
      */
     public HttpRecorder(File tempDir, String backingFilenameBase, 
             int outBufferSize, int inBufferSize) {
+        super();
         tempDir.mkdirs();
         this.backingFileBasename =
             (new File(tempDir.getPath(), backingFilenameBase))
@@ -131,8 +141,7 @@ public class HttpRecorder {
      *
      * @throws IOException
      */
-    public InputStream inputWrap(InputStream is) throws IOException
-    {
+    public InputStream inputWrap(InputStream is) throws IOException {
         if (!this.ris.isOpen()) {
             logger.fine(Thread.currentThread().getName() + " wrapping input");
             this.ris.open(is);
@@ -154,10 +163,8 @@ public class HttpRecorder {
      *
      * @throws IOException
      */
-    public OutputStream outputWrap(OutputStream os) throws IOException
-    {
-        if (!this.ros.isOpen())
-        {
+    public OutputStream outputWrap(OutputStream os) throws IOException {
+        if (!this.ros.isOpen()) {
             this.ros.open(os);
         }
         return this.ros;
@@ -228,35 +235,12 @@ public class HttpRecorder {
     }
 
     /**
-     * Clean up backing files.
-     *
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize()
-        throws Throwable
-    {
-        try
-        {
-            this.cleanup();
-        }
-
-        catch(Exception e)
-        {
-            // We're in finalize.  Not much we can do about this.
-            e.printStackTrace(System.out);
-        }
-
-        super.finalize();
-    }
-
-    /**
      * Cleanup backing files.
      *
      * Call when completely done w/ recorder.  Removes any backing files that
      * may have been dropped.
      */
-    public void cleanup()
-    {
+    public void cleanup() {
         this.close();
         this.delete(this.backingFileBasename + RECORDING_OUTPUT_STREAM_SUFFIX);
         this.delete(this.backingFileBasename + RECORDING_INPUT_STREAM_SUFFIX);
@@ -267,11 +251,9 @@ public class HttpRecorder {
      *
      * @param name Filename to delete.
      */
-    private void delete(String name)
-    {
+    private void delete(String name) {
         File f = new File(name);
-        if (f.exists())
-        {
+        if (f.exists()) {
             f.delete();
         }
     }
@@ -294,16 +276,14 @@ public class HttpRecorder {
     /**
      * @param characterEncoding Character encoding of recording.
      */
-    public void setCharacterEncoding(String characterEncoding)
-    {
+    public void setCharacterEncoding(String characterEncoding) {
         this.characterEncoding = characterEncoding;
     }
 
     /**
      * @return Returns the characterEncoding.
      */
-    public String getCharacterEncoding()
-    {
+    public String getCharacterEncoding() {
         return this.characterEncoding;
     }
 
@@ -315,7 +295,8 @@ public class HttpRecorder {
      * @throws IOException
      */
     public ReplayCharSequence getReplayCharSequence() throws IOException {
-        return getRecordedInput().getReplayCharSequence(this.characterEncoding);
+        return getRecordedInput().
+            getReplayCharSequence(this.characterEncoding);
     }
     
     /**
@@ -327,7 +308,7 @@ public class HttpRecorder {
      * @param in Stream to read.
      * @param encoding Stream encoding.
      * @throws IOException
-     * @return An httprecorder.
+     * @return An {@link org.archive.util.HttpRecorder}.
      */
     public static HttpRecorder wrapInputStreamWithHttpRecord(File dir,
         String basename, InputStream in, String encoding)
@@ -339,8 +320,12 @@ public class HttpRecorder {
         InputStream is = rec.inputWrap(new BufferedInputStream(in));
         final int BUFFER_SIZE = 1024 * 4;
         byte [] buffer = new byte[BUFFER_SIZE];
-        while(is.read(buffer) != -1) {
+        while(true) {
             // Just read it all down.
+            int x = is.read(buffer);
+            if (x == -1) {
+                break;
+            }
         }
         is.close();
         return rec;
