@@ -1,0 +1,20 @@
+##
+## This configuration file allows you to define environment variables
+## to be shared between Heritrix shell scripts.  Note, to use these
+## this file will need to be in the root directory of your Heritrix
+## tree, and you will need to set the environment variable 
+## CRAWL_HOME (I suggest using your .bash_profile or the like)
+##
+
+
+## path to java home (not java executible)
+#export JAVA_HOME=<PUT_JAVA_HOME_HERE>
+JAVA_HOME=/usr/local/j2sdk1.4.0_02
+
+## path to ant (for builds)
+#ANT_HOME=<PUT ANT HOME HERE>
+ANT_HOME=/0/cvs_webcrawler_nightly_build/CrawlerTesting/utils/Ant/apache-ant-1.5.2
+
+## do you want to use authenticated CVS?  If so uncomment
+#CVS_RSH=ssh
+

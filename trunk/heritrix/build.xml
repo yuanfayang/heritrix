@@ -43,10 +43,16 @@
         <mkdir dir="junit/${junitreports}" />
 
 	<mkdir dir="bin" />
+	
+	<!--
+	<mkdir dir="src" />
+	-->
 
 	<mkdir dir="NightlyBuilds" />
 
-        <!-- <echo message="Classpath setting is ${classpath}" /> -->
+	<!--
+        <echo message="Classpath setting is ${classpath}" />
+	-->
 
 	<mkdir dir="RunThis" />
 	<mkdir dir="RunThis/test-config" />
@@ -59,11 +65,16 @@
     <target name="checkout-core" depends="init">
     
         <description> 
-            This target checks out all the source files and third party binaries from CVS.
+            This target checks out all the source files and third party 
+		binaries from CVS.
         </description> 
        
-	<!-- NOTE: YOU'LL PROBABLY NEED TO CHANGE THESE VARS IN build.properties --> 
-        <cvs cvsRoot="${cvsroot}" dest="${repository}" package="${module-name}" failonerror="yes" />
+	<!-- NOTE: YOU'LL PROBABLY NEED TO CHANGE THESE VARS 
+		IN build.properties --> 
+        <cvs cvsRoot="${cvsroot}" 
+		dest="${repository}" 
+		package="${module-name}" 
+		failonerror="yes" />
         
     </target>
 
@@ -72,7 +83,8 @@
     <target name="compile-core" depends="init">
     
         <description> 
-            This target compiles the core sources files (not the unit test sources) 
+            This target compiles the core sources files 
+		(not the unit test sources) 
         </description> 
 
         <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
@@ -89,7 +101,8 @@
             </fileset>
         </copy>     
       
-        <depend srcdir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
+        <depend 
+		srcdir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
                 destdir="${buildDir}"  
                 cache="dependencycache" 
                 closure="yes"> 
@@ -128,7 +141,7 @@
          </description> 
 
          <javadoc packagenames="*.*" 
-                  sourcepath="${packageBaseDir}/archive-open-crawler-${version}/${src}"
+         	sourcepath="${packageBaseDir}/archive-open-crawler-${version}/${src}"
                   classpath="${classpath}"
                   destdir="${packageBaseDir}/archive-open-crawler-${version}/${javadocs}"
 		  source="1.4" >
@@ -167,7 +180,6 @@
         </jar>
 
 
-
         <tstamp>
             <format property="currentdate" pattern="MMddyyyy" />
         </tstamp>
@@ -192,12 +204,20 @@
 			<include name="crawlerclasses.jar" />
 		</fileset>
         </copy>
-	
+
+	<!--	
 	<copy todir="RunThis/test-config/">
 		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/test-config">
 			<include name="**/*" />
 		</fileset>
 	</copy>
+	-->
+
+        <copy todir="RunThis/">
+                <fileset dir="${packageBaseDir}/archive-open-crawler-${version}/configurations/nightly-builds">
+                        <include name="**/*" />
+                </fileset>
+        </copy>
 
 	<copy todir="RunThis/lib/">
 		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/lib">
@@ -211,14 +231,16 @@
 
     </target>
     
-    <target name="nightly" depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,package">
+    <target 
+	name="nightly" 
+	depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,package">
     
         <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
-                      todir="${basedir}/${NightlyBuildsDir}" /> 
+        	todir="${basedir}/${NightlyBuildsDir}" /> 
 
 	<delete dir="${basedir}/${NightlyBuildsDir}/latest" />
         <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
-                      todir="${basedir}/${NightlyBuildsDir}/latest" /> 
+               todir="${basedir}/${NightlyBuildsDir}/latest" /> 
         
         <!-- This is presently disabled as there is no uploading to sourceforge.net -->
         <!-- <move file="archive-open-crawler-${version}-${currentdate}.tar.gz"
@@ -291,7 +313,10 @@
        
             <formatter type="plain" /> 
         
-            <batchtest fork="yes" haltonfailure="no" todir="junit/${junitreports}">
+            <batchtest 
+		fork="yes" 
+		haltonfailure="no" 
+		todir="junit/${junitreports}">
 
 		<fileset dir="${basedir}/${unitTestDir}">
 		  <include name="**/*Test.class" />
