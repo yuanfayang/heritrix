@@ -49,9 +49,9 @@ import org.archive.crawler.datamodel.CrawlURI;
  * that should be configurable extends this class or one of its subclasses.
  * 
  * All subclasses of this class will automatically conform to the
- * JMX DynamicMBean. You could then use the @link #getMBeanInfo() method to
+ * JMX DynamicMBean. You could then use the {@link #getMBeanInfo()} method to
  * investigate which attributes this module supports and then use the
- * @link #getAttribute(String) and @link #setAttribute(Attribute) methods to
+ * {@link #getAttribute(String)} and {@link #setAttribute(Attribute)} methods to
  * alter the attributes values.
  * 
  * Because the settings framework supports per domain/host settings there is
@@ -168,7 +168,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * This method should probably not be called from user code. It is a helper
      * method for the settings framework.
      * 
-     * @param settings the settings object for which the @link DataContainer
+     * @param settings the settings object for which the {@link DataContainer}
      *                 is active.
      * @return the active DataContainer
      */
@@ -212,11 +212,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Get settings object valid for a URI.
      * 
-     * This method takes an object, try to convert it into a @link CrawlURI
+     * This method takes an object, try to convert it into a {@link CrawlURI}
      * and then tries to get the settings object from it. If this fails, then
      * the global settings object is returned.
      * 
-     * @param o possible @link CrawlURI.
+     * @param o possible {@link CrawlURI}.
      * @return the settings object valid for the URI.
      */
     public CrawlerSettings getSettingsFromUri(Object o) {
@@ -232,13 +232,15 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
     
     /** Returns true if an element is overridden for this settings object.
-     * 
+     *
      * @param settings the settings object to investigate.
      * @param name the name of the element to check.
      * @return true if element is overridden for this settings object, false
-     *              if not set here or is first defined here. 
+     *              if not set here or is first defined here.
+     * @throws AttributeNotFoundException if element doesn't exist.
      */
-    public boolean isOverridden(CrawlerSettings settings, String name) {
+    public boolean isOverridden(CrawlerSettings settings, String name)
+            throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         DataContainer data = settings.getData(this);
         if (data == null || !data.containsKey(name)) {
@@ -252,7 +254,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                 data = getDataContainerRecursive(data.getSettings().getParent());
             }
         }
-        return false;
+        throw new AttributeNotFoundException(name);
     }
 
     /** Obtain the value of a specific attribute from the crawl order.
@@ -353,8 +355,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
         DataContainer data = settings.getData(this);
         if (data == null) {
-            //return null;
-            throw new AttributeNotFoundException(name);
+            if (isOverridden(settings, name)) {
+                return null;
+            } else {
+                throw new AttributeNotFoundException(name);
+            }
         }
         return data.get(name);
     }
@@ -638,7 +643,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     /** Returns this object.
      * 
      * This method is implemented to be able to treat the ComplexType as an
-     * subclass of @link javax.management.Attribute.
+     * subclass of {@link javax.management.Attribute}.
      * 
      * @return this object.
      * @see javax.management.Attribute#getValue()
