@@ -27,6 +27,7 @@ package org.archive.crawler;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -493,30 +494,30 @@ public class Heritrix
     private static void selftest(int port) throws Exception
     {
         // Put up the webserver.  It has the selftest garden to go against.
-        httpServer = new SimpleHttpServer(port);
-        httpServer.startServer();
+        Heritrix.httpServer = new SimpleHttpServer(port);
+        Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), "selftest");
         File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
-        jobHandler = new SelftestCrawlJobHandler();
+        Heritrix.jobHandler = new SelftestCrawlJobHandler();
         // Create a job based off the selftest order file.  Then use this as
         // a template to pass jobHandler.newJob().  Doing this gets our
         // selftest output to show under the jobs directory. 
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
-        getSelftestURL =
+        Heritrix.getSelftestURL =
             "http://localhost:" + Integer.toString(port) + "/garden";
-        job = jobHandler.newJob(job, "selftest", "Integration self test",
-                getSelftestURL);
-        jobHandler.addJob(job);
-        jobHandler.startCrawler();
+        job = Heritrix.jobHandler.newJob(job, "selftest",
+            "Integration self test", getSelftestURL);
+        Heritrix.jobHandler.addJob(job);
+        Heritrix.jobHandler.startCrawler();
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
             " selftest started.");
-        out.println("Selftest first crawls " + getSelftestURL +
+        out.println("Selftest first crawls " + getSelftestURL() +
             " and then runs an analysis.");
         out.println("Result of analysis printed to " + HERITRIX_OUT_FILE +
             " when done.");
-        out.println("Selftest job directory:\n" +
-            jobHandler.getJobdir(job).getAbsolutePath());
+        out.println("Selftest job directory for logs and arcs:\n" +
+            Heritrix.jobHandler.getJobdir(job).getAbsolutePath());
     }
 
     /**
@@ -602,8 +603,12 @@ public class Heritrix
     
     private static CrawlJob createCrawlJob(CrawlJobHandler jobHandler,
             File crawlOrderFile, String descriptor)
-        throws InvalidAttributeValueException
+        throws InvalidAttributeValueException, FileNotFoundException
     {
+        if (!crawlOrderFile.exists())
+        {
+            throw new FileNotFoundException(crawlOrderFile.getAbsolutePath());
+        }
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
         settings.initialize();
         return new CrawlJob(jobHandler.getNextJobUID(), descriptor, settings,
