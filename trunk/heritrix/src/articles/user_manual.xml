@@ -3019,7 +3019,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
     </sect2>
   </sect1>
 
-  <glossary>
+  <glossary id="glossary">
     <glossdiv>
       <title>Some definitions</title>
 
@@ -3044,10 +3044,29 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           <para>This also applies to all logs.</para>
         </glossdef>
       </glossentry>
+      <glossentry id="checkpointing">
+        <glossterm>Checkpointing</glossterm>
+        <glossdef>
+          <para>Heritrix currently has no checkpointing facility. However, our
+        conception of what we need is heavily influenced by what Mercator
+        provided. In <ulink 
+        url="http://citeseer.nj.nec.com/najork01highperformance.html">one
+        of the papers on Mercator</ulink> it is described this way:
+<quote>Checkpointing is an important part of any long-running process such as
+a web crawl. By checkpointing we mean writing a representation of the crawler's
+state to stable storage that, in the event of a failure, is sufficient to allow
+the crawler to recover its state by reading the checkpoint and to resume
+crawling from the exact state it was in at the time of the checkpoint. By this
+definition, in the event of a failure, any work performed after the most recent
+checkpoint is lost, but none of the work up to the most recent checkpoint. In
+Mercator, the frequency with which the background thread performs a checkpoint
+is user-configurable; we typically checkpoint anywhere from 1 to 4 times per
+day.</quote></para>
+        </glossdef>
+      </glossentry>
 
       <glossentry id="crawluri">
         <glossterm>CrawlURI</glossterm>
-
         <glossdef>
           <para>A URI and it's associated data such as parent URI, number of
           links from seed etc.</para>
@@ -3056,11 +3075,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
       <glossentry id="dates">
         <glossterm>Dates and times</glossterm>
-
         <glossdef>
           <para>All times in Heritrix are GMT assuming the clock on the
           machine Heritrix is running on is correct.</para>
-
           <para>This means that all date/time in logs are GMT, all dates and
           times shown in the WUI are GMT and any times or dates entered by the
           user need to be in GMT.</para>
@@ -3103,6 +3120,14 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
   L - Link</programlisting>
 
           <para>The discovery path of seeds is an empty string.</para>
+        </glossdef>
+      </glossentry>
+      <glossentry id="glossary_frontier">
+        <glossterm>Frontier</glossterm>
+        <glossdef>
+        <para>A Frontier is a plug-able module in Heritrix that maintains the
+        internal state of the crawl.  See 
+          (<xref linkend="frontier" />).
         </glossdef>
       </glossentry>
 
