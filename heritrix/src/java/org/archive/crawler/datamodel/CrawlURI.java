@@ -399,12 +399,21 @@ public class CrawlURI extends CandidateURI
         String annotations;
         if(alist.containsKey(A_ANNOTATIONS)) {
             annotations = alist.getString(A_ANNOTATIONS);
+            annotations += ","+annotation;
         } else {
-            annotations = "";
+            annotations = annotation;
         }
         
-        annotations += ","+annotation;
         alist.putString(A_ANNOTATIONS,annotations);
+    }
+    
+    public String getAnnotations() {
+        if(alist.containsKey(A_ANNOTATIONS)) {
+            return alist.getString(A_ANNOTATIONS);
+        } else {
+            return "";
+        }
+
     }
 //	/**
 //	 * @param sourceCuri
@@ -555,5 +564,15 @@ public class CrawlURI extends CandidateURI
      */
     public void linkExtractorFinished(){
         linkExtractorFinished = true;
+    }
+
+    /**
+     * Notify CrawlURI it is about to be logged; opportunity
+     * for self-annotation
+     */
+    public void aboutToLog() {
+        if (fetchAttempts>1) {
+            addAnnotation(fetchAttempts+"t");
+        }
     }
 }
