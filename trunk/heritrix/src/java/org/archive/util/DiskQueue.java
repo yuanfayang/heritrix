@@ -130,6 +130,10 @@ public class DiskQueue implements Queue, Serializable {
         // tailStream.flush(); // ??
         isInitialized = true;
     }
+    
+    protected boolean isInitialized(){
+    	return isInitialized;
+    }
 
     /**
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
@@ -201,13 +205,18 @@ public class DiskQueue implements Queue, Serializable {
             try {
                 if(headStream != null) headStream.close();
                 if(tailStream != null) tailStream.close();
-                bytes.close();
-                // bytes.discard();
+                //bytes.close();
+                bytes.discard();
             } catch (IOException e) {
                 // TODO: convert to runtime?
                 e.printStackTrace();
             }
+            bytes = null;
         }
+        isInitialized = false; 
+        // If this object is used again after this method is invoked, the 
+        // late initialization will be reinvoked aquiring these resources
+        // again.
     }
 
     /**
@@ -226,12 +235,16 @@ public class DiskQueue implements Queue, Serializable {
         // There are no levels of storage so we will return all items.
         Iterator it = null;
         
-        try {
-            it = new DiskQueueIterator(bytes.getReadAllInputStream(),length);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if( isInitialized ){
+            try {
+                it = new DiskQueueIterator(bytes.getReadAllInputStream(),length);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } 
+        if( it == null ){
             it = new Iterator(){
-                public void remove() { /** unimplemented */ }
+                public void remove() { throw new UnsupportedOperationException(); }
                 public boolean hasNext() { return false; }
                 public Object next() { throw new NoSuchElementException(); }
             };        

@@ -91,6 +91,19 @@ public class DiskBackedQueue implements Queue, Serializable {
         }
         Object o = headQ.dequeue();
         logger.finest(name+"("+length()+"): "+o);
+        
+      	if(length()<=headMax/4 && tailQ.isInitialized()){
+      		// Currently less then a quarter of what can fit in the memory cache
+            // is left in the queue. Flush out the items on disk and close the
+            // files to free up file handles.
+        	if(tailQ.isEmpty() == false){
+      			fillHeadQ();
+            }
+            if(tailQ.isEmpty()){
+                tailQ.release();
+            }
+        }
+        
         return o;
     }
 
