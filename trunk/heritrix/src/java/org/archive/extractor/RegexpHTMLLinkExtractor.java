@@ -42,8 +42,9 @@ import org.archive.util.TextUtils;
  * Basic link-extraction, from an HTML content-body,
  * using regular expressions.
  *
- * @author gojomo
+ * ROUGH DRAFT IN PROGRESS / incomplete... untested...
  *
+ * @author gojomo
  */
 public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
     private static Logger logger =

@@ -25,6 +25,9 @@
 package org.archive.extractor;
 
 /**
+ * Interface indicating an object can efficiently provide a 
+ * (perhaps cached or simulated) CharSequence version of itself.
+ * 
  * @author gojomo
  */
 public interface CharSequenceProvider {

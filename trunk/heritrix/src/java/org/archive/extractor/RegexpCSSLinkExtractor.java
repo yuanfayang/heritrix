@@ -3,9 +3,9 @@
  *
  * $Id$
  *
- * Created on Jan 6, 2004
+ * Created on Mar 29, 2005
  *
- * Copyright (C) 2004 Internet Archive.
+ * Copyright (C) 2005 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -47,7 +47,9 @@ import org.archive.util.TextUtils;
  * the style sheet, not relative to the document. <a href="http://www.w3.org/TR/REC-CSS1#url">
  * Source: www.w3.org</a>
  *
- * @author Igor Ranitovic
+ * ROUGH DRAFT IN PROGRESS / incomplete... untested... major changes likely
+ *
+ * @author igor gojomo
  *
  **/
 

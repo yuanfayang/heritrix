@@ -37,6 +37,8 @@ import org.archive.crawler.extractor.Link;
  * Abstract superclass providing utility methods for LinkExtractors which
  * would prefer to work on a CharSequence rather than a stream.
  *
+ * ROUGH DRAFT IN PROGRESS / incomplete... untested... 
+ * 
  * @author gojomo
  */
 public abstract class CharSequenceLinkExtractor implements LinkExtractor {
