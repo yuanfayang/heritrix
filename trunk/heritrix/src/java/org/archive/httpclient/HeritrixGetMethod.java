@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.util.HttpRecorder;
@@ -77,6 +78,14 @@ public class HeritrixGetMethod extends GetMethod
      */
     private HttpRecorder httpRecorder = null;
     
+    /**
+     * Save around so can force close.
+     * 
+     * See [ 922080 ] IllegalArgumentException (size is wrong).
+     * https://sourceforge.net/tracker/?func=detail&aid=922080&group_id=73833&atid=539099
+     */
+    private HttpConnection connection = null;
+    
     
 	public HeritrixGetMethod(String uri, HttpRecorder recorder)
     {
@@ -92,8 +101,23 @@ public class HeritrixGetMethod extends GetMethod
 		super.readResponseBody(state, connection);
 	}
     
+    
     protected boolean shouldCloseConnection(HttpConnection conn)
     {
+        // Save off the connection so we can close it on our way out in case
+        // httpclient fails to (We're not supposed to have access to the 
+        // underlying connection object; am only violating contract because
+        // see cases where httpclient is skipping out w/o cleaning up 
+        // after itself). This is second attempt at catching the connection used
+        // fetching.  First is above in the execute method override.  
+        // 
+        // If there's been a shortcircuit of the connection close, this method
+        // most likely won't be called and I won't get a connection to close.
+        // Means this bit of code is of little use but leaving it here anyways.
+        if (conn != this.connection) {
+            this.connection = conn;
+        }
+        
         // Always close connection after each request. As best I can tell, this
         // is superfluous -- we've set our client to be HTTP/1.0.  Doing this
         // out of paranoia.
@@ -102,6 +126,34 @@ public class HeritrixGetMethod extends GetMethod
     
     public void releaseConnection()
     {
-        super.releaseConnection();
+        try {
+            super.releaseConnection();
+        }
+        
+        finally {
+            // Calling isOpen, makes httpclient do a lookup on the connection.
+            // If something bad happened during the releaseConnection above,
+            /// it will usually call close itself inside in the isOpen -- 
+            // the close() won't get called but the wished-for effect will 
+            // have occurred.
+            if (this.connection != null) {
+                if (this.connection.isOpen()) {
+                    this.connection.close();
+                }
+                this.connection = null;
+            }
+        }
+    }
+
+    public int execute(HttpState state, HttpConnection conn)
+            throws HttpException, HttpRecoverableException, IOException
+    {
+        // Save off the connection so we can close it on our way out in case
+        // httpclient fails to (We're not supposed to have access to the 
+        // underlying connection object; am only violating contract because
+        // see cases where httpclient is skipping out w/o cleaning up 
+        // after itself).
+        this.connection = conn;
+        return super.execute(state, conn);
     }
 }
