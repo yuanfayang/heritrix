@@ -113,6 +113,15 @@ to <literal>stringList</literal>):
         check for corruption.
         </para>
       </sect3>
+      <sect3 id="1149470">
+        <title>DNS lookups fail (-6 in crawl.log)</title>
+        <para>
+        <ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1149470&amp;group_id=73833&amp;atid=539099">[1149470] all DNS attempts fail -6</ulink> discusses badly-formatted DNS records returned on windows platform
+        that Heritrix fails to parse and it includes a pointer to a mailing
+        list discussion of failed lookups on non-english windows.
+        The issue includes description of a workaround.
+        </para>
+      </sect3>
     </sect2>
   </sect1>
 
