@@ -73,6 +73,7 @@ import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.GenerationFileHandler;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.GateSync;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -118,10 +119,16 @@ public class CrawlController implements Serializable {
     private CrawlOrder order;
     private CrawlScope scope;
     private ProcessorChainList processorChains;
-    transient private ToePool toePool;
+    transient ToePool toePool;
     private URIFrontier frontier;
     transient private ServerCache serverCache;
     private SettingsHandler settingsHandler;
+
+    // used to hold all threads in place in OutOfMemory condition
+    private GateSync memoryGate = new GateSync();
+    private LinkedList reserveMemory;
+    private static final int RESERVE_BLOCKS = 5;
+    private static final int RESERVE_BLOCK_SIZE = 2^19; // 512K
 
     // crawl state: as requested or actual
     private String sExit;                 // exit status
@@ -249,12 +256,12 @@ public class CrawlController implements Serializable {
      * Starting from nothing, set up CrawlController and associated
      * classes to be ready for a first crawl.
      *
-     * @param settingsHandler
+     * @param sH
      * @throws InitializationException
      */
-    public void initialize(SettingsHandler settingsHandler)
+    public void initialize(SettingsHandler sH)
             throws InitializationException {
-        this.settingsHandler = settingsHandler;
+        this.settingsHandler = sH;
         manifest = new StringBuffer();
         order = settingsHandler.getOrder();
         order.setController(this);
@@ -301,6 +308,11 @@ public class CrawlController implements Serializable {
         }
 
         setupToePool();
+        
+        reserveMemory = new LinkedList();
+        for(int i = 1; i < RESERVE_BLOCKS; i++) {
+            reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
+        }
     }
 
     /**
@@ -1264,6 +1276,33 @@ public class CrawlController implements Serializable {
         // setup status listeners
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList());
+    }
+
+    /**
+     * Close the memory gate, holding any thread that
+     * tries to acquire it in place.
+     */
+    public void lockMemory() {
+        memoryGate.lock();
+    }
+
+    /**
+     * Proceed only if the memory gate has not been
+     * closed. 
+     * @throws InterruptedException
+     */
+    public void acquireMemory() throws InterruptedException {
+        memoryGate.acquire();
+    }
+
+    /**
+     * 
+     */
+    public void freeReserveMemory() {
+        if(!reserveMemory.isEmpty()) {
+            reserveMemory.removeLast();
+            System.gc();
+        }
     }
 
 }
