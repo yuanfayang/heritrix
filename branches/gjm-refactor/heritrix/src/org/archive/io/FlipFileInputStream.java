@@ -46,7 +46,9 @@ public class FlipFileInputStream extends InputStream {
 	 * 
 	 */
 	private void getNewInStream() throws FileNotFoundException, IOException {
-		inStream.close();
+		if(inStream!=null) {
+			inStream.close();
+		} 
 		inStream = new BufferedInputStream(new FileInputStream(source.getInputFile()),4096);
 	}
 

@@ -92,5 +92,18 @@ public class HttpRecorder {
 	public long getResponseContentLength() {
 		return ris.getResponseContentLength();
 	}
+
+	/**
+	 * 
+	 */
+	public void closeRecorders() {
+		try {
+			ris.closeRecorder();
+			ros.closeRecorder();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 }

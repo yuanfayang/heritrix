@@ -7,6 +7,7 @@
 package org.archive.crawler.fetcher;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
@@ -102,14 +103,18 @@ public class FetchHTTP
 		
 		HttpRecorder rec = ((ToeThread)Thread.currentThread()).getHttpRecorder();
 		get.setHttpRecorder(rec);
-
+		
+		long executeRead = 0;
+		long readFullyRead = 0;
+		
 		try {
 				
 		    // TODO: make this initial reading subject to the same
 		    // length/timeout limits; currently only the soTimeout
 		    // is effective here, once the connection succeeds
 			http.executeMethod(get);
-
+			executeRead = rec.getRecordedInput().getSize();
+			
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules
 			
@@ -123,9 +128,9 @@ public class FetchHTTP
 				logger.info(curi.getUURI().getUri()+": length limit exceeded");
 				// but, continue processing whatever was retrieved
 				// TODO: set indicator in curi
+			} finally {
+				readFullyRead = rec.getRecordedInput().getSize();
 			}
-
-			get.getHttpRecorder().close();
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.fine(
@@ -153,14 +158,18 @@ public class FetchHTTP
 			//e.printStackTrace();
 			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
 			curi.setFetchStatus(S_CONNECT_FAILED);
-		} catch (IOException e) {
+		} catch (SocketException e) {
 			logger.warning(e + " on " + curi);
-			//e.printStackTrace();
+			e.printStackTrace();
+			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
+			curi.setFetchStatus(S_CONNECT_FAILED);
+		} catch (IOException e) {
+			logger.warning(e + " on " + curi + "\n"+executeRead+":"+readFullyRead);
+			e.printStackTrace();
 			curi.setFetchStatus(S_CONNECT_FAILED);
 		} finally {
-			//controller.getKicker().cancelKick(Thread.currentThread());
+			rec.closeRecorders();
 			get.releaseConnection();
-			rec.close();
 		}
 	}
 

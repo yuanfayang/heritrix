@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	private static Logger logger = Logger.getLogger("org.archive.util.DiskLongFPSet");
-	static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
+	static final int DEFAULT_CAPACITY_POWER_OF_TWO = 4;
 	static final float DEFAULT_LOAD_FACTOR = 0.75f;
 	File disk;
 	RandomAccessFile rawRafile;
@@ -37,6 +37,9 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 		this.capacityPowerOfTwo = capacityPowerOfTwo;
 		this.loadFactor = loadFactor;
 		disk = new File(dir, name+".fps");
+		if(disk.exists()) {
+			disk.delete();
+		}
 		rawRafile = new RandomAccessFile(disk,"rw");
 		for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
 			rawRafile.writeByte(EMPTY);
@@ -57,6 +60,9 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			RandomAccessFile oldRaw = rawRafile;
 			capacityPowerOfTwo++;
 			File tmpDisk = new File(disk.getAbsolutePath()+".tmp");
+			if(tmpDisk.exists()) {
+				tmpDisk.delete();
+			}
 			rawRafile = new RandomAccessFile(tmpDisk,"rw");
 			for(long l=0;l<(1<<capacityPowerOfTwo);l++) {
 				rawRafile.writeByte(EMPTY);
@@ -80,7 +86,10 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			disk.delete();
 			if(!tmpDisk.renameTo(disk)) {
 				logger.warning("unable to switch to expanded disk file");
+			} else {
+				logger.warning("RENAME SUCCESSFUL");
 			}
+			// disk = new File(disk.getAbsolutePath());
 			rawRafile=new RandomAccessFile(disk,"rw");
 		} catch (IOException e) {
 			// TODO Convert to runtime exception

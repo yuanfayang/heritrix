@@ -170,4 +170,11 @@ public class RecordingInputStream extends InputStream {
 		return recordingOutputStream.getResponseContentLength();
 	}
 
+	/**
+	 * 
+	 */
+	public void closeRecorder() throws IOException {
+		recordingOutputStream.close();
+	}
+
 }
