@@ -30,6 +30,8 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 
+import org.archive.crawler.datamodel.CrawlURI;
+
 /**
  * 
  * @author John Erik Halse
@@ -49,6 +51,7 @@ public class MapType extends ComplexType {
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
      */
     public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
+        settings = settings == null ? globalSettings() : settings;
         if(!(type instanceof MapType)) {
             return super.addElement(settings, type);
         } else {
@@ -84,13 +87,23 @@ public class MapType extends ComplexType {
         }
     };
 
-    public Iterator iterator(CrawlerSettings settings) {
-        settings = settings == null ? globalSettings() : settings;
+    public Iterator iterator(CrawlURI uri) {
+        CrawlerSettings settings;
+        try {
+            settings = uri.getServer().getSettings();
+        } catch (NullPointerException e) {
+            settings = globalSettings();
+        }
         return new It(settings);
     }
     
-    public boolean isEmpty(CrawlerSettings settings) {
-        settings = settings == null ? globalSettings() : settings;
+    public boolean isEmpty(CrawlURI uri) {
+        CrawlerSettings settings;
+        try {
+            settings = uri.getServer().getSettings();
+        } catch (NullPointerException e) {
+            settings = globalSettings();
+        }
         return !settings.getData(getAbsoluteName()).hasAttributes();
     }
 }
