@@ -102,14 +102,25 @@ public class CrawlController {
 
     // crawl state: as requested or actual
     private String sExit;                  // exit status
-    private boolean shouldCrawl;
-    private boolean shouldPause;
-    private boolean paused = false;
-
+    private static final Object NASCENT = "NASCENT";
+    private static final Object RUNNING = "RUNNING";
+    private static final Object PAUSING = "PAUSING";
+    private static final Object PAUSED = "PAUSED";
+    private static final Object STOPPING = "STOPPING";
+    private static final Object FINISHED = "FINISHED";
+    private Object state = NASCENT;
+    
     // disk paths
     private File disk;        // overall disk path
+    private File logsDisk;    // for log files 
+    private File checkpointsDisk;    // for checkpoint files 
     private File stateDisk;   // for temp files representing state of crawler (eg queues)
     private File scratchDisk; // for discardable temp files (eg fetch buffers)
+    
+    // crawl limits
+    private long maxBytes;
+    private long maxDocument;
+    private long maxTime;
     
     /** 
      * A manifest of all files used/created during this crawl. Written to file
@@ -207,7 +218,7 @@ public class CrawlController {
         order.setController(this);
         sExit = "";
 
-        if (checkUserAgentAndFrom(order) == false) {
+        if (order.checkUserAgentAndFrom() == false) {
             String message = "You must set the User-Agent and From HTTP" +
             " header values to acceptable strings. \n" +
             " User-Agent: [software-name](+[info-url])[misc]\n" +
@@ -505,7 +516,23 @@ public class CrawlController {
         = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
         disk.mkdirs();
-        
+       
+        String logsDiskPath
+        = (String) order.getAttribute(null, CrawlOrder.ATTR_LOGS_PATH);
+        logsDisk = new File(logsDiskPath);
+        if (!logsDisk.isAbsolute()) {
+            logsDisk = new File(disk.getPath(), logsDiskPath);
+        }
+        logsDisk.mkdirs();
+
+        String checkpointsDiskPath
+        = (String) order.getAttribute(null, CrawlOrder.ATTR_LOGS_PATH);
+        checkpointsDisk = new File(logsDiskPath);
+        if (!checkpointsDisk.isAbsolute()) {
+            checkpointsDisk = new File(disk.getPath(), checkpointsDiskPath);
+        }
+        checkpointsDisk.mkdirs();
+
         String stateDiskPath
         = (String) order.getAttribute(null, CrawlOrder.ATTR_STATE_PATH);
         stateDisk = new File(stateDiskPath);
@@ -543,84 +570,55 @@ public class CrawlController {
     }
 
     private void setupLogs() throws IOException {
-        String diskPath = disk.getAbsolutePath() + File.separatorChar;
+        String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
 
-        uriProcessing = Logger.getLogger(LOGNAME_CRAWL+"."+diskPath);
-        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS+"."+diskPath);
-        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS+"."+diskPath);
-        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS+"."+diskPath);
-        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS+"."+diskPath);
-        recover = Logger.getLogger(LOGNAME_RECOVER+"."+diskPath);
+        uriProcessing = Logger.getLogger(LOGNAME_CRAWL+"."+logsPath);
+        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS+"."+logsPath);
+        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS+"."+logsPath);
+        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS+"."+logsPath);
+        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS+"."+logsPath);
+        recover = Logger.getLogger(LOGNAME_RECOVER+"."+logsPath);
 
-        FileHandler up = new FileHandler(diskPath + LOGNAME_CRAWL + ".log");
-        addToManifest(diskPath + LOGNAME_CRAWL + ".log", MANIFEST_LOG_FILE, true);
+        FileHandler up = new FileHandler(logsPath + LOGNAME_CRAWL + ".log");
+        addToManifest(logsPath + LOGNAME_CRAWL + ".log", MANIFEST_LOG_FILE, true);
         up.setFormatter(new UriProcessingFormatter());
         uriProcessing.addHandler(up);
         uriProcessing.setUseParentHandlers(false);
 
         FileHandler cerr =
-            new FileHandler(diskPath + LOGNAME_RUNTIME_ERRORS + ".log");
-        addToManifest(diskPath + LOGNAME_RUNTIME_ERRORS + ".log", MANIFEST_LOG_FILE, true);
+            new FileHandler(logsPath + LOGNAME_RUNTIME_ERRORS + ".log");
+        addToManifest(logsPath + LOGNAME_RUNTIME_ERRORS + ".log", MANIFEST_LOG_FILE, true);
         cerr.setFormatter(new RuntimeErrorFormatter());
         runtimeErrors.addHandler(cerr);
         runtimeErrors.setUseParentHandlers(false);
 
         FileHandler lerr =
-            new FileHandler(diskPath + LOGNAME_LOCAL_ERRORS + ".log");
-        addToManifest(diskPath + LOGNAME_LOCAL_ERRORS + ".log", MANIFEST_LOG_FILE, true);
+            new FileHandler(logsPath + LOGNAME_LOCAL_ERRORS + ".log");
+        addToManifest(logsPath + LOGNAME_LOCAL_ERRORS + ".log", MANIFEST_LOG_FILE, true);
         lerr.setFormatter(new LocalErrorFormatter());
         localErrors.addHandler(lerr);
         localErrors.setUseParentHandlers(false);
 
         FileHandler uerr =
-            new FileHandler(diskPath + LOGNAME_URI_ERRORS + ".log");
-        addToManifest(diskPath + LOGNAME_URI_ERRORS + ".log", MANIFEST_LOG_FILE, true);
+            new FileHandler(logsPath + LOGNAME_URI_ERRORS + ".log");
+        addToManifest(logsPath + LOGNAME_URI_ERRORS + ".log", MANIFEST_LOG_FILE, true);
         uerr.setFormatter(new UriErrorFormatter());
         uriErrors.addHandler(uerr);
         uriErrors.setUseParentHandlers(false);
 
         FileHandler stat =
-            new FileHandler(diskPath + LOGNAME_PROGRESS_STATISTICS + ".log");
-        addToManifest(diskPath + LOGNAME_PROGRESS_STATISTICS + ".log", MANIFEST_LOG_FILE, true);
+            new FileHandler(logsPath + LOGNAME_PROGRESS_STATISTICS + ".log");
+        addToManifest(logsPath + LOGNAME_PROGRESS_STATISTICS + ".log", MANIFEST_LOG_FILE, true);
         stat.setFormatter(new StatisticsLogFormatter());
         progressStats.addHandler(stat);
         progressStats.setUseParentHandlers(false);
 
-        FileHandler reco = new FileHandler(diskPath + LOGNAME_RECOVER + ".log");
-        addToManifest(diskPath + LOGNAME_RECOVER + ".log", MANIFEST_LOG_FILE, false);
+        FileHandler reco = new FileHandler(logsPath + LOGNAME_RECOVER + ".log");
+        addToManifest(logsPath + LOGNAME_RECOVER + ".log", MANIFEST_LOG_FILE, false);
         reco.setFormatter(new PassthroughFormatter());
         recover.addHandler(reco);
         recover.setUseParentHandlers(false);
-
     }
-
-    // must include a bot name and info URL
-    private static String ACCEPTABLE_USER_AGENT =
-        "\\S+.*\\(\\+http://\\S*\\).*";
-    // must include a contact email address
-    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
-
-    /**
-     * Checks if the User Agent and From field are set 'correctly' in
-     * the specified Crawl Order.
-     *
-     * @param order The Crawl Order to check
-     * @return true if it passes, false otherwise.
-     */
-    public static boolean checkUserAgentAndFrom(CrawlOrder order) {
-        // don't start the crawl if they're using the default user-agent
-        String userAgent = order.getUserAgent(null);
-        String from = order.getFrom(null);
-        return userAgent.matches(ACCEPTABLE_USER_AGENT)
-            && from.matches(ACCEPTABLE_FROM);
-    }
-
-    /**
-     * @param thread
-     */
-//    public void toeFinished(ToeThread thread) {
-//        // for now do nothing
-//    }
 
     /**
      * @return Object this controller is using to track crawl statistics
@@ -630,14 +628,15 @@ public class CrawlController {
     }
 
     /**
-     *
+     * Operator requested crawl begin 
      */
     public void requestCrawlStart() {
         runProcessorInitialTasks();
         
         // assume Frontier state already loaded
-        shouldCrawl = true;
-        shouldPause = false;
+        //shouldCrawl = true;
+        //shouldPause = false;
+        state = RUNNING;
         logger.info("Should start Crawl");
 
         sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
@@ -654,6 +653,7 @@ public class CrawlController {
 
     private void completeStop() {
         // Ok, now we are ready to exit.
+        state = FINISHED;
         while (registeredCrawlStatusListeners.size() > 0) {
             // Let the listeners know that the crawler is finished.
             ((CrawlStatusListener)
@@ -726,7 +726,7 @@ public class CrawlController {
     private synchronized void completePause() {   
         Iterator iterator;
 
-        paused = true;
+        state = PAUSED;
         // Tell everyone that we have paused
         logger.info("Crawl job paused");
         iterator = registeredCrawlStatusListeners.iterator();
@@ -736,62 +736,53 @@ public class CrawlController {
         }
     }
     
-    private boolean shouldCrawl() {
-        boolean frontierEmpty = frontier.isEmpty();
-        if (frontierEmpty) {
-            sExit = CrawlJob.STATUS_FINISHED;
-        }
-        //if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0)) {
-        long maxBytes = 0;
-        try {
-            maxBytes =
-                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_BYTES_DOWNLOAD))
-                    .longValue();
-        } catch (Exception e) {
-        }
-        long maxDocument = 0;
-        try {
-            maxDocument =
-                ((Long) order
-                    .getAttribute(CrawlOrder.ATTR_MAX_DOCUMENT_DOWNLOAD))
-                    .longValue();
-        } catch (Exception e) {
-        }
-        long maxTime = 0;
-        try {
-            maxTime =
-                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_TIME_SEC))
-                    .longValue();
-        } catch (Exception e) {
+    private boolean shouldContinueCrawling() {
+        if (frontier.isEmpty()) {
+            sExit = CrawlJob.STATUS_FINISHED; 
+            return false;
         }
 
         if (maxBytes > 0 && frontier.totalBytesWritten() >= maxBytes) {
             // Hit the max byte download limit!
             sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
-            shouldCrawl = false;
+            return false;
         } else if (
             maxDocument > 0
                 && frontier.successfullyFetchedCount() >= maxDocument) {
             // Hit the max document download limit!
             sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
-            shouldCrawl = false;
+            return false;
         } else if (
             maxTime > 0 && statistics.crawlDuration() >= maxTime * 1000) {
             // Hit the max byte download limit!
             sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
-            shouldCrawl = false;
+            return false; 
         }
-        return shouldCrawl && (frontier.isEmpty()==false);
+        return state == RUNNING;
     }
 
+    /**
+     * Operator requested a checkpoint
+     * @return name of checkpoint on success, or null on failure
+     */
+    public synchronized String requestCrawlCheckpoint() {
+        // TODO implement
+        return null;
+    }
+    
+    /**
+     * Operator requested for crawl to stop.
+     */
     public synchronized void requestCrawlStop() {
+        if (state == STOPPING || state == FINISHED) {
+            return;
+        }
         sExit = CrawlJob.STATUS_ABORTED;
-        shouldCrawl = false;
-
         beginCrawlStop();
     }
 
     private void beginCrawlStop() {
+        state = STOPPING; 
         // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
         Iterator iterator = registeredCrawlStatusListeners.iterator();
         while (iterator.hasNext()) {
@@ -803,13 +794,13 @@ public class CrawlController {
      * Stop the crawl temporarly.
      */
     public synchronized void requestCrawlPause() {
-        if (shouldPause) {
+        if (state == PAUSING || state == PAUSED) {
             // Already about to pause
             return;
         }
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
-        shouldPause = true;
-        notifyAll();
+        state = PAUSING;
+
         logger.info("Pausing crawl job ...");
 
         // Notify listeners that we are going to pause
@@ -824,20 +815,19 @@ public class CrawlController {
      * @return true if paused
      */
     public boolean isPaused() {
-        return paused;
+        return state == PAUSED;
     }
 
     /**
      * Resume crawl from paused state
      */
     public synchronized void requestCrawlResume() {
-        if (shouldPause==false) {
+        if (state != PAUSING && state != PAUSED) {
             // Can't resume if not been told to pause
             return;
         }
 
-        shouldPause = false;
-        paused = false;
+        state = RUNNING;
         toePool.setShouldPause(false);
 
         logger.info("Crawl job resumed");
@@ -855,6 +845,9 @@ public class CrawlController {
      * @return Active toe thread count.
      */
     public int getActiveToeCount() {
+        if (toePool==null) {
+            return 0;
+        }
         return toePool.getActiveToeCount();
     }
 
@@ -1006,6 +999,29 @@ public class CrawlController {
             caUri.setSchedulingDirective(CandidateURI.HIGH);
             frontier.schedule(caUri);
         }
+        // update thresholds
+        try {
+            maxBytes =
+                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_BYTES_DOWNLOAD))
+                    .longValue();
+        } catch (Exception e) {
+            maxBytes = 0;
+        }
+        try {
+            maxDocument =
+                ((Long) order
+                    .getAttribute(CrawlOrder.ATTR_MAX_DOCUMENT_DOWNLOAD))
+                    .longValue();
+        } catch (Exception e) {
+            maxDocument = 0;
+        }
+        try {
+            maxTime =
+                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_TIME_SEC))
+                    .longValue();
+        } catch (Exception e) {
+            maxTime = 0;
+        }
     }
 
     /**
@@ -1078,19 +1094,13 @@ public class CrawlController {
      * 
      * @param thread
      */
-    public void toePausing(ToeThread thread) {
-        if (shouldPause && getActiveToeCount() == 0) {
-            completePause();
-        }
-    }
-
-    /**
-     * Note that a ToeThread is finished.
-     * @param thread
-     */
-    public void toeFinished(ToeThread thread) {
-        if(!shouldCrawl() && getActiveToeCount() == 0) {
-            completeStop();
+    public void toeChanged(ToeThread thread) {
+        if (getActiveToeCount() == 0) {
+            if (state==PAUSING) {
+                completePause();
+            } else if (state == STOPPING) {
+                completeStop();
+            }
         }
     }
 
@@ -1098,7 +1108,7 @@ public class CrawlController {
      * 
      */
     public void checkFinish() {
-        if(!shouldCrawl()) {
+        if(state == RUNNING && !shouldContinueCrawling()) {
             beginCrawlStop();
         }
     }
