@@ -84,6 +84,14 @@
 								<%=(Runtime.getRuntime().totalMemory())/1024%> Kb
 							</td>
 						</tr>
+						<tr>
+							<td>
+								<b>Max heap size:</b>
+							</td>
+							<td>
+								<%=(Runtime.getRuntime().maxMemory())/1024%> Kb
+							</td>
+						</tr>
 					</table>
 				</td>
 				<td valign="top" width="65%">
