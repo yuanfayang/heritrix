@@ -74,7 +74,7 @@ public class Processor extends CrawlerModule {
         addElementToDefinition(new SimpleType(ATTR_ENABLED,
             "Is processor enabled", new Boolean(true)));
         filters = (MapType) addElementToDefinition(new MapType(ATTR_FILTERS,
-            "Filters", Filter.class));
+            "Filters applied to this processor", Filter.class));
     }
 
     public final void process(CrawlURI curi) {

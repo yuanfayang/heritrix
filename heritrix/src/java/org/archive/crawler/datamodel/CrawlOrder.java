@@ -81,17 +81,25 @@ public class CrawlOrder extends CrawlerModule {
     /** Construct a CrawlOrder.
      */
     public CrawlOrder() {
-        super(ATTR_NAME, "Heritrix crawl order");
+        super(ATTR_NAME, "Heritrix crawl order. \nThis forms the root of " +
+                "the settings framework.");
         Type e;
         
         e = addElementToDefinition(new SimpleType(ATTR_SETTINGS_DIRECTORY,
-                "Directory where override settings are kept", "settings"));
+                "Directory where override settings are kept. \nThe settings " +
+                "for many modules can be overridden based on the domain or " +
+                "subdomain of the URI being processed. This setting specifies" +
+                " a file level directory to store those settings. The path" +
+                " is relative to the location of the global settings, unless" +
+                " an absolute path is provided.", "settings"));
         e.setOverrideable(false);
-
+        e.setExpertSetting(true);
+        
         e = addElementToDefinition(new SimpleType(ATTR_DISK_PATH,
                 "Directory relative to the crawl order where logs, arcs and"
-                        + " other run time files will be kept", "disk"));
+                        + " other run time files will be kept.", "disk"));
         e.setOverrideable(false);
+        e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_DOWNLOAD,
                 "Maximum number of bytes to download. Once this number is"
@@ -110,21 +118,27 @@ public class CrawlOrder extends CrawlerModule {
         e.setOverrideable(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_TOE_THREADS,
-                "Max number of threads processing URIs at the same time.",
+                "Maximum number of threads processing URIs at the same time.",
                 new Integer(100)));
         e.setOverrideable(false);
 
         addElementToDefinition(new CrawlScope());
 
         httpHeaders = (MapType) addElementToDefinition(new MapType(
-                ATTR_HTTP_HEADERS, "HTTP headers"));
+                ATTR_HTTP_HEADERS, "HTTP headers. \nInformation that will " +
+                        "be used when constructing the HTTP headers of " +
+                        "the crawler's HTTP requests."));
         
         httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
-                "User agent to act as",
+                "User agent to act as. \nThis field must contain a valid " +
+                "URL leading to the website of the person or organization " +
+                "responsible for this crawl.",
                 "os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"));
         
         httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
-                "Contact information", "CONTACT_EMAIL_ADDRESS_HERE"));
+                "Contact information. \nThis field must contain a valid" +
+                "e-mail address for the person or organization responsible" +
+                "for this crawl.", "CONTACT_EMAIL_ADDRESS_HERE"));
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
@@ -158,11 +172,19 @@ public class CrawlOrder extends CrawlerModule {
         e.setOverrideable(false);
 
         loggers = (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
-                "Loggers"));
+                "Statistics tracking modules. \nAny number of specialised " +
+                "statistics tracker that monitor a crawl and write logs, " +
+                "reports and/or provide information to the user interface."));
         
         e = addElementToDefinition(new SimpleType(ATTR_RECOVER_PATH,
-                "Optional recover.log to preload Frontier", ""));
+                "Optional recover.log to preload Frontier.\n A recover log " +
+                "is automatically generated during a crawl. If a crawl " +
+                "crashes it can be used to recreate the status of the crawler" +
+                " at the time of the crash to recover. This can take a long" +
+                " time in somce cases, but is usually much quicker then " +
+                "repeating a crawl.", ""));
         e.setOverrideable(false);
+        e.setExpertSetting(true);
 
     }
 
