@@ -91,7 +91,7 @@ public class KeyedQueue implements Serializable  {
     /** FROZEN: not considered as URI source until operator intervention */
     public static final Object FROZEN = "FROZEN".intern();
     /** IN_PROCESS: on hold until one or more URIs in progress are finished */
-    public static final Object BUSY = "IN_PROCESS".intern();
+    public static final Object BUSY = "BUSY".intern();
     /** SNOOZED: on hold until a specific time interval has passed */
     public static final Object SNOOZED = "SNOOZED".intern();
     /** EMPTY: eligible to supply URIs, but without any to supply */
@@ -115,6 +115,8 @@ public class KeyedQueue implements Serializable  {
     LinkedList innerStack; // topmost eligible items
     Queue innerQ; // rest of eligible items
     
+    LinkedList unqueued; // held batch of items to be queued
+    
     /**
      * Put-to-side items; not returned from normal accessors.
      */
@@ -137,6 +139,7 @@ public class KeyedQueue implements Serializable  {
         String tmpName = key;
         this.innerStack = new LinkedList();
         this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);    
+        this.unqueued = new LinkedList();
         // TODO: Currently unimplemented.  Commenting out for now because its
         // presence means extra two file descriptors per processed URI.
         // See https://sourceforge.net/tracker/?func=detail&aid=943768&group_id=73833&atid=539099
@@ -318,10 +321,10 @@ public class KeyedQueue implements Serializable  {
     /** 
      * Add an item in the default manner
      * 
+     * @param curi
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
-    public void enqueue(Object o) {
-        CrawlURI curi = (CrawlURI)o;
+    public void enqueue(CrawlURI curi) {
         if(curi.needsImmediateScheduling()) {
             enqueueHigh(curi);
         } else if (curi.needsSoonScheduling()) {
@@ -354,6 +357,7 @@ public class KeyedQueue implements Serializable  {
      * still have 'frozen' off-to-side URIs.)
      * 
      * @see org.archive.util.Queue#isEmpty()
+     * @return
      */
     public boolean isEmpty() {
         return this.innerStack.isEmpty() && this.innerQ.isEmpty();
@@ -364,6 +368,7 @@ public class KeyedQueue implements Serializable  {
      * Remove an item in the default manner
      * 
      * @see org.archive.util.Queue#dequeue()
+     * @return
      */
     public Object dequeue() {
         if (!this.innerStack.isEmpty()) {
@@ -377,6 +382,7 @@ public class KeyedQueue implements Serializable  {
      * any 'frozen' items.)
      * 
      * @see org.archive.util.Queue#length()
+     * @return
      */
     public long length() {
         return this.innerQ.length() + this.innerStack.size();
@@ -403,7 +409,9 @@ public class KeyedQueue implements Serializable  {
     /** 
      * Iterate over all available (non-frozen) items. 
      * 
+     * @param inCacheOnly
      * @see org.archive.util.Queue#getIterator(boolean)
+     * @return
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return new CompositeIterator(this.innerStack.iterator(),
@@ -413,7 +421,9 @@ public class KeyedQueue implements Serializable  {
     /** 
      * Delete items matching the supplied criterion. 
      * 
+     * @param matcher
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @return
      */
     public long deleteMatchedItems(Predicate matcher) {
         // Delete from inner queue
