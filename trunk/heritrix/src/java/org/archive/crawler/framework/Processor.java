@@ -40,9 +40,21 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * @author Gordon Mohr
  */
 public class Processor extends CrawlerModule {
-	private final static String ATTR_FILTERS = "filters";
-    private final static String ATTR_ENABLED = "enabled";
-    private final static String ATTR_POSTPROCESSOR = "postprocessor";
+    /**
+     * Key to use asking settings for filters value.
+     */
+	public final static String ATTR_FILTERS = "filters";
+    
+    /**
+     * Key to use asking settings for enabled value.
+     */
+    public final static String ATTR_ENABLED = "enabled";
+    
+    /**
+     * Key to use asking settings for postprocessor value.
+     */
+    public final static String ATTR_POSTPROCESSOR = "postprocessor";
+    
     private MapType filters;
     private Processor defaultNextProcessor = null;
 
