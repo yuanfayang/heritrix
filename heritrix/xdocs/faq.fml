@@ -106,6 +106,8 @@ Eventually. For now, the crawler is still in early development, and only if you 
         To filter out infinite document size traps, add a maximum doc.
         size filter to your crawl order.
         </p>
+        <p>See <a href="#crawl_junk">What to do when I'm crawling "junk"?</a>
+        </p>
         </answer>
       </faq>
       <faq id="oome_broadcrawl">
@@ -118,6 +120,88 @@ Eventually. For now, the crawler is still in early development, and only if you 
         </p>
         </answer>
       </faq>
+      <faq id="new_writer">
+        <question>
+        <p>Can I insert the crawl download directly into a MYSQL database instead of into an ARC file on disk while crawling?
+        </p></question>
+        <answer>
+        <p>Yes.  See <a href="http://groups.yahoo.com/group/archive-crawler/message/508">RE: [archive-crawler] Inserting information to MYSQL during crawl</a>
+        for pointers on how but also see the rest of this thread for why you
+            might rather do database insertion post-crawl rather than during.
+        </p>
+        </answer>
+      </faq>
+      <faq id="eclipse_assert">
+        <question>
+        <p>Why when running heritrix in eclipse does it complain about the
+        'assert' keyword?
+        </p></question>
+        <answer>
+        <p>
+        See <a href="http://groups.yahoo.com/group/archive-crawler/message/490">Re: [archive-crawler] Eclipse Heritrix and the assert keyword</a> and other messages in this thread.
+        </p>
+        </answer>
+      </faq>
+      <faq id="crawl_finished">
+        <question>
+        <p>Why won't my crawl finish?</p></question>
+        <answer>
+        <p>The crawl can get hung up on sites that are actually down or are non-responsive.
+        Manual intervention is necessary in such cases. 
+        Study the frontier to get a picture of what is left to be crawled.
+        Looking at the local errors log will give let you see the problems with currently
+        crawled URIs.  Along with robots.txt retries, you will probably also see
+        httpclient timeouts.
+        In general you want to look for repetition of problems with particular
+        host/URIs.</p> 
+
+
+        <p>Grepping the local errors log is a bit tricky because
+        of the shape of its content. Its recommend that you first "flatten"
+        the local errors file.  Here's an example :
+        <source>% cat  local-errors.log | tr -d \\\n | perl -pe 's/([0-9]{17} )/\n$1/g'</source>
+
+         This will remove all new lines and then add a new line in front of 17-digit dates (hopefully only 17-digit tokens followed by a space are dates.).  The result is one line per entry with a 17-digit
+         date prefix. Makes it easier to parse.
+         </p>
+
+        <p>To eliminate URIs for unresponsive hosts from the frontier queue,
+        pause the crawl and block the
+        fetch from that host by creating a new per-host setting 
+        -- an override -- in the preselector processor.</p>
+
+         <p>Also, check for any hung threads. This does not happen
+         anymore (0.8.0+). Check the threads report for threads that
+         have been active for a long time but that should not be: 
+         i.e. documents being downloaded are small in size.
+        </p>
+        <p>Once you've identified hung threads, kill and replace it.</p>
+
+        </answer>
+      </faq>
+
+      <faq id="crawl_junk">
+        <question>
+        <p>What do I do to avoid crawling "junk"?</p></question>
+        <answer>
+         <p>In the past crawls were stopped when we ran into "junk."  
+         An example of what we mean by "junk" is the crawler stuck
+         in a web calender crawling the year 2020.  Nowadays, if 
+         "junk" is detected, we'll pause the crawl and set filters
+         to eliminate "junk" and then resume (Eliminated URIs will
+         show in the logs.  Helps when doing post-crawl analysis).
+         </p>
+         <p>To help guard against the crawling of "junk" setup 
+         the pathological and path-depth filters.
+         This will also help the crawler avoid <a href="#traps">traps</a>.
+         Recommended values for pathological filter is 3 repetitions of same
+         pattern -- e.g. /images/images/images/... -- and for path-depth, a
+         value of 20.
+         </p>
+
+        </answer>
+      </faq>
+
   </part>
 
   <part id="references">
