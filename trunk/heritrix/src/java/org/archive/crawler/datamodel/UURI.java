@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* UURI
+ *
+ * $Id$
+ *
+ * Created on Apr 18, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,407 +21,471 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * URI.java
- * Created on Apr 18, 2003
- *
- * $Header$
  */
 package org.archive.crawler.datamodel;
 
-import java.io.Serializable;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.URIException;
 import org.archive.util.TextUtils;
 
+
 /**
- * Usable URI: a legal URI for our purposes.
+ * Usable URI: A heritrix spin on {@link java.net.URI}.
  *
- * These instances will always have been normalized
- * (massaged in ways that by spec and in practice,
- * do not change the URI's meaning or function) and
- * rehabilitated (patched in riskless or necessary
- * ways to be legal, eg escaping spaces).
+ * This class is an implementation of RFC2396 codifying our experience of
+ * URIs out in the wild.  Often the below is a looser implementation of RFC2396
+ * {@link java.net.URI}.  At other times it fixes quirky {@link java.net.URI}
+ * behaviors.  We've made this class because {@link java.net.URI} is not
+ * subclassable -- its final -- and its unlikely URI will change any time soon 
+ * (See Gordon's considered petition here:
+ * <a href="http://developer.java.sun.com/developer/bugParade/bugs/4939847.html">java.net.URI
+ * should have loose/tolerant/compatibility option (or allow reuse)</a>).
+ * 
+ * <p> Instances of this class are always normalized -- massaged in
+ * ways that by spec and in practice, do not change the URI's meaning or
+ * function: i.e. we call {@link #normalize()} is called in the constructor --
+ * and rehabilitated (patched in riskless or necessary ways to be
+ * legal, eg escaping spaces).  Other things done are the removal of any 
+ * '..' if its first thing in the path as per IE, removal of trailing
+ * whitespace, conversion of backslash to forward slash. We also fail URIs if
+ * they are longer than IE's allowed maximum length.
+ * 
+ * <p>See <a href="http://sourceforge.net/tracker/?func=detail&aid=910120&group_id=73833&atid=539099">[ 910120 ]
+ * java.net.URI#getHost fails when leading digit</a>,
+ * <a href="http://sourceforge.net/tracker/?func=detail&aid=788277&group_id=73833&atid=539099">[ 788277 ]
+ * Doing separate DNS lookup for same host</a>,
+ * <a href="http://sourceforge.net/tracker/?func=detail&aid=808270&group_id=73833&atid=539099">[ 808270 ]
+ * java.net.URI chokes on hosts_with_underscores</a>,
+ * <a href="http://sourceforge.net/tracker/?func=detail&aid=874220&group_id=73833&atid=539099">[ 874220 ]
+ * NPE in java.net.URI.encode</a>,
+ * <a href="http://sourceforge.net/tracker/?func=detail&aid=927940&group_id=73833&atid=539099">[ 927940 ]
+ * java.net.URI parses %20 but getHost null</a> to mention a few of the problems
+ * we've had with native java URI class.
  *
  * @author gojomo
- *
+ * @author stack
+ * 
+ * @see org.apache.commons.httpclient.URI
  */
-public class UURI implements Serializable {
-    // for now, consider URIs too long for IE as illegal
-    // TODO: move this policy elsewhere
-    private static int DEFAULT_MAX_URI_LENGTH = 2083;
-
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.datamodel.UURI");
-
-    protected java.net.URI uri;
-    protected String uriString;
-
-    public static UURI createUURI(String s) throws URISyntaxException {
-        return new UURI(normalize(s));
-    }
-
+public class UURI extends URI {
+    
     /**
-     * @param u
-     */
-    private UURI(URI u) throws URISyntaxException {
-        uri = u;
-        try {
-            uriString = u.toASCIIString();
-        } catch (NullPointerException npe) {
-            throw new URISyntaxException(u.toString(),"URI.encode NPE");
-        }
-        if (uriString.length()>DEFAULT_MAX_URI_LENGTH) {
-            throw new URISyntaxException(uriString,"Too Long");
-        }
-    }
-
-
-
-    /**
-     * Return a "normalized" String for the given String.
-     * This is NOT the same as Alexa's canonicalization.
+     * RFC 2396 regex.
+     * 
+     * From the RFC Appendix B:
+     * <pre>
+     * URI Generic Syntax                August 1998
      *
-     * Normalization cleans a URI to the maximum extent
-     * possible without regard to what it would return
-     * if fetched, or any special-casing based on past
-     * observed behavior.
+     * B. Parsing a URI Reference with a Regular Expression
      *
-     * For example, the URI scheme is case-flattened,
-     * hostnames are case-flattened, default ports are
-     * removed, and path-info is regularized.
-     * @param u
-     * @return A "normalized" String for the given String.
-     * This is NOT the same as Alexa's canonicalization.
-     * @throws URISyntaxException
-     */
-     public static URI normalize(String u) throws URISyntaxException {
-        return normalize(u,null);
-    }
-
-    static final String DOTDOT = "^(/\\.\\.)+";
-
-    static final String SLASH = "/";
-    static final String HTTP = "http";
-    static final String HTTP_PORT = ":80";
-    static final String HTTPS = "https";
-    static final String HTTPS_PORT = ":443";
-    static final String DOT = ".";
-    static final String EMPTY_STRING = "";
-     
-    /**
-     * Normalize and derelativize
+     * As described in Section 4.3, the generic URI syntax is not sufficient
+     * to disambiguate the components of some forms of URI.  Since the
+     * "greedy algorithm" described in that section is identical to the
+     * disambiguation method used by POSIX regular expressions, it is
+     * natural and commonplace to use a regular expression for parsing the
+     * potential four components and fragment identifier of a URI reference.
      *
-     * @param s absolute or relative URI string
-     * @param parent URI to use for derelativizing; may be null
-     * @return A normalized and derelativized URL.
-     * @throws URISyntaxException
+     * The following line is the regular expression for breaking-down a URI
+     * reference into its components.
+     *
+     * ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
+     * 12            3  4          5       6  7        8 9
+     *
+     * The numbers in the second line above are only to assist readability;
+     * they indicate the reference points for each subexpression (i.e., each
+     * paired parenthesis).  We refer to the value matched for subexpression
+     * <n> as $<n>.  For example, matching the above expression to
+     * 
+     * http://www.ics.uci.edu/pub/ietf/uri/#Related
+     * 
+     * results in the following subexpression matches:
+     * 
+     * $1 = http:
+     * $2 = http
+     * $3 = //www.ics.uci.edu
+     * $4 = www.ics.uci.edu
+     * $5 = /pub/ietf/uri/
+     * $6 = <undefined>
+     * $7 = <undefined>
+     * $8 = #Related
+     * $9 = Related
+     * 
+     * where <undefined> indicates that the component is not present, as is
+     * the case for the query component in the above example.  Therefore, we
+     * can determine the value of the four components and fragment as
+     * 
+     * scheme    = $2
+     * authority = $4
+     * path      = $5
+     * query     = $7
+     * fragment  = $9
+     * </pre>
+     * 
+     * <p>Below differs from the rfc regex in that it has java escaping of
+     * regex characters and we allow a URI made of a fragment only (Added extra
+     * group so indexing is off by one after scheme).
      */
-    public static URI normalize(String s, URI parent)
-        throws URISyntaxException {
-
-        if (s==null) {
-            throw new URISyntaxException("n/a","Is null");
-        }
-        // TODO: stop creating temporary instances like a drunken sailor
-        String es = patchEscape(s);
-        URI u = new URI(es);
-        if (!u.isAbsolute()) {
-            if (parent==null) {
-                throw new URISyntaxException(
-                    s, "No parent supplied for relative URI.");
-            }
-            u = parent.resolve(es);
-        }
-        
-
-        String scheme = u.getScheme().toLowerCase();
-        if (u.getRawSchemeSpecificPart().startsWith(SLASH)) {
-            // hierarchical URI
-            // factor out path cruft, according to official spec
-            u = u.normalize(); 
-            // now, go further and eliminate extra '..' segments
-            String fixedPath = 
-                TextUtils.replaceFirst(DOTDOT, u.getPath(), EMPTY_STRING);
-                
-            if (EMPTY_STRING.equals(fixedPath)) {
-                // ensure root URLs end with '/'
-                fixedPath = SLASH;
-            }
-            
-            String canonizedAuthority = u.getAuthority();
-            if(canonizedAuthority==null) {
-                //logger.warning("bad URI: "+s+" relative to "+parent);
-                //return null;
-                throw new URISyntaxException(
-                    s, "uninterpretable relative to " + parent);
-            }
-
-            // TODO: fix the fact that this might clobber case-sensitive
-            // user-info
-            if (scheme.equals(HTTP)) {
-                // case-flatten host, remove default port
-                canonizedAuthority = canonizedAuthority.toLowerCase();
-                // strip default port
-                if (canonizedAuthority.endsWith(HTTP_PORT)) {
-                    canonizedAuthority =
-                        canonizedAuthority.substring(
-                            0,
-                            canonizedAuthority.length() - 3);
-                }
-                // chop trailing '.'
-                if (canonizedAuthority.endsWith(DOT)) {
-                    canonizedAuthority =
-                        canonizedAuthority.substring(
-                            0,
-                            canonizedAuthority.length() - 1);
-                }
-                // chop leading '.'
-                if (canonizedAuthority.startsWith(DOT)) {
-                    canonizedAuthority =
-                        canonizedAuthority.substring(
-                            1,
-                            canonizedAuthority.length());
-                }
-
-            } else if (scheme.equals(HTTPS)) {
-                // case-flatten host, remove default port
-                canonizedAuthority = canonizedAuthority.toLowerCase();
-                if (canonizedAuthority.endsWith(HTTPS_PORT)) {
-                    canonizedAuthority =
-                        canonizedAuthority.substring(
-                            0,
-                            canonizedAuthority.length() - 4);
-                }
-            }
-            u = new URI(scheme, // case-flatten scheme
-                        canonizedAuthority, // case and port flatten
-                        fixedPath, // leave alone
-                        u.getQuery(), // leave alone
-                        null); // drop fragment
-        } else {
-            // opaque URI
-            u = new URI(scheme, // case-flatten scheme
-                        u.getSchemeSpecificPart(), // leave alone
-                        null); // drop fragment
-        }
-
-        return u;
-    }
-
-    static final String NBSP = "\\xA0";
-    static final String SPACE = " ";
-    static final String ESCAPED_SPACE = "%20";
-    static final String PIPE = "|";
-    static final String PIPE_PATTERN = "\\|";
-    static final String ESCAPED_PIPE = "%7C";
-    static final String CIRCUMFLEX = "^";
-    static final String CIRCUMFLEX_PATTERN = "\\^";
-    static final String ESCAPED_CIRCUMFLEX = "%5E";
-    static final String QUOT = "\"";
-    static final String ESCAPED_QUOT = "%22";
-    static final String SQUOT = "'";
-    static final String ESCAPED_SQUOT = "%27";
-    static final String APOSTROPH = "`";
-    static final String ESCAPED_APOSTROPH = "%60";
-    static final String LSQRBRACKET = "[";
-    static final String LSQRBRACKET_PATTERN = "\\[";
-    static final String ESCAPED_LSQRBRACKET = "%5B";
-    static final String RSQRBRACKET = "]";
-    static final String RSQRBRACKET_PATTERN = "\\]";
-    static final String ESCAPED_RSQRBRACKET = "%5D";
-    static final String LCURBRACKET = "{";
-    static final String LCURBRACKET_PATTERN = "\\{";
-    static final String ESCAPED_LCURBRACKET = "%7B";
-    static final String RCURBRACKET = "}";
-    static final String RCURBRACKET_PATTERN = "\\}";
-    static final String ESCAPED_RCURBRACKET = "%7D";
-    static final String BACKSLASH = "\\";
-    static final String BACKSLASH_PATTERN = "\\\\";
-    static final String ESCAPED_BACKSLASH = "%5C";
-    static final String NEWLINE = "\n+|\r+";
-    static final String IMPROPERESC_REPLACE = "%25$1";
-    static final String IMPROPERESC = 
+    final static Pattern RFC2396REGEX = Pattern.compile(
+        "^(([^:/?#]+):)?((//([^/?#]*))?([^?#]*)(\\?([^#]*))?)?(#(.*))?");
+    
+    public static final String DOTDOT = "^(/\\.\\.)+";
+    public static final String SLASH = "/";
+    public static final String HTTP = "http";
+    public static final String HTTP_PORT = ":80";
+    public static final String HTTPS = "https";
+    public static final String HTTPS_PORT = ":443";
+    public static final String DOT = ".";
+    public static final String EMPTY_STRING = "";
+    public static final String NBSP = "\\xA0";
+    public static final String SPACE = " ";
+    public static final String ESCAPED_SPACE = "%20";
+    public static final String PIPE = "|";
+    public static final String PIPE_PATTERN = "\\|";
+    public static final String ESCAPED_PIPE = "%7C";
+    public static final String CIRCUMFLEX = "^";
+    public static final String CIRCUMFLEX_PATTERN = "\\^";
+    public static final String ESCAPED_CIRCUMFLEX = "%5E";
+    public static final String QUOT = "\"";
+    public static final String ESCAPED_QUOT = "%22";
+    public static final String SQUOT = "'";
+    public static final String ESCAPED_SQUOT = "%27";
+    public static final String APOSTROPH = "`";
+    public static final String ESCAPED_APOSTROPH = "%60";
+    public static final String LSQRBRACKET = "[";
+    public static final String LSQRBRACKET_PATTERN = "\\[";
+    public static final String ESCAPED_LSQRBRACKET = "%5B";
+    public static final String RSQRBRACKET = "]";
+    public static final String RSQRBRACKET_PATTERN = "\\]";
+    public static final String ESCAPED_RSQRBRACKET = "%5D";
+    public static final String LCURBRACKET = "{";
+    public static final String LCURBRACKET_PATTERN = "\\{";
+    public static final String ESCAPED_LCURBRACKET = "%7B";
+    public static final String RCURBRACKET = "}";
+    public static final String RCURBRACKET_PATTERN = "\\}";
+    public static final String ESCAPED_RCURBRACKET = "%7D";
+    public static final String BACKSLASH = "\\";
+    public static final String BACKSLASH_PATTERN = "\\\\";
+    public static final String ESCAPED_BACKSLASH = "%5C";
+    public static final String NEWLINE = "\n+|\r+";
+    public static final String IMPROPERESC_REPLACE = "%25$1";
+    public static final String IMPROPERESC = 
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
-     
-    /** apply URI escaping where necessary
-     *
-     * @param s
-     * @return A URI escaped string.
+    
+    /**
+     * Authority port number regex.
      */
-    private static String patchEscape(String s) {
-        // in a perfect world, s would already be escaped
-        // but it may only be partially escaped, so patch it
-        // up where necessary
+    final static Pattern PORTREGEX = Pattern.compile(".*:([0-9]+)$");
+    
+    /**
+     * Shutdown default constructor.
+     */
+    private UURI() {
+        super();
+    }
+    
+    /**
+     * @param uri String representation of an absolute URI.
+     * @throws org.apache.commons.httpclient.URIException
+     */
+    public UURI(String uri) throws URIException {
+        super(patchEscape(uri, null));
+        normalize();
+    }
+    
+    /**
+     * @param relative String representation of URI.
+     * @param base Parent UURI to use derelativizing.
+     * @throws org.apache.commons.httpclient.URIException
+     */
+    public UURI(UURI base, String relative) throws URIException {
+        super(base, patchEscape(relative, base));
+        normalize();
+    }
+    
+    /**
+     * Escape passed uri string.
+     *
+     * Does heritrix escaping; usually escaping done to make our behavior align
+     * with IEs.  This method codifies our experience pulling URIs from the
+     * wilds.  Its does esacaping NOT done in superclass.
+     * 
+     * @param uri URI as string.
+     * @param base May be null.
+     * @return An URI escaped string.
+     * @throws URIException
+     */
+    private static String patchEscape(String uri, URI base)
+            throws URIException {
+        if (uri == null || uri.length() <= 0) {
+            throw new NullPointerException();
+        }
 
-        // replace nbsp with normal spaces (so that they get
-        // stripped if at ends, or encoded if in middle)
-        s = TextUtils.replaceAll(NBSP, s, SPACE);
-        // strip ends whitespaces
-        s = s.trim();
-        // patch spaces
-        if (s.indexOf(SPACE) >= 0) {
-            s = TextUtils.replaceAll(SPACE, s, ESCAPED_SPACE);
-        }        
+        // Replace nbsp with normal spaces (so that they get stripped if at
+        // ends, or encoded if in middle)
+        uri = TextUtils.replaceAll(NBSP, uri, SPACE);
         
-        // escape  | ^ " ' ` [ ] { } \
-        // (IE actually sends these unescaped, but they can't
-        // be put into a java.net.URI instance)
-        if (s.indexOf(PIPE) >= 0) {
-            s = TextUtils.replaceAll(PIPE_PATTERN, s, ESCAPED_PIPE);
-        }
-        if (s.indexOf(CIRCUMFLEX) >= 0) {
-            s = TextUtils.replaceAll(CIRCUMFLEX_PATTERN, s, ESCAPED_CIRCUMFLEX);
-        }
-        if (s.indexOf(QUOT) >= 0) {
-            s = TextUtils.replaceAll(QUOT, s, ESCAPED_QUOT);
-        }
-        // Note: Single quote is not URI's illegal charater. We might want to
-        // skip the escpaing.  
-        if (s.indexOf(SQUOT) >= 0) {
-            s = TextUtils.replaceAll(SQUOT, s, ESCAPED_SQUOT);
-        }
-        if (s.indexOf(APOSTROPH) >= 0) {
-            s = TextUtils.replaceAll(APOSTROPH, s, ESCAPED_APOSTROPH);
-        }
-        if (s.indexOf(LSQRBRACKET) >= 0) {
-            s = TextUtils.replaceAll(
-                    LSQRBRACKET_PATTERN, s, ESCAPED_LSQRBRACKET);
-        }
-        if (s.indexOf(RSQRBRACKET) >= 0) {
-            s = TextUtils.replaceAll(
-                    RSQRBRACKET_PATTERN, s, ESCAPED_RSQRBRACKET);
-        }
-        if (s.indexOf(LCURBRACKET) >= 0) {
-            s = TextUtils.replaceAll(
-                    LCURBRACKET_PATTERN, s, ESCAPED_LCURBRACKET);
-        }
-        if (s.indexOf(RCURBRACKET) >= 0) {
-            s = TextUtils.replaceAll(
-                    RCURBRACKET_PATTERN, s, ESCAPED_RCURBRACKET);
-        }
         // IE actually converts backslashes to slashes rather than to %5C.
         // Since URIs that have backslashes usually work only with IE, we will
         // convert backslashes to slashes as well.
         // TODO: Maybe we can first convert backslashes by specs and than by IE
         // so that we fetch both versions. 
-        if (s.indexOf(BACKSLASH) >= 0) {
-            s = TextUtils.replaceAll(BACKSLASH_PATTERN, s, SLASH);
+        if (uri.indexOf(BACKSLASH) >= 0) {
+            uri = TextUtils.replaceAll(BACKSLASH_PATTERN, uri, SLASH);
         }
-        // escape improper escape codes; eg any '%' followed
-        // by non-hex-digits or
-        s = TextUtils.replaceAll(IMPROPERESC, s, IMPROPERESC_REPLACE);
-        // twice just to be sure (actually, to handle multiple %% in a row)
-        s = TextUtils.replaceAll(IMPROPERESC, s, IMPROPERESC_REPLACE);
-        // kill newlines etc
-        s = TextUtils.replaceAll(NEWLINE, s, EMPTY_STRING);
-
-        return s;
-    }
-
-
-    public String toExternalForm(){
-        return uri.toString();
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    public String toString() {
-        return "UURI<"+uri+">";
-    }
-
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    public boolean equals(Object arg0) {
-        if(! (arg0 instanceof UURI)) {
-            return false;
+        
+        // Escape improper escape codes; eg any '%' followed by non-hex-digits.
+        uri = TextUtils.replaceAll(IMPROPERESC, uri, IMPROPERESC_REPLACE);
+        // Twice just to be sure (actually, to handle multiple %% in a row)
+        uri = TextUtils.replaceAll(IMPROPERESC, uri, IMPROPERESC_REPLACE);
+        // Kill newlines etc
+        uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
+        
+        // For further processing, get uri elements.  See the RFC2396REGEX
+        // comment above for explaination of group indices used in the below.
+        Matcher matcher = RFC2396REGEX.matcher(uri);
+        if (!matcher.matches()) {
+            throw new URIException("Failed parse of " + uri);
         }
-        return uri.equals(((UURI)arg0).getUri());
-    }
-
-    protected URI getUri() {
-        return uri;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    public int hashCode() {
-        return uri.hashCode();
-    }
-
-    /**
-     * @param s absolute or relative URI string
-     * @param parent URI to use for derelativizing; may be null
-     * @return A normalized and derelativized URL.
-     * @throws URISyntaxException
-     */
-    public static UURI createUURI(String string, URI uri)
-            throws URISyntaxException {
-        return new UURI(normalize(string, uri));
-    }
-
-    static final String UNUSABLE_SCHEMES = "(?i)^(javascript:)|(aim:)";
-
-    /**
-     * @param string
-     * @return True if a useable scheme.
-     */
-    private static boolean isUnusableScheme(String string) {
-        if (TextUtils.matches(UNUSABLE_SCHEMES, string)) {
-            return true;
+        String uriScheme = checkUriElementAndLowerCase(matcher.group(2));
+        String uriSchemeSpecificPart = checkUriElement(matcher.group(3));
+        // TODO: fix the fact that this might clobber case-sensitive
+        // 'user-info'.
+        String uriAuthority = checkUriElementAndLowerCase(matcher.group(5));
+        String uriPath = checkUriElement(matcher.group(6));
+        String uriQuery = checkUriElement(matcher.group(8));
+        String uriFragment = checkUriElement(matcher.group(10));
+        
+        // Test if relative URI.  If so, need a base to resolve against.
+        if (uriScheme == null && base == null) {
+            throw new URIException("Relative URI but no base: " + uri);
         }
-        return false;
-    }
+        
+        // Do some checks if absolute path.
+        if (uriSchemeSpecificPart.startsWith(SLASH)) {
+            
+            if (uriPath != null) {
 
-    /**
-     * @return The uri scheme.
-     */
-    public String getScheme() {
-        return uri.getScheme();
+                // Eliminate '..' if its first thing in the path.  IE does this.
+                uriPath = TextUtils.replaceFirst(DOTDOT, uriPath,
+                    EMPTY_STRING);
+                
+                // Ensure root URLs end with '/'
+                if (uriPath == null || EMPTY_STRING.equals(uriPath)) {
+                    uriPath = SLASH;
+                }
+            }
+        }        
+        
+        if (uriAuthority != null) {
+            if (uriScheme != null && uriScheme.length() > 0 &&
+                    uriScheme.equals(HTTP)) {
+                uriAuthority = stripTail(uriAuthority, HTTP_PORT);
+                checkPort(uriAuthority);
+            } else if (uriScheme != null && uriScheme.length() > 0 &&
+                    uriScheme.equals(HTTPS)) {
+                uriAuthority = stripTail(uriAuthority, HTTPS_PORT);
+                checkPort(uriAuthority);
+            }
+            // Strip any prefix dot or tail dots from the authority.
+            uriAuthority = stripTail(uriAuthority, DOT);
+            uriAuthority = stripPrefix(uriAuthority, DOT);
+        }
+
+        return reassemble(uriScheme, uriAuthority, uriPath, uriQuery,
+            uriFragment);
     }
     
-    /** Return the portnumber or -1 if unknown.
+    /**
+     * Check port on passed http authority.  Make sure the size is not larger
+     * than allowed: See the 'port' definition on this
+     * page, http://www.kerio.com/manual/wrp/en/418.htm.
      * 
-     * @return the portnumber or -1 if unknown.
+     * @param uriAuthority
      */
-    public int getPort() {
-        return uri.getPort();
+    private static void checkPort(String uriAuthority) throws URIException {
+        Matcher m = PORTREGEX.matcher(uriAuthority);
+        if (m.matches()) {
+            String no = m.group(1);
+            if (no != null && no.length() > 0) {
+                int portNo = Integer.parseInt(no);
+                if (portNo <= 0 || portNo > 65535) {
+                    throw new URIException("Port out of bounds: " +
+                        uriAuthority);
+                }
+            }
+        }
     }
 
     /**
-     * @return The uri path.
+     * Reassemble URI from passed pieces.
+     * @param uriScheme Scheme.
+     * @param uriAuthority Authority.
+     * @param uriPath Path.
+     * @param uriQuery Query.
+     * @param uriFragment Fragment.
+     * @return Reassembled URI.
+     * throws URIException
      */
-    public String getPath() {
-        return uri.getPath();
+    private static String reassemble(String uriScheme, String uriAuthority,
+                String uriPath, String uriQuery, String uriFragment)
+            throws URIException {
+        // Put the URI back together for return as a string.
+        StringBuffer buffer = new StringBuffer();
+        appendNonNull(buffer, uriScheme, ":", true);
+        appendNonNull(buffer, uriAuthority, "//", false);
+        if (uriPath != null) {
+            if ((uriScheme != null || uriAuthority != null)
+                    && !uriPath.startsWith(SLASH)) {
+                throw new URIException("abs_path requested: " + uriPath + " " +
+                    uriAuthority);
+            }
+            buffer.append(uriPath);
+        }
+        appendNonNull(buffer, uriQuery, "?", false);
+        appendNonNull(buffer, uriFragment, "#", false);
+        return buffer.toString();
+    }
+    
+    /**
+     * @param b Buffer to append to.
+     * @param str String to append if not null.
+     * @param substr Suffix or prefix to use if <code>str</code> is not null.
+     * @param suffix True if <code>substr</code> is a suffix.
+     */
+    private static void appendNonNull(StringBuffer b, String str, String substr,
+            boolean suffix) {
+        if (str != null && str.length() > 0) {
+            if (!suffix) {
+                b.append(substr);
+            }
+            b.append(str);
+            if (suffix) {
+                b.append(substr);
+            }
+        }
     }
 
     /**
-     * @return The uri as a string.
+     * @param str String to work on.
+     * @param prefix Prefix to strip if present.
      */
-    public String getURIString() {
-        return uriString;
+    private static String stripPrefix(String str, String prefix) {
+        return str.startsWith(prefix)?
+            str.substring(prefix.length(), str.length()):
+            str;
+    }   
+            
+    /**
+     * @param str String to work on.
+     * @param tail Tail to strip if present.
+     */
+    private static String stripTail(String str, String tail) {
+        return str.endsWith(tail)?
+            str.substring(0, str.length() - tail.length()):
+            str;
     }
 
     /**
-     * Avoid casual use; java.net.URI may be phased out of crawler
-     * for memory performance reasons
+     * @param element to examine.
+     * @return Null if passed null or an empty string otherwise
+     * <code>element</code>.
+     */
+    private static String checkUriElement(String element) {
+        return (element == null || element.length() <= 0)? null: element;
+    }
+    
+    /**
+     * @param element to examine and lowercase if non-null.
+     * @return Null if passed null or an empty string otherwise
+     * <code>element</code> lowercased.
+     */
+    private static String checkUriElementAndLowerCase(String element) {
+        String tmp = checkUriElement(element);
+        return (tmp != null)? tmp.toLowerCase(): tmp;
+    }
+    
+    /**
+     * @param uri URI as string that is resolved relative to this UURI.
+     * @return UURI that uses this UURI as base.
+     * @throws URIException
+     */
+    public UURI resolve(String uri) throws URIException {
+        return new UURI(this, uri);
+    }
+    
+    /**
+     * Calls {@link URI#URI(String)} and converts any URIException to
+     * {@link  IllegalArgumentException}.
+     * @param uri URI as a string.
+     * @return UURI.
+     * @throws IllegalArgumentException if an URIException.
+     */
+    public UURI create(String uri) {
+        UURI uuri = null;
+        try {
+            uuri = new UURI(uri);
+        }
+        catch (URIException e) {
+            throw new IllegalArgumentException(uri + ": " + e.getMessage());
+        }
+        return uuri;
+    }
+    
+    /**
+     * Test an object if this UURI is equal to another.
      *
-     * @return URI
+     * @param obj an object to compare
+     * @return true if two URI objects are equal
      */
-    public URI getRawUri() {
-        return getUri();
-    }
+    public boolean equals(Object obj) {
 
-    /**
-     * @return The uri host.
+        // normalize and test each components
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof UURI)) {
+            return false;
+        }
+        UURI another = (UURI) obj;
+        // scheme
+        if (!equals(this._scheme, another._scheme)) {
+            return false;
+        }
+        // is_opaque_part or is_hier_part?  and opaque
+        if (!equals(this._opaque, another._opaque)) {
+            return false;
+        }
+        // is_hier_part
+        // has_authority
+        if (!equals(this._authority, another._authority)) {
+            return false;
+        }
+        // path
+        if (!equals(this._path, another._path)) {
+            return false;
+        }
+        // has_query
+        if (!equals(this._query, another._query)) {
+            return false;
+        }
+        // has_fragment?  should be careful of the only fragment case.
+        if (!equals(this._fragment, another._fragment)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see org.apache.commons.httpclient.URI#toString()
      */
-    public String getHost() {
-        return uri.getHost();
+    public String toString() {
+        // Override because superclass drops fragment if present.
+        String frgmnt = getEscapedFragment();
+        return super.toString() +
+            ((frgmnt == null || frgmnt.length() <= 0)? "": "#" + frgmnt);
     }
 }

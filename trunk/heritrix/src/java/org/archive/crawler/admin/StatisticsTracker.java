@@ -694,7 +694,7 @@ public class StatisticsTracker extends AbstractTracker
             this.allSeeds = new Vector();
             synchronized (seeds) {
                 for(Iterator i = seeds.iterator(); i.hasNext();) {
-                    this.allSeeds.add(((UURI)i.next()).getURIString());
+                    this.allSeeds.add(((UURI)i.next()).toString());
                 }
             }
         }

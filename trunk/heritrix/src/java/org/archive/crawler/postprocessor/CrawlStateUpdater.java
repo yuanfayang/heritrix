@@ -23,7 +23,9 @@
 package org.archive.crawler.postprocessor;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -41,10 +43,10 @@ import org.archive.crawler.framework.Processor;
  */
 public class CrawlStateUpdater extends Processor implements
         CoreAttributeConstants, FetchStatusCodes {
+    
+    private static final Logger logger = 
+        Logger.getLogger(CrawlStateUpdater.class.getName());
 
-    /**
-     * @param name
-     */
     public CrawlStateUpdater(String name) {
         super(name, "Crawl state updater");
     }
@@ -62,17 +64,23 @@ public class CrawlStateUpdater extends Processor implements
             }
             
             // update robots info
-            if (curi.getFetchStatus() > 0 && (curi.getUURI().getPath() != null)
-                    && curi.getUURI().getPath().equals("/robots.txt")) {
-                // Update host with robots info
-                if (curi.isHttpTransaction()) {
-                    try {
-                        curi.getServer().updateRobots(curi);
-                    } catch (IOException e) {
-                        curi.addLocalizedError(getName(), e,
-                                "robots.txt parsing IOException");
+            try {
+                if (curi.getFetchStatus() > 0 &&
+                        (curi.getUURI().getPath() != null) &&
+                        curi.getUURI().getPath().equals("/robots.txt")) {
+                    // Update host with robots info
+                    if (curi.isHttpTransaction()) {
+                        try {
+                            curi.getServer().updateRobots(curi);
+                        } catch (IOException e) {
+                            curi.addLocalizedError(getName(), e,
+                                    "robots.txt parsing IOException");
+                        }
                     }
                 }
+            }
+            catch (URIException e) {
+                logger.severe("Failed get path on " + curi.getUURI());
             }
         }
     }

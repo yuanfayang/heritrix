@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.Checksum;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.settings.CrawlerSettings;
@@ -256,7 +257,7 @@ public class CrawlServer implements Serializable {
      *
      * @return the settings object in effect for this server.
      */
-    private CrawlerSettings getSettings(UURI uri) {
+    private CrawlerSettings getSettings(UURI uri) throws URIException {
         return this.settingsHandler.getSettings(uri.getHost(), uri);
     }
 

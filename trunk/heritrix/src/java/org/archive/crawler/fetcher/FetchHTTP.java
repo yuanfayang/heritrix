@@ -195,9 +195,9 @@ public class FetchHTTP extends Processor
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
         HttpMethod method = curi.isPost()?
             (HttpMethod)new HttpRecorderPostMethod(
-                curi.getUURI().getURIString(), rec):
+                curi.getUURI().toString(), rec):
             (HttpMethod)new HttpRecorderGetMethod(
-                curi.getUURI().getURIString(), rec);
+                curi.getUURI().toString(), rec);
         configureMethod(curi, method);
         boolean addedCredentials = populateCredentials(curi, method);
         int immediateRetries = 0;
@@ -277,7 +277,7 @@ public class FetchHTTP extends Processor
         curi.setContentType((ct == null)? null: ct.getValue());
         if (logger.isLoggable(Level.FINE)) {
             logger.fine((curi.isPost()? "POST": "GET") + " " +
-            		curi.getUURI().getURIString() + " " + statusCode + " " +
+            		curi.getUURI().toString() + " " + statusCode + " " +
                 contentSize + " " + curi.getContentType());
         }
         

@@ -59,7 +59,7 @@ public class RegularExpressionCriteria implements Criteria {
         if (uri == null) {
             return false;
         }
-        return TextUtils.matches(regexp, uri.getURIString());
+        return TextUtils.matches(regexp, uri.toString());
     }
 
     /**

@@ -23,8 +23,6 @@
  */
 package org.archive.crawler.postprocessor;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -34,6 +32,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -91,7 +90,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             return;
         }
 
-        URI baseUri = getBaseURI(curi);
+        UURI baseUri = getBaseURI(curi);
         // handle http headers
         if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
             handleLinkCollection(curi, baseUri, A_HTTP_HEADER_URIS, 'R',
@@ -119,11 +118,11 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         }
         // handle js file links
         if (curi.getAList().containsKey(A_JS_FILE_LINKS)) {
-            URI viaURI = baseUri;
+            UURI viaURI = baseUri;
             if (curi.flattenVia() != null && curi.flattenVia().length() != 0) {
                 try {
-                    viaURI = URI.create(curi.flattenVia());
-                } catch (IllegalArgumentException e) {
+                    viaURI = new UURI(curi.flattenVia());
+                } catch (URIException e) {
                     Object[] array = { curi, curi.flattenVia() };
                     getController().uriErrors.log(
                         Level.INFO, e.getMessage(), array);
@@ -135,22 +134,18 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         
     }
 
-    /**
-     * @param curi
-     * @return
-     */
-    private URI getBaseURI(CrawlURI curi) {
+    private UURI getBaseURI(CrawlURI curi) {
         if (!curi.getAList().containsKey(A_HTML_BASE)) {
-            return curi.getUURI().getRawUri();
+            return curi.getUURI();
         }
         String base = curi.getAList().getString(A_HTML_BASE);
         try {
-            return UURI.createUURI(base).getRawUri();
-        } catch (URISyntaxException e) {
+            return new UURI(base);
+        } catch (URIException e) {
             Object[] array = { curi, base };
             getController().uriErrors.log(Level.INFO,e.getMessage(), array);
             // next best thing: use self
-            return curi.getUURI().getRawUri();
+            return curi.getUURI();
         }
     }
 
@@ -163,8 +158,8 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         
         try {
             // create and schedule prerequisite
-            UURI prereq = UURI.createUURI(
-                (String)curi.getPrerequisiteUri(), getBaseURI(curi));
+            UURI prereq = new UURI(getBaseURI(curi),
+                (String)curi.getPrerequisiteUri());
             CandidateURI caUri = new CandidateURI(prereq);
             caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);                              
             caUri.setVia(curi);
@@ -177,7 +172,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 return;
             }
             // leave PREREQ in place so frontier can properly defer this curi
-        } catch (URISyntaxException ex) {
+        } catch (URIException ex) {
             Object[] array = { curi, curi.getPrerequisiteUri() };
             getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
         } catch (NumberFormatException e) {
@@ -216,7 +211,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
      * @param linkType Type of links.
      * @param directive how should URIs be scheduled
      */    
-    private void handleLinkCollection(CrawlURI curi, URI baseUri,
+    private void handleLinkCollection(CrawlURI curi, UURI baseUri,
             String collection, char linkType, String directive)
     {
         if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
@@ -250,7 +245,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         while(iter.hasNext()) {
             String link = (String)iter.next();
             try {
-                UURI uuri = UURI.createUURI(link, baseUri);
+                UURI uuri = new UURI(baseUri, link);
                 CandidateURI caURI = new CandidateURI(uuri);
                 caURI.setSchedulingDirective(directive);
                 caURI.setIsSeed(seed);
@@ -260,7 +255,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                     + linkType + " at head " + uuri);
                     
                 schedule(caURI);
-            } catch (URISyntaxException ex) {
+            } catch (URIException ex) {
                 Object[] array = { curi, link };
                 getController().uriErrors.log(
                     Level.INFO,ex.getMessage(), array);

@@ -26,7 +26,6 @@ package org.archive.crawler.frontier;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,6 +40,7 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -403,18 +403,28 @@ public class Frontier
         wakeReadyQueues(now);
 
         // now, see if any holding queues are ready with a CrawlURI
-        if (!readyClassQueues.isEmpty()) {
+        if (!this.readyClassQueues.isEmpty()) {
             curi = dequeueFromReady();
-            return emitCuri(curi);
+            try {
+                return emitCuri(curi);
+            }
+            catch (URIException e) {
+                logger.severe("Failed holding emitcuri: " + e.getMessage());
+            }
         }
 
         // if that fails to find anything, check the pending queue
         while ((caUri = dequeueFromPending()) != null) {
             curi = CrawlURI.from(caUri);
             enqueueToKeyed(curi);
-            if (!readyClassQueues.isEmpty()) {
+            if (!this.readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
-                return emitCuri(curi);
+                try {
+                    return emitCuri(curi);
+                }
+                catch (URIException e) {
+                    logger.severe("Failed dequeue emitcuri: " + e.getMessage());
+                }
             }
         }
 
@@ -570,14 +580,14 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getURIString(),
+            curi.getUURI().toString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
             controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().getURIString(),
+                curi.getUURI().toString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
@@ -617,7 +627,7 @@ public class Frontier
                 Object array[] = { curi, iter.next() };
                 controller.localErrors.log(
                     Level.WARNING,
-                    curi.getUURI().getURIString(),
+                    curi.getUURI().toString(),
                     array);
             }
             // once logged, discard
@@ -638,7 +648,7 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getURIString(),
+            curi.getUURI().toString(),
             array);
 
         // note that CURI has passed out of scheduling
@@ -707,15 +717,15 @@ public class Frontier
      * @return The CrawlURI
      * @see #noteInProcess(CrawlURI)
      */
-    private CrawlURI emitCuri(CrawlURI curi) {
+    private CrawlURI emitCuri(CrawlURI curi) throws URIException {
         if(curi != null) {
             noteInProcess(curi);
-            curi.setServer(controller.getServerCache().getServerFor(curi));
+            curi.setServer(this.controller.getServerCache().getServerFor(curi));
         }
         logger.finer(this+".emitCuri("+curi+")");
-        controller.recover.info("\n"+F_EMIT+curi.getURIString());
+        this.controller.recover.info("\n"+F_EMIT+curi.getURIString());
         // One less URI in the queue.
-        queuedCount--;
+        this.queuedCount--;
         return curi;
     }
 
@@ -746,19 +756,28 @@ public class Frontier
      *         an exception occured trying to create it.
      */
     private KeyedQueue keyedQueueFor(CrawlURI curi) {
-        KeyedQueue kq = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
+        KeyedQueue kq = null;
+        try {
+            kq = (KeyedQueue)this.allClassQueuesMap.get(curi.getClassKey());
+        }
+        catch (URIException e1) {
+            logger.severe("Failed to get class key: " + e1.getMessage() + " " +
+                curi);
+        }
         if (kq==null) {
             try {
-                kq = new KeyedQueue(curi.getClassKey(),controller.getStateDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+                kq = new KeyedQueue(curi.getClassKey(), 
+                    this.controller.getStateDisk(),
+                    DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
                 kq.activate(); // TODO: have only a subset of queues by active at any one time
-                allClassQueuesMap.put(kq.getClassKey(),kq);
+                this.allClassQueuesMap.put(kq.getClassKey(),kq);
             } catch (IOException e) {
                 // An IOException occured trying to make new KeyedQueue.
                 curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
                 Object array[] = { curi };
-                controller.runtimeErrors.log(
+                this.controller.runtimeErrors.log(
                         Level.SEVERE,
-                        curi.getUURI().getURIString(),
+                        curi.getUURI().toString(),
                         array);
             }
         }
@@ -766,10 +785,10 @@ public class Frontier
     }
 
     protected CandidateURI dequeueFromPending() {
-        if (pendingQueue.isEmpty()) {
+        if (this.pendingQueue.isEmpty()) {
             return null;
         }
-        return (CandidateURI)pendingQueue.dequeue();
+        return (CandidateURI)this.pendingQueue.dequeue();
     }
 
     /**
@@ -980,60 +999,32 @@ public class Frontier
      * @param curi The CrawlURI
      */
     private void failureDisposition(CrawlURI curi) {
-        controller.fireCrawledURIFailureEvent(curi); //Let interested listeners know of failed disposition.
+        //Let interested listeners know of failed disposition.
+        this.controller.fireCrawledURIFailureEvent(curi);
 
         // send to basic log
         curi.aboutToLog();
         Object array[] = { curi };
-        controller.uriProcessing.log(
+        this.controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getURIString(),
+            curi.getUURI().toString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
-            controller.runtimeErrors.log(
+            this.controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().getURIString(),
+                curi.getUURI().toString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
-            failedCount++;
+            this.failedCount++;
             curi.stripToMinimal();
         }
-        controller.recover.info("\n"+F_FAILURE+curi.getURIString());
-    }
-
-    /**
-     * Has the CrawlURI suffered a failure which completes
-     * its processing?
-     *
-     * @param curi
-     * @return True if failure.
-     */
-    private boolean isDispositiveFailure(CrawlURI curi) {
-        switch (curi.getFetchStatus()) {
-
-            case S_DOMAIN_UNRESOLVABLE :
-                // network errors; perhaps some of these
-                // should be scheduled for retries
-            case S_RUNTIME_EXCEPTION :
-                // something unexpectedly bad happened
-            case S_UNFETCHABLE_URI :
-                // no chance to fetch
-            case S_TOO_MANY_RETRIES :
-                // no success after configurable number of retries
-            case S_UNATTEMPTED :
-                // nothing happened to this URI: don't send it through again
-
-                return true;
-
-            default :
-                return false;
-        }
+        this.controller.recover.info("\n"+F_FAILURE+curi.getURIString());
     }
 
     /**
@@ -1527,8 +1518,9 @@ public class Frontier
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        // Ok, if the CrawlController is exiting we delete our reference to it to facilitate gc.
-        controller = null;
+        // Ok, if the CrawlController is exiting we delete our reference to it
+        // to facilitate gc.
+        this.controller = null;
     }
 
     /** (non-Javadoc)
@@ -1542,28 +1534,30 @@ public class Frontier
             if(read.startsWith(F_SUCCESS)) {
                 UURI u;
                 try {
-                    u = UURI.createUURI(read.substring(3));
-                    alreadyIncluded.add(u);
-                } catch (URISyntaxException e) {
+                    u = new UURI(read.substring(3));
+                    this.alreadyIncluded.add(u);
+                } catch (URIException e) {
                     e.printStackTrace();
                 }
             }
         }
         reader.close();
-        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for visitation
+        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for
+        // visitation
         reader = new BufferedReader(new FileReader(pathToLog));
         while((read = reader.readLine()) != null) {
             if(read.startsWith(F_ADD)) {
                 UURI u;
                 try {
-                    u = UURI.createUURI(read.substring(3));
-                    if(!alreadyIncluded.contains(u)) {
+                    u = new UURI(read.substring(3));
+                    if(!this.alreadyIncluded.contains(u)) {
                         CandidateURI caUri = new CandidateURI(u);
                         caUri.setVia(pathToLog);
-                        caUri.setPathFromSeed("L"); // TODO: reevaluate if this is correct
+                        // TODO: reevaluate if this is correct
+                        caUri.setPathFromSeed("L"); 
                         schedule(caUri);
                     }
-                } catch (URISyntaxException e) {
+                } catch (URIException e) {
                     e.printStackTrace();
                 }
             }

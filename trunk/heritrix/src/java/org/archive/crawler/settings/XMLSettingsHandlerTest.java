@@ -25,7 +25,6 @@ package org.archive.crawler.settings;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 
 import javax.management.Attribute;
@@ -34,6 +33,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
@@ -71,7 +71,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
      */
     public void testWriteSettingsObjectCrawlerSettings()
             throws AttributeNotFoundException, InvalidAttributeValueException,
-            MBeanException, ReflectionException, IOException {
+            MBeanException, ReflectionException {
 
         // Write a crawl order file
         CrawlerSettings settings = getGlobalSettings();
@@ -186,7 +186,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
 
     public void testReadWriteRefinements() throws ParseException,
             InvalidAttributeValueException, AttributeNotFoundException,
-            MBeanException, ReflectionException, URISyntaxException {
+            MBeanException, ReflectionException, URIException {
         XMLSettingsHandler handler = getSettingsHandler();
         CrawlerSettings global = getGlobalSettings();
         CrawlerSettings per = getPerHostSettings();
@@ -242,8 +242,8 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
                 CrawlOrder.ATTR_FROM, getMatchDomainURI());
         String newFrom2 = (String) newHeaders.getAttribute(
                 CrawlOrder.ATTR_FROM, getMatchHostURI());
-        CrawlURI matchHostAndPortURI = new CrawlURI(UURI
-                .createUURI("http://www.archive.org:10/index.html"));
+        CrawlURI matchHostAndPortURI = new CrawlURI(
+            new UURI("http://www.archive.org:10/index.html"));
         String newFrom3 = (String) newHeaders.getAttribute(
                 CrawlOrder.ATTR_FROM, matchHostAndPortURI);
 
