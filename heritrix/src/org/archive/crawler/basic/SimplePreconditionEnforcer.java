@@ -22,12 +22,10 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
  *
  */
 public class SimplePreconditionEnforcer extends Processor implements FetchStatusCodes {
-	private static String XP_DELAY_FACTOR = "//params/@delay-factor";
-	private static String XP_MINIMUM_DELAY = "//params/@minimum-delay";
-	private static String XP_CHAFF_THRESHOLD = "//params/@chaff-threshold";
+	private static String XP_DELAY_FACTOR = "params/@delay-factor";
+	private static String XP_MINIMUM_DELAY = "params/@minimum-delay";
 	private static int DEFAULT_DELAY_FACTOR = 10;
 	private static int DEFAULT_MINIMUM_DELAY = 2000;
-	private static int DEFAULT_CHAFF_THRESHOLD = 3;
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimplePolitenessEnforcer");
 

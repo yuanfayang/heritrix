@@ -23,8 +23,8 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class SimplePreselector extends Processor implements FetchStatusCodes {
-	private static String XP_MAX_LINK_DEPTH="//limits/max-link-depth/@value";
-	private static String XP_MAX_EMBED_DEPTH="//limits/max-embed-depth/@value";
+	private static String XP_MAX_LINK_DEPTH="params/@max-link-depth";
+	private static String XP_MAX_EMBED_DEPTH="params/@max-embed-depth";
 	private int maxLinkDepth = -1;
 	private int maxEmbedDepth = -1;
 
