@@ -190,7 +190,18 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
-        return innerQ.deleteMatchedItems(matcher); // TODO delete from stack too
+        // Delete from inner queue
+        long numberOfDeletes = innerQ.deleteMatchedItems(matcher);
+        // Then delete from inner stack
+        Iterator it = innerStack.iterator();
+        while(it.hasNext()){
+            if(matcher.match(it.next())){
+                it.remove();
+                numberOfDeletes++;
+            }
+        }
+        // return total deleted
+        return numberOfDeletes;
     }
 
     /**
