@@ -260,7 +260,7 @@ public class Heritrix
                     "> does not exist.");
             }
         } else {
-            Heritrix.heritrixHome = new File(".");
+            Heritrix.heritrixHome = new File(new File("").getAbsolutePath());
         }
     }
 
