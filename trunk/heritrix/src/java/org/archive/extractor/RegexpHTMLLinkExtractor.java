@@ -421,10 +421,12 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
     }
 
     /**
-     * Ensure no further Links are extracted (by forwarding to end)
+     * Ensure no further Links are extracted (by setting matcher up to fail)
      */
     private void cancelFurtherExtraction() {
-        tags.region(tags.regionEnd(),tags.regionEnd());
+        // java 1.5 only:
+        // tags.region(tags.regionEnd(),tags.regionEnd());
+        tags.reset(""); 
     }
 
     /**
