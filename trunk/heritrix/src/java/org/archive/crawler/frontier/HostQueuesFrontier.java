@@ -1259,6 +1259,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         switch (curi.getFetchStatus()) {
             case S_CONNECT_FAILED:
             case S_CONNECT_LOST:
+            case S_DOMAIN_UNRESOLVABLE:
                 // these are all worth a retry
                 // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
                 return true;

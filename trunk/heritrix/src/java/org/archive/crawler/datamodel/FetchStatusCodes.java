@@ -48,25 +48,31 @@ public interface FetchStatusCodes {
     public static final int S_TIMEOUT = -4;              //
     /** Unexpected runtime exception; see runtime-errors.log */
     public static final int S_RUNTIME_EXCEPTION = -5;    //
-    /** Prerequisite (DNS/robots) failed, precluding attempt */
-    public static final int S_PREREQUISITE_FAILURE = -6; //
+    /** DNS prerequisite failed, precluding attempt */
+    public static final int S_DOMAIN_PREREQUISITE_FAILURE = -6; //
     /** URI recognized as unsupported or illegal)  */
     public static final int S_UNFETCHABLE_URI = -7;      //
     /** multiple retries all failed */
     public static final int S_TOO_MANY_RETRIES = -8;     //
 
-    /** severe java 'Error' conditions (OutOfMemoryError, StackOverflowError,
-     *  etc.) during URI processing */
-    public static final int S_SERIOUS_ERROR = -3000;     //
     /** temporary status assigned URIs awaiting preconditions; appearance in
      *  logs is a bug */
     public static final int S_DEFERRED = -50;
     /** URI could not be queued in Frontier; when URIs are properly
      * filtered for format, should never occur */
     public static final int S_UNQUEUEABLE = -60;
+    
+    /** Robots prerequisite failed, precluding attempt */
+    public static final int S_ROBOTS_PREREQUISITE_FAILURE = -61; //
+    /** DNS prerequisite failed, precluding attempt */
+    public static final int S_OTHER_PREREQUISITE_FAILURE = -62; //
+    /** DNS prerequisite failed, precluding attempt */
+    public static final int S_PREREQUISITE_UNSCHEDULABLE_FAILURE = -63; //
+    
+    /** severe java 'Error' conditions (OutOfMemoryError, StackOverflowError,
+     *  etc.) during URI processing */
+    public static final int S_SERIOUS_ERROR = -3000;     //
 
-    /** robots rules precluded fetch */
-    public static final int S_ROBOTS_PRECLUDED = -9998;
     /** 'chaff' detection of traps/content of negligible value applied */
     public static final int S_DEEMED_CHAFF = -4000;
     /** overstepped link hops */
@@ -84,6 +90,9 @@ public interface FetchStatusCodes {
 
     /** Processing thread was killed */
     public static final int S_PROCESSING_THREAD_KILLED = -7000;
+
+    /** robots rules precluded fetch */
+    public static final int S_ROBOTS_PRECLUDED = -9998;
 
     /** DNS success */
     public static final int S_DNS_SUCCESS = 1;

@@ -242,7 +242,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             if (!schedule(caUri)) {
                 // prerequisite cannot be scheduled (perhaps excluded by scope)
                 // must give up on
-                curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+                curi.setFetchStatus(S_PREREQUISITE_UNSCHEDULABLE_FAILURE);
                 return;
             }
             // leave PREREQ in place so frontier can properly defer this curi
