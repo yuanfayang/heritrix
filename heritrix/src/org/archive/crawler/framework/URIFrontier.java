@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.IOException;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -15,7 +17,7 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
  *
  */
 public interface URIFrontier {
-	void initialize(CrawlController c) throws FatalConfigurationException;
+	void initialize(CrawlController c) throws FatalConfigurationException, IOException;
 
 	void schedule(CandidateURI caUri);
 	CrawlURI next(int timeout);
