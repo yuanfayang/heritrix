@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--This order file is used as a template launching selftests.
     $Id$
+
+    TODO: Our serverside selftest pages w/ flash in them have us 
+    go offsite to download the flash library (The crawler is finding
+    the reference to the flash swf lib download page).  Also,
+    we have references in our binaries to searchtools.com site. 
+    This is taking the selftest crawl offsite.  We used to be able to 
+    limit crawling by setting attributes max-referral-hops.  They're
+    no longer settable since upgrade to new configuration system.
+    When this gets fixed, add in settings for these properties.
+
+    max-embed-hops="0" max-referral-hops="0" max-speculative-hops="0" 
  -->
 <crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">

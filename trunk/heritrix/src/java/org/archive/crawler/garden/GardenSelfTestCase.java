@@ -50,9 +50,13 @@ public class GardenSelfTestCase extends TestCase
     private static File jobDir = null;
     private static String jobName = null;
     private static File arcFile = null;
-    private static boolean initialized = false;
     private static String prefix = null;
     private static String selftestURL = null;
+    
+    /**
+     * Has the static initializer for this class been run.
+     */
+    private static boolean initialized = false;
     
     /**
      * The selftest webapp directory.
@@ -175,6 +179,14 @@ public class GardenSelfTestCase extends TestCase
     {
         return jobDir;
     }
+    
+    /**
+     * @return Return the directory w/ logs in it.
+     */
+    protected static File getLogsDir()
+    {
+        return new File(getJobDir(), getJobName());
+    }
 
     /**
      * @return Returns the jobName.
@@ -197,12 +209,20 @@ public class GardenSelfTestCase extends TestCase
     }
     
     /**
-     * @return Returns the selftestURL.  URL returned is guaranteed to have
-     * a trailing '/'.
+     * @return Returns the selftestURL.
      */
     public static String getSelftestURL()
     {
         return selftestURL;
+    }
+    
+    /**
+     * @return Returns the selftestURL.  URL returned is guaranteed to have
+     * a trailing '/'.
+     */
+    public static String getSelftestURLWithTrailingSlash()
+    {
+        return selftestURL.endsWith("/")? selftestURL: selftestURL + "/";
     }
     
     /**

@@ -505,7 +505,7 @@ public class Heritrix
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.getSelftestURL =
-            "http://localhost:" + Integer.toString(port) + "/garden";
+            "http://localhost:" + Integer.toString(port) + "/garden/";
         job = Heritrix.jobHandler.newJob(job, "selftest",
             "Integration self test", getSelftestURL);
         Heritrix.jobHandler.addJob(job);
@@ -559,7 +559,7 @@ public class Heritrix
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
 		User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
-		
+        
         String status = null;
 
         httpServer = new SimpleHttpServer(port);
@@ -677,7 +677,7 @@ public class Heritrix
      * Returns the selftest URL.
      * 
      * @return Returns the selftestWebappURL.  This method returns null if 
-     * we are not in selftest.
+     * we are not in selftest.  URL has a trailing '/'.
      */
     public static String getSelftestURL()
     {
