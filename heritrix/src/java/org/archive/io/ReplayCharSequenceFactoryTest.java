@@ -52,17 +52,6 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     private static final int INCREMENT = 1;
     
     /**
-     * Name of the file with regular content.
-     */
-    private static final String REGULAR_CONTENT_FILE_NAME =
-        "ReplayCharSequenceFactoryTest.regular.content.txt";
-    
-    /**
-     * Regular content file.
-     */
-    private File regularFile = null;
-    
-    /**
      * Buffer of regular content.
      */
     private byte [] regularBuffer = null;
@@ -83,11 +72,12 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
         this.factory = ReplayCharSequenceFactory.getInstance();
     }
-/*
+
     public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
         
         String fileName =
             writeRegularFile("testGetReplayCharSequenceByteZeroOffset").
+                getAbsolutePath();
         ReplayCharSequence rcs = this.factory.getReplayCharSequence(
                 this.regularBuffer,
                 this.regularBuffer.length +
@@ -115,7 +105,6 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         }
     }
     
-    */
     public void testGetReplayCharSequenceMultiByteZeroOffset()
         throws IOException {
         
