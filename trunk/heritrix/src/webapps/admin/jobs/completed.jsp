@@ -49,6 +49,7 @@
 							<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
                             <a href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
                             <a href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
+                            <a href="/admin/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
                             <a href="/admin/jobs/completed.jsp?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
 						</td>
 					</tr>

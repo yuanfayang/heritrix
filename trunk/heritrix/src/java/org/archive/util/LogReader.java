@@ -57,7 +57,6 @@ public class LogReader
                 ret.append("\n");
             }
         }catch(FileNotFoundException e){
-            e.printStackTrace();
             return null;
         }catch(IOException e){
             e.printStackTrace();
@@ -107,7 +106,6 @@ public class LogReader
             double percent = ((double)ret.length()/logsize)*100;
             info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
         }catch(FileNotFoundException e){
-            e.printStackTrace();
             return null;
         }catch(IOException e){
             e.printStackTrace();
@@ -145,7 +143,6 @@ public class LogReader
                 i++;
             }
         }catch(FileNotFoundException e){
-            e.printStackTrace();
         }catch(IOException e){
             e.printStackTrace();
         }
@@ -222,7 +219,6 @@ public class LogReader
             }
             info = "Displaying: " + linesMatched + " of " + lines + " total lines in file";
         }catch(FileNotFoundException e){
-            e.printStackTrace();
             return null;
         }catch(IOException e){
             e.printStackTrace();
@@ -296,7 +292,6 @@ public class LogReader
             }
             info = "Displaying: " + linesMatched + " of " + lines + " total lines in file";
         }catch(FileNotFoundException e){
-            e.printStackTrace();
             return null;
         }catch(IOException e){
             e.printStackTrace();
@@ -404,7 +399,9 @@ public class LogReader
             long logsize = log.length();
             double percent = ((double)sb.length()/logsize)*100;
             info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
-        } catch (Exception e) {
+        } catch (FileNotFoundException e) {
+            sb = null;
+        } catch (IOException e) {
             e.printStackTrace();
             sb = null;
         } finally {
