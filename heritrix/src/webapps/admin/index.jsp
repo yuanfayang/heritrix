@@ -1,4 +1,3 @@
-<%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
@@ -267,6 +266,6 @@
             &nbsp;
     </td></tr>
     <tr><td>
-        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a>
+        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a> | <a href="<%=request.getContextPath()%>/login.jsp?action=logout">Logout</a>
     </td></tr></table>
 <%@include file="/include/foot.jsp"%>

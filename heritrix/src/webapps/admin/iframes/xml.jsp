@@ -1,4 +1,4 @@
-<%@include file="/include/secure.jsp"%><%@ page import="org.archive.util.LogReader" %><%
+<%@ page import="org.archive.util.LogReader" %><%
      // If there are empty lines before the start of the xml file Mozilla will
      // not display it properly!
     String inputFile = request.getParameter("file");

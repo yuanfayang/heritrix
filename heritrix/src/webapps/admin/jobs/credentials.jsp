@@ -7,7 +7,6 @@
    */
 %>
 <%@include file="/include/handler.jsp"%>
-<%@include file="/include/secure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>

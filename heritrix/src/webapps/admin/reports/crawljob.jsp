@@ -1,5 +1,4 @@
 <%@include file="/include/handler.jsp"%>
-<%@include file="/include/secure.jsp"%>
 
 <%@ page import="java.util.*" %>
 <%@ page import="org.archive.crawler.admin.LongWrapper"%>

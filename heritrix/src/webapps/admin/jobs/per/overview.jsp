@@ -7,7 +7,6 @@
    */
 %>
 <%@include file="/include/handler.jsp"%>
-<%@include file="/include/secure.jsp"%>
 
 <%@page import="java.util.Collection"%>
 <%@page import="java.util.Iterator"%>

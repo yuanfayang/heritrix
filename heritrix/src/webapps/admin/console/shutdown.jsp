@@ -1,4 +1,3 @@
-<%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 <%
     boolean shutdown = request.getParameter("shutdown")!=null
