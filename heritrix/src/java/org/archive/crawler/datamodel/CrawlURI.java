@@ -379,32 +379,6 @@ public class CrawlURI extends CandidateURI
         return alist.getObject(A_PREREQUISITE_URI);
     }
 
-    /**
-     * Method to set a URI that has to be fetched before fetching this URI
-     * regardles if it has been fetched before. Setting this also implies
-     * that the prerequisite URI will be scheduled for crawl before any other
-     * waiting URIs for the same host.
-     *
-     * This method is used to refetch any expired robots.txt or dns-lookups.
-     *
-     * @param stringOrUURI The URI that is a prerequisite for this URI to be
-     * fetched
-     */
-    public void setForcedPrerequisiteUri(Object stringOrUURI) {
-        alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
-        alist.putObject(A_FORCED_PREREQUISITE_URI, "true");
-    }
-
-    /**
-     * Is the prerequisite URI for this URI a forced prerequisite
-     *
-     * @return true if fetching this URI's prerequisite URI should be done regardless
-     * of if it has been fetched before
-     */
-    public boolean hasForcedPrerequisiteUri() {
-        String force = (String) alist.getObject(A_FORCED_PREREQUISITE_URI);
-        return (force != null && force.equals("true"));
-    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -459,13 +433,6 @@ public class CrawlURI extends CandidateURI
         return uuri.toString();
     }
 
-    /**
-     * @param u
-     */
-    public void addEmbed(String u) {
-        addToNamedSet(A_HTML_EMBEDS, u);
-    }
-
     private void addToNamedSet(String key, Object o) {
         Set s;
         if(!alist.containsKey(key)) {
@@ -475,13 +442,6 @@ public class CrawlURI extends CandidateURI
             s = (Set)alist.getObject(key);
         }
         s.add(o);
-    }
-
-    /**
-     * @param u
-     */
-    public void addLink(String u) {
-        addToNamedSet(A_HTML_LINKS, u);
     }
 
     /**
@@ -660,17 +620,13 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * @param string
+     * Add string version of the link to specified collection.
+     * 
+     * @param link Link to be added to collection.
+     * @param collectionName Name of the collection.
      */
-    public void addSpeculativeEmbed(String string) {
-        addToNamedSet(A_HTML_SPECULATIVE_EMBEDS,string);
-    }
-
-    /**
-     * @param string
-     */
-    public void addCSSLink(String string) {
-        addToNamedSet(A_CSS_LINKS, string);
+    public void addLinkToCollection(String link, String collectionName) {
+        addToNamedSet(collectionName, link);
     }
 
     /**
