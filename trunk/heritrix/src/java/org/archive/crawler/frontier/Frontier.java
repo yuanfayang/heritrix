@@ -360,7 +360,7 @@ public class Frontier
                 UURI u = (UURI)i.next();
                 CandidateURI caUri = new CandidateURI(u);
                 caUri.setSeed();
-                caUri.setSchedulingDirective(CandidateURI.HIGH);
+                caUri.setSchedulingDirective(CandidateURI.MEDIUM);
                 schedule(caUri);
             }
         }
