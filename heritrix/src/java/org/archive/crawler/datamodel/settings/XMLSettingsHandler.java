@@ -277,12 +277,14 @@ public class XMLSettingsHandler extends SettingsHandler {
     
     /**
      * Transforms a relative path so that it is relative to the location of the 
-     * order file. If an absolute path is given, it will be returned unchanged.
+     * order file. If an absolute path is given, it will be returned unchanged.<p>
+     * The location of it's order file is always considered as the 'working' 
+     * directory for any given settings.
      * @param path A relative path to a file (or directory)
      * @return The same path modified so that it is relative to the file level
      *         location of the order file for the settings handler.
      */
-    public String getPathRelativeToOrderFile(String path){
+    public String getPathRelativeToWorkingDirectory(String path){
         if (!path.endsWith(File.separator)) {
             path = path + File.separator;
         }

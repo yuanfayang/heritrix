@@ -302,4 +302,14 @@ public abstract class SettingsHandler {
     public CrawlOrder getOrder() {
         return order;
     }
+    
+    /**
+     * Transforms a relative path so that it is relative to a location that is 
+     * regarded as a working dir for these settings. If an absolute path is given, 
+     * it will be returned unchanged.
+     * @param path A relative path to a file (or directory)
+     * @return The same path modified so that it is relative to the file level
+     *         location that is considered the working directory for these settings.
+     */
+    public abstract String getPathRelativeToWorkingDirectory(String path);
 }

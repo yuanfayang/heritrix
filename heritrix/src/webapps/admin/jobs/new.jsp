@@ -20,11 +20,14 @@
     
     if(request.getParameter("action") != null){
     	//Make new job.
-    	CrawlJob newJob = handler.newJob(settingsHandler,request.getParameter("meta/name"));
+    	CrawlJob newJob = handler.newJob(settingsHandler,request.getParameter("meta/name"),request.getParameter("meta/description"),request.getParameter("seeds"));
     	if(request.getParameter("action").equals("configure")){
     		response.sendRedirect("/admin/jobs/configure.jsp?job="+newJob.getUID());
-    	} else {
+    	} else if(request.getParameter("action").equals("modules")){
     		response.sendRedirect("/admin/jobs/modules.jsp?job="+newJob.getUID());
+    	} else {
+    		handler.addJob(newJob);
+    		response.sendRedirect("/admin/jobs.jsp?message=Job created");
     	}
     	return;
     }
@@ -36,7 +39,7 @@
 <%@include file="/include/head.jsp"%>
 
 		<form name="frmNew" method="post" action="new.jsp">
-			<input type="hidden" name="action" value="configure">		
+			<input type="hidden" name="action" value="new">		
 			<b>Create new crawl job based on default profile</b>
 			<p>			
 			<table>
@@ -48,8 +51,33 @@
 						<input name="meta/name" value="<%=orderfile.getName()%>" style="width: 320px">
 					</td>
 				</tr>
+				<tr>
+					<td>
+						Description:
+					</td>
+					<td>
+						<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 320px">
+					</td>
+				</tr>
+				<tr>
+					<td valign="top">
+						Seeds:
+					</td>
+					<td>
+						<textarea name="seeds" style="width: 320px" rows="8"><%
+							BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+							String sout = seeds.readLine();
+							while(sout!=null){
+								out.println(sout);
+								sout = seeds.readLine();
+							}
+						%></textarea>
+					</td>
+				</tr>
 			</table>
-			<input type="button" value="Adjust modules" onClick="document.frmNew.action.value='modules';document.frmNew.submit()"> <input type="submit" value="Configure settings">
+			<input type="button" value="Adjust modules" onClick="document.frmNew.action.value='modules';document.frmNew.submit()">
+			<input type="button" value="Configure settings" onClick="document.frmNew.action.value='configure';document.frmNew.submit()">
+			<input type="submit" value="Submit job">
 		
 		</form>
 		

@@ -393,10 +393,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param name The name of the new job. 
      * @return The new crawl job.
      */
-    public CrawlJob newJob(XMLSettingsHandler profileSettingsHandler,String name){
+    public CrawlJob newJob(XMLSettingsHandler profileSettingsHandler,String name, String description, String seeds){
         CrawlerSettings orderfile = profileSettingsHandler.getSettingsObject(null);
  
         orderfile.setName(name);
+        orderfile.setDescription(description);
         
         // Get a UID.
         String newUID = getNextJobUID();
@@ -404,7 +405,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // Create filenames etc.
         File f = new File("jobs"+File.separator+newUID);
         f.mkdirs();
-        String seedfile = "jobs"+File.separator+newUID+File.separator+"seeds-"+orderfile.getName()+".txt";
+        String seedfile = "seeds-"+orderfile.getName()+".txt";
         
         try {
             ((ComplexType)profileSettingsHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
@@ -423,13 +424,23 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         File newFile = new File("jobs"+File.separator+newUID+File.separator+"job-"+orderfile.getName()+"-1.xml");
         profileSettingsHandler.writeSettingsObject(orderfile,newFile);
-        
+        XMLSettingsHandler newHandler;
+        try {
+            newHandler = new XMLSettingsHandler(newFile);
+            newHandler.initialize(newFile);
+            newJob = new CrawlJob(getNextJobUID(),name,newHandler,CrawlJob.PRIORITY_AVERAGE);
+        } catch (InvalidAttributeValueException e2) {
+            // TODO Auto-generated catch block
+            e2.printStackTrace();
+            return null;
+        }
+
         BufferedWriter writer;
         try {
-            writer = new BufferedWriter(new FileWriter(new File(seedfile)));
+            writer = new BufferedWriter(new FileWriter(new File(newHandler.getPathRelativeToWorkingDirectory(seedfile))));
             if (writer != null) {
                 // TODO Read seeds from profile.
-                writer.write("#Insert seeds");
+                writer.write(seeds);
                 writer.close();
             }
         } catch (IOException e) {
@@ -437,12 +448,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             e.printStackTrace();
         }
         
-        try {
-            newJob = new CrawlJob(getNextJobUID(),name,new XMLSettingsHandler(newFile),CrawlJob.PRIORITY_AVERAGE);
-        } catch (InvalidAttributeValueException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+
         return newJob;
     }
 
@@ -524,6 +530,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             controller.initialize(settingsHandler);
         } catch (Exception e) {
             currentJob.setStatus(CrawlJob.STATUS_MISCONFIGURED);
+            e.printStackTrace();
             completedCrawlJobs.add(currentJob);
             currentJob = null;
             controller = null;

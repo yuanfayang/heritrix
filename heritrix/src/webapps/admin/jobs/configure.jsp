@@ -155,7 +155,6 @@
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
 		writeNewOrderFile(crawlOrder,request);
-		orderfile.setName(request.getParameter("meta/name"));
 		orderfile.setDescription(request.getParameter("meta/description"));
 		
 		settingsHandler.writeSettingsObject(orderfile);
@@ -268,7 +267,14 @@
 						Seeds:
 					</td>
 					<td>
-						<textarea name="seeds" style="width: 320px" rows="8">#Input seeds here</textarea>
+						<textarea name="seeds" style="width: 320px" rows="8"><%
+							BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+							String sout = seeds.readLine();
+							while(sout!=null){
+								out.println(sout);
+								sout = seeds.readLine();
+							}
+						%></textarea>
 					</td>
 				</tr>
 			</table>
