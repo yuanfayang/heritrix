@@ -23,6 +23,9 @@
  */
 package org.archive.crawler.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.logging.Logger;
@@ -30,6 +33,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.LongFPSet;
 
 import st.ata.util.FPGenerator;
@@ -42,25 +46,30 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  *
  */
-public class FPUURISet extends AbstractSet implements UURISet {
+public class FPUURISet extends AbstractSet implements UURISet, Serializable {
+    // be robust against trivial implementation changes
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(FPUURISet.class,1);
+
     private static Logger logger = Logger.getLogger("org.archive.crawler.util.FPUURISet");
 
     LongFPSet fpset;
-    FPGenerator fpgen = FPGenerator.std64;
+    transient FPGenerator fpgen = FPGenerator.std64;
 
-
+    /**
+     * @param fpset
+     */
     public FPUURISet(LongFPSet fpset) {
         this.fpset = fpset;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#count()
      */
     public long count() {
         return fpset.count();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.UURI)
      */
     public boolean contains(UURI u) {
@@ -72,14 +81,14 @@ public class FPUURISet extends AbstractSet implements UURISet {
         return retVal;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#contains(org.archive.crawler.datamodel.CandidateURI)
      */
     public boolean contains(CandidateURI curi) {
         return contains(curi.getUURI());
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.UURI)
      */
     public void add(UURI u) {
@@ -88,35 +97,35 @@ public class FPUURISet extends AbstractSet implements UURISet {
         fpset.add(fp);
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.UURI)
      */
     public void remove(UURI u) {
         fpset.remove(fpgen.fp(u.toString()));
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#add(org.archive.crawler.datamodel.CrawlURI)
      */
     public void add(CandidateURI curi) {
         add(curi.getUURI());
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#remove(org.archive.crawler.datamodel.CrawlURI)
      */
     public void remove(CandidateURI curi) {
         remove(curi.getUURI());
     }
 
-    /* (non-Javadoc)
+    /**
      * @see java.util.AbstractCollection#size()
      */
     public int size() {
         return (int)count();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see java.util.AbstractCollection#iterator()
      */
     public Iterator iterator() {
@@ -124,7 +133,7 @@ public class FPUURISet extends AbstractSet implements UURISet {
         return null;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.UURI)
      */
     public boolean quickContains(UURI u) {
@@ -136,11 +145,17 @@ public class FPUURISet extends AbstractSet implements UURISet {
         return retVal;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.datamodel.UURISet#quickContains(org.archive.crawler.datamodel.CandidateURI)
      */
     public boolean quickContains(CandidateURI curi) {
         return quickContains(curi.getUURI());
+    }
+    
+    // custom serialization
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    	stream.defaultReadObject();
+    	fpgen = FPGenerator.std64;
     }
 
 }
