@@ -351,11 +351,9 @@ implements CoreAttributeConstants {
 	       cs = curi.getHttpRecorder().getReplayCharSequence();
            HttpRecorder hr = curi.getHttpRecorder();
            if (hr == null) {
-               // Note. We can return out of here! 
-               return;
+               throw new IOException("Why is recorder null here?");
            }
            cs = hr.getReplayCharSequence();
-
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e,
                 "Failed get of replay char sequence " + curi.toString() +
@@ -364,6 +362,7 @@ implements CoreAttributeConstants {
                 curi.toString() + " " + e.getMessage() + " " +
                 Thread.currentThread().getName());
         }
+        
         if (cs == null) {
             return;
         }
