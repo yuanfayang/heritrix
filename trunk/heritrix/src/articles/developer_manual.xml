@@ -1983,6 +1983,18 @@ public class SimpleExtractor extends Processor
                 </listitem>
             </orderedlist>
         </para>
+    <sect2 id="arcnaming">
+        <title>ARC File Naming</title>
+        <para>When heritrix creates ARC files, it uses the following template
+        naming them:
+        <programlisting>
+        &lt;OPERATOR SPECIFIED> '-' &lt;12 DIGIT TIMESTAMP> '-' &lt;SERIAL NO.> '-' &lt;FQDN HOSTNAME> '.arc' | '.gz'
+        </programlisting>... where
+        &lt;OPERATOR SPECIFIED> is any operator specified text, &lt;SERIAL 
+        NO> is a zero-padded 5 digit number and &lt;FQDN HOSTNAME> is the 
+        fully-qualified domainname on which the crawl was run.
+        </para>
+    </sect2>
     <sect2 id="arcreader">
         <title>Reading arc files</title>
         <para>By default, heritrix writes all its crawled to disk using <ulink
