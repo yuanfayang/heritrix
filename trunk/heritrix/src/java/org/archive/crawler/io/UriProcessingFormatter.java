@@ -1,5 +1,7 @@
 /* UriProcessingFormatter.java
  *
+ * $Id$
+ * 
  * Created on Jun 10, 2003
  *
  * Copyright (C) 2003 Internet Archive.
@@ -22,7 +24,6 @@
  */
 package org.archive.crawler.io;
 
-import java.text.DecimalFormat;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -36,46 +37,33 @@ import org.archive.util.ArchiveUtils;
  * Formatter for 'crawl.log'. Expects completed CrawlURI as parameter.
  *
  * @author gojomo
- * @version $Id$
  */
 public class UriProcessingFormatter
-    extends Formatter implements CoreAttributeConstants
-{
-    static String NA = ".";
-    static DecimalFormat STATUS_FORMAT = new DecimalFormat("-####");
-    static DecimalFormat LENGTH_FORMAT = new DecimalFormat("#,##0");
+		extends Formatter implements CoreAttributeConstants {
 
-    /* (non-Javadoc)
-     * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
-     */
+    final static String NA = "-";
+
     public String format(LogRecord lr) {
-        CrawlURI curi = (CrawlURI) lr.getParameters()[0];
+        CrawlURI curi = (CrawlURI)lr.getParameters()[0];
 
         String length = NA;
-        String mime = NA;
+        String mime = null;
         String uri = curi.getUURI().toString();
+        
         if (curi.isHttpTransaction()) {
-            if(curi.getContentLength()>=0) {
+            if(curi.getContentLength() >= 0) {
                 length = Long.toString(curi.getContentLength());
-            } else if (curi.getContentSize()>0) {
+            } else if (curi.getContentSize() > 0) {
                 length = Long.toString(curi.getContentSize());
             }
-
-            if (curi.getContentType() != null)
-            {
-                mime = curi.getContentType();
-            }
-        }
-        else
-        {
-            if (curi.getContentSize()>0) {
+            mime = curi.getContentType();
+            
+        } else {
+            if (curi.getContentSize() > 0) {
                 length = Long.toString(curi.getContentSize());
-            }
-            if (curi.getContentType() != null) {
-                mime = curi.getContentType();
-            }
+            } 
+            mime = curi.getContentType();
         }
-        // Cleanup mimetype
         mime = cleanupContentType(mime);
 
         long time;
@@ -88,7 +76,6 @@ public class UriProcessingFormatter
             duration = NA;
         }
 
-
         Object via = curi.getVia();
         if (via instanceof CandidateURI) {
             via = ((CandidateURI)via).getUURI().toString();
@@ -99,26 +86,35 @@ public class UriProcessingFormatter
 
         return ArchiveUtils.get17DigitDate(time)
             + " "
-            + ArchiveUtils.padTo(curi.getFetchStatus(),5)
+            + ArchiveUtils.padTo(curi.getFetchStatus(), 5)
             + " "
-            + ArchiveUtils.padTo(length,10)
-            + " "
-            + "#"
-            + curi.getThreadNumber()
+            + ArchiveUtils.padTo(length, 10)
             + " "
             + uri
             + " "
-            + duration
+            + checkForNull(curi.getPathFromSeed())
+            + " "
+            + checkForNull(via.toString())
             + " "
             + mime
             + " "
-            + curi.getAnnotations()
-            + "\n"
-            + "  "
-            + curi.getPathFromSeed()
+            + "#"
+            // Pad threads to be 3 digits.  For Igor.
+            + ArchiveUtils.padTo(
+                    Integer.toString(curi.getThreadNumber()), 3, '0')
+        	+ " "
+            + duration
             + " "
-            + via
+            + checkForNull(curi.getAnnotations())
             + "\n";
+    }
+    
+    /**
+     * @param str String to check.
+     * @return Return passed string or <code>NA</code> if null.
+     */
+    protected String checkForNull(String str) {
+        return (str == null || str.length() <= 0)? NA: str;
     }
 
     /**

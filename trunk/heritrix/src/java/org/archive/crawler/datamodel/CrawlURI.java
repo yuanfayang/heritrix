@@ -663,9 +663,8 @@ public class CrawlURI extends CandidateURI
         if(alist.containsKey(A_ANNOTATIONS)) {
             return alist.getString(A_ANNOTATIONS);
         } else {
-            return "."; // placeholder for "no annotations", maintain column count
+            return null;
         }
-
     }
 
     /**
