@@ -20,9 +20,9 @@ import org.archive.crawler.io.RecordingOutputStream;
  *
  */
 public class HttpRecorder {
-	String backingFilenamePrefix;
-	RecordingInputStream ris;
-	RecordingOutputStream ros;
+	protected String backingFilenamePrefix;
+	protected RecordingInputStream ris;
+	protected RecordingOutputStream ros;
 	
 	/**
 	 * 
@@ -49,6 +49,28 @@ public class HttpRecorder {
 	public OutputStream outputWrap(OutputStream os) throws IOException {
 		ros.open(os);
 		return ros;
+	}
+
+	/**
+	 * 
+	 */
+	public void close() throws IOException {
+		ris.close();
+		ros.close();
+	}
+
+	/**
+	 * 
+	 */
+	public RecordingInputStream getRecordedInput() {
+		return ris;
+	}
+
+	/**
+	 * 
+	 */
+	public void markResponseBodyStart() {
+		ris.markResponseBodyStart();
 	}
 	
 }

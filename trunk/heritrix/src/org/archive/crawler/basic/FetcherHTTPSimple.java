@@ -105,6 +105,7 @@ public class FetcherHTTPSimple
 			// the cost here rather than elsewhere. )
 			InputStream is = get.getResponseBodyAsStream(); 
 			while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
+			get.getHttpRecorder().close();
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.info(

@@ -12,7 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.commons.httpclient.Header;
+// import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
@@ -280,30 +280,36 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			return;
 		}
 		
-		int headersSize = 0;
 		int recordLength = 0;
-		Header[] headers = get.getResponseHeaders();
 		
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		baos.write(get.getStatusLine().toString().getBytes());	// get status line (it's not a header)
-		baos.write("\n".getBytes());
-		for(int i=0; i < headers.length; i++){
-			baos.write(headers[i].toExternalForm().getBytes());
-		}
-		recordLength += baos.size();
+// OLD WAY
+//		Header[] headers = get.getResponseHeaders();
+//		
+//		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//		baos.write(get.getStatusLine().toString().getBytes());	// get status line (it's not a header)
+//		baos.write("\n".getBytes());
+//		for(int i=0; i < headers.length; i++){
+//			baos.write(headers[i].toExternalForm().getBytes());
+//		}
+//		recordLength += baos.size();
+//		
+//		// get body so we can calc length for metaline
+//		byte[] body = get.getResponseBody();
+//		// don't forget the extra CRLF between headers and body
+//		recordLength += 2;
 		
-		// get body so we can calc length for metaline
-		byte[] body = get.getResponseBody();
-		recordLength += body.length;
-		// don't forget the extra CRLF between headers and body
-		recordLength += 2;
-		
+		recordLength += get.getHttpRecorder().getRecordedInput().getSize();
+
 		writeMetaLine(curi,  recordLength);
 		
-		baos.writeTo(out);
-		out.write("\r\n".getBytes());
-		out.write(body);
-		out.write("\n".getBytes());
+		get.getHttpRecorder().getRecordedInput().getReplayInputStream().readFullyTo(out);
+		out.write('\n'); // trailing newline
+		
+// OLD WAY
+//		baos.writeTo(out);
+//		out.write("\r\n".getBytes());
+//		out.write(body);
+//		out.write("\n".getBytes());
 	}
 	
 	protected void writeDns(CrawlURI curi) throws IOException, InvalidRecordException {

@@ -256,6 +256,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			// nothing to extract for other types here
 			return; 
 		}
+			
 				
 		CharSequence cs = get.getResponseBodyAsString();
 		
