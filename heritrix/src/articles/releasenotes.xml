@@ -13,10 +13,10 @@
   </articleinfo>
 
   <sect1 id="1_2_0">
-    <title>Release 1.2.0 - TBD</title>
+    <title>Release 1.2.0 - 11/16/2004</title>
 
     <abstract>
-      <para>TBD</para>
+      <para>Added IP-based politeness, configurable URI-canonicalization, and mid-fetch abort. Lots of Bug fixes.</para>
     </abstract>
 
     <sect2 id="1_2_0_limitations">
