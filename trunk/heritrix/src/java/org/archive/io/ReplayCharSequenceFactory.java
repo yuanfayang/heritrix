@@ -453,6 +453,9 @@ public class ReplayCharSequenceFactory {
          * @return A character that's outside the current buffers
          */
         private int faultCharAt(int index) {
+            if(Thread.interrupted()) {
+                throw new RuntimeException("thread interrupted");
+            }
             if(index >= this.wrapOrigin + this.wraparoundBuffer.length) {
                 // Moving forward
                 while (index >= this.wrapOrigin + this.wraparoundBuffer.length)
@@ -513,6 +516,7 @@ public class ReplayCharSequenceFactory {
                     "raFile.length()" + len + "\n" +
                     DevUtils.extraInfo(),
                     e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -527,9 +531,9 @@ public class ReplayCharSequenceFactory {
                 this.wrapOffset %= this.wraparoundBuffer.length;
                 this.wrapOrigin++;
             } catch (IOException e) {
-                // TODO convert this to a runtime error?
                 DevUtils.logger.log(Level.SEVERE, "advanceBuffer()" +
                     DevUtils.extraInfo(), e);
+                throw new RuntimeException(e);
             }
         }
 
