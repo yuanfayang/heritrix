@@ -85,9 +85,23 @@ public class RecordingOutputStream extends OutputStream {
     private byte[] buffer;
 
     private long position;
+    
+    /**
+     * True if we're to digest content.
+     */
     private boolean shouldDigest = false;
-    private MessageDigest digest;
+ 
+    /**
+     * Digest instance.
+     */
+    private MessageDigest digest = null;
 
+    /**
+     * Define for SHA1 alogarithm.
+     */
+    private static final String SHA1 = "SHA1";
+    
+    
     /**
      * When recording HTTP, where the content-body starts.
      */
@@ -340,9 +354,15 @@ public class RecordingOutputStream extends OutputStream {
     /**
      * Convenience method for setting SHA1 digest.
      */
-    public void setSha1Digest() {
+    public synchronized void setSha1Digest() {
         try {
-            setDigest(MessageDigest.getInstance("SHA1"));
+            // Reuse extant SHA1 digest if one.
+            if (this.digest != null &&
+                    this.digest.getAlgorithm().equals(SHA1)) {
+                this.digest.reset();
+            } else {
+                setDigest(MessageDigest.getInstance(SHA1));
+            }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
