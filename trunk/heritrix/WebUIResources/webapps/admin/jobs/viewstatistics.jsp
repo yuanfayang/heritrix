@@ -101,13 +101,40 @@
 										<b>Processed docs/sec:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.processedDocsPerSec()%>
+										<%
+											if(cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING))
+											{
+												// Show current and overall stats.
+										%>
+												<%=stats.currentProcessedDocsPerSec()%> (<%=stats.processedDocsPerSec()%>)
+												&nbsp;&nbsp;&nbsp;
+												<b>KB/sec:</b>&nbsp;<%=stats.currentProcessedKBPerSec()%> (<%=stats.processedKBPerSec()%>)
+										<%
+											}
+											else
+											{
+												// Only show overall stats.
+										%>
+												<%=stats.processedDocsPerSec()%>
+												&nbsp;&nbsp;&nbsp;
+												<b>KB/sec:</b>&nbsp;<%=stats.processedKBPerSec()%>
+										<%
+											}
+										%>
 									</td>
 								</tr>
 							</table>
 						</td>
 						<td valign="top">
 							<table border="0" cellspacing="0" cellpadding="0" >
+								<tr>
+									<td>
+										<b>Downloaded:</b>&nbsp;
+									</td>
+									<td>
+										<%=stats.successfulFetchAttempts()%>
+									</td>
+								</tr>
 								<tr>
 									<td>
 										<b>Discovered:</b>&nbsp;
@@ -126,14 +153,6 @@
 								</tr>
 								<tr>
 									<td>
-										<b>Downloaded:</b>&nbsp;
-									</td>
-									<td>
-										<%=stats.successfulFetchAttempts()%>
-									</td>
-								</tr>
-								<tr>
-									<td>
 										<b>Total megabytes written:</b>&nbsp;
 									</td>
 									<td>
@@ -141,39 +160,6 @@
 									</td>
 								</tr>
 							</table>
-						</td>
-					</tr>
-					<%
-						long begin = stats.successfulFetchAttempts();
-						long end = stats.urisEncounteredCount();
-						if(end < 1)
-							end = 1; 
-						int ratio = (int) (100 * begin / end);
-					%>
-					<tr>
-						<td colspan="2" height="5">
-						</td>
-					</tr>
-					<tr>
-						<td colspan="2">
-							<center>
-							<table border=1 width="500">
-							<tr>
-							<td><center><b><u>DOWNLOADED/DISCOVERED DOCUMENT RATIO</u></b><br>
-							<table border="0" cellpadding="0" cellspacing= "0" width="100%"> 
-								<tr>
-									<td width="20%"></td>
-									<td bgcolor="darkorange" width="<%= (int) (ratio/2) %>%" align="right">
-										<strong><%= ratio %></strong>%
-									</td>
-									<td bgcolor="lightblue" align="right" width="<%= (int) ((100-ratio)/2) %>%"></td>
-									<td nowrap>&nbsp;&nbsp;(<%= begin %> of <%= end %>)</td>
-								</tr>
-							</table>		
-							</td>
-							</tr>
-							</table>
-							</center>
 						</td>
 					</tr>
 				</table>
