@@ -70,12 +70,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
         }
         if (recheckScope) {
             CrawlScope scope = getController().getScope();
-            if (curi.getScopeVersion() == scope.getVersion()) {
-                // already checked
-                return;
-            }
             if(scope.accepts(curi)) {
-                curi.setScopeVersion(scope.getVersion());
                 return;
             }
             // scope rejected
