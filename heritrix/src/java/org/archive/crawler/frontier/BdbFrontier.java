@@ -226,8 +226,6 @@ implements Frontier,
      * Choose a per-classKey queue and enqueue it. If this
      * item has made an unready queue ready, place that 
      * queue on the readyClassQueues queue. 
-     * 
-     * @param huri
      */
     public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
@@ -331,6 +329,7 @@ implements Frontier,
                                 curi.setClassKey(currentQueueKey);
                                 readyQ.dequeue();
                                 curi.setHolderKey(null);
+                                sendToQueue(curi);
                             }
                         } else {
                             // readyQ is empty and ready: release held, allowing
@@ -338,10 +337,6 @@ implements Frontier,
                             readyQ.clearHeld();
                             break;
                         }
-                    }
-                    // if curi non-null, it's a requeue
-                    if(curi!=null) {
-                        sendToQueue(curi);
                     }
                 }
             }
@@ -545,7 +540,6 @@ implements Frontier,
             wq.unpeek();
             count += wq.deleteMatching(match);
         }
-        // TODO: update per-queue counts!
         decrementQueuedCount(count);
         return count;
     }
@@ -677,6 +671,8 @@ implements Frontier,
          * Delete all CrawlURIs matching the given expression.
          * 
          * @param match
+         * @param queue
+         * @param headKey
          * @return count of deleted items
          * @throws DatabaseException
          * @throws DatabaseException
@@ -838,7 +834,7 @@ implements Frontier,
          * ensuring earlier-discovered URIs sort before later. 
          * 
          * @param curi
-         * @return
+         * @return a DatabaseEntry key for the CrawlURI
          */
         private DatabaseEntry calculateInsertKey(CrawlURI curi) {
             byte[] keyData = new byte[16];
@@ -927,7 +923,6 @@ implements Frontier,
          * 
          * @param match
          * @return count of deleted URIs
-         * @throws DatabaseException
          */
         public long deleteMatching(String match) {
             try {

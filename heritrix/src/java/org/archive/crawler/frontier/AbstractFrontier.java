@@ -32,8 +32,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -111,6 +109,11 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     public final static String ATTR_MAX_RETRIES = "max-retries";
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
 
+    /** whether to reassign URIs to IP-address based queues when IP known */
+    public final static String ATTR_IP_POLITENESS = "ip_politeness";
+    // TODO: change default to true once well-tested
+    protected final static Boolean DEFAULT_IP_POLITENESS = new Boolean(false); 
+
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
     public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
     protected final static String DEFAULT_FORCE_QUEUE = "";
@@ -130,7 +133,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     int lastMaxBandwidthKB = 0;
 
     /** Policy for assigning CrawlURIs to named queues */
-    protected QueueAssignmentPolicy queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
+    protected QueueAssignmentPolicy queueAssignmentPolicy = null;
     
     /**
      * Crawl replay logger.
@@ -192,7 +195,13 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             "limitation.",
             DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
         t.setExpertSetting(true);
-
+        t = addElementToDefinition(new SimpleType(ATTR_IP_POLITENESS,
+                "Whether to assign URIs to IP-address based queues "+
+                "when possible, to remain polite on a per-IP-address "+
+                "basis.",
+                DEFAULT_IP_POLITENESS));
+        t.setExpertSetting(true);
+        t.setOverrideable(false);
         t = addElementToDefinition(
             new SimpleType(ATTR_FORCE_QUEUE,
             "EXPERT SETTING. The queue name into which to force URIs. Should " +
@@ -225,6 +234,11 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
             this.recover = new RecoveryJournal(logsPath, LOGNAME_RECOVER);
+        }
+        if(((Boolean)getUncheckedAttribute(null,ATTR_IP_POLITENESS)).booleanValue()) {
+            queueAssignmentPolicy = new IPQueueAssignmentPolicy();
+        } else {
+            queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
         }
     }
     
@@ -316,7 +330,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     }
     
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
     public long succeededFetchCount(){
         return succeededFetchCount;
@@ -346,7 +360,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     }
     
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#disregardedFetchCount()
+     * @see org.archive.crawler.framework.Frontier#disregardedUriCount()
      */
     public long disregardedUriCount() {
         return disregardedUriCount;
@@ -460,7 +474,8 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     /**
      * Perform fixups on a CrawlURI about to be returned via next().
      * 
-     * @param curi
+     * @param curi CrawlURI about to be returned by next()
+     * @param q the queue from which the CrawlURI came
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
         curi.setHolder(q);
@@ -482,11 +497,10 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
 
 
     /**
-     * @param curi
-     * @return
-     * @throws AttributeNotFoundException
-     * @throws MBeanException
-     * @throws ReflectionException
+     * Return a suitable value to wait before retrying the given URI.
+     * 
+     * @param curi CrawlURI to be retried
+     * @return millisecond delay before retry
      */
     protected long retryDelayFor(CrawlURI curi) {
         if ( curi.getFetchStatus() == S_CONNECT_FAILED || 
@@ -509,8 +523,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      * appropriate politeness window.
      *
      * @param curi The CrawlURI
-     * @param kq A KeyedQueue
-     * @throws AttributeNotFoundException
+     * @return millisecond politeness delay
      */
     protected long politenessDelayFor(CrawlURI curi) {
         long durationToWait = 0;
@@ -631,14 +644,14 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     }
     
     /**
-     * Utility method to reeturn a scratch dir for the given key's temp files. 
+     * Utility method to return a scratch dir for the given key's temp files. 
      * Every key gets its own subdir. To avoid having any one directory with 
      * thousands of files, there are also two levels of enclosing directory 
      * named by the least-significant hex digits of the key string's java 
      * hashcode. 
      * 
      * @param key
-     * @return
+     * @return File representing scratch directory
      */
     protected File scratchDirFor(String key) {
         String hex = Integer.toHexString(key.hashCode());
@@ -675,8 +688,9 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     }
     
     /**
+     * Log to the main crawl.log
+     * 
      * @param curi
-     * @param array
      */
     protected void log(CrawlURI curi) {
         curi.aboutToLog();
@@ -707,8 +721,6 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      *
      * @param curi The CrawlURI to check
      * @return True if we need to retry.
-     * @throws AttributeNotFoundException If problems occur trying to read the
-     *            maximum number of retries from the settings framework.
      */
     protected boolean needsRetrying(CrawlURI curi) {
         if (overMaxRetries(curi)) {
