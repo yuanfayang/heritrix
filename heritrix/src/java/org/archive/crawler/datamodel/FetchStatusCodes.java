@@ -61,6 +61,9 @@ public interface FetchStatusCodes {
     /** temporary status assigned URIs awaiting preconditions; appearance in
      *  logs is a bug */
     public static final int S_DEFERRED = -50;
+    /** URI could not be queued in Frontier; when URIs are properly
+     * filtered for format, should never occur  */
+    public static final int S_UNQUEUEABLE = -60;
 
     /** robots rules precluded fetch */
     public static final int S_ROBOTS_PRECLUDED = -9998;
