@@ -19,17 +19,43 @@
 				// Not logged in
 				sMessage = "Login failed";
 			}
-			else if(user.authenticate()==User.USER)
+			else 
 			{
-				// Redirect to 'User' start page
+				//Successful login.
+				if(request.getParameter("remember") != null && request.getParameter("remember").equalsIgnoreCase("true"))
+				{
+					// Need to write cookies to remember login.
+					Cookie userCookie = new Cookie("username", request.getParameter("username"));
+					Cookie passCookie = new Cookie("password", request.getParameter("password"));
+					userCookie.setMaxAge(60*60*24*365);//One year
+					passCookie.setMaxAge(60*60*24*365);//One year
+					response.addCookie(userCookie);
+					response.addCookie(passCookie);
+				}
+				else
+				{
+					// Delete old cookies to be sure that no old logins are remembered.
+					Cookie userCookie = new Cookie("username", "");
+					Cookie passCookie = new Cookie("password", "");
+					userCookie.setMaxAge(0);//One year
+					passCookie.setMaxAge(0);//One year
+					response.addCookie(userCookie);
+					response.addCookie(passCookie);
+				}
+				
 				session.setAttribute("user",user);
-				response.sendRedirect("/admin/simplerequest.jsp");
-			}
-			else if(user.authenticate()==User.ADMINISTRATOR)
-			{
-				// Redirect to 'Administrator' start page.
-				session.setAttribute("user",user);
-				response.sendRedirect("/admin/main.jsp");
+
+				//Redirect to user group entry page.
+				if(user.authenticate()==User.USER)
+				{
+					// Redirect to 'User' start page
+					response.sendRedirect("/admin/simplerequest.jsp");
+				}
+				else if(user.authenticate()==User.ADMINISTRATOR)
+				{
+					// Redirect to 'Administrator' start page.
+					response.sendRedirect("/admin/main.jsp");
+				}
 			}
 		}
 		else if(sAction.equalsIgnoreCase("logout"))
@@ -100,7 +126,12 @@
 								</td>
 							</tr>
 							<tr>
-								<td colspan="2" align="right">
+								<td colspan="2">
+									<input type="checkbox" name="remember" value="true"> Remember my login on this computer
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2" align="center">
 									<input type="submit" value="Login">
 								</td>
 							</tr>
