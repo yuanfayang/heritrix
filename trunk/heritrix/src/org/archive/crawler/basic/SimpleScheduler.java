@@ -18,7 +18,7 @@ import org.archive.crawler.framework.URIScheduler;
  * @author gojomo
  *
  */
-public class BreadthFirstScheduler implements URIScheduler {
+public class SimpleScheduler implements URIScheduler {
 	CrawlController controller = null;
 	SimpleStore store;
 	
@@ -26,8 +26,43 @@ public class BreadthFirstScheduler implements URIScheduler {
 	 * @see org.archive.crawler.framework.URIScheduler#curiFor(org.archive.crawler.framework.ToeThread)
 	 */
 	public CrawlURI curiFor(ToeThread thread) {
-		// TODO Auto-generated method stub
+		long now = System.currentTimeMillis();
+		long waitMax = 0;
+		synchronized (store) {
+			store.wakeReadyQueues(now);
+			CrawlURI curi = null;
+			if (!store.getReadyClassQueues().isEmpty()) {
+				curi = store.dequeueFromReady();
+				return emitCuri(curi);
+			}
+			while ((curi = store.dequeueFromPending()) != null) {
+				if (!store.enqueueIfNecessary(curi)) {
+					// OK to emit
+					return emitCuri(curi);
+				}
+			}
+			waitMax = store.earliestWakeTime()-now;
+		}
+		try {
+			store.ReadyChangeSemaphore.wait(waitMax);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+		
 		return null;
+	}
+
+	/**
+	 * @param crawlURI
+	 * @return
+	 */
+	private CrawlURI emitCuri(CrawlURI curi) {
+		store.noteInProcess(curi);
+		return curi;
 	}
 
 	/* (non-Javadoc)
