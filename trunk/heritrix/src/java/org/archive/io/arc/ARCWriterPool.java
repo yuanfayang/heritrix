@@ -37,11 +37,19 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * A pool of ARCWriters.
+ * 
+ * Should only be one instance per JVM.
  *
  * @author stack
  */
-public class ARCWriterPool
-{
+public class ARCWriterPool {
+    
+    /**
+     * Logger instance used by this class.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriterPool");
+    
     /**
      * Default maximum active number of ARCWriters in the pool.
      */
@@ -56,12 +64,6 @@ public class ARCWriterPool
      * Pool instance.
      */
     private ObjectPool pool = null;
-
-    /**
-     * Logger instance used by this class.
-     */
-    private static Logger logger =
-        Logger.getLogger("org.archive.io.arc.ARCWriterPool");
 
 
     /**
