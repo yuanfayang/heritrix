@@ -1,4 +1,4 @@
-/* HeritrixHttpConnectionManager
+/* SingleHttpConnectionManager
 *
 * $Id$
 *
@@ -39,9 +39,9 @@ import org.apache.commons.httpclient.SimpleHttpConnectionManager;
  * 
  * @author gojomo
  */
-public class HeritrixHttpConnectionManager extends SimpleHttpConnectionManager {
+public class SingleHttpConnectionManager extends SimpleHttpConnectionManager {
 
-    public HeritrixHttpConnectionManager() {
+    public SingleHttpConnectionManager() {
         super();
     }
 

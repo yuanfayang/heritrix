@@ -1,4 +1,4 @@
-/* HeritrixHttpClient
+/* PatchedHttpClient
  * 
  * Created on Mar 19, 2004
  *
@@ -45,7 +45,7 @@ import org.apache.commons.logging.LogFactory;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class HeritrixHttpClient extends HttpClient
+public class PatchedHttpClient extends HttpClient
 {
     /** Log object for this class.
      * 
@@ -89,12 +89,12 @@ public class HeritrixHttpClient extends HttpClient
     private int connectionTimeout = 0;
     
     
-    public HeritrixHttpClient()
+    public PatchedHttpClient()
     {
         super();
     }
 
-    public HeritrixHttpClient(HttpConnectionManager httpConnectionManager)
+    public PatchedHttpClient(HttpConnectionManager httpConnectionManager)
     {
         super(httpConnectionManager);
     }
