@@ -24,11 +24,10 @@ package is.hi.bok.crawler.ar.frontier;
 
 import java.io.File;
 
-import junit.framework.TestCase;
-
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.util.TmpDirTestCase;
 
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
@@ -42,9 +41,7 @@ import com.sleepycat.je.EnvironmentConfig;
  *
  * @author Kristinn Sigurdsson
  */
-public class ARHostQueueTest extends TestCase {
-    
-
+public class ARHostQueueTest extends TmpDirTestCase {
     
     /**
      * Big test
@@ -53,7 +50,7 @@ public class ARHostQueueTest extends TestCase {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setTransactional(true); 
         envConfig.setAllowCreate(true);    
-        File envDir = new File("/temp/HQtest"+System.currentTimeMillis()+"/");
+        File envDir = new File(getTmpDir() + File.separator + "AR" + File.separator);
         envDir.mkdirs();
         Environment env = new Environment(envDir, envConfig);
         ARHostQueue hq = new ARHostQueue("bok.hi.is",env,1);
@@ -358,7 +355,7 @@ public class ARHostQueueTest extends TestCase {
          */
         hq.close();
         env.close();
-        // TODO: delete all created files and folders.
+        cleanUpOldFiles("AR");
     }
     
 }
