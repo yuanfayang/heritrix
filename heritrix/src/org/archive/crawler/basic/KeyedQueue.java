@@ -86,10 +86,10 @@ public class KeyedQueue extends LinkedList implements URIStoreable, Comparable {
 		if(this==other) {
 			return 0; // for exact identity only
 		}
-		if (((KeyedQueue)other).getWakeTime()> wakeTime) {
+		if (((URIStoreable)other).getWakeTime()> wakeTime) {
 			return -1;
 		} 
-		if (((KeyedQueue)other).getWakeTime()< wakeTime) {
+		if (((URIStoreable)other).getWakeTime()< wakeTime) {
 			return 1;
 		} 
 		// at this point, the ordering is arbitrary, but still
