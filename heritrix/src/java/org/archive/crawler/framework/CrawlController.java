@@ -486,7 +486,8 @@ public class CrawlController {
         // try to initialize each scope and frontier from the config file
         //scope.initialize(this);
         try {
-            frontier.initialize(this);
+            this.scope.initialize(this);
+            this.frontier.initialize(this);
             
             String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
             if(recoverPath.length()>0) {

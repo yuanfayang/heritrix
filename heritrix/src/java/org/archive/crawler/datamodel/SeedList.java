@@ -75,11 +75,6 @@ public class SeedList extends AbstractList {
     
     /**
      * Cache of seeds.
-     * 
-     * Cache is instantiated on first call to {@link #refresh()}.  If refresh
-     * method is never called, cache is never used (Null cache data member
-     * is used as flag in iterator method; if null, return an iterator that 
-     * goes against raw seed file, else return the cache iterator).
      */
     private List cache = null;
 
@@ -89,14 +84,19 @@ public class SeedList extends AbstractList {
      * 
      * @param seedfile Default seed file to use.
      * @param logger Logger to use logging seed problems.
+     * @param caching True if we're to cache the seed list.
      */
-    public SeedList(File seedfile, Logger logger) {
+    public SeedList(File seedfile, Logger logger, boolean caching) {
         this.logger = logger;
         this.seedfile = seedfile;
+        if (caching) {
+            this.cache = Collections.synchronizedList(new ArrayList());
+            refresh(seedfile);
+        }
     }
     
     /**
-     * Blocked default onstructor.
+     * Blocked default constructor.
      */
     private SeedList() {
         super();
@@ -133,49 +133,45 @@ public class SeedList extends AbstractList {
     }
     
     /** 
-     * Refreshes the cache.
+     * Refreshes the cache, if caching in operation.
      * 
-     * The cache is instantiated on first call to this method and used
-     * ever after.  Callers that do not want caching should not call this 
-     * method.
+     * If no cache, this is a noop.
      */
     public void refresh() {
         refresh(null);
     }
     
     /** 
-     * Refreshes the cache.
+     * Refresh the seed file and the cache, if caching in operation.
      * 
      * @param file Seed file.  If null, we use the default.  Otherwise, we
      * freshen our seedfile with whats passed here.
-     * 
-     * The cache is instantiated on first call to this method and used
-     * ever after.  Callers that do not want caching should not call this 
-     * method.
      */
     public void refresh(File file) {
-        if (file == null) {
-            throw new IllegalArgumentException("File is null");
+        if (file != null) {
+            setSeedfile(file);
         }
 
         // Get iterator before we check on whether cache exists.  Null cache 
         // is signal inside in the iterator method that we should get iterator
         // over seed file rather than over cache.
-        Iterator i = iterator();
-        if (this.cache == null) {
-            this.cache = Collections.synchronizedList(new ArrayList());
-        }
-        synchronized (this.cache) {
-            this.cache.clear();
-            while(i. hasNext()) {
-                this.cache.add(i.next());
+        if (this.cache != null) {
+            Iterator i = null;
+            try {
+                i = new SeedIterator();
             }
-        }
-    }
-    
-    protected synchronized void createCache() {
-        if (this.cache == null) {
-            this.cache = Collections.synchronizedList(new ArrayList());
+            catch (IOException e) {
+                this.logger.severe("Failed to get seed iterator: " + e);
+            }
+            
+            if (i != null) {
+                synchronized (this.cache) {
+                    this.cache.clear();
+                    while(i. hasNext()) {
+                        this.cache.add(i.next());
+                    }
+                }
+            }
         }
     }
     
@@ -191,11 +187,13 @@ public class SeedList extends AbstractList {
         
         boolean result = false;
         if (!(newSeed instanceof UURI)) {
-            throw new IllegalArgumentException("Must pass a UURI: " + newSeed);
+            throw new IllegalArgumentException("Must pass UURI: " + newSeed);
         }
         
+        UURI uuri = (UURI)newSeed;
+        
         if (this.cache != null) {
-            this.cache.add(newSeed);
+            this.cache.add(uuri);
              result = true;
         }
 
@@ -205,7 +203,7 @@ public class SeedList extends AbstractList {
                 FileWriter fw = new FileWriter(f, true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
-                fw.write(newSeed.toString());
+                fw.write(uuri.toExternalForm());
                 fw.flush();
                 fw.close();
                 result = true;
@@ -219,8 +217,9 @@ public class SeedList extends AbstractList {
     
     /**
      * @return Iterator over the seeds.  If you do not read the iterator
-     * to the end, there is a dangling open file descriptor till the finally 
-     * on the iterator runs (if it ever runs).
+     * to the end, and this you are not caching the seedlist, there is a
+     * dangling open file descriptor till the finally on the iterator runs
+     * (if it ever runs).
      */
     public Iterator iterator() {
         Iterator iterator = null;
