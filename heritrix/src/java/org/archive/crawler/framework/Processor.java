@@ -39,16 +39,12 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * @author Gordon Mohr
  */
 public class Processor extends CrawlerModule {
-    /**
-	 * XPath to any specified filters
-	 */
-	//private static String XP_FILTERS = "filter";
 	private final static String ATTR_FILTERS = "filters";
     private final static String ATTR_ENABLED = "enabled";
-    private final static String ATTR_NEXT = "next";
     private final static String ATTR_POSTPROCESSOR = "postprocessor";
     private MapType filters;
-    
+    private Processor defaultNextProcessor = null;
+
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.Processor");
 
     /**
@@ -58,7 +54,6 @@ public class Processor extends CrawlerModule {
     public Processor(String name, String description) {
         super(name, description);
         addElementToDefinition(new SimpleType(ATTR_ENABLED, "Is processor enabled", new Boolean(true)));
-        addElementToDefinition(new SimpleType(ATTR_NEXT, "Next processor in chain", ""));
         addElementToDefinition(new SimpleType(ATTR_POSTPROCESSOR, "Postprocessor", new Boolean(false)));
         filters = (MapType) addElementToDefinition(new MapType(ATTR_FILTERS, "Filters"));
     }
@@ -66,6 +61,16 @@ public class Processor extends CrawlerModule {
 	protected CrawlController controller;
 	
 	public final void process(CrawlURI curi) {
+        // Check if this processor is enabled before processing
+        try {
+            if (!((Boolean) getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
+                return;
+            }
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
 		// by default, simply forward curi along
 		curi.setNextProcessor(getDefaultNext(curi));
 		if(filtersAccept(curi)) {
@@ -121,20 +126,12 @@ public class Processor extends CrawlerModule {
 	 * 
 	 */
 	private Processor getDefaultNext(CrawlURI curi) {
-        String nextProcessorName;
-        Processor nextProcessor = null;
-        try {
-            nextProcessorName = (String) getAttribute(ATTR_NEXT, curi);
-            if (nextProcessorName == null || nextProcessorName.equals("")) {
-                nextProcessor = null;
-            } else {
-                nextProcessor = (Processor) getParent().getAttribute(nextProcessorName, curi);
-            }
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-        }
-        return nextProcessor;
+        return defaultNextProcessor;
 	}
+    
+    public void setDefaultNextProcessor(Processor nextProcessor) {
+        defaultNextProcessor = nextProcessor;
+    }
 	
     private Processor getPostprocessor(CrawlURI curi) {
         String processorName;
@@ -148,20 +145,11 @@ public class Processor extends CrawlerModule {
         return processor;
     }
     
-	public void initialize(CrawlController c) {
+	public void initialize(CrawlController c) throws AttributeNotFoundException {
 		controller = c;
-		//Node n;
-		//if ((n=xNode.getAttributes().getNamedItem("next"))!=null) {
-		//	defaultNext = (Processor)c.getProcessors().get(n.getNodeValue());
-		//}
-		try {
-            if (((Boolean) getAttribute(null, ATTR_POSTPROCESSOR)).booleanValue()) {
-            	// I am the distinguished postprocessor earlier stage can skip to
-            	controller.setPostprocessor(this);
-            }
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        if (((Boolean) getAttribute(null, ATTR_POSTPROCESSOR)).booleanValue()) {
+            // I am the distinguished postprocessor earlier stage can skip to
+            controller.setPostprocessor(this);
         }
 
         Iterator iter = filters.iterator(null);
