@@ -158,6 +158,19 @@ public class DataContainer extends HashMap {
         }
     }
 
+    protected void copyAttribute(String name, DataContainer destination) throws InvalidAttributeValueException, AttributeNotFoundException {
+        if (this != destination) {
+            MBeanAttributeInfo attribute = (MBeanAttributeInfo) attributeNames.get(name);
+            destination.attributeNames.put(name, attribute);
+            
+            int index = attributes.indexOf(attribute);
+            if (index != -1 && !destination.attributes.contains(attribute)) {
+                destination.attributes.add(index, attribute);
+            }
+            destination.put(attribute.getName(), get(attribute.getName()));
+        }
+    }
+
     public Object put(Object key, Object value) {
         throw new UnsupportedOperationException();
     }
