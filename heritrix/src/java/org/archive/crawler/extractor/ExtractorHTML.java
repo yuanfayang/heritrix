@@ -244,7 +244,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             if (codebase != null) {
                 // TODO: Pass in the charset.
                 codebaseURI = UURIFactory.
-                	getInstance(curi.getUURI(), codebase);
+                	    getInstance(curi.getUURI(), codebase);
             }
             while(iter.hasNext()) {
                 res = iter.next().toString();
@@ -256,7 +256,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 processEmbed(curi, res);
             }
         } catch (URIException e) {
-            curi.addLocalizedError(getName(),e,"BAD CODEBASE " + codebase);
+            curi.addLocalizedError(getName(), e, "BAD CODEBASE " + codebase);
         } catch (IllegalArgumentException e) {
             DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
                 "codebase=" + codebase + " res=" + res + "\n" +

@@ -119,6 +119,20 @@ public class UURIFactoryTest extends TestCase {
                 uuri.toString().equals(tgtUri));
     }
     
+    public final void testBadScheme() throws URIException {
+        final String uriStr = "file:///home/stack/index.html";
+        boolean exception = false;
+        try {
+            UURI uuri = UURIFactory.getInstance(uriStr);
+        } catch (URIException e) {
+            String message = e.getMessage();
+        	    exception = true;
+        }
+        // Comment in when unit tests have a list of disallowed schemes loaded.
+        // Normally they don't.
+        // assertTrue("Didn't get exception", exception);
+    }
+    
 	public final void testFailedGetPath() throws URIException {
 		final String path = "/RealMedia/ads/" +
 		"click_lx.ads/%%PAGE%%/%%RAND%%/%%POS%%/%%CAMP%%/empty";
@@ -152,7 +166,7 @@ public class UURIFactoryTest extends TestCase {
         UURI uuri = UURIFactory.getInstance(base, "http://www.changeup.com/...</a");
         int i = 0;
     }
-	
+    
 	public final void testTrimSpaceNBSP() throws URIException {
 		final String uri = "   http://archive.org/DIR WITH SPACES/" +
 		UURIFactory.NBSP + "home.html    " + UURIFactory.NBSP + "   ";
