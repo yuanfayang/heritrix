@@ -147,7 +147,9 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
 		shouldCrawl = false;
 		if(isAvailable())
+		{
 			notify();
+		}
 	}
 
 	/**

@@ -196,7 +196,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 			// pause before writing the first entry (so we have real numbers)
 			// and then pause between entries 
 			try {
-				Thread.sleep(logInterval * 1000);
+				Thread.sleep(controller.getOrder().getIntAt(CrawlController.XP_STATS_INTERVAL, CrawlController.DEFAULT_STATISTICS_REPORT_INTERVAL) * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				controller.runtimeErrors.log(

@@ -536,4 +536,25 @@ public class CrawlController extends Thread{
 		
 		return rep.toString();
 	}
+	
+	/**
+	 * Set's a new CrawlOrder for this controller.  Objects that do not cache the values they
+	 * read from the CrawlOrder will be updated automatically.  
+	 * 
+	 * @param o The new CrawlOrder
+	 */
+	public void updateOrder(CrawlOrder o)
+	{
+		// Prepare the new CrawlOrder
+		o.initialize();
+		// Replace the old CrawlOrder
+		order = o;
+		// Resize the ToePool
+		toePool.setSize(order.getMaxToes());
+		// Prepare the new CrawlScope	
+		CrawlScope newscope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
+		newscope.initialize(this);
+		// Replace the old CrawlScope		
+		scope = newscope;
+	}
 }

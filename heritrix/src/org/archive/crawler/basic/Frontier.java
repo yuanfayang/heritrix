@@ -107,10 +107,10 @@ public class Frontier
     // limits on retries TODO: separate into retryPolicy? 
 	private int maxRetries = 3;
 	private int retryDelay = 15000;
-	private long minDelay;
-	private float delayFactor;
-	private long maxDelay;
-	private int minInterval;
+//	private long minDelay;
+//	private float delayFactor;
+//	private long maxDelay;
+//	private int minInterval;
 
 	// top-level stats
 	long completionCount = 0;
@@ -132,10 +132,10 @@ public class Frontier
 	public void initialize(CrawlController c)
 		throws FatalConfigurationException, IOException {
 		
-		delayFactor = getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
-		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
-		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
-		minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
+//		delayFactor = getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
+//		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
+//		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
+//		minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
@@ -736,17 +736,22 @@ public class Frontier
 			long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
 			long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
 			durationToWait =
-				(long) (delayFactor
+				(long) (getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR)
 					* durationTaken);
 
+			long minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
 			if (minDelay > durationToWait) {
 				// wait at least the minimum
 				durationToWait = minDelay;
 			}
+			
+			long maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
 			if (durationToWait > maxDelay) {
 				// wait no more than the maximum
 				durationToWait = maxDelay;
 			}
+			
+			long minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
 			if (durationToWait < (minInterval - durationTaken) ) {
 				// wait at least as long as necessary to space off from last fetch begin
 				durationToWait = minInterval - durationTaken;
@@ -1064,7 +1069,7 @@ public class Frontier
 				else if(q[i] instanceof CrawlURI)
 				{
 					CrawlURI cu = (CrawlURI)q[i];
-					rep.append("   Snooze item " + (i++) + " - " + "CrawlUri" + "\n");
+					rep.append("   Snooze item " + (i+1) + " - " + "CrawlUri" + "\n");
 					rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
 					rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
 				}
