@@ -12,6 +12,7 @@
 <%
 	ArrayList availibleURIFrontiers = CrawlJobHandler.loadOptions("urifrontiers.options");
 	ArrayList availibleProcessors = CrawlJobHandler.loadOptions("processors.options");
+	ArrayList availibleTrackers = CrawlJobHandler.loadOptions("trackers.options");
 	ArrayList availibleScopes = CrawlJobHandler.loadOptions("scopes.options");
 	
 	// Get the default settings.
@@ -105,6 +106,34 @@
 				// Write changes
 				settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
 			}
+		}else if(action.equals("trackers")){
+			//Doing something with the statistics trackers
+			String subaction = request.getParameter("subaction");
+			if(subaction != null){
+				// Do common stuff
+				String trackerName = request.getParameter("item");
+				MapType trackers = ((MapType)settingsHandler.getOrder().getAttribute("loggers"));
+				// Figure out what to do
+				if(subaction.equals("up")){
+					// Move selected tracker up
+					trackers.moveElementUp(settingsHandler.getSettings(null),trackerName);
+				}else if(subaction.equals("down")){
+					// Move selected tracker down			
+					trackers.moveElementDown(settingsHandler.getSettings(null),trackerName);
+				}else if(subaction.equals("remove")){
+					// Remove selected processor
+					trackers.removeElement(settingsHandler.getSettings(null),trackerName);
+				}else if(subaction.equals("add")){
+					String className = request.getParameter("cboAddTrackers");
+					String typeName = className.substring(className.indexOf("|")+1);
+					className = className.substring(0,className.indexOf("|"));
+
+					trackers.addElement(settingsHandler.getSettings(null),
+									 SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+				}
+				// Write changes
+				settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
+			}
 		}		
 	}
 
@@ -170,6 +199,33 @@
 		document.frmModules.subaction.value="add";
 		doSubmit();
 	}
+
+	function doMoveUpTracker(track){
+		document.frmModules.action.value="trackers";
+		document.frmModules.subaction.value="up";
+		document.frmModules.item.value=track;
+		doSubmit();
+	}
+
+	function doMoveDownTracker(track){
+		document.frmModules.action.value="trackers";
+		document.frmModules.subaction.value="down";
+		document.frmModules.item.value=track;
+		doSubmit();
+	}
+	
+	function doRemoveTracker(track){
+		document.frmModules.action.value="trackers";
+		document.frmModules.subaction.value="remove";
+		document.frmModules.item.value=track;
+		doSubmit();
+	}
+	
+	function doAddTracker(){
+		document.frmModules.action.value="trackers";
+		document.frmModules.subaction.value="add";
+		doSubmit();
+	}
 </script>
 
 	<p>
@@ -180,7 +236,7 @@
 		<input type="hidden" name="subaction" value="done">
 		<input type="hidden" name="item" value="">
 		<p>
-			<b>Chose URI Frontier</b>
+			<b>Select URI Frontier</b>
 		<p>
 		<table>
 			<tr>
@@ -309,7 +365,87 @@
 			</tr>
 		<%	}	%>
 		</table>
-	<!--p><b>Select Statistics Tracking</b-->
+
+		<p>
+			<b>Select Statistics Tracking</b>
+		<p>
+		<table cellspacing="0" cellpadding="2">
+		<%
+			Vector unusedTrackers = new Vector();
+			ComplexType trackers = ((ComplexType)settingsHandler.getOrder().getAttribute("loggers"));
+			MBeanInfo trackersInfo = trackers.getMBeanInfo();
+			MBeanAttributeInfo t[] = trackersInfo.getAttributes();
+			
+			// Printout used trackers.
+			alt = false;
+			for(int n=0; n<t.length; n++) {
+		        Object currentAttribute = null;
+				ModuleAttributeInfo att = (ModuleAttributeInfo)t[n]; //The attributes of the current attribute.
+		
+				out.println("<tr");
+				if(alt){
+					out.println(" bgcolor='#EEEEFF'");
+				}
+				out.println("><td>&nbsp;"+att.getType()+"</td>");
+				if(n!=0){
+					out.println("<td><a href=\"javascript:doMoveUpTracker('"+att.getName()+"')\">Move up</a></td>");
+				} else {
+					out.println("<td></td>");
+				}
+				if(n!=t.length-1){
+					out.println("<td><a href=\"javascript:doMoveDownTracker('"+att.getName()+"')\">Move down</a></td>");
+				} else {
+					out.println("<td></td>");
+				}
+				out.println("<td><a href=\"javascript:doRemoveTracker('"+att.getName()+"')\">Remove</a></td>");
+				out.println("</tr>");
+				alt = !alt;
+			}
+		
+			// Find out which aren't being used.
+			for(int i=0 ; i<availibleTrackers.size() ; i++){
+				boolean isIncluded = false;
+				
+				for(int n=0; n<t.length; n++) {
+		            Object currentAttribute = null;
+					ModuleAttributeInfo att = (ModuleAttributeInfo)t[n]; //The attributes of the current attribute.
+		
+					try {
+						currentAttribute = trackers.getAttribute(att.getName());
+					} catch (Exception e1) {
+						out.println(e1.toString() + " " + e1.getMessage());
+					}
+					String typeAndName = att.getType()+"|"+att.getName();
+					if(typeAndName.equals(availibleTrackers.get(i))){
+						//Found it
+						isIncluded = true;
+						break;
+					}
+				}
+				if(isIncluded == false){
+					// Yep the current one is unused.
+					unusedTrackers.add(availibleTrackers.get(i));
+				}
+			}
+			if(unusedTrackers.size() > 0 ){
+		%>
+			<tr>
+				<td>
+					<select name="cboAddTrackers">
+					<%
+						for(int i=0 ; i<unusedTrackers.size() ; i++){
+							String curr = (String)unusedTrackers.get(i);
+							out.println("<option value='"+curr+"'>"+curr.substring(0,curr.indexOf("|"))+"</option>");
+						}
+					%>
+					</select>
+				</td>
+				<td>
+					<input type="button" value="Add" onClick="doAddTracker()">
+				</td>
+			</tr>
+		<%	}	%>
+		</table>
 	</form>
 	<p>
 		<%@include file="/include/jobnav.jsp"%>
