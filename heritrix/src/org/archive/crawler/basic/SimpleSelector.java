@@ -32,14 +32,46 @@ public class SimpleSelector implements URISelector, CoreAttributeConstants, Fetc
 	SimpleStore store;
 	private int maxLinkDepth = -1;
 	int completionCount = 0;
+	
+	public static final int MAX_FETCH_ATTEMPTS = 3;
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URISelector#inter(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public void inter(CrawlURI curi) {
-		synchronized(store) {
-
+				
+		synchronized(store) {		
+			
 			store.noteProcessingDone(curi);
+			
+			// check the status code of the uri
+			switch(curi.getFetchStatus()){
+				// this uri is virgin, let it carry on
+				case S_UNATTEMPTED:					
+					break;
+
+				// fail cases
+				case S_CONNECT_FAILED:					
+				case S_CONNECT_LOST:
+				case S_DOMAIN_UNRESOLVABLE:
+					logger.info("Removing URI " + curi.toString() + ". ");
+					// don't let the madness continue
+					return;
+
+				// they don't want us to have it
+				case S_ROBOTS_PRECLUDED:
+					return;
+						
+				// something bad happened
+				case S_INTERNAL_ERROR:
+					RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
+					StringWriter sw = new StringWriter();
+					e.printStackTrace(new PrintWriter(sw));
+					controller.failureLogger.info(
+						e+" on "+curi+"\n"+
+							   sw.toString());
+			}
+			
 			// handle prerequisites
 			if (curi.getAList().containsKey("prerequisite-uri")) {
 				UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),curi.getUURI().getUri());
@@ -98,46 +130,31 @@ public class SimpleSelector implements URISelector, CoreAttributeConstants, Fetc
 			    store.notify();
 			}
 			
-			// note completions
-			// TODO: dont' count/retry certain errors
-			if(curi.getFetchStatus()>0) {
-				// SUCCESS: note & log
+			// SUCCESS: note & log
+ 			completionCount++;
+			if ( (completionCount % 50) == 0) {
+				logger.info("==========> " +
+					completionCount+" <========== HTTP URIs completed");
+			}
 
-				completionCount++;
-				if ( (completionCount % 50) == 0) {
-					logger.info("==========> " +
-						completionCount+" <========== HTTP URIs completed");
-				}
-
-				String length = "n/a";
-				if ( curi.getAList().containsKey("http-transaction")) {
-					GetMethod get = (GetMethod) curi.getAList().getObject("http-transaction");
-					// allow get to be GC'd
-					curi.getAList().remove("http-transaction");
+			String length = "n/a";
+			if ( curi.getAList().containsKey("http-transaction")) {
+				GetMethod get = (GetMethod) curi.getAList().getObject("http-transaction");
+				// allow get to be GC'd
+				curi.getAList().remove("http-transaction");
 					
-					if (get.getResponseHeader("Content-Length")!=null) {
-						length = get.getResponseHeader("Content-Length").getValue();
-					}
-				}
-				Object array[] = { new Integer(curi.getThreadNumber()), new Integer(curi.getFetchStatus()), length, curi.getUURI().getUri() };
-				controller.successLogger.log(Level.INFO,curi.getUURI().getUri().toString(),array);
-			} else {
-				// FAILURE: note and log
-				if(curi.getFetchStatus()==S_INTERNAL_ERROR) {
-					RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
-					StringWriter sw = new StringWriter();
-					e.printStackTrace(new PrintWriter(sw));
-					controller.failureLogger.info(
-						e+" on "+curi+"\n"+
-							   sw.toString());
-				} else {
-					controller.failureLogger.warning(
-						curi.getFetchStatus()+" "+curi);
+				if (get.getResponseHeader("Content-Length")!=null) {
+					length = get.getResponseHeader("Content-Length").getValue();
 				}
 			}
-			// note that CURI has passed out of scheduling
-			curi.setStoreState(URIStoreable.FINISHED);
-		}
+			Object array[] = { new Integer(curi.getThreadNumber()), new Integer(curi.getFetchStatus()), length, curi.getUURI().getUri() };
+			controller.successLogger.log(Level.INFO,curi.getUURI().getUri().toString(),array);
+				
+		} 
+			
+		// note that CURI has passed out of scheduling
+		curi.setStoreState(URIStoreable.FINISHED);
+		
 	}
 
 	/* (non-Javadoc)

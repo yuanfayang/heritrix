@@ -37,7 +37,13 @@ public class SimplePolitenessEnforcer extends Processor implements FetchStatusCo
 		){
 			logger.info("deferring processing of " + curi.toString() + " for dns lookup." );
 			
-			curi.setPrerequisiteUri("dns:" + curi.getHost().getHostname());
+			String hostname = curi.getHost().getHostname();
+			
+			// if they passed us an ip don't choke on it
+			if(hostname==null){
+				hostname = curi.getUURI().getUri().getAuthority();
+			}
+			curi.setPrerequisiteUri("dns:" + hostname);
 			curi.cancelFurtherProcessing();			
 			return;
 		}

@@ -31,8 +31,6 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 
 	protected final Object ReadyChangeSemaphore = new Object();
 	
-	public static final int MAX_FETCH_ATTEMPTS = 3;
-	
 	HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
 	
 	// every CrawlURI not yet in process or another queue; all seeds start here
@@ -289,34 +287,6 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 	 */
 	public void reinsert(CrawlURI curi) {
 
-		int status = curi.getFetchStatus();
-		int fetchAttempts = curi.getNumberOfFetchAttempts();
-			
-		// check the status code of the uri
-		switch(status){
-			// this uri is virgin, let it carry on
-			case S_UNATTEMPTED:					
-				break;
-
-			// fail cases
-			case S_CONNECT_FAILED:					
-			case S_CONNECT_LOST:
-			case S_DOMAIN_UNRESOLVABLE:
-				if(fetchAttempts >= MAX_FETCH_ATTEMPTS){
-					// don't let the madness continue
-					return;
-				}else{
-					curi.setNumberOfFetchAttempts(fetchAttempts + 1);
-				}
-				break;
-
-			// they don't want us to have it
-			case S_ROBOTS_PRECLUDED:
-				return;
-			
-		}
-		
-		
 		if(enqueueIfNecessary(curi)) {
 			// added to classQueue
 			return;
