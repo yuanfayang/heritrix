@@ -100,10 +100,17 @@ public class CrawlScope extends Filter {
         t.setOverrideable(false);
         t.setExpertSetting(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
-                "Max link hops to include", new Integer(25)));
+                "Max link hops to include. URIs more than this number " +
+                "of links from a seed will not be ruled in-scope. (Such " +
+                "determination does not preclude later inclusion if a " +
+                "shorter path is later discovered.)", new Integer(25)));
         addElementToDefinition(new SimpleType(
                 ATTR_MAX_TRANS_HOPS,
-                "Max transitive hops (embeds, referrals, preconditions) to include",
+                "Max transitive hops (embeds, referrals, preconditions) to include. " +
+                "URIs reached by more than this number of transitive hops will not " +
+                "be ruled in-scope, even if otherwise on an in-focus site. (Such " +
+                "determination does not preclude later inclusion if a " +
+                "shorter path is later discovered.)",
                 new Integer(5)));
         this.excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
