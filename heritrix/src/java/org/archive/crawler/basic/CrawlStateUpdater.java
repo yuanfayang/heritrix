@@ -73,6 +73,15 @@ public class CrawlStateUpdater extends Processor implements
             // If not dns make sure it's http, 'cause we don't know nuthin'
             // else
         } else if (scheme.equals("http") || scheme.equals("https")) {
+            
+            // update connection problems counter
+            if(curi.getFetchStatus()==S_CONNECT_FAILED) {
+                curi.getServer().incrementConsecutiveConnectionErrors();
+            } else if (curi.getFetchStatus()>0){
+                curi.getServer().resetConsecutiveConnectionErrors();
+            }
+            
+            // update robots info
             if (curi.getFetchStatus() > 0 && (curi.getUURI().getPath() != null)
                     && curi.getUURI().getPath().equals("/robots.txt")) {
                 // Update host with robots info
