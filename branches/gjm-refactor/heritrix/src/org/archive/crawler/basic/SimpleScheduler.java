@@ -14,13 +14,12 @@ import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.ToeThread;
-import org.archive.crawler.framework.URIScheduler;
 
 /**
  * @author gojomo
  *
  */
-public class SimpleScheduler implements URIScheduler {
+public class SimpleScheduler  {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleScheduler");
 
 	CrawlController controller = null;
@@ -90,7 +89,7 @@ public class SimpleScheduler implements URIScheduler {
 	 */
 	public void initialize(CrawlController c) throws FatalConfigurationException {
 		controller = c;
-		store = (SimpleStore) c.getStore();
+//		store = (SimpleStore) c.getStore();
 		// load seeds
 //		Iterator iter = c.getOrder().getBehavior().getSeeds().iterator();
 //		while (iter.hasNext()) {

@@ -20,14 +20,13 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
-import org.archive.crawler.framework.URISelector;
 import org.archive.crawler.framework.XMLConfig;
 
 /**
  * @author gojomo
  *
  */
-public class SimpleSelector extends XMLConfig implements URISelector, CoreAttributeConstants, FetchStatusCodes {
+public class SimpleSelector extends XMLConfig implements CoreAttributeConstants, FetchStatusCodes {
 	/**
 	 * XPath to any specified filters
 	 */
@@ -465,7 +464,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	 */
 	public void initialize(CrawlController c) {
 		controller = c;
-		store = (SimpleStore)c.getStore();
+//		store = (SimpleStore)c.getStore();
 		//maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value", maxLinkDepth);
 		//maxEmbedDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-embed-depth/@value", maxEmbedDepth);
 	

@@ -49,7 +49,7 @@
     <processor 
       name="Preprocessor" 
       class="org.archive.crawler.basic.SimplePreconditionEnforcer"
-      next="DNS">
+      next="DNS"
      />
     
     <processor 

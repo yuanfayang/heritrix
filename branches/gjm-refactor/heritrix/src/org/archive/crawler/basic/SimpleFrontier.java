@@ -341,4 +341,28 @@ public class SimpleFrontier implements URIFrontier {
 		curi.setStoreState(URIStoreable.PENDING);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
+	 */
+	public int discoveredUriCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
+	 */
+	public int successfullyFetchedCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.URIFrontier#failedFetchCount()
+	 */
+	public int failedFetchCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

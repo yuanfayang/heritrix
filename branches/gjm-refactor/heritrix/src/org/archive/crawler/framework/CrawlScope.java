@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.UURI;
 
 /**
@@ -63,7 +62,7 @@ public abstract class CrawlScope extends Filter {
 		return "CrawlScope<"+name+">";
 	}	
 	
-	public List getSeeds() throws FatalConfigurationException {
+	public List getSeeds() {
 		if (seeds != null) {
 			return seeds;
 		}
@@ -91,8 +90,8 @@ public abstract class CrawlScope extends Filter {
 				}
 			}
 		} catch (IOException e) {
-			throw new FatalConfigurationException(
-				"Unable to locate seeds file: " + e.toString());
+			e.printStackTrace();
+			// TODO throw runtime error? log something?
 		}
 		return seeds;
    	

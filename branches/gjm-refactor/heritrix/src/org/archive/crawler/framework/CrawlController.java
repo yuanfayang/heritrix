@@ -44,12 +44,12 @@ public class CrawlController {
 	private static final String LOGNAME_URI_ERRORS = "uri-errors";
 	private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
-	private static final String XP_STATS_LEVEL = "/loggers/crawl-statistics/@level";
-	private static final String XP_STATS_INTERVAL = "/loggers/crawl-statistics/@interval";
-	private static final String XP_DISK_PATH = "/behavior/@disk";
-	private static final String XP_PROCESSORS = "/behavior/processors/processor";
-	private static final String XP_FRONTIER = "/behavior/frontier";
-	private static final String XP_CRAWL_SCOPE = "/scope";
+	private static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
+	private static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval";
+	private static final String XP_DISK_PATH = "//behavior/@disk-path";
+	private static final String XP_PROCESSORS = "//behavior/processors/processor";
+	private static final String XP_FRONTIER = "//behavior/frontier";
+	private static final String XP_CRAWL_SCOPE = "//scope";
 	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
 	private ToePool toePool;
 	private URIFrontier frontier;
@@ -68,10 +68,6 @@ public class CrawlController {
 
 	CrawlOrder order;
 	CrawlScope scope;
-	
-	URIScheduler scheduler;
-	URIStore store;
-	URISelector selector;
 		
 	Processor firstProcessor;
 	LinkedHashMap processors = new LinkedHashMap(); 
@@ -243,34 +239,17 @@ public class CrawlController {
 	}
 	
 	/**
-	 * 
-	 */
-	public URIScheduler getScheduler() {
-		return scheduler;
-		
-	}
-
-	/**
 	 * @param thread
 	 */
 	public void toeFinished(ToeThread thread) {
 		// for now do nothing
 	}
-
-	/**
-	 * 
-	 */
-	public URISelector getSelector() {
-		return selector;
-	}
-
 	
 	/** Return the object this controller is using to track crawl statistics
 	 */
 	public StatisticsTracker getStatistics(){
 		return statistics;
 	}
-	
 	
 	/**
 	 * 
@@ -315,13 +294,6 @@ public class CrawlController {
 	 */
 	public CrawlOrder getOrder() {
 		return order;
-	}
-
-	/**
-	 * @return
-	 */
-	public URIStore getStore() {
-		return store;
 	}
 
 	/**

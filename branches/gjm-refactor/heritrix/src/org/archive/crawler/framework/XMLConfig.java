@@ -418,7 +418,9 @@ public class XMLConfig {
 			if(node == null && parentConfigurationFile != null){
 				return parentConfigurationFile.instantiate(xpath);
 			}
-			
+			if(node == null){
+				return null;
+			}
 			return instantiate(node);
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block

@@ -21,7 +21,6 @@ import org.archive.crawler.datamodel.MemUURISet;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.URIStore;
 
 /**
  * A minimal in-memory URIStore. Keeps "full" CrawlURI instances
@@ -30,7 +29,7 @@ import org.archive.crawler.framework.URIStore;
  * @author gojomo
  *
  */
-public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeConstants {
+public class SimpleStore implements FetchStatusCodes, CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleStore");
 	
 	UURISet seeds = new MemUURISet();

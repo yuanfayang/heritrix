@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.util;
 
 import java.util.HashMap;
 import java.util.SortedSet;
