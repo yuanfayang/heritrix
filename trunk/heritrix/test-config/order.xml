@@ -41,6 +41,11 @@
   <processor 
     name="ExtractorHTML" 
     class="org.archive.crawler.basic.ExtractorHTML"
+    next="ExtractorDOC">
+  </processor>
+  <processor
+  	name="ExtractorDOC"
+  	class="org.archive.crawler.basic.ExtractorDOC"
     next="Archiver">
   </processor>
   <processor 

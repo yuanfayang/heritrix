@@ -7,7 +7,8 @@
 #dns:yahoo.org?TYPE=A
 #dns:hoogabooooga.org
 #http://nonexistentdomaingoeshere.net
-http://crawl08.archive.org
+http://crawl08.archive.org/parkertest/test.doc
+#http://crawl08.archive.org
 #http://parkert.com/misc/tstpage.html
 #dns:yahoo.com
 #http://www.yahoo.com/
