@@ -85,7 +85,7 @@ public class ServerCache {
         }
 
         String hostOrAuthority = curi.getUURI().getAuthority();
-        if (hostOrAuthority != null && scheme.equals(UURIFactory.HTTP_PORT)) {
+        if (hostOrAuthority != null && scheme.equals(UURIFactory.HTTPS)) {
             // If https and no port specified, add default https port to
             // distinuish https from http server without a port.
             if (!hostOrAuthority.matches(".+:[0-9]+")) {

@@ -409,10 +409,16 @@ public class CrawlURI extends CandidateURI
                     + e.getMessage() + " " + this);
             candidate = DEFAULT_CLASS_KEY;
         }
-        candidate.replace(':','#'); // ensure classKeys are safe as filenames on NTFS
-        return candidate;
+        if (scheme != null && scheme.equals(UURIFactory.HTTPS)) {
+            // If https and no port specified, add default https port to
+            // distinguish https from http server without a port.
+            if (!candidate.matches(".+:[0-9]+")) {
+                candidate += UURIFactory.HTTPS_PORT;
+            }
+        }
+        // Ensure classKeys are safe as filenames on NTFS
+        return candidate.replace(':','#'); 
     }
-
 
     /**
      * Get the attribute list.
