@@ -58,7 +58,7 @@
 					redirect = "/admin/main.jsp";
 				}
 				
-				if(back!=null && back.length()>0){
+				if(back!=null && back.length()>0 && back.equalsIgnoreCase("null")==false){
 					redirect = URLDecoder.decode(back);
 				}
 				response.sendRedirect(redirect);
