@@ -23,7 +23,7 @@
 			{
 				// Redirect to 'User' start page
 				session.setAttribute("user",user);
-				response.sendRedirect("/admin/simplerequest.jsp");
+				response.sendRedirect("/admin/simplerequesthandler.jsp");
 			}
 			else if(user.authenticate()==User.ADMINISTRATOR)
 			{
