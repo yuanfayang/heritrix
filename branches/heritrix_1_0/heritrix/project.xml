@@ -56,14 +56,14 @@
     -->
   <currentVersion>1.0.5${version.build.suffix}</currentVersion>
   
-  <!-- details about the organization that 'owns' the project -->
+  <!-- Details about the organization that 'owns' the project -->
   <organization>
     <name>Internet Archive</name>
     <url>http://www.archive.org/</url>
     <logo>http://www.archive.org/images/logo.jpg</logo>
   </organization>
   
-  <!-- the year the project started -->
+  <!-- The year the project started -->
   <inceptionYear>2003</inceptionYear>
   <package>org.archive</package>
   <!--TODO: Make a logo for the heritrix crawler!-->
@@ -71,7 +71,7 @@
   <description>The Internet Archive's open-source, extensible, web-scale,
   archival-quality web crawler project.
   </description>
-  <!-- a short description of what the project does -->
+  <!-- A short description of what the project does -->
   <shortDescription>
   An open-source, extensible, web-scale crawler.
   </shortDescription>
