@@ -275,17 +275,19 @@ public class Heritrix {
 	/**
 	 * Print out the command line argument usage for this program.
 	 * <p>
-	 * java Heritrix [--no-wui | --port:xxxx] &lt;crawl order file&gt; [--start | --wait | --set-as-default] [-?]<br>
-	 * &nbsp;&nbsp;&nbsp;--no-wui Start crawler without Web User Interface<br>
-	 * &nbsp;&nbsp;&nbsp;--port:xxxx The port that the web UI will run on, 8080 is default<br>
-	 * &nbsp;&nbsp;&nbsp;&lt;crawl order file&gt; The crawl to launch. Optional if --no-wui not specified, in which case the next parameter controls it's behavior.<br>
-	 * <br>&nbsp;
-	 * &nbsp;&nbsp;&nbsp;Only if --no-wui is NOT set and a crawl order file IS specified:
-	 * &nbsp;&nbsp;&nbsp;&nbsp;--start Start crawling as specified by the given crawl order file. Only valid behavior if --no-wui specified.<br>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;--wait Load the job specified by the given crawl order file but do not start crawling. Default behavior.<br>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;--set-as-default Set the specified crawl order as the default crawl order<br>
-	 * <br>&nbsp;
-	 * &nbsp;&nbsp;&nbsp;-? Display this message
+	 * <pre>USAGE: java Heritrix [--no-wui | --port:xxxx] &lt;crawl order file> [--start | --wait | --set-as-default] [-?]
+	 *	--no-wui           Start crawler without Web User Interface
+	 *	--port:xxxx        The port that the web UI will run on, 8080 is default
+	 *	&lt;crawl order file&gt; The crawl to launch. Optional if --no-wui not specified, in which case the next 
+	 *	                   parameter controls it's behavior.
+	 *
+	 *	Only if --no-wui is NOT selected and a crawl order file IS specified:
+	 *	--start            Start crawling as specified by the given crawl order file.
+	 *	--wait             Load the job specified by the given crawl order file but do not start crawling. 
+	 *	                   Default behavior.
+	 *	--set-as-default   Set the specified crawl order as the default crawl order
+	 *
+ 	 *	-?                 Display this message</pre>
 	 */
 	protected static void usage() {
 		System.out.println(
