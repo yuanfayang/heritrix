@@ -15,7 +15,7 @@
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.crawler.framework.Filter" %>
 
-<%@ page import="java.util.Vector" %>
+<%@ page import="java.util.Vector,java.util.ArrayList" %>
 <%@ page import="javax.management.MBeanInfo"%>
 <%@ page import="javax.management.Attribute"%>
 <%@ page import="javax.management.MBeanAttributeInfo"%>
@@ -24,12 +24,6 @@
 <%@ page import="javax.management.ReflectionException"%>
 
 <%!
-	String[] availibleFilters = {"org.archive.crawler.filter.HopsFilter",
-								 "org.archive.crawler.filter.OrFilter",
-								 "org.archive.crawler.filter.PathDepthFilter",
-								 "org.archive.crawler.filter.SeedExtensionFilter",
-								 "org.archive.crawler.filter.TransclusionFilter",
-								 "org.archive.crawler.filter.URIRegExpFilter"};
 	/**
 	 * Generates the HTML code to display and allow manipulation of which
 	 * filters are attached to the crawl order. Will work it's way 
@@ -51,7 +45,7 @@
 	 *
 	 * @return The variable part of the HTML code for selecting filters.
 	 */
-	public String printFilters(ComplexType mbean, String indent, boolean possible, boolean first, boolean last, String parent, boolean alt) throws Exception {
+	public String printFilters(ComplexType mbean, String indent, boolean possible, boolean first, boolean last, String parent, boolean alt, ArrayList availibleFilters) throws Exception {
 		if(mbean.isTransient()){
 			return "";
 		}
@@ -96,7 +90,7 @@
 				}
 
 				if(currentAttribute instanceof ComplexType) {
-			    	p.append(printFilters((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",possible,n==0,n==a.length-1,mbean.getAbsoluteName(),alt));
+			    	p.append(printFilters((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",possible,n==0,n==a.length-1,mbean.getAbsoluteName(),alt,availibleFilters));
 			    	if(currentAttribute instanceof MapType)
 			    	{
 			    		MapType thisMap = (MapType)currentAttribute;
@@ -104,8 +98,8 @@
 				    		p.append("<tr><td colspan='5'>\n"+indent+"&nbsp;&nbsp;");
 				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
 				    		p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
-				    		for(int i=0 ; i<availibleFilters.length ; i++){
-					    		p.append("<option value='"+availibleFilters[i]+"'>"+availibleFilters[i]+"</option>\n");
+				    		for(int i=0 ; i<availibleFilters.size() ; i++){
+					    		p.append("<option value='"+availibleFilters.get(i)+"'>"+availibleFilters.get(i)+"</option>\n");
 					    	}
 				    		p.append("</select>\n");
 				    		p.append("<input type='button' value='Add' onClick=\"doAdd('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\">\n");
@@ -129,9 +123,9 @@
 		// Didn't find any job with the given UID or no UID given.
 		response.sendRedirect("/admin/jobs.jsp?message=No job selected");
 		return;
-	} else if(theJob.isReadOnly() || theJob.isRunning()){
+	} else if(theJob.isReadOnly()){
 		// Can't edit this job.
-		response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a running or read only job");
+		response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a read only job");
 		return;
 	}
 
@@ -275,7 +269,7 @@
 		<input type="hidden" name="map" value="">
 		<input type="hidden" name="filter" value="">
 		<table>
-			<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false)%>
+			<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false,CrawlJobHandler.loadOptions("filters.options"))%>
 		</table>
 	</form>
 	<p>

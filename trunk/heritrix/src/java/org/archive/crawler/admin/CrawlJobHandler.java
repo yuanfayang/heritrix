@@ -22,10 +22,13 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
@@ -36,7 +39,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.*;
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
@@ -797,5 +800,32 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if(controller!=null){
             controller.kickUpdate();
         }
+    }
+
+    /**
+     * Loads options from a file. Typically these are a list of availible 
+     * modules that can be plugged into some part of the configuration. 
+     * For examples Processors, Frontiers, Filters etc. Leading and trailing
+     * spaces are trimmed from each line.
+     * @param file the name of the option file (it is presumed to reside in the 
+     *             Heritrix conf directory
+     * @return The option file with each option line as a seperate entry in the 
+     *         ArrayList.
+     * @throws IOException when there is trouble reading the file.
+     */    
+    public static ArrayList loadOptions(String file) throws IOException{
+        File optionfile = new File(Heritrix.getConfdir()+File.separator+file);
+        BufferedReader bf = new BufferedReader(new FileReader(optionfile), 8192);
+        ArrayList ret = new ArrayList();
+
+        String line = null;
+        while ((line = bf.readLine()) != null) {
+            line = line.trim();
+            if(line.indexOf('#')<0 && line.length()>0){
+                // Looks like a valid line.
+                ret.add(line);
+            }
+        }
+        return ret;
     }
 }
