@@ -517,8 +517,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         /* Update HQ */
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
-        curi.processingCleanup(); // Ready the URI for reserialization.
-
+        // Ready the URI for reserialization.
+        curi.processingCleanup(); 
+        curi.resetDeferrals();   
+        curi.resetFetchAttempts();
         try {
             hq.update(curi, true,
                 (curi.containsKey(A_FETCH_COMPLETED_TIME)?
@@ -556,7 +558,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         }
         
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
-        curi.processingCleanup(); // Ready the URI for reserialization.
+        // Ready the URI for reserialization.
+        curi.processingCleanup(); 
+        if(errorWait){
+            curi.resetDeferrals(); //Defferals only refer to immediate retries.
+        }
         try {
             hq.update(curi, errorWait, delay);
         } catch (IOException e) {
@@ -598,7 +604,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
-        curi.processingCleanup(); // Ready the URI for serialization.
+        // Ready the URI for serialization.
+        curi.processingCleanup();
+        curi.resetDeferrals();
+        curi.resetFetchAttempts();
         try {
             // No wait on failure. No contact was made with the server.
             hq.update(curi,false, 0, shouldBeForgotten(curi)); 
@@ -633,8 +642,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
-        curi.processingCleanup(); // Ready the URI for reserialization.
-
+        // Ready the URI for reserialization.
+        curi.processingCleanup(); 
+        curi.resetDeferrals();
+        curi.resetFetchAttempts();
         try {
             // No politness wait on disregard. No contact was made with server
             hq.update(curi, false, 0, shouldBeForgotten(curi));
