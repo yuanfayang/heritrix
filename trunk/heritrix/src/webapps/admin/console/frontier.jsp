@@ -100,7 +100,7 @@
             <td colspan="2" nowrap>
                 <input type="radio" name="style" checked value="perLine">one URI per line 
                 <input type="radio" name="style" value="crawlLog">crawl.log style
-                <input type="radio" name="style" value="recoveryJournal">recovery journal style
+                <input type="radio" name="style" value="recoveryJournal">recovery journal style (uncompressed)
             </td>
             <td width="100%">
             </td>
