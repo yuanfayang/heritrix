@@ -24,6 +24,8 @@
  */
 package org.archive.io;
 
+import it.unimi.dsi.mg4j.io.RepositionableStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.MappedByteBuffer;
@@ -32,7 +34,7 @@ import java.nio.MappedByteBuffer;
  * An inputstream perspective on a MappedByteBuffer.
  *
  * This class is effectively a random access input stream.  Use
- * {@link #getFilePointer()} to get current location and then mark and reset to
+ * {@link #position()} to get current location and then mark and reset to
  * move about in the stream.
  * 
  * <p>This class is no longer used but its kept around because it documents
@@ -95,7 +97,7 @@ import java.nio.MappedByteBuffer;
  * @author stack
  */
 public class MappedByteBufferInputStream extends InputStream
-        implements PositionableStream {
+        implements RepositionableStream {
 	
     /**
      * The mapped byte buffer we're feeding this stream from.
@@ -167,11 +169,11 @@ public class MappedByteBufferInputStream extends InputStream
 		return this.mbb.remaining();
 	}
 	
-	public long getFilePointer() throws IOException {
+	public long position() {
 		return this.mbb.position();
 	}
 	
-	public void seek(long position) throws IOException {
+	public void position(long position) {
         assert position < Integer.MAX_VALUE: "Position too big for int.";
 		this.mbb.position((int)position);
 	}

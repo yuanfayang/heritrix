@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.GzippedInputStream;
-import org.archive.io.PositionableStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
