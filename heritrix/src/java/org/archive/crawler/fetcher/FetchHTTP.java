@@ -148,14 +148,9 @@ public class FetchHTTP extends Processor
     }
 
     protected void innerProcess(CrawlURI curi) {
-        initialize();
-        
-        // Clear any httpRecorder so subsequent processing doesn't mistakenly 
-        // think it current.
-        curi.setHttpRecorder(null);
-        
+        initialize();     
         if (!canFetch(curi)) {
-            // cannot fetch this, due to protocol, retries, or other problems
+            // Cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
@@ -182,7 +177,8 @@ public class FetchHTTP extends Processor
             rec.closeRecorders();
             get.releaseConnection();
             return;
-        } 
+        }
+    
 //        catch (ArrayIndexOutOfBoundsException e) {
 //            // for weird windows-only ArrayIndex exceptions from native code
 //            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
