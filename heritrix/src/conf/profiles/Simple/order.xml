@@ -158,11 +158,14 @@
         <map name="filters">
         </map>
       </newObject>
-      <newObject name="Postselector" class="org.archive.crawler.postprocessor.Postselector">
+      <newObject name="Postselector" 
+            class="org.archive.crawler.postprocessor.Postselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
         <boolean name="seed-redirects-new-seed">true</boolean>
+        <boolean name="override-logger">false</boolean>
+        <map name="scope-rejected-uri-log-filters" />
       </newObject>
     </map>
     <map name="loggers">

@@ -160,14 +160,25 @@ public class Processor extends ModuleType {
      * @return True if all filters accept this CrawlURI.
      */
     protected boolean filtersAccept(CrawlURI curi) {
-        if (filters.isEmpty(curi)) {
+        return filtersAccept(this.filters, curi);
+    }
+    
+    /**
+     * Do all specified filters (if any) accept this CrawlURI?
+     *
+     * @param curi
+     * @param fs Filters to process.
+     * @return True if all filters accept this CrawlURI.
+     */
+    protected boolean filtersAccept(MapType fs, CrawlURI curi) {
+        if (fs.isEmpty(curi)) {
             return true;
         }
-        Iterator iter = filters.iterator(curi);
-        while(iter.hasNext()) {
-            Filter f = (Filter)iter.next();
-            if( !f.accepts(curi) ) {
-                logger.info(f+" rejected "+curi+" in Processor "+getName());
+        for (Iterator i = fs.iterator(curi); i.hasNext();) {
+            Filter filter = (Filter)i.next();
+            if( !filter.accepts(curi) ) {
+                logger.info(filter + " rejected " + curi + " in Processor " +
+                    getName());
                 return false;
             }
         }
