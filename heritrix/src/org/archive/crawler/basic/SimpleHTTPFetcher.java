@@ -47,9 +47,15 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread {
 				+get.getStatusCode()+" "
 				+(contentLength==null ? "na" : contentLength.getValue()));
 
-			// TODO consider errors
-			curi.getAList().putObject("http-transaction",get);
-			curi.getAList().putLong("http-complete-time",System.currentTimeMillis());
+			// TODO consider errors more carefully
+			try{
+				curi.getAList().putObject("http-transaction",get);
+				curi.getAList().putLong("http-complete-time",System.currentTimeMillis());
+				curi.getAList().putString("content-type", get.getResponseHeader("content-type").getValue());
+			}catch(Exception e){
+				// give up and pass to next processor
+				return;
+			}
 
 		} catch (HttpException e) {
 			// TODO Auto-generated catch block

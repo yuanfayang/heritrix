@@ -48,6 +48,25 @@ public class CrawlURI implements URIStoreable {
 	}
 	
 	/**
+	 * @param uri
+	 * @return
+	 */
+	public CrawlURI(URI u){
+		uuri = new UURI(u);
+	}
+	
+	/**
+	 * @param uriString
+	 */
+	public CrawlURI(String s){
+		try{
+			uuri = new UURI(new URI(s));
+		}catch(Exception e){
+			uuri = null;
+		}
+	}
+	
+	/**
 	 * @return
 	 */
 	public UURI getUURI() {
@@ -182,7 +201,15 @@ public class CrawlURI implements URIStoreable {
 	}
 	
 	public String getContentType(){
-		return getAList().getString(CrawlURI.CONTENT_TYPE_LABEL);
+		String ct;
+		
+		try{
+			ct = getAList().getString(CrawlURI.CONTENT_TYPE_LABEL);
+			return ct;
+		}catch(Exception e){
+			return "unknown";
+		}
+
 	}
 
 }
