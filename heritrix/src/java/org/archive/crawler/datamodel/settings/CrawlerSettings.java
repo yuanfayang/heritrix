@@ -44,108 +44,102 @@ import java.util.Map;
  * @author John Erik Halse
  */
 public class CrawlerSettings {
-	private final Map localComplexTypes = new HashMap();
-	private final Map modules = new HashMap();
-    private final AbstractSettingsHandler handler;
-	private final String scope;
-	private String name = "";
-	private String description = "";
-	private CrawlerSettings parent;
+    private final Map localComplexTypes = new HashMap();
+    private final Map modules = new HashMap();
+    private final SettingsHandler handler;
+    private final String scope;
+    private String name = "";
+    private String description = "";
+    private CrawlerSettings parent;
 
-	/**
-	 * 
-	 */
-	public CrawlerSettings(AbstractSettingsHandler handler, CrawlerSettings parent, String scope) {
+    /**
+     * 
+     */
+    public CrawlerSettings(
+        SettingsHandler handler,
+        CrawlerSettings parent,
+        String scope) {
         this.handler = handler;
-		this.scope = scope;
-		this.parent = parent;
-	}
+        this.scope = scope;
+        this.parent = parent;
+    }
 
-	/**
-	 * @return
-	 */
-	public String getDescription() {
-		return description;
-	}
+    /**
+     * @return
+     */
+    public String getDescription() {
+        return description;
+    }
 
-	/**
-	 * @return
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @return
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @return
-	 */
-	public String getScope() {
-		return scope;
-	}
+    /**
+     * @return
+     */
+    public String getScope() {
+        return scope;
+    }
 
-	/**
-	 * @param string
-	 */
-	public void setDescription(String string) {
-		description = string;
-	}
+    /**
+     * @param string
+     */
+    public void setDescription(String string) {
+        description = string;
+    }
 
-	/**
-	 * @param string
-	 */
-	public void setName(String string) {
-		name = string;
-	}
+    /**
+     * @param string
+     */
+    public void setName(String string) {
+        name = string;
+    }
 
-	public void addModule(CrawlerModule module) {
-		if(modules.containsKey(module.getName())) {
-			throw new IllegalArgumentException("Duplicate module name: " + module.getName());
-		} else {
-			modules.put(module.getName(), module);
-		}
-	}
-	
-	public DataContainer addComplexType(ComplexType type) {
-		if(localComplexTypes.containsKey(type.getAbsoluteName())) {
-			throw new IllegalArgumentException("Duplicate complex type: " + type.getAbsoluteName());
-		} else {
-            DataContainer data = new DataContainer(type);
-			localComplexTypes.put(type.getAbsoluteName(), data);
-            return data;
-		}
-	}
+    public void addModule(CrawlerModule module) {
+        if (modules.containsKey(module.getName())) {
+            throw new IllegalArgumentException(
+                "Duplicate module name: " + module.getName());
+        } else {
+            modules.put(module.getName(), module);
+        }
+    }
 
-    /*
-	public Object[] getComplexType(String absoluteName) {
-		return (Object[]) localComplexTypes.get(absoluteName);
-	}
-    */
-    
-	public DataContainer getData(String absoluteName) {
-        DataContainer data = (DataContainer) localComplexTypes.get(absoluteName);
-        if(data != null) {
+    public DataContainer addComplexType(ComplexType type) {
+        DataContainer data = new DataContainer(type);
+        localComplexTypes.put(type.getAbsoluteName(), data);
+        return data;
+    }
+
+    public DataContainer getData(String absoluteName) {
+        DataContainer data =
+            (DataContainer) localComplexTypes.get(absoluteName);
+        if (data != null) {
             return data;
         } else {
             return null;
         }
-        //return (DataContainer) ((Object[]) localComplexTypes.get(absoluteName))[1];
-	}
-	
-	public CrawlerModule getModule(String name) {
-		return (CrawlerModule) modules.get(name);
-	}
-	
-	public Iterator modules() {
-		return modules.values().iterator();
-	}
-	
-	/**
-	 * @return
-	 */
-	public CrawlerSettings getParent() {
-		return parent;
-	}
-    
-    public AbstractSettingsHandler getSettingsHandler() {
+    }
+
+    public CrawlerModule getModule(String name) {
+        return (CrawlerModule) modules.get(name);
+    }
+
+    public Iterator modules() {
+        return modules.values().iterator();
+    }
+
+    /**
+     * @return
+     */
+    public CrawlerSettings getParent() {
+        return parent;
+    }
+
+    public SettingsHandler getSettingsHandler() {
         return handler;
     }
 }

@@ -48,8 +48,6 @@ public class Controller extends CrawlerModule {
         procMap.addElementToDefinition(new CrawlerModule("Processor1", "URI processors"));
         procMap.addElementToDefinition(new SimpleType("firstProcessor", "First processor to run URI trough", "Processor1"));
         
-        addElementToDefinition(new CrawlerModule("TestModule", "TESTMODULE"));
-        addElementToDefinition(new CrawlerModule("TestModule2", "TESTMODULE"));
-        addElementToDefinition(new CrawlerModule("TestModule3", "TESTMODULE3"));
+        addElementToDefinition(new CrawlerModule("Frontier", "Frontier description"));
 	}
 }

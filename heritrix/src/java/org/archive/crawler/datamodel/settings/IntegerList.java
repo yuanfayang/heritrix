@@ -112,9 +112,9 @@ public class IntegerList extends ListType {
     public Object checkType(Object element) throws ClassCastException {
         if (!(element instanceof Integer)) {
             element =
-                AbstractSettingsHandler.StringToType(
+                SettingsHandler.StringToType(
                     (String) element,
-                    AbstractSettingsHandler.INTEGER);
+                    SettingsHandler.INTEGER);
         }
         return element;
     }
