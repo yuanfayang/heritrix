@@ -12,6 +12,52 @@
     </authorgroup>
   </articleinfo>
 
+  <sect1 id="1_4_0">
+    <title>Release 1.4.0 - NOT YET RELEASED</title>
+    <sect2 id="1_2_0_limitations">
+      <title>Known Limitations/Issues</title>
+      <sect3 id="glibc2_3_2"><title>Glibc 2.3.2 and NPTL</title>
+        <para>NPTL is the 'new' linux threading model.  It replaces
+        <emphasis>linuxthreads</emphasis> the 'old' model.  You can tell
+        you're running NPTL if your java process shows as one process only
+        in the process listing.  Wwith linuxthreads, all java threads
+        show as distinct linux processes.  Linux threading is integral 
+        to glibc.  
+        </para>
+
+        <para>On rare occasions we've seen the crawler hang without
+        obvious explaination when running with NPTL threading on linux.
+        Doing a thread dump on the hung crawler, one version of the hung
+        crawler has threads waiting to obtain a lock that no one apparently
+        holds.  Our reading has these rare, odd hangs as a problem in glbc2.3.2
+        when running with NPTL (NPTL 0.60) (We used to hang frequently but
+        workarounds have gotten mitigated the frequency of lockup).
+        An upgrade to glibc2.3.3 seems to
+        do away with these hangs (Glibc2.3.3 has NPTL 0.61, at least on recent
+        fedora core releases). If an upgrade is not possible -- for example,
+        the new glibc is not currently available for debian -- you can
+        disable NPTL and run with old threads by setting the environment
+        variable <literal>LD_ASSUME_KERNEL=2.4.1</literal> (You can 
+        set this environment variable on a per process basis).
+        </para>
+
+        <para>NPTL is usually the default
+        threading model on linux and is usually what you want -- threads
+        are more lightweight and java throughput seems to be slightly 
+        higher with NPTL enabled. Various are the ways in which you
+        can see which threading model you are using.   Do an ldd on 
+        the java executable to see what shared libraries its using.
+        Note the location of the glibc shared library. Executing
+        <literal>PATH_TO_GLIBC/lib.so.6</literal>, usually
+        <literal>/lib/lib.so.6</literal>, will list details on glibc. Look in
+        the listing for either 'nptl' or 'linuxthreads'.  On debian systems,
+        lib.so.6 is not executable but you can make it so.
+        </para>
+        <para>See <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1086554&amp;group_id=73833&amp;atid=539099">[ 1086554 ] glibc 2.3.2 NPTL hang (Was bdbfrontier stall in...)</ulink> for more on the issue.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
   <sect1 id="1_2_0">
     <title>Release 1.2.0 - 11/16/2004</title>
 
