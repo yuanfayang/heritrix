@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,16 +37,13 @@ import java.util.List;
 public class CharsetSelfTest extends SelfTestCase
 {
     /**
-     * Files to find as an array.
-     */
-    private static final String [] FILES_TO_FIND_AS_ARRAY =
-        {"utf8.jsp", "shiftjis.jsp", "charsetselftest_end.html"};
-
-    /**
      * Files to find as a list.
      */
     private static final List FILES_TO_FIND =
-        Arrays.asList(FILES_TO_FIND_AS_ARRAY);
+        Arrays.asList(new File[] 
+            {new File("utf8.jsp"), 
+                new File("shiftjis.jsp"),
+                new File("charsetselftest_end.html")});
     
     /**
      * Look for last file in link chain.

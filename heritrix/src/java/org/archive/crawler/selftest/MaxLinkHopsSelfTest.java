@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,35 +43,23 @@ public class MaxLinkHopsSelfTest
     extends SelfTestCase
 {
     /**
-     * Assumption is that the setting for max-link-hops is less than this
-     * number.
-     */
-    private static final int MAXLINKHOPS = 5;
-
-
-    /**
-     * Files to find as an array.
-     */
-    private static final String [] FILES_TO_FIND_AS_ARRAY =
-        {"2.html", "3.html", "4.html", "5.html"};
-
-    /**
      * Files to find as a list.
      */
     private static final List FILES_TO_FIND =
-        Arrays.asList(FILES_TO_FIND_AS_ARRAY);
-
-    /**
-     * Files not to find as an array.
-     */
-    private static final String [] FILES_NOT_TO_FIND_AS_ARRAY =
-        {"1.html", "6.html"};
+        Arrays.asList(new File[] {new File("2.html"), 
+            new File("3.html"), new File("4.html"), new File("5.html")});
     
     /**
      * Files not to find as a list.
      */
     private static final List FILES_NOT_TO_FIND =
-        Arrays.asList(FILES_NOT_TO_FIND_AS_ARRAY);
+        Arrays.asList(new File[] {new File("1.html"), new File("6.html")});
+
+    /**
+     * Assumption is that the setting for max-link-hops is less than this
+     * number.
+     */
+    private static final int MAXLINKHOPS = 5;
 
 
     /**
