@@ -206,6 +206,14 @@
          <url>http://www.archive.org</url>
          <timezone>-8</timezone>
     </developer>
+    <developer>
+        <name>Dan Avery</name>
+        <id>danavery</id>
+        <email>davery at archive dot org</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
+    </developer>
   </developers>
 
   <contributors>
