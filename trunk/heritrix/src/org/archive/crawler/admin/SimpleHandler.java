@@ -14,6 +14,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.CrawlJobHandler;
 import org.archive.crawler.framework.CrawlListener;
+import org.archive.crawler.framework.ToePool;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 
@@ -145,6 +146,23 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		else
 		{
 			return ((Frontier)controller.getFrontier()).report();
+		}
+	}
+	
+	/**
+	 * Returns the CrawlControllers ToeThreads report.
+	 * 
+	 * @return
+	 */
+	public String getThreadsReport()
+	{
+		if(controller==null)
+		{
+			return "Crawler not running";		
+		}
+		else
+		{
+			return controller.reportThreads();	
 		}
 	}
 	
