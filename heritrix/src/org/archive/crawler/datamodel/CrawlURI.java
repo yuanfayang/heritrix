@@ -15,7 +15,6 @@ import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
-import org.archive.crawler.datamodel.CrawlHost;
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
@@ -34,8 +33,10 @@ import st.ata.util.HashtableAList;
  * 
  * @author Gordon Mohr
  */
-public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchStatusCodes{
-	
+public class CrawlURI
+	implements URIStoreable, Comparable, CoreAttributeConstants, FetchStatusCodes {
+	private long wakeTime;
+
 	public static final String CONTENT_TYPE_LABEL = "content-type";
 	
 	private UURI baseUri;
@@ -196,15 +197,13 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	 * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
 	 */
 	public long getWakeTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		return wakeTime;
 	}
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
 	 */
 	public void setWakeTime(long w) {
-		// TODO Auto-generated method stub
-		
+		wakeTime = w;
 	}
 
 	/**
@@ -349,6 +348,25 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	 */
 	public void stripToMinimal() {
 		alist = null;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(Object other) {
+		if(this==other) {
+			return 0; // for exact identity only
+		}
+		if (((URIStoreable)other).getWakeTime()> wakeTime) {
+			return -1;
+		} 
+		if (((URIStoreable)other).getWakeTime()< wakeTime) {
+			return 1;
+		} 
+		// at this point, the ordering is arbitrary, but still
+		// must be consistent/stable over time
+		// TODOSOON: fix this
+		return ((String)((URIStoreable)other).getClassKey()).compareTo(this.getClassKey());	
 	}
 	
 /*	public boolean isFubared(){
