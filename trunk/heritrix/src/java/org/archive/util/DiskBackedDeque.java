@@ -36,6 +36,7 @@ import org.apache.commons.collections.Predicate;
  */
 public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializable {
     protected DiskStack stack;
+
     /**
      * @param dir
      * @param name
@@ -83,6 +84,15 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
      */
     public Object pop() {
         return dequeue();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+        Object candidate = dequeue();
+        push(candidate);
+        return candidate;
     }
     
     /* (non-Javadoc)
@@ -154,10 +164,17 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
     }
     
     /* (non-Javadoc)
-     * @see org.archive.util.Queue#release()
+     * @see org.archive.util.DiskBackedQueue#disconnect()
      */
-    public void release() {
-        super.release();
-        stack.release();
+    public void disconnect() {
+        super.disconnect();
+        stack.disconnect();
+    }
+
+    /**
+     * @return
+     */
+    public int memoryLoad() {
+        return headQ.size();
     }
 }
