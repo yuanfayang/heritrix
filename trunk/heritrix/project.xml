@@ -286,19 +286,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>org.mortbay.jmx</id>
-            <version>4.2.17</version>
-            <url>http://jetty.mortbay.com/jetty/</url>
-            <properties>
-                <description>This jar came w/ Jetty.  Seems to be jetty
-                mbeans.
-                </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>servlet</id>
             <version>2.3</version>
             <url>http://jakarta.apache.org/tomcat/</url>
