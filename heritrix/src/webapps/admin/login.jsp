@@ -64,7 +64,7 @@
                         <table border="0">
                             <% if(sMessage != null ){ %>
                                 <tr>
-                                    <td colspan="2" align="center">
+                                    <td colspan="2" align="left">
                                     <b><font color=red><%=sMessage%></font></b>
                                     </td>
                                 </tr>

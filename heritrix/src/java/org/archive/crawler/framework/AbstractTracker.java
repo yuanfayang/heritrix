@@ -98,7 +98,14 @@ public abstract class AbstractTracker extends ModuleType
         // Add listeners
         controller.addCrawlStatusListener(this);
     }
-
+    
+    /**
+     * Run the reports.
+     * @param c A CrawlController instance.
+     * @param exitMessage Message to log into the crawl report exit status.
+     */
+    public abstract void report(CrawlController c, String exitMessage);
+    
     /**
      * Start thread.  Will call logActivity() at intervals specified by
      * logInterval
@@ -309,7 +316,7 @@ public abstract class AbstractTracker extends ModuleType
         logActivity(); //Log end state
         logNote("CRAWL ENDED - " + sExitMessage);
         shouldrun = false;
-        controller = null; //Facilitate GC.
+        controller = null; // Facilitate GC.
     }
 
     /**
@@ -318,5 +325,4 @@ public abstract class AbstractTracker extends ModuleType
     public long crawlDuration() {
         return getCrawlerTotalElapsedTime();
     }
-
 }
