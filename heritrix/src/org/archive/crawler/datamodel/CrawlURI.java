@@ -446,11 +446,11 @@ public class CrawlURI extends CandidateURI
 	public long getContentLength() {
 		if (contentLength<0) {
 			GetMethod get = (GetMethod) getAList().getObject(A_HTTP_TRANSACTION);
-			if (get.getResponseHeader("Content-Length")!=null) {
-				contentLength = Integer.parseInt(get.getResponseHeader("Content-Length").getValue());
-			} else {
+			//if (get.getResponseHeader("Content-Length")!=null) {
+			//	contentLength = Integer.parseInt(get.getResponseHeader("Content-Length").getValue());
+			//} else {
 				contentLength = get.getHttpRecorder().getResponseContentLength();
-			}
+			//}
 		}
 		return contentLength;
 	}

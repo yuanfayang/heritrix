@@ -174,7 +174,7 @@ public class RecordingInputStream extends InputStream {
 	 * 
 	 */
 	public void closeRecorder() throws IOException {
-		recordingOutputStream.close();
+		recordingOutputStream.closeRecorder();
 	}
 
 }

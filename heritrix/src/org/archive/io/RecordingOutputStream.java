@@ -132,6 +132,7 @@ public class RecordingOutputStream extends OutputStream {
 	public void close() throws IOException {
 		super.close();
 		wrappedStream.close();
+		diskStream.flush();
 		diskStream.close();
 		this.size = position;
 	}
@@ -190,7 +191,9 @@ public class RecordingOutputStream extends OutputStream {
 	 * 
 	 */
 	public void closeRecorder() throws IOException {
+		diskStream.flush();
 		diskStream.close();
+		this.size = position;
 	}
 
 

@@ -109,18 +109,18 @@ public class Frontier
 		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
 		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
 		
-		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
-	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
+		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
+	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
 		//alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
-		//alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
-		alreadyIncluded = new FPUURISet(
-			new CachingDiskLongFPSet(
-				c.getScratchDisk(),
-				"alreadyIncluded",
-				20,
-				0.75f,
-				20,
-				0.75f));
+		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
+//		alreadyIncluded = new FPUURISet(
+//			new CachingDiskLongFPSet(
+//				c.getScratchDisk(),
+//				"alreadyIncluded",
+//				20,
+//				0.75f,
+//				20,
+//				0.75f));
 		
 		this.controller = c;
 		Iterator iter = c.getScope().getSeedsIterator();

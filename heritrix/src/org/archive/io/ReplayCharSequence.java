@@ -178,15 +178,15 @@ public class ReplayCharSequence implements CharSequence {
 	}
 	
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		StringBuffer sb = new StringBuffer((int)size);
-		for(int i=0; i<size; i++) {
-			sb.append(charAt(i));
-		}
-		return sb.toString();
-	}
+//	/* (non-Javadoc)
+//	 * @see java.lang.Object#toString()
+//	 */
+//	public String toString() {
+//		StringBuffer sb = new StringBuffer((int)size);
+//		for(int i=0; i<size; i++) {
+//			sb.append(charAt(i));
+//		}
+//		return sb.toString();
+//	}
 
 }
