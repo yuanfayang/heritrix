@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.URIException;
@@ -93,13 +92,14 @@ implements Serializable, Lineable {
     
     /**
      * Where this URI was (presently) discovered.
-     * Can be String, CrawlURI or null.  Is turned into a String when
-     * we serialize.
      */
-    // mostly for debugging; will be a CrawlURI when memory is no object
-    // just a string or null when memory is an object (configurable)
-    private Object via;
+    private UURI via;
 
+    /**
+     * Context of URI's discovery, as per the 'context' in Link
+     */
+    private CharSequence viaContext;
+    
     /**
      * Flexible dynamic attributes list.
      * <p>
@@ -140,10 +140,11 @@ implements Serializable, Lineable {
      * @param pathFromSeed
      * @param via
      */
-    public CandidateURI(UURI u, String pathFromSeed, Object via) {
+    public CandidateURI(UURI u, String pathFromSeed, UURI via, CharSequence viaContext) {
         this.uuri = u;
         this.pathFromSeed = pathFromSeed;
         this.via = via;
+        this.viaContext = viaContext;
     }
 
     /**
@@ -170,7 +171,7 @@ implements Serializable, Lineable {
     protected void setSeed(){
         isSeed = true;
         setPathFromSeed("");
-        setVia("");
+        setVia(null);
     }
 
     /**
@@ -197,10 +198,17 @@ implements Serializable, Lineable {
     /**
      * @return URI via which this one was discovered
      */
-    public Object getVia() {
+    public UURI getVia() {
         return this.via;
     }
 
+    /**
+     * @return CharSequence context in which this one was discovered
+     */
+    public CharSequence getViaContext() {
+        return this.viaContext;
+    }
+    
     /**
      * @param string
      */
@@ -219,8 +227,8 @@ implements Serializable, Lineable {
     /**
      * @param object
      */
-    public void setVia(Object object) {
-        via = object;
+    public void setVia(UURI via) {
+        this.via = via;
     }
 
     /**
@@ -239,12 +247,6 @@ implements Serializable, Lineable {
         return this.cachedCandidateURIString;
     }
 
-    private void writeObject(java.io.ObjectOutputStream out)
-    throws IOException {
-         this.via = flattenVia();
-         out.defaultWriteObject();
-    }
-
     /**
      * Method returns string version of this URI's referral URI.
      * @return String version of referral URI
@@ -253,17 +255,7 @@ implements Serializable, Lineable {
         if(via == null) {
             return "";
         }
-        if (via instanceof String) {
-            // already OK
-            return (String) via;
-        }
-        if (via instanceof UURI) {
-            return ((UURI)via).toString();
-        }
-        if (via instanceof CandidateURI) {
-            return ((CandidateURI)via).getUURI().toString();
-        }
-        return via.toString();
+        return ((UURI)via).toString();
     }
 
     public String getLine() {
@@ -396,11 +388,14 @@ implements Serializable, Lineable {
     public static CandidateURI fromString(String uriHopsViaString)
             throws URIException {
         String args[] = uriHopsViaString.split("\\s+");
-        String pathFromSeeds = (args.length > 1 && !args[1].equals("-"))?
-            args[1]: "";
-        Object via = (args.length > 2 && !args[2].equals("-"))? args[2]: "";
+        String pathFromSeeds = (args.length > 1 && !args[1].equals("-")) ? args[1]
+                : "";
+        UURI via = (args.length > 2 && !args[2].equals("-")) ? UURIFactory
+                .getInstance(args[2]) : null;
+        CharSequence viaContext = (args.length > 3 && !args[3].equals("-")) ? args[2]
+                : null;
         return new CandidateURI(UURIFactory.getInstance(args[0]),
-            pathFromSeeds, via);
+                pathFromSeeds, via, viaContext);
     }
     
     public static CandidateURI createSeedCandidateURI(UURI uuri) {

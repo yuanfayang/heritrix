@@ -191,8 +191,10 @@ implements FrontierJournal {
                             args[2]: "";
                         String via = (args.length > 3)?
                             args[3]: source.getPath();
+                        String viaContext = (args.length > 4)?
+                                args[4]: "";
                         CandidateURI caUri = new CandidateURI(u, pathFromSeed,
-                            via);
+                            UURIFactory.getInstance(via), viaContext);
                         frontier.schedule(caUri);
                     } catch (URIException e) {
                         e.printStackTrace();

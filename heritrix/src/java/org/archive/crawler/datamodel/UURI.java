@@ -55,7 +55,7 @@ import org.archive.util.TextUtils;
  * @see org.apache.commons.httpclient.URI
  */
 public class UURI extends URI
-implements Serializable {
+implements CharSequence, Serializable {
     
     public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
 
@@ -328,4 +328,32 @@ implements Serializable {
         this.cachedAuthorityMinusUserinfo = tmp;
         return this.cachedAuthorityMinusUserinfo;
 	}
+
+    /* (non-Javadoc)
+     * @see java.lang.CharSequence#length()
+     */
+    public int length() {
+        return getEscapedURI().length();
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.CharSequence#charAt(int)
+     */
+    public char charAt(int index) {
+        return getEscapedURI().charAt(index);
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.CharSequence#subSequence(int, int)
+     */
+    public CharSequence subSequence(int start, int end) {
+        return getEscapedURI().subSequence(start,end);
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    public int compareTo(Object arg0) {
+        return getEscapedURI().compareTo(arg0);
+    }
 }
