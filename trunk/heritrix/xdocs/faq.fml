@@ -35,6 +35,17 @@
       </answer>
     </faq>
 
+    <faq id="introduction">
+      <question>
+      Where can I go to get a good introduction/overview of Heritrix?
+      </question>
+      <answer>
+        <p><a href="An Introduction to Heritrix.pdf">An Introduction to
+            Heritrix</a>.
+        </p>
+      </answer>
+    </faq>
+
   </part>
   <part id="problems">
     <title>Common Problems</title>
