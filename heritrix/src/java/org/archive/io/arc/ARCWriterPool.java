@@ -28,8 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
@@ -37,7 +35,6 @@ import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Base32;
 
 
 /**
@@ -111,6 +108,7 @@ public class ARCWriterPool {
      * @param arcsDir Directory we dump ARC files to.
      * @param prefix ARC file prefix to use.
      * @param compress Whether to compress the ARCs made.
+     * @param arcMaxSize Maximum size for arcs.
      * @param maxActive Maximum active ARCWriters.  Tactic is to block waiting
      * a maximum of MAXIMUM_WAIT till an ARC comes available.
      * @param maxWait Time to wait on an ARCWriter when pool is all checked
@@ -245,8 +243,8 @@ public class ARCWriterPool {
          * @param compress True if ARC files should be compressed.
          * @param arcMaxSize Maximum size for arc file.
          *
-         * @throws IOException Passed directory is not writeable or we were unable
-         * to create the directory.
+         * @throws IOException Passed directory is not writeable or we were
+         * unable to create the directory.
          */
         public ARCWriterFactory(File arcsDir, String prefix, boolean compress,
                 int arcMaxSize)
@@ -257,18 +255,15 @@ public class ARCWriterPool {
             this.prefix = prefix;
             this.compress = compress;
             this.arcMaxSize = arcMaxSize;
-            String tmp = "127.0.0.1";
+            String tmp = "localhost.localdomain";
             try {
-            	    tmp = InetAddress.getLocalHost().getHostAddress();
+                tmp = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException e) {
                 logger.severe("Failed getHostAddress for this host");
             }
             this.host = tmp;
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.commons.pool.PoolableObjectFactory#makeObject()
-         */
         public Object makeObject() throws Exception
         {
             return new ARCWriter(this.arcsDir, this.prefix, this.compress,
@@ -279,9 +274,6 @@ public class ARCWriterPool {
             return "-" + this.host;
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.commons.pool.PoolableObjectFactory#destroyObject(java.lang.Object)
-         */
         public void destroyObject(Object arcWriter) throws Exception
         {
             ((ARCWriter)arcWriter).close();
