@@ -151,7 +151,7 @@ public class SurtPrefixSet extends TreeSet {
             if(s.startsWith(SURT_PREFIX_DIRECTIVE)) {
                 // it's specifically a SURT prefix line
                 String u = s.substring(SURT_PREFIX_DIRECTIVE.length()).trim();
-                if(u.contains("(")) {
+                if(u.indexOf("(")>0) {
                     // formal SURT prefix
                     add(u);
                 } else {
