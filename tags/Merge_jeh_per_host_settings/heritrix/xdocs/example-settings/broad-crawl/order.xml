@@ -1,0 +1,165 @@
+<crawl-order 
+  name="dev-crawl"
+  comment="A simple crawl for development/example purposes."
+ >
+
+ <scope 
+   class="org.archive.crawler.basic.Scope"
+   mode="broad"
+   max-link-hops="50"
+   max-trans-hops="5">
+   
+  <seeds>
+ # http://dmoz.org/odphead.gif 
+ # http://www.rawr.net/index.swf
+  http://www.drudgereport.com
+  http://www.yahoo.com
+ # http://www.yahoo.com
+ # http://www.yahoo.com
+ # http://my.yahoo.com
+  http://www.google.com/dirhp
+  http://www.lycos.com
+  http://www.msn.com
+  </seeds>
+	
+<!--
+   <exclude class="org.archive.crawler.filter.OrFilter">
+      <filter name="pathological-path" class="org.archive.crawler.filter.URIRegExpFilter" regexp=".*/([^/]*)/\1/\1/.*" /> 
+      <filter name="max-path" class="org.archive.crawler.filter.PathDepthFilter" modifier="not" max-path-depth="20" />
+  </exclude>
+-->
+
+ </scope>
+ 
+ <behavior
+   disk-path="disk"
+   max-toe-threads="200"
+   >
+   
+  <http-headers
+    User-Agent="heritrix-aoc/alpha (+http://crawler.archive.org)"
+    From="archive-crawler-agent@lists.sourceforge.net" 
+   />
+
+  <!--
+  <robots-honoring-policy name="most-favored-set" masquerade="false">
+  	<user-agents>
+  		<agent>foo</agent>
+  		<agent>bar</agent>
+  		<agent>booh</agent>
+	</user-agents>
+	<custom-robots>
+		User-agent: *
+		Disallow: /
+	</custom-robots>
+  </robots-honoring-policy>
+  -->
+  
+  <frontier 
+    class="org.archive.crawler.basic.Frontier"
+    delay-factor="1"
+    min-delay-ms="0"
+    max-delay-ms="1000"
+   />
+  
+   <processors>
+   
+    <processor 
+      name="Preselector" 
+      class="org.archive.crawler.basic.Preselector"
+      next="Preprocessor"
+     />
+
+    <processor 
+      name="Preprocessor" 
+      class="org.archive.crawler.basic.PreconditionEnforcer"
+      next="DNS"
+     />
+    
+    <processor 
+      name="DNS" 
+      class="org.archive.crawler.fetcher.FetchDNS"
+      next="HTTP"
+     />
+    
+    <processor 
+      name="HTTP" 
+      class="org.archive.crawler.fetcher.FetchHTTP"
+      next="ExtractorHTTP"
+
+      timeout-seconds="60"
+      sotimeout-ms="10000"
+      max-length-bytes="1048576"
+      max-fetch-attempts="5"
+     />
+    
+    <processor 
+      name="ExtractorHTTP" 
+      class="org.archive.crawler.extractor.ExtractorHTTP"
+      next="ExtractorHTML"
+     />
+
+    <processor 
+      name="ExtractorHTML" 
+      class="org.archive.crawler.extractor.ExtractorHTML"
+      next="ExtractorDOC"
+     />
+     
+    <processor
+      name="ExtractorDOC"
+  	  class="org.archive.crawler.extractor.ExtractorDOC"
+  	  next="ExtractorSWF"
+     />
+     
+    <processor
+      name="ExtractorSWF"
+      class="org.archive.crawler.extractor.ExtractorSWF"
+      next="ExtractorPDF"
+     />
+     
+    <processor
+      name="ExtractorPDF"
+      class="org.archive.crawler.extractor.ExtractorPDF"
+      next="Archiver"
+     />
+     
+    <processor 
+      name="Archiver" 
+      class="org.archive.crawler.basic.ARCWriterProcessor"
+      next="Updater"
+      
+      path="arcs"
+      compress="yes"
+      max-arc-size="20000000">
+	   <!--
+	   <filter 
+	     name="http-only"
+         class="org.archive.crawler.filter.URIRegExpFilter"
+         regexp="^http://.*" 
+	   />
+	   -->
+     </processor>
+     
+     <processor 
+       name="Updater" 
+       class="org.archive.crawler.basic.CrawlStateUpdater"
+       postprocessor="defined"
+       next="Postselector"
+      />
+
+    <processor 
+      name="Postselector" 
+      class="org.archive.crawler.basic.Postselector"
+     />
+
+  </processors>
+ 
+  <loggers>
+   <crawl-statistics
+     interval-seconds="20"
+    />
+  </loggers>
+ 
+ </behavior>
+
+</crawl-order>

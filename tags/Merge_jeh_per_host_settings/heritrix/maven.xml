@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<project>
+    <preGoal name="xdoc:jelly-transform">
+        <attainGoal name="faq"/>
+    </preGoal> 
+
+    <preGoal name="java:jar-resources"> 
+        <filter token="VERSION" value="${pom.currentVersion}" /> 
+    </preGoal> 
+
+    <postGoal name="dist:prepare-bin-filesystem">
+        <echo>[Heritrix] dist:prepare-bin-filesystem postGoal</echo>
+
+        <!--Add the lib dir to our binary distribution.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/lib">
+          <fileset dir="./lib">
+            <include name="*.jar"/>
+          </fileset>
+        </copy>
+
+        <!--Copy to a bin dir the heritrix start script.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/bin">
+          <fileset dir="${maven.src.dir}/scripts">
+            <include name="heritrix*.sh"/>
+          </fileset>
+        </copy>
+
+        <!--Set permission on scripts just copied.-->
+        <!--The below succeeds changing the mode on the executables but 
+            the subsequent dist:build-bin task ant tar'ring removes the
+            execute bit.  Need to replace the dist:build-bin task w/ 
+            a version that will preserve the execute bit on the script
+            files (Putting the task in here whole doesn't work).-->
+        <chmod perm="ugo+rx" >
+          <fileset dir="${maven.dist.bin.assembly.dir}/bin">
+            <include name="heritrix*.sh"/>
+          </fileset>
+        </chmod>
+
+        <!--Copy over the admin webapp.-->
+        <filter token="VERSION" value="${pom.currentVersion}" />
+        <copy todir="${maven.dist.bin.assembly.dir}/webapps" filtering="true">
+          <fileset dir="${maven.src.dir}/webapps">
+            <include name="**/*"/>
+          </fileset>
+        </copy>
+
+    </postGoal>
+
+    <postGoal name="dist:prepare-src-filesystem">
+        <echo>[Heritrix] dist:prepare-src-filesystem postGoal</echo>
+        <!--Add the lib dir to our binary distribution.-->
+        <copy todir="${maven.dist.src.assembly.dir}/lib">
+          <fileset dir="./lib">
+            <include name="*.jar"/>
+          </fileset>
+        </copy>
+    </postGoal>
+
+    <goal name="site:update-sourceforge">
+        <!--This goal will update sourceforge crawler.archive.org site. Assumes
+            maven.username has been defined in project.properties or in a 
+            build.properties, and that that users public ssh key has been
+            uploaded totheir sourceforge preferences (see
+            http://sourceforge.net/docman/display_doc.php?docid=761&group_id=1)
+            and that this key has no password associated (Means that 
+            we get ssh CVS access w/o having to supply password).
+
+            Note, this goal may give out a couple of lines like the below but
+            these are harmless:
+            
+                [exec] failed to set permissions on . : Operation not permitted
+
+            We use this new goal rather than 'site:sshdeploy' because we don't 
+            want to totally overwrite the htdoc content up on sourceforge.
+         -->
+        <exec executable="rsync" >
+            <arg value="--quiet" />
+            <arg value="--archive" />
+            <arg value="--rsh=ssh" />
+            <arg
+              value="${maven.build.dir}/docs/"/>
+            <arg value="${maven.username}@crawler.archive.org:/home/groups/a/ar/archive-crawler/htdocs/" />
+        </exec>
+    </goal>
+</project>

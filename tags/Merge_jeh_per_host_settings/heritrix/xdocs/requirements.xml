@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <properties>
+    <title>System Runtime Requirements</title>
+    <author email="stack at archive dot org">St.Ack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+  <section name="System Runtime Requirements">
+
+    <subsection name="Java Runtime Environment">
+<p>The Heritrix crawler is implemented purely in java.  This means that the
+only true requirement for running it is that you have a JRE installed.  The
+Heritrix crawler makes use of 1.4 features so your JRE must be at least
+of a 1.4.0 pedigree.</p>
+    </subsection>
+   
+    <subsection name="Linux">
+        <p>The Heritrix crawler has been built and tested on Linux only. 
+        We'll eventually get to other platforms but thats all that we've run
+        on to date.</p>
+    </subsection>
+    </section>
+
+  </body>
+</document>

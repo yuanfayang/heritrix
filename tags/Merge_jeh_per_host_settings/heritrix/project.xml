@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+    On maven:
+     http://maven.apache.org/
+     http://www.onjava.com/pub/a/onjava/2003/10/22/maven.html?page=1	
+     http://www-106.ibm.com/developerworks/java/library/j-maven/
+
+    Maven builds into ${basedir}/target. Its hard to change this going by the
+    maven.build.dir note in http://maven.apache.org/reference/user-guide.html.
+    Eclipse normally builds into ${basedir}/bin but we set a property in 
+    the .classpath file so eclipse too will build into ${basedir}/target.
+    Be careful.  Eclipse overwrites the build target directory.
+
+    Currently we have one project to build all; the utils, the WAR, and the 
+    heritrix crawler itself.  Later we might refactor so each has its own
+    maven subproject created by a master project.  For now we'll run w/ one 
+    maven project only because we want to be able to build w/ either maven
+    or ant only.
+
+    TODO: http://maven.apache.org/reference/plugins/statcvs/
+    TODO: Make a war file.
+    TODO: http://maven.apache.org/reference/plugins/docbook/
+
+    Maven generates documentation using xdoc.  Xdoc is a dumbed down html
+    written as xml.   There is no dtd so no validation.  The best description
+    of whats allowed in an xdoc file seems to be this document:
+    http://jakarta.apache.org/site/jakarta-site-tags.html.  Its constraining;
+    you can't do much formatting using xdoc tags.
+ -->
+<project>
+
+  <!--The version of maven's project object model -->
+  <pomVersion>3</pomVersion>
+
+  <!--The group id shared by Internet Archive projects.-->
+  <groupId>org.archive</groupId>
+  
+  <!-- a unique name for this project -->
+  <id>heritrix</id>
+  
+  <!-- a short but descriptive name for the project -->
+  <name>Heritrix</name>
+  
+  <!-- The version of the project under development, e.g.
+       1.1, 1.2, 2.0-SNAPSHOT
+
+       See "Version and Release Numbering" on
+       http://crawler.archive.org/developer.html for how version is done in 
+       this project.
+
+       NOTE: If this version is changed, you MUST update the version property
+       in build.xml.
+
+       Supply a version.build.suffix in a build.properties file and it will
+       be picked up and appended to the currentVersion.  Handy for continuous
+       builds if the version.build.suffix holds time of build.
+    -->
+  <currentVersion>0.3.0${version.build.suffix}</currentVersion>
+  
+  <!-- details about the organization that 'owns' the project -->
+  <organization>
+    <name>Internet Archive</name>
+    <url>http://www.archive.org/</url>
+    <logo>http://www.archive.org/images/logo.jpg</logo>
+  </organization>
+  
+  <!-- the year the project started -->
+  <inceptionYear>2003</inceptionYear>
+  <package>org.archive</package>
+  <!--TODO: Make a logo for the heritrix crawler!-->
+  <logo>/images/logo.gif</logo>
+  <description>The Internet Archive's web crawler.
+  </description>
+  <!-- a short description of what the project does -->
+  <shortDescription>
+  An open-source, extensible, web-scale, archival-quality web crawler project.
+  </shortDescription>
+
+  <!--TODO: the project home page.-->
+  <url>http://crawler.archive.org</url>
+  <issueTrackingUrl>http://sourceforge.net/tracker/?group_id=73833
+	</issueTrackingUrl>
+    <!--Optional. The hostname of the web server that hosts the project's web
+        site. This is used when the web site is deployed.
+     -->
+    <siteAddress>crawler.archive.org</siteAddress>
+    
+    <!--Optional. The directory on the web server where the public web site 
+        for this project resides. This is used when the web site is deployed.
+     -->
+    <siteDirectory>/home/groups/a/ar/archive-crawler/htdocs/</siteDirectory>
+
+    <!--TODO: See what these configurations do.-->
+    <distributionSite>http://shell.sourceforge.net</distributionSite>
+    <distributionDirectory>/home/users/s/st/${maven.username}
+    </distributionDirectory>
+
+    <!--The version control repository and http url for online access
+        the connection element has the form:
+        scm:<system>:<system specific connection string> 
+     -->
+    <repository>
+       <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/archive-crawler:ArchiveOpenCrawler</connection>
+        <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler</url>
+    </repository>
+
+    <versions>
+        <version>
+            <id>0.2.0</id>
+            <name>0.2.0</name>
+            <tag>heritrix-0_2_0</tag>
+        </version>
+    </versions>
+  
+
+    <!-- any mailing lists for the project -->
+    <mailingLists>
+        <mailingList>  
+            <name>Crawler Discussion List</name>
+            <subscribe>
+            archive-crawler-subscribe@yahoogroups.com
+            </subscribe>
+            <unsubscribe>
+            archive-crawler-unsubscribe@yahoogroups.com
+            </unsubscribe>
+            <archive>
+            http://groups.yahoo.com/group/archive-crawler/
+            </archive>
+        </mailingList>  
+        <mailingList>  
+            <name>Crawler CVS Commits</name>
+            <subscribe>
+            http://lists.sourceforge.net/lists/listinfo/archive-crawler-cvs
+            </subscribe>
+            <unsubscribe>
+            http://lists.sourceforge.net/lists/listinfo/archive-crawler-cvs
+            </unsubscribe>
+            <archive>http://sourceforge.net/mailarchive/forum.php?forum=archive-crawler-cvs
+            </archive>
+        </mailingList>  
+    </mailingLists>
+  
+  <!--TODO: who the developers are for the project -->
+  <developers>
+    <developer>
+        <name>Gordon Mohr</name>
+        <id>gojomo</id>
+        <email>gojomo at archive dot org</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
+    </developer>
+    <developer>
+        <name>Igor Ranitovic</name>
+        <id>ia_igor</id>
+        <email>igor at archive dot org</email>
+        <organization>Internet Archive</organization>
+        <url>http://www.archive.org</url>
+    </developer>
+    <developer>
+        <name>John Erik Halse</name>
+        <id>johnerik</id>
+        <email>johnh at archive dot org</email>
+        <organization>National Library of Norway</organization>
+        <url>http://www.nb.no</url>
+    </developer>
+    <developer>
+        <name>Kristinn Sigurdsson</name>
+        <id>kristinn_sig</id>
+        <email>kris at archive dot org</email>
+        <organization>National and University Library of Iceland</organization>
+        <url>http://www.bok.hi.is/</url>
+    </developer>
+    <developer>
+        <name>Raymie Stata</name>
+        <id>rstata</id>
+        <email>rstata at archive dot org</email>
+    </developer>
+    <developer>
+        <name>Michael Stack</name>
+        <id>stack-sf</id>
+        <email>stack at archive dot org</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
+    </developer>
+  </developers>
+
+  <contributors>
+    <contributor>
+        <name>James Casey</name>
+        <email>me at jamesc dot net</email>
+        <url>http://www.jamesc.net</url>
+    </contributor>
+    <contributor>
+        <name>Parker Thompson</name>
+        <email>parkert at archive dot org</email>
+    </contributor>
+    <contributor>
+        <name>Judy Ma</name>
+        <email>jma at archive dot org</email>
+    </contributor>
+
+  </contributors>
+
+    <licenses>
+        <license>
+            <name>GNU LESSER GENERAL PUBLIC LICENSE</name>
+            <url>http://www.gnu.org/licenses/lgpl.txt</url>
+            <distribution>repo</distribution>
+       </license>
+    </licenses>
+
+    <!--For now, refer to local jars.  Later when (if) we deceide to go
+        all-out maven, we'll pull common jars from remote repository.
+
+        TODO: Fix the display of dependencies so it displays the 
+        license and description properties added by us, IA.  Or add a pregoal
+        to dependency generation so that it generates a dependencies license
+        page using info below.
+
+        TODO: Change the licenses into links to actual licenses.
+
+    -->
+    <dependencies>
+        <dependency>
+            <!--TODO: We're using a version between RC2 and RC1, not what is
+            listed here.  I've tried to update our httpclient to RC2 but
+            it seems to be missing the complete org.apache.httpclient.params
+            package.  I tried building from src but this also generated a jar
+            w/o the params package though the params pkg still exists as src.
+             -->
+            <id>commons-httpclient</id>
+            <version>2.0-rc2</version>
+            <url>http://jakarta.apache.org/commons/httpclient/downloads.html</url>
+            <properties>
+                <description>This package is used for fetching URIs via http.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>commons-logging</id>
+            <version>1.0.3</version>
+            <url>http://jakarta.apache.org/commons/logging.html</url>
+            <properties>
+                <description>Provides logging adapters.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>dnsjava</id>
+            <version>1.5</version>
+            <url>http://www.xbill.org/dnsjava/</url>
+            <properties>
+                <description>DNS Lookups.
+                </description>
+                <license>BSD</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>stataclasses</id>
+            <version>0.1.0</version>
+            <url>http://cvs.sourceforge.net/viewcvs.py/*checkout*/archive-crawler/ArchiveOpenCrawler/lib/stataclasses-0.1.0.jar</url>
+            <properties>
+                <description>Utils supplied by Rayme Stata.
+                Gave it arbitrary 0.1.0 version number.
+                </description>
+                <license>?</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>org.mortbay.jetty</id>
+            <version>4.2.15rc0</version>
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>The Jetty servlet container.
+                </description>
+                <license>Jetty license,
+                    http://jetty.mortbay.org/jetty/LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>org.mortbay.jmx</id>
+            <version>4.2.15rc0</version>
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty.
+                </description>
+                <license>Jetty license,
+                    http://jetty.mortbay.org/jetty/LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>servlet</id>
+            <version>2.3</version>
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty.  Assumption is that its
+                2.3 servlet and that its Sun License.  TODO: Fix license and 
+                source.
+                </description>
+                <license>Jetty license,
+                    http://jetty.mortbay.org/jetty/LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>jasper-runtime</id>
+            <version />
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty. Its the jakarta 
+                jasper jsp runtime.  According to Jetty VERSION.TXT was taken
+                from tomcat 4.1.24.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>jasper-compiler</id>
+            <version />
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty. Its the jakarta 
+                jasper jsp runtime.  According to Jetty VERSION.TXT was taken
+                from tomcat 4.1.24.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>jmxri</id>
+            <version />
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty. Its JMX runtime.
+                TODO: Have marked it w/ the jetty version.
+                TODO: License must be something else than jetty.
+                </description>
+                <license>Jetty license,
+                    http://jetty.mortbay.org/jetty/LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>jmxtools</id>
+            <version />
+            <url>http://jetty.mortbay.com/jetty/</url>
+            <properties>
+                <description>This jar came w/ Jetty. Its JMX tools.
+                TODO: License must be something else than jetty.
+                </description>
+                <license>Jetty license,
+                    http://jetty.mortbay.org/jetty/LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>poi</id>
+            <version>2.0-RC1-20031102</version>
+            <url>http://jakarta.apache.org/poi/</url>
+            <properties>
+                <description>For parsing PDFs.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>poi-scratchpad</id>
+            <version>2.0-RC1-20031102</version>
+            <url>http://jakarta.apache.org/poi/</url>
+            <properties>
+                <description>For parsing PDFs.  Has the 
+                org.apache.poi.hdf.extractor.WordDocument.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>javaswf</id>
+            <version />
+            <url>http://www.anotherbigidea.com/javaswf</url>
+            <properties>
+                <description>JavaSWF2 is a set of Java packages that enable the parsing, manipulation and generation of the Macromedia Flash(TM) file format known as SWF ("swiff").  Added jar was made by unzipping javaswf-CVS-SNAPSHOT-1.zip download, compiling the java classes therein, and then making a jar of the product.</description>
+                <license>The JavaSWF BSD License, 
+                http://anotherbigidea.com/javaswf/JavaSWF2-BSD.LICENSE.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>itext</id>
+            <version>1.0</version>
+            <url>http://www.lowagie.com/iText/</url>
+            <properties>
+                <description>A library for parsing PDF files.</description>
+                <license>MPL and LGPL</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>ant</id>
+            <version>1.5.4</version>
+            <url>http://ant.apache.org</url>
+            <properties>
+                <description>Build tool</description>
+                <license>Apache 1.1.  http://ant.apache.org/license.html
+                </license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>junit</id>
+            <version>3.8.1</version>
+            <url>http://www.junit.org/</url>
+            <properties>
+                <description>A framework for implimenting the unit testing
+                methology.</description>
+                <license>IBM's Common Public License Version 0.5.</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>commons-pool</id>
+            <version>1.1</version>
+            <url>http://jakarta.apache.org/site/binindex.cgi#commons-pool</url>
+            <properties>
+                <description>For object pooling.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>commons-collections</id>
+            <version>2.1</version>
+            <url>http://jakarta.apache.org/site/binindex.cgi#commons-collections</url>
+            <properties>
+                <description>Needed by commons-pool.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+
+  </dependencies>
+
+  
+  <!-- build information for the project -->
+  <build>
+    <nagEmailAddress>webmaster@crawler.archive.org</nagEmailAddress>
+    <sourceDirectory>src/java</sourceDirectory>
+    <unitTestSourceDirectory>src/java</unitTestSourceDirectory>
+
+    <unitTest>
+      <includes>
+        <include>**/*Test.java</include>
+      </includes>
+      <excludes>
+        <exclude>**/SelfTest.java</exclude>
+      </excludes>
+    </unitTest>
+
+    <resources>
+      <resource>
+        <filtering>true</filtering> 
+        <directory>src/conf</directory>
+        <includes>
+          <include>*.properties</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+
+    <!--List of reports to generate.
+        Some are not working.  Fix.
+     -->
+    <reports>
+        <report>maven-changelog-plugin</report>
+        <!--<report>maven-developer-activity-plugin</report>-->
+        <!--TODO: <report>maven-file-activity-plugin</report>-->
+        <report>maven-changes-plugin</report>
+        <report>maven-checkstyle-plugin</report>
+        <report>maven-javadoc-plugin</report>
+        <report>maven-jdepend-plugin</report>
+        <report>maven-junit-report-plugin</report>
+        <report>maven-jxr-plugin</report>
+        <report>maven-license-plugin</report>
+        <!--TODO: OOME and takes long time.
+            <report>maven-linkcheck-plugin</report>
+         -->
+        <report>maven-pmd-plugin</report>
+        <report>maven-tasklist-plugin</report>
+    </reports>
+
+</project>
+
