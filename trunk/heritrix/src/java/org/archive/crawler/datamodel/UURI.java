@@ -174,6 +174,7 @@ public class UURI extends URI {
     public static final String IMPROPERESC = 
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
     
+    public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
     /**
      * Authority port number regex.
      */
@@ -478,6 +479,22 @@ public class UURI extends URI {
         return true;
     }
     
+    /**
+     * Strips www[0-9]*\. from the host.
+     * 
+     * If calling getHostBaseName becomes a performance issue we should 
+     * consider adding the hostBasename member that is set on initialization.
+     * 
+     * @return Host's basename.
+     * @throws URIException
+     */
+    public String getHostBasename() throws URIException {
+        if (this.getHost() != null) {            
+            return TextUtils.replaceFirst(MASSAGEHOST_PATTERN, this.getHost(),
+                        EMPTY_STRING);
+        }
+        return null;
+    }
     
     /* (non-Javadoc)
      * @see org.apache.commons.httpclient.URI#toString()
