@@ -238,6 +238,10 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
 
     private void parseComplexType(ComplexType complexType, int indent)
         throws SAXException {
+        if (complexType.isTransient()) {
+            return;
+        }
+        
         DataContainer data = settings.getData(complexType.getAbsoluteName());
         MBeanInfo mbeanInfo = data.getMBeanInfo();
         String objectElement = resolveElementName(complexType);
