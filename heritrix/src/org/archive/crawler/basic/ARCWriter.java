@@ -23,6 +23,9 @@ import org.archive.crawler.framework.Processor;
 import org.xbill.DNS.Record;
 
 import org.archive.crawler.basic.InvalidRecordException;
+import org.archive.crawler.datamodel.CrawlerBehavior;
+
+import org.w3c.dom.Node;
 
 /**
  * Processor module for writing the results of any 
@@ -40,16 +43,41 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
 	private FileOutputStream out = null;		// for writing to files
-
+	
+	//	append to arc files to assure uniqueness across threads. 
+	private static int arcId = 0;						
 
   	public void initialize(CrawlController c){
   		super.initialize(c);
-  		
-  		// set up output directory
-  		CrawlOrder order = c.getOrder();
-  		setOutputDir(order.getOutputLocation());
-  		
+  
+		readConfiguration();
 		createNewArcFile();		  		
+  	}
+  	
+  	public void readConfiguration(){
+		// set up output directory
+		CrawlOrder order = controller.getOrder();
+		CrawlerBehavior behavior = order.getBehavior();
+		
+		
+		// retrieve any nodes we think we need from the dom(s)
+		Node filePrefix = order.getNodeAt("/crawl-order/arc-file/@prefix");
+		Node maxSize = getNodeAt("./arc-files/@max-size-bytes");
+		Node path = order.getNodeAt("//disk/@path");
+		
+
+		setArcPrefix( 
+			( (filePrefix==null) ? arcPrefix : filePrefix.getNodeValue() )
+		);
+		
+		setArcMaxSize(
+			( (maxSize==null) ? arcMaxSize : (new Integer(maxSize.getNodeValue())).intValue() )
+		);
+		
+		setOutputDir(
+			( (path==null) ? outputDir : path.getNodeValue() )
+		);
+
   	}
   	
   	public void process(CrawlURI curi){
@@ -125,7 +153,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	protected void createNewArcFile() {
 
 		String date = get14DigitDate();
-		String fileName = outputDir + arcPrefix + date + ".arc";
+		int uniqueIdentifier = getNextArcId();
+		
+		String fileName = outputDir + arcPrefix + date +  "-" + uniqueIdentifier + ".arc";
+		
 		try {
 			if(out != null){
 				out.close();
@@ -249,6 +280,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		// start writing files with the new prefix
 		createNewArcFile();
 	}
+	
+	private int getNextArcId(){
+		return arcId++;
+	}
 
 	public void setOutputDir(String buffer) {
 				
@@ -271,9 +306,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		}else{
 			outputDir = buffer;
 		}
-			
-		// start writing files to the new dir
-		createNewArcFile();
 	}
 	
 	// utility functions for creating arc-style date stamps
