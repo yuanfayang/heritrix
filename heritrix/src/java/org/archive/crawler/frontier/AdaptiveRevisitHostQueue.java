@@ -305,7 +305,7 @@ implements AdaptiveRevisitAttributeConstants {
                     update = true;
                 }
                 if( (curiProcessingTime < oldCuriProcessingTime)
-                        && (overrideSetTimeOnDups) || update){
+                        && (overrideSetTimeOnDups || update)){
                     // We update the processing time if it is earlier then 
                     // the original and either overrideSetTimeOnDups was set
                     // or update is true, meaning a higher priority scheduling
