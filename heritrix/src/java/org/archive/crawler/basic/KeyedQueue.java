@@ -25,10 +25,12 @@ package org.archive.crawler.basic;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
+import org.archive.util.QueueItemMatcher;
 
 /**
  * Ordered collection of items with the same "classKey". The
@@ -165,6 +167,20 @@ public class KeyedQueue implements Queue, URIStoreable {
      */
     public void release() {
         innerQ.release();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#getIterator(boolean)
+     */
+    public Iterator getIterator(boolean inCacheOnly) {
+        return innerQ.getIterator(inCacheOnly);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     */
+    public void deleteMatchedItems(QueueItemMatcher matcher) {
+        innerQ.deleteMatchedItems(matcher);
     }
 
 }

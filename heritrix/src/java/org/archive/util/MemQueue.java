@@ -23,11 +23,12 @@
  */
 package org.archive.util;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
-/** An im-memory implementation of a {@link Queue}.
+/** An in-memory implementation of a {@link Queue}.
  *
- * @author gojomo
+ * @author Gordon Mohr
  *
  */
 public class MemQueue extends LinkedList implements Queue {
@@ -64,5 +65,25 @@ public class MemQueue extends LinkedList implements Queue {
     public void release() {
         // nothing to release
     }
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#getIterator(boolean)
+     */
+    public Iterator getIterator(boolean inCacheOnly) {
+        return listIterator();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     */
+    public void deleteMatchedItems(QueueItemMatcher matcher) {
+        Iterator it = listIterator();
+        while(it.hasNext()){
+            if(matcher.match(it.next())){
+                it.remove();
+            }
+        }
+    }
+    
+    
 
 }

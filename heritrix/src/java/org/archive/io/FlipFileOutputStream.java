@@ -31,28 +31,43 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * @author gojomo
- *
+ * An output stream that uses a pair of files on disk. One file is used for  
+ * reading and one for writing. Once the file being read (by a 
+ * <code>FlipFileOutputStream</code>) from is exhausted it switches
+ * to the other causing this output stream to switch to the other file 
+ * (overwriting it).
+ * <p>
+ * The files are named xxx.ff0 and xxx.ff1 (with xxx being user configureable).
+ * <p>
+ * This structure is ideally suited for implementing disk based queues.
+ * @author Gordon Mohr.
+ * @see org.archive.io.FlipFileInputStream
+ * @see org.archive.io.DiskBackedByteQueue
  */
 public class FlipFileOutputStream extends OutputStream {
     BufferedOutputStream outStream;
+    FileOutputStream fileStream;
     String pathPrefix;
     File file0;
     File file1;
     File currentFile;
 
     /**
-     * @param tempDir
-     * @param backingFilenamePrefix
-     * @throws FileNotFoundException
+     * Constructor
+     * @param tempDir The directory where the files are to be stored.
+     * @param backingFilenamePrefix name of the files, the class will append
+     *                              to this name to make them each unique.
+     * @throws FileNotFoundException if unable to create FileOutStream.
      */
-    public FlipFileOutputStream(File tempDir, String backingFilenamePrefix) throws FileNotFoundException {
+    public FlipFileOutputStream(File tempDir, String backingFilenamePrefix) 
+                            throws FileNotFoundException  {
         tempDir.mkdirs();
         pathPrefix = tempDir.getPath()+File.separatorChar+backingFilenamePrefix;
         file0 = new File(pathPrefix + ".ff0");
         file1 = new File(pathPrefix + ".ff1");
         currentFile = file0;
-        outStream = new BufferedOutputStream(new FileOutputStream(currentFile), 4096);
+        fileStream = new FileOutputStream(currentFile);
+        outStream = new BufferedOutputStream(fileStream, 4096);
     }
 
     /* (non-Javadoc)
@@ -78,24 +93,36 @@ public class FlipFileOutputStream extends OutputStream {
 
 
     // TODO other write()s for efficiency
-
-    public File getInputFile() throws IOException {
+    /**
+     * Called by <code>FlipFileInputStream</code> when it has exhausted
+     * it's current input file. Returns the current output file and switches
+     * writing to the old input file.
+     */
+    protected File getInputFile() throws IOException {
         File lastFile = currentFile;
         flip();
         return lastFile;
     }
 
     /**
-     *
+     * Flush the current output stream and switch it to the other file.
      */
     private void flip() throws IOException {
-        outStream.flush();
+        flush();
         currentFile = (currentFile == file0) ? file1 : file0;
         outStream = new BufferedOutputStream(new FileOutputStream(currentFile), 4096);
     }
+    
+    /**
+     * Returns the current output file.
+     * @return the current output file
+     */
+    public File getOutputFile(){
+        return currentFile;
+    }
 
     /**
-     *
+     * Deletes both files associated with this class and it's partner.
      */
     public void discard() {
         file0.delete();
@@ -120,5 +147,12 @@ public class FlipFileOutputStream extends OutputStream {
 
     public int getCurrentFileIndex() {
         return (currentFile == file0) ? 0 : 1;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.io.OutputStream#flush()
+     */
+    public void flush() throws IOException{
+        outStream.flush();
     }
 }
