@@ -81,10 +81,16 @@ public class Frontier
 	// (contrasted with min-delay: if min-interval time has already elapsed during last
 	// fetch, then next fetch may occur immediately; it constrains starts not off-cycles)
 	private static String ATTR_MIN_INTERVAL = "min-interval-ms";
+
+    private static String ATTR_MAX_RETRIES = "max-retries";
+    private static String ATTR_RETRY_DELAY = "retry-delay";
+    
 	private static Float DEFAULT_DELAY_FACTOR = new Float(5);
 	private static Integer DEFAULT_MIN_DELAY = new Integer(500);
 	private static Integer DEFAULT_MAX_DELAY = new Integer(5000);
 	private static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
+    private static Integer DEFAULT_MAX_RETRIES = new Integer(30);
+    private static Long DEFAULT_RETRY_DELAY = new Long(900000); //15 minutes
 	
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.basic.Frontier");
@@ -133,8 +139,8 @@ public class Frontier
 	HashMap heldCuris = new HashMap(); // of UURI -> CrawlURI
 
     // limits on retries TODO: separate into retryPolicy? 
-	private int maxRetries = 30;
-	private int retryDelay = 900000; // 15 minutes
+//	private int maxRetries = 30;
+//	private int retryDelay = 900000; // 15 minutes
 //	private long minDelay;
 //	private float delayFactor;
 //	private long maxDelay;
@@ -173,11 +179,18 @@ public class Frontier
             "Always wait this long after one completion before recontacting " +
             "same server, regardless of multiple", DEFAULT_MIN_DELAY));
         addElementToDefinition(new SimpleType(ATTR_MIN_INTERVAL,
-            "always wait at least this long between request *starts* " +
+            "Always wait at least this long between request *starts* " +
             "(contrasted with min-delay: if min-interval time has already " +
             "elapsed during last fetch, then next fetch may occur " +
             "immediately; it constrains starts not off-cycles)",
             DEFAULT_MIN_INTERVAL));
+        addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
+            "How often to retry fetching a URI that failed to be retrieved. ",
+            DEFAULT_MAX_RETRIES));
+        addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
+            "How long to wait by default until we retry fetching a URI that " +
+            "failed to be retrieved (millisec). ",
+            DEFAULT_RETRY_DELAY));
     }
     
     public Frontier() {
@@ -988,9 +1001,9 @@ public class Frontier
 	 * @param curi
 	 * @return True if we need to retry.
 	 */
-	private boolean needsRetrying(CrawlURI curi) {
+	private boolean needsRetrying(CrawlURI curi) throws AttributeNotFoundException {
 		//
-		if (curi.getFetchAttempts()>=maxRetries) {
+		if (curi.getFetchAttempts()>= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
 			return false;
 		}
 		switch (curi.getFetchStatus()) {
@@ -1008,8 +1021,8 @@ public class Frontier
 	/**
 	 * @param curi
 	 */
-	private void scheduleForRetry(CrawlURI curi) {
-		int delay;
+	private void scheduleForRetry(CrawlURI curi) throws AttributeNotFoundException {
+		long delay;
 		if(curi.getAList().containsKey(A_PREREQUISITE_URI)) {
 			// schedule as a function of other URI's progress
 			UURI prereq = (UURI) curi.getPrerequisiteUri();
@@ -1022,12 +1035,12 @@ public class Frontier
 			delay = curi.getAList().getInt(A_RETRY_DELAY);
 		} else {
 			// use overall default
-			delay = retryDelay; 
+			delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue(); 
 		}
 		if (delay>0) {
 			// snooze to future
 			logger.finer("inserting snoozed "+curi+" for "+delay);
-			insertSnoozed(curi,retryDelay);
+			insertSnoozed(curi,delay);
 		} else {
 			// eligible for retry asap
 			pushToPending(curi);
