@@ -781,6 +781,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.httpRecorder = null;
         this.fetchStatus = S_UNATTEMPTED;
         this.setPrerequisite(false);
+        // Clear 'links extracted' flag.
+        this.linkExtractorFinished = false;
         // Let current get method to be GC'd.
         getAList().remove(A_HTTP_TRANSACTION);
         // Discard any ideas of prereqs -- may no longer be valid.
