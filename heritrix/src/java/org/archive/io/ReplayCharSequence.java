@@ -34,7 +34,7 @@ import java.io.IOException;
  * @author stack
  * @version $Revision$, $Date$
  */
-public interface ReplayCharSequence extends UnstableCharSequence {
+public interface ReplayCharSequence extends CharSequence {
 
     /**
      * Call this method when done so implementation has chance to clean up

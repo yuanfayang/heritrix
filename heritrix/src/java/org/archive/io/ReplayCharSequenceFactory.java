@@ -579,20 +579,6 @@ public class ReplayCharSequenceFactory {
         public String toString() {
             return substring(0, length());
         }
-
-        /* (non-Javadoc)
-         * @see org.archive.io.UnstableCharSequence#isUnstable()
-         */
-        public boolean isUnstable() {
-            return true;
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.io.UnstableCharSequence#stabilize()
-         */
-        public CharSequence stabilize() {
-            return toString();
-        }
     }
 
     /**
@@ -1035,20 +1021,6 @@ public class ReplayCharSequenceFactory {
                 sb.append(charAt(i)); 
             }
             return sb.toString();
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.io.UnstableCharSequence#isUnstable()
-         */
-        public boolean isUnstable() {
-            return true;
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.io.UnstableCharSequence#stabilize()
-         */
-        public CharSequence stabilize() {
-            return toString();
         }
     }
 }
