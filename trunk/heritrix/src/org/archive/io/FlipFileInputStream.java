@@ -42,6 +42,38 @@ public class FlipFileInputStream extends InputStream {
 		return c;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#read(byte[])
+	 */
+	public int read(byte[] b) throws IOException {
+		int count;
+		if (inStream==null || (count = inStream.read(b)) == -1 ) {
+			getNewInStream();
+			if((count = inStream.read(b)) == -1) {
+				// if both old and new stream were exhausted, return EOF
+				return -1;
+			}
+		}
+		return count;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#read(byte[], int, int)
+	 */
+	public int read(byte[] b, int off, int len) throws IOException {
+		int count;
+		if (inStream==null || (count = inStream.read(b,off,len)) == -1 ) {
+			getNewInStream();
+			if((count = inStream.read(b,off,len)) == -1) {
+				// if both old and new stream were exhausted, return EOF
+				return -1;
+			}
+		}
+		return count;
+	}
+
+
 	/**
 	 * 
 	 */
@@ -52,4 +84,11 @@ public class FlipFileInputStream extends InputStream {
 		inStream = new BufferedInputStream(new FileInputStream(source.getInputFile()),4096);
 	}
 
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#close()
+	 */
+	public void close() throws IOException {
+		super.close();
+		inStream.close();
+	}
 }
