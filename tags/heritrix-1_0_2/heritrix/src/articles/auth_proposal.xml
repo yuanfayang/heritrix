@@ -1,0 +1,788 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <title>Heritrix Negotiation of Authentication Schemes</title>
+
+  <subtitle>A Proposal to address RFE <ulink
+  url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=914301&amp;group_id=73833&amp;atid=539102">[
+  914301 ] Logging in (HTTP POST, Basic Auth, etc.)</ulink></subtitle>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <author>
+      <affiliation>
+        <orgname>Internet Archive</orgname>
+      </affiliation>
+
+      <firstname>Michael</firstname>
+
+      <surname>Stack</surname>
+    </author>
+  </articleinfo>
+
+  <abstract>
+    <para>Description of common web authentication schemes. Description of the
+    problem volunteering credentials at the appropriate juncture. Proposal for
+    navigating HTTP POST login and Basic Auth for when Heritrix has been
+    supplied credentials ahead of the authorization challenge.</para>
+  </abstract>
+
+  <sect1>
+    <title>Introduction</title>
+
+    <para>This document is divided into two parts. The first part disccuses
+    common web authentication schemes eliminating the less common. The second
+    part outlines Heritrix negotiation of HTML login forms and Basic/Digest
+    Auth authentications schemes. On the end are a list of items to consider
+    for future versions of the authentication system.</para>
+
+    <para>This intent of this document is to solicit feedback in advance of
+    implementation.</para>
+
+    <para>The rest of this introduction is given over to scope and assumptions
+    made in this document.</para>
+
+    <sect2>
+      <title>Scope</title>
+
+      <sect3>
+        <title>Delivery timeline</title>
+
+        <para>Delivery on the proposal is to be parcelled out over Heritrix
+        versions. A first cut at Heritrix form-based POST/GET authentication
+        is to be included in version 1.0 (End of April, 2004).</para>
+      </sect3>
+
+      <sect3>
+        <title>Common web authentication schemes only</title>
+
+        <para>This proposal is for the common web authentication schemes only:
+        E.g. HTTP POST to a HTML form, and Basic and Digest Auth. This
+        proposal does not cover the Heritrix crawler authenticating against a
+        LDAP server, PAM, getting tickets from a Kerberos server, negotiating
+        single sign-ons, etc.</para>
+      </sect3>
+
+      <sect3 id="connbased">
+        <title>Connection-based authentication schemes</title>
+
+        <para>Connection-based authentication schemes are outside the scope of
+        this proposal. They are antithetical to the current Heritrix mode of
+        operation. Consideration of connection-based authentication schemes is
+        postponed until Heritrix does other than HTTP/1.0 behavior of getting
+        a new connection per request.</para>
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Assumptions</title>
+
+      <sect3>
+        <title>Heritrix has been granted necessary authentication
+        credentials</title>
+
+        <para>Assumption is that Heritrix has been granted legitimate access
+        to the site we're trying to log into ahead of the login attempt; that
+        the site owners have given permission and the necessary login/password
+        combination and/or certificates necessary to gain access.</para>
+      </sect3>
+
+      <sect3 id="procchainassumption">
+        <title>Heritrix URI processing chain</title>
+
+        <para>Assumption is that this proposal integrate with the Heritrix URI
+        processing chains model <citation>See <ulink
+        url="http://crawler.archive.org/user.html">URI Processing
+        Chains</ulink> </citation> rather than go to an authentication
+        framework such as <ulink url="#jaas">JAAS</ulink> and encapsulate the
+        complete authentication dialog within a JAAS LoginModule plugin, with
+        a plugin per authentication scheme supported. On the one hand, the
+        Heritrix URI processing chain lends itself naturally to the processing
+        of the common web authentication mechanisms with its core notions of
+        HTML fetching and extracting, and besides, the authentication dialog
+        will likely have links to harvest. On the other hand, authentication
+        will be spread about the application.</para>
+      </sect3>
+
+      <sect3>
+        <title>No means of recording credentials used authenticating in an
+        ARC</title>
+
+        <para>There is no means currently for recording in an arc file the
+        credentials used getting to pages (If we recorded the request, we'd
+        have some hope of archiving them).</para>
+      </sect3>
+
+      <sect3>
+        <title>Credentials store does not need to be secured</title>
+
+        <para>Assumption is that Heritrix does not need to secure the store in
+        which we keep credentials to offer up during authentications; the
+        credentials store does not need to be saved on disk encrypted and
+        password protected.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <sect1 id="schemes">
+    <title>Authentication Schemes</title>
+
+    <para>This section discusses common web authentication schemes and where
+    applicable, practical issues navigating the schemes' requirements. The
+    first two described, <xref linkend="basicdesc" /> and <xref
+    linkend="postdesc" />, are assumed most commonly used.</para>
+
+    <sect2 id="basicdesc">
+      <title>Basic and Digest Access Authentication <xref
+      linkend="rfc2617" /></title>
+
+      <para>The server returns a HTTP response code of <constant>401
+      Unauthorized</constant> or <constant>407 Proxy Authentication
+      Required</constant> when it requires authentiation of the client.</para>
+
+      <blockquote>
+        <para>The realm directive (case-insensitive) is required for all
+        authentication schemes that issue a challenge. The realm value
+        (case-sensitive), in combination with the canonical root URL...of the
+        server being accessed, defines the protection space. <xref
+        linkend="rfc2617" /></para>
+      </blockquote>
+
+      <para>The canonical root URL is discussed in this message, <ulink
+      url="http://cert.uni-stuttgart.de/archive/bugtraq/1999/08/msg00380.html">Re:
+      IE and cached passwords</ulink>. Its scheme + hostname + port only. Path
+      and query string have been stripped. Effectively, it equates to scheme +
+      <ulink
+      url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
+      authority.</ulink></para>
+
+      <blockquote>
+        <para>A client SHOULD assume that all paths at or deeper than the
+        depth of the last symbolic element in the path field of the
+        Request-URI also are within the protection space specified by the
+        Basic realm value of the current challenge. A client MAY preemptively
+        send the corresponding Authorization header with requests for
+        resources in that space without receipt of another challenge from the
+        server. <xref linkend="rfc2617" /></para>
+      </blockquote>
+    </sect2>
+
+    <sect2 id="postdesc">
+      <title>HTTP POST and GET of Authentication Credentials</title>
+
+      <para>Generally, this scheme works as follows. When an unauthenticated
+      client attempts to access a protected area, they are redirected by the
+      server to a page with an HTML login form. The client must then HTTP POST
+      or a HTTP GET the HTML form with the client access credentials filled
+      in. Upon verification of the credentials by the server, the client is
+      given access. So the client does not need to pass credentials on all
+      subsequent accesses to the protected areas of the site, the server will
+      mark the client usually in one of two ways: It will write a special,
+      usually time- and scope-limited, token, or "cookie", back to the client
+      which the client volunteers on all subsequent accesses, or the server
+      will serve pages that have embedded URLs rewritten to include a special
+      token. The tokens are examined by the server on each subsequent access
+      for validity and access continues while the token remains valid.</para>
+
+      <para>There is no standard for how this dialogue is supposed to proceed.
+      Myriad are the implementations of this basic scheme. Below is a listing
+      of common difficulties:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Form field item names are varient.</para>
+        </listitem>
+
+        <listitem>
+          <para>Means by which unsuccessful login is reported to the client
+          varies. A client can be redirected to new failed login page or the
+          original login page is redrawn with the inclusion of banner message
+          reporting on the failed login.</para>
+        </listitem>
+
+        <listitem>
+          <para>Following on from the previous point, should a solution POST
+          authentication and then do all necessary to ensure a successful
+          login -- i.e. follow redirects, regex over the result page to ensure
+          it says "successful login", etc. -- or should a solution do nought
+          but POST and then give whatever the resultant page to the Heritrix
+          URI processing chain whether successful or not?</para>
+
+          <note>
+            <title>Processing of form success page?</title>
+
+            <para>The result page should probably be let through. It may have
+            valuable links on board. The alternative would necessitate our
+            running an out-of-band subset of the Heritrix URI processing chain
+            POSTing/GETting authentication running extractors to verify result
+            of login attempt. This mini authentication chain could be kept
+            tidy encapsulated within a login module -- see <xref
+            linkend="procchainassumption" />-- but ugly would be how to
+            transfer such as the cookies from the mini chain over to the main
+            URI processing chain.</para>
+          </note>
+        </listitem>
+
+        <listitem>
+          <para>The aforementioned differing ways in which the server parks in
+          the client a validated token.</para>
+        </listitem>
+
+        <listitem>
+          <para>What if login attempt fails? Should we retry? For how long?
+          Means maintaining a state across URI processing?</para>
+        </listitem>
+
+        <listitem>
+          <para>Should there be tools to help an operator develop Heritrix
+          authentication configuration? Should a tool be developed that runs
+          the login outside of the Heritrix context to make it easier on
+          operator developing the authentication configuration?</para>
+        </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <sect2 id="clientcertdesc">
+      <title>X509 Client Certificates</title>
+
+      <para>To gain access, the client must volunteer a trusted certificate
+      setting up an SSL connection to the server. Upon receipt, the server
+      tests the client is entitled to access.</para>
+
+      <para>Its probably rare that client certificates alone will be used as
+      access protection. More likely, certificates will be used in combination
+      with one of the above listed schemes.</para>
+
+      <para>The certificate the client is to volunteer needs to be in a local
+      TrustStore available to the Heritrix TrustManager making the SSL
+      connection (Heritrix already maintains its own keystore of certificates
+      to use verifying server proffered certs).</para>
+
+      <note>
+        <title>Testing</title>
+
+        <para>Test to see if certificates are volunteered even in case where
+        we're running in open trust mode. Test to see how hard to append a
+        host-particular keystore to the general Heritrix keystore at
+        runtime.</para>
+      </note>
+    </sect2>
+
+    <sect2 id="ntlmdesc">
+      <title id="httpclientntlm">NTLM <xref linkend="ntlm" /></title>
+
+      <blockquote>
+        <para>NTLM is...a proprietary protocol designed by Microsoft with no
+        publicly available specification. Early version of NTLM were less
+        secure than Digest authentication due to faults in the design, however
+        these were fixed in a service pack for Windows NT 4 and the protocol
+        is now considered more secure than Digest authentication... There are
+        some significant differences in the way that NTLM works compared with
+        basic and digest authentication...NTLM authenticates a connection and
+        not a request, so you need to authenticate every time a new connection
+        is made and keeping the connection open during authentication is
+        vital. Due to this, NTLM cannot be used to authenticate with both a
+        proxy and the server, nor can NTLM be used with HTTP 1.0 connections
+        or servers that do not support HTTP keep-alives. <xref
+        linkend="httpclient" /></para>
+      </blockquote>
+
+      <para>The NTLM is put outside the scope of this proposal because its
+      nature is antithetical to how Heritrix works: i.e. It authenticates the
+      connection, not a session <citation>Also see <xref
+      linkend="connbased" /> </citation>. Related, the implementation is
+      incomplete in httpclient. NTLM will not be discussed further.</para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Proposal</title>
+
+    <para>Proposal is to put off implementation of client-side certificates in
+    Heritrix. Rare is the case where its needed.</para>
+
+    <note>
+      <title>Workaround?</title>
+
+      <para>It should be possible to just add the client certificate to the
+      local truststore and all would just work. Test.</para>
+    </note>
+
+    <para>Having cut <xref linkend="ntlmdesc" /> and <xref
+    linkend="clientcertdesc" />, we're left with <xref linkend="basicdesc" />
+    and <xref linkend="postdesc" />, the assumed most commonly used web
+    authentication schemes.</para>
+
+    <para>Reading in the above, <xref linkend="schemes" />, it may be apparent
+    that there can not be one solution that will work for both schemes. The
+    discussion in the following two sections -- a section per scheme under
+    consideration -- should bring this fact out and help identify facility
+    common to the two schemes detailed later in <xref
+    linkend="commonage" />.</para>
+
+    <sect2>
+      <title>Basic and Digest Access Authentication <xref
+      linkend="rfc2617" /></title>
+
+      <para>A basic implementation would, upon receipt of a 401 response
+      status code, extract a realm from the 401 response and use this
+      <parameter>realm + URI canonical root URL</parameter> as a compound key
+      to do a look up into a store of Basic/Digest Auth credentials. If a
+      match is found, the <emphasis>persistent domain/virtualdomain
+      object</emphasis> made for the current domain is loaded with the
+      discovered credentials and the 401'ing current URI is marked for retry
+      (If no matching credentials found, the current URI is marked failed with
+      a 401 response code).</para>
+
+      <para>Let it be a given that any rfc2617 credentials found in a
+      <emphasis>persistent domain/virtualdomain object</emphasis> always get
+      always loaded into the HTTP GET request.</para>
+
+      <para>When our 401'ing URI comes around again for retry, since
+      credentials were loaded the last time this URI was seen, credentials
+      will be found in the <emphasis>persistent domain/virtualdomain
+      object</emphasis> and will be added to the request headers. This time
+      around the authentication should succeed.</para>
+
+      <para>Any other URI that is a member of this realm will also
+      subsequently successfully authenticate given the above rule whereby we
+      always load any found credentials into the current request.</para>
+
+      <para>Let the above be the default behavior. Configurations would
+      enable/disable:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Enable/Disable this feature.</para>
+        </listitem>
+
+        <listitem id="preemptiveauth">
+          <para>Pre-population of the <emphasis>persistent
+          domain/virtualdomain object</emphasis> with all rfc2617 credentials
+          upon construction thereby avoiding 401s altogether since we'd be
+          sending all credentials in advance of any challenge (preemptive
+          authentication). A domain might have many rfc2617 realms. Preemptive
+          authentication would have us volunteering all of a domains realms'
+          credentials in each request.</para>
+
+          <para>The query of the store pre-populating the <emphasis>persistent
+          domain/virtualdomain object</emphasis> would use the <parameter>URI
+          canonical root URL</parameter> for a key.</para>
+
+          <para>This configuration could be set globally for all Heritrix
+          requests or per <parameter>URI canonical root URL</parameter> by
+          setting a property on the corresponding record in the store.</para>
+        </listitem>
+
+        <listitem>
+          <para>Upon receipt of a 401 and on successfully locating appropriate
+          credentials in the store (or already loaded in the
+          <emphasis>persistent domain/virtualdomain object</emphasis>),
+          configuration could enable immediately retrying the request rather
+          than letting the 401 percolate down through the Heritrix processing
+          chain and back up out of the Frontier (Enabling this configuration
+          would leave no trace of the 401 in the ARC).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>The simplest implementation would have us always do <ulink
+      url="preemptiveauth">preemptive authentication</ulink>. Configuration
+      would turn this feature on or off, and that'd be all.</para>
+
+      <para>Below we look with more detail at aspects of the above proposed
+      implementation.</para>
+
+      <sect3>
+        <title>CrawlServer</title>
+
+        <para>In Heritrix, the <emphasis>persistent domain/virtualdomain
+        object</emphasis> is <classname><ulink
+        url="http://crawler.archive.org/xref/org/archive/crawler/datamodel/CrawlServer.html">org.archive.crawler.datamodel.CrawlServer</ulink></classname>.
+        Its created inside in <ulink
+        url="http://crawler.archive.org/xref/org/archive/crawler/basic/Frontier.html">org.archive.crawler.basic.Frontier#next()</ulink>
+        if no extant CrawlServer is found in the <ulink
+        url="org.archive.crawler.datamodel.ServerCache">org.archive.crawler.datamodel.ServerCache</ulink>.
+        The lookup is done using a (decoded) <ulink
+        url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
+        authority</ulink>. The currently processed URI has easy access to its
+        corresponding CrawlServer. See <ulink
+        url="http://crawler.archive.org/xref/org/archive/crawler/datamodel/CrawlURI.html">CrawlURI#getServer()</ulink>.</para>
+      </sect3>
+
+      <sect3>
+        <title>HTTPClient</title>
+
+        <para>HTTPClient has builtin support for Basic, Digest and NTLM. It
+        takes care of sending appropriate Authentication headers.</para>
+
+        <para>Digest Authentication generally works but has a ways to go
+        according to the comment made on 2004-03-11 16:21 in <ulink
+        url="http://issues.apache.org/bugzilla/show_bug.cgi?id=27594">Wrong
+        reauthentication when using DigestAuthentication</ulink></para>
+
+        <note>
+          <title>Multiple Realms</title>
+
+          <para>What to do if host has multiple realms? Will HTTPClient <xref
+          linkend="httpclient" /> do right thing and offer all credentials
+          available appropriately? Need to test.</para>
+        </note>
+
+        <para>The HTTPClient authentication code was just refactored
+        extensively in HEAD -- post 2.0 release. Reported problems
+        authenticating via a proxy going over SSL.</para>
+      </sect3>
+
+      <sect3>
+        <title>RFC2617 Record</title>
+
+        <para>A RFC2617 record would be keyed by <parameter>URI canonical root
+        URL</parameter>. It would contain a realm, login and password. We'd
+        not distingush proxy (407) records.</para>
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>HTTP POST and GET of Authentication Credentials</title>
+
+      <para>Every URI processed by Heritrix first has preconditions checked.
+      Example preconditions are the fetching of a domain's DNS record and its
+      <filename>robots.txt</filename> file before proceeding to make requests
+      against the domain. This proposal is to add a new <emphasis>login
+      precondition</emphasis> after the fashion of the robots and DNS
+      preconditions -- See <ulink
+      url="org.archive.crawler.prefetch.PreconditionEnforcer">org.archive.crawler.prefetch.PreconditionEnforcer</ulink>
+      -- and a facility for having our HTTP fetcher run a configurable one
+      time login.</para>
+
+      <para>The new <parameter>login precondition</parameter> will test the
+      current URI against a preloaded list of <emphasis>login URI
+      patterns</emphasis>. Each <parameter>login URI pattern
+      </parameter>describes a protected area of a domain (or virtualdomain):
+      e.g. "http://www.archive.org/private/*". Each <parameter>login URI
+      pattern</parameter> serves as a key to an associated <emphasis>login
+      record</emphasis>. A <parameter>login record</parameter> has all
+      information necessary for negotiation of a successful login such as the
+      HTML form content to submit -- username, password, submit button name,
+      etc. -- and whether login requires POSTing or GETting the login form.
+      The login record also has a <emphasis>ran login</emphasis> flag that
+      says whether or not the login has been run previously against this
+      protected area.</para>
+
+      <note>
+        <title>Ran Login flag</title>
+
+        <para>The <parameter>ran login</parameter> flag says whether the login
+        has been <emphasis>run</emphasis>, not whether or not login
+        <emphasis>succeeded</emphasis>. Guaging whether the login was
+        successful or not is difficult. It varies with the login
+        implementation as already noted.</para>
+      </note>
+
+      <para>Also part of the login record is a <emphasis>login URI</emphasis>.
+      The <parameter>login URI</parameter> is the login page whose successful
+      navigation gives access to the protected space: e.g. If the pattern we
+      used testing was, "http://www.archive.org/private/*", the
+      <parameter>login URI</parameter> might be
+      "http://www.archive.org/private/login.html".</para>
+
+      <para>If the current URI matches one of the <parameter>login URI
+      pattern</parameter> list, we pull the matched patterns associated
+      <parameter>login record</parameter>. If the <parameter>ran
+      login</parameter> flag has not been set, the <parameter>login
+      URI</parameter> is <emphasis>force</emphasis> queued. Its force queued
+      in case the URI has been seen (GET'd) already. The <parameter>login
+      URI</parameter> (somehow) has the <parameter>login record</parameter>
+      associated. The presence of the <parameter>login record</parameter>
+      distingushes the <parameter>login URI</parameter>. The current URI is
+      requeued (Precondition not met). Otherwise the current URI is let run
+      through as per normal.</para>
+
+      <para>When the <parameter>login URI</parameter> becomes the current URI
+      and is being processed by the HTTP fetcher, the presence of the
+      <parameter>login record</parameter> with a <parameter>ran
+      login</parameter> set to false signals the HTTP fetcher to run the
+      abnormal login sequence rather than do its usual GET. The
+      <parameter>login record</parameter> has all the HTTP fetcher needs to
+      execute the login. Upon completion, the <parameter>login ran</parameter>
+      flag is set in the <parameter>login record</parameter> and the
+      <parameter>login record</parameter> is removed from the <parameter>login
+      URI</parameter>.</para>
+
+      <note>
+        <title>GET of the login URI</title>
+
+        <para>What if we haven't already seen the login page? Should the login
+        precondition first force fetch the login URI without the login record
+        loaded so its first GET'd before the we run a login?</para>
+      </note>
+
+      <para>This implementation cannot guarantee successful login nor is there
+      provision for retries. The general notion is that the single running of
+      the login succeeds and that the produced success cookie or rewritten URI
+      makes it back to the Heritrix client gaining us access to the protected
+      area.</para>
+
+      <para>Configuration would enable or disable this feature.</para>
+
+      <sect3>
+        <title>Login Record</title>
+
+        <para>A login record would be keyed by the pattern it applies to and
+        would contain aforementioned <parameter>ran login</parameter> flag and
+        <parameter>login URI</parameter>. Tied to the login URI would be a
+        list of key-value pairs to hold the login form content as well as
+        specification of whether the form is to be POSTed or GETed.</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="commonage">
+      <title>Commonage</title>
+
+      <para>Here we discuss features common to the two above authentication
+      scheme implementations.</para>
+
+      <sect3>
+        <title>URI#authority as URI canonical root URL</title>
+
+        <para>Proposal is to equate the two. Doing so means no need to change
+        CrawlServer. Currently the CawlServer is constructed wrapping the
+        URI#authority portion of an URI. URI#authority is <parameter>URI
+        canonical root URL</parameter> absent the scheme. Assuming CrawlServer
+        is for http only, then it should be safe making this equation.</para>
+
+        <note>
+          <title>DNS</title>
+
+          <para>Are there CrawlServer instances made for anything but http
+          schemes?</para>
+        </note>
+
+        <note>
+          <title>HTTPS</title>
+
+          <para>Check that <parameter>URI canonical root URL</parameter>s of
+          <filename>http://www.example.com</filename> and
+          <filename>https://www.example.com</filename> result in different
+          <classname>CrawlServer</classname> instances.</para>
+        </note>
+      </sect3>
+
+      <sect3>
+        <title>Population of Domain/VirtualDomain object with
+        Credentials</title>
+
+        <para>Proposal is that CrawlServer encapsulate credentials store
+        accessing, that it read the store upon construction.</para>
+      </sect3>
+
+      <sect3>
+        <title>Caching of Credentials</title>
+
+        <para>Once read from the store, we need to cache the credentials in
+        CrawlServer.</para>
+
+        <sect4>
+          <title>JAAS Subject, Principal and Credentials <xref
+          linkend="jaas" /></title>
+
+          <para>Proposal is that we at least look at selectively exploiting
+          this library caching credentials. For example, a CrawlServer might
+          implement the java.security.auth.Subject interface. To this Subject,
+          we'd add implementations of the Principals and Credentials
+          interfaces (Makes sense for the carrying of RFC2617 credentials.
+          Less so for login credentials. TBD).</para>
+        </sect4>
+      </sect3>
+
+      <sect3 id="store">
+        <title>Credential Stores</title>
+
+        <para>The credential store would be on disk.</para>
+
+        <para>For convenience, particularly listing credentials in a global
+        file store, credentials can be grouped first by host (the base domain
+        -- domain minus port #) and then by URI#authority (domain plus any
+        port #).</para>
+
+        <para>Configuration would allow us to point at a global store of
+        credentials.</para>
+
+        <sect4>
+          <title>Layering of Credential Stores</title>
+
+          <para>Subsequently, we'd add support for
+          <emphasis>layering</emphasis> stores. Modeled after apache's
+          <filename>.htaccess</filename> mechanism for selectively overriding
+          the main server configuration on a directory scope, or, closer to
+          home, on how Heritrix settings can be overridden on a per-host
+          basis, it'd be possible to point the store querying code at a
+          directory whose subdirectories are named for domains progressing
+          from a root down through the macro level org, com, gov, etc.,
+          subdomains getting progressively more precise: e.g travel.yahoo.com
+          would be found under the yahoo.com directory which would be under
+          the com directory. Searching for credentials, we'd search up through
+          the directory structure going from the current domain on up to the
+          root. <parameter>realm + canonical root URL</parameter> key. If not
+          found in the domain store, of if a domain store did not exist, we'd
+          back up the settings hierarchy until we hit the global store.</para>
+        </sect4>
+
+        <sect4>
+          <title>Exploit the settings framework implementing credentials
+          store</title>
+
+          <para>Propose extending or adapting the Heritrix settings framework
+          to have it manage our credentials store so we can exploit code
+          already written.</para>
+        </sect4>
+      </sect3>
+
+      <sect3>
+        <title>Logging</title>
+
+        <para>A new log will trace authentication transactions. Log will
+        include listing of credentials offered, new cookies, query parameters,
+        and pertinent HTTP headers returned by the submitted authentication,
+        and where possible, report on whether authentication succeeded or
+        not</para>
+      </sect3>
+
+      <sect3>
+        <title>Debugging tool</title>
+
+        <para>A command-line tool to run single logins to aid debugging logins
+        will aid development and be of use to operators.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Design</title>
+
+    <sect2>
+      <title>Configuration</title>
+
+      <para>Will add to the HTTP Fetcher options that enable, disable and
+      configuration of the two authentication types supported.</para>
+    </sect2>
+
+    <sect2>
+      <title>Credential store</title>
+
+      <para>Below is a static class model diagram for accessing the credential
+      store.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="credentials.gif" />
+        </imageobject>
+      </mediaobject>
+
+      <note>
+        <title>Implementation looks nothing like the above</title>
+
+        <para>Ignore the above design. The implementation turned out to be
+        something else altogether. The model was effectively inverted
+        (credentials hold domains) and notions of going via a
+        CredentialManager/CredentialStore to do all operations on the store
+        were removed. While the resultant implementation is not a good OOM,
+        its amenable to UI manipulation (and sits easily atop the heritrix
+        settings system).</para>
+      </note>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Future</title>
+
+    <para>This section has issues to be addressed later, probably in a version
+    2.0 of the authentication system.</para>
+
+    <sect2>
+      <title>Same URL different Page Content</title>
+
+      <para>Heritrix distingushes pages by URIs. Pages seen can be different
+      whether logged in or not. We'll need some way to force/suggest sets of
+      URIs are revisitable after a login token is received. This might mean
+      the 'fingerprint' of a URI includes any authentication information to be
+      used.</para>
+    </sect2>
+
+    <sect2>
+      <title>Integration with the UI</title>
+
+      <para>Add/Edit/Delete of Credentials via the UI. Flagging the operator
+      about 401s and likely html login forms.</para>
+    </sect2>
+  </sect1>
+
+  <bibliography>
+    <biblioentry id="heritrix">
+      <abbrev>heritrix</abbrev>
+
+      <title><ulink url="http://crawler.archive.org">Heritrix is the Internet
+      Archive's open-source, extensible, web-scale, archival-quality web
+      crawler project.</ulink></title>
+
+      <abstract>
+        <para>Heritrix is the Internet Archive's open-source, extensible,
+        web-scale, archival-quality web crawler project.</para>
+      </abstract>
+    </biblioentry>
+
+    <biblioentry id="httpclient">
+      <abbrev>httpclient</abbrev>
+
+      <title>Apache Jakarta Commons HTTPClient <ulink
+      url="http://jakarta.apache.org/commons/httpclient/authentication.html">Authentication
+      Guide</ulink></title>
+
+      <abstract>
+        <para>Description of how the http client library used by Heritrix can
+        be made volunteer authentication credentials. The library does Basic,
+        Digest, and NTLM "transparently" though the NTLM implementation has
+        shortcomings: Just call
+        <programlisting>HttpState#setCredentials(String realm, Credentials
+        cred);</programlisting></para>
+
+        <para>Credentials can also be offered preemptively.</para>
+      </abstract>
+
+      <edition>Commons HTTPClient version 2.0.</edition>
+    </biblioentry>
+
+    <biblioentry id="jaas">
+      <abbrev>jaas</abbrev>
+
+      <title><ulink url="http://java.sun.com/products/jaas/index.jsp">Java
+      Authentication and Authorization Service (JAAS)</ulink></title>
+
+      <abstract>
+        <para>JAAS is a developed authorization and authentication vocabulary
+        and toolset that is part of JVM 1.4.x.</para>
+      </abstract>
+    </biblioentry>
+
+    <biblioentry id="ntlm">
+      <abbrev>ntlm</abbrev>
+
+      <title>The <ulink url="http://davenport.sourceforge.net/ntlm.html">NTLM
+      Authentication Protocol</ulink></title>
+    </biblioentry>
+
+    <biblioentry id="rfc2617">
+      <title>RFC2617 <ulink
+      url="http://ftp.ics.uci.edu/pub/ietf/http/rfc2617.txt">HTTP
+      Authentication: Basic and Digest Access Authentication</ulink></title>
+
+      <abstract>
+        <para>Description of HTTP 1.0 Basic Auth and newer (HTTP 1.1) Digest
+        Auth. feature that passes a nonce instead of login/password over the
+        wire.</para>
+      </abstract>
+    </biblioentry>
+  </bibliography>
+</article>

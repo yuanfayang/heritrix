@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <title>Known Limitations</title>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <authorgroup>
+      <corpauthor>Internet Archive</corpauthor>
+    </authorgroup>
+  </articleinfo>
+
+  <sect1>
+    <title>Introduction</title>
+
+    <para>This document lists known limitations by version number.
+    It includes user and developer notes.</para>
+  </sect1>
+
+  <sect1 id="1_0_0">
+    <title>Heritrix 1.0.0</title>
+
+    <sect2 id="upper_bounds">
+      <title>Crawl Size Upper Bounds</title>
+
+      <para>Heritrix 1.0.0 uses disk-based queues to hold any number of
+pending URIs bounded only by available disk space, but still relies on
+in-memory structures to efficiently track all discovered hosts and
+previously-scheduled URIs.  Crawls whose total scheduled URIs or discovered
+hosts exhaust all available memory will trigger out-of-memory errors, which
+freeze a crawl at the point of the error.</para>
+
+<para>With the default settings, and an assignment of a 256MB Java heap to the
+Heritrix process, crawling which discovers up to 10 000 hosts, and schedules
+over 6 000 000 URIs, should be possible. Discovery of higher numbers of
+URIs/hosts will likely trigger out-of-memory problems unless a larger java heap
+was assigned at startup.</para>
+
+<para>Broad crawls -- those using the BroadScope or ranging over domains with
+many subdomains -- can easily and quickly exceed these parameters. Thus broad
+crawls in Heritrix 1.0.0 are not recommended, except for experimental
+purposes.</para>
+
+<para>Narrower crawls, restricted to specific hosts or domains a limited number
+of subdomains, can run for a week or more, collecting millions of resources.
+Larger heaps can allow crawls to run into the tens of millions of collected
+URIS, and tens of thousands of discovered hosts.</para>
+
+<para>An experimental alternate Frontier, the DiskIncludedFrontier, is also
+available via the 'Modules' crawl configuration tab. It uses a capped amount of
+memory plus disk storage to remember any number of scheduled URIs, but its
+performance is poor and it has not received the same testing as our default
+Frontier. The memory cost of additional discovered hosts continues to rise
+without limit when using a DiskIncludedFrontier.</para>
+
+<para>Future versions of Heritrix will include other frontier implementations
+allowing larger and unbounded crawls with minimal performance penalties.</para>
+    </sect2>
+
+    <sect2 id="958055">
+      <title><ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=958055&amp;group_id=73833&amp;atid=539099">[ 958055 ] Seed ConcurrentModificationException</ulink>
+      </title>
+
+      <para>Its possible to get ConcurrentModificationsException editing options on 
+      a running crawl.</para>
+      <sect3><title>Workaround</title>
+        <para>Pause the crawl when making changes to crawl options.</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="984390">
+      <title><ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=984390&amp;group_id=73833&amp;atid=539099">[ 984390 ] Build fails: "rws" mode and Mac OS X interact badly</ulink></title>
+
+    <para>On macintoshes and linux kernel version 2.6, heritrix fails to build
+    (unit tests fail).</para>
+      <sect3><title>Workaround</title>
+        <para>See issue, <ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=984390&amp;group_id=73833&amp;atid=539099">[ 984390 ] Build fails: "rws" mode and Mac OS X interact badly</ulink>, for source code workaround edit.</para>
+      </sect3>
+    </sect2>
+
+
+    <sect2 id="955975">
+      <title><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=955975&amp;group_id=73833&amp;atid=539099">[ 955975 ] Build fails: JVM and kernel 2.6+ (Was 2 tests fail...)</ulink></title>
+
+    <para>Heritrix fails to build on linux kernel 2.6.</para>
+      <sect3><title>Workaround</title>
+        <para>Build fails unless you use a JDK in advance of pedigree 
+        1.5 beta 2.  See <ulink
+        url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=955975&amp;group_id=73833&amp;atid=539099">[ 955975 ] Build fails: JVM and kernel 2.6+ (Was 2 tests fail...)</ulink> and 
+        <ulink url="#984390">above</ulink>.
+        </para>
+      </sect3>
+    </sect2>
+
+    </sect1>
+</article>

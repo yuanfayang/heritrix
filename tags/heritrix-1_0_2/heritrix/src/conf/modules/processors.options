@@ -1,0 +1,20 @@
+# Availible processors. 
+# Each processor class should be listed with full package info
+# followed by a '|' and a descriptive name (containing only [a-z,A-z])
+# Lines beginning with # and empty lines are ignored
+org.archive.crawler.prefetch.Preselector|Preselector
+org.archive.crawler.prefetch.PreconditionEnforcer|Preprocessor
+org.archive.crawler.fetcher.FetchDNS|DNS
+org.archive.crawler.fetcher.FetchHTTP|HTTP
+org.archive.crawler.extractor.ExtractorHTTP|ExtractorHTTP
+org.archive.crawler.extractor.ExtractorHTML|ExtractorHTML
+org.archive.crawler.extractor.ExtractorHTML2|ExtractorHTML2
+org.archive.crawler.extractor.ExtractorCSS|ExtractorCSS
+org.archive.crawler.extractor.ExtractorSWF|ExtractorSWF
+org.archive.crawler.extractor.ExtractorJS|ExtractorJS
+org.archive.crawler.extractor.ExtractorPDF|ExtractorPDF
+org.archive.crawler.extractor.ExtractorDOC|ExtractorDOC
+org.archive.crawler.extractor.ExtractorUniversal|ExtractorUniversal
+org.archive.crawler.writer.ARCWriterProcessor|Archiver
+org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
+org.archive.crawler.postprocessor.Postselector|Postselector
