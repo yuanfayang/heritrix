@@ -21,6 +21,9 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
@@ -235,7 +238,7 @@ public class StatisticsTracker extends AbstractTracker
             new PaddingStringBuffer()
                 .append(ArchiveUtils.TIMESTAMP14.format(now))
                 .raAppend(26, discoveredUriCount)
-                .raAppend(38, pendingUriCount)
+                .raAppend(38, queuedUriCount)
                 .raAppend(51, downloadedUriCount)
                 .raAppend(66, ArchiveUtils.doubleToString(currentDocsPerSecond,2) + "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
                 .raAppend(79, currentKBPerSec + "(" + totalKBPerSec + ")")
@@ -553,7 +556,7 @@ public class StatisticsTracker extends AbstractTracker
     public long queuedUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().queuedUriCount() : downloadedUriCount;
+        return shouldrun ? controller.getFrontier().queuedUriCount() : queuedUriCount;
     }
 
     /**
@@ -806,6 +809,23 @@ public class StatisticsTracker extends AbstractTracker
         // TODO: Save object to disk.
     }
 
+    /**
+     * Write the content of the statistics tracker to an XML file.
+     * 
+     * @param file The file to write to.
+     * 
+     * @throws IOException If problems occur writing file
+     */
+    public void writeToXML(File file) throws IOException{
+        PaddingStringBuffer xml = new PaddingStringBuffer();
+        // Construct XML
+        
+        // Write XML to file
+        FileWriter writer = new FileWriter(file,false);
+        writer.write(xml.toString());
+        writer.flush();
+        writer.close();
+    }
 }
 
 
