@@ -346,7 +346,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
 
     private void parseListData(Object value, int indent) throws SAXException {
         AttributesImpl atts = new AttributesImpl();
-        IntegerList list = (IntegerList) value;
+        ListType list = (ListType) value;
         Iterator it = list.iterator();
         while (it.hasNext()) {
             Object element = it.next();
