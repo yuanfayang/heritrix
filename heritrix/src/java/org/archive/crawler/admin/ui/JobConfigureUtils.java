@@ -59,14 +59,10 @@ public class JobConfigureUtils {
      * @param response Http response.
      */
     protected static CrawlJob getAndCheckJob(CrawlJob job,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-    	    
+            HttpServletRequest request, HttpServletResponse response) {
         return job;
     }
         
-
-    
 	/**
 	 * This methods updates a ComplexType with information passed to it
 	 * by a HttpServletRequest. It assumes that for every 'simple' type
