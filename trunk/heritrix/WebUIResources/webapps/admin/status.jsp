@@ -46,12 +46,10 @@
 				<table border="0" cellpadding="0" cellspacing= "0" width="100%"> 
 					<tr>
 						<td width="20%"></td>
-						<td bgcolor="darkorange" width="<%= (int) (ratio/2) %>%">
+						<td bgcolor="darkorange" width="<%= (int) (ratio/2) %>%" align="right">
 							<strong><%= ratio %></strong>%
 						</td>
-						<td bgcolor="lightblue" align="right" width="<%= (int) ((100-ratio)/2) %>%">
-							<strong>100%</strong>
-						</td>
+						<td bgcolor="lightblue" align="right" width="<%= (int) ((100-ratio)/2) %>%"></td>
 						<td nowrap>&nbsp;&nbsp;(<%= begin %> of <%= end %>)</td>
 					</tr>
 				</table>		
