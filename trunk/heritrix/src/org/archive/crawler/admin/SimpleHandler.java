@@ -4,9 +4,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Date;
-import java.util.Vector;
 import java.util.Enumeration;
+import java.util.Vector;
 import java.util.logging.Logger;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.archive.crawler.basic.Frontier;
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -14,12 +16,8 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.CrawlJobHandler;
 import org.archive.crawler.framework.CrawlListener;
-import org.archive.crawler.framework.ToePool;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.w3c.dom.Node;
 
 /**
