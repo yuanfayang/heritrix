@@ -152,8 +152,11 @@
 					//Add filter
 					String className = request.getParameter(map+".class");
 					String typeName = request.getParameter(map+".name");
-					filterMap.addElement(settingsHandler.getSettings(null),
-									     SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+					if(typeName != null && typeName.length() > 0 
+					   && className != null && className.length() > 0 ){
+						filterMap.addElement(settingsHandler.getSettings(null),
+										     SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+					}
 				} else if(subaction.equals("moveup")){
 					// Move a filter down in a map
 					if(filter != null && filter.length() > 0){
