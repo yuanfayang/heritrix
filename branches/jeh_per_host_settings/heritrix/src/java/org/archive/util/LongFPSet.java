@@ -31,7 +31,13 @@ package org.archive.util;
  */
 public interface LongFPSet {
     /**
-     * Add a fingerprint to the set.
+     * Add a fingerprint to the set.  Note that subclasses can implement
+     * different policies on how to add - some might grow the available space,
+     * others might implement some type of LRU caching.
+     *
+     * In particular, you cannot on the {@link #count()} method returning
+     * 1 greater than before the addition.
+     * 
      * @param l the fingerprint to add
      * @return <code>true</code> if set has changed with this addition
      */

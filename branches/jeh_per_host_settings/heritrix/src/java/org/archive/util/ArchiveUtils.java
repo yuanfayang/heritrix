@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Miscellaneous useful methods.
@@ -39,6 +40,7 @@ import java.io.File;
  * @author gojomo
  */
 public class ArchiveUtils {
+    
 	/** 
 	 * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
 	 */
@@ -212,10 +214,8 @@ public class ArchiveUtils {
 	}
 
 	/**
-	 * Retunrs a file's path.
-	 * 
-	 * @param aFileName
-	 * @return
+	 * @param aFileName Filename to get a file path for.
+	 * @return Returns a file's path.
 	 */
 	public static String getFilePath(String aFileName){
 		String tmpFileName = systemFileName(aFileName);
@@ -265,6 +265,59 @@ public class ArchiveUtils {
 		}
 		return true;	
 	}
-
+  
+    /**
+     * Ensure writeable directory.
+     * 
+     * If doesn't exist, we attempt creation.
+     * 
+     * @param dir Directory to test for exitence and is writeable.
+     * 
+     * @return The passed <code>dir</code>.
+     * 
+     * @exception IOException If passed directory does not exist and is not 
+     * createable, or directory is not writeable or is not a directory.
+     */
+    public static File ensureWriteableDirectory(String dir)
+        throws IOException
+    {
+        return ensureWriteableDirectory(new File(dir));
+    }
+    
+    /**
+     * Ensure writeable directory.
+     * 
+     * If doesn't exist, we attempt creation.
+     * 
+     * @param dir Directory to test for exitence and is writeable.
+     * 
+     * @return The passed <code>dir</code>.
+     * 
+     * @exception IOException If passed directory does not exist and is not 
+     * createable, or directory is not writeable or is not a directory.
+     */
+    public static File ensureWriteableDirectory(File dir)
+        throws IOException
+    {
+        if (!dir.exists())
+        {
+            dir.mkdirs();
+        }
+        else
+        {
+            if (!dir.canWrite())
+            {
+                throw new IOException("Dir " + dir.getAbsolutePath() +
+                    " not writeable.");
+            }
+            else if (!dir.isDirectory())
+            {
+                throw new IOException("Dir " + dir.getAbsolutePath() +
+                    " is not a directory.");
+            }
+        }  
+        
+        return dir;
+    }
 }
 
