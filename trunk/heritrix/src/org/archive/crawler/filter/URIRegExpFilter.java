@@ -9,7 +9,7 @@ package org.archive.crawler.filter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
@@ -30,13 +30,13 @@ public class URIRegExpFilter extends Filter {
 	protected boolean innerAccepts(Object o) {
 		String input = null;
 		// TODO consider changing this to ask o for its matchString
-		if(o instanceof CrawlURI) {
-			input = ((CrawlURI)o).getURIString();
+		if(o instanceof CandidateURI) {
+			input = ((CandidateURI)o).getURIString();
 		} else if (o instanceof UURI ){
 			input = ((UURI)o).getUriString();
 		} else {
 			//TODO handle other inputs
-			
+			input = o.toString();
 		}
 		Matcher m = pattern.matcher(input);
 		return m.matches();
