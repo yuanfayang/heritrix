@@ -727,7 +727,7 @@
 
       <para><note>
           <para>Modules are referred to by their Java class names
-          (org.archive.crawler.frontier.HostQueuesFrontier). This is done because these
+          (org.archive.crawler.frontier.BdbFrontier). This is done because these
           are the only names we can be assured of being unique.</para>
         </note>See <ulink
       url="http://crawler.archive.org/articles/developer_manual.html">Developer's
