@@ -28,6 +28,7 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.DiskLongFPSet;
+import org.archive.util.MemLongFPSet;
 import org.archive.util.Queue;
 
 /**
@@ -108,7 +109,8 @@ public class Frontier
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
-		alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded"));
+		//alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded"));
+		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
 		
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();
