@@ -65,7 +65,11 @@
                 Cookbook, By Eric M. Burke, Brian M. Coyner</em>. We agree with 
                 the above so we put Unit Test classes beside the classes they 
                 are testing in the source tree giving them the name of the 
-                Class they are testing with a Test suffix. </p>
+                Class they are testing with a Test suffix.</p>
+                <p>Another advantage is that test classes of the same package
+                can get at testee's default access methods and members,
+                something a test in another package would not be
+                able to do.</p>
         </section>
         <section name="Coding Conventions">
             <p>Heritrix baselines on SUN's <a 
