@@ -10,15 +10,11 @@ import org.archive.crawler.basic.ARCWriter;
 import org.archive.crawler.basic.SimpleHTTPFetcher;
 import org.archive.crawler.datamodel.*;
 import org.archive.crawler.framework.*;
-import org.archive.crawler.*;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import java.net.*;
-
-//import org.w3c.dom.Node;
 
 /**
  * @author Parker Thompson
@@ -41,9 +37,7 @@ public class ARCWriterTest extends TestCase {
 	// initialize any variables used in the tests here
 	public void setUp(){
 		
-		//controller	= new CrawlController();
 		writer 		= new ARCWriter();
-		//fetcher 	= new SimpleHTTPFetcher();
 		curi 			= new CrawlURI("http://parkert.com");
 		crawlhost	= new CrawlHost("parkert.com");
 		
@@ -56,14 +50,6 @@ public class ARCWriterTest extends TestCase {
 		}
 		
 		curi.getAList().putString("content-type", "text/html");
-		
-		//orderFile	= "example-order.xml";
-		//order 		= CrawlOrder.readFromFile(orderFile);
-		
-		//controller.initialize(order);
-	
-		//fetcher.setNode(node);						
-		//fetcher.initialize(controller);
 	}
 	
 	// clean up after the test here if necessary
@@ -93,7 +79,7 @@ public class ARCWriterTest extends TestCase {
 			writer.setOutputDir(new String("/home/parkert/"));
 			writer.writeHttp(curi);
 	
-			System.out.println("test ran");
+			System.out.println("test ran, check " + writer.getOutputDir() + " for resulting arc(s).");
 						
 		} catch (Exception e) {	
 			System.out.println("error fetching page");

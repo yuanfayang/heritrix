@@ -24,9 +24,9 @@ public class CrawlHost {
 	private static long DEFAULT_VALIDITY_DURATION = 1000*60*60*24; // one day
 	String hostname;
 	InetAddress ip;
-	long ipExpires = 0;
+	long ipExpires = -1;
 	RobotsExclusionPolicy robots;
-	long robotsExpires = 0;
+	long robotsExpires = -1;
 	Checksum robotstxtChecksum;
 	
 	/**

@@ -8,7 +8,7 @@ import junit.framework.*;
 import org.archive.crawler.basic.SimpleDNSFetcher;
 import org.archive.crawler.datamodel.*;
 import org.xbill.DNS.*;
-import java.net.URI;
+//import java.net.URI;
 
 /**
  * @author parkert
@@ -16,42 +16,80 @@ import java.net.URI;
  */
 public class SimpleDNSFetcherTest extends TestCase {
 
+	SimpleDNSFetcher fetcher;
+	CrawlURI curiBasic;
+	CrawlURI curiWithHostPort;
+	CrawlURI curiWithQuery;
+
 	public static void main(String[] args) {
+		TestResult result = new TestResult();
 		
-		// create the DNS Fetcher
-		SimpleDNSFetcher fetcher = new SimpleDNSFetcher();
-		
-		// create a CrawlURI so we can test it and manually create the crawlhost 
-		// TODO should the crawlhost creation be done in the curi constructor?
-		CrawlURI curi = new CrawlURI( UURI.createUURI("dns:parkert.com") );
-		/*URI testuri = null;
-		try{
-		 	testuri = new URI("dns:parkert.com?args");
-		}catch(Exception e){}
-		*/
-		
-		curi.setHost( new CrawlHost("parkert.com"));
-		//curi.getUURI().getUri().
-		
-		fetcher.process(curi);
-		
-		// make sure we got the appropriate info into curi (dns info)
-		// by looking at the dnsrecords Alist entry, and the curi's CrawlHost
-		// which should have received and IP and a time to expire
-		Record[] rrSet = (Record[])curi.getAList().getObject(SimpleDNSFetcher.RRECORDS_ALIST_LABEL);
-		//Assert.assertNotNull(RRSet);
-		
-		CrawlHost hostAsString = curi.getHost();	// should be parkert.com
-		long expireTime = hostAsString.getIpExpires();
-		String HostAsString = hostAsString.getIP().toString();
-		
-		long timestamp = curi.getAList().getLong(SimpleDNSFetcher.DNSFETCH_TIMESTAMP_LABEL);
-		
-		for(int i=0; i<rrSet.length; i++)
-			System.out.println("rr:\t\t\t\t" + rrSet[i].toString());
-			
-		System.out.println("host:\t\t\t" + HostAsString);
-		System.out.println("expires:\t\t" + expireTime);
-		System.out.println("timestamp:\t" + timestamp);
+		Test t = suite();
+		t.run(result);
 	}
+	
+	public SimpleDNSFetcherTest(String s){
+		super(s);
+	}
+	
+	public static Test suite(){
+		
+		SimpleDNSFetcherTest tp 	= new SimpleDNSFetcherTest("testParsing");
+		SimpleDNSFetcherTest ths 	= new SimpleDNSFetcherTest("testHostSeeding");
+		
+		TestSuite s = new TestSuite();
+		s.addTest(tp);
+		s.addTest(ths);
+		
+		return s;
+	}
+
+
+	public void setUp(){
+		
+		fetcher 	= new SimpleDNSFetcher();
+		
+		curiBasic 				= new CrawlURI( UURI.createUURI("dns:parkert.com") );
+		curiWithHostPort 	= new CrawlURI( UURI.createUURI("dns://ns1.archive.org/parkert.com"));
+		curiWithQuery 		= new CrawlURI( UURI.createUURI("dns:parkert.com?TYPE=A&CLASS=IN"));
+
+		curiBasic.setHost( new CrawlHost("parkert.com"));
+	}
+	
+	public void tearDown(){
+	}
+	
+	// test the dns module's ability to parse different forms of dns uris
+	public void testParsing(){
+			String curiBasicStr 				= SimpleDNSFetcher.parseTargetDomain(curiBasic);
+			String curiWithHostPortStr 	= SimpleDNSFetcher.parseTargetDomain(curiWithHostPort);
+			String curiWithQueryStr	 		= SimpleDNSFetcher.parseTargetDomain(curiWithQuery);
+			
+			// make sure everything came out ok
+		assertEquals(curiBasicStr, "parkert.com");
+		assertEquals(curiWithHostPortStr, "parkert.com");
+		assertEquals(curiWithQueryStr, "parkert.com");	
+	}
+	
+	// test that the crawlhost is getting all the dns-related info 
+	// it should be from the lookup (e.g. expire time)
+	public void testHostSeeding(){
+		
+		fetcher.process(curiBasic);
+		
+		CrawlHost host = curiBasic.getHost();	
+		
+		Record[] rrSet = (Record[])curiBasic.getAList().getObject(SimpleDNSFetcher.RRECORDS_ALIST_LABEL);
+		
+		long expireTime = host.getIpExpires();
+		long timestamp = curiBasic.getAList().getLong(SimpleDNSFetcher.DNSFETCH_TIMESTAMP_LABEL);
+		
+		// we should have at least one record
+		assertTrue(rrSet.length > 0);
+		
+		assertTrue(expireTime >= 0);
+		assertTrue(timestamp > 0);			
+
+	}
+
 }
