@@ -10,7 +10,7 @@
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
-    <string name="disk-path">disk</string>
+    <string name="disk-path" />
     <string name="scratch-path">scratch</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
