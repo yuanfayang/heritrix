@@ -67,7 +67,9 @@ public class ReplayInputStream extends InputStream {
 			return -1; // EOF
 		}
 		if (position<buffer.length) {
-			return buffer[(int)position++];
+			int c= (int)buffer[(int)position]&0xFF; // convert to unsigned int
+			position++;
+			return c; 
 		} else {
 			int c = diskStream.read();
 			if(c>=0) {
