@@ -2183,6 +2183,26 @@ public class SimpleExtractor extends Processor
     </sect2>
   </sect1>
 
+  <sect1 id="arcreader">
+    <title>Reading arc files</title>
+    <p>By default, heritrix runs with the <literal>ARCWriterProcessor</literal>.
+    This processor writes internet archive arc files.  Arc files are described
+    here: <ulink 
+    url="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
+    File Format</ulink>.  See <ulink 
+    url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html">org.archive.io.arc.ARCReader</ulink>
+    for a java reader of arc files.  It has a command line interface that
+    can be used to print out meta info and for doing random access of arc
+    records (The command-line interface is described in the
+        <ulink 
+        url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main method javadoc</ulink> comments).  Also 
+        see the arc file parsing tools that have been developed by
+        <ulink 
+        url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink>.
+        </p>
+
+  </sect1>
+
   <appendix>
     <title>Future changes in the API</title>
 
