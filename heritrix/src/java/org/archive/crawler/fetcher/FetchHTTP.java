@@ -351,8 +351,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
         curi.setContentSize(contentSize);
         curi.setContentDigest(rec.getRecordedInput().getDigestValue());
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine((curi.isPost()? "POST": "GET") + " " +
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info((curi.isPost()? "POST": "GET") + " " +
                 curi.getUURI().toString() + " " + statusCode + " " +
                 contentSize + " " + curi.getContentType());
         }
@@ -673,7 +673,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	// as flag to frontier to requeue this curi and let the curi
         	// die a natural death.
         	extant.detachAll(curi);
-        	logger.fine("Auth failed (401) though supplied realm " +
+        	logger.warning("Auth failed (401) though supplied realm " +
         			realm + " to " + curi.toString());
         } else {
         	// Look see if we have a credential that corresponds to this
@@ -691,16 +691,16 @@ implements CoreAttributeConstants, FetchStatusCodes {
         				Rfc2617Credential.class, curi.getServer().getName());
         		if (storeRfc2617Credentials == null ||
         				storeRfc2617Credentials.size() <= 0) {
-        			logger.fine("No rfc2617 credentials for " + curi);
+        			logger.info("No rfc2617 credentials for " + curi);
         		} else {
         			Rfc2617Credential found = Rfc2617Credential.
 					getByRealm(storeRfc2617Credentials, realm, curi);
         			if (found == null) {
-        				logger.fine("No rfc2617 credentials for realm " +
+        				logger.info("No rfc2617 credentials for realm " +
         						realm + " in " + curi);
         			} else {
         				found.attach(curi, authscheme);
-        				logger.fine("Found credential for realm " + realm +
+        				logger.info("Found credential for realm " + realm +
         						" in store for " + curi.toString());
         			}
         		}
@@ -717,7 +717,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
             final CrawlURI curi) {
         Header [] headers = method.getResponseHeaders("WWW-Authenticate");
         if (headers == null || headers.length <= 0) {
-            logger.warning("We got a 401 but no WWW-Authenticate challenge: " +
+            logger.info("We got a 401 but no WWW-Authenticate challenge: " +
                 curi.toString());
             return null;
         }
@@ -726,10 +726,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
         try {
             authschemes = AuthChallengeParser.parseChallenges(headers);
         } catch(MalformedChallengeException e) {
-            logger.warning("Failed challenge parse: " + e.getMessage());
+            logger.info("Failed challenge parse: " + e.getMessage());
         }
         if (authschemes == null || authschemes.size() <= 0) {
-            logger.warning("We got a 401 and WWW-Authenticate challenge" +
+            logger.info("We got a 401 and WWW-Authenticate challenge" +
                 " but failed parse of the header " + curi.toString());
             return null;
         }            
@@ -751,24 +751,24 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	} else if (key.equals("digest")) {
         		authscheme = new DigestScheme();
         	} else {
-        		logger.warning("Unsupported scheme: " + key);
+        		logger.info("Unsupported scheme: " + key);
         		continue;
         	}
             
             try {
 				authscheme.processChallenge(challenge);
 			} catch (MalformedChallengeException e) {
-				logger.warning(e.getMessage() + " " + curi + " " + headers);
+				logger.info(e.getMessage() + " " + curi + " " + headers);
                 continue;
 			}
         	if (authscheme.isConnectionBased()) {
-        		logger.warning("Connection based " + authscheme);
+        		logger.info("Connection based " + authscheme);
         		continue;
         	}
         	
         	if (authscheme.getRealm() == null ||
         			authscheme.getRealm().length() <= 0) {
-        		logger.warning("Empty realm " + authscheme + " for " + curi);
+        		logger.info("Empty realm " + authscheme + " for " + curi);
         		continue;
         	}
         	result = authscheme;
