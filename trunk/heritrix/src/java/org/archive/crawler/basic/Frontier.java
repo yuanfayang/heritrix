@@ -328,7 +328,7 @@ public class Frontier
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
-            caUri.setIsSeed(true);
+            caUri.setSeed();
             caUri.setSchedulingDirective(CandidateURI.HIGH);
             innerSchedule(caUri);
         }
@@ -594,7 +594,9 @@ public class Frontier
             long earliestWake = earliestWakeTime();
             // Sleep to timeout or earliestWakeup time, whichever comes first
             long sleepuntil = earliestWake < until ? earliestWake : until;
-            wait(sleepuntil-now); // If new URIs are scheduled, we will be woken 
+            if(sleepuntil > 0){
+                wait(sleepuntil-now); // If new URIs are scheduled, we will be woken
+            }
             now = System.currentTimeMillis();
         }
         return null;
