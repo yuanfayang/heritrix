@@ -57,7 +57,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
         Type type = getElementFromDefinition(ATTR_INVERTED);
         type.setTransient(true);
 
-        type = getElementFromDefinition(ATTR_INVERTED);
+        type = getElementFromDefinition(ATTR_REGEXP);
         type.setTransient(true);
 
         addElementToDefinition(new SimpleType(ATTR_REPETITIONS,
@@ -82,7 +82,6 @@ public class PathologicalPathFilter extends URIRegExpFilter {
 
         if (rep == 0) return null;
         
-        String regexp = ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
-        return regexp;
+        return ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
     }
 }
