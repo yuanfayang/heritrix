@@ -1,825 +1,378 @@
 -------------------------------------------------------------------------------
 $Id$
 -------------------------------------------------------------------------------
+0. Contents
+1. Introduction
+2. Webmasters!
+3. System Runtime Requirements
+4. Getting Started
+5. Developer Documentation
+6. Release History
+7. License
+8. Dependencies
+
+
+1. Introduction
 Heritrix is the Internet Archive's open-source, extensible, web-scale,
-archival-quality web crawler project. Its home page is
-http://crawler.archive.org.
+archival-quality web crawler project. Heritrix (sometimes spelled heretrix, or
+misspelled or missaid as heratrix/heritix/heretix/heratix) is an archaic word
+for heiress (woman who inherits). Since our crawler seeks to collect the digital
+artifacts of our culture for the benefit of future researchers and generations,
+this name seemed apt. 
 
-Heritrix (sometimes spelled heretrix , or misspelled or missaid as
-heratrix / heritix / heretix / heratix ) is an archaic word for heiress
-(woman who inherits). Since our crawler seeks to collect the digital artifacts
-of our culture for the benefit of future researchers and generations, this
-name seemed apt.
+2. Webmasters!
+Heritrix is designed to respect the robots.txt 
+<http://www.robotstxt.org/wc/robots.html> exclusion directives and META robots
+tags <http://www.robotstxt.org/wc/exclusion.html#meta>. If you notice our
+crawler behaving poorly, please send us email at archive-crawler-agent *at*
+lists *dot* sourceforge *dot* net. 
 
-Webmasters!
+3. System Runtime Requirements
 
-Heritrix is designed to respect the robots.txt exclusion directives and META
-robots tags . If you notice our crawler behaving poorly, please send us email
-at archive-crawler-agent *at* lists *dot* sourceforge *dot* net.
-
-
-0.0 TABLE OF CONTENTS
-
-    1.0 SYSTEM REQUIREMENTS
-    2.0 GETTING STARTED
-    3.0 DEVELOPER NOTES
-    4.0 CHANGES
-    5.0 LICENSE
-
-
-1.0 SYSTEM REQUIREMENTS
-
+3.1. Java Runtime Environment
 The Heritrix crawler is implemented purely in java. This means that the only
-true requirement for running it is that you have a JRE installed.
+true requirement for running it is that you have a JRE installed. The Heritrix
+crawler makes use of Java 1.4 features so your JRE must be at least of a 1.4.0
+pedigree. We currently include all of the free/open source third-party
+libraries necessary to run Heritrix in the distribution package.  They are
+listed along with pointers to their licenses in Section 8. Dependencies below.
 
-1.1 Java
-
-The Heritrix crawler makes use of Java 1.4 features so your JRE must be at
-least of a 1.4.0 pedigree.
-
-We currently include all of the free/open source third-party libraries
-necessary to run Heritrix in the distribution package. See DEPENDENCIES for
-the complete list (Licenses for all of the listed libraries are listed in the
-dependencies section of the raw project.xml at the root of the src download).
-
-1.2 Hardware
-
+3.2. Hardware
 We recommend assigning at least 256MB RAM to the Java heap (via the
 "-Xmx256MB" VM argument), which is usually suitable for crawls that range over
-hundreds of hosts.
+hundreds of hosts. 
 
-1.3 Linux
-
+3.3. Linux
 The Heritrix crawler has been built and tested primarily on Linux. It has seen
-some informal use on Windows 2000 and Windows XP, but is not tested, packaged,
-or supported on platforms other than Linux at this time.
-
-
-2.0 GETTING STARTED
-
-This manual is targeted at those who just want to run the crawler. The user has
-downloaded a Heritrix binary and they need to know about configuration file
-formats and how to source and run a crawl. If you want to build heritrix from
-Manual source or if you'd like to make contributions and would like to know
-about contribution conventions, etc., see instead the Developer Manual.
-
-2.1 Launching Heritrix
-
-To run Heritrix, first do the following:
-
-    % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX
-
-...where $HERITRIX_HOME is the location of your built Heritrix (i.e. under the
-dist dir if you built with Ant, or under the untarred 
-target/distribution/heritrix.?.?.?.tar.gz dir if you built with Maven, or under
-the untarred heritrix.?.?.?.tar.gz if you pulled a packaged binary).
-
-Next run:
-
-    % cd $HERITRIX_HOME
-    % chmod u+x $HERITRIX_HOME/bin/heritrix
-    % $HERITRIX_HOME/bin/heritrix --help
-
-This should give you usage output like the following:
-
-    Usage: heritrix --help
-    Usage: heritrix --nowui ORDER_FILE
-    Usage: heritrix [--port=PORT] [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]
-    Usage: heritrix [--port=PORT] --selftest
-    Version: 0.4.0
-    Options:
-    -a,--admin     Login and password for web user interface administration.
-    Default: admin/letmenin.
-    -h,--help      Prints this message and exits.
-    -n,--nowui     Put heritrix into run mode and begin crawl using ORDER_FILE.
-                   Do not put up web user interface.
-    -p,--port      Port to run web user interface on.  Default: 8080.
-    -r,--run       Put heritrix into run mode. If ORDER_FILE begin crawl.
-    -s,--selftest  Run integrated self test.
-    Arguments:
-    ORDER_FILE     Crawl order to run.
-
-Launch the crawler with the UI enabled by doing the following:
-
-    % $HERITRIX_HOME/bin/heritrix
-
-This will start up heritrix printing out a startup message that looks like the
-following:
-
-    [b116-dyn-60 619] heritrix-0.4.0 > ./bin/heritrix
-    Tue Feb 10 17:03:01 PST 2004 Starting heritrix...
-    Tue Feb 10 17:03:05 PST 2004 Heritrix 0.4.0 is running.
-    Web UI is at: http://b116-dyn-60.archive.org:8080/admin
-    Login and password: admin/letmein
-
-Browse to the location you see printed out on the command line and login using
-the supplied login/password. See 'Launching crawl jobs via the web UI', the
-next section, for how to create a job to run.
-
-2.2 Launching crawl jobs via the web UI
-
-If the program is launched with a web UI users can access the administrative
-interface with any regular browser. The admin section is password protected.
-
-Once logged in, the 'Console' (more on that later) is displayed. Near the top
-of the page are several tabs. To create a new job, select the 'Jobs' tab.
-
-The 'Jobs' page offers several ways of creating a new job.
-
-    * Create new crawl job (This will be based on the default profile)
-    * Create new crawl job based on a profile
-    * Create new crawl job based on an existing job
-
-It is not possible to create jobs from scratch but you will be allowed to edit
-any configurable part of the profile or job selected to serve as a template for
-the new job. If running Heritrix for the first time there is only the supplied
-default profile to chose from.
-
-Having selected a profile/job the user will be asked to supply a name,
-description, and seed list for the job (A seed list contains the list of URLs
-the crawler should start its crawl from). Once submitted the name can not be
-changed. The description and seed list can however be modified at a later date.
-
-Below the data fields in the new job page, there are five buttons.
-
-    * Modules
-    * Filters
-    * Settings
-    * Overrides
-    * Submit job
-
-Each of the first 4 buttons corresponds to a section of the crawl configuration
-that can be modified. Modules refers to selecting which pluggable modules
-(classes) to use. This includes the 'frontier' and 'processors'. It does not
-include the use of pluggable filters which are configurable via the second
-option. Settings refers to setting the configurable values on modules
-(pluggable or otherwise).  Overrides refers to the ability to set alternate
-values based on which domain the crawler is working on. Clicking on any of
-these 4 will cause the job to be created but kept from being run until the user
-finish configuring it. The user will be taken to the relevant page. More on
-these pages in a bit.
-
-Submit job button will cause the job to be submitted to the pending queue right
-away. It can still be edited while in the queue or even after it starts
-crawling (although modules and filters can only be set prior to the start of
-crawling). If the crawler is set to run and there is no other job currently
-crawling, the new job will start crawling at once. Note that some profiles may
-not contain entirely default valid settings. In particular, User-Agent and From
-attributes in the the http-headers section -- see the Settings on your job --
-*MUST* be set to other than the default in the default profile for the crawl to
-begin. You should set these to something meaningful that allows administrators
-of sites you'll be crawling to contact you. The software requires that
-User-Agent value be of the form...
-
-    [name] (+[http-url])[optional-etc]
-
-...where [name ] is the crawler identifier and [http-url ] is an URL giving
-more information about your crawling efforts. The From value must be an email
-address. (Please do not leave the Archive Open Crawler project's contact
-information in these fields, we do not have the time or the resources to handle
-complaints about crawlers which we do not administer.)
-
-Note, the state running generally means that the crawler will
-start executing a job as soon as one is made available in the pending jobs
-queue (as long as there is not a job currently being run).
-If the crawler is not in the running state, jobs added to the pending jobs
-queue will be held there in stasis; they will not be run, even if there
-are no jobs currently being run.  The term crawling generally refers to
-a state whereby a job being currently run (crawled): i.e. pages are being
-fetched, links extracted etc. Note that if a crawler is set to the not run
-state, a job currently running will continue to run.  In other words, a job
-that started before the crawler was stopped will continue running. In that
-scenario once the current job has completed, the next job will not be started.
-
-2.2.1 Modules
-
-This page allows the user to select what URIFrontier implementation to use
-(select from combobox) and to configure the chain of processors that are used
-when processing a URI. Note that the order of display (top to bottom) is the
-order in which processors are run. Options are provided for moving processors
-up, down, removing them and adding those not currently in the chain. Those that
-are added are placed at the end by default. Generally the user should then move
-them to their correct location. Detailed configuration of these modules is then
-performed by going to the 'Settings' page afterwards.
-
-2.2.2 Filters
-
-Cer tain modules (Scope, all processors, the OrFilter for example) will allow
-an arbitrary number of filters to be applied to them. This page presents a
-treelike structure of the configuration with the ability to add, remove, and
-reorder filters. For each grouping of filters the options provided correspond
-to those that are provided for processors. Note however that since filters can
-contain filters the lists can become complicated. As with modules, detailed
-configuration of the filters is done via the 'Settings' page.
-
-2.2.3 Settings
-
-This page provides a treelike representation of the crawl configuration similar
-to the one the 'Filters' page provides. In this case however an input field is
-provided for each configurable parameter of each module. Changes made will be
-saved when the user navigates to one of the other crawl configuration pages or
-selects 'Finished'. On all pages choosing 'Finish' will submit the job to the
-pending queue. Navigation to other parts of the admin interface will cause the
-job to be lost.
-
-2.2.4 Overrides
-
-This page provides an iterative list of domains that contain override settings,
-that is values for parameters that override values in the global configuration.
-Users can navigate to any domain that has an override, create/edit the
-overrides and delete them. When creating/editing them a page similar to the
-'Settings' page is provided. The main difference is that each input field is
-preceded by a checkbox. If a box is checked, the value being displayed overrides
-the global configuration.  If not, the setting being displayed is inherited
-from the current domains super domain. Therefore, to override a setting, 
-remember to add a check in front of it.  Removing a check removes the override. Changes made to non-checked fields will be ignored.
-
-It is not possible to override what modules are used in an override. Some of
-that functionality can however be achieved via the 'enabled' option that each
-processor has. By overriding it and setting it to false you can disable that
-processor. It is even possible to have it set to false by default and only
-enable it on select domains. Thus any arbitrary chain of processors can be
-created for each domain with one major exception. It is not possible to
-manipulate the order of the processors. It is possible to similarly disable/
-enable filters. It is also possible to add filters. You can not affect the
-order of inherited filters, and you can not interject new filters among them.
-Override filters will be run after inherited filters.
-
-2.3 Run
-
-Once a job is in the pending queue the user can go back to the Console and
-start the crawler. The option to do so is presented just below the general
-information on the state of the crawler to the far left. Once started the
-console will offer summary information about the progress of the crawl and the
-option of terminating it.
-
-2.4 Monitoring the Crawler via the web UI
-
-Once logged in the user will be taken to the Console. It is the central page
-for monitoring and managing a running job. However more detailed reports and
-actions are possible from other pages.
-
-Every single page in the admin interface displays the same info header. It
-tells you if the crawler is running or crawling a job (i.e. the state of the
-crawler). If a job is being crawled it's name is displayed as well as some
-minimal progress statistics. Information about the number of pending and
-completed jobs is also provided.
-
-2.5 Jobs
-
-While a job is running this page allows users to view it's crawl order (the
-actual XML configuration file), to view reports about a specific job (both are
-also available after the job is in the completed list) and the option to edit
-the job. As noted in the cha pter about launching jobs via the WUI you cannot
-modify the pluggable modules but you can change the configurable parameters
-that they possess. This page also gives access to a list of pending jobs.
-
-2.6 Logs
-
-A very useful page that allows you to view any of the logs that are created on
-a per-job basis. Logs can be viewed by line number, time stamp, regular
-expression or 'tail' (show the last lines of the file).
-
-2.7 Reports
-
-This page allows access to the same crawl job report mentioned in the 'Jobs'
-page section. This report includes the number of downloaded documents and
-various associated statistics.
-
-2.8 Environment Variables
-
-2.8.1 HERITRIX_HOME
-Set this environment variable to point at the heritrix home directory.  For
-example, if you've unpacked heritrix in your home directory and heritrix is
-sitting in the <code>heritrix-0.5.2</code> directory, you'd set HERITRIX_HOME
-as follows.  Assuming your shell is bash:
-
-    % export HERITRIX_HOME=~/heritrix-0.6.0
-
-If you don't set this environment variable, the heritrix start script makes a
-guess at the home for heritrix.  It doesn't always guess correctly.
-
-2.8.2 JAVA_OPTS
-
-Pass options to the heritrix JVM by populating the JAVA_OPTS environment
-variable with values.  For example, if you want to have heritrix run with a
-larger heap, say 512 megs, you could do either of the following (assuming your
-shell is bash):
-    
-    % export JAVA_OPTS=-Xmx512m
-    % $HERITRIX_HOME/bin/heritrix
-
-Or, you could do it all on the one line as follows:,
-
-    % JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix
-
-2.9 System Properties
-
-Below we document the system properties passed on the command-line that can
-influence Heritrix behavior.
-
-2.9.1 heritrix.development
-
-Set this property on the command-line (i.e. "-Dheritrix.development) or include
-as part of JAVA_OPTS environment variable setting) when you want to run the
-crawler from eclipse. When this property is set, the conf and webapps
-directories will be found in their development locations and startup messages
-will show on the console.
-
-2.9.2 javax.net.ssl.trustStore
-
-Heritrix has its own truststore at conf/heritrix.cacerts that it uses if the
-FetcherHTTP is configured to use a trust level of other than open (open is the
-default setting).  In the unusual case where  you'd like to have heritrix
-use an alternate truststore, point at the alternate by supplying the JSSE
-javax.net.ssl.trustStore property on the command line. For example:
-
-    % java -Djavax.net.ssl.trustStore=/tmp/truststore \
-        org.archive.crawler.Heritrix
-
-2.9.2 java.util.logging.config.file
-
-The heritrix conf directory includes a file named heritrix.properties . A
-section of this file specifies the default heritrix logging configuration. To
-override these settings, point java.util.logging.config.file at a properties
-file with an alternate logging configuration. Below we reproduce the default
-for reference:
-
-    # Basic logging setup; to console, all levels
-    handlers= java.util.logging.ConsoleHandler
-    java.util.logging.ConsoleHandler.level= ALL
-
-    # Default global logging level: only warnings or higher
-    .level= WARNING
-
-    # currently necessary (?) for standard logs to work
-    crawl.level= INFO
-    runtime-errors.level= INFO
-    uri-errors.level= INFO
-    progress-statistics.level= INFO
-    recover.level= INFO
-
-    # HttpClient is too chatty... only want to hear about severe problems
-    org.apache.commons.httpclient.level= SEVERE
-
-Here's an example of how you might specify an override:
-
-    % JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
-    ./bin/heritrix --no-wui order.xml
-
-
-3.0 DEVELOPER NOTES
-
-This doc. is for observers and contributors who'd like to build from
-source. In here we'll talk of cvs access, the code layout, core technologies
-and key technical decisions.
-
-3.1 Obtaining Heritrix
-
-There three ways to obtain Heritrix: packaged binary or packaged source
-downloaded from the crawler sourceforge home page, or via CVS checkout. See the
-crawler sourceforge cvs page for how to fetch from CVS (Note, anonymous
-access does not give you the current HEAD but a snapshot that can at times be
-up to 24 hours behind HEAD). The packaged binary is named
-heritrix-?.?.?.tar.gz (or heritrix-?.?.?.zip ) and the packaged source is
-named heritrix-?.?.?-src.tar.gz (or heritrix-?.?.?-src.zip ) where ?.?.?
-is the heritrix release version.
-
-3.2 Building Heritrix
-
-You can build Heritrix from source using Ant or Maven. The Maven build is
-more comprehensive and will generate everything from either the packaged source
-or from a CVS checkout. The Ant build is less so in that it doesn't
-generate the distribution documentation but it does produce everything else
-needed to run Heritrix.
-
-If you are building Heritrix with Ant, you must have Ant 1.5 installed. Make
-sure the Ant optional.jar file sits beside the junit.jar. See JUnit Task for
-what you must do to set up Ant to run junit tests (The build requires
-junit).
-
-The Heritrix maven build was developed using 1.0-rc1. See maven.apache.org.
-
-3.3 Building Heritrix with Ant
-
-If you obtained the packaged source, here is how you build with Ant:
-
-    % tar xfz heritrix-?.?.?-src.tar.gz
-    % cd heritrix-?.?.? % $ANT_HOME/bin/ant dist
-
-In the dist subdir you have all you need to run the Heritrix crawler. To learn
-more about the ant build, type ant -projecthelp .
-
-3.4 Building Heritrix with Maven
-
-To build a CVS source checkout with Maven:
-
-    % cd CVS_CHECKOUT_DIR
-    % $MAVEN_HOME/bin/maven dist
-
-In the target/distribution subdir, you will find packaged source and binary
-builds. Run $MAVEN_HOME/bin/maven -g for other Maven possibilities.
-
-3.5 Running Heritrix
-
-See the GETTING STARTED section for how to run the built Heritrix.
-
-3.6 Eclipse
-
-At the head of the CVS tree, you'll find Eclipse .project and .classpath
-configuration files that should make integrating the CVS checkout into your
-Eclipse development environment straight-forward.
-
-3.7 Unit Tests Code
-
-"[A ] popular convention is to place all test classes in a parallel directory
-structure. This allows you to use the same Java package names for your tests,
-while keeping the source files separate. To be honest, we do not like this
-approach because you must look in two different directories to find files."
-from Section 4.11.3, Java Extreme Programming Cookbook, By Eric M. Burke,
-Brian M. Coyner . We agree with the above so we put Unit Test classes beside
-the classes they are testing in the source tree giving them the name of the
-Class they are testing with a Test suffix.
-
-3.8 Coding Conventions
-
-Heritrix baselines on SUN's Code Conventions for the JavaTM Programming
-Language . It'd be hard not to they say so little. They at least say maximum
-line length of 80 characters . Below are tightenings on the SUN conventions
-used in Heritrix.
-
-We also will favor much of what is written in this document, Java Programming
-Style Guidelines .
-
-3.8.1 No Tabs
-
-No tabs in source code. Set your editor to indent with spaces.
-
-3.8.2 Indent Width
-
-Indents are 4 charcters wide.
-
-3.8.3 File comment
-
-Here is the eclipse template we use for the file header comment:
-
-    /* ${type_name}
-    *
-    * $$Id$$
-    *
-    * Created on ${date}
-    *
-    * Copyright (C) ${year} Internet Archive.
-    *
-    * This file is part of the Heritrix web crawler (crawler.archive.org).
-    *
-    * Heritrix is free software; you can redistribute it and/or modify
-    * it under the terms of the GNU Lesser Public License as published by
-    * the Free Software Foundation; either version 2.1 of the License, or
-    * any later version.
-    *
-    * Heritrix is distributed in the hope that it will be useful,
-    * but WITHOUT ANY WARRANTY; without even the implied warranty of
-    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    * GNU Lesser Public License for more details.
-    *
-    * You should have received a copy of the GNU Lesser Public License
-    * along with Heritrix; if not, write to the Free Software
-    * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    */
-    ${package_declaration}
-
-3.8.4 Function/Block Bracket Open on Same Line
-
-Preference is to have the bracket that opens functions and blocks on same line
-as function declaration or block test rather than on a new line on of its
-ownsome.
-
-For example:
-
-    if (true) {
-        return true;
-    } 
-
-and
-
-    public void main (String [] args) {
-        System.println("Hello world");
-
-3.9 Version and Release Numbering
-
-Heritrix uses a version numbering scheme modelled after the one used for
-Linux kernels. Versions are 3 numbers:
-
-    [major ] .[minor/mode ] .[patchlevel ]
-
-The major version number, currently at zero, increments upon significant
-architectural changes or the achievement of important milestones in
-capabilities. The minor/mode version number increments as progress is made
-within a major version, with the added constraint that all external releases
-have an even minor/mode version number, and all internal/development versions
-have an odd minor/mode version number.
-
-The patchlevel number increments for small sets of changes, providing the
-most fine-grain timeline of software evolution. Patchlevels increment
-regularly for internal/development(odd minor l evel) work, but only increment
-for external releases when an official update to the previous release version
-has been tested and packaged.
-
-In the CVS HEAD, version numbers are applied as tags of the form "heritrix-#_
-#_#". When a particular development-version is thought appropriate to become
-an external/"stable" release, it is considered a "Release Candidate". If
-testing confirms it is suitable for release, it is assigned the next even
-minor/mode value (and a zero patchlevel), CVS version-labelled, and packaged
-for release. Immediately after release, and before additional coding occurs,
-the CVS HEAD is assigned the next odd minor/mode value (and a zero
-patchlevel) in project/source files.
-
-If patches are required to a released version, before the next release is
-ready, they are applied to a CVS branch from the release version tag, tested,
-and released as the subsequent patchlevel.
-
-Keep in mind that each version number is an integer, not merely a decimal
-digit. To use an extreme example: development version 2.99.99 would be
-followed by either the 2.99.100 development version patchlevel or the 2.100.0
-release. (And after such a release, the next development version would be
-2.101.0.)
-
-3.10 Making a Heritrix Release
-
-Before initiating a release, its assumed that the current HEAD version has
-been run through the integration self test, that all unit tests pass, that the
-(as yet non-existent) test suite has been exercised, and that general usage
-shows HEAD to be release worthy.
-
-    1. Send a mail to the list to freeze commits until the all-clear is given.
-    2. Up the project.xml 'currentVersion' element and the build.xml 'version'
-    property. Ensure they are the same version number. (See Version and
-    Release Numbering on this page for guidance on what version number to
-    use)
-    3. Generate the site. Review all documentation making sure it remains
-    applicable. Fix at least the embarrassing. Make issues to have all that
-    remains addressed.
-    4. Make the maven distributions: % $MAVEN_HOME/bin/maven dist
-    5. Build the maven produced src distribution version using both maven and
-    ant to ensure both builds work.
-    6. Run both the binary and src-built product through the integration self
-    test suite: % $HERITRIX_HOME/bin/heritrix --selftest
-    7. Update xdocs/changes.xml .
-    8. (TODO: Changelog based off CVS history).
-    9. Update the README.txt. Do html2txt on maven generated xdocs.
-    10. Tag the CVS repository: % cvs -q tag heritrix-?_?_?
-    11. Update the project.xml 'currentVersion' and build.xml 'version' property
-    to both be a version number beyond that of the release currently being
-    made (If we're releasing 0.2.0, then increment to 0.3.0).
-    12. Login and upload the maven 'dist' product to sourceforge into the
-        admin->File releases section.
-    13. Update news on website, send announcement to mailinglist -- and give an
-    all-clear that commits may resume -- and update our release state on
-    freshmeat site (Here is the URL I used creating our freshmeat project:
-    http://freshmeat.net/add-project/all-done/43820/46804/ -- 46804 is our
-    project ID).
-
-3.11 Integration self test
-
-Run the integration self test on the command line by doing the following:
-
-    % $HERITRIX_HOME/bin/heritrix --selftest
-
-This will set the crawler going against itself, in particular, the selftest
-webapp. When done, it runs an analsys of the produced arc files and logs and
-dumps a ruling into heritrix_out.log . See the org.archive.crawler.selftest
-package for more on how the selftest works.
-
-3.12 cruisecontrol
-
-See src/cc for a config.xml that will run the heritrix maven build under
-cruisecontrol . See the README.txt in the same directory for how to set up
-continuous building using cc.
-
-3.13 Settings XML Schema
-
-The XML Schema that describes the crawler job order file can be viewed as xhtml
-here: http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/webapps/root/heritrix_settings.html?rev=1
-
-
-4.0 CHANGES
-
-Release History
-+------------------------------------------------------------+
-|    Version    |        Date         |     Description      |
-|---------------+---------------------+----------------------|
-| 0.6.0         | 2004-03-25          |                      |
-|---------------+---------------------+----------------------|
-| 0.4.1         | 2004-02-12          |                      |
-|---------------+---------------------+----------------------|
-| 0.4.0         | 2004-02-10          |                      |
-|---------------+---------------------+----------------------|
-| 0.2.0         | 2003-01-05          |                      |
-|---------------+---------------------+----------------------|
-| 0.1.0         | 2003-12-31          |                      |
-+------------------------------------------------------------+
+some informal use on Macintosh, Windows 2000 and Windows XP, but is not tested,
+packaged, nor supported on platforms other than Linux at this time. 
+
+4. Getting Started
+See the User Manual at ./docs/articles/user_manual.html or at
+<http://crawler.archive.org/articles/user_manual.html>.
+
+5. Developer Documentation
+See ./docs/articles/developer_manual.html or
+<http://crawler.archive.org/articles/developer_manual.html>.
+
+
+6. Release History
+
+Release 0.8.0 - 2004-05-18 14:00
+
+Type Changes                                               By
+add  integrate selftest into cruisecontrol build           stack-sf
+add  On reedit, red star by bad attribute setting.         kristinn_sig
+add  day/night configurations                              kristinn_sig
+add  UI should only write changed config                   kristinn_sig
+add  record of settings changes should be kept             johnerik
+add  Only one build, not two                               stack-sf
+add  maven-only build rather than ant & maven              stack-sf
+add  ARCWriter should use a pool of open files -- if it    stack-sf
+     helps
+add  Precomp ile UI pages                                  stack-sf
+add  UI should be split into common/uncommon settings      kristinn_sig
+add  UI web pages need to be more responsive               kristinn_sig
+fix  ConcurrentModificationExceptions                      stack-sf
+fix  Too many open files                                   stack-sf
+fix  ConcurrentModificationExceptionsd                     stack-sf
+fix  empty seeds-report.txt                                kristinn_sig
+fix  Doc. assumes bash. Allow tcsh/csh                     stack-sf
+fix  script heritrix.sh goes into infinite loop            stack-sf
+fix  heritrix.sh launch file path weirdness                stack-sf
+fix  ToeThreads hung in ExtractorHTML after Pause          stack-sf
+fix  IllegalCharsetNameException: Windows-1256             stack-sf
+fix  No doc-files/package.html in javadoc.                 stack-sf
+fix  embed-count sensitivity WRT redirects, preconditions  gojomo
+fix  Refinement limits are not always saved                kristinn_sig
+fix  NPE exception in getMBeanInfo(settings)               johnerik
+fix  Untried CrawlURIs should have clear status code       gojomo
+fix  Thread underutilization in broad crawls               gojomo
+fix  KeyedQueue showing EMPTY status, but the length is 1. gojomo
+fix  NPE in XMLSettingsHandler.recursiveFindFiles()        johnerik
+fix  Failed DNS does not have intended impact              gojomo
+fix  ftp URIs are retried                                  gojomo
+fix  Refetching of robots and/or DNS broken                gojomo
+fix  NPE switching to 'expert' settings in HEAD            kristinn_sig
+fix  rss extractor                                         ia_igor
+fix  JS extractor clueless on relative URIs                ia_igor
+fix  converting URI's '\' into '/' character               ia_igor
+fix  When going back to overrides, directory is gone       kristinn_sig
+fix  shutdown.jsp unable to compile                        kristinn_sig
+fix  ARCWriterPool timeouts -- legitimate?                 stack-sf
+fix  If one URI connect-fails, hold queue, too             gojomo
+fix  Fetching simple URLs fails with S_CONNECT_FAILED (-2) gojomo
+     error
+fix  seeds held back/poor breadth first?                   gojomo
+fix  Parsing links found between escaped quotes in         ia_igor
+     JavaScript
+fix  Does not extract applet URI correctky                 ia_igor
+fix  links to likely-embed types should be treated as      ia_igor
+     embeds
+fix  Frontier.next() forceFetches will cause assertion     gojomo
+     error
+fix  Flash link extractor causes OutOfMemory exceptions.   ia_igor
+fix  Should be possible to resume from                     kristinn_sig
+fix  Heritrix ignores charset                              stack-sf
+fix  Max # of arcs not being respected.                    stack-sfkristinn_sig
+fix  New profile should ensure unique name                 kristinn_sig
+fix  When changing scope common scope settings are lost    johnerik
+fix  ssl doesn't work                                      stack-sf
+fix  Allow that people use tcsh/csh not just bash          stack-sf
+fix  https SSLHandshakeException: unknown certificate      stack-sf
+fix  Cannot override settings that isn't set in globals    johnerik
+fix  'Waiting for pause' even after all threads done       kristinn_sig
+fix  filter 'invert', filter names need work               kristinn_sig
+fix  max-link-hops (etc.) ignored unless                   stack-sf
+fix  order.xml absolute paths                              johnerik
+fix  Cannot set Transcl usionFilter attributes             johnerik
+fix  Link puts garbage into arc file: http://www.msn.com/  stack-sf
+     robots.t
 
 Release 0.6.0 - 2004-03-25
-+------------------------------------------------------------+
-|  Type  |             Changes              |       By       |
-|--------+----------------------------------+----------------|
-|        | 861861 Redirects(/refreshes)     |                |
-| add    | from seeds should == new seeds - | kristinn_sig   |
-|        | Completed xxxx sdf               |                |
-|--------+----------------------------------+----------------|
-| add    | 899223 Special seed-success      | kristinn_sig   |
-|        | report shoudl be offered         |                |
-|--------+----------------------------------+----------------|
-| add    | 891986 Bandwidth throttle        | johnerik       |
-|        | function, setting.               |                |
-|--------+----------------------------------+----------------|
-| add    | 899223 Special seed-success      | kristinn_sig   |
-|        | report shoudl be offered         |                |
-|--------+----------------------------------+----------------|
-| add    | 877275 integrated operator       | kristinn_sig   |
-|        | 'diary' needed                   |                |
-|--------+----------------------------------+----------------|
-| add    | 891983 IP, Robots expirations    | johnerik       |
-|        | should be settable               |                |
-|--------+----------------------------------+----------------|
-| add    | 910152 Recovery of old jobs on   | kristinn_sig   |
-|        | WUI (re)start                    |                |
-|--------+----------------------------------+----------------|
-| add    | 781171 parsing css               | ia_igor        |
-|--------+----------------------------------+----------------|
-|        | 912986 log views should give an  |                |
-| add    | idea of file size (where         | kristinn_sig   |
-|        | possible)                        |                |
-|--------+----------------------------------+----------------|
-| add    | 912989 Alerts should have        | kristinn_sig   |
-|        | 'select all' button...           |                |
-|--------+----------------------------------+----------------|
-| add    | 856593 [load ] [save ] [turn on/ | ia_igor        |
-|        | off ] cookies                    |                |
-|--------+----------------------------------+----------------|
-| add    | 912201 Add levels to alerts      | kristinn_sig   |
-|--------+----------------------------------+----------------|
-| add    | 896665 Split processor chains.   | johnerik       |
-|--------+----------------------------------+----------------|
-| add    | 896754 Show total of disregards  | kristinn_sig   |
-|--------+----------------------------------+----------------|
-| add    | 903095 Show increments of        | kristinn_sig   |
-|        | megabytes in ui                  |                |
-|--------+----------------------------------+----------------|
-|        | 896794 serious errors (eg        |                |
-| add    | outofmemory) should show up in   | kristinn_sig   |
-|        | UI                               |                |
-|--------+----------------------------------+----------------|
-| add    | 900520 Short description of      | kristinn_sig   |
-|        | ComplexTypes in user i nterface. |                |
-|--------+----------------------------------+----------------|
-| add    | 899982 Should be possible to     | kristinn_sig   |
-|        | alter filters while crawling.    |                |
-|--------+----------------------------------+----------------|
-| add    | 896672 Display progress (doc/    | kristinn_sig   |
-|        | sec) with more precision         |                |
-|--------+----------------------------------+----------------|
-| add    | 896677 Highlight the success or  | kristinn_sig   |
-|        | failures of each seed            |                |
-|--------+----------------------------------+----------------|
-| add    | 896760 Prominent notification    | kristinn_sig   |
-|        | when seeds have problems         |                |
-|--------+----------------------------------+----------------|
-| add    | 896801 java regexps (in log      | kristinn_sig   |
-|        | view) need help text             |                |
-|--------+----------------------------------+----------------|
-| add    | 896778 Log viewing enhancements: | kristinn_sig   |
-|--------+----------------------------------+----------------|
-| add    | 896795 frontier, thread report   | kristinn_sig   |
-|        | im provements                    |                |
-|--------+----------------------------------+----------------|
-| add    | 876516 default launch should     | ia_igor        |
-|        | nohup, save stdout/stderr        |                |
-|--------+----------------------------------+----------------|
-| update | Update of httpclient to release  | stack-sf       |
-|        | 2.0                              |                |
-|--------+----------------------------------+----------------|
-| update | Update of jmx libs to release    | stack-sf       |
-|        | 1.2.1                            |                |
-|--------+----------------------------------+----------------|
-| fix    | 896763 127.0.0.1 in job report   | kristinn_sig   |
-|--------+----------------------------------+----------------|
-|        | 896767 Frontier retry-delay      |                |
-| fix    | should include units (eg         | kristinn_sig   |
-|        | -seconds)                        |                |
-|--------+----------------------------------+----------------|
-|        | 898994 Revisiting admin URIs if  |                |
-| fix    | not logged in should prompt      | kristinn_sig   |
-|        | login                            |                |
-|--------+----------------------------------+----------------|
-| fix    | 899019 Deadlock in Andy's 2nd    | johnerik       |
-|        | Crawl                            |                |
-|--------+----------------------------------+----------------|
-| fix    | 767225 Better bad-config         | parkerthompson |
-|        | handling                         |                |
-|--------+----------------------------------+----------------|
-| fix    | 815357 mysterious pause facing   | gojomo         |
-|        | network (DNS) problem            |                |
-|--------+----------------------------------+----------------|
-| fix    | 896747 ExtractorJS's report      | kristinn_sig   |
-|        | overstates it's discovered URIs  |                |
-|--------+----------------------------------+----------------|
-| fix    | 896667 Web UI does not display   | kristinn_sig   |
-|        | correctly in IE                  |                |
-|--------+----------------------------------+----------------|
-| fix    | 896780 console clarity/safety    | kristinn_sig   |
-|--------+----------------------------------+----------------|
-|        | 896655 Does not respect per      |                |
-| fix    | settings added after crawl was   | johnerik       |
-|        | started.                         |                |
-|--------+----------------------------------+----------------|
-| fix    | 856555 'empty' records in        | ia_igor        |
-|        | compressed arc files             |                |
-|--------+----------------------------------+----------------|
-| fix    | 895955 URIRegExpFilter retains   | stack-sf       |
-|        | memory                           |                |
-+------------------------------------------------------------+
+
+Type   Changes                                                   By
+add    861861 Redirects(/refreshes) from seeds should == new     kristinn_sig
+       seeds - Completed
+add    899223 Special seed-success report shoudl be offered      kristinn_sig
+add    891986 Bandwidth throttle function, setting.              johnerik
+add    899223 Special seed-success report shoudl be offered      kristinn_sig
+add    877275 integrated operator 'diary' needed                 kristinn_sig
+add    891983 IP, Robots expirations should be settable          johnerik
+add    910152 Recovery of old jobs on WUI (re)s tart             kristinn_sig
+add    781171 parsing css                                        ia_igor
+add    912986 log views should give an idea of file size (where  kristinn_sig
+       possible)
+add    912989 Alerts should have 'select all' button...          kristinn_sig
+add    856593 [load ] [save ] [turn on/off ] cookies             ia_igor
+add    912201 Add levels to alerts                               kristinn_sig
+add    896665 Split processor chains.                            johnerik
+add    896754 Show total of disregards                           kristinn_sig
+add    903095 Show increments of megabytes in ui                 kristinn_sig
+add    896794 serious errors (eg outofmemory) should show up in  kristinn_sig
+       UI
+add    900520 Short description of ComplexTypes in user          kristinn_sig
+       interface.
+add    899982 Should be possible to alter filters while          kristinn_sig
+       crawling.
+add    896672 Display progress (doc/sec) with more precision     kristinn_sig
+add    896677 Highlight the success or failures of each seed     kristinn_sig
+add    896760 Prominent notification when seeds have problems    kristinn_sig
+add    896801 java regexps (in log view) need help text          kristinn_sig
+add    896778 Log viewing enhancements:                          kristinn_sig
+add    896795 frontier, thread report improvements               kristinn_sig
+add    876516 default launch should nohup, save stdout/stderr    ia_igor
+update Update of httpclient to release 2.0                       stack-sf
+update Update of jmx libs to release 1. 2.1                      stack-sf
+fix    896763 127.0.0.1 in job report                            kristinn_sig
+fix    896767 Frontier retry-delay should include units (eg      kristinn_sig
+       -seconds)
+fix    898994 Revisiting admin URIs if not logged in should      kristinn_sig
+       prompt login
+fix    899019 Deadlock in Andy's 2nd Crawl                       johnerik
+fix    767225 Better bad-config handling                         parkerthompson
+fix    815357 mysterious pause facing network (DNS) problem      gojomo
+fix    896747 ExtractorJS's report overstates it's discovered    kristinn_sig
+       URIs
+fix    896667 Web UI does not display correctly in IE            kristinn_sig
+fix    896780 console clarity/safety                             kristinn_sig
+fix    896655 Does not respect per settings added after crawl    johnerik
+       was started.
+fix    856555 'empty' records in compressed arc files            ia_igor
+fix    895955 URIRegExpFilter retains memory                     stack-sf
 
 Release 0.4.1 - 2004-02-12
-+------------------------------------------------------------+
-| Type |                 Changes                 |    By     |
-|------+-----------------------------------------+-----------|
-| fix  | 895955 URIRegExpFilter retains memory   | stack-sf  |
-+------------------------------------------------------------+
+
+Type Changes                               By
+fix  895955 URIRegExpFilter retains memory stack-sf
 
 Release 0.4.0 - 2004-02-10
-+------------------------------------------------------------+
-|  Type  |                Changes                 |    By    |
-|--------+----------------------------------------+----------|
-|        | New MBEAN-based configuration system.  |          |
-| add    | Reads and writes XML to validate       | stack-sf |
-|        | against heritrix_settings.xsd.         |          |
-|--------+----------------------------------------+----------|
-| update | UI extensively revamped. Exploits new  | stack-sf |
-|        | configuration system.                  |          |
-|--------+----------------------------------------+----------|
-| add    | 60-odd unit tests added.               | stack-sf |
-|--------+----------------------------------------+----------|
-| add    | Integration selftest framework.        | stack-sf |
-|--------+----------------------------------------+----------|
-| add    | Added pooling of ARCWriters.           | stack-sf |
-|--------+----------------------------------------+----------|
-|        | Start script backgrounds heritrix and  |          |
-|        | redirects stdout/stderr to             |          |
-| update | heritrix_out.log. See 876516 Default   | stack-sf |
-|        | launch should nohup, save stdout/      |          |
-|        | stderr Web UI accesses are loggged to  |          |
-|        | heritrix_out.log also.                 |          |
-|--------+----------------------------------------+----------|
-| update | Updated httpclient to version 2.0RC3.  | stack-sf |
-|--------+----------------------------------------+----------|
-| fix    | 763517 IAGZIPOutputStream NPE under    | stack-sf |
-|        | IBM JVM                                |          |
-|--------+----------------------------------------+----------|
-| fix    | 809018 Cleaner versioned testing build | stack-sf |
-|        | needed                                 |          |
-|--------+----------------------------------------+----------|
-| fix    | 872729 Cmd-line options for setting    | stack-sf |
-|        | web ui username/password               |          |
-|--------+----------------------------------------+----------|
-| fix    | 863317 Universal single-pass extractor | stack-sf |
-+------------------------------------------------------------+
+
+Type   Changes                                                         By
+add    New MBEAN-based configuration system. Reads and writes XML to   stack-sf
+       validate against heritrix_settings.xsd.
+update UI extensively revamped. Exploits new configuration system.     stack-sf
+add    60-odd unit tests added.                                        stack-sf
+add    Integration selftest framework.                                 stack-sf
+add    Added pooling of ARCWriters.                                    stack-sf
+       Start script backgrounds heritrix and redirects stdout/stderr
+update to heritrix_out.log. See 876516 Default launch should nohup,    stack-sf
+       save stdout/stderrWeb UI accesses are loggged to
+       heritrix_out.log also.
+update Updated httpclient to version 2.0RC3.                           stack-sf
+fix    763517 IAGZIPOutputStream NPE under IBM JVM                     stack-sf
+fix    809018 Cleaner versioned testing build needed                   stack-sf
+fix    872729 Cmd-line options for setting web ui username/password    stack-sf
+fix    863317 Universal single-pass extractor                          stack-sf
 
 Release 0.2.0 - 2003-01-05
-+------------------------------------------------------------+
-|  Type  |               Changes               |     By      |
-|--------+-------------------------------------+-------------|
-| add    | First 'official' release.           | stack-sf    |
-+------------------------------------------------------------+
+
+Type Changes                   By
+add  First 'official' release. stack-sf
 
 Release 0.1.0 - 2003-12-31
-+------------------------------------------------------------+
-| Type |                  Changes                   |   By   |
-|------+--------------------------------------------+--------|
-|      | Initial Mavenized development version      |        |
-| add  | number (CVS/internal only). Added          | gojomo |
-|      | everything to new project layout.          |        |
-+------------------------------------------------------------+
+
+Type Changes                                                             By
+add  Initial Mavenized development version number (CVS/internal only).   gojomo
+     Added everything to new project layout.
 
 
-5.0 LICENSE
+7. License
 
-Heritrix is free software; you can redistribute it and/or modify it 
-under the terms of the GNU Lesser Public License as published by the 
-Free Software Foundation; either version 2.1 of the License, or any 
+Heritrix is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser Public License as published by the
+Free Software Foundation; either version 2.1 of the License, or any
 later version.
- 
-Heritrix is distributed in the hope that it will be useful, 
+                                                                                
+Heritrix is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser Public License for more details.
-
+                                                                                
 You should have received a copy of the GNU Lesser Public License
-along with Heritrix (See LICENSE.txt); if not, write to the Free 
-Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+along with Heritrix (See LICENSE.txt); if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 02111-1307  USA
-
-For the licenses for libraries used by Heritrix and included in its 
-distribution, see the dependencies section of project.xml for pointers 
+                                                                                
+For the licenses for libraries used by Heritrix and included in its
+distribution, see the dependencies section of project.xml for pointers
 to their licenses (TODO: Generate a license page).
+
+8. Dependencies
+
+8.1. commons-httpclient
+version: 2.0-final
+url: http://jakarta.apache.org/commons/httpclient/
+description: This package is used for fetching URIs via http.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.2. commons-logging
+version: 1.0.3
+url: http://jakarta.apache.org/commons/logging.html
+description: Provides logging adapters.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.3. dnsjava
+version: 1.6.2
+url: http://www.dnsjava.org/
+description: DNS Lookups.
+license: BSD
+
+8.4. stataclasses
+version: 0.1.0
+url: http://cvs.sourceforge.net/viewcvs.py/*checkout*/archive-crawler/ArchiveOpenCrawler/lib/stataclasses-0.1.0.jar
+description: Utils supplied by Rayme Stata. Gave it arbitrary 0.1.0 version
+number.
+license: ?
+
+8.5. jetty
+version: 4.2.17
+url: http://jetty.mortbay.com/jetty/
+description: The Jetty servlet container.
+license: Jetty license, http://jetty.mortbay.org/jetty/LICENSE.html
+
+8.6. servlet
+version: 2.3
+url: http://jakarta.apache.org/tomcat/
+description: Taken from tomcat.
+license: http://jakarta.apache.org/site/legal.html
+
+8.7. jasper-runtime
+version: 4.1.30
+url: http://jakarta.apache.org/tomcat/
+description: Taken from tomcat.
+license: http://jakarta.apache.org/site/legal.html
+
+8.8. jasper-compiler
+version: 4.1.30
+url: http://jakarta.apache.org/tomcat/
+description: Taken from tomcat.
+license: http://jakarta.apache.org/site/legal.html
+
+8.9. jmxri
+version: 
+url: http://java.sun.com/products/JavaManagement/index.jsp
+description: JMX Reference Implementation.
+license: SUN Binary Code License http://java.com/en/download/license.jsp
+
+8.10. jmxtools
+version: 
+url: http://java.sun.com/products/JavaManagement/index.jsp
+description: JMX tools.
+license: SUN Binary Code License http://java.com/en/download/license.jsp
+
+8.11. poi
+version: 2.0-RC1-20031102
+url: http://jakarta.apache.org/poi/
+description: For parsing PDFs.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.12. poi-scratchpad
+version: 2.0-RC1-20031102
+url: http://jakarta.apache.org/poi/
+description: For parsing PDFs. Has the
+org.apache.poi.hdf.extractor.WordDocument.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.13. javaswf
+version: 
+url: http://www.anotherbigidea.com/javaswf
+description: JavaSWF2 is a set of Java packages that enable the parsing,
+manipulation and generation of the Macromedia Flash(TM) file format known as
+SWF ("swiff"). Added jar was made by unzipping javaswf-CVS-SNAPSHOT-1.zip
+download, compiling the java classes therein, and then making a jar of the
+product.
+license: The JavaSWF BSD License,
+http://anotherbigidea.com/javaswf/JavaSWF2-BSD.LICENSE.html
+
+8.14. itext
+version: 1.0
+url: http://www.lowagie.com/iText/
+description: A library for parsing PDF files.
+license: MPL and LGPL
+
+8.15. ant
+version: 1.5.4
+url: http://ant.apache.org
+description: Build tool
+license: Apache 1.1. http://ant.apache.org/license.html
+
+8.16. junit
+version: 3.8.1
+url: http://www.junit.org/
+description: A framework for implimenting the unit testing methology.
+license: IBM's Common Public License Version 0.5.
+
+8.17. commons-pool
+version: 1.1
+url: http://jakarta.apache.org/site/binindex.cgi#commons-pool
+description: For object pooling.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.18. commons-collections
+version: 2.1
+url: http://jakarta.apache.org/site/binindex.cgi#commons-collections
+description: Needed by commons-pool.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.19. commons-cli
+version: 1.0
+url: http://jakarta.apache.org/site/binindex.cgi
+description: Needed doing Heritrix command-line processing.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.20. concurrent
+version: 1.3.2
+url: http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html
+description: Concurrency utilities.
+license: Public Domain
+
+8.21. commons-net
+version: 1.1.0
+url: http://jakarta.apache.org/commons/net/
+description: This is an Internet protocol suite Java library originally
+developed by ORO, Inc. This version supports Finger, Whois, TFTP, Telnet, POP3,
+FTP, NNTP, SMTP, and some miscellaneous protocols like Time and Echo as well as
+BSD R command support. Heritrix uses its FTP implementation.
+license: Apache 1.1 http://www.apache.org/LICENSE.txt
+
