@@ -103,7 +103,7 @@ public class SeedsInputIterator implements Iterator {
 				Matcher m = seedExtractor.matcher(read);
 				while(m.find()) {
 					String candidate = m.group();
-					if(m.group(1)==null) {
+					if(m.group(2)==null) {
 						// naked hostname without scheme
 						candidate = "http://" + candidate;
 					}
