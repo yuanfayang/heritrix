@@ -60,6 +60,10 @@ public class CanonicalizerTest extends TmpDirTestCase {
         this.rules = (MapType)(settingsHandler.getSettingsObject(null)).
             getModule(CrawlOrder.ATTR_NAME).
                getAttribute(CrawlOrder.ATTR_RULES);
+        this.rules.addElement(null, new LowercaseRule("lowercase"));
+        this.rules.addElement(null, new StripUserinfoRule("userinfo"));
+        this.rules.addElement(null, new StripWWWRule("www"));
+        this.rules.addElement(null, new StripSessionIDs("ids"));
         this.rules.addElement(null, new FixupQueryStr("querystr"));
     }
     
