@@ -27,7 +27,6 @@ package org.archive.crawler.frontier;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURIFactory;
-import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.util.DevUtils;
 
 /**
@@ -60,7 +59,7 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
                     candidate = UURIFactory.getInstance(curi.flattenVia()).
                         getAuthorityMinusUserinfo();
                 } else {
-                    candidate= FetchDNS.parseTargetDomain(curi);
+                    candidate= curi.getUURI().getReferencedHost();
                 }
             } else {
                 candidate =  curi.getUURI().getAuthorityMinusUserinfo();

@@ -28,6 +28,7 @@ import java.net.UnknownHostException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
@@ -70,12 +71,19 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     protected void innerProcess(CrawlURI curi) {
+        if (!curi.getUURI().getScheme().equals("dns")) {
+            // only handles dns
+            return;
+        }
         Record[] rrecordSet = null;         // store retrieved dns records
         long now;                           // the time this operation happened
         CrawlServer targetServer = null;
-        String dnsName = parseTargetDomain(curi);
-        if (!curi.getUURI().getScheme().equals("dns")) {
-            // only handles dns
+        String dnsName = null;
+        try {
+            dnsName = curi.getUURI().getReferencedHost();
+        } catch (URIException e) {
+            logger.severe("Failed parse of dns record " + curi + " " +
+                e.getMessage());
             return;
         }
 
@@ -148,37 +156,5 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
-    }
-
-    /**
-     * Parse passed dns <code>CrawlURI</code> for its hostname component.
-     *
-     * CrawlURI should look like:
-     * <code>"dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]</code>
-     *
-     * @param curi Crawl URI to parse.
-     * @return The target hostname of a 'dns:' URI. Returns null for
-     * non-'dns:' input.
-     */
-    public static String parseTargetDomain(CrawlURI curi){
-        String uri = curi.getURIString();
-
-        // if it's not a dns uri
-        if(!uri.startsWith("dns:")){
-            return null;
-        }
-
-        uri = uri.substring(4);                        // drop "dns:" prefix
-
-        if(uri.startsWith("//")){                        // drop hostport
-            uri = uri.replaceFirst("//[^/]+/", "");
-        }
-
-        // drop query string
-        if(uri.indexOf("?") > -1){
-            uri = uri.substring(0, uri.indexOf("?"));
-        }
-
-        return uri;
     }
 }

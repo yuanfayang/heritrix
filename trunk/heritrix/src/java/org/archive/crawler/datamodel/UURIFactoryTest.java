@@ -128,6 +128,21 @@ public class UURIFactoryTest extends TestCase {
 		assertTrue("Didn't get expected path: " + uri, 
 				foundPath.equals(path));
 	}
+    
+    public final void testDnsHost() throws URIException {
+        String uri = "dns://ads.nandomedia.com:81/one.html";
+        UURI uuri = UURIFactory.getInstance(uri);
+        String host = uuri.getReferencedHost();
+        assertTrue("Host is wrong " + host, host.equals("ads.nandomedia.com"));
+        uri = "dns:ads.nandomedia.com";
+        uuri = UURIFactory.getInstance(uri);
+        host = uuri.getReferencedHost();
+        assertTrue("Host is wrong " + host, host.equals("ads.nandomedia.com"));
+        uri = "dns:ads.nandomedia.com?a=b";
+        uuri = UURIFactory.getInstance(uri);
+        host = uuri.getReferencedHost();
+        assertTrue("Host is wrong " + host, host.equals("ads.nandomedia.com"));
+    }
 	
 	public final void testPercentEscaping() throws URIException {
 		final String uri = "http://archive.org/%a%%%%%.html";
