@@ -53,6 +53,7 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -288,8 +289,9 @@ public class FetchHTTP extends Processor
             if (logger.isLoggable(Level.FINE)) {
                 // Print out the cookie.  Might help with the debugging.
                 Header setCookie = method.getResponseHeader("set-cookie");
-                logger.fine((setCookie == null)? 
-                    null: setCookie.toString().trim());
+                if (setCookie != null) {
+                    logger.fine(setCookie.toString().trim());
+                }
             }
         } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
             // 401 is not 'success'.
@@ -462,7 +464,27 @@ public class FetchHTTP extends Processor
             for (Iterator i = avatars.iterator(); i.hasNext();) {
                 CredentialAvatar ca = (CredentialAvatar)i.next();
                 curi.removeCredentialAvatar(ca);
-                curi.getServer().addCredentialAvatar(ca);
+                // The server to attach too may not be the server that hosts
+                // this passed curi.  It might be of another subdomain. 
+                // The avatar needs to be added to the server that is dependent
+                // on this precondition.  Find it by name.  Get the name from
+                // the credential this avatar represents.
+                Credential c = ca.getCredential(getSettingsHandler(), curi);
+                String cd = null;
+                try {
+                    cd = c.getCredentialDomain(curi);
+                }
+                catch (AttributeNotFoundException e) {
+                    logger.severe("Failed to get cred domain for " + curi +
+                        " for " + ca + ": " + e.getMessage());
+                }
+                if (cd != null) {
+                    CrawlServer cs
+                        = getController().getServerCache().getServerFor(cd);
+                    if (cs != null) {
+                        cs.addCredentialAvatar(ca);
+                    }
+                }
             }
         }
     }
@@ -516,7 +538,7 @@ public class FetchHTTP extends Processor
                 logger.severe("No credential store for " + curi);
             } else {
                 Set storeRfc2617Credentials = cs.subset(curi,
-                    Rfc2617Credential.class);
+                    Rfc2617Credential.class, curi.getServer().getName());
                 if (storeRfc2617Credentials == null ||
                     storeRfc2617Credentials.size() <= 0) {
                     logger.fine("No rfc2617 credentials for " + curi);

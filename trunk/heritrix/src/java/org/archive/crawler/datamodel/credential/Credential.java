@@ -233,4 +233,27 @@ public abstract class Credential extends ModuleType {
      * credential type.
      */
     public abstract boolean isPost(CrawlURI curi);
+
+    /**
+     * Test passed curi matches this credentials rootUri.
+     * @param curi CrawlURI to test.
+     * @return True if domain for credential matches that of the passed curi.
+     */
+    public boolean rootUriMatch(CrawlURI curi) {
+        String cd = null;
+        try {
+            cd = getCredentialDomain(curi);
+        }
+        catch (AttributeNotFoundException e) {
+            logger.severe("Failed to get credential domain " + curi + ": " +
+                e.getMessage());
+        }
+
+        // TODO: Account for port.  Currently we do not distingush between
+        // http and https; they both get same crawl server instance. 
+        String serverName = curi.getServer().getName();
+        logger.fine("RootURI: Comparing " + serverName + " " + cd);
+        return cd != null && serverName != null &&
+            serverName.equalsIgnoreCase(cd);
+    }
 }
