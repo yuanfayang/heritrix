@@ -11,8 +11,6 @@
 	<classpathentry kind="lib" path="lib/javaswf-CVS-SNAPSHOT-1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-2.0-RC1-20031102.jar"/>
 	<classpathentry kind="lib" path="lib/poi-scratchpad-2.0-RC1-20031102.jar"/>
-	<classpathentry kind="lib" path="lib/jmxri-4.2.15rc0.jar"/>
-	<classpathentry kind="lib" path="lib/jmxtools-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/org.mortbay.jetty-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/org.mortbay.jmx-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/stataclasses-0.1.0.jar"/>
@@ -23,5 +21,7 @@
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-httpclient-2.0-rc3.jar"/>
+	<classpathentry kind="lib" path="lib/jmxri-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/jmxtools-1.2.1.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
