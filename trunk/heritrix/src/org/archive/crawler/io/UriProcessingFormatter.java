@@ -59,6 +59,9 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			+ " "
 			+ ArchiveUtils.padTo(length,10)
 			+ " "
+			+ "#"
+			+ curi.getThreadNumber()
+			+ " "
 			+ uri
 			+ " "
 			+ mime
