@@ -486,8 +486,11 @@ public class CrawlController implements Serializable {
                 String recoverPath =
                     (String)order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
                 if(recoverPath.length() > 0) {
+                	boolean retainFailures = ((Boolean) order
+							.getAttribute(CrawlOrder.ATTR_RECOVER_RETAIN_FAILURES))
+							.booleanValue();
                     try {
-                        frontier.importRecoverLog(recoverPath);
+                        frontier.importRecoverLog(recoverPath,retainFailures);
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         throw new FatalConfigurationException(

@@ -679,13 +679,14 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         return false;
     }
     
-    public void importRecoverLog(String pathToLog) throws IOException {
+    public void importRecoverLog(String pathToLog, boolean retainFailures)
+			throws IOException {
         File source = new File(pathToLog);
         if (!source.isAbsolute()) {
             source = new File(getSettingsHandler().getOrder()
                     .getController().getDisk(), pathToLog);
         }
-        RecoveryJournal.importRecoverLog(source,this);
+        RecoveryJournal.importRecoverLog(source,this,retainFailures);
     }
     
     /* (non-Javadoc)

@@ -306,9 +306,13 @@ public interface Frontier {
      * crash. This method is the one used to achive this.
      *
      * @param pathToLog The name (with full path) of the recover log.
+     * @param retainFailures If true, failures in log should count as 
+     * having been included. (If false, failures will be ignored, meaning
+     * the corresponding URIs will be retried in the recovered crawl.)
      * @throws IOException If problems occur reading the recover log.
      */
-    public void importRecoverLog(String pathToLog) throws IOException;
+    public void importRecoverLog(String pathToLog, boolean retainFailures)
+			throws IOException;
 
     /**
      * Get a <code>URIFrontierMarker</code> initialized with the given
