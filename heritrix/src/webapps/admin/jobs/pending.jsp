@@ -34,6 +34,7 @@
 					Status
 				</th>
 				<th>
+					Actions
 				</th>
 			</tr>
 			<%
@@ -50,6 +51,7 @@
 						</td>
 						<td>
 							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View</a>
+							<a href="/admin/jobs/modify.jsp?job=<%=job.getUID()%>">Modify</a>
 							<a href="/admin/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
 						</td>
 					</tr>
