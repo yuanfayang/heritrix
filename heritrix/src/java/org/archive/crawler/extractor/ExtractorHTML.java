@@ -55,7 +55,7 @@ implements CoreAttributeConstants {
     protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
     private static Logger logger =
-        Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
+        Logger.getLogger(ExtractorHTML.class.getName());
 
     /**
      * Compiled relevant tag extractor.
@@ -149,7 +149,11 @@ implements CoreAttributeConstants {
 
 
     public ExtractorHTML(String name) {
-        super(name, "HTML extractor. Extracts links from HTML documents");
+        this(name, "HTML extractor. Extracts links from HTML documents");
+    }
+    
+    public ExtractorHTML(String name, String description) {
+        super(name, description);
     }
 
     protected void processGeneralTag(CrawlURI curi, CharSequence element,

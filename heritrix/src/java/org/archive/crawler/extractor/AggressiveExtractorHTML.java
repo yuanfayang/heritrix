@@ -1,5 +1,5 @@
 /*
- * ExtractorHTML2
+ * AggressiveExtractorHTML
  *
  * $Id$
  *
@@ -38,44 +38,47 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author Igor Ranitovic
  *
  */
-public class ExtractorHTML2 extends ExtractorHTML {
-    static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
-    /**
-     * @param name
-     */
-    public ExtractorHTML2(String name) {
-        super(name);
+public class AggressiveExtractorHTML
+extends ExtractorHTML {
+    static Logger logger =
+        Logger.getLogger(AggressiveExtractorHTML.class.getName());
+    
+    public AggressiveExtractorHTML(String name) {
+        super(name, "Aggressive HTML extractor. Subclasses ExtractorHTML " +
+                " so does all that it does, except in regard to javascript " +
+                " blocks.  Here " +
+                " it first processes as JS as its parent does, but then it " +
+                " reruns through the JS treating it as HTML (May cause many " +
+                " false positives). It finishes by applying heuristics " +
+                " against script code looking for possible URIs. ");
     }
 
-    /**
-     * @param curi
-     * @param sequence
-     */
-    protected void processScript(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
-
+    protected void processScript(CrawlURI curi, CharSequence sequence,
+            int endOfOpenTag) {
          // first, get attributes of script-open tag
         // as per any other tag
-        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
+        processGeneralTag(curi, sequence.subSequence(0,6),
+            sequence.subSequence(0, endOfOpenTag));
         // then, proccess entire javascript code as html code
         // this may cause a lot of false positves
-        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(endOfOpenTag,sequence.length()));
+        processGeneralTag(curi, sequence.subSequence(0,6),
+            sequence.subSequence(endOfOpenTag, sequence.length()));
         // finally, apply best-effort string-analysis heuristics
         // against any code present (false positives are OK)
-        processScriptCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
+        processScriptCode(curi, sequence.subSequence(endOfOpenTag,
+            sequence.length()));
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
      */
     public String report() {
-        StringBuffer ret = new StringBuffer();
+        StringBuffer ret = new StringBuffer(256);
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML2\n");
-        ret.append("  Function:          Link extraction on HTML documents (including embedded CSS)\n");
+        ret.append("  Function:          Link extraction on HTML documents " +
+            "(including embedded CSS)\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-
         return ret.toString();
     }
-
-
 }
