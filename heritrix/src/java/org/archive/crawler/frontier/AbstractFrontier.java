@@ -69,10 +69,10 @@ CoreAttributeConstants {
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
     /** should the frontier hold any threads asking for URIs? */
-    private boolean shouldPause = false;
+    protected boolean shouldPause = false;
     /** should the frontier send an EndedException to any threads 
      * asking for URIs? */
-    private boolean shouldTerminate = false;
+    protected boolean shouldTerminate = false;
     
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
@@ -505,7 +505,6 @@ CoreAttributeConstants {
     protected CrawlServer getServer(CrawlURI curi) {
         return this.controller.getServerCache().getServerFor(curi);
     }
-
 
     /**
      * Return a suitable value to wait before retrying the given URI.
