@@ -68,7 +68,7 @@ implements UriUniqFilter, Serializable {
         this.receiver = r;
     }
 
-    public void add(CandidateURI obj, String canonical) {
+    public void add(String canonical, CandidateURI obj) {
         if(fpAdd(getFp(canonical))) {
             this.receiver.receive(obj);
         }
@@ -82,11 +82,11 @@ implements UriUniqFilter, Serializable {
         return fpgen.fp(canonical);
     }
 
-    public void addNow(CandidateURI obj, String canonical) {
-        add(obj, canonical);
+    public void addNow(String canonical, CandidateURI obj) {
+        add(canonical, obj);
     }
 
-    public void addForce(CandidateURI obj, String canonical) {
+    public void addForce(String canonical, CandidateURI obj) {
         fpAdd(getFp(canonical));
         this.receiver.receive(obj);
     }

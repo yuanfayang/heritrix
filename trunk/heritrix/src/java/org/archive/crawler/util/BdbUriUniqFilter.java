@@ -200,20 +200,20 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     	this.receiver = receiver;
     }
 
-    public void add(CandidateURI item, String canonical) {
-    	add(item, canonical, true, false);
+    public void add(String canonical, CandidateURI item) {
+    	add(canonical, item, true, false);
     }
 
-    public void addNow(CandidateURI item, String canonical) {
-    	add(item, canonical);
+    public void addNow(String canonical, CandidateURI item) {
+    	add(canonical, item);
     }
 
-    public void addForce(CandidateURI item, String canonical) {
-    	add(item, canonical, true, true);
+    public void addForce(String canonical, CandidateURI item) {
+    	add(canonical, item, true, true);
     }
 
     public void note(String canonical) {
-        add(null, canonical, false, false);
+        add(canonical, null, false, false);
     }
     
     /**
@@ -226,7 +226,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * @param force Override of <code>passItOn</code> forcing passing on
      * of <code>item</code> even if already seen.
      */
-    protected void add(CandidateURI item, String canonical, boolean passItOn,
+    protected void add(String canonical, CandidateURI item, boolean passItOn,
             boolean force) {
         DatabaseEntry key = new DatabaseEntry();
         LongBinding.longToEntry(createKey(canonical), key);

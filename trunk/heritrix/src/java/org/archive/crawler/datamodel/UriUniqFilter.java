@@ -65,49 +65,49 @@ public interface UriUniqFilter {
     
     /**
      * Add given uri, if not already present.
-     * @param uri Item to add.
-     * @param canonical The canonicalized version of <code>uri</code>.
+     * @param key Usually a canonicalized version of <code>value</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
+     * @param value Item to add.
      */
-    public void add(CandidateURI uri, String canonical);
+    public void add(String key, CandidateURI value);
     
     /**
      * Immediately add uri.
-     * @param uri Uri item to add immediately.
-     * @param canonical The canonicalized version of <code>uri</code>.
+     * @param key Usually a canonicalized version of <code>uri</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
+     * @param value Item to add.
      */
-    public void addNow(CandidateURI uri, String canonical);
+    public void addNow(String key, CandidateURI value);
     
     /**
      * Add given uri, even if already present
      * 
      * TODO: What is this for?
      * 
-     * @param uri Uri item to force add.
-     * @param canonical The canonicalized version of <code>uri</code>.
+     * @param key Usually a canonicalized version of <code>uri</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
+     * @param value Item to add.
      */
-    public void addForce(CandidateURI uri, String canonical);
+    public void addForce(String key, CandidateURI value);
     
     /**
      * Note item as seen, without passing through to receiver.
-     * @param canonical The canonicalized version of <code>uri</code>.
+     * @param key Usually a canonicalized version of an <code>URI</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
      */
-    public void note(String canonical);
+    public void note(String key);
     
     /**
      * Forget item was seen
-     * @param canonical The canonicalized version of <code>uri</code>.
+     * @param key Usually a canonicalized version of an <code>URI</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
      */
-    public void forget(String canonical);
+    public void forget(String key);
     
     /**
      * Force pending items to be added/dropped.

@@ -209,9 +209,9 @@ implements Frontier,
      */
     public void schedule(CandidateURI caUri) {
         if (caUri.forceFetch()) {
-            alreadyIncluded.addForce(caUri, canonicalize(caUri.getUURI()));
+            alreadyIncluded.addForce(canonicalize(caUri.getUURI()), caUri);
         } else {
-            alreadyIncluded.add(caUri, canonicalize(caUri.getUURI()));
+            alreadyIncluded.add(canonicalize(caUri.getUURI()), caUri);
         }
     }
 
