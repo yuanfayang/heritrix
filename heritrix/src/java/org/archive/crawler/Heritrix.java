@@ -597,6 +597,8 @@ public class Heritrix
      * Launch the crawler without a web UI
      *
      * @param crawlOrderFile The crawl order to crawl.
+     * @throws InitializationException
+     * @throws InvalidAttributeValueException
      */
     private static void launch(String crawlOrderFile)
         throws InitializationException, InvalidAttributeValueException
@@ -606,7 +608,7 @@ public class Heritrix
         handler.initialize();
         controller = new CrawlController();
         controller.initialize(handler);
-        controller.startCrawl();
+        controller.requestCrawlStart();
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
             " crawl started using " + crawlOrderFile + ".");
     }
@@ -791,7 +793,7 @@ public class Heritrix
                 jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
             }
         } else if(controller != null) {
-            controller.stopCrawl();
+            controller.requestCrawlStop();
         }
     }
 
