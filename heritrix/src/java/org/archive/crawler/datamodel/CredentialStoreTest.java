@@ -33,8 +33,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.*;
-import org.archive.crawler.datamodel.credential.*;
+import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsFrameworkTestCase;
 
@@ -87,7 +86,7 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
         return names;
     }
     
-    private void writeCrendentials(CredentialStore store, Object context,
+    private void writeCrendentials(CredentialStore store, CrawlerSettings context,
                 String prefix)
         throws InvalidAttributeValueException, AttributeNotFoundException,
         IllegalArgumentException, InvocationTargetException {
@@ -104,6 +103,6 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
         for (Iterator i = store.iterator(null); i.hasNext();) {
             names.add(((Credential)i.next()).getName());
         }
-        getSettingsHandler().writeSettingsObject((CrawlerSettings)context);
+        getSettingsHandler().writeSettingsObject(context);
     }
 }

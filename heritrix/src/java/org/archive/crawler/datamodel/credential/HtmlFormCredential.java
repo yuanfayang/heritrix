@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.datamodel.credential;
 
-import org.archive.crawler.datamodel.credential.*;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;

@@ -35,6 +35,7 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.credential.*;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
@@ -108,8 +109,7 @@ public class CredentialStore extends ModuleType{
     protected MapType get(Object context)
         throws AttributeNotFoundException {
         
-        return (MapType)getAttribute(getSettingsFromObject(context),
-            ATTR_CREDENTIALS);
+        return (MapType)getAttribute(context, ATTR_CREDENTIALS);
     }
     
     /**
@@ -129,32 +129,32 @@ public class CredentialStore extends ModuleType{
      * Create and add to the list a credential of the passed <code>type</code>
      * giving the credential the passed <code>name</code>.
      * 
-     * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
+     * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param name Name to give the manufactured credential.  Should be unique
      * else the add of the credential to the list of credentials will fail.
      * @param type Type of credentials to get.
      * @return The credential created and added to the list of credentials.
      */
-    public Credential create(Object context, String name, Class type)
+    public Credential create(CrawlerSettings context, String name, Class type)
         throws IllegalArgumentException, InvocationTargetException,
         InvalidAttributeValueException, AttributeNotFoundException {
         
         Credential result = (Credential)SettingsHandler.
             instantiateModuleTypeFromClassName(name, type.getName());
         // Now add the just-created credential to the list.
-        get(context).addElement(getSettingsFromObject(context), result);
+        get(context).addElement(context, result);
         return result;
     }
     
     /**
      * Delete the credential <code>name</code>.
      * 
-     * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
+     * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param credential Credential to delete.
      */
-    public void remove(Object context, Credential credential)
+    public void remove(CrawlerSettings context, Credential credential)
         throws AttributeNotFoundException, IllegalArgumentException {
         
         remove(context, credential.getName());
@@ -163,14 +163,14 @@ public class CredentialStore extends ModuleType{
     /**
      * Delete the credential <code>name</code>.
      * 
-     * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
+     * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param name Name of credential to delete.
      */
-    public void remove(Object context, String name)
+    public void remove(CrawlerSettings context, String name)
         throws IllegalArgumentException, AttributeNotFoundException {
         
-        get(context).removeElement(getSettingsFromObject(context), name);
+        get(context).removeElement(context, name);
     }
     
     /**
@@ -178,7 +178,7 @@ public class CredentialStore extends ModuleType{
      */
     public Iterator iterator(Object context) throws AttributeNotFoundException {
         
-        return get(context).iterator(getSettingsFromObject(context));
+        return get(context).iterator(context);
     }
     
     /**
