@@ -15,6 +15,6 @@ org.archive.crawler.extractor.ExtractorJS|ExtractorJS
 org.archive.crawler.extractor.ExtractorPDF|ExtractorPDF
 org.archive.crawler.extractor.ExtractorDOC|ExtractorDOC
 org.archive.crawler.extractor.ExtractorUniversal|ExtractorUniversal
-org.archive.crawler.basic.ARCWriterProcessor|Archiver
+org.archive.crawler.writer.ARCWriterProcessor|Archiver
 org.archive.crawler.basic.CrawlStateUpdater|Updater
 org.archive.crawler.basic.Postselector|Postselector

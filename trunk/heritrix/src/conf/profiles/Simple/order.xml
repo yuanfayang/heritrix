@@ -113,7 +113,7 @@
       </newObject>
     </map>
     <map name="write-processors">
-      <newObject name="Archiver" class="org.archive.crawler.basic.ARCWriterProcessor">
+      <newObject name="Archiver" class="org.archive.crawler.writer.ARCWriterProcessor">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
