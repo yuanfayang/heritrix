@@ -15,12 +15,9 @@
 </seeds>
  
  </scope>
-
+ 
  <behavior 
  	disk-path="disk" 
- 	max-bytes-download="0"
- 	max-document-download="0"
- 	max-time-sec="0"
  	max-toe-threads="100">
    
   <http-headers 
@@ -73,6 +70,11 @@
     <processor 
     	class="org.archive.crawler.extractor.ExtractorSWF" 
     	name="ExtractorSWF" 
+    	next="ExtractorJS"/>
+
+    <processor 
+    	class="org.archive.crawler.extractor.ExtractorJS" 
+    	name="ExtractorJS" 
     	next="Archiver"/>
 
 	<!-- ExtractorPDF, ExtractorDOC disabled for now:
