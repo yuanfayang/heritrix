@@ -70,6 +70,7 @@ public class DiskStack implements Stack, Serializable {
         this.storage = storage;
         // test minimally if supplied file is sensible
         if(storage.exists()==false) {
+            storage.getParentFile().mkdirs();
             storage.createNewFile();
         }
     }
