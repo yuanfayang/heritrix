@@ -23,15 +23,8 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -43,7 +36,6 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.OrFilter;
-import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.util.DevUtils;
@@ -99,6 +91,7 @@ public class CrawlScope extends Filter {
      *        the constant ATT_NAME.
      */
     public CrawlScope(String name) {
+        // 'name' is never used.
         super(ATTR_NAME, "Crawl scope");
         Type t;
         t = addElementToDefinition(new SimpleType(ATTR_SEEDS,
@@ -111,7 +104,7 @@ public class CrawlScope extends Filter {
                 ATTR_MAX_TRANS_HOPS,
                 "Max transitive hops (embeds, referrals, preconditions) to include",
                 new Integer(5)));
-        excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
+        this.excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
         
         // Try to preserve the values of these attributes when we exchange
@@ -297,10 +290,10 @@ public class CrawlScope extends Filter {
      * @return True if exclude filter accepts passed object.
      */
     private boolean excludeAccepts(Object o) {
-        if (excludeFilter.isEmpty(o)) {
+        if (this.excludeFilter.isEmpty(o)) {
             return exeedsMaxHops(o);
         } else {
-            return excludeFilter.accepts(o) || exeedsMaxHops(o);
+            return this.excludeFilter.accepts(o) || exeedsMaxHops(o);
         }
     }
 
