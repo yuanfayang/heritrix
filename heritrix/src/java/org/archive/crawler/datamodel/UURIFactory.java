@@ -489,17 +489,21 @@ public class UURIFactory extends URI {
         // Do it here now in the fixup so if improperly escaped, we throw
         // an exception not letting a URI out.  Otherwise, we make a URI
         // and its fine till a processor does a getPath on it; the getPath
-        // forces the parent to decode the escaping, failing if the escaping
-        // was improperly done.  The resultant exception happens at an
-        // inconvenient time midprocessing.
+        // forces the parent to decode the escaping failing if the escaping
+        // is improper.  The resultant exception happens at an inconvenient
+        // time midprocessing (PathDepthFilter checks).
         //
-        // This fixup may cause us to miss content. This is to be seen.
-        // A fix would require fixing or avoiding the parent class.  TODO:
-        // review crawl logs for URIs that fail this test to see if the
-        // rejected URIs are fetchable (What we've seen to date is that
-        // the URIs with bad escaping are not fetchable; midprocessing
-        // we fail on them in PathDepthFilter for instance when it does
-        // a getPath and fails).
+        // One reason for these bad escapings -- though not the only --
+        // is that the page is using an encoding other than the ASCII or the
+        // UTF-8 that is our default URI encoding.  In this case the parent
+        // class is burping on the passed URL encoding.  If the page encoding
+        // was passed into this factory, the encoding seems to be parsed
+        // correctly (See the testEscapedEncoding unit test).
+        //
+        // This fixup may cause us to miss content.  There is the case noted
+        // above.  TODO: Look out for cases where we fail other than for the
+        // above given reason which will be fixed when we address
+        // '[ 913687 ] Make extractors interrogate for charset'.
         if (escaped) {
             validateEscaping(uriPath);
         }
