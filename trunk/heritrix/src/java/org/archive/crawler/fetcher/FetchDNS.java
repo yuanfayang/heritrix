@@ -141,10 +141,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         // Try to get the records for this host (assume domain name)
         // TODO: Bug #935119 concerns potential hang here
         rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
-
-        // Set null ip to mark that we have tried to look it up even if
-        // dns fetch fails.
-        targetHost.setIP(null, 0);
+        
         if (rrecordSet != null) {
             curi.setFetchStatus(S_DNS_SUCCESS);
             curi.setContentType("text/dns");
@@ -154,8 +151,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
             ARecord arecord = getFirstARecord(rrecordSet);
             targetHost.setIP(arecord.getAddress(), arecord.getTTL());
         } else {
-            if (((Boolean) getUncheckedAttribute(null,
+            if (((Boolean)getUncheckedAttribute(null,
                     ATTR_ACCEPT_NON_DNS_RESOLVES)).booleanValue()) {
+                // Do lookup that bypasses javadns.
                 InetAddress address = null;
                 try {
                     address = InetAddress.getByName(dnsName);
@@ -166,15 +164,20 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     targetHost.setIP(address, DEFAULT_TTL_FOR_NON_DNS_RESOLVES);
                     curi.setFetchStatus(S_GETBYNAME_SUCCESS);
                 } else {
-                    curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+                    setUnresolvable(curi, targetHost);
                 }
             } else {
-                curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+                setUnresolvable(curi, targetHost);
             }
         }
         // Add the IP of the dns server to this dns crawluri.
         curi.putString(A_DNS_SERVER_IP_LABEL, FindServer.server());
         curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+    }
+    
+    protected void setUnresolvable(CrawlURI curi, CrawlHost host) {
+        host.setIP(null, 0);
+        curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE); 
     }
     
     protected ARecord getFirstARecord(Record[] rrecordSet) {
