@@ -169,9 +169,8 @@ public class CrawlController extends Thread {
     CrawlOrder order;
     CrawlScope scope;
 
-    Processor firstProcessor;
-    Processor postprocessor;
-    MapType processors;
+    private ProcessorChainList processorChains;
+
     int nextToeSerialNumber = 0;
 
     ServerCache serverCache;
@@ -463,15 +462,21 @@ public class CrawlController extends Thread {
             order.setAttribute((Frontier) frontier);
         }
 
-        processors = order.getProcessors();
-        if (processors.isEmpty(null)) {
-            throw new FatalConfigurationException("No processors defined");
-        }
-
         // try to initialize each scope and frontier from the config file
         //scope.initialize(this);
         try {
             frontier.initialize(this);
+            
+            String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
+            if(recoverPath.length()>0) {
+                try {
+                    frontier.importRecoverLog(recoverPath);
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                    throw new FatalConfigurationException("Recover.log problem: "+e1);
+                }
+            }
         } catch (IOException e) {
             throw new FatalConfigurationException(
                 "unable to initialize frontier: " + e);
@@ -479,28 +484,8 @@ public class CrawlController extends Thread {
 
         serverCache = new ServerCache(getSettingsHandler());
 
-        Processor previous = null;
-        Iterator it = processors.iterator(null);
-        while (it.hasNext()) {
-            Processor p = (Processor) it.next();
-
-            if (previous == null) {
-                firstProcessor = p;
-            } else {
-                previous.setDefaultNextProcessor(p);
-            }
-
-            if (((Boolean) p.getAttribute(null, Processor.ATTR_POSTPROCESSOR))
-                 .booleanValue()) {
-                // I am the distinguished postprocessor earlier stage can skip to
-                setPostprocessor(p);
-            }
-
-            logger.info(
-                "Processor: " + p.getName() + " --> " + p.getClass().getName());
-
-            previous = p;
-        }
+        // Setup processors
+        processorChains = new ProcessorChainList(order);
     }
 
     private void setupDisk() throws FatalConfigurationException,
@@ -685,7 +670,7 @@ public class CrawlController extends Thread {
 
             CrawlURI curi = frontier.next(timeout);
             if (curi != null) {
-                curi.setNextProcessor(firstProcessor);
+                curi.setNextProcessorChain(getFirstProcessorChain());
                 ToeThread toe = toePool.available();
                 //if (toe !=null) {
                 logger.fine(toe.getName() + " crawl: " + curi.getURIString());
@@ -725,9 +710,6 @@ public class CrawlController extends Thread {
         registeredCrawlStatusListeners = null;
         order = null;
         scope = null;
-        firstProcessor = null;
-        postprocessor = null;
-        processors = null;
         serverCache = null;
 
         logger.fine(getName() + " finished for order CrawlController");
@@ -840,10 +822,6 @@ public class CrawlController extends Thread {
         return order;
     }
 
-    public MapType getProcessors() {
-        return processors;
-    }
-
     public ServerCache getServerCache() {
         return serverCache;
     }
@@ -929,15 +907,28 @@ public class CrawlController extends Thread {
         return scope;
     }
 
-    public Processor getPostprocessor() {
-        return postprocessor;
+    /** Get the list of processor chains.
+     * 
+     * @return the list of processor chains.
+     */
+    public ProcessorChainList getProcessorChainList() {
+        return processorChains;
+    }
+    
+    /** Get the first processor chain.
+     * 
+     * @return the first processor chain.
+     */
+    public ProcessorChain getFirstProcessorChain() {
+        return processorChains.getFirstChain();
     }
 
-    /**
-     * @param processor
+    /** Get the postprocessor chain.
+     * 
+     * @return the postprocessor chain.
      */
-    public void setPostprocessor(Processor processor) {
-        postprocessor = processor;
+    public ProcessorChain getPostprocessorChain() {
+        return processorChains.getLastChain();
     }
 
     public File getDisk() {
@@ -1000,16 +991,17 @@ public class CrawlController extends Thread {
                 + ArchiveUtils.TIMESTAMP12.format(new Date())
                 + "\n");
         rep.append("  Job being crawled:    " + getOrder().getCrawlOrderName()
-                   + "\n");
+                + "\n");
 
-        rep.append("  Number of Processors: " + processors.size(null) + "\n");
+        rep.append("  Number of Processors: " + processorChains.processorCount()
+                + "\n");
         rep.append("  NOTE: Some processors may not return a report!\n\n");
 
-        Iterator iter = processors.iterator(null);
-        while (iter.hasNext()) {
-            Processor p = (Processor) iter.next();
-            //Processor p = (Processor) ((Map.Entry)obj).getValue();
-            rep.append(p.report());
+        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
+            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
+                    ip.hasNext(); ) {
+                rep.append(((Processor) ip.next()).report());
+            }
         }
 
         return rep.toString();
@@ -1017,8 +1009,8 @@ public class CrawlController extends Thread {
 
     /**
      * While many settings will update automatically when the SettingsHandler is
-     * modified, some settings need to be explicitly changed to reflect new settings.
-     * This includes, number of toe threads and seeds.
+     * modified, some settings need to be explicitly changed to reflect new
+     * settings. This includes, number of toe threads and seeds.
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
@@ -1028,7 +1020,8 @@ public class CrawlController extends Thread {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
             caUri.setIsSeed(true);
-            frontier.scheduleHigh(caUri);
+            caUri.setSchedulingDirective(CandidateURI.HIGH);
+            frontier.schedule(caUri);
         }
     }
 
