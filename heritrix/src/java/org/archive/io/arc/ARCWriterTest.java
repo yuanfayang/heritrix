@@ -30,9 +30,8 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.archive.io.*;
-import org.archive.util.*;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.TmpDirTestCase;
 
 
 /**
