@@ -11,8 +11,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -22,6 +20,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.IAGZIPOutputStream;
 import org.w3c.dom.Node;
 import org.xbill.DNS.Record;
@@ -159,7 +158,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}
 			
 			String hostIP = curi.getHost().getIP().getHostAddress();
-			String dateStamp = get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
+			String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
 			
 			// fail if we're missing anythign critical
 			if(hostIP == null || dateStamp == null){
@@ -193,7 +192,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	
 	protected void createNewArcFile() throws IOException {
 
-		String date = get14DigitDate();
+		String date = ArchiveUtils.get14DigitDate();
 		int uniqueIdentifier = getNextArcId();
 		
 		String fileExtension = ".arc";
@@ -297,7 +296,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		
 		// start the record with a 14-digit date per RFC 2540
-		byte[] fetchDate = get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME)).getBytes();
+		byte[] fetchDate = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME)).getBytes();
 		baos.write(fetchDate);
 		// don't forget the newline
 		baos.write("\n".getBytes());
@@ -370,25 +369,5 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		}else{
 			outputDir = buffer;
 		}
-	}
-	
-	// utility functions for creating arc-style date stamps
-	public static String get14DigitDate(){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
-		return sdf.format(new Date());
-	}
-	public static String get12DigitDate(){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmm");		
-		return sdf.format(new Date()); 
-	}
-	public static String get14DigitDate(long date){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
-		return sdf.format(new Date(date));
-	}
-	public static String get12DigitDate(long date){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmm");		
-		return sdf.format(new Date(date)); 
 	}	
-	
-	
 }
