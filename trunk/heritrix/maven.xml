@@ -163,7 +163,7 @@
         <chmod file="${basename}/bin/*" perm="a+rx" />
         <chmod file="${basename}/bin/*" perm="a+rx" />
         <exec failonerror="true"
-                timeout="300000"
+                timeout="90000"
                 executable="${basename}/bin/foreground_heritrix">
             <arg line="--selftest" />
             <arg line="--port=8083" />
