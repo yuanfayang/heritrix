@@ -95,6 +95,7 @@ public class SimpleSelector implements URISelector, CoreAttributeConstants {
 				store.snoozeQueueUntil(
 					curi.getClassKey(),
 					completeTime + duration);
+			    store.notify();
 			}
 			
 			// note completions
@@ -117,7 +118,7 @@ public class SimpleSelector implements URISelector, CoreAttributeConstants {
 					length = get.getResponseHeader("Content-Length").getValue();
 				} catch (NullPointerException npe ) {
 				}
-				Object array[] = { new Integer(statusCode), length, curi.getUURI().getUri() };
+				Object array[] = { new Integer(curi.getThreadNumber()), new Integer(statusCode), length, curi.getUURI().getUri() };
 				fetchLogger.log(Level.INFO,curi.getUURI().getUri().toString(),array);
 			}
 			// note that CURI has passed out of scheduling
