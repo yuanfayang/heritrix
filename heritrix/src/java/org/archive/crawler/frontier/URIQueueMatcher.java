@@ -27,11 +27,11 @@ package org.archive.crawler.frontier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.URIFrontier;
-import org.archive.util.QueueItemMatcher;
 
 
 /**
@@ -39,10 +39,10 @@ import org.archive.util.QueueItemMatcher;
  * queues used by the <code>Frontier</code>
  * @author Kristinn Sigurdsson
  * 
- * @see org.archive.util.QueueItemMatcher
+ * @see org.apache.commons.collections.Predicate
  * @see org.archive.crawler.frontier.Frontier
  */
-public class URIQueueMatcher implements QueueItemMatcher {
+public class URIQueueMatcher implements Predicate {
     
     private Pattern p;
     private boolean delete = false;
@@ -68,9 +68,9 @@ public class URIQueueMatcher implements QueueItemMatcher {
     }
     
     /* (non-Javadoc)
-     * @see org.archive.util.QueueItemMatcher#match(java.lang.Object)
+     * @see org.apache.commons.collections.Predicate#evaluate(java.lang.Object)
      */
-    public boolean match(Object o) {
+    public boolean evaluate(Object o) {
         if(o instanceof CandidateURI){
             CandidateURI CaURI = (CandidateURI)o;
             Matcher m = p.matcher(CaURI.getURIString());
