@@ -183,7 +183,7 @@
 			return;
 		}else if(action.equals("goto")){
             // Goto another page of the job/profile settings
-			response.sendRedirect(request.getParameter("subaction")+"?job="+theJob.getUID());
+			response.sendRedirect(request.getParameter("subaction"));
 			return;
 		}else if(action.equals("module")){
 			// Setting a module
