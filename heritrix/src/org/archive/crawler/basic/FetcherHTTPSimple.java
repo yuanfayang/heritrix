@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -76,7 +77,7 @@ public class FetcherHTTPSimple
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false); // don't auto-follow redirects
-		get.setHttp11(false);
+		get.getParams().setVersion(HttpVersion.HTTP_1_0);
 		// use only HTTP/1.0 (to avoid receiving chunked responses)
 		get.setRequestHeader(
 			"User-Agent",
