@@ -24,7 +24,7 @@
  */
 package org.archive.crawler.settings.refinements;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CandidateURI;
 
 
 /**
@@ -54,20 +54,17 @@ public class PortnumberCriteria implements Criteria {
         setPortNumber(portNumber);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.refinements.Criteria#isWithinRefinementBounds(org.archive.crawler.datamodel.UURI, int)
-     */
-    public boolean isWithinRefinementBounds(UURI uri) {
-        int port = uri.getPort();
+    public boolean isWithinRefinementBounds(CandidateURI curi) {
+        int port = curi.getUURI().getPort();
         if (port < 0) {
-            if (uri.getScheme().equals("http")) {
+            if (curi.getUURI().getScheme().equals("http")) {
                 port = 80;
-            } else if (uri.getScheme().equals("https")) {
+            } else if (curi.getUURI().getScheme().equals("https")) {
                 port = 443;
             }
         }
 
-        return (port == portNumber)? true: false;
+        return port == portNumber;
     }
 
     /**
@@ -78,6 +75,7 @@ public class PortnumberCriteria implements Criteria {
     public String getPortNumber() {
         return String.valueOf(portNumber);
     }
+
     /**
      * Set the port number that is to be checked against a URI.
      *
@@ -87,16 +85,10 @@ public class PortnumberCriteria implements Criteria {
         this.portNumber = Integer.parseInt(portNumber);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.refinements.Criteria#getName()
-     */
     public String getName() {
         return "Port number criteria";
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.refinements.Criteria#getDescription()
-     */
     public String getDescription() {
         return "Accept URIs on port " + getPortNumber();
     }

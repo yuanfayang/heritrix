@@ -129,7 +129,7 @@ public class CrawlServer implements Serializable {
         validRobots = true;
         
         if (curi.getFetchStatus() != 200 ||
-                honoringPolicy.getType(getSettings(curi.getUURI())) ==
+                honoringPolicy.getType(getSettings(curi)) ==
                     RobotsHonoringPolicy.IGNORE)
         {
             // not found or other errors == all ok for now
@@ -148,13 +148,11 @@ public class CrawlServer implements Serializable {
         ReplayInputStream contentBodyStream = null;
         try {
             BufferedReader reader;
-            if (honoringPolicy.getType(getSettings(curi.getUURI()))
+            if (honoringPolicy.getType(getSettings(curi))
                 == RobotsHonoringPolicy.CUSTOM) {
                 reader = new BufferedReader(new StringReader(honoringPolicy
-                        .getCustomRobots(getSettings(curi.getUURI()))));
-            }
-            else
-            {
+                    .getCustomRobots(getSettings(curi))));
+            } else {
                 contentBodyStream = curi.getHttpRecorder().getRecordedInput()
                     .getContentReplayInputStream();
 
@@ -162,10 +160,8 @@ public class CrawlServer implements Serializable {
                 reader = new BufferedReader(
                     new InputStreamReader(contentBodyStream));
             }
-            robots = RobotsExclusionPolicy.policyFor(
-                    getSettings(curi.getUURI()),
-                    reader,
-                    honoringPolicy);
+            robots = RobotsExclusionPolicy.policyFor(getSettings(curi),
+                reader, honoringPolicy);
 
         } catch (IOException e) {
             robots = RobotsExclusionPolicy.ALLOWALL;
@@ -230,14 +226,15 @@ public class CrawlServer implements Serializable {
     }
 
     /** Get the settings object in effect for this server.
-     * @param uri
+     * @param curi
      *
      * @return the settings object in effect for this server.
      * @throws URIException
      */
-    private CrawlerSettings getSettings(UURI uri)
+    private CrawlerSettings getSettings(CandidateURI curi)
     throws URIException {
-        return this.settingsHandler.getSettings(uri.getReferencedHost(), uri);
+        return this.settingsHandler.
+            getSettings(curi.getUURI().getReferencedHost(), curi);
     }
 
     /** Set the settings handler to be used by this server.

@@ -178,10 +178,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * Create a new instance of CrawlURI from a {@link CandidateURI}
      *
      * @param caUri the CandidateURI to base this CrawlURI on.
-     * @param o
+     * @param o Monotonically increasing number within a crawl.
      */
     public CrawlURI(CandidateURI caUri, long o) {
-        super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(), caUri.getViaContext());
+        super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
+            caUri.getViaContext());
         ordinal = o;
         setIsSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
@@ -1115,8 +1116,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void createAndAddLink(String url, CharSequence context,
             char hopType) throws URIException {
-        Link link = createLink(url,context,hopType);
-        addOutLink(link);
+        addOutLink(createLink(url, context, hopType));
     }
 
     /**
@@ -1130,9 +1130,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void createAndAddLinkRelativeToBase(String url,
             CharSequence context, char hopType) throws URIException {
-        Link link = new Link(getUURI(), UURIFactory.getInstance(
-                getBaseURI(), url), context, hopType);
-        addOutLink(link);
+        addOutLink(new Link(getUURI(), UURIFactory.getInstance(
+                getBaseURI(), url), context, hopType));
     }
     
     /**
@@ -1146,9 +1145,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void createAndAddLinkRelativeToVia(String url,
             CharSequence context, char hopType) throws URIException {
-        Link link = new Link(getUURI(), UURIFactory.getInstance(
-                getVia(), url), context, hopType);
-        addOutLink(link);
+        addOutLink(new Link(getUURI(), UURIFactory.getInstance(
+            getVia(), url), context, hopType));
     }
     
     /**
@@ -1158,8 +1156,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @throws URIException if supplied string cannot be interpreted as URI
      */
     public void setBaseURI(String baseHref) throws URIException {
-        UURI base = UURIFactory.getInstance(baseHref);
-        putObject(A_HTML_BASE,base);
+        putObject(A_HTML_BASE, UURIFactory.getInstance(baseHref));
     }
       
     /**
