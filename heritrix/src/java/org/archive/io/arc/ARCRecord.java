@@ -187,10 +187,13 @@ public class ARCRecord extends InputStream implements ARCConstants {
         if (this.httpHeaderStream != null) {
             // Empty the httpHeaderStream
             for (int available = this.httpHeaderStream.available();
-            		(available = this.httpHeaderStream.available()) > 0;) {
+            		this.httpHeaderStream != null &&
+            			(available = this.httpHeaderStream.available()) > 0;) {
                 // We should be in this loop once only we should only do this
                 // buffer allocation once.
                 byte [] buffer = new byte[available];
+                // The read nulls out httpHeaderStream when done with it so
+                // need check for null in the loop control line.
                 read(buffer, 0, available);
             }
         }
@@ -273,6 +276,16 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     public int getBodyOffset() {
         return this.bodyOffset;
+    }
+    
+    /**
+     * Return status code for this record.
+     * 
+     * This method will return -1 until the http header has been read.
+     * @return Status code.
+     */
+    public int getStatusCode() {
+        return (this.httpStatus == null)? -1: this.httpStatus.getStatusCode();
     }
     
     /**

@@ -203,6 +203,31 @@ public interface ARCConstants {
     public static final String STATUSCODE_FIELD_KEY = "statuscode";
     
     /**
+     * Key for date field.
+     */
+    public static final String DATE_FIELD_KEY = "date";
+    
+    /**
+     * Key for url field.
+     */
+    public static final String URL_FIELD_KEY = URL_HEADER_FIELD_KEY;
+    
+    /**
+     * Key for offset field.
+     */
+    public static final String OFFSET_FIELD_KEY = OFFSET_HEADER_FIELD_KEY;
+    
+    /**
+     * Key for filename field.
+     */
+    public static final String FILENAME_FIELD_KEY = FILENAME_HEADER_FIELD_KEY;
+    
+    /**
+     * Key for checksum field.
+     */
+    public static final String CHECKSUM_FIELD_KEY = CHECKSUM_HEADER_FIELD_KEY;
+    
+    /**
      * Tokenized field prefix.
      * 
      * Use this prefix for tokenized fields  when naming fields in
