@@ -47,12 +47,12 @@ public abstract class ListType implements Type {
     }
 
     public void add(Object element) {
-        checkType(element);
+        element = checkType(element);
         listData.add(element);
     }
     
     public void add(int index, Object element) {
-        checkType(element);
+        element = checkType(element);
         listData.add(index, element);
     }
     
@@ -61,7 +61,7 @@ public abstract class ListType implements Type {
     }
     
     public Object set(int index, Object element) {
-        checkType(element);
+        element = checkType(element);
         return listData.set(index, element);
     }
     
@@ -77,7 +77,7 @@ public abstract class ListType implements Type {
         return listData.isEmpty();
     }
     
-    public abstract boolean checkType(Object element) throws ClassCastException;
+    public abstract Object checkType(Object element) throws ClassCastException;
     
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.Type#getDefaultValue()
@@ -98,5 +98,11 @@ public abstract class ListType implements Type {
      */
     public String getName() {
         return name;
+    }
+    
+    /** Removes all elements from this list.
+     */
+    public void clear() {
+        listData.clear();
     }
 }

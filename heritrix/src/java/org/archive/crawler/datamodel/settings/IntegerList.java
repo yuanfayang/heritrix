@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import javax.management.InvalidAttributeValueException;
+
 /**
  * 
  * @author John Erik Halse
@@ -30,89 +32,96 @@ package org.archive.crawler.datamodel.settings;
  */
 public class IntegerList extends ListType {
 
-	/**
-	 * 
-	 */
-	public IntegerList(String name, String description) {
+    /**
+     * 
+     */
+    public IntegerList(String name, String description) {
         super(name, description);
-	}
+    }
 
-	/**
-	 * @param c
-	 */
-	public IntegerList(String name, String description, IntegerList l) {
+    /**
+     * @param c
+     */
+    public IntegerList(String name, String description, IntegerList l) {
         super(name, description);
         addAll(l);
-	}
+    }
 
-	public IntegerList(String name, String description, Integer[] l) {
+    public IntegerList(String name, String description, Integer[] l) {
         super(name, description);
         addAll(l);
-	}
-	
+    }
+
     public IntegerList(String name, String description, int[] l) {
         super(name, description);
         addAll(l);
     }
 
-	/* (non-Javadoc)
-	 * @see java.util.List#add(int, java.lang.Object)
-	 */
-	public void add(int index, Integer element) {
-		super.add(index, element);
-	}
+    /* (non-Javadoc)
+     * @see java.util.List#add(int, java.lang.Object)
+     */
+    public void add(int index, Integer element) {
+        super.add(index, element);
+    }
 
     public void add(int index, int element) {
         super.add(index, new Integer(element));
     }
 
-	/* (non-Javadoc)
-	 * @see java.util.Collection#add(java.lang.Object)
-	 */
-	public void add(Integer element) {
-		super.add(element);
-	}
+    /* (non-Javadoc)
+     * @see java.util.Collection#add(java.lang.Object)
+     */
+    public void add(Integer element) {
+        super.add(element);
+    }
 
     public void add(int element) {
         super.add(new Integer(element));
     }
 
-	/* (non-Javadoc)
-	 * @see java.util.Collection#addAll(java.util.Collection)
-	 */
-	public void addAll(IntegerList l) {
-       super.addAll(l);
-	}
+    /* (non-Javadoc)
+     * @see java.util.Collection#addAll(java.util.Collection)
+     */
+    public void addAll(IntegerList l) {
+        super.addAll(l);
+    }
 
-	/* (non-Javadoc)
-	 * @see java.util.List#addAll(int, java.util.Collection)
-	 */
-	public void addAll(Integer[] l) {
-        for(int i=0; i<l.length; i++) {
-            add(l[i]);
-        }
-	}
-
-    public void addAll(int[] l) {
-        for(int i=0; i<l.length; i++) {
+    /* (non-Javadoc)
+     * @see java.util.List#addAll(int, java.util.Collection)
+     */
+    public void addAll(Integer[] l) {
+        for (int i = 0; i < l.length; i++) {
             add(l[i]);
         }
     }
 
-	/* (non-Javadoc)
-	 * @see java.util.List#set(int, java.lang.Object)
-	 */
-	public Integer set(int index, Integer element) {
-		return (Integer) super.set(index, element);
-	}
+    public void addAll(int[] l) {
+        for (int i = 0; i < l.length; i++) {
+            add(l[i]);
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see java.util.List#set(int, java.lang.Object)
+     */
+    public Integer set(int index, Integer element) {
+        return (Integer) super.set(index, element);
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.ListType#checkType(java.lang.Object)
      */
-    public boolean checkType(Object element) throws ClassCastException {
-        if(!(element instanceof Integer)) {
-            throw new ClassCastException("Element should be of type java.lang.Integer");
+    public Object checkType(Object element) throws ClassCastException {
+        if (!(element instanceof Integer)) {
+            try {
+                element =
+                    AbstractSettingsHandler.StringToType(
+                        (String) element,
+                        AbstractSettingsHandler.INTEGER);
+            } catch (InvalidAttributeValueException e) {
+                throw new ClassCastException("Element should be of type java.lang.Integer");
+            }
         }
-        return true;
+        return element;
     }
 }

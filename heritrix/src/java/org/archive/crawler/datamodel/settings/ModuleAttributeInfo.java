@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 
 /**
@@ -33,7 +34,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     private final boolean overridable;
     private final Object defaultValue;
     private final Object legalValueLists[];
-    private final ComplexType complexType;
+    private ComplexType complexType;
 
     /**
      * @param name
@@ -51,7 +52,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         boolean isOverrideable,
         Object[] legalValues,
         Object defaultValue)
-        throws IllegalArgumentException {
+        throws InvalidAttributeValueException {
         super(name, type.getClass().getName(), description, true, true, false);
         overridable = isOverrideable;
         legalValueLists = legalValues;
@@ -85,39 +86,30 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         return defaultValue;
     }
 
-    public Object checkValue(Object value) {
+    public Object checkValue(Object value) throws InvalidAttributeValueException {
         // Check if value is of correct type. If not, see if it is
         // a string and try to turn it into right type
-        if (!value.getClass().getName().equals(getType())
-            && value instanceof String) {
             try {
-                String type = AbstractSettingsHandler.getTypeName(getType());
-                if (type == AbstractSettingsHandler.INTEGER) {
-                    value = Integer.decode((String) value);
-                } else if (type == AbstractSettingsHandler.LONG) {
-                    value = Long.decode((String) value);
-                    // TODO: Add more convertions
-                } else {
-                    throw new IllegalArgumentException(
-                        "Unable to decode string '"
-                            + value
-                            + "' into type '"
-                            + getType()
-                            + "'");
+                if (!(Class.forName(getType()).isInstance(value))
+                    && value instanceof String) {
+                    value = AbstractSettingsHandler.StringToType((String) value, AbstractSettingsHandler.getTypeName(getType()));
                 }
             } catch (Exception e) {
-                throw new IllegalArgumentException(
+                throw new InvalidAttributeValueException(
                     "Unable to decode string '"
                         + value
                         + "' into type '"
                         + getType()
                         + "'");
             }
-        }
 
         // If it still isn't a legal type throw an error
-        if (!value.getClass().getName().equals(getType())) {
-            throw new IllegalArgumentException(
+        try {
+            if (!Class.forName(getType()).isInstance(value)) {
+                throw new InvalidAttributeValueException();
+            }
+        } catch (Exception e) {
+            throw new InvalidAttributeValueException(
                 "Value of illegal type: '"
                     + value.getClass().getName()
                     + "', '"
@@ -137,11 +129,22 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
                 }
             }
             if (!found) {
-                throw new IllegalArgumentException(
+                throw new InvalidAttributeValueException(
                     "Value '" + value + "' not in legal values list");
             }
         }
 
         return value;
     }
+    /* (non-Javadoc)
+     * @see javax.management.MBeanAttributeInfo#getType()
+     */
+    public String getType() {
+        if (complexType != null) {
+            return complexType.getClass().getName();
+        } else {
+            return super.getType();
+        }
+    }
+
 }

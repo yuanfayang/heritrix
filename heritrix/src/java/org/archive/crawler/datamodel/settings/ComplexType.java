@@ -64,7 +64,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         this.description = description;
     }
 
-    protected void setAsController(AbstractSettingsHandler settingsHandler) {
+    protected void setAsController(AbstractSettingsHandler settingsHandler) throws InvalidAttributeValueException {
         this.settingsHandler = settingsHandler;
         this.parent = null;
         this.absoluteName = name;
@@ -79,7 +79,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return settingsHandler.getSettingsObject(null);
     }
 
-    public Type addElement(CrawlerSettings settings, Type type) {
+    public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
         getDataContainer(settings).addElementType(
             type.getName(),
             type.getDescription(),
@@ -88,20 +88,17 @@ public abstract class ComplexType implements DynamicMBean, Type {
             type.getDefaultValue());
         if (type instanceof ComplexType) {
             addComplexType(settings, (ComplexType) type);
-            ((ComplexType) type).initialize();
         }
         return type;
     }
 
     private ComplexType addComplexType(
         CrawlerSettings settings,
-        ComplexType object) {
+        ComplexType object) throws InvalidAttributeValueException {
         if (this.settingsHandler == null) {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
-        object.parent = this;
-        object.settingsHandler = getSettingsHandler();
-        object.absoluteName = getAbsoluteName() + '/' + object.getName();
+        initComplexType(object);
 
         if (settings.getScope() == null) {
             // We're working with the global order file
@@ -111,9 +108,21 @@ public abstract class ComplexType implements DynamicMBean, Type {
                     (CrawlerModule) object);
             }
         }
+
         settings.addComplexType(object);
+        object.initialize();
 
         return object;
+    }
+    
+    /** Set initialation parameters for a complex type
+     * 
+     * @param object to be initialized
+     */
+    private void initComplexType(ComplexType object) {
+        object.parent = this;
+        object.settingsHandler = getSettingsHandler();
+        object.absoluteName = getAbsoluteName() + '/' + object.getName();
     }
 
     public AbstractSettingsHandler getSettingsHandler() {
@@ -146,7 +155,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return ((ModuleAttributeInfo) getAttributeInfo(name)).getDefaultValue();
     }
 
-    public Object getAttribute(CrawlerSettings settings, String name) {
+    public Object getAttribute(CrawlerSettings settings, String name) throws AttributeNotFoundException {
         Object res = getLocalAttribute(settings, name);
 
         if (res == null && settings != null && settings.getScope() != null) {
@@ -165,7 +174,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return res;
     }
 
-    public Object getLocalAttribute(CrawlerSettings settings, String name) {
+    public Object getLocalAttribute(CrawlerSettings settings, String name) throws AttributeNotFoundException {
         if (settings == null) {
             settings = globalSettings();
         }
@@ -188,24 +197,30 @@ public abstract class ComplexType implements DynamicMBean, Type {
         setAttribute(settingsHandler.getSettingsObject(null), attribute);
     }
 
-    public void setAttribute(CrawlerSettings settings, Attribute attribute) {
+    public void setAttribute(CrawlerSettings settings, Attribute attribute) throws InvalidAttributeValueException, AttributeNotFoundException {
         DataContainer data = getDataContainer(settings);
+        
+        if (attribute.getValue() instanceof ComplexType) {
+            initComplexType((ComplexType) attribute.getValue());
+        }
+        
         data.put(attribute.getName(), attribute.getValue());
     }
 
-    private DataContainer getDataContainer(CrawlerSettings settings) {
+    private DataContainer getDataContainer(CrawlerSettings settings) throws InvalidAttributeValueException {
+        // Get this ComplexType's data container for the submitted settings
         DataContainer data = settings.getData(getAbsoluteName());
+
+        // If there isn't a container, create one
         if (data == null) {
-            ComplexType type =
-                settingsHandler.getComplexTypeFromRegistry(getAbsoluteName());
-            ComplexType parent = type.getParent();
+            ComplexType parent = getParent();
             if (parent == null) {
-                settings.addModule((CrawlerModule) type);
+                settings.addModule((CrawlerModule) this);
             } else {
                 DataContainer parentData =
                     settings.getData(parent.getAbsoluteName());
                 if (parentData == null) {
-                    settings.addModule((CrawlerModule) type);
+                    settings.addModule((CrawlerModule) this);
                 } else {
                     globalSettings().getData(
                         parent.getAbsoluteName()).copyAttributeInfo(
@@ -213,7 +228,17 @@ public abstract class ComplexType implements DynamicMBean, Type {
                         parentData);
                 }
             }
-            data = settings.addComplexType(type);
+            
+            // Create fresh DataContainer
+            data = settings.addComplexType(this);
+        }
+        
+        // Make sure that the DataContainer references right type
+        if(data.complexType != this) {
+            if (this instanceof CrawlerModule) {
+                data.complexType = (ComplexType) this;
+                data.complexType.initialize();
+            }
         }
         return data;
     }
@@ -299,7 +324,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return type;
     }
 
-    protected void initialize() {
+    protected void initialize() throws InvalidAttributeValueException {
         Iterator it = definition.iterator();
         while (it.hasNext()) {
             addElement(globalSettings(), (Type) it.next());

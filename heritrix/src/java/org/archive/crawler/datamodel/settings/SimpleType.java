@@ -63,5 +63,4 @@ public class SimpleType implements Type {
     public Object getDefaultValue() {
         return defaultValue;
     }
-
 }

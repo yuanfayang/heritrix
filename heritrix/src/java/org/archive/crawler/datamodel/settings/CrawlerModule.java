@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import javax.management.InvalidAttributeValueException;
+
 /**
  * Superclass of all modules that should be configurable.
  * 
@@ -35,14 +37,22 @@ public class CrawlerModule extends ComplexType {
 	 * @param name
 	 * @param description
 	 */
-	public CrawlerModule(String name, String description) {
+	protected CrawlerModule(String name, String description) {
 		super(name, description);
 	}
+    
+    /** Every subclass should implement this constructor
+     * 
+     * @param name of the module
+     */
+    public CrawlerModule(String name) {
+        super(name, name);
+    }
     
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
      */
-    public Type addElement(CrawlerSettings settings, Type type) {
+    public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
         if(initialized()) {
             throw new IllegalStateException("Not allowed to add elements to modules");
         }
