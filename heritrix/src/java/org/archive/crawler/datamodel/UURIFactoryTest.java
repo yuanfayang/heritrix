@@ -68,6 +68,23 @@ public class UURIFactoryTest extends TestCase {
 		final String uuriStr = uuri.toString();
 		assertTrue(ESCAPED_URISTR.equals(uuriStr));
 	}
+    
+    public final void testTooLongAfterEscaping() {
+        StringBuffer buffer = new StringBuffer("http://www.archive.org/a/");
+        // Append bunch of spaces.  When escaped, they'll triple in size.
+        for (int i = 0; i < 1024; i++) {
+        	buffer.append(" ");
+        }
+        buffer.append("/index.html");
+        String message = null;
+        try {
+        	UURI uuri = UURIFactory.getInstance(buffer.toString());
+        } catch (URIException e) {
+            message = e.getMessage();
+        }
+        assertTrue("Wrong or no exception: " + message, (message != null) &&
+            message.startsWith("Created (escaped) uuri >"));
+    }
 	
 	public final void testFtpUris() throws URIException {
 		final String FTP = "ftp";
