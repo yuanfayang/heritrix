@@ -401,7 +401,8 @@ public class UURIFactory extends URI {
             uriAuthority = stripPrefix(uriAuthority, DOT);
         }
 
-        StringBuffer buffer = new StringBuffer();
+        // Preallocate big.
+        StringBuffer buffer = new StringBuffer(1024 * 4);
         appendNonNull(buffer, uriScheme, ":", true);
         appendNonNull(buffer, uriAuthority, "//", false);
         appendNonNull(buffer, uriPath, "", false);
