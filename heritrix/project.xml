@@ -481,7 +481,6 @@
     <nagEmailAddress>webmaster@crawler.archive.org</nagEmailAddress>
     <sourceDirectory>src/java</sourceDirectory>
     <unitTestSourceDirectory>src/java</unitTestSourceDirectory>
-
     <unitTest>
       <excludes>
         <exclude>**/*SelfTest.java</exclude>
@@ -490,39 +489,31 @@
         <include>**/*Test.java</include>
       </includes>
     </unitTest>
-
-    <!-- Resources that are packaged up inside the JAR file -->
-    <resources>
-      <resource>
-          <directory>${basedir}/src/java</directory>
-          <includes>
-            <include>**/doc-files/**</include>
-          </includes>
-      </resource>
-    </resources>
-
-
   </build>
 
     <!--List of reports to generate.
         Some are not working.  Fix.
      -->
     <reports>
+        <!--Use the heritrix javadoc goal rather than the default
+            maven javadoc plugin.  The latter doesn't copy over doc-files
+            nor package.html files.
+          -->
+        <report>maven-license-plugin</report>
         <report>maven-changelog-plugin</report>
-        <!--<report>maven-developer-activity-plugin</report>-->
-        <!--TODO: <report>maven-file-activity-plugin</report>-->
         <report>maven-changes-plugin</report>
         <report>maven-checkstyle-plugin</report>
-        <report>maven-javadoc-plugin</report>
         <report>maven-jdepend-plugin</report>
         <report>maven-junit-report-plugin</report>
         <report>maven-jxr-plugin</report>
         <report>maven-license-plugin</report>
+        <report>maven-pmd-plugin</report>
+        <report>maven-tasklist-plugin</report>
+        <!--<report>maven-developer-activity-plugin</report>-->
+        <!--TODO: <report>maven-file-activity-plugin</report>-->
         <!--TODO: OOME and takes long time.
             <report>maven-linkcheck-plugin</report>
          -->
-        <report>maven-pmd-plugin</report>
-        <report>maven-tasklist-plugin</report>
     </reports>
 
 </project>

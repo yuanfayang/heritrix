@@ -16,6 +16,7 @@
         href="http://sourceforge.net/projects/archive-crawler"/>
       <item name="User Manual" href="/user.html"/>
       <item name="Developer Manual" href="/developer.html"/>
+      <item name="Javadocs" href="/apidocs/index.html"/>
       <item name="FAQ" href="/faq.html"/>
       <item name="Wiki" 
         href="http://crawler.archive.org/cgi-bin/wiki.pl?HomePage"/>
