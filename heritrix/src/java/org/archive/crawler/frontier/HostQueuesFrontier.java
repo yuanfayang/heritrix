@@ -95,11 +95,12 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  * @author Gordon Mohr
  */
 public class HostQueuesFrontier
-    extends ModuleType
-    implements Frontier, FetchStatusCodes, CoreAttributeConstants,
+extends ModuleType
+implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         CrawlStatusListener, HasUriReceiver {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(HostQueuesFrontier.class,1);
+    private static final long serialVersionUID =
+        ArchiveUtils.classnameBasedUID(HostQueuesFrontier.class, 1);
 
     private static final Logger logger =
         Logger.getLogger(HostQueuesFrontier.class.getName());
@@ -674,10 +675,10 @@ public class HostQueuesFrontier
 
         long duration = System.currentTimeMillis() - start;
         if(duration > 1000) {
-            System.err.println(
-                    "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
-                    +" "+duration+"ms"
-                    +" finished("+curi.getURIString()+") via "+curi.flattenVia());
+            logger.warning("#" +
+                ((ToeThread)Thread.currentThread()).getSerialNumber() +
+                " " + duration + "ms" + " finished(" + curi.getURIString() +
+                ") via " + curi.flattenVia());
         }
     }
 
@@ -858,7 +859,7 @@ public class HostQueuesFrontier
 
     /**
      * Marks a CrawlURI as being in process.
-     * @param curi The CrawlURI
+     * @param curi The CrawlURI to mark.
      */
     protected void noteInProcess(CrawlURI curi) {
         URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
@@ -986,7 +987,8 @@ public class HostQueuesFrontier
 
     /**
      * If an empty queue has become ready, add to ready queues.
-     * Should only be called after state has changed.
+     * Should only be called after state has changed.  Also
+     * discards queue if discardable.
      *
      * @param kq Queue to update.
      * @throws InterruptedException
@@ -1230,17 +1232,16 @@ public class HostQueuesFrontier
      */
     protected void snoozeQueueUntil(URIWorkQueue kq, long wake) {
         if(kq.getState()== URIWorkQueue.INACTIVE) {
-            // likely a brand new queue under a site-first mode of operation
-            // must activate before snoozing
+            // Likely a brand new queue under a site-first mode of operation
+            // Must activate before snoozing
             inactiveClassQueues.remove(kq);
             kq.activate();
         } else if(kq.getState() == URIWorkQueue.SNOOZED) {
-            // must be removed before time may be mutated
+            // Must be removed before time may be mutated
             snoozeQueues.remove(kq);
         } else if (kq.getState() == URIWorkQueue.READY ) {
             readyClassQueues.remove(kq);
         }
-
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.snooze();
