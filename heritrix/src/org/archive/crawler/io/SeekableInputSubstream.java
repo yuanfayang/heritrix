@@ -9,6 +9,7 @@ package org.archive.crawler.io;
 import java.io.IOException;
 
 /**
+ * A view on a SeekableInputStream constrained to a specific range.
  * 
  * @author Gordon Mohr
  */
@@ -17,6 +18,13 @@ public class SeekableInputSubstream extends SeekableInputStream {
 	long start;
 	long end;
 	
+	/**
+	 * Create a "view" on the given stream, limited to the given range.
+	 * 
+	 * @param inner
+	 * @param s
+	 * @param e
+	 */
 	public SeekableInputSubstream(SeekableInputStream inner, long s, long e) {
 		innerStream = inner;
 		start = s;
