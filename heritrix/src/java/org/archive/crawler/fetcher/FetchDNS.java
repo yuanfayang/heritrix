@@ -42,11 +42,15 @@ import org.xbill.DNS.dns;
 
 /**
  * Processor to resolve 'dns:' URIs.
+ * 
+ * TODO: Refactor to use org.archive.util.DNSJavaUtils.
  *
  * @author multiple
  */
-public class FetchDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
-    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
+public class FetchDNS extends Processor
+implements CoreAttributeConstants, FetchStatusCodes {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
 
     // defaults
      private short ClassType = DClass.IN;
@@ -107,11 +111,9 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
                         CrawlHost.IP_NEVER_EXPIRES); // never expire numeric IPs
 
             } catch (UnknownHostException e) {
-                // this should never happen as a dns lookup is not made
-
+                // This should never happen as a dns lookup is not made
                 e.printStackTrace();
             }
-
             curi.setFetchStatus(S_DNS_SUCCESS);
 
             // no further lookup necessary
