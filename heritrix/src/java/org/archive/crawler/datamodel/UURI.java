@@ -44,14 +44,18 @@ import org.archive.util.TextUtils;
  * <a href="http://developer.java.sun.com/developer/bugParade/bugs/4939847.html">java.net.URI
  * should have loose/tolerant/compatibility option (or allow reuse)</a>).
  * 
- * <p> Instances of this class are always normalized -- massaged in
- * ways that by spec and in practice, do not change the URI's meaning or
- * function: i.e. we call {@link #normalize()} is called in the constructor --
- * and rehabilitated (patched in riskless or necessary ways to be
+ * <p>Instances of this class are always normalized -- massaged in
+ * ways that by spec and in practice, do not change the URI's meaning nor
+ * function -- i.e. we call {@link #normalize()} is called in the constructor --
+ * and URIs are rehabilitated: i.e. patched in riskless or necessary ways to be
  * legal, eg escaping spaces).  Other things done are the removal of any 
  * '..' if its first thing in the path as per IE, removal of trailing
- * whitespace, conversion of backslash to forward slash. We also fail URIs if
- * they are longer than IE's allowed maximum length.
+ * whitespace, conversion of backslash to forward slash. This class will also
+ * fail URIs if they are longer than IE's allowed maximum length.
+ * 
+ * <p>This class tries to cache calculated strings such as the extracted host
+ * and this class as a string rather than have the parent class rerun its 
+ * calculation everytime.
  * 
  * <p>See <a href="http://sourceforge.net/tracker/?func=detail&aid=910120&group_id=73833&atid=539099">[ 910120 ]
  * java.net.URI#getHost fails when leading digit</a>,
@@ -179,6 +183,31 @@ public class UURI extends URI {
      * Authority port number regex.
      */
     final static Pattern PORTREGEX = Pattern.compile(".*:([0-9]+)$");
+    
+    /**
+     * Cache of the host name.
+     * 
+     * Super class calculates on every call.  Profiling shows us spend 30% of
+     * total elapsed time in URI class.
+     */
+    private String cachedHost = null;
+    
+    /**
+     * Cache of this uuri escaped as a string.
+     * 
+     * Super class calculates on every call.  Profiling shows us spend 30% of
+     * total elapsed time in URI class.
+     */
+    private String cachedEscapedURI = null;
+    
+    /**
+     * Cache of this uuri escaped with fragment if present as a string.
+     * 
+     * Super class calculates on every call.  Profiling shows us spend 30% of
+     * total elapsed time in URI class.
+     */
+    private String cachedString = null;
+
     
     /**
      * Shutdown default constructor.
@@ -496,13 +525,43 @@ public class UURI extends URI {
         return null;
     }
     
-    /* (non-Javadoc)
-     * @see org.apache.commons.httpclient.URI#toString()
+    /**
+     * Override because superclass drops fragment if present.
+     * @return String representation of this URI WITH the fragment if present.
      */
     public String toString() {
-        // Override because superclass drops fragment if present.
-        String frgmnt = getEscapedFragment();
-        return super.toString() +
-            ((frgmnt == null || frgmnt.length() <= 0)? "": "#" + frgmnt);
+        if (this.cachedString == null) {
+            synchronized (this) {
+                if (this.cachedString == null) {
+                    String frgmnt = getEscapedFragment();
+                    this.cachedString = super.toString() +
+                        ((frgmnt == null || frgmnt.length() <= 0)? "":
+                            "#" + frgmnt);
+                }
+            }
+        }
+        return this.cachedString;
+    }
+   
+    public String getEscapedURI() {
+        if (this.cachedEscapedURI == null) {
+            synchronized (this) {
+                if (this.cachedEscapedURI == null) {
+                    this.cachedEscapedURI = super.getEscapedURI();
+                }
+            }
+        }
+        return this.cachedEscapedURI;
+    }
+    
+    public String getHost() throws URIException {
+        if (this.cachedHost == null) {
+            synchronized (this) {
+                if (this.cachedHost == null) {
+                    this.cachedHost = super.getHost();
+                }
+            }
+        }
+        return this.cachedHost;
     }
 }
