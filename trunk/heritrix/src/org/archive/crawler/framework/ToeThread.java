@@ -13,6 +13,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
+import org.archive.util.HttpRecorder;
 
 /**
  * One "worker thread"; asks for CrawlURIs, processes them, 
@@ -27,6 +28,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	private boolean shouldCrawl = true;
 	CrawlController controller;
 	int serialNumber;
+	HttpRecorder httpRecorder;
 	HashMap localProcessors = new HashMap();
 	
 	CrawlURI currentCuri;
@@ -40,6 +42,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		controller = c;
 		serialNumber = sn;
 		setName("ToeThread #"+serialNumber);
+		httpRecorder = new HttpRecorder("tt"+sn+"http");
 	}
 
 	/* (non-Javadoc)
@@ -146,4 +149,18 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	public boolean isPaused(){
 		return paused;
 	}
+	/**
+	 * @return
+	 */
+	public HttpRecorder getHttpRecorder() {
+		return httpRecorder;
+	}
+
+	/**
+	 * @param recorder
+	 */
+	public void setHttpRecorder(HttpRecorder recorder) {
+		httpRecorder = recorder;
+	}
+
 }

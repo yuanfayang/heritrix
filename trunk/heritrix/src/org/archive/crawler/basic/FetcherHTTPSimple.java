@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
@@ -21,6 +22,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.ToeThread;
 
 /**
  * Basic class for using the Apache Jakarta HTTPClient library
@@ -86,6 +88,7 @@ public class FetcherHTTPSimple
 			"From",
 			controller.getOrder().getBehavior().getFrom());
 		
+		get.setHttpRecorder(((ToeThread)Thread.currentThread()).getHttpRecorder());
 		//controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
 
 		try {
@@ -100,7 +103,8 @@ public class FetcherHTTPSimple
 			// spider, just one doing some indexing/analysis --
 			// this might be wasteful. As it is, it just moves 
 			// the cost here rather than elsewhere. )
-			get.getResponseBody(); 	
+			InputStream is = get.getResponseBodyAsStream(); 
+			while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.info(
