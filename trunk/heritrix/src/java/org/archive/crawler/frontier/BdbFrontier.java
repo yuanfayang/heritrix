@@ -588,7 +588,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             rep.append(q.report());
         }
         if(snoozedClassQueues.size()>50) {
-            rep.append("   ...and"+(snoozedClassQueues.size()-50)+" more.\n");
+            rep.append("...and "+(snoozedClassQueues.size()-50)+" more.\n");
         }    
         return rep.toString();
     }
