@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* DevNull
+ * 
+ * $Id$
+ * 
+ * Created on Jun 23, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,32 +21,33 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Created on Jun 23, 2003
- *
  */
 package org.archive.io;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
+
 /**
+ * This class takes input and does nothing with it, sort of a /dev/null for the
+ * rest of us.
+ * 
  * @author Parker Thompson
- *
- * This class takes input and does nothing with it,
- * sort of a /dev/null for the rest of us.
  */
-public class NullOutputStream extends OutputStream {
+public class DevNull extends OutputStream {
 
-    public NullOutputStream(){
+    public DevNull(){
+        super();
     }
 
-    public void write(int b) throws IOException {
+    public void write(int b) {
+        // Do nothing.
     }
 
-    public void write(byte[] b){
+    public void write(byte[] b) {
+        // Do nothing.
     }
 
-    public void write(byte[] b, int off, int len){
+    public void write(byte[] b, int off, int len) {
+        // Do nothing.
     }
 }

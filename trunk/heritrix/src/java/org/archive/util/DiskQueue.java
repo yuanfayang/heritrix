@@ -35,7 +35,7 @@ import java.util.logging.Level;
 
 import org.archive.crawler.framework.Savable;
 import org.archive.io.DiskBackedByteQueue;
-import org.archive.io.NullOutputStream;
+import org.archive.io.DevNull;
 
 /**
  * Queue which stores all its objects to disk using object
@@ -99,7 +99,7 @@ public class DiskQueue implements Queue, Savable {
     }
 
     private void lateInitialize() throws FileNotFoundException, IOException {
-        testStream = new ObjectOutputStream(new NullOutputStream());        
+        testStream = new ObjectOutputStream(new DevNull());        
         tailStream = new ObjectOutputStream(bytes.getTailStream());
         headStream = new ObjectInputStream(bytes.getHeadStream());
         tailStream.flush();
