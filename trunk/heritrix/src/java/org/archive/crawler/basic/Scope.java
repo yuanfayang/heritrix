@@ -32,8 +32,6 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.settings.ComplexType;
-import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.filter.HopsFilter;
@@ -119,13 +117,14 @@ public class Scope extends CrawlScope {
         addElementToDefinition(new SimpleType(ATTR_MODE,
             "Mode", defaultMode, allowedModes));
 
-        ComplexType filter = (ComplexType) addElementToDefinition(
-                new CrawlerModule(ATTR_FOCUS_FILTER));
+        Filter filter = (Filter) addElementToDefinition(
+                new Filter(ATTR_FOCUS_FILTER,
+                "Specify this filter if mode is userdefined."));
         filter.setTransient(true);
         
-        filter = (ComplexType) addElementToDefinition(
-                new CrawlerModule(ATTR_TRANSITIVE_FILTER));
-        filter.setTransient(true);
+        filter = (Filter) addElementToDefinition(
+                new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
+        //filter.setTransient(true);
         
         excludeFilter = (OrFilter) addElementToDefinition(
                 new OrFilter(ATTR_EXCLUDE_FILTER));
@@ -149,7 +148,6 @@ public class Scope extends CrawlScope {
                 Object filter = getAttribute(settings, ATTR_FOCUS_FILTER);
                 if (filter instanceof Filter) {
                     focusFilter = (Filter) filter;
-                    focusFilter.setTransient(false);
                 }
             } else if (mode.equals(MODE_BROAD)) {
                 focusFilter = null;
@@ -170,7 +168,7 @@ public class Scope extends CrawlScope {
                 if (transitiveFilter == null) {
                     transitiveFilter =
                         new TransclusionFilter(ATTR_TRANSITIVE_FILTER);
-                    transitiveFilter.setTransient(true);
+                    //transitiveFilter.setTransient(true);
                     setAttribute(settings, transitiveFilter);
                 }
                 transitiveFilter.initialize(controller);
@@ -179,8 +177,7 @@ public class Scope extends CrawlScope {
             // setup exclude filter
             HopsFilter hopsFilter = null;
             if (((Integer) getAttribute(settings, ATTR_MAX_LINK_HOPS))
-                .intValue()
-                != 0) {
+                    .intValue() != 0) {
                 // hopsFilter implied
                 hopsFilter = new HopsFilter("hopsFilter");
                 hopsFilter.setTransient(true);
