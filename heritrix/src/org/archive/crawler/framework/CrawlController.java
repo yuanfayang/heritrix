@@ -183,7 +183,7 @@ public class CrawlController extends Thread {
 	 * 
 	 * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
 	 */
-	public void raiseCrawledURISuccessfulEvent(CrawlURI curi)
+	public void throwCrawledURISuccessfulEvent(CrawlURI curi)
 	{
 		if(registeredCrawlURIDispositionListener != null)
 		{
@@ -211,7 +211,7 @@ public class CrawlController extends Thread {
 	 * 
 	 * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
 	 */
-	public void raiseCrawledURINeedRetryEvent(CrawlURI curi)
+	public void throwCrawledURINeedRetryEvent(CrawlURI curi)
 	{
 		if(registeredCrawlURIDispositionListener != null)
 		{
@@ -239,7 +239,7 @@ public class CrawlController extends Thread {
 	 * 
 	 * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
 	 */
-	public void raiseCrawledURIDisregardEvent(CrawlURI curi)
+	public void throwCrawledURIDisregardEvent(CrawlURI curi)
 	{
 		if(registeredCrawlURIDispositionListener != null)
 		{
@@ -267,7 +267,7 @@ public class CrawlController extends Thread {
 	 * 
 	 * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
 	 */
-	public void raiseCrawledURIFailureEvent(CrawlURI curi)
+	public void throwCrawledURIFailureEvent(CrawlURI curi)
 	{
 		if(registeredCrawlURIDispositionListener != null)
 		{
@@ -728,7 +728,9 @@ public class CrawlController extends Thread {
 	}
 
 	/**
-	 * @return
+	 * @return The number of ToeThreads
+	 * 
+	 * @see ToePool#getToeCount()
 	 */
 	public int getToeCount() {
 		return toePool.getToeCount();
