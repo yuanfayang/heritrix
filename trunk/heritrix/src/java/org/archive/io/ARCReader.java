@@ -1,4 +1,11 @@
-/* Copyright (C) 2003 Internet Archive.
+/* 
+ * ARCReader
+ *
+ * $Id$
+ * 
+ * Created on Sep 26, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,13 +22,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * utf-8 eth test : ð
- * 
- * ARCReader.java
- * Created on Sep 26, 2003
- *
- * $Header$
  */
 package org.archive.io;
 
