@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
  *
  */
 public abstract class LookaheadIterator implements Iterator {
-    Object next;
+    protected Object next;
 
     /** 
      * Test whether any items remain; loads next item into
