@@ -15,7 +15,7 @@ import org.archive.crawler.framework.CrawlController;
  * Main class for Heritrix crawler.
  * 
  * Currently takes a single command-line argument, which
- * should be a ".crawlo" file describing the crawl to 
+ * should be an XML crawl-order file describing the crawl to 
  * undertake, and begins that crawl.
  * 
  * (Eventually, will start web UI and await further
@@ -38,7 +38,7 @@ public class Heritrix {
 		CrawlController controller = new CrawlController();
 		controller.initialize(order);
 		controller.startCrawl();
-		logger.info("Exitting main thread.");
+		logger.info("exitting main thread");
 	}
 
 }
