@@ -8,6 +8,7 @@ package org.archive.crawler;
 
 import java.util.logging.Logger;
 
+import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
 
@@ -25,20 +26,55 @@ import org.archive.crawler.framework.CrawlController;
  *
  */
 public class Heritrix {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.Heritrix");
+	private static Logger logger =
+		Logger.getLogger("org.archive.crawler.Heritrix");
 
-	public static void main( String[] args ) {
-		(new Heritrix()).instanceMain( args );
+	public static void main(String[] args) {
+		(new Heritrix()).instanceMain(args);
 	}
 
-	public void instanceMain( String[] args ) {
-		String crawlOrderFile = args[0]; 
-		CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
-		
+	public void instanceMain(String[] args) {
+		// Default crawlOrder
+		String crawlOrderFile = "test-config/order.xml"; 
+		CrawlOrder order;
 		CrawlController controller = new CrawlController();
-		controller.initialize(order);
-		controller.startCrawl();
+
+		switch (args.length) {
+			case 1 :
+				crawlOrderFile = args[0];
+			case 0 :
+				order = CrawlOrder.readFromFile(crawlOrderFile);
+				controller.setOrder(order);
+				startServer(controller);
+				break;
+			case 2 :
+				if (args[0].equals("-no-wui")) {
+					crawlOrderFile = args[1];
+					order = CrawlOrder.readFromFile(crawlOrderFile);
+					controller.initialize(order);
+					controller.startCrawl();
+					break;
+				}
+			default :
+				usage();
+				return;
+
+		}
 		logger.info("exitting main thread");
 	}
+	private void usage() {
+		System.out.println("USAGE: java Heritrix [-no-wui] ordel.xml");
+		System.out.println(
+			"\t-no-wui start crawler without Web User Interface");
+	}
+	private void startServer(CrawlController c) {
+		SimpleHttpServer server = new SimpleHttpServer(80);
+		server.setControler(c);
+		try {
+			server.startServer();
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+		}
 
+	}
 }
