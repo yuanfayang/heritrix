@@ -99,7 +99,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     // sorts are matched specially
     static final String EACH_ATTRIBUTE_EXTRACTOR =
       "(?is)\\s((href)|(action)|(on\\w*)"
-     +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
+     +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)"
      +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)"
      +"|(value)|([-\\w]+))"
@@ -112,7 +112,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
     // 3: ACTION - single URI relative to doc base, or occasionally javascript:
     // 4: ON[WHATEVER] - script handler
-    // 5: SRC,BACKGROUND,CITE,LONGDESC,USEMAP,PROFILE,DATASRC, or FOR
+    // 5: SRC,LOWSRC,BACKGROUND,CITE,LONGDESC,USEMAP,PROFILE,DATASRC, or FOR
     //    single URI relative to doc base
     // 6: CODEBASE - a single URI relative to doc base, affecting other
     //    attributes
