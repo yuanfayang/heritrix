@@ -46,22 +46,34 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
+
     protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
     private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
 
-    // this pattern extracts either (1) whole <script>...</script>
-    // ranges; or (2) any other open-tag with at least one attribute
-    // (eg matches "<a href='boo'>" but not "</a>" or "<br>")
+    /**
+     * Compiled relevant tag extractor.
+     * 
+     * <p>
+     * This pattern extracts either:
+     * <li> (1) whole &lt;script&gt;...&lt;/script&gt; or
+     * <li> (2) &lt;style&gt;...&lt;/style&gt; or
+     * <li> (3) &lt;meta ...&gt; or
+     * <li> (3) any other open-tag with at least one attribute
+     * (eg matches "&lt;a href='boo'&gt;" but not "&lt;/a&gt;" or "&lt;br&gt;")
+     * <p>
+     * groups:
+     * <li> 1: SCRIPT SRC=foo&gt;boo&lt;/SCRIPT
+     * <li> 2: just script open tag
+     * <li> 3: STYLE TYPE=moo&gt;zoo&lt;/STYLE
+     * <li> 4: just style open tag
+     * <li> 5: entire other tag, without '<' '>'
+     * <li> 6: element
+     * <li> 7: META
+     * <li> 8: !-- comment --
+     */
     static final String RELEVANT_TAG_EXTRACTOR =
-    "(?is)<(?:((script.*?)>.*?</script)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
-    // groups:
-    // 1: SCRIPT SRC=blah>blah</SCRIPT
-    // 2: just script open tag
-    // 3: entire other tag, without '<' '>'
-    // 4: element
-    // 5: META
-    // 6: !-- blahcomment --
+     "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
 
 
 //    // this pattern extracts 'href' or 'src' attributes from
@@ -318,27 +330,40 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
         Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
         while(tags.find()) {
-            if (tags.start(6) > 0) {
+            if (tags.start(8) > 0) {
                 // comment match
                 // for now do nothing
-            } else if (tags.start(5) > 0) {
+            } else if (tags.start(7) > 0) {
             // <meta> match
-                if (processMeta(curi,cs.subSequence(tags.start(3), tags.end(3)))) {
+                if (processMeta(curi,
+                      cs.subSequence(tags.start(5), tags.end(5)))) {
+                          
                     // meta tag included NOFOLLOW; abort processing
                     TextUtils.freeMatcher(tags);
                     return;
                 }
-            } else if (tags.start(3) > 0) {
+            } else if (tags.start(5) > 0) {
                 // generic <whatever> match
-                processGeneralTag(
-                    curi,
-                    cs.subSequence(tags.start(4),tags.end(4)),
-                    cs.subSequence(tags.start(3),tags.end(3)));
+                processGeneralTag(curi,
+                    cs.subSequence(tags.start(6),tags.end(6)),
+                    cs.subSequence(tags.start(5),tags.end(5)));
+                    
             } else if (tags.start(1) > 0) {
                 // <script> match
-                processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
+                processScript(
+                    curi,
+                    cs.subSequence(tags.start(1), tags.end(1)),
+                    tags.end(2) - tags.start(1));
+                    
+            } else if (tags.start(3) > 0){
+                // <style... match
+                processStyle(curi,
+                    cs.subSequence(tags.start(3), tags.end(3)),
+                    tags.end(4) - tags.start(3));
+
             }
         }
+
         TextUtils.freeMatcher(tags);
 
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
@@ -431,6 +456,20 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 content.substring(content.indexOf("=") + 1), A_HTML_LINKS);
         }
         return false;
+    }
+
+    /**
+     * @param curi
+     * @param sequence
+     * @param endOfOpenTag
+     */
+    protected void processStyle(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
+        // First, get attributes of script-open tag as per any other tag.
+        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
+    
+        // then, parse for URIs
+        numberOfLinksExtracted += ExtractorCSS.processStyleCode(
+            curi, sequence.subSequence(endOfOpenTag,sequence.length()));
     }
 
     /* (non-Javadoc)
