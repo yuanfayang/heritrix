@@ -6,25 +6,21 @@
  */
 package org.archive.crawler.basic;
 
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.GetMethod;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.io.OutputStream;
-import org.xbill.DNS.*;
 
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.Processor;
+import org.xbill.DNS.Record;
 
 /**
  * @author Parker Thompson
@@ -87,7 +83,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 					+ " "
 					+ curi.getHost().getIP().getHostAddress()
 					+ " "
-					+ curi.getAList().getLong(FETCH_BEGAN_AT)
+					+ curi.getAList().getLong(A_FETCH_BEGAN_TIME)
 					+ " "
 					// eliminate additonal args (e.g. "text/html; charset=iso-8859-1" => text/html)
 					+  contentType
@@ -143,10 +139,19 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	}		
 	
 	protected void writeHttp(CrawlURI curi) throws IOException {
+
+		GetMethod get =
+			(GetMethod) curi.getAList().getObject("http-transaction");
+			
+		if (get == null ) {
+			// some error occurred; nothing to write
+			// TODO: capture some network errors in the ARC file for posterity
+			return;
+		}
 		
-		int recordLength		= 0;
-		GetMethod get 		= (GetMethod) curi.getAList().getObject("http-transaction");
-		Header[] headers 	= get.getResponseHeaders();
+		int headersSize = 0;
+		int recordLength = 0;
+		Header[] headers = get.getResponseHeaders();
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		for(int i=0; i < headers.length; i++){
@@ -174,7 +179,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		
-		Record[] rrSet = (Record[]) curi.getAList().getObject(RRECORD_SET_LABEL);
+		Record[] rrSet = (Record[]) curi.getAList().getObject(A_RRECORD_SET_LABEL);
 		
 		for(int i=0; i < rrSet.length; i++){
 			byte[] record = rrSet[i].rdataToString().getBytes();
@@ -218,8 +223,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 				
 		// make sure it's got a trailing file.seperator so the
 		// dir is not treated as a file prefix
-		if(! buffer.endsWith(file.separator)){
-			buffer = new String(buffer + file.separator);
+		if(! buffer.endsWith(File.separator)){
+			buffer = new String(buffer + File.separator);
 		}
 			
 		File newDir = new File(buffer);

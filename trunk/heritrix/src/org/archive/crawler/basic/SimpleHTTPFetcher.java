@@ -35,7 +35,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, o
 			return;
 		}
 		
-		curi.getAList().putLong(FETCH_BEGAN_AT,System.currentTimeMillis());
+		curi.getAList().putLong(A_FETCH_BEGAN_TIME,System.currentTimeMillis());
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false);
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
@@ -49,16 +49,15 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, o
 				+(contentLength==null ? "na" : contentLength.getValue()));
 
 			// TODO consider errors more carefully
-			curi.getAList().putObject("http-transaction",get);
-			curi.getAList().putLong("http-complete-time",System.currentTimeMillis());
+			curi.getAList().putObject(A_HTTP_TRANSACTION,get);
+			curi.getAList().putLong(A_FETCH_COMPLETED_TIME,System.currentTimeMillis());
 			Header ct = get.getResponseHeader("content-type");
 			if ( ct!=null ) {
-				curi.getAList().putString("content-type", ct.getValue());
+				curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
 			}
 			
 		} catch (HttpException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.warning(e+" at "+curi);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

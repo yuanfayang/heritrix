@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
@@ -23,7 +24,7 @@ import org.archive.crawler.io.FetchFormatter;
  * @author gojomo
  *
  */
-public class SimpleSelector implements URISelector {
+public class SimpleSelector implements URISelector, CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleSelector");
 	private static Logger fetchLogger = Logger.getLogger("fetchLogger");
 
@@ -71,13 +72,29 @@ public class SimpleSelector implements URISelector {
 			}
 			
 			// snooze as necessary
-			if(curi.getAList().containsKey("delay-factor")&&
-			curi.getAList().containsKey("http-begin-time")&&
-			curi.getAList().containsKey("http-complete-time")) {
-				int delayFactor = curi.getAList().getInt("delay-factor");
-				long completeTime = curi.getAList().getLong("http-complete-time");
-				long duration = delayFactor * (completeTime-curi.getAList().getLong("http-begin-time"));
-				store.snoozeQueueUntil(curi.getClassKey(),completeTime+duration);
+			long duration = 0;
+			if (curi.getAList().containsKey(A_DELAY_FACTOR)
+				&& curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
+				&& curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
+				int delayFactor = curi.getAList().getInt(A_DELAY_FACTOR);
+				long completeTime =
+					curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+				duration =
+					delayFactor
+						* (completeTime
+							- curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+
+				if (curi.getAList().containsKey(A_MINIMUM_DELAY)) {
+					// ensure minimum delay is enforced
+					int min = curi.getAList().getInt(A_MINIMUM_DELAY);
+					if (min > duration) {
+						duration = min;
+					}
+				}
+				// TODO: maximum delay? 
+				store.snoozeQueueUntil(
+					curi.getClassKey(),
+					completeTime + duration);
 			}
 			
 			// note completions

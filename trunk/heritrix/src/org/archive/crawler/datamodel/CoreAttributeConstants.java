@@ -2,7 +2,9 @@
  * CoreAttributeConstants.java
  * Created on Jun 17, 2003
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src//**
+ * @author gojomo
+ *
  */
 package org.archive.crawler.datamodel;
 
@@ -12,10 +14,29 @@ package org.archive.crawler.datamodel;
  */
 public interface CoreAttributeConstants {
 	
-	public static final String A_CONTENT_TYPE 							= "content-type";
-	public static final String RRECORD_SET_LABEL 					= "dnsrecords";
-	public static final String DNSFETCH_TIMESTAMP_LABEL	= "dns_fetch_timestamp";	
-	public static final String DNS_CONTENT_TYPE						= "dns/text";	
-	public static final String FETCH_BEGAN_AT							= "fetch_begin_timestamp";
+	/**
+	 * Extracted MIME type of fetched content; should be
+	 * set immediately by fetching module if possible 
+	 * (rather than waiting for a later analyzer)
+	 */
+	public static String A_CONTENT_TYPE = "content-type";
 	
+	/**
+	 * Multiplier of last fetch duration to wait before
+	 * fetching another item of the same class (eg host)
+	 */
+	public static String A_DELAY_FACTOR = "delay-factor";
+	/**
+	 * Minimum delay before fetching another item of th
+	 * same class (eg host). Even if lastFetchTime*delayFactor
+	 * is less than this, this period will be waited. 
+	 */
+	public static String A_MINIMUM_DELAY = "minimum-delay";
+
+	public static String A_RRECORD_SET_LABEL = "dns-records";
+	public static String A_DNS_FETCH_TIME	= "dns-fetch-time";	
+	public static String A_FETCH_BEGAN_TIME= "fetch-began-time";
+	public static String A_FETCH_COMPLETED_TIME = "fetch-completed-time";
+	public static String A_HTTP_TRANSACTION = "http-transaction";
+
 }

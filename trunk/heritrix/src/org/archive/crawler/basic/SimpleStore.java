@@ -236,9 +236,9 @@ public class SimpleStore implements URIStore {
 		if((curi=(CrawlURI) allCuris.get(uuri))!=null) {
 			// already inserted
 			// TODO: perhaps yank to front?
-			if(curi.getStoreState()==URIStoreable.FINISHED) {
-				System.out.println("maybe a prob");
-			}
+			//if(curi.getStoreState()==URIStoreable.FINISHED) {
+			//	System.out.println("maybe a prob");
+			//}
 			return;
 		}
 		curi = new CrawlURI(uuri);
