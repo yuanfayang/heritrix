@@ -213,7 +213,7 @@ implements FrontierJournal {
     protected static BufferedReader getBufferedReader(File source)
     throws IOException {
         boolean isGzipped = source.getName().toLowerCase().
-            endsWith(GZIP_SUFFIX);
+            endsWith(ARCConstants.DOT_COMPRESSED_FILE_EXTENSION);
         // Scan log for all 'Fs' lines: add as 'alreadyIncluded'
         FileInputStream fis = new FileInputStream(source);
         return new BufferedReader(isGzipped?
