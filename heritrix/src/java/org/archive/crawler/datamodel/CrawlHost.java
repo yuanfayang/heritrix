@@ -35,7 +35,9 @@ import java.net.UnknownHostException;
  * @author gojomo
  */
 public class CrawlHost implements Serializable {
+    /** flag value indicating always-valid IP */
     public static final long IP_NEVER_EXPIRES = -1;
+    /** flag value indicating an IP has not yet been looked up */
     public static final long IP_NEVER_LOOKED_UP = -2;
     private String hostname;
     private InetAddress ip;
@@ -122,6 +124,9 @@ public class CrawlHost implements Serializable {
         return ipTTL;
     }
 
+    /**
+     * @see java.lang.Object#toString()
+     */
     public String toString() {
         return "CrawlHost<" + hostname + "(ip:" + ip + ")>";
     }
