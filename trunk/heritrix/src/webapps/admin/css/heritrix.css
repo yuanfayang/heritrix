@@ -1,36 +1,16 @@
-body         { margin-left: 0; margin-top: 0; margin-bottom: 0; 
-               padding: 0; margin-right: 0 }
-               
-td
+body
 {
-    font-family: Verdana;
-    font-size: 12px;
+    font-family: Verdana,sans-serif;
 }
-
-th
+.wide
 {
-    font-family: Verdana;
-    font-size: 12px;
-    font-weight: bold;
+    margin-left:-5px;
+    margin-right:-5px;
 }
-
-input
-{
-    font-family: Verdana;
-    font-size: 12px;
-}
-
-select
-{
-    font-family: Verdana;
-    font-size: 12px;
-}
-
 .subheading
 {
-    font-size: 12px; font-weight: bold; text-align: center;
+    font-weight: bold; text-align: center;
 }
-
 .dataheader
 {
     font-weight: bold; text-align: right; padding-right: 3px;
@@ -91,4 +71,11 @@ a:hover.underLineOnHover
 {
     text-decoration: underline;
 }
-
+.SettingsBlock
+{
+    border:1px solid #9999ff;
+    margin-left:10px; margin-right:5px;
+    margin-top:3px; margin-bottom:10px;
+    padding: 3px;
+	background-color:white;
+}
