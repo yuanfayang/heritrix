@@ -1057,7 +1057,12 @@ public class ReplayCharSequenceFactory {
 //        }
         
         public String toString() {
-            return new StringBuffer(length()).append(this).toString();
+            StringBuffer sb = new StringBuffer(length());
+            // could use StringBuffer.append(CharSequence) if willing to do 1.5 & up
+            for (int i = 0;i<length();i++) {
+                sb.append(charAt(i)); 
+            }
+            return sb.toString();
         }
 
         /* (non-Javadoc)
