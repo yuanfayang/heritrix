@@ -7,7 +7,7 @@
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.util.TextUtils" %>
 
-<%@ page import="java.io.*,java.lang.Boolean,java.util.Vector,java.util.ArrayList" %>
+<%@ page import="java.io.*,java.lang.Boolean,java.util.ArrayList" %>
 <%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
 
 <%!
@@ -68,7 +68,7 @@
 		
 		ret.append("<table cellspacing='0' cellpadding='2'>");
 		
-		Vector unusedOptions = new Vector();
+		ArrayList unusedOptions = new ArrayList();
 		MBeanInfo mapInfo = map.getMBeanInfo();
 		MBeanAttributeInfo m[] = mapInfo.getAttributes();
 			

@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
-<%@ page import="org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,java.util.List" %>
 
 <%
     String sAction = request.getParameter("action");
@@ -11,7 +11,7 @@
         }
     }   
 
-	Vector jobs = handler.getCompletedJobs();
+	List jobs = handler.getCompletedJobs();
 
 	String title = "Completed crawl jobs";
 	int tab = 1;
@@ -19,7 +19,7 @@
 
 <%@include file="/include/head.jsp"%>
 
-		<table border="0">
+		<table border="0"> 
 			<tr>
 				<th>
 					Job name

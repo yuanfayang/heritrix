@@ -23,7 +23,7 @@
 package org.archive.crawler.selftest;
 
 import java.util.Date;
-import java.util.Vector;
+import java.util.List;
 import java.util.logging.Logger;
 
 import junit.framework.Test;
@@ -68,14 +68,14 @@ public class SelfTestCrawlJobHandler
 
             // At crawlEnded time, there is no current job.  Get the selftest
             // job by pulling from the completedCrawlJobs queue.
-            Vector completedCrawlJobs = getCompletedJobs();
+            List completedCrawlJobs = getCompletedJobs();
             if (completedCrawlJobs == null || completedCrawlJobs.size() <= 0)
             {
                 logger.severe("Selftest job did not complete.");
             }
             else
             {
-                CrawlJob job = (CrawlJob)completedCrawlJobs.lastElement();
+                CrawlJob job = (CrawlJob)completedCrawlJobs.get(completedCrawlJobs.size()-1);
                 Test test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
                         job, job.getDirectory(),
                         Heritrix.getHttpServer().

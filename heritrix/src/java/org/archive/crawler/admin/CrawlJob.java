@@ -177,6 +177,8 @@ public class CrawlJob
         // status
         status = jobReader.readLine();
         if(status.equals(STATUS_ABORTED)==false 
+                && status.equals(STATUS_CREATED)==false
+                && status.equals(STATUS_DELETED)==false
                 && status.equals(STATUS_FINISHED)==false
                 && status.equals(STATUS_FINISHED_ABNORMAL)==false
                 && status.equals(STATUS_FINISHED_DATA_LIMIT)==false
@@ -189,7 +191,7 @@ public class CrawlJob
                 && status.equals(STATUS_WAITING_FOR_PAUSE)==false){
             // status is invalid. Must be one of the above
             throw new InvalidJobFileException("Status (line 3) in job file " +
-                    "is not valild: '" + status + "'");
+                    "is not valid: '" + status + "'");
         }
         // isReadOnly
         String tmp = jobReader.readLine();

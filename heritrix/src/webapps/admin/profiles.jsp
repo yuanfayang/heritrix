@@ -1,7 +1,7 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="java.util.Vector"%>
+<%@page import="java.util.List"%>
 <%@page import="org.archive.crawler.admin.CrawlJob"%>
 <%@page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler"%>
 
@@ -31,7 +31,7 @@
 		</th>
 	</tr>
 	<%
-		Vector profiles = handler.getProfiles();
+		List profiles = handler.getProfiles();
 		CrawlJob defaultProfile = handler.getDefaultProfile();
 		for(int i=0 ; i<profiles.size() ; i++){
 			CrawlJob profile = (CrawlJob)profiles.get(i);

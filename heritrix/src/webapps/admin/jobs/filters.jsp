@@ -15,7 +15,7 @@
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.crawler.framework.Filter" %>
 
-<%@ page import="java.util.Vector,java.util.ArrayList" %>
+<%@ page import="java.util.ArrayList" %>
 <%@ page import="javax.management.MBeanInfo"%>
 <%@ page import="javax.management.Attribute"%>
 <%@ page import="javax.management.MBeanAttributeInfo"%>
