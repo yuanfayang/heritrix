@@ -29,10 +29,12 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI implements URIStoreable {
+	
+	public static final String CONTENT_TYPE_LABEL = "content-type";
+	
 	private UURI baseUri;
-	AList alist = new HashtableAList();
-	UURI uuri; 
-	Processor nextProcessor;
+	private AList alist = new HashtableAList();
+	private UURI uuri; 
 	CrawlHost host;
 	CrawlFetch fetch;
 
@@ -50,19 +52,7 @@ public class CrawlURI implements URIStoreable {
 	public UURI getUURI() {
 		return uuri;
 	}
-	
-	/**
-	 * 
-	 */
-	public Processor nextProcessor() {
-		return nextProcessor;
-	}
-	/**
-	 * @param processor
-	 */
-	public void setNextProcessor(Processor processor) {
-		nextProcessor = processor;
-	}
+
 	/**
 	 * @return
 	 */
@@ -169,6 +159,16 @@ public class CrawlURI implements URIStoreable {
 		baseUri = UURI.createUURI(getAList().getString("html-base-href"));
 		return getBaseUri();
 	}
-
+	
+	/**
+	 * @
+	 */
+	public String getURIString(){
+		return this.getUURI().getUri().toString();
+	}
+	
+	public String getContentType(){
+		return getAList().getString(CrawlURI.CONTENT_TYPE_LABEL);
+	}
 
 }
