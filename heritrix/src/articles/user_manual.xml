@@ -744,12 +744,16 @@
 
         <para>There is only one Frontier per crawl job.</para>
 
-        <para>At present only one Frontier is provided with Heritrix. While it
+        <para>At present only one Frontier is provided with Heritrix (A subclass
+        of this single Frontier, <xref linkend="domainsensitive" />, 
+        allows specification of upperbound on number
+        of documents downloaded on a per-site basis). While it
         visits URIs and sites discovered in a generally breadth-first manner,
         it offers configuration options controlling how it throttles its
         activity against particular hosts, and whether it has a bias towards
         finishing hosts in progress ('site-first' crawling) or cycling among
         all hosts with pending URIs.</para>
+       
       </sect3>
 
       <sect3 id="scopes">
@@ -3412,9 +3416,21 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         </glossdef>
       </glossentry>
 
+      <glossentry id="glossary_domainsenstive">
+        <glossterm>DomainSensitiveFrontier</glossterm>
+        <glossdef>
+          <para>A subclass of the default Heritrix Frontier, 
+          See <xref linkend="glossary_frontier" />, that
+          allows specifying an upper-bound on the number of
+          documents downloaded per-site.  It does this by
+          exploiting <xref linkend="overrides" />.  For this
+          frontier to work, an override must be made per
+          domain.</para>
+        </glossdef>
+      </glossentry>
+
       <glossentry id="glossary_frontier">
         <glossterm>Frontier</glossterm>
-
         <glossdef>
           <para>A Frontier is a plug-able module in Heritrix that maintains
           the internal state of the crawl. See <xref
