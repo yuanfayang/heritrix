@@ -187,7 +187,8 @@ public class ARCSocketFactoryTest
                 + " attempts");
         }
 
-        byte[] responseBody = method.getResponseBody();
+        // Get response though I ignore it.
+        method.getResponseBody();
         method.releaseConnection();
         
         // Have to force the close myself.  httpclient doesn't call socket
