@@ -56,11 +56,16 @@ public class KeyedQueue implements Queue, URIStoreable {
     Queue innerQ;
 
     /**
-     * @param key
-     * @param scratchDir
-     * @param headMax
+     * @param key A unique identifier used to distingush files related to this
+     *           objects disk based data structures (will be a part of their
+     *           file name, must therefor be a legal filename).
+     * @param scratchDir Directory where disk based data structures will be
+     *           created.
+     * @param headMax Maximum number of items to keep in memory (excluding
+     *           those that have been enqueuedMedium or enqueuedHigh).
+     * @throws IOException When it fails to create disk based data structures.
      */
-    public KeyedQueue(String key, File scratchDir, int headMax) {
+    public KeyedQueue(String key, File scratchDir, int headMax) throws IOException {
         super();
         classKey = key;
         String tmpName = null;
@@ -68,13 +73,7 @@ public class KeyedQueue implements Queue, URIStoreable {
             tmpName = (String) key;
         }
         innerStack = new LinkedList();
-//        innerQ = new MemQueue();
-        try {
-            innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
-        } catch (IOException e) {
-            // TODO Convert to runtime exception?
-            e.printStackTrace();
-        }
+        innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
     }
 
     public boolean isReady() {

@@ -88,7 +88,7 @@
 						&nbsp;<input name="alerts" value="<%=alert.getID()%>" type="checkbox">&nbsp;
                     </td>
                     <td nowrap>
-                        &nbsp;&nbsp;<code><%=sdf.format(alert.getTimeOfAlert())%> GMT</code>&nbsp;
+                        &nbsp;<code><%=sdf.format(alert.getTimeOfAlert())%> GMT</code>&nbsp;
                     </td>
                     <td nowrap>
                         &nbsp;<code><%=alert.getLevel().getName()%></code>&nbsp;

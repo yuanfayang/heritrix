@@ -42,6 +42,8 @@ public class ToePool extends CrawlStatusAdapter {
     protected CrawlController controller;
     protected ArrayList toes;
     protected int effectiveSize = 0;
+    
+    protected boolean paused;
 
     /**
      * Constructor
@@ -50,6 +52,7 @@ public class ToePool extends CrawlStatusAdapter {
      * @param count The number of ToeThreads to start with
      */
     public ToePool(CrawlController c, int count) {
+        paused = true; // Begin in a paused state
         controller = c;
         controller.addCrawlStatusListener(this);
         toes = new ArrayList(count);
@@ -68,7 +71,6 @@ public class ToePool extends CrawlStatusAdapter {
             try {
                 wait(200);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 DevUtils.logger.log(Level.SEVERE,"available()"+DevUtils.extraInfo(),e);
             }
         }
@@ -142,6 +144,7 @@ public class ToePool extends CrawlStatusAdapter {
     {
         return ((ToeThread)toes.get(toe)).report();
     }
+    
     /**
      * Change the number of availible ToeThreads.
      * @param newsize The new number of availible ToeThreads.
@@ -154,7 +157,8 @@ public class ToePool extends CrawlStatusAdapter {
             for(int i = getToeCount(); i<newsize; i++) {
                 ToeThread newThread = new ToeThread(controller,this,i);
                 newThread.setPriority(DEFAULT_TOE_PRIORITY);
-                newThread.setShouldPause(true); // start paused
+				// start paused if controller is paused.
+                newThread.setShouldPause(paused); 
                 toes.add(newThread);
                 newThread.start();
             }
@@ -180,9 +184,23 @@ public class ToePool extends CrawlStatusAdapter {
      */
     public void setShouldPause(boolean b) {
         Iterator iter = toes.iterator();
+        paused = b;
         while(iter.hasNext()) {
-            ((ToeThread)iter.next()).setShouldPause(b);
+            ((ToeThread)iter.next()).setShouldPause(paused);
         }
+    }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        setShouldPause(true);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        setShouldPause(false);
     }
 }
