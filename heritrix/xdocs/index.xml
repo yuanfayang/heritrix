@@ -33,6 +33,13 @@
         <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 0.8.0 05/24/2004">
+        <p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.8.0</a> fixes problems using seed lists
+        of tens and more hosts, ameliorates too-many-open files, 
+        added basic reporting to UI, as well as a bunch of 
+        bug fixes: See <a href="/changes-report.html">Changes</a> log.
+        </p>
+    </subsection>
 
     <subsection name="Release 0.6.0 03/25/2004">
         <p>See <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.6.0</a>.  Lots of fixes and features.
