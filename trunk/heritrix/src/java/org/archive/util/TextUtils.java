@@ -190,12 +190,14 @@ public class TextUtils {
 	}
     
     /**
-     * This method takes a string and returns the same string with any single 
-     * quote escaped by prepending the character with a backslash.
+     * Escapes a string so that it can be passed as an argument to a javscript in
+     * a JSP page. This method takes a string and returns the same string 
+     * with any single quote escaped by prepending the character with a backslash. 
+     * Linebreaks are also replaced with '\n'.
      * @param s The string to escape
-     * @return The same string with all single quotes escaped.
+     * @return The same string escaped.
      */
-    public static String escape(String s) {
+    public static String escapeForJavascript(String s) {
         if(s.indexOf('\'') < 0 ){
             return s;
         }
@@ -204,6 +206,8 @@ public class TextUtils {
         for(int j=0 ; j<characters.length ; j++){
             if(characters[j] == '\''){
                 buffer.append('\\'); 
+            } else if(characters[j]=='\n') {
+                buffer.append("\\n");                
             }
             buffer.append(characters[j]);
         }
