@@ -41,12 +41,18 @@ import org.archive.util.Lineable;
 public class CandidateURI implements Serializable, Lineable {
     private static final long serialVersionUID = -7152937921526560388L;
 
+    public static String FORCE_REVISIT = "Force";
+    public static String HIGH = "High";
+    public static String NORMAL = "Normal";
+
     /** Usuable URI under consideration */
     UURI uuri;
     /** Seed status */
     boolean isSeed = false;
-    /** Latest version of the inScope definition met; (zero if not)*/
-    int inScopeVersion = -1;
+
+    String schedulingDirective = NORMAL;
+    boolean inclusionTested = false;
+    
     /** String of letters indicating how this URI was reached from a seed */
     // P precondition
     // R redirection
@@ -59,10 +65,6 @@ public class CandidateURI implements Serializable, Lineable {
     // mostly for debugging; will be a CrawlURI when memory is no object
     // just a string or null when memory is an object (configurable)
     Object via;
-
-    // Should a fetch be forced even though the URI is in the already included map
-    private boolean forceFetch = false;
-
 
     /**
      * @param u
@@ -113,21 +115,6 @@ public class CandidateURI implements Serializable, Lineable {
         return isSeed;
     }
 
-    /**
-     * @return Scope version.
-     *
-     */
-    public int getScopeVersion() {
-        return inScopeVersion;
-    }
-
-    /**
-     * @param i
-     */
-    public void setScopeVersion(int i) {
-        inScopeVersion = i;
-    }
-
     public String getPathFromSeed() {
         return pathFromSeed;
     }
@@ -173,10 +160,10 @@ public class CandidateURI implements Serializable, Lineable {
             return (String) via;
         }
         if (via instanceof UURI) {
-            return ((UURI)via).getUriString();
+            return ((UURI)via).getURIString();
         }
         if (via instanceof CandidateURI) {
-            return ((CandidateURI)via).getUURI().getUriString();
+            return ((CandidateURI)via).getUURI().getURIString();
         }
         return via.toString();
     }
@@ -186,7 +173,7 @@ public class CandidateURI implements Serializable, Lineable {
      */
     public String getLine() {
         return this.getClass().getName()
-                +" "+getUURI().getUriString()
+                +" "+getUURI().getURIString()
                 +" "+pathFromSeed
                 +" "+flattenVia();
     }
@@ -195,7 +182,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return URI String
      */
     public String getURIString() {
-        return getUURI().getUriString();
+        return getUURI().getURIString();
     }
 
     /**
@@ -229,7 +216,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return true if crawling of this URI should be forced
      */
     public boolean forceFetch() {
-        return forceFetch;
+        return schedulingDirective == FORCE_REVISIT;
     }
 
     /**
@@ -243,6 +230,38 @@ public class CandidateURI implements Serializable, Lineable {
      * @param b set to true to enforce the crawling of this URI
      */
     public void setForceFetch(boolean b) {
-        forceFetch = b;
+        schedulingDirective = FORCE_REVISIT;
     }
+    /**
+     * @return Returns the inclusionTested.
+     */
+    public boolean isInclusionTested() {
+        return inclusionTested;
+    }
+    /**
+     * @param inclusionTested The inclusionTested to set.
+     */
+    public void setInclusionTested(boolean inclusionTested) {
+        this.inclusionTested = inclusionTested;
+    }
+    /**
+     * @return Returns the schedulingDirective.
+     */
+    public String getSchedulingDirective() {
+        return schedulingDirective;
+    }
+    /**
+     * @param schedulingDirective The schedulingDirective to set.
+     */
+    public void setSchedulingDirective(String schedulingDirective) {
+        this.schedulingDirective = schedulingDirective;
+    }
+    
+    /**
+     * @return
+     */
+    public boolean needsImmediateScheduling() {
+        return schedulingDirective==HIGH || schedulingDirective == FORCE_REVISIT;
+    }
+
 }
