@@ -294,9 +294,34 @@ public class KeyedQueue implements Queue, Serializable  {
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
-        this.innerQ.enqueue(o);
+        CrawlURI curi = (CrawlURI)o;
+        if(curi.needsImmediateScheduling()) {
+            enqueueHigh(curi);
+        } else if (curi.needsSoonScheduling()) {
+            enqueueMedium(curi);
+        } else {
+            this.innerQ.enqueue(curi);
+        }
     }
 
+    /**
+     * enqueue at a middle location (ahead of 'most'
+     * items, but behind any recent 'enqueueHigh's
+     * 
+     * @param curi
+     */
+    private void enqueueMedium(CrawlURI curi) {
+        this.innerStack.addLast(curi);
+    }
+    /**
+     * enqueue ahead of everything else
+     * 
+     * @param curi
+     */
+    private void enqueueHigh(CrawlURI curi) {
+        this.innerStack.addFirst(curi);
+    }
+   
     /** 
      * Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
      * still have 'frozen' off-to-side URIs.)
@@ -383,24 +408,6 @@ public class KeyedQueue implements Queue, Serializable  {
      */
     public Object getInProcessItem() {
        return this.inProcessItem;
-    }
-
-    /**
-     * enqueue at a middle location (ahead of 'most'
-     * items, but behind any recent 'enqueueHigh's
-     * 
-     * @param curi
-     */
-    public void enqueueMedium(CrawlURI curi) {
-        this.innerStack.addLast(curi);
-    }
-    /**
-     * enqueue ahead of everything else
-     * 
-     * @param curi
-     */
-    public void enqueueHigh(CrawlURI curi) {
-        this.innerStack.addFirst(curi);
     }
 
     /**

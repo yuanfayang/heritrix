@@ -102,6 +102,8 @@ public class Frontier
     private static final Logger logger =
         Logger.getLogger(Frontier.class.getName());
 
+    /** how many items to store in memory atop each keyedqueue
+     * higher == more RAM used per active host; lower == more disk IO */
     private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
@@ -378,7 +380,7 @@ public class Frontier
         }
 
         if(caUri.needsImmediateScheduling()) {
-            enqueueHigh(CrawlURI.from(caUri));
+            enqueueToKeyed(CrawlURI.from(caUri));
         } else {
             this.pendingQueue.enqueue(caUri);
         }
@@ -401,7 +403,6 @@ public class Frontier
      */
     private CrawlURI next() {
         long now = System.currentTimeMillis();
-        long waitMax = 0;
         CrawlURI curi = null;
 
         enforceBandwidthThrottle(now);
@@ -704,9 +705,9 @@ public class Frontier
     }
 
     private void discardQueue(KeyedQueue q) {
-        allClassQueuesMap.remove(((KeyedQueue)q).getClassKey());
+        allClassQueuesMap.remove(q.getClassKey());
         q.discard();
-        ((KeyedQueue)q).release();
+        q.release();
         //assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
         assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q";
         assert !snoozeQueues.contains(q) : "snoozeQueues holding dead q";
@@ -725,6 +726,7 @@ public class Frontier
      * @param curi The CrawlURI
      * @return The CrawlURI
      * @see #noteInProcess(CrawlURI)
+     * @throws URIException
      */
     private CrawlURI emitCuri(CrawlURI curi) throws URIException {
         if(curi != null) {
@@ -824,11 +826,9 @@ public class Frontier
             logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
-        if(curi.needsImmediateScheduling()) {
-            kq.enqueueHigh(curi);
-        } else {
-            kq.enqueue(curi);
-        }
+
+        kq.enqueue(curi);
+
         if(kq.checkEmpty()) {
             // if kq state changed, update frontier's internals
             updateQ(kq);
@@ -885,39 +885,6 @@ public class Frontier
     public synchronized void unfreezeQueue(KeyedQueue kq) {
         kq.unfreeze();
         kq.activate(); // TODO: implement active/inactive distinctions
-    }
-
-    
-    /**
-     * @param curi
-     */
-    private void enqueueMedium(CrawlURI curi) {
-        KeyedQueue kq = keyedQueueFor(curi);
-        if(kq==null){
-            logger.severe("No workQueue found for "+curi);
-            return; // Couldn't find/create kq.
-        }
-            
-        kq.enqueueMedium(curi);
-        if(kq.checkEmpty()) {
-            updateQ(kq);
-        }
-    }
-
-    /**
-     * @param curi
-     */
-    private void enqueueHigh(CrawlURI curi) {
-        KeyedQueue kq = keyedQueueFor(curi);
-        if(kq==null){
-            logger.severe("No workQueue found for "+curi);
-            return; // Couldn't find/create kq.
-        }
-            
-        kq.enqueueHigh(curi);
-        if(kq.checkEmpty()) {
-            updateQ(kq);
-        }
     }
 
     protected long earliestWakeTime() {
@@ -1147,7 +1114,8 @@ public class Frontier
     private void reschedule(CrawlURI curi) {
         // Eliminate state related to only prior processing passthrough.
         curi.processingCleanup();
-        enqueueMedium(curi);
+        curi.setSchedulingDirective(CandidateURI.MEDIUM);
+        enqueueToKeyed(curi);
         queuedCount++;
     }
 
@@ -1273,7 +1241,6 @@ public class Frontier
         if(allClassQueuesMap.size()!=0)
         {
             Iterator q = allClassQueuesMap.keySet().iterator();
-            int i = 1;
             while(q.hasNext())
             {
                 keyqueueKeys.add(q.next());
@@ -1411,7 +1378,6 @@ public class Frontier
         if(allClassQueuesMap.size()!=0)
         {
             Iterator q = allClassQueuesMap.keySet().iterator();
-            int i = 1;
             while(q.hasNext())
             {
                 KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
@@ -1456,7 +1422,6 @@ public class Frontier
         if(allClassQueuesMap.size()!=0)
         {
             Iterator q = allClassQueuesMap.keySet().iterator();
-            int i = 1;
             while(q.hasNext())
             {
                 KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
@@ -1588,14 +1553,14 @@ public class Frontier
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
         ObjectPlusFilesOutputStream coostream = (ObjectPlusFilesOutputStream)stream;
-        coostream.pushAuxiliaryDirectory(new File(coostream.getAuxiliaryDirectory(),"frontier"));
+        coostream.pushAuxiliaryDirectory("frontier");
         coostream.defaultWriteObject();
         coostream.popAuxiliaryDirectory();
     }
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
-        coistream.pushAuxiliaryDirectory(new File(coistream.getAuxiliaryDirectory(),"frontier"));
+        coistream.pushAuxiliaryDirectory("frontier");
         coistream.defaultReadObject();
         coistream.popAuxiliaryDirectory();
     }
