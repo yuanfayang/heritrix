@@ -87,7 +87,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
      * Test which will overflow into disk backing,
      * trigger flip of write and read files.
      */
-    public synchronized void testIntoDiskBacking() throws InterruptedException {
+    public synchronized void testIntoDiskBacking() {
         DiskBackedQueue queue = (DiskBackedQueue)this.queue;
         
         queue.enqueue("foo1");
@@ -146,6 +146,13 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertTrue("queue is empty", queue.isEmpty());    
     }
     
+    /**
+     * Test that object + files properly serializes and deserialized
+     * from ObjectPlusFiles streams.
+     * 
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public void testSerialization() throws IOException, ClassNotFoundException {
         queue.enqueue("foo1");
         queue.enqueue("foo2");
