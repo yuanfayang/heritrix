@@ -42,9 +42,9 @@ public class HostCache {
 			}
 		}
 
-		String authorityUsuallyHost = curi.getUURI().getUri().getAuthority();
-		if (authorityUsuallyHost != null) {
-			return getHostFor(authorityUsuallyHost);
+		String hostOrAuthority = curi.getUURI().getUri().getHost();
+		if (hostOrAuthority != null) {
+			return getHostFor(hostOrAuthority);
 			// TODOSOMEDAY: make this robust against those rare cases
 			// where authority is not a hostname
 		} else {
