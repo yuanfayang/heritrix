@@ -4,6 +4,5 @@
 org.archive.crawler.filter.HopsFilter
 org.archive.crawler.filter.OrFilter
 org.archive.crawler.filter.PathDepthFilter
-org.archive.crawler.filter.SeedExtensionFilter
 org.archive.crawler.filter.TransclusionFilter
 org.archive.crawler.filter.URIRegExpFilter
