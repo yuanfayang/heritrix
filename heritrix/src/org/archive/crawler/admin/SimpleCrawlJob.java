@@ -17,17 +17,18 @@ public class SimpleCrawlJob implements CrawlJob
 	protected String sName;
 	protected String sFilename; //An XML file describing a crawl order (including path)
 	protected String sStatus;
-	protected StatisticsTracker stats;
 	protected boolean isReadOnly = false;
+	protected StatisticsTracker stats;
 	protected int priority;
+	protected int orderVersion;
 	
-	public SimpleCrawlJob(String UID, String name, String crawlorderfile, int priority)
-	{
+	public SimpleCrawlJob(String UID, String name, String crawlorderfile, int priority){
 		this.UID = UID;
 		this.priority = priority;
 		sName = name;
 		sFilename = crawlorderfile;
 		sStatus = STATUS_CREATED;
+		orderVersion = 1; 
 
 	}
 	
@@ -88,16 +89,16 @@ public class SimpleCrawlJob implements CrawlJob
 		}
 		else
 		{
+			orderVersion++;
 			sFilename = crawlOrderFile;
 			return true;
 		}
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlJob#getCrawlOrderFile()
 	 */
 	public String getCrawlOrderFile() {
-		// TODO Auto-generated method stub
 		return sFilename;
 	}
 
@@ -148,5 +149,12 @@ public class SimpleCrawlJob implements CrawlJob
 	 */
 	public String getUID() {
 		return UID;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJob#getOrderVersion()
+	 */
+	public int getOrderVersion() {
+		return orderVersion;
 	}	
 }
