@@ -32,8 +32,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Open-addressing on-disk hash set for holding primitive long fingerprints. 
+ * 
  * @author gojomo
- *
  */
 public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	private static Logger logger =
