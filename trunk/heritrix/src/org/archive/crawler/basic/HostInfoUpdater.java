@@ -38,6 +38,10 @@ public class HostInfoUpdater extends Processor {
 			if(curi.getAList().containsKey("http-transaction")) {
 				GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
 				curi.getHost().updateRobots(get);
+				
+				// see which epires first, the dns or the robots.txt
+				long expireCuri = ( curi.getHost().getIpExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getIpExpires() : curi.getHost().getIpExpires();
+				curi.setDontRetryBefore(expireCuri);
 			}
 		}
 	}

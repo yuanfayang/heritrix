@@ -21,7 +21,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
  *
  */
 public class CrawlHost {
-	private static long DEFAULT_VALIDITY_DURATION = 1000*60*60*24; // one day
+	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day
 	String hostname;
 	InetAddress ip;
 	long ipExpires = -1;
@@ -75,6 +75,34 @@ public class CrawlHost {
 	public void setRobotsExpires(long l) {
 		robotsExpires = l;
 	}
+	
+/*	public boolean isRobotsExpired(){
+		
+		// -1 denotes a robots.txt we haven't fetched
+		// so ignore that as a special case
+		if( getRobotsExpires() < System.currentTimeMillis()
+			&& getRobotsExpires() > 0
+		){
+			return true;
+		}
+
+		return false;
+	}
+	
+	public boolean isExpired(){
+		// -1 denotes an ip we haven't fetched
+		// so ignore that as a special case
+		if( getRobotsExpires() < System.currentTimeMillis()
+			&& getRobotsExpires() > 0
+		){
+			return true;
+		}
+
+		return false;
+	}
+	*/
+	
+	
 
 	/**
 	 * @return
@@ -101,7 +129,7 @@ public class CrawlHost {
 	 * @param get
 	 */
 	public void updateRobots(GetMethod get) {
-		robotsExpires = System.currentTimeMillis()+DEFAULT_VALIDITY_DURATION;
+		robotsExpires = System.currentTimeMillis()+DEFAULT_ROBOTS_VALIDITY_DURATION;
 		if (get.getStatusCode()==404) {
 			// not found == all ok
 			robots = RobotsExclusionPolicy.ALLOWALL;

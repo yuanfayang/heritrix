@@ -15,6 +15,8 @@ import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
+import org.archive.crawler.datamodel.CrawlHost;
+
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
 
@@ -49,12 +51,27 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 	private int fetchAttempts = 0;	// the number of fetch attempts that have been made
 
 	private int threadNumber;
+	
+	private long dontRetryBefore = -1;
 
 	/**
 	 * @param uuri
 	 */
 	public CrawlURI(UURI u) {
 		uuri=u;
+	}
+	
+	public void setDontRetryBefore(long expires){
+		dontRetryBefore = expires;
+	}
+	public long getDontRetryBefore(){
+		return dontRetryBefore;
+	}
+	public boolean isExpired(){
+		if(dontRetryBefore < System.currentTimeMillis()){
+			return true;
+		}
+		return false;
 	}
 	
 	/**
