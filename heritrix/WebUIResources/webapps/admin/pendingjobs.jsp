@@ -11,7 +11,7 @@
 		{
 			try
 			{
-				handler.removeJob(Integer.parseInt(request.getParameter("job")));
+				handler.removeJob(request.getParameter("job"));
 			}
 			catch(java.lang.NumberFormatException e){}
 		}
