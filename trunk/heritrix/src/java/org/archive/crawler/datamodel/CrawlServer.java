@@ -58,7 +58,7 @@ public class CrawlServer implements Serializable {
     // how many consecutive connection errors have been encountered;
     // used to drive exponentially increasing retry timeout or decision
     // to 'freeze' entire class (queue) of URIs
-    int consecutiveConnectionErrors = 0;
+    protected int consecutiveConnectionErrors = 0;
     
     /** Creates a new CrawlServer object.
      * 
