@@ -567,16 +567,36 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return info;
     }
 
-    public MBeanAttributeInfo getAttributeInfo(
-        CrawlerSettings settings,
-        String name) {
-        try {
-            return settings.getData(this).getAttributeInfo(name);
-        } catch (NullPointerException e) {
-            return null;
-        }
-    }
+    /** Get the effective Attribute info for an element of this type from 
+     * a settings object.
+     * 
+     * @param settings the settings object for which the Attribute info is
+     *        effective.
+     * @param name the name of the element to get the attribute for.
+     * @return the attribute info
+     */
+    public MBeanAttributeInfo getAttributeInfo(CrawlerSettings settings,
+            String name) {
 
+        MBeanAttributeInfo info = null;
+        
+        DataContainer data = getDataContainerRecursive(settings);
+        while (data != null && info == null) {
+            info = data.getAttributeInfo(name);
+            if (info == null) {
+                data = getDataContainerRecursive(data.getSettings().getParent());
+            }
+        }
+
+        return info;
+    }
+    
+    /** Get the Attribute info for an element of this type from the global
+     * settings.
+     * 
+     * @param name the name of the element to get the attribute for.
+     * @return the attribute info
+     */
     public MBeanAttributeInfo getAttributeInfo(String name) {
         return getAttributeInfo(globalSettings(), name);
     }
