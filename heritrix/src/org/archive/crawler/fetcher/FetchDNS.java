@@ -27,7 +27,7 @@ import org.xbill.DNS.dns;
  * @author gojomo
  *
  */
-public class FetcherDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
+public class FetchDNS extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetcherDNS");
 	
  	// set to false for performance, true if your URIs will contain useful type/class info (usually they won't)

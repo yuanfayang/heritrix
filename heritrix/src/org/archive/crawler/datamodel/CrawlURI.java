@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.URIStoreable;
-import org.archive.crawler.fetcher.FetcherDNS;
+import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
 
 import st.ata.util.AList;
@@ -155,7 +155,7 @@ public class CrawlURI extends CandidateURI
 		
 		String scheme = getUURI().getUri().getScheme();
 		if (scheme.equals("dns")){
-			return FetcherDNS.parseTargetDomain(this);
+			return FetchDNS.parseTargetDomain(this);
 		}
 		String host = getUURI().getUri().getHost();
 		if (host == null) {
