@@ -286,8 +286,9 @@
 			}
 			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
             return;
-		}else if(request.getParameter("action").equals("filters")){
-			response.sendRedirect("/admin/jobs/per/filters.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+		}else if(request.getParameter("action").equals("goto")){
+            // Goto another page of the job/profile settings
+			response.sendRedirect(request.getParameter("where")+"?job="+theJob.getUID()+"&currDomain="+currDomain);
             return;
         }else if(request.getParameter("action").equals("updateexpert")){
             if(request.getParameter("expert") != null){
@@ -349,8 +350,9 @@
 			document.frmConfig.submit();
 		}
 		
-		function doGotoFilters(){
-			document.frmConfig.action.value="filters";
+		function doGoto(where){
+			document.frmConfig.action.value="goto";
+			document.frmConfig.where.value=where;
 			doSubmit();
 		}
 		
@@ -373,6 +375,7 @@
 	<form name="frmConfig" method="post" action="configure.jsp">
 		<input type="hidden" name="update" value="true">		
 		<input type="hidden" name="action" value="done">
+		<input type="hidden" name="where" value="">
         <input type="hidden" name="expert" value="<%=expert%>">
 		<input type="hidden" name="currDomain" value="<%=currDomain%>">
 		<input type="hidden" name="job" value="<%=theJob.getUID()%>">

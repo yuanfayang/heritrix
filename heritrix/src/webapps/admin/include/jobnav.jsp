@@ -35,23 +35,23 @@
 							</td>
 						<% } else { %>
 							<td class="tab<%=jobtab==0?"_selected":""%>" nowrap>
-								<a href="javascript:doGotoModules()" class="tab_text<%=jobtab==0?"_selected":""%>">Modules</a>
+								<a href="javascript:doGoto('/admin/jobs/modules.jsp')" class="tab_text<%=jobtab==0?"_selected":""%>">Modules</a>
 							</td>
 						<% } %>
 						<td class="tab_seperator">
 						</td>
 						<td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-							<a href="javascript:doGotoFilters()" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
+							<a href="javascript:doGoto('/admin/jobs/filters.jsp')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
 						</td>
 						<td class="tab_seperator">
 						</td>
 						<td class="tab<%=jobtab==2?"_selected":""%>" nowrap>
-							<a href="javascript:doGotoConfigure()" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
+							<a href="javascript:doGoto('/admin/jobs/configure.jsp')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
 						</td>
 						<td class="tab_seperator">
 						</td>
 						<td class="tab<%=jobtab==3?"_selected":""%>" nowrap>
-							<a href="javascript:doGotoPer()" class="tab_text<%=jobtab==3?"_selected":""%>">Overrides</a>
+							<a href="javascript:doGoto('/admin/jobs/per/overview.jsp')" class="tab_text<%=jobtab==3?"_selected":""%>">Overrides</a>
 						</td>
 						<td class="tab_seperator">
 						</td>
