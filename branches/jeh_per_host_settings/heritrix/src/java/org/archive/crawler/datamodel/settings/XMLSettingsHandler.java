@@ -116,7 +116,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         orderFile = tmpOrderFile;
     }
 
-    private File scopeToFile(String scope) {
+    private File getSettingsDirectory() {
         String settingsDirectoryName = null;
         try {
             settingsDirectoryName =
@@ -130,9 +130,12 @@ public class XMLSettingsHandler extends SettingsHandler {
             e.printStackTrace();
         }
 
-        File settingsDirectory =
-             new File(getPathRelativeToWorkingDirectory(settingsDirectoryName));
-
+        return new File(getPathRelativeToWorkingDirectory(settingsDirectoryName));
+    }
+    
+    private File scopeToFile(String scope) {
+        File settingsDirectory = getSettingsDirectory();
+        
         File file;
         if (scope == null || scope.equals("")) {
             file = settingsDirectory;
@@ -268,35 +271,52 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param settingsDirectory the top level directory of the per host/domain
      *                          settings files.
      */
-    public void copySettings(File orderFileName, File settingsDirectory) throws Exception {
-        File oldSettingsDirectory = settingsDirectory;
+    public void copySettings(File newOrderFileName, File newSettingsDirectory) throws IOException {
+        File oldSettingsDirectory = getSettingsDirectory();
         
         // Write new orderfile and point the settingshandler to it
-        orderFile = orderFileName;
-        getOrder().setAttribute(new Attribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY, settingsDirectory.getPath()));
+        orderFile = newOrderFileName;
+        try {
+            getOrder().setAttribute(new Attribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY, newSettingsDirectory.getPath()));
+        } catch (Exception e) {
+            throw new IOException("Could not update settings with new location: " + e.getMessage());
+        }
         writeSettingsObject(getSettingsObject(null));
         
         // Copy the per host files
-        File[] entries = settingsDirectory.listFiles();
-        for(int i=0 ;i<entries.length; i++) {
-        }
+        copyFiles(oldSettingsDirectory, newSettingsDirectory);
     }
     
-    private void copyFile(File from, File to) throws IOException {
-       // get channels
-       FileInputStream fis = new FileInputStream(from);
-       FileOutputStream fos = new FileOutputStream(to);
-       FileChannel fcin = fis.getChannel();
-       FileChannel fcout = fos.getChannel();
+    private void copyFiles(File src, File dest) throws IOException {
+        if (src.isDirectory()) {
+            // Create destination directory
+            dest.mkdirs();
+            
+            // Go trough the contents of the directory
+            String list[] = src.list();
+            for (int i = 0; i < list.length; i++) {
+                File src1 = new File(src, list[i]);
+                File dest1 = new File(dest, list[i]);
+                copyFiles(src1 , dest1);
+            }
+            
+        } else {
 
-       // do the file copy
-       fcin.transferTo(0, fcin.size(), fcout);
+            // get channels
+            FileInputStream fis = new FileInputStream(src);
+            FileOutputStream fos = new FileOutputStream(dest);
+            FileChannel fcin = fis.getChannel();
+            FileChannel fcout = fos.getChannel();
 
-       // finish up
-       fcin.close();
-       fcout.close();
-       fis.close();
-       fos.close();
+            // do the file copy
+            fcin.transferTo(0, fcin.size(), fcout);
+
+            // finish up
+            fcin.close();
+            fcout.close();
+            fis.close();
+            fos.close();
+        }
     }
     
     /**
