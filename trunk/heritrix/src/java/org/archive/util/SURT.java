@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Sort-friendly Reversible URI Transform.
+ * Sort-friendly URI Reordering Transform.
  * 
  * Converts URIs of the form:
  * 
@@ -46,6 +46,13 @@ import java.util.regex.Pattern;
  * This remedies the 'problem' with standard URIs that the host portion of a 
  * regular URI, with its dotted-domains, is actually in reverse order from 
  * the natural hierarchy that's usually helpful for grouping and sorting.
+ * 
+ * The value of respecting URI case variance is considered negligible: it
+ * is vanishingly rare for case-variance to be meaningful, while URI case-
+ * variance often arises from people's confusion or sloppiness, and they
+ * only correct it insofar as necessary to avoid blatant problems. Thus 
+ * SURT form is considered to be flattened to all lowercase, and thus not
+ * completely reversible. 
  * 
  * @author gojomo
  */
@@ -82,10 +89,11 @@ public class SURT {
         String userinfo = emptyIfNull(m.group(2));
         String at = emptyIfNull(m.group(3));
         String path = emptyIfNull(m.group(6)); 
-        return scheme + BEGIN_TRANSFORMED_AUTHORITY + reorderedHost 
+        String composed = scheme + BEGIN_TRANSFORMED_AUTHORITY + reorderedHost 
             + port + at
             + userinfo + END_TRANSFORMED_AUTHORITY 
             + path;
+        return composed.toLowerCase();
     }
     
     private static String emptyIfNull(String string) {
