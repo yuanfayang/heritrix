@@ -25,11 +25,13 @@
  */
 package org.archive.crawler.writer;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -65,6 +67,7 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.io.ReplayInputStream;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
@@ -351,26 +354,14 @@ ARCWriterSettings, FetchStatusCodes {
             // Write nothing.
             return;
         }
-
-        ARCWriter writer = this.pool.borrowARCWriter();
-        if (writer == null) {
-            throw new IOException("Writer is null");
-        }
         
-        try {
-            writer.write(curi.getURIString(), curi.getContentType(),
-               getHostAddress(curi),
-               curi.getLong(A_FETCH_BEGAN_TIME), recordLength,
-               curi.getHttpRecorder().getRecordedInput().
+        write(curi, recordLength,
+            curi.getHttpRecorder().getRecordedInput().
                    getReplayInputStream());
-        } finally {
-            this.pool.returnARCWriter(writer);
-        }
     }
 
     protected void writeDns(CrawlURI curi)
-        throws IOException
-    {
+    throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // Start the record with a 14-digit date per RFC 2540
         long ts = curi.getLong(A_FETCH_BEGAN_TIME);
@@ -390,23 +381,45 @@ ARCWriterSettings, FetchStatusCodes {
                 recordLength += 1;
             }
         }
+        
+        write(curi, recordLength,
+            new ByteArrayInputStream(baos.toByteArray()));
 
+        // Save the calculated contentSize for logging purposes
+        // TODO handle this need more sensibly
+        curi.setContentSize(recordLength);
+    }
+    
+    protected void write(CrawlURI curi, int recordLength, InputStream in)
+    throws IOException {
         ARCWriter writer = this.pool.borrowARCWriter();
         if (writer == null) {
             throw new IOException("Writer is null");
         }
         
         try {
-            writer.write(curi.getURIString(), curi.getContentType(),
-                getHostAddress(curi), curi.getLong(A_FETCH_BEGAN_TIME),
-                    recordLength, baos);
+            if (in instanceof ReplayInputStream) {
+                writer.write(curi.getURIString(), curi.getContentType(),
+                    getHostAddress(curi), curi.getLong(A_FETCH_BEGAN_TIME),
+                    recordLength, (ReplayInputStream)in);
+            } else {
+                writer.write(curi.getURIString(), curi.getContentType(),
+                    getHostAddress(curi), curi.getLong(A_FETCH_BEGAN_TIME),
+                    recordLength, in);
+            }
+        } catch (IOException e) {
+            // Invalidate this arc file (It gets a '.invalid' suffix).
+            this.pool.invalidateARCWriter(writer);
+            // Set the writer to null otherwise the pool accounting
+            // of how many active writers gets skewed if we subsequently
+            // do a returnARCWriter call on this object in the finally block.
+            writer = null;
+            throw e;
         } finally {
-            this.pool.returnARCWriter(writer);
+            if (writer != null) {
+                this.pool.returnARCWriter(writer);
+            }
         }
-
-        // Save the calculated contentSize for logging purposes
-        // TODO handle this need more sensibly
-        curi.setContentSize(recordLength);
     }
     
     private String getHostAddress(CrawlURI curi) {

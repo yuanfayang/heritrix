@@ -84,7 +84,7 @@ public class RecordingInputStream
 
     public int read() throws IOException {
         if (!isOpen()) {
-        	    throw new IOException("Stream closed " +
+            throw new IOException("Stream closed " +
                 Thread.currentThread().getName());
         }
         int b = this.in.read();

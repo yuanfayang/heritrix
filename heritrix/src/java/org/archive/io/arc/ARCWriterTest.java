@@ -24,20 +24,24 @@
  */
 package org.archive.io.arc;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.archive.io.RecordingInputStream;
+import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
+import org.archive.util.HttpRecorder;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -374,17 +378,35 @@ extends TmpDirTestCase implements ARCConstants {
             err.startsWith("WARNING Premature EOF before end-of-record"));
     }
     
-    public void testCheckForWhiteSpace()
-    throws IOException {
+    public void testGapError() throws IOException {
         ARCWriter writer =
-            createArcWithOneRecord("testCheckForWhiteSpace", true);
-        String x = writer.checkForWhiteSpace("one two");
-        assertTrue("Didn't remove space", x.equals("onetwo"));
-        x = writer.checkForWhiteSpace("     ");
-        assertTrue("Didn't remove space", x.equals("-"));
-        x = writer.checkForWhiteSpace("onetwo\n");
-        assertTrue("Didn't remove space", x.equals("onetwo"));
-        x = writer.checkForWhiteSpace("onetwo");
-        assertTrue("Didn't remove space", x.equals("onetwo"));
+            createArcWithOneRecord("testGapError", true);
+        String content = getContent();
+        // Make a 'weird' RIS that returns bad 'remaining' length
+        // after the call to readFullyTo.
+        ReplayInputStream ris = new ReplayInputStream(content.getBytes(),
+                content.length(), null) {
+            private boolean readFullyToCalled = false;
+            public void readFullyTo(OutputStream os)
+            throws IOException {
+                super.readFullyTo(os);
+                this.readFullyToCalled = true;
+            }
+            
+            public long remaining() {
+                return (this.readFullyToCalled)? -1: super.remaining();
+            }
+        };
+        String message = null;
+        try {
+        writer.write(SOME_URL, "text/html", "192.168.1.1",
+            (new Date()).getTime(), content.length(), ris);
+        } catch (IOException e) {
+            message = e.getMessage();
+        }
+        writer.close();
+        assertTrue("No gap when should be",
+            message != null &&
+            message.indexOf("Gap between expected and actual") >= 0);
     }
 }

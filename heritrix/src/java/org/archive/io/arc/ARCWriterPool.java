@@ -24,6 +24,7 @@
  */
 package org.archive.io.arc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
@@ -83,6 +84,8 @@ public class ARCWriterPool {
      * Instance of arc writer settings.
      */
     private final ARCWriterSettings settings;
+    
+    private static final String INVALID_SUFFIX = ".invalid";
     
 
     /**
@@ -160,6 +163,20 @@ public class ARCWriterPool {
             }
         }
         return writer;
+    }
+    
+    public void invalidateARCWriter(ARCWriter writer)
+    throws IOException {
+        try {
+            this.pool.invalidateObject(writer);
+        } catch (Exception e) {
+            // Convert exception.
+            throw new IOException(e.getMessage());
+        }
+        // It'll have been closed.  Rename with an '.invalid' suffix so it
+        // gets attention.
+        writer.getArcFile().renameTo(
+            new File(writer.getArcFile().getAbsoluteFile() + INVALID_SUFFIX));
     }
     
     /**
