@@ -117,7 +117,20 @@ public class SimpleHttpServer
     public void stopServer()
         throws Exception
     {
-        this.server.stop();
+        if (this.server != null)
+        {
+            this.server.stop();
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    protected void finalize()
+        throws Throwable
+    {
+        stopServer();
+        super.finalize();
     }
 
     /**
