@@ -55,5 +55,12 @@ public class CrawlStatusAdapter implements CrawlStatusListener
      */
     public void crawlEnded(String sExitMessage) {
     }
-
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
 }

@@ -934,7 +934,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
-
         Checkpoint resumeFrom = currentJob.getResumeFromCheckpoint();
 
         try {
@@ -949,9 +948,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             }
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
-
             SettingsHandler settingsHandler = currentJob.getSettingsHandler();
-
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
@@ -1099,6 +1096,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void crawlEnded(String sExitMessage) {
         // Not interested in this event.
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
     }
 
     /**
