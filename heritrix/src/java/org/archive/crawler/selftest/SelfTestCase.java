@@ -1,29 +1,34 @@
 /* SelfTestCase
- * 
+ *
  * Created on Feb 4, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 package org.archive.crawler.selftest;
 
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -34,6 +39,7 @@ import org.archive.crawler.basic.ARCWriterProcessor;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.io.arc.ARCReader;
+import org.archive.io.arc.ARCRecordMetaData;
 import org.archive.util.FileUtils;
 
 import junit.framework.TestCase;
@@ -41,10 +47,10 @@ import junit.framework.TestCase;
 
 /**
  * Base class for integrated selftest unit tests.
- * 
+ *
  * Has utility for integrated selftest such as location of selftest generated
  * arc file.
- * 
+ *
  * @author stack
  * @version $Id$
  */
@@ -54,32 +60,32 @@ public class SelfTestCase extends TestCase
      * Suffix for selftest classes.
      */
     protected static final String SELFTEST = "SelfTest";
-    
-    private static CrawlJob job = null;
-    private static File jobDir = null;
+
+    private static CrawlJob crawlJob = null;
+    private static File crawlJobDir = null;
     private static File arcFile = null;
     private static String selftestURL = null;
-    private static CrawlOrder crawlOrder = null;
-    
+
     /**
      * Directory logs are kept in.
      */
     private static File logsDir = null;
-    
+
     /**
      * Has the static initializer for this class been run.
      */
     private static boolean initialized = false;
-    
+
     /**
      * The selftest webapp htdocs directory.
      */
     private static File htdocs = null;
-    
+
+
     /**
      * A reference to an ARCReader on which the validate method has been called.
      * Can be used to walk the metadata.
-     * 
+     *
      * @see org.archive.io.arc.ARCReader#validate()
      */
     private static ARCReader readReader = null;
@@ -94,7 +100,7 @@ public class SelfTestCase extends TestCase
     {
         super(testName);
     }
-    
+
     /* (non-Javadoc)
      * @see junit.framework.TestCase#setUp()
      */
@@ -107,56 +113,91 @@ public class SelfTestCase extends TestCase
         }
         super.setUp();
     }
-    
+
+    /**
+     * Test passed object is non-null.
+     *
+     * @param obj Object to test.
+     * @return Passed object.
+     * @throws NullPointerException Thrown if passed object is null.
+     */
+    private static Object testNonNull(Object obj)
+        throws NullPointerException
+    {
+        if (obj == null)
+        {
+            throw new NullPointerException(obj.toString());
+        }
+        return obj;
+    }
+
+    /**
+     * Test non null and not empty.
+     *
+     * @param str String to test.
+     * @return The passed string.
+     * @throws IllegalArgumentException if null or empty string.
+     */
+    private static String testNonNullNonEmpty(String str)
+        throws IllegalArgumentException, NullPointerException
+    {
+        if (((String)testNonNull(str)).length() <= 0)
+        {
+            throw new IllegalArgumentException("Passed string " + str +
+                " is empty.");
+        }
+        return str;
+    }
+
+    /**
+     * Test nonull and exits.
+     *
+     * @param file File to test.
+     * @return Passed file.
+     * @throws FileNotFoundException passed file doesn't exist.
+     */
+    private static File testNonNullExists(File file)
+        throws FileNotFoundException
+    {
+        if (!((File)testNonNull(file)).exists())
+        {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+        return file;
+    }
+
     /**
      * Static initializer.
-     * 
+     *
      * Must be called before instantiation of any tests based off this class.
-     * 
-     * @param selftestURL URL to selftest webapp.
+     *
+     * @param url URL to selftest webapp.
      * @param job The selftest crawl job.
-      * @param jobDir Job output directory.  Has the seed file, the order file
-     * and logs.  
-     * @param htdocs Expanded webapp directory location.
-     * 
+     * @param jobDir Job output directory.  Has the seed file, the order file
+     * and logs.
+     * @param docs Expanded webapp directory location.
+     *
      * @throws IOException if nonexistent directories passed.
      */
-    public static synchronized void initialize(final String selftestURL,
-            final CrawlJob job, final File jobDir, final File htdocs)
+    public static synchronized void initialize(final String url,
+            final CrawlJob job, final File jobDir, final File docs)
         throws IOException, AttributeNotFoundException, MBeanException,
             ReflectionException
     {
-        if (selftestURL == null || selftestURL.length() <= 0)
-        {
-            throw new IOException("SelftestURL not set");
-        }    
-        SelfTestCase.selftestURL =
-            selftestURL.endsWith("/")? selftestURL: selftestURL + "/";
-        
-        if (job == null)
-        {
-        	throw new NullPointerException("Passed job is null");
-        }
-        SelfTestCase.job = job;
-        
-        if (jobDir == null || !jobDir.exists())
-        {
-            throw new IOException("Jobdir null or does not exist");
-        }
-        SelfTestCase.jobDir = jobDir;
-        
-        SelfTestCase.crawlOrder = job.getSettingsHandler().getOrder();
-        if (crawlOrder != null)
-        {
-            throw new NullPointerException("CrawlOrder is null");
-        }
-        
+        testNonNullNonEmpty(url);
+        SelfTestCase.selftestURL = url.endsWith("/")? url: url + "/";
+        SelfTestCase.crawlJob = (CrawlJob)testNonNull(job);
+        SelfTestCase.crawlJobDir = testNonNullExists(jobDir);
+        SelfTestCase.htdocs = testNonNullExists(docs);
         // Calculate the logs directory.  If diskPath is not absolute, then logs
-        // are in the jobs dir under the diskPath subdirectory.
+        // are in the jobs directory under the diskPath subdirectory.  Guard
+        // against case where diskPath is empty.
+        CrawlOrder crawlOrder =
+            (CrawlOrder)testNonNull(job.getSettingsHandler().getOrder());
         String diskPath = (String)crawlOrder.
             getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         if (diskPath != null && diskPath.length() > 0 &&
-                diskPath.startsWith(File.separator))
+            diskPath.startsWith(File.separator))
         {
             SelfTestCase.logsDir = new File(diskPath);
         }
@@ -166,43 +207,27 @@ public class SelfTestCase extends TestCase
                 (diskPath != null && diskPath.length() > 0)?
                     new File(jobDir, diskPath): jobDir;
         }
-
-        if (SelfTestCase.logsDir == null || !SelfTestCase.logsDir.exists())
-        {
-            throw new IOException("Logs directory not found");
-        }
-        
-        // Calculate the arcfile name.  Find it in the arcDir.  Should only be one.
-        // Then make an instance of ARCReader and call the validate on it.
+        testNonNullExists(SelfTestCase.logsDir);
+        // Calculate the arcfile name.  Find it in the arcDir.  Should only be
+        // one. Then make an instance of ARCReader and call the validate on it.
         ComplexType arcWriterProcessor =
-            (ComplexType)crawlOrder.getProcessors().
-                getAttribute("Archiver");
+            (ComplexType)crawlOrder.getProcessors().getAttribute("Archiver");
         String arcDirStr = (String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PATH);
         File arcDir = null;
         if (arcDirStr != null && arcDirStr.length() > 0 &&
                 arcDirStr.startsWith(File.separator))
         {
-        	arcDir = new File(arcDirStr);
+            arcDir = new File(arcDirStr);
         }
         else
         {
             arcDir = (arcDirStr != null && arcDirStr.length() > 0)?
                 new File(SelfTestCase.logsDir, arcDirStr): SelfTestCase.logsDir;
         }
- 
-        if (arcDir == null || !arcDir.exists())
-        {
-            throw new IOException("ArcDir not found");
-        }
-        
-        String prefix = (String)arcWriterProcessor.
-            getAttribute(ARCWriterProcessor.ATTR_PREFIX);
-        if (prefix == null || prefix.length() <= 0)
-        {
-            throw new IOException("Prefix not set");
-        }    
-        
+        testNonNullExists(arcDir);
+        String prefix = testNonNullNonEmpty((String)arcWriterProcessor.
+            getAttribute(ARCWriterProcessor.ATTR_PREFIX));
         File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
         if (arcs.length != 1)
         {
@@ -212,16 +237,10 @@ public class SelfTestCase extends TestCase
         SelfTestCase.arcFile = arcs[0];
         SelfTestCase.readReader = new ARCReader(arcFile);
         SelfTestCase.readReader.validate();
-        
-        if (htdocs == null || !htdocs.exists())
-        {
-            throw new IOException("WebappDir htdocs not set");
-        }
-        SelfTestCase.htdocs = htdocs;
-        
+
         SelfTestCase.initialized = true;
     }
-    
+
     /**
      * @return Returns the arcDir.
      */
@@ -233,11 +252,11 @@ public class SelfTestCase extends TestCase
     /**
      * @return Returns the jobDir.
      */
-    protected static File getJobDir()
+    protected static File getCrawlJobDir()
     {
-        return jobDir;
+        return SelfTestCase.crawlJobDir;
     }
-    
+
     /**
      * @return Return the directory w/ logs in it.
      */
@@ -245,27 +264,27 @@ public class SelfTestCase extends TestCase
     {
         return SelfTestCase.logsDir;
     }
-    
+
     /**
-     * Returns the selftest ARCReader.
-     * 
+     * Returns the selftest read ARCReader.
+     *
      * The returned ARCReader has been validated.  Use it to get at metadata.
-     * 
+     *
      * @return Returns the readReader, an ARCReader that has been validated.
      */
     protected static ARCReader getReadReader()
     {
-        return readReader;
+        return SelfTestCase.readReader;
     }
-    
+
     /**
      * @return Returns the selftestURL.
      */
     public static String getSelftestURL()
     {
-        return selftestURL;
+        return SelfTestCase.selftestURL;
     }
-    
+
     /**
      * @return Returns the selftestURL.  URL returned is guaranteed to have
      * a trailing '/'.
@@ -274,10 +293,10 @@ public class SelfTestCase extends TestCase
     {
         return selftestURL.endsWith("/")? selftestURL: selftestURL + "/";
     }
-    
+
     /**
      * Calculates test name by stripping SelfTest from current class name.
-     * 
+     *
      * @return The name of the test.
      */
     public String getTestName()
@@ -297,5 +316,92 @@ public class SelfTestCase extends TestCase
     public static File getHtdocs()
     {
         return SelfTestCase.htdocs;
+    }
+    
+    /**
+     * @return Returns the crawlJob.
+     */
+    public static CrawlJob getCrawlJob()
+    {
+        return crawlJob;
+    }
+
+    /**
+     * Confirm passed files exist on disk under the test directory.
+     *
+     * @param files Files to test for existence under the test's directory.
+     * @return true if all files exist on disk.
+     */
+    public boolean filesExist(List files)
+    {
+        boolean result = true;
+        for (Iterator i = files.iterator(); i.hasNext();)
+        {
+            if (!fileExists((String)i.next()))
+            {
+                result = false;
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Confirm passed file exists on disk under the test directory.
+     *
+     * This method takes care of building up the file path under the selftest
+     * webapp.  Just pass the file name.
+     *
+     * @param fileName Name of file to look for.
+     * @return True if file exists.
+     */
+    public boolean fileExists(String fileName)
+    {
+        File testDir = new File(getHtdocs(), getTestName());
+        File fileOnDisk = new File(testDir, fileName);
+        return fileOnDisk.exists();
+    }
+
+    /**
+     * Test passed list were all found in the arc.
+     *
+     * @param files List of files to find in the arc.  No other files but these
+     * should be found in the arc.
+     * @return Files found in arc.
+     */
+    public List testFilesInArc(List files)
+    {
+        List foundFiles = filesFoundInArc();
+        assertTrue("All files are on disk", filesExist(files));
+        assertTrue("All found", foundFiles.containsAll(files));
+        assertTrue("Same size", foundFiles.size() == files.size());
+        return foundFiles;
+    }
+
+    /**
+     * Find all files that belong to this test that are mentioned in the arc.
+     * @return List of found files.
+     */
+    private List filesFoundInArc()
+    {
+        String frameDirURL = getSelftestURLWithTrailingSlash() + getTestName();
+        List metaDatas = getReadReader().getMetaDatas();
+        ARCRecordMetaData metaData = null;
+        List filesFound = new ArrayList();
+        for (Iterator i = metaDatas.iterator(); i.hasNext();)
+        {
+            metaData = (ARCRecordMetaData)i.next();
+            String url = metaData.getUrl();
+            if (url.startsWith(frameDirURL) &&
+                metaData.getMimetype().equalsIgnoreCase("text/html"))
+            {
+                String name = url.substring(url.lastIndexOf("/") + 1);
+                if (name != null && name.length() > 0)
+                {
+                    filesFound.add(name);
+                }
+            }
+        }
+        return filesFound;
     }
 }

@@ -4,5 +4,5 @@
     "http://java.sun.com/j2ee/dtds/web-app_2_3.dtd">
 
 <web-app>
-    <display-name>Heritrix Crawler Garden</display-name>
+    <display-name>Heritrix Selftest</display-name>
 </web-app>
