@@ -40,6 +40,7 @@ import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 
@@ -667,9 +668,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         SettingsHandler settingsHandler = currentJob.getSettingsHandler();
         try {
             controller.initialize(settingsHandler);
-        } catch (Exception e) {
+        } catch (InitializationException e) {
             currentJob.setStatus(CrawlJob.STATUS_MISCONFIGURED);
-            e.printStackTrace();
+            currentJob.setErrorMessage("A fatal InitializationException occured when loading job:\n"+e.getMessage());
             completedCrawlJobs.add(currentJob);
             currentJob = null;
             controller = null;

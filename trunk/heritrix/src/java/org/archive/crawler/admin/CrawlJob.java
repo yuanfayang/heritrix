@@ -88,6 +88,8 @@ public class CrawlJob
     private int priority;
     private int orderVersion;
     
+    private String errorMessage = null;
+    
     protected XMLSettingsHandler settingsHandler;
 
     /**
@@ -316,4 +318,22 @@ public class CrawlJob
         }
         return null;
     }
+    /**
+     * Get the error message associated with this job. Will return null if there
+     * is no error message. 
+     * @return the error message associated with this job
+     */
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    /**
+     * Set an error message for this job. Generally this only occurs if the job
+     * is misconfigured.
+     * @param string the error message associated with this job
+     */
+    public void setErrorMessage(String string) {
+        errorMessage = string;
+    }
+
 }
