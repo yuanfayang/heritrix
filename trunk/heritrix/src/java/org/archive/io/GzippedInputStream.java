@@ -97,8 +97,19 @@ public class GzippedInputStream extends GZIPInputStream
 		                8 /*Sizeof gzip CRC block*/);
 		        // If available bytes, assume another gzip member.
 		        // Move the stream on to the start of next gzip member.
-		        if (((PositionableStream)this.in).available() > 0) {
-		            result = true;
+		        // We do this because the above calculation using the
+		        // this.inf.getRemaining is off by one if the remaining is
+		        // zero.
+		        int read = -1;
+		        while (((PositionableStream)this.in).available() > 0 &&
+		                	!result &&
+		                	((read = this.in.read()) != -1)) {
+		            	if ((read & 0xff) ==
+		            	    	(0xff & GZIPInputStream.GZIP_MAGIC)) {
+		            	    // We've found gzip header start.  Backup stream one byte.
+		            	    seek(getFilePointer() - 1);
+		            	    result = true;
+		            }
 		        }
 		    } catch (IOException e) {
 		        throw new RuntimeException("Failed i/o: " +
