@@ -18,7 +18,10 @@
  
  <behavior 
  	disk-path="disk" 
- 	max-toe-threads="100">
+	max-bytes-download="0"
+ 	max-document-download="0"
+ 	max-time-sec="0"
+  	max-toe-threads="100">
    
   <http-headers 
    	User-Agent="os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"
