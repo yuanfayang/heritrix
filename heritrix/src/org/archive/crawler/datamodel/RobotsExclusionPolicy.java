@@ -10,7 +10,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -37,6 +39,7 @@ public class RobotsExclusionPolicy {
 		LinkedList userAgents = new LinkedList();
 		HashMap disallows = new HashMap(); 
  		boolean hasErrors = false;
+ 		String catchall = null;
  		
 		try {
 			while (reader != null) {
@@ -57,18 +60,17 @@ public class RobotsExclusionPolicy {
 					}
 					read = read.trim(); 
 					if (read.matches("(?i)^User-agent:.*")) {
-						String ua = read.substring(11);
+						String ua = read.substring(11).trim().toLowerCase();
 						if(current==null||current.size()==0) {
 							// only create new rules-list if necessary
 							// otherwise share with previous user-agent
 							current = new ArrayList();
 						} 
 						if(ua.equals("*")) {
-							ua = ".*";
-							userAgents.addLast(ua); // put the catchall as a last entry
+							ua = ""; 
+							catchall = ua;
 						} else {
-							ua = "(?i)"+ua;
-							userAgents.addFirst(ua);
+							userAgents.addLast(ua);
 						}
 						disallows.put(ua,current);
 						continue;
@@ -79,7 +81,7 @@ public class RobotsExclusionPolicy {
 							hasErrors = true; 
 							continue;
 						}
-						String path = read.substring(9);
+						String path = read.substring(9).trim();
 						current.add(path);
 						continue;
 					}
@@ -91,6 +93,9 @@ public class RobotsExclusionPolicy {
 			e.printStackTrace();
 			// TODO: be smarter here: perhaps use partial results, if avail?
 			return ALLOWALL;
+		}
+		if (catchall!=null) {
+			userAgents.addLast(catchall);
 		}
 		return new RobotsExclusionPolicy(userAgents, disallows, hasErrors);
 	}
@@ -113,11 +118,28 @@ public class RobotsExclusionPolicy {
 		if (this == DENYALL)
 			return true;
 		
-		// TODO implement
-		
 		// TODO: improve behavior in common case: where only one entry matters,
 		// because crawler user-agent never changes
-
+		
+		Iterator iter = userAgents.iterator();
+		while ( iter.hasNext() ) {
+			String ua = (String)iter.next();
+			if (userAgent.indexOf(ua)>-1) {
+				Iterator i2 = ((List)disallows.get( ua )).iterator();
+				while ( i2.hasNext() ) {
+					String disallowedPath = (String)i2.next();
+					if ( disallowedPath.length() == 0 ) {
+						// blanket allow
+						return false;
+					}
+					if ( path.startsWith(disallowedPath) ) {
+						return true;
+					}
+				}
+				return false; // no disallows for this ua
+			}
+		}
+		// no matching ua
 		return false;
 	}
  
