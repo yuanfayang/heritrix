@@ -744,7 +744,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
                 // again.  If no rfc2617 loaded, we should not be here.
                 boolean loaded = curi.hasRfc2617CredentialAvatar();
                 if (!loaded) {
-                    logger.severe("Have 401 but no creds loaded " + curi);
+                    logger.info("Have 401 but no creds loaded " + curi);
                 }
                 return loaded;
             case S_DEFERRED:
