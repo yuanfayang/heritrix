@@ -3,7 +3,7 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
-    <date>20040218011024</date>
+    <date>20040220181256</date>
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
@@ -12,25 +12,22 @@
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
     <integer name="max-toe-threads">50</integer>
-    <newObject name="scope" class="org.archive.crawler.basic.Scope">
+    <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
-      <boolean name="inverted">false</boolean>
       <string name="seedsfile">seeds.txt</string>
       <integer name="max-link-hops">25</integer>
       <integer name="max-trans-hops">5</integer>
-      <string name="mode">domain</string>
+      <newObject name="excludeFilter" class="org.archive.crawler.filter.OrFilter">
+        <boolean name="enabled">true</boolean>
+        <boolean name="make-filter-XOR">false</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
         <boolean name="enabled">true</boolean>
-        <boolean name="inverted">false</boolean>
         <integer name="max-speculative-hops">1</integer>
         <integer name="max-referral-hops">2147483647</integer>
         <integer name="max-embed-hops">2147483647</integer>
-      </newObject>
-      <newObject name="excludeFilter" class="org.archive.crawler.filter.OrFilter">
-        <boolean name="enabled">true</boolean>
-        <boolean name="inverted">false</boolean>
-        <map name="filters">
-        </map>
       </newObject>
     </newObject>
     <map name="http-headers">
@@ -80,7 +77,7 @@
         <integer name="timeout-seconds">1200</integer>
         <integer name="sotimeout-ms">20000</integer>
         <long name="max-length-bytes">9223372036854775807</long>
-        <integer name="max-fetch-attempts">35</integer>
+        <integer name="max-fetch-attempts">10</integer>
         <string name="cookies-file"/>
         <boolean name="strict">false</boolean>
       </newObject>
@@ -101,14 +98,6 @@
         <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
-      </newObject>
-      <newObject name="ExtractorUniversal" class="org.archive.crawler.extractor.ExtractorUniversal">
-        <boolean name="enabled">true</boolean>
-        <boolean name="postprocessor">false</boolean>
-        <map name="filters">
-        </map>
-        <long name="max-depth-bytes">10240</long>
-        <long name="max-url-length">2083</long>
       </newObject>
       <newObject name="Archiver" class="org.archive.crawler.basic.ARCWriterProcessor">
         <boolean name="enabled">true</boolean>
