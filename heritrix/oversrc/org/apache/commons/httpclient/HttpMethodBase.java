@@ -1051,6 +1051,11 @@ public abstract class HttpMethodBase implements HttpMethod {
      */
     public void releaseConnection() {
 
+		// IA HERITRIX CHANGE:
+		if(responseConnection != null) {
+			responseConnection.close();
+		} // we always want the streams closed
+
         if (responseStream != null) {
             try {
                 // FYI - this may indirectly invoke responseBodyConsumed.
