@@ -23,187 +23,173 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
+import java.util.logging.Logger;
 
-import org.archive.crawler.framework.XMLConfig;
-import org.archive.crawler.framework.exceptions.*;
-import org.w3c.dom.Document;
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.basic.Scope;
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.framework.CrawlController;
 
 /** Read and manipulate configuration (order) file.
  */
-public class CrawlOrder extends XMLConfig {
-	private static final String XP_CRAWL_ORDER_NAME = "//crawl-order/@name";
-	private static final String XP_HTTP_USER_AGENT = "//http-headers/@User-Agent";
-	private static final String XP_HTTP_FROM = "//http-headers/@From";
-	private static final String XP_MAX_TOE_THREADS = "//behavior/@max-toe-threads";
-	private static final String XP_ROBOTS_HONORING_POLICY_NAME = "//behavior/robots-honoring-policy/@name";
-	private static final String XP_ROBOTS_HONORING_POLICY_MASQUERADE = "//behavior/robots-honoring-policy/@masquerade";
-	private static final String XP_ROBOTS_HONORING_POLICY_CUSTOM_ROBOTS = "//behavior/robots-honoring-policy/custom-robots";
-	private static final String XP_ROBOTS_HONORING_POLICY_USER_AGENTS = "//behavior/robots-honoring-policy/user-agents/agent";
-	
-	String caseFlattenedUserAgent;
-	String name;
-    String outputLocation;
-	String crawlOrderFilename;
-	RobotsHonoringPolicy robotsHonoringPolicy = null;
-	
-	/**
-	 * Create a CrawlOrder instance from the given file.
-	 * 
-	 * @param crawlOrderFile
-	 * @return the created CrawlOrder
-	 * @throws InitializationException
-	 */
-	public static CrawlOrder readFromFile(String crawlOrderFile) throws InitializationException {
-		
-		String pathToDoc = null;
-		Document doc = null;
-		
-		// try to extract a default path for later file reading
-		int pathEnd = crawlOrderFile.lastIndexOf(File.separatorChar);
-		if(pathEnd >=0){
-			pathToDoc = crawlOrderFile.substring(0,pathEnd);
-		}
-		
-		try{
-			doc = readDocumentFromFile(crawlOrderFile);
-		}catch(IOException e){
-			throw new InitializationException("Can't read from '" + crawlOrderFile + "': " + e.toString(), e);
-		}
-		
-		
-		CrawlOrder co = new CrawlOrder(doc, pathToDoc);				
-//		XMLConfig behave = co.getBehavior();
-//		if(behave != null){
-//			behave.setDefaultFileLocation(pathToDoc);
-//		}
-		
-		return co;
-	}
-	
-	/** Construct a CrawlOrder instance given a Document.
-	 * @param doc
-	 * @throws InitializationException
-	 */
-	public CrawlOrder(Document doc) throws InitializationException {
-		this(doc, ".");
-	}
+public class CrawlOrder extends CrawlerModule {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.CrawlOrder");
 
-	/** Construct a CrawlOrder instance given a Document and a path to that
-	 *  document.  The path is necessary in the event that the config file inherits
-	 *  from another config file (so we can locate that on the file sytem).
-	 * @param doc
-	 * @param pathToDoc
-	 * @throws InitializationException
-	 */
-	public CrawlOrder(Document doc, String pathToDoc)
-		throws InitializationException {
-		xNode = doc;
+    public static final String ATTR_SETTINGS_DIRECTORY = "settings-directory";
+    public static final String ATTR_DISK_PATH = "disk-path";
+    public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
+    public static final String ATTR_MAX_DOCUMENT_DOWNLOAD = "max-document-download";
+    public static final String ATTR_MAX_TIME_SEC = "max-time-sec";
+    public static final String ATTR_MAX_TOE_THREADS = "max-toe-threads";
+    public static final String ATTR_HTTP_HEADERS = "http-headers";
+    public static final String ATTR_USER_AGENT = "user-agent";
+    public static final String ATTR_FROM = "from";
+    public static final String ATTR_FRONTIER = "frontier";
+    public static final String ATTR_PROCESSORS = "processors";
 
-		if (pathToDoc != null) {
-			defaultFilePath = pathToDoc;
-		} else {
-			defaultFilePath = ".";
-		}
-		
-		//loadParents(pathToDoc);
-		initialize();
+    String caseFlattenedUserAgent;
 
-	}
-	
-	/** Load common configuration variables from config file.  Should only 
-	 *  be called on the primary (non-inherited from) crawl order.
-	 */
-	public void initialize(){
-		name = getStringAt(XP_CRAWL_ORDER_NAME);
-	}
-	
-	protected void loadParents(String pathToDoc) throws InitializationException {
-		
-		// try to read any configuration files which this extends
-		// if this fails let the Initialization exception bubble up
-		String parentFileName = getStringAt("//crawl-order/@extends");
-		//TODO check for infinite loop (parent == self)
-		if (parentFileName != null && parentFileName.length() != 0) {
-			try {
-				if(isAbsoluteFilePath(parentFileName)){
-					parentConfigurationFile = 
-						readFromFile(parentFileName);
-				}else{
-					parentConfigurationFile =
-						readFromFile(pathToDoc + File.separator + parentFileName);
-				}
-				// can't read parent, proceed as best we can.
-			} catch (InitializationException e) {
-				System.out.println(
-					"Unable to read config file '"
-						+ pathToDoc
-						+ File.separator
-						+ parentFileName
-						+ "' (non fatal), continuing...");
-			}
-		}
-	}
+    private MapType httpHeaders;
+    private MapType processors;
+    
+    private CrawlController controller;
 
-	public String getName() {
-		// if this node doesn't have it but we have a parent conf file check that
-		if(name == null && parentConfigurationFile != null){
-			return ((CrawlOrder)parentConfigurationFile).getName();
-		}
-		return name;
-	}
+    /** Construct a CrawlOrder instance given a Document.
+     * @param doc
+     * @throws InitializationException
+     */
+    public CrawlOrder() {
+        super("crawl-order", "Heritrix crawl order");
 
-	public String getOutputLocation(){
-		if(outputLocation == null && parentConfigurationFile != null){
-			return ((CrawlOrder)parentConfigurationFile).getOutputLocation();
-		}
-		return outputLocation;
-	}
-	
-	public String getUserAgent() {
-		if (caseFlattenedUserAgent==null) {
-			caseFlattenedUserAgent =  getStringAt(XP_HTTP_USER_AGENT).toLowerCase();
-		}
-		return caseFlattenedUserAgent;
-	}
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_SETTINGS_DIRECTORY,
+                "Directory where per host settings are kept",
+                "settings"));
+        addElementToDefinition(
+            new SimpleType(ATTR_DISK_PATH, "Working directory", "disk"));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_BYTES_DOWNLOAD,
+                "Max number of bytes to download",
+                new Integer(0)));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_DOCUMENT_DOWNLOAD,
+                "Max number of documents to download",
+                new Integer(0)));
+        addElementToDefinition(
+            new SimpleType(ATTR_MAX_TIME_SEC, "Max time", new Integer(0)));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_TOE_THREADS,
+                "Max number of threads",
+                new Integer(100)));
 
-	public String getFrom() {
-		return getStringAt(XP_HTTP_FROM);
-	}
-	
-	public int getMaxToes() {
-		return getIntAt(XP_MAX_TOE_THREADS);
-	}
+        addElementToDefinition(new Scope());
+        
+        httpHeaders =
+            (MapType) addElementToDefinition(new MapType(ATTR_HTTP_HEADERS,
+                "HTTP headers"));
+        httpHeaders.addElementToDefinition(
+            new SimpleType(
+                ATTR_USER_AGENT,
+                "User agent to act as",
+                "os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"));
+        httpHeaders.addElementToDefinition(
+            new SimpleType(
+                ATTR_FROM,
+                "Contact information",
+                "CONTACT_EMAIL_ADDRESS_HERE"));
 
-	public String getCrawlOrderFilename() {
-		return crawlOrderFilename;
-	}
+        addElementToDefinition(new RobotsHonoringPolicy());
 
-	/**
-	 * This method constructs a new RobotsHonoringPolicy object from the orders file.
-	 * 
-	 * If this method is called repeatedly it will return the same instance each time.
-	 * 
-	 * @return the new RobotsHonoringPolicy
-	 */
-	public RobotsHonoringPolicy getRobotsHonoringPolicy() {
-		if (robotsHonoringPolicy==null) {
-			robotsHonoringPolicy = new RobotsHonoringPolicy(getStringAt(XP_ROBOTS_HONORING_POLICY_NAME));
-			robotsHonoringPolicy.setMasquerade(getStringAt(XP_ROBOTS_HONORING_POLICY_MASQUERADE));
-			
-			// if the policy type is custom, we should look up the admins robots.txt file
-			if(robotsHonoringPolicy.isType(RobotsHonoringPolicy.CUSTOM)) {
-				robotsHonoringPolicy.setCustomRobots(getStringAt(XP_ROBOTS_HONORING_POLICY_CUSTOM_ROBOTS));
-			}
-			if (robotsHonoringPolicy.isType(RobotsHonoringPolicy.MOST_FAVORED_SET)) {
-				Iterator iter = getTextNodesAt(xNode, XP_ROBOTS_HONORING_POLICY_USER_AGENTS).iterator();
-				while (iter.hasNext()) {
-					robotsHonoringPolicy.addUserAgent((String) iter.next());
-				}
-			}
-		}
-		return robotsHonoringPolicy;
-	}
+        addElementToDefinition(new CrawlerModule(ATTR_FRONTIER, "Frontier"));
+
+        processors =
+            (MapType) addElementToDefinition(new MapType(ATTR_PROCESSORS,
+                "URI processors"));
+    }
+
+    public String getUserAgent(CrawlerSettings settings) {
+        if (caseFlattenedUserAgent == null) {
+            try {
+                caseFlattenedUserAgent =
+                    ((String) httpHeaders
+                        .getAttribute(settings, ATTR_USER_AGENT))
+                        .toLowerCase();
+            } catch (AttributeNotFoundException e) {
+                logger.severe(e.getMessage());
+            }
+        }
+        return caseFlattenedUserAgent;
+    }
+
+    public String getFrom(CrawlerSettings settings) {
+        String res = null;
+        try {
+            res = (String) httpHeaders.getAttribute(settings, ATTR_FROM);
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+        return res;
+    }
+
+    public int getMaxToes() {
+        Integer res = null;
+        try {
+            res = (Integer) getAttribute(null, ATTR_MAX_TOE_THREADS);
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+        return res.intValue();
+    }
+
+//    public String getCrawlOrderFilename() {
+//        return crawlOrderFilename;
+//    }
+
+    /**
+     * This method constructs a new RobotsHonoringPolicy object from the orders file.
+     * 
+     * If this method is called repeatedly it will return the same instance each time.
+     * 
+     * @return the new RobotsHonoringPolicy
+     */
+    public RobotsHonoringPolicy getRobotsHonoringPolicy(CrawlerSettings settings) {
+        try {
+            return (RobotsHonoringPolicy) getAttribute(settings,
+                    RobotsHonoringPolicy.ATTR_NAME);
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+            return null;
+        }
+    }
+
+    /** Get the name of the order file.
+     * 
+     * @return the name of the order file.
+     */
+    public String getName() {
+        return getSettingsHandler().getSettingsObject(null).getName();
+    }
+    
+    /**
+     * @return
+     */
+    public CrawlController getController() {
+        return controller;
+    }
+
+    /**
+     * @param controller
+     */
+    public void setController(CrawlController controller) {
+        this.controller = controller;
+    }
 }

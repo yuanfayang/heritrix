@@ -26,8 +26,17 @@ package org.archive.crawler.basic;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
+
+import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.settings.ComplexType;
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.filter.HopsFilter;
 import org.archive.crawler.filter.SeedExtensionFilter;
 import org.archive.crawler.filter.TransclusionFilter;
@@ -69,53 +78,121 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class Scope extends CrawlScope {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.basic.Scope");
+    public static final String ATTR_NAME = "scope";
+    public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
+    public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
+    public static final String ATTR_MODE = "mode";
+    public static final String ATTR_FOCUS_FILTER = "focusFilter";
+    public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
+    public static final String ATTR_EXCLUDE_FILTER = "excludeFilter";
+
+    public static final String MODE_DOMAIN = "domain";
+    public static final String MODE_BROAD = "broad";
+    public static final String MODE_PATH = "path";
+    public static final String MODE_HOST = "host";
+    public static final String MODE_USER_DEFINED = "userdefined";
+
+    static final String[] allowedModes = new String[] {MODE_BROAD, MODE_DOMAIN, MODE_HOST, MODE_PATH, MODE_USER_DEFINED};
+    static final String defaultMode = MODE_DOMAIN;
+
 	Filter focusFilter; 
 	Filter transitiveFilter; 
 	Filter excludeFilter;
 	List seeds;
+    String mode = null;
 	
+    public Scope(String name) {
+        super(name);
+
+        addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS, "Max link hops", new Integer(25)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS, "Max trans hops", new Integer(5)));
+        addElementToDefinition(new SimpleType(ATTR_MODE, "Mode", defaultMode, allowedModes));
+        
+        ComplexType filter = (ComplexType) addElementToDefinition(new CrawlerModule(ATTR_FOCUS_FILTER));
+        filter.setTransient(true);
+        filter = (ComplexType) addElementToDefinition(new CrawlerModule(ATTR_TRANSITIVE_FILTER));
+        filter.setTransient(true);
+        filter = (ComplexType) addElementToDefinition(new CrawlerModule(ATTR_EXCLUDE_FILTER));
+        filter.setTransient(true);
+    }
+    
+    public Scope() {
+        this(ATTR_NAME);
+    }
+    
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize(org.archive.crawler.framework.CrawlController)
 	 */
-	public void initialize(CrawlController controller) {
-		super.initialize(controller);
+	public void initialize(CrawlerSettings settings) {
+		super.initialize(settings);
 		// setup focusFilter
-		if(getStringAt("@mode")==null) {
-			focusFilter = (Filter) instantiate("focus");
-		} else if (getStringAt("@mode").equalsIgnoreCase("broad")){
+        try {
+            mode = (String) getAttribute(settings, ATTR_MODE);
+
+		if(mode == null || mode.equals(MODE_USER_DEFINED)) {
+            Object filter = getAttribute(settings, ATTR_FOCUS_FILTER);
+            if (filter instanceof Filter) {
+                focusFilter = (Filter) filter;
+                focusFilter.setTransient(false);
+            }
+		} else if (mode.equals(MODE_BROAD)){
 			focusFilter = null;
 		} else {
 			// SeedExtensionFilter implied
-			focusFilter = new SeedExtensionFilter();
-			focusFilter.setNode(xNode);
+			focusFilter = new SeedExtensionFilter(ATTR_FOCUS_FILTER);
+            focusFilter.setTransient(true);
+            try {
+                setAttribute(settings, focusFilter);
+            } catch (InvalidAttributeValueException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (AttributeNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
 		}
 		if(focusFilter != null) {
-			focusFilter.initialize(controller);
+			focusFilter.initialize(settings);
 			// only set up transitiveFilter if focusFilter set
-			transitiveFilter = (Filter) instantiate("transitive");
+            Object filter = getAttribute(settings, ATTR_TRANSITIVE_FILTER);
+            if (filter instanceof Filter) {
+                transitiveFilter = (Filter) filter;
+                transitiveFilter.setTransient(false);
+            }
 			if(transitiveFilter == null) {
-				transitiveFilter = new TransclusionFilter();
-				transitiveFilter.setNode(xNode);
+				transitiveFilter = new TransclusionFilter(ATTR_TRANSITIVE_FILTER);
+                transitiveFilter.setTransient(true);
+                setAttribute(settings, transitiveFilter);
 			}
-			transitiveFilter.initialize(controller);
+			transitiveFilter.initialize(settings);
 		}
 		// setup exclude filter
-		if(getNodeAt("@max-link-hops")!=null) {
+        if (((Integer) getAttribute(settings, ATTR_MAX_LINK_HOPS)).intValue() != 0) {
+        }
+		// TODO: if(getNodeAt("@max-link-hops")!=null) {
 			// HopsFilter implied
-			excludeFilter = new HopsFilter();
-			excludeFilter.setNode(xNode);
-		} 
-		Filter optionalExclude = (Filter) instantiate("exclude");
-		if (optionalExclude != null) {
-			if (excludeFilter == null) {
-				excludeFilter = optionalExclude;
-			} else {
-				excludeFilter = excludeFilter.orWith(optionalExclude);
-			}
-		}
+		//	excludeFilter = new HopsFilter();
+		//	excludeFilter.setNode(xNode);
+		//} 
+		// TODO: Filter optionalExclude = (Filter) instantiate("exclude");
+		//if (optionalExclude != null) {
+		//	if (excludeFilter == null) {
+		//		excludeFilter = optionalExclude;
+		//	} else {
+		//		excludeFilter = excludeFilter.orWith(optionalExclude);
+		//	}
+		//}
 		if (excludeFilter != null) {
-			excludeFilter.initialize(controller);
+			excludeFilter.initialize(settings);
 		} 
+
+        } catch (InvalidAttributeValueException e) {
+            logger.severe(e.getMessage());
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
 	}
 
 	/**
@@ -211,5 +288,12 @@ public class Scope extends CrawlScope {
 		}
 		return seeds.iterator();
 	}
+
+    /**
+     * @return
+     */
+    public String getMode() {
+        return mode;
+    }
 
 } 

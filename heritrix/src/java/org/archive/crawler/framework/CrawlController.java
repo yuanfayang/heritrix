@@ -34,13 +34,17 @@ import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.admin.AdminConstants;
 import org.archive.crawler.admin.StatisticsTracker;
+import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -139,9 +143,9 @@ public class CrawlController extends Thread {
 	 * @param o CrawlOrder
 	 * @throws InitializationException
 	 */
-	public void initialize(CrawlOrder o) throws InitializationException {
-		order = o;	
-		order.initialize();
+	public void initialize(SettingsHandler settingsHandler) throws InitializationException {
+		order = settingsHandler.getOrder();
+        order.setController(this);
 		
 		if(checkUserAgentAndFrom(order)==false){
 			throw new FatalConfigurationException(
@@ -163,8 +167,8 @@ public class CrawlController extends Thread {
 			throw new InitializationException("Unable to create log file(s): " + e.toString(), e);
 		}
 
-		setupStatTracking();
-		setupToePool();
+        // TODO: setupStatTracking();
+        // TODO: setupToePool();
 		setupCrawlModules();
 		
 	}
@@ -315,20 +319,27 @@ public class CrawlController extends Thread {
 
 
 	private void setupCrawlModules() throws FatalConfigurationException {
-		scope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
-		frontier = (URIFrontier) order.instantiate(XP_FRONTIER);
+		//scope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
+        //frontier = (URIFrontier) order.instantiate(XP_FRONTIER);
+
+        try {
+            scope = (CrawlScope) order.getAttribute(null, Scope.ATTR_NAME);
+            //frontier = (URIFrontier) order.getAttribute(null, CrawlOrder.ATTR_FRONTIER);
+        } catch (AttributeNotFoundException e) {
+            throw new FatalConfigurationException(e.getMessage());
+        }
 		
-		firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
+		// TODO: firstProcessor = (Processor) order.instantiateAllInto(XP_PROCESSORS,processors);
 		
 		// try to initialize each scope and frontier from the config file
 
 		
-		scope.initialize(this);
-		try {
-			frontier.initialize(this);
-		} catch (IOException e) {
-			throw new FatalConfigurationException("unable to initialize frontier: "+e);
-		}
+		scope.initialize(scope.globalSettings());
+//		try {
+//			frontier.initialize(this);
+//		} catch (IOException e) {
+//			throw new FatalConfigurationException("unable to initialize frontier: "+e);
+//		}
 			
 		serverCache = new ServerCache(this);
 		
@@ -343,14 +354,22 @@ public class CrawlController extends Thread {
 
 
 	private void setupDisk() throws FatalConfigurationException {
-		String diskPath = order.getStringAt(XP_DISK_PATH);
+		//String diskPath = order.getStringAt(XP_DISK_PATH);
+        String diskPath;
+        try {
+            diskPath = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
+        } catch (AttributeNotFoundException e) {
+            throw new FatalConfigurationException(e.getMessage());
+        }
+        /*
 		if(diskPath == null || diskPath.length() == 0){
 			throw new FatalConfigurationException("No output Directory specified", 
 									order.getCrawlOrderFilename(), 
 									XP_DISK_PATH
 			);
 		}
-		
+		*/
+        
 		if(! diskPath.endsWith(File.separator)){
 			diskPath = diskPath + File.separator;
 		}
@@ -365,9 +384,9 @@ public class CrawlController extends Thread {
 		// the statistics object must be created before modules that use it if those 
 		// modules retrieve the object from the controller during initialization 
 		// (which some do).  So here we go with that.
-		int interval = order.getIntAt(XP_STATS_INTERVAL, DEFAULT_STATISTICS_REPORT_INTERVAL);
-		statistics = new StatisticsTracker(); //TODO: Read from configuration file what implementation of StatisticsTracking to use
-		statistics.initalize(this);
+		// TODO: int interval = order.getIntAt(XP_STATS_INTERVAL, DEFAULT_STATISTICS_REPORT_INTERVAL);
+        // TODO: statistics = new StatisticsTracker(); //TODO: Read from configuration file what implementation of StatisticsTracking to use
+        // TODO: statistics.initalize(this);
 	
 	}
 
@@ -422,8 +441,8 @@ public class CrawlController extends Thread {
 	 */
 	public static boolean checkUserAgentAndFrom(CrawlOrder order){
 		// don't start the crawl if they're using the default user-agent
-		String userAgent = order.getUserAgent();
-		String from = order.getFrom();
+		String userAgent = order.getUserAgent(null);
+		String from = order.getFrom(null);
 		return userAgent.matches(ACCEPTABLE_USER_AGENT) && from.matches(ACCEPTABLE_FROM);
 	}
 	
@@ -549,19 +568,19 @@ public class CrawlController extends Thread {
 		{
 			sExit = CrawlJob.STATUS_FINISHED;
 		}
-		if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0))
+        // TODO: if(order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0) > 0 && frontier.totalBytesWritten()>= order.getLongAt(XP_MAX_BYTES_DOWNLOAD,0))
 		{
 			// Hit the max byte download limit!
 			sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
 			shouldCrawl = false;
 		}
-		else if(order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0) > 0 && frontier.successfullyFetchedCount()>= order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0))
+        // TODO: else if(order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0) > 0 && frontier.successfullyFetchedCount()>= order.getLongAt(XP_MAX_DOCUMENT_DOWNLOAD,0))
 		{
 			// Hit the max document download limit!
 			sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
 			shouldCrawl = false;
 		}
-		else if(order.getLongAt(XP_MAX_TIME,0) > 0 && statistics.crawlDuration()>= order.getLongAt(XP_MAX_TIME,0)*1000)
+        // TODO: else if(order.getLongAt(XP_MAX_TIME,0) > 0 && statistics.crawlDuration()>= order.getLongAt(XP_MAX_TIME,0)*1000)
 		{
 			// Hit the max byte download limit!
 			sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
@@ -758,7 +777,7 @@ public class CrawlController extends Thread {
 		StringBuffer rep = new StringBuffer();	
 		
 		rep.append("Toe threads report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-		rep.append(" Job being crawled:         " + getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
+		rep.append(" Job being crawled:         " + getOrder().getName()+"\n");
 		
 		rep.append(" Number of toe threads in pool: " + toePool.getToeCount() + " (" + toePool.getActiveToeCount() + " active)\n");
 		for(int i=0 ; i < toePool.getToeCount() ; i++){
@@ -793,16 +812,16 @@ public class CrawlController extends Thread {
 	 */
 	public void updateOrder(CrawlOrder o) {
 		// Prepare the new CrawlOrder
-		o.initialize();
+        // TODO: o.initialize();
 		// Replace the old CrawlOrder
 		order = o;
 		// Resize the ToePool
 		toePool.setSize(order.getMaxToes());
 		// Prepare the new CrawlScope	
-		CrawlScope newscope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
-		newscope.initialize(this);
+        // TODO: CrawlScope newscope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
+        // TODO: newscope.initialize(this);
 		// Replace the old CrawlScope		
-		scope = newscope;
+        // TODO: scope = newscope;
 		// Update the seed list in the frontier
 		Iterator iter = getScope().getSeedsIterator();
 		while (iter.hasNext()) {

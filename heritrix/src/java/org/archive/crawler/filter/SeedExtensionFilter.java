@@ -25,9 +25,10 @@ package org.archive.crawler.filter;
 
 import java.util.Iterator;
 
+import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -48,13 +49,20 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class SeedExtensionFilter extends Filter {
-	private CrawlController controller;
 	static private int PATH = 0; // only accept same host, path-extensions
 	static private int HOST = 1; // accept any URIs from same host
 	static private int DOMAIN = 2; // accept any URIs from same domain
  
 	private int extensionMode = PATH;
 	
+    /**
+     * @param name
+     * @param description
+     */
+    public SeedExtensionFilter(String name) {
+        super(name, "Seed extension filter");
+    }
+    
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
@@ -68,7 +76,7 @@ public class SeedExtensionFilter extends Filter {
 		if(u==null) {
 			return false;
 		}
-		Iterator iter = controller.getScope().getSeedsIterator();
+		Iterator iter = getController().getScope().getSeedsIterator();
 		while(iter.hasNext()) {
 			UURI s = (UURI)iter.next();
 			if(s.getHost().equals(u.getHost())) {
@@ -107,21 +115,20 @@ public class SeedExtensionFilter extends Filter {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#initialize()
 	 */
-	public void initialize(CrawlController c) {
-		// TODO Auto-generated method stub
-		super.initialize(c);
-		controller = c;
-		String mode = getStringAt("@mode");
-		if(mode==null || "path".equals(mode)) {
+	public void initialize(CrawlerSettings settings) {
+		super.initialize(settings);
+/*        String mode = ((Scope) settings.getSettingsHandler().getModule(Scope.ATTR_NAME)).getMode();
+        System.out.println("XXX - SeedExtensionFilter:initialize:\n   " + mode);
+		if(mode==null || Scope.MODE_PATH.equals(mode)) {
 			// default
 			return;
 		}
-		if("host".equals(mode)) {
+		if(Scope.MODE_HOST.equals(mode)) {
 			extensionMode = HOST;
 		}
-		if("domain".equals(mode)) {
+		if(Scope.MODE_DOMAIN.equals(mode)) {
 			extensionMode = DOMAIN;
-		}
+		}*/
 	}
 
 

@@ -23,58 +23,106 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.logging.Logger;
+
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.filter.OrFilter;
 
 /**
  * 
  * @author Gordon Mohr
  */
-public abstract class Filter extends XMLConfig {
-	String name;
-	boolean inverter = false;
-	
-	public  void setName(String n) {
-		name = n;
-	}
-	public String getName() {
-		return name;
-	}
-	
-	public boolean accepts(Object o) {
-		return inverter ^ innerAccepts(o);
-	}
-	
-	/**
-	 * @param o
-	 * @return If it accepts.
-	 */
-	protected abstract boolean innerAccepts(Object o);
-	
-	public void initialize(CrawlController controller) {
-		if(xNode!=null) {
-			setName(getStringAt("@name"));
-			if("not".equals(getStringAt("@modifier"))) {
-				inverter = true;
-			}
-		}
-	}
+public abstract class Filter extends CrawlerModule {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.framework.Filter");
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		return "Filter<"+name+">";
-	}
+    static final String ATTR_INVERTED = "inverted";
 
-	/**
-	 * @param other
-	 * @return Filter.
-	 */
-	public Filter orWith(Filter other) {
-		OrFilter orF = new OrFilter();
-		orF.addFilter(this);
-		orF.addFilter(other);
-		return orF;
-	}
+    // associated CrawlController
+    CrawlController controller;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public Filter(String name, String description) {
+        super(name, description);
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_INVERTED,
+                "Filter functionality should be inverted",
+                new Boolean(false)));
+    }
+
+    //String name;
+    boolean inverter = false;
+
+    /*
+    public  void setName(String n) {
+    	name = n;
+    }
+    public String getName() {
+    	return name;
+    }
+    */
+
+    public boolean accepts(CrawlerSettings settings, Object o) {
+        boolean localInverter = false;
+        try {
+            localInverter = ((Boolean) getAttribute(settings, ATTR_INVERTED)).booleanValue();
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+        return localInverter ^ innerAccepts(o);
+    }
+    
+    public boolean accepts(Object o) {
+        return inverter ^ innerAccepts(o);
+    }
+
+    /**
+     * @param o
+     * @return If it accepts.
+     */
+    protected abstract boolean innerAccepts(Object o);
+
+    public void initialize(CrawlerSettings settings) {
+        settings = settings == null ? globalSettings() : settings;
+        this.controller = settings.getSettingsHandler().getOrder().getController();
+        try {
+            inverter = ((Boolean) getAttribute(settings, ATTR_INVERTED)).booleanValue();
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        return "Filter<" + getName() + ">";
+    }
+
+    /**
+     * @param other
+     * @return Filter.
+     */
+    public Filter orWith(Filter other) {
+        OrFilter orF = new OrFilter();
+        orF.addFilter(this);
+        orF.addFilter(other);
+        return orF;
+    }
+
+    /**
+     * @return
+     */
+    public CrawlController getController() {
+        return controller;
+    }
 
 }
