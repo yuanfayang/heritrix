@@ -150,6 +150,12 @@ public class CrawlURI extends CandidateURI
     private String cachedCrawlURIString = null;
 
     /**
+     * A digest (hash, usually SHA1) of retrieved content-body. 
+     * 
+     */
+    private byte[] contentDigest = null;
+
+    /**
      * Create a new instance of CrawlURI from a {@link UURI}.
      *
      * @param uuri the UURI to base this CrawlURI on.
@@ -1001,5 +1007,23 @@ public class CrawlURI extends CandidateURI
      */
     public boolean isPost() {
         return this.post;
+    }
+
+    /**
+     * Set the retained content-digest value (usu. SHA1). 
+     * 
+     * @param digestValue
+     */
+    public void setContentDigest(byte[] digestValue) {
+        contentDigest = digestValue;
+    }
+
+    /**
+     * Return the retained content-digest value, if any.
+     * 
+     * @return
+     */
+    public Object getContentDigest() {
+        return contentDigest;
     }
 }
