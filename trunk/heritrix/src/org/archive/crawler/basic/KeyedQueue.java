@@ -41,13 +41,13 @@ public class KeyedQueue implements Queue, URIStoreable {
 		if (key instanceof String) {
 			tmpName = (String) key;
 		}
-		innerQ = new MemQueue();
-//		try {
-//			innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
-//		} catch (IOException e) {
-//			// TODO Convert to runtime exception?
-//			e.printStackTrace();
-//		}
+//		innerQ = new MemQueue();
+		try {
+			innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
+		} catch (IOException e) {
+			// TODO Convert to runtime exception?
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -143,6 +143,13 @@ public class KeyedQueue implements Queue, URIStoreable {
 	 */
 	public long length() {
 		return innerQ.length();
+	}
+
+	/**
+	 * 
+	 */
+	public void release() {
+		innerQ.release();
 	}
 
 }
