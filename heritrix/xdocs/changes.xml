@@ -5,6 +5,21 @@
   </properties>
   <body>
 
+    <release version="1.0.2" date="2004-09-14"
+        description="Bug fixes.">
+       
+
+
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1020770">old crawls stick around, consuming memory</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002319">Terminating paused crawl leaves zombie threads</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935146">Excessive ARCWriterPool timeouts</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010859">Per host overrides not taking effect.</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1014732">document size limit not working</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1012520">UURI.length() > 2k</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010966">crawl.log has URIs with spaces in them stack-sf</a></action>
+    </release>
+
+
     <release version="1.0.0" date="2004-08-06"
         description="Added new prefix ('SURT') scope and filter,
         compression of recovery log,
