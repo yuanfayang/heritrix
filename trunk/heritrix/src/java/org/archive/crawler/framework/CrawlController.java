@@ -1321,13 +1321,13 @@ public class CrawlController implements Serializable {
         }
     }
 
-    public void toePaused() {
+    public synchronized void toePaused() {
         if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
             completePause();
         }
     }
     
-    public void toeEnded() {
+    public synchronized void toeEnded() {
         if (state == STOPPING && toePool.getActiveToeCount() == 0) {
             completeStop();
         }
