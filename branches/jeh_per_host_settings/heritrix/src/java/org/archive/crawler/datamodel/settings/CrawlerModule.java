@@ -37,7 +37,7 @@ public class CrawlerModule extends ComplexType {
 	 * @param name
 	 * @param description
 	 */
-	protected CrawlerModule(String name, String description) {
+	public CrawlerModule(String name, String description) {
 		super(name, description);
 	}
     
