@@ -1,4 +1,4 @@
-/* URIFrontierProposed
+/* Frontier
  *
  * $Id$
  *
@@ -144,6 +144,7 @@ public interface Frontier {
      *
      * @return the next URI that should be processed.
      * @throws InterruptedException
+     * @throws EndedException 
      */
     CrawlURI next() throws InterruptedException, EndedException;
 
