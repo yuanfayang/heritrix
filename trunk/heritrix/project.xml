@@ -302,7 +302,7 @@
     <dependencies>
         <dependency>
             <id>bdb</id>
-            <version>1.7.0</version>
+            <version>1.7.1</version>
             <url>http://www.sleepycat.com/products/je.shtml</url>
             <properties>
                 <war.bundle>true</war.bundle>
