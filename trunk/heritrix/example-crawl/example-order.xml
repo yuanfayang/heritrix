@@ -96,7 +96,7 @@
    <max-pages value="1000" />
    <max-duration value="1h" />
    <max-resources-per-site value="1000" />
-   <max-toe-threads value="25" />
+   <max-toe-threads value="5" />
   </limits>
 
  </crawler-behavior>
