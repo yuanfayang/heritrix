@@ -1,4 +1,9 @@
-/* Copyright (C) 2003 Internet Archive.
+/* StringList
+ * 
+ * $Id$
+ * Created on Dec 18, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,64 +20,85 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * IntegerList.java
- * Created on Dec 18, 2003
- *
- * $Header$
  */
 package org.archive.crawler.datamodel.settings;
 
-/**
+/** List of String values.
  * 
  * @author John Erik Halse
- *
  */
 public class StringList extends ListType {
 
-    /**
+    /** Creates a new StringList.
      * 
+     * @param name of the list.
+     * @param description of the list. This string should be suitable for using
+     *        in a user interface.
      */
     public StringList(String name, String description) {
         super(name, description);
     }
 
-    /**
-     * @param c
+    /** Creates a new StringList and initializes it with the values from
+     * another StringList.
+     * 
+     * @param name of the list.
+     * @param description of the list. This string should be suitable for using
+     *        in a user interface.
+     * @param the list from which this lists gets its initial values.
      */
     public StringList(String name, String description, StringList l) {
         super(name, description);
         addAll(l);
     }
 
+    /** Creates a new StringList and initializes it with the values from
+     * an array of Strings.
+     * 
+     * @param name of the list.
+     * @param description of the list. This string should be suitable for using
+     *        in a user interface.
+     * @param the array from which this lists gets its initial values.
+     */
     public StringList(String name, String description, String[] l) {
         super(name, description);
         addAll(l);
     }
 
-    /* (non-Javadoc)
-     * @see java.util.List#add(int, java.lang.Object)
+    /** Add a new @link java.lang.String at the specified index to this list.
+     * 
+     * @param index index at which the specified element is to be inserted.
+     * @param element the value to be added.
      */
     public void add(int index, String element) {
         super.add(index, element);
     }
 
-    /* (non-Javadoc)
-     * @see java.util.Collection#add(java.lang.Object)
+    /** Add a new @link java.lang.String at the end of this list.
+     * 
+     * @param element the value to be added.
      */
     public void add(String element) {
         super.add(element);
     }
 
-    /* (non-Javadoc)
-     * @see java.util.Collection#addAll(java.util.Collection)
+    /** Appends all of the elements in the specified list to the end of this
+     * list, in the order that they are returned by the specified lists's
+     * iterator.
+     * 
+     * The behavior of this operation is unspecified if the specified
+     * collection is modified while the operation is in progress.
+     *
+     * @param l list whose elements are to be added to this list.
      */
     public void addAll(StringList l) {
         super.addAll(l);
     }
 
-    /* (non-Javadoc)
-     * @see java.util.List#addAll(int, java.util.Collection)
+    /** Appends all of the elements in the specified array to the end of this
+     * list, in the same order that they are in the array.
+     * 
+     * @param l array whose elements are to be added to this list.
      */
     public void addAll(String[] l) {
         for (int i = 0; i < l.length; i++) {
@@ -80,15 +106,23 @@ public class StringList extends ListType {
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.util.List#set(int, java.lang.Object)
+    /** Replaces the element at the specified position in this list with the
+     *  specified element.
+     * 
+     * @param index index at which the specified element is to be inserted.
+     * @param element element to be inserted.
+     * @return the element previously at the specified position.
      */
-    public Integer set(int index, String element) {
-        return (Integer) super.set(index, element);
+    public String set(int index, String element) {
+        return (String) super.set(index, element);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.ListType#checkType(java.lang.Object)
+    /** Check if element is of right type for this list.
+     * 
+     * @param element element to check.
+     * @return element of the right type.
+     * @throws ClassCastException is thrown if the element was of wrong type
+     *         and could not be converted.
      */
     public Object checkType(Object element) throws ClassCastException {
         if (!(element instanceof String)) {

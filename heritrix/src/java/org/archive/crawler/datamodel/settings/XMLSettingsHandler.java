@@ -46,19 +46,20 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
-/**
+/** A SettingsHandler which uses XML files as persistent storage.
  * 
  * @author John Erik Halse
- *
  */
 public class XMLSettingsHandler extends SettingsHandler {
     private static Logger logger =
-        Logger.getLogger("org.archive.crawler.datamodel.settings.XMLSettingsHandler");
+        Logger.getLogger(
+            "org.archive.crawler.datamodel.settings.XMLSettingsHandler");
 
     // XML element name constants
     protected static final String XML_SCHEMA = "heritrix_settings.xsd";
@@ -74,64 +75,77 @@ public class XMLSettingsHandler extends SettingsHandler {
     protected static final String XML_ATTRIBUTE_NAME = "name";
     protected static final String XML_ATTRIBUTE_CLASS = "class";
 
-	private File orderFile;
-	private File settingsDirectory;
-	private final static String settingsFilename = "settings.xml";
+    private File orderFile;
+    private File settingsDirectory;
+    private final static String settingsFilename = "settings.xml";
 
-	/**
-	 * 
-	 */
-	public XMLSettingsHandler(File orderFile) throws InvalidAttributeValueException {
+    /** Create a new XMLSettingsHandler object.
+     * 
+     * @param orderFile where the order file is located.
+     */
+    public XMLSettingsHandler(File orderFile)
+        throws InvalidAttributeValueException {
         super();
         this.orderFile = orderFile;
-	}
+    }
 
-	/**
-	 * @param controller
-	 */
-	public void initialize() {
-		super.initialize();
-		try {
-			this.settingsDirectory =
-				new File(
-					(String) getOrder().getAttribute("settings-directory"));
-		} catch (AttributeNotFoundException e) {
-			e.printStackTrace();
-		} catch (MBeanException e) {
-			e.printStackTrace();
-		} catch (ReflectionException e) {
-			e.printStackTrace();
-		}
-	}
+    /** Initialize the SettingsHandler.
+     * 
+     * This method builds the settings data structure and initializes it with
+     * settings from the order file given to the constructor.
+     */
+    public void initialize() {
+        super.initialize();
+        try {
+            this.settingsDirectory =
+                new File(
+                    (String) getOrder().getAttribute(
+                        CrawlOrder.ATTR_SETTINGS_DIRECTORY));
+        } catch (AttributeNotFoundException e) {
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            e.printStackTrace();
+        }
+    }
 
+    /** Initialize the SettingsHandler from a source.
+     * 
+     * This method builds the settings data structure and initializes it with
+     * settings from the order file given as a parameter. The intended use is
+     * to create a new order file based on a default (template) order file.
+     * 
+     * @param source the order file to initialize from.
+     */
     public void initialize(File source) {
         File tmpOrderFile = orderFile;
         orderFile = source;
         this.initialize();
         orderFile = tmpOrderFile;
     }
-    
-	private File scopeToFile(String scope) {
-		File file;
-		if (scope == null || scope.equals("")) {
-			file = settingsDirectory;
-		} else {
-			String elements[] = scope.split("\\.");
-			StringBuffer path = new StringBuffer();
-			for (int i = elements.length - 1; i > 0; i--) {
-				path.append(elements[i]);
-				path.append(File.separatorChar);
-			}
-			path.append(elements[0]);
-			file = new File(settingsDirectory, path.toString());
-		}
-		return file;
-	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.settings.SettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
-	 */
-	public final void writeSettingsObject(CrawlerSettings settings) {
+    private File scopeToFile(String scope) {
+        File file;
+        if (scope == null || scope.equals("")) {
+            file = settingsDirectory;
+        } else {
+            String elements[] = scope.split("\\.");
+            StringBuffer path = new StringBuffer();
+            for (int i = elements.length - 1; i > 0; i--) {
+                path.append(elements[i]);
+                path.append(File.separatorChar);
+            }
+            path.append(elements[0]);
+            file = new File(settingsDirectory, path.toString());
+        }
+        return file;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.SettingsHandler#writeSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings)
+     */
+    public final void writeSettingsObject(CrawlerSettings settings) {
         File filename;
         if (settings.getScope() == null) {
             filename = orderFile;
@@ -140,34 +154,59 @@ public class XMLSettingsHandler extends SettingsHandler {
             filename = new File(dirname, settingsFilename);
             dirname.mkdirs();
         }
-		writeSettingsObject(settings, filename);
-	}
+        writeSettingsObject(settings, filename);
+    }
 
-	public final void writeSettingsObject(CrawlerSettings settings, File filename) {
+    /** Write a CrawlerSettings object to a specified file.
+     * 
+     * This method is similar to @link #writeSettingsObject(CrawlerSettings)
+     * except that it uses the submitted File object instead of trying to
+     * resolve where the file should be written.
+     * 
+     * @param settings the settings object to be serialized.
+     * @param filename the file to which the settings object should be written.
+     */
+    public final void writeSettingsObject(
+        CrawlerSettings settings,
+        File filename) {
         logger.fine("Writing " + filename.getAbsolutePath());
-		try {
-			StreamResult result =
-				new StreamResult(
-					new BufferedOutputStream(new FileOutputStream(filename)));
-			Transformer transformer =
-				TransformerFactory.newInstance().newTransformer();
-			Source source = new CrawlSettingsSAXSource(settings);
-			transformer.transform(source, result);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        try {
+            StreamResult result =
+                new StreamResult(
+                    new BufferedOutputStream(new FileOutputStream(filename)));
+            Transformer transformer =
+                TransformerFactory.newInstance().newTransformer();
+            Source source = new CrawlSettingsSAXSource(settings);
+            transformer.transform(source, result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-    protected final CrawlerSettings readSettingsObject(CrawlerSettings settings, File filename) {
-        if(filename.exists()) {
+    protected final CrawlerSettings readSettingsObject(
+        CrawlerSettings settings,
+        File filename) {
+        if (filename.exists()) {
             logger.fine("Reading " + filename.getAbsolutePath());
             try {
-                XMLReader parser = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
-                InputStream file = new BufferedInputStream(new FileInputStream(filename));
-                parser.setContentHandler(new CrawlSettingsSAXHandler(settings));             
+                XMLReader parser =
+                    SAXParserFactory
+                        .newInstance()
+                        .newSAXParser()
+                        .getXMLReader();
+                InputStream file =
+                    new BufferedInputStream(new FileInputStream(filename));
+                parser.setContentHandler(new CrawlSettingsSAXHandler(settings));
                 parser.parse(new InputSource(file));
             } catch (SAXParseException e) {
-                System.out.println(e.getMessage() + " in file '" + filename.getAbsolutePath() + "', line: " + e.getLineNumber() + ", column: " + e.getColumnNumber());
+                System.out.println(
+                    e.getMessage()
+                        + " in file '"
+                        + filename.getAbsolutePath()
+                        + "', line: "
+                        + e.getLineNumber()
+                        + ", column: "
+                        + e.getColumnNumber());
                 //e.printStackTrace();
             } catch (SAXException e) {
                 System.out.println(e.getMessage());
@@ -187,10 +226,10 @@ public class XMLSettingsHandler extends SettingsHandler {
         return settings;
     }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
-	 */
-	protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
+     */
+    protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
         File filename;
         if (settings.getScope() == null) {
             // Read order file
@@ -201,5 +240,14 @@ public class XMLSettingsHandler extends SettingsHandler {
             filename = new File(dirname, settingsFilename);
         }
         return readSettingsObject(settings, filename);
-	}
+    }
+
+    /** Get the <code>File</code> object pointing to the order file.
+     * 
+     * @return File object for the order file.
+     */
+    public File getOrderFile() {
+        return orderFile;
+    }
+
 }

@@ -165,7 +165,10 @@ public abstract class ListType implements Type {
         listData.clear();
     }
 
-    /* (non-Javadoc)
+    /** The getLegalValues is not applicable for list so this method will
+     * always return null.
+     * 
+     * @return null
      * @see org.archive.crawler.datamodel.settings.Type#getLegalValues()
      */
     public Object[] getLegalValues() {

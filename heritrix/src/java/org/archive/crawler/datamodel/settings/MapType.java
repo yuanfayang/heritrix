@@ -49,28 +49,30 @@ public class MapType extends ComplexType {
     public MapType(String name, String description) {
         super(name, description);
     }
-    
+
     /** Add a new element to this map.
      * 
      * @param settings the settings object for this method to have effect.
      * @param type the element to be added.
      */
-    public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
+    public Type addElement(CrawlerSettings settings, Type type)
+        throws InvalidAttributeValueException {
         settings = settings == null ? globalSettings() : settings;
-        if(!(type instanceof MapType)) {
+        if (!(type instanceof MapType)) {
             return super.addElement(settings, type);
         } else {
             throw new IllegalArgumentException("Nested maps are not allowed.");
         }
     }
-    
+
     private class It implements Iterator {
         CrawlerSettings settings;
         Iterator atts;
-                        
+
         public It(CrawlerSettings settings) {
             this.settings = settings;
-            this.atts = settings.getData(getAbsoluteName()).attributeInfoIterator();
+            this.atts =
+                settings.getData(getAbsoluteName()).attributeInfoIterator();
         }
 
         public boolean hasNext() {
@@ -79,7 +81,9 @@ public class MapType extends ComplexType {
 
         public Object next() {
             try {
-                return getAttribute(settings, ((MBeanAttributeInfo) atts.next()).getName());
+                return getAttribute(
+                    settings,
+                    ((MBeanAttributeInfo) atts.next()).getName());
             } catch (AttributeNotFoundException e) {
                 // This should never happen
                 e.printStackTrace();
@@ -106,7 +110,7 @@ public class MapType extends ComplexType {
         }
         return new It(settings);
     }
-    
+
     /** Returns true if this map is empty.
      * 
      * @param uri the URI for which this set of elements are valid.
@@ -121,7 +125,7 @@ public class MapType extends ComplexType {
         }
         return !settings.getData(getAbsoluteName()).hasAttributes();
     }
-    
+
     /** Get the number of elements in this map.
      * 
      * @param uri the URI for which this set of elements are valid.

@@ -34,7 +34,7 @@ public interface Type {
      * @return this type's name
      */
     String getName();
-    
+
     /** Get the description of this type
      * 
      * The descritpion should be suitable for showing in a user interface.
@@ -42,12 +42,17 @@ public interface Type {
      * @return this type's description
      */
     String getDescription();
-    
+
     /** The default value for this type
      *  
      * @return this type's default value
      */
     Object getDefaultValue();
-    
+
+    /** Get the legal values for this type.
+     * 
+     * @return the legal values for this type or null if there are no
+     *         restrictions.
+     */
     Object[] getLegalValues();
 }

@@ -107,6 +107,10 @@ public class DataContainer extends HashMap {
         return !attributes.isEmpty();
     }
     
+    public int size() {
+        return attributes.size();
+    }
+    
     protected MBeanAttributeInfo getAttributeInfo(String name) {
         return (MBeanAttributeInfo) attributeNames.get(name);
     }

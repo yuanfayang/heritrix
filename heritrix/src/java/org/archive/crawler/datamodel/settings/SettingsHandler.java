@@ -68,7 +68,6 @@ public abstract class SettingsHandler {
     final static String LONG_LIST = "longList";
     final static String FLOAT_LIST = "floatList";
     final static String DOUBLE_LIST = "doubleList";
-    final static String BOOLEAN_LIST = "booleanList";
     final static String STRING_LIST = "stringList";
     private final static String names[][] =
         new String[][] { { INTEGER, "java.lang.Integer" }, {
@@ -87,9 +86,6 @@ public abstract class SettingsHandler {
             FLOAT_LIST, "org.archive.crawler.datamodel.settings.FloatList" }, {
             DOUBLE_LIST,
                 "org.archive.crawler.datamodel.settings.DoubleList" },
-                {
-            BOOLEAN_LIST,
-                "org.archive.crawler.datamodel.settings.BooleanList" },
                 {
             STRING_LIST, "org.archive.crawler.datamodel.settings.StringList" }
     };

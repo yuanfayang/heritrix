@@ -39,9 +39,11 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/**
- * @author johnh
- *
+/** An SAX element handler that updates a CrawlerSettings object.
+ * 
+ * This is a helper class for the XMLSettingsHandler.
+ * 
+ * @author John Erik Halse
  */
 public class CrawlSettingsSAXHandler extends DefaultHandler {
     private Locator locator;
@@ -82,7 +84,6 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         handlers.put(SettingsHandler.MAP, new MapHandler());
         handlers.put(SettingsHandler.INTEGER_LIST, new ListHandler());
         handlers.put(SettingsHandler.STRING_LIST, new ListHandler());
-        handlers.put(SettingsHandler.BOOLEAN_LIST, new ListHandler());
         handlers.put(SettingsHandler.DOUBLE_LIST, new ListHandler());
         handlers.put(SettingsHandler.FLOAT_LIST, new ListHandler());
         handlers.put(SettingsHandler.LONG_LIST, new ListHandler());
