@@ -102,7 +102,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		Matcher attr = EACH_ATTRIBUTE_EXTRACTOR.matcher(cs);
 		
 		// Just in case it's an OBJECT tag
-		CharSequence codebase = null;
+		String codebase = null;
 		ArrayList resources = null;
 		
 		while (attr.find()) {
@@ -126,8 +126,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processEmbed(curi, value);
 			} else if (attr.start(6)>-1) {
 				// CODEBASE
-				codebase = value;
-				processEmbed(curi,codebase.toString());
+				codebase = value.toString();
+				codebase = codebase.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+				processEmbed(curi,codebase);
 			} else if (attr.start(7)>-1) {
 				// CLASSID,DATA
 				if (resources==null) { resources = new ArrayList(); }
@@ -165,6 +166,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			}
 			while(iter.hasNext()) {
 				String res = iter.next().toString();
+				res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 				if (codebaseURI != null) {
 					res = codebaseURI.resolve(res).toString();
 				}
@@ -193,7 +195,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param value
 	 */
 	private void processScriptCode(CrawlURI curi, CharSequence cs) {
-		Matcher candidates = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(cs);
+		String code = cs.toString();
+		code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		Matcher candidates = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(code);
 		while (candidates.find()) {
 			curi.addEmbed(candidates.group(2));
 		}
