@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.List;
+
 import javax.management.InvalidAttributeValueException;
 
 /**
@@ -67,5 +69,20 @@ public class ModuleType extends ComplexType {
                             + ")");
         }
         return super.addElement(settings, type);
+    }
+    
+    /**
+     * Those Modules that use files on disk should list them all when this 
+     * method is called.
+     * 
+     * <p>Each file (as a string name with full path) should be added to the
+     * provided list.
+     * 
+     * <p>Modules that do not use any files can safely ignore this method.
+     * 
+     * @param list The list to add files to.
+     */
+    protected void listUsedFiles(List list){
+        // By default do nothing
     }
 }

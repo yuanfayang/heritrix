@@ -232,12 +232,12 @@ public class Frontier
         
         this.controller = c;
         controller.addCrawlStatusListener(this);
-        loadSeeds(c);
+        loadSeeds();
     }
 
-    private synchronized void loadSeeds(CrawlController c) {
-        c.getScope().refreshSeedsIteratorCache();
-        Iterator iter = c.getScope().getSeedsIterator();
+    private synchronized void loadSeeds() {
+        controller.getScope().refreshSeedsIteratorCache();
+        Iterator iter = controller.getScope().getSeedsIterator();
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);

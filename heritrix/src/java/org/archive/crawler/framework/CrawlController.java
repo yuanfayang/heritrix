@@ -74,6 +74,10 @@ import org.archive.util.ArchiveUtils;
  * @author Gordon Mohr
  */
 public class CrawlController extends Thread {
+    public static final char MANIFEST_CONFIG_FILE = 'C';
+    public static final char MANIFEST_REPORT_FILE = 'R';
+    public static final char MANIFEST_LOG_FILE = 'L';
+    
     private static final String LOGNAME_PROGRESS_STATISTICS =
         "progress-statistics";
     private static final String LOGNAME_URI_ERRORS = "uri-errors";
@@ -102,6 +106,12 @@ public class CrawlController extends Thread {
 
     private File disk;
     private File scratchDisk;
+    
+    /** 
+     * A manifest of all files used/created during this crawl. Written to file
+     * at the end of the crawl (the absolutely last thing done). 
+     */
+    private StringBuffer manifest;
 
     /**
      * Messges from the crawlcontroller.
@@ -195,8 +205,9 @@ public class CrawlController extends Thread {
      * @throws InitializationException
      */
     public void initialize(SettingsHandler settingsHandler)
-        throws InitializationException {
+            throws InitializationException {
         this.settingsHandler = settingsHandler;
+        manifest = new StringBuffer();
         order = settingsHandler.getOrder();
         order.setController(this);
         sExit = "";
@@ -539,35 +550,41 @@ public class CrawlController extends Thread {
         recover = Logger.getLogger(LOGNAME_RECOVER+"."+diskPath);
 
         FileHandler up = new FileHandler(diskPath + LOGNAME_CRAWL + ".log");
+        addToManifest(diskPath + LOGNAME_CRAWL + ".log", MANIFEST_LOG_FILE, true);
         up.setFormatter(new UriProcessingFormatter());
         uriProcessing.addHandler(up);
         uriProcessing.setUseParentHandlers(false);
 
         FileHandler cerr =
             new FileHandler(diskPath + LOGNAME_RUNTIME_ERRORS + ".log");
+        addToManifest(diskPath + LOGNAME_RUNTIME_ERRORS + ".log", MANIFEST_LOG_FILE, true);
         cerr.setFormatter(new RuntimeErrorFormatter());
         runtimeErrors.addHandler(cerr);
         runtimeErrors.setUseParentHandlers(false);
 
         FileHandler lerr =
             new FileHandler(diskPath + LOGNAME_LOCAL_ERRORS + ".log");
+        addToManifest(diskPath + LOGNAME_LOCAL_ERRORS + ".log", MANIFEST_LOG_FILE, true);
         lerr.setFormatter(new LocalErrorFormatter());
         localErrors.addHandler(lerr);
         localErrors.setUseParentHandlers(false);
 
         FileHandler uerr =
             new FileHandler(diskPath + LOGNAME_URI_ERRORS + ".log");
+        addToManifest(diskPath + LOGNAME_URI_ERRORS + ".log", MANIFEST_LOG_FILE, true);
         uerr.setFormatter(new UriErrorFormatter());
         uriErrors.addHandler(uerr);
         uriErrors.setUseParentHandlers(false);
 
         FileHandler stat =
             new FileHandler(diskPath + LOGNAME_PROGRESS_STATISTICS + ".log");
+        addToManifest(diskPath + LOGNAME_PROGRESS_STATISTICS + ".log", MANIFEST_LOG_FILE, true);
         stat.setFormatter(new StatisticsLogFormatter());
         progressStats.addHandler(stat);
         progressStats.setUseParentHandlers(false);
 
         FileHandler reco = new FileHandler(diskPath + LOGNAME_RECOVER + ".log");
+        addToManifest(diskPath + LOGNAME_RECOVER + ".log", MANIFEST_LOG_FILE, false);
         reco.setFormatter(new PassthroughFormatter());
         recover.addHandler(reco);
         recover.setUseParentHandlers(false);
@@ -680,11 +697,13 @@ public class CrawlController extends Thread {
 
         // Save processors report to file
         try {
-            FileWriter fw = new FileWriter(getDisk().getPath()+
-                    File.separator+"processors-report.txt");
+            File procreport = new File(getDisk().getPath() +
+                    File.separator + "processors-report.txt");
+            FileWriter fw = new FileWriter(procreport);
             fw.write(reportProcessors());
             fw.flush();
             fw.close();
+            addToManifest(procreport.getAbsolutePath(), MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write processors-report.txt",
                     "Unable to write processors-report.txt at the end of crawl.",
@@ -695,6 +714,30 @@ public class CrawlController extends Thread {
         // Run processors' final tasks
         runProcessorFinalTasks();
 
+        // Complete manifest (write configuration files and any 
+        // files managed by CrawlController to it - files managed by other 
+        // classes, excluding the settings framework, are responsible for 
+        // adding their files to the manifest themselves.)
+        Iterator it = settingsHandler.getListOfAllFiles().iterator();
+        while(it.hasNext()){
+            addToManifest((String)it.next(),MANIFEST_CONFIG_FILE,true);
+        }
+        
+        // Write manifest to disk.
+        try {
+            FileWriter fw = new FileWriter(getDisk().getPath()+
+                    File.separator+"crawl-manifest.txt");
+            fw.write(manifest.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("Unable to write crawl-manifest.txt",
+                    "Unable to write crawl-manifest.txt at the end of crawl.",
+                    e,Level.SEVERE));
+            e.printStackTrace();
+        }
+        
+        
         logger.info("exiting run");
 
         //Do cleanup to facilitate GC.
@@ -1043,5 +1086,22 @@ public class CrawlController extends Thread {
      */
     public void killThread(int threadNumber, boolean replace){
         toePool.killThread(threadNumber, replace);
+    }
+    
+    /**
+     * Add a file to the manifest of files used/generated by the current
+     * crawl.
+     * 
+     * @param file The filename (with absolute path) of the file to add  
+     * @param type The type of the file 
+     * @param bundle Should the file be included in a typical bundling of
+     *           crawler files.
+     * 
+     * @see #MANIFEST_CONFIG_FILE
+     * @see #MANIFEST_LOG_FILE
+     * @see #MANIFEST_REPORT_FILE
+     */
+    public void addToManifest(String file, char type, boolean bundle){
+        manifest.append(type+(bundle?"+":"-")+" "+file+"\n");
     }
 }
