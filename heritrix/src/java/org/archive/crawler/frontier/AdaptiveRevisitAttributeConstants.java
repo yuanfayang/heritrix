@@ -50,6 +50,7 @@ extends CoreAttributeConstants {
     public static final String A_LAST_ETAG = "last-etag";
     public static final String A_LAST_DATESTAMP = "last-datestamp";
     
+    public static final String A_WAIT_REEVALUATED = "wait-reevaluated";
     
     /** No knowledge of URI content. Possibly not fetched yet, unable
      *  to check if different or an error occured on last fetch attempt. */

@@ -84,9 +84,20 @@ implements AdaptiveRevisitAttributeConstants {
      * @param name The name of the module
      */
     public WaitEvaluator(String name) {
-        super(name, "Evaluates how long to wait before fetching a URI again. " +
+        this(name, "Evaluates how long to wait before fetching a URI again. " +
                 "Typically, this processor should be in the post processing " +
-                "chain.");
+                "chain. It will pass if another wait evaluator has already " +
+                "processed the CrawlURI.");
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param name The name of the module
+     * @param description Description of the module
+     */
+    public WaitEvaluator(String name, String description){
+        super(name, description);
         
         addElementToDefinition(new SimpleType(ATTR_INITIAL_WAIT_INTERVAL,
                 "The initial wait time between revisits. Will then be " +
@@ -138,6 +149,13 @@ implements AdaptiveRevisitAttributeConstants {
         if(curi.isSuccess()==false){
             // If the URI was not crawled successfully, we can not reevaluate
             // the wait interval.
+            return;
+        }
+        
+        if(curi.containsKey(A_WAIT_REEVALUATED) && 
+                ((Boolean)curi.getObject(A_WAIT_REEVALUATED)).booleanValue()){
+            // This CrawlURIs wait interval has already been reevaluted during
+            // this processing round.
             return;
         }
             
@@ -248,6 +266,7 @@ implements AdaptiveRevisitAttributeConstants {
                     + waitInterval);
         }
         // Update wait interval
-        curi.putLong(A_WAIT_INTERVAL,waitInterval);    
+        curi.putLong(A_WAIT_INTERVAL,waitInterval);
+        curi.putObject(A_WAIT_REEVALUATED,new Boolean(true));
     }
 }

@@ -23,3 +23,6 @@ org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
 org.archive.crawler.postprocessor.Postselector|Postselector
 org.archive.crawler.postprocessor.LowDiskPauseProcessor|LowDiskPause
 org.archive.crawler.postprocessor.WaitEvaluator|WaitEvaluator
+org.archive.crawler.postprocessor.ContentBasedWaitEvaluator|ContentBasedWaitEvaluator
+org.archive.crawler.postprocessor.TextWaitEvaluator|TextWaitEvaluator
+org.archive.crawler.postprocessor.ImageWaitEvaluator|ImageWaitEvaluator
