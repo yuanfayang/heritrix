@@ -126,6 +126,15 @@ public class ARCWriterTest
         } else {
                 metaDatas = reader.validate(recordCount);
         }
+        // Now, run through each of the records doing absolute get going from
+        // the end to start.
+        for (int i = metaDatas.size() - 1; i >= 0; i--) {
+            ARCRecordMetaData meta = (ARCRecordMetaData)metaDatas.get(i);
+            ARCRecord r = reader.get(meta.getOffset());
+            String mimeType = r.getMetaData().getMimetype();
+            assertTrue("Record is bogus", 
+                mimeType != null && mimeType.length() > 0);
+        }
         reader.close();
         assertTrue("Metadatas not equal", metaDatas.size() == recordCount);
         for (Iterator i = metaDatas.iterator(); i.hasNext();) {
@@ -152,33 +161,26 @@ public class ARCWriterTest
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
         File [] files = FileUtils.getFilesWithPrefix(getTmpDir(), PREFIX);
-        for (int i = 0; i < files.length; i++)
-        {
+        for (int i = 0; i < files.length; i++) {
             validate(files[i], -1);
         }
     }
 
-    public void testWriteRecord()
-        throws IOException
-    {
+    public void testWriteRecord() throws IOException {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecord", false,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount  + 1 /*Header record*/);
     }
 
-    public void testWriteRecordCompressed()
-        throws IOException
-    {
+    public void testWriteRecordCompressed() throws IOException {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecordCompressed", true,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount + 1 /*Header record*/);
     }
 
-    public void testGetOutputDir()
-        throws IOException
-    {
+    public void testGetOutputDir() throws IOException {
         ARCWriter arcWriter = new ARCWriter(getTmpDir(),
             "getOutputDir-" + PREFIX, false, DEFAULT_MAX_ARC_FILE_SIZE);
         assertEquals(getTmpDir(), arcWriter.getArcsDir());

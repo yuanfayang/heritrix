@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.archive.io.MappedByteBufferInputStream;
+import org.archive.io.Position;
 
 /**
  * Get an iterator on an arc file or get a record by absolute position.
@@ -114,10 +114,13 @@ import org.archive.io.MappedByteBufferInputStream;
  * performance.  See <a
  * href="http://forum.java.sun.com/thread.jsp?forum=4&thread=227539&message=806443">NIO
  * ByteBuffer slower than BufferedInputStream</a>.  It can be 4 times slower
- * than java.io or 40% faster.
+ * than java.io or 40% faster.  For sure its 3x to 4x slower than reading from
+ * a buffer: http://jroller.com/page/cpurdy/20040405#raw_nio_performance.
  *
  * <p>TODO: Profiling java.io vs. memory-mapped ByteBufferInputStream.  As is,
- * ARCReader is SLOW.
+ * ARCReader is SLOW.  Should be able to just swap out the underlying input
+ * stream putting in place a java.io version that supports position rollback
+ * and marking.
  *
  * <p>TODO: Testing of this reader class against ARC files harvested out in
  * the wilds.  This class has only been tested to date going against small
@@ -155,7 +158,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * 
      * <p>Set in constructor.
      */
-    protected MappedByteBufferInputStream in = null;
+    protected InputStream in = null;
 	
 	/**
 	 * Channel we got the memory mapped byte buffer from.
@@ -186,10 +189,19 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 			try {
                 cleanupCurrentRecord();
 			} catch (IOException e) {
-				throw new RuntimeException(e.getMessage());
+				throw new RuntimeException(e.getClass().getName() + ": " +
+                    e.getMessage());
 			}
 		}
-        this.in.setPosition(0);
+        if (this.in.markSupported()) {
+            try {
+                ((Position)this.in).setPosition(0);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e.getClass().getName() + ": " +
+                    e.getMessage());
+            }
+        }
 		return (Iterator)this;
 	}
 	
@@ -197,8 +209,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	 * Get record at passed <code>offset</code>.
 	 * @param offset Byte index into arcfile at which a record starts.
 	 * @return An ARCRecord reference.
+     * @throws IOException
 	 */
-	public abstract ARCRecord get(long offset);
+	public ARCRecord get(long offset) throws IOException {
+        cleanupCurrentRecord();
+        ((Position)this.in).setPosition(offset);
+        // Calling next looks weird but under the wraps it does the right thing.
+        return (ARCRecord)next();
+    }
 	
 	/**
 	 * Convenience method for constructors.
@@ -227,9 +245,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	
 	/**
 	 * Call close when done so we can cleanup after ourselves.
+     * @throws IOException
 	 */
-    public void close()
-        		throws IOException {
+    public void close() throws IOException {
         cleanupCurrentRecord();
         if (this.in != null) {
             this.in.close();
@@ -241,22 +259,20 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         }
     }
 
-    protected void finalize()
-        		throws Throwable {
+    protected void finalize() throws Throwable {
         super.finalize();
         close();
     }
 
     /**
      * @return True if we have more ARC records to read.
-     * @throws IOException
      */
     public boolean hasNext() {
-    		try {
-    			return this.in.available() > 0;
-    		} catch (IOException e) {
-	    		throw new RuntimeException("Failed: " + e.getMessage());
-    		}
+        try {
+            return this.in.available() > 0;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed: " + e.getMessage());
+        }
     }
 
     /**
@@ -268,8 +284,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * @return Next ARCRecord else null if no more records left.  You need to
      * cast result to ARCRecord.
-     *
-     * @throws IOException
      */
     public Object next() {
         if (this.currentRecord != null) {
@@ -283,7 +297,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         }
 
         try {
-			return createARCRecord(this.in, this.in.getPosition());
+			return createARCRecord(this.in, ((Position)this.in).getPosition());
 		} catch (IOException e) {
 			throw new NoSuchElementException(e.getClass() + ": " +
                 e.getMessage());
@@ -309,8 +323,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * 
      * @param is InputStream to use.
      * @param offset Absolute offset into arc file.
+     * @return An arc record.
+     * @throws IOException
      */
-    protected ARCRecord createARCRecord(InputStream is, int offset)
+    protected ARCRecord createARCRecord(InputStream is, long offset)
         		throws IOException {
         ArrayList values = getTokenizedHeaderLine(is);
         boolean contentRead = false;
@@ -370,7 +386,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 " -- or passed buffer doesn't contain a line.");
             }
 
-            c = stream.read();
+            c = stream.read() & 0xff;
             if (c == -1) {
                 throw new IOException("Hit EOF before header EOL.");
             }
@@ -430,13 +446,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @param headerFieldNameKeys Keys to use composing headerFields map.
      * @param values Values to set into the headerFields map.
      * @param version The version of this ARC file.
+     * @param offset Offset into arc file.
      *
      * @return Metadata structure for this record.
      *
      * @exception IOException  If no. of keys doesn't match no. of values.
      */
     private ARCRecordMetaData computeMetaData(ArrayList headerFieldNameKeys,
-                ArrayList values, String version, int offset)
+                ArrayList values, String version, long offset)
             throws IOException {
         if (headerFieldNameKeys.size() != values.size()) {
             throw new IOException("Size of field name keys does " +
@@ -449,7 +466,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         }
 
         headerFields.put(VERSION_HEADER_FIELD_KEY, version);
-        headerFields.put(ABSOLUTE_OFFSET_KEY, new  Integer(offset));
+        headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
         return new ARCRecordMetaData(headerFields);
     }
@@ -492,15 +509,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 		 
         int count = 0;
         for (Iterator i = iterator(); hasNext();) {
-        		count++;
+            count++;
             ARCRecord r = (ARCRecord)i.next();
             if (r.getMetaData().getLength() <= 0
                 && r.getMetaData().getMimetype().equals(NO_TYPE_MIMETYPE)) {
                 throw new IOException("ARCRecord content is empty.");
             }
-
             r.close();
-
             // Add reference to metadata into a list of metadatas.
             metaDatas.add(r.getMetaData());
         }
@@ -539,5 +554,29 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     public ARCRecord getCurrentRecord() {
         return this.currentRecord;
+    }
+    
+    /**
+     * @param args Command-line arguments.
+     * @throws IOException
+     */
+    public static void main(String [] args) throws IOException {
+        if (args.length <= 0 || args[0].equals("-h") 
+                || args[0].equals("--help")) {
+            System.out.println("Usage: java ARCReader ARC1, ARC2, ...");
+        } else {
+            for (int i = 0; i < args.length; i++) {
+                ARCReader arc = ARCReaderFactory.get(new File(args[i]));
+                for (Iterator ii = arc.iterator(); ii.hasNext();) {
+                    ARCRecord r = (ARCRecord)ii.next();
+                    ARCRecordMetaData meta = r.getMetaData();
+                    System.out.println(meta.getOffset() + " " +
+                        meta.getLength() + " " +
+                        meta.getIp() + " " +
+                        meta.getMimetype() + " " +
+                        meta.getUrl());
+                }
+            }
+        }
     }
 }

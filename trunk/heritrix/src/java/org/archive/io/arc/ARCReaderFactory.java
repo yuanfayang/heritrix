@@ -34,6 +34,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.archive.io.GZIPMemberInputStream;
 import org.archive.io.MappedByteBufferInputStream;
+import org.archive.io.Position;
 
 /**
  * Return an ARCReader.
@@ -41,17 +42,6 @@ import org.archive.io.MappedByteBufferInputStream;
  * @author stack
  */
 public class ARCReaderFactory implements ARCConstants {
-
-    /**
-     * Assumed maximum size of a record meta header line.
-     *
-     * This 100k which seems massive but its the same as the LINE_LENGTH from
-     * <code>alexa/include/a_arcio.h</code>:
-     * <pre>
-     * #define LINE_LENGTH     (100*1024)
-     * </pre>
-     */
-    private static final int MAX_HEADER_LINE_LENGTH = 1024 * 100;
     
     /**
      * This factory instance.
@@ -68,6 +58,7 @@ public class ARCReaderFactory implements ARCConstants {
 	/**
 	 * @param arcFile An arcfile to read.
 	 * @return An ARCReader.
+     * @throws IOException
 	 */
 	public static ARCReader get(File arcFile) throws IOException {
         boolean compressed =
@@ -80,9 +71,9 @@ public class ARCReaderFactory implements ARCConstants {
         }
 		return compressed?
 			(ARCReader)ARCReaderFactory.factory.
-				new CompressedNuArcReader(arcFile):
+				new CompressedARCReader(arcFile):
 		    (ARCReader)ARCReaderFactory.factory.
-				new UncompressedNuArcReader(arcFile);
+				new UncompressedARCReader(arcFile);
 	}
 
     /**
@@ -185,27 +176,19 @@ public class ARCReaderFactory implements ARCConstants {
 	 * Uncompressed arc file reader.
 	 * @author stack
 	 */
-	private class UncompressedNuArcReader extends ARCReader {
+	private class UncompressedARCReader extends ARCReader {
 		
 		/**
 		 * Constructor.
 		 * @param arcfile Uncompressed arcfile to read.
+         * @throws IOException
 		 */
-		public UncompressedNuArcReader(File arcfile)
-				throws IOException {
+		public UncompressedARCReader(File arcfile) throws IOException {
 			// Arc file has been tested for existence by time it has come
 			// to here.
             this.in = new MappedByteBufferInputStream(initialize(arcfile));
 			// Read in the arcfile header.
-            createARCRecord(this.in, this.in.getPosition());
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.archive.io.arc.NuArcReader#get(long)
-		 */
-		public ARCRecord get(long offset) {
-			// TODO Auto-generated method stub
-			return null;
+            createARCRecord(this.in, ((Position)this.in).getPosition());
 		}
 	}
 	
@@ -213,18 +196,19 @@ public class ARCReaderFactory implements ARCConstants {
 	 * Compressed arc file reader.
 	 * @author stack
 	 */
-	private class CompressedNuArcReader extends ARCReader {
+	private class CompressedARCReader extends ARCReader {
 
 		/**
 		 * Constructor.
 		 * @param arcfile Uncompressed arcfile to read.
+         * @throws IOException
 		 */
-		public CompressedNuArcReader(File arcfile) throws IOException {
+		public CompressedARCReader(File arcfile) throws IOException {
 			// Arc file has been tested for existence by time it has come
 			// to here.
 			this.in = new GZIPMemberInputStream(initialize(arcfile));
             // Read in arcfile header record.
-            createARCRecord(this.in, this.in.getPosition());
+            createARCRecord(this.in, ((Position)this.in).getPosition());
 		}
         
         /**
@@ -239,8 +223,6 @@ public class ARCReaderFactory implements ARCConstants {
          *
          * @return Next ARCRecord else null if no more records left.  You need to
          * cast result to ARCRecord.
-         *
-         * @throws IOException
          */
         public Object next() {
             if (this.currentRecord != null) {
@@ -258,7 +240,8 @@ public class ARCReaderFactory implements ARCConstants {
             ((GZIPMemberInputStream)this.in).next();
 
             try {
-                return createARCRecord(this.in, this.in.getPosition());
+                return createARCRecord(this.in,
+                    ((Position)this.in).getPosition());
             } catch (IOException e) {
                 throw new NoSuchElementException(e.getClass() + ": " +
                     e.getMessage());
@@ -279,18 +262,12 @@ public class ARCReaderFactory implements ARCConstants {
          * 
          * @param is InputStream to use.
          * @param offset Absolute offset into arc file.
+         * @throws IOException
+         * @return An arc record.
          */
-		protected ARCRecord createARCRecord(InputStream is, int offset)
+		protected ARCRecord createARCRecord(InputStream is, long offset)
 				throws IOException {
 			return super.createARCRecord(new GZIPInputStream(is), offset);
-		}
-        
-		/* (non-Javadoc)
-		 * @see org.archive.io.arc.NuArcReader#get(long)
-		 */
-		public ARCRecord get(long offset) {
-			// TODO Auto-generated method stub
-			return null;
 		}
 	}
 }

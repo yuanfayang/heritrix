@@ -31,9 +31,14 @@ import java.nio.MappedByteBuffer;
 /**
  * An inputstream perspective on a MappedByteBuffer.
  * 
+ * This class is effectively a random access input stream.  Used
+ * {@link #getPosition()} to get current location and then mark and reset to
+ * move about in the stream.
+ * 
  * @author stack
  */
-public class MappedByteBufferInputStream extends InputStream {
+public class MappedByteBufferInputStream extends InputStream
+    implements Position {
 	
     /**
      * The mapped byte buffer we're feeding this stream from.
@@ -52,25 +57,27 @@ public class MappedByteBufferInputStream extends InputStream {
 	
 	/**
 	 * Constructor.
-	 * @param buffer MappedByteBuffer to use.
+	 * @param mbb MappedByteBuffer to use.
 	 */
 	public MappedByteBufferInputStream(MappedByteBuffer mbb) {
 		super();
 		this.mbb = mbb;
         this.closed = false;
 	}
-	
-    protected MappedByteBuffer getMappedByteBuffer() {
-        // TODO: Shut this down.
-    	    return this.mbb;
-    }
     
 	public int read() throws IOException {
         checkClosed();
 		return (available() <= 0)? -1: this.mbb.get();
 	}
-    
-    // TODO: Add buffer read.
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        checkClosed();
+        int read = (available() <= 0)? -1: Math.min(available(), len);
+        if (read > 0) {
+            this.mbb.get(b, off, read);
+        }
+        return read;
+    }
     
     /* (non-Javadoc)
 	 * @see java.io.InputStream#close()
@@ -80,9 +87,6 @@ public class MappedByteBufferInputStream extends InputStream {
         this.closed = true;
 	}
     
-    /**
-     * @return True if this stream has been closed.
-     */
     protected void checkClosed() throws IOException {
     	    if (this.closed) {
             throw new IOException("Stream has been closed");
@@ -121,11 +125,12 @@ public class MappedByteBufferInputStream extends InputStream {
 		return this.mbb.remaining();
 	}
 	
-	public int getPosition() {
+	public long getPosition() throws IOException {
 		return this.mbb.position();
 	}
 	
-	public void setPosition(int position) {
-		this.mbb.position(position);
+	public void setPosition(long position) throws IOException {
+        assert position < Integer.MAX_VALUE: "Position too big for int.";
+		this.mbb.position((int)position);
 	}
 }
