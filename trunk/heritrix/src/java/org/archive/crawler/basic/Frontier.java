@@ -217,7 +217,8 @@ public class Frontier
 
         this.controller = c;
         controller.addCrawlStatusListener(this);
-        Iterator iter = c.getScope().getSeedsIterator(false);
+        c.getScope().refreshSeedsIteratorCache();
+        Iterator iter = c.getScope().getSeedsIterator();
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
@@ -1021,7 +1022,7 @@ public class Frontier
             delay = curi.getAList().getInt(A_RETRY_DELAY);
         } else {
             // use overall default
-            delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue(); 
+            delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
         }
         if (delay>0) {
             // snooze to future

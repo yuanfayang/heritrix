@@ -97,10 +97,10 @@ public class StatisticsTracker extends AbstractTracker{
     protected Hashtable statusCodeDistribution = new Hashtable();
     /** Keep track of hosts */
     protected Hashtable hostsDistribution = new Hashtable();
-    
+
     /** Keep track of processed seeds disposition*/
     protected Hashtable processedSeedsDisposition = new Hashtable();
-    
+
     /** Keep track of processed seeds status codes*/
     protected Hashtable processedSeedsStatusCodes = new Hashtable();
 
@@ -133,62 +133,62 @@ public class StatisticsTracker extends AbstractTracker{
      * @see org.archive.crawler.framework.AbstractTracker#logActivity()
      */
     protected synchronized void logActivity() {
-    	// This method loads "snapshot" data.
-    	discoveredPages = urisEncounteredCount();
-    	pendingPages = urisInFrontierCount();
-    	downloadedPages = successfulFetchAttempts();
-    	downloadFailures = failedFetchAttempts();
-    	totalProcessedBytes = getTotalBytesWritten();
+        // This method loads "snapshot" data.
+        discoveredPages = urisEncounteredCount();
+        pendingPages = urisInFrontierCount();
+        downloadedPages = successfulFetchAttempts();
+        downloadFailures = failedFetchAttempts();
+        totalProcessedBytes = getTotalBytesWritten();
 
-    	if(totalFetchAttempts() == 0){
-    		docsPerSecond = 0;
-    		totalKBPerSec = 0;
-    	}
-    	else if(getCrawlerTotalElapsedTime() < 1000){
+        if(totalFetchAttempts() == 0){
+            docsPerSecond = 0;
+            totalKBPerSec = 0;
+        }
+        else if(getCrawlerTotalElapsedTime() < 1000){
             return; //Not enough time has passed for a decent snapshot.
         }
         else{
-    		docsPerSecond = (double) downloadedPages / (double)(getCrawlerTotalElapsedTime() / 1000);
-    		totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())	/ 1000)) + .5 ); // round to nearest long
-    	}
+            docsPerSecond = (double) downloadedPages / (double)(getCrawlerTotalElapsedTime() / 1000);
+            totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())    / 1000)) + .5 ); // round to nearest long
+        }
 
-    	busyThreads = activeThreadCount();
+        busyThreads = activeThreadCount();
 
-    	if(shouldrun || (System.currentTimeMillis() - lastLogPointTime) >= 1000)
-    	{
-    		// If shouldrun is false there is a chance that the time interval since
-    		// last time is too small for a good sample.  We only want to update
-    		// "current" data when the interval is long enough or shouldrun is true.
-    		currentDocsPerSecond = 0;
-    		currentKBPerSec = 0;
+        if(shouldrun || (System.currentTimeMillis() - lastLogPointTime) >= 1000)
+        {
+            // If shouldrun is false there is a chance that the time interval since
+            // last time is too small for a good sample.  We only want to update
+            // "current" data when the interval is long enough or shouldrun is true.
+            currentDocsPerSecond = 0;
+            currentKBPerSec = 0;
 
-    		// Note time.
-    		long currentTime = System.currentTimeMillis();
-    		long sampleTime = currentTime - lastLogPointTime;
+            // Note time.
+            long currentTime = System.currentTimeMillis();
+            long sampleTime = currentTime - lastLogPointTime;
 
-    		// if we haven't done anyting or there isn't a reasonable sample size give up.
-    		if(sampleTime >= 1000)
-    		{
+            // if we haven't done anyting or there isn't a reasonable sample size give up.
+            if(sampleTime >= 1000)
+            {
 
-    			// Update docs/sec snapshot
-    			long currentPageCount = successfulFetchAttempts();
-    			long samplePageCount = currentPageCount - lastPagesFetchedCount;
+                // Update docs/sec snapshot
+                long currentPageCount = successfulFetchAttempts();
+                long samplePageCount = currentPageCount - lastPagesFetchedCount;
 
-    			currentDocsPerSecond = (double) samplePageCount / (double)(sampleTime / 1000);
+                currentDocsPerSecond = (double) samplePageCount / (double)(sampleTime / 1000);
 
-    			lastPagesFetchedCount = currentPageCount;
+                lastPagesFetchedCount = currentPageCount;
 
-    			// Update kbytes/sec snapshot
-    			long currentProcessedBytes = totalProcessedBytes;
-    			long sampleProcessedBytes = currentProcessedBytes - lastProcessedBytesCount;
+                // Update kbytes/sec snapshot
+                long currentProcessedBytes = totalProcessedBytes;
+                long sampleProcessedBytes = currentProcessedBytes - lastProcessedBytesCount;
 
-    			currentKBPerSec = (int) (((sampleProcessedBytes/1024) / (sampleTime / 1000)) + .5);
+                currentKBPerSec = (int) (((sampleProcessedBytes/1024) / (sampleTime / 1000)) + .5);
 
-    			lastProcessedBytesCount = currentProcessedBytes;
-    		}
-    	}
+                lastProcessedBytesCount = currentProcessedBytes;
+            }
+        }
 
-    	Date now = new Date();
+        Date now = new Date();
         periodicLogger.log(
             Level.INFO,
             new PaddingStringBuffer()
@@ -204,7 +204,7 @@ public class StatisticsTracker extends AbstractTracker{
                 .toString());
 
 
-    	lastLogPointTime = System.currentTimeMillis();
+        lastLogPointTime = System.currentTimeMillis();
     }
 
 
@@ -215,7 +215,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return  The rate per second of documents gathered so far
      */
     public double processedDocsPerSec(){
-    	return docsPerSecond;
+        return docsPerSecond;
     }
 
     /**
@@ -225,7 +225,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The rate per second of documents gathered during the last snapshot
      */
     public double currentProcessedDocsPerSec(){
-    	return currentDocsPerSecond;
+        return currentDocsPerSecond;
     }
 
     /**
@@ -235,7 +235,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The rate per second of KB gathered so far
      */
     public long processedKBPerSec(){
-    	return totalKBPerSec;
+        return totalKBPerSec;
     }
 
     /**
@@ -247,7 +247,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The rate per second of KB gathered during the last snapshot
      */
     public int currentProcessedKBPerSec(){
-    	return currentKBPerSec;
+        return currentKBPerSec;
     }
 
     /** Returns a HashMap that contains information about distributions of
@@ -258,7 +258,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return mimeTypeDistribution
      */
     public Hashtable getFileDistribution() {
-    	return mimeTypeDistribution;
+        return mimeTypeDistribution;
     }
 
 
@@ -268,24 +268,24 @@ public class StatisticsTracker extends AbstractTracker{
      *
      * @param map The HashMap
      * @param key The key for the counter to be incremented, if it does not
-     * 	          exist it will be added (set to 1).  If null it will
+     *               exist it will be added (set to 1).  If null it will
      *            increment the counter "unknown".
      */
     protected static void incrementMapCount(Hashtable map, String key) {
 
-    	if (key == null) {
-    		key = "unknown";
-    	}
+        if (key == null) {
+            key = "unknown";
+        }
 
-    	if (map.containsKey(key)) {
-    		((LongWrapper) map.get(key)).longValue++;
+        if (map.containsKey(key)) {
+            ((LongWrapper) map.get(key)).longValue++;
 
-    	} else {
-    		// if we didn't find this key add it
+        } else {
+            // if we didn't find this key add it
             synchronized(map){
-        		map.put(key, new LongWrapper(1));
+                map.put(key, new LongWrapper(1));
             }
-    	}
+        }
     }
 
     /**
@@ -323,7 +323,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return statusCodeDistribution
      */
     public Hashtable getStatusCodeDistribution() {
-    	return statusCodeDistribution;
+        return statusCodeDistribution;
     }
 
     /** Return a HashMap representing the distribution of hosts for
@@ -334,7 +334,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return Hosts distribution as a HashMap
      */
     public Hashtable getHostsDistribution() {
-    	return hostsDistribution;
+        return hostsDistribution;
     }
 
     /**
@@ -343,7 +343,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The total number of ToeThreads
      */
     public int threadCount() {
-    	return controller.getToeCount();
+        return controller.getToeCount();
     }
 
     /**
@@ -354,7 +354,7 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The number of active (non-paused) threads
      */
     public int activeThreadCount() {
-    	return shouldrun ? controller.getActiveToeCount() : busyThreads;
+        return shouldrun ? controller.getActiveToeCount() : busyThreads;
     }
 
     /**
@@ -368,9 +368,9 @@ public class StatisticsTracker extends AbstractTracker{
      */
     public long urisInFrontierCount() {
 
-    	// While shouldrun is true we can use info direct from the crawler.
-    	// After that our last snapshot will have to do.
-    	return shouldrun ? controller.getFrontier().pendingUriCount() : pendingPages;
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().pendingUriCount() : pendingPages;
     }
 
     /**
@@ -381,14 +381,14 @@ public class StatisticsTracker extends AbstractTracker{
      * number of URIs encountered
      */
     public int percentOfDiscoveredUrisCompleted() {
-    	long completed = totalFetchAttempts();
-    	long total = urisEncounteredCount();
+        long completed = totalFetchAttempts();
+        long total = urisEncounteredCount();
 
-    	if (total == 0) {
-    		return 0;
-    	}
+        if (total == 0) {
+            return 0;
+        }
 
-    	return (int) (100 * completed / total);
+        return (int) (100 * completed / total);
     }
 
     /**
@@ -402,9 +402,9 @@ public class StatisticsTracker extends AbstractTracker{
      * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long urisEncounteredCount() {
-    	// While shouldrun is true we can use info direct from the crawler.
-    	// After that our last snapshot will have to do.
-    	return shouldrun ? controller.getFrontier().discoveredUriCount() : discoveredPages;
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().discoveredUriCount() : discoveredPages;
     }
 
     /**
@@ -414,7 +414,7 @@ public class StatisticsTracker extends AbstractTracker{
      * and {@link StatisticsTracker#failedFetchAttempts() failedFetchAttempts()}
      */
     public long totalFetchAttempts() {
-    	return successfulFetchAttempts() + failedFetchAttempts();
+        return successfulFetchAttempts() + failedFetchAttempts();
     }
 
     /**
@@ -423,9 +423,9 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The total number of failed fetch attempts
      */
     public long failedFetchAttempts() {
-    	// While shouldrun is true we can use info direct from the crawler.
-    	// After that our last snapshot will have to do.
-    	return shouldrun ? controller.getFrontier().failedFetchCount() : downloadFailures;
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().failedFetchCount() : downloadFailures;
     }
 
     /**
@@ -438,9 +438,9 @@ public class StatisticsTracker extends AbstractTracker{
      * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
      */
     public long successfulFetchAttempts() {
-    	// While shouldrun is true we can use info direct from the crawler.
-    	// After that our last snapshot will have to do.
-    	return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedPages;
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedPages;
     }
 
     /**
@@ -450,15 +450,15 @@ public class StatisticsTracker extends AbstractTracker{
      * @return The total number of uncompressed bytes written to disk
      */
     public long getTotalBytesWritten() {
-    	return shouldrun ? controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
+        return shouldrun ? controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
-    
+
     /**
      * Returns the disposition of any seed. If the supplied URL is not a seed
      * it will always return 'not processed'
      * @param UriString The URI of the seed
      * @return the disposition of the seed
-     * 
+     *
      * @see #SEED_DISPOSITION_NOT_PROCESSED
      * @see #SEED_DISPOSITION_SUCCESS
      * @see #SEED_DISPOSITION_FAILURE
@@ -478,7 +478,7 @@ public class StatisticsTracker extends AbstractTracker{
      * or a seed that has not been crawled it will return zero.
      * @param UriString The URI of the seed
      * @return the disposition of the seed
-     * 
+     *
      */
     public int getSeedStatusCode(String UriString){
         int ret = 0;
@@ -490,7 +490,7 @@ public class StatisticsTracker extends AbstractTracker{
 
     /**
      * If the curi is a seed, we update the processedSeeds table.
-     * 
+     *
      * @param curi The CrawlURI that may be a seed.
      * @param disposition The dispositino of the CrawlURI.
      */
@@ -500,35 +500,36 @@ public class StatisticsTracker extends AbstractTracker{
             processedSeedsStatusCodes.put(curi.getURIString(),new Integer(curi.getFetchStatus()));
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURISuccessful(org.archive.crawler.datamodel.CrawlURI)
      */
     public void crawledURISuccessful(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_SUCCESS);
-    	// Save status codes
-    	incrementMapCount(statusCodeDistribution,Integer.toString(curi.getFetchStatus()));
+        // Save status codes
+        incrementMapCount(statusCodeDistribution,Integer.toString(curi.getFetchStatus()));
 
-    	// Save mime types
-    	// strip things like charset (e.g. text/html; charset=iso-blah-blah)
-    	String mime = curi.getContentType();
-    	if(mime!=null)
-    	{
-    		int semicolonLoc = mime.indexOf(';');
-    		if (semicolonLoc >= 0) {
-    			mime = mime.substring(0, semicolonLoc);
-    		}
-    		mime = mime.toLowerCase();
-    	}
-    	incrementMapCount(mimeTypeDistribution, mime);
+        // Save mime types
+        // strip things like charset (e.g. text/html; charset=iso-blah-blah)
+        String mime = curi.getContentType();
+        if(mime!=null)
+        {
+            int semicolonLoc = mime.indexOf(';');
+            if (semicolonLoc >= 0) {
+                mime = mime.substring(0, semicolonLoc);
+            }
+            mime = mime.toLowerCase();
+        }
+        incrementMapCount(mimeTypeDistribution, mime);
 
-    	// Save hosts
+        // Save hosts
         if(curi.getFetchStatus()==1){
             // DNS Lookup, handle it differently.
             incrementMapCount(hostsDistribution, "dns:");
         } else {
-            incrementMapCount(hostsDistribution, curi.getServer().getHostname());
-        }
+        incrementMapCount(hostsDistribution, curi.getServer().getHostname());
+
+    }
     }
 
     /* (non-Javadoc)
@@ -549,34 +550,34 @@ public class StatisticsTracker extends AbstractTracker{
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIFailure(org.archive.crawler.datamodel.CrawlURI)
      */
     public void crawledURIFailure(CrawlURI curi) {
-    	handleSeed(curi,SEED_DISPOSITION_FAILURE);
+        handleSeed(curi,SEED_DISPOSITION_FAILURE);
     }
 
     /**
-     * Get a seed iterator for the job being monitored. If job is no longer 
-     * running, stored values will be returned. If job is running, current 
+     * Get a seed iterator for the job being monitored. If job is no longer
+     * running, stored values will be returned. If job is running, current
      * seed iterator will be fetched and stored values will be updated.
      * <p>
      * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
-     * UURIs like the Scope seed iterator. The strings are equal to the URIs' 
+     * UURIs like the Scope seed iterator. The strings are equal to the URIs'
      * getURIString() values.
      * @return the seed iterator
      */
     public Iterator getSeeds(){
         if(shouldrun){
-            Iterator tmp = controller.getScope().getSeedsIterator(true);
+            Iterator tmp = controller.getScope().getSeedsIterator();
             allSeeds = new Vector();
             while(tmp.hasNext()){
                 String s = ((UURI)tmp.next()).getUriString();
                 allSeeds.add(s);
             }
-        } 
+        }
         return allSeeds.iterator();
     }
-    
+
     /**
-     * Get a seed iterator for the job being monitored. If job is no longer 
-     * running, stored values will be returned. If job is running, current 
+     * Get a seed iterator for the job being monitored. If job is no longer
+     * running, stored values will be returned. If job is running, current
      * seed iterator will be fetched and stored values will be updated.
      * <p>
      * Sort order is:<br>
@@ -585,7 +586,7 @@ public class StatisticsTracker extends AbstractTracker{
      * Status codes larger then 0 (largest to smallest)<br>
      * <p>
      * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
-     * UURIs like the Scope seed iterator. The strings are equal to the URIs' 
+     * UURIs like the Scope seed iterator. The strings are equal to the URIs'
      * getURIString() values.
      * @return the seed iterator
      */
@@ -596,7 +597,7 @@ public class StatisticsTracker extends AbstractTracker{
                 int firstCode = getSeedStatusCode((String) e1);
                 int secondCode = getSeedStatusCode((String) e2);
                 int ret = 0;
-                
+
                 if (firstCode == secondCode) {
                     // If the values are equal, sort by URIs.
                     String firstURI = (String) e1;
@@ -604,7 +605,7 @@ public class StatisticsTracker extends AbstractTracker{
                     ret = firstURI.compareTo(secondURI);
                 } else if ( (firstCode > 0 && secondCode > 0)
                           ||(firstCode < 0 && secondCode < 0) ){
-                    // Both are either positve or negative, 
+                    // Both are either positve or negative,
                     // sort from largest to smallest
                     if (firstCode < secondCode) {
                         ret = 1;
@@ -627,13 +628,13 @@ public class StatisticsTracker extends AbstractTracker{
         }
         return sortedSet.iterator();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
         Iterator tmp = getSeeds(); //Make sure to save the seeds list.
-        
+
         // Save seed report to reports.log
         int maxURILenght = 0;
         while(tmp.hasNext()){
@@ -642,7 +643,7 @@ public class StatisticsTracker extends AbstractTracker{
                 maxURILenght = tmpString.length();
             }
         }
-        
+
         //Ok, we now know how much space to allocate the seed name colum
         //now build the report.
         PaddingStringBuffer rep = new PaddingStringBuffer();
@@ -660,7 +661,7 @@ public class StatisticsTracker extends AbstractTracker{
         rep.padTo(maxURILenght+9);
         rep.append("-------------");
         rep.newline();
-        
+
         tmp = getSeedsSortedByStatusCode();
         while(tmp.hasNext()){
             String UriString = (String)tmp.next();
@@ -682,7 +683,7 @@ public class StatisticsTracker extends AbstractTracker{
         rep.newline();
         rep.newline();
         controller.reports.info(rep.toString()); //Write report to file.
-        
+
         super.crawlEnded(sExitMessage);
     }
 

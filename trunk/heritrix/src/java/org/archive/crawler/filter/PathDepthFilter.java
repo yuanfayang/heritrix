@@ -57,24 +57,24 @@ public class PathDepthFilter extends Filter {
      * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
      */
     protected boolean innerAccepts(Object o) {
-    	if(o instanceof CandidateURI) {
-    		path = ((CandidateURI)o).getUURI().getPath();
-    	} else if (o instanceof UURI ){
-    		path = ((UURI)o).getPath();
-    	}else{
-    		path = null;
-    	}
+        if(o instanceof CandidateURI) {
+            path = ((CandidateURI)o).getUURI().getPath();
+        } else if (o instanceof UURI ){
+            path = ((UURI)o).getPath();
+        }else{
+            path = null;
+        }
 
-    	if (path == null){
-    		return true;
-    	}
+        if (path == null){
+            return true;
+        }
 
-    	int count = 0;
-    	for (int i = path.indexOf(slash);
-    		i != -1;
-    		i = path.indexOf(slash, i + 1)) {
-    		count++;
-    	}
+        int count = 0;
+        for (int i = path.indexOf(slash);
+            i != -1;
+            i = path.indexOf(slash, i + 1)) {
+            count++;
+        }
         if (o instanceof CrawlURI) {
             try {
                 maxPathDepth = (Integer) getAttribute(ATTR_MAX_PATH_DEPTH, (CrawlURI) o);
@@ -83,7 +83,7 @@ public class PathDepthFilter extends Filter {
                 e.printStackTrace();
             }
         }
-    	return (count <= maxPathDepth.intValue());
+        return (count <= maxPathDepth.intValue());
     }
 
 }

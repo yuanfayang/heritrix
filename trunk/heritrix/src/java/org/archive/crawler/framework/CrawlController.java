@@ -985,7 +985,8 @@ public class CrawlController extends Thread {
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-        Iterator iter = getScope().getSeedsIterator(false);
+        getScope().refreshSeedsIteratorCache();
+        Iterator iter = getScope().getSeedsIterator();
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
