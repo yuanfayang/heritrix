@@ -54,7 +54,7 @@ public abstract class SettingsHandler {
 
     /** Settings object referencing order file */
     private final CrawlerSettings globalSettings =
-        new CrawlerSettings(this, null, null);
+        new CrawlerSettings(this, null);
 
     /** Cached CrawlerSettings objects */
     private final Map settingsCache = new WeakHashMap();
@@ -123,27 +123,18 @@ public abstract class SettingsHandler {
         readSettingsObject(globalSettings);
     }
 
-    private String getParentScope(String scope) {
+    /** Strip off the leftmost part of a domain name.
+     * 
+     * @param scope the domain name.
+     * @return scope with everything before the first dot ripped off.
+     */
+    protected String getParentScope(String scope) {
         int split = scope.indexOf('.');
         if (split == -1) {
             return null;
         } else {
             return scope.substring(split + 1);
         }
-    }
-
-    private CrawlerSettings getParentObject(String scope) {
-        CrawlerSettings parent;
-        if (scope == null || scope.equals("")) {
-            parent = null;
-        } else {
-            parent = getSettingsObject(getParentScope(scope));
-            while (parent == null && scope != null) {
-                scope = getParentScope(scope);
-                parent = getSettings(scope);
-            }
-        }
-        return parent;
     }
 
     /** Get a module by name.
@@ -185,7 +176,7 @@ public abstract class SettingsHandler {
         if (data == null) {
             return null;
         } else {
-            return data.complexType;
+            return data.getComplexType();
         }
     }
 
@@ -281,7 +272,9 @@ public abstract class SettingsHandler {
         } else if (settingsCache.containsKey(scope)) {
             settings = (CrawlerSettings) settingsCache.get(scope);
         } else {
-            settings = new CrawlerSettings(this, getParentObject(scope), scope);
+            settings = new CrawlerSettings(this, scope);
+            // Try to read settings from persisten storage. If its not there
+            // it will be set to null. 
             settings = readSettingsObject(settings);
         }
         return settings;
@@ -302,7 +295,7 @@ public abstract class SettingsHandler {
         CrawlerSettings settings;
         settings = getSettingsObject(scope);
         if (settings == null) {
-            settings = new CrawlerSettings(this, getParentObject(scope), scope);
+            settings = new CrawlerSettings(this, scope);
             settingsCache.put(scope, settings);
         }
         return settings;

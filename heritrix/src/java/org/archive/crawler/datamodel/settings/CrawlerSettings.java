@@ -60,7 +60,7 @@ public class CrawlerSettings {
     private final Map localModules = new HashMap();
 
     /** Reference to the settings handler this settings object belongs to */
-    private final SettingsHandler handler;
+    private final SettingsHandler settingsHandler;
 
     /** Scope for this collection of settings (hostname) */
     private final String scope;
@@ -71,14 +71,12 @@ public class CrawlerSettings {
     /** Description of this collection of settings */
     private String description = "";
 
-    private CrawlerSettings parent;
-
     /** Constructs a new CrawlerSettings object.
      * 
      * Application code should not call the constructor directly, but use the
      * methods in SettingsHandler instead.
      * 
-     * @param handler The SettingsHandler this object belongs to.
+     * @param settingsHandler The SettingsHandler this object belongs to.
      * @param parent The parent of this settings object or null if this is the
      *               order.
      * @param scope The scope of this settings object (ie. host or domain).
@@ -88,11 +86,9 @@ public class CrawlerSettings {
      */
     public CrawlerSettings(
         SettingsHandler handler,
-        CrawlerSettings parent,
         String scope) {
-        this.handler = handler;
+        this.settingsHandler = handler;
         this.scope = scope;
-        this.parent = parent;
     }
 
     /** Get the description of this CrawlerSettings object.
@@ -145,7 +141,7 @@ public class CrawlerSettings {
     }
 
     protected DataContainer addComplexType(ComplexType type) {
-        DataContainer data = new DataContainer(type);
+        DataContainer data = new DataContainer(this, type);
         localComplexTypes.put(type.getAbsoluteName(), data);
         if (type instanceof CrawlerModule) {
             localModules.put(type.getName(), type);
@@ -158,13 +154,7 @@ public class CrawlerSettings {
     }
 
     protected DataContainer getData(String absoluteName) {
-        DataContainer data =
-            (DataContainer) localComplexTypes.get(absoluteName);
-        if (data != null) {
-            return data;
-        } else {
-            return null;
-        }
+        return (DataContainer) localComplexTypes.get(absoluteName);
     }
 
     protected CrawlerModule getTopLevelModule(String name) {
@@ -184,7 +174,10 @@ public class CrawlerSettings {
      * @return the parent of this CrawlerSettings object.
      */
     public CrawlerSettings getParent() {
-        return parent;
+        if (scope == null || scope.equals("")) {
+            return null;
+        }
+        return settingsHandler.getSettings(settingsHandler.getParentScope(scope));
     }
 
     /** Get the SettingHandler this CrawlerSettings object belongs to.
@@ -192,6 +185,6 @@ public class CrawlerSettings {
      * @return the SettingHandler this CrawlerSettings object belongs to.
      */
     public SettingsHandler getSettingsHandler() {
-        return handler;
+        return settingsHandler;
     }
 }

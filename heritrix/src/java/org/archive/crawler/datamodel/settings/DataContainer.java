@@ -27,7 +27,6 @@ package org.archive.crawler.datamodel.settings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,21 +35,34 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 
-/** 
+/** This class holds the data for a ComplexType for a settings object.
  * 
  * @author John Erik Halse
  */
 public class DataContainer extends HashMap {
-    protected ComplexType complexType;
+    /** The ComplexType for which this DataContainer keeps data */
+    private ComplexType complexType;
+    
+    /** The Settings object for which this data is valid */
+    private CrawlerSettings settings;
+    
+    /** The attributes defined for this DataContainers combination of
+     * ComplexType and CrawlerSettings.
+     */
     private List attributes;
+    
+    /** All attributes that have their value set for this DataContainers
+     * combination of ComplexType and CrawlerSettings. This includes overrides.
+     */
     private Map attributeNames;
 
     /** Create a data container for a module.
      * 
      * @param module the module to create the data container for.
      */
-    public DataContainer(ComplexType module) {
+    public DataContainer(CrawlerSettings settings, ComplexType module) {
         super();
+        this.settings = settings;
         this.complexType = module;
         attributes = new ArrayList();
         attributeNames = new HashMap();
@@ -146,8 +158,8 @@ public class DataContainer extends HashMap {
         return info;
     }
 
-    protected Iterator attributeInfoIterator() {
-        return attributes.iterator();
+    protected List getLocalAttributeInfoList() {
+        return attributes;
     }
 
     protected boolean hasAttributes() {
@@ -165,7 +177,7 @@ public class DataContainer extends HashMap {
     protected void copyAttributeInfo(String name, DataContainer destination) {
         if (this != destination) {
             Object attribute = attributeNames.get(name);
-            destination.attributes.add(attribute);
+            //destination.attributes.add(attribute);
             destination.attributeNames.put(name, attribute);
         }
     }
@@ -195,11 +207,11 @@ public class DataContainer extends HashMap {
         if (localAttrInfo == null) {
             value = attrInfo.checkValue(value);
             attrInfo.setType(value);
-            attributes.add(attrInfo);
+            //attributes.add(attrInfo);
             attributeNames.put(key, attrInfo);
         } else {
             value = localAttrInfo.checkValue(value);
-            attrInfo.setType(value);
+            localAttrInfo.setType(value);
         }
 
         return super.put(key, value);
@@ -283,4 +295,19 @@ public class DataContainer extends HashMap {
         attributeNames.remove(element.getName());
         return (Type) super.remove(element.getName()); 
     }
+    
+    /**
+     * @return
+     */
+    protected ComplexType getComplexType() {
+        return complexType;
+    }
+
+    /**
+     * @return
+     */
+    protected CrawlerSettings getSettings() {
+        return settings;
+    }
+
 }

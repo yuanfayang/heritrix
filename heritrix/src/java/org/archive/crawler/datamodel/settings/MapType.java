@@ -24,13 +24,13 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.EmptyStackException;
 import java.util.Iterator;
+import java.util.Stack;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
-
-import org.archive.crawler.datamodel.CrawlURI;
 
 /** This class represents a container of settings.
  * 
@@ -125,23 +125,40 @@ public class MapType extends ComplexType {
 
     private class It implements Iterator {
         CrawlerSettings settings;
-        Iterator atts;
+        Stack attributeStack = new Stack();
+        Iterator currentIterator;
 
         public It(MapType map, CrawlerSettings settings) {
             this.settings = settings;
-            this.atts =
-                settings.getData(map).attributeInfoIterator();
+
+            DataContainer data = getDataContainerRecursive(settings);
+            while (data != null) {
+                attributeStack.push(data.getLocalAttributeInfoList().iterator());
+                data = getDataContainerRecursive(data.getSettings().getParent());
+            }
+            
+            currentIterator = (Iterator) attributeStack.pop();
         }
 
         public boolean hasNext() {
-            return atts.hasNext();
+            if (currentIterator.hasNext()) {
+                return true;
+            } else {
+                try {
+                    currentIterator = (Iterator) attributeStack.pop();
+                } catch (EmptyStackException e) {
+                    return false;
+                }
+            }
+            return currentIterator.hasNext();
         }
 
         public Object next() {
+            hasNext();
             try {
                 return getAttribute(
                     settings,
-                    ((MBeanAttributeInfo) atts.next()).getName());
+                    ((MBeanAttributeInfo) currentIterator.next()).getName());
             } catch (AttributeNotFoundException e) {
                 // This should never happen
                 e.printStackTrace();
@@ -159,13 +176,8 @@ public class MapType extends ComplexType {
      * @param uri the URI for which this set of elements are valid.
      * @return an iterator over all the elements in this map.
      */
-    public Iterator iterator(CrawlURI uri) {
-        CrawlerSettings settings;
-        try {
-            settings = uri.getServer().getSettings();
-        } catch (NullPointerException e) {
-            settings = globalSettings();
-        }
+    public Iterator iterator(CrawlerSettings settings) {
+        settings = settings == null ? globalSettings() : settings;
         return new It(this, settings);
     }
 
@@ -174,29 +186,27 @@ public class MapType extends ComplexType {
      * @param uri the URI for which this set of elements are valid.
      * @return true if this map is empty.
      */
-    public boolean isEmpty(CrawlURI uri) {
-        CrawlerSettings settings;
-        try {
-            settings = uri.getServer().getSettings();
-        } catch (NullPointerException e) {
-            settings = globalSettings();
-        }
-        return !settings.getData(this).hasAttributes();
-    }
+    public boolean isEmpty(CrawlerSettings settings) {
+        settings = settings == null ? globalSettings() : settings;
 
+        return !getDataContainerRecursive(settings).hasAttributes();
+    }
+    
     /** Get the number of elements in this map.
      * 
      * @param uri the URI for which this set of elements are valid.
      * @return the number of elements in this map.
      */
-    public int size(CrawlURI uri) {
-        CrawlerSettings settings;
-        try {
-            settings = uri.getServer().getSettings();
-        } catch (NullPointerException e) {
-            settings = globalSettings();
+    public int size(CrawlerSettings settings) {
+        settings = settings == null ? globalSettings() : settings;
+
+        int size = 0;
+        DataContainer data = getDataContainerRecursive(settings);
+        while (data != null) {
+            size += data.size();
+            data = getDataContainerRecursive(data.getSettings().getParent());
         }
-        return settings.getData(this).size();
+        return size;
     }
     
     /** Get the content type allowed for this map.
