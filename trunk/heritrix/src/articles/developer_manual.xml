@@ -2014,9 +2014,9 @@ public class SimpleExtractor extends Processor
             <ulink
             url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink>
             have also developed arc reading and writing tools. </para>
-        <para>Tom Emerson of Basis Technologies has put up a project on
+        <para>Tom Emerson of Basis Technology has put up a project on
             sourceforge to host a BSD-Licensed C++ ARC reader called <ulink
-            url="http://sourceforge.net/projects/libarchive/">libarchive</ulink>. </para>
+            url="http://sourceforge.net/projects/libarc/">libarc</ulink>. </para>
             </sect2>
     </sect1>
     <appendix>
