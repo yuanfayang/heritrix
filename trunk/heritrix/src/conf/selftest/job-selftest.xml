@@ -7,11 +7,11 @@
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
-    <string name="disk-path">selftest</string>
+    <string name="disk-path">data</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
-    <integer name="max-toe-threads">50</integer>
+    <integer name="max-toe-threads">5</integer>
     <newObject name="scope" class="org.archive.crawler.basic.Scope">
       <boolean name="enabled">true</boolean>
       <boolean name="inverted">false</boolean>
