@@ -311,11 +311,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         // Look to see if a default profile system property has been
         // supplied. If so, use it instead.
-        // TODO: Make changes to default profile durable across restarts.
-        defaultProfile = System.getProperty(DEFAULT_PROFILE_NAME);
-        if (defaultProfile == null) {
-            defaultProfile = DEFAULT_PROFILE;
-        }
+        // TODO: Try and read default profile from some permanent storage.
+        defaultProfile = DEFAULT_PROFILE;
     }
 
     /**
@@ -391,6 +388,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void setDefaultProfile(CrawlJob profile){
         defaultProfile = profile.getJobName();
+        // TODO: Make changes to default profile durable across restarts.
     }
 
     /**
@@ -877,6 +875,18 @@ public class CrawlJobHandler implements CrawlStatusListener {
         } else {
             return controller.reportThreads();
         }
+    }
+    
+    /**
+     * Kills a thread. For details see 
+     * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)
+     * ToePool.killThread(int, boolean)}.
+     * @param threadNumber Thread to kill.
+     * @param replace Should thread be replaced.
+     * @see org.archive.crawler.framework.ToePool#killThread(int, boolean)
+     */
+    public void killThread(int threadNumber, boolean replace){
+        controller.killThread(threadNumber, replace);
     }
 
     /**
