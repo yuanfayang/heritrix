@@ -175,6 +175,14 @@ public class ARCWriterProcessor
     
     private synchronized void _initialize() {
         
+        // Recheck inside now we're inside the synchronized block to be sure.
+        // I've seen the case where two threads have seen the flag set to false
+        // and both have then proceeded to call into this method thereby
+        // setting up two instances of ARCWriterPool.
+        if (this.initialized) {
+            return;
+        }
+        
         Logger logger = getSettingsHandler().getOrder().getController()
             .runtimeErrors;
 
