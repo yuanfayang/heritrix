@@ -24,6 +24,7 @@ package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,22 +42,24 @@ import org.archive.crawler.admin.CrawlJob;
  * @version $Id$
  */
 public class AllSelfTestCases
-{
-    /**
-     * Array of all known selftests.
-     */
-    private static final Class [] _allKnownSelftests = {
-            BackgroundImageExtractionSelfTestCase.class,
-            FramesSelfTestCase.class,
-            MaxLinkHopsSelfTest.class,
-            CharsetSelfTest.class
-        };
-    
+{   
     /**
      * All known selftests as a list.
+     * 
+     * Gets initialized by the static block that immediately follows.
      */
-    private static List allKnownSelftests =
-        Arrays.asList(AllSelfTestCases._allKnownSelftests);
+    private static List allKnownSelftests;
+    static {
+        // List of all known selftests.
+        Class [] tmp = {
+                BackgroundImageExtractionSelfTestCase.class,
+                FramesSelfTestCase.class,
+                MaxLinkHopsSelfTest.class,
+                CharsetSelfTest.class
+            };
+        AllSelfTestCases.allKnownSelftests = 
+            Collections.unmodifiableList(Arrays.asList(tmp));
+    }
     
     /**
      * Run all known tests in the selftest suite.

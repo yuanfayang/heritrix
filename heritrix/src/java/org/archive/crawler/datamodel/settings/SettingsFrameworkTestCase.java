@@ -47,19 +47,11 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
     private CrawlerSettings globalSettings;
     private CrawlerSettings perDomainSettings;
     private CrawlerSettings perHostSettings;
-    private XMLSettingsHandler settingsHandler;
+    protected XMLSettingsHandler settingsHandler;
     private CrawlURI unMatchedURI;
     private CrawlURI matchDomainURI;
     private CrawlURI matchHostURI;
-
-    /**
-     * Constructor for SettingsFrameworkTestCase.
-     * @param arg0
-     */
-    public SettingsFrameworkTestCase(String arg0) {
-        super(arg0);
-    }
-
+    
     /*
      * @see TmpDirTestCase#setUp()
      */
@@ -76,6 +68,7 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
         globalSettings = settingsHandler.getSettingsObject(null);
         perDomainSettings = settingsHandler.getOrCreateSettingsObject("archive.org");
         perHostSettings = settingsHandler.getOrCreateSettingsObject("www.archive.org");
+        
 
         ServerCache serverCache = new ServerCache(getSettingsHandler());
 
@@ -87,6 +80,18 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
 
         matchHostURI = new CrawlURI(UURI.createUURI("http://www.archive.org/index.html"));
         matchHostURI.setServer(serverCache.getServerFor(matchHostURI));
+        
+        // Write legit email and url so we avoid warnings if tests are reading
+        // and writing order files.
+        MapType httpHeaders = (MapType)globalSettings.
+            getModule(CrawlOrder.ATTR_NAME).
+                getAttribute(CrawlOrder.ATTR_HTTP_HEADERS);
+        httpHeaders.setAttribute(globalSettings,
+            new Attribute(CrawlOrder.ATTR_USER_AGENT,
+                "unittest (+http://testing.one.two.three)"));
+        httpHeaders.setAttribute(globalSettings,
+                new Attribute(CrawlOrder.ATTR_FROM,
+                    "unittestingtesting@one.two.three)"));
     }
 
     /*

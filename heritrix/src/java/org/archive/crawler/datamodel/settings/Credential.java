@@ -23,36 +23,51 @@
 package org.archive.crawler.datamodel.settings;
 
 
+
 /**
- * Credential.
+ * Credential type.
  * 
- * Let this be also a credential in the JAAS sense also.
+ * Let this be also a credential in the JAAS sense to in that this is what
+ * gets added to a subject on successful authentication since it contains
+ * data needed to authenticate (realm, login, password, etc.).
  * 
- * <p>Abstract.
+ * <p>Settings system assumes that subclasses implement a constructor that
+ * takes a name only.
  * 
  * @author stack
  * @version $Revision$, $Date$
  */
 public abstract class Credential extends ModuleType {
-
+    
+    /**
+     * The root URI that this credential is to go against.
+     */
+    private String credentialDomain = null;
+    
     /**
      * Constructor.
      * 
-     * @param name Name is unique within a credential type.  For example, if
-     * the credential is rfc2617, then name should be the realm: i.e. there 
-     * is only one credential for a particular realm.
+     * @param name Name of this credential.
      * @param description Descrtiption of this particular credential.
      */
-    protected Credential(String name, String description)
+    public Credential(String name, String description)
     {
         super(name, description);
     }
     
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
+    /**
+     * @return Returns the credentialDomain.
      */
-    public boolean equals(Object arg0)
+    public String getCredentialDomain()
     {
-        return this.hashCode() == arg0.hashCode();
+        return this.credentialDomain;
+    }
+    
+    /**
+     * @param credentialDomain The credentialDomain to set.
+     */
+    public void setCredentialDomain(String credentialDomain)
+    {
+        this.credentialDomain = credentialDomain;
     }
 }

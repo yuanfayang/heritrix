@@ -44,15 +44,6 @@ import org.archive.crawler.framework.CrawlScope;
  */
 public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
 
-    /**
-     * Constructor for XMLSettingsHandlerTest.
-     * 
-     * @param arg0
-     */
-    public XMLSettingsHandlerTest(String arg0) {
-        super(arg0);
-    }
-
     /*
      * @see TestCase#setUp()
      */

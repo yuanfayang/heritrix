@@ -34,8 +34,9 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.settings.ModuleType;
+import org.archive.crawler.datamodel.settings.CredentialStore;
 import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.RegularExpressionConstraint;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
@@ -73,6 +74,7 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_WRITE_PROCESSORS = "write-processors";
     public static final String ATTR_POST_PROCESSORS = "post-processors";
     public static final String ATTR_LOGGERS = "loggers";
+    
 
     String caseFlattenedUserAgent;
 
@@ -205,7 +207,8 @@ public class CrawlOrder extends ModuleType {
         e.setOverrideable(false);
         e.setExpertSetting(true);
         
-        e = addElementToDefinition(new CredentialStore());
+        e = addElementToDefinition(
+            new CredentialStore(CredentialStore.ATTR_NAME));
         e.setOverrideable(true);
         e.setExpertSetting(true);
     }

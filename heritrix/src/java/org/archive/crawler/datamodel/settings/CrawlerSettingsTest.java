@@ -31,14 +31,6 @@ package org.archive.crawler.datamodel.settings;
  */
 public class CrawlerSettingsTest extends SettingsFrameworkTestCase {
 
-    /**
-     * Constructor for CrawlerSettingsTest.
-     * @param arg0
-     */
-    public CrawlerSettingsTest(String arg0) {
-        super(arg0);
-    }
-
     /*
      * @see TestCase#setUp()
      */
@@ -61,7 +53,7 @@ public class CrawlerSettingsTest extends SettingsFrameworkTestCase {
 
     final public void testGetModule() {
         ModuleType mod = new ModuleType("name");
-        DataContainer data = getGlobalSettings().addComplexType(mod);
+        getGlobalSettings().addComplexType(mod);
         assertSame(mod, getGlobalSettings().getModule("name"));
     }
 
