@@ -70,7 +70,7 @@ public class BroadScope extends CrawlScope {
      * non-caching seed list.
      *
      * @param seedfile Seedfile to use as seed source.
-     * @param l Logger to use internally.
+     * @param c CrawlController.
      * @param caching True if seed list created is to cache seeds.
      */
     protected synchronized void createSeedlist(File seedfile, CrawlController c,

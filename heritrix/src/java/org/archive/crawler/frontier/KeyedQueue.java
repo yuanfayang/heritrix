@@ -345,7 +345,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * @return
+     * @return Unqueued size plus inner queue memory load.
      */
     public int memoryLoad() {
         return unqueued.size()+innerQ.memoryLoad();
