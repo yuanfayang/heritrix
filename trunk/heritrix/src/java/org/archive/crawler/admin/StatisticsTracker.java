@@ -758,11 +758,13 @@ public class StatisticsTracker extends AbstractTracker
      */
     public void crawlEnded(String sExitMessage) {
         CrawlController controller = this.controller;
+        
+        Iterator tmp = getSeeds(); // Need this before we do super.crawlEnded()
+        
         super.crawlEnded(sExitMessage);
         // Need to write some reports at the end of the crawl.
         String directory = controller.getDisk().getPath();
         // seeds-report.txt
-        Iterator tmp = getSeeds(); 
         
         int maxURILength = 0;
         while(tmp.hasNext()){
