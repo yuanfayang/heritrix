@@ -210,6 +210,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private void loadJobs() {
         File jobDir = Heritrix.getJobsdir();
+        jobDir.mkdirs();
         File[] jobs = jobDir.listFiles();
         for (int i = 0; i < jobs.length; i++) {
             if (jobs[i].isDirectory()) {
@@ -511,7 +512,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // Found the one to delete.
                 cj.setStatus(CrawlJob.STATUS_DELETED);
                 it.remove();
-                //completedCrawlJobs.add(cj);
                 return; // We're not going to find another job with the same UID
             }
         }
@@ -523,6 +523,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // Found the one to delete.
                 cj.setStatus(CrawlJob.STATUS_DELETED);
                 it.remove();
+                return; // No other job will have the same UID
             }
         }
     }
