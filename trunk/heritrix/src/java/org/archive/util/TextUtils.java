@@ -62,9 +62,9 @@ public class TextUtils {
 	 */
 	public static Matcher getMatcher(Pattern p, CharSequence input) {
 		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
 			matchers = new Stack();
-			patternMatchers.put(p, matchers);
+			patternMatchers.put(p.pattern(), matchers);
 		}
 		Matcher matcher;
 		try {
@@ -75,7 +75,7 @@ public class TextUtils {
 		}
 		return matcher;
 	}
-
+    
 	/**
 	 * Use this method to indicate that you are finnished with a Matcher object so
 	 * that it can be recycled. It is up to the user to make sure that this object really isn't
@@ -86,7 +86,7 @@ public class TextUtils {
 	 */
 	public static void freeMatcher(Matcher m) {
 		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(m.pattern())) == null) {
+		if((matchers = (Stack) patternMatchers.get(m.pattern().pattern())) == null) {
 			// This matcher wasn't created by any pattern in the map, throw it away
 			return;
 		}
@@ -105,9 +105,9 @@ public class TextUtils {
 	 */
 	public static String replaceAll(Pattern p, CharSequence input, String replacement) {
 		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
 			matchers = new Stack();
-			patternMatchers.put(p, matchers);
+			patternMatchers.put(p.pattern(), matchers);
 		}
 		Matcher matcher;
 		try {
@@ -133,9 +133,9 @@ public class TextUtils {
 	 */
 	public static String replaceFirst(Pattern p, CharSequence input, String replacement) {
 		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
 			matchers = new Stack();
-			patternMatchers.put(p, matchers);
+			patternMatchers.put(p.pattern(), matchers);
 		}
 		Matcher matcher;
 		try {
@@ -160,9 +160,9 @@ public class TextUtils {
 	 */
 	public static boolean matches(Pattern p, CharSequence input) {
 		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
 			matchers = new Stack();
-			patternMatchers.put(p, matchers);
+			patternMatchers.put(p.pattern(), matchers);
 		}
 		Matcher matcher;
 		try {
