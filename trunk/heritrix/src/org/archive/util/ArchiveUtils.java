@@ -19,9 +19,20 @@ import java.io.File;
  * @author gojomo
  */
 public class ArchiveUtils {
-    public static SimpleDateFormat TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");	
-	public static SimpleDateFormat TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");	
-	public static SimpleDateFormat TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");	
+    public static SimpleDateFormat TIMESTAMP12;	
+	public static SimpleDateFormat TIMESTAMP14;	
+	public static SimpleDateFormat TIMESTAMP17;	
+
+	// Initialize fomatters with pattern and time zone
+	static {
+		TimeZone TZ = TimeZone.getTimeZone("GMT");
+		TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");
+		TIMESTAMP12.setTimeZone(TZ);
+		TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");
+		TIMESTAMP14.setTimeZone(TZ);
+		TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		TIMESTAMP17.setTimeZone(TZ);
+	}
 
 	/**
 	 * Utility function for creating arc-style date stamps
@@ -30,7 +41,6 @@ public class ArchiveUtils {
 	 * @return the date stamp
 	 */
 	public static String get17DigitDate(){
-		TIMESTAMP17.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP17.format(new Date());
 	}
 
@@ -41,7 +51,6 @@ public class ArchiveUtils {
 	 * @return the date stamp
 	 */
 	public static String get14DigitDate(){
-		TIMESTAMP14.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP14.format(new Date());
 	}
 
@@ -52,7 +61,6 @@ public class ArchiveUtils {
 	 * @return the date stamp
 	 */
 	public static String get12DigitDate(){
-		TIMESTAMP12.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP12.format(new Date()); 
 	}
 	
@@ -65,7 +73,6 @@ public class ArchiveUtils {
 	 * @return the date stamp
 	 */
 	public static String get17DigitDate(long date){
-		TIMESTAMP17.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP17.format(new Date(date));
 	}
 	
@@ -78,7 +85,6 @@ public class ArchiveUtils {
 	 * @return the date stamp
 	 */
 	public static String get14DigitDate(long date){
-		TIMESTAMP14.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP14.format(new Date(date));
 	}
 	
@@ -91,7 +97,6 @@ public class ArchiveUtils {
 	 * @return the date stamp
 	 */
 	public static String get12DigitDate(long date){
-		TIMESTAMP12.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP12.format(new Date(date)); 
 	}
 	
@@ -105,7 +110,6 @@ public class ArchiveUtils {
 	 * @throws ParseException if the inputstring was malformed
 	 */
 	public static Date parse17DigitDate(String date) throws ParseException{
-		TIMESTAMP17.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP17.parse(date);
 	}
 	
@@ -119,7 +123,6 @@ public class ArchiveUtils {
 	 * @throws ParseException if the inputstring was malformed
 	 */
 	public static Date parse14DigitDate(String date) throws ParseException{
-		TIMESTAMP14.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP14.parse(date);
 	}
 	
@@ -133,7 +136,6 @@ public class ArchiveUtils {
 	 * @throws ParseException if the inputstring was malformed
 	 */
 	public static Date parse12DigitDate(String date) throws ParseException{
-		TIMESTAMP12.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return TIMESTAMP12.parse(date);
 	}
 	
