@@ -79,13 +79,15 @@ import com.sleepycat.je.OperationStatus;
  * EXPERIMENTAL 
  * CURRENT STATE: uses in-memory map of all known 'queues' inside a 
  * single BDB database. Round-robins between all queues. Encounters
- * BDB lock timeout exceptions if more than a tiny crawl. 
+ * BDB lock timeout exceptions if more than a tiny crawl; these seem
+ * to be harmless. 
  *
  * @author Gordon Mohr
  */
 public class BdbFrontier extends AbstractFrontier implements Frontier,
         FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     // be robust against trivial implementation changes
+    private static final int REPORT_MAX_QUEUES = 100;
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(BdbFrontier.class, 1);
 
@@ -571,24 +573,24 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         rep.append("\n -----===== READY QUEUES =====-----\n");
         Iterator iter = readyClassQueues.iterator();
         int count = 0; 
-        while(iter.hasNext() && count < 50 ) {
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
             BdbWorkQueue q = (BdbWorkQueue) iter.next();
             count++;
             rep.append(q.report());
         }
-        if(readyClassQueues.getCount()>50) {
-            rep.append("...and "+(readyClassQueues.getCount()-50)+" more.\n");
+        if(readyClassQueues.getCount()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(readyClassQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
         }
         rep.append("\n -----===== SNOOZED QUEUES =====-----\n");
         count = 0;
         iter = snoozedClassQueues.iterator();
-        while(iter.hasNext() && count < 50 ) {
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
             BdbWorkQueue q = (BdbWorkQueue) iter.next();
             count++;
             rep.append(q.report());
         }
-        if(snoozedClassQueues.size()>50) {
-            rep.append("...and "+(snoozedClassQueues.size()-50)+" more.\n");
+        if(snoozedClassQueues.size()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(snoozedClassQueues.size()-REPORT_MAX_QUEUES)+" more.\n");
         }    
         return rep.toString();
     }
