@@ -6,6 +6,9 @@ package org.archive.crawler.basic;
 
 import junit.framework.*;
 
+import java.io.IOException;
+import java.util.Date;
+
 import org.archive.crawler.basic.ARCWriter; 
 import org.archive.crawler.basic.SimpleHTTPFetcher;
 import org.archive.crawler.datamodel.*;
@@ -20,7 +23,7 @@ import java.net.*;
  * @author Parker Thompson
  *  
  */
-public class ARCWriterTest extends TestCase {
+public class ARCWriterTest extends TestCase implements CoreAttributeConstants{
 	
 	ARCWriter writer;
 	SimpleHTTPFetcher fetcher;
@@ -41,6 +44,21 @@ public class ARCWriterTest extends TestCase {
 		curi 			= new CrawlURI("http://parkert.com");
 		crawlhost	= new CrawlHost("parkert.com");
 		
+		writer.setArcMaxSize(10000);
+		writer.setArcPrefix("prefix");
+		writer.setOutputDir(".");
+		writer.setUseCompression(true);
+		
+		try{
+		writer.createNewArcFile();
+		}catch(IOException e){}
+		
+		try{
+		crawlhost.setIP(InetAddress.getByName("parkert.com"));
+		}catch(UnknownHostException e){}
+		
+		crawlhost.setHasBeenLookedUp();
+		
 		try {
 			crawlhost.setIP( InetAddress.getByName("parkert.com") );
 			curi.setHost(crawlhost);
@@ -50,6 +68,7 @@ public class ARCWriterTest extends TestCase {
 		}
 		
 		curi.getAList().putString("content-type", "text/html");
+		curi.getAList().putLong(A_FETCH_BEGAN_TIME, (new Date()).getTime());
 	}
 	
 	// clean up after the test here if necessary
@@ -76,7 +95,7 @@ public class ARCWriterTest extends TestCase {
 			curi.getAList().putObject("http-transaction",get);
 
 			//fetcher.process(curi);
-			writer.setOutputDir(new String("/home/parkert/"));
+			//writer.setOutputDir(new String("./arcs/"));
 			writer.process(curi);
 	
 			System.out.println("test ran, check " + writer.getOutputDir() + " for resulting arc(s).");
