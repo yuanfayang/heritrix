@@ -418,32 +418,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>jmxremote</id>
-            <version />
-            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <description>JMX Remote.
-                </description>
-                <license>SUN Binary Code License
-                http://java.com/en/download/license.jsp
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
-            <id>jmxremote_optional</id>
-            <version />
-            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <description>JMX Remote Optional Tools.
-                </description>
-                <license>SUN Binary Code License
-                http://java.com/en/download/license.jsp
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>poi</id>
             <version>2.0-RC1-20031102</version>
             <url>http://jakarta.apache.org/poi/</url>
