@@ -143,6 +143,11 @@ public class Heritrix
     protected static CrawlJobHandler jobHandler = null;
 
     /**
+     * CrawlController, used when running jobs without a WUI.
+     */
+    protected static CrawlController controller = null;
+    
+    /**
      * Heritrix start log file.
      * 
      * This file contains standard out produced by this main class.
@@ -539,7 +544,7 @@ public class Heritrix
         XMLSettingsHandler handler =
             new XMLSettingsHandler(new File(crawlOrderFile));
         handler.initialize();
-        CrawlController controller = new CrawlController();
+        controller = new CrawlController();
         controller.initialize(handler);
         controller.startCrawl();
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
@@ -706,5 +711,47 @@ public class Heritrix
     public static String getHERITRIX_OUT_FILE()
     {
         return HERITRIX_OUT_FILE;
+    }
+    
+    /**
+     * Shuts the program down. This method does it's best to terminate any crawl
+     * normally before shutting the program down, but it will not wait more then
+     * 1 second for threads to finish before calling <code>System.exit(0)</code>.
+     */
+    public static void shutHeritrixDown(){
+        if(httpServer!=null){
+            // Shut down the web access.
+            try {
+                httpServer.stopServer();
+            } catch (InterruptedException e) {
+                // Generally this can be ignored, but we'll print a stack trace 
+                // just in case.
+                e.printStackTrace();
+            }
+        }
+        if(jobHandler != null){
+            // Shut down the jobHandler.
+            if(jobHandler.isCrawling()){
+                jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
+                try {
+                    jobHandler.wait(1000); // Give most of the threads time to exit.
+                } catch (InterruptedException e) {
+                    // Generally this can be ignored, but we'll print a stack trace 
+                     // just in case.
+                    e.printStackTrace();
+                } 
+            }
+        } else if(controller != null) {
+            controller.stopCrawl();
+            try {
+                controller.wait(1000); // Give most of the threads time to exit.
+            } catch (InterruptedException e) {
+                // Generally this can be ignored, but we'll print a stack trace 
+                 // just in case.
+                e.printStackTrace();
+            } 
+        }
+        
+        System.exit(0);
     }
 }

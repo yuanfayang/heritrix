@@ -231,5 +231,7 @@
 			}
 		}
 	%> | <a href="">Refresh</a>
+	<p>
+		<a href="/admin/shutdown.jsp">Shut down Heritrix software</a>
 
 <%@include file="/include/foot.jsp"%>

@@ -116,8 +116,7 @@ public class SimpleHttpServer
      * 
      * @throws Exception
      */
-    public synchronized void stopServer()
-        throws Exception
+    public synchronized void stopServer() throws InterruptedException
     {
         if (this.server != null)
         {
