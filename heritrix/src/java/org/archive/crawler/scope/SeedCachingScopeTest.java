@@ -59,7 +59,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
             this.seedsfile = seedsfile;
         }
         
-        protected File getSeedfile() {
+        public File getSeedfile() {
             return seedsfile;
         } 
     }

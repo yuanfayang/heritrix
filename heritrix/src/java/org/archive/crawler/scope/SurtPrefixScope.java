@@ -102,7 +102,7 @@ public class SurtPrefixScope extends RefinedScope {
             readPrefixes();
         }
         
-        UURI u = getUURI(o);
+        UURI u = UURI.from(o);
         if (u == null) {
             return false;
         }

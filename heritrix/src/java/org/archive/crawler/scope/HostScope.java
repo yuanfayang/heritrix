@@ -103,7 +103,7 @@ public class HostScope extends SeedCachingScope {
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
-        UURI u = getUURI(o);
+        UURI u = UURI.from(o);
         if (u == null) {
             return false;
         }

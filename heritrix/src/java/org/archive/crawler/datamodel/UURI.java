@@ -356,4 +356,27 @@ implements CharSequence, Serializable {
     public int compareTo(Object arg0) {
         return getEscapedURI().compareTo(arg0);
     }
+    
+    /**
+     * Convenience method for finding the UURI inside an
+     * Object likely to have one.
+     * 
+     * @param o Object that has a UURI
+     * @return the UURI found
+     */
+    public static UURI from(Object o) {
+        UURI u = null;
+        if (o instanceof UURI) {
+            u = (UURI)o;
+        } else if (o instanceof CandidateURI) {
+            u = ((CandidateURI) o).getUURI();
+        } else {
+            // TODO: build UURI from a String?
+            // possibly fail with null rather than exception?
+            if (o != null) {
+                throw new IllegalArgumentException("Passed wrong type: " + o);
+            }
+        }
+        return u;
+    }
 }
