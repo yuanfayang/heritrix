@@ -30,7 +30,7 @@
      * @author Kristinn Sigurdsson
      */
 %>
-<%@include file="/include/stats.jsp"%>
+<%@include file="stats.jsp"%>
 
 <html>
     <head>
