@@ -1,5 +1,5 @@
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob,java.io.File" %>
 
 <%
 	/**
@@ -10,10 +10,13 @@
 	if(request.getParameter(handler.XP_CRAWL_ORDER_NAME) != null)
 	{
 		// Got something in the request.  Let's update!
-		int newUID = handler.getNextJobUID();
-		String filename = "job-"+newUID+"-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
-		handler.createCrawlOrderFile(request,filename);
-		handler.addJob(new SimpleCrawlJob(newUID, request.getParameter(handler.XP_CRAWL_ORDER_NAME),handler.WEB_APP_PATH+filename,SimpleCrawlJob.PRIORITY_AVERAGE));
+		String newUID = handler.getNextJobUID();
+		String filename = "jobs"+File.separator+newUID+File.separator+"job-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".xml";
+		String seedfile = "seeds-"+request.getParameter(handler.XP_CRAWL_ORDER_NAME)+".txt";
+		File f = new File("jobs"+File.separator+newUID);
+		f.mkdirs();
+		handler.createCrawlOrderFile(request,filename,seedfile,true);
+		handler.addJob(new SimpleCrawlJob(newUID, request.getParameter(handler.XP_CRAWL_ORDER_NAME),filename,SimpleCrawlJob.PRIORITY_AVERAGE));
 		response.sendRedirect("/admin/main.jsp");
 	}
 
