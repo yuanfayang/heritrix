@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.commons.collections.Predicate;
 
 
