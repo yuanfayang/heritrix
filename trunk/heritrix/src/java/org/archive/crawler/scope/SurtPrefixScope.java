@@ -59,19 +59,23 @@ public class SurtPrefixScope extends RefinedScope {
     public SurtPrefixScope(String name) {
         super(name);
         setDescription(
-                  "A scope for crawls limited to regions of the web defined by"
-                + " a set of SURT prefixes. (The SURT form of a URI has had its"
-                + " hostname reordered to ease sorting and grouping by domain"
-                + " hierarchies.)");
-        addElementToDefinition(new SimpleType(ATTR_SURTS_SOURCE_FILE,
-            "Source file from which to read SURT prefixes.", ""));
-        addElementToDefinition(new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES,
-            "Should seeds also be intepreted as SURT prefixes.", 
-            DEFAULT_SEEDS_AS_SURT_PREFIXES));
+                  "SurtPrefixScope: A scope for crawls limited to regions of "
+                + "the web defined by a set of SURT prefixes. (The SURT form of "
+                + "a URI has its hostname reordered to ease sorting and "
+                + "grouping by domain hierarchies.)");
+        addElementToDefinition(
+                new SimpleType(ATTR_SURTS_SOURCE_FILE, 
+                        "Source file from which to read SURT prefixes.", 
+                        ""));
+        addElementToDefinition(
+                new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES, 
+                        "Should seeds also be intepreted as SURT prefixes.", 
+                        DEFAULT_SEEDS_AS_SURT_PREFIXES));
         
         Type t = addElementToDefinition(
-                new SimpleType(ATTR_SURTS_DUMP_FILE, "Dump file to save SURT " +
-                        "prefixes actually used.", ""));
+                new SimpleType(ATTR_SURTS_DUMP_FILE, 
+                        "Dump file to save SURT prefixes actually used.", 
+                        ""));
         t.setExpertSetting(true);
 
     }
