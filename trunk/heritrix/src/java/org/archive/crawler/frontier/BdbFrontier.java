@@ -513,13 +513,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                             curi.setClassKey(currentQueueKey);
                             readyQ.dequeue(this.pendingUris);
                             curi.setHolderKey(null);
-                            sendToQueue(curi);
+                            // curi will be sent to true queue after lock
+                            //  on readyQ is released, to prevent deadlock
                         } else {
                             // readyQ is empty and ready: release held, allowing
                             // subsequent enqueues to ready
                             readyQ.clearHeld();
                             break;
                         }
+                    }
+                    if(curi!=null) {
+                        // complete the requeuing begun earlier
+                        sendToQueue(curi);
                     }
                 }
             }
