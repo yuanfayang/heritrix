@@ -856,8 +856,10 @@ public class Foo extends ModuleType {
             2396</ulink>. This causes some problems because the real world does
             not conform to the RFC. In addition some bugs in the URI class have
             been discovered which restricts its acceptance of some URIs further.
-            To overcome these limitations we need to, at some point, write a
-            replacement for the java.net.URI.</para>
+            To overcome these limitations, org.archive.crawler.datamodel.UURI
+            substitutes for java.net.URI (with help from
+            the HttpClient URI class).</para>
+
         <para>Three different classes wraps the java.net.URI in Heritrix:</para>
         <variablelist>
             <varlistentry>
@@ -2020,15 +2022,6 @@ public class SimpleExtractor extends Processor
         <para>This appendix lists issues in the API that needs investigation and
             eventually changes to be made. Read this so that you could avoid
             locking yourself to dependencies that is likely to change.</para>
-        <sect1>
-            <title>The org.archive.crawler.datamodel.UURI class</title>
-            <para>The UURI class gives access to the java.net.URI it wraps.
-                Because of limitations in the java.net.URI class it might be
-                necessary to substitute this with something else. UURI
-                implements a lot of convenience methods to get information from
-                the URI. We might add more of these methods and deprecate the
-                getRawURI() method.</para>
-        </sect1>
         <sect1 id="alist">
             <title>The org.archive.crawler.datamodel.CrawlURI class</title>
             <para>The attribute list of the CrawlURI, manipulated trough the
