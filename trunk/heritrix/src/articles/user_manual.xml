@@ -3303,6 +3303,15 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>The L in the above example refers to the type of link followed
         (see <xref linkend="discoverypath" />).</para>
       </sect3>
+    <sect3 id="jmxclient"><title>cmdline-jmxclient</title>
+        <para>This jar file is checked in as a script.  It enables command-line
+        control of Heritrix if Heritrix has been started up inside of a
+        SUN 1.5.0 JDK. See the <ulink
+        url="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient project</ulink> to learn more about this
+        script's capabilities and how to use it.
+        See also <xref linkend="mon_con" />.
+        </para>
+    </sect3>
     </sect2>
 
     <sect2 id="recover">
@@ -3338,6 +3347,27 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       (Gzip zips in 32k blocks; the worst loss would be the last 32k of
       gzipped data).</para>
     </sect2>
+
+    <sect2 id="mon_com"><title>Remote Monitoring and Control</title>
+        <para>As of release 1.4.0, Heritrix will start up the JVM's
+        JMX Agent if deployed in a SUN 1.5.0 JVM.  It password protects the
+        JMX Agent using whatever was specified as the Heritrix admin password
+        so to login, you'll used 'monitorRole' or 'controlRole' for login and
+        the Heritrix admin password as password.  By default, the JMX Agent is
+        started up on port 8849 (To change any of the JMX settings,
+        set the JMX_OPTS environment variable). After starting up the 
+        JMX agent, Heritrix will then register itself with the JVM JMX Agent 
+        publishing attributes and operations that can be run remotely.
+        To see whats available via JMX, use the SUN 1.5.0 JDK jconsole
+        application -- its in $JAVA_HOME/bin -- or use
+        <xref linkend="jmxclient" />.  To learn more about the SUN 1.5.0 JDK
+        JMX managements and jconsole, see <a
+        href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management Using JMX</a>.  This O'Reilly article is also 
+        a good place for getting started : 
+        <xlink href="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring Local and Remote Applications Using JMX 1.2 and JConsole</xlink>.
+        </para>
+    </sect2>
+
   </sect1>
 
   <glossary id="glossary">
