@@ -15,6 +15,7 @@
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="lib/ant-1.5.4.jar"/>
 	<classpathentry kind="lib" path="src/conf"/>
+	<classpathentry kind="lib" path="src/resources"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-tomcat-4.1.30.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>

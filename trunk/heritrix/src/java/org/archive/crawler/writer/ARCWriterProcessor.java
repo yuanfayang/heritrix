@@ -27,13 +27,30 @@ package org.archive.crawler.writer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -208,13 +225,108 @@ public class ARCWriterProcessor extends Processor
                     this.arcSuffix,
                     this.useCompression,
                     this.arcMaxSize,
-                    null,
+                    getMetadata(),
                     this.poolMaximumActive,
                     this.poolMaximumWait);
             
         } catch (IOException e) {
             logger.warning(e.getLocalizedMessage());
         }
+    }
+    
+    /**
+     * Return list of metadatas to add to first arc file metadata record.
+     *
+     * Get xml files from settingshandle.  Currently order file is the
+     * only xml file.  We're NOT adding seeds to meta data.
+     * 
+     * @return List of strings and/or files to add to arc file as metadata or
+     * null.
+     */
+    protected List getMetadata() {
+        List settingsFiles = getSettingsHandler().getListOfAllFiles();
+        if (settingsFiles ==  null || settingsFiles.size() <= 0) {
+            // Early return.
+            return null;
+        }
+        List metadata = null;
+        final String XML_TAIL = ".xml";
+        for (Iterator i = settingsFiles.iterator(); i.hasNext();) {
+            String str = (String)i.next();
+            if (str == null || str.length() <= 0) {
+                continue;
+            }
+            if (str.length() <= XML_TAIL.length() ||
+                !str.toLowerCase().endsWith(XML_TAIL)) {
+                continue;
+            }
+            File f = new File(str);
+            if (!f.exists() || !f.canRead()) {
+                logger.severe("File " + str + " is does not exist or is" +
+                " not readable.");
+                continue;
+            }
+            if (metadata == null) {
+                metadata = new ArrayList(settingsFiles.size());
+            }
+            metadata.add(getMetadataBody(f));
+        }
+        return metadata;
+    }
+    
+    /**
+     * Write the arc metadata body content.
+     * 
+     * Its based on the order xml file but into this base we'll add other info
+     * such as machine ip.
+     * 
+     * @param orderFile Order file.
+     * 
+     * @return String that holds the arc metaheader body.
+     * 
+     * @throws TransformerConfigurationException
+     * @throws FileNotFoundException
+     * @throws UnknownHostException
+     */
+    protected String getMetadataBody(File orderFile) {
+        String result = null;
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Templates templates = null;
+        Transformer xformer = null;
+        try {
+            templates = factory.newTemplates(new StreamSource(
+                this.getClass().getResourceAsStream("/arcMetaheaderBody.xsl")));
+            xformer = templates.newTransformer();
+            // Below parameter names must match what is in the stylesheet.
+            xformer.setParameter("software", "Heritrix " +
+                Heritrix.getVersion() + " http://crawler.archive.org");
+            xformer.setParameter("ip",
+                InetAddress.getLocalHost().getHostAddress());
+            xformer.setParameter("hostname",
+                InetAddress.getLocalHost().getHostName());
+            StreamSource source = new StreamSource(
+                new FileInputStream(orderFile));
+            StringWriter writer = new StringWriter();
+            StreamResult target = new StreamResult(writer);
+            xformer.transform(source, target);
+            result= writer.toString();
+        } catch (TransformerConfigurationException e) {
+            logger.severe("Failed transform " + e);
+        } catch (FileNotFoundException e) {
+            logger.severe("Failed transform, file not found " + e);
+        } catch (UnknownHostException e) {
+            logger.severe("Failed transform, unknown host " + e);
+        } catch(TransformerException e) {
+            SourceLocator locator = e.getLocator();
+            int col = locator.getColumnNumber();
+            int line = locator.getLineNumber();
+            String publicId = locator.getPublicId();
+            String systemId = locator.getSystemId();
+            logger.severe("Transform error " + e + ", col " + col + ", line " +
+                line + ", publicId " + publicId + ", systemId " + systemId);
+        }
+        
+        return result;
     }
 
     protected void readConfiguration()
