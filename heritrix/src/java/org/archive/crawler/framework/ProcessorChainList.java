@@ -70,7 +70,7 @@ public class ProcessorChainList {
                     .getAttribute(CrawlOrder.ATTR_POST_PROCESSORS));
         } catch (AttributeNotFoundException e) {
             throw new FatalConfigurationException("Could not get processors" +
-                + " from crawl order: " + e.getMessage());
+                " from crawl order: " + e.getMessage());
         } catch (MBeanException e) {
             throw new FatalConfigurationException("Could not get processors" +
                 " from crawl order: " + e.getMessage());
