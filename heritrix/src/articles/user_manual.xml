@@ -8,19 +8,23 @@
     <title>Introduction</title>
 
     <para>Heritrix is the Internet Archive's open-source, extensible,
-    web-scale, archival-quality web crawler. </para>
+    web-scale, archival-quality web crawler.</para>
 
     <para>This document explains how to create, configure and run crawls using
     it. It is intended for users of the software and presumes that they
-    possess at least a general familiarity with the concept of web crawling.
-    </para>
+    possess at least a general familiarity with the concept of web
+    crawling.</para>
+
+    <para>If you want to build heritrix from source or if you'd like to make
+    contributions and would like to know about contribution conventions, etc.,
+    see instead the Developer Manual.</para>
   </sect1>
 
   <sect1>
     <title>Installing and running Heritrix</title>
 
     <para>This chapter will explain how to set up Heritrix. Some basic Linux
-    administration skills are needed for this. </para>
+    administration skills are needed for this.</para>
 
     <para>Because Heritrix is a pure Java program it can (in theory anyway) be
     run on any platform that has a Java 1.4 VM. However we are only committed
@@ -51,41 +55,75 @@
 
       <para>Once you have downloaded and untarred the correct file you can
       move on to the next step.</para>
-    </sect2>
 
-    <sect2>
-      <title>Installing Java</title>
+      <sect3>
+        <title>System requirements</title>
 
-      <para>Before you can install Heritrix you must ensure that a <emphasis
-      role="bold">JavaVM 1.4</emphasis> (or later) is installed on the
-      machine. Heritrix comes bundled with all libraries needed to run it. The
-      only prerequisite is the JavaVM.</para>
+        <sect4>
+          <title>Java Runtime Environment </title>
 
-      <para>If you already have Java installed you can move on the next step
-      if not you can download Java from:</para>
+          <para>The Heritrix crawler is implemented purely in java. This means
+          that the only true requirement for running it is that you have a JRE
+          installed. </para>
 
-      <itemizedlist>
-        <listitem>
-          <para><emphasis role="bold">Sun</emphasis> -- <ulink
-          url="http://java.sun.com/">java.sun.com</ulink> </para>
-        </listitem>
+          <para>The Heritrix crawler makes use of Java 1.4 features so your
+          JRE must be at least of a 1.4.0 pedigree.</para>
 
-        <listitem>
-          <para><emphasis role="bold">IBM</emphasis> -- <ulink
-          url="http://www.ibm.com/java">www.ibm.com/java</ulink></para>
-        </listitem>
-      </itemizedlist>
+          <para>We currently include all of the free/open source third-party
+          libraries necessary to run Heritrix in the distribution package. See
+          dependencies for the complete list (Licenses for all of the listed
+          libraries are listed in the dependencies section of the raw
+          project.xml at the root of the src download or here on sourceforge
+          ). </para>
 
-      <para>It has been our experiance that running on Linux with the IBM Java
-      virtual machine Heritrix performs better then with the Sun JavaVM (Java
-      version 1.4.2). This may change in the future. There are no known
-      problems with using either of the two.</para>
+          <sect5>
+            <title>Installing Java</title>
+
+            <para>If you do not have Java installed you can download Java
+            from:</para>
+
+            <itemizedlist>
+              <listitem>
+                <para><emphasis role="bold">Sun</emphasis> -- <ulink
+                url="http://java.sun.com/">java.sun.com</ulink></para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">IBM</emphasis> -- <ulink
+                url="http://www.ibm.com/java">www.ibm.com/java</ulink></para>
+              </listitem>
+            </itemizedlist>
+
+            <para>It has been our experiance that running on Linux with the
+            IBM Java virtual machine Heritrix performs better then with the
+            Sun JavaVM (Java version 1.4.2). This may change in the future.
+            There are no known problems with using either of the two.</para>
+          </sect5>
+        </sect4>
+
+        <sect4>
+          <title>Hardware</title>
+
+          <para> We recommend assigning at least 256MB RAM to the Java heap
+          (via the "-Xmx256MB" VM argument), which is usually suitable for
+          crawls that range over hundreds of hosts.</para>
+        </sect4>
+
+        <sect4>
+          <title>Linux</title>
+
+          <para>The Heritrix crawler has been built and tested primarily on
+          Linux. It has seen some informal use on Macintosh, Windows 2000 and
+          Windows XP, but is not tested, packaged, nor supported on platforms
+          other than Linux at this time.</para>
+        </sect4>
+      </sect3>
     </sect2>
 
     <sect2>
       <title>Running Heritrix</title>
 
-      <para> To run Heritrix, first do the following:<programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
+      <para>To run Heritrix, first do the following:<programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
       <literal>$HERITRIX_HOME</literal> is the location of your untarred
       <filename>heritrix.?.?.?.tar.gz</filename>.</para>
 
@@ -123,27 +161,136 @@
   Web UI is at: http://b116-dyn-60.archive.org:8080/admin
   Login and password: admin/letmein</programlisting></para>
 
-      <para>The only command line options that you may want to use right away
-      are:</para>
+      <para>See <xref linkend="wui" /> and <xref linkend="tutorial" /> to get
+      your first crawl up and running.</para>
 
-      <itemizedlist>
-        <listitem>
-          <para><literal>--port=PORT</literal> </para>
+      <sect3>
+        <title>Command line options</title>
 
-          <para>Set what port the web based user interface runs on. </para>
-        </listitem>
+        <para>A quick overview of the most useful command line options. It is
+        not neccessary to specify any command line options to run the
+        crawler.</para>
 
-        <listitem>
-          <para><literal>--admin=LOGIN:PASSWORD</literal> </para>
+        <sect4>
+          <title>--port=PORT</title>
+
+          <para><programlisting>  --port=PORT</programlisting></para>
+
+          <para>Set what port the web based user interface runs on. By default
+          this is port <literal>8080</literal>.</para>
+        </sect4>
+
+        <sect4>
+          <title>--admin=LOGIN:PASSWORD</title>
+
+          <para><programlisting>  --admin=LOGIN:PASSWORD</programlisting></para>
 
           <para>Change the default admin username and password. If you do not
           do this then the defaul username and password will be in effect.
-          Since they are widely known that may not be desirable.</para>
-        </listitem>
-      </itemizedlist>
+          Since they are widely known that may not be desirable. Default
+          username is <literal>admin</literal> and the default password is
+          <literal>letmein</literal>.</para>
+        </sect4>
+      </sect3>
 
-      <para>See <xref linkend="wui" /> and <xref linkend="tutorial" /> to get
-      your first crawl up and running.</para>
+      <sect3>
+        <title>Environment variables</title>
+
+        <sect4>
+          <title>HERITRIX_HOME</title>
+
+          <para>Set this environment variable to point at the heritrix home
+          directory. For example, if you've unpacked heritrix in your home
+          directory and heritrix is sitting in the heritrix-0.5.2 directory,
+          you'd set HERITRIX_HOME as follows. Assuming your shell is
+          bash:<programlisting>  % export HERITRIX_HOME=~/heritrix-0.5.2</programlisting>If
+          you don't set this environment variable, the heritrix start script
+          makes a guess at the home for heritrix. It doesn't always guess
+          correctly.</para>
+        </sect4>
+
+        <sect4>
+          <title>JAVA_HOME</title>
+
+          <para>This environment variable may already exist. It should point
+          to the Java installation on the machine. An example of how this
+          might be set (assuming your shell is bash):</para>
+
+          <para><programlisting>  % export JAVA_HOME=/usr/local/java/jre/</programlisting></para>
+        </sect4>
+
+        <sect4>
+          <title>JAVA_OPTS</title>
+
+          <para>Pass options to the heritrix JVM by populating the JAVA_OPTS
+          environment variable with values. For example, if you want to have
+          heritrix run with a larger heap, say 512 megs, you could do either
+          of the following (assuming your shell is bash):<programlisting>  % export JAVA_OPTS="-Xmx512m"
+  % $HERITRIX_HOME/bin/heritrix</programlisting>Or, you could do it all on the
+          one line as follows:<programlisting>  % JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix</programlisting></para>
+        </sect4>
+      </sect3>
+
+      <sect3>
+        <title>System properties</title>
+
+        <para>Below we document the system properties passed on the
+        command-line that can influence Heritrix behavior.</para>
+
+        <sect4>
+          <title>heritrix.development</title>
+
+          <para>Set this property on the command-line (i.e.
+          "-Dheritrix.development" or include as part of
+          <literal>JAVA_OPTS</literal> environment value) when you want to run
+          the crawler from eclipse. When this property is set, the conf and
+          webapps directories will be found in their development locations and
+          startup messages will show on the console.</para>
+        </sect4>
+
+        <sect4>
+          <title>javax.net.ssl.trustStore</title>
+
+          <para>Heritrix has its own trust store at conf/heritrix.cacerts that
+          it uses if the FetcherHTTP is configured to use a trust level of
+          other than open ( open is the default setting). In the unusual case
+          where you'd like to have heritrix use an alternate truststore, point
+          at the alternate by supplying the JSSE javax.net.ssl.trustStore
+          property on the command line: e.g. java
+          -Djavax.net.ssl.trustStore=/tmp/truststore
+          org.archive.crawler.Heritrix .</para>
+        </sect4>
+
+        <sect4>
+          <title>java.util.logging.config.file</title>
+
+          <para>The heritrix <filename>conf</filename> directory includes a
+          file named <filename>heritrix.properties</filename> . A section of
+          this file specifies the default heritrix logging configuration. To
+          override these settings, point
+          <literal>java.util.logging.config.file</literal> at a properties
+          file with an alternate logging configuration. Below we reproduce the
+          default <filename>heritrix.properties</filename> for
+          reference:<programlisting>  # Basic logging setup; to console, all levels
+  handlers= java.util.logging.ConsoleHandler
+  java.util.logging.ConsoleHandler.level= ALL
+
+  # Default global logging level: only warnings or higher
+  .level= WARNING
+
+  # currently necessary (?) for standard logs to work
+  crawl.level= INFO
+  runtime-errors.level= INFO
+  uri-errors.level= INFO
+  progress-statistics.level= INFO
+  recover.level= INFO
+
+  # HttpClient is too chatty... only want to hear about severe problems
+  org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an
+          example of how you might specify an override:<programlisting>  % JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
+          ./bin/heritrix --no-wui order.xml</programlisting></para>
+        </sect4>
+      </sect3>
     </sect2>
   </sect1>
 
@@ -433,7 +580,7 @@
         first crawling.</para>
       </sect3>
 
-      <sect3>
+      <sect3 id="scopes">
         <title>Crawl Scope</title>
 
         <para>A crawl scope is an object that decides for each discovered URI
@@ -517,7 +664,7 @@
         provided scopes have a <literal>Transclusion</literal> filter
         hardcoded into them that handles transitive items (URIs that normally
         shouldn't be included but because of special circumstance they will be
-        included). </para>
+        included).</para>
 
         <para>For more about Filters see <xref linkend="filters" />.</para>
 
@@ -698,7 +845,118 @@
     <sect2 id="filters">
       <title>Filters</title>
 
-      <para></para>
+      <para>Filters are modules that take a <xref linkend="crawluri" /> and
+      determines if it matches the criteria of the filter. If so it returns
+      true, otherwise it returns false.</para>
+
+      <para>Filters are used in a couple of different contexts in Heritrix.
+      </para>
+
+      <para>Their use in scopes has already been discussed in <xref
+      linkend="scopes" /> and the problems with using them that in <xref
+      linkend="scopeproblems" />. Along with the planned overhaul of the
+      scopes (as discussed in <xref linkend="scopeproblems" />) the filters
+      will likely change significantly.</para>
+
+      <para>Aside from scopes filters are also used in processors. Filters
+      applied to processors always filter URIs <emphasis>out</emphasis>. That
+      is to say that any URI matching a filter on a processor will effectively
+      skip over that processor. </para>
+
+      <para>This can be useful to disable (for instance) link extraction on
+      documents coming from a specific section of a given website.</para>
+
+      <sect3>
+        <title>Adding, removing and reordering filters</title>
+
+        <para>The filters page of the configuration section of the WUI
+        presents a semi treelike structure of the crawl configuration.
+        Wherever filters can be added a listing of existing filters is
+        provided along with the options to remove them or move them up or down
+        that list. Below each list is the option to add a new filter to that
+        list. </para>
+
+        <para>Adding a new filters requires giving it a unique name, selecting
+        the class type of the filter from a combobox and clicking the
+        associated add button.</para>
+
+        <para>Since filters can in turn contain other filters (the OrFilter
+        being the best example of this) these lists can become quite complex
+        and at times confusing.</para>
+      </sect3>
+
+      <sect3>
+        <title>Provided filters</title>
+
+        <para>The following is an overview of the most useful of the filters
+        provided with Heritrix.</para>
+
+        <sect4>
+          <title>org.archive.crawler.filter.OrFilter</title>
+
+          <para>Contains any number of filters and returns true if any of them
+          returns true. A logical OR on it's filters basically.</para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.URIRegExpFilter</title>
+
+          <para>Returns true if a URI matches the regular expression set for
+          it.</para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.FilePatternFilter</title>
+
+          <para>Compares suffix of a passed URI against a regular expression
+          pattern, returns true for matches. </para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.PathDeptFilter</title>
+
+          <para>Returns true for all <xref linkend="crawluri" /> passed in
+          with a path depth less or equal than the
+          <literal>max-path-depth</literal> value.</para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.PathologicalPathFilter</title>
+
+          <para>Checks if a URI contains a repated pattern.</para>
+
+          <para> This filter is checking if a pattern is repeated a specific
+          number of times. The use is to avoid crawler traps where the server
+          adds the same pattern to the requested URI like:</para>
+
+          <para><programlisting>  http://host/img/img/img/img....</programlisting></para>
+
+          <para>Returns true if such a pattern is found. Sometimes used on
+          processor but is primarily of use in the exclude section of
+          scopes.</para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.HopsFilter</title>
+
+          <para>Returns true for all CandidateURIs passed in with a <xref
+          linkend="link-hop-count" /> greater than the
+          <literal>max-link-hops</literal> value. </para>
+
+          <para>Generally only used in scopes.</para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.TransclusionFilter</title>
+
+          <para>Filter which returns true for <xref linkend="crawluri" />
+          instances which contain more than zero but fewer than
+          <literal>max-trans-hops</literal> embed entries at the end of their
+          <xref linkend="discoverypath" />.</para>
+
+          <para>Generally only used in scopes.</para>
+        </sect4>
+      </sect3>
     </sect2>
 
     <sect2 id="credentials">
@@ -730,8 +988,9 @@
 
         <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE</programlisting></para>
 
-        <para>This is done by editing the heritrix.properties file under the
-        conf directory.</para>
+        <para>This is done by editing the
+        <filename>heritrix.properties</filename> file under the
+        <filename>conf</filename> directory.</para>
       </note>
 
       <sect3>
@@ -1371,67 +1630,109 @@
     </sect2>
   </sect1>
 
-  <sect1>
-    <title>Worth noting</title>
+  <glossary>
+    <glossdiv>
+      <title>Some definitions</title>
 
-    <para>The following chapters cover a few points that are worth noting as
-    they may otherwise be confusing.</para>
+      <glossentry id="runningvcrawling">
+        <glossterm>Running Vs. Crawling</glossterm>
 
-    <sect2 id="runningvcrawling">
-      <title>Running Vs. Crawling</title>
+        <glossdef>
+          <para>The state <emphasis>running</emphasis> generally means that
+          the crawler will start executing a job as soon as one is made
+          available in the pending jobs queue (as long as there is not a job
+          currently being run).</para>
 
-      <para>The state <emphasis>running</emphasis> generally means that the
-      crawler will start executing a job as soon as one is made available in
-      the pending jobs queue (as long as there is not a job currently being
-      run).</para>
+          <para>If the crawler is not in the running state, jobs added to the
+          pending jobs queue will be held there in stasis; they will not be
+          run, even if there are no jobs currently being run.</para>
 
-      <para>If the crawler is not in the running state, jobs added to the
-      pending jobs queue will be held there in stasis; they will not be run,
-      even if there are no jobs currently being run.</para>
+          <para>The term <emphasis>crawling</emphasis> generally refers to a
+          state whereby a job's being currently run (crawled): i.e. pages are
+          being fetched, links extracted etc.</para>
+        </glossdef>
+      </glossentry>
 
-      <para>The term <emphasis>crawling</emphasis> generally refers to a state
-      whereby a job's being currently run (crawled): i.e. pages are being
-      fetched, links extracted etc.</para>
-    </sect2>
+      <glossentry id="regexpr">
+        <glossterm>Regular expressions</glossterm>
 
-    <sect2>
-      <title>Regular expressions</title>
+        <glossdef>
+          <para>All regular expressions used by Heritrix are Java regular
+          expressions.</para>
 
-      <para>All regular expressions used by Heritrix are Java regular
-      expressions.</para>
+          <para>Java regular expressions differ from those used in Perl, for
+          example, in several ways. For detailed info on Java regular
+          expressions see the Java API for java.util.regex.Pattern on Sun's
+          home page (<ulink
+          url="http://java.sun.com">java.sun.com</ulink>).</para>
 
-      <para>Java regular expressions differ from those used in Perl, for
-      example, in several ways. For detailed info on Java regular expressions
-      see the Java API for java.util.regex.Pattern on Sun's home page (<ulink
-      url="???">java.sun.com</ulink>).</para>
+          <para>For API of Java SE v1.4.2 see <ulink
+          url="http://java.sun.com/j2se/1.4.2/docs/api/index.html">http://java.sun.com/j2se/1.4.2/docs/api/index.html</ulink>,
+          it is recommended you lookup the API for the version of Java that is
+          being used to run Heritrix.</para>
+        </glossdef>
+      </glossentry>
 
-      <para>For API of Java SE v1.4.2 see <ulink
-      url="http://java.sun.com/j2se/1.4.2/docs/api/index.html">http://java.sun.com/j2se/1.4.2/docs/api/index.html</ulink>,
-      it is recommended you lookup the API for the version of Java that is
-      being used to run Heritrix.</para>
-    </sect2>
+      <glossentry id="dates">
+        <glossterm>Dates and times</glossterm>
 
-    <sect2>
-      <title>Dates and times</title>
+        <glossdef>
+          <para>All times in Heritrix are GMT assuming the clock on the
+          machine Heritrix is running on is correct.</para>
 
-      <para>All times in Heritrix are GMT assuming the clock on the machine
-      Heritrix is running on is correct.</para>
+          <para>This means that all date/time stamps in logs are GMT, all
+          dates and times shown in the WUI are GMT and any times or dates
+          entered by the user need to be in GMT.</para>
+        </glossdef>
+      </glossentry>
 
-      <para>This means that all date/time stamps in logs are GMT, all dates
-      and times shown in the WUI are GMT and any times or dates entered by the
-      user need to be in GMT.</para>
-    </sect2>
+      <glossentry id="bytes">
+        <glossterm>Bytes, KB and statistics</glossterm>
 
-    <sect2>
-      <title>Bytes, KB and statistics</title>
+        <glossdef>
+          <para></para>
+        </glossdef>
+      </glossentry>
 
-      <para></para>
-    </sect2>
+      <glossentry id="alerts">
+        <glossterm>Alerts</glossterm>
 
-    <sect2 id="alerts">
-      <title>Alerts</title>
+        <glossdef>
+          <para></para>
+        </glossdef>
+      </glossentry>
 
-      <para></para>
-    </sect2>
-  </sect1>
+      <glossentry id="crawluri">
+        <glossterm>CrawlURI</glossterm>
+
+        <glossdef>
+          <para>A URI and it's associated data such as parent URI, number of
+          links from seed etc.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry id="link-hop-count">
+        <glossterm>Link hop count</glossterm>
+
+        <glossdef>
+          <para>Number of link follow from the seed to the current URI. Seeds
+          have a link hop count of 0.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Discovery path</glossterm>
+
+        <glossdef>
+          <para>Each URI has a discovery path. The path contains one character
+          for each link or embed followed from the seed.</para>
+
+          <programlisting>  R - Redirect
+  E - Embed
+  X - Speculative embed (aggressive link extraction)
+  L - Link</programlisting>
+        </glossdef>
+      </glossentry>
+    </glossdiv>
+  </glossary>
 </article>
