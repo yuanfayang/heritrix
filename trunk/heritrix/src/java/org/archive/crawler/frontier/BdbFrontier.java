@@ -110,6 +110,9 @@ implements Frontier,
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
 
+    // budgetted rotation support
+    private static int DEFAULT_BUDGET_REFRESH_INCREMENT = 5000;
+    
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
 
@@ -331,25 +334,25 @@ implements Frontier,
             wq.enqueue(curi);
             if(!wq.isHeld()) {
                 wq.setHeld();
-                if(queuesStartAsReady()) {
-                    readyQueue(wq);
-                } else {
+                if(holdQueues()) {
                     deactivateQueue(wq);
+                } else {
+                    replenishBudget(wq);
+                    readyQueue(wq);
                 }
             }
         }
     }
 
     /**
-     * Whether or not new queues should begin as ready, or be held for
-     * some later become-active step (as when necessary to keep threads
-     * busy)
-     * @return true if new queues should be placed in the ready queue
+     * Whether queues should start inactive (only becoming active when needed
+     * to keep the crawler busy), or if queues should start out ready.
+     * 
+     * @return true if new queues should held inactive
      */
-    private boolean queuesStartAsReady() {
-        // true if 'hold-queues' is false 
+    private boolean holdQueues() {
         return ((Boolean) getUncheckedAttribute(null, ATTR_HOLD_QUEUES))
-                .booleanValue() == false;
+                .booleanValue();
     }
 
     /**
@@ -456,6 +459,11 @@ implements Frontier,
                 }
             }
 
+            if(shouldTerminate) {
+                // skip subsequent steps if already on last legs
+                throw new EndedException("shouldTerminate is true");
+            }
+                
             // Nothing was ready; ensure any piled-up scheduled URIs are considered
             this.alreadyIncluded.flush(); 
             
@@ -467,6 +475,40 @@ implements Frontier,
     }
 
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.AbstractFrontier#noteAboutToEmit(org.archive.crawler.datamodel.CrawlURI, org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue)
+     */
+    protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
+        // TODO Auto-generated method stub
+        super.noteAboutToEmit(curi, q);
+        if(employBudgetRotation()) {
+            q.decrementBudget(getCost(curi));
+        }
+    }
+    
+    /** 
+     * Whether to use a budgeting process to rotate queues into and
+     * out of active status. 
+     * 
+     * @return true if budgetted rotation should be used, false otherwise
+     */
+    private boolean employBudgetRotation() {
+        // TODO for now, always do apply budget rotation
+        return true;
+    }
+
+    /**
+     * Return the 'cost' of a CrawlURI (how much of its associated
+     * queue's budget it depletes upon attempted processing)
+     * 
+     * @param curi
+     * @return the associated cost
+     */
+    private int getCost(CrawlURI curi) {
+        // for now, all CrawlURI have cost of 1
+        return 1;
+    }
+    
     /**
      * Activate an inactive queue, if any are available. 
      * 
@@ -475,8 +517,19 @@ implements Frontier,
     private void activateInactiveQueue() throws InterruptedException {
         BdbWorkQueue activatedQ = (BdbWorkQueue) inactiveQueues.poll(0);
         if(activatedQ!=null) {
+            replenishBudget(activatedQ);
             readyQueue(activatedQ);
+            logger.info("ACTIVATED queue: "+activatedQ.classKey);
         }
+    }
+
+    /**
+     * Replenish the budget of the given queue by the appropriate amount.
+     * 
+     * @param activatedQ queue to replenish
+     */
+    private void replenishBudget(BdbWorkQueue queue) {
+        queue.incrementBudget(DEFAULT_BUDGET_REFRESH_INCREMENT);
     }
 
     /**
@@ -492,12 +545,8 @@ implements Frontier,
                 BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
                 if (peek.getWakeTime() < now) {
                     snoozedClassQueues.remove(peek);
-                    try {
-                        peek.setWakeTime(0);
-                        readyClassQueues.put(peek);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    peek.setWakeTime(0);
+                    reenqueueQueue(peek);
                 } else {
                     return;
                 }
@@ -534,7 +583,7 @@ implements Frontier,
                     long delay_ms = delay_sec * 1000;
                     snoozeQueue(wq, now, delay_ms);
                 } else {
-                    readyQueue(wq);
+                    reenqueueQueue(wq);
                 }
             }
             // Let everyone interested know that it will be retried.
@@ -587,7 +636,7 @@ implements Frontier,
             if (delay_ms > 0) {
                 snoozeQueue(wq,now,delay_ms);
             } else {
-                readyQueue(wq);
+                reenqueueQueue(wq);
             }
         }
 
@@ -597,9 +646,27 @@ implements Frontier,
     }
 
     /**
+     * Enqueue the given queue to either readyClassQueues or inactiveQueues,
+     * as appropriate.
+     * 
      * @param wq
-     * @param now
-     * @param delay_ms
+     */
+    private void reenqueueQueue(BdbWorkQueue wq) {
+        if(employBudgetRotation() && wq.getBudget() <= 0) {
+            logger.info("DEACTIVATED queue: "+wq.classKey);
+            deactivateQueue(wq);
+        } else {
+            readyQueue(wq);
+        }
+    }
+
+    /**
+     * Place the given queue into 'snoozed' state, ineligible to
+     * supply any URIs for crawling, for the given amount of time. 
+     * 
+     * @param wq queue to snooze 
+     * @param now time now in ms 
+     * @param delay_ms time to snooze in ms
      */
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
         wq.setWakeTime(now+delay_ms);
@@ -1079,6 +1146,9 @@ implements Frontier,
         /** time to wake, if snoozed */
         long wakeTime = 0;
         
+        /** running 'budget' indicating whether queue should stay active */
+        int budget = 0;
+        
         /**
          * Create a virtual queue inside the given BdbMultiQueue 
          * 
@@ -1091,6 +1161,32 @@ implements Frontier,
             origin = new byte[16];
             long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
             ArchiveUtils.longIntoByteArray(fp, origin, 0);
+        }
+
+        public int getBudget() {
+            return budget;
+        }
+
+        /**
+         * Increase the internal running budget to be used before 
+         * deactivating the queue
+         * 
+         * @param amount amount to increment
+         * @return updated budget value
+         */
+        public int incrementBudget(int amount) {
+            this.budget = this.budget + amount;
+            return this.budget;
+        }
+
+        /**
+         * Decrease the internal running budget by the given amount. 
+         * @param amount tp decrement
+         * @return updated budget value
+         */
+        public int decrementBudget(int amount) {
+            this.budget = this.budget - amount;
+            return this.budget;
         }
 
         /**
