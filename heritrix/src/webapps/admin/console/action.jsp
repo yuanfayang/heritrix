@@ -37,6 +37,11 @@
 			// Tell handler to resume crawl job
 			handler.resumeJob();
 		}
+//		else if(sAction.equalsIgnoreCase("checkpoint"))
+//		{
+//			// Tell handler to resume crawl job
+//			handler.checkpointJob();
+//		}
 		
 	}	
 	response.sendRedirect("/admin/main.jsp");

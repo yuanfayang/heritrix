@@ -18,6 +18,9 @@
 	<li><a href="/admin/jobs/new.jsp">Create new crawl job</a>
 	<li><a href="/admin/jobs/basedon.jsp">Create new crawl job based on a profile</a>
 	<li><a href="/admin/jobs/basedon.jsp?type=jobs">Create new crawl job based on an existing job</a>
+<%-- // DISABLED FOR NOW
+	<li><a href="/admin/jobs/resumefromjob.jsp">Resume an existing job from a checkpoint</a>
+--%>
 </ul>
 
 <% if(handler.isCrawling()){ %>
