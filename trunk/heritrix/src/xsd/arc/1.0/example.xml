@@ -16,7 +16,7 @@
     <arc:ip>123.1.2.3</arc:ip>
     <arc:operator>stack at archive dot org</arc:operator>
     <arc:software>Heritrix 0.7.1 http://crawler.archive.org</arc:software>
-    <arc:robots-honored>false</arc:robots-honored>
+    <arc:robots>classic</arc:robots>
     <arc:http-header-from>stack@crawler.archive.org</arc:http-header-from>
     <arc:http-header-user-agent>os-heritrix/0.7.1
         (+http://crawler.archive.org) </arc:http-header-user-agent>
