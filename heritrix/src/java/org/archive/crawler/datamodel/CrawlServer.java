@@ -55,6 +55,11 @@ public class CrawlServer implements Serializable {
     long robotsFetched = ROBOTS_NOT_FETCHED;
     Checksum robotstxtChecksum;
 
+    // how many consecutive connection errors have been encountered;
+    // used to drive exponentially increasing retry timeout or decision
+    // to 'freeze' entire class (queue) of URIs
+    int consecutiveConnectionErrors = 0;
+    
     /** Creates a new CrawlServer object.
      * 
      * @param h the host string for the server.
@@ -256,6 +261,20 @@ public class CrawlServer implements Serializable {
      */
     public void setSettingsHandler(SettingsHandler settingsHandler) {
         this.settingsHandler = settingsHandler;
+    }
+
+    /**
+     * 
+     */
+    public void incrementConsecutiveConnectionErrors() {
+        consecutiveConnectionErrors++;
+    }
+
+    /**
+     * 
+     */
+    public void resetConsecutiveConnectionErrors() {
+        consecutiveConnectionErrors = 0;
     }
 
 }
