@@ -223,7 +223,7 @@ public class Frontier
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);
             caUri.setIsSeed(true);
-            schedule(caUri);
+            scheduleHigh(caUri);
         }
     }
 
