@@ -34,23 +34,47 @@
     </section>
     <section name="News and Status">
 
-    <subsection name="Release 0.8.1 05/28/2004">
-        <p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.8.1</a> fixes problems building heritrix
-        with maven 1.0 release candidate 2+ (maven-1.0-rc2, etc.).
+    <subsection name="1.0.0 first release candidate, 0.10.0 06/04/2004">
+        <p>Release for second heritrix workshop, Copenhagen 06/2004
+        (1.0.0 first release candidate). Added site-first prioritization,
+        fixed link extraction of multibyte URIs, added metadata to arcs as xml,
+        changed arc naming template, new user and developer manuals,
+        added basic/digest auth and http post/get login facility, and added
+        help to UI. Bug fixes. 
+        See <a href="/changes-report.html">Changes</a> log for detail.
         </p>
     </subsection>
+
+    <subsection name="Release 0.8.1 05/28/2004">
+        <p>Fixes to build with maven rc2+.
+        </p>
+    </subsection>
+
     <subsection name="Release 0.8.0 05/24/2004">
-        <p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.8.0</a> fixes problems using seed lists
-        of tens and more hosts, ameliorates too-many-open files, 
-        added basic reporting to UI, as well as a bunch of 
-        bug fixes: See <a href="/changes-report.html">Changes</a> log.
+        <p>Release (and branch heritrix-0_8 made at the heritrix-0_7_1 tag)
+        because of concurrentmodificationexceptions if tens of seeds supplied
+        and to fix domain-scope leakage. Also, made continuous build
+        publically available, incorporated integration selftest into build,
+        made it a maven-build only (ant-build no longer supported), added
+        day/night configurations (refinements), ameliorated too-many-open
+        files, added exploit of http-header content-type charset creating
+        character streams, and heritrix now crawls ssl sites. UI improvements
+        include red start by bad configuration, precompilation, and
+        delineation of advanced settings. 
+        See <a href="/changes-report.html">Changes</a> log for detail.
         </p>
     </subsection>
 
     <subsection name="Release 0.6.0 03/25/2004">
-        <p>See <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.6.0</a>.  Lots of fixes and features.
-        See the <a href="/changes-report.html">Changes</a> log.
-        We've also spent some time optimizing.</p>
+        <p>Release made in advance of radical frontier changes.
+        Added bandwidth throttle, operator 'diary', settable robots expiration,
+        crawler cookie pre-population, and changing of certain options
+        mid-crawl. Many UI improvements including UI display of critical
+        exceptions, UI desccription of job-order options, and improved
+        reporting.  Optimizations.  Updated httpclient lib to 2.0 release and
+        jmx libs to 1.2.1.
+        See <a href="/changes-report.html">Changes</a> log for detail.
+        </p>
     </subsection>
 
     <subsection name="Point Release 0.4.1 02/12/2004">
@@ -59,7 +83,13 @@
     </subsection>
 
     <subsection name="Release 0.4.0 02/10/2004">
-        <p>See <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.4.0</a>.</p>
+        <p>Release made for heritrix workshop, San Francisco, 02/2004.
+        New MBEAN-based configuration, extensive UI revamp, first unit
+        tests and integration selftest framework added, pooling of
+        ARCWriters, new cmd-line start scripts, httpclient lib update (2.0RC3)
+        and bugfixes.
+        See <a href="/changes-report.html">Changes</a> log for detail.
+        </p>
     </subsection>
 
     <subsection name="First Release 01/05/2004">
