@@ -18,12 +18,25 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
 
+import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.settings.ComplexType;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.util.ArchiveUtils;
@@ -33,6 +46,32 @@ import org.archive.util.ArchiveUtils;
  * in order when the crawler is running.<br>
  * Basically this provides a layer between any potential user interface and 
  * the CrawlController and the details of a crawl.
+ * <p>
+ * The jobs managed by the handler can be divided into the following:
+ * <ul>
+ *  <li> <code>Pending</code> - Jobs that are ready to run and are waiting their
+ *                              turn. These can be edited, viewed, deleted etc.
+ *  <li> <code>Running</code> - Only one job can be running at a time. There may
+ *                              be no job running. The running job can be viewed 
+ *                              and edited to some extent. It can also be 
+ *                              terminated. This job should have a 
+ *                              StatisticsTracking module attached to it for more
+ *                              details on the crawl.
+ * <li><code>Completed</code> - Jobs that have finished crawling or have been
+ *                              deleted from the pending queue or terminated
+ *                              while running. They can not be edited but can be
+ *                              viewed. They retain the StatisticsTracking
+ *                              module from their run.
+ *  <li> <code>New job</code> - At any given time their can be one 'new job' the 
+ *                              new job is not considered ready to run. It can
+ *                              be edited or discarded (in which case it will be
+ *                              totally destroyed, including any files on disk).
+ *                              Once an operator deems the job ready to run it 
+ *                              can be moved to the pending queue.
+ * <li> <code>Profiles</code> - Jobs under profiles are not actual jobs. They can 
+ *                              be edited normally but can not be submitted to
+ *                              to the pending queue. New jobs can be created 
+ *                              using a profile as it's template. 
  * 
  * @author Kristinn Sigurdsson
  * 
@@ -95,6 +134,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
     private CrawlJob currentJob = null;
 
     /**
+     * A new job that is being created/configured. Not yet ready for crawling.
+     */
+    private CrawlJob newJob = null;
+
+    /**
      * A list of pending CrawlJobs.
      */
     private Vector pendingCrawlJobs = new Vector();
@@ -103,6 +147,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * A list of completed CrawlJobs
      */
     private Vector completedCrawlJobs = new Vector();
+    
+    /**
+     * A list of profile CrawlJobs.
+     */
+    private Vector profileJobs = new Vector();
+    // The UIDs of profiles should be NOT be timestamps. A descriptive name is ideal.
 
     /**
      * If true the crawler is 'running'. That is the next pending job will start
@@ -134,15 +184,24 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
     
     /**
-     * Submit a job to the handler. At present it will not take the job's
-     * priority into consideration.
+     * Submit a job to the handler. Job will be scheduled for crawling. At present 
+     * it will not take the job's* priority into consideration.
      * 
      * @param job A new job for the handler
      */
-
     public void addJob(CrawlJob job) {
         job.setStatus(CrawlJob.STATUS_PENDING);
+        if(job.isNew()){
+            // Are adding the new job to the pending queue.
+            newJob = null;
+            job.setNew(false);
+        }
         pendingCrawlJobs.add(job);
+        if(crawling == false && isRunning())
+        {
+            // Start crawling
+            startNextJob();
+        }
     }
 
     /**
@@ -175,15 +234,22 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Return a job with the given UID.  
-     * Doesn't matter if it's pending, currently running or has finished running.
+     * Doesn't matter if it's pending, currently running,has finished running is
+     * new or a profile.
      * 
      * @param jobUID The unique ID of the job.
      * @return The job with the UID or null if no such job is found
      */
     public CrawlJob getJob(String jobUID) {
+        if(jobUID == null){
+            return null; //UID can't be null
+        }
         // First check currently running job
         if (currentJob != null && currentJob.getUID().equals(jobUID)) {
             return currentJob;
+        } else if (newJob != null && newJob.getUID().equals(jobUID)) {
+            // Then check the 'new job'
+            return newJob;
         } else {
             // Then check pending jobs.
             Iterator itPend = pendingCrawlJobs.iterator();
@@ -194,10 +260,19 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
 
-            // Finally check completed jobs.
+            // The check completed jobs.
             Iterator itComp = completedCrawlJobs.iterator();
             while (itComp.hasNext()) {
                 CrawlJob cj = (CrawlJob) itComp.next();
+                if (cj.getUID().equals(jobUID)) {
+                    return cj;
+                }
+            }
+            
+            // And finally check the profiles.
+            Iterator itProfile = profileJobs.iterator();
+            while (itProfile.hasNext()) {
+                CrawlJob cj = (CrawlJob) itProfile.next();
                 if (cj.getUID().equals(jobUID)) {
                     return cj;
                 }
@@ -308,7 +383,85 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public String getNextJobUID() {
         return ArchiveUtils.TIMESTAMP17.format(new Date());
     }
+    
+    /**
+     * Creates a new job. The new job will be returned and also registered as the
+     * handler's 'new job'. The new job will be based on the settings provided but
+     * created in a new location on disk.
+     * @param profileSettingsHandler The (XML) settings handler of the settings that should
+     *                        form the basis for the new job.
+     * @param name The name of the new job. 
+     * @return The new crawl job.
+     */
+    public CrawlJob newJob(XMLSettingsHandler profileSettingsHandler,String name){
+        CrawlerSettings orderfile = profileSettingsHandler.getSettingsObject(null);
+ 
+        orderfile.setName(name);
+        
+        // Get a UID.
+        String newUID = getNextJobUID();
+        
+        // Create filenames etc.
+        File f = new File("jobs"+File.separator+newUID);
+        f.mkdirs();
+        String seedfile = "jobs"+File.separator+newUID+File.separator+"seeds-"+orderfile.getName()+".txt";
+        
+        try {
+            ((ComplexType)profileSettingsHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
+        } catch (AttributeNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (InvalidAttributeValueException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (MBeanException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (ReflectionException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        File newFile = new File("jobs"+File.separator+newUID+File.separator+"job-"+orderfile.getName()+"-1.xml");
+        profileSettingsHandler.writeSettingsObject(orderfile,newFile);
+        
+        BufferedWriter writer;
+        try {
+            writer = new BufferedWriter(new FileWriter(new File(seedfile)));
+            if (writer != null) {
+                // TODO Read seeds from profile.
+                writer.write("#Insert seeds");
+                writer.close();
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        try {
+            newJob = new CrawlJob(getNextJobUID(),name,new XMLSettingsHandler(newFile),CrawlJob.PRIORITY_AVERAGE);
+        } catch (InvalidAttributeValueException e2) {
+            // TODO Auto-generated catch block
+            e2.printStackTrace();
+        }
+        return newJob;
+    }
 
+    /**
+     * Discard the handler's 'new job'. This will remove any files/directories
+     * written to disk.
+     */
+    public void discardNewJob(){
+        //TODO: Implement
+    }
+    
+    /**
+     * Get the handler's 'new job'
+     * @return the handler's 'new job'
+     */
+    public CrawlJob getNewJob(){
+        return newJob;
+    }
+    
     /**
      * Is the crawler accepting crawl jobs to run?
      * @return True if the next availible CrawlJob will be crawled. False otherwise.

@@ -25,7 +25,9 @@ import org.archive.crawler.framework.StatisticsTracking;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and 
- * methods needed by a CrawlJobHandler to accept and execute them.
+ * methods needed by a CrawlJobHandler to accept and execute them. A given crawl
+ * job may also be a 'profile' for a crawl. In that case it should not be executed
+ * as a crawl but can be edited and used as a template for creating new CrawlJobs.
  * 
  * @author Kristinn Sigurdsson
  * 
@@ -74,13 +76,15 @@ public class CrawlJob
     public static final String STATUS_MISCONFIGURED = "Could not launch job - Fatal InitializationException";
 
     // Class variables	
-    protected String UID;       //A UID issued by the CrawlJobHandler.
-    protected String name;
-    protected String status;
-    protected boolean isReadOnly = false;
-    protected StatisticsTracking stats;
-    protected int priority;
-    protected int orderVersion;
+    private String UID;       //A UID issued by the CrawlJobHandler.
+    private String name;
+    private String status;
+    private boolean isReadOnly = false;
+    private boolean isNew = true;
+    private boolean isProfile = false;
+    private StatisticsTracking stats;
+    private int priority;
+    private int orderVersion;
     
     protected SettingsHandler settingsHandler;
 
@@ -168,7 +172,7 @@ public class CrawlJob
 	/**
      * Get this job's level of priority.
 	 * 
-	 * @return this job's set priority
+	 * @return this job's priority
      * @see #setJobPriority(int)
      * @see #PRIORITY_MINIMAL
      * @see #PRIORITY_LOW
@@ -232,4 +236,33 @@ public class CrawlJob
     public SettingsHandler getSettingsHandler(){
         return settingsHandler;
     }
+    /**
+     * @return
+     */
+    public boolean isNew() {
+        return isNew;
+    }
+
+    /**
+     * @return
+     */
+    public boolean isProfile() {
+        return isProfile;
+    }
+
+    /**
+     * @param b
+     */
+    public void setNew(boolean b) {
+        isNew = b;
+    }
+
+    /**
+     * Set's wether or not this job is a profile.
+     * @param b True/False
+     */
+    public void setProfile(boolean b) {
+        isProfile = b;
+    }
+
 }
