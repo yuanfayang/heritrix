@@ -1429,7 +1429,7 @@ public class MyFrontier extends ModuleType implements URIFrontier,
     <para>Basically the innerProcess method uses the CrawlURI that is passed
     to it as a parameter (see <xref linkend="editingCURI" />) and the
     underlying HttpRecorder (managed by the ToeThread) (see <xref
-    linkend="httprecorder" />) to perform whatever actions are needed. </para>
+    linkend="httprecorder" />) to perform whatever actions are needed.</para>
 
     <para>Fetchers read the CrawlURI, fetch the relevant document and write to
     the HttpRecorder. Extractors read the HttpRecorder and add the discovered
@@ -1508,8 +1508,7 @@ public class MyFrontier extends ModuleType implements URIFrontier,
 
           <para>Keys to values and objects placed in it are defined in the
           <ulink
-          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">CoreAttributeConstants</ulink>.
-          </para>
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">CoreAttributeConstants</ulink>.</para>
 
           <para>It is of course possible to add any arbitrary entry to it but
           that requires writing both the module that sets the value and the
@@ -1683,6 +1682,168 @@ public class MyFrontier extends ModuleType implements URIFrontier,
       <title>An example processor</title>
 
       <para>The following example is a very simple extractor.</para>
+
+      <programlisting>package org.archive.crawler.extractor;
+
+import java.util.regex.Matcher;
+
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
+import org.archive.util.TextUtils;
+
+/**
+ * A very simple extractor. Will assume that any string that matches a 
+ * configurable regular expression is a link.
+ *
+ * @author Kristinn Sigurdsson
+ */
+public class SimpleExtractor extends Processor
+    implements CoreAttributeConstants
+{
+    public static final String ATTR_REGULAR_EXPRESSION = "input-param";
+    public static final String DEFAULT_REGULAR_EXPRESSION = 
+        "http://([a-zA-Z0-9]+\\.)+[a-zA-Z0-9]+/"; //Find domains
+    
+    int numberOfCURIsHandled = 0; 
+    int numberOfLinksExtracted = 0;
+
+    public SimpleExtractor(String name) { <co id="simple_1"
+          linkends="co_simple_1" />
+        super(name, "A very simple link extractor. Doesn't do anything useful.");
+        Type e;
+        e = addElementToDefinition(new SimpleType(ATTR_REGULAR_EXPRESSION,
+            "How deep to look into files for URI strings, in bytes",
+            DEFAULT_REGULAR_EXPRESSION));
+        e.setExpertSetting(true);
+    }
+
+    protected void innerProcess(CrawlURI curi) {
+
+        if (!curi.isHttpTransaction()) <co id="simple_2"
+          linkends="co_simple_2" />
+        {
+            // We only handle HTTP at the moment.
+            return;
+        }
+        
+        numberOfCURIsHandled++; <co id="simple_3" linkends="co_simple_3" />
+
+        CharSequence cs = curi.getHttpRecorder().getReplayCharSequence(); <co
+          id="simple_4" linkends="co_simple_4" />
+        String regexpr = null;
+        try {
+            regexpr = (String)getAttribute(ATTR_REGULAR_EXPRESSION,curi); <co
+          id="simple_5" linkends="co_simple_5" />
+        } catch(AttributeNotFoundException e) {
+            regexpr = DEFAULT_REGULAR_EXPRESSION;
+        }
+
+        Matcher match = TextUtils.getMatcher(regexpr, cs); <co id="simple_6"
+          linkends="co_simple_6" />
+        
+        while (match.find()){ 
+            String link = cs.subSequence(match.start(),match.end()).toString(); <co
+          id="simple_7" linkends="co_simple_7" />
+            curi.addLinkToCollection(link,A_HTML_LINKS);<co id="simple_8"
+          linkends="co_simple_8" />
+            numberOfLinksExtracted++; <co id="simple_9" linkends="co_simple_9" />
+            System.out.println("SimpleExtractor: " + link); <co id="simple_10"
+          linkends="co_simple_10" />
+        }
+        
+        TextUtils.freeMatcher(match); <co id="simple_11"
+          linkends="co_simple_11" />
+    }
+
+    public String report() { <co id="simple_12" linkends="co_simple_12" />
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor." +
+            "SimpleExtractor\n");
+        ret.append("  Function:          Example extractor\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+
+        return ret.toString();
+    }
+}</programlisting>
+
+      <calloutlist>
+        <callout arearefs="simple_1" id="co_simple_1">
+          <para>The constructor. As with any Heritrix module it set's up the
+          processors name, description and configurable parameters. In this
+          case the only configurable parameter is the Regular expression that
+          will be used to find links. Both a name and a default value is
+          provided for this parameter. It is also marked as an expert
+          setting.</para>
+        </callout>
+
+        <callout arearefs="simple_2" id="co_simple_2">
+          <para>Check if the URI was fetched via a HTTP transaction. If not it
+          is probably a DNS lookup or was not fetched. Either way regular link
+          extraction is not possible.</para>
+        </callout>
+
+        <callout arearefs="simple_3" id="co_simple_3">
+          <para>If we get this far then we have a URI that the processor will
+          try to extract links from. Bump URI counter up by one.</para>
+        </callout>
+
+        <callout arearefs="simple_4" id="co_simple_4">
+          <para>Get the ReplayCharSequence. Can apply regular expressions on
+          it directly.</para>
+        </callout>
+
+        <callout arearefs="simple_5" id="co_simple_5">
+          <para>Look up the regular expression to use. If the attribute is not
+          found we'll use the default value.</para>
+        </callout>
+
+        <callout arearefs="simple_6" id="co_simple_6">
+          <para>Apply the regular expression. We'll use the <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/util/TextUtils.html#getMatcher(java.lang.String,%20java.lang.CharSequence)">TextUtils.getMatcher()</ulink>
+          utility method for performance reasons.</para>
+        </callout>
+
+        <callout arearefs="simple_7" id="co_simple_7">
+          <para>Extract a link discovered by the regular expression from the
+          character sequence and store it as a string.</para>
+        </callout>
+
+        <callout arearefs="simple_8" id="co_simple_8">
+          <para>Add discovered link to the collection of regular links
+          extracted from the current URI.</para>
+        </callout>
+
+        <callout arearefs="simple_9" id="co_simple_9">
+          <para>Note that we just discovered another link.</para>
+        </callout>
+
+        <callout arearefs="simple_10" id="co_simple_10">
+          <para>This is a handy debug line that will print each extracted link
+          to the standard output. You would not want this in production
+          code.</para>
+        </callout>
+
+        <callout arearefs="simple_11" id="co_simple_11">
+          <para>Free up the matcher object. This too is for performance. See
+          the related <ulink
+          url="http://crawler.archive.org/apidocs/org/archive/util/TextUtils.html#freeMatcher(java.util.regex.Matcher)">javadoc</ulink>.</para>
+        </callout>
+
+        <callout arearefs="simple_12" id="co_simple_12">
+          <para>The report states the name of the processor, it's function and
+          the totals of how many URIs were handled and how many links were
+          extracted. A fairly typical report for an extractor.</para>
+        </callout>
+      </calloutlist>
+
+      <para>Even though the example above is fairly simple the processor
+      nevertheless works as intended. </para>
     </sect2>
 
     <sect2>
