@@ -134,6 +134,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 
     /**
      * @param curi
+     * @return
      */
     private URI getBaseURI(CrawlURI curi) {
         if (!curi.getAList().containsKey(A_HTML_BASE)) {
@@ -154,7 +155,6 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
         if ( curi.getDeferrals() > maxDeferrals ) {
             // too many deferrals, equals failure
             curi.setFetchStatus(S_PREREQUISITE_FAILURE);
-            //failureDisposition(curi);
             return;
         }
         
@@ -211,7 +211,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @param baseUri URI that is used to resolve links.
      * @param collection Collection name.
      * @param linkType Type of links.
-     * @param priority Scheduling priority of links.
+     * @param directive how should URIs be scheduled
      */    
     private void handleLinkCollection(CrawlURI curi, URI baseUri,
             String collection, char linkType, String directive)
@@ -236,13 +236,10 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
                     seed = true;
                 }
             } catch (MBeanException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             } catch (ReflectionException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             } catch (AttributeNotFoundException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
