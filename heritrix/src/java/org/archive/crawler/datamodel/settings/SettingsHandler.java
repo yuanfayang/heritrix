@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -308,6 +310,44 @@ public abstract class SettingsHandler {
      */
     public CrawlOrder getOrder() {
         return order;
+    }
+    
+    /** Instatiate a new CrawlerModule given its name and className.
+     * 
+     * @param name the name for the new ComplexType.
+     * @param className the class name of the new ComplexType.
+     * @return an instance of the class identified by className.
+     * 
+     * @throws InvocationTargetException
+     */
+    public static CrawlerModule instantiateCrawlerModuleFromClassName(
+            String name, String className)
+            throws InvocationTargetException {
+
+        Class cl;
+        try {
+            cl = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            throw new InvocationTargetException(e);
+        }
+
+        CrawlerModule module;
+        try {
+            Constructor co =
+                cl.getConstructor(new Class[] { String.class });
+            module = (CrawlerModule) co.newInstance(new Object[] { name });
+        } catch (IllegalArgumentException e) {
+            throw new InvocationTargetException(e);
+        } catch (InstantiationException e) {
+            throw new InvocationTargetException(e);
+        } catch (IllegalAccessException e) {
+            throw new InvocationTargetException(e);
+        } catch (SecurityException e) {
+            throw new InvocationTargetException(e);
+        } catch (NoSuchMethodException e) {
+            throw new InvocationTargetException(e);
+        }
+        return module;
     }
     
     /**
