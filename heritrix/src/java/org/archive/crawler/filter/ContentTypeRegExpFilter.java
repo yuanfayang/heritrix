@@ -35,7 +35,8 @@ public class ContentTypeRegExpFilter extends URIRegExpFilter {
     private static final String DESCRIPTION = "ContentType regexp filter.\n" +
         "Cannot be used until after fetcher processors. Only then is the" +
         " Content-Type known. A good place for this filter is at" +
-        " the writer step processing.";
+        " the writer step processing.  If the content-type is null," +
+        " 301s usually have no content-type, the filter returns true.";
 
     /**
      * @param name Filter name.
@@ -56,7 +57,8 @@ public class ContentTypeRegExpFilter extends URIRegExpFilter {
         }
         String content_type = ((CrawlURI)o).getContentType();
         String regexp = getRegexp(o);
-        return (content_type == null || regexp == null)?  
-            false: TextUtils.matches(getRegexp(o), content_type);
+        return (regexp == null)? false:
+            (content_type == null)? true:
+                TextUtils.matches(getRegexp(o), content_type);
     }
 }
