@@ -42,8 +42,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+
 import org.archive.io.MappedByteBufferInputStream;
 import org.archive.io.PositionableStream;
+
 
 /**
  * Get an iterator on an arc file or get a record by absolute position.
