@@ -4,3 +4,4 @@
 org.archive.crawler.frontier.HostQueuesFrontier
 org.archive.crawler.frontier.DiskIncludedFrontier
 org.archive.crawler.frontier.DomainSensitiveFrontier
+org.archive.crawler.frontier.BdbFrontier
