@@ -403,9 +403,12 @@ implements Serializable, Lineable {
     /**
      * Assumption is that only one at a thread will ever be accessing
      * a CandidateURI.
+     * 
+     * @deprecated Public access will be deprecated.  This methods access
+     * will change in next release.
      * @return the attribute list.
      */
-    protected AList getAList() {
+    public AList getAList() {
         if (this.alist == null) {
             this.alist = new HashtableAList();
         }
