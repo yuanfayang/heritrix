@@ -28,7 +28,12 @@
 									"org.archive.crawler.basic.CrawlStateUpdater|Updater",
 									"org.archive.crawler.basic.Postselector|Postselector"
 									};
-
+	String[] availibleScopes = {"org.archive.crawler.framework.CrawlScope",
+								"org.archive.crawler.scope.DomainScope",
+								"org.archive.crawler.scope.HostScope",
+								"org.archive.crawler.scope.PathScope",
+								"org.archive.crawler.scope.FilterScope"};
+	
 	// Get the default settings.
 	
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
@@ -83,6 +88,15 @@
 			String className = request.getParameter("cboFrontier");
 			CrawlerModule tmp = SettingsHandler.instantiateCrawlerModuleFromClassName("frontier",className);
 			settingsHandler.getOrder().setAttribute(tmp);
+			// Write changes
+			settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
+		}else if(action.equals("scope")){
+			// Change scope
+			String className = request.getParameter("cboScope");
+			CrawlerModule tmp = SettingsHandler.instantiateCrawlerModuleFromClassName(org.archive.crawler.framework.CrawlScope.ATTR_NAME,className);
+			settingsHandler.getOrder().setAttribute(tmp);
+			// Write changes
+			settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
 		}else if(action.equals("processors")){
 			//Doing something with the processors
 			String subaction = request.getParameter("subaction");
@@ -145,6 +159,11 @@
 		doSubmit();
 	}
 	
+	function doSetScope(){
+		document.frmModules.action.value="scope";
+		doSubmit();
+	}
+	
 	function doMoveUpProcessor(proc){
 		document.frmModules.action.value="processors";
 		document.frmModules.subaction.value="up";
@@ -204,7 +223,32 @@
 				</td>
 			</tr>
 		</table>
-		
+	
+		<p>
+			<b>Select crawl scope</b>
+		<p>
+		<table>
+			<tr>
+				<td>
+					<select name="cboScope">
+					<%
+						MBeanAttributeInfo scope = settingsHandler.getOrder().getAttributeInfo("scope");
+						for(int i=0 ; i<availibleScopes.length ; i++){
+							out.print("<option value='"+availibleScopes[i]+"'");
+							if(scope.getType().equals((String)availibleScopes[i])){
+								out.print(" selected");
+							}
+							out.println(">"+ availibleScopes[i]+"</option>");
+						}
+					%>
+					</select>
+				</td>
+				<td>
+					<input type="button" value="Set scope" onClick="doSetScope()">
+				</td>
+			</tr>
+		</table>
+				
 		<p>
 			<b>Select Processors</b>
 		<p>
