@@ -24,21 +24,23 @@
 
 	/* Location of logs */
 	SettingsHandler settingsHandler = null;
+	CrawlJob theJob = null;
 	if(request.getParameter("job") != null && request.getParameter("job").length() > 0){
 		//Get logs for specific job. This assumes that the logs for each job are stored in a unique location.
-		settingsHandler = handler.getJob(request.getParameter("job")).getSettingsHandler();
+		theJob = handler.getJob(request.getParameter("job"));
 	}else{
 		if(handler.getCurrentJob() != null){
 			// If no specific job then assume current one
-			settingsHandler = handler.getCurrentJob().getSettingsHandler();
+			theJob = handler.getCurrentJob();
 		} else if(handler.getCompletedJobs().size() > 0){
 			// If no current job, use the latest completed job.
-			settingsHandler = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getSettingsHandler();
+			theJob = (CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1);
 		}
 	}
 	
-	if(settingsHandler != null)
+	if(theJob != null)
 	{
+		settingsHandler = theJob.getSettingsHandler();
 		String diskPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_DISK_PATH);
 		diskPath = settingsHandler.getPathRelativeToWorkingDirectory(diskPath)+"/";
 
@@ -139,6 +141,7 @@
 	</script>
 
 	<form method="get" action="logs.jsp" name="frmLogs">
+		<input type="hidden" name="job" value="<%=theJob.getUID()%>"
 		<table border="0" cellspacing="0" cellpadding="0">
 			<tr>
 				<td height="3"></td>
@@ -271,7 +274,7 @@
 		</tr>
 		<tr>
 			<td colspan="3">
-				&nbsp;<%=fileName%>
+				&nbsp;<%=fileName%> for <%=theJob.getJobName()%>
 			</td>
 		</tr>
 		<tr>
