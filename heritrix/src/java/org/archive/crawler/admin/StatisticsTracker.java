@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -94,11 +95,18 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTracker extends AbstractTracker
-                    implements CrawlURIDispositionListener{
-
+implements CrawlURIDispositionListener{
+    /**
+     * Messages from the StatisticsTracker.
+     */
+    private final static Logger logger =
+        Logger.getLogger(StatisticsTracker.class.getName());
+    
     // TODO: Class needs to be serializable.
-    // TODO: Need to be able to specify file where the object will be written once the CrawlEnded event occurs
-    // TODO: Need to be able to save object on Checkpointing as well as CrawlEnded.
+    // TODO: Need to be able to specify file where the object will be
+    // written once the CrawlEnded event occurs
+    // TODO: Need to be able to save object on Checkpointing as well
+    // as CrawlEnded.
 
     protected long lastPagesFetchedCount = 0;
     protected long lastProcessedBytesCount = 0;
@@ -108,7 +116,6 @@ public class StatisticsTracker extends AbstractTracker
      */
     protected long discoveredUriCount = 0;
     protected long queuedUriCount = 0;
-    protected long pendingUriCount = 0;
     protected long finishedUriCount = 0;
 
     protected long downloadedUriCount = 0;
@@ -141,7 +148,7 @@ public class StatisticsTracker extends AbstractTracker
     protected Hashtable processedSeedsStatusCodes = new Hashtable();
 
     /** Cache seed list */
-    protected Vector allSeeds = new Vector();
+    protected List allSeeds = new Vector();
 
     /** Seed successfully crawled */
     public static final String SEED_DISPOSITION_SUCCESS =
@@ -165,21 +172,14 @@ public class StatisticsTracker extends AbstractTracker
                 "with the web UI and creates the progress-statistics log.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.StatisticsTracking#initalize(org.archive.crawler.framework.CrawlController)
-     */
-    public void initalize(CrawlController c) {
-        super.initalize(c);
+    public void initialize(CrawlController c) {
+        super.initialize(c);
         controller.addCrawlURIDispositionListener(this);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.AbstractTracker#logActivity()
-     */
     protected synchronized void logActivity() {
         // This method loads "snapshot" data.
         discoveredUriCount = discoveredUriCount();
-        pendingUriCount = pendingUriCount();
         downloadedUriCount = successfullyFetchedCount();
         finishedUriCount = finishedUriCount();
         queuedUriCount = queuedUriCount();
@@ -195,17 +195,22 @@ public class StatisticsTracker extends AbstractTracker
             return; //Not enough time has passed for a decent snapshot.
         }
         else{
-            docsPerSecond = (double) downloadedUriCount / (double)(getCrawlerTotalElapsedTime() / 1000);
-            totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())    / 1000)) + .5 ); // round to nearest long
+            docsPerSecond = (double) downloadedUriCount /
+                (double)(getCrawlerTotalElapsedTime() / 1000);
+            // Round to nearest long.
+            totalKBPerSec = (long)(((totalProcessedBytes / 1024) /
+                 ((getCrawlerTotalElapsedTime()) / 1000)) + .5 );
         }
 
         busyThreads = activeThreadCount();
 
-        if(shouldrun || (System.currentTimeMillis() - lastLogPointTime) >= 1000)
+        if(shouldrun ||
+            (System.currentTimeMillis() - lastLogPointTime) >= 1000)
         {
-            // If shouldrun is false there is a chance that the time interval since
-            // last time is too small for a good sample.  We only want to update
-            // "current" data when the interval is long enough or shouldrun is true.
+            // If shouldrun is false there is a chance that the time interval
+            // since last time is too small for a good sample.  We only want
+            // to update "current" data when the interval is long enough or
+            // shouldrun is true.
             currentDocsPerSecond = 0;
             currentKBPerSec = 0;
 
@@ -213,10 +218,10 @@ public class StatisticsTracker extends AbstractTracker
             long currentTime = System.currentTimeMillis();
             long sampleTime = currentTime - lastLogPointTime;
 
-            // if we haven't done anyting or there isn't a reasonable sample size give up.
+            // if we haven't done anyting or there isn't a reasonable sample
+            // size give up.
             if(sampleTime >= 1000)
             {
-
                 // Update docs/sec snapshot
                 long currentPageCount = successfullyFetchedCount();
                 long samplePageCount = currentPageCount - lastPagesFetchedCount;
@@ -468,23 +473,6 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
-     * Number of URIs that are awaiting detailed processing.
-     *
-     * <p>If crawl not running (paused or stopped) this will return the value
-     * of the last snapshot.
-     *
-     * @return The number of URIs in the frontier (found but not processed)
-     *
-     * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
-     */
-    public long pendingUriCount() {
-
-        // While shouldrun is true we can use info direct from the crawler.
-        // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().pendingUriCount() : pendingUriCount;
-    }
-
-    /**
      * This returns the number of completed URIs as a percentage of the total
      * number of URIs encountered (should be inverse to the discovery curve)
      *
@@ -510,7 +498,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return A count of all uris encountered
      *
-     * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
+     * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
@@ -523,7 +511,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return Number of URIs that have finished processing
      *
-     * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
+     * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
         return shouldrun ? controller.getFrontier().finishedUriCount() : finishedUriCount;
@@ -548,7 +536,8 @@ public class StatisticsTracker extends AbstractTracker
     public long disregardedFetchAttempts() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().disregardedFetchCount() : downloadDisregards;
+        return shouldrun ? controller.getFrontier().disregardedFetchCount() :
+            downloadDisregards;
     }
 
     /**
@@ -559,12 +548,13 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return The number of successully fetched URIs
      *
-     * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
      */
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedUriCount;
+        return shouldrun ? controller.getFrontier().successfullyFetchedCount():
+            downloadedUriCount;
     }
 
     /**
@@ -575,7 +565,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return Number of URIs queued up and waiting for processing.
      *
-     * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
+     * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
@@ -709,17 +699,22 @@ public class StatisticsTracker extends AbstractTracker
      * getURIString() values.
      * @return the seed iterator
      */
-    public Iterator getSeeds(){
-        if(this.shouldrun) {
-            List seeds = this.controller.getScope().getSeedlist();
-            this.allSeeds = new Vector();
-            synchronized (seeds) {
-                for(Iterator i = seeds.iterator(); i.hasNext();) {
-                    this.allSeeds.add(((UURI)i.next()).toString());
-                }
-            }
+    public Iterator getSeeds() {
+        if (this.shouldrun) {
+            this.allSeeds = getSeeds(this.controller);
         }
         return this.allSeeds.iterator();
+    }
+    
+    protected List getSeeds(CrawlController c) {
+        List seeds = c.getScope().getSeedlist();
+        List seedsCopy = new Vector();
+        synchronized (seeds) {
+            for(Iterator i = seeds.iterator(); i.hasNext();) {
+                seedsCopy.add(((UURI)i.next()).toString());
+            }
+        }
+        return seedsCopy;
     }
 
     /**
@@ -738,7 +733,10 @@ public class StatisticsTracker extends AbstractTracker
      * @return the seed iterator
      */
     public Iterator getSeedsSortedByStatusCode() {
-        Iterator tmp = getSeeds();
+        return getSeedsSortedByStatusCode(getSeeds());
+    }
+    
+    protected Iterator getSeedsSortedByStatusCode(Iterator i) {
         TreeSet sortedSet = new TreeSet(new Comparator() {
             public int compare(Object e1, Object e2) {
                 int firstCode = getSeedStatusCode((String) e1);
@@ -770,56 +768,74 @@ public class StatisticsTracker extends AbstractTracker
                 return ret;
             }
         });
-        while (tmp.hasNext()) {
-            sortedSet.add(tmp.next());
+        while (i.hasNext()) {
+            sortedSet.add(i.next());
         }
         return sortedSet.iterator();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
     public void crawlEnded(String sExitMessage) {
-        CrawlController controller = this.controller;
-
-        Iterator tmp = getSeeds(); // Need this before we do super.crawlEnded()
-
+        CrawlController c = this.controller;
         super.crawlEnded(sExitMessage);
-        // Need to write some reports at the end of the crawl.
-        String directory = controller.getDisk().getPath();
-        // seeds-report.txt
-
-        int maxURILength = 0;
-        while(tmp.hasNext()){
-            String tmpString = (String)tmp.next();
-            if(tmpString.length()>maxURILength){
-                maxURILength = tmpString.length();
+        report(c, sExitMessage);
+    }
+    
+    /**
+     * @return Length of longest URL.
+     */
+    protected int getLongestString(Iterator i) {
+        int max = 0;
+        for (; i != null && i.hasNext();) {
+            String tmp = (String)i.next();
+            if (tmp != null && tmp.length() > max) {
+                max = tmp.length();
             }
         }
-
-        //Ok, we now know how much space to allocate the seed name colum
+        return max;
+    }
+    
+    /**
+     * @return Get longest map entry key.
+     */
+    protected int getLongestMapEntryKey(Iterator i) {
+        int max = 0;
+        for (; i.hasNext();) {
+            Map.Entry mapEntry = (Map.Entry)i.next();
+            String key = mapEntry.getKey().toString();
+            if(key != null && key.length() > max) {
+                max = key.length();
+            }
+        }
+        return max;
+    }
+    
+    /**
+     * @return A summary of seeds crawled and not crawled.
+     */
+    protected SeedsSummary writeSeedsReport(CrawlController c) {
+        int maxURILength = getLongestString(getSeeds(c).iterator());
+        // Ok, we now know how much space to allocate the seed name colum
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
-        //Build header.
+        // Build header.
         rep.append("[seeds]");
-        rep.raAppend(maxURILength+11, "[res-code]");
+        rep.raAppend(maxURILength + 11, "[res-code]");
         rep.append(" [status]");
         rep.newline();
 
         int seedsCrawled = 0;
         int seedsNotCrawled = 0;
-
-        tmp = getSeedsSortedByStatusCode();
-        while(tmp.hasNext()){
-            String UriString = (String)tmp.next();
+        for (Iterator i = getSeedsSortedByStatusCode(getSeeds(c).iterator());
+                i.hasNext();) {
+            String UriString = (String)i.next();
             int code = getSeedStatusCode(UriString);
             String statusCode = "";
-            if(code != 0){
+            if (code != 0) {
                 statusCode = Integer.toString(code);
             }
             rep.append(UriString);
-            rep.raAppend(maxURILength+11,code);
-            if(code>0){
+            rep.raAppend(maxURILength + 11, code);
+            if (code > 0) {
                 rep.append(" CRAWLED");
                 seedsCrawled++;
             } else {
@@ -828,83 +844,46 @@ public class StatisticsTracker extends AbstractTracker
             }
             rep.newline();
         }
-
-        try {
-            FileWriter fw =
-                new FileWriter(directory+File.separator+"seeds-report.txt");
-            try {
-                fw.write(rep.toString());
-            } finally {
-                fw.close();
-            }
-            controller.addToManifest(directory+File.separator+"seeds-report.txt",
-                    CrawlController.MANIFEST_REPORT_FILE,true);
-        } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write seeds-report.txt",
-                    "Unable to write seeds-report.txt at the end of crawl.",e,
-                    Level.SEVERE));
-            e.printStackTrace();
-        }
-
-        // hosts-report.txt
-        tmp = getHostsDistribution().entrySet().iterator();
-
-        int maxHostLength = 0;
-        while(tmp.hasNext()){
-            Map.Entry tmpEntry = (Map.Entry)tmp.next();
-            if(tmpEntry.getKey().toString().length()>maxHostLength){
-                maxHostLength = tmpEntry.getKey().toString().length();
-            }
-        }
-
-        //Ok, we now know how much space to allocate the seed name colum
-        rep = new PaddingStringBuffer();
-
-        //Build header.
+        
+        writeReport(c, "seeds-report.txt", rep.toString());
+        return new SeedsSummary(seedsCrawled, seedsNotCrawled);
+    }
+    
+    protected void writeHostsReport(CrawlController c) {
+        // Get longest host name.
+        int maxHostLength = getLongestMapEntryKey(getHostsDistribution().
+            entrySet().iterator());
+        
+        // Ok, we now know how much space to allocate the seed name colum
+        PaddingStringBuffer rep = new PaddingStringBuffer();
+        
+        // Build header.
         rep.append("[host]");
-        rep.raAppend(maxHostLength+13, "[#urls]");
-        rep.raAppend(maxHostLength+26, "[#bytes]");
+        rep.raAppend(maxHostLength + 13, "[#urls]");
+        rep.raAppend(maxHostLength + 26, "[#bytes]");
         rep.newline();
-
+        
         TreeSet hostsDistribution = getSortedByValue(getHostsDistribution());
-        tmp = hostsDistribution.iterator();;
-        while(tmp.hasNext()){
-            Map.Entry host = (Map.Entry)tmp.next();
+        for (Iterator i = hostsDistribution.iterator(); i.hasNext();) {
+            Map.Entry host = (Map.Entry)i.next();
             rep.append(host.getKey().toString());
-            rep.raAppend(maxHostLength+13,((LongWrapper)host.getValue()).longValue);
-            rep.raAppend(maxHostLength+26,getBytesPerHost((String)host.getKey()));
-
+            rep.raAppend(maxHostLength + 13,
+                ((LongWrapper)host.getValue()).longValue);
+            rep.raAppend(maxHostLength + 26,
+                getBytesPerHost((String)host.getKey()));
             rep.newline();
         }
-
-        try {
-            FileWriter fw = new FileWriter(directory+File.separator+"hosts-report.txt");
-            fw.write(rep.toString());
-            fw.flush();
-            fw.close();
-            controller.addToManifest(directory+File.separator+"hosts-report.txt",
-                    CrawlController.MANIFEST_REPORT_FILE, true);
-        } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write hosts-report.txt",
-                    "Unable to write hosts-report.txt at the end of crawl.",e,
-                    Level.SEVERE));
-            e.printStackTrace();
-        }
-
-
-        // mimetype-report.txt
-        tmp = getFileDistribution().entrySet().iterator();
-
-        int maxMimeLength = 0;
-        while(tmp.hasNext()){
-            Map.Entry tmpEntry = (Map.Entry)tmp.next();
-            if(tmpEntry.getKey().toString().length()>maxMimeLength){
-                maxMimeLength = tmpEntry.getKey().toString().length();
-            }
-        }
+        
+        writeReport(c, "hosts-report.txt", rep.toString());
+    }
+    
+    protected void writeMimetypesReport(CrawlController c) {
+        int maxMimeLength = getLongestMapEntryKey(
+            getFileDistribution().entrySet().iterator());
+             
 
         //Ok, we now know how much space to allocate the seed name colum
-        rep = new PaddingStringBuffer();
+        PaddingStringBuffer rep = new PaddingStringBuffer();
 
         //Build header.
         rep.append("[mime-types]");
@@ -913,36 +892,20 @@ public class StatisticsTracker extends AbstractTracker
         rep.newline();
 
         TreeSet filesDistribution = getSortedByValue(getFileDistribution());
-        tmp = filesDistribution.iterator();;
-        while(tmp.hasNext()){
-            Map.Entry host = (Map.Entry)tmp.next();
+        for (Iterator i = filesDistribution.iterator(); i.hasNext();) {
+            Map.Entry host = (Map.Entry)i.next();
             rep.append(host.getKey().toString());
             rep.raAppend(maxMimeLength+13,((LongWrapper)host.getValue()).longValue);
             rep.raAppend(maxMimeLength+26,getBytesPerFileType((String)host.getKey()));
-
             rep.newline();
         }
-
-        try {
-            FileWriter fw = new FileWriter(directory+File.separator+"mimetype-report.txt");
-            fw.write(rep.toString());
-            fw.flush();
-            fw.close();
-            controller.addToManifest(directory+File.separator+"mimetype-report.txt",
-                    CrawlController.MANIFEST_REPORT_FILE, true);
-        } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write mimetype-report.txt",
-                    "Unable to write mimetype-report.txt at the end of crawl.",e,
-                    Level.SEVERE));
-            e.printStackTrace();
-        }
-
-        // responsecode-report.txt
-        tmp = getFileDistribution().entrySet().iterator();
-
+        
+        writeReport(c, "mimetype-report.txt", rep.toString());
+    }
+    
+    protected void writeResponseCodeReport(CrawlController c) {
         int maxCodeLength = 10;
-
-        rep = new PaddingStringBuffer();
+        PaddingStringBuffer rep = new PaddingStringBuffer();
 
         //Build header.
         rep.append("[rescode]");
@@ -950,41 +913,29 @@ public class StatisticsTracker extends AbstractTracker
         rep.newline();
 
         TreeSet statusCodeDistribution = getSortedByValue(getStatusCodeDistribution());
-        tmp = statusCodeDistribution.iterator();;
-        while(tmp.hasNext()){
-            Map.Entry host = (Map.Entry)tmp.next();
+        for (Iterator i = statusCodeDistribution.iterator(); i.hasNext(); ) {
+            Map.Entry host = (Map.Entry)i.next();
             rep.append(host.getKey().toString());
-            rep.raAppend(maxCodeLength+13,((LongWrapper)host.getValue()).longValue);
-
+            rep.raAppend(maxCodeLength+13, ((LongWrapper)host.getValue()).longValue);
             rep.newline();
         }
-
-        try {
-            FileWriter fw = new FileWriter(directory+File.separator+"responsecode-report.txt");
-            fw.write(rep.toString());
-            fw.flush();
-            fw.close();
-            controller.addToManifest(directory+File.separator+"responsecode-report.txt",
-                    CrawlController.MANIFEST_REPORT_FILE, true);
-        } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write responsecode-report.txt",
-                    "Unable to write responsecode-report.txt at the end of crawl.",e,
-                    Level.SEVERE));
-            e.printStackTrace();
-        }
-
-        // crawl-report.txt
-        rep = new PaddingStringBuffer();
-        rep.append("Crawl Name: " + controller.getOrder().getCrawlOrderName());
+        
+        writeReport(c, "responsecode-report.txt", rep.toString());
+    }
+    
+    protected void writeCrawlReport(CrawlController c, String exitMessage,
+            SeedsSummary seedsSummary) {
+        PaddingStringBuffer rep = new PaddingStringBuffer();
+        rep.append("Crawl Name: " + c.getOrder().getCrawlOrderName());
         rep.newline();
-        rep.append("Crawl Status: " + sExitMessage);
+        rep.append("Crawl Status: " + exitMessage);
         rep.newline();
         rep.append("Duration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));
         rep.newline();
-        rep.append("Total Seeds Crawled: " + seedsCrawled);
+        rep.append("Total Seeds Crawled: " + seedsSummary.getCrawled());
         rep.newline();
-        rep.append("Total Seeds not Crawled: " + seedsNotCrawled);
+        rep.append("Total Seeds not Crawled: " + seedsSummary.getNotCrawled());
         rep.newline();
         // hostsDistribution contains all hosts crawled plus an entry for dns.
         rep.append("Total Hosts Crawled: " + (hostsDistribution.size()-1));
@@ -1001,23 +952,55 @@ public class StatisticsTracker extends AbstractTracker
                 ") ");
         rep.newline();
 
+        writeReport(c, "crawl-report.txt", rep.toString());
+    }
+    
+    protected void writeReport(CrawlController c, String name,
+            String content) {
+        File f = new File(c.getDisk().getPath(), name);
         try {
-            FileWriter fw = new FileWriter(directory+File.separator+"crawl-report.txt");
-            fw.write(rep.toString());
-            fw.flush();
+            FileWriter fw = new FileWriter(f);
+            fw.write(content);
             fw.close();
-            controller.addToManifest(directory+File.separator+"crawl-report.txt",
-                    CrawlController.MANIFEST_REPORT_FILE, true);
+            c.addToManifest(f.getAbsolutePath(),
+                CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write crawl-report.txt",
-                    "Unable to write crawl-report.txt at the end of crawl.",e,
-                    Level.SEVERE));
+            Heritrix.addAlert(new Alert("Unable to write " + f.getName(),
+                "Unable to write " + f.getAbsolutePath() +
+                " at the end of crawl.", e, Level.SEVERE));
             e.printStackTrace();
         }
-
+        logger.info("Wrote " + f.getAbsolutePath());
+    }
+    
+    /**
+     * Run the reports.
+     * @param c A CrawlController instance.
+     * @param seeds A seeds iterator.
+     */
+    public void report(CrawlController c, String exitMessage) {
+        SeedsSummary seedsSummary = writeSeedsReport(c);
+        writeHostsReport(c);
+        writeMimetypesReport(c);
+        writeResponseCodeReport(c);
+        writeCrawlReport(c, exitMessage, seedsSummary);
         // TODO: Save object to disk?
     }
-
+    
+    protected class SeedsSummary {
+        final int crawled;
+        final int notCrawled;
+        protected SeedsSummary(int crawled, int notCrawled) {
+            this.crawled = crawled;
+            this.notCrawled = notCrawled;
+        }
+        public int getCrawled() {
+            return this.crawled;
+        }
+        public int getNotCrawled() {
+            return this.notCrawled;
+        }
+    }
 }
 
 
