@@ -561,9 +561,7 @@ public class Frontier
             case S_TOO_MANY_EMBED_HOPS :
                  // too far from last true link
             case S_TOO_MANY_LINK_HOPS :
-                // too far from seeds
-            case S_DELETED_BY_USER :
-                // user deleted
+                 // too far from seeds
                 return true;
             default:
                 return false;
@@ -659,7 +657,7 @@ public class Frontier
         while(!snoozeQueues.isEmpty()&&((URIStoreable)snoozeQueues.first()).getWakeTime()<=now) {
             URIStoreable awoken = (URIStoreable)snoozeQueues.first();
             if (!snoozeQueues.remove(awoken)) {
-                logger.severe("first() item couldn't be remove()d!");
+                logger.severe("first() item couldn't be remove()d! - "+awoken);
             }
             if (awoken instanceof KeyedQueue) {
                 assert inProcessMap.get(awoken.getClassKey()) == null : "false ready: class peer still in process";
@@ -1285,7 +1283,7 @@ public class Frontier
      */
     public void deleteURIsFromPending(String match) {
         // Create QueueItemMatcher
-        QueueItemMatcher mat = new URIQueueMatcher(match,true,this);
+        QueueItemMatcher mat = new URIQueueMatcher(match);
         // Delete from pendingHigh
         pendingHighQueue.deleteMatchedItems(mat);
         // Delete from all KeyedQueues
