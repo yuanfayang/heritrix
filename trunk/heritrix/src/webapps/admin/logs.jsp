@@ -22,11 +22,18 @@
 	}
 
 	/* Location of logs */
-	CrawlOrder crawlOrder = handler.getDefaultCrawlOrder();
-	if(handler.getCurrentJob() != null)
-	{
-		// Use current job settings rather then default
-		crawlOrder = handler.getCurrentJob().getCrawlOrder();
+	CrawlOrder crawlOrder = handler.getDefaultCrawlOrder(); //We'll use the default crawl order if we have no other choice
+	if(request.getParameter("job") != null && request.getParameter("job").length() > 0){
+		//Get logs for specific job. This assumes that the logs for each job are stored in a unique location.
+		crawlOrder = handler.getJob(request.getParameter("job"));
+	}else{
+		if(handler.getCurrentJob() != null){
+			// Use current job settings rather then default
+			crawlOrder = handler.getCurrentJob().getCrawlOrder();
+		} else if(handler.getCompletedJobs().size() > 0){
+			// If no current job, use the latest completed job.
+			crawlOrder = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getCrawlOrder();
+		}
 	}
 	String diskPath = crawlOrder.getStringAt(handler.XP_DISK_PATH)+"/";
 	
