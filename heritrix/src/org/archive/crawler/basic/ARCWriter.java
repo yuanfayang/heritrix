@@ -284,15 +284,19 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		writeMetaLine(curi,  recordLength);
 		
 		ReplayInputStream capture = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
-		capture.readFullyTo(out);
-		long remaining = capture.remaining();
-		if(remaining>0) {
-			DevUtils.warnHandle(new Throwable("n/a"),"gap between expected and actual");
-			while(remaining>0) {
-				// pad with zeros
-				out.write(0);
-				remaining--;
+		try {
+			capture.readFullyTo(out);
+			long remaining = capture.remaining();
+			if(remaining>0) {
+				DevUtils.warnHandle(new Throwable("n/a"),"gap between expected and actual: "+remaining+"\n"+DevUtils.extraInfo());
+				while(remaining>0) {
+					// pad with zeros
+					out.write(0);
+					remaining--;
+				}
 			}
+		} finally {
+			capture.close();
 		}
 		out.write('\n'); // trailing newline
 		
