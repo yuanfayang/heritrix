@@ -49,6 +49,7 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.HttpConstants;
 import org.apache.commons.httpclient.auth.AuthScheme;
 import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.auth.MalformedChallengeException;
@@ -106,6 +107,7 @@ public class FetchHTTP extends Processor
     public static final String ATTR_LOAD_COOKIES = "load-cookies-from-file";
     public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
     public static final String ATTR_ACCEPT_HEADERS = "accept-headers";
+    public static final String ATTR_DEFAULT_ENCODING = "default-encoding";
    
     /**
      * SSL trust level setting attribute name.
@@ -115,6 +117,14 @@ public class FetchHTTP extends Processor
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
     private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
+
+    /**
+     * Default character encoding to use for pages that do not specify.
+     * Instead of using HttpConstants.DEFAULT_CONTENT_CHARSET directly, define
+     * this here so the definition can be trivially changed later.
+     */
+    private static String DEFAULT_DEFAULT_ENCODING =
+        HttpConstants.DEFAULT_CONTENT_CHARSET;
 
    /**
      * Default setting for HttpClient's "strict mode".
@@ -175,13 +185,18 @@ public class FetchHTTP extends Processor
             "Accept Headers to include in each request. Each must be the"
             + " complete header, e.g., 'Accept-Language: en'"));
         e.setExpertSetting(true);
-        addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_HOST,
+        e = addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_HOST,
             "Proxy hostname (set only if needed)", ""));
         e.setExpertSetting(true);
-        addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_PORT,
+        e = addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_PORT,
             "Proxy port (set only if needed)", ""));
         e.setExpertSetting(true);
-
+        e = addElementToDefinition(new SimpleType(ATTR_DEFAULT_ENCODING,
+            "The character encoding to use for files that do not have one" +
+            " specified in the HTTP response headers.  Default: " +
+            "ISO-8859-1.",
+            DEFAULT_DEFAULT_ENCODING));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
@@ -269,7 +284,7 @@ public class FetchHTTP extends Processor
             System.currentTimeMillis());
 
         // Set the response charset into the HttpRecord if available.
-        rec.setCharacterEncoding(((HttpMethodBase)method).getResponseCharSet());
+        setCharacterEncoding(rec, method);
 
         // Set httpRecorder into curi for convenience of subsequent processors.
         curi.setHttpRecorder(rec);
@@ -305,6 +320,38 @@ public class FetchHTTP extends Processor
 
         // Save off the GetMethod just in case needed by subsequent processors.
         curi.getAList().putObject(A_HTTP_TRANSACTION, method);
+    }
+
+    /**
+     * Set the character encoding based on the result headers or default.
+     *
+     * The HttpClient returns its own default encoding ("ISO-8859-1") if one
+     * isn't specified in the Content-Type response header. We give the user
+     * the option of overriding this, so we need to detect the case where the
+     * default is returned.
+     *
+     * Now, it may well be the case that the default returned by HttpClient
+     * and the default defined by the user are the same.
+     * 
+     * @param rec Recorder for this request.
+     * @param method Method used for the request.
+     */
+    private void setCharacterEncoding(final HttpRecorder rec,
+                                      final HttpMethod method)
+    {
+        String encoding = null;
+
+        try {
+            encoding = ((HttpMethodBase) method).getResponseCharSet();
+            if (encoding == null ||
+                    encoding.equals(HttpConstants.DEFAULT_CONTENT_CHARSET)) {
+                encoding = (String) getAttribute(ATTR_DEFAULT_ENCODING);
+            }
+        } catch (Exception e) {
+            logger.warning("Failed get default encoding: " +
+                e.getLocalizedMessage());
+        }
+        rec.setCharacterEncoding(encoding);
     }
 
     /**
