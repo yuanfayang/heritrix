@@ -6,8 +6,12 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -63,6 +67,50 @@ public class XMLConfig {
 
 	}
 
+	/**
+	 * @param string
+	 * @return
+	 */
+	public BufferedReader nodeValueOrSrcReader(String xpath) {
+		return nodeValueOrSrcReader(getNodeAt("xpath"));
+	}
+
+	/**
+	 * @param string
+	 * @return
+	 */
+	public Node getNodeAt(String xpath) {
+		try {
+			return XPathAPI.selectSingleNode(xNode,xpath);
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static BufferedReader nodeValueOrSrcReader(Node node) {
+
+		try {
+			Node srcNode = XPathAPI.selectSingleNode(node,"@src");
+			if (srcNode != null ) {
+				return new BufferedReader(new FileReader(srcNode.getNodeValue()));
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return new BufferedReader(new StringReader(node.getNodeValue()));
+
+	}
+
 	protected int getIntAt(String xpath) {
 
 			try {
@@ -101,7 +149,11 @@ public class XMLConfig {
 	public Object instantiate(Node n) {
 		try {
 			Class c = Class.forName(n.getAttributes().getNamedItem("class").getNodeValue());
-			return c.newInstance();
+			Object instance = c.newInstance();
+			if (instance instanceof XMLConfig) {
+				((XMLConfig)instance).setNode(n);
+			}
+			return instance;
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -116,6 +168,13 @@ public class XMLConfig {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * @param n
+	 */
+	private void setNode(Node n) {
+		xNode = n;
 	}
 
 	/**

@@ -13,12 +13,16 @@ import org.archive.crawler.datamodel.CrawlURI;
  *
  */
 public interface URIScheduler {
-	CrawlController controller = null;
 	
 	/**
 	 * @param thread
 	 * @return
 	 */
 	CrawlURI curiFor(ToeThread thread);
+
+	/**
+	 * 
+	 */
+	void initialize(CrawlController c);
 
 }

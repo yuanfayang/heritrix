@@ -51,4 +51,11 @@ public class CrawlOrder extends XMLConfig {
 		
 	}
 
+	/**
+	 * 
+	 */
+	public CrawlScope getScope() {
+		return scope;
+	}
+
 }
