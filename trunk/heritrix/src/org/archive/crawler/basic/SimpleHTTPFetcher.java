@@ -7,18 +7,21 @@
 package org.archive.crawler.basic;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.FetchStatusCodes;
 
 
 /**
@@ -33,7 +36,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
-	HttpClient http = new HttpClient();
+	HttpClient http;
 	private int timeout;
 
 
@@ -57,10 +60,10 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
 		get.setRequestHeader("From",controller.getOrder().getBehavior().getFrom());
 		
+		controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
+
 		try {
-			
-			controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
-			
+						
 			http.executeMethod(get);
 			
 			// force read-to-end, so that any socket hangs occur here,
@@ -71,9 +74,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			// spider, just one doing some indexing/analysis --
 			// this might be wasteful. As it is, it just moves 
 			// the cost here rather than elsewhere. )
-			get.getResponseBody(); 
-
-			controller.getKicker().cancelKick(Thread.currentThread());
+			get.getResponseBody(); 			
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.info(
@@ -88,7 +89,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			if ( ct!=null ) {
 				curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
 			}
-			
+
 		} catch (HttpException e) {
 			logger.warning(e+" on "+curi);
 			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
@@ -96,7 +97,17 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 		} catch (IOException e) {
 			logger.warning(e+" on "+curi);
 			curi.setFetchStatus(S_CONNECT_FAILED);
-		} 
+		} catch (RuntimeException e) {
+			StringWriter sw = new StringWriter();
+			e.printStackTrace(new PrintWriter(sw));
+			logger.warning(e+" on "+curi+" in SimpleHTTPFetcher\n"+
+			               sw.toString());
+			curi.setFetchStatus(S_INTERNAL_ERROR);
+		} finally {
+			controller.getKicker().cancelKick(Thread.currentThread());
+		}
+		
+
 	}
 
 	/* (non-Javadoc)
@@ -105,6 +116,8 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 	public void initialize(CrawlController c) {
 		super.initialize(c);
 		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
+		CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+		http = new HttpClient();
 	}
 
 }
