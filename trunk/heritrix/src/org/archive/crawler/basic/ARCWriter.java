@@ -96,7 +96,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	 * to disk.  Currently
   	 * this method understands the following uri types: dns, http
   	 */
-  	public void process(CrawlURI curi){
+  	public synchronized void process(CrawlURI curi){
   		super.process(curi);
 
   		// find the write protocol and write this sucker
@@ -244,6 +244,11 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 	protected void writeHttp(CrawlURI curi) throws IOException, InvalidRecordException {
 
+		if (curi.getFetchStatus()<=0) {
+			// error
+			// TODO: smarter handling
+			return;
+		}
 		GetMethod get =
 			(GetMethod) curi.getAList().getObject("http-transaction");
 			
