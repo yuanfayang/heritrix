@@ -51,6 +51,7 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.HttpVersion;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.auth.AuthChallengeParser;
 import org.apache.commons.httpclient.auth.AuthScheme;
 import org.apache.commons.httpclient.auth.BasicScheme;
@@ -80,7 +81,6 @@ import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
-import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ArchiveUtils;
@@ -285,11 +285,6 @@ public class FetchHTTP extends Processor
             	method.releaseConnection();
             }
         }
-        
-        if (rec.getRecordedInput().isOpen()) {
-        	logger.warning("RIS still open. Should have been closed by" +
-                " method release: " + Thread.currentThread().getName());
-        }
 
         // Note completion time
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
@@ -333,6 +328,12 @@ public class FetchHTTP extends Processor
 
         // Save off the GetMethod just in case needed by subsequent processors.
         curi.getAList().putObject(A_HTTP_TRANSACTION, method);
+        
+        if (rec.getRecordedInput().isOpen()) {
+            logger.severe(curi.toString() + " RIS still open. Should have" +
+                " been closed by method release: " +
+                Thread.currentThread().getName());
+        }
     }
 
     /**
@@ -752,8 +753,14 @@ public class FetchHTTP extends Processor
         // Get timeout.  Use it for socket and for connection timeout.
         int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
         
-        SingleHttpConnectionManager cm =
-            new SingleHttpConnectionManager();
+        MultiThreadedHttpConnectionManager cm =
+            new MultiThreadedHttpConnectionManager();
+        // TODO: Tie this to host valence in frontier.
+        cm.getParams().setDefaultMaxConnectionsPerHost(10);
+        // Multiply toethread max by 2 in case one is occupied when
+        // we go to get another (Allow some slack).
+        cm.getParams().setMaxTotalConnections(getController().
+            getOrder().getMaxToes() * 2);
         cm.getParams().setConnectionTimeout(timeout);
         cm.getParams().setStaleCheckingEnabled(true);
         // Minimizes bandwidth usage.  Setting to true disables Nagle's
