@@ -543,7 +543,9 @@ implements Frontier,
         if(activatedQ!=null) {
             replenishBudget(activatedQ);
             readyQueue(activatedQ);
-            logger.info("ACTIVATED queue: "+activatedQ.classKey);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("ACTIVATED queue: "+activatedQ.classKey);
+            }
         }
     }
 
@@ -572,7 +574,7 @@ implements Frontier,
                     return;
                 }
                 BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
-                if (peek.getWakeTime() < now) {
+                if (peek.getWakeTime() <= now) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
@@ -682,7 +684,9 @@ implements Frontier,
      */
     private void reenqueueQueue(BdbWorkQueue wq) {
         if(wq.getBudget() <= 0) {
-            logger.info("DEACTIVATED queue: "+wq.classKey);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("DEACTIVATED queue: "+wq.classKey);
+            }
             deactivateQueue(wq);
         } else {
             readyQueue(wq);
