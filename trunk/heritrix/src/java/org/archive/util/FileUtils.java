@@ -24,11 +24,14 @@
  */
 package org.archive.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
 import java.util.regex.Pattern;
 
@@ -70,25 +73,59 @@ public class FileUtils
             }
 
         } else {
-
-            // get channels
-            FileInputStream fis = new FileInputStream(src);
-            FileOutputStream fos = new FileOutputStream(dest);
-            FileChannel fcin = fis.getChannel();
-            FileChannel fcout = fos.getChannel();
-
-            // do the file copy
-            fcin.transferTo(0, fcin.size(), fcout);
-
-            // finish up
-            fcin.close();
-            fcout.close();
-            fis.close();
-            fos.close();
+            copyFile(src, dest);
         }
     }
 
-    /** Deletes all files and subdirectories under dir.
+    /**
+     * Copy the src file to the destination.
+     * 
+     * @param src
+     * @param dest
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static void copyFile(File src, File dest) throws FileNotFoundException, IOException {
+		copyFile(src, dest, -1);
+	}
+
+	/**
+     * Copy up to extent bytes of the source file to the destination
+     * 
+	 * @param src
+	 * @param dest
+	 * @param extent
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public static void copyFile(File src, File dest, long extent) throws FileNotFoundException, IOException {
+		if(dest.exists()) {
+            dest.delete();
+        } 
+        // get channels
+		FileInputStream fis = new FileInputStream(src);
+		FileOutputStream fos = new FileOutputStream(dest);
+		FileChannel fcin = fis.getChannel();
+		FileChannel fcout = fos.getChannel();
+		
+        if (extent<0) {
+         extent = fcin.size();   
+        }
+        
+		// do the file copy
+		long trans = fcin.transferTo(0, extent, fcout);
+        if(trans < extent ) {
+            System.err.println("FileUtils.copyFile() only transferred "+trans+" of "+extent);
+        }
+        
+		// finish up
+		fcin.close();
+		fcout.close();
+		fis.close();
+		fos.close();
+	}
+
+	/** Deletes all files and subdirectories under dir.
      * @param dir
      * @return true if all deletions were successful. If a deletion fails, the
      *          method stops attempting to delete and returns false.
@@ -107,6 +144,28 @@ public class FileUtils
         return dir.delete();
     }
 
+    
+
+    /**
+     * Utility method to read an entire file as a String.
+     * 
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public static String readFileAsString(File file) throws IOException {
+        StringBuffer sb = new StringBuffer();
+        String line;
+        BufferedReader br
+            = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+        line = br.readLine();
+        while(line!=null) {
+            sb.append(line);
+            line = br.readLine();
+        }
+        br.close();
+        return sb.toString();
+    }
     /**
      * Get a list of all files in directory that have passed prefix.
      *
@@ -139,14 +198,14 @@ public class FileUtils
         class RegexpFileFilter implements FileFilter {
             Pattern pattern;
 
-            public RegexpFileFilter(String regexp) {
+            protected RegexpFileFilter(String regexp) {
                 pattern = Pattern.compile(regexp);
             }
 
             public boolean accept(File pathname) {
                 return pattern.matcher(pathname.getName()).matches();
             }
-        };
+        }
 
         return new RegexpFileFilter(regexp);
     }
