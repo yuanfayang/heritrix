@@ -5,31 +5,21 @@ import java.util.regex.Pattern;
 
 public class TextUtils {
 
-	public static String getText(String aFileName) {
-		try {
-			BufferedReader reader =
-				new BufferedReader(new FileReader(aFileName));
-			if (reader == null) {
-				return "";
-			}
-			StringBuffer sb = new StringBuffer();
-			String aLine;
-			while ((aLine = reader.readLine()) != null) {
-				sb.append(aLine + "\n");
-			}
-			reader.close();
-			return sb.toString();
-		} catch (Exception e) {
-			// TODO: report error
-			e.printStackTrace();
-		}
-		return "";
-	}
-
+	/**
+	 * Implementation of a unix-like 'tail' command
+	 * @param aFileName a file name String
+	 * @return the String representation of at most 10 last lines
+	 */
 	public static String tail(String aFileName) {
 		return tail(aFileName, 10);
 	}
 
+	/**
+	 * Implementation of a unix-like 'tail -n' command
+	 * @param aFileName a file name String
+	 * @param n int number of lines to be returned
+	 * @return the String representation of at most n last lines 
+	 */
 	public static String tail(String aFileName, int n) {
 		int BUFFERSIZE = 1024;
 		long pos;
@@ -37,9 +27,10 @@ public class TextUtils {
 		long lastPos;
 		int numOfLines = 0;
 		byte[] buffer = new byte[BUFFERSIZE];
-
+		StringBuffer sb = new StringBuffer();
+		RandomAccessFile raf = null;
 		try {
-			RandomAccessFile raf = new RandomAccessFile(new File(aFileName), "r");
+			raf = new RandomAccessFile(new File(aFileName), "r");
 			endPos = raf.length();
 			lastPos = endPos;
 
@@ -84,7 +75,6 @@ public class TextUtils {
 			} while ((numOfLines <= n) && (pos != 0));
 
 			// print last n line starting from last postion
-			StringBuffer sb = new StringBuffer();
 			for (pos = lastPos; pos < endPos; pos += buffer.length) {
 				raf.seek(pos);
 				if ((endPos - pos) < BUFFERSIZE) {
@@ -92,15 +82,20 @@ public class TextUtils {
 					buffer = new byte[remainer];
 				}
 				raf.readFully(buffer);
-				// remove runing white spaces
 				sb.append(new String(buffer));
 			}
-			return sb.toString();
-
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (raf != null) {
+					raf.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return sb.toString();
 		}
-		return "";
 	}
 
 	/**
@@ -114,7 +109,10 @@ public class TextUtils {
 	 * @param replacement the String to substitute every match with
 	 * @return the String with all the matches substituted
 	 */
-	public static String replaceAll(Pattern p, CharSequence input, String replacement) {
+	public static String replaceAll(
+		Pattern p,
+		CharSequence input,
+		String replacement) {
 		return p.matcher(input).replaceAll(replacement);
 	}
 
@@ -129,10 +127,13 @@ public class TextUtils {
 	 * @param replacement the String to substitute the first match with
 	 * @return the String with the first match substituted
 	 */
-	public static String replaceFirst(Pattern p, CharSequence input, String replacement) {
+	public static String replaceFirst(
+		Pattern p,
+		CharSequence input,
+		String replacement) {
 		return p.matcher(input).replaceFirst(replacement);
 	}
-	
+
 	/**
 	 * Utility method using a precompiled pattern instead of using the matches method of
 	 * the String class.
@@ -146,7 +147,7 @@ public class TextUtils {
 	public static boolean matches(Pattern p, CharSequence input) {
 		return p.matcher(input).matches();
 	}
-	
+
 	/**
 	 * Utility method using a precompiled pattern instead of using the split method of
 	 * the String class.
