@@ -127,14 +127,10 @@ public class RecordingInputStream
         return count;
     }
 
-    /* (non-Javadoc)
-     * @see java.io.OutputStream#close()
-     */
     public void close() throws IOException {
         logger.fine(Thread.currentThread().getName() + " closing " +
             this.in + ", " + Thread.currentThread().getName());
-        if (this.in != null)
-        {
+        if (this.in != null) {
             this.in.close();
             this.in = null;
         }
@@ -161,7 +157,8 @@ public class RecordingInputStream
     /**
      * Read all of a stream (Or read until we timeout or have read to the max).
      * @param maxLength Maximum length to read.
-     * @param timeout Timeout in milliseconds.
+     * @param timeout Timeout in milliseconds for total read.  If zero or
+     * negative, timeout is <code>Long.MAX_VALUE</code>.
      * @throws IOException failed read.
      * @throws RecorderLengthExceededException
      * @throws RecorderTimeoutException
