@@ -407,8 +407,8 @@ public class CrawlURI extends CandidateURI
                 candidate = DEFAULT_CLASS_KEY;
             }
         } catch (URIException e) {
-            DevUtils.warnHandle(e,"Failed to get class key: " 
-                    + e.getMessage() + " " + this);
+            DevUtils.warnHandle(e, "Failed to get class key: " +
+                e.getMessage() + " " + this);
             candidate = DEFAULT_CLASS_KEY;
         }
         // Ensure classKeys are safe as filenames on NTFS

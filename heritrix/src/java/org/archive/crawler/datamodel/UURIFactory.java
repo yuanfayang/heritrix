@@ -25,8 +25,10 @@
 package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -203,10 +205,31 @@ public class UURIFactory extends URI {
     private final static int MAX_URL_LENGTH = 2083;
     
     /**
+     * System property key for list of supported schemes.
+     */
+    private static final String SCHEMES_KEY = ".schemes";
+    
+    private List schemes = null;
+        
+    
+    /**
      * Protected constructor.
      */
     private UURIFactory() {
         super();
+        String schemes = System.getProperty(this.getClass().getName() +
+            SCHEMES_KEY);
+        if (schemes != null && schemes.length() > 0) {
+        	String [] candidates = schemes.split(",| ");
+            for (int i = 0; i < candidates.length; i++) {
+            	if (candidates[i] != null && candidates[i].length() > 0) {
+            		if (this.schemes == null) {
+            			this.schemes = new ArrayList(candidates.length);
+                    }
+                    this.schemes.add(candidates[i]);
+                }
+            }
+        }
     }
     
     /**
@@ -325,7 +348,8 @@ public class UURIFactory extends URI {
         if (uri.length() > MAX_URL_LENGTH) {
             // TODO: Would  make sense to test against for excessive length
             // after all the fixup and normalization has been done.
-            throw new URIException("URI length > " + MAX_URL_LENGTH);
+            throw new URIException("URI length > " + MAX_URL_LENGTH + ": " +
+                uri);
         }
         
         // Replace nbsp with normal spaces (so that they get stripped if at
@@ -368,10 +392,13 @@ public class UURIFactory extends URI {
         String uriQuery = checkUriElement(matcher.group(8));
         // UNUSED String uriFragment = checkUriElement(matcher.group(10));
         
-        if (uriScheme != null && uriScheme.length() == 1) {
-            // Catch URLs that look like this:
-            // c:/Documents%20and%20Settings/Administrator.doc
-        	throw new URIException("Scheme is one-letter only: " + uri);
+        // If a scheme, is it a supported scheme?
+        if (uriScheme != null && uriScheme.length() > 0 &&
+        this.schemes != null) {
+        	if (!this.schemes.contains(uriScheme)) {
+        		throw new UnsupportedUriScheme("Unsupported scheme: " +
+                    uriScheme);
+            }
         }
         
         // Test if relative URI.  If so, need a base to resolve against.
@@ -594,5 +621,17 @@ public class UURIFactory extends URI {
             super(base, relative);
             normalize();
         }
+    }
+    
+    /**
+     * Exception thrown when we come across unsupported scheme.
+     */
+    private class UnsupportedUriScheme extends URIException {
+		/**
+		 * @param reason For exception.
+		 */
+		public UnsupportedUriScheme(String reason) {
+			super(reason);
+		}
     }
 }
