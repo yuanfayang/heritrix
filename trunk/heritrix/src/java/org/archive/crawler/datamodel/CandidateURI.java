@@ -66,7 +66,15 @@ public class CandidateURI implements Serializable, Lineable {
     /** Where this URI was (presently) discovered */
     // mostly for debugging; will be a CrawlURI when memory is no object
     // just a string or null when memory is an object (configurable)
-    Object via;   
+    Object via;
+
+    /**
+     * Cache of this candidate uuri as a string.
+     * 
+     * Profiling shows us spending about 1-2% of total elapsed time in
+     * toString.
+     */
+    private String cachedCandidateURIString = null;   
 
     /**
      * @param u
@@ -142,13 +150,21 @@ public class CandidateURI implements Serializable, Lineable {
         via = object;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
+    /**
+     * @return This candidate URI as a string wrapped with 'CandidateURI(' + 
+     * ')'.
      */
     public String toString() {
-        return "CandidateURI("+getURIString()+")";
+        if (this.cachedCandidateURIString == null) {
+            synchronized (this) {
+                if (this.cachedCandidateURIString == null) {
+                    this.cachedCandidateURIString =
+                        "CandidateURI(" + getURIString() + ")";
+                }
+            }
+        }
+        return this.cachedCandidateURIString;
     }
-
 
     private void writeObject(java.io.ObjectOutputStream out)
          throws IOException {
