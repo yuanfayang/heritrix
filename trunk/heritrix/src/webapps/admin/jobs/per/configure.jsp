@@ -44,6 +44,13 @@
 		StringBuffer p = new StringBuffer();
 		MBeanInfo info = mbean.getMBeanInfo(settings);
 
+        MBeanAttributeInfo[] a = info.getAttributes();
+        
+        if( mbean instanceof MapType && a.length ==0 ){
+            // Empty map, ignore it.
+            return "";
+        }
+        
 		p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td>\n");
 		p.append("<td><a class='help' href=\"javascript:doPop('");
 		p.append(TextUtils.escapeForJavascript(mbean.getDescription()));
@@ -59,8 +66,6 @@
  		
 		p.append("<td colspan='2'><font size='-2'>" + shortDescription + "</font></td></tr>\n");
 
-		MBeanAttributeInfo a[] = info.getAttributes();
-		
 		for(int n=0; n<a.length; n++) {
 	        if(a[n] == null) {
                 p.append("  ERROR: null attribute");
