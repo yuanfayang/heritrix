@@ -13,10 +13,15 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 
 /**
+ * Ensures the preconditions for a fetch -- such as 
+ * DNS lookup or acquiring a robots.txt policy -- are
+ * satisfied before a URI is passed to subsequent
+ * stages.
+ * 
  * @author gojomo
  *
  */
-public class SimplePolitenessEnforcer extends Processor implements FetchStatusCodes {
+public class SimplePreconditionEnforcer extends Processor implements FetchStatusCodes {
 	private static String XP_DELAY_FACTOR = "//params/@delay-factor";
 	private static String XP_MINIMUM_DELAY = "//params/@minimum-delay";
 	private static int DEFAULT_DELAY_FACTOR = 10;
@@ -27,8 +32,7 @@ public class SimplePolitenessEnforcer extends Processor implements FetchStatusCo
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void process(CrawlURI curi) {
-		super.process(curi);
+	protected void innerProcess(CrawlURI curi) {
 		
 		// if we haven't done a dns lookup  and this isn't a dns uri 
 		// shoot that off and defer further processing
@@ -36,7 +40,7 @@ public class SimplePolitenessEnforcer extends Processor implements FetchStatusCo
 			!curi.getUURI().getUri().getScheme().equals("dns")
 		){
 			logger.info("deferring processing of " + curi.toString() + " for dns lookup." );
-			
+
 			String hostname = curi.getHost().getHostname();
 			
 			// if they passed us an ip don't choke on it
