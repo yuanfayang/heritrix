@@ -37,8 +37,6 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * A pool of ARCWriters.
- * 
- * Should only be one instance per JVM.
  *
  * @author stack
  */

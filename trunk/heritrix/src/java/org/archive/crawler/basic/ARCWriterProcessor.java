@@ -132,10 +132,9 @@ public class ARCWriterProcessor
     /**
      * Reference to an ARCWriter.
      * 
-     * One pool shared by all instances of this class.  Gets set by 
-     * synchronized {@link #_initialize()}.
+     * Gets set by synchronized {@link #_initialize()}.
      */
-    private static ARCWriterPool pool = null;
+    private ARCWriterPool pool = null;
 
     /**
      * Has this processor been initialized.
