@@ -37,7 +37,7 @@ import org.archive.util.DevUtils;
 public class SeedsInputIterator implements Iterator {
 	//  regexp for identifying URIs in seed input data
 	public static final Pattern DEFAULT_SEED_EXTRACTOR = 
-		Pattern.compile("(?i:(http(s)?://\\w+)|(\\w+\\.\\w+)(\\.\\w+)*(:\\d+)?(/\\S*)?)");
+		Pattern.compile("(?i:((http(s)?://\\w+)|(\\w+\\.\\w+))(\\.\\w+)*(:\\d+)?(/\\S*)?)");
 	// pattern to extract seeds
 	Pattern seedExtractor = DEFAULT_SEED_EXTRACTOR;
 
