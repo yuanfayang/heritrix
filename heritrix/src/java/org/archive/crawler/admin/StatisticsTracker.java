@@ -195,6 +195,21 @@ implements CrawlURIDispositionListener {
         }
         controller.addCrawlURIDispositionListener(this);
     }
+    
+    public void cleanup() {
+        if (this.hostsBytes != null) {
+            this.hostsBytes.clear();
+            this.hostsBytes = null;
+        }
+        if (this.hostsDistribution != null) {
+            this.hostsDistribution.clear();
+            this.hostsDistribution = null;
+        }
+        if (this.hostsLastFinished != null) {
+            this.hostsLastFinished.clear();
+            this.hostsLastFinished = null;
+        }
+    }
 
     protected synchronized void logActivity() {
         // This method loads "snapshot" data.

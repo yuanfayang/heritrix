@@ -283,9 +283,8 @@ public class BdbMultipleWorkQueues {
      */
     public void close() {
         try {
-            pendingUrisDB.close();
+            this.pendingUrisDB.close();
         } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

@@ -47,4 +47,16 @@ implements BigMap {
         this.diskMap = createDiskMap(this.db, c.getClassCatalog(),
             keyClass, valueClass);
     }
+    
+    public void clear() {
+        // Close out my bdb db.
+        if (this.db != null) {
+            try {
+                this.db.close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            }
+            this.db = null;
+        }
+    }
 }
