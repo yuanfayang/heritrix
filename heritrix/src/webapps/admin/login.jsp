@@ -2,25 +2,7 @@
 <%@ page errorPage="/error.jsp" %>
 <%@page import="java.net.URLDecoder" %>
 
-<%
-    String sMessage = null;
-    String sAction = request.getParameter("action");
-    if(sAction != null) {
-        // Some action has been specified.
-        if(sAction.equalsIgnoreCase("redirect")) {
-            sMessage = "Incorrect login/password combination.";
-        } else if(sAction.equalsIgnoreCase("login")) {
-            // Do nothing.  Its all done by the container. 
-        } else if(sAction.equalsIgnoreCase("logout")) {
-            // Logging out.
-            session = request.getSession();
-            if (session != null) {
-                session.invalidate();
-                sMessage = "Successful logout.";
-            }
-        }
-    }
-%>
+<%  String sMessage = null;%>
 
 <html>
     <head>

@@ -127,8 +127,7 @@ public class ConfigurableX509TrustManager implements X509TrustManager
 
 
     public ConfigurableX509TrustManager()
-        throws NoSuchAlgorithmException, KeyStoreException
-    {
+    throws NoSuchAlgorithmException, KeyStoreException {
         this(DEFAULT);
     }
 
@@ -141,10 +140,8 @@ public class ConfigurableX509TrustManager implements X509TrustManager
      * @throws KeyStoreException
      */
     public ConfigurableX509TrustManager(String level)
-        throws NoSuchAlgorithmException, KeyStoreException
-    {
+    throws NoSuchAlgorithmException, KeyStoreException {
         super();
-
         TrustManagerFactory factory = TrustManagerFactory.
             getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
@@ -155,8 +152,7 @@ public class ConfigurableX509TrustManager implements X509TrustManager
         // /j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html#Introduction
         factory.init((KeyStore)null);
         TrustManager[] trustmanagers = factory.getTrustManagers();
-        if (trustmanagers.length == 0)
-        {
+        if (trustmanagers.length == 0) {
             throw new NoSuchAlgorithmException(TrustManagerFactory.
                 getDefaultAlgorithm() + " trust manager not supported");
         }
@@ -167,10 +163,8 @@ public class ConfigurableX509TrustManager implements X509TrustManager
     }
 
     public void checkClientTrusted(X509Certificate[] certificates, String type)
-            throws CertificateException
-    {
-        if (this.trustLevel.equals(OPEN))
-        {
+    throws CertificateException {
+        if (this.trustLevel.equals(OPEN)) {
             return;
         }
 
@@ -178,24 +172,17 @@ public class ConfigurableX509TrustManager implements X509TrustManager
     }
 
     public void checkServerTrusted(X509Certificate[] certificates, String type)
-            throws CertificateException
-    {
-        if (this.trustLevel.equals(OPEN))
-        {
+    throws CertificateException {
+        if (this.trustLevel.equals(OPEN)) {
             return;
         }
 
-        try
-        {
+        try {
             this.standardTrustManager.checkServerTrusted(certificates, type);
-            if (this.trustLevel.equals(STRICT))
-            {
+            if (this.trustLevel.equals(STRICT)) {
                 logger.severe(STRICT + " not implemented.");
             }
-        }
-
-        catch (CertificateException e)
-        {
+        } catch (CertificateException e) {
             if (this.trustLevel.equals(LOOSE) &&
                 certificates != null && certificates.length == 1)
             {
@@ -203,17 +190,14 @@ public class ConfigurableX509TrustManager implements X509TrustManager
                     // CertificateException, assume its selfsigned.
                     X509Certificate certificate = certificates[0];
                     certificate.checkValidity();
-            }
-            else
-            {
+            } else {
                 // If we got to here, then we're probably NORMAL. Rethrow.
                 throw e;
             }
         }
     }
 
-    public X509Certificate[] getAcceptedIssuers()
-    {
+    public X509Certificate[] getAcceptedIssuers() {
         return this.standardTrustManager.getAcceptedIssuers();
     }
 }

@@ -24,9 +24,11 @@ package org.archive.crawler.datamodel;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -35,11 +37,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.util.DevUtils;
 
 
@@ -51,7 +53,13 @@ import org.archive.util.DevUtils;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class SeedList extends AbstractList implements Serializable {
+public class SeedList
+extends AbstractList implements Serializable {
+    /**
+     * SeedList logging instance.
+     */
+    private static final Logger logger =
+        Logger.getLogger(SeedList.class.getName());
 
     /**
      * Regexp for identifying URIs in seed input data
@@ -71,13 +79,6 @@ public class SeedList extends AbstractList implements Serializable {
     private File seedfile = null;
 
     /**
-     * Where to log, via controller.
-     *
-     * Passed in to the constructor.
-     */
-    final CrawlController controller;
-
-    /**
      * Cache of seeds.
      */
     private List cache = null;
@@ -90,9 +91,8 @@ public class SeedList extends AbstractList implements Serializable {
      * @param controller controller to provide logging
      * @param caching True if we're to cache the seed list.
      */
-    public SeedList(File seedfile, CrawlController controller, boolean caching) {
+    public SeedList(File seedfile, boolean caching) {
         //this.logger = logger;
-        this.controller = controller;
         this.seedfile = seedfile;
         if (caching) {
             this.cache = Collections.synchronizedList(new ArrayList());
@@ -105,8 +105,6 @@ public class SeedList extends AbstractList implements Serializable {
      */
     private SeedList() {
         super();
-        // Must initialize with something because logger is final.
-        this.controller = null;
     }
 
     /**
@@ -114,6 +112,29 @@ public class SeedList extends AbstractList implements Serializable {
      */
     protected File getSeedfile() {
         return this.seedfile;
+    }
+    
+    /**
+     * Return an seeds as a stream.
+     * This method will work for case where seeds are on disk or on classpath.
+     * @return InputStream on current seeds file.
+     * @throws IOException
+     */
+    public InputStream getSeedStream() throws IOException {
+        InputStream is = null;
+        if (!getSeedfile().exists()) {
+            // Is the file on the CLASSPATH?
+            is = SeedIterator.class.
+                getResourceAsStream(getSeedfile().getPath());
+        } else if(getSeedfile().canRead()) {
+            is = new FileInputStream(getSeedfile());
+        }
+        if (is == null) {
+            throw new IOException(getSeedfile() + " does not" +
+            " exist -- neither on disk nor on CLASSPATH -- or is not" +
+            " readable.");
+        }
+        return is;
     }
 
     /**
@@ -166,7 +187,7 @@ public class SeedList extends AbstractList implements Serializable {
                 i = new SeedIterator();
             }
             catch (IOException e) {
-                this.controller.uriErrors.severe("Failed to get seed iterator: " + e);
+                logger.severe("Failed to get seed iterator: " + e);
             }
 
             if (i != null) {
@@ -233,7 +254,7 @@ public class SeedList extends AbstractList implements Serializable {
                 this.cache.iterator(): new SeedIterator();
         }
         catch (IOException e) {
-            controller.uriErrors.severe("Failed to get iterator: " + e);
+            logger.severe("Failed to get iterator: " + e);
         }
         return iterator;
     }
@@ -266,13 +287,8 @@ public class SeedList extends AbstractList implements Serializable {
 
         private SeedIterator() throws IOException {
             super();
-            if (!getSeedfile().exists() ||
-                    !getSeedfile().canRead()) {
-                throw new IOException(getSeedfile() + " does not" +
-                    " exist or is not readable.");
-            }
             this.reader =
-                new BufferedReader(new FileReader(getSeedfile()));
+                new BufferedReader(new InputStreamReader(getSeedStream()));
         }
 
         /** (non-Javadoc)
@@ -331,7 +347,7 @@ public class SeedList extends AbstractList implements Serializable {
                             return true;
                         } catch (URIException e1) {
                             Object[] array = {null, candidate};
-                            SeedList.this.controller.uriErrors.log(Level.INFO,
+                            logger.log(Level.INFO,
                                 "Reading seeds: " + e1.getMessage(), array);
                             this.next = null;
                             // keep reading for valid seeds
@@ -339,8 +355,7 @@ public class SeedList extends AbstractList implements Serializable {
                         }
                     }
                     Object[] array = {null, read};
-                    SeedList.this.controller.uriErrors.log(Level.INFO, "bad seed line",
-                        array);
+                    logger.log(Level.INFO, "bad seed line", array);
                 }
                 close();
                 // no more seeds
@@ -354,17 +369,12 @@ public class SeedList extends AbstractList implements Serializable {
         /**
          * As this iterator is backed by a reader, it should
          * receive a close() so that it can close the reader.
+         * @throws IOException
          */
-        public void close() {
+        public void close() throws IOException {
             if(this.reader != null) {
-                try {
-                    this.reader.close();
-                    this.reader =  null;
-                }
-                catch (IOException e) {
-                    SeedList.this.controller.uriErrors.severe(
-                        "Failed close of the seed reader.");
-                }
+                this.reader.close();
+                this.reader =  null;
             }
         }
 
