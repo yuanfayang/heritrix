@@ -28,4 +28,5 @@ public interface Queue {
 	 */
 	Object dequeue();
 
+	long length();
 }
