@@ -37,7 +37,7 @@
         ret.append("<tr><td></td><td width='100' colspan='2'><i>" + currentDescription + "</i></td>");
         
         if(unusedOptions.size()>0){ 
-            ret.append("<tr><td>&nbsp;Availible alternatives:</td><td>");
+            ret.append("<tr><td>&nbsp;Available alternatives:</td><td>");
             ret.append("<select name='cbo" + name + "'>");
             for(int i=0 ; i<unusedOptions.size() ; i++){
                 ret.append("<option value='"+unusedOptions.get(i)+"'>");
