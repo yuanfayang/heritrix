@@ -41,6 +41,9 @@ import java.util.logging.Logger;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
+import org.archive.crawler.Heritrix;
+import org.archive.crawler.datamodel.BigMap;
+import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -110,7 +113,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     protected UriUniqFilter alreadyIncluded;
 
     /** all known queues */
-    protected Map allQueues = new HashMap(); // of classKey -> BDBWorkQueue
+    protected Map allQueues = null; // of classKey -> BDBWorkQueue
 
     /** all per-class queues whose first item may be handed out */
     protected LinkedQueue readyClassQueues = new LinkedQueue(); // of BDBWorkQueue
@@ -119,7 +122,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     protected Bag inProcessQueues = BagUtils.synchronizedBag(new HashBag()); // of BDBWorkQueue
 
     /** all per-class queues held in snoozed state, sorted by wake time */
-    protected SortedSet snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet());
+    protected SortedSet snoozedClassQueues =
+        Collections.synchronizedSortedSet(new TreeSet());
 
     /** all 'inactive' queues, not yet in active rotation */
     protected LinkedQueue inactiveQueues = new LinkedQueue();
@@ -213,12 +217,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         super.initialize(c);
         this.controller = c;
         try {
+            this.allQueues = BigMapFactory.getBigMap(this.getSettingsHandler(),
+               "allqueues", String.class, BdbWorkQueue.class);
             pendingUris = createMultipleWorkQueues();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
         }
+        
         try {
             costAssignmentPolicy = (CostAssignmentPolicy) Class.forName(
                     (String) getUncheckedAttribute(null, ATTR_COST_POLICY))

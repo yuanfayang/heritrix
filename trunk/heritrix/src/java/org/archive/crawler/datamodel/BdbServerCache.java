@@ -23,12 +23,9 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.io.File;
 import java.util.logging.Logger;
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
-import org.archive.util.CachedBdbMap;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -51,17 +48,15 @@ public class BdbServerCache extends ServerCache {
 
     public void initialize(SettingsHandler settings) {
         this.settingsHandler = settings;
-        CrawlController controller =
-            settingsHandler.getOrder().getController();
 
-        File fileName = new File(controller.getScratchDisk(), "serverCache");
-        fileName.mkdirs();
         try {
-            servers = new CachedBdbMap(fileName, "servers", String.class,
-                    CrawlServer.class);
-            hosts = new CachedBdbMap(fileName, "hosts", String.class,
-                    CrawlHost.class);
+            this.servers = BigMapFactory.getBigMap(settings, "servers",
+                String.class, CrawlServer.class);
+            this.hosts = BigMapFactory.getBigMap(settings, "hosts",
+                String.class, CrawlHost.class);
         } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

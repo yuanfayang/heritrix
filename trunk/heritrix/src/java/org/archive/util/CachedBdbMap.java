@@ -76,10 +76,10 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private DbEnvironmentEntry dbEnvironment;
 
     /** The BDB JE database used for this instance. */
-    private Database db;
+    protected Database db;
 
     /** The Collection view of the BDB JE database used for this instance. */
-    private StoredMap diskMap;
+    protected StoredMap diskMap;
 
     /** The softreferenced cache */
     private Map cache;
@@ -115,6 +115,14 @@ public class CachedBdbMap extends AbstractMap implements Map {
         int openDbCount = 0;
         File dbDir;
     }
+    
+    /**
+     * Constructor for subclasses to use.
+     */
+    public CachedBdbMap() {
+        super();
+        initialize();
+    }
 
     /**
      * A constructor for creating a new CachedBdbMap.
@@ -135,7 +143,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public CachedBdbMap(File dbDir, String dbName, Class keyClass,
             Class valueClass) throws DatabaseException {
         super();
-        initialization();
+        initialize();
         dbEnvironment = getDbEnvironment(dbDir);
         this.db = openDatabase(dbEnvironment.environment, dbName);
         dbEnvironment.openDbCount++;
@@ -157,12 +165,12 @@ public class CachedBdbMap extends AbstractMap implements Map {
             String dbName, Class keyClass, Class valueClass)
     throws DatabaseException {
         super();
-        initialization();
+        initialize();
         this.db = openDatabase(environment, dbName);
         this.diskMap = createDiskMap(this.db, classCatalog, keyClass, valueClass);
     }
     
-    private void initialization() {
+    private void initialize() {
         // We need access to the referent field in the PhantomReference.
         // For more on this trick, see
         // http://www.javaspecialists.co.za/archive/Issue098.html and for
