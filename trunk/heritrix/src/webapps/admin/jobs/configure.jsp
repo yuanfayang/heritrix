@@ -215,7 +215,6 @@
 				else{
 				    try{
 				       Attribute arr = new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName()));
-                       Constraint.FailedCheck f = mbean.checkValue(arr);
 					   mbean.setAttribute(arr);
     				} catch (Exception e1) {
 	   				    e1.printStackTrace();
