@@ -19,6 +19,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
@@ -395,8 +396,15 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		
 		if("robots".equalsIgnoreCase(name) && content != null ) {
 			curi.getAList().putString(A_META_ROBOTS,content);
-			if(content.indexOf("nofollow")>0) {
-				// if 'nofollow' is specified, end html extraction
+			RobotsHonoringPolicy policy = controller.getOrder().getRobotsHonoringPolicy();
+			if ((policy == null
+				|| (!policy.isType(RobotsHonoringPolicy.IGNORE)
+					&& !policy.isType(RobotsHonoringPolicy.CUSTOM)))
+				&& (content.indexOf("nofollow") >= 0
+					|| content.indexOf("none") >= 0)) {
+				// if 'nofollow' or 'none' is specified and the 
+				// honoring policy is not IGNORE or CUSTOM, end html extraction
+				logger.fine("HTML extraction skipped due to robots meta-tag for: " + curi.getURIString());
 				return true;
 			}
 		} else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
