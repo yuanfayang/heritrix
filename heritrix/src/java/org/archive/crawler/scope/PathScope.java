@@ -74,6 +74,13 @@ public class PathScope extends CrawlScope {
 
     public PathScope(String name) {
         super(name);
+        setDescription(
+            "A scope for pah crawls. Crawl made with this scope will be " +
+            "limited to a specific portion of the hosts it's seeds provide. " +
+            "More specifically the paths those seeds provide. For example if" +
+            "one of the seeds is 'archive.org/example/' all URIs under the" +
+            "path 'examples' will be crawled (like 'archive.org/examples/hello.html')" +
+            "but not URIs in other paths or root (i.e. 'archive.org/index.html).");
 
         transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));

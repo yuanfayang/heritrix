@@ -59,7 +59,9 @@ public class BroadScope extends CrawlScope {
      */
     public BroadScope(String name) {
         super(name);
-        setDescription("A scope for broad crawls.");
+        setDescription(
+            "A scope for broad crawls. Crawl made with this scope will not be " +
+            "limited to the hosts or domains of it's seeds.");
     }
 
     /**
