@@ -323,6 +323,7 @@ public class PreconditionEnforcer
             logger.severe("No credential store for " + curi);
             return result;
         }
+        
         Iterator i = cs.iterator(curi);
         if (i == null) {
             return result;
@@ -330,17 +331,25 @@ public class PreconditionEnforcer
 
         while (i.hasNext()) {
             Credential c = (Credential)i.next();
-            if (!c.hasPrerequisite(curi)) {
-                continue;
-            }
             
             if (c.isPrerequisite(curi)) {
                 // This credential has a prereq. and this curi is it.  Let it
                 // through.  Add its avatar to the curi as a mark.  Also, does
-                // this curi need to be posted?
+                // this curi need to be posted?  Note, we do this test for
+                // is it a prereq BEFORE we do the check that curi is of the
+                // credential domain because such as yahoo have you go to
+                // another domain altogether to login.
                 c.attach(curi);
                 curi.setPost(c.isPost(curi));
                 break;
+            }
+            
+            if (!c.rootUriMatch(curi)) {
+                continue;
+            }
+            
+            if (!c.hasPrerequisite(curi)) {
+                continue;
             }
             
             if (!authenticated(c, curi)) {

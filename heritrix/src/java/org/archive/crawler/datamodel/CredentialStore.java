@@ -242,7 +242,25 @@ public class CredentialStore extends ModuleType {
      * credentials.
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public Set subset(Object context, Class type) {
+    public Set subset(CrawlURI context, Class type) {
+        return subset(context, type, null);
+    }
+    
+    /**
+     * Return set made up of all credentials of the passed
+     * <code>type</code>.
+     * 
+     * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
+     * context.  If null, we use global context.
+     * @param type Type of the list to return.  Type is some superclass of
+     * credentials.
+     * @param rootUri RootUri to match.  May be null.  In this case we return 
+     * all.  Currently we expect the CrawlServer name to equate to root Uri.
+     * Its not.  Currently it doesn't distingush between servers of same name
+     * but different ports (e.g. http and https).
+     * @return Unmodifable sublist of all elements of passed type.
+     */
+    public Set subset(CrawlURI context, Class type, String rootUri) {
         
         Set result = null;
         Iterator i = iterator(context);
@@ -251,6 +269,22 @@ public class CredentialStore extends ModuleType {
                 Credential c = (Credential)i.next();
                 if (!type.isInstance(c)) {
                     continue;
+                }
+                if (rootUri != null) {
+                    String cd = null;
+                    try {
+                        cd = c.getCredentialDomain(context);
+                    }
+                    catch (AttributeNotFoundException e) {
+                       logger.severe("Failed to get cred domain: " +
+                           context + ": " + e.getMessage());
+                    }
+                    if (cd == null) {
+                        continue;
+                    }
+                    if (!rootUri.equalsIgnoreCase(cd)) {
+                        continue;
+                    }
                 }
                 if (result == null) {
                     result = new HashSet();
