@@ -26,6 +26,8 @@ package org.archive.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.apache.commons.collections.Predicate;
+
 
 /** An Abstract queue.  It should implement FIFO semantics.
  * @author gojomo
@@ -85,8 +87,8 @@ public interface Queue {
      * <p>
      * Making other changes to the queue while this method is being 
      * processed is not safe. 
-     * @param matcher a queue item matcher
+     * @param matcher a predicate
      * @return the number of deleted items
      */
-    long deleteMatchedItems(QueueItemMatcher matcher);
+    long deleteMatchedItems(Predicate matcher);
 }

@@ -26,6 +26,8 @@ package org.archive.util;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.apache.commons.collections.Predicate;
+
 /** An in-memory implementation of a {@link Queue}.
  *
  * @author Gordon Mohr
@@ -56,7 +58,7 @@ public class MemQueue extends LinkedList implements Queue {
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-        return (long)size();
+        return size();
     }
 
     /**
@@ -82,13 +84,13 @@ public class MemQueue extends LinkedList implements Queue {
     }
     
     /**
-     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
-    public long deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(Predicate matcher) {
         Iterator it = listIterator();
         long numberOfDeletes = 0;
         while(it.hasNext()){
-            if(matcher.match(it.next())){
+            if(matcher.evaluate(it.next())){
                 it.remove();
                 numberOfDeletes++;
             }
