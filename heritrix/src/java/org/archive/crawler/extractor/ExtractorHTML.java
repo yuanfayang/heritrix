@@ -378,7 +378,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                     cs.subSequence(start, end))) {
                           
                     // meta tag included NOFOLLOW; abort processing
-                    TextUtils.freeMatcher(tags);
                     break;
                 }
             } else if (tags.start(5) > 0) {
