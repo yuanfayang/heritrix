@@ -204,22 +204,19 @@ public interface URIWorkQueue {
     /** 
      * Remove an item in the default manner
      * 
-     * @return
+     * @return Item removed.
      */
     public abstract CrawlURI dequeue();
 
     /**
-     * Return the last enqueued URI; useful for
+     * @return the last enqueued URI; useful for
      * assessing queue state.
-     * 
-     * @return
      */
     public String getLastQueued();
 
     /**
-     * Return the last dequeued URI; useful
+     * @return the last dequeued URI; useful
      * for assessing queue state.
-     * @return
      */
     public String getLastDequeued();
 
@@ -233,9 +230,8 @@ public interface URIWorkQueue {
     public abstract void setMaximumMemoryLoad(int load);
     
     /**
-     * Return current memory load (items in memory rather
+     * @return current memory load (items in memory rather
      * than on disk).
-     * @return
      */
     public int memoryLoad();
     
@@ -258,7 +254,7 @@ public interface URIWorkQueue {
      * 
      * @param inCacheOnly
      * @see org.archive.util.Queue#getIterator(boolean)
-     * @return
+     * @return An iterator.
      */
     public abstract Iterator getIterator(boolean inCacheOnly);
 
@@ -267,8 +263,7 @@ public interface URIWorkQueue {
      * 
      * @param matcher
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
-     * @return
+     * @return Count of items deleted.
      */
     public abstract long deleteMatchedItems(Predicate matcher);
-
 }
