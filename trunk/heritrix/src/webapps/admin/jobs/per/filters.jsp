@@ -11,8 +11,6 @@
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.framework.Filter" %>
 
-<%@include file="/include/jobfilters.jsp"%>
-
 <%
     String currDomain = request.getParameter("currDomain");
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
@@ -45,13 +43,11 @@
             override filters. It is not possible to remove filters defined in a super domain!
         <p>
         <table>
-            <%=printFilters(
+            <%=JobConfigureUtils.printOfType(
                     theJob.getSettingsHandler().getOrder(),
-                    ((XMLSettingsHandler)theJob.getSettingsHandler()).
-                        getSettingsObject(currDomain), "", false,
-                    false, false, (String)null, false, 
-                    CrawlJobHandler.loadOptions(CrawlJobHandler.
-                        MODULE_OPTIONS_FILE_FILTERS), Filter.class, true)%>
+                    "", 
+                    false, false, false, (String)null, false, 
+                    Filter.class, true)%>
         </table>
     </form>
     <p>

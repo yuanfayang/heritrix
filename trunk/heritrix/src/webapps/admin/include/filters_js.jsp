@@ -39,7 +39,7 @@
 
     function doAdd(map){
         if(document.getElementById(map+".name").value == ""){
-            alert("Must enter a unique name for the filter");
+            alert("Must enter a unique name for the subcomponent");
         } else {
             document.frmFilters.action.value = "filters";
             document.frmFilters.subaction.value = "add";

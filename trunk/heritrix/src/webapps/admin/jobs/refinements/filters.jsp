@@ -10,10 +10,8 @@
 <%@page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@page import="org.archive.crawler.framework.Filter" %>
 <%@page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
+<%@page import="org.archive.crawler.settings.*"%>
 <%@page import="org.archive.crawler.settings.refinements.*"%>
-
-
-<%@include file="/include/jobfilters.jsp"%>
 
 <%
     // Load display level
@@ -127,8 +125,11 @@
             refinement filters. It is not possible to remove filters defined in a super domain!
         <p>
         <table>
-            <%=printFilters(crawlOrder,settings,"",false,false,false,null,false,CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FILTERS),
-                    Filter.class, true)%>
+            <%=JobConfigureUtils.printOfType(
+            	crawlOrder,
+            	"",
+            	false,false,false,null,false,
+            	Filter.class, true)%>
         </table>
     </form>
     <p>

@@ -13,6 +13,8 @@
      *          3 - Overrides
      *          4 - Credentials
      *          5 - Refinements
+     *          6 - URL (Canonicalization)
+     *          7 - Submodules 
      *
      * @author Kristinn Sigurdsson
      */
@@ -40,6 +42,11 @@
                                 <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/modules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==0?"_selected":""%>">Modules</a>
                             </td>
                         <% } %>
+                        <td class="tab_seperator">
+                        </td>
+                        <td class="tab<%=jobtab==7?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/submodules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==7?"_selected":""%>">Submodules</a>
+                        </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
