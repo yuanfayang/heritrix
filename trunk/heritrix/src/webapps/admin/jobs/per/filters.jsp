@@ -1,7 +1,6 @@
 <%
   /**
-   * This pages allows the user to select what filters
-   * are applied to what modules in the crawl order.
+   * This pages allows the user to add filters to overrides.
    *
    * @author Kristinn Sigurdsson
    */
@@ -30,13 +29,16 @@
 								 "org.archive.crawler.filter.SeedExtensionFilter",
 								 "org.archive.crawler.filter.TransclusionFilter",
 								 "org.archive.crawler.filter.URIRegExpFilter"};
-	/** TODO: FIX JAVADOC.
+	/** 
 	 * Generates the HTML code to display and allow manipulation of which
-	 * filters are attached to the crawl order. Will work it's way 
-	 * recursively down the crawlorder.
+	 * filters are attached to this override. Will work it's way 
+	 * recursively down the crawlorder. Inherited filters are displayed,
+	 * but no changes allowed. Local filters can be added and manipulated.
 	 *
 	 * @param mbean The ComplexType representing the crawl order or one 
 	 *              of it's subcomponents.
+	 * @param settings CrawlerSettings for the domain to override setting
+	 *                 for.
 	 * @param indent A string to prefix to the current ComplexType to 
 	 *               visually indent it.
 	 * @param possible If true then the current ComplexType MAY be a 
@@ -60,14 +62,14 @@
 
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
-		if(possible && mbean instanceof Filter && mbean.getParent().getLocalAttribute(settings,mbean.getName())!=null){
+		if(possible && mbean instanceof Filter){
 			// Have a local filter.
 			p.append("<tr");
 			if(alt){
 				p.append(" bgcolor='#EEEEFF'");
 			}
 			alt = !alt;
-			p.append("><td nowrap>" + indent + mbean.getName() + "</td><td nowrap>");
+			p.append("><td nowrap><b>" + indent + "</b>" + mbean.getName() + "</td><td nowrap>");
 			if(first==false){
 				p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Move up</a>");
 			}
@@ -82,28 +84,39 @@
 			p.append("<tr><td colspan='5'><b>" + indent + mbean.getName() + "</b></td></tr>\n");
 		}
 		
-		possible = mbean instanceof MapType;
 		alt=false;
+		boolean haveNotFoundFirstEditable = true;
+		int firstEditable = -1;
 		for(int n=0; n<a.length; n++) {
+			possible = mbean instanceof MapType;
 	        if(a[n] == null) {
                 p.append("  ERROR: null attribute");
             } else {
 	            Object currentAttribute = null;
+	            Object localAttribute = null;
 				ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
 				try {
 					currentAttribute = mbean.getAttribute(settings, att.getName());
+					localAttribute = mbean.getLocalAttribute(settings, att.getName());
 				} catch (Exception e1) {
 					String error = e1.toString() + " " + e1.getMessage();
 					return error;
 				}
+		    	if(localAttribute == null){
+		    		possible = false; //Not an editable filter.
+		    	} else if(haveNotFoundFirstEditable) {
+		    		firstEditable=n;
+		    		haveNotFoundFirstEditable=false;
+		    		alt = true;
+		    	}
 
 				if(currentAttribute instanceof ComplexType) {
-			    	p.append(printFilters((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",possible,n==0,n==a.length-1,mbean.getAbsoluteName(),alt));
+			    	p.append(printFilters((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",possible,n==firstEditable,n==a.length-1,mbean.getAbsoluteName(),alt));
 			    	if(currentAttribute instanceof MapType)
 			    	{
 			    		MapType thisMap = (MapType)currentAttribute;
 			    		if(thisMap.getContentType().getName().equals(Filter.class.getName())){
-				    		p.append("<tr><td colspan='5'>\n"+indent+"&nbsp;&nbsp;");
+				    		p.append("<tr><td colspan='5'>\n<b>"+indent+"&nbsp;&nbsp;</b>");
 				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
 				    		p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
 				    		for(int i=0 ; i<availibleFilters.length ; i++){
@@ -161,8 +174,8 @@
 					String typeName = request.getParameter(map+".name");
 					if(typeName != null && typeName.length() > 0 
 					   && className != null && className.length() > 0 ){
-						filterMap.addElement(settings,
-										     SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+						CrawlerModule tmp = SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className);
+						filterMap.addElement(settings,tmp);
 					}
 				} else if(subaction.equals("moveup")){
 					// Move a filter down in a map
@@ -192,7 +205,7 @@
 			return;
 		}else if(action.equals("configure")){
 			// Go to configure settings.
-			response.sendRedirect("/admin/jobs/per/configure.jsp?job="+theJob.getUID());
+			response.sendRedirect("/admin/jobs/per/configure.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
 			return;
 		}
 	}
@@ -246,6 +259,7 @@
 	}
 </script>
 	<p>
+		<b>Override for the <%=theJob.isProfile()?"profile":"job"%> <%=theJob.getJobName()%> on domain '<%=currDomain%>'</b>
 		<%@include file="/include/jobpernav.jsp"%>
 	<p>
 	<form name="frmFilters" method="post" action="filters.jsp">
@@ -255,6 +269,10 @@
 		<input type="hidden" name="subaction" value="">
 		<input type="hidden" name="map" value="">
 		<input type="hidden" name="filter" value="">
+		<p>
+			<b>Instructions:</b> It is possible to add filters to overrides and manipulate existing<br>
+			override filters. It is not possible to remove filters defined in a super domain!
+		<p>
 		<table>
 			<%=printFilters(crawlOrder,settings,"",false,false,false,null,false)%>
 		</table>
