@@ -29,4 +29,5 @@ then
     HERITRIX_HOME=`cd "$PRGDIR/.." ; pwd`
 fi
 
-CLASS_MAIN='org.archive.io.arc.ARCReader' $HERITRIX_HOME/bin/runclassmain $@
+FOREGROUND='true', CLASS_MAIN='org.archive.io.arc.ARCReader' \
+    $HERITRIX_HOME/bin/heritrix $@

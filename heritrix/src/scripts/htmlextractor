@@ -29,5 +29,6 @@ then
     HERITRIX_HOME=`cd "$PRGDIR/.." ; pwd`
 fi
 
+FOREGROUND='true', \
 CLASS_MAIN='org.archive.crawler.extractor.ExtractorHTMLTest' \
-    $HERITRIX_HOME/bin/runclassmain $@
+    $HERITRIX_HOME/bin/heritrix $@
