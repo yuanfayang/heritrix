@@ -46,7 +46,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	private String arcPrefix = "archive";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
-//	private OutputStream out = null;		// for writing to files
+	private OutputStream arcOut = null;		// for writing to files
 	private IAGzipOutputStream out = null;	// compressed output stream
 	
 	//	append to arc files to assure uniqueness across threads. 
@@ -57,7 +57,12 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   		super.initialize(c);
   
 		readConfiguration();
-		createNewArcFile();		  		
+		
+		try{
+			createNewArcFile();		  		
+		}catch(IOException e){
+			e.printStackTrace();
+		}
   	}
   	
   	protected void readConfiguration(){
@@ -71,7 +76,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		Node maxSize = getNodeAt("./arc-files/@max-size-bytes");
 		Node path = order.getNodeAt("//disk/@path");
 		
-
 		setArcPrefix( 
 			( (filePrefix==null) ? arcPrefix : filePrefix.getNodeValue() )
 		);
@@ -86,13 +90,21 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 
   	}
   	
+  	/**
+  	 * Takes a CrawlURI and generates an arc record, writing it
+  	 * to disk.  Currently
+  	 * this method understands the following uri types: dns, http
+  	 */
   	public void process(CrawlURI curi){
   		super.process(curi);
-  		
+
   		// find the write protocol and write this sucker
   		String scheme = curi.getUURI().getUri().getScheme();
-  		
-  		try{
+  	
+  		try{  			
+  			// zip each record individually
+			out.startCompressionBlock();
+			
   			if(scheme.equals("dns")){
   				writeDns(curi);
   				
@@ -109,9 +121,15 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			e.printStackTrace();
   		}
   	}
-
-
-  	protected void writeMetaLine(CrawlURI curi, int recordLength) throws InvalidRecordException{
+  	
+  	/**
+  	 *  Write a standard arc metaline
+  	 * @param curi
+  	 * @param recordLength
+  	 * @throws InvalidRecordException
+  	 * @throws IOException
+  	 */
+  	protected void writeMetaLine(CrawlURI curi, int recordLength) throws InvalidRecordException, IOException{
 
 		// TODO sanity check the passed curi before writing
 		if (true){	
@@ -149,15 +167,15 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}
 					
 			try{	
-			out.writeRecordHeader();
 			out.write(metaLineStr.getBytes());  		
+			
 			}catch(IOException e){
 				e.printStackTrace();
 			}
   		}
   	}
   	
-	protected void createNewArcFile() {
+	protected void createNewArcFile() throws IOException {
 
 		String date = get14DigitDate();
 		int uniqueIdentifier = getNextArcId();
@@ -170,9 +188,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}
 							
 			file = new File(fileName);
-			//out = new FileOutputStream(file, true).getChannel();
-			//out = new FileOutputStream(file);
-			out = new IAGzipOutputStream(new FileOutputStream(file));
+			arcOut = new FileOutputStream(file);
+			out = new IAGzipOutputStream(arcOut);
 			
 			String arcFileDesc =
 				"filedesc://"
@@ -182,10 +199,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 					+ " text/plain 77\n1 0 InternetArchive\nURL IP-address Archive-date Content-type Archive-length\n";
 			
 			out.write(arcFileDesc.getBytes());
-			out.finish();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw e;
 		}
 	}
 
@@ -230,7 +247,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		out.write("\r\n".getBytes());
 		out.write(body);
 		out.write("\n".getBytes());
-		out.finish();
 	}
 	
 	protected void writeDns(CrawlURI curi) throws IOException, InvalidRecordException {
@@ -264,7 +280,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 		baos.writeTo(out);
 	 	out.write("\n".getBytes());
-	 	out.finish();
 	}
 	
 	// getters and setters		
@@ -287,9 +302,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 	public void setArcPrefix(String buffer) {	
 		arcPrefix = buffer;
-		
-		// start writing files with the new prefix
-		createNewArcFile();
 	}
 	
 	private int getNextArcId(){
