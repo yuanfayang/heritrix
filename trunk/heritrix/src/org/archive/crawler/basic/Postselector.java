@@ -147,11 +147,12 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	}
 
 	/**
-	 * Schedule the given CandidateURI with the Frontier as a "high" priority
-	 * item (such as a prerequisite or embedded resource which should be fetched
-	 * in an expedited manner). 
+	 * Schedule the given {@link CandidateURI CandidateURI} with the Frontier as a 
+	 * "high" priority item (such as a prerequisite or embedded resource which should 
+	 * be fetched in an expedited manner). 
 	 * 
-	 * @param prereq
+	 * @param caUri The CandidateURI to be scheduled
+	 * 
 	 * @return true if CandidateURI was accepted by crawl scope, false otherwise
 	 */
 	private boolean scheduleHigh(CandidateURI caUri) {
@@ -168,9 +169,10 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 	}
 
 	/**
-	 * Schedule the given CandidateURI with the Frontier.
+	 * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
 	 * 
-	 * @param prereq
+	 * @param caUri The CandidateURI to be scheduled
+	 * 
 	 * @return true if CandidateURI was accepted by crawl scope, false otherwise
 	 */
 	private boolean schedule(CandidateURI caUri) {

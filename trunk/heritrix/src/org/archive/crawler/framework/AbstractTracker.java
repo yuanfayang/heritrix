@@ -11,8 +11,6 @@ import org.archive.util.PaddingStringBuffer;
 
 
 /**
- * @author Kristinn Sigurdsson
- *
  * A partial implementation of the StatisticsTracking interface.  
  * <p>
  * It covers the thread handling. (Launching, pausing etc.)  Included in this is 
@@ -25,6 +23,8 @@ import org.archive.util.PaddingStringBuffer;
  * <p>
  * Implementation of logActivity (the actual logging) as well as listening for
  * CrawlURIDisposition events is not addressed.
+ * 
+ * @author Kristinn Sigurdsson
  * 
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
@@ -114,26 +114,21 @@ public abstract class AbstractTracker implements StatisticsTracking,
 
 	/**
 	 * A method for logging current state.  
-	 * 
-	 * A class implementing this one should override it with the
-	 * proper code to log the progress information.
-	 * 
-	 * This method will be called by run at intervals specified in
+	 * <p>
+	 * This method will be called by run() at intervals specified in
 	 * the crawl order file.  It is also invoked when pausing or
-	 * stopping a crawl to capture the state at that point. It should
-	 * not be called by other classes.  
+	 * stopping a crawl to capture the state at that point.
 	 * <p>
 	 * It is recommended that for implementations of this method it be
 	 * carefully considered if it should be synchronized in whole or in 
 	 * part. 
 	 */
-	protected void logActivity(){
-		// Left to implementing classes.	
-	}
+	protected abstract void logActivity();
 	
 	public void setCrawlStartTime(long mili){
 		crawlerStartTime = mili;
 	}
+	
 	public long getCrawlStartTime(){
 		return crawlerStartTime;
 	}
@@ -250,9 +245,7 @@ public abstract class AbstractTracker implements StatisticsTracking,
 	}
 
 
-	/**
-	 * Will be called once the crawl job we are monitoring has ended.
-	 * 
+	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
 	 */
 	public void crawlEnded(String sExitMessage) {

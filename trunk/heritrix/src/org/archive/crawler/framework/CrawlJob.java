@@ -1,16 +1,19 @@
 package org.archive.crawler.framework;
-/**
- * @author Kristinn Sigurdsson
- *
- * A CrawlJob encapsulates a CrawlOrder with any and all information and methods needed
- * by a CrawlJobHandler to accept and execute them.
- */
 
 import org.archive.crawler.datamodel.CrawlOrder;
 
+/**
+ * A CrawlJob encapsulates a CrawlOrder with any and all information and methods needed
+ * by a CrawlJobHandler to accept and execute them.
+ * 
+ * @author Kristinn Sigurdsson
+ * 
+ * @see CrawlJobHandler
+ */
+
 public interface CrawlJob
 {
-	/**
+	/*
 	 * Possible values for Priority
 	 */
 	public static final int PRIORITY_MINIMAL = 0;
@@ -19,21 +22,33 @@ public interface CrawlJob
 	public static final int PRIORITY_HIGH = 3;
 	public static final int PRIORITY_CRITICAL = 4;
 
-	/**
+	/*
 	 * Possible states for a Job.
 	 */
-	public static final String STATUS_CREATED = "Created"; // Inital value.  
-	public static final String STATUS_PENDING = "Pending"; // Job has been successfully submitted to a CrawlJobHandler 
-	public static final String STATUS_RUNNING = "Running"; // Job is being crawled
-	public static final String STATUS_DELETED = "Deleted"; // Job was deleted from the CrawlJobHandler before it was crawled.
-	public static final String STATUS_ABORTED = "Aborted by user"; //Job was terminted by user input while crawling 
-	public static final String STATUS_FINISHED_ABNORMAL = "Abnormal exit from crawling"; //Something went very wrong 
-	public static final String STATUS_FINISHED = "Finished"; // Job finished normally having completed it's crawl.
-	public static final String STATUS_FINISHED_TIME_LIMIT = "Finished - Timelimit hit"; // Job finished normally when the specified timelimit was hit.
-	public static final String STATUS_FINISHED_DATA_LIMIT = "Finished - Maximum amount of data limit hit"; // Job finished normally when the specifed amount of data (MB) had been downloaded
-	public static final String STATUS_FINISHED_DOCUMENT_LIMIT = "Finished - Maximum number of documents limit hit"; //Job finished normally when the specified number of documents had been fetched.
-	public static final String STATUS_WAITING_FOR_PAUSE = "Pausing - Waiting for threads to finish"; // Job is going to be temporarly stopped after active threads are finished.
-	public static final String STATUS_PAUSED = "Paused"; // Job was temporarly stopped. State is kept so it can be resumed
+	/** Inital value. */
+	public static final String STATUS_CREATED = "Created";  
+	/** Job has been successfully submitted to a CrawlJobHandler */
+	public static final String STATUS_PENDING = "Pending"; 
+	/** Job is being crawled */
+	public static final String STATUS_RUNNING = "Running";
+	/** Job was deleted from the CrawlJobHandler before it was crawled. */
+	public static final String STATUS_DELETED = "Deleted";
+	/** Job was terminted by user input while crawling */
+	public static final String STATUS_ABORTED = "Aborted by user"; 
+	/** Something went very wrong */
+	public static final String STATUS_FINISHED_ABNORMAL = "Abnormal exit from crawling"; 
+	/** Job finished normally having completed it's crawl. */
+	public static final String STATUS_FINISHED = "Finished";
+	/** Job finished normally when the specified timelimit was hit. */
+	public static final String STATUS_FINISHED_TIME_LIMIT = "Finished - Timelimit hit";
+	/** Job finished normally when the specifed amount of data (MB) had been downloaded */
+	public static final String STATUS_FINISHED_DATA_LIMIT = "Finished - Maximum amount of data limit hit";
+	/** Job finished normally when the specified number of documents had been fetched. */
+	public static final String STATUS_FINISHED_DOCUMENT_LIMIT = "Finished - Maximum number of documents limit hit";
+	/** Job is going to be temporarly stopped after active threads are finished. */
+	public static final String STATUS_WAITING_FOR_PAUSE = "Pausing - Waiting for threads to finish";
+	/** Job was temporarly stopped. State is kept so it can be resumed */
+	public static final String STATUS_PAUSED = "Paused";
 	
 	/**
 	 * Each job needs to be assigned a ID.
@@ -76,8 +91,13 @@ public interface CrawlJob
 	
 	/**
 	 * 
-	 * @param iPriority The level of priority 
-	 *        (see constants defined here beginning with PRIORITY
+	 * @param priority The level of priority 
+	 *        
+	 * @see CrawlJob#PRIORITY_MINIMAL
+	 * @see CrawlJob#PRIORITY_LOW
+	 * @see CrawlJob#PRIORITY_AVERAGE
+	 * @see CrawlJob#PRIORITY_HIGH
+	 * @see CrawlJob#PRIORITY_CRITICAL
 	 */
 	public void setJobPriority(int priority);
 	

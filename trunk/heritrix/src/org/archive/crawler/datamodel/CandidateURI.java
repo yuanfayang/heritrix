@@ -186,8 +186,11 @@ public class CandidateURI implements Serializable, Lineable {
 	}
 
 	/**
-	 * @param curi
-	 * @return
+	 * Compares the domain of this CandidateURI with that of another CandidateURI
+	 * 
+	 * @param other The other CandidateURI
+	 * 
+	 * @return True if both are in the same domain, false otherwise.
 	 */
 	public boolean sameDomainAs(CandidateURI other) {
 		String domain = getUURI().getHost();
