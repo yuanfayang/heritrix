@@ -172,13 +172,13 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo3 dequeued","foo3",queue.dequeue());
         assertEquals("foo4 dequeued","foo4",queue.dequeue());
         assertEquals("foo5 dequeued","foo5",queue.dequeue());
-        // this next forces read of 5 into memory from disk, file flip
+        // this next forces read of 5/2 into memory from disk, file flip
         assertEquals("foo6 dequeued","foo6",queue.dequeue());
 
         // next 4 enqueues write to new file
         queue.enqueue("foo12");
 
-        // TODO serialize/deserialize
+        // serialize
         File tmpDir = getTmpDir();
         File serFile = new File(tmpDir,"foo.ser");
         File storeDir = new File(tmpDir,"serialization");
@@ -193,7 +193,8 @@ public class DiskBackedQueueTest extends QueueTestBase {
 
         ((DiskBackedQueue)queue).release();
         queue = null;
-
+        
+        // deserialize
         ObjectPlusFilesInputStream in = null;
         try {
             in = new ObjectPlusFilesInputStream(
@@ -210,15 +211,15 @@ public class DiskBackedQueueTest extends QueueTestBase {
         queue.enqueue("foo15");
 
         // dequeue rest
-        assertEquals("foo1 dequeued","foo7",queue.dequeue());
-        assertEquals("foo1 dequeued","foo8",queue.dequeue());
-        assertEquals("foo1 dequeued","foo9",queue.dequeue());
-        assertEquals("foo1 dequeued","foo10",queue.dequeue());
-        assertEquals("foo1 dequeued","foo11",queue.dequeue());
-        assertEquals("foo1 dequeued","foo12",queue.dequeue());
-        assertEquals("foo1 dequeued","foo13",queue.dequeue());
-        assertEquals("foo1 dequeued","foo14",queue.dequeue());
-        assertEquals("foo1 dequeued","foo15",queue.dequeue());
+        assertEquals("foo7 dequeued","foo7",queue.dequeue());
+        assertEquals("foo8 dequeued","foo8",queue.dequeue());
+        assertEquals("foo9 dequeued","foo9",queue.dequeue());
+        assertEquals("foo10 dequeued","foo10",queue.dequeue());
+        assertEquals("foo11 dequeued","foo11",queue.dequeue());
+        assertEquals("foo12 dequeued","foo12",queue.dequeue());
+        assertEquals("foo13 dequeued","foo13",queue.dequeue());
+        assertEquals("foo14 dequeued","foo14",queue.dequeue());
+        assertEquals("foo15 dequeued","foo15",queue.dequeue());
         assertTrue("queue is empty", queue.isEmpty());
     }
 }
