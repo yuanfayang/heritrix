@@ -132,5 +132,9 @@
       </newObject>
     </map>
     <string name="recover-path"></string>
+    <newObject name="credential-store" 
+        class="org.archive.crawler.datamodel.settings.CredentialStore">
+      <map name="credentials" />
+    </newObject>
   </controller>
 </crawl-order>
