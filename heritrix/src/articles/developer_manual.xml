@@ -23,7 +23,7 @@
     <para></para>
 
     <sect2>
-      <title>Obatining Heritrix</title>
+      <title>Obtaining Heritrix</title>
 
       <para>Heritrix can be obtained as packaged binary or source downloaded
       from the crawler <ulink
@@ -63,9 +63,9 @@
     <sect2>
       <title>Eclipse</title>
 
-      <para>The developement team uses Eclipse as the developement
-      environment. This is of course optional, but for those who want to use
-      Eclipse you can, at the head of the CVS tree, find Eclipse
+      <para>The development team uses Eclipse as the development environment.
+      This is of course optional, but for those who want to use Eclipse you
+      can, at the head of the CVS tree, find Eclipse
       <emphasis>.project</emphasis> and <emphasis>.classpath</emphasis>
       configuration files that should make integrating the CVS checkout into
       your Eclipse development environment straight-forward.</para>
@@ -75,7 +75,7 @@
   <sect1>
     <title>Coding conventions</title>
 
-    <para>Heritrix baselines on SUN's Code Conventions for the JavaTM
+    <para>Heritrix baselines on SUN's Code Conventions for the Java™
     Programming Language <xref linkend="sun_code_conventions" />. It'd be hard
     not to they say so little. They at least say <ulink
     url="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum
@@ -101,7 +101,7 @@
       <sect3>
         <title>Indent Width</title>
 
-        <para>Indents are 4 charcters wide.</para>
+        <para>Indents are 4 characters wide.</para>
       </sect3>
 
       <sect3>
@@ -109,7 +109,7 @@
 
         <para>Preference is to have the bracket that opens functions and
         blocks on same line as function declaration or block test rather than
-        on a new line on of its ownsome. For example:<programlisting>if (true) {
+        on a new line on of its own some. For example:<programlisting>if (true) {
     return true;
 }</programlisting>and<programlisting>public void main (String [] args) {
     System.println("Hello world");
@@ -249,8 +249,8 @@ ${package_declaration}</programlisting></para>
     <sect2>
       <title>ToeThreads</title>
 
-      <para>The Heritrix web crawler is multithreaded. Every URI is handled by
-      its own thread called ToeThreads. A ToeThread asks the Frontier for a
+      <para>The Heritrix web crawler is multi threaded. Every URI is handled
+      by its own thread called ToeThreads. A ToeThread asks the Frontier for a
       new URI, sends it trough all the processors and the asks for a new
       URI.</para>
     </sect2>
@@ -260,8 +260,8 @@ ${package_declaration}</programlisting></para>
 
       <para>Processors are grouped into processor chains (<xref
       linkend="processor_chains" />). Each chain does some processing on a
-      URI. When a Processor is finnished with a URI the ToeThread sends the
-      URI to the next Processor until the URI has been processed by all the
+      URI. When a Processor is finished with a URI the ToeThread sends the URI
+      to the next Processor until the URI has been processed by all the
       Processors.</para>
 
       <figure id="processor_chains">
@@ -287,7 +287,7 @@ ${package_declaration}</programlisting></para>
     <para>The settings framework is designed to be a flexible way to configure
     a crawl with special treatment for subparts of the web without adding to
     much performance overhead. If you want to write a module which should be
-    configurable thru the user interface, it is important to have a basic
+    configurable through the user interface, it is important to have a basic
     understanding of the Settings framework. At the core the settings
     framework is a way to keep persistent, context sensitive configuration
     settings for any class in the crawler.</para>
@@ -332,7 +332,7 @@ ${package_declaration}</programlisting></para>
       this particular host. If it is, the value will be returned. If not, it
       will go up one level recursively until it eventually reach the order
       object and returns the global value. If no value is set here either
-      (normally it would be), a hardcoded default value is returned.</para>
+      (normally it would be), a hard coded default value is returned.</para>
 
       <para>All per domain/host settings objects does only contain those
       settings which are to be overridden for this particular domain/host. The
@@ -342,7 +342,7 @@ ${package_declaration}</programlisting></para>
       <para>To further complicate the picture, there is also settings objects
       called refinements. An object of this type belongs to a global or per
       settings object and overrides the settings in it's owners object if some
-      criteria is met. These critera could be that the URI in question
+      criteria is met. These criteria could be that the URI in question
       conforms to a regular expression or that it the settings are consulted
       at a specific time of day limited by a time span.</para>
     </sect2>
@@ -356,24 +356,37 @@ ${package_declaration}</programlisting></para>
       values are stored in an instance of DataContainer. The DataContainer is
       never accessed directly from user code. Instead the user accesses the
       attributes through methods in the ComplexType. The attributes are
-      accessed in different ways depending if it is from the UI or from inside
-      a running crawl.</para>
+      accessed in different ways depending if it is from the user interface or
+      from inside a running crawl.</para>
 
       <para>When an attribute is accessed from the URI (either reading or
       writing) you want to make sure that you are editing the attribute in the
       right context. When trying to override an attribute, you don't want the
       settings framework to traverse up to effective value for the attribute,
       but instead want to know that the attribute is not set on this level. To
-      achieve this there is getLocalAttribute and setAttribute methods taking
-      a settings object as a parameter. These methods works only on the
-      supplied settings object.</para>
+      achieve this there is <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#getLocalAttribute(org.archive.crawler.datamodel.settings.CrawlerSettings,%20java.lang.String)">getLocalAttribute(CrawlerSettings
+      settings, String name)</ulink> and <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#setAttribute(org.archive.crawler.datamodel.settings.CrawlerSettings,%20javax.management.Attribute)">setAttribute(CrawlerSettings
+      settings, Attribute attribute)</ulink> methods taking a settings object
+      as a parameter. These methods works only on the supplied settings
+      object. In addition the methods <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#getAttribute(java.lang.String)">getAttribute(name)</ulink>
+      and <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#setAttribute(javax.management.Attribute)">setAttribute(Attribute
+      attribute)</ulink> is there for conformance to the Java JMX
+      specification. The latter to always works on the global settings
+      object.</para>
 
       <para>Getting an attribute within a crawl is different in that way that
-      you always want to get a value if its set for this context or not. That
-      means that the settings framework should work its way up the settings
-      hierarchy to find the value in effect for the context. The <xref
-      linkend="get_attribute_flow" /> shows how the settings framework finds
-      the effective value given a context.</para>
+      you always want to get a value even if it is not set in it's context.
+      That means that the settings framework should work its way up the
+      settings hierarchy to find the value in effect for the context. The
+      method <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#getAttribute(java.lang.String,%20org.archive.crawler.datamodel.CrawlURI)">getAttribute(String
+      name, CrawlURI uri)</ulink> should be used to make sure that the right
+      context is used. The <xref linkend="get_attribute_flow" /> shows how the
+      settings framework finds the effective value given a context.</para>
 
       <figure id="get_attribute_flow">
         <title>Flow of getting an attribute</title>
@@ -385,6 +398,28 @@ ${package_declaration}</programlisting></para>
         </mediaobject>
       </figure>
     </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Common needs for all configurable modules</title>
+
+    <para>As mentioned earlier all configurable modules in Heritrix subclasses
+    ComplexType (or one of its descendants). When you write your own module
+    you should inherit from <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ModuleType.html">ModuleType</ulink>
+    which is a subclass of ComplexType intended for be subclassed by all
+    modules in Heritrix. Heritrix knows how to handle a ComplexType and to get
+    the needed information to render the user interface part for it. To make
+    this happen your module has to obey some rules.</para>
+
+    <orderedlist>
+      <listitem>
+        <para>A module should always implement a constructor taking exactly
+        one argument - the name argument (<ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ModuleType.html#ModuleType(java.lang.String)">see
+        ModuleType(String name)</ulink>).</para>
+      </listitem>
+    </orderedlist>
   </sect1>
 
   <sect1>
@@ -428,6 +463,145 @@ ${package_declaration}</programlisting></para>
 
     <para></para>
   </sect1>
+
+  <appendix>
+    <title>Version and Release Numbering</title>
+
+    <para>Heritrix uses a version numbering scheme modeled after the one used
+    for Linux kernels. Versions are 3 numbers:</para>
+
+    <para>[major ] .[minor/mode ] .[patchlevel ]</para>
+
+    <para>The major version number, currently at zero, increments upon
+    significant architectural changes or the achievement of important
+    milestones in capabilities. The minor/mode version number increments as
+    progress is made within a major version, with the added constraint that
+    all external releases have an even minor/mode version number, and all
+    internal/development versions have an odd minor/mode version
+    number.</para>
+
+    <para>The patchlevel number increments for small sets of changes,
+    providing the most fine-grain timeline of software evolution. Patchlevels
+    increment regularly for internal/development(odd minor level) work, but
+    only increment for external releases when an official update to the
+    previous release version has been tested and packaged.</para>
+
+    <para>In the CVS HEAD, version numbers are applied as tags of the form
+    "heritrix-#_#_#". When a particular development-version is thought
+    appropriate to become an external/"st able" release, it is considered a
+    "Release Candidate". If testing confirms it is suitable for release, it is
+    assigned the next even minor/mode value (and a zero patchlevel), CVS
+    version-labelled, and packaged for release. Immediately after release, and
+    before additional coding occurs, the CVS HEAD is assigned the next odd
+    minor/mode value (and a zero patchlevel) in project/source files.</para>
+
+    <para>If patches are required to a released version, before the next
+    release is ready, they are applied to a CVS branch from the release
+    version tag, tested, and released as the subsequent patchlevel.</para>
+
+    <para>Keep in mind that each version number is an integer, not merely a
+    decimal digit. To use an extreme example: development version 2.99.99
+    would be followed by either the 2.99.100 development version patchlevel or
+    the 2.100.0 release. (And after such a release, the next development
+    version would be 2.101.0.)</para>
+  </appendix>
+
+  <appendix>
+    <title>Making a Heritrix Release</title>
+
+    <para> Before initiating a release, its assumed that the current HEAD
+    version has been run through the integration self test, that all unit
+    tests pass, that the (as yet non-existent) test suite has been exercised,
+    and that general usage shows HEAD to be release worthy.</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Send a mail to the list to freeze commits until the all-clear is
+        given.</para>
+      </listitem>
+
+      <listitem>
+        <para>Up the project.xml 'currentVersion' element and the build.xml
+        'version' property. Ensure they are the same version number. (See
+        Version and Release Numbering on this page for guidance on what
+        version number to use)</para>
+      </listitem>
+
+      <listitem>
+        <para>Update xdocs/changes.xml with bugs and RFEs closed since last
+        release.</para>
+      </listitem>
+
+      <listitem>
+        <para>(TODO: Changelog based off CVS history).</para>
+      </listitem>
+
+      <listitem>
+        <para>Add news of the new release to the site main home page.</para>
+      </listitem>
+
+      <listitem>
+        <para>Generate the site. Review all documentation making sure it
+        remains applicable. Fix at least the embarrassing. Make issues to have
+        all that remains addressed.</para>
+      </listitem>
+
+      <listitem>
+        <para>Update the README.txt. Do html2txt on maven generated xdocs (I
+        did 'cat PAGE.html| w3m -dump -T text/html &gt; PAGE.txt', catted the
+        product together and then did vi regex'ing to clean out website
+        navigations and extra whitespace).</para>
+      </listitem>
+
+      <listitem>
+        <para>Commit all changes made above all in the one commit with a log
+        message about new release. Commit files with the new version -- the
+        build.xml and project.xml -- as well as the README.txt, home page, and
+        all changes in documentation including the changelog additions.</para>
+      </listitem>
+
+      <listitem>
+        <para>Wait on a cruisecontrol successful build of all just committed.
+        Download the src and binary latest builds from under the cruisecontrol
+        'build artifacts' link.</para>
+      </listitem>
+
+      <listitem>
+        <para>Build the cruisecontrol produced src distribution
+        version.</para>
+      </listitem>
+
+      <listitem>
+        <para>Run both the binary and src-built product through the
+        integration self test suite: % $HERITRIX_HOME/bin/heritrix
+        --selftest</para>
+      </listitem>
+
+      <listitem>
+        <para>Tag the CVS repository: % cvs -q tag heritrix-?_?_?</para>
+      </listitem>
+
+      <listitem>
+        <para>Update the project.xml 'currentVersion' and build.xml 'version'
+        property to both be a version number beyond that of the release
+        currently being made (If we're releasing 0.2.0, then increment to
+        0.3.0).</para>
+      </listitem>
+
+      <listitem>
+        <para>Login and upload the maven 'dist' product to sourceforge into
+        the admin-&gt;File releases section.</para>
+      </listitem>
+
+      <listitem>
+        <para>Send announcement to mailinglist -- and give an all-clear that
+        commits may resume -- and update our release state on freshmeat site
+        (Here is the URL I used creating our freshmeat project:
+        http://freshmeat.net/add-project/all-done/43820/46804/ -- 46804 is our
+        project ID).</para>
+      </listitem>
+    </orderedlist>
+  </appendix>
 
   <bibliography>
     <biblioentry id="heritrix_user_manual">
