@@ -33,7 +33,6 @@ import org.archive.crawler.datamodel.UriUniqFilter;
 import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.tuple.LongBinding;
-import com.sleepycat.je.BtreeStats;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
@@ -72,6 +71,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     protected DatabaseEntry value = null;
 	private HasUriReceiver receiver = null;
     private static final String DB_NAME = "alreadySeenUrl";
+    protected long count = 0;
     
     /**
      * Shutdown default constructor.
@@ -171,13 +171,6 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     }
     
     public long count() {
-        long count = -1;
-        try {
-			count = ((BtreeStats)this.alreadySeen.getStats(null)).
-                getLeafNodeCount();
-		} catch (DatabaseException e) {
-			logger.severe(e.getMessage());
-		}
         return count;
     }
 
@@ -221,10 +214,13 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         OperationStatus status = null;
         try {
             status = this.alreadySeen.putNoOverwrite(null, key, this.value);
+
         } catch (DatabaseException e) {
             logger.severe(e.getMessage());
         }
-
+        if(status == OperationStatus.SUCCESS) {
+            count++;
+        }
         if ((status != OperationStatus.KEYEXIST && passItOn) || force) {
         	this.receiver.receive(item);
         }
@@ -233,11 +229,15 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     public void forget(HasUri item) {
         DatabaseEntry key = new DatabaseEntry();
         LongBinding.longToEntry(createKey(item.getUri()), key);
-    	try {
-			this.alreadySeen.delete(null, key);
+    	OperationStatus status = null;
+        try {
+			status = this.alreadySeen.delete(null, key);
 		} catch (DatabaseException e) {
 			logger.severe(e.getMessage());
 		}
+        if (status == OperationStatus.SUCCESS) {
+            count--;
+        }
     }
 
     public long flush() {
