@@ -194,7 +194,10 @@ public class CrawlOrder extends ModuleType {
                 "repeating a crawl.", ""));
         e.setOverrideable(false);
         e.setExpertSetting(true);
-
+        
+        e = addElementToDefinition(new CredentialStore());
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
     }
 
     public String getUserAgent(CrawlURI curi) {
