@@ -218,6 +218,9 @@ public class FetchHTTP extends Processor
                 break;
             } catch (HttpRecoverableException e) {
                 if (immediateRetries < getMaxImmediateRetries()) {
+                    // See "[ 910219 ] [httpclient] unable...starting with"
+                    // http://sourceforge.net/tracker/?group_id=73833&atid=539099&func=detail&aid=910219
+                    // for the justification for this loop.
                     this.recoveryRetries++;
                     immediateRetries++;
                     continue;
