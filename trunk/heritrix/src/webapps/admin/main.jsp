@@ -25,6 +25,7 @@
 		}	
 	</script>
 	
+	<table border="0" cellspacing="0" cellpadding="0"><tr><td>
 	<fieldset style="width: 750px">
 		<legend>Crawler status</legend>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%">
@@ -216,6 +217,8 @@
 			%>
 		</table>
 	</fieldset>
+	</td></tr>
+	<tr><td>
 	<%
 		if(handler.isRunning())
 		{
@@ -239,11 +242,14 @@
 			}
 		}
 	%> | <a href="/admin/main.jsp">Refresh</a>
-	<p>
-		&nbsp;
-	<p>
-		&nbsp;
-	<p>
+	</td></tr>
+	<tr><td>
+		<p>
+			&nbsp;
+		<p>
+			&nbsp;
+	</td></tr>
+	<tr><td>
 		<a href="/admin/shutdown.jsp">Shut down Heritrix software</a>
-
+	</td></tr></table>
 <%@include file="/include/foot.jsp"%>
