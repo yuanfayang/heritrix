@@ -25,8 +25,11 @@
  */
 package org.archive.crawler;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.archive.crawler.admin.SimpleCrawlJob;
@@ -63,6 +66,7 @@ public class Heritrix {
      * @see #usage()
      */
     public static void main(String[] args) {
+        patchLogging();
         boolean noWUI = false;
         int port = -1;
         String crawlOrderFile = null;
@@ -198,6 +202,34 @@ public class Heritrix {
         }
     }
     
+    /**
+     * If the user hasn't altered the default logging parameters,
+     * tighten them up somewhat: some of our libraries are way
+     * too verbose at the INFO or WARNING levels. 
+     */
+    private static void patchLogging() {
+        if (System.getProperty("java.util.logging.config.class")!=null) {
+            return;
+        }
+        if (System.getProperty("java.util.logging.config.file")!=null) {
+            return;
+        }
+        // no user-set logging properties established; use defaults 
+        // from distribution-packaged 'heritrix.properties'
+        InputStream properties = ClassLoader.getSystemResourceAsStream("heritrix.properties");
+        if (properties != null ) {
+            try {
+                LogManager.getLogManager().readConfiguration(properties);
+            } catch (SecurityException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * Launch the crawler without a web UI
      * 
