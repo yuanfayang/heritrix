@@ -25,11 +25,14 @@
  */
 package org.archive.crawler;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
 import org.archive.crawler.admin.SimpleCrawlJob;
 import org.archive.crawler.admin.SimpleHandler;
 import org.archive.crawler.admin.SimpleHttpServer;
+import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
@@ -257,7 +260,23 @@ public class Heritrix {
             System.out.println("Fatal IO error: " + e.getMessage());
         }
         System.out.println("Heritrix is running");
-        System.out.println("\tWeb UI on port " + port);
+        System.out.println(" Web UI on port " + port);
+        try {
+          InetAddress addr = InetAddress.getLocalHost();
+          
+          // Get IP Address
+          byte[] ipAddr = addr.getAddress();
+          
+          // Get hostname
+          String hostname = addr.getHostName();
+          System.out.println(" http://"+hostname+":"+port+"/admin");
+        } catch (UnknownHostException e) {
+        }
+        System.out.println(
+      " operator login/password = "
+        + User.getOperatorUsername()
+        + "/"
+        + User.getOperatorPassword());
         System.out.println(status);
     }
 
