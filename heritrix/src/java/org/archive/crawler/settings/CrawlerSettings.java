@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.refinements.Refinement;
 
 /**
@@ -311,7 +311,7 @@ public class CrawlerSettings {
      * @param uri The uri for which parents of this object shoul be found.
      * @return the parent of this CrawlerSettings object.
      */
-    public CrawlerSettings getParent(UURI uri) {
+    public CrawlerSettings getParent(CrawlURI uri) {
         if (isRefinement()) {
             return settingsHandler.getSettingsForHost(scope);
         } else {

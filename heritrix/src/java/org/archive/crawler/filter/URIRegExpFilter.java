@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.filter;
 
+import java.util.regex.PatternSyntaxException;
+
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
@@ -70,8 +72,15 @@ public class URIRegExpFilter extends Filter {
         String input = null;
         input = asString(o);
         String regexp = getRegexp(o);
-        return (regexp == null)?  
-            false: TextUtils.matches(getRegexp(o), input);
+        try {
+            return (regexp == null)?  
+                    false: TextUtils.matches(getRegexp(o), input);
+        } catch (PatternSyntaxException e){
+            // This is bad. Filter will match nothing when error occurs and 
+            // log the error. TODO: Maybe create alert?
+            logger.severe(e.getMessage());
+            return false;
+        }
     }
 
     /** 

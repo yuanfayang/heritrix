@@ -24,7 +24,7 @@
  */
 package org.archive.crawler.settings.refinements;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CrawlURI;
 
 
 /**
@@ -40,7 +40,7 @@ public interface Criteria {
      * @param uri the URI to check.
      * @return true if the uri is within the bounds.
      */
-    public boolean isWithinRefinementBounds(UURI uri);
+    public boolean isWithinRefinementBounds(CrawlURI uri);
 
     /**
      * Returns the name of the Criteria type.

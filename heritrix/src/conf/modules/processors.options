@@ -19,3 +19,5 @@ org.archive.crawler.writer.ARCWriterProcessor|Archiver
 org.archive.crawler.writer.MirrorWriterProcessor|MirrorWriter
 org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
 org.archive.crawler.postprocessor.Postselector|Postselector
+is.hi.bok.crawler.ar.processor.ChangeEvaluator|ChangeEvaluator
+is.hi.bok.crawler.ar.processor.WaitEvaluator|WaitEvaluator
