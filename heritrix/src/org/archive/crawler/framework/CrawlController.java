@@ -27,6 +27,7 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.io.LocalErrorFormatter;
+import org.archive.crawler.io.PassthroughFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
@@ -52,6 +53,7 @@ public class CrawlController extends Thread {
 	private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
 	private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
 	private static final String LOGNAME_CRAWL = "crawl";
+	private static final String LOGNAME_RECOVER = "recover";
 	public static final String XP_STATS_LEVEL = "//loggers/crawl-statistics/@level";
 	public static final String XP_STATS_INTERVAL = "//loggers/crawl-statistics/@interval-seconds";
 	public static final String XP_DISK_PATH = "//behavior/@disk-path";
@@ -79,6 +81,7 @@ public class CrawlController extends Thread {
 	public Logger localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS);
 	public Logger uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS);
 	public Logger progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS);
+	public Logger recover = Logger.getLogger(LOGNAME_RECOVER);
 	
 	// create a statistic tracking object and have it write to the log every 
 	protected StatisticsTracker statistics = null;
@@ -242,6 +245,11 @@ public class CrawlController extends Thread {
 		stat.setFormatter(new StatisticsLogFormatter());
 		progressStats.addHandler(stat);
 		progressStats.setUseParentHandlers(false);
+		
+		FileHandler reco = new FileHandler(diskPath+LOGNAME_RECOVER+".log");
+		reco.setFormatter(new PassthroughFormatter());
+		recover.addHandler(reco);
+		recover.setUseParentHandlers(false);
 	}
 
 	// must include a bot name and info URL
