@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -16,6 +17,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.admin.AdminConstants;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -28,6 +30,7 @@ import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.FPUURISet;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.MemLongFPSet;
 import org.archive.util.MemQueue;
@@ -943,5 +946,112 @@ public class Frontier
 	public void crawlEnding(String sExitMessage) {
 		controller = null;			
 	}
-
+	
+	/**
+	 * This methods compiles a human readable report on the status of the frontier
+	 * at the time of the call. 
+	 * 
+	 * @return A report on the current status of the frontier.
+	 */
+	public synchronized String report()
+	{
+		StringBuffer rep = new StringBuffer();
+		
+		rep.append("Frontier report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+		rep.append(" Job being crawled:         " + controller.getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
+		rep.append("\n -----===== QUEUES =====-----\n");
+		rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
+		rep.append(" Pending high queue length: " + pendingHighQueue.length() + "\n");
+		rep.append("\n All class queues map size: " + allClassQueuesMap.size() + "\n");
+		if(allClassQueuesMap.size()!=0)
+		{
+			Iterator q = allClassQueuesMap.keySet().iterator();
+			int i = 1;
+			while(q.hasNext())
+			{
+				KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
+				rep.append("   All class keyqueue " + (i++) + " - " + kq.getClassKey() + "\n");
+				rep.append("     Length:   " + kq.length() + "\n");
+				rep.append("     Is ready: " + kq.isReady() + "\n");
+				rep.append("     Status:   " + kq.state.toString() + "\n");
+			}
+		}
+		rep.append("\n Ready class queues size:   " + readyClassQueues.size() + "\n");
+		for(int i=0 ; i < readyClassQueues.size() ; i++)
+		{
+			KeyedQueue kq = (KeyedQueue)readyClassQueues.get(i);			
+			rep.append("   Ready class keyqueue " + (i+1) + " - " + kq.getClassKey() + "\n");
+			rep.append("     Length:   " + kq.length() + "\n");
+			rep.append("     Is ready: " + kq.isReady() + "\n");
+			rep.append("     Status:   " + kq.state.toString() + "\n");
+		}
+		rep.append("\n Held class queues size:    " + heldClassQueues.size() + "\n");
+		for(int i=0 ; i < heldClassQueues.size() ; i++)
+		{
+			KeyedQueue kq = (KeyedQueue)heldClassQueues.get(i);			
+			rep.append("   Held class keyqueue " + (i+1) + " - " + kq.getClassKey() + "\n");
+			rep.append("     Length:   " + kq.length() + "\n");
+			rep.append("     Is ready: " + kq.isReady() + "\n");
+			rep.append("     Status:   " + kq.state.toString() + "\n");
+		}
+		rep.append("\n Snooze queues size:        " + snoozeQueues.size() + "\n");
+		if(snoozeQueues.size()!=0)
+		{
+			Object[] q = ((TreeSet)snoozeQueues).toArray();
+			for(int i=0 ; i < q.length ; i++)
+			{
+				if(q[i] instanceof KeyedQueue)
+				{
+					KeyedQueue kq = (KeyedQueue)q[i];
+					rep.append("   Snooze item " + (i+1) + " - keyqueue " + kq.getClassKey() + "\n");
+					rep.append("     Length:   " + kq.length() + "\n");
+					rep.append("     Is ready: " + kq.isReady() + "\n");
+					rep.append("     Status:   " + kq.state.toString() + "\n");
+				}
+				else if(q[i] instanceof CrawlURI)
+				{
+					CrawlURI cu = (CrawlURI)q[i];
+					rep.append("   Snooze item " + (i++) + " - " + "CrawlUri" + "\n");
+					rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+					rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
+				}
+			}
+		}
+		rep.append("\n -----===== CrawlURI MAPS =====-----\n");
+		rep.append(" In process map size: " + inProcessMap.size() + "\n");
+		if(inProcessMap.size()!=0)
+		{
+			Iterator q = inProcessMap.keySet().iterator();
+			int i = 1;
+			while(q.hasNext())
+			{
+				CrawlURI cu = (CrawlURI)inProcessMap.get(q.next());
+				rep.append("   In process CrawlUri " + (i++) + "\n");
+				rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+				rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
+			}
+		}
+		rep.append("\n Held curis map size: " + heldCuris.size() + "\n");
+		if(heldCuris.size()!=0)
+		{
+			Iterator q = heldCuris.keySet().iterator();
+			int i = 1;
+			while(q.hasNext())
+			{
+				CrawlURI cu = (CrawlURI)q.next();
+				rep.append("   Held CrawlUri " + (i++) + "\n");
+				rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+				rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
+			}
+		}
+		
+		return rep.toString();
+	}
+	
+	
+	public long getAllClassQueuesMap()
+	{
+		long total = 0;
+		return total;		
+	}
 }
