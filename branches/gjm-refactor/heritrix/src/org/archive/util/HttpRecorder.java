@@ -101,8 +101,7 @@ public class HttpRecorder {
 			ris.closeRecorder();
 			ros.closeRecorder();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			DevUtils.warnHandle(e,"convert to runtime exception?");
 		}
 	}
 	

@@ -45,7 +45,7 @@ public class FetchHTTP
 	private static long DEFAULT_MAX_LENGTH_BYTES = Long.MAX_VALUE;
 	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 3;
 	
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetchHTTP");
+	private static Logger logger = Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 	HttpClient http;
 	private long timeout;
 	private int soTimeout;
