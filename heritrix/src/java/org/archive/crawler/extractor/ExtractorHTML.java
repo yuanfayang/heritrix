@@ -92,7 +92,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
       "(?is)\\s((href)|(action)|(on\\w*)"
      +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
      +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
-     +"|(codebase)|((?:classid)|(?:data))|(archive)"
+     +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)"
      +"|(value)|([-\\w]+))"
      +"\\s*=\\s*"
      +"(?:(?:\"(.*?)(?:\"|$))"
@@ -105,14 +105,17 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     // 4: ON[WHATEVER] - script handler
     // 5: SRC,BACKGROUND,CITE,LONGDESC,USEMAP,PROFILE,DATASRC, or FOR
     //    single URI relative to doc base
-    // 6: CODEBASE - a single URI relative to doc base, affecting other attributes
-    // 7: CLASSID,DATA - a single URI relative to CODEBASE (if supplied)
-    // 8: ARCHIVE - one or more space-delimited URIs relative to CODEBASE (if supplied)
-    // 9: VALUE - often includes a uri path on forms
-    // 10: any other attribute
-    // 11: double-quote delimited attr value
-    // 12: single-quote delimited attr value
-    // 13: space-delimited attr value
+    // 6: CODEBASE - a single URI relative to doc base, affecting other 
+    //    attributes
+    // 7: CLASSID, DATA - a single URI relative to CODEBASE (if supplied)
+    // 8: ARCHIVE - one or more space-delimited URIs relative to CODEBASE
+    //    (if supplied)
+    // 9: CODE - a single URI relative to the CODEBASE (is specified).
+    // 10: VALUE - often includes a uri path on forms
+    // 11: any other attribute
+    // 12: double-quote delimited attr value
+    // 13: single-quote delimited attr value
+    // 14: space-delimited attr value
 
 
     // much like the javascript likely-URI extractor, but
@@ -122,8 +125,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     static final String LIKELY_URI_PATH =
      "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)";
     static final String ESCAPED_AMP = "&amp;";
+    static final String AMP ="&";
     static final String WHITESPACE = "\\s";
-
+    static final String CLASSEXT =".class";
+    static final String APPLET = "applet";
+    static final String BASE = "base";
+    static final String LINK = "link";
+    
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -136,10 +144,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
     /**
      */
-    protected void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
+    protected void processGeneralTag(CrawlURI curi, CharSequence element, 
+            CharSequence cs) {
+                
         Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 
-        // Just in case it's an OBJECT tag
+        // Just in case it's an OBJECT or APPLET tag
         String codebase = null;
         ArrayList resources = null;
 
@@ -148,51 +158,67 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                 (attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
             CharSequence value =
                 cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
-            if (attr.start(2)>-1) {
+            if (attr.start(2) > -1) {
                 // HREF
-                if(element.toString().equalsIgnoreCase("link")) {
+                if(element.toString().equalsIgnoreCase(LINK)) {
                     // <LINK> elements treated as embeds (css, ico, etc)
                     processEmbed(curi, value);
                 } else {
                     // other HREFs treated as links
                     processLink(curi, value);
                 }
-                if (element.toString().equalsIgnoreCase("base")) {
-                    curi.getAList().putString(A_HTML_BASE,value.toString());
+                if (element.toString().equalsIgnoreCase(BASE)) {
+                    curi.getAList().putString(A_HTML_BASE, value.toString());
                 }
-            } else if (attr.start(3)>-1) {
+            } else if (attr.start(3) > -1) {
                 // ACTION
                 processLink(curi, value);
-            } else if (attr.start(4)>-1) {
+            } else if (attr.start(4) > -1) {
                 // ON____
                 processScriptCode(curi, value);
-            } else if (attr.start(5)>-1) {
+            } else if (attr.start(5) > -1) {
                 processEmbed(curi, value);
-            } else if (attr.start(6)>-1) {
+            } else if (attr.start(6) > -1) {
                 // CODEBASE
-                //codebase = value.toString();
-                //codebase = codebase.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-                codebase = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+                // TODO: more HTML deescaping?
+                codebase = TextUtils.replaceAll(ESCAPED_AMP, value, AMP);
                 processEmbed(curi,codebase);
-            } else if (attr.start(7)>-1) {
-                // CLASSID,DATA
-                if (resources==null) { resources = new ArrayList(); }
+            } else if (attr.start(7) > -1) {
+                // CLASSID, DATA
+                if (resources == null) { 
+                    resources = new ArrayList();
+                }
                 resources.add(value.toString());
-            } else if (attr.start(8)>-1) {
+            } else if (attr.start(8) > -1) {
                 // ARCHIVE
-                if (resources==null) { resources = new ArrayList(); }
-                //String[] multi = value.toString().split("\\s");
+                if (resources==null) {
+                    resources = new ArrayList();
+                }
                 String[] multi = TextUtils.split(WHITESPACE, value);
                 for(int i = 0; i < multi.length; i++ ) {
                     resources.add(multi[i]);
                 }
-            } else if (attr.start(9)>-1) {
+            } else if (attr.start(9) > -1) {
+                // CODE
+                if (resources==null) {
+                    resources = new ArrayList();
+                }
+                // If element is applet and code value does not end with 
+                // '.class' then append '.class' to the code value.
+                if (element.toString().toLowerCase().equals(APPLET) &&
+                        !value.toString().toLowerCase().endsWith(CLASSEXT)) {
+                    resources.add(value.toString() + CLASSEXT);
+                } else {
+                    resources.add(value.toString());
+                }
+                
+            } else if (attr.start(10) > -1) {
                 // VALUE
                 if(TextUtils.matches(LIKELY_URI_PATH, value)) {
                     processLink(curi,value);
                 }
 
-            } else if (attr.start(10)>-1) {
+            } else if (attr.start(11) > -1) {
                 // any other attribute
                 // ignore for now
                 // could probe for path- or script-looking strings, but
@@ -216,24 +242,21 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             }
             while(iter.hasNext()) {
                 res = iter.next().toString();
-                //res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-                res = TextUtils.replaceAll(ESCAPED_AMP, res, "&");
+                // TODO: more HTML deescaping?
+                res = TextUtils.replaceAll(ESCAPED_AMP, res, AMP);
                 if (codebaseURI != null) {
                     res = codebaseURI.resolve(res).toString();
                 }
-                processEmbed(curi,res);
+                processEmbed(curi, res);
             }
         } catch (URISyntaxException e) {
             //System.out.println("BAD CODEBASE "+codebase+" at "+curi);
             // e.printStackTrace();
             curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
         } catch (IllegalArgumentException e) {
-            DevUtils.logger.log(
-                Level.WARNING,
-                "processGeneralTag()\n"+
-                "codebase="+codebase+" res="+res+"\n"+
-                DevUtils.extraInfo(),
-                e);
+            DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
+                "codebase=" + codebase + " res=" + res + "\n" + 
+                DevUtils.extraInfo(), e);
         }
     }
 
