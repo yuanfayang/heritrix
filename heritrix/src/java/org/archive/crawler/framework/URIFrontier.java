@@ -425,4 +425,12 @@ public interface URIFrontier {
      * @return The number of URIs deleted
      */
     public long deleteURIs(String match);
+
+    /**
+     * Notify Frontier that a CrawlURI has been deleted outside of the
+     * normal next()/finished() lifecycle. 
+     * 
+     * @param tmp
+     */
+    public void deleted(CrawlURI curi);
 }
