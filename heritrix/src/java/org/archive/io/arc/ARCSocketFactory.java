@@ -467,7 +467,8 @@ public class ARCSocketFactory extends SocketFactory
         /* (non-Javadoc)
          * @see java.net.Socket#getInputStream()
          */
-        public InputStream getInputStream() throws IOException
+        public InputStream getInputStream()
+            throws IOException
         {
             return this.recorder.getRecordedInput();
         }
@@ -481,17 +482,26 @@ public class ARCSocketFactory extends SocketFactory
             throws IOException
         {
             super.close();
-            this.recorder.close();
-            try
-            {
-                record();
-            }
-            finally
-            {
-                this.recorder.cleanup();
-            }
+            record();
         }
         
+        /* (non-Javadoc)
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() throws Throwable
+        {
+            try
+            {
+                close();
+            }
+            catch(Exception e)
+            {
+                // No point letting it out when we're in finalize.
+                e.printStackTrace(System.out);
+            }
+            super.finalize();
+        }
+
         /**
          * Write socket recordings to an ARC file.
          * 
@@ -502,31 +512,40 @@ public class ARCSocketFactory extends SocketFactory
         private void record()
             throws IOException
         {
-            ReplayInputStream response =
-                this.recorder.getRecordedInput().getReplayInputStream();
-            ReplayInputStream request =
-                this.recorder.getRecordedOutput().getReplayInputStream();
-            if (response.remaining() > 0)
+            try
             {
-                // Mark start of stream.  We'll want to reset to here below.
-                response.mark(MAX_HEADER_SIZE);
-                // Read past the status line.  Ignore return.
-                getStatusLine(response);
-                String contentType = getContentType(response);
-                // Reset to start of stream so can write out total repsonse.
-                response.reset();
-                ARCWriter writer = getPool().borrowARCWriter();
-                try
+                this.recorder.close();
+                ReplayInputStream response =
+                    this.recorder.getRecordedInput().getReplayInputStream();
+                ReplayInputStream request =
+                    this.recorder.getRecordedOutput().getReplayInputStream();
+                if (response.remaining() > 0)
                 {
-                    writer.write(getURL(request), contentType,
-                        this.getInetAddress().getHostAddress(),
-                        this.connectTime.getTime(), (int)response.getSize(),
-                        response);
+                    // Mark start of stream.  We'll want to reset to here below.
+                    response.mark(MAX_HEADER_SIZE);
+                    // Read past the status line.  Ignore return.
+                    getStatusLine(response);
+                    String contentType = getContentType(response);
+                    // Reset to start of stream so can write out total repsonse.
+                    response.reset();
+                    ARCWriter writer = getPool().borrowARCWriter();
+                    try
+                    {
+                        writer.write(getURL(request), contentType,
+                            this.getInetAddress().getHostAddress(),
+                            this.connectTime.getTime(), (int)response.getSize(),
+                            response);
+                    }
+                    finally
+                    {
+                        getPool().returnARCWriter(writer);
+                    }
                 }
-                finally
-                {
-                    getPool().returnARCWriter(writer);
-                }
+            }
+            
+            finally
+            {
+                this.recorder.cleanup();
             }
         }
         
