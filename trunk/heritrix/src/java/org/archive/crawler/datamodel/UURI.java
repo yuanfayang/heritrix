@@ -210,9 +210,11 @@ public class UURI implements Serializable {
     static final String NBSP = "\\xA0";
     static final String SPACE = " ";
     static final String ESCAPED_SPACE = "%20";
-    static final String PIPE = "\\|";
+    static final String PIPE = "|";
+    static final String PIPE_PATTERN = "\\|";
     static final String ESCAPED_PIPE = "%7C";
-    static final String CIRCUMFLEX = "\\^";
+    static final String CIRCUMFLEX = "^";
+    static final String CIRCUMFLEX_PATTERN = "\\^";
     static final String ESCAPED_CIRCUMFLEX = "%5E";
     static final String QUOT = "\"";
     static final String ESCAPED_QUOT = "%22";
@@ -220,22 +222,26 @@ public class UURI implements Serializable {
     static final String ESCAPED_SQUOT = "%27";
     static final String APOSTROPH = "`";
     static final String ESCAPED_APOSTROPH = "%60";
-    static final String LSQRBRACKET = "\\[";
+    static final String LSQRBRACKET = "[";
+    static final String LSQRBRACKET_PATTERN = "\\[";
     static final String ESCAPED_LSQRBRACKET = "%5B";
-    static final String RSQRBRACKET = "\\]";
+    static final String RSQRBRACKET = "]";
+    static final String RSQRBRACKET_PATTERN = "\\]";
     static final String ESCAPED_RSQRBRACKET = "%5D";
-    static final String LCURBRACKET = "\\{";
+    static final String LCURBRACKET = "{";
+    static final String LCURBRACKET_PATTERN = "\\{";
     static final String ESCAPED_LCURBRACKET = "%7B";
-    static final String RCURBRACKET = "\\}";
+    static final String RCURBRACKET = "}";
+    static final String RCURBRACKET_PATTERN = "\\}";
     static final String ESCAPED_RCURBRACKET = "%7D";
-    static final String BACKSLASH = "\\\\";
+    static final String BACKSLASH = "\\";
+    static final String BACKSLASH_PATTERN = "\\\\";
     static final String ESCAPED_BACKSLASH = "%5C";
     static final String NEWLINE = "\n+|\r+";
     static final String IMPROPERESC_REPLACE = "%25$1";
     static final String IMPROPERESC = 
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
-        
-
+     
     /** apply URI escaping where necessary
      *
      * @param s
@@ -265,14 +271,16 @@ public class UURI implements Serializable {
         // (IE actually sends these unescaped, but they can't
         // be put into a java.net.URI instance)
         if (s.indexOf(PIPE) >= 0) {
-            s = TextUtils.replaceAll(PIPE, s, ESCAPED_PIPE);
+            s = TextUtils.replaceAll(PIPE_PATTERN, s, ESCAPED_PIPE);
         }
         if (s.indexOf(CIRCUMFLEX) >= 0) {
-            s = TextUtils.replaceAll(CIRCUMFLEX, s, ESCAPED_CIRCUMFLEX);
+            s = TextUtils.replaceAll(CIRCUMFLEX_PATTERN, s, ESCAPED_CIRCUMFLEX);
         }
         if (s.indexOf(QUOT) >= 0) {
             s = TextUtils.replaceAll(QUOT, s, ESCAPED_QUOT);
         }
+        // Note: Single quote is not URI's illegal charater. We might want to
+        // skip the escpaing.  
         if (s.indexOf(SQUOT) >= 0) {
             s = TextUtils.replaceAll(SQUOT, s, ESCAPED_SQUOT);
         }
@@ -280,16 +288,20 @@ public class UURI implements Serializable {
             s = TextUtils.replaceAll(APOSTROPH, s, ESCAPED_APOSTROPH);
         }
         if (s.indexOf(LSQRBRACKET) >= 0) {
-            s = TextUtils.replaceAll(LSQRBRACKET, s, ESCAPED_LSQRBRACKET);
+            s = TextUtils.replaceAll(
+                    LSQRBRACKET_PATTERN, s, ESCAPED_LSQRBRACKET);
         }
         if (s.indexOf(RSQRBRACKET) >= 0) {
-            s = TextUtils.replaceAll(RSQRBRACKET, s, ESCAPED_RSQRBRACKET);
+            s = TextUtils.replaceAll(
+                    RSQRBRACKET_PATTERN, s, ESCAPED_RSQRBRACKET);
         }
         if (s.indexOf(LCURBRACKET) >= 0) {
-            s = TextUtils.replaceAll(LCURBRACKET, s, ESCAPED_LCURBRACKET);
+            s = TextUtils.replaceAll(
+                    LCURBRACKET_PATTERN, s, ESCAPED_LCURBRACKET);
         }
         if (s.indexOf(RCURBRACKET) >= 0) {
-            s = TextUtils.replaceAll(RCURBRACKET, s, ESCAPED_RCURBRACKET);
+            s = TextUtils.replaceAll(
+                    RCURBRACKET_PATTERN, s, ESCAPED_RCURBRACKET);
         }
         // IE acutally converts backslashes to slashes rather than to %5C.
         // Since URIs that have backslases usually work only with IE, we will
@@ -297,7 +309,7 @@ public class UURI implements Serializable {
         // TODO: Maybe we can first convert backslashes by specs and than by IE
         // so that we fetch both versions. 
         if (s.indexOf(BACKSLASH) >= 0) {
-            s = TextUtils.replaceAll(BACKSLASH, s, SLASH);
+            s = TextUtils.replaceAll(BACKSLASH_PATTERN, s, SLASH);
         }
         // escape improper escape codes; eg any '%' followed
         // by non-hex-digits or
