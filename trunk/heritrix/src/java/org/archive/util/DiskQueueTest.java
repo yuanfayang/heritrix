@@ -73,7 +73,7 @@ public class DiskQueueTest extends QueueTestBase {
      */
     protected Queue makeQueue() {
         try {
-            return new DiskQueue(this.tmpDir, FILE_PREFIX);
+            return new DiskQueue(getTmpDir(), FILE_PREFIX);
         } catch (FileNotFoundException e) {
             fail("file not found : " + e.getMessage());
             // never gets here

@@ -106,7 +106,7 @@ public class ARCWriterTest
         throws IOException
     {
         cleanUpOldFiles(baseName);
-        ARCWriter arcWriter = new ARCWriter(this.tmpDir,
+        ARCWriter arcWriter = new ARCWriter(getTmpDir(),
             baseName + '-' + PREFIX, compress, maxSize);
         assertNotNull(arcWriter);
         for (int i = 0; i < recordCount; i++)
@@ -153,7 +153,7 @@ public class ARCWriterTest
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
         this.fileFilterPrefix = baseName;
-        File [] files = this.tmpDir.listFiles(this);
+        File [] files = getTmpDir().listFiles(this);
         for (int i = 0; i < files.length; i++)
         {
             validate(files[i], -1);
@@ -169,7 +169,7 @@ public class ARCWriterTest
     {
         this.fileFilterPrefix = baseName;
         // Delete any files hanging about from last test run if any.
-        File [] files = this.tmpDir.listFiles(this);
+        File [] files = getTmpDir().listFiles(this);
         for (int i = 0; i < files.length; i++)
         {
             files[i].delete();
@@ -209,9 +209,9 @@ public class ARCWriterTest
     public void testGetOutputDir()
         throws IOException
     {
-        ARCWriter arcWriter = new ARCWriter(this.tmpDir,
+        ARCWriter arcWriter = new ARCWriter(getTmpDir(),
             "getOutputDir-" + PREFIX, false, DEFAULT_MAX_ARC_FILE_SIZE);
-        assertEquals(this.tmpDir, arcWriter.getOutputDir());
+        assertEquals(getTmpDir(), arcWriter.getOutputDir());
         arcWriter.close();
     }
 }

@@ -54,7 +54,7 @@ public class TmpDirTestCase
     /**
      * Directory to write temporary files to.
      */
-    protected File tmpDir = null;
+    private File tmpDir = null;
     
 
     public TmpDirTestCase()
@@ -94,5 +94,14 @@ public class TmpDirTestCase
     protected void tearDown() throws Exception
     {
         super.tearDown();
+    }
+    
+    
+    /**
+     * @return Returns the tmpDir.
+     */
+    public File getTmpDir()
+    {
+        return tmpDir;
     }
 }
