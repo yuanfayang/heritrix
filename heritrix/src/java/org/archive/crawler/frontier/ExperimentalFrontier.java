@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,7 +53,9 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.MemLongFPSet;
 import org.archive.util.PaddingStringBuffer;
 
+import EDU.oswego.cs.dl.util.concurrent.ClockDaemon;
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
+import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -65,34 +64,29 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  * for politeness.
  *
  * There is one generic 'pendingQueue', and then an arbitrary
- * number of other 'KeyedQueues' each representing a certain
+ * number of other work queues each representing a certain
  * 'key' class of URIs -- effectively, a single host (by hostname).
  *
- * KeyedQueues may have an item in-process -- in which case they
- * do not provide any other items for processing. KeyedQueues may
- * also be 'snoozed' -- when they should be kept inactive for a
- * period of time, to either enforce politeness policies or allow
- * a configurable amount of time between error retries.
- *
- *
+ * CURRENT STATUS: Not yet even minimally functional. Work on hold
+ * pending other experiments. 
+ * 
  * @author Gordon Mohr
  */
-public class NewFrontier
+public class ExperimentalFrontier
     extends AbstractFrontier
     implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         HasUriReceiver {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(NewFrontier.class,1);
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(ExperimentalFrontier.class,1);
 
     private static final Logger logger =
-        Logger.getLogger(NewFrontier.class.getName());
-
+        Logger.getLogger(ExperimentalFrontier.class.getName());
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
     protected UriUniqFilter alreadyIncluded;
 
-    // initial holding place for all regularly-scheduled URIs, until the
+    // initial holding place for all regularly-scheduled URIs, until they
     // get moved to an active per-host queue
     TieredQueue mainQueue;
     
@@ -103,12 +97,12 @@ public class NewFrontier
     ConcurrentReaderHashMap allClassQueuesMap = new ConcurrentReaderHashMap(); // of String (classKey) -> KeyedQueue
 
     // all per-class queues whose first item may be handed out 
-    LinkedList readyClassQueues = new LinkedList(); // of KeyedQueues
+    LinkedQueue readyClassQueues = new LinkedQueue(); // of KeyedQueues
 
-    // all per-class queues who are on hold until a certain time
-    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime     
-
-    public NewFrontier(String name){
+    // daemon to wake (put in ready queue) WorkQueues at the appropriate time
+    ClockDaemon daemon = new ClockDaemon();
+    
+    public ExperimentalFrontier(String name){
         this(name,"NewFrontier. NOT YET FUNCTIONAL. DO NOT USE.\nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
                 " will be scheduled. \nThis frontier is mostly a breadth-first"+
@@ -121,7 +115,7 @@ public class NewFrontier
     /**
      * @param name
      */
-    public NewFrontier(String name, String description) {
+    public ExperimentalFrontier(String name, String description) {
         // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         // therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
@@ -141,18 +135,6 @@ public class NewFrontier
         loadSeeds();
     }
     
-    
-    
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#unpause()
-     */
-    public synchronized void unpause() {
-        // TODO Auto-generated method stub
-        super.unpause();
-        synchronized(readyClassQueues) {
-            readyClassQueues.notifyAll();
-        }
-    }
     /**
      * Create the main queue which holds items until they are assigned
      * to per-host queues. 
@@ -184,8 +166,6 @@ public class NewFrontier
         return uuf;
     }
 
-
-    
     /**
      * Arrange for the given CandidateURI to be visited, if it is not
      * already scheduled/completed.
@@ -193,16 +173,16 @@ public class NewFrontier
      * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void schedule(CandidateURI caUri) {
-        synchronized(alreadyIncluded) {
-            if(caUri.forceFetch()) {
-                alreadyIncluded.addForce(caUri);
-            } else {
-                alreadyIncluded.add(caUri);
-            }
+        if(caUri.forceFetch()) {
+            alreadyIncluded.addForce(caUri);
+        } else {
+            alreadyIncluded.add(caUri);
         }
     }
     
     /**
+     * Accept the given CandidateURI for scheduling.
+     * 
      * @param huri
      */
     public void receive(UriUniqFilter.HasUri huri) {
@@ -211,14 +191,32 @@ public class NewFrontier
 
         applySpecialHandling(curi);
 
-        synchronized(mainQueue) {
-            if (curi.needsImmediateScheduling()) {
-                mainQueue.enqueue(curi,0);
-            } else if (curi.needsSoonScheduling()) {
-                mainQueue.enqueue(curi,1);
-            } else {
-                mainQueue.enqueue(curi);
+        if (curi.needsImmediateScheduling() || curi.needsSoonScheduling()) {
+            // try to put accelerated items onto prexisting queue, if present 
+            ExperimentalWorkQueue wq = (ExperimentalWorkQueue) allClassQueuesMap.get(curi.getClassKey());
+            if(wq!=null) {
+                synchronized(wq) {
+                    if(wq.isValid()) {
+                        wq.enqueue(curi);
+                    } else {
+                        wq = null;
+                    }
+                }
+            } 
+            if( wq == null ) {
+                if(curi.needsImmediateScheduling()) {
+                    mainQueue.enqueue(curi,0);
+                } else {
+                    mainQueue.enqueue(curi,1);
+                }
             }
+        } else {
+            // put at end
+            mainQueue.enqueue(curi);
+        }
+        
+        if(readyClassQueues.isEmpty()) {
+            fillReadyQueues();
         }
     }
 
@@ -267,32 +265,29 @@ public class NewFrontier
      * @see org.archive.crawler.framework.Frontier#next(int)
      */
     public CrawlURI next() throws InterruptedException, EndedException {
+        long wait = 0;
         while(true) {
             long now = System.currentTimeMillis();
 
             // do common checks for pause, terminate, bandwidth-hold
             preNext(now);
 
-            synchronized(readyClassQueues) {
-                // Check for snoozing queues who are ready to wake up.
-                wakeSnoozedQueues(now);
-
-                if(!readyClassQueues.isEmpty()) {
-                    NewWorkQueue q = (NewWorkQueue) readyClassQueues.removeFirst();
-                    CrawlURI curi = q.peek();
-                    noteAboutToEmit(curi,q);
-                    // TODO: replace q on readyClassQueues if still able to provide items (valence>1)
+            ExperimentalWorkQueue readyQ = (ExperimentalWorkQueue) readyClassQueues.poll(5000);
+            if(readyQ != null) {
+                synchronized(readyQ) {
+                    if(readyQ.isEmpty()) {
+                        readyQ.setValid(false);
+                        // TODO this code is incomplete
+                        allClassQueuesMap.remove(readyQ.getClassKey());
+                        continue;
+                    }
+                    CrawlURI curi = readyQ.peek();
+                    noteAboutToEmit(curi,readyQ);
+                    // TODO: restore valence capability
                     return curi; 
                 }
             }
-            
-            // if reach here, nothing was ready; try to make or wait for
-            // something to be ready, avoiding hold of frontier lock as 
-            // much as possible      
-            if(fillReadyQueues()) {
-                continue; // the while(true) with fresh URIs
-            }
-            
+       
             // ensure any piled-up scheduled URIs are considered
             synchronized(alreadyIncluded) {
                 if(alreadyIncluded.pending()>0) {
@@ -300,47 +295,31 @@ public class NewFrontier
                         continue; // the while(true) with fresh URIs
                     }
                 }
-                
-                // consider if URIs exhausted
-                if(isEmpty()) {
-                    // TODO: notify controller?
-                    // nothing left to crawl
-                    throw new EndedException("exhausted");
-                } 
-            }
-            
-            // wait until something changes
-            synchronized(readyClassQueues) {
-                long wait = 0;
-                if(!snoozeQueues.isEmpty()) {
-                    wait = ((NewWorkQueue)snoozeQueues.first()).getWakeTime() - now;
-                }
-                readyClassQueues.wait(wait);
             }
         }
     }
 
     /**
+     * @throws InterruptedException
      * 
      */
-    private boolean fillReadyQueues() {
-        boolean retVal = false;
-        synchronized(mainQueue) {
-        
-            while (allClassQueuesMap.size()<maxWorkQueues 
-                    && !mainQueue.isEmpty()) {
+    private void fillReadyQueues() {
+        synchronized(allClassQueuesMap) { // ensure only one thread in this method 
+            while (allClassQueuesMap.size()<maxWorkQueues  && !mainQueue.isEmpty()) {
                 CrawlURI curi = (CrawlURI) mainQueue.dequeue();
-                NewWorkQueue wq = (NewWorkQueue) allClassQueuesMap.get(curi.getClassKey());
+                ExperimentalWorkQueue wq = (ExperimentalWorkQueue) allClassQueuesMap.get(curi.getClassKey());
                 if (wq==null) {
                     wq = newWorkQueueFor(curi);
                     allClassQueuesMap.put(curi.getClassKey(),wq);
                     wq.enqueue(curi);
-                    synchronized(readyClassQueues) {
+                    try {
                         // new queue is always ready
-                        readyClassQueues.addLast(wq);
-                        readyClassQueues.notify();
+                        readyClassQueues.put(wq);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                        System.err.println("fillReadyQueues() couldn't ready: "+wq);
                     }
-                    retVal = true; // the overall while, since there's now a ready queue
                 } else {
                     // old queue is never made ready by addition
                     // TODO: is this true? esp. if valence>1?
@@ -348,41 +327,36 @@ public class NewFrontier
                 }
             }
         }
-        return retVal; 
     }
 
     /**
      * @param curi
      * @return
      */
-    private NewWorkQueue newWorkQueueFor(CrawlURI curi) {
-        NewWorkQueue kq = null;
+    private ExperimentalWorkQueue newWorkQueueFor(CrawlURI curi) {
+        ExperimentalWorkQueue kq = null;
 
         String key = curi.getClassKey();
         // the creation of disk directories makes this a potentially
         // lengthy operation we don't want to hold full-frontier lock
-        // for 
+        // for
         try {
-            kq = new NewWorkQueue(key,
-            this.controller.getServerCache().getServerFor(curi),
-            scratchDirFor(key),
-            100);
+            kq = new ExperimentalWorkQueue(key, this.controller.getServerCache()
+                    .getServerFor(curi), scratchDirFor(key), 100);
         } catch (IOException e) {
             // An IOException occured trying to make new KeyedQueue.
-            curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
+            curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
             Object array[] = { curi };
-            this.controller.runtimeErrors.log(
-                    Level.SEVERE,
-                    curi.getUURI().toString(),
-                    array);
+            this.controller.runtimeErrors.log(Level.SEVERE, curi.getUURI()
+                    .toString(), array);
         }
-        return kq;    
+        return kq;
     }
 
     /**
      * @param curi
      */
-    protected void noteAboutToEmit(CrawlURI curi, NewWorkQueue q) {
+    protected void noteAboutToEmit(CrawlURI curi, ExperimentalWorkQueue q) {
         curi.setHolder(q);
         CrawlServer cs = this.controller.getServerCache().getServerFor(curi);
         if (cs != null) {
@@ -401,6 +375,7 @@ public class NewFrontier
      * via the next next() call, as a result of finished().
      *
      *  (non-Javadoc)
+     * @throws InterruptedException
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public void finished(CrawlURI curi) {
@@ -408,19 +383,22 @@ public class NewFrontier
         
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
-        NewWorkQueue wq = (NewWorkQueue) curi.getHolder();
+        ExperimentalWorkQueue wq = (ExperimentalWorkQueue) curi.getHolder();
         assert (wq.peek() == curi) : "unexpected peek "+wq;
 
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
             long delay_sec = retryDelayFor(curi);
-            synchronized(wq) {
-                wq.unpeek();
-                if (delay_sec>0) {
-                    wq.setWakeTime(now+(delay_sec*1000));
-                    snoozeQueues.add(wq);
-                } else {
-                    readyClassQueues.add(wq);
+            wq.unpeek();
+            if (delay_sec>0) {
+                long delay = delay_sec*1000;
+                daemon.executeAfterDelay(delay, new WakeTask(wq));
+            } else {
+                try {
+                    readyClassQueues.put(wq);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
             controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
@@ -472,15 +450,16 @@ public class NewFrontier
         long delay_ms = politenessDelayFor(curi);
         synchronized(readyClassQueues) { // TODO: rethink this sync
             if (delay_ms>0) {
-                wq.setWakeTime(now+delay_ms);
-                snoozeQueues.add(wq);
+                daemon.executeAfterDelay(delay_ms, new WakeTask(wq));
             } else {
-                readyClassQueues.add(wq);
-                readyClassQueues.notify(); // new items might be available, let waiting threads know
+                try {
+                    readyClassQueues.put(wq);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
             }
         }
-        
-        fillReadyQueues();
         
         curi.stripToMinimal();
         curi.processingCleanup();
@@ -509,61 +488,11 @@ public class NewFrontier
      * @return True if queues are empty.
      */
     public boolean isEmpty() {
-        synchronized(mainQueue) {
-            return 
-                mainQueue.isEmpty() &&
-                alreadyIncluded.pending()==0 &&
-                allClassQueuesMap.isEmpty();
-        }
-    }
-
-
-    /**
-     * Wake any snoozed queues whose snooze time is up.
-     * @param now Current time in millisec.
-     * @throws InterruptedException
-     */
-    protected void wakeSnoozedQueues(long now) throws InterruptedException {
-        while(!snoozeQueues.isEmpty()&&((NewWorkQueue)snoozeQueues.first()).getWakeTime()<=now) {
-            NewWorkQueue awoken = (NewWorkQueue)snoozeQueues.first();
-            if (!snoozeQueues.remove(awoken)) {
-                logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
-                logger.severe(report());
-            }
-            if (awoken.isEmpty()) {
-                // delete it
-                discardQueue(awoken);
-            } else {
-                // ready it
-                readyClassQueues.add(awoken);
-            }
-        }
-    }
-
-    private void discardQueue(NewWorkQueue q) {
-        allClassQueuesMap.remove(q.getClassKey());
-        assert !snoozeQueues.contains(q) : "snoozeQueues holding dead q "+q;
-        assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q "+q;
-    }
-
-    protected long earliestWakeTime() {
-        if (!snoozeQueues.isEmpty()) {
-            return ((NewWorkQueue)snoozeQueues.first()).getWakeTime();
-        }
-        return Long.MAX_VALUE;
-    }
-
-    /**
-     * @param curi
-     * @param array
-     */
-    protected void log(CrawlURI curi) {
-        curi.aboutToLog();
-        Object array[] = { curi };
-        this.controller.uriProcessing.log(
-            Level.INFO,
-            curi.getUURI().toString(),
-            array );
+        // TODO: consider synchronizing on something (allClassQueuesMap?)
+        return 
+            mainQueue.isEmpty() &&
+            alreadyIncluded.pending()==0 &&
+            allClassQueuesMap.isEmpty();
     }
 
     /**
@@ -725,7 +654,7 @@ public class NewFrontier
             Iterator q = allClassQueuesMap.keySet().iterator();
             while(q.hasNext())
             {
-                NewWorkQueue kq = (NewWorkQueue)allClassQueuesMap.get(q.next());
+                ExperimentalWorkQueue kq = (ExperimentalWorkQueue)allClassQueuesMap.get(q.next());
                 numberOfDeletes += kq.deleteMatchedItems(mat);
 
                 // If our deleting has emptied the KeyedQueue then update it's
@@ -747,8 +676,8 @@ public class NewFrontier
     public String oneLineReport() {
     	StringBuffer rep = new StringBuffer();
     	rep.append(allClassQueuesMap.size()+" queues: ");
-    	rep.append(readyClassQueues.size()+" ready, ");
-    	rep.append(snoozeQueues.size()+" snoozed, ");
+//    	rep.append(readyClassQueues.size()+" ready, ");
+//    	rep.append(snoozeQueues.size()+" snoozed, ");
     	// rep.append(inactiveClassQueues.size()+" inactive");    	
     	return rep.toString();
     }
@@ -784,30 +713,30 @@ public class NewFrontier
             Iterator q = allClassQueuesMap.entrySet().iterator();
             while(q.hasNext())
             {
-                NewWorkQueue kq = (NewWorkQueue)q.next();
+                ExperimentalWorkQueue kq = (ExperimentalWorkQueue)q.next();
                 appendKeyedQueue(rep,kq,now);
             }
         }
-        rep.append("\n Ready class queues size:   " + readyClassQueues.size() + "\n");
-        for(int i=0 ; i < readyClassQueues.size() ; i++)
-        {
-            NewWorkQueue kq = (NewWorkQueue)readyClassQueues.get(i);
-            appendKeyedQueue(rep,kq,now);
-        }
-
-        rep.append("\n Snooze queues size:        " + snoozeQueues.size() + "\n");
-        if(snoozeQueues.size()!=0)
-        {
-            Object[] q = ((TreeSet)snoozeQueues).toArray();
-            for(int i=0 ; i < q.length ; i++)
-            {
-                if(q[i] instanceof NewWorkQueue)
-                {
-                    NewWorkQueue kq = (NewWorkQueue)q[i];
-                    appendKeyedQueue(rep,kq,now);
-                }
-            }
-        }
+//        rep.append("\n Ready class queues size:   " + readyClassQueues.size() + "\n");
+//        for(int i=0 ; i < readyClassQueues.size() ; i++)
+//        {
+//            ExperimentalWorkQueue kq = (ExperimentalWorkQueue)readyClassQueues.get(i);
+//            appendKeyedQueue(rep,kq,now);
+//        }
+//
+//        rep.append("\n Snooze queues size:        " + snoozeQueues.size() + "\n");
+//        if(snoozeQueues.size()!=0)
+//        {
+//            Object[] q = ((TreeSet)snoozeQueues).toArray();
+//            for(int i=0 ; i < q.length ; i++)
+//            {
+//                if(q[i] instanceof ExperimentalWorkQueue)
+//                {
+//                    ExperimentalWorkQueue kq = (ExperimentalWorkQueue)q[i];
+//                    appendKeyedQueue(rep,kq,now);
+//                }
+//            }
+//        }
         //rep.append("\n Inactive queues size:        " + inactiveClassQueues.size() + "\n");
 
 
@@ -815,15 +744,15 @@ public class NewFrontier
     }
 
 
-    private void appendKeyedQueue(StringBuffer rep, NewWorkQueue kq, long now) {
-        rep.append("    NewWorkQueue  " + kq.getClassKey() + "\n");
+    private void appendKeyedQueue(StringBuffer rep, ExperimentalWorkQueue kq, long now) {
+        rep.append("    ExperimentalWorkQueue  " + kq.getClassKey() + "\n");
         rep.append("     Length:        " + kq.length() + "\n");
 //        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
-        if(kq instanceof NewWorkQueue){
+        if(kq instanceof ExperimentalWorkQueue){
 //        	rep.append("     Status:        " +
-//            ((NewWorkQueue)kq).getState().toString() + "\n");
+//            ((ExperimentalWorkQueue)kq).getState().toString() + "\n");
 //        }
-//        if(kq.getState()==NewWorkQueue.SNOOZED) {
+//        if(kq.getState()==ExperimentalWorkQueue.SNOOZED) {
 //            rep.append("     Wakes in:      " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
 //        }
 //        if(kq.getInProcessItems().size()>0) {
@@ -856,4 +785,32 @@ public class NewFrontier
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(u);
     }
+    
+    protected class WakeTask implements Runnable {
+        ExperimentalWorkQueue queue;
+        
+        /**
+         * 
+         */
+        public WakeTask(ExperimentalWorkQueue q) {
+            super();
+            queue = q;
+        }
+        
+        /* (non-Javadoc)
+         * @see java.lang.Runnable#run()
+         */
+        public void run() {
+            try {
+                readyClassQueues.put(queue);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                System.err.println("Queue not woken: "+queue);
+            }
+        }
+        
+    }
 }
+
+
