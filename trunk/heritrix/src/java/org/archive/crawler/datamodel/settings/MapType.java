@@ -218,7 +218,7 @@ public class MapType extends ComplexType {
     public boolean isEmpty(CrawlerSettings settings) {
         settings = settings == null ? globalSettings() : settings;
 
-        return !getDataContainerRecursive(settings).hasAttributes();
+        return size(settings) == 0;
     }
     
     /** Get the number of elements in this map.
