@@ -65,9 +65,14 @@ public class PathDepthFilter extends Filter {
      */
     protected boolean innerAccepts(Object o) {
         this.path = null;
+        if (o == null) {
+            return false;
+        }
         if(o instanceof CandidateURI) {
             try {
-                this.path = ((CandidateURI)o).getUURI().getPath();
+                if (((CandidateURI)o).getUURI() != null) {
+                    this.path = ((CandidateURI)o).getUURI().getPath();
+                }
             }
             catch (URIException e) {
                 logger.severe("Failed getpath for " +
@@ -100,7 +105,9 @@ public class PathDepthFilter extends Filter {
                 logger.severe(e.getMessage());
             }
         }
-        return (count <= maxPathDepth.intValue());
+        return (maxPathDepth != null) ?
+            count <= maxPathDepth.intValue():
+            false;
     }
 
     /* (non-Javadoc)
