@@ -1,0 +1,16 @@
+<document>
+  <properties>
+    <title>Change Log</title>
+    <author email="stack at archive dot org">Michael Stack</author>
+  </properties>
+  <body>
+
+    <release version="0.1.0" date="2003-12-31">
+    	Initial Mavenized development version number (CVS/internal only).
+      <action dev="heritrix" type="add">
+        Added everything to new project layout.
+      </action>
+     </release>
+
+  </body>
+</document>
