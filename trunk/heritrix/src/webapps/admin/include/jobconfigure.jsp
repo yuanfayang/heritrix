@@ -276,8 +276,10 @@
      */
     public String checkError(String key, CrawlJobErrorHandler errorHandler,
             CrawlerSettings settings){
-        Constraint.FailedCheck failedCheck =
-            (Constraint.FailedCheck)errorHandler.getError(key);
+        Constraint.FailedCheck failedCheck = null;
+        if (errorHandler != null) {
+            failedCheck = (Constraint.FailedCheck)errorHandler.getError(key);
+        }
         if (failedCheck != null) {
             boolean sameSetting = false;
             if(settings != null && failedCheck.getSettings() == settings) {

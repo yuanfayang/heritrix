@@ -39,6 +39,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -55,6 +56,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.credential.Credential;
@@ -841,7 +843,8 @@ public class Heritrix implements HeritrixMBean {
     throws InvalidAttributeValueException {
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
         settings.initialize();
-        return new CrawlJob(handler.getNextJobUID(), descriptor, settings, null,
+        return new CrawlJob(handler.getNextJobUID(), descriptor, settings,
+            new CrawlJobErrorHandler(Level.SEVERE),
             CrawlJob.PRIORITY_HIGH,
             crawlOrderFile.getAbsoluteFile().getParentFile());
     }
