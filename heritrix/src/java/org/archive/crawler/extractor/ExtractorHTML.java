@@ -115,6 +115,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
 	static final Pattern WHITESPACE = Pattern.compile("\\s");
 	
+    protected long numberOfCURIsHandled = 0;
+    protected long numberOfLinksExtracted= 0;
+    
 	/**
 	 */
 	protected void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
@@ -253,6 +256,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			processScriptCode(curi,value.subSequence(11,value.length()));
 		} else {
 			logger.finest("link: "+link+ " from "+curi);
+            numberOfLinksExtracted++;
 			curi.addLink(link);
 		}
 	}
@@ -268,7 +272,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		//embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
 		logger.finest("embed: "+embed+ " from "+curi);
-		curi.addEmbed(embed);
+        numberOfLinksExtracted++;
+        curi.addEmbed(embed);
 	}
 
 
@@ -297,7 +302,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			// nothing to extract for other types here
 			return; 
 		}
-			
+		
+        numberOfCURIsHandled++;
 				
 		CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 		
@@ -330,6 +336,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			}
 		}
 		TextUtils.freeMatcher(tags);
+
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 	}
 		
 	
@@ -418,5 +426,20 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		}
 		return false;
 	}
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML\n");
+        ret.append("  Function:          Link extraction on HTML documents\n");
+        ret.append("                     - Embedded JavaScript handled by ExtractorJS\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }
+
 }
 

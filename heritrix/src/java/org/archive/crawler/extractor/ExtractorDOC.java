@@ -46,6 +46,9 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
 
+    private long numberOfCURIsHandled = 0;
+    private long numberOfLinksExtracted= 0;
+
 	/**
 	 *  Initialize this processor module.
 	 * 
@@ -79,8 +82,10 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 			// nothing to extract for other types here
 			return; 
 		}
+        
+        numberOfCURIsHandled++;		
 		
-		// get the doc as a File
+        // get the doc as a File
 		try{
 		  	documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 		
@@ -130,9 +135,23 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		
 		// if we found any links add them to the curi for later processing
 		if(links.size()>0) {
-			curi.getAList().putObject(A_HTML_LINKS, links);
+            numberOfLinksExtracted += links.size();
+            curi.getAList().putObject(A_HTML_LINKS, links);
 		}
-		
+		curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 		logger.fine(curi + " has " + links.size() + " links.");
 	}
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorDOC\n");
+        ret.append("  Function:          Link extraction on MS Word documents (.doc)\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }
 }

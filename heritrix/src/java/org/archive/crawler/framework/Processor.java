@@ -149,4 +149,20 @@ public class Processor extends XMLConfig {
 		}
 		return newInstance;
 	}
+    
+    /**
+     * Compiles and returns a report (in human readable form) about the status
+     * of the processor.  The processor's name (of implementing class) should
+     * always be included.
+     * <p>
+     * Examples of stats declared would include:<br>
+     * * Number of CrawlURIs handled.<br>
+     * * Number of links extracted (for link extractors)<br>
+     * etc.
+     * 
+     * @return A human readable report on the processor's state.
+     */
+    public String report(){
+        return ""; // Default behavior.
+    }
 }
