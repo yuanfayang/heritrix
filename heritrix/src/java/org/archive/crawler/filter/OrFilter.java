@@ -49,9 +49,14 @@ public class OrFilter extends Filter {
      * @param name
      */
     public OrFilter(String name) {
-        super(name, "Or filter");
-        filters = new MapType("filters",
-            "Filters that should be or'ed together", Filter.class);
+        super(
+            name,
+            "OrFilter.\nA filter that serves as a placeholder for other filters who's functionality should be logically or'ed together.");
+        filters =
+            new MapType(
+                "filters",
+                "This is a list of filters who's functionality should be logically or'ed together by the OrFilter.",
+                Filter.class);
         addElementToDefinition(filters);
     }
 
