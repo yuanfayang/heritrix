@@ -28,11 +28,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+
+import org.archive.crawler.Heritrix;
+import org.archive.crawler.admin.Alert;
+import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -45,7 +50,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * @author John Erik Halse
  */
-public class CrawlSettingsSAXHandler extends DefaultHandler {
+public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErrorHandler {
     private static Logger logger =
         Logger.getLogger(
             "org.archive.crawler.datamodel.settings.XMLSettingsHandler");
@@ -117,10 +122,19 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
      * @see org.xml.sax.ContentHandler#startDocument()
      */
     public void startDocument() throws SAXException {
+        settingsHandler.registerValueErrorHandler(this);
         skip.push(new Boolean(false));
         super.startDocument();
     }
 
+    /* (non-Javadoc)
+     * @see org.xml.sax.ContentHandler#endDocument()
+     */
+    public void endDocument() throws SAXException {
+        settingsHandler.unregisterValueErrorHandler(this);
+        super.endDocument();
+    }
+    
     /* (non-Javadoc)
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
@@ -170,6 +184,11 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                 }
             }
         } else {
+            Heritrix.addAlert(new Alert("Problems reading settings",
+                    "Unknown element '" + qName + "' in '"
+                            + locator.getSystemId() + "', line: "
+                            + locator.getLineNumber() + ", column: "
+                            + locator.getColumnNumber(), Level.WARNING));
             logger.warning("Unknown element '" + qName
                + "' in '" + locator.getSystemId()
                + "', line: " + locator.getLineNumber()
@@ -374,11 +393,39 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                         settings,
                         new Attribute(elementName, value));
                 } catch (AttributeNotFoundException e) {
+                    Heritrix.addAlert(new Alert(
+                            "Attribute in settings file not found",
+                            "Unknown attribute '" + elementName + "' in '"
+                                    + locator.getSystemId() + "', line: "
+                                    + locator.getLineNumber() + ", column: "
+                                    + locator.getColumnNumber(), e,
+                            Level.WARNING));
                     logger.warning("Unknown attribute '" + elementName
                        + "' in '" + locator.getSystemId()
                        + "', line: " + locator.getLineNumber()
                        + ", column: " + locator.getColumnNumber());
                 } catch (InvalidAttributeValueException e) {
+                    try {
+                        Heritrix.addAlert(new Alert(
+                                "Illegal value in settings file",
+                                "Illegal value '"
+                                        + value
+                                        + "' for attribute '"
+                                        + elementName
+                                        + "' in '"
+                                        + locator.getSystemId()
+                                        + "', line: "
+                                        + locator.getLineNumber()
+                                        + ", column: "
+                                        + locator.getColumnNumber()
+                                        + "\nValue reset to default value: "
+                                        + ((ComplexType) container)
+                                                .getAttribute(settings,
+                                                        elementName), e,
+                                Level.WARNING));
+                    } catch (AttributeNotFoundException e1) {
+                        throw new SAXException(e1);
+                    }
                     logger.warning("Illegal value for attribute '" + elementName
                        + "' in '" + locator.getSystemId()
                        + "', line: " + locator.getLineNumber()
@@ -409,5 +456,18 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         public void endElement(String name) throws SAXException {
             stack.pop();
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.ValueErrorHandler#handleValueError(org.archive.crawler.datamodel.settings.Constraint.FailedCheck)
+     */
+    public void handleValueError(FailedCheck error) {
+        Heritrix.addAlert(new Alert("Illegal value '" + value
+                + "' in settings file", error.getMessage() + "\n Attribute: '"
+                + error.getOwner().getName() + ":"
+                + error.getDefinition().getName() + "'\n Value:     '" + value
+                + "'\n File:      '" + locator.getSystemId() + "', line: "
+                + locator.getLineNumber() + ", column: "
+                + locator.getColumnNumber(), error.getLevel()));
     }
 }

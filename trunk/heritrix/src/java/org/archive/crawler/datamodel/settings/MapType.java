@@ -26,11 +26,15 @@ package org.archive.crawler.datamodel.settings;
 
 import java.util.EmptyStackException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Stack;
 
+import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
+
+import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
 
 /** This class represents a container of settings.
  *
@@ -54,7 +58,7 @@ import javax.management.MBeanAttributeInfo;
  */
 public class MapType extends ComplexType {
     /** The content type allowed for this map. */
-    private final Class contentType;
+    private final Type definition;
 
     /** Construct a new MapType object.
      *
@@ -62,7 +66,7 @@ public class MapType extends ComplexType {
      * @param description the description of the attribute.
      */
     public MapType(String name, String description) {
-        this(name, description, Type.class);
+        this(name, description, Object.class);
     }
 
     /** Construct a new MapType object.
@@ -73,7 +77,8 @@ public class MapType extends ComplexType {
      */
     public MapType(String name, String description, Class type) {
         super(name, description);
-        this.contentType = type;
+        this.definition = new SimpleType("dummy", "dummy", null);
+        this.definition.setLegalValueType(type);
     }
 
     /** Add a new element to this map.
@@ -99,8 +104,7 @@ public class MapType extends ComplexType {
             }
         }
 
-        if (!(element instanceof MapType)
-                && (this.contentType.isInstance(element))) {
+        if (!(element instanceof MapType)) {
             return super.addElement(settings, element);
         } else {
             throw new IllegalArgumentException("Nested maps are not allowed.");
@@ -250,11 +254,52 @@ public class MapType extends ComplexType {
         return size;
     }
 
-    /** Get the content type allowed for this map.
-     *
-     * @return the content type allowed for this map.
+    /**
+     * Get the content type definition for attributes of this map.
+     * 
+     * @param attribute since all attributes of a map are of the same type, this
+     *            value is not used.
+     * @return the content type definition for attributes of this map.
      */
-    public Class getContentType() {
-        return this.contentType;
+    Type getDefinition(Attribute attribute) {
+        return definition;
+    }
+
+    FailedCheck checkValue(Type definition, Attribute attribute) {
+        FailedCheck res = super.checkValue(definition, attribute);
+
+        definition = super.getDefinition(attribute);
+
+        // Check if value fulfills any constraints
+        List constraints = definition != null ? definition.getConstraints()
+                : null;
+        if (constraints != null) {
+            FailedCheck ac = null;
+            for (Iterator it = constraints.iterator(); it.hasNext()
+                    && ac == null;) {
+                ac = ((Constraint) it.next()).check(this, definition, attribute);
+                if (res == null
+                        || ac.getLevel().intValue() >= res.getLevel()
+                                .intValue()) {
+                    res = ac;
+                }
+            }
+        }
+
+        return res;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#addConstraint(org.archive.crawler.datamodel.settings.Constraint)
+     */
+    public void addConstraint(Constraint constraint) {
+        definition.addConstraint(constraint);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getConstraints()
+     */
+    public List getConstraints() {
+        return definition.getConstraints();
     }
 }

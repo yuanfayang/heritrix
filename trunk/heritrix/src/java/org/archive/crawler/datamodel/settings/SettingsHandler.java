@@ -29,8 +29,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -57,6 +62,9 @@ public abstract class SettingsHandler {
 
     /** Reference to the order module */
     private final CrawlOrder order;
+    
+    private Set valueErrorHandlers = Collections.synchronizedSet(new HashSet());
+    private int errorReportingLevel = Level.INFO.intValue();
 
     /** Datatypes supported by the settings framwork */
     final static String INTEGER = "integer";
@@ -434,4 +442,62 @@ public abstract class SettingsHandler {
      *         exist an empty array will be returned.
      */
     public abstract ArrayList getDomainOverrides(String rootDomain);
+
+    /**
+     * Unregister an instance of {@link ValueErrorHandler}.
+     * 
+     * @param errorHandler the <code>CalueErrorHandler</code> to unregister.
+     * 
+     * @see ValueErrorHandler
+     * @see #setErrorReportingLevel(Level)
+     * @see #registerValueErrorHandler(ValueErrorHandler)
+     *  
+     */
+    public void unregisterValueErrorHandler(ValueErrorHandler errorHandler) {
+        valueErrorHandlers.remove(errorHandler);
+    }
+
+    /**
+     * Register an instance of {@link ValueErrorHandler}.
+     * <p>
+     * If a ValueErrorHandler is registered, only constraints with level
+     * {@link Level#SEVERE}will throw an {@link InvalidAttributeValueException}.
+     * The ValueErrorHandler will recieve a notification for all failed checks
+     * with level equal or greater than the error reporting level.
+     * 
+     * @param errorHandler the <code>CalueErrorHandler</code> to register.
+     * 
+     * @see ValueErrorHandler
+     * @see #setErrorReportingLevel(Level)
+     * @see #unregisterValueErrorHandler(ValueErrorHandler)
+     */
+    public void registerValueErrorHandler(ValueErrorHandler errorHandler) {
+        if (errorHandler != null) {
+            valueErrorHandlers.add(errorHandler);
+        }
+    }
+    
+    /**
+     * Fire events on all registered {@link ValueErrorHandlers}.
+     * 
+     * @param error the failed constraints return value.
+     * @return true if there was any registered ValueErrorHandlers to notify.
+     */
+    boolean fireValueErrorHandlers(Constraint.FailedCheck error) {
+        if (error.getLevel().intValue() >= errorReportingLevel) {
+            for (Iterator it = valueErrorHandlers.iterator(); it.hasNext();) {
+                ((ValueErrorHandler) it.next()).handleValueError(error);
+            }
+        }
+        return valueErrorHandlers.size() > 0;
+    }
+    
+    /**
+     * Set the level for which notification of failed constraints will be fired.
+     * 
+     * @param level the error reporting level.
+     */
+    public void setErrorReportingLevel(Level level) {
+        errorReportingLevel = level.intValue();
+    }
 }

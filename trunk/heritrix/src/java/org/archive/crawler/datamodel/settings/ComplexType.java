@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
@@ -46,6 +47,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
 
 /** Superclass of all configurable modules.
  *
@@ -124,14 +126,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     public Type addElement(CrawlerSettings settings, Type type)
         throws InvalidAttributeValueException {
-        getOrCreateDataContainer(settings).addElementType(
-            type.getName(),
-            type.getDescription(),
-            type.isOverrideable(),
-            type.isTransient(),
-            type.getLegalValues(),
-            type.getDefaultValue(),
-            type.isExpertSetting());
+        getOrCreateDataContainer(settings).addElementType(type);
         if (type instanceof ComplexType) {
             addComplexType(settings, (ComplexType) type);
         }
@@ -186,8 +181,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                         }
                     }
                 }
-                if (found) {
-                    oldData.copyAttribute(t.getName(), newData);
+                if (found && oldData.copyAttribute(t.getName(), newData)) {
                     if (t instanceof ComplexType) {
                         object.setupVariables((ComplexType) t);
                     }
@@ -518,15 +512,110 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         DataContainer data = getOrCreateDataContainer(settings);
         Object value = attribute.getValue();
 
-        Object oldValue = data.put(attribute.getName(), value);
+        ModuleAttributeInfo attrInfo = (ModuleAttributeInfo) getAttributeInfo(
+                settings.getParent(), attribute.getName());
+
+        ModuleAttributeInfo localAttrInfo = (ModuleAttributeInfo) data.getAttributeInfo(attribute
+                .getName());
+
+        // Check if attribute exists
+        if (attrInfo == null && localAttrInfo == null) {
+            throw new AttributeNotFoundException(attribute.getName());
+        }
+
+        // Check if we are overriding and if that is allowed for this attribute
+        if (localAttrInfo == null) {
+            if (!attrInfo.isOverrideable()) {
+                throw new InvalidAttributeValueException(
+                        "Attribute not overrideable: " + attribute.getName());
+            }
+            localAttrInfo = new ModuleAttributeInfo(attrInfo);
+        }
         
+        // Check if value is of correct type. If not, see if it is
+        // a string and try to turn it into right type
+        Class typeClass = getDefinition(attribute).getLegalValueType();
+        if (!(typeClass.isInstance(value)) && value instanceof String) {
+            try {
+                value = SettingsHandler.StringToType((String) value,
+                        SettingsHandler.getTypeName(typeClass.getName()));
+            } catch (ClassCastException e) {
+                throw new InvalidAttributeValueException(
+                        "Unable to decode string '" + value + "' into type '"
+                                + typeClass.getName() + "'");
+            }
+        }
+
+        // If it still isn't a legal type throw an error
+        if (!typeClass.isInstance(value)) {
+            throw new InvalidAttributeValueException("Value of illegal type: '"
+                    + value.getClass().getName() + "', '" + typeClass.getName()
+                    + "' was expected");
+        }
+        
+        // Check if the attribute value is legal
+        FailedCheck error = checkValue(attribute);
+        if (error != null) {
+            if (error.getLevel() == Level.SEVERE) {
+                throw new InvalidAttributeValueException(error.getMessage());
+            } else if (error.getLevel() == Level.WARNING) {
+                if (!getSettingsHandler().fireValueErrorHandlers(error)) {
+                    throw new InvalidAttributeValueException(error.getMessage());
+                }
+            } else {
+                getSettingsHandler().fireValueErrorHandlers(error);
+            }
+        }
+
+        // Everything ok, set it
+        localAttrInfo.setType(value);
+        Object oldValue = data.put(attribute.getName(), localAttrInfo, value);
+        
+        // If the attribute is a complex type other than the old value,
+        // make sure that all sub attributes are correctly set
         if (value instanceof ComplexType && value != oldValue) {
             ComplexType complex = (ComplexType) value;
-            //addComplexType(settings, complex);
             replaceComplexType(settings, complex);
         }
     }
     
+    /**
+     * Get the content type definition for an attribute.
+     * 
+     * @param attribute the attribut to get the definition for.
+     * @return the content type definition for the attribute.
+     */
+    Type getDefinition(Attribute attribute) {
+        return (Type) definitionMap.get(attribute.getName());
+    }
+    
+    /**
+     * Check an attribute to see if it fulfills all the constraints set on the
+     * definition of this attribute.
+     * 
+     * @param attribute the attribute to check.
+     * @return null if everything is ok, otherwise it returns a FailedCheck
+     *         object with detailed information of what went wrong.
+     */
+    public FailedCheck checkValue(Attribute attribute) {
+        return checkValue(getDefinition(attribute), attribute);
+    }
+
+    FailedCheck checkValue(Type definition, Attribute attribute) {
+        FailedCheck res = null;
+
+        // Check if value fulfills any constraints
+        List constraints = definition.getConstraints();
+        if (constraints != null) {
+            for (Iterator it = constraints.iterator(); it.hasNext()
+                    && res == null;) {
+                res = ((Constraint) it.next()).check(this, definition, attribute);
+            }
+        }
+
+        return res;
+    }
+
     /** Unset an attribute on a per host level.
      *
      * This methods removes an override on a per host or per domain level.
@@ -738,7 +827,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      */
     public Type addElementToDefinition(Type type) {
         if (isInitialized()) {
-            throw new IllegalStateException("Elements should only be added to definition in the constructor.");
+            throw new IllegalStateException(
+                    "Elements should only be added to definition in the " +
+                    "constructor.");
         }
         if (definitionMap.containsKey(type.getName())) {
             definition.remove(type);
@@ -760,7 +851,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      */
     public Type getElementFromDefinition(String name) {
         if (isInitialized()) {
-            throw new IllegalStateException("Elements definition can only be accessed in the constructor.");
+            throw new IllegalStateException(
+                    "Elements definition can only be accessed in the " +
+                    "constructor.");
         }
         return (Type) definitionMap.get(name);
     }

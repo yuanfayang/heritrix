@@ -105,8 +105,13 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
                   MBeanException, ReflectionException {
 
         MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
-                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+                CrawlOrder.ATTR_HTTP_HEADERS);
 
+        MBeanAttributeInfo atts[] = map.getMBeanInfo().getAttributes();
+        for (int i = 0; i < atts.length; i++) {
+            map.removeElement(getGlobalSettings(), atts[i].getName());
+        }
+        
         assertTrue("Map should be empty", map.isEmpty(getPerHostSettings()));
         assertEquals("Map should be empty", 0, map.size(getPerHostSettings()));
 
@@ -117,11 +122,11 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertSame("Did not return added element",
             map.addElement(getGlobalSettings(), module1), module1);
 
-        assertSame("Did not return added element",
-            map.addElement(getPerHostSettings(), module2), module2);
+        assertSame("Did not return added element", module2,
+            map.addElement(getPerHostSettings(), module2));
 
-        assertSame("Did not return added element",
-            map.addElement(getPerHostSettings(), module3), module3);
+        assertSame("Did not return added element", module3,
+            map.addElement(getPerHostSettings(), module3));
 
         assertFalse("Map should contain elements",
             map.isEmpty(getPerHostSettings()));
@@ -259,4 +264,27 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertSame(map.getValue(), map);
     }
 
+    /* Test for getAttribute
+     * 
+     */
+    public void testGetAttribute() throws AttributeNotFoundException,
+            MBeanException, ReflectionException, InvalidAttributeValueException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_HTTP_HEADERS);
+
+        SimpleType type1 = new SimpleType("testType1", "description", "value");
+        SimpleType type2 = new SimpleType("testType2", "description", "value");
+        map.addElement(getGlobalSettings(), type1);
+        map.addElement(getPerDomainSettings(), type2);
+        assertEquals(type1.getValue(), map.getAttribute(getPerHostSettings(),
+                "testType1"));
+        assertEquals(type2.getValue(), map.getAttribute(getPerHostSettings(),
+        "testType2"));
+        try {
+            map.getAttribute(getGlobalSettings(), "testType2");
+            fail();
+        } catch (AttributeNotFoundException e) {
+            // OK
+        }
+    }
 }

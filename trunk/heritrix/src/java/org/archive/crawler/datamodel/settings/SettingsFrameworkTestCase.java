@@ -32,6 +32,7 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
 import org.archive.util.TmpDirTestCase;
 
 /** Set up a couple of settings to test different functions of the settings
@@ -39,7 +40,8 @@ import org.archive.util.TmpDirTestCase;
  *
  * @author John Erik Halse
  */
-public class SettingsFrameworkTestCase extends TmpDirTestCase {
+public class SettingsFrameworkTestCase extends TmpDirTestCase implements
+        ValueErrorHandler {
     private File orderFile;
     private File settingsDir;
     private CrawlerSettings globalSettings;
@@ -156,6 +158,13 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase {
      */
     public CrawlURI getUnMatchedURI() {
         return unMatchedURI;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.ValueErrorHandler#handleValueError(org.archive.crawler.datamodel.settings.Constraint.FailedCheck)
+     */
+    public void handleValueError(FailedCheck error) {
+        // TODO Auto-generated method stub
     }
 
 }
