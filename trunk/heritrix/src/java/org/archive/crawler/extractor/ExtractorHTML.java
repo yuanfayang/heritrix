@@ -499,18 +499,21 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         TextUtils.freeMatcher(attr);
         attr = null;
 
+        // Look for the 'robots' meta-tag
         if("robots".equalsIgnoreCase(name) && content != null ) {
-            curi.getAList().putString(A_META_ROBOTS,content);
+            curi.getAList().putString(A_META_ROBOTS, content);
             RobotsHonoringPolicy policy =
                 getSettingsHandler().getOrder().getRobotsHonoringPolicy();
+            String contentLower = content.toLowerCase();
             if ((policy == null
                 || (!policy.isType(curi, RobotsHonoringPolicy.IGNORE)
                     && !policy.isType(curi, RobotsHonoringPolicy.CUSTOM)))
-                && (content.indexOf("nofollow") >= 0
-                    || content.indexOf("none") >= 0)) {
+                && (contentLower.indexOf("nofollow") >= 0
+                    || contentLower.indexOf("none") >= 0)) {
                 // if 'nofollow' or 'none' is specified and the
                 // honoring policy is not IGNORE or CUSTOM, end html extraction
-                logger.fine("HTML extraction skipped due to robots meta-tag for: " + curi.getURIString());
+                logger.fine("HTML extraction skipped due to robots meta-tag for: "
+                                + curi.getURIString());
                 return true;
             }
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
