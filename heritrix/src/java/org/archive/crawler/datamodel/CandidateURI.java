@@ -42,7 +42,7 @@ import org.archive.util.Lineable;
 public class CandidateURI implements Serializable, Lineable {
     private static final long serialVersionUID = -7152937921526560388L;
 
-    public static final String FORCE_REVISIT = "Force";
+    //public static final String FORCE_REVISIT = "Force";
     public static final String HIGH = "High"; // before any others of its class
     public static final String MEDIUM = "Medium"; // after any Highs
     public static final String NORMAL = "Normal"; // whenever/end of queue
@@ -53,7 +53,8 @@ public class CandidateURI implements Serializable, Lineable {
     boolean isSeed = false;
 
     String schedulingDirective = NORMAL;
-
+    boolean forceRevisit = false; // even if already visited
+    
     /** String of letters indicating how this URI was reached from a seed */
     // P precondition
     // R redirection
@@ -238,7 +239,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return true if crawling of this URI should be forced
      */
     public boolean forceFetch() {
-        return this.schedulingDirective == FORCE_REVISIT;
+        return forceRevisit;
     }
 
    /**
@@ -252,7 +253,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @param b set to true to enforce the crawling of this URI
      */
     public void setForceFetch(boolean b) {
-        schedulingDirective = FORCE_REVISIT;
+        forceRevisit = b;
     }
 
     /**
@@ -273,7 +274,7 @@ public class CandidateURI implements Serializable, Lineable {
      * @return True if needs immediate scheduling.
      */
     public boolean needsImmediateScheduling() {
-        return schedulingDirective==HIGH || schedulingDirective == FORCE_REVISIT;
+        return schedulingDirective==HIGH;
     }
 
     /**
@@ -306,5 +307,31 @@ public class CandidateURI implements Serializable, Lineable {
             }
         }
         return transCount;
+    }
+
+    /**
+     * Given a string containing a URI, then optional whitespace
+     * delimited hops-path and via info, create a CandidateURI 
+     * instance.
+     * 
+     * @param string
+     * @return
+     * @throws URIException
+     */
+    public static CandidateURI fromString(String uriHopsViaString) throws URIException {
+        String args[] = uriHopsViaString.split("\\s+");
+        CandidateURI caUri = new CandidateURI(UURIFactory.getInstance(args[0]));
+        if (args.length > 1 && !args[1].equals("-")) {
+            caUri.setPathFromSeed(args[1]);
+        } else {
+            caUri.setPathFromSeed("");
+        }
+        if (args.length > 2 && !args[2].equals("-")) {
+            caUri.setVia(args[2]);
+        } else {
+            // filler
+            caUri.setVia("");
+        }
+        return caUri;
     }
 }
