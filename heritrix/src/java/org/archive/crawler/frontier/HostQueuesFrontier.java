@@ -632,7 +632,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         	curi.processingCleanup();
         	long duration = System.currentTimeMillis() - start;
         	if(duration > 1000) {
-        		logger.warning("#" +
+        		logger.info("#" +
         				((ToeThread)Thread.currentThread()).getSerialNumber() +
 						" " + duration + "ms" + " finished(" + curi.getURIString() +
 						") via " + curi.flattenVia());

@@ -23,6 +23,7 @@
 package org.archive.httpclient;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
@@ -74,8 +75,11 @@ import org.archive.util.HttpRecorder;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class HttpRecorderGetMethod extends GetMethod
-        implements CloseConnectionMarker {
+public class HttpRecorderGetMethod extends GetMethod {
+    
+    protected static Logger logger =
+        Logger.getLogger(HttpRecorderGetMethod.class.getName());
+    
     /**
      * Instance of http recorder method.
      */
@@ -88,52 +92,21 @@ public class HttpRecorderGetMethod extends GetMethod
 	}
 
 	protected void readResponseBody(HttpState state, HttpConnection connection)
-		    throws IOException, HttpException {
+	throws IOException, HttpException {
         // We're about to read the body.  Mark transition in http recorder.
-		this.httpRecorderMethod.markContentBegin();
+		this.httpRecorderMethod.markContentBegin(connection);
 		super.readResponseBody(state, connection);
 	}
 
     protected boolean shouldCloseConnection(HttpConnection conn) {
-        // Save off the connection so we can close it on our way out in case
-        // httpclient fails to (We're not supposed to have access to the
-        // underlying connection object; am only violating contract because
-        // see cases where httpclient is skipping out w/o cleaning up
-        // after itself). This is second attempt at catching the connection used
-        // fetching.  First is above in the execute method override.
-        //
-        // If there's been a shortcircuit of the connection close, this method
-        // most likely won't be called and I won't get a connection to close.
-        // Means this bit of code is of little use but leaving it here anyways.
-        if (conn != this.httpRecorderMethod.getConnection()) {
-            this.httpRecorderMethod.setConnection(conn);
-        }
-
         // Always close connection after each request. As best I can tell, this
         // is superfluous -- we've set our client to be HTTP/1.0.  Doing this
         // out of paranoia.
         return true;
     }
-    
-    public void closeConnection() {
-        this.httpRecorderMethod.closeConnection();
-    }
-
-    public void releaseConnection()
-    {
-        try {
-            super.releaseConnection();
-        } finally {
-            // If something bad happened during the releaseConnection above,
-            // it will usually call close itself inside in an isOpen --
-            // the close() won't get called but the wished-for effect will
-            // have occurred.  This may not be necessary.
-            this.httpRecorderMethod.closeConnection();
-        }
-    }
 
     public int execute(HttpState state, HttpConnection conn)
-            throws HttpException, IOException {
+    throws HttpException, IOException {
         // Save off the connection so we can close it on our way out in case
         // httpclient fails to (We're not supposed to have access to the
         // underlying connection object; am only violating contract because

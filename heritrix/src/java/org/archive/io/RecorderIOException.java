@@ -30,5 +30,11 @@ import java.io.IOException;
  * @author Gordon Mohr
  */
 public class RecorderIOException extends IOException {
+    public RecorderIOException() {
+    	super();
+    }
 
+    public RecorderIOException(String msg) {
+    	super(msg);
+    }
 }

@@ -29,5 +29,11 @@ package org.archive.io;
  * @author Gordon Mohr
  */
 public class RecorderTimeoutException extends RecorderIOException {
+    public RecorderTimeoutException() {
+        super();
+    }
 
+    public RecorderTimeoutException(String msg) {
+        super(msg);
+    }
 }

@@ -51,7 +51,6 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.HttpVersion;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.auth.AuthChallengeParser;
 import org.apache.commons.httpclient.auth.AuthScheme;
 import org.apache.commons.httpclient.auth.BasicScheme;
@@ -77,11 +76,11 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
-import org.archive.httpclient.CloseConnectionMarker;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
+import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ArchiveUtils;
@@ -249,6 +248,7 @@ public class FetchHTTP extends Processor
         	this.http.executeMethod(method);
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
+            method.releaseConnection();
         	return;
         } catch (ArrayIndexOutOfBoundsException e) {
         	// For weird windows-only ArrayIndex exceptions in native
@@ -256,6 +256,7 @@ public class FetchHTTP extends Processor
         	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
         	// treating as if it were an IOException
         	failedExecuteCleanup(method, curi, e);
+            method.releaseConnection();
         	return;
         }
 
@@ -266,20 +267,10 @@ public class FetchHTTP extends Processor
                 1000 * getTimeout(curi));
         } catch (RecorderTimeoutException ex) {
             curi.addAnnotation("timeTrunc");
-            if (method instanceof CloseConnectionMarker) {
-                ((CloseConnectionMarker)method).closeConnection();
-            } else {
-                logger.severe("Exceeded download time limit but method does" +
-                    " not support close.");
-            }
+            method.abort();
         } catch (RecorderLengthExceededException ex) {
-            curi.addAnnotation("lengthTrunc");
-            if (method instanceof CloseConnectionMarker) {
-                ((CloseConnectionMarker)method).closeConnection();
-            } else {
-                logger.severe("Exceeded download size limit but method does" +
-                    " not support close.");
-            }
+            curi.addAnnotation("lenTrunc");
+            method.abort();
         } catch (IOException e) {
             cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
             return;
@@ -290,7 +281,14 @@ public class FetchHTTP extends Processor
             cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
             return;
         } finally {
-            method.releaseConnection();
+            if (!((HttpMethodBase)method).isAborted()) {
+            	method.releaseConnection();
+            }
+        }
+        
+        if (rec.getRecordedInput().isOpen()) {
+        	logger.warning("RIS still open. Should have been closed by" +
+                " method release: " + Thread.currentThread().getName());
         }
 
         // Note completion time
@@ -378,6 +376,7 @@ public class FetchHTTP extends Processor
             final CrawlURI curi, final Exception exception) {
         cleanup(method, curi, exception, "executeMethod", S_CONNECT_FAILED);
     }
+    
     /**
      * Cleanup after a failed method execute.
      * @param curi CrawlURI we failed on.
@@ -390,11 +389,6 @@ public class FetchHTTP extends Processor
             final Exception exception, final String message, final int status) {
         curi.addLocalizedError(this.getName(), exception, message);
         curi.setFetchStatus(status);
-
-        // Its ok if releaseConnection is called multiple times: i.e. here and
-        // in the finally that is at end of one of the innerProcess blocks
-        // above.
-        method.releaseConnection();
     }
 
     /**
@@ -748,34 +742,32 @@ public class FetchHTTP extends Processor
     }
 
     public void initialTasks() {
-        setupHttp();
+        configureHttp();
 
         // load cookies from a file if specified in the order file.
         loadCookies();
     }
 
-    void setupHttp() throws RuntimeException {
+    void configureHttp() throws RuntimeException {
         // Get timeout.  Use it for socket and for connection timeout.
         int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
         
-        MultiThreadedHttpConnectionManager mtcm =
-            new MultiThreadedHttpConnectionManager();
-        int maxToeThreads = getController().getOrder().getMaxToes();
-        mtcm.getParams().setMaxTotalConnections(maxToeThreads * 2);
-        // TODO: This needs to match the frontier valence but valence
-        // seems to be particular to a frontier implementation.  Fix.
-        mtcm.getParams().setDefaultMaxConnectionsPerHost(10);
-        mtcm.getParams().setConnectionTimeout(timeout);
-        mtcm.getParams().setStaleCheckingEnabled(true);
+        SingleHttpConnectionManager cm =
+            new SingleHttpConnectionManager();
+        cm.getParams().setConnectionTimeout(timeout);
+        cm.getParams().setStaleCheckingEnabled(true);
         // Minimizes bandwidth usage.  Setting to true disables Nagle's
         // alogarthim.  IBM JVMs < 142 give an NPE setting this boolean
         // on ssl sockets.
-        mtcm.getParams().setTcpNoDelay(false);
-        this.http = new HttpClient(mtcm);
+        cm.getParams().setTcpNoDelay(false);
+        this.http = new HttpClient(cm);
         
         // Set default socket timeout.
         this.http.getParams().setSoTimeout(timeout);
 
+        // Set client to be version 1.0.
+        this.http.getParams().setVersion(HttpVersion.HTTP_1_0);
+        
         try {
             String trustLevel = (String) getAttribute(ATTR_TRUST);
             Protocol.registerProtocol("https", new Protocol("https",
@@ -785,11 +777,9 @@ public class FetchHTTP extends Processor
         } catch (Exception e) {
             // Convert all to RuntimeException so get an exception out if
             // initialization fails.
-            throw new RuntimeException(
-                    "Failed initialization getting attributes: "
-                            + e.getMessage());
+            throw new RuntimeException("Failed initialization getting" +
+                " attributes: " + e.getMessage());
         }
-        
 	}
 
     /**
@@ -1108,7 +1098,7 @@ public class FetchHTTP extends Processor
             this.cookies = cookies;
         }
     	public void run() {
-            setupHttp();
+            configureHttp();
             for(int i = 0; i < cookies.length; i++) {
                 FetchHTTP.this.http.getState().addCookie(cookies[i]);
             }
