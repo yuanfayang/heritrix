@@ -59,7 +59,7 @@
 					Delay factor:
 				</td>
 				<td>
-					<input name="<%="//frontier/@delay-factor"%>" value="<%=crawlOrder.getStringAt("//frontier/@delay-factor")%>" size="<%=iInputSize%>">
+					<input name="<%=handler.XP_POLITENESS_DELAY_FACTOR%>" value="<%=crawlOrder.getStringAt(handler.XP_POLITENESS_DELAY_FACTOR)%>" size="<%=iInputSize%>">
 				</td>
 			</tr>
 			<tr>
@@ -67,7 +67,7 @@
 					Min delay (ms):
 				</td>
 				<td>
-					<input name="<%="//frontier/@min-delay-ms"%>" value="<%=crawlOrder.getStringAt("//frontier/@min-delay-ms")%>" size="<%=iInputSize%>">
+					<input name="<%=handler.XP_POLITENESS_MIN_DELAY%>" value="<%=crawlOrder.getStringAt(handler.XP_POLITENESS_MIN_DELAY)%>" size="<%=iInputSize%>">
 				</td>
 			</tr>
 			<tr>
@@ -75,7 +75,7 @@
 					Max delay (ms):
 				</td>
 				<td>
-					<input name="<%="//frontier/@max-delay-ms"%>" value="<%=crawlOrder.getStringAt("//frontier/@max-delay-ms")%>" size="<%=iInputSize%>">
+					<input name="<%=handler.XP_POLITENESS_MAX_DELAY%>" value="<%=crawlOrder.getStringAt(handler.XP_POLITENESS_MAX_DELAY)%>" size="<%=iInputSize%>">
 				</td>
 			</tr>
 			<tr>
@@ -83,20 +83,49 @@
 					Min interval (ms):
 				</td>
 				<td>
-					<input name="<%="//frontier/@min-interval-ms"%>" value="<%=crawlOrder.getStringAt("//frontier/@min-interval-ms")%>" size="<%=iInputSize%>">
+					<input name="<%=handler.XP_POLITENESS_MIN_INTERVAL%>" value="<%=crawlOrder.getStringAt(handler.XP_POLITENESS_MIN_INTERVAL)%>" size="<%=iInputSize%>">
 				</td>
 			</tr>
 			<tr>
 				<td>
-					<b>File configurations</b>
+					<b>HTTP Fetch</b>
 				</td>
 			</tr>
 			<tr>
 				<td>
-					Disk path:
+					Max fetch attempts:
 				</td>
 				<td>
-					<input name="<%=handler.XP_DISK_PATH%>" value="<%=crawlOrder.getStringAt(handler.XP_DISK_PATH)%>" size="<%=iInputSize%>">
+					<input name="<%=handler.XP_HTTPFETCH_MAX_FETCH_ATTEMPTS%>" value="<%=crawlOrder.getStringAt(handler.XP_HTTPFETCH_MAX_FETCH_ATTEMPTS)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Socket timeout (ms):
+				</td>
+				<td>
+					<input name="<%=handler.XP_HTTPFETCH_SOTIMEOUT%>" value="<%=crawlOrder.getStringAt(handler.XP_HTTPFETCH_SOTIMEOUT)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Timout (sec):
+				</td>
+				<td>
+					<input name="<%=handler.XP_HTTPFETCH_TIMEOUT%>" value="<%=crawlOrder.getStringAt(handler.XP_HTTPFETCH_TIMEOUT)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Max lenght (bytes):
+				</td>
+				<td>
+					<input name="<%=handler.XP_HTTPFETCH_MAX_LENGTH_BYTES%>" value="<%=crawlOrder.getStringAt(handler.XP_HTTPFETCH_MAX_LENGTH_BYTES)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<b>ARC file configurations</b>
 				</td>
 			</tr>
 			<tr>
@@ -125,6 +154,14 @@
 			</tr>
 			<tr>
 				<td>
+					ARC dump path:
+				</td>
+				<td>
+					<input name="<%=handler.XP_ARC_DUMP_PATH%>" value="<%=crawlOrder.getStringAt(handler.XP_ARC_DUMP_PATH)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
 					<b>Request headers</b>
 				</td>
 			</tr>
@@ -146,12 +183,20 @@
 			</tr>
 			<tr>
 				<td>
-					<b>Crawler internal settings</b>
+					<b>Crawler behavior</b>
 				</td>
 			</tr>
 			<tr>
 				<td>
-					Maximum number of toe threads:
+					Disk path:
+				</td>
+				<td>
+					<input name="<%=handler.XP_DISK_PATH%>" value="<%=crawlOrder.getStringAt(handler.XP_DISK_PATH)%>" size="<%=iInputSize%>">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Max worker threads:
 				</td>
 				<td>
 					<input name="<%=handler.XP_MAX_TOE_THREADS%>" value="<%=crawlOrder.getStringAt(handler.XP_MAX_TOE_THREADS)%>" size="<%=iInputSize%>">
