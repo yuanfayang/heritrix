@@ -25,6 +25,7 @@ package org.archive.crawler.prefetch;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -152,8 +153,11 @@ public class PreconditionEnforcer
         // require /robots.txt if not present
         if (isRobotsExpired(curi)) {
         	// Need to get robots
-            logger.fine( "No valid robots for " + curi.getServer()
-                + "; deferring " + curi);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine( "No valid robots for " +
+                    getController().getServerCache().getServerFor(curi) +
+                    "; deferring " + curi);
+            }
 
             // Robots expired - should be refetched even though its already
             // crawled.
@@ -168,9 +172,10 @@ public class PreconditionEnforcer
             return true;
         }
         // test against robots.txt if available
-        if(curi.getServer().isValidRobots()){
+        CrawlServer cs = getController().getServerCache().getServerFor(curi);
+        if(cs.isValidRobots()){
             String ua = getController().getOrder().getUserAgent(curi);
-            if( curi.getServer().getRobots().disallows(curi, ua)) {
+            if(cs.getRobots().disallows(curi, ua)) {
                 // Don't fetch and turn off later stages of processing.
                 curi.skipToProcessorChain(getController().getPostprocessorChain());
                 curi.setFetchStatus(S_ROBOTS_PRECLUDED);
@@ -179,14 +184,15 @@ public class PreconditionEnforcer
                 return true;
             }
             return false;
-        } else {
-            // No valid robots found => Attempt to get robots.txt failed
-            curi.skipToProcessorChain(getController().getPostprocessorChain());
-            curi.setFetchStatus(S_ROBOTS_PREREQUISITE_FAILURE);
-            curi.getAList().putString("error","robots.txt prerequisite failed");
-            logger.fine("robots.txt prerequisite failed " + curi);
-            return true;
         }
+        // No valid robots found => Attempt to get robots.txt failed
+        curi.skipToProcessorChain(getController().getPostprocessorChain());
+        curi.setFetchStatus(S_ROBOTS_PREREQUISITE_FAILURE);
+        curi.getAList().putString("error","robots.txt prerequisite failed");
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("robots.txt prerequisite failed " + curi);
+        }
+        return true;
     }
 
     /**
@@ -194,7 +200,8 @@ public class PreconditionEnforcer
      * @return true if no further processing in this module should occur
      */
     private boolean considerDnsPreconditions(CrawlURI curi) {
-        if(curi.getServer()==null) {
+        CrawlServer cs = getController().getServerCache().getServerFor(curi);
+        if(cs == null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
@@ -203,10 +210,12 @@ public class PreconditionEnforcer
         // If we've done a dns lookup and it didn't resolve a host
         // cancel further fetch-processing of this URI, because
         // the domain is unresolvable
-        if (curi.getServer().getHost().hasBeenLookedUp()
-                && curi.getServer().getHost().getIP() == null) {
-            logger.fine( "no dns for " + curi.getServer().toString()
-                + " cancelling processing for " + curi.toString());
+        CrawlHost ch = getController().getServerCache().getHostFor(curi);
+        if (ch == null || ch.hasBeenLookedUp() && ch.getIP() == null) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine( "no dns for " + ch +
+                    " cancelling processing for " + curi.toString());
+            }
             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
@@ -217,7 +226,7 @@ public class PreconditionEnforcer
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
             logger.fine("Deferring processing of " + curi.toString()
                 + " for dns lookup.");
-            curi.markPrerequisite("dns:" + curi.getServer().getHostname(),
+            curi.markPrerequisite("dns:" + ch.getHostName(),
                 getController().getPostprocessorChain());
             return true;
         }
@@ -254,7 +263,7 @@ public class PreconditionEnforcer
      * @return true if ip should be looked up.
      */
     public boolean isIpExpired(CrawlURI curi) {
-        CrawlHost host = curi.getServer().getHost();
+        CrawlHost host = getController().getServerCache().getHostFor(curi);
         if (!host.hasBeenLookedUp()) {
             // IP has not been looked up yet.
             return true;
@@ -321,7 +330,9 @@ public class PreconditionEnforcer
      * @return true if the robots policy is expired.
      */
     public boolean isRobotsExpired(CrawlURI curi) {
-        long robotsFetched = curi.getServer().getRobotsFetchedTime();
+        CrawlServer server =
+            getController().getServerCache().getServerFor(curi);
+        long robotsFetched = server.getRobotsFetchedTime();
         if (robotsFetched == CrawlServer.ROBOTS_NOT_FETCHED) {
             // Have not attempted to fetch robots
             return true;
@@ -387,7 +398,7 @@ public class PreconditionEnforcer
                 break;
             }
 
-            if (!c.rootUriMatch(curi)) {
+            if (!c.rootUriMatch(getController(), curi)) {
                 continue;
             }
 
@@ -401,7 +412,9 @@ public class PreconditionEnforcer
                 // html form).
                 String prereq = c.getPrerequisite(curi);
                 if (prereq == null || prereq.length() <= 0) {
-                    logger.severe(curi.getServer().getName() + " has "
+                    CrawlServer server =
+                        getController().getServerCache().getServerFor(curi);
+                    logger.severe(server.getName() + " has "
                         + " credential(s) of type " + c + " but prereq"
                         + " is null.");
                 } else {
@@ -426,12 +439,13 @@ public class PreconditionEnforcer
      */
     private boolean authenticated(final Credential credential,
             final CrawlURI curi) {
-
         boolean result = false;
-        if (!curi.getServer().hasCredentialAvatars()) {
+        CrawlServer server =
+            getController().getServerCache().getServerFor(curi);
+        if (!server.hasCredentialAvatars()) {
             return result;
         }
-        Set avatars = curi.getServer().getCredentialAvatars();
+        Set avatars = server.getCredentialAvatars();
         for (Iterator i = avatars.iterator(); i.hasNext();) {
             CredentialAvatar ca = (CredentialAvatar)i.next();
             String key = null;

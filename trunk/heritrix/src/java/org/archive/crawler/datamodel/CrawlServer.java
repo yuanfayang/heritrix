@@ -53,7 +53,6 @@ public class CrawlServer implements Serializable {
 
     private final String server; // actually, host+port in the https case
     private int port;
-    private transient CrawlHost host;
     private transient SettingsHandler settingsHandler;
     private RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
@@ -192,35 +191,6 @@ public class CrawlServer implements Serializable {
        return server;
     }
 
-    /**
-     * Get the associated CrawlHost
-     *
-     * @return host
-     */
-    public CrawlHost getHost() {
-        return host;
-    }
-
-    /** Set the CrawlHost for which this server is a service.
-     *
-     * @param host the CrawlHost.
-     */
-    public void setHost(CrawlHost host) {
-        this.host = host;
-    }
-
-    /** Get the hostname for this server.
-     *
-     * @return the hostname without any port numbers.
-     */
-    public String getHostname() {
-        int colonIndex = server.indexOf(":");
-        if(colonIndex < 0) {
-            return server;
-        }
-        return server.substring(0,colonIndex);
-    }
-
     /** Get the port number for this server.
      *
      * @return the port number or -1 if not known (uses default for protocol)
@@ -321,5 +291,39 @@ public class CrawlServer implements Serializable {
 	 */
 	public boolean isValidRobots() {
 		return validRobots;
+	}
+    
+    /**
+     * Get key to use doing lookup on server instances.
+     * @param curi CrawlURI we're to get server key for.
+     * @return String to use as server key.
+     * @throws URIException
+     */
+	public static String getServerKey(CrawlURI curi)
+	throws URIException {
+	    // TODO: evaluate if this is really necessary -- why not 
+	    // make the server of a dns CrawlURI the looked-up domain,
+	    // also simplifying FetchDNS?
+	    String key = curi.getUURI().getAuthorityMinusUserinfo();
+	    if (key == null) {
+	        // Fallback for cases where getAuthority() fails (eg 'dns:'.
+	        // DNS UURIs have the 'domain' in the 'path' parameter, not
+	        // in the authority).
+	        key = curi.getUURI().getCurrentHierPath();
+	        if(key != null && !key.matches("[-_\\w\\.:]+")) {
+	            // Not just word chars and dots and colons and dashes and
+	            // underscores; throw away
+	            key = null;
+	        }
+	    }
+	    if (key != null &&
+	            curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
+	        // If https and no port specified, add default https port to
+	        // distinuish https from http server without a port.
+	        if (!key.matches(".+:[0-9]+")) {
+	            key += ":" + UURIFactory.HTTPS_PORT;
+	        }
+	    }
+	    return key;
 	}
 }

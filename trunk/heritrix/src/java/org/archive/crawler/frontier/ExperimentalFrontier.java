@@ -356,13 +356,10 @@ public class ExperimentalFrontier
 
     /**
      * @param curi
+     * @param q
      */
     protected void noteAboutToEmit(CrawlURI curi, ExperimentalWorkQueue q) {
         curi.setHolder(q);
-        CrawlServer cs = this.controller.getServerCache().getServerFor(curi);
-        if (cs != null) {
-            curi.setServer(cs);
-        }
         doJournalEmitted(curi);        
     }
 

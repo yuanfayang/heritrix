@@ -48,6 +48,20 @@ public interface ServerCache {
      * @return CrawlServer instance that matches the passed CrawlURI.
      */
     public abstract CrawlServer getServerFor(CrawlURI curi);
+    
+    /**
+     * Get the {@link CrawlHost} associated with <code>name</code>.
+     * @param hostname Host name we're to return Host for.
+     * @return CrawlHost instance that matches the passed Host name.
+     */
+    public abstract CrawlHost getHostFor(String hostname);
+    
+    /**
+     * Get the {@link CrawlHost} associated with <code>curi</code>.
+     * @param curi CrawlURI we're to return Host for.
+     * @return CrawlHost instance that matches the passed Host name.
+     */
+    public abstract CrawlHost getHostFor(CrawlURI curi);
 
     /**
      * @param serverKey Key to use doing lookup.

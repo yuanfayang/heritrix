@@ -25,6 +25,7 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 
 /**
  * Establishes a mapping from CrawlURIs to String keys (queue names).
@@ -33,16 +34,18 @@ import org.archive.crawler.datamodel.CrawlURI;
  */
 public abstract class QueueAssignmentPolicy {
     
-    /** Get the String key (name) of the queue to which the 
+    /** 
+     * Get the String key (name) of the queue to which the 
      * CrawlURI should be assigned. 
      * 
      * Note that changes to the CrawlURI, or its associated 
      * components (such as CrawlServer), may change its queue
      * assignment.
+     * @param controller This crawls' controller.
      * 
      * @param curi
      * @return the String key of the queue to assign the CrawlURI 
      */
-    public abstract String getClassKey(CrawlURI curi);
-
+    public abstract String getClassKey(CrawlController controller,
+        CrawlURI curi);
 }

@@ -65,53 +65,17 @@ public class BdbServerCache implements ServerCache {
             cserver.setSettingsHandler(settingsHandler);
             servers.put(h, cserver);
         }
-        
-        // Have to check if host is set because the host member in CrawlServer
-        // is transient and will not survive serialisation.
-        if (cserver.getHost() == null) {
-            String hostname = cserver.getHostname();
-            CrawlHost host = (CrawlHost) hosts.get(hostname);
-            if (host == null) {
-                host = new CrawlHost(hostname);
-                hosts.put(hostname, host);
-            }
-            cserver.setHost(host);
-        }
         return cserver;
     }
 
     public CrawlServer getServerFor(CrawlURI curi) {
         CrawlServer hostOrAuthority = null;
         try {
-            // TODO: evaluate if this is really necessary -- why not
-            // make the server of a dns CrawlURI the looked-up domain,
-            // also simplifying FetchDNS?
-            String hostOrAuthorityStr = curi.getUURI()
-                    .getAuthorityMinusUserinfo();
-            if (hostOrAuthorityStr == null) {
-                // Fallback for cases where getAuthority() fails (eg 'dns:'.
-                // DNS UURIs have the 'domain' in the 'path' parameter, not
-                // in the authority).
-                hostOrAuthorityStr = curi.getUURI().getCurrentHierPath();
-                if (hostOrAuthorityStr != null
-                        && !hostOrAuthorityStr.matches("[-_\\w\\.:]+")) {
-                    // Not just word chars and dots and colons and dashes and
-                    // underscores; throw away
-                    hostOrAuthorityStr = null;
-                }
-            }
-            if (hostOrAuthorityStr != null
-                    && curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
-                // If https and no port specified, add default https port to
-                // distinuish https from http server without a port.
-                if (!hostOrAuthorityStr.matches(".+:[0-9]+")) {
-                    hostOrAuthorityStr += ":" + UURIFactory.HTTPS_PORT;
-                }
-            }
+            String key = CrawlServer.getServerKey(curi);
             // TODOSOMEDAY: make this robust against those rare cases
             // where authority is not a hostname.
-            if (hostOrAuthorityStr != null) {
-                hostOrAuthority = getServerFor(hostOrAuthorityStr);
+            if (key != null) {
+                hostOrAuthority = getServerFor(key);
             }
         } catch (URIException e) {
             e.printStackTrace();
@@ -121,10 +85,31 @@ public class BdbServerCache implements ServerCache {
         }
         return hostOrAuthority;
     }
+    
+    public CrawlHost getHostFor(String hostname) {
+        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
+        if (host == null) {
+            String hkey = new String(hostname); 
+            host = new CrawlHost(hkey);
+            hosts.put(hkey, host);
+        }
+        return host;
+    }
+    
+    public CrawlHost getHostFor(CrawlURI curi) {
+        CrawlHost h = null;
+        try {
+            h = getHostFor(curi.getUURI().getHost());
+        } catch (URIException e) {
+            e.printStackTrace();
+        }
+        return h;
+    }
 
-    public void initialize(SettingsHandler settingsHandler) {
-        this.settingsHandler = settingsHandler;
-        CrawlController controller = settingsHandler.getOrder().getController();
+    public void initialize(SettingsHandler settings) {
+        this.settingsHandler = settings;
+        CrawlController controller =
+            settingsHandler.getOrder().getController();
 
         File fileName = new File(controller.getScratchDisk(), "serverCache");
         fileName.mkdirs();
@@ -147,5 +132,4 @@ public class BdbServerCache implements ServerCache {
         CrawlHost chost = (CrawlHost) hosts.get(hostKey);
         return chost != null;
     }
-
 }

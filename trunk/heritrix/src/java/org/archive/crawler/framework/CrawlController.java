@@ -120,9 +120,9 @@ public class CrawlController implements Serializable {
     private CrawlOrder order;
     private CrawlScope scope;
     private ProcessorChainList processorChains;
-    transient ToePool toePool;
+    private transient ToePool toePool;
     private Frontier frontier;
-    transient private ServerCache serverCache;
+    private transient ServerCache serverCache;
     private SettingsHandler settingsHandler;
 
     // used to hold all threads in place in OutOfMemory condition
@@ -470,7 +470,8 @@ public class CrawlController implements Serializable {
              MBeanException, ReflectionException, ClassNotFoundException,
              InstantiationException, IllegalAccessException {
         
-        serverCache = ServerCacheFactory.getServerCache(getSettingsHandler());
+        this.serverCache =
+            ServerCacheFactory.getServerCache(getSettingsHandler());
 
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);

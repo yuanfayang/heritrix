@@ -28,6 +28,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.util.DevUtils;
 
 /**
@@ -47,7 +48,7 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.QueueAssignmentPolicy#getClassKey(org.archive.crawler.datamodel.CrawlURI)
      */
-    public String getClassKey(CrawlURI curi) {
+    public String getClassKey(CrawlController controller, CrawlURI curi) {
         String scheme = curi.getUURI().getScheme();
         String candidate = null;
         try {
