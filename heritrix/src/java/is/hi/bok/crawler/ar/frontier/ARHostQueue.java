@@ -289,8 +289,8 @@ public class ARHostQueue implements ARAttributeConstants {
         long oldValue = getNextReadyTime();
         try{
             if(inProcessing(curi.getURIString())){
-                // If it is currently being processed, then it is already been added
-                // and we sure as heck can't fetch it any sooner!
+                // If it is currently being processed, then it is already been 
+                // added and we sure as heck can't fetch it any sooner!
                 return;
             }
             
@@ -300,29 +300,34 @@ public class ARHostQueue implements ARAttributeConstants {
                     A_TIME_OF_NEXT_PROCESSING);
     
             if (opStatus == OperationStatus.KEYEXIST){ 
-                if(overrideSetTimeOnDups==false){
-                    // We are done. The URI already existed and we are not going to
-                    // override
-                    return;
-                } else {
-                    // Override an existing URI
-                    // We need to extract the old CrawlURI (it contains vital info
-                    // on past crawls), update its time of next processing and
-                    // put it back into the queue (overwriting it's old value)
-                    CrawlURI curiExisting = getCrawlURI(curi.getURIString());
-                    long oldCuriProcessingTime = curiExisting.getLong(
-                            A_TIME_OF_NEXT_PROCESSING);
-                    if( curiProcessingTime >= oldCuriProcessingTime ){
-                        // The new processing time is later or equal to the 
-                        // existing processing time. Since we never want to delay
-                        // the fetching of a URI we can do nothing and exit method.
-                        return;
-                    }
+                // Override an existing URI
+                // We need to extract the old CrawlURI (it contains vital
+                // info on past crawls), check it's scheduling directive
+                // and (possibly) it's time of next fetch and update if it
+                // will promote the URI to an earlier processing time.
+                boolean update = false;
+                CrawlURI curiExisting = getCrawlURI(curi.getURIString());
+                long oldCuriProcessingTime = curiExisting.getLong(
+                        A_TIME_OF_NEXT_PROCESSING);
+                if(curi.getSchedulingDirective() < 
+                        curiExisting.getSchedulingDirective()){
+                    // New scheduling directive is of higher importance,
+                    // update to promote URI.
+                    curiExisting.setSchedulingDirective(
+                            curi.getSchedulingDirective());
+                    update = true;
+                }
+                if( curiProcessingTime < oldCuriProcessingTime
+                        && overrideSetTimeOnDups){
+                    // The new processing time is eariler then the 
+                    // existing processing time. Will promote URI, so we
+                    // update
                     curiExisting.putLong(
                             A_TIME_OF_NEXT_PROCESSING,
                             curiProcessingTime);
+                }
+                if(update){
                     opStatus = strictAdd(curiExisting,true); //Override
-                    
                 }
             } else if(opStatus == OperationStatus.SUCCESS) {
                 // Just inserted a brand new CrawlURI into the queue.
