@@ -402,6 +402,7 @@ public class CrawlURI extends CandidateURI
                     + e.getMessage() + " " + this);
             candidate = DEFAULT_CLASS_KEY;
         }
+        candidate.replace(':','#'); // ensure classKeys are safe as filenames on NTFS
         return candidate;
     }
 
