@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
     On maven:
@@ -157,6 +157,7 @@
         <email>gojomo at archive dot org</email>
          <organization>Internet Archive</organization>
          <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
     </developer>
     <developer>
         <name>Igor Ranitovic</name>
@@ -164,6 +165,7 @@
         <email>igor at archive dot org</email>
         <organization>Internet Archive</organization>
         <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
     </developer>
     <developer>
         <name>John Erik Halse</name>
@@ -171,6 +173,7 @@
         <email>johnh at archive dot org</email>
         <organization>National Library of Norway</organization>
         <url>http://www.nb.no</url>
+         <timezone>-1</timezone>
     </developer>
     <developer>
         <name>Kristinn Sigurdsson</name>
@@ -178,11 +181,13 @@
         <email>kris at archive dot org</email>
         <organization>National and University Library of Iceland</organization>
         <url>http://www.bok.hi.is/</url>
+         <timezone>-0</timezone>
     </developer>
     <developer>
         <name>Raymie Stata</name>
         <id>rstata</id>
         <email>rstata at archive dot org</email>
+         <timezone>-8</timezone>
     </developer>
     <developer>
         <name>Michael Stack</name>
@@ -190,6 +195,7 @@
         <email>stack at archive dot org</email>
          <organization>Internet Archive</organization>
          <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
     </developer>
   </developers>
 
@@ -206,6 +212,10 @@
     <contributor>
         <name>Judy Ma</name>
         <email>jma at archive dot org</email>
+    </contributor>
+    <contributor>
+        <name>Soren Vejrup Carlsen</name>
+        <email>svc at kb dot dk</email>
     </contributor>
 
   </contributors>
