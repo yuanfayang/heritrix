@@ -312,9 +312,9 @@ implements Frontier,
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
                     synchronized(readyQ) {
-                        curi = readyQ.peek();
-                        curi.setServer(getServer(curi));
+                        curi = readyQ.peek();                     
                         if (curi != null) {
+                            curi.setServer(getServer(curi));
                             // check if curi belongs in different queue
                             String currentQueueKey = getClassKey(curi);
                             if (currentQueueKey.equals(curi.getClassKey())) {
@@ -535,17 +535,12 @@ implements Frontier,
      * @return Number of items deleted.
      */
     public long deleteURIs(String match) {
-        long count;
-        try {
-            count = pendingUris.deleteMatching(match);
-        } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+        long count = 0;
         Iterator iter = allQueues.values().iterator();
         while(iter.hasNext()) {
-            ((BdbWorkQueue)iter.next()).unpeek();
+            BdbWorkQueue wq = (BdbWorkQueue)iter.next();
+            wq.unpeek();
+            count += wq.deleteMatching(match);
         }
         // TODO: update per-queue counts!
         decrementQueuedCount(count);
@@ -562,7 +557,6 @@ implements Frontier,
                 inProcessQueues.uniqueSet().size() + " in-process; " +
                 readyClassQueues.getCount() + " ready; " + 
                 snoozedClassQueues.size() + " snoozed");
-        // TODO: include active, snoozed counts if/when possible
         return rep.toString();
     }
 
@@ -685,21 +679,28 @@ implements Frontier,
          * @param match
          * @return count of deleted items
          * @throws DatabaseException
+         * @throws DatabaseException
          */
-        public long deleteMatching(String match) throws DatabaseException {
+        public long deleteMatchingFromQueue(String match, String queue,
+                DatabaseEntry headKey) throws DatabaseException {
             long deletedCount = 0;
             Pattern pattern = Pattern.compile(match);
-            DatabaseEntry key = new DatabaseEntry();
+            DatabaseEntry key = headKey;
             DatabaseEntry value = new DatabaseEntry();
 
             Cursor cursor = null;
             try {
                 cursor = pendingUrisDB.openCursor(null, null);
-                OperationStatus result = cursor.getNext(key, value, null);
+                OperationStatus result = cursor.getSearchKeyRange(headKey,
+                        value, null);
 
                 while (result == OperationStatus.SUCCESS) {
                     CrawlURI curi = (CrawlURI) crawlUriBinding
                             .entryToObject(value);
+                    if (!curi.getClassKey().equals(queue)) {
+                        // rolled into next queue; finished with this queue
+                        break;
+                    }
                     if (pattern.matcher(curi.getURIString()).matches()) {
                         cursor.delete();
                         deletedCount++;
@@ -711,6 +712,7 @@ implements Frontier,
                     cursor.close();
                 }
             }
+
             return deletedCount;
         }
 
@@ -921,6 +923,25 @@ implements Frontier,
         }
 
         /**
+         * Delete URIs matching the given pattern from this queue. 
+         * 
+         * @param match
+         * @return count of deleted URIs
+         * @throws DatabaseException
+         */
+        public long deleteMatching(String match) {
+            try {
+                long deleteCount = masterQueue.deleteMatchingFromQueue(match,classKey,new DatabaseEntry(origin));
+                this.count -= deleteCount;
+                return deleteCount;
+            } catch (DatabaseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
          * @return a string describing this queue
          */
         public String report() {
@@ -1020,7 +1041,7 @@ implements Frontier,
                 } catch (DatabaseException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
-                    return null;
+                    throw new RuntimeException(e);
                 }
             }
             return peekItem;
@@ -1038,6 +1059,7 @@ implements Frontier,
             } catch (DatabaseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
             count++;
         }
