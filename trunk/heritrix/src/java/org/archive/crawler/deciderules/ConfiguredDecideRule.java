@@ -35,7 +35,7 @@ import org.archive.crawler.settings.SimpleType;
  */
 public class ConfiguredDecideRule extends DecideRule {
     public final static String ATTR_DECISION = "decision";
-    public final static String[] ALLOWED_TYPES = new String[] {ACCEPT, REJECT};
+    public final static Object[] ALLOWED_TYPES = new Object[] {ACCEPT, REJECT};
     
     public ConfiguredDecideRule(String name) {
         super(name);
