@@ -244,7 +244,7 @@ public class CrawlScope extends Filter {
      * @param o URI to check.
      * @return true if too many hops.
      */
-    protected boolean exeedsMaxHops(Object o) {
+    protected boolean exceedsMaxHops(Object o) {
         if(! (o instanceof CandidateURI)) {
             return false;
         }
@@ -304,9 +304,9 @@ public class CrawlScope extends Filter {
      */
     protected boolean excludeAccepts(Object o) {
         if (this.excludeFilter.isEmpty(o)) {
-            return exeedsMaxHops(o);
+            return exceedsMaxHops(o);
         } else {
-            return this.excludeFilter.accepts(o) || exeedsMaxHops(o);
+            return this.excludeFilter.accepts(o) || exceedsMaxHops(o);
         }
     }
 
