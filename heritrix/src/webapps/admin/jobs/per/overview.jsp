@@ -16,6 +16,7 @@
 <%@page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler"%>
 
 <%
+	String message = request.getParameter("message");
 	// Load the job.
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
 	
@@ -66,6 +67,15 @@
 				// Then redirect to configure override.
 				response.sendRedirect("/admin/jobs/per/configure.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
 				return;
+			}
+		} else if(action.equals("delete")){
+			// Delete settings.
+			String theDomain = request.getParameter("currDomain");
+			if(theDomain != null && theDomain.length()>0){
+				settingsHandler.deleteSettingsObject(settingsHandler.getOrCreateSettingsObject(theDomain));
+				// Then redirect to configure override.
+				message = "Override for domain '"+theDomain+"' deleted.";
+				currDomain = "";
 			}
 		} else if(action.equals("modules")){
 			// Go to modules.
@@ -119,14 +129,22 @@
 		}
 		
 		function doCreateEdit(){
-			document.frmPer.action.value="edit";
 			document.frmPer.currDomain.value = document.frmPer.newDomain.value;
+			doEdit();
+		}
+		
+		function doDeleteThis(){
+			document.frmPer.action.value="delete";
 			doSubmit();
 		}
 		
+		function doDelete(){
+			document.frmPer.currDomain.value = document.frmPer.newDomain.value;
+			doDeleteThis();
+		}
+		
 		function doCreate(){
-			document.frmPer.action.value="edit";
-			doSubmit();
+			doEdit();
 		}
 		
 		function doEdit(){
@@ -140,6 +158,10 @@
 			doSubmit();
 		}
 	</script>	
+	<% if(message != null && message.length() > 0){ %>
+		<p>
+			<font color="red"><b><%=message%></b></font>
+	<% } %>
 	<p>
 		<%@include file="/include/jobnav.jsp"%>
 	<p>
@@ -178,6 +200,9 @@
 				if(localSettings != null){
 		%>
 					<p><a href="javascript:doEdit()">Edit override for '<%=currDomain%>'</a><br>
+					<% if(theJob.isRunning()==false){ %>
+						<p><a href="javascript:doDeleteThis()">Delete override for '<%=currDomain%>'</a><br>
+					<% } %>
 		<%
 				} else {
 		%>
@@ -190,5 +215,8 @@
 			<b>Quick override:</b><br>
 			Domain: <input name="newDomain" value="<%=currDomain%>">
 			<input type="button" value="Create/Edit" onClick="doCreateEdit()">
+			<% if(theJob.isRunning()==false){ %>
+				<input type="button" value="Delete" onClick="doDelete()">
+			<% } %>
 	</form>
 <%@include file="/include/foot.jsp"%>
