@@ -66,3 +66,8 @@ select
 {
 	padding: 2;
 }
+
+.help
+{
+	text-decoration: none;
+}
