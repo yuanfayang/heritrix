@@ -1,4 +1,4 @@
-/* MultiHttpConnectionProvider
+/* HeritrixHttpConnectionManager
 *
 * $Id$
 *
@@ -22,14 +22,13 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */ 
-package org.archive.crawler.util;
+package org.archive.httpclient;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpConnection;
-import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 
 /**
@@ -39,20 +38,13 @@ import org.apache.commons.httpclient.SimpleHttpConnectionManager;
  * with external mechanisms.
  * 
  * @author gojomo
- *
  */
-public class MultiHttpConnectionProvider extends SimpleHttpConnectionManager {
+public class HeritrixHttpConnectionManager extends SimpleHttpConnectionManager {
 
-    /**
-     * Constructor 
-     */
-    public MultiHttpConnectionProvider() {
+    public HeritrixHttpConnectionManager() {
         super();
     }
 
-    /**
-     * @see HttpConnectionManager#getConnection(HostConfiguration, long)
-     */
     public HttpConnection getConnection(
         HostConfiguration hostConfiguration, long timeout) {
 
@@ -61,15 +53,12 @@ public class MultiHttpConnectionProvider extends SimpleHttpConnectionManager {
         return conn;
     }
 
-    /**
-     * @see HttpConnectionManager#releaseConnection(org.apache.commons.httpclient.HttpConnection)
-     */
     public void releaseConnection(HttpConnection conn) {
         finishLast(conn);
     }
     
-    // copied from superclass because it wasn't made available to subclasses
     static void finishLast(HttpConnection conn) {
+        // copied from superclass because it wasn't made available to subclasses
         InputStream lastResponse = conn.getLastResponseInputStream();
         if (lastResponse != null) {
             conn.setLastResponseInputStream(null);
@@ -81,5 +70,4 @@ public class MultiHttpConnectionProvider extends SimpleHttpConnectionManager {
             }
         }
     }
-
 }

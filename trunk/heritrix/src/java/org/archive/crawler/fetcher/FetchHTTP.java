@@ -47,10 +47,10 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.util.MultiHttpConnectionProvider;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HeritrixGetMethod;
 import org.archive.httpclient.HeritrixHttpClient;
+import org.archive.httpclient.HeritrixHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ConfigurableX509TrustManager;
@@ -340,18 +340,8 @@ public class FetchHTTP extends Processor
         {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-            MultiHttpConnectionProvider connectionManager =
-                new MultiHttpConnectionProvider();
-            // We use the multithreaded connection manager because, at the
-            // least, cookies will be shared across clients.  It also seems
-            // SimpleConnectionManager is unsafe run in an environment running
-            // multiple instances (to be verified).
-//            MultiThreadedHttpConnectionManager connectionManager =
-//                new MultiThreadedHttpConnectionManager();
-//            // Ensure there will be as many http connections available as
-//            // worker threads
-//            connectionManager.setMaxTotalConnections(getController().
-//                getToeCount());
+            HeritrixHttpConnectionManager connectionManager =
+                new HeritrixHttpConnectionManager();
             this.http = new HeritrixHttpClient(connectionManager);
 
             try
