@@ -61,7 +61,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
 	 +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
 	 +"|(codebase)|((?:classid)|(?:data))|(archive)"
-	 +"|([-\\w]+))"
+	 +"|(value)|([-\\w]+))"
 	 +"\\s*=\\s*"
 	 +"(?:(?:\"(.*?)(?:\"|$))"
 	 +"|(?:'(.*?)(?:'|$))"
@@ -76,11 +76,20 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// 6: CODEBASE - a single URI relative to doc base, affecting other attributes
 	// 7: CLASSID,DATA - a single URI relative to CODEBASE (if supplied)
 	// 8: ARCHIVE - one or more space-delimited URIs relative to CODEBASE (if supplied)
-	// 9: any other attribute
-	// 10: double-quote delimited attr value
-	// 11: single-quote delimited attr value
-	// 12: space-delimited attr value
+	// 9: VALUE - often includes a uri path on forms
+	// 10: any other attribute
+	// 11: double-quote delimited attr value
+	// 12: single-quote delimited attr value
+	// 13: space-delimited attr value
 	
+	
+	// much like the javascript likely-URI extractor, but
+	// without requiring quotes -- this can indicate whether
+	// an HTML tag attribute that isn't definitionally a 
+	// URI might be one anyway, as in form-tag VALUE attributes
+	static Pattern LIKELY_URI_PATH = Pattern.compile(
+	 "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)");
+
 	/**
 	 * @param tags
 	 * @param i
@@ -96,7 +105,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		
 		while (attr.find()) {
 			int valueGroup =
-				(attr.start(10) > -1) ? 10 : (attr.start(11) > -1) ? 11 : 12;
+				(attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
 			CharSequence value =
 				cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
 			if (attr.start(2)>-1) {
@@ -129,6 +138,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 					resources.add(multi[i]);
 				}
 			} else if (attr.start(9)>-1) {
+				// VALUE
+				if(LIKELY_URI_PATH.matcher(value).matches()) {
+					processLink(curi,value);
+				}
+
+			} else if (attr.start(10)>-1) {
 				// any other attribute
 				// ignore for now
 				// could probe for path- or script-looking strings, but
@@ -156,6 +171,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		} catch (URISyntaxException e) {
 			System.out.println("BAD CODEBASE "+codebase+" at "+curi);
 			e.printStackTrace();
+			curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		}
