@@ -307,7 +307,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @return
 	 */
 	private boolean expectedHTML(CrawlURI curi) {
-		String path = curi.getUURI().getUri().getPath();
+		String path = curi.getUURI().getPath();
 		int dot = path.lastIndexOf('.');
 		if (dot<0) {
 			// no path extension, HTML is fine

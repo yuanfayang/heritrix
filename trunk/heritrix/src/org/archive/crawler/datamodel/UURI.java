@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
 public class UURI implements Serializable {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.UURI");
 
-	java.net.URI uri;
+	protected java.net.URI uri;
+	protected String uriString;
 	
 	public static UURI createUURI(String s) throws URISyntaxException {
 		URI u;
@@ -41,6 +42,7 @@ public class UURI implements Serializable {
 	 */
 	private UURI(URI u) {
 		uri = u;
+		uriString = u.toASCIIString();
 	}
 
 
@@ -91,7 +93,7 @@ public class UURI implements Serializable {
 			// hierarchical URI
 			u = u.normalize(); // factor out path cruft, according to official spec
 			// now, go further and eliminate extra '..' segments
-			String fixedPath = u.getPath().replaceFirst("^(/\\.\\.)+","");
+			String fixedPath = u.getRawPath().replaceFirst("^(/\\.\\.)+","");
 			if ("".equals(fixedPath)) {
 //				ensure root URLs end with '/'
 				fixedPath = "/"; 
@@ -247,7 +249,7 @@ public class UURI implements Serializable {
 	/**
 	 * @return
 	 */
-	public URI getUri() {
+	protected URI getUri() {
 		return uri;
 	}
 
@@ -278,6 +280,44 @@ public class UURI implements Serializable {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getScheme() {
+		return uri.getScheme();
+	}
+
+	/**
+	 * 
+	 */
+	public String getPath() {
+		return uri.getPath();
+	}
+
+	/**
+	 * 
+	 */
+	public String getUriString() {
+		return uriString;
+	}
+
+	/**
+	 * Avoid casual use; java.net.URI may be phased out of crawler
+	 * for memory performance reasons
+	 * 
+	 * @return
+	 */
+	public URI getRawUri() {
+		return getUri();
+	}
+
+	/**
+	 * @return
+	 */
+	public String getHost() {
+		return uri.getHost();
 	}
 
 }

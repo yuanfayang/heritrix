@@ -96,7 +96,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		}
 
   		// find the write protocol and write this sucker
-  		String scheme = curi.getUURI().getUri().getScheme();
+  		String scheme = curi.getUURI().getScheme();
   	
   		try{ 
   			

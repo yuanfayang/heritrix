@@ -40,8 +40,8 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 		}
 		
 		// make sure we only process schemes we understand (i.e. not dns)
-		if(!curi.getUURI().getUri().getScheme().equals("http")){
-			logger.fine("PolitenessEnforcer doesn't understand uri's of type "+curi.getUURI().getUri().getScheme() + " (ignoring)");
+		if(!curi.getUURI().getScheme().equals("http")){
+			logger.fine("PolitenessEnforcer doesn't understand uri's of type "+curi.getUURI().getScheme() + " (ignoring)");
 			return;
 		}
 		
@@ -64,7 +64,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 	 */
 	private boolean considerRobotsPreconditions(CrawlURI curi) {
 		// treat /robots.txt fetches specially
-		if (curi.getUURI().getUri().getPath().equals("/robots.txt")) {
+		if (curi.getUURI().getPath().equals("/robots.txt")) {
 			// allow processing to continue
 			return false; 
 		}
@@ -106,7 +106,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 		// if we haven't done a dns lookup  and this isn't a dns uri 
 		// shoot that off and defer further processing
 		if (!curi.getServer().getHost().hasBeenLookedUp()
-			&& !curi.getUURI().getUri().getScheme().equals("dns")) {
+			&& !curi.getUURI().getScheme().equals("dns")) {
 			logger.fine(
 				"deferring processing of "
 					+ curi.toString()

@@ -54,10 +54,10 @@ public class SeedExtensionFilter extends Filter {
 		Iterator iter = controller.getScope().getSeedsIterator();
 		while(iter.hasNext()) {
 			UURI s = (UURI)iter.next();
-			if(s.getUri().getHost().equals(u.getUri().getHost())) {
+			if(s.getHost().equals(u.getHost())) {
 				// hosts match
 				if (extensionMode == PATH) {
-					if(s.getUri().getPath().regionMatches(0,u.getUri().getPath(),0,s.getUri().getPath().lastIndexOf('/'))) {
+					if(s.getPath().regionMatches(0,u.getPath(),0,s.getPath().lastIndexOf('/'))) {
 						// matches up to last '/'
 						return true;
 					}  else {
@@ -69,10 +69,10 @@ public class SeedExtensionFilter extends Filter {
 			}
 			if (extensionMode == DOMAIN) {
 				// might be a close-enough match
-				String seedDomain = s.getUri().getHost();
+				String seedDomain = s.getHost();
 				// strip www[#]
 				seedDomain = seedDomain.replaceFirst("^www\\d*","");
-				String candidateDomain = u.getUri().getHost();
+				String candidateDomain = u.getHost();
 				if (candidateDomain==null) {
 					// either an opaque, unfetchable, or unparseable URI
 					continue;
