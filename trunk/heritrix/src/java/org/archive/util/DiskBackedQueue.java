@@ -26,6 +26,7 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
@@ -36,9 +37,9 @@ import java.util.logging.Logger;
  *
  * @author Gordon Mohr
  */
-public class DiskBackedQueue implements Queue {
-    private static final Logger logger =
-        Logger.getLogger("org.archive.util.DiskBackedQueue");
+public class DiskBackedQueue implements Queue, Serializable {
+    private static Logger logger = 
+        Logger.getLogger(DiskBackedQueue.class.getName());
 
     int headMax;
     MemQueue headQ;
@@ -48,19 +49,20 @@ public class DiskBackedQueue implements Queue {
     /**
      * @param dir
      * @param name
+     * @param reuse whether to reuse any existing backing files
      * @param headMax
      * @throws IOException
      *
      */
-    public DiskBackedQueue(File dir, String name, int headMax)
+    public DiskBackedQueue(File dir, String name, boolean reuse, int headMax)
             throws IOException {
         this.headMax = headMax;
         this.name = name;
         this.headQ = new MemQueue();
-        this.tailQ = new DiskQueue(dir, name);
+        this.tailQ = new DiskQueue(dir, name, reuse);
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
@@ -73,14 +75,14 @@ public class DiskBackedQueue implements Queue {
         }
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
         return length()==0;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
@@ -92,37 +94,34 @@ public class DiskBackedQueue implements Queue {
         return o;
     }
 
-    /**
-     *
-     */
     private void fillHeadQ() {
         while (headQ.length()<headMax && tailQ.length()>0) {
             headQ.enqueue(tailQ.dequeue());
         }
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#length()
      */
     public long length() {
         return headQ.length()+tailQ.length();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#release()
      */
     public void release() {
         tailQ.release();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
          return headQ.peek();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
@@ -140,7 +139,7 @@ public class DiskBackedQueue implements Queue {
         }
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
