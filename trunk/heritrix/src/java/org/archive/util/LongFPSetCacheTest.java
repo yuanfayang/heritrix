@@ -66,6 +66,25 @@ public class LongFPSetCacheTest extends LongFPSetTestCase {
         return new LongFPSetCache();
     }
 
+    /**
+     *  This is a cache buffer, which does not grow,
+     * but chucks out old values.  Therefore it has a different behaviour
+     * from all the other LongFPSets.  We do a different test here.
+     */
+
+    public void testCount() {
+        LongFPSet fpSet = new LongFPSetCache();
+        final int NUM = 1000;
+        final int MAX_ENTRIES = 768;
+
+        assertEquals("empty set to start", 0, fpSet.count());
+
+        for (int i = 1; i < NUM; ++i) {
+            fpSet.add((long) i);
+            assertEquals("correct num on add",
+                    i<MAX_ENTRIES?i:MAX_ENTRIES, fpSet.count());
+        }
+    }
 
     // TODO - implement test methods in LongFPSetCacheTest
 }
