@@ -119,7 +119,18 @@ extends BaseRule {
                             int groupIndex = Integer.
                                 parseInt(format.substring(start, j));
                             if (groupIndex >= 0 && groupIndex < 256) {
-                                buffer.append(matcher.group(groupIndex));
+                                String g = null;
+                                try {
+                                    g = matcher.group(groupIndex);
+                                } catch (IndexOutOfBoundsException e) {
+                                    logger.warning("IndexOutOfBoundsException" +
+                                        " getting group " + groupIndex +
+                                        " from " + matcher.group(0) +
+                                        " with format of " + format);
+                                }
+                                if (g != null) {
+                                    buffer.append(g);
+                                }
                                 // Skip closing curly bracket if one.
                                 if (curlyBraceStart &&
                                         format.charAt(j) == '}') {
