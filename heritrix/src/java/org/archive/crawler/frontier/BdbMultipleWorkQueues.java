@@ -56,20 +56,19 @@ import com.sleepycat.je.OperationStatus;
 public class BdbMultipleWorkQueues {
     /** database holding all pending URIs, grouped in virtual queues */
     protected Database pendingUrisDB = null;
-    /** database supporting bdb serialization */
-    protected Database classCatalogDB = null;
-    /** supporting bdb serialization */ 
-    protected StoredClassCatalog classCatalog = null;
-    /**  supporting bdb serialization of CrawlURIs*/
+    /**  Supporting bdb serialization of CrawlURIs*/
     protected SerialBinding crawlUriBinding;
 
     /**
      * Create the multi queue in the given environment. 
      * 
      * @param env bdb environment to use
+     * @param classCatalog Class catalog to use.
      * @throws DatabaseException
      */
-    public BdbMultipleWorkQueues(Environment env) throws DatabaseException {
+    public BdbMultipleWorkQueues(Environment env,
+        StoredClassCatalog classCatalog)
+    throws DatabaseException {
         // Open the database. Create it if it does not already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
@@ -83,8 +82,6 @@ public class BdbMultipleWorkQueues {
             // ignored
         }
         pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-        classCatalogDB = env.openDatabase(null, "classes", dbConfig);
-        classCatalog = new StoredClassCatalog(classCatalogDB);
         crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
     }
 
@@ -287,18 +284,10 @@ public class BdbMultipleWorkQueues {
     public void close() {
         try {
             pendingUrisDB.close();
-            classCatalogDB.close();
         } catch (DatabaseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-    }
-    
-    /**
-     * @return Returns the classCatalog.
-     */
-    public StoredClassCatalog getClassCatalog() {
-        return this.classCatalog;
     }
     
     /**

@@ -76,9 +76,14 @@ import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
 
-import EDU.oswego.cs.dl.util.concurrent.NullSync;
 import EDU.oswego.cs.dl.util.concurrent.ReentrantLock;
-import EDU.oswego.cs.dl.util.concurrent.Sync;
+
+import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseConfig;
+import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -248,6 +253,23 @@ public class CrawlController implements Serializable {
 
     /** distinguished filename for this component in checkpoints */
     public static final String DISTINGUISHED_FILENAME = "controller.ser";
+    
+    /** Shared bdb Environment for Frontier subcomponents */
+    // TODO: investigate using multiple environments to split disk accesses
+    // across separate physical disks
+    private Environment bdbEnvironment = null;
+    
+    /**
+     * Shared class catalog database.  Used by the
+     * {@link #classCatalog}.
+     */
+    private Database classCatalogDB = null;
+    
+    /**
+     * Class catalog instance.
+     * Used by bdb serialization.
+     */
+    private StoredClassCatalog classCatalog = null;
 
     /**
      * default constructor
@@ -269,8 +291,8 @@ public class CrawlController implements Serializable {
     public void initialize(SettingsHandler sH)
             throws InitializationException {
         this.settingsHandler = sH;
-        order = settingsHandler.getOrder();
-        order.setController(this);
+        this.order = settingsHandler.getOrder();
+        this.order.setController(this);
         sExit = "";
         this.manifest = new StringBuffer();
         String onFailMessage = "";
@@ -296,6 +318,9 @@ public class CrawlController implements Serializable {
 
             onFailMessage = "Unable to create log file(s)";
             setupLogs();
+            
+            onFailMessage = "Unable to setup bdb environment.";
+            setupBdb();
 
             onFailMessage = "Unable to setup statistics";
             setupStatTracking();
@@ -323,6 +348,50 @@ public class CrawlController implements Serializable {
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
+    }
+    
+    private void setupBdb()
+    throws FatalConfigurationException, AttributeNotFoundException {
+        EnvironmentConfig envConfig = new EnvironmentConfig();
+        envConfig.setAllowCreate(true);
+        // This setting required by Linda Lee of bdbje as part of the 
+        // work on the bug #11552.
+        envConfig.setConfigParam("je.evictor.criticalPercentage", "1");
+        int bdbCachePercent = ((Integer)this.order.
+            getAttribute(null, CrawlOrder.ATTR_BDB_CACHE_PERCENT)).intValue();
+        if(bdbCachePercent > 0) {
+            // Operator has expressed a preference; override BDB default or 
+            // je.properties value
+            envConfig.setCachePercent(bdbCachePercent);
+        }
+        try {
+            this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
+            if (logger.isLoggable(Level.INFO)) {
+                // Write out the bdb configuration.
+                envConfig = bdbEnvironment.getConfig();
+                logger.info("BdbConfiguration: Cache percentage " +
+                    envConfig.getCachePercent() +
+                    ", cache size " + envConfig.getCacheSize());
+            }
+            // Open the class catalog database. Create it if it does not
+            // already exist. 
+            DatabaseConfig dbConfig = new DatabaseConfig();
+            dbConfig.setAllowCreate(true);
+            this.classCatalogDB = this.bdbEnvironment.
+                openDatabase(null, "classes", dbConfig);
+            this.classCatalog = new StoredClassCatalog(classCatalogDB);
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
+        }
+    }
+    
+    public Environment getBdbEnvironment() {
+        return this.bdbEnvironment;
+    }
+    
+    public StoredClassCatalog getClassCatalog() {
+        return this.classCatalog;
     }
 
     /**
@@ -462,11 +531,8 @@ public class CrawlController implements Serializable {
                 && registeredCrawlURIDispositionListeners.size() > 0) {
                 Iterator it = registeredCrawlURIDispositionListeners.iterator();
                 while (it.hasNext()) {
-                    (
-                        (CrawlURIDispositionListener) it
-                            .next())
-                            .crawledURIFailure(
-                        curi);
+                    ((CrawlURIDispositionListener)it.next())
+                        .crawledURIFailure(curi);
                 }
             }
         }
@@ -810,6 +876,15 @@ public class CrawlController implements Serializable {
         this.order = null;
         this.scope = null;
         this.serverCache = null;
+        if (this.classCatalogDB != null) {
+            try {
+                this.classCatalogDB.close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            }
+            this.classCatalogDB = null;
+        }
+        this.bdbEnvironment = null;
     }
 
     private void completePause() {
@@ -1325,8 +1400,6 @@ public class CrawlController implements Serializable {
     /**
      * Relinquish continue permission at end of processing (allowing
      * another thread to proceed if in single-thread mode). 
-     *  
-     * @throws InterruptedException
      */
     public void releaseContinuePermission() {
         if(singleThreadMode) {

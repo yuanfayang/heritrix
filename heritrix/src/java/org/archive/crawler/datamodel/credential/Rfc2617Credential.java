@@ -141,10 +141,10 @@ public class Rfc2617Credential extends Credential {
     }
 
     public boolean populate(CrawlURI curi, HttpClient http, HttpMethod method,
-            Object payload) {
+            String payload) {
         boolean result = false;
-        AuthScheme authscheme = (AuthScheme)payload;
-        if (authscheme == null) {
+        String authRealm = payload;
+        if (authRealm == null) {
             logger.severe("No authscheme though creds: " + curi);
             return result;
         }
@@ -166,14 +166,14 @@ public class Rfc2617Credential extends Credential {
         	upc = new UsernamePasswordCredentials(getLogin(curi),
         	    getPassword(curi));
         	http.getState().setCredentials(new AuthScope(curi.getUURI().getHost(),
-        	    curi.getUURI().getPort(), authscheme.getRealm()), upc);
-        	logger.fine("Credentials for realm " + authscheme.getRealm() +
+        	    curi.getUURI().getPort(), authRealm), upc);
+        	logger.fine("Credentials for realm " + authRealm +
         	    " for curi " + curi.toString() + " added to request: " +
 				result);
         	result = true;
         } catch (AttributeNotFoundException e1) {
         	logger.severe("Failed to get login and password for " +
-        			curi + " and " + authscheme);
+        			curi + " and " + authRealm);
         } catch (URIException e) {
         	logger.severe("Failed to parse host from " + curi + ": " +
         			e.getMessage());

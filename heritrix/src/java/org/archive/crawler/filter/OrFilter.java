@@ -107,7 +107,7 @@ public class OrFilter extends Filter {
             logger.severe(e.getMessage());
         }
     }
-
+    
     public boolean isEmpty(Object o) {
         return getFilters(o).isEmpty(o);
     }
