@@ -24,11 +24,14 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import javax.management.InvalidAttributeValueException;
+
+import org.archive.util.ArchiveUtils;
 
 /**
  * 
@@ -96,7 +99,7 @@ public abstract class AbstractSettingsHandler {
 	}
 
 	/**
-	 * @param controller
+	 * 
 	 */
 	public void initialize() {
 		readSettingsObject(globalSettings);
@@ -165,15 +168,36 @@ public abstract class AbstractSettingsHandler {
 		return (String) name2class.get(typeName);
 	}
 	
-    protected static Object StringToType(String stringValue, String typeName) throws InvalidAttributeValueException {
+    /** Convert a String object to an object of <code>typeName</code>.
+     * 
+     * @param stringValue string to convert.
+     * @param typeName type to convert to. typeName should be one of the
+     *        supported types represented by constants in this class.
+     * @return the new value object.
+     * @throws ClassCastException is thrown if string could not be converted.
+     */
+    protected static Object StringToType(String stringValue, String typeName) {
         Object value;
-        if (typeName == AbstractSettingsHandler.INTEGER) {
+        if (typeName == AbstractSettingsHandler.STRING) {
+            value = stringValue;
+        } else if (typeName == AbstractSettingsHandler.INTEGER) {
             value = Integer.decode(stringValue);
         } else if (typeName == AbstractSettingsHandler.LONG) {
             value = Long.decode(stringValue);
-            // TODO: Add more convertions
+        } else if (typeName == AbstractSettingsHandler.BOOLEAN) {
+            value = Boolean.valueOf(stringValue);
+        } else if (typeName == AbstractSettingsHandler.DOUBLE) {
+            value = Double.valueOf(stringValue);
+        } else if (typeName == AbstractSettingsHandler.FLOAT) {
+            value = Float.valueOf(stringValue);
+        } else if (typeName == AbstractSettingsHandler.TIMESTAMP) {
+            try {
+                value = ArchiveUtils.parse14DigitDate(stringValue);
+            } catch (ParseException e) {
+                throw new ClassCastException("Cannot convert '" + stringValue + "' to type '" + typeName + "'");
+            }
         } else {
-            throw new InvalidAttributeValueException();
+            throw new ClassCastException("Cannot convert '" + stringValue + "' to type '" + typeName + "'");
         }
         return value;
     }
