@@ -6,7 +6,9 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -346,15 +348,21 @@ public class CrawlURI extends CandidateURI
 	}
 
 	/**
-	 * Make note of a non-fatal error which should be logged
-	 * somewhere, but allows processing to continue.
+	 * Make note of a non-fatal error. local to a particular Processor,
+	 * which should be logged somewhere, but allows processing to continue.
 	 * 
 	 * @param string
 	 * @param e
 	 */
 	public void addLocalizedError(String processorName, Exception ex, String message) {
-		// TODO implement
-		System.out.println("CrawlURI.addLocalizedError() says: \"Implement me!\"");
+		List localizedErrors;
+		if(alist.containsKey(A_LOCALIZED_ERRORS)) {
+			localizedErrors = (List) alist.getObject(A_LOCALIZED_ERRORS);
+		} else {
+			localizedErrors = new ArrayList();
+		}
+		
+		localizedErrors.add(new LocalizedError(processorName, ex, message));
 	}
 
 //	/**

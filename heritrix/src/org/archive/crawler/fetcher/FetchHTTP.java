@@ -7,13 +7,10 @@
 package org.archive.crawler.fetcher;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -77,7 +74,7 @@ public class FetchHTTP
 		}
 		
 		// give it a go
-		curi.incrementFetchAttempts();
+		//curi.incrementFetchAttempts();
 		
 		// make sure the dns lookup succeeded
 		if (curi.getServer().getHost().getIP() == null
@@ -108,69 +105,64 @@ public class FetchHTTP
 		long readFullyRead = 0;
 		
 		try {
-				
-		    // TODO: make this initial reading subject to the same
-		    // length/timeout limits; currently only the soTimeout
-		    // is effective here, once the connection succeeds
+
+			// TODO: make this initial reading subject to the same
+			// length/timeout limits; currently only the soTimeout
+			// is effective here, once the connection succeeds
 			http.executeMethod(get);
 			executeRead = rec.getRecordedInput().getSize();
-			
-			// force read-to-end, so that any socket hangs occur here,
-			// not in later modules
-			
-			try {
-				rec.getRecordedInput().readFullyOrUntil(maxLength,timeout);
-			} catch (RecorderTimeoutException ex) {
-				logger.info(curi.getUURI().getUri()+": time limit exceeded");
-				// but, continue processing whatever was retrieved
-				// TODO: set indicator in curi
-			} catch (RecorderLengthExceededException ex) {
-				logger.info(curi.getUURI().getUri()+": length limit exceeded");
-				// but, continue processing whatever was retrieved
-				// TODO: set indicator in curi
-			} finally {
-				readFullyRead = rec.getRecordedInput().getSize();
-			}
-			
-			Header contentLength = get.getResponseHeader("Content-Length");
-			logger.fine(
-				curi.getUURI().getUri()+": "
-				+get.getStatusCode()+" "
-				+(contentLength==null ? "na" : contentLength.getValue()));
-
-			// TODO consider errors more carefully
-			curi.setFetchStatus(get.getStatusCode());
-			curi.setContentSize(get.getHttpRecorder().getRecordedInput().getSize());
-			curi.getAList().putObject(A_HTTP_TRANSACTION,get);
-			curi.getAList().putLong(A_FETCH_COMPLETED_TIME,System.currentTimeMillis());
-			Header ct = get.getResponseHeader("content-type");
-			if ( ct!=null ) {
-				curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
-			}
-
-		} catch (HttpRecoverableException e) {
-			// transient exception; only display in fine logging mode
-			logger.fine(e + " on " + curi);
-			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
-			curi.setFetchStatus(S_CONNECT_FAILED);
-		} catch (HttpException e) {
-			logger.warning(e + " on " + curi);
-			//e.printStackTrace();
-			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
-			curi.setFetchStatus(S_CONNECT_FAILED);
-		} catch (SocketException e) {
-			logger.warning(e + " on " + curi);
-			e.printStackTrace();
-			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
-			curi.setFetchStatus(S_CONNECT_FAILED);
 		} catch (IOException e) {
-			logger.warning(e + " on " + curi + "\n"+executeRead+":"+readFullyRead);
-			e.printStackTrace();
+			curi.addLocalizedError(
+					this.getName(),
+					e,
+					"executeMethod " +executeRead + ":" + readFullyRead);
 			curi.setFetchStatus(S_CONNECT_FAILED);
-		} finally {
 			rec.closeRecorders();
 			get.releaseConnection();
+			return;
 		}
+			
+		try {
+			// force read-to-end, so that any socket hangs occur here,
+			// not in later modules			
+			rec.getRecordedInput().readFullyOrUntil(maxLength,timeout);
+		} catch (RecorderTimeoutException ex) {
+			logger.info(curi.getUURI().getUri()+": time limit exceeded");
+			// but, continue processing whatever was retrieved
+			// TODO: set indicator in curi
+		} catch (RecorderLengthExceededException ex) {
+			logger.info(curi.getUURI().getUri()+": length limit exceeded");
+			// but, continue processing whatever was retrieved
+			// TODO: set indicator in curi
+		} catch (IOException e) {
+			readFullyRead = rec.getRecordedInput().getSize();
+			curi.addLocalizedError(
+					this.getName(),
+					e,
+					"readFully " +executeRead + ":" + readFullyRead);
+			curi.setFetchStatus(S_CONNECT_FAILED);
+			rec.closeRecorders();
+			get.releaseConnection();
+			return;
+		} 
+			
+		Header contentLength = get.getResponseHeader("Content-Length");
+		logger.fine(
+			curi.getUURI().getUri()+": "
+			+get.getStatusCode()+" "
+			+(contentLength==null ? "na" : contentLength.getValue()));
+
+		// TODO consider errors more carefully
+		curi.setFetchStatus(get.getStatusCode());
+		curi.setContentSize(get.getHttpRecorder().getRecordedInput().getSize());
+		curi.getAList().putObject(A_HTTP_TRANSACTION,get);
+		curi.getAList().putLong(A_FETCH_COMPLETED_TIME,System.currentTimeMillis());
+		Header ct = get.getResponseHeader("content-type");
+		if ( ct!=null ) {
+			curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
+		}
+		rec.closeRecorders();
+		get.releaseConnection();
 	}
 
 	/* (non-Javadoc)
