@@ -3,7 +3,7 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
-    <date>20040325235526</date>
+    <date>20040409202922</date>
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
@@ -44,16 +44,16 @@
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
       <string name="type">classic</string>
       <boolean name="masquerade">false</boolean>
-      <string name="custom-robots"/>
+      <text name="custom-robots"/>
       <stringList name="user-agents">
       </stringList>
     </newObject>
-    <newObject name="frontier" class="org.archive.crawler.basic.Frontier">
+    <newObject name="frontier" class="org.archive.crawler.frontier.Frontier">
       <float name="delay-factor">5.0</float>
-      <integer name="max-delay-ms">20000</integer>
+      <integer name="max-delay-ms">5000</integer>
       <integer name="min-delay-ms">500</integer>
       <integer name="min-interval-ms">1000</integer>
-      <integer name="max-retries">10</integer>
+      <integer name="max-retries">30</integer>
       <long name="retry-delay-seconds">900</long>
       <integer name="total-bandwidth-usage-KB-sec">0</integer>
       <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
@@ -144,5 +144,9 @@
       </newObject>
     </map>
     <string name="recover-path"/>
+    <newObject name="credential-store" class="org.archive.crawler.datamodel.settings.CredentialStore">
+      <map name="credentials">
+      </map>
+    </newObject>
   </controller>
 </crawl-order>
