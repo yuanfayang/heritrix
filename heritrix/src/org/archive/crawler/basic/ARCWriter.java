@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -18,18 +19,12 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-import org.xbill.DNS.Record;
-
-import org.archive.crawler.basic.InvalidRecordException;
-import org.archive.crawler.datamodel.CrawlerBehavior;
-
-import java.util.zip.GZIPOutputStream;
 import org.archive.crawler.util.IAGzipOutputStream;
-import java.io.OutputStream;
-
 import org.w3c.dom.Node;
+import org.xbill.DNS.Record;
 
 /**
  * Processor module for writing the results of any 
