@@ -49,17 +49,17 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     static final String ESCAPED_AMP = "&amp;";
     static final String WHITESPACE = "\\s";
 
-    // finds strings in Javascript
+    // finds whitespace-free strings in Javascript
     // (areas between paired ' or " characters, possibly backslash-quoted
     // on the ends, but not in the middle)
     static final String JAVASCRIPT_STRING_EXTRACTOR =
-     "(\\\\*(?:\"|\'))((?:[^\\n\\r]*?[^\\n\\r\\\\])??)(?:\\1)";
+        "(\\\\*(?:\"|\'))(\\S{0,2083}?)(?:\\1)";
 
     // determines whether a string is likely URI
     // (no whitespace or '<' '>',  has an internal dot or some slash,
     // begins and ends with either '/' or a word-char)
     static final String STRING_URI_EXTRACTOR =
-     "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)";
+        "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)";
 
     // finds strings in javascript likely to be URIs/paths
     // guessing based on '.' in string, so if highly likely to
@@ -67,7 +67,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     // will find false positives
     // TODO: add '/' check, suppress strings being concatenated via '+'?
     static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
-     "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
+        "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
 
     protected long numberOfCURIsHandled = 0;
     protected static long numberOfLinksExtracted = 0;
