@@ -7,7 +7,6 @@
 package org.archive.crawler.fetcher;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
