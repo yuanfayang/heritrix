@@ -169,6 +169,11 @@ public class RecordingInputStream
         throws IOException, RecorderLengthExceededException,
             RecorderTimeoutException
     {
+        // Check we're open before proceeding.
+        if (!isOpen()) {
+            return;
+        }
+        
         long timeoutTime;
         long totalBytes = 0;
         
