@@ -42,40 +42,32 @@ public class URIRegExpFilter extends Filter {
     public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 
     /**
-     * @param name Filter name.
+     * @param name
      */
     public URIRegExpFilter(String name) {
-        this(name, "URI regexp filter.", "");
+        super(name, "URI regexp filter.");
         addElementToDefinition(
             new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when" +
-                " regular expression matches. \n", new Boolean(true)));
+                    " regular expression matches. \n", new Boolean(true)));
         addElementToDefinition(
-            new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
+                new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
     }
 
-    public URIRegExpFilter(String name, String regexp) {
-        this(name, "URI regexp filter.", regexp);
-    }
-
-    protected URIRegExpFilter(String name, String description, String regexp) {
-        super(name, description);
-        addElementToDefinition(new SimpleType(ATTR_MATCH_RETURN_VALUE,
-            "What to return when" + " regular expression matches. \n",
-            new Boolean(true)));
-        addElementToDefinition(new SimpleType(ATTR_REGEXP,
-            "Java regular expression.", regexp)); 
-    }
-
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
+     */
     protected boolean innerAccepts(Object o) {
         String input = null;
         input = asString(o);
         String regexp = getRegexp(o);
-        return (regexp == null)?  
-            false: TextUtils.matches(getRegexp(o), input);
+        if (regexp == null) {
+            return false;
+        } else {
+            return TextUtils.matches(getRegexp(o), input);
+        }
     }
 
-    /** 
-     * Get the regular expression string to match the URI against.
+    /** Get the regular expression string to match the URI against.
      *
      * @param o the object for which the regular expression should be
      *          matched against.
@@ -90,13 +82,15 @@ public class URIRegExpFilter extends Filter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#applyInversion()
+     */
     protected boolean returnTrueIfMatches(CrawlURI curi) {
-        try {
-            return ((Boolean)getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).
-                booleanValue();
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-            return true;
-        }
+       try {
+           return ((Boolean) getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).booleanValue();
+       } catch (AttributeNotFoundException e) {
+           logger.severe(e.getMessage());
+           return true;
+       }
     }
 }

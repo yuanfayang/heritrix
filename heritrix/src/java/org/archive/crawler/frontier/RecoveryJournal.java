@@ -41,7 +41,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
-import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.URIFrontier;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -81,11 +81,11 @@ public class RecoveryJournal {
     }
 
     /**
-     * Note that a CrawlURI was added (scheduled) to the Frontier.
+     * Note that a CrawlURI was added (scheduled) to the Frontier
      * 
      * @param curi
      */
-    public synchronized void added(CrawlURI curi) {
+    public void added(CrawlURI curi) {
         write("\n" + F_ADD + curi.getURIString() + " " 
                  + curi.getPathFromSeed() + " " + curi.flattenVia());
     }
@@ -144,9 +144,9 @@ public class RecoveryJournal {
      * @param source Recover log path.
      * @param frontier Frontier reference.
      * 
-     * @see org.archive.crawler.framework.Frontier#importRecoverLog(java.lang.String)
+     * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
      */
-    public static void importRecoverLog(File source, Frontier frontier)
+    public static void importRecoverLog(File source, URIFrontier frontier)
             throws IOException {
         // scan log for all 'Fs' lines: add as 'alreadyIncluded'
         BufferedReader reader = new BufferedReader(new InputStreamReader(

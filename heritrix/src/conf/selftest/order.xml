@@ -62,7 +62,7 @@
       <stringList name="user-agents">
       </stringList>
     </newObject>
-    <newObject name="frontier" class="org.archive.crawler.frontier.HostQueuesFrontier">
+    <newObject name="frontier" class="org.archive.crawler.frontier.Frontier">
       <float name="delay-factor">0.0</float>
       <integer name="max-delay-ms">0</integer>
       <integer name="min-delay-ms">0</integer>

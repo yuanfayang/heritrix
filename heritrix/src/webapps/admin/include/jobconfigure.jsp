@@ -24,7 +24,7 @@
      *      @param name absolute name of the attribute
      *   doPop(text) - Displays text in a pop-up dialog of some sort.
      *      @param text the text that will be displayed.
-     *   doDeleteList(name) - Delete selected from specified list. INCLUDED
+     *   doDeleteList(name) - Delete selected items from specified list. INCLUDED
      *      @param name the absolute name of the list attribute.
      *   doAddList(name) - Add an entry to a list INCLUDED
      *      @param name the absolute name of the list attribute to add to
@@ -32,7 +32,7 @@
      *                  contains the new entry
      *   doAddMap(name) - Add to a simple typed map. INCLUDED
      *      @param name the absolute name of the map attribute to add to.
-     *   doDeleteMap(name, key) - Delete  entry from a simple typed map INCLUDED
+     *   doDeleteMap(name, key) - Delete an entry from a simple typed map INCLUDED
      *      @param name the absolute name of the map attribute to remove from
      *      @param key the key of the item in the map that is to be removed.
      *
@@ -265,26 +265,22 @@
     }
     
     /**
-     * Checks if there is an error for a specific attribute for a given
-     * CrawlerSettings
+     * Checks if there is an error for a specific attribute for a given CrawlerSettings
      *
      * @param key The absolutename of the attribute to check for.
      * @param errorHandler The errorHandler containing the errors
      * @param settings the CrawlerSettings that is the 'current' context
      *
      */
-    public String checkError(String key, CrawlJobErrorHandler errorHandler,
-            CrawlerSettings settings){
-        Constraint.FailedCheck failedCheck =
-            (Constraint.FailedCheck)errorHandler.getError(key);
+    public String checkError(String key, CrawlJobErrorHandler errorHandler, CrawlerSettings settings){
+        Constraint.FailedCheck failedCheck = (Constraint.FailedCheck)errorHandler.getError(key);
         if (failedCheck != null) {
             boolean sameSetting = false;
-            if(settings != null && failedCheck.getSettings() == settings) {
+            if(settings != null && failedCheck.getSettings() == settings){
                 sameSetting = true;
-            } else if(settings == null) {
+            } else if(settings == null){
                 // If failedCheck.getSettings is the global setting then true.
-                if(failedCheck.getSettings().getScope() == null ||
-                        failedCheck.getSettings().getScope().length() == 0) {
+                if(failedCheck.getSettings().getScope() == null || failedCheck.getSettings().getScope().length() == 0){
                     sameSetting = true;
                 }
             }
@@ -295,6 +291,83 @@
             }
         }
         return "";
+    }
+
+    /**
+     * This methods updates a ComplexType with information passed to it
+     * by a HttpServletRequest. It assumes that for every 'simple' type
+     * there is a corrisponding parameter in the request. A recursive
+     * call will be made for any nested ComplexTypes. For each attribute
+     * it will check if the relevant override is set (name.override 
+     * parameter equals 'true'). If so the attribute setting on the 
+     * specified domain level (settings) will be rewritten. If it is not
+     * we well ensure that it isn't being overridden.
+     * 
+     * @param mbean The ComplexType to update
+     * @param settings CrawlerSettings for the domain to override setting
+     *           for. null denotes the global settings.
+     * @param request The HttpServletRequest to use to update the 
+     *           ComplexType
+     * @param expert if true expert settings will be updated, otherwise they
+     *           will be ignored.     
+     */
+    public void writeNewOrderFile(ComplexType mbean, 
+                                  CrawlerSettings settings, 
+                                  HttpServletRequest request, 
+                                  boolean expert){
+        if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
+            return;
+        }
+        MBeanInfo info = mbean.getMBeanInfo(settings);
+        MBeanAttributeInfo a[] = info.getAttributes();
+        for(int n=0; n<a.length; n++) {
+            Object currentAttribute = null;
+            ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
+            try {
+                currentAttribute = mbean.getAttribute(settings, att.getName());
+            } catch (Exception e1) {
+                return;
+            }
+
+            if(att.isTransient()==false && (att.isExpertSetting()==false || expert)){
+                if(currentAttribute instanceof ComplexType) {
+                    writeNewOrderFile((ComplexType)currentAttribute, settings, request,expert);
+                }
+                else {
+                    // Have a 'setting'. Let's see if we need to update it (if settings == null update all, otherwise only if override is set.
+                    String attAbsoluteName = mbean.getAbsoluteName() + "/" + att.getName();
+                    boolean override = request.getParameter(attAbsoluteName+".override") != null
+                                       && request.getParameter(attAbsoluteName+".override").equals("true");
+                    if(settings == null || override){
+                        //Write this setting
+                        if(currentAttribute instanceof ListType){
+                            ListType list = (ListType)currentAttribute;
+                            list.clear();
+                            String[] elems = request.getParameterValues(attAbsoluteName);
+                            for(int i=0 ; elems != null && i < elems.length ; i++){
+                                list.add(elems[i]);
+                            }
+                        }
+                        else{
+                            try{
+                                mbean.setAttribute(settings, new Attribute(att.getName(),request.getParameter(attAbsoluteName)));
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                                return;
+                            }
+                        }
+                    } else if(settings != null && override == false) {
+                        // Is not being overriden. Need to remove possible previous overrides.
+                        try{
+                            mbean.unsetAttribute(settings,att.getName());
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 %>
 
@@ -331,29 +404,3 @@
         doSubmit();
     }    		
 </script>
-
-<%
-    // This code is shared by each of the configure.jsp pages. 
-    // Sets up the CrawlJob, CrawlOrder, settingsHandler, 
-    // the CrawlJobErrorHandler and sets the expert boolean.
-	CrawlJob theJob = handler.getJob(request.getParameter("job"));
-	if (theJob == null) {
-		// Didn't find any job with the given UID or no UID given.
-		response.sendRedirect("/admin/jobs.jsp?message=" +
-            "No job selected " + request.getParameter("job"));
-		return;
-	} else if(theJob.isReadOnly()) {
-		// Can't edit this job.
-		response.sendRedirect("/admin/jobs.jsp?message=" +
-            "Can't configure a read only job");
-		return;
-	}
-    CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
-	boolean expert = false;
-    if(getCookieValue(request.getCookies(), "expert", "false").equals("true")) {
-        expert = true;
-    }
-	// Get the settings objects.
-	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
-	CrawlOrder crawlOrder = settingsHandler.getOrder();
-%>

@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
+import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.archive.util.ArchiveUtils;
 
@@ -43,9 +44,8 @@ import org.archive.util.ArchiveUtils;
  * @author stack
  */
 public class ARCWriterPool {
-    // Be robust against trivial implementation changes
-    private static final long serialVersionUID =
-        ArchiveUtils.classnameBasedUID(ARCWriterPool.class, 1);
+    // be robust against trivial implementation changes
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(ARCWriterPool.class,1);
 
     /**
      * Logger instance used by this class.

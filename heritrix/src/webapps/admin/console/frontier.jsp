@@ -1,8 +1,8 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="org.archive.crawler.framework.FrontierMarker"%>
-<%@ page import="org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException"%>
+<%@ page import="org.archive.crawler.framework.URIFrontierMarker"%>
+<%@ page import="org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException"%>
 
 <%@ page import="java.util.ArrayList"%>
 
@@ -100,7 +100,7 @@
             <td colspan="2" nowrap>
                 <input type="radio" name="style" checked value="perLine">one URI per line 
                 <input type="radio" name="style" value="crawlLog">crawl.log style
-                <input type="radio" name="style" value="recoveryJournal">recovery journal style (uncompressed)
+                <input type="radio" name="style" value="recoveryJournal">recovery journal style
             </td>
             <td width="100%">
             </td>
@@ -171,7 +171,7 @@
                 StringBuffer outputString = new StringBuffer();
                 if ( action != null ) {
                     
-                    FrontierMarker marker = null;
+                    URIFrontierMarker marker = null;
 			        if(grep){
 			            if(regexpr.length() > 0){
 			                regexpr = ".*" + regexpr + ".*";
@@ -186,7 +186,7 @@
                        session.setAttribute("marker",marker);
 	                } else if(action.equals("next")) {
 	                   // Reuse old marker.
-	                   marker = (FrontierMarker)session.getAttribute("marker");
+	                   marker = (URIFrontierMarker)session.getAttribute("marker");
 	                   regexpr = marker.getMatchExpression();
 	                } else if(action.equals("delete")){
 	                   // Delete based on regexpr.
@@ -205,7 +205,7 @@
                             for(int i=0 ; i < list.size() ; i++){
                                 outputString.append((String)list.get(i)+"\n");
                             }
-                        } catch ( InvalidFrontierMarkerException e ) {
+                        } catch ( InvalidURIFrontierMarkerException e ) {
                             session.removeAttribute("marker");
                             outputString.append("Invalid marker");
                         }

@@ -49,10 +49,10 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.FrontierMarker;
+import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -140,6 +140,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * A list of pending CrawlJobs.
      */
+    //private Vector pendingCrawlJobs = new Vector();
     private TreeSet pendingCrawlJobs;
 
     /**
@@ -237,7 +238,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Loads a job given a specific job file. The loaded job will be placed in
-     * the list of completed jobs or pending queue depending on its status.
+     * the list of completed jobs or pending queue depending on it's status.
      * Running jobs will have their status set to 'finished abnormally' and put
      * into the completed list.
      * @param job the job file of the job to load.
@@ -1091,13 +1092,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *            Limit marker scope to 'cached' URIs.
      * @return a URIFrontierMarker for the current job.
      * @see #getPendingURIsList(URIFrontierMarker, int, boolean)
-     * @see org.archive.crawler.framework.Frontier#getInitialMarker(String,
+     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(String,
      *      boolean)
-     * @see org.archive.crawler.framework.FrontierMarker
+     * @see org.archive.crawler.framework.URIFrontierMarker
      */
-    public FrontierMarker getInitialMarker(String regexpr,
+    public URIFrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {
-        FrontierMarker tmp = null;
+        URIFrontierMarker tmp = null;
         if (controller != null && controller.isPaused()) {
             // Ok, get the marker.
             tmp = controller.getFrontier().getInitialMarker(regexpr,
@@ -1119,15 +1120,15 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param verbose
      *            should detailed info be provided on each URI?
      * @return the frontiers URI list based on the provided marker
-     * @throws InvalidFrontierMarkerException
+     * @throws InvalidURIFrontierMarkerException
      *             When marker is inconsistent with the current state of the
      *             frontier.
      * @see #getInitialMarker(String, boolean)
-     * @see org.archive.crawler.framework.FrontierMarker
+     * @see org.archive.crawler.framework.URIFrontierMarker
      */
-    public ArrayList getPendingURIsList(FrontierMarker marker,
+    public ArrayList getPendingURIsList(URIFrontierMarker marker,
             int numberOfMatches, boolean verbose)
-            throws InvalidFrontierMarkerException {
+            throws InvalidURIFrontierMarkerException {
         ArrayList tmp = null;
         if (controller != null && controller.isPaused()) {
             // Ok, get the list.

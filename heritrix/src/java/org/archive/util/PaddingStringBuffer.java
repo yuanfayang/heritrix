@@ -45,8 +45,7 @@ public final class PaddingStringBuffer {
     // Location in current line
     int linePos;
 
-    /** 
-     * Create a new PaddingStringBuffer
+    /** Create a new PaddingStringBuffer
      *
      */
     public PaddingStringBuffer() {

@@ -324,7 +324,6 @@ public class CrawlURI extends CandidateURI
      *         URI.
      */
     public int incrementFetchAttempts() {
-        // TODO: rename, this is actually processing-loop-attempts
         return fetchAttempts++;
     }
 
@@ -1026,23 +1025,5 @@ public class CrawlURI extends CandidateURI
      */
     public Object getContentDigest() {
         return contentDigest;
-    }
-
-    transient Object holder;
-    /**
-     * Remember a 'holder' to which some enclosing/queueing
-     * facility has assigned this CrawlURI
-     * .
-     * @param obj
-     */
-    public void setHolder(Object obj) {
-        holder=obj;
-    }
-
-    /**
-     * @return
-     */
-    public Object getHolder() {
-        return holder;
     }
 }

@@ -108,6 +108,7 @@ public class StatisticsTracker extends AbstractTracker
      */
     protected long discoveredUriCount = 0;
     protected long queuedUriCount = 0;
+    protected long pendingUriCount = 0;
     protected long finishedUriCount = 0;
 
     protected long downloadedUriCount = 0;
@@ -167,8 +168,8 @@ public class StatisticsTracker extends AbstractTracker
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.StatisticsTracking#initalize(org.archive.crawler.framework.CrawlController)
      */
-    public void initialize(CrawlController c) {
-        super.initialize(c);
+    public void initalize(CrawlController c) {
+        super.initalize(c);
         controller.addCrawlURIDispositionListener(this);
     }
 
@@ -178,6 +179,7 @@ public class StatisticsTracker extends AbstractTracker
     protected synchronized void logActivity() {
         // This method loads "snapshot" data.
         discoveredUriCount = discoveredUriCount();
+        pendingUriCount = pendingUriCount();
         downloadedUriCount = successfullyFetchedCount();
         finishedUriCount = finishedUriCount();
         queuedUriCount = queuedUriCount();
@@ -466,6 +468,23 @@ public class StatisticsTracker extends AbstractTracker
     }
 
     /**
+     * Number of URIs that are awaiting detailed processing.
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value
+     * of the last snapshot.
+     *
+     * @return The number of URIs in the frontier (found but not processed)
+     *
+     * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
+     */
+    public long pendingUriCount() {
+
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ? controller.getFrontier().pendingUriCount() : pendingUriCount;
+    }
+
+    /**
      * This returns the number of completed URIs as a percentage of the total
      * number of URIs encountered (should be inverse to the discovery curve)
      *
@@ -491,7 +510,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return A count of all uris encountered
      *
-     * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
+     * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long discoveredUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
@@ -504,7 +523,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return Number of URIs that have finished processing
      *
-     * @see org.archive.crawler.framework.Frontier#finishedUriCount()
+     * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
      */
     public long finishedUriCount() {
         return shouldrun ? controller.getFrontier().finishedUriCount() : finishedUriCount;
@@ -540,7 +559,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return The number of successully fetched URIs
      *
-     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
      */
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
@@ -556,7 +575,7 @@ public class StatisticsTracker extends AbstractTracker
      *
      * @return Number of URIs queued up and waiting for processing.
      *
-     * @see org.archive.crawler.framework.Frontier#queuedUriCount()
+     * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
      */
     public long queuedUriCount() {
         // While shouldrun is true we can use info direct from the crawler.

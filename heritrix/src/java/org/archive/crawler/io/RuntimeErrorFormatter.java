@@ -33,33 +33,29 @@ import org.archive.crawler.datamodel.CrawlURI;
 
 /**
  * Runtime exception log formatter.
- *
- * Used to format unexpected runtime exceptions such as 
- * OOMEs.
  * 
  * @author gojomo
  */
-public class RuntimeErrorFormatter extends UriProcessingFormatter
-implements CoreAttributeConstants {
+public class RuntimeErrorFormatter
+		extends UriProcessingFormatter
+		implements CoreAttributeConstants {
+
     public String format(LogRecord lr) {
         Object [] parameters = lr.getParameters();
-        String stackTrace = "None retrieved";
+        String stackTrace = "None retreived";
         if (parameters != null) {
-            // CrawlURI is always first parameter.
             CrawlURI curi = (CrawlURI)parameters[0];
             if (curi != null) {
                 Exception e = (Exception)curi.getAList().
                 	getObject(A_RUNTIME_EXCEPTION);
-                assert e != null : "Null exception";
+                assert e != null : "null exception";
                 StringWriter sw = new StringWriter();
-                if (e == null) {
-                    sw.write("No exception to report.");
-                } else {
-                    e.printStackTrace(new PrintWriter(sw));
-                }
+                e.printStackTrace(new PrintWriter(sw));
                 stackTrace = sw.toString();
             }
         }
         return super.format(lr) + " " + stackTrace;
     }
 }
+
+

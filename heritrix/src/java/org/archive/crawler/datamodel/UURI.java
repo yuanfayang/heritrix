@@ -28,7 +28,6 @@ import java.io.Serializable;
 
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UriUniqFilter.HasUri;
 import org.archive.util.SURT;
 import org.archive.util.TextUtils;
 
@@ -55,7 +54,7 @@ import org.archive.util.TextUtils;
  *
  * @see org.apache.commons.httpclient.URI
  */
-public class UURI extends URI implements Serializable, HasUri {
+public class UURI extends URI implements Serializable {
     
     public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
 
@@ -251,10 +250,4 @@ public class UURI extends URI implements Serializable, HasUri {
         return surtForm;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUri#getUri()
-     */
-    public String getUri() {
-        return this.toString();
-    }
 }

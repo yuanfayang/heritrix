@@ -13,15 +13,41 @@
 <%@include file="/include/jobconfigure.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@page import="org.archive.crawler.settings.refinements.*"%>
 
 <%
+	// Load the job to configure.
+	CrawlJob theJob = handler.getJob(request.getParameter("job"));
+    CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
+
+    boolean expert = false;
+    if(getCookieValue(request.getCookies(),"expert","false").equals("true")){
+        expert = true;
+    }
+
+	
+	if(theJob == null)
+	{
+		// Didn't find any job with the given UID or no UID given.
+		response.sendRedirect("/admin/jobs.jsp?message=No job selected "+request.getParameter("job"));
+		return;
+	} else if(theJob.isReadOnly()){
+		// Can't edit this job.
+		response.sendRedirect("/admin/jobs.jsp?message=Can't configure a running job");
+		return;
+	}
+
     // Load display level
     String currDomain = request.getParameter("currDomain");
     String reference = request.getParameter("reference");
+
+    // Get the settings objects.
+    XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
+    CrawlOrder crawlOrder = settingsHandler.getOrder();
     boolean global = currDomain == null || currDomain.length() == 0;
+
     CrawlerSettings localSettings;
+    
     if(global){
         localSettings = settingsHandler.getSettingsObject(null);
     } else {
@@ -29,6 +55,7 @@
     }
     
     Refinement refinement = localSettings.getRefinement(reference);
+
     CrawlerSettings orderfile = refinement.getSettings();
 
     
@@ -36,8 +63,7 @@
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
         errorHandler.clearErrors();
-		JobConfigureUtils.writeNewOrderFile(crawlOrder, orderfile, request,
-            expert);
+		writeNewOrderFile(crawlOrder,orderfile,request,expert);
 		settingsHandler.writeSettingsObject(orderfile);
 	}
 	
