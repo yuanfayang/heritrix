@@ -32,6 +32,7 @@ import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.url.canonicalize.FixupQueryStr;
 import org.archive.crawler.url.canonicalize.LowercaseRule;
+import org.archive.crawler.url.canonicalize.RegexRule;
 import org.archive.crawler.url.canonicalize.StripSessionIDs;
 import org.archive.crawler.url.canonicalize.StripUserinfoRule;
 import org.archive.crawler.url.canonicalize.StripWWWRule;
@@ -59,10 +60,6 @@ public class CanonicalizerTest extends TmpDirTestCase {
         this.rules = (MapType)(settingsHandler.getSettingsObject(null)).
             getModule(CrawlOrder.ATTR_NAME).
                getAttribute(CrawlOrder.ATTR_RULES);
-        this.rules.addElement(null, new LowercaseRule("lowercase"));
-        this.rules.addElement(null, new StripUserinfoRule("userinfo"));
-        this.rules.addElement(null, new StripWWWRule("www"));
-        this.rules.addElement(null, new StripSessionIDs("ids"));
         this.rules.addElement(null, new FixupQueryStr("querystr"));
     }
     
@@ -82,5 +79,10 @@ public class CanonicalizerTest extends TmpDirTestCase {
         assertTrue("Mangled sessionid", result.equals(
             Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
                 this.rules.iterator(UURIFactory.getInstance(result)))));
+        tmp = scheme + "www." + nonQueryStr +
+            "?jsessionid=01234567890123456789012345678901";
+        assertTrue("Mangled sessionid", result.equals(
+             Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
+                   this.rules.iterator(UURIFactory.getInstance(result)))));       
     }
 }
