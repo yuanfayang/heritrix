@@ -162,7 +162,8 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             UURI prereq = UURIFactory.getInstance(getBaseURI(curi),
                 (String)curi.getPrerequisiteUri());
             CandidateURI caUri = new CandidateURI(prereq);
-            caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);
+            caUri.setSchedulingDirective(CandidateURI.HIGH);
+            caUri.setForceFetch(true);
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
 
