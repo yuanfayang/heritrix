@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -149,16 +150,6 @@ public abstract class SettingsHandler {
         return (CrawlerModule) globalSettings.getModule(name);
     }
 
-    /*
-    protected void addToModuleRegistry(CrawlerModule module) {
-        moduleRegistry.put(module.getName(), module);
-    }
-
-    protected void addToComplexTypeRegistry(ComplexType type) {
-        complexTypesRegistry.put(type.getAbsoluteName(), type);
-    }
-    */
-
     /** Get a complex type by its absolute name.
      * 
      * The absolute name is the complex types name and the path leading to
@@ -168,13 +159,23 @@ public abstract class SettingsHandler {
      * @param absoluteName the absolute name of the complex type to get.
      * @return the complex type referenced by the absolute name or null if
      *         the complex type could not be found in this settings object.
+     * @throws AttributeNotFoundException is thrown if no ComplexType by this
+     *         name exist.
      */
     public ComplexType getComplexTypeByAbsoluteName(
-            CrawlerSettings settings, String absoluteName) {
+            CrawlerSettings settings, String absoluteName)
+            throws AttributeNotFoundException {
                 
+        settings = settings == null ? globalSettings : settings;
+
         DataContainer data = settings.getData(absoluteName);
         if (data == null) {
-            return null;
+            CrawlerSettings parentSettings = settings.getParent();
+            if (parentSettings == null) {
+                throw new AttributeNotFoundException(absoluteName);
+            } else {
+                return getComplexTypeByAbsoluteName(parentSettings, absoluteName);
+            }
         } else {
             return data.getComplexType();
         }
