@@ -239,9 +239,14 @@ public class CrawlJob
         // errorMessage
         // TODO: Multilines
         tmp = jobReader.readLine();
+        errorMessage = "";
         while(tmp!=null){
-            errorMessage+=tmp;
+            errorMessage+=tmp+'\n';
             tmp = jobReader.readLine();
+        }
+        if(errorMessage.length()==0){
+            // Empty error message should be null
+            errorMessage = null;
         }
         // TODO: Load stattrack if needed.
     }

@@ -25,12 +25,9 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;

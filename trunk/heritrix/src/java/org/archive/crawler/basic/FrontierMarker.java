@@ -46,7 +46,7 @@ public class FrontierMarker implements URIFrontierMarker {
     protected boolean hasNext;
     protected long nextItemNumber;
     protected ArrayList keyqueues;
-    // -1 -> PendingHighQueue, -2 -> PendingQueue, > 0 -> KeyQueue at index...
+    // -1 -> PendingQueue, > 0 -> KeyQueue at index...
     int currentQueue;
     // The absolute position (ignoring matches or no matches) in the current
     // queue to BEGIN.
@@ -58,14 +58,14 @@ public class FrontierMarker implements URIFrontierMarker {
         p = Pattern.compile(match);
         nextItemNumber=1;
         this.keyqueues = keyqueues;
-        currentQueue = -1;
+        currentQueue = 0;
         absolutePositionInCurrentQueue = 0;
         hasNext = true;
     }
     
     protected void nextQueue(){
         if(++currentQueue==keyqueues.size()){
-            currentQueue = -2;
+            currentQueue = -1;
         }
         absolutePositionInCurrentQueue = 0;
     }
