@@ -208,10 +208,11 @@
         </dependency>
         <dependency>
             <id>stataclasses</id>
-            <version />
+            <version>0.1.0</version>
             <url>file://${basedir}/lib/stataclasses.jar</url>
             <properties>
                 <description>Utils supplied by Rayme Stata.
+                Gave it arbitrary 0.1.0 version number.
                 </description>
                 <license>?</license>
             </properties>
@@ -241,12 +242,13 @@
             </properties>
         </dependency>
         <dependency>
-            <id>javax.servlet</id>
+            <id>servlet</id>
             <version>2.3</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>This jar came w/ Jetty.  Assumption is that its
-                2.3 servlet and that its Sun License.
+                2.3 servlet and that its Sun License.  TODO: Fix license and 
+                source.
                 </description>
                 <license>Jetty license,
                     http://jetty.mortbay.org/jetty/LICENSE.html
@@ -259,11 +261,10 @@
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>This jar came w/ Jetty. Its the jakarta 
-                jasper jsp runtime.  TODO: Fix the license.
+                jasper jsp runtime.  According to Jetty VERSION.TXT was taken
+                from tomcat 4.1.24.
                 </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
-                </license>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
         </dependency>
         <dependency>
@@ -272,11 +273,10 @@
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>This jar came w/ Jetty. Its the jakarta 
-                jasper jsp compiler.  TODO: Fix the license.
+                jasper jsp runtime.  According to Jetty VERSION.TXT was taken
+                from tomcat 4.1.24.
                 </description>
-                <license>Jetty license,
-                    http://jetty.mortbay.org/jetty/LICENSE.html
-                </license>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
         </dependency>
         <dependency>
@@ -285,6 +285,7 @@
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>This jar came w/ Jetty. Its JMX runtime.
+                TODO: Have marked it w/ the jetty version.
                 TODO: License must be something else than jetty.
                 </description>
                 <license>Jetty license,
@@ -307,7 +308,7 @@
         </dependency>
         <dependency>
             <id>poi</id>
-            <version>1.5</version>
+            <version>1.5.1</version>
             <url>http://jakarta.apache.org/poi/</url>
             <properties>
                 <description>For parsing PDFs.
@@ -320,7 +321,7 @@
             <version />
             <url>http://www.anotherbigidea.com/javaswf</url>
             <properties>
-                <description>JavaSWF2 is a set of Java packages that enable the parsing, manipulation and generation of the Macromedia Flash(TM) file format known as SWF ("swiff").</description>
+                <description>JavaSWF2 is a set of Java packages that enable the parsing, manipulation and generation of the Macromedia Flash(TM) file format known as SWF ("swiff").  Added jar was made by unzipping javaswf-CVS-SNAPSHOT-1.zip download, compiling the java classes therein, and then making a jar of the product.</description>
                 <license>The JavaSWF BSD License, 
                 http://anotherbigidea.com/javaswf/JavaSWF2-BSD.LICENSE.html
                 </license>
