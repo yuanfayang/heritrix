@@ -18,10 +18,21 @@ import org.archive.crawler.framework.Filter;
  * @author Gordon Mohr
  */
 public class TransclusionFilter extends Filter {
-	int maxTransHops = 0;
-	
-	// 1-3 trailing P(recondition)/R(eferral)/E(mbed)/X(speculative-embed) hops
-	private static final String TRANSCLUSION_PATH = ".*[PREX][PREX]?[PREX]?$";
+	private static final String XP_MAX_TRANS_HOPS = "@max-trans-hops";
+	private static final String XP_MAX_SPECULATIVE_HOPS = "@max-speculative-hops";
+	private static final String XP_MAX_REFERRAL_HOPS = "@max-referral-hops";
+	private static final String XP_MAX_EMBED_HOPS = "@max-embed-hops";
+	private static final int DEFAULT_MAX_TRANS_HOPS = 4;
+	private static final int DEFAULT_MAX_SPECULATIVE_HOPS = 1; // no more than 1
+	private static final int DEFAULT_MAX_REFERRAL_HOPS = Integer.MAX_VALUE; // no limit beside the overall trans limit
+	private static final int DEFAULT_MAX_EMBED_HOPS = Integer.MAX_VALUE; // no limit beside the overall trans limit
+	int maxTransHops = DEFAULT_MAX_TRANS_HOPS;
+	int maxSpeculativeHops = DEFAULT_MAX_SPECULATIVE_HOPS;
+	int maxReferralHops = DEFAULT_MAX_REFERRAL_HOPS;
+	int maxEmbedHops = DEFAULT_MAX_EMBED_HOPS;
+		
+//	// 1-3 trailing P(recondition)/R(eferral)/E(mbed)/X(speculative-embed) hops
+//	private static final String TRANSCLUSION_PATH = ".*[PREX][PREX]?[PREX]?$";
 	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
@@ -36,20 +47,44 @@ public class TransclusionFilter extends Filter {
 		}
 		String path = ((CandidateURI)o).getPathFromSeed();
 		int transCount = 0;
-		for(int i=path.length()-1;i>=0;i--) {
+		int specCount = 0;
+		int refCount = 0;
+		int embedCount = 0;
+		loop: for(int i=path.length()-1;i>=0;i--) {
 			// everything except 'L' is consider transitive
-			if(path.charAt(i)=='L') {
-				break;
-			} else {
-				transCount++;
+			switch (path.charAt(i)) {
+				case 'L': {
+					break loop;
+				}
+				case 'X': {
+					specCount++;
+					break;
+				}
+				case 'R': {
+					refCount++;
+					break;
+				}
+				case 'E': {
+					embedCount++;
+					break;
+				}
+				// 'D's get a free pass
 			}
+			transCount++;
 		}
-		return (transCount > 0) && (transCount <= maxTransHops);
+		return (transCount > 0) // this is a case of possible transclusion
+				&& (transCount <= maxTransHops) // and the overall number of hops isn't too high
+				&& (specCount <= maxSpeculativeHops) // and the number of spec-hops isn't too high
+				&& (refCount <= maxReferralHops)  // and the number of referral-hops isn't too high
+				&& (embedCount <= maxEmbedHops);  // and the number of embed-hops isn't too high
 	}
 
 	public void initialize(CrawlController c) {
 		super.initialize(c);
-		maxTransHops = getIntAt("@max-trans-hops",maxTransHops);
+		maxTransHops = getIntAt(XP_MAX_TRANS_HOPS,maxTransHops);
+		maxSpeculativeHops = getIntAt(XP_MAX_SPECULATIVE_HOPS,maxSpeculativeHops);
+		maxReferralHops = getIntAt(XP_MAX_REFERRAL_HOPS,maxReferralHops);
+		maxEmbedHops = getIntAt(XP_MAX_EMBED_HOPS,maxEmbedHops);
 	}
 
 }
