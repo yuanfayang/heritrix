@@ -35,13 +35,12 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
-import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.queue.DiskBackedDeque;
-import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CompositeIterator;
+import org.archive.util.DiskBackedDeque;
 import org.archive.util.Inverter;
+import org.archive.util.Queue;
 
 /**
  * Ordered collection of work items with the same "classKey".
@@ -87,9 +86,6 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
     
-    /** Associated CrawlServer instance, held to keep CrawlServer from being cache-flushed */
-    CrawlServer crawlServer;
-    
     /** ms time to wake, if snoozed */
     long wakeTime;
     /** common string 'key' of included items (typically hostname)  */
@@ -125,16 +121,10 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @param maxMemLoad Maximum number of items to keep in memory
      * @throws IOException When it fails to create disk based data structures.
      */
-    public KeyedQueue(String key, CrawlServer server, File scratchDir, int maxMemLoad)
+    public KeyedQueue(String key, File scratchDir, int maxMemLoad)
             throws IOException {
         super();
         this.classKey = key;
-        if(server!=null && !server.getName().startsWith(key)) {
-            // temp debugging output
-            System.err.println("KeyedQueue server<->key mismatch noted: "+server.getName()+"<->"+key);
-            // assert server.getHostname().startsWith(key) : "KeyedQueue server - key mismatch";
-        }
-        this.crawlServer = server;
         String tmpName = key;
         this.maxMemoryLoad = maxMemLoad;
         this.innerQ = new DiskBackedDeque(scratchDir,tmpName,false,maxMemLoad);    
@@ -320,10 +310,10 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Add an item in the default manner
      *
      * @param curi
-     * @see org.archive.queue.Queue#enqueue(java.lang.Object)
+     * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(CrawlURI curi) {
-     
+        
         if(curi.needsImmediateScheduling()) {
             enqueueHigh(curi);
         } else if (curi.needsSoonScheduling()) {
@@ -381,7 +371,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * @see org.archive.queue.Queue#isEmpty()
+     * @see org.archive.util.Queue#isEmpty()
      * @return Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
      * still have 'frozen' off-to-side URIs.)
      */
@@ -393,7 +383,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     /**
      * Remove an item in the default manner
      *
-     * @see org.archive.queue.Queue#dequeue()
+     * @see org.archive.util.Queue#dequeue()
      * @return A crawl uri.
      */
     public CrawlURI dequeue() {
@@ -451,7 +441,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
 
     
     /** 
-     * @see org.archive.queue.Queue#length()
+     * @see org.archive.util.Queue#length()
      * @return Total number of available items. (Does not include
      * any 'frozen' items.)
      */
@@ -470,7 +460,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Iterate over all available (non-frozen) items. 
      * 
      * @param inCacheOnly
-     * @see org.archive.queue.Queue#getIterator(boolean)
+     * @see org.archive.util.Queue#getIterator(boolean)
      * @return Iterator.
      */
     public Iterator getIterator(boolean inCacheOnly) {
@@ -483,7 +473,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Delete items matching the supplied criterion.
      *
      * @param matcher
-     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      * @return Number of deletes.
      */
     public long deleteMatchedItems(Predicate matcher) {

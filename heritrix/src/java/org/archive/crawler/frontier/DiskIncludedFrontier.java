@@ -31,11 +31,11 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.util.FPUriUniqFilter;
+import org.archive.crawler.util.FPUURISet;
 import org.archive.util.CachingDiskLongFPSet;
 
 /**
@@ -132,10 +132,10 @@ public class DiskIncludedFrontier extends Frontier {
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.Frontier#createAlreadyIncluded(java.io.File, java.lang.String)
      */
-    protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
+    protected UURISet createAlreadyIncluded(File dir, String filePrefix)
             throws IOException, FatalConfigurationException {
         try {
-			UriUniqFilter uuf = new FPUriUniqFilter(
+			return new FPUURISet(
 			                 new CachingDiskLongFPSet(
 			                         dir,
 			                         filePrefix,
@@ -151,8 +151,6 @@ public class DiskIncludedFrontier extends Frontier {
                                      ((Float)getAttribute(
                                             ATTR_INCLUDED_URIS_CACHE_LOADFACTOR ))
                                             .floatValue()));
-            uuf.setDestination(this);
-            return uuf;		
 		} catch (AttributeNotFoundException e) {
             throw new FatalConfigurationException("AttributeNotFoundException " +
                     "encountered on reading creating CachingDiskLongFPSet. " +

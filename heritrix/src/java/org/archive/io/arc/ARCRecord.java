@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpConstants;
 import org.apache.commons.httpclient.HttpParser;
 import org.apache.commons.httpclient.StatusLine;
@@ -107,14 +106,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
     private InputStream httpHeaderStream = null;
     
     /**
-     * Http headers.
-     * 
-     * Only populated after reading of headers.
-     */
-    private Header [] httpHeaders = null;
-
-    
-    /**
      * Minimal http header length.
      * 
      * I've seen in arcs content length of 1 with no 
@@ -122,12 +113,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     private static final long MIN_HTTP_HEADER_LENGTH =
         "HTTP/1.1 200 OK\r\n".length();
-    
-    /**
-     * Offset at which the body begins.
-     */
-    private int bodyOffset = -1;
-    
 
     /**
      * Constructor.
@@ -169,39 +154,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
     }
     
     /**
-     * Skip over the the http header if one present.
-     * 
-     * Subsequent reads will get the body.
-     * 
-     * <p>Calling this method in the midst of reading the header
-     * will make for strange results.  Otherwise, safe to call
-     * at any time though before reading any of the arc record
-     * content is only time that it makes sense.
-     * 
-     * <p>After calling this method, you can call
-     * {@link getHttpHeaders()} to get the read http header.
-     * 
-     * @throws IOException
-     */
-    public void skipHttpHeader() throws IOException {
-        if (this.httpHeaderStream != null) {
-            // Empty the httpHeaderStream
-            for (int available = this.httpHeaderStream.available();
-            		this.httpHeaderStream != null &&
-            			(available = this.httpHeaderStream.available()) > 0;) {
-                // We should be in this loop once only we should only do this
-                // buffer allocation once.
-                byte [] buffer = new byte[available];
-                // The read nulls out httpHeaderStream when done with it so
-                // need check for null in the loop control line.
-                read(buffer, 0, available);
-            }
-        }
-    }
-    
-    /**
      * Read http header if present.
-     * Technique borrowed from HttpClient HttpParse class.
      * @return ByteArrayInputStream with the http header in it or null if no
      * http header.
      * @throws IOException
@@ -227,16 +180,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
         }
         this.httpStatus = new StatusLine(statusLine);
         
-        // Save off all bytes read.  Keep them as bytes rather than
-        // convert to strings so we don't have to worry about encodings
-        // though this should never be a problem doing http headers since
-        // its all supposed to be ascii.
-        ByteArrayOutputStream baos =
-            new ByteArrayOutputStream(statusBytes.length + 4 * 1024);
+        // Save off all bytes read.
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(4 * 1024);
         baos.write(statusBytes);
         
-        // Now read rest of the header lines looking for the separation
-        // between header and body.
+        // Now read rest of the header lines.
         for (byte [] lineBytes = null; true;) {
             lineBytes = HttpParser.readRawLine(this.in);
             eolCharCount = getEolCharsCount(lineBytes);
@@ -252,40 +200,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             }
         }
         
-        byte [] headerBytes = baos.toByteArray();
-        // Save off where body starts.
-        this.bodyOffset = headerBytes.length;
-        ByteArrayInputStream bais =
-            new ByteArrayInputStream(headerBytes);
-        if (!bais.markSupported()) {
-            throw new IOException("ByteArrayInputStream does not support mark");
-        }
-        bais.mark(headerBytes.length);
-        // Read the status line.  Don't let it into the parseHeaders function.
-        // It doesn't know what to do with it.
-        bais.read(statusBytes, 0, statusBytes.length);
-        this.httpHeaders = HttpParser.parseHeaders(bais);
-        bais.reset();
-        return bais;
-    }
-    
-    /**
-     * @return Offset at which the body begins (Only known after
-     * header has been read) or -1 if none or we haven't read
-     * headers yet.
-     */
-    public int getBodyOffset() {
-        return this.bodyOffset;
-    }
-    
-    /**
-     * Return status code for this record.
-     * 
-     * This method will return -1 until the http header has been read.
-     * @return Status code.
-     */
-    public int getStatusCode() {
-        return (this.httpStatus == null)? -1: this.httpStatus.getStatusCode();
+        return new ByteArrayInputStream(baos.toByteArray());
     }
     
     /**
@@ -312,13 +227,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     public ARCRecordMetaData getMetaData() {
         return this.metaData;
-    }
-    
-    /**
-     * @return http headers (Only available after header has been read).
-     */
-    public Header [] getHttpHeaders() {
-        return this.httpHeaders;
     }
 
     /**
@@ -349,10 +257,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
             // If http header, return bytes from it before we go to underlying
             // stream.
             c = this.httpHeaderStream.read();
-            // If done with the header stream, null it out.
-            if (this.httpHeaderStream.available() <= 0) {
-                this.httpHeaderStream = null;
-            }
         } else {
             if (available() > 0) {
                 c = this.in.read();
@@ -378,10 +282,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 read = -1;
             } else {
                 read = this.httpHeaderStream.read(b, offset, read);
-            }
-            // If done with the header stream, null it out.
-            if (this.httpHeaderStream.available() <= 0) {
-                this.httpHeaderStream = null;
             }
         } else {
             read = Math.min(length - offset, available());

@@ -74,17 +74,15 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.GenerationFileHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.GateSync;
-import org.xbill.DNS.DClass;
-import org.xbill.DNS.Type;
-import org.xbill.DNS.dns;
 
 /**
  * CrawlController collects all the classes which cooperate to
- * perform a crawl and provides a high-level interface to the
- * running crawl.
+ * perform a crawl, provides a high-level interface to the
+ * running crawl, and executes the "master thread" which doles
+ * out URIs from the Frontier to the ToeThreads.
  *
  * As the "global context" for a crawl, subcomponents will
- * often reach each other through the CrawlController.
+ * usually reach each other through the CrawlController.
  *
  * @author Gordon Mohr
  */
@@ -309,9 +307,6 @@ public class CrawlController implements Serializable {
             throw new InitializationException(extendedMessage, e);
         }
 
-        // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
-        dns.getRecords("localhost", Type.A, DClass.IN);
-        
         setupToePool();
         setThresholds();
         
@@ -471,9 +466,6 @@ public class CrawlController implements Serializable {
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
              MBeanException, ReflectionException {
-        
-        serverCache = new ServerCache(getSettingsHandler());
-
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
@@ -490,7 +482,6 @@ public class CrawlController implements Serializable {
             // try to initialize frontier from the config file
             try {
                 frontier.initialize(this);
-                frontier.pause(); // pause until begun
 
                 // TODO: make recover path relative to job root dir
                 String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
@@ -507,6 +498,8 @@ public class CrawlController implements Serializable {
                     "unable to initialize frontier: " + e);
             }
         }
+
+        serverCache = new ServerCache(getSettingsHandler());
 
         // Setup processors
         if (processorChains == null) {
@@ -569,7 +562,7 @@ public class CrawlController implements Serializable {
         Iterator it = loggers.iterator(null);
         while (it.hasNext()) {
             StatisticsTracking tracker = (StatisticsTracking) it.next();
-            tracker.initialize(this);
+            tracker.initalize(this);
             if (statistics == null) {
                 statistics = tracker;
             }
@@ -729,12 +722,11 @@ public class CrawlController implements Serializable {
         // A proper exit will change this value.
 
         // start periodic background logging of crawl statistics
-        statistics.noteStart();
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
         statLogger.start();
 
-        frontier.unpause();
+        toePool.setShouldPause(beginPaused);
     }
 
     private void completeStop() {
@@ -877,8 +869,6 @@ public class CrawlController implements Serializable {
     private void beginCrawlStop() {
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = STOPPING;
-            frontier.terminate();
-            frontier.unpause();
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
                     i.hasNext();) {
                 ((CrawlStatusListener)i.next()).crawlEnding(sExit);
@@ -899,7 +889,6 @@ public class CrawlController implements Serializable {
         logger.info("Pausing crawl job ...");
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = PAUSING;
-            frontier.pause();
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
                     i.hasNext();) {
                 ((CrawlStatusListener)i.next()).crawlPausing(sExit);
@@ -925,7 +914,7 @@ public class CrawlController implements Serializable {
         }
 
         state = RUNNING;
-        frontier.unpause();
+        toePool.setShouldPause(false);
 
         logger.info("Crawl job resumed");
 
@@ -950,9 +939,7 @@ public class CrawlController implements Serializable {
     }
 
     private void setupToePool() {
-        toePool = new ToePool(this);
-        // TODO: make # of toes self-optimizing
-        toePool.setSize(order.getMaxToes());
+        toePool = new ToePool(this, order.getMaxToes());
     }
 
     /**
@@ -1175,6 +1162,22 @@ public class CrawlController implements Serializable {
     }
 
     /**
+     * Note that a ToeThread is pausing; may receive more than one
+     * notification, if a thread is notify()d while paused.
+     *
+     * @param thread
+     */
+    public void toeChanged(ToeThread thread) {
+        if (getActiveToeCount() == 0) {
+            if (state==PAUSING) {
+                completePause();
+            } else if (state == STOPPING) {
+                completeStop();
+            }
+        }
+    }
+
+    /**
      * Evaluate if the crawl should stop because it is finished.
      */
     public void checkFinish() {
@@ -1318,18 +1321,6 @@ public class CrawlController implements Serializable {
         if(!reserveMemory.isEmpty()) {
             reserveMemory.removeLast();
             System.gc();
-        }
-    }
-
-    public void toePaused() {
-        if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
-            completePause();
-        }
-    }
-    
-    public void toeEnded() {
-        if (state == STOPPING && toePool.getActiveToeCount() == 0) {
-            completeStop();
         }
     }
 }

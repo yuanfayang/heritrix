@@ -63,9 +63,6 @@ import java.nio.MappedByteBuffer;
  * about  unable to allocate the memory.  So, a channel based reader would be
  * limited only by memory characteristics of the machine its running on (swap
  * and physical memory -- not JVM heap size) ONLY, I discovered the following.
- * Note, a spin on the 'unable to allocate the memory' was that I was 
- * unable to keep open tens of ARC instances concurrently because each was
- * using 100meg plus of RAM.
  *
  * <p>Really big files generated complaint out of FileChannel.map saying the
  * size parameter was > Integer.MAX_VALUE which is also odd considering the

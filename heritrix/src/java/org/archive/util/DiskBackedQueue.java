@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.queue;
+package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +33,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
-import org.archive.util.CompositeIterator;
-import org.archive.util.Inverter;
 
 
 
@@ -73,7 +71,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.queue.Queue#enqueue(java.lang.Object)
+     * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
         logger.finest(name+"("+length()+"): "+o);
@@ -86,14 +84,14 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.queue.Queue#isEmpty()
+     * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
         return length()==0;
     }
 
     /**
-     * @see org.archive.queue.Queue#dequeue()
+     * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
         Object retObj = null;
@@ -169,21 +167,21 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.queue.Queue#length()
+     * @see org.archive.util.Queue#length()
      */
     public long length() {
         return headQ.size()+tailQ.length();
     }
 
     /**
-     * @see org.archive.queue.Queue#release()
+     * @see org.archive.util.Queue#release()
      */
     public void release() {
         tailQ.release();
     }
 
     /**
-     * @see org.archive.queue.Queue#peek()
+     * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
     	if(headQ.isEmpty()){
@@ -196,16 +194,8 @@ public class DiskBackedQueue implements Queue, Serializable {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.queue.Queue#unpeek()
-     */
-    public void unpeek() {
-        // nothign necessary; head of this queue is stable
-        
-    }
-    
     /**
-     * @see org.archive.queue.Queue#getIterator(boolean)
+     * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         if(inCacheOnly){
@@ -223,7 +213,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
     public long deleteMatchedItems(Predicate matcher) {
         long numberOfDeletes = 0;

@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.queue;
+package org.archive.util;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -122,7 +122,7 @@
       how to run the built Heritrix.</para>
     </sect2>
 
-    <sect2 id="eclipse">
+    <sect2>
       <title>Eclipse</title>
 
       <para>The development team uses Eclipse as the development environment.

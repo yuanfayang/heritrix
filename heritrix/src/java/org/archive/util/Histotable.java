@@ -44,14 +44,11 @@ import org.archive.crawler.admin.LongWrapper;
  */
 public class Histotable {
 	HashMap totals = new HashMap(); // object -> LongWrapper(count)
-
     // sorted by count
 	TreeSet sorted = new TreeSet(new Comparator() {
         public int compare(Object e1, Object e2) {
-            long firstVal = ((LongWrapper) ((Map.Entry)e1).getValue()).
-                longValue;
-            long secondVal = ((LongWrapper) ((Map.Entry)e2).getValue()).
-                longValue;
+            long firstVal = ((LongWrapper) ((Map.Entry) e1).getValue()).longValue;
+            long secondVal = ((LongWrapper) ((Map.Entry) e2).getValue()).longValue;
             if (firstVal < secondVal) { return 1; }
             if (secondVal < firstVal) { return -1; }
             // If the values are the same, sort by keys.
@@ -87,7 +84,7 @@ public class Histotable {
 	}
 	
 	/**
-	 * Utility method to convert a key-&gt;LongWrapper(count) into
+	 * Utility method to convert a key->LongWrapper(count) into
 	 * the string "count key".
 	 * 
 	 * @param e Map key.
@@ -97,4 +94,6 @@ public class Histotable {
 		Map.Entry entry = (Map.Entry) e;
 		return ((LongWrapper)entry.getValue()).longValue + " " + entry.getKey();
 	}
+	
+	
 }

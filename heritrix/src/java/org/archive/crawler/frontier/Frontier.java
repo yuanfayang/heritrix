@@ -54,25 +54,22 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
+import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.URIFrontierMarker;
-import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.util.FPUriUniqFilter;
-import org.archive.queue.MemQueue;
-import org.archive.queue.Queue;
+import org.archive.crawler.util.FPUURISet;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.MemLongFPSet;
+import org.archive.util.MemQueue;
 import org.archive.util.PaddingStringBuffer;
+import org.archive.util.Queue;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -96,7 +93,7 @@ import org.archive.util.PaddingStringBuffer;
 public class Frontier
     extends ModuleType
     implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
-        CrawlStatusListener, HasUriReceiver {
+        CrawlStatusListener {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(Frontier.class,1);
 
@@ -138,8 +135,8 @@ public class Frontier
 
 
     protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000); //2 seconds
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); //30 seconds
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000);
+    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000);
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
@@ -159,7 +156,7 @@ public class Frontier
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
-    protected UriUniqFilter alreadyIncluded;
+    protected UURISet alreadyIncluded;
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
 
@@ -197,10 +194,7 @@ public class Frontier
     private int inactiveQueuesMemoryLoadTarget = 10000;
     private int inactivePerQueueLoadThreshold = 1000;
 
-    // flags indicating operator-specified crawl pause/end 
-    private boolean shouldPause = false;
-    private boolean shouldTerminate = false;
-  
+    
     public Frontier(String name){
         this(name,"Frontier. \nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
@@ -280,7 +274,7 @@ public class Frontier
         t.setExpertSetting(true);
         t = addElementToDefinition(
                 new SimpleType(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
-                "Size of each host queue's in-memory head.\n Once each grows " +
+                "Size of each host queue's in memory head.\n Once each grows " +
                 "beyond this size additional items will be written to a file " +
                 "on disk. Default value " + DEFAULT_HOST_QUEUES_MEMORY_CAPACITY+
                 ". A high value means more RAM used per host queue while a low"+
@@ -314,14 +308,11 @@ public class Frontier
      * @return A UURISet that will serve as a record of already seen URIs
      * @throws IOException If problems occur creating files on disk
      */
-    protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
+    protected UURISet createAlreadyIncluded(File dir, String filePrefix)
             throws IOException, FatalConfigurationException {
         // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
-        UriUniqFilter uuf = new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
-        uuf.setDestination(this);
-        return uuf;
-        
+        return new FPUURISet(new MemLongFPSet(23,0.75f));
         //return new PagedUURISet(c.getScratchDisk());
 
         // alternative: pure disk-based set
@@ -360,8 +351,8 @@ public class Frontier
                 UURI u = (UURI)i.next();
                 CandidateURI caUri = new CandidateURI(u);
                 caUri.setSeed();
-                caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-                schedule(caUri);
+                caUri.setSchedulingDirective(CandidateURI.HIGH);
+                innerSchedule(caUri);
             }
         }
     }
@@ -412,15 +403,7 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public synchronized void schedule(CandidateURI caUri) {
-        long start = System.currentTimeMillis();
         innerSchedule(caUri);
-        long duration = System.currentTimeMillis()-start;
-        if(duration>1000) {
-            System.err.println(
-                    "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
-                    +" "+duration+"ms"
-                    +" schedule("+caUri.getURIString()+") via "+caUri.flattenVia());
-        }
     }
 
     /**
@@ -430,19 +413,12 @@ public class Frontier
      * @param caUri The CandidateURI to schedule
      */
     private void innerSchedule(CandidateURI caUri) {
-        if(caUri.forceFetch()) {
-            alreadyIncluded.addForce(caUri);
-        } else {
-            alreadyIncluded.add(caUri);
+        if(!caUri.forceFetch() && this.alreadyIncluded.contains(caUri)) {
+            logger.finer("Disregarding alreadyIncluded "+caUri);
+            return;
         }
-    }
-    
-    /**
-     * @param huri
-     */
-    public void receive(UriUniqFilter.HasUri huri) {
-        CandidateURI caUri = (CandidateURI) huri;
         CrawlURI curi = asCrawlUri(caUri);
+
 
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0){
@@ -492,79 +468,50 @@ public class Frontier
      *
      * @see org.archive.crawler.framework.URIFrontier#next(int)
      */
-    synchronized public CrawlURI next() throws InterruptedException, EndedException {
-        while(true) {
-            long now = System.currentTimeMillis();
-            CrawlURI curi = null;
+    private CrawlURI next() {
+        long now = System.currentTimeMillis();
+        CrawlURI curi = null;
 
-            // enforce operator pause
-            while(shouldPause) {
-                controller.toePaused();
-                wait();
-            }
-            // enforce operator terminate
-            if(shouldTerminate) {
-                throw new EndedException("terminated");
-            }
-            
-            enforceBandwidthThrottle(now);
-            
-            // Check for snoozing queues who are ready to wake up.
-            wakeReadyQueues(now);
-    
-            // if no ready queues among active, activate inactive queues
-            // TODO: avoid activating new queue if wait for another would be trivial
-            // TODO: have inactive queues sorted by priority
-            // TODO: (probably elsewhere) deactivate active queues that "have 
-            // done enough for now" ("enough" to be defined)
-            while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
-                URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
-                kq.activate();
-                assert kq.isEmpty() == false : "empty queue was waiting for activation";
-                kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
-                        ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
-                updateQ(kq);
-            }
-            
-            // now, see if any holding queues are ready with a CrawlURI
-            if (!this.readyClassQueues.isEmpty()) {
-                curi = dequeueFromReady();
-                try {
-                    return emitCuri(curi);
-                }
-                catch (URIException e) {
-                    logger.severe("Failed holding emitcuri: " + e.getMessage());
-                }
-            }
-    
-            // consider if URIs exhausted
-            if(isEmpty()) {
-                // nothing left to crawl
-                this.controller.requestCrawlStop();
-                throw new EndedException("exhausted");
-            } 
-            
-            if(alreadyIncluded.pending()>0) {
-                if(alreadyIncluded.flush()>0) {
-                    continue; // the while(true) with fresh URIs
-                }
-            } // else
-            
-            // wait until something changes
-            waitForChange(now);
-        }
-    }
+        enforceBandwidthThrottle(now);
+        
+        // Check for snoozing queues who are ready to wake up.
+        wakeReadyQueues(now);
 
-    /**
-     * @return
-     * @throws InterruptedException
-     */
-    private void waitForChange(long now) throws InterruptedException {
-        long wait = 1000; // TODO: consider right value
-        if(!snoozeQueues.isEmpty()) {
-            wait = ((URIWorkQueue)snoozeQueues.first()).getWakeTime() - now;
+        // if no ready queues among active, activate inactive queues
+        // TODO: avoid activating new queue if wait for another would be trivial
+        // TODO: have inactive queues sorted by priority
+        // TODO: (probably elsewhere) deactivate active queues that "have 
+        // done enough for now" ("enough" to be defined)
+        while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
+            URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
+            kq.activate();
+            assert kq.isEmpty() == false : "empty queue was waiting for activation";
+            kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
+                    ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
+            updateQ(kq);
         }
-        wait(wait);
+        
+        // now, see if any holding queues are ready with a CrawlURI
+        if (!this.readyClassQueues.isEmpty()) {
+            curi = dequeueFromReady();
+            try {
+                return emitCuri(curi);
+            }
+            catch (URIException e) {
+                logger.severe("Failed holding emitcuri: " + e.getMessage());
+            }
+        }
+
+        // consider if URIs exhausted
+        if(isEmpty()) {
+            // nothing left to crawl
+            logger.info("nothing left to crawl");
+            return null;
+        } else {
+            // nothing to return now, but there are still URIs
+            // held for the future
+            return null;
+        }
     }
 
     private CrawlURI asCrawlUri(CandidateURI caUri) {
@@ -574,15 +521,6 @@ public class Frontier
         return CrawlURI.from(caUri,nextOrdinal++);
     }
 
-    /**
-     * Ensure that any overall-bandwidth-usage limit is respected,
-     * by pausing as long as necessary.
-     * 
-     * TODO: release frontier lock on scheduling, finishing URIs
-     * while this pause is in effect.
-     * 
-     * @param now
-     */
     private void enforceBandwidthThrottle(long now) {
         int maxBandwidthKB;
         try {
@@ -627,6 +565,32 @@ public class Frontier
     }
 
     /**
+     * @param timeout Time to wait on next CrawlURI (milliseconds).
+     * @return The next CrawlURI eligible for processing.
+     * @throws InterruptedException
+     */
+    public synchronized CrawlURI next(int timeout) throws InterruptedException {
+        long now = System.currentTimeMillis();
+        long until = now + timeout;
+
+        while(now<until) {
+            // Keep trying till we hit timeout.
+            CrawlURI curi = next();
+            if(curi!=null) {
+                return curi;
+            }
+            long earliestWake = earliestWakeTime();
+            // Sleep to timeout or earliestWakeup time, whichever comes first
+            long sleepuntil = earliestWake < until ? earliestWake : until;
+            if(sleepuntil > now){
+                wait(sleepuntil-now); // If new URIs are scheduled, we will be woken
+            }
+            now = System.currentTimeMillis();
+        }
+        return null;
+    }
+
+    /**
      * Note that the previously emitted CrawlURI has completed
      * its processing (for now).
      *
@@ -638,7 +602,6 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
-        long start = System.currentTimeMillis();
         logger.fine("Frontier.finished: " + curi.getURIString());
         // Catch up on scheduling
         innerBatchFlush();
@@ -676,14 +639,6 @@ public class Frontier
 
         finally {
             curi.processingCleanup();
-        }
-
-        long duration = System.currentTimeMillis()-start;
-        if(duration>1000) {
-            System.err.println(
-                    "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
-                    +" "+duration+"ms"
-                    +" finished("+curi.getURIString()+") via "+curi.flattenVia());
         }
     }
 
@@ -793,7 +748,6 @@ public class Frontier
     public boolean isEmpty() {
         return 
 //            pendingQueue.isEmpty() &&
-            alreadyIncluded.pending()==0 &&
             allClassQueuesMap.isEmpty();
     }
 
@@ -897,7 +851,6 @@ public class Frontier
                 try {
                     String key = curi.getClassKey();
 					kq = new KeyedQueue(key,
-                        this.controller.getServerCache().getServerFor(curi),
 					    scratchDirFor(key),
 					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
                                 ,curi)).intValue());
@@ -1353,14 +1306,14 @@ public class Frontier
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting "+curi);
-        alreadyIncluded.forget(curi.getUURI());
+        alreadyIncluded.remove(curi.getUURI());
     }
 
     /**  (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
-        return alreadyIncluded.count();
+        return alreadyIncluded.size();
     }
 
     /** (non-Javadoc)
@@ -1603,7 +1556,7 @@ public class Frontier
         rep.append("  Failed:       " + failedCount + "\n");
         rep.append("  Disregarded:  " + disregardedCount + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
-        rep.append(" Already included size:     " + alreadyIncluded.count()+"\n");
+        rep.append(" Already included size:     " + alreadyIncluded.size()+"\n");
 //        rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
         rep.append("\n All class queues map size: " + allClassQueuesMap.size() + "\n");
         if(allClassQueuesMap.size()!=0)
@@ -1743,7 +1696,7 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
      */
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.note(u);
+        this.alreadyIncluded.add(u);
     }
 
     /* (non-Javadoc)
@@ -1752,16 +1705,4 @@ public class Frontier
     public void kickUpdate() {
         loadSeeds();
     }
-    
-    synchronized public void pause() { 
-        shouldPause = true;
-    }
-    synchronized public void unpause() { 
-        shouldPause = false;
-        notifyAll();
-    }
-    synchronized public void terminate() { 
-        shouldTerminate = true;
-    }
-
 }

@@ -140,6 +140,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * A list of pending CrawlJobs.
      */
+    //private Vector pendingCrawlJobs = new Vector();
     private TreeSet pendingCrawlJobs;
 
     /**
@@ -237,7 +238,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Loads a job given a specific job file. The loaded job will be placed in
-     * the list of completed jobs or pending queue depending on its status.
+     * the list of completed jobs or pending queue depending on it's status.
      * Running jobs will have their status set to 'finished abnormally' and put
      * into the completed list.
      * @param job the job file of the job to load.

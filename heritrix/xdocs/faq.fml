@@ -38,18 +38,6 @@
   </part>
   <part id="problems">
     <title>Common Problems</title>
-    <faq id="arc_closed">
-      <question>How do I know when heritrix is done with an ARC file?</question>
-      <answer>See
-      <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=988277&amp;group_id=73833&amp;atid=539102">[988277] [Need feedback] "Done with ARC file" event</a> for a description for 
-      how to enable logging of opening and closing of arcs.</answer>
-    </faq>
-    <faq id="html_only">
-      <question>How do I crawl html only?</question>
-      <answer>Tom Emerson describes one technique here, 
-      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">Focusing on HTML</a>.</answer>
-    </faq>
-
     <faq id="limitations">
       <question>Are there known limitations?</question>
       <answer>See the 
@@ -216,25 +204,6 @@
 
         </answer>
       </faq>
-
-
-
-<faq id="toethreads">
-<question>Why are the main crawler worker threads called "ToeThreads"??
-</question>
-
-<answer>
-<p>While the mascots of web crawlers have usually been spider-related,
-I'd rather think of Heritrix as a centipede or millipede: fast and
-many-segmented.</p>
-
-<p>Anything that "crawls" over many things at once would presumably have
-a lot of feet and toes. Heritrix will often use many hundreds of worker
-threads to "crawl", but 'WorkerThread' or 'CrawlThread' seem mundane.</p>
-
-<p>So instead, we have 'ToeThreads'.  :)</p>
-</answer>
-</faq>
 
   </part>
 

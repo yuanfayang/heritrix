@@ -23,11 +23,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package org.archive.queue;
+package org.archive.util;
 
 import java.util.NoSuchElementException;
-
-import org.archive.util.TmpDirTestCase;
 
 /**
  * JUnit test suite for Queue.  It's an abstract class which is implemented by

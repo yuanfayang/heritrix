@@ -23,12 +23,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package org.archive.queue;
+package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.archive.util.TmpDirTestCase;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

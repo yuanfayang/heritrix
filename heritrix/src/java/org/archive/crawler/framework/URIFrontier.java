@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 
@@ -71,6 +70,7 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  *     <li> {@link #discoveredUriCount() Discovered URIs}
  *     <li> {@link #queuedUriCount() Queued URIs}
  *     <li> {@link #finishedUriCount() Finished URIs}
+ *     <li> {@link #pendingUriCount() Pending URIs}
  *     <li> {@link #successfullyFetchedCount() Successfully processed URIs}
  *     <li> {@link #failedFetchCount() Failed to process URIs}
  *     <li> {@link #disregardedFetchCount() Disregarded URIs}
@@ -146,7 +146,7 @@ public interface URIFrontier {
      * @return the next URI that should be processed.
      * @throws InterruptedException
      */
-    CrawlURI next() throws InterruptedException, EndedException;
+    CrawlURI next(int timeout) throws InterruptedException;
 
     /**
      * Returns true if the frontier contains no more URIs to crawl.
@@ -173,9 +173,34 @@ public interface URIFrontier {
      *
      * @param caURI The URI to schedule.
      *
+     * @see #batchSchedule(CandidateURI)
      * @see CandidateURI#setSchedulingDirective(String)
      */
     public void schedule(CandidateURI caURI);
+
+    /**
+     * Schedules a CandidateURI.
+     *
+     * <p>This is a non-synchronized method for scheduling large numbers of
+     * URIs at a time. All URIs scheduled with this method will be 'held' in
+     * a thread specific container until {@link #batchFlush() batchFlush()} is
+     * invoked.
+     *
+     * @param caURI The URI to schedule.
+     *
+     * @see #schedule(CandidateURI)
+     * @see #batchFlush()
+     */
+    public void batchSchedule(CandidateURI caURI);
+
+    /**
+     * Forces all the URIs that have been batched up for scheduling by the
+     * {@link #batchSchedule(CandidateURI) batchSchedule()} method to be
+     * actually scheduled.
+     *
+     * <p>This is a synchronized method.
+     */
+    public void batchFlush();
 
     /**
      * Report a URI being processed as having finished processing.
@@ -235,6 +260,23 @@ public interface URIFrontier {
      * @return Number of finished URIs.
      */
     public long finishedUriCount();
+
+    /**
+     * Number of URIs that are awaiting detailed processing.
+     *
+     * <p>Number of discovered URIs that have not been inspected for scope or
+     * duplicates (generally referred to as <i>pending</i> URIs. Depending
+     * on the implementation of the <tt>URIFrontier</tt> this might always be
+     * zero. It may also be an adjusted number that tries to account for
+     * duplicates by estimation.
+     *
+     * <p>This does not count URIs scheduled with
+     * {@link #batchSchedule(CandidateURI) batchSchedule()} and are waiting for
+     * the batch to be flushed.
+     *
+     * @return Estimated number of URIs scheduled for prcoessing.
+     */
+    public long pendingUriCount();
 
     /**
      * Number of <i>successfully</i> processed URIs.
@@ -414,22 +456,5 @@ public interface URIFrontier {
      */
     public void kickUpdate();
 
-    /**
-     * Notify Frontier that it should not release any URIs, instead
-     * holding all threads, until instructed otherwise. 
-     */
-    public void pause();
 
-    /**
-     * Resumes the release of URIs to crawl, allowing worker
-     * ToeThreads to proceed. 
-     */
-    public void unpause();
-
-    /**
-     * Notify Frontier that it should end the crawl, giving
-     * any worker ToeThread that askss for a next() an 
-     * EndedException. 
-     */
-    public void terminate();
 }

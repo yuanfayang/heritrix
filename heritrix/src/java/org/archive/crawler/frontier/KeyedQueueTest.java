@@ -55,7 +55,7 @@ public class KeyedQueueTest extends TmpDirTestCase {
         if (queueDir.exists()) {
             FileUtils.deleteDir(queueDir);
         }
-        KeyedQueue kq = new KeyedQueue(seed.getClassKey(), null,
+        KeyedQueue kq = new KeyedQueue(seed.getClassKey(),
             queueDir, 1);
         try {
             kq.activate();

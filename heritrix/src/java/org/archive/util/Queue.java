@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.queue;
+package org.archive.util;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -29,9 +29,7 @@ import java.util.NoSuchElementException;
 import org.apache.commons.collections.Predicate;
 
 
-/** 
- * An Abstract queue.  It should implement FIFO semantics.
- * 
+/** An Abstract queue.  It should implement FIFO semantics.
  * @author gojomo
  *
  */
@@ -40,7 +38,7 @@ public interface Queue {
     /** Add an entry to the end of queue
      * @param o the entry to queue
      */
-    void enqueue(Object obj);
+    void enqueue(Object o);
 
     /** is the queue empty?
      *
@@ -67,22 +65,10 @@ public interface Queue {
     void release();
 
     /**
-     * Give the top object in the queue, leaving it in place to be
-     * returned by future peek() or dequeue() invocations.
-     * 
      * @return top object, without removing it
      */
     Object peek();
 
-    /**
-     * Releases queue from the obligation to return in the
-     * next peek()/dequeue() the same object as returned by
-     * any previous peek(). 
-     * 
-     * @return
-     */
-    void unpeek();
-    
     /**
      * Returns an iterator for the queue.
      * <p>

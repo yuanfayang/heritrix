@@ -81,7 +81,7 @@ public interface URIWorkQueue {
     public abstract boolean isEmpty();
 
     /** 
-     * @see org.archive.queue.Queue#length()
+     * @see org.archive.util.Queue#length()
      * @return Total number of available items. (Does not include
      * any 'frozen' items.)
      */
@@ -249,7 +249,7 @@ public interface URIWorkQueue {
      * Iterate over all available (non-frozen) items. 
      * 
      * @param inCacheOnly
-     * @see org.archive.queue.Queue#getIterator(boolean)
+     * @see org.archive.util.Queue#getIterator(boolean)
      * @return An iterator.
      */
     public abstract Iterator getIterator(boolean inCacheOnly);
@@ -258,7 +258,7 @@ public interface URIWorkQueue {
      * Delete items matching the supplied criterion. 
      * 
      * @param matcher
-     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      * @return Count of items deleted.
      */
     public abstract long deleteMatchedItems(Predicate matcher);
