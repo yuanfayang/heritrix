@@ -82,6 +82,14 @@ public class ARCRecord extends InputStream implements ARCConstants {
     private boolean eor = false;
     
     /**
+     * Whether to read all available bytes from source stream as
+     * part of this record. Only appropriate if source stream has
+     * its own enveloping which delineates record with an EOF -- as with 
+     * GZIPInputStream.
+     */
+    private boolean readAllAvailable = false;
+    
+    /**
      * Compute digest on what we read and add to metadata when done.
      * 
      * Currently hardcoded as sha-1. TODO: Remove when arcs record
@@ -166,6 +174,10 @@ public class ARCRecord extends InputStream implements ARCConstants {
         }
         
         this.httpHeaderStream = readHttpHeader();
+    }
+    
+    public void setReadAllAvailable(boolean flag) {
+        this.readAllAvailable = flag;
     }
     
     /**
@@ -450,41 +462,64 @@ public class ARCRecord extends InputStream implements ARCConstants {
             // trying to move past it.  Important is that we not count
             // bytes read below here as part of the arc content.
             if (this.in.available() > 0) {
-                // If there's still stuff on the line, its the LINE_SEPARATOR
-                // that lies between records.  Lets read it so we're cue'd up
-                // aligned ready to read the next record.
-                //
-                // But there is a problem.  If the file is compressed, there
-                // will only be LINE_SEPARATOR's in the stream -- we need to
-                // move on to the next GZIP member in the stream before we can
-                // get more characters.  But if the file is uncompressed, then
-                // we need to NOT read characters from the next record in the
-                // stream.
-                //
-                // If the stream supports mark, then its not the GZIP stream.
-                // Use the mark to go back if we read anything but
-                // LINE_SEPARATOR characters.
                 int c = -1;
-                while (this.in.available() > 0) {
-                    if (this.in.markSupported()) {
-                        this.in.mark(1);
+                c = this.in.read();
+                if(c != LINE_SEPARATOR) {
+                    System.err.println("ERROR("+metaData.getDate()
+                            +" "+metaData.getUrl()+"):"
+                            +" expected newline, received char: "+c);
+                }
+                if(this.readAllAvailable) {
+                    int excess = 0;
+                    while(this.in.read()!=-1) {
+                        excess++;
                     }
-                    c = this.in.read();
-                    if (c != -1) {
-                        if (c == LINE_SEPARATOR) {
-                            continue;
-                        }
-                        if (this.in.markSupported()) {
-                            // We've overread.  We're in next record. Backup
-                            // break.
-                            this.in.reset();
-                            break;
-                        }
-                        throw new IOException("Read " + (char)c +
-                            " when only" + LINE_SEPARATOR + " expected.");
+                    if(excess > 0) {
+                        System.err.println("ERROR("+metaData.getDate()
+                                +" "+metaData.getUrl()+"):"
+                                +" excess record material:"+excess);
                     }
                 }
+            } else {
+                System.err.println("ERROR("+metaData.getDate()
+                        +" "+metaData.getUrl()+"):"
+                        +" expected record-terminator-newline missing");
             }
+//                // If there's still stuff on the line, its the LINE_SEPARATOR
+//                // that lies between records.  Lets read it so we're cue'd up
+//                // aligned ready to read the next record.
+//                //
+//                // But there is a problem.  If the file is compressed, there
+//                // will only be LINE_SEPARATOR's in the stream -- we need to
+//                // move on to the next GZIP member in the stream before we can
+//                // get more characters.  But if the file is uncompressed, then
+//                // we need to NOT read characters from the next record in the
+//                // stream.
+//                //
+//                // If the stream supports mark, then its not the GZIP stream.
+//                // Use the mark to go back if we read anything but
+//                // LINE_SEPARATOR characters.
+//                int c = -1;
+//                while (this.in.available() > 0) {
+//                    if (this.in.markSupported()) {
+//                        this.in.mark(1);
+//                    }
+//                    c = this.in.read();
+//                    if (c != -1) {
+//                        if (c == LINE_SEPARATOR) {
+//                            continue;
+//                        }
+//                        if (this.in.markSupported()) {
+//                            // We've overread.  We're in next record. Backup
+//                            // break.
+//                            this.in.reset();
+//                            break;
+//                        }
+//                        throw new IOException("Read " + (char)c +
+//                            " when only" + LINE_SEPARATOR + " expected.");
+//                    }
+//                }
+//            }
 
             this.eor = true;
             // Set the metadata digest as base32 string.
