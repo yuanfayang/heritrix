@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
@@ -47,6 +48,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.PositionableStream;
 import org.archive.io.RandomAccessInputStream;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
 import org.archive.util.MimetypeUtils;
 
@@ -152,11 +154,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     private boolean digest = true;
     
     private static final byte [] outputBuffer = new byte[8 * 1024];
-
-    /**
-     * True if we are to fix space in metadata lines.
-     */
-    private boolean fixSpaceInMetadataLine = true;
     
     private static final String CDX_OUTPUT = "cdx";
     private static final String DUMP_OUTPUT = "dump";
@@ -554,15 +551,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     throws IOException {
         if (keys.size() != values.size()) {
             List originalValues = values;
-            if (isFixSpaceInMetadataLine()) {
-                values = fixSpaceInMetadataLine(values, keys.size());
-            }
+            values = fixSpaceInMetadataLine(values, keys.size());
             if (keys.size() != values.size()) {
                 throw new IOException("Size of field name keys does" +
                         " not match count of field values: " + values);
             }
             // Note that field was fixed on stderr.
-            System.err.println("WARNING: Fixed spaces in metadata URL." +
+            logStdErr(Level.WARNING, "Fixed spaces in metadata URL." +
                 " Original: " + originalValues + ", New: " + values);
         }
 
@@ -578,8 +573,26 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
     
     /**
+     * Log on stderr.
+     * Logging should go via the logging system.  This method
+     * bypasses the logging system going direct to stderr.
+     * Should not generally be used.  Its used for rare messages
+     * that come of cmdline usage of ARCReader ERRORs and WARNINGs.
+     * Override if using ARCReader in a context where no stderr or
+     * where you'd like to redirect stderr to other than System.err.
+     * @param level Level to log message at.
+     * @param message Message to log.
+     */
+    protected void logStdErr(Level level, String message) {
+        System.err.println(level.toString() + " " + message);
+    }
+    
+    /**
      * Fix space in URLs.
      * The ARCWriter used to write into the ARC URLs with spaces in them.
+     * See <a
+     * href="https://sourceforge.net/tracker/?group_id=73833&atid=539099&func=detail&aid=1010966">[ 1010966 ]
+     * crawl.log has URIs with spaces in them</a>.
      * This method does fix up on such headers converting all spaces found
      * to '%20'.
      * @param values List of metadata values.
@@ -588,12 +601,24 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * fixup failed.
      */
     protected List fixSpaceInMetadataLine(List values, int requiredSize) {
-        // Do validity check. 4th from last is IP, all before the IP
+        // Do validity check. 3rd from last is a date of 14 numeric
+        // characters.  The 4th from last is IP, all before the IP
         // should be concatenated together with a '%20' joiner.
         // In the below, '4' is 4th field from end which has the IP.
         if (!(values.size() > requiredSize) || values.size() < 4) {
             return values;
         }
+        // Test 3rd field is valid date.
+        String date = (String)values.get(values.size() - 3);
+        if (date.length() != 14) {
+            return values;
+        }
+        for (int i = 0; i < date.length(); i++) {
+            if (!Character.isDigit(date.charAt(i))) {
+                return values;
+            }
+        }
+        // Test 4th field is valid IP.
         String ip = (String)values.get(values.size() - 4);
         Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
         if (ip == "-" || m.matches()) {
@@ -614,20 +639,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         return values;
     }
     
-    /**
-     * @return Returns the fixSpaceInMetadataLine.
-     */
-    public boolean isFixSpaceInMetadataLine() {
-        return this.fixSpaceInMetadataLine;
-    }
-    
-    /**
-     * @param fixSpaceInMetadataLine The fixSpaceInMetadataLine to set.
-     */
-    public void setFixSpaceInMetadataLine(boolean fixSpaceInMetadataLine) {
-        this.fixSpaceInMetadataLine = fixSpaceInMetadataLine;
-    }
-
     /**
      * Validate the arcFile.
      *
@@ -723,7 +734,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             int exitCode) {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
             " [--digest=true|false] \\\n" +
-            " [--space=true|false] [--format=cdx|dump|gzipdump|nohead] \\\n" +
+            " [--format=cdx|dump|gzipdump|nohead]" +
             " [--offset=#] ARCFILE",
                 options);
         System.exit(exitCode);
@@ -741,18 +752,15 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * 
      * @param f Arc file to read.
      * @param digest Digest yes or no.
-     * @param space Whether to fix spaces in URLs in metadata lines.
      * @param format Format to use outputting.
      * @throws IOException
+     * @throws java.text.ParseException
      */
-    protected static void output(File f, boolean digest, boolean space,
-        String format)
-    throws IOException {
+    protected static void output(File f, boolean digest, String format)
+    throws IOException, java.text.ParseException {
         // long start = System.currentTimeMillis();
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
-        arc.setFixSpaceInMetadataLine(space);
-        arc.setDigest(digest);
         // Clear cache of calculated arc file name.
         cachedShortArcFileName = null;
         
@@ -760,11 +768,16 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         // http://www.archive.org/web/researcher/cdx_legend.php
         // and http://www.archive.org/web/researcher/example_cdx.php.
         // Hash is hard-coded straight SHA-1 hash of content.
-        if (format.charAt(0) == CDX_OUTPUT.charAt(0)) {
+        if (format.equals(CDX_OUTPUT)) {
+            arc.setDigest(digest);
             cdxOutput(arc, compressed);
-        } else if (format.charAt(0) == DUMP_OUTPUT.charAt(0)) {
+        } else if (format.equals(DUMP_OUTPUT)) {
+            // No point digesting if we're doing a dump.
+            arc.setDigest(false);
             dumpOutput(arc, false);
-        } else if (format.charAt(0) == GZIP_DUMP_OUTPUT.charAt(0)) {
+        } else if (format.equals(GZIP_DUMP_OUTPUT)) {
+            // No point digesting if we're doing a dump.
+            arc.setDigest(false);
             dumpOutput(arc, true);
         } else {
             throw new IOException("Unsupported format: " + format);
@@ -772,7 +785,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
     
     protected static void dumpOutput(ARCReader arc, boolean compressed)
-    throws IOException {
+    throws IOException, java.text.ParseException {
         boolean firstRecord = true;
         ARCWriter writer = null;
         for (Iterator ii = arc.iterator(); ii.hasNext();) {
@@ -797,7 +810,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             }
             
             writer.write(meta.getUrl(), meta.getMimetype(), meta.getIp(),
-                Long.parseLong(meta.getDate()), (int)meta.getLength(), r);
+                ArchiveUtils.parse14DigitDate(meta.getDate()).getTime(),
+                (int)meta.getLength(), r);
         }
         // System.out.println(System.currentTimeMillis() - start);
     }
@@ -835,11 +849,11 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     protected static void outputARCRecord(ARCRecord r, String format)
     throws IOException {
-        if (format.charAt(0) == CDX_OUTPUT.charAt(0)) {
+        if (format.equals(CDX_OUTPUT)) {
             outputARCRecordCdx(r);
-        } else if(format.charAt(0) == DUMP_OUTPUT.charAt(0)) {
+        } else if(format.equals(DUMP_OUTPUT)) {
             outputARCRecordDump(r);
-        } else if(format.charAt(0) == NOHEAD_OUTPUT.charAt(0)) {
+        } else if(format.equals(NOHEAD_OUTPUT)) {
             outputARCRecordNohead(r);
         } else {
             throw new IOException("Unsupported format" +
@@ -893,6 +907,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         buffer.append(meta.getOffset());
         buffer.append(SPACE);
         buffer.append(meta.getLength());
+        buffer.append(SPACE);
         buffer.append(getShortArcFileName(meta));
         System.out.println(buffer.toString());
         System.out.flush();
@@ -932,11 +947,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * Hash is hard-coded straight SHA-1 hash of content.
      *
      * @param args Command-line arguments.
-     * @throws IOException Failed read of passed arc files.
      * @throws ParseException Failed parse of the command line.
+     * @throws IOException
+     * @throws java.text.ParseException
      */
     public static void main(String [] args)
-        throws IOException, ParseException {
+    throws ParseException, IOException, java.text.ParseException {
 
         Options options = new Options();
         options.addOption(new Option("h","help", false,
@@ -945,8 +961,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             "Outputs record at this offset into arc file."));
         options.addOption(new Option("d","digest", true,
             "Calculate digest. Expensive. Default: true."));
-        options.addOption(new Option("s","space", true,
-            "Fix any spaces found in metadata URLs. Default: true."));
         options.addOption(new Option("f","format", true,
             "Output options: 'cdx', 'dump', 'gzipdump'," +
             " or 'nohead'. Default: 'cdx'."));
@@ -964,7 +978,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         // Now look at options passed.
         long offset = -1;
         boolean digest = true;
-        boolean space = true;
         String format = "cdx";
         for (int i = 0; i < cmdlineOptions.length; i++) {
             switch(cmdlineOptions[i].getId()) {
@@ -983,16 +996,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                                 equals(cmdlineOptions[i].getValue().
                                     toLowerCase())) {
                             digest = false;
-                        }
-                    }
-                    break;
-                    
-                case 's':
-                    if (cmdlineOptions[i].getValue() != null) {
-                        if (Boolean.FALSE.toString().
-                                equals(cmdlineOptions[i].getValue().
-                                        toLowerCase())) {
-                            space = false;
                         }
                     }
                     break;
@@ -1024,7 +1027,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             }
             ARCReader arc = ARCReaderFactory.
                 get(new File((String)cmdlineArgs.get(0)));
-            arc.setFixSpaceInMetadataLine(space);
             ARCRecord rec = arc.get(offset);
             outputARCRecord(rec, format);
         } else if (cmdlineOptions.length > 1) {
@@ -1034,7 +1036,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 File f = new File((String)i.next());
                 try {
-                    output(f, digest, space, format);
+                    output(f, digest, format);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
                     // debugging.  Then print stack trace and try to keep
