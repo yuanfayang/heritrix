@@ -165,7 +165,7 @@
       url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc/README.txt?content-type=text%2Fplain&amp;rev=1">README.txt</ulink>
       </filename> in the same directory for how to set up continuous building
       using cc. Browse here to <ulink
-      url="http://crawltools.archive.org:8080/cruisecontrol/buildresults/ArchiveOpenCrawler">crawltools</ulink>
+      url="http://crawltools.archive.org:8080/cruisecontrol/">crawltools</ulink>
       to see what the continuous build website looks like (It may not always
       be available).</para>
     </sect2>
