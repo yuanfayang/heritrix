@@ -42,7 +42,9 @@ public class CrawlHost {
     private long ipTTL = IP_NEVER_LOOKED_UP;
     private boolean hasBeenLookedUp = false;
 
-
+    // Used when bandwith constraint are used
+    long earliestNextURIEmitTime = 0;
+    
     /** Create a new CrawlHost object.
      * 
      * @param hostname the host name for this host.
@@ -122,4 +124,23 @@ public class CrawlHost {
     public String toString() {
         return "CrawlHost<" + name + "(ip:" + ip + ")>";
     }
+    
+    /** Get the earliest time a URI for this host could be emitted.
+     * This only has effect if constraints on bandwidth per host is set.
+     * 
+     * @return Returns the earliestNextURIEmitTime.
+     */
+    public long getEarliestNextURIEmitTime() {
+        return earliestNextURIEmitTime;
+    }
+    
+    /** Set the earliest time a URI for this host could be emitted.
+     * This only has effect if constraints on bandwidth per host is set.
+     * 
+     * @param earliestNextURIEmitTime The earliestNextURIEmitTime to set.
+     */
+    public void setEarliestNextURIEmitTime(long earliestNextURIEmitTime) {
+        this.earliestNextURIEmitTime = earliestNextURIEmitTime;
+    }
+    
 }
