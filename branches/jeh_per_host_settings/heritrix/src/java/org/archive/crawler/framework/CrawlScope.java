@@ -23,8 +23,12 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
+
+import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
@@ -56,8 +60,7 @@ import org.archive.util.DevUtils;
  *
  */
 public abstract class CrawlScope extends Filter {
-    // the xpath to extract seeds from the scope configuration element
-    public static final String XP_SEEDS = "seeds";
+    public static final String ATTR_SEEDS = "seedsfile";
 
     // a monotonically increasing version number, for scopes that may change
     int version = 0;
@@ -68,6 +71,7 @@ public abstract class CrawlScope extends Filter {
      */
     public CrawlScope(String name) {
         super(name, "Crawl scope");
+        addElementToDefinition(new SimpleType(ATTR_SEEDS, "File from which to extract seeds", "seeds.txt"));
     }
 
     public void initialize(CrawlerSettings settings) {
@@ -99,17 +103,18 @@ public abstract class CrawlScope extends Filter {
      * @return An iterator of the seeds in this scope.
      */
     public Iterator getSeedsIterator() {
-        return null;
-/*
         try {
-            return new SeedsInputIterator(
-                nodeValueOrSrcReader(XP_SEEDS),
-                controller);
+            String fileName = (String) getAttribute(null, ATTR_SEEDS);
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+            return new SeedsInputIterator(reader,
+                getController());
         } catch (IOException e) {
             DevUtils.warnHandle(e, "problem reading seeds");
             return null;
+        } catch (AttributeNotFoundException e) {
+            DevUtils.warnHandle(e, "problem reading seeds");
+            return null;
         }
-        */
     }
 
     //	/**
