@@ -28,6 +28,8 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
+	private boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
+
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTML");
 
     // this pattern extracts either (1) whole <script>...</script>
@@ -229,6 +231,16 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			return;
 		}
+		
+		if(ignoreUnexpectedHTML) {
+			if(!expectedHTML(curi)) {
+				// HTML was not expected (eg a GIF was expected) so ignore 
+				// (as if a soft 404)
+				return;
+			}
+		}
+		
+		
 		GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 		Header contentType = get.getResponseHeader("Content-Type");
 		if ((contentType==null)||(!contentType.getValue().startsWith("text/html"))) {
@@ -267,7 +279,28 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		}
 	}
 		
-		
+	
+	static Pattern NON_HTML_PATH_EXTENSION = Pattern.compile(
+		"(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
+		"|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)");
+	/**
+	 * @param curi
+	 * @return
+	 */
+	private boolean expectedHTML(CrawlURI curi) {
+		String path = curi.getUURI().getUri().getPath();
+		int dot = path.lastIndexOf('.');
+		if (dot<0) {
+			// no path extension, HTML is fine
+			return true; 
+		}
+		if(dot<(path.length()-5)) {
+			// extension too long to recognize, HTML is fine
+			return true;
+		}
+		return NON_HTML_PATH_EXTENSION.matcher(path.substring(dot)).matches();
+	}
+
 	/**
 	 * @param curi
 	 * @param sequence
