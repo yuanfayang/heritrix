@@ -271,17 +271,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>stataclasses</id>
-            <version>0.1.0</version>
-            <url>http://cvs.sourceforge.net/viewcvs.py/*checkout*/archive-crawler/ArchiveOpenCrawler/lib/stataclasses-0.1.0.jar</url>
-            <properties>
-                <description>Utils supplied by Rayme Stata.
-                Gave it arbitrary 0.1.0 version number.
-                </description>
-                <license>?</license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>jetty</id>
             <version>4.2.17</version>
             <url>http://jetty.mortbay.com/jetty/</url>
