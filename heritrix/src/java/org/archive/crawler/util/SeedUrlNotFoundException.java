@@ -1,4 +1,4 @@
-/* BdbUriUniqFilter
+/* SeedUrlNotFoundException
 *
 * $Id$
 *
