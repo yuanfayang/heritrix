@@ -98,10 +98,8 @@ public class ARCSocketFactory extends SocketFactory
     
     /**
      * Dir name where we dump arc files.
-     * 
-     * Protected so unit tests can get at this value.
      */
-    protected static final String ARCDIR_NAME = "arcs";
+    private static final String ARCDIR_NAME = "arcs";
     
     /**
      * Name of scratch directory into which we put backing files made by
@@ -251,6 +249,8 @@ public class ARCSocketFactory extends SocketFactory
     }
     
     /**
+     * Get the pool of ARCWriters used by ARCSocketFactory.
+     * 
      * @return Returns the ARCWriter pool instance.
      */
     private ARCWriterPool getPool()
@@ -258,6 +258,14 @@ public class ARCSocketFactory extends SocketFactory
         return pool;
     }
     
+    /**
+     * @return Returns the ARC file dumpDir.
+     */
+    public File getDumpDir()
+    {
+        return dumpDir;
+    }
+
     /**
      * A socket that records all read (and written) to Internet Archive ARC
      * files.
