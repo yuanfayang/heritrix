@@ -26,7 +26,7 @@
         schemaLocation="http://dublincore.org/schemas/xmls/qdc/2003/04/02/dc.xsd"/>
     <xs:import namespace="http://purl.org/dc/terms/"
         schemaLocation="http://dublincore.org/schemas/xmls/qdc/2003/04/02/dcterms.xsd"/>
-    <xs:element name="robots-honored" substitutionGroup="dc:coverage">
+    <xs:element name="robots" substitutionGroup="dc:coverage">
         <xs:annotation>
             <xs:documentation xml:lang="en">
                 Element-refinement for 'dc:coverage'.
