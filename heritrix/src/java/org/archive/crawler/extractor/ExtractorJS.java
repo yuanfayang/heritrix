@@ -152,12 +152,19 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                 foundLinks++;
                 try {
                     if (handlingJSFile) {
-                        curi.createAndAddLinkRelativeToVia(string,Link.JS_MISC,Link.SPECULATIVE_HOP);
+                        curi.createAndAddLinkRelativeToVia(string,
+                            Link.JS_MISC, Link.SPECULATIVE_HOP);
                     } else {
-                        curi.createAndAddLinkRelativeToBase(string,Link.JS_MISC,Link.SPECULATIVE_HOP);
+                        curi.createAndAddLinkRelativeToBase(string,
+                            Link.JS_MISC, Link.SPECULATIVE_HOP);
                     }
                 } catch (URIException e) {
-                    controller.logUriError(e,curi,string);
+                    if (controller != null) {
+                        controller.logUriError(e, curi, string);
+                    } else {
+                        logger.warning(string + " from " + curi + " threw " +
+                            e.getMessage());
+                    }
                 }
             } else {
                foundLinks += considerStrings(curi, subsequence,
