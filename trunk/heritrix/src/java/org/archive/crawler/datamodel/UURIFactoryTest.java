@@ -83,6 +83,26 @@ public class UURIFactoryTest extends TestCase {
 				uuri.getPath(), (uuri.getPath()).equals(PATH));       
 	}
     
+    public final void testWhitespaceEscaped() throws URIException {
+        // Test that we get all whitespace even if the uri is
+        // already escaped.
+        String uri = "http://archive.org/index%25 .html";
+        String tgtUri = "http://archive.org/index%25%20.html";
+        UURI uuri = UURIFactory.getInstance(uri);
+        assertTrue("Not equal " + uuri.toString(),
+                uuri.toString().equals(tgtUri));
+        uri = "http://archive.org/index%25\t.html";
+        tgtUri = "http://archive.org/index%25%09.html";
+        uuri = UURIFactory.getInstance(uri);
+        assertTrue("Not equal " + uuri.toString(),
+                uuri.toString().equals(tgtUri));       
+        uri = "http://archive.org/index%25\u001D.html";
+        tgtUri = "http://archive.org/index%25%1D.html".toLowerCase();
+        uuri = UURIFactory.getInstance(uri);
+        assertTrue("Not equal " + uuri.toString(),
+                uuri.toString().equals(tgtUri));
+    }
+    
 	public final void testFailedGetPath() throws URIException {
 		final String path = "/RealMedia/ads/" +
 		"click_lx.ads/%%PAGE%%/%%RAND%%/%%POS%%/%%CAMP%%/empty";
@@ -140,7 +160,7 @@ public class UURIFactoryTest extends TestCase {
 	public final void testDoubleEncoding() throws URIException {
 		final char ae = '\u00E6';
 		final String uri = "http://archive.org/DIR WITH SPACES/home" +
-		ae + ".html";
+		    ae + ".html";
 		final String encodedUri =
 			"http://archive.org/DIR%20WITH%20SPACES/home%E6.html";
 		UURI uuri = UURIFactory.getInstance(uri, "ISO-8859-1");

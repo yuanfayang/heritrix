@@ -33,6 +33,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
+import org.archive.util.MimetypeUtils;
 
 /**
  * Formatter for 'crawl.log'. Expects completed CrawlURI as parameter.
@@ -65,7 +66,7 @@ public class UriProcessingFormatter
             } 
             mime = curi.getContentType();
         }
-        mime = cleanupContentType(mime);
+        mime = MimetypeUtils.truncate(mime);
 
         long time;
         String duration;
@@ -123,33 +124,6 @@ public class UriProcessingFormatter
      */
     protected String checkForNull(String str) {
         return (str == null || str.length() <= 0)? NA: str;
-    }
-
-    /**
-     * Cleanup passed mimetype.
-     *
-     * Figure out content type, truncate at delimiters [;, ].
-     * Truncate multi-part content type header at ';'.
-     * Apache httpclient collapses values of multiple instances of the
-     * header into one comma-separated value, therefore truncated at ','.
-     *
-     * @param contentType Raw content-type.
-     *
-     * @return Computed content-type made from passed content-type after
-     * running it through a set of rules.
-     */
-    private String cleanupContentType(String contentType) {
-        if (contentType == null) {
-            contentType = "no-type";
-        } else if (contentType.indexOf(';') >= 0) {
-            contentType = contentType.substring(0, contentType.indexOf(';'));
-        } else if (contentType.indexOf(',') >= 0) {
-            contentType = contentType.substring(0, contentType.indexOf(','));
-        } else if (contentType.indexOf(' ') >= 0) {
-            contentType = contentType.substring(0, contentType.indexOf(' '));
-        }
-
-        return contentType;
     }
 }
 

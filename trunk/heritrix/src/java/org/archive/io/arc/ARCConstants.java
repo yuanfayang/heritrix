@@ -70,14 +70,6 @@ public interface ARCConstants {
             + '.' + COMPRESSED_FILE_EXTENSION;
 
     /**
-     * The 'no-type' content-type.
-     * 
-     * Defined in the ARC file spec at
-     * http://www.archive.org/web/researcher/ArcFileFormat.php.
-     */
-    public static final String NO_TYPE_MIMETYPE = "no-type";
-
-    /**
      * ARC file line seperator character.
      * 
      * This is what the alexa c-code looks for delimiting lines.
