@@ -21,7 +21,14 @@
   http://www.lycos.com
   http://www.msn.com
   </seeds>
- 
+	
+<!--
+   <exclude class="org.archive.crawler.filter.OrFilter">
+      <filter name="pathological-path" class="org.archive.crawler.filter.URIRegExpFilter" regexp=".*/([^/]*)/\1/\1/.*" /> 
+      <filter name="max-path" class="org.archive.crawler.filter.PathDepthFilter" modifier="not" max-path-depth="20" />
+  </exclude>
+-->
+
  </scope>
  
  <behavior
