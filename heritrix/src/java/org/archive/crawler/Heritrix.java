@@ -561,6 +561,10 @@ public class Heritrix
 		User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
 		
         String status = null;
+
+        httpServer = new SimpleHttpServer(port);
+        httpServer.startServer();
+
         jobHandler = new CrawlJobHandler();
         if (crawlOrderFile != null)
         {
@@ -586,8 +590,6 @@ public class Heritrix
             status = "Crawler set to run mode but no order file to crawl";
         }
 
-        httpServer = new SimpleHttpServer(port);
-        httpServer.startServer();
         InetAddress addr = InetAddress.getLocalHost();
         String uiLocation = "http://" + addr.getHostName() + ":" + port +
             "/admin";
