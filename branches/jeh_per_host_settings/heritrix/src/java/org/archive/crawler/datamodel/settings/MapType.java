@@ -65,29 +65,46 @@ public class MapType extends ComplexType {
         }
     }
     
-    public Type removeElement(CrawlerSettings settings, String name) {
+    /** Remove an attribute from the map.
+     * 
+     * @param settings the settings object for which this method has effect.
+     * @param name name of the attribute to remove.
+     * @return the element that was removed.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with the submitted name.
+     */
+    public Type removeElement(CrawlerSettings settings, String name)
+      throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
-        return null;
+        return settings.getData(this).removeElement(name);
     }
     
     /** Move an attribute up one place in the list. 
      * 
+     * @param settings the settings object for which this method has effect.
      * @param name name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
      *              at the top.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with the submitted name.
      */
-    public boolean moveElementUp(CrawlerSettings settings, String name) throws AttributeNotFoundException {
+    public boolean moveElementUp(CrawlerSettings settings, String name)
+      throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).moveElementUp(name);
     }
 
     /** Move an attribute down one place in the list. 
      * 
+     * @param settings the settings object for which this method has effect.
      * @param name name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
      *              at bottom.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with the submitted name.
      */
-    public boolean moveElementDown(CrawlerSettings settings, String name) throws AttributeNotFoundException {
+    public boolean moveElementDown(CrawlerSettings settings, String name)
+      throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).moveElementDown(name);
     }
