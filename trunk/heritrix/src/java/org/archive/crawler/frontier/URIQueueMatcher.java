@@ -76,7 +76,7 @@ public class URIQueueMatcher implements QueueItemMatcher {
             Matcher m = p.matcher(CaURI.getURIString());
             if(m.matches()){
                 if(delete && frontier != null){
-                    CrawlURI tmp = new CrawlURI(CaURI);
+                    CrawlURI tmp = new CrawlURI(CaURI,0);
                     tmp.setFetchStatus(FetchStatusCodes.S_DELETED_BY_USER);
                     frontier.finished(tmp);
                 }
