@@ -39,31 +39,31 @@ public class HtmlFormCredential extends Credential {
         
         Type t = addElementToDefinition(new SimpleType("url-pattern",
                 "Pattern that defines the realm this login covers.", ""));
-            t.setOverrideable(true);
+            t.setOverrideable(false);
             t.setExpertSetting(true);
         
         t = addElementToDefinition(new SimpleType("login-uri",
             "URI of page that contains the HTML login form we're to apply" +
             " these credentials too.", ""));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
 
         final String [] METHODS = {"POST", "GET"};
         t = addElementToDefinition(new SimpleType("http-method",
             "GET or POST", METHODS[0], METHODS));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
         
         t = addElementToDefinition(new MapType("form-items", "Form items.",
             String.class));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);       
         
         t = addElementToDefinition(new SimpleType("cookie-name",
             "Name of cookie that pertains to this authentication.\n" +
             "This field will be logged before, if present, and after" +
             " authentication attempt.  To aid debugging only.", ""));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
     }
 }

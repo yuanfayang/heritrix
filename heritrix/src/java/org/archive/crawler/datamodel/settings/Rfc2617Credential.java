@@ -38,23 +38,23 @@ public class Rfc2617Credential extends Credential {
         
         Type t = addElementToDefinition(new SimpleType("realm",
             "Basic/Digest Auth realm.", "Realm"));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
     
         t = addElementToDefinition(new SimpleType("preempt",
             "Preemptively offer credential in advance of 401 challenge.",
             Boolean.FALSE));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
         
         t = addElementToDefinition(new SimpleType("login", "Login.",
             "login"));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
         
         t = addElementToDefinition(new SimpleType("password", "Password.",
             "password"));
-        t.setOverrideable(true);
+        t.setOverrideable(false);
         t.setExpertSetting(true);
     }
 }
