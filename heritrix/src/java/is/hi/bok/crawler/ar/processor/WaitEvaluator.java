@@ -64,6 +64,10 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
      *  whose content change detection is not available. */
     public final static String ATTR_DEFAULT_WAIT_INTERVAL = "default-wait-interval-seconds";
     protected final static Long DEFAULT_DEFAULT_WAIT_INTERVAL = new Long(259200); // 3 days
+    /** Indicates if the amount of time the URI was overdue should be added
+     *  to the wait time before the new wait time is calculated.  */
+    public final static String ATTR_USE_OVERDUE_TIME = "use-overdue-time";
+    protected final static Boolean DEFAULT_USE_OVERDUE_TIME = new Boolean(false); 
 
     /**
      * Constructor
@@ -110,6 +114,11 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
                 "revisit reveals a changed document. A value of 1 will leave " +
                 "it unchanged, a value of two will half it etc.",
                 DEFAULT_CHANGED_FACTOR));
+        addElementToDefinition(new SimpleType(ATTR_USE_OVERDUE_TIME,
+                "Indicates if the amount of time the URI was overdue should " +
+                "be added to the wait time before the new wait time is " +
+                "calculated.",
+                DEFAULT_USE_OVERDUE_TIME));
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
@@ -154,9 +163,26 @@ public class WaitEvaluator extends Processor implements ARAttributeConstants {
         } else {
             /* Calculate curi's time of next processing */ 
             waitInterval = DEFAULT_INITIAL_WAIT_INTERVAL.longValue()*1000;
+
             // Retrieve wait interval
             if(curi.containsKey(A_WAIT_INTERVAL)){
                 waitInterval =  curi.getLong(A_WAIT_INTERVAL); 
+
+                // Should override time be taken into account?
+                boolean useOverrideTime = DEFAULT_USE_OVERDUE_TIME.booleanValue();
+                try {
+                    useOverrideTime = ((Boolean)getAttribute(
+                            curi,ATTR_USE_OVERDUE_TIME)).booleanValue();
+                } catch (AttributeNotFoundException e1) {
+                    useOverrideTime = DEFAULT_USE_OVERDUE_TIME.booleanValue();
+                    logger.fine("Unable to load use-overdue-time for " + 
+                            curi.getURIString());
+                }
+                
+                if(useOverrideTime){
+                    waitInterval += curi.getLong(A_FETCH_OVERDUE);
+                }
+
                 // Revise the wait interval
                 if(curi.getContentState() == CrawlURI.CONTENT_CHANGED){
                     // Had changed. Decrease wait interval time.
