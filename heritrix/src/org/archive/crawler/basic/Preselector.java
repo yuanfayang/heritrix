@@ -13,11 +13,10 @@ import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
 
 /**
- * Gives a yes/no on whether a CrawlURI should be processed at all.
- * 
- * Usually, failing a processor filter causes that processor
- * to be skipped. Failing this processor's filter means a
- * CrawlURI will be marked OUT_OF_SCOPE.
+ * If set to recheck the crawl's scope, gives a yes/no on whether 
+ * a CrawlURI should be processed at all. If not, its status
+ * will be marked OUT_OF_SCOPE and the URI will skip directly
+ * to the first "postprocessor". 
  * 
  * 
  * @author gojomo

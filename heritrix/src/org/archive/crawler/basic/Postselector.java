@@ -21,9 +21,9 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Processor;
 
 /**
- * Determine which links etc get fed back into Frontier,
- * if/when failures get retried, etc.
- * 
+ * Determine which extracted links etc get fed back into Frontier.
+ *
+ * Could in the future also control whether current URI is retried. 
  * 
  * @author gojomo
  *

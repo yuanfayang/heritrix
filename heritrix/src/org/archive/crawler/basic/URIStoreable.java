@@ -7,6 +7,9 @@
 package org.archive.crawler.basic;
 
 /**
+ * Represents objects with a lifecycle, including snoozed times,
+ * inside the Frontier: individual CandidateURIs and queues. 
+ * 
  * @author gojomo
  *
  */
