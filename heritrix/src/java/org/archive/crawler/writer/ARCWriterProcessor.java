@@ -51,7 +51,7 @@ import org.xbill.DNS.Record;
  * perhaps someday, certain kinds of network failures) to the Internet Archive
  * ARC file format.
  *
- * Assumption is that there is only one of this ARCWriterProcessors per
+ * Assumption is that there is only one of these ARCWriterProcessors per
  * Heritrix instance.
  *
  * @author Parker Thompson
