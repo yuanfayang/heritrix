@@ -42,8 +42,8 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void process(CrawlURI curi) {
-		super.process(curi);
+	protected void innerProcess(CrawlURI curi) {
+
 		if(!curi.getUURI().getUri().getScheme().equals("http")) {
 			// only handles plain http for now
 			return;
