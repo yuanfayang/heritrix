@@ -71,7 +71,6 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  *     <li> {@link #discoveredUriCount() Discovered URIs}
  *     <li> {@link #queuedUriCount() Queued URIs}
  *     <li> {@link #finishedUriCount() Finished URIs}
- *     <li> {@link #pendingUriCount() Pending URIs}
  *     <li> {@link #successfullyFetchedCount() Successfully processed URIs}
  *     <li> {@link #failedFetchCount() Failed to process URIs}
  *     <li> {@link #disregardedFetchCount() Disregarded URIs}

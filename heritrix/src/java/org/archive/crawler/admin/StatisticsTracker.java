@@ -465,23 +465,6 @@ public class StatisticsTracker extends AbstractTracker
         return shouldrun ? controller.getActiveToeCount() : busyThreads;
     }
 
-//    /**
-//     * Number of URIs that are awaiting detailed processing.
-//     *
-//     * <p>If crawl not running (paused or stopped) this will return the value
-//     * of the last snapshot.
-//     *
-//     * @return The number of URIs in the frontier (found but not processed)
-//     *
-//     * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
-//     */
-//    public long pendingUriCount() {
-//
-//        // While shouldrun is true we can use info direct from the crawler.
-//        // After that our last snapshot will have to do.
-//        return shouldrun ? controller.getFrontier().pendingUriCount() : pendingUriCount;
-//    }
-
     /**
      * This returns the number of completed URIs as a percentage of the total
      * number of URIs encountered (should be inverse to the discovery curve)
