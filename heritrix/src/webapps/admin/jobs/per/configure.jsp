@@ -53,17 +53,35 @@
 	// Check for actions
     String action = request.getParameter("action");
     if(action != null){
-		if(action.equals("done")){
+		if (action.equals("done")) {
 			if(theJob.isRunning()){
 				handler.kickUpdate();
 			}
 			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
             return;
-		}else if(action.equals("goto")){
+		} else if (action.equals("goto")) {
             // Goto another page of the job/profile settings
-			response.sendRedirect(request.getParameter("where")+"&currDomain="+currDomain);
+			response.sendRedirect(request.getParameter("item")+"&currDomain="+currDomain);
             return;
-        }else if(action.equals("updateexpert")){
+        } else if (action.equals("addMap")) {
+            // Adding to a simple map
+            String mapName = request.getParameter("update");
+            MapType map = (MapType)settingsHandler.getComplexTypeByAbsoluteName(orderfile,mapName);
+            String key = request.getParameter(mapName+".key");
+            String value = request.getParameter(mapName+".value");
+            SimpleType t = new SimpleType(key,"",value);
+            map.addElement(orderfile,t);
+            response.sendRedirect("configure.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+            return;
+        } else if (action.equals("deleteMap")) {
+            // Removing from a simple map
+            String mapName = request.getParameter("update");
+            String key = request.getParameter("item");
+            MapType map = (MapType)settingsHandler.getComplexTypeByAbsoluteName(orderfile,mapName);
+            map.removeElement(orderfile,key);
+            response.sendRedirect("configure.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+            return;
+        } else if (action.equals("updateexpert")) {
             if(request.getParameter("expert") != null){
                 if(request.getParameter("expert").equals("true")){
                     expert = true;
@@ -93,23 +111,6 @@
 <%@include file="/include/head.jsp"%>
 
 	<script type="text/javascript">
-		function doAddList(listName){
-			newItem = document.getElementById(listName+"/add");
-			theList = document.getElementById(listName);
-			
-			if(newItem.value.length > 0){
-				insertLocation = theList.length;
-				theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
-				newItem.value = "";
-			}
-			setEdited(listName);
-		}
-		
-		function doDeleteList(listName){
-			theList = document.getElementById(listName);
-			theList.options[theList.selectedIndex] = null;
-			setEdited(listName);
-		}
 		
 		function doSubmit(){
 			// Before the form can be submitted we must
@@ -127,7 +128,7 @@
 		
 		function doGoto(where){
 			document.frmConfig.action.value="goto";
-			document.frmConfig.where.value=where;
+			document.frmConfig.item.value=where;
 			doSubmit();
 		}
 		
@@ -160,7 +161,7 @@
 	<form name="frmConfig" method="post" action="configure.jsp">
 		<input type="hidden" name="update" value="true">		
 		<input type="hidden" name="action" value="done">
-		<input type="hidden" name="where" value="">
+		<input type="hidden" name="item" value="">
         <input type="hidden" name="expert" value="<%=expert%>">
 		<input type="hidden" name="currDomain" value="<%=currDomain%>">
 		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
