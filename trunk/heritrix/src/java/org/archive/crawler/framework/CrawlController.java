@@ -758,7 +758,7 @@ public class CrawlController extends Thread {
 		StringBuffer rep = new StringBuffer();	
 		
 		rep.append("Toe threads report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-		rep.append(" Job being crawled:         " + getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
+		rep.append(" Job being crawled: " + getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
 		
 		rep.append(" Number of toe threads in pool: " + toePool.getToeCount() + " (" + toePool.getActiveToeCount() + " active)\n");
 		for(int i=0 ; i < toePool.getToeCount() ; i++){
@@ -769,6 +769,30 @@ public class CrawlController extends Thread {
 		
 		return rep.toString();
 	}
+    
+    /**
+     * Compiles and returns a human readable report on the active processors.
+     * @return human readable report on the active processors.
+     * 
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String reportProcessors(){
+        StringBuffer rep = new StringBuffer();
+        rep.append("Processors report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+        rep.append("  Job being crawled:    " + getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
+        
+        rep.append("  Number of Processors: " + processors.size() + "\n");
+        rep.append("  NOTE: Some processors may not return a report!\n\n");
+
+        Iterator iter = processors.entrySet().iterator();
+        while (iter.hasNext()) {
+            Object obj = iter.next();
+            Processor p = (Processor) ((Map.Entry)obj).getValue();
+            rep.append(p.report());
+        }
+        
+        return rep.toString();
+    }
 	
 	/**
 	 * Set's a new CrawlOrder for this controller.  Objects that do not cache the values they

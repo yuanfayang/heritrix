@@ -97,6 +97,7 @@ public class ExtractorHTML2 extends ExtractorHTML {
 			return; 
 		}
 			
+        numberOfCURIsHandled++;
 				
 		CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 		
@@ -133,6 +134,7 @@ public class ExtractorHTML2 extends ExtractorHTML {
 			}
 		}
 		TextUtils.freeMatcher(tags);
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 	}
 		
 	
@@ -181,9 +183,26 @@ public class ExtractorHTML2 extends ExtractorHTML {
 			caUri = TextUtils.replaceAll(ESCAPED_AMP, caUri, "&"); // TODO: more HTML deescaping?
 			caUri = TextUtils.replaceAll(BACKSLAH, caUri, "");
 			logger.finest("stlye: " + caUri + " from " + curi);
-			curi.addCSSLink(caUri);
+            numberOfLinksExtracted++;
+            curi.addCSSLink(caUri);
 		}
 		TextUtils.freeMatcher(candidates);
         
 	}
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML2\n");
+        ret.append("  Function:          Link extraction on HTML documents (including embedded CSS)\n");
+        ret.append("                     - Embedded JavaScript handled by ExtractorJS\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }
+
+
 }

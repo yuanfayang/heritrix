@@ -179,7 +179,10 @@ public class SimpleHandler
     }
     
     /**
+     * Returns the CrawlControllers ToeThreads report
      * @return The CrawlControllers ToeThreads report
+     * 
+     * @see org.archive.crawler.framework.CrawlController#reportThreads()
      */
     public String getThreadsReport()
     {
@@ -190,6 +193,24 @@ public class SimpleHandler
         else
         {
             return controller.reportThreads();    
+        }
+    }
+    
+    /**
+     * Returns the CrawlControllers Processors report
+     * @return The CrawlControllers Processors report
+     * 
+     * @see org.archive.crawler.framework.CrawlController#reportProcessors()
+     */
+    public String getProcessorsReport()
+    {
+        if(controller==null)
+        {
+            return "Crawler not running";        
+        }
+        else
+        {
+            return controller.reportProcessors();    
         }
     }
     

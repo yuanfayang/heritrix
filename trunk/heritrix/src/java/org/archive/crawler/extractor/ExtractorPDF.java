@@ -47,6 +47,9 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
 	
+    protected long numberOfCURIsHandled = 0;
+    protected long numberOfLinksExtracted= 0;
+
 	protected void innerProcess(CrawlURI curi){
 
 		if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {
@@ -61,7 +64,9 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 			// nothing to extract for other types here
 			return;
 		} 
-
+        
+        numberOfCURIsHandled++;
+        
 		File tempFile;
 		
 		if(get.getHttpRecorder().getRecordedInput().getSize()>maxSizeToParse) {
@@ -89,9 +94,24 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 		}
 		
 		if(uris!=null && uris.size()>0) {
-			curi.getAList().putObject("html-links", uris);
+            numberOfLinksExtracted += uris.size();
+            curi.getAList().putObject("html-links", uris);
 		}
 		
 		logger.fine(curi+" has "+uris.size()+" links.");
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 	}
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorPDF\n");
+        ret.append("  Function:          Link extraction on PDF documents\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }
 }

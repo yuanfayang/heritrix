@@ -65,6 +65,9 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         Pattern.compile(
             "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
+    private long numberOfCURIsHandled = 0;
+    private long numberOfLinksExtracted= 0;
+
 	/**
 	 * @param curi
 	 */
@@ -85,6 +88,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             && (!curi.toString().toLowerCase().endsWith(".css"))) {
             return;
         }
+        numberOfCURIsHandled++;
 
         CharSequence cs =
             get.getHttpRecorder().getRecordedInput().getCharSequence();
@@ -103,11 +107,26 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
 				cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
 				// Remove backslash(s), an escape character used in CSS URL  
                 cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
+                numberOfLinksExtracted++;
                 curi.addCSSLink(cssUri);
             }
             TextUtils.freeMatcher(uris);
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "ExtractorCSS StackOverflowError");
         }
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorCSS\n");
+        ret.append("  Function:          Link extraction on Cascading Style Sheets (.css)\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
     }
 }
