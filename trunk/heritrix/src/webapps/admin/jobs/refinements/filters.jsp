@@ -112,52 +112,7 @@
 %>
 
 <%@include file="/include/head.jsp"%>
-<script type="text/javascript">
-	function doSubmit(){
-		document.frmFilters.submit();
-	}
-	
-	function doGoto(where){
-		document.frmFilters.action.value="goto";
-		document.frmFilters.subaction.value=where;
-		doSubmit();
-	}
-	
-	function doMoveUp(filter,map){
-		document.frmFilters.action.value = "filters";
-		document.frmFilters.subaction.value = "moveup";
-		document.frmFilters.map.value = map;
-		document.frmFilters.filter.value = filter;
-		doSubmit();
-	}
-
-	function doMoveDown(filter,map){
-		document.frmFilters.action.value = "filters";
-		document.frmFilters.subaction.value = "movedown";
-		document.frmFilters.map.value = map;
-		document.frmFilters.filter.value = filter;
-		doSubmit();
-	}
-
-	function doRemove(filter,map){
-		document.frmFilters.action.value = "filters";
-		document.frmFilters.subaction.value = "remove";
-		document.frmFilters.map.value = map;
-		document.frmFilters.filter.value = filter;
-		doSubmit();
-	}
-
-	function doAdd(map){
-        if(document.getElementById(map+".name").value == ""){
-            alert("Must enter a unique name for the filter");
-        } else {
-			document.frmFilters.action.value = "filters";
-			document.frmFilters.subaction.value = "add";
-			document.frmFilters.map.value = map;
-			doSubmit();
-		}
-	}
-</script>
+<%@include file="/include/filters_js.jsp"%>
 	<p>
         <b>Refinement '<%=refinement.getReference()%>' on '<%=global?"global settings":currDomain%>' of
         <%=theJob.isProfile()?"profile":"job"%>
@@ -177,7 +132,8 @@
 			refinement filters. It is not possible to remove filters defined in a super domain!
 		<p>
 		<table>
-			<%=printFilters(crawlOrder,settings,"",false,false,false,null,false,CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FILTERS))%>
+			<%=printFilters(crawlOrder,settings,"",false,false,false,null,false,CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FILTERS),
+                    Filter.class, true)%>
 		</table>
 	</form>
 	<p>
