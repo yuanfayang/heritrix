@@ -18,13 +18,17 @@
     <section name="Obtaining Heritrix">
 
 <p>There three ways to obtain Heritrix: packaged binary or packaged source
-download from http://sourceforge.net/projects/archive-crawler or via checkout
-from CVS (See http://sourceforge.net/cvs/?group_id=73833 for how to fetch
-from CVS.  Note, anonymous access does not give you the current HEAD but
-a snapshot that can at times be up to 24 hours behind HEAD).  The packaged
-binary will be named heritrix-?.?.?.tar.gz or heritrix-?.?.?.zip and the
-packaged source will be n amed heritrix-?.?.?-src.tar.gz
-or heritrix-?.?.?-src.zip where '?.?.?' is the heritrix release version.
+download from the crawler 
+<a href="http://sourceforge.net/projects/archive-crawler">sourceforge home
+page</a> or via CVS checkout.  See the crawler 
+<a href="http://sourceforge.net/cvs/?group_id=73833">sourceforge cvs page</a>
+for how to fetch from CVS (Note, anonymous access does not give you the
+current HEAD but a snapshot that can at times be up to 24 hours behind HEAD).
+The packaged binary will be named
+<em>heritrix-?.?.?.tar.gz</em> (or <em>heritrix-?.?.?.zip</em>) and the
+packaged source will be named <em>heritrix-?.?.?-src.tar.gz</em> (or
+<em>heritrix-?.?.?-src.zip</em>) where <em>?.?.?</em> is the heritrix release
+version.  
 </p>
 
 </section>
@@ -37,18 +41,19 @@ or heritrix-?.?.?-src.zip where '?.?.?' is the heritrix release version.
     % $ANT_HOME/bin/ant dist
 </source>
 </p>
-<p>In the 'dist' subdir will be all you need to run the Heritrix crawler. To
-learn more about the ant build, type 'ant -projecthelp'.
+<p>In the <em>dist</em> subdir will be all you need to run the Heritrix 
+crawler. To learn more about the ant build, type <em>ant -projecthelp</em>.
 </p>
                                                                                 
 <p>To build a CVS source checkout w/ Maven:
 <source>
-    % cd CVS_CHECKOUT_DIR (or heritrix-?.?.?)
+    % cd CVS_CHECKOUT_DIR
     % $MAVEN_HOME/bin/maven dist
 </source>
 </p>
-<p>In the 'target/distribution' subdir, you will find packaged source and binary
-builds. Run '$MAVEN_HOME/bin/maven -g' for other Maven possibilities.
+<p>In the <em>target/distribution</em> subdir, you will find packaged source
+and binary builds. Run <em>$MAVEN_HOME/bin/maven -g</em> for other Maven
+possibilities.
 </p>
 </section>
 
@@ -65,10 +70,10 @@ checkout into your Eclipse development environment straight-forward.
 directory structure. This allows you to use the same Java package names for
 your tests, while keeping the source files separate. To be honest, we do not
 like this approach because you must look in two different directories to find
-files." Section 4.11.3, Java Extreme Programming Cookbook, By Eric M. Burke, 
-Brian M. Coyner.  We agree w/ the above so we put Unit Test classes beside the
-classes they are testing in the source tree giving them the name of the Class
-they are testing w/ a Test suffix.
+files." from <em>Section 4.11.3, Java Extreme Programming Cookbook, By Eric M.
+Burke, Brian M. Coyner</em>.  We agree w/ the above so we put Unit Test
+classes beside the classes they are testing in the source tree giving them the
+name of the Class they are testing w/ a Test suffix.
 </p>
 </section>
 
@@ -77,7 +82,7 @@ they are testing w/ a Test suffix.
 href="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Code Conventions for the JavaTM Programming Language</a>.  It'd be hard not to they 
 say so little.  They at least say 
 <a href="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum
-line length of 80 characters</a>.  Below are tightenings of the SUN 
+line length of 80 characters</a>.  Below are explicit tightenings on the SUN 
 conventions used in Heritrix.
 </p>
 
@@ -87,7 +92,6 @@ conventions used in Heritrix.
 <subsection name="Indent Width">
     <p>Indents are 4 charcters wide.</p>
 </subsection>
-
 </section>
 
 
