@@ -48,7 +48,14 @@ import org.archive.io.PositionableStream;
  * @author stack
  */
 public class GzippedInputStream extends GZIPInputStream
-	implements Iterator, PositionableStream {
+    implements Iterator, PositionableStream {
+    
+    /**
+     * Length of minimual 'default GZIP header.
+     *
+     * See RFC1952 for explaination of value of 10.
+     */
+    public static final int MINIMAL_GZIP_HEADER_LENGTH = 10;
     
     /**
      * Offset of current gzip member.
@@ -67,101 +74,108 @@ public class GzippedInputStream extends GZIPInputStream
         this(in, 512);
     }
     
-	public GzippedInputStream(InputStream in, int size) throws IOException {
-		super(in, size);
-		if (!(this.in instanceof PositionableStream)) {
-		    throw new IOException("Passed stream does not" +
-		            " implement PositionableStream");
-		}
-		// The parent GZIPInputStream constructor has read past the gzip member
-		// header.  Position stream back at start so the first record gets
-		// treated just like all others in below processing.  Makes logic cleaner.
-		seek(0);
-	}
+    public GzippedInputStream(InputStream in, int size) throws IOException {
+        super(in, size);
+        if (!(this.in instanceof PositionableStream)) {
+            throw new IOException("Passed stream does not" +
+                    " implement PositionableStream");
+        }
+        // The parent GZIPInputStream constructor has read past the gzip member
+        // header.  Position stream back at start so the first record gets
+        // treated just like all others in below processing.  Makes logic cleaner.
+        seek(0);
+    }
 
-	/**
-	 * Use this method to get position of gzip member start.
-	 * @return Returns current gzip members beginning offset.
-	 */
-	public long getMemberOffset() {
-	    return this.currentMemberOffset;
-	}
-	
-	public boolean hasNext() {
+    /**
+     * Use this method to get position of gzip member start.
+     * @return Returns current gzip members beginning offset.
+     */
+    public long getMemberOffset() {
+        return this.currentMemberOffset;
+    }
+    
+    public boolean hasNext() {
         boolean result = false;
-		if (this.currentMemberOffset == -1) {
-		    // Let out the member we're currently pointing at.
-		    result = true;
-		} else {
-		    // Move to next record if there is one. Move to the next gzip
-		    // member positioning ourselves by backing up the stream
-		    // so we reread any inflater remaining bytes.  Then add 8 bytes to
-		    // get us past the GZIP CRC trailer block that ends all
-		    // gzip members.
-		    try {
-		        seek(getFilePointer() - this.inf.getRemaining() +
-		                8 /*Sizeof gzip CRC block*/);
-		        // If available bytes, assume another gzip member.
-		        // Move the stream on to the start of next gzip member.
-		        // We do this because the above calculation using the
-		        // this.inf.getRemaining is off by one if the remaining is
-		        // zero.
-		        int read = -1;
-		        while (((PositionableStream)this.in).available() > 2 &&
-		                !result) {
-		            // The testGzipMagic test reads two bytes.  If success,
-		            // need to back up stream two bytes so header is
-		            // intact when we go to read  next gzip member.  If
-		            // no success, then we need to back up one byte and
-		            // retry.
-		            if (!this.gzipHeader.testGzipMagic(this.in)) {
-		                seek(getFilePointer() - 1);
-		            } else {
-		                seek(getFilePointer() - 2);
-		            	result = true;
-		            }
-		        }
-		    } catch (IOException e) {
-		        throw new RuntimeException("Failed i/o: " +
-		                e.getMessage());
-		    }
-		}
-		
-		return result;
-	}
-	
+        if (this.currentMemberOffset == -1) {
+            // Let out the member we're currently pointing at.
+            result = true;
+        } else {
+            // Move to next record if there is one. Move to the next gzip
+            // member positioning ourselves by backing up the stream
+            // so we reread any inflater remaining bytes.  Then add 8 bytes to
+            // get us past the GZIP CRC trailer block that ends all
+            // gzip members.
+            try {
+                seek(getFilePointer() - this.inf.getRemaining() +
+                        8 /*Sizeof gzip CRC block*/);
+                // If at least MINIMAL_GZIP_HEADER_LENGTH available
+                // bytes, assume another gzip member. Move the stream
+                // on to the start of next gzip member. We do this
+                // poke ahead in the stream because the above calculation
+                // using this.inf.getRemaining can be off by a couple
+                // if the remaining is zero.  I don't know why.
+                int read = -1;
+                while (((PositionableStream)this.in).available() >
+                                MINIMAL_GZIP_HEADER_LENGTH &&
+                            !result) {
+                    read = this.gzipHeader.readByte(this.in);
+                    if ((byte)read == (byte)GZIPInputStream.GZIP_MAGIC) {
+                            read = this.gzipHeader.readByte(this.in);
+                        if((byte)read == 
+                                (byte)(GZIPInputStream.GZIP_MAGIC >> 8)) {
+                            // Found gzip header.  Backup the stream the
+                            // two bytes we just found and set result true.
+                            seek(getFilePointer() - 2);
+                            result = true;
+                        } else {
+                            // Didn't find gzip header.  Back up stream one
+                            // byte because the byte just read might be the
+                            // actual start of the gzip header.
+                            seek(getFilePointer() - 1);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed i/o: " +
+                        e.getMessage());
+            }
+        }
+        
+        return result;
+    }
+    
     /**
      * @return An InputStream.
      */
-	public Object next() {
-	    // Reset inflater and read in next gzip header.
-	    try {
+    public Object next() {
+        // Reset inflater and read in next gzip header.
+        try {
             this.currentMemberOffset = getFilePointer();
-	        nextGzipMember();
+            nextGzipMember();
         } catch (IOException e) {
-	        throw new RuntimeException("Failed i/o next member: " +
-	                e.getMessage());
+            throw new RuntimeException("Failed i/o next member: " +
+                    e.getMessage());
         }
-	    return this;
-	}
-	
-	public void remove() {
-		throw new UnsupportedOperationException();
-	}
-	
-	public Iterator iterator() {
-		return this;   
-	}
-	
+        return this;
+    }
+    
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+    
+    public Iterator iterator() {
+        return this;   
+    }
+    
     /**
      * Move to next gzip member in the file.
      */
-	protected synchronized void nextGzipMember() throws IOException {
-		this.eos = false;
-		this.inf.reset();
+    protected synchronized void nextGzipMember() throws IOException {
+        this.eos = false;
+        this.inf.reset();
         new GzipHeader(this.in);
-		this.crc.reset();
-	}
+        this.crc.reset();
+    }
 
     public void seek(long position) throws IOException {
         // Assume that seek puts us at a gzip member begin.
