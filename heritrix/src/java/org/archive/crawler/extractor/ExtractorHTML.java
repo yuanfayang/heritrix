@@ -442,6 +442,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     protected boolean isHtmlExpectedHere(CrawlURI curi) throws URIException {
         String path = curi.getUURI().getPath();
+        if(path==null) {
+            // no path extension, HTML is fine
+            return true;
+        }
         int dot = path.lastIndexOf('.');
         if (dot < 0) {
             // no path extension, HTML is fine
