@@ -25,6 +25,7 @@ package org.archive.crawler.filter;
 
 import javax.management.AttributeNotFoundException;
 
+import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -38,7 +39,7 @@ import org.archive.crawler.framework.Filter;
  * @author Gordon Mohr
  */
 public class TransclusionFilter extends Filter {
-    private static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
+    //private static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 	private static final String ATTR_MAX_SPECULATIVE_HOPS = "max-speculative-hops";
 	private static final String ATTR_MAX_REFERRAL_HOPS = "max-referral-hops";
 	private static final String ATTR_MAX_EMBED_HOPS = "max-embed-hops";
@@ -60,7 +61,7 @@ public class TransclusionFilter extends Filter {
     public TransclusionFilter(String name) {
         super(name, "Transclusion filter");
 
-        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS, "", new Integer(DEFAULT_MAX_TRANS_HOPS)));
+        //addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS, "", new Integer(DEFAULT_MAX_TRANS_HOPS)));
         addElementToDefinition(new SimpleType(ATTR_MAX_SPECULATIVE_HOPS, "", new Integer(DEFAULT_MAX_SPECULATIVE_HOPS)));
         addElementToDefinition(new SimpleType(ATTR_MAX_REFERRAL_HOPS, "", new Integer(DEFAULT_MAX_REFERRAL_HOPS)));
         addElementToDefinition(new SimpleType(ATTR_MAX_EMBED_HOPS, "", new Integer(DEFAULT_MAX_EMBED_HOPS)));
@@ -118,7 +119,9 @@ public class TransclusionFilter extends Filter {
 
 	public void readMaxValues(CrawlURI curi) {
 		try {
-            maxTransHops = ((Integer) getAttribute(ATTR_MAX_TRANS_HOPS, curi)).intValue();
+            Scope scope = (Scope) globalSettings().getModule(Scope.ATTR_NAME);
+            maxTransHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
+            //maxTransHops = ((Integer) getAttribute(ATTR_MAX_TRANS_HOPS, curi)).intValue();
             maxSpeculativeHops = ((Integer) getAttribute(ATTR_MAX_SPECULATIVE_HOPS, curi)).intValue();
             maxReferralHops = ((Integer) getAttribute(ATTR_MAX_REFERRAL_HOPS, curi)).intValue();
             maxEmbedHops = ((Integer) getAttribute(ATTR_MAX_EMBED_HOPS, curi)).intValue();
