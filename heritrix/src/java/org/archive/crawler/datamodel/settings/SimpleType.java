@@ -29,31 +29,21 @@ package org.archive.crawler.datamodel.settings;
  * @author John Erik Halse
  *
  */
-public class SimpleType implements Type {
-    private final String name;
+public class SimpleType extends Type {
     private final String description;
-    private final Object defaultValue;
     private Object[] legalValues = null;
     
     /**
      * 
      */
     public SimpleType(String name, String description, Object defaultValue) {
-        this.name = name;
+        super(name, defaultValue);
         this.description = description;
-        this.defaultValue = defaultValue;
     }
     
     public SimpleType(String name, String description, Object defaultValue, Object[] legalValues) {
         this(name, description, defaultValue);
         this.legalValues = legalValues;
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.Type#getName()
-     */
-    public String getName() {
-        return name;
     }
 
     /* (non-Javadoc)
@@ -67,7 +57,7 @@ public class SimpleType implements Type {
      * @see org.archive.crawler.datamodel.settings.Type#getDefaultValue()
      */
     public Object getDefaultValue() {
-        return defaultValue;
+        return getValue();
     }
 
     public Object[] getLegalValues() {

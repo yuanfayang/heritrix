@@ -24,35 +24,40 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import javax.management.Attribute;
+
 /** Interface implemented by all element types.
  * 
  * @author John Erik Halse
  */
-public interface Type {
-    /** Get the name of this type
-     * 
-     * @return this type's name
+public abstract class Type extends Attribute {
+    /**
+     * @param arg0
+     * @param arg1
      */
-    String getName();
+    public Type(String name, Object value) {
+        super(name, value);
+    }
 
     /** Get the description of this type
      * 
-     * The descritpion should be suitable for showing in a user interface.
+     * The description should be suitable for showing in a user interface.
      * 
      * @return this type's description
      */
-    String getDescription();
+    abstract String getDescription();
 
     /** The default value for this type
      *  
      * @return this type's default value
      */
-    Object getDefaultValue();
+    abstract Object getDefaultValue();
 
     /** Get the legal values for this type.
      * 
      * @return the legal values for this type or null if there are no
      *         restrictions.
      */
-    Object[] getLegalValues();
+    abstract Object[] getLegalValues();
+
 }

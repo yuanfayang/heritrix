@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
+import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
@@ -167,8 +168,8 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param filename the file to which the settings object should be written.
      */
     public final void writeSettingsObject(
-                        CrawlerSettings settings,
-                        File filename) {
+        CrawlerSettings settings,
+        File filename) {
         logger.fine("Writing " + filename.getAbsolutePath());
         try {
             StreamResult result =
@@ -240,7 +241,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             filename = new File(dirname, settingsFilename);
         }
         return readSettingsObject(settings, filename);
-	}
+    }
 
     /** Get the <code>File</code> object pointing to the order file.
      * 
@@ -249,17 +250,27 @@ public class XMLSettingsHandler extends SettingsHandler {
     public File getOrderFile() {
         return orderFile;
     }
-    
-    /**
-     * Creates a replica of the settings file structure in another directory 
-     * (fully recursive, includes all per host settings) and returns an 
-     * XMLSettingsHandler that has been set up for it.
+
+    /** Creates a replica of the settings file structure in another directory 
+     * (fully recursive, includes all per host settings). The SettingsHandler
+     * will then refer to the new files.
      * 
-     * @param cloneDirectory The target directory for the replica configuration files.
-     * @return An XMLSettingsHandler for the replicated settings files.
+     * Observe that this method should only be called after the SettingsHandler
+     * has been initialized.
+     * 
+     * @param orderFileName where the new order file should be saved.
+     * @param settingsDirectory the top level directory of the per host/domain
+     *                          settings files.
      */
-    public XMLSettingsHandler clone(String cloneDirectory){
-        //TODO:Implement
-        return null;
+    public void copySettings(File orderFileName, File settingsDirectory) throws Exception {
+        File oldSettingsDirectory = settingsDirectory;
+        
+        // Write new orderfile and point the settingshandler to it
+        orderFile = orderFileName;
+        getOrder().setAttribute(new Attribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY, settingsDirectory.getPath()));
+        writeSettingsObject(getSettingsObject(null));
+        
+        // Copy the per host files
+        
     }
 }

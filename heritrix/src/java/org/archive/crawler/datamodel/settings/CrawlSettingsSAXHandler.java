@@ -223,9 +223,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                 CrawlerModule module =
                     (CrawlerModule) co.newInstance(new Object[] { moduleName });
                 try {
-                    parentModule.setAttribute(
-                        settings,
-                        new Attribute(moduleName, module));
+                    parentModule.setAttribute(settings, module);
                 } catch (AttributeNotFoundException e) {
                     parentModule.addElement(settings, module);
                 }
