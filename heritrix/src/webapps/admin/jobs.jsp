@@ -44,16 +44,14 @@
 <% } %>
 
 <h2>Create New Job</h2>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	&raquo; <a href="<%=request.getContextPath()%>/jobs/basedon.jsp?type=jobs">
-	based on existing job</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	
-	&raquo; <a href="<%=request.getContextPath()%>/jobs/basedon.jsp">
-	based on a profile</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	
-	&raquo; <a href="<%=request.getContextPath()%>/jobs/new.jsp">
-	with defaults</a>
+    <ul>
+	<li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp?type=jobs">
+	based on existing job</a></li>
+	<li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp">
+	based on a profile</a></li>
+	<li><a href="<%=request.getContextPath()%>/jobs/new.jsp">
+	with defaults</a></li>
+    </ul>
 	
 <h2>Pending Jobs (<%=handler.getPendingJobs().size()%>)</h2>
 
