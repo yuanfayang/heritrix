@@ -504,7 +504,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The job with the UID or null if no such job is found
      */
     public CrawlJob getJob(String jobUID) {
-        if(jobUID == null){
+        if (jobUID == null){
             return null; //UID can't be null
         }
         // First check currently running job
@@ -557,10 +557,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // First check to see if we are deleting the current job.
         if (currentJob != null && jobUID.equals(currentJob.getUID())) {
             // Need to terminate the current job.
-            controller.requestCrawlStop(); // This will cause crawlEnding to be invoked.
-                                    // It will handle the clean up.
-            crawling = false;
-
+            // requestCrawlStop will cause crawlEnding to be invoked.
+            // It will handle the clean up.
+            controller.requestCrawlStop();
             synchronized (this) {
                 try {
                     // Take a few moments so that the controller can change
@@ -574,9 +573,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
             return; // We're not going to find another job with the same UID
         }
+        
         // Ok, it isn't the current job, let's check the pending jobs.
-        Iterator it = pendingCrawlJobs.iterator();
-        while ( it.hasNext() ) {
+        for(Iterator it = pendingCrawlJobs.iterator(); it.hasNext();) {
             CrawlJob cj = (CrawlJob) it.next();
             if (cj.getUID().equals(jobUID)) {
                 // Found the one to delete.
@@ -585,9 +584,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 return; // We're not going to find another job with the same UID
             }
         }
+        
         // And finally the completed jobs.
-        it = completedCrawlJobs.iterator();
-        while (it.hasNext()) {
+        for (Iterator it = completedCrawlJobs.iterator(); it.hasNext();) {
             CrawlJob cj = (CrawlJob) it.next();
             if (cj.getUID().equals(jobUID)) {
                 // Found the one to delete.
@@ -930,7 +929,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return;
         }
 
-        currentJob = (CrawlJob) pendingCrawlJobs.first();
+        this.currentJob = (CrawlJob) pendingCrawlJobs.first();
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
@@ -944,7 +943,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // restore old controller
                 controller = CrawlController.readFrom(resumeFrom);
                 // reuse restored settings handler
-                currentJob.setSettingsHandler((XMLSettingsHandler)controller.getSettingsHandler());
+                currentJob.setSettingsHandler((XMLSettingsHandler)controller.
+                    getSettingsHandler());
             }
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
@@ -964,10 +964,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
             startNextJob(); //Load the next job if there is one.
             return;
         }
-        crawling = true;
-        currentJob.setStatus(CrawlJob.STATUS_RUNNING);
-        currentJob.setRunning(true);
-        currentJob.setStatisticsTracking(controller.getStatistics());
+        this.crawling = true;
+        this.currentJob.setStatus(CrawlJob.STATUS_RUNNING);
+        this.currentJob.setRunning(true);
+        this.currentJob.setStatisticsTracking(controller.getStatistics());
         controller.requestCrawlStart();
     }
 
@@ -1073,37 +1073,28 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
      */
     public void crawlEnding(String sExitMessage) {
-        crawling = false;
+        this.crawling = false;
         currentJob.setStatus(sExitMessage);
         currentJob.setReadOnly(); //Further changes have no meaning
         currentJob.setRunning(false);
         completedCrawlJobs.add(currentJob);
         currentJob = null;
         // Remove the reference so that the old controller can be gc.
-        controller = null;
-        if (running) {
+        this.controller = null;
+        synchronized (this) {
+            // If the GUI terminated the job then it is waiting for this event.
+            notifyAll();
+        }
+    }
+
+    public void crawlEnded(String sExitMessage) {
+        if (this.running) {
             startNextJob();
         }
-
-        synchronized (this) {
-            //If the GUI terminated the job then it is waiting for this event.
-            notify();
-        }
-    }
-
-    /*
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
-    public void crawlEnded(String sExitMessage) {
-        // Not interested in this event.
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
     public void crawlStarted(String message) {
         // TODO Auto-generated method stub
-        
     }
 
     /**
@@ -1111,7 +1102,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @see CrawlController#kickUpdate()
      */
     public void kickUpdate(){
-        if(controller!=null){
+        if(controller != null){
             controller.kickUpdate();
         }
     }
