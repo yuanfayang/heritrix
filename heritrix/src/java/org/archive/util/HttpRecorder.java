@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
@@ -46,8 +47,11 @@ import org.archive.io.ReplayCharSequence;
  * 
  * @author gojomo
  */
-public class HttpRecorder
-{
+public class HttpRecorder {
+
+    protected static Logger logger =
+        Logger.getLogger("org.archive.util.HttpRecorder");
+    
     private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
     private static final int DEFAULT_INPUT_BUFFER_SIZE = 65536;
 
@@ -111,8 +115,8 @@ public class HttpRecorder
      */
     public InputStream inputWrap(InputStream is) throws IOException
     {
-        if (!this.ris.isOpen())
-        {
+        if (!this.ris.isOpen()) {
+            logger.fine(Thread.currentThread().getName() + " wrapping input");
             this.ris.open(is);
         }
         return this.ris;
@@ -143,6 +147,7 @@ public class HttpRecorder
      * Close all streams.
      */
     public void close() {
+        logger.fine(Thread.currentThread().getName() + " closing");
         try {
             this.ris.close();
         } catch (IOException e) {
