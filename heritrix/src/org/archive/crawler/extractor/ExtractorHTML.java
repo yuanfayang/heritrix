@@ -364,13 +364,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			}
 			// TODO: handle other stuff
 		}
-		if("robots".equalsIgnoreCase(name)) {
+		if("robots".equalsIgnoreCase(name) && content != null ) {
 			curi.getAList().putString(A_META_ROBOTS,content);
 			if(content.indexOf("nofollow")>0) {
 				// if 'nofollow' is specified, end html extraction
 				return true;
 			}
-		} else if ("refresh".equalsIgnoreCase(httpEquiv)) {
+		} else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
 			curi.addLink(content.substring(content.indexOf("=")+1));
 		}
 		return false;
