@@ -60,11 +60,10 @@ public class BroadScope extends CrawlScope {
      */
     public BroadScope(String name) {
         super(name);
-        setDescription("BroadScope: A scope for broad crawls. Crawls made with this scope "
-                + "will not be limited to the hosts or domains of its seeds. NOTE: Such a "
-                + "crawl will quickly discover enough unique hosts to exceed "
-                + "Heritrix 1.0.0's memory resources. Thus broad crawls are not "
-                + "recommended except as stress-tests.");
+        setDescription("BroadScope: A scope for broad crawls. Crawls made" +
+        " with this scope will not be limited to the hosts or domains of" +
+        " its seeds. NOTE: BroadScoped crawls will eventually run out of" +
+        " memory (See Release Notes).");
     }
 
     /**
@@ -75,8 +74,8 @@ public class BroadScope extends CrawlScope {
      * @param c CrawlController.
      * @param caching True if seed list created is to cache seeds.
      */
-    protected synchronized void createSeedlist(File seedfile, CrawlController c,
-            boolean caching) {
+    protected synchronized void createSeedlist(File seedfile,
+            CrawlController c, boolean caching) {
         super.createSeedlist(seedfile, c, false);
     }
 
