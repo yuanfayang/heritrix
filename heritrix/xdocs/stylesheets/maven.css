@@ -1,69 +1,69 @@
 body {
- background: @UI_BODY_BACKGROUND@;
- color: @UI_BODY_FOREGROUND@;
+ background: #FFFFFF;
+ color: #FFFFFF;
  }
 
 .app h3 {
- color: @UI_SECTION_FOREGROUND@;
- background-color: @UI_SECTION_BACKGROUND@;
+ color: #FFFFFF;
+ background-color: #9999FF;
  }
 
 .app h4 {
- color: @UI_SUBSECTION_FOREGROUND@;
- background-color: @UI_SUBSECTION_BACKGROUND@;
+ color: #FFFFFF;
+ background-color: #FFFFFF;
  }
 
 .a td { 
- background: @UI_TABLE_ROW_ODD_BACKGROUND@;
- color: @UI_TABLE_ROW_ODD_FOREGROUND@;
+ background: #FFFFFF;
+ color: #FFFFFF;
  }
 
 .b td { 
- background: @UI_TABLE_ROW_EVEN_BACKGROUND@;
- color: @UI_TABLE_ROW_EVEN_FOREGROUND@;
+ background: #FFFFFF;
+ color: #FFFFFF;
  }
 
 .app th {
- background-color: @UI_TABLE_HEADER_BACKGROUND@;
- color: @UI_TABLE_HEADER_FOREGROUND@;
+ background-color: #FFFFFF;
+ color: #FFFFFF;
  }
 
 div#banner {
- border-top: 1px solid @UI_BANNER_BORDER_TOP@;
+ border-top: 1px solid #9999FF;
  border-bottom: 1px solid @UI_BANNER_BORDER_BOTTOM@;
  }
 
 #banner, #banner td { 
- background: @UI_BANNER_BACKGROUND@;
- color: @UI_BANNER_FOREGROUND@;
+ background: #9999FF;
+ color: #FFFFFF;
  }
 
 #leftcol {
- background: @UI_NAVCOL_BACKGROUND@;
- color: @UI_NAVCOL_FOREGROUND@;
+ background: #FFFFFF;
+ color: #FFFFFF;
  border-right: 1px solid @UI_NAVCOL_BORDER_RIGHT@;
  border-bottom: 1px solid @UI_NAVCOL_BORDER_BOTTOM@;
  border-top: 1px solid @UI_NAVCOL_BORDER_TOP@;
 }
 
 #navcolumn {
- background: @UI_NAVCOL_BACKGROUND@;
- color: @UI_NAVCOL_FOREGROUND@;
+ background: #FFFFFF;
+ color: #FFFFFF;
  border-right: none;
  border-bottom: none;
  border-top: none;
  }
 
 #breadcrumbs {
- background-color: @UI_BREADCRUMBS_BACKGROUND@;
- color: @UI_BREADCRUMBS_FOREGROUND@;
+ background-color: #FFFFFF;
+ color: #FFFFFF;
  border-top: 1px solid @UI_BREADCRUMBS_BORDER_TOP@;
  border-bottom: 1px solid @UI_BREADCRUMBS_BORDER_BOTTOM@;
  }
 
 #source {
- background-color: @UI_SOURCE_BACKGROUND@;
- color: @UI_SOURCE_FOREGROUND@;
+ background-color: #FFFFFF;
+ color: #FFFFFF;
  border-right: 1px solid @UI_SOURCE_BORDER_RIGHT@; 
  border-left: 1px solid @UI_SOURCE_BORDER_LEFT@; 
  border-top: 1px solid @UI_SOURCE_BORDER_TOP@; 
@@ -83,7 +83,7 @@ a[name]:hover, #leftcol a[name]:hover {
  }
 
 a:link, #breadcrumbs a:visited, #navcolumn a:visited, .app a:visited, .tasknav a:visited {
- color: @UI_HREF_LINK@;
+ color: #FFFFFF;
  }
 
 a:active, a:hover, #leftcol a:active, #leftcol a:hover {
