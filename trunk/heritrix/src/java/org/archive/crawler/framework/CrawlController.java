@@ -832,9 +832,17 @@ public class CrawlController implements Serializable {
 
         // Assume Frontier state already loaded.
         logger.info("Starting crawl.");
-        sendCrawlStateChangeEvent(STARTED, STARTED.toString());
-        state = beginPaused ? PAUSED : RUNNING;
-        sendCrawlStateChangeEvent(state, state.toString());
+        sendCrawlStateChangeEvent(STARTED, CrawlJob.STATUS_PENDING);
+        String jobState;
+        if(beginPaused) {
+            state = PAUSED;
+            jobState = CrawlJob.STATUS_PAUSED;
+        } else {
+            state = RUNNING;
+            jobState = CrawlJob.STATUS_RUNNING;
+        }
+        sendCrawlStateChangeEvent(state, jobState);
+
         // A proper exit will change this value.
         this.sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
 
