@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import org.archive.crawler.basic.ARCWriter; 
-import org.archive.crawler.basic.SimpleHTTPFetcher;
+import org.archive.crawler.basic.FetcherHTTPSimple;
 import org.archive.crawler.datamodel.*;
 import org.archive.crawler.framework.*;
 import org.apache.commons.httpclient.Header;
@@ -26,7 +26,7 @@ import java.net.*;
 public class ARCWriterTest extends TestCase implements CoreAttributeConstants{
 	
 	ARCWriter writer;
-	SimpleHTTPFetcher fetcher;
+	FetcherHTTPSimple fetcher;
 	CrawlURI curi;
 	CrawlController controller;
 	String orderFile;
