@@ -38,11 +38,18 @@
   </part>
   <part id="problems">
     <title>Common Problems</title>
+    <faq id="arc_closed">
+      <question>How do I know when heritrix is done with an ARC file?</question>
+      <answer>See
+      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">[988277] [Need feedback] "Done with ARC file" event</a> for a description for 
+      how to enalbe logging of opening and closing of arcs.</answer>
+    </faq>
     <faq id="html_only">
       <question>How do I crawl html only?</question>
       <answer>Tom Emerson describes one technique here, 
       <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">Focusing on HTML</a>.</answer>
     </faq>
+
     <faq id="limitations">
       <question>Are there known limitations?</question>
       <answer>See the 
