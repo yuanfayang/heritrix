@@ -45,7 +45,9 @@
 	 *
 	 * @return The variable part of the HTML code for selecting filters.
 	 */
-	public String printFilters(ComplexType mbean, String indent, boolean possible, boolean first, boolean last, String parent, boolean alt, ArrayList availibleFilters) throws Exception {
+	public String printFilters(ComplexType mbean, String indent,
+            boolean possible, boolean first, boolean last, String parent,
+            boolean alt, ArrayList availibleFilters) throws Exception {
 		if(mbean.isTransient()){
 			return "";
 		}
@@ -60,9 +62,11 @@
 				p.append(" bgcolor='#EEEEFF'");
 			}
 			alt = !alt;
-			p.append("><td nowrap>" + indent + mbean.getName() + "</td><td nowrap>");
+			p.append("><td nowrap>" + indent + mbean.getName() +
+                "</td><td nowrap>");
 			if(first==false){
-				p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Move up</a>");
+				p.append("<a href=\"javascript:doMoveUp('" +
+                    mbean.getName() + "','" + parent + "')\">Move up</a>");
 			}
 			p.append("</td><td nowrap>");
 			if(last==false){
