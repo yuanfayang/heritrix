@@ -291,6 +291,25 @@ public class CrawlerSettings {
     }
     
     /**
+     * Remove a refinement from this settings object.
+     * 
+     * @param reference the reference (name) to the refinement to be removed.
+     * @return true if something was removed, false if the refinement was not
+     *         found.
+     */
+    public boolean removeRefinement(String reference) {
+        if (hasRefinements()) {
+            for(Iterator it = refinements.iterator(); it.hasNext();) {
+                if (((Refinement) it.next()).getReference().equals(reference)) {
+                    it.remove();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
      * Returns true if this settings object has refinements attached to it.
      * 
      * @return true if this settings object has refinements attached to it.
