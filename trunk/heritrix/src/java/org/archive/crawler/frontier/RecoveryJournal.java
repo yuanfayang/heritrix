@@ -54,19 +54,23 @@ import org.archive.crawler.framework.Frontier;
  * 
  * @author gojomo
  */
-public class RecoveryJournal {
+public class RecoveryJournal
+implements FrontierJournal {
     protected final static String F_ADD = "F+ ";
-
     protected final static String F_EMIT = "Fe ";
-
     protected final static String F_RESCHEDULE = "Fr ";
-
     protected final static String F_SUCCESS = "Fs ";
-
     protected final static String F_FAILURE = "Ff ";
 
-    OutputStreamWriter out;
+    /**
+     * Stream on which we record frontier events.
+     */
+    private OutputStreamWriter out = null;
 
+
+    private static final String GZIP_SUFFIX = ".gz";
+
+    
     /**
      * Create a new recovery journal at the given location
      * 
@@ -74,57 +78,39 @@ public class RecoveryJournal {
      * @param filename
      * @throws IOException
      */
-    public RecoveryJournal(String path, String filename) throws IOException {
+    public RecoveryJournal(String path, String filename)
+    throws IOException {
         this.out = new OutputStreamWriter(new GZIPOutputStream(
-                new BufferedOutputStream(new FileOutputStream(new File(path,
-                        filename + ".gz")))));
+            new BufferedOutputStream(new FileOutputStream(new File(path,
+                filename + GZIP_SUFFIX)))));
     }
 
-    /**
-     * Note that a CrawlURI was added (scheduled) to the Frontier.
-     * 
-     * @param curi
-     */
     public synchronized void added(CrawlURI curi) {
         write("\n" + F_ADD + curi.getURIString() + " " 
-                 + curi.getPathFromSeed() + " " + curi.flattenVia());
+            + curi.getPathFromSeed() + " " + curi.flattenVia());
     }
 
-    /**
-     * Note that a CrawlURI was finished, successfully
-     * 
-     * @param curi
-     */
     public void finishedSuccess(CrawlURI curi) {
-        write("\n" + F_SUCCESS + curi.getURIString());
+        finishedSuccess(curi.getURIString());
+    }
+    
+    public void finishedSuccess(UURI uuri) {
+        finishedSuccess(uuri.toString());
+    }
+    
+    protected void finishedSuccess(String uuri) {
+        write("\n" + F_SUCCESS + uuri);
     }
 
-    /**
-     * Note that a CrawlURI was emitted for processing. (If not followed
-     * by a finished or rescheduled notation in the journal, the CrawlURI
-     * was still in-process when the journal ended.)
-     * 
-     * @param curi
-     */
     public void emitted(CrawlURI curi) {
         write("\n" + F_EMIT + curi.getURIString());
 
     }
 
-    /**
-     * Note that a CrawlURI was finished, unsuccessfully. 
-     * @param curi
-     */
     public void finishedFailure(CrawlURI curi) {
         write("\n" + F_FAILURE + curi.getURIString());
     }
 
-    /**
-     * Note that a CrawlURI was returned to the Frontier for 
-     * another try.
-     * 
-     * @param curi
-     */
     public void rescheduled(CrawlURI curi) {
         write("\n" + F_RESCHEDULE + curi.getURIString());
     }
@@ -148,18 +134,20 @@ public class RecoveryJournal {
      */
     public static void importRecoverLog(File source, Frontier frontier)
             throws IOException {
-        // scan log for all 'Fs' lines: add as 'alreadyIncluded'
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new GZIPInputStream(new FileInputStream(source))));
+        if (source == null) {
+            throw new IllegalArgumentException("Passed source file is null.");
+        }
+        // Scan log for all 'Fs' lines: add as 'alreadyIncluded'
+        BufferedReader reader = getBufferedReader(source);
         String read;
         try {
             while ((read = reader.readLine()) != null) {
                 if (read.startsWith(F_SUCCESS)) {
-                    UURI u;
                     String args[] = read.split("\\s+");
                     try {
-                        u = UURIFactory.getInstance(args[1]);
+                        UURI u = UURIFactory.getInstance(args[1]);
                         frontier.considerIncluded(u);
+                        frontier.getFrontierJournal().finishedSuccess(u);
                     } catch (URIException e) {
                         e.printStackTrace();
                     }
@@ -171,10 +159,9 @@ public class RecoveryJournal {
             reader.close();
         }
         
-        // scan log for all 'F+' lines: if not alreadyIncluded, schedule for
+        // Scan log for all 'F+' lines: if not alreadyIncluded, schedule for
         // visitation
-        reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(
-                new FileInputStream(source))));
+        reader = getBufferedReader(source);
         try {
             while ((read = reader.readLine()) != null) {
                 if (read.startsWith(F_ADD)) {
@@ -206,18 +193,35 @@ public class RecoveryJournal {
         	    reader.close(); 
         }
     }
+    
+    /**
+     * @return Recover log buffered reader.
+     * @throws IOException
+     */
+    protected static BufferedReader getBufferedReader(File source)
+    throws IOException {
+        boolean isGzipped = source.getName().toLowerCase().
+            endsWith(GZIP_SUFFIX);
+        // Scan log for all 'Fs' lines: add as 'alreadyIncluded'
+        FileInputStream fis = new FileInputStream(source);
+        return new BufferedReader(isGzipped?
+            new InputStreamReader(new GZIPInputStream(fis)):
+            new InputStreamReader(fis));   
+    }
 
     /**
      *  Flush and close the underlying IO objects.
      */
     public void close() {
+        if (this.out == null) {
+            return;
+        }
         try {
             this.out.flush();
             this.out.close();
+            this.out = null;
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-
 }
