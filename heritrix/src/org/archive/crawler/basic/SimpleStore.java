@@ -54,7 +54,9 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
     // all per-class queues who are on hold until a certain time
 	SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime
 
-
+	// CrawlURIs held until some specific other CrawlURI is emitted
+	HashMap heldCuris = new HashMap(); // of UURI -> CrawlURI
+	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIStore#initialize(org.archive.crawler.framework.CrawlController)
 	 */
@@ -163,12 +165,15 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 		
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if (classQueue == null) {
+			releaseHeld(curi); 
 			return;
 		}
-		assert classQueue.getStoreState() == URIStoreable.READY : "odd state for classQueue of to-be-emitted CrawlURI";
+		assert classQueue.getStoreState() == URIStoreable.READY : "odd state "+ classQueue.getStoreState() + " for classQueue "+ classQueue + "of to-be-emitted CrawlURI";
 		readyClassQueues.remove(classQueue);
 		enqueueToHeld(classQueue);
+		releaseHeld(curi);
 	}
+
 
 	/**
 	 * 
@@ -253,12 +258,12 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	/**
 	 * @param prereq
 	 */
-	public void insertAtHead(UURI uuri, int dist) {
+	public CrawlURI insertAtHead(UURI uuri, int dist) {
 		if(filteredOut(uuri)){
 			if(uuri != null){
 				logger.info("filtering " + uuri.toString() );
 			}
-			return; 
+			return null; 
 		}
 		
 		CrawlURI curi = (CrawlURI)allCuris.get(uuri);
@@ -271,7 +276,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			
 			// if curi is still locked out, ignore request to schedule
 			if(curi.getStoreState() != URIStoreable.FINISHED || curi.dontFetchYet()){
-				return;
+				return curi;
 			} 
 			// yank URI back into scheduling if necessary
 			curi.reconstitute();
@@ -288,10 +293,11 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			pendingQueue.addFirst(curi);
 			curi.setStoreState(URIStoreable.PENDING);
 			notify();
-			return;
+			return curi;
 		}
 		classQueue.addFirst(curi);
 		curi.setStoreState(classQueue.getStoreState());
+		return curi;
 	}
 
 	/**
@@ -416,4 +422,40 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 		curi.setStoreState(URIStoreable.SNOOZED);
 		snoozeQueues.add(curi);
 	}
+
+	/**
+	 * Insert first CrawlURI in a manner that will cause
+	 * it to be emitted only after prereqCuri is emitted.
+	 * @param curi
+	 * @param prereqCuri
+	 */
+	public void insertAfter(CrawlURI curi, CrawlURI prereqCuri) {
+		assert prereqCuri.getStoreState()!=URIStoreable.FINISHED : "bad prereq";
+		addAsHeld(curi,prereqCuri.getUURI());
+	}
+
+	/**
+	 * @param curi
+	 * @param uuri
+	 */
+	private void addAsHeld(CrawlURI curi, UURI uuri) {
+		CrawlURI incumbent = (CrawlURI) heldCuris.get(uuri);
+		if (incumbent != null) {
+			heldCuris.put(curi.getUURI(),incumbent);
+		}
+		heldCuris.put(uuri,curi);
+		curi.setStoreState(URIStoreable.HELD);
+	}
+	
+	/**
+	 * @param curi
+	 */
+	private void releaseHeld(CrawlURI curi) {
+		CrawlURI released = (CrawlURI) heldCuris.get(curi.getUURI());
+		if(released!=null) {
+			heldCuris.remove(curi.getUURI());
+			reinsert(released);
+		}
+	}
+
 }
