@@ -103,6 +103,76 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
     /** The default maximum number of connections allowed overall */
     public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 20;
 
+    /**
+     * A mapping from Reference to ConnectionSource.  Used to reclaim resources when connections
+     * are lost to the garbage collector.
+     */
+    public static final Map REFERENCE_TO_CONNECTION_SOURCE = Collections.synchronizedMap(new HashMap());
+    
+    /**
+     * The reference queue used to track when HttpConnections are lost to the
+     * garbage collector
+     */
+    private static final ReferenceQueue REFERENCE_QUEUE = new ReferenceQueue();
+
+    /**
+     * The thread responsible for handling lost connections.
+     */
+    private static ReferenceQueueThread REFERENCE_QUEUE_THREAD;
+    
+    static {
+        REFERENCE_QUEUE_THREAD = new ReferenceQueueThread();
+        REFERENCE_QUEUE_THREAD.start();
+    }
+    
+    /**
+     * Stores the reference to the given connection along with the hostConfig and connection pool.  
+     * These values will be used to reclaim resources if the connection is lost to the garbage 
+     * collector.  This method should be called before a connection is released from the connection 
+     * manager.
+     * 
+     * <p>A static reference to the connection manager will also be stored.  To ensure that
+     * the connection manager can be GCed {@link #removeReferenceToConnection(HttpConnection)}
+     * should be called for all connections that the connection manager is storing a reference
+     * to.</p>
+     * 
+     * @param connection the connection to create a reference for
+     * @param hostConfiguration the connection's host config
+     * @param connectionPool the connection pool that created the connection
+     * 
+     * @see #removeReferenceToConnection(HttpConnection)
+     */
+    private static void storeReferenceToConnection(
+        HttpConnectionWithReference connection,
+        HostConfiguration hostConfiguration,
+        ConnectionPool connectionPool
+    ) {
+        
+        ConnectionSource source = new ConnectionSource();
+        source.connectionPool = connectionPool;
+        source.hostConfiguration = hostConfiguration;
+        
+        REFERENCE_TO_CONNECTION_SOURCE.put(
+            connection.reference,
+            source
+        );
+    }
+    
+    /**
+     * Removes the reference being stored for the given connection.  This method should be called
+     * when the connection manager again has a direct reference to the connection.
+     * 
+     * @param connection the connection to remove the reference for
+     * 
+     * @see #storeReferenceToConnection(HttpConnection, HostConfiguration, ConnectionPool)
+     */
+    private static void removeReferenceToConnection(HttpConnectionWithReference connection) {
+        
+        synchronized (REFERENCE_TO_CONNECTION_SOURCE) {
+            REFERENCE_TO_CONNECTION_SOURCE.remove(connection.reference);
+        }
+    }
+    
     // ----------------------------------------------------- Instance Variables
     /** Maximum number of connections allowed per host */
     private int maxHostConnections = DEFAULT_MAX_HOST_CONNECTIONS;
@@ -116,26 +186,11 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
     /** Connection Pool */
     private ConnectionPool connectionPool;
 
-    /** mapping from reference to hostConfiguration */
-    private Map referenceToHostConfig;
-
-    /**
-     * the reference queue used to track when HttpConnections are lost to the
-     * garbage collector
-     */
-    private ReferenceQueue referenceQueue;
-
     /**
      * No-args constructor
      */
     public MultiThreadedHttpConnectionManager() {
-
-        this.referenceToHostConfig = Collections.synchronizedMap(new HashMap());
         this.connectionPool = new ConnectionPool();
-        
-        this.referenceQueue = new ReferenceQueue();
-
-        new ReferenceQueueThread().start();
     }
 
     /**
@@ -208,8 +263,8 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
 
         while (true) {
             try {
-                return getConnectionWithTimeout(hostConfiguration, 0);
-            } catch (ConnectTimeoutException e) {
+                return getConnection(hostConfiguration, 0);
+            } catch (HttpException e) {
                 // we'll go ahead and log this, but it should never happen. HttpExceptions
                 // are only thrown when the timeout occurs and since we have no timeout
                 // it should never happen.
@@ -222,12 +277,12 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
     }
 
     /**
-     * @see HttpConnectionManager#getConnectionWithTimeout(HostConfiguration, long)
+     * @see HttpConnectionManager#getConnection(HostConfiguration, long)
      */
-    public HttpConnection getConnectionWithTimeout(HostConfiguration hostConfiguration, 
-        long timeout) throws ConnectTimeoutException {
+    public HttpConnection getConnection(HostConfiguration hostConfiguration, 
+        long timeout) throws HttpException {
 
-        LOG.trace("enter HttpConnectionManager.getConnectionWithTimeout(HostConfiguration, long)");
+        LOG.trace("enter HttpConnectionManager.getConnection(HostConfiguration, long)");
 
         if (hostConfiguration == null) {
             throw new IllegalArgumentException("hostConfiguration is null");
@@ -245,22 +300,6 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
         return new HttpConnectionAdapter(conn);
     }
 
-	/**
-	 * @see HttpConnectionManager#getConnection(HostConfiguration, long)
-	 * 
-	 * @deprecated Use #getConnectionWithTimeout(HostConfiguration, long)
-	 */
-	public HttpConnection getConnection(HostConfiguration hostConfiguration, 
-		long timeout) throws HttpException {
-
-		LOG.trace("enter HttpConnectionManager.getConnection(HostConfiguration, long)");
-		try {
-			return getConnectionWithTimeout(hostConfiguration, timeout);
-		} catch(ConnectTimeoutException e) {
-			throw new HttpException(e.getMessage());
-		}
-	}
-
     /**
      * Gets a connection or waits if one is not available.  A connection is
      * available if one exists that is not being used or if fewer than
@@ -273,11 +312,11 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
      *
      * @return HttpConnection an available connection
      *
-     * @throws ConnectTimeoutException if a connection does not become available in
+     * @throws HttpException if a connection does not become available in
      * 'timeout' milliseconds
      */
     private HttpConnection doGetConnection(HostConfiguration hostConfiguration, 
-        long timeout) throws ConnectTimeoutException {
+        long timeout) throws HttpException {
 
         HttpConnection connection = null;
 
@@ -327,7 +366,7 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
                     try {
                         
                         if (useTimeout && timeToWait <= 0) {
-                            throw new ConnectTimeoutException("Timeout waiting for connection");
+                            throw new HttpException("Timeout waiting for connection");
                         }
                         
                         if (LOG.isDebugEnabled()) {
@@ -467,7 +506,8 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
          * @return a new connection or <code>null</code> if none are available
          */
         public synchronized HttpConnection createConnection(HostConfiguration hostConfiguration) {
-            HttpConnection connection = null;
+            
+            HttpConnectionWithReference connection = null;
 
             HostConnectionPool hostPool = getHostPool(hostConfiguration);
 
@@ -477,15 +517,16 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Allocating new connection, hostConfig=" + hostConfiguration);
                 }
-                connection = new HttpConnection(hostConfiguration);
+                connection = new HttpConnectionWithReference(hostConfiguration);
                 connection.setStaleCheckingEnabled(connectionStaleCheckingEnabled);
                 connection.setHttpConnectionManager(MultiThreadedHttpConnectionManager.this);
                 numConnections++;
                 hostPool.numConnections++;
-        
-                // add a weak reference to this connection
-                referenceToHostConfig.put(new WeakReference(connection, referenceQueue),
-                                          hostConfiguration);
+                
+                // store a reference to this connection so that it can be cleaned up
+                // in the event it is not correctly released
+                storeReferenceToConnection(connection, hostConfiguration, this);
+                
             } else if (LOG.isDebugEnabled()) {
                 if (hostPool.numConnections >= getMaxConnectionsPerHost()) {
                     LOG.debug("No connection allocated, host pool has already reached "
@@ -500,6 +541,20 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
             return connection;
         }
     
+        /**
+         * Handles cleaning up for a lost connection with the given config.  Decrements any 
+         * connection counts and notifies waiting threads, if appropriate.
+         * 
+         * @param config the host configuration of the connection that was lost
+         */
+        public synchronized void handleLostConnection(HostConfiguration config) {
+            HostConnectionPool hostPool = getHostPool(config);
+            hostPool.numConnections--;
+
+            numConnections--;
+            notifyWaitingThread(config);
+        }
+
         /**
          * Get the pool (list) of connections available for the given hostConfig.
          *
@@ -530,13 +585,16 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
          */
         public synchronized HttpConnection getFreeConnection(HostConfiguration hostConfiguration) {
 
-            HttpConnection connection = null;
+            HttpConnectionWithReference connection = null;
             
             HostConnectionPool hostPool = getHostPool(hostConfiguration);
 
             if (hostPool.freeConnections.size() > 0) {
-                connection = (HttpConnection) hostPool.freeConnections.removeFirst();
+                connection = (HttpConnectionWithReference) hostPool.freeConnections.removeFirst();
                 freeConnections.remove(connection);
+                // store a reference to this connection so that it can be cleaned up
+                // in the event it is not correctly released
+                storeReferenceToConnection(connection, hostConfiguration, this);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Getting free connection, hostConfig=" + hostConfiguration);
                 }
@@ -564,17 +622,6 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
 
                 connection.close();
 
-                // make sure this connection will not be cleaned up again when garbage 
-                // collected
-                for (Iterator iter = referenceToHostConfig.keySet().iterator(); iter.hasNext();) {
-                    WeakReference connectionRef = (WeakReference) iter.next();
-                    if (connectionRef.get() == connection) {
-                        iter.remove();
-                        connectionRef.enqueue();
-                        break;
-                    }
-                }
-                
                 HostConnectionPool hostPool = getHostPool(connectionConfiguration);
                 
                 hostPool.freeConnections.remove(connection);
@@ -589,6 +636,7 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
          * Notifies a waiting thread that a connection for the given configuration is 
          * available.
          * @param configuration the host config to use for notifying
+         * @see #notifyWaitingThread(HostConnectionPool)
          */
         public synchronized void notifyWaitingThread(HostConfiguration configuration) {
             notifyWaitingThread(getHostPool(configuration));
@@ -655,6 +703,9 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
                 }
 
                 freeConnections.add(conn);
+                // we can remove the reference to this connection as we have control over
+                // it again.  this also ensures that the connection manager can be GCed
+                removeReferenceToConnection((HttpConnectionWithReference) conn);
                 if (numConnections == 0) {
                     // for some reason this connection pool didn't already exist
                     LOG.error("Host connection pool not found, hostConfig=" 
@@ -668,10 +719,23 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
     }
 
     /**
+     * A simple struct-like class to combine the objects needed to release a connection's
+     * resources when claimed by the garbage collector.
+     */
+    private static class ConnectionSource {
+        
+        /** The connection pool that created the connection */
+        public ConnectionPool connectionPool;
+
+        /** The connection's host configuration */
+        public HostConfiguration hostConfiguration;
+    }
+    
+    /**
      * A simple struct-like class to combine the connection list and the count
      * of created connections.
      */
-    private class HostConnectionPool {
+    private static class HostConnectionPool {
         /** The hostConfig this pool is for */
         public HostConfiguration hostConfiguration;
         
@@ -689,7 +753,7 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
      * A simple struct-like class to combine the waiting thread and the connection 
      * pool it is waiting on.
      */
-    private class WaitingThread {
+    private static class WaitingThread {
         /** The thread that is waiting for a connection */
         public Thread thread;
         
@@ -701,41 +765,35 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
      * A thread for listening for HttpConnections reclaimed by the garbage
      * collector.
      */
-    private class ReferenceQueueThread extends Thread {
+    private static class ReferenceQueueThread extends Thread {
 
         /**
          * Create an instance and make this a daemon thread.
          */
         public ReferenceQueueThread() {
             setDaemon(true);
+            setName("MultiThreadedHttpConnectionManager cleanup");
         }
 
         /**
-         * Handles cleaning up for the given reference.  Decrements any connection counts
-         * and notifies waiting threads, if appropriate.
+         * Handles cleaning up for the given connection reference.
          * 
          * @param ref the reference to clean up
          */
         private void handleReference(Reference ref) {
-            synchronized (connectionPool) {
-                // only clean up for this reference if it is still associated with 
-                // a HostConfiguration
-                if (referenceToHostConfig.containsKey(ref)) {
-                    HostConfiguration config = (HostConfiguration) referenceToHostConfig.get(ref);
-                    referenceToHostConfig.remove(ref);
-                    
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(
-                            "Connection reclaimed by garbage collector, hostConfig=" + config);
-                    }
-                    
-                    HostConnectionPool hostPool = connectionPool.getHostPool(config);
-                    hostPool.numConnections--;
-
-                    connectionPool.numConnections--;
-                    connectionPool.notifyWaitingThread(config);
+            
+            ConnectionSource source = (ConnectionSource) REFERENCE_TO_CONNECTION_SOURCE.remove(ref);
+            // only clean up for this reference if it is still associated with 
+            // a ConnectionSource
+            if (source != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(
+                        "Connection reclaimed by garbage collector, hostConfig=" 
+                        + source.hostConfiguration);
                 }
-            }            
+                
+                source.connectionPool.handleLostConnection(source.hostConfiguration);
+            }
         }
 
         /**
@@ -744,7 +802,7 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
         public void run() {
             while (true) {
                 try {
-                    Reference ref = referenceQueue.remove();
+                    Reference ref = REFERENCE_QUEUE.remove();
                     if (ref != null) {
                         handleReference(ref);
                     }
@@ -755,7 +813,23 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
         }
 
     }
+    
+    /**
+     * A connection that keeps a reference to itself.
+     */
+    private static class HttpConnectionWithReference extends HttpConnection {
+        
+        public WeakReference reference = new WeakReference(this, REFERENCE_QUEUE);
+        
+        /**
+         * @param hostConfiguration
+         */
+        public HttpConnectionWithReference(HostConfiguration hostConfiguration) {
+            super(hostConfiguration);
+        }
 
+    }
+    
     /**
      * An HttpConnection wrapper that ensures a connection cannot be used
      * once released.
@@ -894,10 +968,28 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
             }
         }
 
+        public OutputStream getRequestOutputStream(boolean useChunking)
+            throws IOException, IllegalStateException {
+            if (hasConnection()) {
+                return wrappedConnection.getRequestOutputStream(useChunking);
+            } else {
+                return null;
+            }
+        }
+
         public InputStream getResponseInputStream()
             throws IOException, IllegalStateException {
             if (hasConnection()) {
                 return wrappedConnection.getResponseInputStream();
+            } else {
+                return null;
+            }
+        }
+
+        public InputStream getResponseInputStream(HttpMethod method)
+            throws IOException, IllegalStateException {
+            if (hasConnection()) {
+                return wrappedConnection.getResponseInputStream(method);
             } else {
                 return null;
             }
@@ -953,9 +1045,12 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
 
         public void open() throws IOException {
             if (hasConnection()) {
-				if (recorder!=null) {
-					wrappedConnection.setHttpRecorder(recorder);
-				}
+                // Copy HERITRIX recorder from wrapped connection to this
+                // connection override.
+                if (this.httpRecorder !=  null)
+                {
+                    wrappedConnection.setHttpRecorder(this.httpRecorder);
+                }
                 wrappedConnection.open();
             } else {
                 throw new IllegalStateException("Connection has been released");
@@ -998,7 +1093,7 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
         }
 
         public void releaseConnection() {
-            if (!isLocked() && hasConnection()) {
+            if (hasConnection()) {
                 HttpConnection wrappedConnection = this.wrappedConnection;
                 this.wrappedConnection = null;
                 wrappedConnection.releaseConnection();
@@ -1066,6 +1161,14 @@ public class MultiThreadedHttpConnectionManager implements HttpConnectionManager
         public void setProxyPort(int port) throws IllegalStateException {
             if (hasConnection()) {
                 wrappedConnection.setProxyPort(port);
+            } else {
+                // do nothing
+            }
+        }
+
+        public void setSecure(boolean secure) throws IllegalStateException {
+            if (hasConnection()) {
+                wrappedConnection.setSecure(secure);
             } else {
                 // do nothing
             }

@@ -62,6 +62,7 @@
  */
 
 package org.apache.commons.httpclient;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,6 +81,8 @@ import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 import org.apache.commons.httpclient.util.TimeoutController;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+// HERITRIX import.
 import org.archive.util.HttpRecorder;
 
 /**
@@ -119,20 +122,38 @@ public class HttpConnection {
     // ----------------------------------------------------------- Constructors
 
     /**
-     * Constructor.
+     * Creates a new HTTP connection for the given host and port.
      *
-     * @param host the host I should connect to
-     * @param port the port I should connect to
+     * @param host the host to connect to
+     * @param port the port to connect to
      */
     public HttpConnection(String host, int port) {
-        this(null, -1, host, null, port, Protocol.getProtocol("http"));
+        this(null, -1, host, port, false);
     }
 
     /**
-     * Constructor.
+     * Creates a new HTTP connection for the given host and port. 
+     * If secure attribute is set, use SSL to establish the connection.
      *
-     * @param host the host I should connect to
-     * @param port the port I should connect to
+     * @param host the host to connect to
+     * @param port the port to connect to
+     * @param secure when <tt>true</tt>, connect via HTTPS (SSL)
+     * 
+     * @deprecated use HttpConnection(String, int, Protocol)
+     * 
+     * @see #HttpConnection(String,int,Protocol)
+     *
+     */
+    public HttpConnection(String host, int port, boolean secure) {
+        this(null, -1, host, port, secure);
+    }
+
+    /**
+     * Creates a new HTTP connection for the given host and port
+     * using the given protocol.
+     *
+     * @param host the host to connect to
+     * @param port the port to connect to
      * @param protocol the protocol to use
      */
     public HttpConnection(String host, int port, Protocol protocol) {
@@ -140,11 +161,12 @@ public class HttpConnection {
     }
 
     /**
-     * Constructor.
+     * Creates a new HTTP connection for the given host with the virtual 
+     * alias and port using given protocol.
      *
-     * @param host the host I should connect to
-     * @param virtualHost the virtual host I will be sending requests to
-     * @param port the port I should connect to
+     * @param host the host to connect to
+     * @param virtualHost the virtual host requests will be sent to
+     * @param port the port to connect to
      * @param protocol the protocol to use
      */
     public HttpConnection(String host, String virtualHost, int port, Protocol protocol) {
@@ -152,23 +174,50 @@ public class HttpConnection {
     }
 
     /**
-     * Constructor.
+     * Creates a new HTTP connection for the given host and port via the 
+     * given proxy host and port using the default protocol.
      *
-     * @param proxyHost the host I should proxy via
-     * @param proxyPort the port I should proxy via
-     * @param host the host I should connect to
-     * @param port the port I should connect to
+     * @param proxyHost the host to proxy via
+     * @param proxyPort the port to proxy via
+     * @param host the host to connect to
+     * @param port the port to connect to
      */
     public HttpConnection(
         String proxyHost,
         int proxyPort,
         String host,
         int port) {
-        this(proxyHost, proxyPort, host, null, port, Protocol.getProtocol("http"));
+        this(proxyHost, proxyPort, host, port, false);
     }
 
     /**
-     * Creates a new HttpConnection.
+     * Creates a new HTTP connection for the given host and port via
+     * the given proxy host and port. If secure attribute is set,
+     * use SSL to establish the connection.
+     *
+     * @param proxyHost the host I should proxy via
+     * @param proxyPort the port I should proxy via
+     * @param host the host to connect to. Parameter value must be non-null.
+     * @param port the port to connect to
+     * @param secure when <tt>true</tt>, connect via HTTPS (SSL)
+     * 
+     * @deprecated use HttpConnection(String, int, String, int, Protocol)
+     * 
+     * @see #HttpConnection(String, int, String, String, int, Protocol)
+     *
+     */
+    public HttpConnection(
+        String proxyHost,
+        int proxyPort,
+        String host,
+        int port,
+        boolean secure) {
+        this(proxyHost, proxyPort, host, null, port,
+            Protocol.getProtocol(secure ? "https" : "http"));
+    }
+
+    /**
+     * Creates a new HTTP connection for the given host configuration.
      * 
      * @param hostConfiguration the host/proxy/protocol to use
      */
@@ -183,13 +232,15 @@ public class HttpConnection {
     }
 
     /**
-     * Create an instance
+     * Creates a new HTTP connection for the given host with the virtual 
+     * alias and port via the given proxy host and port using the given 
+     * protocol.
      * 
-     * @param proxyHost the host I should proxy via
-     * @param proxyPort the port I should proxy via
-     * @param host the host I should connect to. Parameter value must be non-null.
-     * @param virtualHost the virtual host I will be sending requests to
-     * @param port the port I should connect to
+     * @param proxyHost the host to proxy via
+     * @param proxyPort the port to proxy via
+     * @param host the host to connect to. Parameter value must be non-null.
+     * @param virtualHost the virtual host requests will be sent to
+     * @param port the port to connect to
      * @param protocol The protocol to use. Parameter value must be non-null.
      */
     public HttpConnection(
@@ -218,19 +269,19 @@ public class HttpConnection {
     // ------------------------------------------ Attribute Setters and Getters
 
     /**
-     * Return my host name.
+     * Returns the host.
      *
-     * @return my host.
+     * @return the host.
      */
     public String getHost() {
         return hostName;
     }
 
     /**
-     * Set my host name.
+     * Sets the host to connect to.
      *
-     * @param host the host I should connect to. Parameter value must be non-null.
-     * @throws IllegalStateException if I am already connected
+     * @param host the host to connect to. Parameter value must be non-null.
+     * @throws IllegalStateException if the connection is already open
      */
     public void setHost(String host) throws IllegalStateException {
         if (host == null) {
@@ -241,22 +292,23 @@ public class HttpConnection {
     }
 
     /**
-     * Return my virtual host name.
+     * Returns the target virtual host.
      *
-     * @return my virtual host.
+     * @return the virtual host.
      */
     public String getVirtualHost() {
         return virtualName;
     }
 
     /**
-     * Set my virtual host name.
+     * Sets the virtual host to target.
      *
      * @param host the virtual host name that should be used instead of 
      *        physical host name when sending HTTP requests. Virtual host 
      *        name can be set to <tt> null</tt> if virtual host name is not
      *        to be used
-     * @throws IllegalStateException if I am already connected
+     * 
+     * @throws IllegalStateException if the connection is already open
      */
     public void setVirtualHost(String host) throws IllegalStateException {
         assertNotOpen();
@@ -264,12 +316,12 @@ public class HttpConnection {
     }
 
     /**
-     * Return my port.
+     * Returns the port of the host.
      *
      * If the port is -1 (or less than 0) the default port for
      * the current protocol is returned.
      *
-     * @return my port.
+     * @return the port.
      */
     public int getPort() {
         if (portNumber < 0) {
@@ -280,10 +332,11 @@ public class HttpConnection {
     }
 
     /**
-     * Set my port.
+     * Sets the port to connect to.
      *
-     * @param port the port I should connect to
-     * @throws IllegalStateException if I am already connected
+     * @param port the port to connect to
+     * 
+     * @throws IllegalStateException if the connection is already open
      */
     public void setPort(int port) throws IllegalStateException {
         assertNotOpen();
@@ -291,19 +344,20 @@ public class HttpConnection {
     }
 
     /**
-     * Return my proxy host.
+     * Returns the proxy host.
      *
-     * @return my proxy host.
+     * @return the proxy host.
      */
     public String getProxyHost() {
         return proxyHostName;
     }
 
     /**
-     * Set the host I should proxy through.
+     * Sets the host to proxy through.
      *
-     * @param host the host I should proxy through.
-     * @throws IllegalStateException if I am already connected
+     * @param host the host to proxy through.
+     * 
+     * @throws IllegalStateException if the connection is already open
      */
     public void setProxyHost(String host) throws IllegalStateException {
         assertNotOpen();
@@ -311,19 +365,20 @@ public class HttpConnection {
     }
 
     /**
-     * Return my proxy port.
+     * Returns the port of the proxy host.
      *
-     * @return my proxy port.
+     * @return the proxy port.
      */
     public int getProxyPort() {
         return proxyPortNumber;
     }
 
     /**
-     * Set the port I should proxy through.
+     * Sets the port of the host to proxy through.
      *
-     * @param port the host I should proxy through.
-     * @throws IllegalStateException if I am already connected
+     * @param port the port of the host to proxy through.
+     * 
+     * @throws IllegalStateException if the connection is already open
      */
     public void setProxyPort(int port) throws IllegalStateException {
         assertNotOpen();
@@ -331,28 +386,48 @@ public class HttpConnection {
     }
 
     /**
-     * Return <tt>true</tt> if I will (or I am) connected over a
-     * secure (HTTPS/SSL) protocol.
+     * Returns <tt>true</tt> if the connection is established over 
+     * a secure protocol.
      *
-     * @return <tt>true</tt> if I will (or I am) connected over a
-     *         secure (HTTPS/SSL) protocol.
+     * @return <tt>true</tt> if connected over a secure protocol.
      */
     public boolean isSecure() {
         return protocolInUse.isSecure();
     }
 
     /**
-     * Get the protocol.
-     * @return HTTPS if secure, HTTP otherwise
+     * Returns the protocol used to establish the connection.
+     * @return The protocol
      */
     public Protocol getProtocol() {
         return protocolInUse;
     }
 
     /**
-     * Sets the protocol used by this connection.
+     * Defines whether the connection should be established over a
+     * secure protocol.
+     *
+     * @param secure whether or not to connect over a secure protocol.
      * 
-     * @param protocol The new protocol.
+     * @throws IllegalStateException if the connection is already open
+     * 
+     * @deprecated use setProtocol(Protocol)
+     * 
+     * @see #setProtocol(Protocol)
+     */
+    public void setSecure(boolean secure) throws IllegalStateException {
+        assertNotOpen();
+        protocolInUse = secure
+            ? Protocol.getProtocol("https")
+            : Protocol.getProtocol("http");
+    }
+
+    /**
+     * Sets the protocol used to establish the connection
+     * 
+     * @param protocol The protocol to use.
+     * 
+     * @throws IllegalStateException if the connection is already open
      */
     public void setProtocol(Protocol protocol) {
         assertNotOpen();
@@ -387,10 +462,10 @@ public class HttpConnection {
     }
 
     /**
-     * Return <tt>true</tt> if I am connected,
+     * Returns <tt>true</tt> if the connection is open,
      * <tt>false</tt> otherwise.
      *
-     * @return <tt>true</tt> if I am connected
+     * @return <tt>true</tt> if the connection is open
      */
     public boolean isOpen() {
         if (used && isStaleCheckingEnabled() && isStale()) {
@@ -413,6 +488,11 @@ public class HttpConnection {
 
     /**
      * Sets whether or not isStale() will be called when testing if this connection is open.
+     * 
+     * <p>Setting this flag to <code>false</code> will increase performance when reusing
+     * connections, but it will also make them less reliable.  Stale checking ensures that
+     * connections are viable before they are used.  When set to <code>false</code> some
+     * method executions will result in IOExceptions and they will have to be retried.</p>
      * 
      * @param staleCheckEnabled <code>true</code> to enable isStale()
      * 
@@ -481,11 +561,11 @@ public class HttpConnection {
     }
 
     /**
-     * Return <tt>true</tt> if I am (or I will be)
-     * connected via a proxy, <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if the connection is established via a proxy,
+     * <tt>false</tt> otherwise.
      *
-     * @return <tt>true</tt> if I am (or I will be)
-     *         connected via a proxy, <tt>false</tt> otherwise.
+     * @return <tt>true</tt> if a proxy is used to establish the connection, 
+     * <tt>false</tt> otherwise.
      */
     public boolean isProxied() {
         return (!(null == proxyHostName || 0 >= proxyPortNumber));
@@ -525,7 +605,7 @@ public class HttpConnection {
     // --------------------------------------------------- Other Public Methods
 
     /**
-     * Set my {@link Socket}'s timeout, via {@link Socket#setSoTimeout}.  If the
+     * Sets the {@link Socket}'s timeout, via {@link Socket#setSoTimeout}.  If the
      * connection is already open, the SO_TIMEOUT is changed.  If no connection
      * is open, then subsequent connections will use the timeout value.
      * <p>
@@ -534,7 +614,6 @@ public class HttpConnection {
      * @param timeout the timeout value
      * @throws SocketException - if there is an error in the underlying
      * protocol, such as a TCP error.
-     * @throws IllegalStateException if I am not connected
      */
     public void setSoTimeout(int timeout)
         throws SocketException, IllegalStateException {
@@ -546,15 +625,13 @@ public class HttpConnection {
     }
 
     /**
-     * Return my {@link Socket}'s timeout, via {@link Socket#setSoTimeout}, if the
+     * Returns the {@link Socket}'s timeout, via {@link Socket#getSoTimeout}, if the
      * connection is already open. If no connection is open, return the value subsequent 
      * connection will use.
      * <p>
      * Note: This is not a connection timeout but a timeout on network traffic!
      *
      * @return the timeout value
-     * 
-     * @exception SocketException
      */
     public int getSoTimeout() throws SocketException {
         LOG.debug("HttpConnection.getSoTimeout()");
@@ -576,16 +653,17 @@ public class HttpConnection {
     }
 
     /**
-     * Open this connection to the current host and port
-     * (via a proxy if so configured).
+     * Establishes a connection to the specified host and port
+     * (via a proxy if specified).
      * The underlying socket is created from the {@link ProtocolSocketFactory}.
      *
-     * @throws IOException when there are errors opening the connection
+     * @throws IOException if an attempt to establish the connection results in an
+     *   I/O error.
      */
     public void open() throws IOException {
         LOG.trace("enter HttpConnection.open()");
 
-        assertNotOpen(); // ??? is this worth doing?
+        assertNotOpen();
         try {
             if (null == socket) {
 
@@ -639,19 +717,22 @@ public class HttpConnection {
             if (sendBufferSize != -1) {
                 socket.setSendBufferSize(sendBufferSize);
             }
+            // Insert HERITRIX inputstream wrapper.
             InputStream is = socket.getInputStream();
-			if(recorder!=null) {
-				is = recorder.inputWrap(is);
-			}
+            if (this.httpRecorder != null)
+            {
+                is = this.httpRecorder.inputWrap(is);
+            }
             inputStream = new PushbackInputStream(is);
             outputStream = new BufferedOutputStream(
                 new WrappedOutputStream(socket.getOutputStream()),
                 socket.getSendBufferSize()
             );
-			if(recorder!=null) {
-				outputStream = recorder.outputWrap(outputStream);
-			}
-
+            // Insert HERITRIX inputstream wrapper.
+            if (this.httpRecorder != null)
+            {
+                outputStream = this.httpRecorder.outputWrap(outputStream);
+            }
             isOpen = true;
             used = false;
         } catch (IOException e) {
@@ -671,14 +752,14 @@ public class HttpConnection {
     }
 
     /**
-     * Calling this method indicates that the proxy has successfully created the
-     * tunnel to the host. The socket will be switched to the secure socket.
-     * Subsequent communication is done via the secure socket. The method can
-     * only be called once on a proxied secure connection.
+     * Instructs the proxy to establish a secure tunnel to the host. The socket will 
+     * be switched to the secure socket. Subsequent communication is done via the secure 
+     * socket. The method can only be called once on a proxied secure connection.
      *
      * @throws IllegalStateException if connection is not secure and proxied or
      * if the socket is already secure.
-     * @throws IOException if an error occured creating the secure socket
+     * @throws IOException if an attempt to establish the secure tunnel results in an
+     *   I/O error.
      */
     public void tunnelCreated() throws IllegalStateException, IOException {
         LOG.trace("enter HttpConnection.tunnelCreated()");
@@ -733,10 +814,9 @@ public class HttpConnection {
     }
 
     /**
-     * Return a {@link OutputStream} suitable for writing (possibly
-     * chunked) bytes to my {@link OutputStream}.
+     * Returns an {@link OutputStream} suitable for writing the request.
      *
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      * @return a stream to write the request to
      */
@@ -752,7 +832,48 @@ public class HttpConnection {
     }
 
     /**
-     * Return the response input stream
+     * Returns an {@link OutputStream} suitable for writing the request.
+     *
+     * @param useChunking when <tt>true</tt> the chunked transfer-encoding will
+     *      be used
+     * @throws IllegalStateException if the connection is not open
+     * @throws IOException if an I/O problem occurs
+     * @return a stream to write the request to
+     * @deprecated Use new ChunkedOutputStream(httpConnecion.getRequestOutputStream());
+     */
+    public OutputStream getRequestOutputStream(boolean useChunking)
+        throws IOException, IllegalStateException {
+        LOG.trace("enter HttpConnection.getRequestOutputStream(boolean)");
+
+        OutputStream out = getRequestOutputStream();
+        if (useChunking) {
+            out = new ChunkedOutputStream(out);
+        }
+        return out;
+    }
+
+    /**
+     * Return a {@link InputStream} suitable for reading the response.
+     * <p>
+     * If the given {@link HttpMethod} contains
+     * a <tt>Transfer-Encoding: chunked</tt> header,
+     * the returned stream will be configured
+     * to read chunked bytes.
+     *
+     * @param method This argument is ignored.
+     * @throws IllegalStateException if the connection is not open
+     * @throws IOException if an I/O problem occurs
+     * @return a stream to read the response from
+     * @deprecated Use getResponseInputStream() instead.
+     */
+    public InputStream getResponseInputStream(HttpMethod method)
+        throws IOException, IllegalStateException {
+        LOG.trace("enter HttpConnection.getResponseInputStream(HttpMethod)");
+        return getResponseInputStream();
+    }
+
+    /**
+     * Return a {@link InputStream} suitable for reading the response.
      * @return InputStream The response input stream.
      * @throws IOException If an IO problem occurs
      * @throws IllegalStateException If the connection isn't open.
@@ -768,7 +889,7 @@ public class HttpConnection {
      * Tests if input data avaialble. This method returns immediately
      * and does not perform any read operations on the input socket
      * 
-     * @return boolean <tt>true</tt> if input data is availble, 
+     * @return boolean <tt>true</tt> if input data is available, 
      *                 <tt>false</tt> otherwise.
      * 
      * @throws IOException If an IO problem occurs
@@ -828,7 +949,7 @@ public class HttpConnection {
     }
 
     /**
-     * Write the specified bytes to my output stream.
+     * Writes the specified bytes to the output stream.
      *
      * @param data the data to be written
      * @throws HttpRecoverableException if a SocketException occurs
@@ -843,8 +964,8 @@ public class HttpConnection {
     }
 
     /**
-     * Write <i>length</i> bytes in <i>data</i> starting at
-     * <i>offset</i> to my output stream.
+     * Writes <i>length</i> bytes in <i>data</i> starting at
+     * <i>offset</i> to the output stream.
      *
      * The general contract for
      * write(b, off, len) is that some of the bytes in the array b are written
@@ -889,12 +1010,12 @@ public class HttpConnection {
     }
 
     /**
-     * Write the specified bytes, followed by <tt>"\r\n".getBytes()</tt> to my
+     * Writes the specified bytes, followed by <tt>"\r\n".getBytes()</tt> to the
      * output stream.
      *
      * @param data the bytes to be written
      * @throws HttpRecoverableException when socket exceptions occur writing data
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      */
     public void writeLine(byte[] data)
@@ -905,11 +1026,11 @@ public class HttpConnection {
     }
 
     /**
-     * Write <tt>"\r\n".getBytes()</tt> to my output stream.
+     * Writes <tt>"\r\n".getBytes()</tt> to the output stream.
      *
      * @throws HttpRecoverableException when socket exceptions occur writing
      *      data
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      */
     public void writeLine()
@@ -919,12 +1040,12 @@ public class HttpConnection {
     }
 
     /**
-     * Write the specified String (as bytes) to my output stream.
+     * Writes the specified String (as bytes) to the output stream.
      *
      * @param data the string to be written
      * @throws HttpRecoverableException when socket exceptions occur writing
      *      data
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      */
     public void print(String data)
@@ -934,13 +1055,13 @@ public class HttpConnection {
     }
 
     /**
-     * Write the specified String (as bytes), followed by
-     * <tt>"\r\n".getBytes()</tt> to my output stream.
+     * Writes the specified String (as bytes), followed by
+     * <tt>"\r\n".getBytes()</tt> to the output stream.
      *
      * @param data the data to be written
      * @throws HttpRecoverableException when socket exceptions occur writing
      *      data
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      */
     public void printLine(String data)
@@ -950,11 +1071,11 @@ public class HttpConnection {
     }
 
     /**
-     * Write <tt>"\r\n".getBytes()</tt> to my output stream.
+     * Writes <tt>"\r\n".getBytes()</tt> to the output stream.
      *
      * @throws HttpRecoverableException when socket exceptions occur writing
      *      data
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      */
     public void printLine()
@@ -964,11 +1085,11 @@ public class HttpConnection {
     }
 
     /**
-     * Read up to <tt>"\n"</tt> from my (unchunked) input stream.
+     * Reads up to <tt>"\n"</tt> from the (unchunked) input stream.
      * If the stream ends before the line terminator is found,
      * the last part of the string will still be returned.
      *
-     * @throws IllegalStateException if I am not connected
+     * @throws IllegalStateException if the connection is not open
      * @throws IOException if an I/O problem occurs
      * @return a line from the response
      */
@@ -980,7 +1101,7 @@ public class HttpConnection {
     }
 
     /**
-     * Shutdown my {@link Socket}'s output, via Socket.shutdownOutput()
+     * Attempts to shutdown the {@link Socket}'s output, via Socket.shutdownOutput()
      * when running on JVM 1.3 or higher.
      */
     public void shutdownOutput() {
@@ -1003,7 +1124,7 @@ public class HttpConnection {
     }
 
     /**
-     * Close my socket and streams.
+     * Closes the socket and streams.
      */
     public void close() {
         LOG.trace("enter HttpConnection.close()");
@@ -1034,35 +1155,15 @@ public class HttpConnection {
 
         // we are assuming that the connection will only be released once used
         used = true;
-        
-        if (locked) {
-            LOG.debug("Connection is locked.  Call to releaseConnection() ignored.");
-        } else if (httpConnectionManager != null) {
-            LOG.debug("Releasing connection back to connection manager.");
+        if (httpConnectionManager != null) {
             httpConnectionManager.releaseConnection(this);
-        } else {
-            LOG.warn("HttpConnectionManager is null.  Connection cannot be released.");
         }
-    }
-
-    /**
-     * @return
-     */
-    boolean isLocked() {
-        return locked;
-    }
-
-    /**
-     * @param locked
-     */
-    void setLocked(boolean locked) {
-        this.locked = locked;
     }
 
     // ------------------------------------------------------ Protected Methods
 
     /**
-     * Close everything out.
+     * Closes everything out.
      */
     protected void closeSocketAndStreams() {
         LOG.trace("enter HttpConnection.closeSockedAndStreams()");
@@ -1109,7 +1210,7 @@ public class HttpConnection {
     }
 
     /**
-     * Throw an {@link IllegalStateException} if I am connected.
+     * Throws an {@link IllegalStateException} if the connection is already open.
      *
      * @throws IllegalStateException if connected
      */
@@ -1120,7 +1221,7 @@ public class HttpConnection {
     }
 
     /**
-     * Throw an {@link IllegalStateException} if I am not connected.
+     * Throws an {@link IllegalStateException} if the connection is not open.
      *
      * @throws IllegalStateException if not connected
      */
@@ -1241,14 +1342,12 @@ public class HttpConnection {
             // keep the original value of used, as it will be set to false by close().
             boolean tempUsed = used;
             HttpConnection.this.close();
-            if (ioe instanceof InterruptedIOException) {
-                return new IOTimeoutException(ioe.getMessage()); 
-            } else if (tempUsed) {
+            if (tempUsed) {
                 LOG.debug(
                     "Output exception occurred on a used connection.  Will treat as recoverable.", 
                     ioe
                 );
-                return new HttpRecoverableException(ioe.getMessage(), ioe);                
+                return new HttpRecoverableException(ioe.toString());                
             } else {
                 return ioe;
             }            
@@ -1339,7 +1438,7 @@ public class HttpConnection {
     /** An {@link InputStream} for the response to an individual request. */
     private InputStream lastResponseInputStream = null;
     
-    /** Whether or not I am connected. */
+    /** Whether or not the connection is connected. */
     protected boolean isOpen = false;
     
     /** the protocol being used */
@@ -1351,19 +1450,15 @@ public class HttpConnection {
     /** TCP_NODELAY socket value */
     private boolean soNodelay = true;
     
-    /** flag to indicate if this connection can be released, if locked the connection cannot be 
-     * released */
-    private boolean locked = false;
-    
     /** Whether or not the socket is a secure one. */
     private boolean usingSecureSocket = false;
     
-    /** Whether I am tunneling a proxy or not */
+    /** Whether the connection is open via a secure tunnel or not */
     private boolean tunnelEstablished = false;
     
     /** Whether or not isStale() is used by isOpen() */
-    private boolean staleCheckingEnabled = true;    
-
+    private boolean staleCheckingEnabled = true;
+    
     /** Timeout until connection established (Socket created). 0 means no timeout. */
     private int connectTimeout = 0;
     
@@ -1372,15 +1467,15 @@ public class HttpConnection {
     
     /** The local interface on which the connection is created, or null for the default */
     private InetAddress localAddress;
-    
-	/** Optional recorder. */
-	protected HttpRecorder recorder;
 
-	/* (non-Javadoc)
-	 * @see org.apache.commons.httpclient.HttpMethod#setHttpRecorder(org.archive.util.HttpRecorder)
-	 */
-	public void setHttpRecorder(HttpRecorder recorder) {
-		this.recorder = recorder;
-	}
+    // Instance variable for HERITRIX
+    /**
+     * HttpRecorder instance.
+     */
+    protected HttpRecorder httpRecorder = null;
 
+    public void setHttpRecorder(HttpRecorder httpRecorder)
+    {
+        this.httpRecorder = httpRecorder;
+    }
 }

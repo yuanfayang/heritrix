@@ -51,11 +51,6 @@ public class SimpleHttpServer
     public static final int DEFAULT_PORT = 8080;
     
     /**
-     * Name of the admin webapp.
-     */
-    private static final String ADMIN_WEBAPP_NAME = "admin";
-    
-    /**
      * Webapp contexts returned out of a server start.
      */
     private WebApplicationContext [] contexts = null;
@@ -90,20 +85,6 @@ public class SimpleHttpServer
             webappsPath = webappsPath + File.separator;
         }
         return webappsPath;
-    }
-
-    /**
-     * Return the admin webapp path.
-     * 
-     * Looks at system properties to see if default has been overridden.  This
-     * method is used by CrawlJobHandler also.
-     * 
-     * @return Return admin webapp path (Path returned has a trailing '/').
-     */
-    public String getAdminWebappPath()
-    {
-        return getWebappPath(ADMIN_WEBAPP_NAME).getAbsolutePath() +
-            File.separator;
     }
     
     /**

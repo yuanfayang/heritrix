@@ -426,6 +426,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param settings the settings object for which the attribute should be
      *        unset.
      * @param name the name of the attribute.
+     * @return Null.
      * @throws AttributeNotFoundException is thrown if the attribute name
      *         doesn't exist.
      */

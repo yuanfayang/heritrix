@@ -129,13 +129,11 @@ recent and more likely to work.
 <p>Below we document system properties passed on the command-line that 
 can influence Heritrix behavior.
 </p>
-<subsection name="heritrix.webapp.path">
-<p>Path to webapp directory.  Default: <em>webapps</em>.  Set
-to <em>src/webapps</em> if you want to run the webapp inside eclipse, etc.</p>
-</subsection>
-<subsection name="heritrix.default.orderfile">
-<p>Default order.xml file to use when making jobs via the web UI.
-Default: <em>webapp/admin/order.xml</em>.
+<subsection name="heritrix.development">
+<p>Set this property on the command-line when you want to run the crawler
+from eclipse.  When this property is set, the conf and webapps directories
+will be found in their development locations and startup messages will
+show on the console.
 </p>
 </subsection>
 

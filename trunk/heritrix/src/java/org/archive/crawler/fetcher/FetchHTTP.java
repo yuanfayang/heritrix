@@ -35,11 +35,9 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpClientParams;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -63,30 +61,60 @@ import org.archive.util.HttpRecorder;
 public class FetchHTTP
 	extends Processor
 	implements CoreAttributeConstants, FetchStatusCodes {
-    private static String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
-	private static String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
-	private static String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
-	private static String ATTR_MAX_FETCH_ATTEMPTS = "max-fetch-attempts";
-    private static String ATTR_LOAD_COOKIES = "cookies-file";
+    public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
+    public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
+    public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
+    public static final String ATTR_MAX_FETCH_ATTEMPTS = "max-fetch-attempts";
+    public static final String ATTR_LOAD_COOKIES = "cookies-file";
+    
 	private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(10);
 	private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(5000);
 	private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
 	private static Integer DEFAULT_MAX_FETCH_ATTEMPTS = new Integer(30);
+    
+    /**
+     * HTTP protocol adherence strictness.
+     * 
+     * Can be true or false.
+     */
+    public static final String ATTR_STRICT = "strict";
+    
+    /**
+     * Default setting for protocol strictness.
+     */
+    private static final boolean DEFAULT_STRICT = false;
+    
+    /**
+     * Setting for protocol strictness.
+     */
+    private boolean strict = DEFAULT_STRICT;
+    
 	
-	private static Logger logger = Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
-	HttpClient http;
-	private int soTimeout;
+	private static Logger logger =
+        Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
+    
+	HttpClient http = null;
+	
+    private int soTimeout;
 
     /**
      * @param name
      */
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");
-        addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS, "Timeout seconds", DEFAULT_TIMEOUT_SECONDS));
-        addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS, "So timeout milliseconds", DEFAULT_SOTIMEOUT_MS));
-        addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES, "Max length in bytes", DEFAULT_MAX_LENGTH_BYTES));
-        addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS, "Max fetch attempts", DEFAULT_MAX_FETCH_ATTEMPTS));
-        addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES, "File to load cookies from", ""));
+        addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
+            "Timeout seconds", DEFAULT_TIMEOUT_SECONDS));
+        addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
+            "So timeout milliseconds", DEFAULT_SOTIMEOUT_MS));
+        addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
+            "Max length in bytes", DEFAULT_MAX_LENGTH_BYTES));
+        addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS,
+            "Max fetch attempts", DEFAULT_MAX_FETCH_ATTEMPTS));
+        addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
+            "File to load cookies from", ""));
+        addElementToDefinition(new SimpleType(ATTR_STRICT,
+                "Strict adherence to HTTP protocol",
+                new Boolean(strict)));
     }
 
 	/* (non-Javadoc)
@@ -227,8 +255,9 @@ public class FetchHTTP
         // don't auto-follow redirects
         get.setFollowRedirects(false); 
         // use only HTTP/1.0 (to avoid receiving chunked responses)
-        get.getParams().setVersion(HttpVersion.HTTP_1_0);
-        get.getParams().makeLenient();
+        get.setHttp11(false);
+        // Set non-strict http protocol mode.
+        get.setStrictMode(getStrict(curi));
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
         	userAgent = controller.getOrder().getUserAgent(curi);
@@ -250,7 +279,7 @@ public class FetchHTTP
 		connectionManager.setMaxTotalConnections(controller.getToeCount());
 		http = new HttpClient(connectionManager);
 		
-		// load cookies from a file if specified in the order file.
+		    // load cookies from a file if specified in the order file.
             try {
                 loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
             } catch (MBeanException e) {
@@ -259,13 +288,27 @@ public class FetchHTTP
                 throw new AttributeNotFoundException(e.getMessage());
             }
 		
-		// set connection timeout: considered same as overall timeout, for now
-		// TODO: restore this when HTTPClient stops using monitor thread
-		//((HttpClientParams)http.getParams()).setConnectionTimeout((int)timeout);
+		// Set connection timeout. Considered same as overall timeout, for now.
+		// TODO: When HTTPClient stops using a monitor 'waitingThread' thread to
+        // watch over the getting of the socket from socket factory
+        // and instead supports the java.net.Socket#connect timeout.
+		// http.setConnectionTimeout((int)timeout);
 		// set per-read() timeout: overall timeout will be checked at least this
 		// frequently
-		 ((HttpClientParams) http.getParams()).setSoTimeout(soTimeout);
+		http.setTimeout(soTimeout);
 	}
+    
+    private boolean getStrict(CrawlURI curi) {
+        Boolean strict = null;
+        try {
+           strict  = (Boolean)getAttribute(ATTR_STRICT, curi);
+        }
+        catch (Exception e)
+        {
+            strict = new Boolean(DEFAULT_STRICT);
+        }
+        return strict.booleanValue();
+    }
 
     private int getSoTimeout(CrawlURI curi) {
         Integer res;
