@@ -32,12 +32,13 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.regex.Pattern;
 
+
 /** Utility methods for manipulating files and directories.
  * 
  * @author John Erik Halse
  */
-public class FileUtils {
-
+public class FileUtils
+{
     /** Constructor made private because all methods of this class are static.
      * 
      */
@@ -103,6 +104,27 @@ public class FileUtils {
         }
         // The directory is now empty so delete it
         return dir.delete();
+    }
+    
+    /**
+     * Get a list of all files in directory that have passed prefix.
+     * 
+     * @param dir Dir to look in.
+     * @param prefix Basename of files to look for. Compare is case insensitive.
+     * 
+     * @return List of files in dir that start w/ passed basename.
+     */
+    public static File [] getFilesWithPrefix(File dir, final String prefix)
+    {
+        FileFilter prefixFilter = new FileFilter()
+            {
+                public boolean accept(File pathname)
+                {
+                    return pathname.getName().toLowerCase().
+                        startsWith(prefix.toLowerCase());
+                }
+            };
+        return dir.listFiles(prefixFilter);
     }
 
     /** Get a @link java.io.FileFilter that filters files based on a regular

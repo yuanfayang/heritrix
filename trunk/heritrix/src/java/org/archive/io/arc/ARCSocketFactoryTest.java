@@ -50,6 +50,7 @@ import org.apache.commons.httpclient.HttpRecoverableException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -129,7 +130,7 @@ public class ARCSocketFactoryTest
             ARCSocketFactory.DEFAULT_PREFIX);
         cleanUpOldFiles(((ARCSocketFactory)this.factory).getBackingFileDir(),
             "");
-        cleanUpOldFiles(getTmpDir(), "arcsocketfactorytest");
+        FileUtils.deleteDir(new File(getTmpDir(), "arcsocketfactorytest"));
         // Now use httpclient to fetch urls.
         String [] urls = {"http://www.google.com/NO_SUCH_PLACE",
             "http://directory.google.com/Top/Society/",
@@ -138,8 +139,8 @@ public class ARCSocketFactoryTest
         {
             getURLContent(urls[i]);
         }
-        File [] f =
-            getListOfFiles(((ARCSocketFactory)this.factory).getArcDumpDir(),
+        File [] f = FileUtils.getFilesWithPrefix
+            (((ARCSocketFactory)this.factory).getArcDumpDir(),
                 ARCSocketFactory.DEFAULT_PREFIX);
         for (int i = 0; i < f.length; i++)
         {
