@@ -24,6 +24,7 @@ package org.archive.crawler.admin;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -89,11 +90,11 @@ public class StatisticsTracker extends AbstractTracker{
 	 * Cumulative data 
 	 */
 	/** Keep track of the file types we see (mime type -> count) */
-	protected HashMap mimeTypeDistribution = new HashMap();
+	protected Hashtable mimeTypeDistribution = new Hashtable();
 	/** Keep track of fetch status codes */
-	protected HashMap statusCodeDistribution = new HashMap();
+	protected Hashtable statusCodeDistribution = new Hashtable();
 	/** Keep track of hosts */
-	protected HashMap hostsDistribution = new HashMap();
+	protected Hashtable hostsDistribution = new Hashtable();
 	
 	public StatisticsTracker(String name) {
 		super(name, "A statistics tracker that's been designed to work well with the web UI and creates the progress-statistics log.");
@@ -232,9 +233,11 @@ public class StatisticsTracker extends AbstractTracker{
 	/** Returns a HashMap that contains information about distributions of 
 	 *  encountered mime types.  Key/value pairs represent 
 	 *  mime type -> count.
+     * <p>
+     * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
 	 * @return mimeTypeDistribution
 	 */
-	public HashMap getFileDistribution() {
+	public Hashtable getFileDistribution() {
 		return mimeTypeDistribution;
 	}
 
@@ -248,38 +251,44 @@ public class StatisticsTracker extends AbstractTracker{
 	 * 	          exist it will be added (set to 1).  If null it will 
 	 *            increment the counter "unknown".
 	 */
-	protected static void incrementMapCount(HashMap map, String key) {
+	protected static void incrementMapCount(Hashtable map, String key) {
 
 		if (key == null) {
 			key = "unknown";
 		}
 
 		if (map.containsKey(key)) {
-
-			Integer matchValue = (Integer) map.get(key);
-			matchValue = new Integer(matchValue.intValue() + 1);
-			map.put(key, matchValue);
+			((LongWrapper) map.get(key)).longValue++;
 
 		} else {
 			// if we didn't find this key add it
-			map.put(key, new Integer(1));
+            synchronized(map){
+    			map.put(key, new LongWrapper(1));
+            }
 		}
 	}
 
     /**
      * Sort the entries of the given HashMap in descending order 
      * by their values, which must be Numbers
-     * @param map
+     * @param map Assumes values are wrapped with LongWrapper.
      * @return
      */
-    public TreeSet getSortedByValue(HashMap map) {
+    public TreeSet getSortedByValue(Hashtable map) {
         TreeSet sortedSet = new TreeSet(
             new Comparator() {
                 public int compare(Object e1, Object e2) {
-                    long comp =
-                        ((Number)((Map.Entry)e2).getValue()).longValue()
-                        -((Number)((Map.Entry)e1).getValue()).longValue();
-                    return comp > 0 ? 1 : comp < 0 ? - 1 : 0;
+                    long firstVal = ((LongWrapper)((Map.Entry)e1).getValue()).longValue;
+                    long secondVal = ((LongWrapper)((Map.Entry)e2).getValue()).longValue; 
+                    if(firstVal < secondVal){
+                        return 1;
+                    } if(secondVal < firstVal){
+                        return -1;
+                    }
+                    // If the values are the same, sort by keys. 
+                    String firstKey = (String)((Map.Entry)e1).getKey();
+                    String secondKey = (String)((Map.Entry)e2).getKey();
+                    return firstKey.compareTo(secondKey);
                 }
             });
         sortedSet.addAll(map.entrySet());
@@ -289,18 +298,22 @@ public class StatisticsTracker extends AbstractTracker{
 	/** Return a HashMap representing the distribution of status codes for
 	 *  successfully fetched curis, as represented by a hashmap where
 	 *  key -> val represents (string)code -> (integer)count
-	 * @return statusCodeDistribution
+     * <p>
+     * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
+	 * @return statusCodeDistribution 
 	 */
-	public HashMap getStatusCodeDistribution() {
+	public Hashtable getStatusCodeDistribution() {
 		return statusCodeDistribution;
 	}
 
 	/** Return a HashMap representing the distribution of hosts for
 	 *  successfully fetched curis, as represented by a hashmap where
 	 *  key -> val represents (string)code -> (integer)count
+     * <p>
+     * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
 	 * @return Hosts distribution as a HashMap
 	 */
-	public HashMap getHostsDistribution() {
+	public Hashtable getHostsDistribution() {
 		return hostsDistribution;
 	}
 
@@ -468,3 +481,5 @@ public class StatisticsTracker extends AbstractTracker{
 	}
 
 }
+
+
