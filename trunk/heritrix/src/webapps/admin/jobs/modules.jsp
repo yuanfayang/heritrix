@@ -9,12 +9,136 @@
 <%@ page import="java.io.*,java.lang.Boolean,java.util.Vector,java.util.ArrayList" %>
 <%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
 
-<%
-	ArrayList availibleURIFrontiers = CrawlJobHandler.loadOptions("urifrontiers.options");
-	ArrayList availibleProcessors = CrawlJobHandler.loadOptions("processors.options");
-	ArrayList availibleTrackers = CrawlJobHandler.loadOptions("trackers.options");
-	ArrayList availibleScopes = CrawlJobHandler.loadOptions("scopes.options");
+<%!
+	/**
+	 * Builds the HTML for selecting an implementation of a specific crawler module 
+	 * 
+	 * @param module The MBeanAttributeInfo on the currently set module
+	 * @param availibleOptions A list of the availibe implementations (full class names as Strings)
+	 * @param name The name of the module
+	 *
+	 * @return the HTML for selecting an implementation of a specific crawler module
+	 */
+	public String buildModuleSetter(MBeanAttributeInfo module, ArrayList availibleOptions, String name){
+		StringBuffer ret = new StringBuffer();
+		
+		ArrayList unusedOptions = new ArrayList();
+		
+		// Let's figure out which are not being used.
+		for(int i=0 ; i<availibleOptions.size() ; i++){
+			if(module.getType().equals((String)availibleOptions.get(i))==false){
+				unusedOptions.add(availibleOptions.get(i));
+			}
+		}
+		
+		ret.append("<table><tr><td>Current selection:</td><td>");
+		ret.append("<i>" + module.getType() + "</i>");
+		ret.append("</td><td></td></tr>");
+		
+		if(unusedOptions.size()>0){ 
+			ret.append("<tr><td>Availible alternatives:</td><td>");
+			ret.append("<select name='cbo" + name + "'>");
+			for(int i=0 ; i<unusedOptions.size() ; i++){
+				ret.append("<option value='"+unusedOptions.get(i)+"'>");
+				ret.append(unusedOptions.get(i)+"</option>");
+			}
+			ret.append("</select>");
+			ret.append("</td><td>");
+			ret.append("<input type='button' value='Change' onClick='doSetModule(\"" + name + "\")'>");
+			ret.append("</td></tr>");
+		}
+		ret.append("</table>");
+		return ret.toString();
+	}
 	
+	/**
+	 * Builds the HTML to edit a map of modules
+	 *
+	 * @param map The map to edit
+	 * @param availibleOptions List of availible modules that can be added to the map
+	 *                         (full class names as Strings)
+	 * @param name A short name for the map (only alphanumeric chars.)
+	 *
+	 * @return the HTML to edit the specified modules map
+	 */
+	public String buildModuleMap(ComplexType map, ArrayList availibleOptions, String name){
+		StringBuffer ret = new StringBuffer();
+		
+		ret.append("<table cellspacing='0' cellpadding='2'>");
+		
+		Vector unusedOptions = new Vector();
+		MBeanInfo mapInfo = map.getMBeanInfo();
+		MBeanAttributeInfo m[] = mapInfo.getAttributes();
+			
+		// Printout modules in map.
+		boolean alt = false;
+		for(int n=0; n<m.length; n++) {
+	        Object currentAttribute = null;
+			ModuleAttributeInfo att = (ModuleAttributeInfo)m[n]; //The attributes of the current attribute.
+	
+			ret.append("<tr");
+			if(alt){
+				ret.append(" bgcolor='#EEEEFF'");
+			}
+			ret.append("><td>&nbsp;"+att.getType()+"</td>");
+			if(n!=0){
+				ret.append("<td><a href=\"javascript:doMoveMapItemUp('" + name + "','"+att.getName()+"')\">Move up</a></td>");
+			} else {
+				ret.append("<td></td>");
+			}
+			if(n!=m.length-1){
+				ret.append("<td><a href=\"javascript:doMoveMapItemDown('" + name + "','"+att.getName()+"')\">Move down</a></td>");
+			} else {
+				ret.append("<td></td>");
+			}
+			ret.append("<td><a href=\"javascript:doRemoveMapItem('" + name + "','"+att.getName()+"')\">Remove</a></td>");
+			ret.append("</tr>");
+			alt = !alt;
+		}
+		
+		// Find out which aren't being used.
+		for(int i=0 ; i<availibleOptions.size() ; i++){
+			boolean isIncluded = false;
+			
+			for(int n=0; n<m.length; n++) {
+	            Object currentAttribute = null;
+				ModuleAttributeInfo att = (ModuleAttributeInfo)m[n]; //The attributes of the current attribute.
+	
+				try {
+					currentAttribute = map.getAttribute(att.getName());
+				} catch (Exception e1) {
+					ret.append(e1.toString() + " " + e1.getMessage());
+				}
+				String typeAndName = att.getType()+"|"+att.getName();
+				if(typeAndName.equals(availibleOptions.get(i))){
+					//Found it
+					isIncluded = true;
+					break;
+				}
+			}
+			if(isIncluded == false){
+				// Yep the current one is unused.
+				unusedOptions.add(availibleOptions.get(i));
+			}
+		}
+		if(unusedOptions.size() > 0 ){
+			ret.append("<tr><td>");
+			ret.append("<select name='cboAdd" + name + "'>");
+			for(int i=0 ; i<unusedOptions.size() ; i++){
+				String curr = (String)unusedOptions.get(i);
+				ret.append("<option value='"+curr+"'>"+curr.substring(0,curr.indexOf("|"))+"</option>");
+			}
+			ret.append("</select>");
+			ret.append("</td><td>");
+			ret.append("<input type='button' value='Add' onClick=\"doAddMapItem('" + name + "')\">");
+			ret.append("</td></tr>");
+		}
+		ret.append("</table>");
+		return ret.toString();
+	}
+%>
+
+<%
 	// Get the default settings.
 	
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
@@ -64,75 +188,62 @@
 			// Go to select filters.
 			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID());
 			return;
-		}else if(action.equals("frontier")){
-			// Change URI frontier
-			String className = request.getParameter("cboFrontier");
-			CrawlerModule tmp = SettingsHandler.instantiateCrawlerModuleFromClassName("frontier",className);
-			settingsHandler.getOrder().setAttribute(tmp);
-			// Write changes
-			settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
-		}else if(action.equals("scope")){
-			// Change scope
-			String className = request.getParameter("cboScope");
-			CrawlerModule tmp = SettingsHandler.instantiateCrawlerModuleFromClassName(org.archive.crawler.framework.CrawlScope.ATTR_NAME,className);
-			settingsHandler.getOrder().setAttribute(tmp);
-			// Write changes
-			settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
-		}else if(action.equals("processors")){
-			//Doing something with the processors
-			String subaction = request.getParameter("subaction");
-			if(subaction != null){
-				// Do common stuff
-				String procName = request.getParameter("item");
-				MapType procs = ((MapType)settingsHandler.getOrder().getAttribute("processors"));
-				// Figure out what to do
-				if(subaction.equals("up")){
-					// Move selected processor up
-					procs.moveElementUp(settingsHandler.getSettings(null),procName);
-				}else if(subaction.equals("down")){
-					// Move selected processor down			
-					procs.moveElementDown(settingsHandler.getSettings(null),procName);
-				}else if(subaction.equals("remove")){
-					// Remove selected processor
-					procs.removeElement(settingsHandler.getSettings(null),procName);
-				}else if(subaction.equals("add")){
-					String className = request.getParameter("cboAddProcessor");
-					String typeName = className.substring(className.indexOf("|")+1);
-					className = className.substring(0,className.indexOf("|"));
-
-					procs.addElement(settingsHandler.getSettings(null),
-									 SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
-				}
+		}else if(action.equals("module")){
+			// Setting a module
+			String item = request.getParameter("item");
+			String className = request.getParameter("cbo"+item);
+						
+			CrawlerModule tmp = null;
+			if(item.equals("Frontier")){
+				// Changing URI frontier
+				tmp = SettingsHandler.instantiateCrawlerModuleFromClassName("frontier",className);
+			} else if(item.equals("Scope")){
+				// Changing Scope
+				tmp = SettingsHandler.instantiateCrawlerModuleFromClassName(org.archive.crawler.framework.CrawlScope.ATTR_NAME,className);
+			} 
+			if(tmp != null){
+				// If tmp is null then something went wrong but we'll ignore it.
+				settingsHandler.getOrder().setAttribute(tmp);
 				// Write changes
 				settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
 			}
-		}else if(action.equals("trackers")){
-			//Doing something with the statistics trackers
+		}else if(action.equals("map")){
+			//Doing something with a map
 			String subaction = request.getParameter("subaction");
-			if(subaction != null){
+			String item = request.getParameter("item");
+			if(subaction != null && item != null){
 				// Do common stuff
-				String trackerName = request.getParameter("item");
-				MapType trackers = ((MapType)settingsHandler.getOrder().getAttribute("loggers"));
-				// Figure out what to do
-				if(subaction.equals("up")){
-					// Move selected tracker up
-					trackers.moveElementUp(settingsHandler.getSettings(null),trackerName);
-				}else if(subaction.equals("down")){
-					// Move selected tracker down			
-					trackers.moveElementDown(settingsHandler.getSettings(null),trackerName);
-				}else if(subaction.equals("remove")){
-					// Remove selected processor
-					trackers.removeElement(settingsHandler.getSettings(null),trackerName);
-				}else if(subaction.equals("add")){
-					String className = request.getParameter("cboAddTrackers");
-					String typeName = className.substring(className.indexOf("|")+1);
-					className = className.substring(0,className.indexOf("|"));
-
-					trackers.addElement(settingsHandler.getSettings(null),
-									 SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+				String subitem = request.getParameter("subitem");
+				MapType map = null;
+				if(item.equals("Processors")){
+					// Editing processors map
+					map = ((MapType)settingsHandler.getOrder().getAttribute("processors"));
+				} else if(item.equals("StatisticsTracking")){
+					// Editing Statistics Tracking map
+					map = ((MapType)settingsHandler.getOrder().getAttribute("loggers"));
 				}
-				// Write changes
-				settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
+				if(map != null){
+					// Figure out what to do
+					if(subaction.equals("up")){
+						// Move selected processor up
+						map.moveElementUp(settingsHandler.getSettings(null),subitem);
+					}else if(subaction.equals("down")){
+						// Move selected processor down			
+						map.moveElementDown(settingsHandler.getSettings(null),subitem);
+					}else if(subaction.equals("remove")){
+						// Remove selected processor
+						map.removeElement(settingsHandler.getSettings(null),subitem);
+					}else if(subaction.equals("add")){
+						String className = request.getParameter("cboAdd"+item);
+						String typeName = className.substring(className.indexOf("|")+1);
+						className = className.substring(0,className.indexOf("|"));
+	
+						map.addElement(settingsHandler.getSettings(null),
+										 SettingsHandler.instantiateCrawlerModuleFromClassName(typeName,className));
+					}
+					// Write changes
+					settingsHandler.writeSettingsObject(settingsHandler.getSettings(null));
+				}
 			}
 		}		
 	}
@@ -163,67 +274,40 @@
 		doSubmit();
 	}
 	
-	function doSetURIFrontier(){
-		document.frmModules.action.value="frontier";
+	function doSetModule(name){
+		document.frmModules.action.value="module";
+		document.frmModules.item.value=name;
 		doSubmit();
 	}
 	
-	function doSetScope(){
-		document.frmModules.action.value="scope";
-		doSubmit();
-	}
-	
-	function doMoveUpProcessor(proc){
-		document.frmModules.action.value="processors";
+	function doMoveMapItemUp(name, item){
+		document.frmModules.action.value="map";
 		document.frmModules.subaction.value="up";
-		document.frmModules.item.value=proc;
+		document.frmModules.item.value=name;
+		document.frmModules.subitem.value=item;
 		doSubmit();
 	}
 
-	function doMoveDownProcessor(proc){
-		document.frmModules.action.value="processors";
+	function doMoveMapItemDown(name, item){
+		document.frmModules.action.value="map";
 		document.frmModules.subaction.value="down";
-		document.frmModules.item.value=proc;
+		document.frmModules.item.value=name;
+		document.frmModules.subitem.value=item;
 		doSubmit();
 	}
 	
-	function doRemoveProcessor(proc){
-		document.frmModules.action.value="processors";
+	function doRemoveMapItem(name, item){
+		document.frmModules.action.value="map";
 		document.frmModules.subaction.value="remove";
-		document.frmModules.item.value=proc;
+		document.frmModules.item.value=name;
+		document.frmModules.subitem.value=item;
 		doSubmit();
 	}
 	
-	function doAddProcessor(){
-		document.frmModules.action.value="processors";
+	function doAddMapItem(name){
+		document.frmModules.action.value="map";
 		document.frmModules.subaction.value="add";
-		doSubmit();
-	}
-
-	function doMoveUpTracker(track){
-		document.frmModules.action.value="trackers";
-		document.frmModules.subaction.value="up";
-		document.frmModules.item.value=track;
-		doSubmit();
-	}
-
-	function doMoveDownTracker(track){
-		document.frmModules.action.value="trackers";
-		document.frmModules.subaction.value="down";
-		document.frmModules.item.value=track;
-		doSubmit();
-	}
-	
-	function doRemoveTracker(track){
-		document.frmModules.action.value="trackers";
-		document.frmModules.subaction.value="remove";
-		document.frmModules.item.value=track;
-		doSubmit();
-	}
-	
-	function doAddTracker(){
-		document.frmModules.action.value="trackers";
-		document.frmModules.subaction.value="add";
+		document.frmModules.item.value=name;
 		doSubmit();
 	}
 </script>
@@ -235,217 +319,27 @@
 		<input type="hidden" name="action" value="done">
 		<input type="hidden" name="subaction" value="done">
 		<input type="hidden" name="item" value="">
+		<input type="hidden" name="subitem" value="">
 		<p>
 			<b>Select URI Frontier</b>
 		<p>
-		<table>
-			<tr>
-				<td>
-					<select name="cboFrontier">
-					<%
-						MBeanAttributeInfo frontier = settingsHandler.getOrder().getAttributeInfo("frontier");
-						for(int i=0 ; i<availibleURIFrontiers.size() ; i++){
-							out.print("<option value='"+availibleURIFrontiers.get(i)+"'");
-							if(frontier.getType().equals((String)availibleURIFrontiers.get(i))){
-								out.print(" selected");
-							}
-							out.println(">"+ availibleURIFrontiers.get(i)+"</option>");
-						}
-					%>
-					</select>
-				</td>
-				<td>
-					<input type="button" value="Set URI Frontier" onClick="doSetURIFrontier()">
-				</td>
-			</tr>
-		</table>
+			<%=buildModuleSetter(settingsHandler.getOrder().getAttributeInfo("frontier"),CrawlJobHandler.loadOptions("urifrontiers.options"),"Frontier")%>
+
 	
 		<p>
 			<b>Select crawl scope</b>
 		<p>
-		<table>
-			<tr>
-				<td>
-					<select name="cboScope">
-					<%
-						MBeanAttributeInfo scope = settingsHandler.getOrder().getAttributeInfo("scope");
-						for(int i=0 ; i<availibleScopes.size() ; i++){
-							out.print("<option value='"+availibleScopes.get(i)+"'");
-							if(scope.getType().equals((String)availibleScopes.get(i))){
-								out.print(" selected");
-							}
-							out.println(">"+ availibleScopes.get(i)+"</option>");
-						}
-					%>
-					</select>
-				</td>
-				<td>
-					<input type="button" value="Set scope" onClick="doSetScope()">
-				</td>
-			</tr>
-		</table>
+			<%=buildModuleSetter(settingsHandler.getOrder().getAttributeInfo("scope"),CrawlJobHandler.loadOptions("scopes.options"),"Scope")%>
 				
 		<p>
 			<b>Select Processors</b>
 		<p>
-		<table cellspacing="0" cellpadding="2">
-		<%
-			Vector unusedProcessors = new Vector();
-			ComplexType procs = ((ComplexType)settingsHandler.getOrder().getAttribute("processors"));
-			MBeanInfo procInfo = procs.getMBeanInfo();
-			MBeanAttributeInfo p[] = procInfo.getAttributes();
-			
-			// Printout used proc.
-			boolean alt = false;
-			for(int n=0; n<p.length; n++) {
-		        Object currentAttribute = null;
-				ModuleAttributeInfo att = (ModuleAttributeInfo)p[n]; //The attributes of the current attribute.
-		
-				out.println("<tr");
-				if(alt){
-					out.println(" bgcolor='#EEEEFF'");
-				}
-				out.println("><td>&nbsp;"+att.getType()+"</td>");
-				if(n!=0){
-					out.println("<td><a href=\"javascript:doMoveUpProcessor('"+att.getName()+"')\">Move up</a></td>");
-				} else {
-					out.println("<td></td>");
-				}
-				if(n!=p.length-1){
-					out.println("<td><a href=\"javascript:doMoveDownProcessor('"+att.getName()+"')\">Move down</a></td>");
-				} else {
-					out.println("<td></td>");
-				}
-				out.println("<td><a href=\"javascript:doRemoveProcessor('"+att.getName()+"')\">Remove</a></td>");
-				out.println("</tr>");
-				alt = !alt;
-			}
-		
-			// Find out which aren't being used.
-			for(int i=0 ; i<availibleProcessors.size() ; i++){
-				boolean isIncluded = false;
-				
-				for(int n=0; n<p.length; n++) {
-		            Object currentAttribute = null;
-					ModuleAttributeInfo att = (ModuleAttributeInfo)p[n]; //The attributes of the current attribute.
-		
-					try {
-						currentAttribute = procs.getAttribute(att.getName());
-					} catch (Exception e1) {
-						out.println(e1.toString() + " " + e1.getMessage());
-					}
-					String typeAndName = att.getType()+"|"+att.getName();
-					if(typeAndName.equals(availibleProcessors.get(i))){
-						//Found it
-						isIncluded = true;
-						break;
-					}
-				}
-				if(isIncluded == false){
-					// Yep the current one is unused.
-					unusedProcessors.add(availibleProcessors.get(i));
-				}
-			}
-			if(unusedProcessors.size() > 0 ){
-		%>
-			<tr>
-				<td>
-					<select name="cboAddProcessor">
-					<%
-						for(int i=0 ; i<unusedProcessors.size() ; i++){
-							String curr = (String)unusedProcessors.get(i);
-							out.println("<option value='"+curr+"'>"+curr.substring(0,curr.indexOf("|"))+"</option>");
-						}
-					%>
-					</select>
-				</td>
-				<td>
-					<input type="button" value="Add" onClick="doAddProcessor()">
-				</td>
-			</tr>
-		<%	}	%>
-		</table>
+			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("processors"), CrawlJobHandler.loadOptions("processors.options"), "Processors")%>
 
 		<p>
 			<b>Select Statistics Tracking</b>
 		<p>
-		<table cellspacing="0" cellpadding="2">
-		<%
-			Vector unusedTrackers = new Vector();
-			ComplexType trackers = ((ComplexType)settingsHandler.getOrder().getAttribute("loggers"));
-			MBeanInfo trackersInfo = trackers.getMBeanInfo();
-			MBeanAttributeInfo t[] = trackersInfo.getAttributes();
-			
-			// Printout used trackers.
-			alt = false;
-			for(int n=0; n<t.length; n++) {
-		        Object currentAttribute = null;
-				ModuleAttributeInfo att = (ModuleAttributeInfo)t[n]; //The attributes of the current attribute.
-		
-				out.println("<tr");
-				if(alt){
-					out.println(" bgcolor='#EEEEFF'");
-				}
-				out.println("><td>&nbsp;"+att.getType()+"</td>");
-				if(n!=0){
-					out.println("<td><a href=\"javascript:doMoveUpTracker('"+att.getName()+"')\">Move up</a></td>");
-				} else {
-					out.println("<td></td>");
-				}
-				if(n!=t.length-1){
-					out.println("<td><a href=\"javascript:doMoveDownTracker('"+att.getName()+"')\">Move down</a></td>");
-				} else {
-					out.println("<td></td>");
-				}
-				out.println("<td><a href=\"javascript:doRemoveTracker('"+att.getName()+"')\">Remove</a></td>");
-				out.println("</tr>");
-				alt = !alt;
-			}
-		
-			// Find out which aren't being used.
-			for(int i=0 ; i<availibleTrackers.size() ; i++){
-				boolean isIncluded = false;
-				
-				for(int n=0; n<t.length; n++) {
-		            Object currentAttribute = null;
-					ModuleAttributeInfo att = (ModuleAttributeInfo)t[n]; //The attributes of the current attribute.
-		
-					try {
-						currentAttribute = trackers.getAttribute(att.getName());
-					} catch (Exception e1) {
-						out.println(e1.toString() + " " + e1.getMessage());
-					}
-					String typeAndName = att.getType()+"|"+att.getName();
-					if(typeAndName.equals(availibleTrackers.get(i))){
-						//Found it
-						isIncluded = true;
-						break;
-					}
-				}
-				if(isIncluded == false){
-					// Yep the current one is unused.
-					unusedTrackers.add(availibleTrackers.get(i));
-				}
-			}
-			if(unusedTrackers.size() > 0 ){
-		%>
-			<tr>
-				<td>
-					<select name="cboAddTrackers">
-					<%
-						for(int i=0 ; i<unusedTrackers.size() ; i++){
-							String curr = (String)unusedTrackers.get(i);
-							out.println("<option value='"+curr+"'>"+curr.substring(0,curr.indexOf("|"))+"</option>");
-						}
-					%>
-					</select>
-				</td>
-				<td>
-					<input type="button" value="Add" onClick="doAddTracker()">
-				</td>
-			</tr>
-		<%	}	%>
-		</table>
+			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("loggers"), CrawlJobHandler.loadOptions("trackers.options"), "StatisticsTracking")%>
 	</form>
 	<p>
 		<%@include file="/include/jobnav.jsp"%>
