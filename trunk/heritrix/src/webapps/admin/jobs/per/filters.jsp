@@ -268,7 +268,7 @@
 			override filters. It is not possible to remove filters defined in a super domain!
 		<p>
 		<table>
-			<%=printFilters(crawlOrder,settings,"",false,false,false,null,false,CrawlJobHandler.loadOptions("filters.options"))%>
+			<%=printFilters(crawlOrder,settings,"",false,false,false,null,false,CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FILTERS))%>
 		</table>
 	</form>
 	<p>

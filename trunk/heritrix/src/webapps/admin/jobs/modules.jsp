@@ -330,7 +330,7 @@
 		<p>
 			<%=buildModuleSetter(
 				settingsHandler.getOrder().getAttributeInfo("frontier"),
-				CrawlJobHandler.loadOptions("urifrontiers.options"),
+				CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FRONTIERS),
 				"Frontier",
 				((ComplexType)settingsHandler.getOrder().getAttribute("frontier")).getMBeanInfo().getDescription())%>
 
@@ -340,19 +340,19 @@
 		<p>
 			<%=buildModuleSetter(
 				settingsHandler.getOrder().getAttributeInfo("scope"),
-				CrawlJobHandler.loadOptions("scopes.options"),
+				CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_SCOPES),
 				"Scope",
 				((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getMBeanInfo().getDescription())%>
 				
 		<p>
 			<b>Select Processors</b>
 		<p>
-			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("processors"), CrawlJobHandler.loadOptions("processors.options"), "Processors")%>
+			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("processors"), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_PROCESSORS), "Processors")%>
 
 		<p>
 			<b>Select Statistics Tracking</b>
 		<p>
-			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("loggers"), CrawlJobHandler.loadOptions("trackers.options"), "StatisticsTracking")%>
+			<%=buildModuleMap((ComplexType)settingsHandler.getOrder().getAttribute("loggers"), CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_TRACKERS), "StatisticsTracking")%>
 	</form>
 	<p>
 		<%@include file="/include/jobnav.jsp"%>

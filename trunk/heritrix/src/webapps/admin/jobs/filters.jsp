@@ -269,7 +269,7 @@
 		<input type="hidden" name="map" value="">
 		<input type="hidden" name="filter" value="">
 		<table>
-			<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false,CrawlJobHandler.loadOptions("filters.options"))%>
+			<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false,CrawlJobHandler.loadOptions(CrawlJobHandler.MODULE_OPTIONS_FILE_FILTERS))%>
 		</table>
 	</form>
 	<p>

@@ -91,6 +91,14 @@ import org.archive.util.FileUtils;
 
 public class CrawlJobHandler implements CrawlStatusListener {
 
+    public static final String MODULE_OPTIONS_FILE_FILTERS = "filters.options";
+    public static final String MODULE_OPTIONS_FILE_PROCESSORS = "processors.options";
+    public static final String MODULE_OPTIONS_FILE_SCOPES = "scopes.options";
+    public static final String MODULE_OPTIONS_FILE_TRACKERS = "trackers.options";
+    public static final String MODULE_OPTIONS_FILE_FRONTIERS = "urifrontiers.options";
+	public static final String MODULE_OPTIONS_DIRECTORY = Heritrix.getConfdir()
+			+ File.separator + "modules" + File.separator;
+    
     /**
      * Name of system property whose specification overrides default profile
      * used.
@@ -809,14 +817,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * modules that can be plugged into some part of the configuration.
      * For examples Processors, Frontiers, Filters etc. Leading and trailing
      * spaces are trimmed from each line.
-     * @param file the name of the option file (it is presumed to reside in the
-     *             Heritrix conf directory
+     * @param file the name of the option file (without path!)
      * @return The option file with each option line as a seperate entry in the
      *         ArrayList.
      * @throws IOException when there is trouble reading the file.
      */
     public static ArrayList loadOptions(String file) throws IOException{
-        File optionfile = new File(Heritrix.getConfdir()+File.separator+file);
+        File optionfile = new File(MODULE_OPTIONS_DIRECTORY+file);
         BufferedReader bf = new BufferedReader(new FileReader(optionfile), 8192);
         ArrayList ret = new ArrayList();
 
