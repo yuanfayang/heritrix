@@ -30,7 +30,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
-import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -66,7 +65,7 @@ import org.archive.crawler.framework.Filter;
  * @author gojomo
  *
  */
-public class PathScope extends CrawlScope {
+public class PathScope extends SeedCachingScope {
 
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.PathScope");

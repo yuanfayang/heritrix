@@ -28,7 +28,6 @@ import java.util.Iterator;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
-import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -64,7 +63,7 @@ import org.archive.crawler.framework.Filter;
  * @author gojomo
  *
  */
-public class HostScope extends CrawlScope {
+public class HostScope extends SeedCachingScope {
 
 
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
