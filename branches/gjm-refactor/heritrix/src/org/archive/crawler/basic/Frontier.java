@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -230,15 +231,15 @@ public class Frontier
 	public synchronized void finished(CrawlURI curi) {
 		logger.fine(this+".finished("+curi+")");
 		
+		curi.incrementFetchAttempts();
+		
 		try {
 			noteProcessingDone(curi);
 			// snooze queues as necessary
 			updateScheduling(curi);
 			notify(); // new items might be available
 			
-			//if(curi.getAList()) {
-			//	curi.getAList().remove(A_PREREQUISITE_URI);
-			//}
+			noteLocalErrors(curi);
 			
 			// consider errors which halt further processing
 			if (isDispositiveFailure(curi)) {
@@ -246,36 +247,12 @@ public class Frontier
 				return;
 			}
 				
-// NOW HANDLED BY POSTSELECTOR
-//			// handle any prerequisites
-//			if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
-//				handlePrerequisites(curi);
-//				return;
-//			}
-				
 			// consider errors which can be retried
 			if (needsRetrying(curi)) {
 				scheduleForRetry(curi);
 				return;
 			}
-				
-				
-// NOW HANDLED BY POSTSELECTOR
-//			URI baseUri = getBaseURI(curi);
-//				
-//			// handle http headers 
-//			if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
-//				handleHttpHeaders(curi, baseUri);
-//			}
-//			// handle embeds 
-//			if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
-//				handleEmbeds(curi, baseUri);
-//			}
-//			// handle links
-//			if (curi.getAList().containsKey(A_HTML_LINKS)) {
-//				handleLinks(curi, baseUri);
-//			}
-				
+								
 			// SUCCESS: note & log
 			successDisposition(curi);
 		} catch (RuntimeException e) {
@@ -286,6 +263,23 @@ public class Frontier
 		}	
 	} 
 			
+	/**
+	 * 
+	 */
+	private void noteLocalErrors(CrawlURI curi) {
+		if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
+			List localErrors = (List)curi.getAList().getObject(A_LOCALIZED_ERRORS);
+			Iterator iter = localErrors.iterator();
+			while(iter.hasNext()) {
+				Object array[] = { curi, iter.next() };
+				controller.localErrors.log(
+					Level.WARNING,
+					curi.getUURI().getUri().toString(),
+					array);
+			}
+		}
+	}
+
 	/**
 	 * The CrawlURI has been successfully crawled, and will be
 	 * attempted no more. 
@@ -359,9 +353,13 @@ public class Frontier
 		}
 	}
 
-	private void discardQueue(URIStoreable awoken) {
-		allClassQueuesMap.remove(((KeyedQueue)awoken).getClassKey());
-		awoken.setStoreState(URIStoreable.FINISHED);
+	private void discardQueue(URIStoreable q) {
+		allClassQueuesMap.remove(((KeyedQueue)q).getClassKey());
+		q.setStoreState(URIStoreable.FINISHED);
+		assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
+		assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q";
+		assert !snoozeQueues.contains(q) : "snoozeQueues holding dead q";
+		//assert heldClassQueues.size()+readyClassQueues.size()+snoozeQueues.size() <= allClassQueuesMap.size() : "allClassQueuesMap discrepancy";
 	}
 	
 	/**
@@ -586,8 +584,8 @@ public class Frontier
 
 		// if exception, also send to crawlErrors
 		if (curi.getFetchStatus() == S_INTERNAL_ERROR) {
-			controller.crawlErrors.log(
-				Level.INFO,
+			controller.runtimeErrors.log(
+				Level.WARNING,
 				curi.getUURI().getUri().toString(),
 				array);
 		}
