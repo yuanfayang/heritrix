@@ -1188,6 +1188,7 @@ public class Frontier
         switch (curi.getFetchStatus()) {
             case S_CONNECT_FAILED:
             case S_CONNECT_LOST:
+            case S_DOMAIN_UNRESOLVABLE:
                 // these are all worth a retry
                 // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
                 return true;
@@ -1221,9 +1222,6 @@ public class Frontier
 
         // now, reinsert CrawlURI in relevant queue
         reschedule(curi);
-
-        controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-        controller.recover.rescheduled(curi);
     }
 
     /**
@@ -1241,6 +1239,9 @@ public class Frontier
         }
         enqueueToKeyed(curi);
         queuedCount++;
+        
+        controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
+        controller.recover.rescheduled(curi);
     }
 
     /**
