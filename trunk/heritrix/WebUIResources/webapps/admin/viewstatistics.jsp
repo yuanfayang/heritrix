@@ -8,24 +8,18 @@
 	 *	Parameter: job - UID for the job.
 	 */
 	 
-	int job = -1;
+	String job = request.getParameter("job");
 	CrawlJob cjob = null;
-	
-	try
-	{
-		job = Integer.parseInt(request.getParameter("job"));
-	}
-	catch(Exception e){}
 
 	StatisticsTracker stats = null;
 	
-	if(job != -1)
+	if(job != null)
 	{
 		Vector jobs = handler.getCompletedJobs();
 		for(int i=0 ; i < jobs.size() ; i++)
 		{
 			cjob = (CrawlJob)jobs.get(i);
-			if(cjob.getUID() == job)
+			if(cjob.getUID().equals(job))
 			{
 				// Found it!
 				stats = cjob.getStatisticsTracker();
