@@ -230,6 +230,61 @@ public class LogReader
 
     /**
      * Return the line number of the first line in the
+     * log/file that begins with the given string.
+     *
+     * @param aFileName The filename of the log/file
+     * @param prefix The prefix string to match
+     * @return The line number (counting from 1, not zero) of the first line
+     *         that matches the given regular expression. -1 is returned if no
+     *         line matches the regular expression. -1 also is returned if 
+     *         errors occur (file not found, io exception etc.)
+     */
+    public static int findFirstLineBeginningFromSeries(String aFileName, 
+                                                        String prefix)
+    {
+        try {
+            return findFirstLineBeginning(seriesReader(aFileName), prefix);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+    
+    /**
+     * Return the line number of the first line in the
+     * log/file that that begins with the given string.
+     *
+     * @param reader The reader of the log/file
+     * @param prefix The prefix string to match
+     * @return The line number (counting from 1, not zero) of the first line
+     *         that matches the given regular expression. -1 is returned if no
+     *         line matches the regular expression. -1 also is returned if 
+     *         errors occur (file not found, io exception etc.)
+     */
+    public static int findFirstLineBeginning(InputStreamReader reader, 
+                                              String prefix)
+    {
+
+        try{
+            BufferedReader bf = new BufferedReader(reader, 8192);
+
+            String line = null;
+            int i = 1;
+            while ((line = bf.readLine()) != null) {
+                if(line.startsWith(prefix)){
+                    // Found a match
+                    return i;
+                }
+                i++;
+            }
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
+    /**
+     * Return the line number of the first line in the
      * log/file that matches a given regular expression.
      *
      * @param aFileName The filename of the log/file
