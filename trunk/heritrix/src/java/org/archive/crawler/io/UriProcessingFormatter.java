@@ -75,6 +75,9 @@ public class UriProcessingFormatter
                 mime = curi.getContentType();
             }
         }
+        // Cleanup mimetype
+        mime = cleanupContentType(mime);
+         
         long time;
         String duration;
         if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
@@ -116,6 +119,33 @@ public class UriProcessingFormatter
             + " "
             + via
             + "\n";
+    }
+
+    /**
+     * Cleanup passed mimetype.
+     *
+     * Figure out content type, truncate at delimiters [;, ].
+     * Truncate multi-part content type header at ';'.
+     * Apache httpclient collapses values of multiple instances of the
+     * header into one comma-separated value, therefore truncated at ','.
+     *
+     * @param contentType Raw content-type.
+     *
+     * @return Computed content-type made from passed content-type after
+     * running it through a set of rules.
+     */
+    private String cleanupContentType(String contentType) {
+        if (contentType == null) {
+            contentType = "no-type";
+        } else if (contentType.indexOf(';') >= 0) {
+            contentType = contentType.substring(0, contentType.indexOf(';'));
+        } else if (contentType.indexOf(',') >= 0) {
+            contentType = contentType.substring(0, contentType.indexOf(','));
+        } else if (contentType.indexOf(' ') >= 0) {
+            contentType = contentType.substring(0, contentType.indexOf(' '));
+        }
+
+        return contentType;
     }
 }
 
