@@ -37,6 +37,36 @@ day.</source></p>
     </subsection>
 
 
+<subsection name="Host">
+
+<p>A host can serve multiple domains or a single domain can be served by 
+multiple hosts.  For our purposes so far, 
+<i>host</i> == <i>hostname in URI</i> 
+DNS is not considered; it is volatile and may be unavailable.
+So when we get the URIs...
+<source>
+    http://www.example.com
+    http://search.example.com
+    http://201.199.7.15
+</source>
+...even if they all point to the 201.199.7.15 IP, they are 3 different logical
+hosts (at the level of the URI/HTTP protocol). Conformant
+HTTP proxies behave similarly, we think, even if they know www.example.com ==
+201.199.7.15, they will not consider them interchangeable.
+</p>
+
+<p>This is not ideal for politeness where we'd want politeness rules to 
+apply to the physical host rather than the logical.</p>
+
+<p><a href="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlHost.html">CrawlHost</a> is used to represent our notion of a <i>Host</i>
+(whereas <a href="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlServer.html">CrawlServer</a> is used to represent a
+<i>Server</i> on that host: e.g. there would be a <code>CrawlHost</code>
+for yahoo.com and one <code>CrawlServer</code> instance for the yahoo.com:80
+and another for yahoo.com:443.
+</p>
+
+</subsection>
+
     </section>
   </body>
 </document>
