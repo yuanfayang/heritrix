@@ -96,7 +96,6 @@
         <long name="max-length-bytes">9223372036854775807</long>
         <string name="load-cookies-from-file"/>
         <string name="save-cookies-to-file"/>
-        <boolean name="strict">false</boolean>
         <string name="trust-level">open</string>
       </newObject>
     </map>
