@@ -10,7 +10,8 @@
 	 *          0 - Modules
 	 *          1 - Filters
 	 *          2 - Settings
-	 *          3 - Overrides
+     *          3 - Overrides
+     *          4 - Credentials
 	 *
 	 * @author Kristinn Sigurdsson
 	 */
@@ -40,11 +41,16 @@
 						<% } %>
 						<td class="tab_seperator">
 						</td>
-						<td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-							<a href="javascript:doGoto('/admin/jobs/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
-						</td>
-						<td class="tab_seperator">
-						</td>
+                        <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('/admin/jobs/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
+                        <td class="tab<%=jobtab==4?"_selected":""%>" nowrap>
+                            <a href="javascript:doGoto('/admin/jobs/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
+                        </td>
+                        <td class="tab_seperator">
+                        </td>
 						<td class="tab<%=jobtab==2?"_selected":""%>" nowrap>
 							<a href="javascript:doGoto('/admin/jobs/configure.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
 						</td>
