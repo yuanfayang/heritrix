@@ -251,8 +251,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             return;
         }
         
-        DataContainer data = settings.getData(complexType);
-        MBeanInfo mbeanInfo = data.getMBeanInfo();
+        MBeanInfo mbeanInfo = complexType.getMBeanInfo(settings);
         String objectElement = resolveElementName(complexType);
 
         AttributesImpl atts = new AttributesImpl();
@@ -284,18 +283,11 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         for (int i = 0; i < attsInfo.length; i++) {
             ModuleAttributeInfo attribute = (ModuleAttributeInfo) attsInfo[i];
             Object value;
-            if (! attribute.isComplexType()) {
-                try {
-                    value = data.get(attribute.getName());
-                } catch (AttributeNotFoundException e) {
-                    value = attribute.getDefaultValue();
-                }
-            } else {
-                try {
-                    value = complexType.getLocalAttribute(settings, attribute.getName());
-                } catch (AttributeNotFoundException e) {
-                    throw new SAXException(e);
-                }
+            try {
+                value = complexType.getLocalAttribute(
+                    settings, attribute.getName());
+            } catch (AttributeNotFoundException e) {
+                throw new SAXException(e);
             }
             if (orderFile || value != null) {
                 // Write only overridden values unless this is the order file
