@@ -186,17 +186,9 @@
 				}
 			}
 			return;
-		}else if(action.equals("configure")){
-			// Go to configure settings.
-			response.sendRedirect("/admin/jobs/configure.jsp?job="+theJob.getUID());
-			return;
-		}else if(action.equals("modules")){
-			// Go to modules
-			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
-			return;
-		}else if(action.equals("per")){
-			// Go to modules
-			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID());
+		}else if(action.equals("goto")){
+            // Goto another page of the job/profile settings
+			response.sendRedirect(request.getParameter("subaction")+"?job="+theJob.getUID());
 			return;
 		}
 	}
@@ -213,21 +205,12 @@
 		document.frmFilters.submit();
 	}
 	
-	function doGotoConfigure(){
-		document.frmFilters.action.value="configure";
-		doSubmit();
-	}
-	
-	function doGotoModules(){
-		document.frmFilters.action.value="modules";
-		doSubmit();
-	}
-	
-	function doGotoPer(){
-		document.frmFilters.action.value="per";
-		doSubmit();
-	}
-	
+    function doGoto(where){
+        document.frmFilters.action.value="goto";
+        document.frmFilters.subaction.value = where;
+        doSubmit();
+    }
+    
 	function doMoveUp(filter,map){
 		document.frmFilters.action.value = "filters";
 		document.frmFilters.subaction.value = "moveup";

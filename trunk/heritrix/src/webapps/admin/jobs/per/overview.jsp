@@ -77,17 +77,9 @@
 				message = "Override for domain '"+theDomain+"' deleted.";
 				currDomain = "";
 			}
-		} else if(action.equals("modules")){
-			// Go to modules.
-			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
-			return;
-		} else if(action.equals("filters")){
-			// Go to filters.
-			response.sendRedirect("/admin/jobs/filters.jsp?job="+theJob.getUID());
-			return;
-		} else if(action.equals("configure")){
-			// Go to configure settings.
-			response.sendRedirect("/admin/jobs/configure.jsp?job="+theJob.getUID());
+		} else if(action.equals("goto")){
+            // Goto another page of the job/profile settings
+			response.sendRedirect(request.getParameter("where")+"?job="+theJob.getUID());
 			return;
 		}
 	}
@@ -113,21 +105,12 @@
 			document.frmPer.submit();
 		}
 		
-		function doGotoModules(){
-			document.frmPer.action.value="modules";
-			doSubmit();
-		}
-		
-		function doGotoFilters(){
-			document.frmPer.action.value="filters";
-			doSubmit();
-		}
-
-		function doGotoConfigure(){
-			document.frmPer.action.value="configure";
-			doSubmit();
-		}
-		
+	    function doGoto(where){
+	        document.frmPer.action.value="goto";
+	        document.frmPer.where.value = where;
+	        doSubmit();
+	    }
+	    
 		function doCreateEdit(){
 			document.frmPer.currDomain.value = document.frmPer.newDomain.value;
 			doEdit();
@@ -167,6 +150,7 @@
 	<p>
 	<form name="frmPer" method="post" action="overview.jsp">
 		<input type="hidden" name="action" value="done">
+		<input type="hidden" name="where" value="">
 		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 		<input type="hidden" name="currDomain" value="<%=currDomain%>">
 		<b>

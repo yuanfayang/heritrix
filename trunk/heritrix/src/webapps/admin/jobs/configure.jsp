@@ -264,16 +264,11 @@
 				}
 			}
             return;
-		}else if(request.getParameter("action").equals("modules")){
-			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
+		}else if(request.getParameter("action").equals("goto")){
+            // Goto another page of the job/profile settings
+			response.sendRedirect(request.getParameter("where")+"?job="+theJob.getUID());
             return;
-		}else if(request.getParameter("action").equals("filters")){
-			response.sendRedirect("/admin/jobs/filters.jsp?job="+theJob.getUID());
-            return;
-        }else if(request.getParameter("action").equals("per")){
-            response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID());
-            return;
-        }else if(request.getParameter("action").equals("updateexpert")){
+		}else if(request.getParameter("action").equals("updateexpert")){
 		    if(request.getParameter("expert") != null){
 		        if(request.getParameter("expert").equals("true")){
 		            expert = true;
@@ -334,19 +329,10 @@
 			document.frmConfig.submit();
 		}
 		
-		function doGotoModules(){
-			document.frmConfig.action.value="modules";
-			doSubmit();
-		}
-		
-		function doGotoFilters(){
-			document.frmConfig.action.value="filters";
-			doSubmit();
-		}
-		
-		function doGotoPer(){
-			document.frmConfig.action.value="per";
-			doSubmit();
+		function doGoto(where){
+            document.frmConfig.action.value="goto";
+            document.frmConfig.where.value = where;
+            doSubmit();
 		}
 		
 		function doPop(text){
@@ -373,6 +359,7 @@
 	<form name="frmConfig" method="post" action="configure.jsp">
 		<input type="hidden" name="update" value="true">		
 		<input type="hidden" name="action" value="done">
+		<input type="hidden" name="where" value="">
 		<input type="hidden" name="expert" value="<%=expert%>">
 		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 	

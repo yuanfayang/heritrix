@@ -199,9 +199,9 @@
 			}
 			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
 			return;
-		}else if(action.equals("configure")){
-			// Go to configure settings.
-			response.sendRedirect("/admin/jobs/per/configure.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+		}else if(action.equals("goto")){
+            // Goto another page of the job/profile settings
+			response.sendRedirect(request.getParameter("subaction")+"?job="+theJob.getUID()+"&currDomain="+currDomain);
 			return;
 		}
 	}
@@ -218,8 +218,9 @@
 		document.frmFilters.submit();
 	}
 	
-	function doGotoConfigure(){
-		document.frmFilters.action.value="configure";
+	function doGoto(where){
+		document.frmFilters.action.value="goto";
+		document.frmFilters.subaction.value=where;
 		doSubmit();
 	}
 	

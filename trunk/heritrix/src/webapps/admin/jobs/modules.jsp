@@ -181,17 +181,9 @@
 				}
 			}
 			return;
-		}else if(action.equals("configure")){
-			// Go to configure settings.
-			response.sendRedirect("/admin/jobs/configure.jsp?job="+theJob.getUID());
-			return;
-		}else if(action.equals("filters")){
-			// Go to select filters.
-			response.sendRedirect("/admin/jobs/filters.jsp?job="+theJob.getUID());
-			return;
-		}else if(action.equals("per")){
-			// Go to select filters.
-			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID());
+		}else if(action.equals("goto")){
+            // Goto another page of the job/profile settings
+			response.sendRedirect(request.getParameter("subaction")+"?job="+theJob.getUID());
 			return;
 		}else if(action.equals("module")){
 			// Setting a module
@@ -276,21 +268,12 @@
 		document.frmModules.submit();
 	}
 	
-	function doGotoConfigure(){
-		document.frmModules.action.value="configure";
-		doSubmit();
-	}
-	
-	function doGotoFilters(){
-		document.frmModules.action.value="filters";
-		doSubmit();
-	}
-	
-	function doGotoPer(){
-		document.frmModules.action.value="per";
-		doSubmit();
-	}
-	
+    function doGoto(where){
+        document.frmModules.action.value="goto";
+        document.frmModules.subaction.value = where;
+        doSubmit();
+    }
+    
 	function doSetModule(name){
 		document.frmModules.action.value="module";
 		document.frmModules.item.value=name;
