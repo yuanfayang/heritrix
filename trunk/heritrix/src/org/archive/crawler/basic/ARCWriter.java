@@ -270,6 +270,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		Header[] headers = get.getResponseHeaders();
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		baos.write(get.getStatusLine().toString().getBytes());	// get status line (it's not a header)
+		baos.write("\n".getBytes());
 		for(int i=0; i < headers.length; i++){
 			baos.write(headers[i].toExternalForm().getBytes());
 		}
