@@ -847,33 +847,18 @@ public class Foo extends ModuleType {
                         url="http://www.w3.org/Addressing/">Naming and
                         Addressing: URIs, URLs, ...</ulink> on w3.org's website.</para>
             </footnote> in Heritrix are represented by several classes. The
-            basic building block is the <ulink
-            url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">java.net.URI</ulink>
-            class. This class offers some normalization of an URI in addition to
-            methods for accessing the different parts of the URI. The URI class,
-            according to its documentation, is meant to strictly conform to the
-                <ulink url="http://www.ietf.org/rfc/rfc2396.txt">RFC
-            2396</ulink>. This causes some problems because the real world does
-            not conform to the RFC. In addition some bugs in the URI class have
-            been discovered which restricts its acceptance of some URIs further.
-            To overcome these limitations, org.archive.crawler.datamodel.UURI
-            substitutes for java.net.URI (with help from
-            the HttpClient URI class).</para>
+            basic building block is 
+            <literal>org.archive.datamodel.UURI</literal> which subclasses
+            <literal>org.apache.commons.httpclient.URI</literal>. 
+            This class always normalizes and derelativizes URIs.
+            It also provides methods for accessing the different parts of the
+            URI.</para>
+            <para>We used to use <literal>java.net.URI</literal> but bugs
+            and its strict RFC2396 conformance in the face of a real world
+            that acts otherwise, it was replaced by UURI.</para>
 
-        <para>Three different classes wraps the java.net.URI in Heritrix:</para>
+        <para>Two classes wrap the <literal>UURI</literal> in Heritrix:</para>
         <variablelist>
-            <varlistentry>
-                <term>
-                    <ulink url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/UURI.html">UURI</ulink>
-                </term>
-                <listitem>
-                    <para>Usable URI: a legal URI for our purposes. These
-                        instances will always have been normalized (massaged in
-                        ways that by spec and in practice, do not change the
-                        URI's meaning or function) and rehabilitated (patched in
-                        risk less or necessary ways to be legal, eg escaping spaces).</para>
-                </listitem>
-            </varlistentry>
             <varlistentry>
                 <term>
                     <ulink url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CandidateURI.html">CandidateURI</ulink>
@@ -1938,18 +1923,22 @@ public class SimpleExtractor extends Processor
         <para>The ARC file format is described here: <ulink
                 url="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
                 File Format</ulink>. Heritrix writes version 1 ARC files.</para>
-        <para>Recently, an amendment was made to the ARC file version 1 format
+        <para>Pre-release of Heritrix 1.0, 
+        an amendment was made to the ARC file version 1 format
             to allow writing of extra metadata into first record of an ARC file.
-            This extra metadata is written as XML whose XML Schema can be found
+            This extra metadata is written as XML. 
+            The XML Schema used by metadata instance documents can be found
             at <ulink
             url="http://archive.org/arc/1.0/arc.xsd">http://archive.org/arc/1.0/xsd</ulink>.
             The schema is documented <ulink
             url="http://archive.org/arc/1.0/arc.html">here</ulink>. </para>
         <para>If the extra XML metadata info is present, the second
             '&lt;reserved&gt;' field of the second line of version 1 ARC
-            files will be changed from '0' to '1'.</para>
+            files will be changed from '0' to '1': i.e. ARCs with XML 
+            metadata are version '1.1'.</para>
         <para>If present, the ARC file metadata record body will contain at
-            least the following fields. Later revisions of may add other fields:<orderedlist>
+            least the following fields (Later revisions to the ARC
+            may add other fields):<orderedlist>
                 <listitem>
                     <para>Software and software version used creating the ARC
                         file. Example: 'heritrix 0.7.1 http://crawler.archive.org'.</para>
