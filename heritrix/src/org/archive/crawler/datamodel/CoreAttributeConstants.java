@@ -46,6 +46,7 @@ public interface CoreAttributeConstants {
 	public static String A_LOCALIZED_ERRORS = "localized-errors";
 	
 	public static String A_PREREQUISITE_URI = "prerequisite-uri";
+	public static String A_FORCED_PREREQUISITE_URI = "forced-prerequisite-uri";
 	public static String A_HTML_EMBEDS = "html-embeds";
 	public static String A_HTML_SPECULATIVE_EMBEDS = "html-speculativeembeds";
 	public static String A_DISTANCE_FROM_SEED = "distance-from-seed";
