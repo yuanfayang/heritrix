@@ -90,7 +90,7 @@
 							<font color="<%=statusColor%>"><%=statusCode%></font>
 						</td>
 						<td>
-							<a href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=UriString%>&grep=true"><%=disposition%></a>
+							<a href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=UriString%>&grep=true" style="text-decoration: none;"><%=disposition%></a>
 						</td>
 					</tr>
 			<%
