@@ -273,6 +273,24 @@ public class XMLConfig {
 		return null;
 	}
 	
+	/**
+	 * Retrieve a (positive) integer value from the given xpath;
+	 * return -1 if none found or other error occurs. 
+	 * 
+	 * @param xpath
+	 * @return
+	 */
+	public boolean getBooleanAt(String xpath, boolean defaultValue) {
+		String value = getStringAt(xpath);
+		if(value==null) {
+			return defaultValue;
+		}
+		if(value.equalsIgnoreCase("yes")||value.equalsIgnoreCase("true")) {
+			return true;
+		}
+		return false;
+	}
+
 
 	/**
 	 * Retrieve a (positive) integer value from the given xpath;
@@ -325,6 +343,25 @@ public class XMLConfig {
 		}
 		return ((Integer) cachedIntegers.get(xpath)).intValue();
 	}
+
+	/**
+	 * Retrieve a (positive) long  value from the given xpath;
+	 * return the supplied default if none found or other error occurs. 
+	 * 
+	 * @param xpath
+	 * @param defaultValue
+	 * @return
+	 */
+	public long getLongAt(String xpath, long defaultValue) {
+		// TODO possibly mimic the caching that happens for Integers
+		String n = getStringAt(xpath);
+		long l;
+		if (n != null) {
+			return Long.parseLong(n);
+		}
+		return defaultValue;
+	}
+
 
 	/**
 	 * Return the text of the given node: the value if an
@@ -386,6 +423,19 @@ public class XMLConfig {
 	}
 
 	/**
+	 * @param string
+	 * @param arcPrefix
+	 * @return
+	 */
+	public String getStringAt(String xpath, String defaultVal ) {
+		String retVal = getStringAt(xpath);
+		if (retVal==null) {
+			retVal = defaultVal;
+		}
+		return retVal;
+	}
+
+	/**
 	 * Using the node at the specified xpath as a guide,
 	 * create a Java instance. The node must supply a 
 	 * 'class' attribute. 
@@ -400,7 +450,9 @@ public class XMLConfig {
 			if(node == null && parentConfigurationFile != null){
 				return parentConfigurationFile.instantiate(xpath);
 			}
-			
+			if(node == null){
+				return null;
+			}
 			return instantiate(node);
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block

@@ -10,18 +10,18 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.InitializationException;
 
 /**
  * Main class for Heritrix crawler.
  * 
- * Currently takes a single command-line argument, which
+ * Initially takes a single command-line argument, which
  * should be an XML crawl-order file describing the crawl to 
  * undertake, and begins that crawl.
  * 
- * (Eventually, will start web UI and await further
- * instructions.)
+ * Alternatively, can start a web UI and await further 
+ * instructions.
  * 
  * @author gojomo
  *
@@ -62,8 +62,6 @@ public class Heritrix {
 		// catch all configuration exceptions, which at this level are fatal
 		}catch(InitializationException e){
 			System.out.println("Fatal configuration exception: " + e.toString());
-		}catch(Exception ee) {
-			ee.printStackTrace(System.out);
 		}
 		
 		logger.info("exitting main thread");
@@ -76,9 +74,9 @@ public class Heritrix {
 				"\t-no-wui start crawler without Web User Interface");
 	}
 
-	private void startServer() throws Exception {
-		SimpleHttpServer server = new SimpleHttpServer();
+	private void startServer() {
 		try {
+			SimpleHttpServer server = new SimpleHttpServer();
 			server.startServer();
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
@@ -86,9 +84,9 @@ public class Heritrix {
 
 	}
 
-	private void startServer(CrawlController c) throws Exception {
-		SimpleHttpServer server = new SimpleHttpServer();
+	private void startServer(CrawlController c) {
 		try {
+			SimpleHttpServer server = new SimpleHttpServer();
 			server.startServer();
 		} catch (Exception e) {
 			e.printStackTrace(System.out);

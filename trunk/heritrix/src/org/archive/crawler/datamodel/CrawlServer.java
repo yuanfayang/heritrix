@@ -9,10 +9,12 @@ package org.archive.crawler.datamodel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.crawler.io.ReplayInputStream;
+import org.archive.io.ReplayInputStream;
 
 /**
  * Represents a single remote "host". 
@@ -20,7 +22,7 @@ import org.archive.crawler.io.ReplayInputStream;
  * @author gojomo
  *
  */
-public class CrawlServer {
+public class CrawlServer implements Serializable {
 	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day 
 	String server; // actually, host+port in the http case
 	CrawlHost host;
@@ -140,5 +142,30 @@ public class CrawlServer {
 		}
 		return server.substring(0,colonIndex);
 	}
+
+
+	/**
+	 * Refuse to be serialized, but do not halt serialization:
+	 * replace with null. 
+	 * 
+	 * @return
+	 * @throws ObjectStreamException
+	 */
+	protected Object writeReplace() throws ObjectStreamException {
+		return null;
+	}
+	
+//	private void writeObject(ObjectOutputStream stream)
+//	 throws IOException {
+//	 	ObjectOutputStream.PutField puts = stream.putFields();
+//	 	puts.put("server",server);
+//	 	stream.writeFields();
+//	 }
+// 
+//	private void readObject(ObjectInputStream stream)
+//	 throws IOException, ClassNotFoundException {
+//	 	ObjectInputStream.GetField reads = stream.readFields();
+//	 	server = (String)reads.get("server",null);
+//	 }
 
 }

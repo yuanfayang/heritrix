@@ -24,7 +24,7 @@ import org.archive.util.HttpRecorder;
 public class ToeThread extends Thread implements CoreAttributeConstants, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
-	private boolean paused = false;
+	private ToePool pool;
 	private boolean shouldCrawl = true;
 	CrawlController controller;
 	int serialNumber;
@@ -32,69 +32,78 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	HashMap localProcessors = new HashMap();
 	
 	CrawlURI currentCuri;
+	long lastStartTime;
+	long lastFinishTime;
 	// in-process/on-hold curis? not for now
 	// a queue of curis to do next? not for now
 
 	/**
 	 * @param c
 	 */
-	public ToeThread(CrawlController c, int sn) {
+	public ToeThread(CrawlController c, ToePool p, int sn) {
 		controller = c;
+		pool = p;
 		serialNumber = sn;
 		setName("ToeThread #"+serialNumber);
-		httpRecorder = new HttpRecorder("tt"+sn+"http");
+		httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
+	}
+
+
+	public synchronized void crawl(CrawlURI curi) {
+		assert currentCuri == null : "attempt to clobber crawlUri";
+		currentCuri = curi;
+		currentCuri.setThreadNumber(serialNumber);
+		notify();
+	}
+	
+	public boolean isAvailable() {
+		return currentCuri == null;
 	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		logger.info(getName()+" started for order '"+controller.getOrder().getName()+"'");
-		while ( shouldCrawl ) {
-			processingLoop();
-		} 
-		controller.toeFinished(this);
-		logger.info(getName()+" finished for order '"+controller.getOrder().getName()+"'");
-	}
-	
-	private synchronized void processingLoop() {
-		assert currentCuri == null;
-		
-		while ( paused ) {
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
+		logger.fine(getName()+" started for order '"+controller.getOrder().getName()+"'");
 		try {
-			currentCuri = controller.crawlUriFor(this);
-			
-			if ( currentCuri != null ) {
-			
-				try {
-					while ( currentCuri.nextProcessor() != null ) {
-						getProcessor(currentCuri.nextProcessor()).process(currentCuri);
-					}
-				} catch (RuntimeException e) {
-					currentCuri.setFetchStatus(S_INTERNAL_ERROR);
-					// store exception temporarily for logging
-					currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
-				}
-			
-				controller.getSelector().inter(currentCuri);
-				currentCuri = null;
-			} else {
-				// self-pause, because there's nothing left to crawl
-				logger.warning(getName()+" pausing: nothing to crawl");
-				paused = true;
-			}
+			while ( shouldCrawl ) {
+				processingLoop();
+			} 
+			controller.toeFinished(this);
 		} catch (OutOfMemoryError e) {
 			e.printStackTrace();
 			logger.warning(getName()+" pausing: out of memory error");
-			paused = true;
+			shouldCrawl = false;
+		}
+		logger.fine(getName()+" finished for order '"+controller.getOrder().getName()+"'");
+	}
+	
+	private synchronized void processingLoop() {
+		if ( currentCuri != null ) {
+			lastStartTime = System.currentTimeMillis();
+			
+			try {
+				while ( currentCuri.nextProcessor() != null ) {
+					Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+					currentProcessor.process(currentCuri);
+				}
+			} catch (RuntimeException e) {
+				currentCuri.setFetchStatus(S_INTERNAL_ERROR);
+				// store exception temporarily for logging
+				currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+			}
+		
+			controller.getFrontier().finished(currentCuri);
+			currentCuri = null;
+			lastFinishTime = System.currentTimeMillis();
+		}
+		pool.noteAvailable(this);
+		
+		try {
+			wait();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			logger.warning(getName()+" interrupted");
 		}
 	}
 
@@ -121,19 +130,6 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	private boolean shouldCrawl() {
 		return shouldCrawl;
 	}
-
-	/**
-	 * 
-	 */
-	public synchronized void unpause() {
-		if(!paused) return;
-		paused = false;
-		this.notify();
-	}
-	
-	public void pauseAfterCurrent() {
-		paused = true;
-	}
 	
 	public void stopAfterCurrent() {
 		shouldCrawl = false;
@@ -145,10 +141,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	public int getSerialNumber() {
 		return serialNumber;
 	}
-	
-	public boolean isPaused(){
-		return paused;
-	}
+
 	/**
 	 * @return
 	 */

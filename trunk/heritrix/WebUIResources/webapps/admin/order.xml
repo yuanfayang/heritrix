@@ -1,101 +1,135 @@
-<crawl-order name="example-crawl">
- <comment>
-  A simple crawl for example purposes.
- </comment>
- 
- <crawler-behavior>
+<crawl-order 
+  name="default-crawl"
+  comment="A simple crawl for development/example purposes."
+ >
 
-  <http-headers>
-   <User-Agent>heritrix-aoc/alpha (+http://crawler.archive.org)</User-Agent>
-   <From>archive-crawler-agent@lists.sourceforge.net</From>
-  </http-headers>
+ <scope 
+   class="org.archive.crawler.basic.Scope"
+   mode="broad"
+   max-link-hops="5"
+   max-trans-hops="5">
+   
+  <seeds src="seeds.txt">
+  </seeds>
  
-  <selector class="org.archive.crawler.basic.SimpleSelector">
-   <seeds src="seeds.txt" />
-  </selector>
-  
-  <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
-  
-  <store class="org.archive.crawler.basic.SimpleStore" />
+ </scope>
  
-  <processors>
-   <processor 
-     name="Preselector" 
-     class="org.archive.crawler.basic.SimplePreselector"
-     next="Preprocessor">
-    <params max-link-depth="0" max-embed-depth="2" />
-    <filter
-     name="focus"
-     class="org.archive.crawler.util.SeedExtensionFilter"
-     mode="domain"
+ <behavior
+   disk-path="disk"
+   max-toe-threads="5"
+   >
+   
+  <http-headers
+    User-Agent="heritrix-aoc/alpha (+http://crawler.archive.org)"
+    From="archive-crawler-agent@lists.sourceforge.net" 
+   />
+
+  <frontier 
+    class="org.archive.crawler.basic.Frontier"
+    delay-factor="1"
+    min-delay-ms="0"
+    max-delay-ms="1000"
+   />
+  
+   <processors>
+   
+    <processor 
+      name="Preselector" 
+      class="org.archive.crawler.basic.Preselector"
+      next="Preprocessor"
      />
-   </processor>
-   <processor 
-     name="Preprocessor" 
-     class="org.archive.crawler.basic.SimplePreconditionEnforcer"
-     next="DNS">
-    <params delay-factor="3" minimum-delay="100" />
-   </processor>
-   <processor 
-     name="DNS" 
-     class="org.archive.crawler.basic.FetcherDNS"
-     next="HTTP">
-   </processor>
-   <processor 
-     name="HTTP" 
-     class="org.archive.crawler.basic.FetcherHTTPSimple"
-     next="ExtractorHTTP">
-     <params timeout-seconds="10" />
-   </processor>
-   <processor 
-     name="ExtractorHTTP" 
-     class="org.archive.crawler.extractor.ExtractorHTTP"
-     next="ExtractorHTML">
-   </processor>
-   <processor 
-     name="ExtractorHTML" 
-     class="org.archive.crawler.extractor.ExtractorHTML"
-   next="ExtractorDOC">
-  </processor>
-  <processor
-  	name="ExtractorDOC"
-  	class="org.archive.crawler.extractor.ExtractorDOC"
-  	next="ExtractorSWF">
-  </processor>
-  <processor
-    name="ExtractorSWF"
-    class="org.archive.crawler.extractor.ExtractorSWF"
-    next="ExtractorPDF">
- </processor>
- <processor
-   	name="ExtractorPDF"
-   	class="org.archive.crawler.extractor.ExtractorPDF"
-    next="Archiver">
-   </processor>
-   <processor 
-     name="Archiver" 
-     class="org.archive.crawler.basic.ARCWriter"
-     next="Updater">
-      <compression use="true"/>
-	  <arc-files prefix="CRAWL-" max-size-bytes="20000000"/>
-   </processor>
-   <processor 
-     name="Updater" 
-     class="org.archive.crawler.basic.CrawlStateUpdater">
-   </processor>
+
+    <processor 
+      name="Preprocessor" 
+      class="org.archive.crawler.basic.PreconditionEnforcer"
+      next="DNS"
+     />
+    
+    <processor 
+      name="DNS" 
+      class="org.archive.crawler.fetcher.FetchDNS"
+      next="HTTP"
+     />
+    
+    <processor 
+      name="HTTP" 
+      class="org.archive.crawler.fetcher.FetchHTTP"
+      next="ExtractorHTTP"
+
+      timeout-seconds="20"
+      sotimeout-ms="10000"
+      max-length-bytes="1048576"
+      max-fetch-attempts="5"
+     />
+    
+    <processor 
+      name="ExtractorHTTP" 
+      class="org.archive.crawler.extractor.ExtractorHTTP"
+      next="ExtractorHTML"
+     />
+
+    <processor 
+      name="ExtractorHTML" 
+      class="org.archive.crawler.extractor.ExtractorHTML"
+      next="ExtractorDOC"
+     />
+     
+    <processor
+      name="ExtractorDOC"
+  	  class="org.archive.crawler.extractor.ExtractorDOC"
+  	  next="ExtractorSWF"
+     />
+     
+    <processor
+      name="ExtractorSWF"
+      class="org.archive.crawler.extractor.ExtractorSWF"
+      next="ExtractorPDF"
+     />
+     
+    <processor
+      name="ExtractorPDF"
+      class="org.archive.crawler.extractor.ExtractorPDF"
+      next="Archiver"
+     />
+     
+    <processor 
+      name="Archiver" 
+      class="org.archive.crawler.basic.ARCWriter"
+      next="Updater"
+      
+      prefix="hx"
+      path="arcs"
+      compress="yes"
+      max-arc-size="100000000">
+	   <!--
+	   <filter 
+	     name="http-only"
+         class="org.archive.crawler.filter.URIRegExpFilter"
+         regexp="^http://.*" 
+	   />
+	   -->
+     </processor>
+     
+     <processor 
+       name="Updater" 
+       class="org.archive.crawler.basic.CrawlStateUpdater"
+       postprocessor="defined"
+       next="Postselector"
+      />
+
+    <processor 
+      name="Postselector" 
+      class="org.archive.crawler.basic.Postselector"
+     />
+
   </processors>
  
-  <limits>
-   <max-toe-threads value="2" />
-  </limits>
-
- </crawler-behavior>
- <disk path="disk" />
+  <loggers>
+   <crawl-statistics
+     interval="10"
+    />
+  </loggers>
  
- <loggers>
-  <crawl-statistics>
-    <interval>10</interval>
-  </crawl-statistics>
-</loggers>
+ </behavior>
 
 </crawl-order>

@@ -18,10 +18,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.util.ArchiveUtils;
 import org.w3c.dom.Node;
 

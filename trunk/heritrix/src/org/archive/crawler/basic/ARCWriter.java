@@ -12,18 +12,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-// import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.crawler.basic.StatisticsTracker;
+import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
+import org.archive.io.IAGZIPOutputStream;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.IAGZIPOutputStream;
-import org.w3c.dom.Node;
 import org.xbill.DNS.Record;
 
 /**
@@ -38,7 +35,7 @@ import org.xbill.DNS.Record;
 public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 	private int arcMaxSize = 100000000;		// max size we want arc files to be (bytes)
-	private String arcPrefix = "archive";			// file prefix for arcs
+	private String arcPrefix = "IAH";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
 	private OutputStream arcOut = null;		// for writing to files
@@ -68,32 +65,15 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	protected void readConfiguration(){
 		// set up output directory
 		CrawlOrder order = controller.getOrder();
-		CrawlerBehavior behavior = order.getBehavior();
 		
-		// retrieve any nodes we think we need from the dom(s)
-		Node filePrefix = order.getNodeAt("/crawl-order/arc-file/@prefix");
-		Node maxSize = getNodeAt("./arc-files/@max-size-bytes");
-		Node path = order.getNodeAt("//disk/@path");
-		Node compression = getNodeAt("./compression/@use");
-		setUseCompression(
-			( (compression==null) ? true : compression.getNodeValue().equals("true"))
-		); 
-		
-		setArcPrefix( 
-			( (filePrefix==null) ? arcPrefix : filePrefix.getNodeValue() )
-		);
-		
-		setArcMaxSize(
-			( (maxSize==null) ? arcMaxSize : (new Integer(maxSize.getNodeValue())).intValue() )
-		);
-		
-		setOutputDir(
-			( (path==null) ? outputDir : path.getNodeValue() )
-		);
+		setUseCompression(getBooleanAt("@compress",false));
+		setArcPrefix(getStringAt("@prefix",arcPrefix));
+		setArcMaxSize(getIntAt("@max-size-bytes",arcMaxSize));
+		setOutputDir(getStringAt("@path",outputDir));
 
   	}
-  	
-  	/**
+
+	/**
   	 * Takes a CrawlURI and generates an arc record, writing it
   	 * to disk.  Currently
   	 * this method understands the following uri types: dns, http
@@ -156,50 +136,48 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	protected void writeMetaLine(CrawlURI curi, int recordLength) throws InvalidRecordException, IOException{
 
 		// TODO sanity check the passed curi before writing
-		if (true){	
-			
-			// figure out content type, truncate at delimiter ';'
-			String contentType = curi.getContentType();
-			if(contentType==null) {
-				contentType = "no-type"; // per ARC spec
-			} else if(curi.getContentType().indexOf(';') >= 0 ){
-				contentType = contentType.substring(0,contentType.indexOf(';'));
-			}
-			
-			String hostIP = curi.getServer().getHost().getIP().getHostAddress();
-			String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
-			
-			// fail if we're missing anythign critical
-			if(hostIP == null || dateStamp == null){
-				throw new InvalidRecordException("missing data elements");
-			}		
-			
-			String metaLineStr = 
-					curi.getURIString()
-					+ " "
-					+ hostIP
-					+ " "
-					+ dateStamp
-					+ " "
-					+  contentType
-					+ " "
-					+ recordLength
-					+ "\n";	
-					
-			try{	
-			out.write(metaLineStr.getBytes());  		
-			
-			}catch(IOException e){
-				e.printStackTrace();
-			}
+
+		// figure out content type, truncate at delimiter ';'
+		String contentType = curi.getContentType();
+		if(contentType==null) {
+			contentType = "no-type"; // per ARC spec
+		} else if(curi.getContentType().indexOf(';') >= 0 ){
+			contentType = contentType.substring(0,contentType.indexOf(';'));
+		}
+		
+		String hostIP = curi.getServer().getHost().getIP().getHostAddress();
+		String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
+		
+		// fail if we're missing anythign critical
+		if(hostIP == null || dateStamp == null){
+			throw new InvalidRecordException("missing data elements");
+		}		
+		
+		String metaLineStr = 
+				curi.getURIString()
+				+ " "
+				+ hostIP
+				+ " "
+				+ dateStamp
+				+ " "
+				+  contentType
+				+ " "
+				+ recordLength
+				+ "\n";	
 				
-			// store size since we've already calculated it and it can be used 
-			// to generate interesting statistics
-			curi.setContentSize(recordLength);
+		try{	
+			out.write(metaLineStr.getBytes());  		
+		
+		}catch(IOException e){
+			e.printStackTrace();
+		}
 			
-			// note completion
-			statistics.completedProcessing(curi);
-  		}
+		// store size since we've already calculated it and it can be used 
+		// to generate interesting statistics
+		//curi.setContentSize((long)recordLength);
+		
+		// note completion
+		statistics.completedProcessing(curi);
   	}
   	
 	protected void createNewArcFile() throws IOException {
@@ -297,7 +275,9 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 //		// don't forget the extra CRLF between headers and body
 //		recordLength += 2;
 		
-		recordLength += get.getHttpRecorder().getRecordedInput().getSize();
+		// recordLength += get.getHttpRecorder().getRecordedInput().getSize();
+
+		recordLength += curi.getContentSize();
 
 		writeMetaLine(curi,  recordLength);
 		
@@ -340,6 +320,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		}	
 		writeMetaLine(curi, recordLength);
 	
+		// save the calculated contentSize for logging purposes
+		// TODO handle this need more sensibly
+		curi.setContentSize((long)recordLength);
+	
 		baos.writeTo(out);
 	 	out.write("\n".getBytes());
 	}
@@ -371,35 +355,22 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	}
 
 	public void setOutputDir(String buffer) {
-				
 
-		String crawlOrderDirecetory = controller.getOrder().getBehavior().getDefaultFileLocation();
-		// trim white spaces
-		crawlOrderDirecetory.trim();	
-		// insure a trailing 'File.separator'
-		if(! crawlOrderDirecetory.endsWith(File.separator)){
-			crawlOrderDirecetory = new String(crawlOrderDirecetory + File.separator);
-		}
-
-		// make sure it's got a trailing file.seperator so the
+		// make sure it's got a trailing file.separator so the
 		// dir is not treated as a file prefix
-		if(! buffer.endsWith(File.separator)){
+		if ((buffer.length() > 0) && !buffer.endsWith(File.separator)) {
 			buffer = new String(buffer + File.separator);
 		}
-		
-		buffer = crawlOrderDirecetory + buffer; 
-		File newDir = new File(buffer);
-		
-		if(!newDir.exists()){
-			try{
+
+		File newDir = new File(controller.getDisk(), buffer);
+
+		if (!newDir.exists()) {
+			try {
 				newDir.mkdirs();
-				outputDir = buffer;
-					
-			}catch(Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
-			}		
-		}else{
-			outputDir = buffer;
+			}
 		}
-	}	
+		outputDir = newDir.getAbsolutePath()+ File.separatorChar;
+	}
 }
