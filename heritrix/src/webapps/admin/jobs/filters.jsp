@@ -41,7 +41,11 @@
 				if(theJob.isRunning()){
 					handler.kickUpdate();
 				}
-				response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+				if(theJob.isProfile()){
+					response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
+				}else{
+					response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+				}
 			}
 			return;
 		}else if(action.equals("configure")){
@@ -56,7 +60,7 @@
 	}
 
 	String title = "Adjust modules";
-	int tab = 1;
+	int tab = theJob.isProfile()?2:1;
 %>
 
 <%@include file="/include/head.jsp"%>

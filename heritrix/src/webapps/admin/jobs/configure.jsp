@@ -12,6 +12,9 @@
 <%!
 	StringBuffer lists = new StringBuffer();
 	public String printMBean(ComplexType mbean, String indent) throws Exception {
+		if(mbean.isTransient()){
+			return "";
+		}
 		StringBuffer p = new StringBuffer();
 		MBeanInfo info = mbean.getMBeanInfo();
 
@@ -89,6 +92,9 @@
 	}
 	
 	public void writeNewOrderFile(ComplexType mbean, HttpServletRequest request){
+		if(mbean.isTransient()){
+			return;
+		}
 		MBeanInfo info = mbean.getMBeanInfo();
 		MBeanAttributeInfo a[] = info.getAttributes();
 		for(int n=0; n<a.length; n++) {
@@ -148,7 +154,7 @@
 		return;
 	}
 
-	XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob.getSettingsHandler();
+	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
 
 	boolean isNew = theJob.isNew();
 	
@@ -184,7 +190,11 @@
 				if(theJob.isRunning()){
 					handler.kickUpdate();
 				}
-				response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+				if(theJob.isProfile()){
+					response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
+				}else{
+					response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+				}
 			}
 		}else if(request.getParameter("action").equals("modules")){
 			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
@@ -197,7 +207,7 @@
 	String inputForm=printMBean(crawlOrder,"");
 	
 	String title = "Configure settings";
-	int tab = 1;
+	int tab = theJob.isProfile()?2:1;
 %>
 
 <%@include file="/include/head.jsp"%>
