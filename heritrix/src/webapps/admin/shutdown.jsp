@@ -51,12 +51,20 @@
 			public void run(){
 				try {
 					synchronized(this){
-						wait(200);
+						wait(200); // Wait a moment so we can finish displaying 'good bye' page
 					}
 				} catch( InterruptedException e ) {
 					// We can ignore it.
 				}
-				Heritrix.shutHeritrixDown();
+				Heritrix.prepareHeritrixShutDown();
+				try {
+					synchronized(this){
+						wait(1000); // Wait for those threads that can terminate quickly.
+					}
+				} catch( InterruptedException e ) {
+					// We can ignore it.
+				}
+				Heritrix.performHeritrixShutDown();
 			}
 		};
 		temp.start();
