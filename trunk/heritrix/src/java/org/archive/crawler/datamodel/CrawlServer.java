@@ -30,7 +30,6 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.security.Principal;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.Checksum;
 
