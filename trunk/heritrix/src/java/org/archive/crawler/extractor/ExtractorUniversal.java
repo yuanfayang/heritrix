@@ -47,7 +47,7 @@ import org.archive.util.TextUtils;
  * in a URL (see {@link #isURLableChar(int) isURLableChar()} for details). 
  * Once it hits the end of such a string (i.e. finds a character that
  * should not be in a URL) it will try to determine if it has found a URL using
- * a regular expression ({@link #LIKELY_URL_EXTRACTOR LIKELY_URL_EXTRACTOR}). 
+ * a regular expression LIKELY_URL_EXTRACTOR LIKELY_URL_EXTRACTOR. 
  * Strings under 4 characters in length will not be considered.  If the regular
  * expression matches we will consider the string a URL and add it to the 
  * CrawlURI as a speculative embed.

@@ -54,7 +54,9 @@ public class ExtractorHTML2 extends ExtractorHTML {
 			"url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
 	/**
-	 * <p> This pattern extracts either:<br>
+     * Compiled relevant tag extractor.
+     *
+	 * This pattern extracts either:<br>
 	 * (1) whole &lt;script&gt;...&lt;/script&gt; or<br> 
 	 * (2) &lt;style&gt;...&lt;/style&gt; or<br>
 	 * (3) &lt;meta ...&gt; or<br>

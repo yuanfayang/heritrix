@@ -300,7 +300,7 @@ public class Scope extends CrawlScope {
     }
 
     /**
-     * @return
+     * @return Mode
      */
     public String getMode() {
         return mode;
