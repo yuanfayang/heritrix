@@ -31,7 +31,9 @@ public class CandidateURI {
 	// for example LLLE (an embedded image on a page 3 links from seed)
 	String pathFromSeed; 
 	/** Where this URI was (presently) discovered */
-	UURI precursorUuri;
+	// mostly for debugging; will be a CrawlURI when memory is no object
+	// just a string or null when memory is an object (configurable)
+	Object via;
 	
 	
 	/**
@@ -42,10 +44,56 @@ public class CandidateURI {
 	}
 	
 	/**
+	 * @param uriString
+	 */
+	public CandidateURI(String s){
+		try{
+			setUuri(UURI.createUURI(s));
+		}catch(Exception e){
+			setUuri(null);
+		}
+	}
+
+	
+	/**
 	 * @param b
 	 */
-	public void setSeed(boolean b) {
+	public void setIsSeed(boolean b) {
 		isSeed=b;
 	}
+
+	/**
+	 * 
+	 */
+	public UURI getUuri() {
+		return uuri;
+	}
 	
+	/**
+	 * @param u
+	 */
+	private void setUuri(UURI u) {
+		uuri=u;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean getIsSeed() {
+		return isSeed;
+	}
+	
+	/**
+	 * 
+	 */
+	public int getScopeVersion() {
+		return inScopeVersion;
+	}
+	
+	/**
+	 * @param i
+	 */
+	public void setScopeVersion(int i) {
+		inScopeVersion = i;
+	}
 }

@@ -6,7 +6,7 @@
  */
 package org.archive.crawler.basic;
 
-import java.util.Iterator;
+//import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
@@ -92,10 +92,10 @@ public class SimpleScheduler implements URIScheduler {
 		controller = c;
 		store = (SimpleStore) c.getStore();
 		// load seeds
-		Iterator iter = c.getOrder().getBehavior().getSeeds().iterator();
-		while (iter.hasNext()) {
-			insertAsSeed((UURI) iter.next());
-		}
+//		Iterator iter = c.getOrder().getBehavior().getSeeds().iterator();
+//		while (iter.hasNext()) {
+//			insertAsSeed((UURI) iter.next());
+//		}
 	}
 
 	/**

@@ -6,6 +6,16 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.FatalConfigurationException;
+import org.archive.crawler.datamodel.UURI;
+
 /**
  * Filter which determines, looking at the totality of 
  * information available about a CandidateURI/CrawlURI,
@@ -25,15 +35,18 @@ package org.archive.crawler.framework;
  * @author gojomo
  *
  */
-public class CrawlScope extends Filter {
+public abstract class CrawlScope extends Filter {
+	private static final String XP_SEEDS = "/seeds";
 	int version;
+	List seeds;
+	CrawlController controller;
 	
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
+	 * @see org.archive.crawler.framework.Filter#initialize(org.archive.crawler.framework.CrawlController)
 	 */
-	protected boolean innerAccepts(Object o) {
-		// TODO Auto-generated method stub
-		return false;
+	public void initialize(CrawlController controller) {
+		super.initialize(controller);
+		this.controller = controller;
 	}
 
 	/**
@@ -48,5 +61,59 @@ public class CrawlScope extends Filter {
 	 */
 	public String toString() {
 		return "CrawlScope<"+name+">";
+	}	
+	
+	public List getSeeds() throws FatalConfigurationException {
+		if (seeds != null) {
+			return seeds;
+		}
+		seeds = new ArrayList();
+		try {
+			BufferedReader reader = nodeValueOrSrcReader(XP_SEEDS);
+			String read;
+			while (reader != null) {
+				do {
+					read = reader.readLine();
+				} while (
+					(read != null)
+						&& ((read = read.trim()).startsWith("#")
+							|| read.length() == 0));
+
+				if (read == null) {
+					reader.close();
+					reader = null;
+				} else {
+					try {
+						seeds.add(UURI.createUURI(read));
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		} catch (IOException e) {
+			throw new FatalConfigurationException(
+				"Unable to locate seeds file: " + e.toString());
+		}
+		return seeds;
+   	
+	}
+
+
+	/**
+	 * @param list
+	 */
+	public void clearSeeds() {
+		seeds = new ArrayList();
+	}
+
+	/**
+	 * TODO determine if this is appropriate place for this
+	 * @param u
+	 */
+	public void addSeed(UURI u){
+		seeds.add(u);
+		CandidateURI caUri = new CandidateURI(u);
+		caUri.setIsSeed(true);
+		controller.getFrontier().schedule(caUri);
 	}
 }

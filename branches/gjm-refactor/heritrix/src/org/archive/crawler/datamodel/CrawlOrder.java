@@ -9,20 +9,19 @@ package org.archive.crawler.datamodel;
 import java.io.File;
 import java.io.IOException;
 
-import javax.xml.transform.TransformerException;
-
-import org.apache.xpath.XPathAPI;
 import org.archive.crawler.framework.XMLConfig;
 import org.w3c.dom.Document;
 
 /** Read and manipulate configuration (order) file.
  */
 public class CrawlOrder extends XMLConfig {
-	protected String name;
-	protected CrawlerBehavior behavior;
-	protected String outputLocation;
-	public String crawlOrderFilename;
-	//protected CrawlOrder parentConfigurationFile;
+	private static final String XP_HTTP_USER_AGENT = "//http-headers/@User-Agent";
+	private static final String XP_HTTP_FROM = "//http-headers/@From";
+	private static final String XP_MAX_TOE_THREADS = "//behavior/@max-toe-threads";
+	String caseFlattenedUserAgent;
+	String name;
+    String outputLocation;
+	String crawlOrderFilename;
 	
 	/**
 	 * @param crawlOrderFile
@@ -86,25 +85,7 @@ public class CrawlOrder extends XMLConfig {
 	 *  be called on the primary (non-inherited from) crawl order.
 	 */
 	public void initialize(){
-		try {
-			name = getStringAt("//crawl-order/@name");
-
-			// ignore null pointers here, it may just mean this file inherited from
-			// another and we can find the behavior there.			
-			try {
-				behavior =
-					new CrawlerBehavior(
-						XPathAPI.selectSingleNode(xNode, "//crawler-behavior"));
-				behavior.setDefaultFileLocation(this.defaultFilePath);
-				behavior.setParentConfig(this.parentConfigurationFile);
-			} catch (NullPointerException e) {
-			}
-
-			//outputLocation = getStringAt("//disk/@path");
-
-		} catch (TransformerException e) {
-			e.printStackTrace();
-		}
+		name = getStringAt("//crawl-order/@name");
 	}
 	
 	protected void loadParents(String pathToDoc) throws InitializationException {
@@ -135,17 +116,6 @@ public class CrawlOrder extends XMLConfig {
 	}
 
 	/**
-	 * 
-	 */
-	public CrawlerBehavior getBehavior() {
-		// if this node doesn't have it but we have a parent conf file check that
-		if(behavior == null && parentConfigurationFile != null){ 
-			return ((CrawlOrder)parentConfigurationFile).getBehavior();
-		}
-		return behavior;
-	}
-
-	/**
 	 * @return
 	 */
 	public String getName() {
@@ -161,5 +131,36 @@ public class CrawlOrder extends XMLConfig {
 			return ((CrawlOrder)parentConfigurationFile).getOutputLocation();
 		}
 		return outputLocation;
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getUserAgent() {
+		if (caseFlattenedUserAgent==null) {
+			caseFlattenedUserAgent =  getStringAt(XP_HTTP_USER_AGENT).toLowerCase();
+		}
+		return caseFlattenedUserAgent;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getFrom() {
+		return getStringAt(XP_HTTP_FROM);
+	}
+	
+	/**
+		 * @return
+	*/
+	public int getMaxToes() {
+		return getIntAt(XP_MAX_TOE_THREADS);
+	}
+
+	/**
+	 * 
+	 */
+	public String getCrawlOrderFilename() {
+		return crawlOrderFilename;
 	}
 }

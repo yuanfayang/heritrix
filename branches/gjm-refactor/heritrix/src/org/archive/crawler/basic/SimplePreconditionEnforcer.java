@@ -52,8 +52,8 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		
 		// for all curis that will in fact be fetched, set appropriate delays
 		// TODOSOMEDAY: allow per-host, per-protocol, etc. factors
-		curi.setDelayFactor(getDelayFactorFor(curi));
-		curi.setMinimumDelay(getMinimumDelayFor(curi));
+//		curi.setDelayFactor(getDelayFactorFor(curi));
+//		curi.setMinimumDelay(getMinimumDelayFor(curi));
 
 		return;
 	}
@@ -78,7 +78,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			return true;
 		}
 		// test against robots.txt if available
-		String ua = controller.getOrder().getBehavior().getUserAgent();
+		String ua = controller.getOrder().getUserAgent();
 		if( curi.getServer().getRobots().disallows(curi.getUURI().getUri().getPath(),ua)) {
 			// don't fetch
 			curi.cancelFurtherProcessing();  // turn off later stages

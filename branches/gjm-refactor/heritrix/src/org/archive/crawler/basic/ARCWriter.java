@@ -12,13 +12,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-// import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.ArchiveUtils;
@@ -68,7 +65,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	protected void readConfiguration(){
 		// set up output directory
 		CrawlOrder order = controller.getOrder();
-		CrawlerBehavior behavior = order.getBehavior();
 		
 		// retrieve any nodes we think we need from the dom(s)
 		Node filePrefix = order.getNodeAt("/crawl-order/arc-file/@prefix");
