@@ -152,17 +152,20 @@ public class HTTPMidFetchUnhangedFilter extends Filter
         if( datestamp == HEADER_PREDICTS_UNCHANGED 
                 && etag == HEADER_PREDICTS_UNCHANGED){
             // Have both and they agree, no change
+            curi.setContentState(CrawlURI.CONTENT_UNCHANGED);
             return false;
         }
         // If one or the other is missing, trust the one that is present
         if(datestamp == HEADER_PREDICTS_MISSING
                 && etag == HEADER_PREDICTS_UNCHANGED){
             // Only have etag, and it predicts no change
+            curi.setContentState(CrawlURI.CONTENT_UNCHANGED);
             return false;
         }
         if(datestamp == HEADER_PREDICTS_UNCHANGED
                 && etag == HEADER_PREDICTS_MISSING){
             // Only have last-modified, and it predicts no change
+            curi.setContentState(CrawlURI.CONTENT_UNCHANGED);
             return false;
         }
         return true; // Default, assume change. 
