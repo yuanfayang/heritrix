@@ -50,8 +50,8 @@
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
         <boolean name="enabled">true</boolean>
         <integer name="max-speculative-hops">1</integer>
-        <integer name="max-referral-hops">0</integer>
-        <integer name="max-embed-hops">0</integer>
+        <integer name="max-referral-hops">-1</integer>
+        <integer name="max-embed-hops">-1</integer>
       </newObject>
     </newObject>
     <map name="http-headers">
