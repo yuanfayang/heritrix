@@ -3,6 +3,9 @@
 	<name>ArchiveOpenCrawler</name>
 	<comment></comment>
 	<projects>
+		<project>dnsjava</project>
+		<project>httpclient</project>
+		<project>junit</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

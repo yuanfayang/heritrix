@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-	
 
 <!--
 ##################################################################
@@ -21,120 +20,6 @@
 
     <!-- This is link to access all the environment variables -->
     <property environment="env" />
-
-    <target name="make-property-file">
-
-	<!-- if cvsTag/version is not set set it -->
-	<property name="currentBuildNum" value="n/a" />
-	<property name="version" value="unknown" />
-	<property name="cvsTagLabel" value="n/a" />
-
-	<!-- make sure we get hostame on both windows and linux -->
-	<property name="env.COMPUTERNAME" value="${env.HOSTNAME}" />
-
-	<propertyfile
-		file="${property.file}" 
-		comment="Build of Heritrix version ${version} build ${currentBuildNum}">
-
-		<entry key="java.vm.vendor" 
-			value="${java.vm.vendor}" />
-
-		<entry key="java.runtime.name" 
-			value="${java.runtime.name}" />
-
-		<entry key="cvs.tag" 
-			value="${cvsTagLabel}" />
-
-		<entry key="java.version" 
-			value="${java.version}" />
-
-		<entry key="ant.version"
-			value="${ant.version}" />
-	
-		<entry key="build.number"
-			value="${currentBuildNum}" />
-		
-		<entry key="build.version"
-			value="${version}" />
-		
-		<entry key="build.date"
-			type="date"
-			pattern="EEEE MMM dd, yyyy"
-			value="now" />
-
-		<entry key="build.time"
-			type="date"
-			pattern="kk:mm:ss"
-			value="now" />
-
-		<entry key="build.host" value="${env.COMPUTERNAME}" />
-		<entry key="build.user.name" value="${user.name}" />
-		<entry key="build.os.name" value="${os.name}" />
-	</propertyfile>
-    </target>
-   
-    <target name="tag-current-repository">
-
-	<!-- this will cause a failure if cvsTag is not set
-		by the caller (the version/build target).  Which
-		should prevent somthing "bad" from happening,
-		it'll just fail.
-	-->
-	<property name="cvsTag" value="" />
-
-	<cvs command="-d ${cvsroot} rtag -R ${cvsTag} ${module-name}"
-                failonerror="yes" />
-    </target>
-
-    <target name="checkout-by-label" depends="init">
-                                                                                
-        <description>
-            This target checks out all the source files and third party
-                binaries from CVS for a given build version.
-        </description>
-
-                                                                         
-        <!-- NOTE: YOU'LL PROBABLY NEED TO CHANGE THESE VARS
-                IN build.properties -->
-        <cvs cvsRoot="${cvsroot}"
-                dest="${repository}"
-		tag="${cvsTag}"
-                package="${module-name}"
-                failonerror="yes" />
-    </target>
-
-    <target name="_label-as-build">
-	<buildnumber file="${buildnumber.file}" />
-
-	<property name="cvsTagLabel" value="build" />
-	<property name="cvsTag" value="b${build.number}" />
-	<property name="currentBuildNum" value="${build.number}" />
-
-	<echo message="setting cvs label (rtag) to ${cvsTag}" />
-    </target>
-
-    <target name="_label-as-version">
-	<property name="cvsTagLabel" value="version" />
-	<property name="cvsTag" value="v${_version}" />
-
-	<echo message="setting cvs label (rtag) to ${cvsTag}" />
-    </target>
-
-    <target name="release-version" depends="_label-as-version,init,tag-current-repository,checkout-by-label,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-	<echo message="*****************************************************" />
-	<echo message="THIS SHOULD ONLY BE RUN ON THE OFFICIAL BUILD MACHINE" />
-	<echo message="*****************************************************" />
-    </target>
-
-    <target name="release-build" depends="_label-as-build,init,tag-current-repository,checkout-by-label,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-	<echo message="*****************************************************" />
-	<echo message="THIS SHOULD ONLY BE RUN ON THE OFFICIAL BUILD MACHINE" />
-	<echo message="*****************************************************" />
-    </target>
-
-    <target name="build-by-tag" depends="checkout-by-label,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-	<echo message="note: select a version using ant ... -DcvsTag=version" />
-    </target>
 
     <target name="init">
     
@@ -169,10 +54,9 @@
         <echo message="Classpath setting is ${classpath}" />
 	-->
 
-	<mkdir dir="RunThis" />
-	<mkdir dir="RunThis/test-config" />
+		<mkdir dir="RunThis" />
         <mkdir dir="RunThis/lib" />
-        <mkdir dir="RunThis/bin" />
+
     </target>
 
 
@@ -192,6 +76,7 @@
 		failonerror="yes" />
         
     </target>
+
 
 
     <target name="compile-core" depends="init">
@@ -265,26 +150,18 @@
 
 
 
-    <target name="package" depends="init,compile-core,javadoc,make-property-file">
+    <target name="package" depends="init,compile-core,javadoc">
     
-	<property name="cvsTag" value="" />
-
         <description> 
             This target packages all the source files,classfiles and javadocs. 
         </description> 
-       
-	<copy todir="${packageBaseDir}/archive-open-crawler-${version}">
-		<fileset dir="${basedir}">
-		  <include name="${property.file}" />
-		</fileset>
-	</copy> 
-
+        
         <copy todir="${packageBaseDir}/archive-open-crawler-${version}">
             <fileset dir="${repository}/ArchiveOpenCrawler">
                 <exclude name="**/*.java" />
             </fileset>
         </copy>
-<!-- 
+        
         <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${bin}">
             <fileset dir="${repository}/ArchiveOpenCrawler/bin">
                 <include name="**/*" />
@@ -297,7 +174,6 @@
             </fileset>
         </copy> 
         
--->
         <jar destfile="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}/crawlerclasses.jar" 
                       basedir="${buildDir}">
         </jar>
@@ -317,7 +193,7 @@
              </tarfileset> 
         </tar>     
         
-        <gzip zipfile="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" 
+        <gzip zipfile="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
               src="${basedir}/archive-open-crawler-${version}-${currentdate}.tar"/> 
               
 	<!-- now put stuff somewhere we can run a crawl from -->
@@ -358,18 +234,18 @@
 	name="nightly" 
 	depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,package">
     
-        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" 
+        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
         	todir="${basedir}/${NightlyBuildsDir}" /> 
 
 	<delete dir="${basedir}/${NightlyBuildsDir}/latest" />
-        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" 
+        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${currentdate}.tar.gz" 
                todir="${basedir}/${NightlyBuildsDir}/latest" /> 
         
         <!-- This is presently disabled as there is no uploading to sourceforge.net -->
         <!-- <move file="archive-open-crawler-${version}-${currentdate}.tar.gz"
               tofile="latest-archive-open-crawler-${version}.tar.gz" /> -->
               
-        <delete file="${basedir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" />      
+        <delete file="${basedir}/archive-open-crawler-${version}-${currentdate}.tar.gz" />      
               
         <echo message="" />
         <echo message="*****************************************************" />
