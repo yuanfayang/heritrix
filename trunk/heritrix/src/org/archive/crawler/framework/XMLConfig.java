@@ -43,12 +43,11 @@ public class XMLConfig {
 	 * Backing node; default origin of any XPath accesses.
 	 */
 	protected Node xNode;
-	
+
 	protected HashMap cachedPathNodes = new HashMap(); // String -> Node
 	protected HashMap cachedIntegers = new HashMap(); // String -> Integer
 	protected HashMap cachedStrings = new HashMap(); // String -> String
 
-	
 	/**
 	 * Convenience method for reading an XML file into a Document instance
 	 * 
@@ -80,7 +79,7 @@ public class XMLConfig {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * If the supplied node has a 'src' attribute, treat that
 	 * as a filename, and return the document in that file.
@@ -92,9 +91,9 @@ public class XMLConfig {
 	 */
 	public static Node nodeOrSrc(Node node) {
 		try {
-			Node srcNode = XPathAPI.selectSingleNode(node,"@src");
-			if (srcNode != null ) {
-				return (Node)readDocumentFromFile(srcNode.getNodeValue());
+			Node srcNode = XPathAPI.selectSingleNode(node, "@src");
+			if (srcNode != null) {
+				return (Node) readDocumentFromFile(srcNode.getNodeValue());
 			}
 		} catch (TransformerException te) {
 			// TODO something maybe
@@ -128,17 +127,17 @@ public class XMLConfig {
 	 */
 	public Node getNodeAt(String xpath) {
 		Node cacheNode = null;
-		if (! cachedPathNodes.containsKey(xpath)) {
+		if (!cachedPathNodes.containsKey(xpath)) {
 			try {
-				cacheNode = XPathAPI.selectSingleNode(xNode,xpath);
+				cacheNode = XPathAPI.selectSingleNode(xNode, xpath);
 			} catch (TransformerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				cacheNode = null;
 			}
-			cachedPathNodes.put(xpath,cacheNode);
+			cachedPathNodes.put(xpath, cacheNode);
 		}
-		return (Node)cachedPathNodes.get(xpath);
+		return (Node) cachedPathNodes.get(xpath);
 	}
 
 	/**
@@ -154,9 +153,10 @@ public class XMLConfig {
 	public static BufferedReader nodeValueOrSrcReader(Node node) {
 
 		try {
-			Node srcNode = XPathAPI.selectSingleNode(node,"@src");
-			if (srcNode != null ) {
-				return new BufferedReader(new FileReader(srcNode.getNodeValue()));
+			Node srcNode = XPathAPI.selectSingleNode(node, "@src");
+			if (srcNode != null) {
+				return new BufferedReader(
+					new FileReader(srcNode.getNodeValue()));
 			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -181,9 +181,8 @@ public class XMLConfig {
 	 * @return
 	 */
 	public int getIntAt(String xpath) {
-		return getIntAt(xpath,-1);
+		return getIntAt(xpath, -1);
 	}
-
 
 	/**
 	 * Retrieve a (positive) integer value from the given xpath;
@@ -195,10 +194,10 @@ public class XMLConfig {
 	 */
 	public int getIntAt(String xpath, int defaultValue) {
 		Integer cacheInteger = null;
-		if (! cachedIntegers.containsKey(xpath)) {
+		if (!cachedIntegers.containsKey(xpath)) {
 			try {
 				String n = getStringAt(xpath);
-				if (n!=null) {
+				if (n != null) {
 					cacheInteger = new Integer(getStringAt(xpath));
 				} else {
 					cacheInteger = new Integer(defaultValue);
@@ -212,9 +211,9 @@ public class XMLConfig {
 				e.printStackTrace();
 				cacheInteger = new Integer(defaultValue);
 			}
-			cachedIntegers.put(xpath,cacheInteger);
+			cachedIntegers.put(xpath, cacheInteger);
 		}
-		return ((Integer)cachedIntegers.get(xpath)).intValue();
+		return ((Integer) cachedIntegers.get(xpath)).intValue();
 	}
 
 	/**
@@ -232,13 +231,13 @@ public class XMLConfig {
 		if (node instanceof Attr) {
 			return node.getNodeValue();
 		}
-		String value = ""; 
-		NodeList children = node.getChildNodes(); 
-		for(int i = 0; i < children.getLength(); i++ ) { 
-		  Node ci = children.item(i); 
-		  if( ci.getNodeType() == Node.TEXT_NODE ) { 
-			value = value + ci.getNodeValue(); 
-		  }
+		String value = "";
+		NodeList children = node.getChildNodes();
+		for (int i = 0; i < children.getLength(); i++) {
+			Node ci = children.item(i);
+			if (ci.getNodeType() == Node.TEXT_NODE) {
+				value = value + ci.getNodeValue();
+			}
 		}
 		return value;
 	}
@@ -249,7 +248,7 @@ public class XMLConfig {
 	 * @param xpath
 	 * @return
 	 */
-	protected String getStringAt(String xpath) {
+	public String getStringAt(String xpath) {
 		String cacheString = null;
 		if (!cachedStrings.containsKey(xpath)) {
 			try {
@@ -261,12 +260,11 @@ public class XMLConfig {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			cachedStrings.put(xpath,cacheString);
+			cachedStrings.put(xpath, cacheString);
 		}
 		return (String) cachedStrings.get(xpath);
 	}
-	
-	
+
 	/**
 	 * Using the node at the specified xpath as a guide,
 	 * create a Java instance. The node must supply a 
@@ -277,7 +275,7 @@ public class XMLConfig {
 	 */
 	public Object instantiate(String xpath) {
 		try {
-			return instantiate(XPathAPI.selectSingleNode(xNode,xpath));
+			return instantiate(XPathAPI.selectSingleNode(xNode, xpath));
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -300,10 +298,12 @@ public class XMLConfig {
 	 */
 	public Object instantiate(Node n) {
 		try {
-			Class c = Class.forName(n.getAttributes().getNamedItem("class").getNodeValue());
+			Class c =
+				Class.forName(
+					n.getAttributes().getNamedItem("class").getNodeValue());
 			Object instance = c.newInstance();
 			if (instance instanceof XMLConfig) {
-				((XMLConfig)instance).setNode(n);
+				((XMLConfig) instance).setNode(n);
 			}
 			return instance;
 		} catch (DOMException e) {
@@ -354,22 +354,39 @@ public class XMLConfig {
 			return null;
 		}
 		Node currentNode;
-		while ((currentNode=iter.nextNode())!=null) {
+		while ((currentNode = iter.nextNode()) != null) {
 			Object currentObject = instantiate(currentNode);
-			if (first==null) {
+			if (first == null) {
 				first = currentObject;
 			}
 			if (results instanceof HashMap) {
 				// if supplied hashmap, look for 'name' key
-				if (currentNode.getAttributes().getNamedItem("name")!=null) {
-					String name = currentNode.getAttributes().getNamedItem("name").getNodeValue();
-					((HashMap)results).put(name,currentObject);
+				if (currentNode.getAttributes().getNamedItem("name") != null) {
+					String name =
+						currentNode
+							.getAttributes()
+							.getNamedItem("name")
+							.getNodeValue();
+					((HashMap) results).put(name, currentObject);
 				}
-			} else if (results instanceof Collection){
+			} else if (results instanceof Collection) {
 				// otherwise, just add to results
-				((Collection)results).add(currentObject);
+				 ((Collection) results).add(currentObject);
 			}
 		}
 		return first;
+	}
+	/**
+	 * @return
+	 */
+	public Node getXNode() {
+		return xNode;
+	}
+
+	public void clearCaches() {
+		cachedPathNodes = new HashMap();
+		cachedIntegers = new HashMap();
+		cachedStrings = new HashMap();
+
 	}
 }
