@@ -37,36 +37,36 @@ public class MemQueue extends LinkedList implements Queue {
     public MemQueue() {
         super();
     }
-    /* (non-javadoc)
-     * @see org.archive.util.Queue#enqueue()
-
+    
+    /**
+     * @see org.archive.util.Queue#enqueue(Object)
      */
     public void enqueue(Object o) {
         add(o);
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
         return removeFirst();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#length()
      */
     public long length() {
         return (long)size();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#release()
      */
     public void release() {
         // nothing to release
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
@@ -74,14 +74,14 @@ public class MemQueue extends LinkedList implements Queue {
     }
     
     
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return listIterator();
     }
     
-    /* (non-Javadoc)
+    /**
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
