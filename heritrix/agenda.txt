@@ -9,9 +9,11 @@ respect NOFOLLOW meta robots
 initial DOC support
 cleaned up, file-based activity & error logging
 HTML extraction bugs fixed & reorged for efficiency
+fix robots.txt spinning on certain errors
 
 _Next few things to do:
-fix robots.txt spinning on certain errors
+basic javascript guesswork extraction
+<object> tag handling
 ToeThread start/pause/stop cleanup
 get links from DOC/PDF/SWF/etc formats
 investigate MG4J, Nutch components (Nutch HTTP + MG4J Strings?)
