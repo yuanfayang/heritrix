@@ -45,7 +45,7 @@ import java.util.zip.GZIPInputStream;
  * <p>This class knows how to parse an ARC file and has accessors for all of
  * the ARC file content. It can parse ARC Version 1 and 2.
  * 
- * <p>{@link java.util.GZIPInputStream} can't deal w/ a GZIP file made of
+ * <p>{@link java.util.zip.GZIPInputStream} can't deal w/ a GZIP file made of
  * multiple GZIP members.   An instance finds the first GZIP member only.
  * Worse, when its done, its taken the underlying input stream to EOF.  So, it
  * needs to be spoon fed GZIP members by the underlying stream.
