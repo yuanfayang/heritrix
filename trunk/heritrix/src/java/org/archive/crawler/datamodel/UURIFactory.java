@@ -411,8 +411,8 @@ public class UURIFactory extends URI {
         if (uriScheme != null && uriScheme.length() > 0 &&
         		this.schemes != null) {
         	if (!this.schemes.contains(uriScheme)) {
-        		throw new UnsupportedUriSchemeException(
-                     "Unsupported scheme: " + uriScheme);
+        		throw new URIException(
+                "Unsupported scheme: " + uriScheme);
             }
         }
         
@@ -653,17 +653,5 @@ public class UURIFactory extends URI {
             super(base, relative);
             normalize();
         }
-    }
-    
-    /**
-     * Exception thrown when we come across unsupported scheme.
-     */
-    private class UnsupportedUriSchemeException extends URIException {
-		/**
-		 * @param reason For exception.
-		 */
-		public UnsupportedUriSchemeException(String reason) {
-			super(reason);
-		}
     }
 }
