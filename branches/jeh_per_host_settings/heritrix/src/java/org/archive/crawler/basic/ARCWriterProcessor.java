@@ -83,7 +83,7 @@ public class ARCWriterProcessor
     /**
      * Where to drop ARC files.
      */
-    protected String outputDir = null;
+    protected String outputDir = "";
 
     /**
      * Reference to an ARCWriter.
