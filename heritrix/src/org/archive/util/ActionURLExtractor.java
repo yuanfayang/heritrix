@@ -47,8 +47,6 @@ public class ActionURLExtractor extends ActionWriter {
 	 */
 	public void getURL( String url, String target ) throws IOException
 	{
-		System.out.println("getting url! " + url + " " + target);
-		
 		// report uri back to tag parser
 		tagWriter.putLink(url);
 		links.add(url);
