@@ -13,12 +13,8 @@ package org.archive.util;
  * 
  * @author Gordon Mohr
  */
-public class MemLongFPSet implements LongFPSet {
-	boolean containsZero = false;
-	int capacityPowerOfTwo;
-	long[] raw;
-	long size;
-	
+public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
+	long[] rawArray;
 	/**
 	 * 
 	 */
@@ -31,7 +27,7 @@ public class MemLongFPSet implements LongFPSet {
 	 */
 	public MemLongFPSet(int capacityPowerOfTwo) {
 		this.capacityPowerOfTwo = capacityPowerOfTwo;
-		raw = new long[2^capacityPowerOfTwo];
+		rawArray = new long[1<<capacityPowerOfTwo];
 		size = 0;
 	}
 
@@ -54,7 +50,7 @@ public class MemLongFPSet implements LongFPSet {
 			return false;
 		}
 		size++;
-		raw[-i+1]=l;
+		rawArray[-(i+1)]=l;
 		return true;
 	}
 
@@ -62,17 +58,17 @@ public class MemLongFPSet implements LongFPSet {
 	 * @param l
 	 * @return
 	 */
-	private int indexFor(long l) {
-		if(size>(2^(capacityPowerOfTwo-1))) {
+	protected int indexFor(long l) {
+		if(size>(1<<(capacityPowerOfTwo-1))) {
 			grow();
 		}
-		int candidateIndex = (int) (l >> (64 - capacityPowerOfTwo));
+		int candidateIndex = (int) (l >>> (64 - capacityPowerOfTwo));
 		while (true) {
-			if (raw[candidateIndex]==0) {
+			if (rawArray[candidateIndex]==0) {
 				// not present: return negative insertion index -1 
 				return -candidateIndex-1;
 			}
-			if (raw[candidateIndex]==l) {
+			if (rawArray[candidateIndex]==l) {
 				// present: return actual position
 				return candidateIndex;
 			}
@@ -84,22 +80,15 @@ public class MemLongFPSet implements LongFPSet {
 	 * 
 	 */
 	private void grow() {
-		long[] oldRaw = raw;
+		long[] oldRaw = rawArray;
 		capacityPowerOfTwo++;
-		raw = new long[2^capacityPowerOfTwo];
+		rawArray = new long[1<<capacityPowerOfTwo];
 		size=0;
 		for(int i = 0; i< oldRaw.length; i++) {
 			if(oldRaw[i]!=0) {
 				add(oldRaw[i]);
 			}
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.util.LongSet#contains(long)
-	 */
-	public boolean contains(long l) {
-		return indexFor(l)>=0;
 	}
 
 	/* (non-Javadoc)
@@ -128,23 +117,16 @@ public class MemLongFPSet implements LongFPSet {
 	 * @param i
 	 */
 	private void removeAt(int index) {
-		assert raw[index] != 0 : "removeAt bad index";
-		raw[index]=0;
+		assert rawArray[index] != 0 : "removeAt bad index";
+		rawArray[index]=0;
 		size--;
 		int probeIndex = index+1;
-		while(raw[probeIndex]!=0) {
-			long move = raw[probeIndex];
-			raw[probeIndex]=0;
-			raw[indexFor(move)]=move;
+		while(rawArray[probeIndex]!=0) {
+			long move = rawArray[probeIndex];
+			rawArray[probeIndex]=0;
+			rawArray[indexFor(move)]=move;
 			probeIndex++;
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.util.LongFPSet#length()
-	 */
-	public long size() {
-		return size;
 	}
 
 }
