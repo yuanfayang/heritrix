@@ -25,7 +25,7 @@ package org.archive.crawler.datamodel;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
-import org.archive.crawler.datamodel.credential.*;
+import org.archive.crawler.datamodel.credential.CredentialDomain;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.Type;
