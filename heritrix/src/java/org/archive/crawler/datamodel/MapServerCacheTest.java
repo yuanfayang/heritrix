@@ -34,24 +34,20 @@ import junit.framework.TestCase;
  */
 public class MapServerCacheTest extends TestCase {
 
-    public void testHolds() {
-        ServerCache servers = new ServerCache(null);
-        
+    public void testHolds()
+    throws ClassNotFoundException, InstantiationException,
+            IllegalAccessException {
+        ServerCache servers = ServerCacheFactory.getServerCache(null);
         String serverKey = "www.example.com:9090";
         String hostKey = "www.example.com";
-        CrawlServer s = servers.getServerFor(serverKey);
-        
+        servers.getServerFor(serverKey);
         forceScarceMemory();
-                
         assertTrue("cache lost server", servers.containsServer(serverKey));
         assertTrue("cache lost host", servers.containsHost(hostKey));
     }
 
-    /**
-     * 
-     */
     private void forceScarceMemory() {
-        // force soft references to be broken
+        // Force soft references to be broken
         LinkedList hog = new LinkedList();
         long blocks = Runtime.getRuntime().maxMemory() / 1000000;
         for(long l = 0; l <= blocks; l++) {

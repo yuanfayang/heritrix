@@ -31,6 +31,7 @@ import javax.management.Attribute;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
+import org.archive.crawler.datamodel.ServerCacheFactory;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.Constraint.FailedCheck;
 import org.archive.util.TmpDirTestCase;
@@ -70,7 +71,8 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
         perHostSettings = settingsHandler.getOrCreateSettingsObject("www.archive.org");
 
 
-        ServerCache serverCache = new ServerCache(getSettingsHandler());
+        ServerCache serverCache =
+            ServerCacheFactory.getServerCache(getSettingsHandler());
 
         unMatchedURI = new CrawlURI(
             UURIFactory.getInstance("http://localhost.com/index.html"));
