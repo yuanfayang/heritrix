@@ -258,7 +258,7 @@ public class ARCSocketFactory extends SocketFactory
     /**
      * Return a unique basename.
      * 
-     * Name is timestamp + an every increasing sequence number.  Used 
+     * Name is timestamp + an ever increasing sequence number.  Used 
      * creating backing files for recording input and output streams.
      * 
      * @return Unique basename.
@@ -423,6 +423,16 @@ public class ARCSocketFactory extends SocketFactory
         
         /**
          * Ready socket for recording of all read and written.
+         * 
+         * Creates a subdirectory named for the host we're connecting to.
+         * Sets up backing files named w/ a unique named inside in this 
+         * subdirectory to back the streams that catch all read and written 
+         * in case the buffers need to overflow to disk.  Would be nicer
+         * having the backing files mimic the layout of the URL path but 
+         * we don't know the URL path till <code>close</code> time so for 
+         * now make do w/ files of unique name (They are cleaned up on 
+         * close so shouldn't be problems w/ too many files in the 
+         * subdir).
          *
          * @exception IOException
          */
@@ -491,7 +501,8 @@ public class ARCSocketFactory extends SocketFactory
             {
                 // Mark start of stream.  We'll want to reset to here below.
                 response.mark(MAX_HEADER_SIZE);
-                StatusLine statusLine = getStatusLine(response);
+                // Read past the status line.  Ignore return.
+                getStatusLine(response);
                 String contentType = getContentType(response);
                 // Reset to start of stream so can write out total repsonse.
                 response.reset();
@@ -520,7 +531,7 @@ public class ARCSocketFactory extends SocketFactory
         {
             String s = HttpParser.readLine(replayInputStream);
             // TODO: Upgrade httpclient and use StatusLine.startsWithHTTP().
-            for (; s != null && !s.startsWith("HTTP");)
+            while (s != null && !s.startsWith("HTTP"))
             {
                 s = HttpParser.readLine(replayInputStream);
             }
@@ -648,7 +659,7 @@ public class ARCSocketFactory extends SocketFactory
         
         /**
          * @return Sub directory to write recording backing files into for this 
-         * socket named for the ip of the host we're connecting to.
+         * socket named for the name of the host we're connecting to.
          * @exception IOException
          */
         private File getBackingFileSubDir()
