@@ -25,12 +25,9 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -91,6 +88,9 @@ public class CrawlController extends Thread {
 
     protected String sExit;
 
+    /**
+     * Comment for <code>DEFAULT_MASTER_THREAD_PRIORITY</code>
+     */
     public static final int DEFAULT_MASTER_THREAD_PRIORITY =
         Thread.NORM_PRIORITY + 1;
 
@@ -180,11 +180,13 @@ public class CrawlController extends Thread {
     int nextToeSerialNumber = 0;
 
     ServerCache serverCache;
-    //ThreadKicker kicker;
 
     private boolean paused = false;
     private boolean finished = false;
 
+    /**
+     * 
+     */
     public CrawlController() {
     }
 
@@ -260,7 +262,6 @@ public class CrawlController extends Thread {
                 "Unable to setup statistics: " + e.toString(), e);
         }
 
-        setupToePool();
 
         try {
             setupCrawlModules();
@@ -305,7 +306,8 @@ public class CrawlController extends Thread {
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         }
-
+        
+        setupToePool();
     }
 
     /**
@@ -623,6 +625,9 @@ public class CrawlController extends Thread {
         this.start();
     }
 
+    /** (non-Javadoc)
+     * @see java.lang.Thread#run()
+     */
     public void run() {
         logger.fine(getName() + " started for CrawlController");
         sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
@@ -637,12 +642,20 @@ public class CrawlController extends Thread {
         statLogger.setName("StatLogger");
         statLogger.start();
 
+        toePool.setShouldPause(false);
+        frontier.start();
         while (shouldCrawl()) {
             if (shouldPause) {
                 pauseCrawl();
             }
-            // keep the channel full in batches
-            frontier.nextInto(10,crawlUriChannel,timeout);
+            synchronized(this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
 
         // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
@@ -684,43 +697,40 @@ public class CrawlController extends Thread {
         logger.fine(getName() + " finished for order CrawlController");
     }
 
-    private void pauseCrawl() {
-        synchronized (this) {
-            try {
-                // Wait until all ToeThreads are finished with their work
-                while (getActiveToeCount() > 0 && shouldPause) {
-                    wait(200);
-                }
-                if(shouldPause){
-                    paused = true;
-                    // Tell everyone that we have paused
-                    logger.info("Crawl job paused");
-                    Iterator iterator = registeredCrawlStatusListeners.iterator();
-                    while (iterator.hasNext()) {
-                        ((CrawlStatusListener) iterator.next()).crawlPaused(
+    private synchronized void pauseCrawl() {
+        try {
+            toePool.setShouldPause(true);
+            // Wait until all ToeThreads are finished with their work
+            while (getActiveToeCount() > 0 && shouldPause) {
+                wait(200);
+            }
+            if(shouldPause){
+                paused = true;
+                // Tell everyone that we have paused
+                logger.info("Crawl job paused");
+                Iterator iterator = registeredCrawlStatusListeners.iterator();
+                while (iterator.hasNext()) {
+                    ((CrawlStatusListener) iterator.next()).crawlPaused(
                             CrawlJob.STATUS_PAUSED);
-                    }
-
-                    wait(); // resumeCrawl() will wake us.
-                    paused = false;
-                } else{
-                    // Been given an order to resume while waiting
-                    // to pause
-                    paused = false;
                 }
-
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                
+                wait(); // resumeCrawl() will wake us.
             }
-            logger.info("Crawl job resumed");
-
-            // Tell everyone that we have resumed from pause
-            Iterator iterator = registeredCrawlStatusListeners.iterator();
-            while (iterator.hasNext()) {
-                ((CrawlStatusListener) iterator.next()).crawlResuming(
+            // Been given an order to resume while waiting
+            // to pause
+            paused = false;
+            toePool.setShouldPause(false);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        logger.info("Crawl job resumed");
+        
+        // Tell everyone that we have resumed from pause
+        Iterator iterator = registeredCrawlStatusListeners.iterator();
+        while (iterator.hasNext()) {
+            ((CrawlStatusListener) iterator.next()).crawlResuming(
                     CrawlJob.STATUS_RUNNING);
-            }
         }
     }
 
@@ -771,12 +781,16 @@ public class CrawlController extends Thread {
         return shouldCrawl && !frontier.isEmpty();
     }
 
-    public void stopCrawl() {
+    /**
+     * 
+     */
+    public synchronized void stopCrawl() {
         sExit = CrawlJob.STATUS_ABORTED;
         shouldCrawl = false;
         // If crawl is paused it should be resumed first so it
         // can be stopped properly
         resumeCrawl();
+        notifyAll();
     }
 
     /**
@@ -789,6 +803,7 @@ public class CrawlController extends Thread {
         }
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
         shouldPause = true;
+        notifyAll();
         logger.info("Pausing crawl job ...");
 
         // Notify listeners that we are going to pause
@@ -819,6 +834,9 @@ public class CrawlController extends Thread {
         notify();
     }
 
+    /**
+     * @return
+     */
     public int getActiveToeCount() {
         return toePool.getActiveToeCount();
     }
@@ -827,10 +845,16 @@ public class CrawlController extends Thread {
         toePool = new ToePool(this, order.getMaxToes());
     }
 
+    /**
+     * @return
+     */
     public CrawlOrder getOrder() {
         return order;
     }
 
+    /**
+     * @return
+     */
     public ServerCache getServerCache() {
         return serverCache;
     }
@@ -850,6 +874,9 @@ public class CrawlController extends Thread {
         return frontier;
     }
 
+    /**
+     * @return
+     */
     public CrawlScope getScope() {
         return scope;
     }
@@ -878,10 +905,16 @@ public class CrawlController extends Thread {
         return processorChains.getLastChain();
     }
 
+    /**
+     * @return
+     */
     public File getDisk() {
         return disk;
     }
 
+    /**
+     * @return
+     */
     public File getScratchDisk() {
         return scratchDisk;
     }

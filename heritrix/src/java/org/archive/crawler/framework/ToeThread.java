@@ -53,7 +53,9 @@ public class ToeThread extends Thread
     private static int DEFAULT_TAKE_TIMEOUT = 3000;
     
     private ToePool pool;
-    private boolean shouldCrawl = true;
+    private volatile boolean shouldCrawl = true;
+    private volatile boolean shouldPause = false;
+
     CrawlController controller;
     int serialNumber;
     HttpRecorder httpRecorder;
@@ -91,19 +93,24 @@ public class ToeThread extends Thread
 //        notify();
 //    }
 
+    /**
+     * @return
+     */
     public boolean isAvailable() {
         return currentCuri == null;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Runnable#run()
+    /** (non-Javadoc)
+     * @see java.lang.Thread#run()
      */
     public void run() {
         String name = controller.getOrder().getCrawlOrderName();
         logger.fine(getName()+" started for order '"+name+"'");
 
         while ( shouldCrawl ) {
-            where = 1;
+            while ( shouldPause ) {
+                pause();
+            }
             try {
                 currentCuri = (CrawlURI) controller.getFrontier().newNext(DEFAULT_TAKE_TIMEOUT);
             } catch (InterruptedException e1) {
@@ -127,8 +134,22 @@ public class ToeThread extends Thread
         logger.fine(getName()+" finished for order '"+name+"'");
     }
 
+    /**
+     * 
+     */
+    private synchronized void pause() {
+        try {
+            wait();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+
     private void processCrawlUri() {
         currentCuri.setThreadNumber(serialNumber);
+        currentCuri.setNextProcessorChain(controller.getFirstProcessorChain());
         lastStartTime = System.currentTimeMillis();
         where = 3;
         try {
@@ -178,6 +199,7 @@ public class ToeThread extends Thread
 
     /**
      * @param processor
+     * @return
      */
     private Processor getProcessor(Processor processor) {
         if(!(processor instanceof InstancePerThread)) {
@@ -198,6 +220,9 @@ public class ToeThread extends Thread
         return shouldCrawl;
     }
 
+    /**
+     * 
+     */
     public synchronized void stopAfterCurrent() {
         logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
         shouldCrawl = false;
@@ -207,10 +232,16 @@ public class ToeThread extends Thread
         }
     }
 
+    /**
+     * @return
+     */
     public int getSerialNumber() {
         return serialNumber;
     }
 
+    /**
+     * @see org.archive.util.HttpRecorderMarker#getHttpRecorder()
+     */
     public HttpRecorder getHttpRecorder() {
         return httpRecorder;
     }
@@ -280,6 +311,17 @@ public class ToeThread extends Thread
         rep.newline();
 
         return rep.toString();
+    }
+
+
+    /**
+     * @param b
+     */
+    public synchronized void setShouldPause(boolean b) {
+        shouldPause = b;
+        if(!shouldPause) {
+            notifyAll();
+        }
     }
 
 
