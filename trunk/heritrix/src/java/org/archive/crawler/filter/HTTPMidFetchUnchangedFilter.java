@@ -73,6 +73,10 @@ implements AdaptiveRevisitAttributeConstants {
                 "and later, the entire document is available and examining " +
                 "this will usually give better results then relying on HTTP " +
                 "headers. See documentation for further details.");
+
+        // Register persistent CrawlURI items 
+        CrawlURI.addAlistPersistentMember(A_LAST_DATESTAMP);
+        CrawlURI.addAlistPersistentMember(A_LAST_ETAG);
     }
     
     /**

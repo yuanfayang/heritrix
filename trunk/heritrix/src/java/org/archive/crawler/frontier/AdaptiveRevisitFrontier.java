@@ -185,6 +185,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     " host.",
                     DEFAULT_HOST_VALENCE));
             t.setExpertSetting(true);
+
+        // Register persistent CrawlURI items 
+        CrawlURI.addAlistPersistentMember(A_CONTENT_STATE_KEY);
+        CrawlURI.addAlistPersistentMember(A_TIME_OF_NEXT_PROCESSING);
     }
 
     public synchronized void initialize(CrawlController c)
@@ -196,12 +200,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             c.getClassCatalog());
         
         loadSeeds();
-        
-        // Add our state key to list of keys whose content should persist
-        // across URI processings.  
-        CrawlURI.addAlistPersistentMember(A_CONTENT_STATE_KEY);
-        CrawlURI.addAlistPersistentMember(A_LAST_CONTENT_DIGEST);
-        CrawlURI.addAlistPersistentMember(A_TIME_OF_NEXT_PROCESSING);
     }
 
     /**

@@ -57,6 +57,11 @@ implements AdaptiveRevisitAttributeConstants {
                 "straight to the post processor chain) and the CrawlURI is " +
                 "marked appropriately. Should be located at the start of " +
                 "the Extractor chain.");
+
+        // Register persistent CrawlURI items 
+        CrawlURI.addAlistPersistentMember(A_LAST_CONTENT_DIGEST);
+        CrawlURI.addAlistPersistentMember(A_NUMBER_OF_VISITS);
+        CrawlURI.addAlistPersistentMember(A_NUMBER_OF_VERSIONS);
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
