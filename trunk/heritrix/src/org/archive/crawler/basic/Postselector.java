@@ -103,7 +103,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 		try {
 			return UURI.createUURI(base).getRawUri();
 		} catch (URISyntaxException e) {
-			Object[] array = { this, base };
+			Object[] array = { curi, base };
 			controller.uriErrors.log(Level.INFO,e.getMessage(), array );
 			// next best thing: use self
 			return curi.getUURI().getRawUri();
