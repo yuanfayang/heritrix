@@ -5,9 +5,15 @@
   </properties>
   <body>
 
+    <release version="0.2.0" date="2003-01-05">
+      <action dev="stack" type="add">
+        First 'official' release.
+      </action>
+     </release>
+
     <release version="0.1.0" date="2003-12-31">
+      <action dev="gojomo" type="add">
     	Initial Mavenized development version number (CVS/internal only).
-      <action dev="heritrix" type="add">
         Added everything to new project layout.
       </action>
      </release>

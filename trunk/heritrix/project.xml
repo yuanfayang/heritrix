@@ -47,7 +47,7 @@
 
        TODO: Point to versioning scheme.
     -->
-  <currentVersion>0.2.0</currentVersion>
+  <currentVersion>0.3.0</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
@@ -83,9 +83,9 @@
     <siteDirectory>/home/groups/a/ar/archive-crawler/htdocs/</siteDirectory>
 
     <!--TODO: See what these configurations do.-->
-    <distributionSite>http://sourceforge.net/projects/archive-crawler
-        </distributionSite>
-    <distributionDirectory>/tmp</distributionDirectory>
+    <distributionSite>http://shell.sourceforge.net</distributionSite>
+    <distributionDirectory>/home/users/s/st/${maven.username}
+    </distributionDirectory>
 
     <!--The version control repository and http url for online access
         the connection element has the form:
@@ -95,6 +95,14 @@
        <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/archive-crawler:ArchiveOpenCrawler</connection>
         <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/</url>
     </repository>
+
+    <versions>
+        <version>
+            <id>0.2.0</id>
+            <name>0.2.0</name>
+            <tag>heritrix-0_2_0</tag>
+        </version>
+    </versions>
   
 
     <!-- any mailing lists for the project -->
@@ -157,6 +165,14 @@
         <email>stack at archive dot com</email>
     </developer>
   </developers>
+
+    <licenses>
+        <license>
+            <name>GNU LESSER GENERAL PUBLIC LICENSE</name>
+            <url>http://www.gnu.org/licenses/lgpl.txt</url>
+            <distribution>repo</distribution>
+       </license>
+    </licenses>
 
     <!--For now, refer to local jars.  Later when (if) we deceide to go
         all-out maven, we'll pull common jars from remote repository.
