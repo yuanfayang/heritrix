@@ -235,6 +235,9 @@ implements Frontier,
         this.controller = c;
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
+        // This setting required by Linda Lee of bdbje as part of the 
+        // work on the bug #11552.
+        envConfig.setConfigParam("je.evictor.criticalPercentage", "1");
         int bdbCachePercent = ((Integer) getUncheckedAttribute(null,
 				ATTR_BDB_CACHE_PERCENT)).intValue();
         if(bdbCachePercent > 0) {
