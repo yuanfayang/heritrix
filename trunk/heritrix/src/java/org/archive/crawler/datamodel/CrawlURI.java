@@ -179,7 +179,13 @@ public class CrawlURI extends CandidateURI
 		}
 		String host = getUURI().getUri().getHost();
 		if (host == null) {
-			return getUURI().getUri().getAuthority();
+			String authority =  getUURI().getUri().getAuthority();
+            if(authority == null) {
+                // let it be its own key
+                return getUURI().getUriString();
+            } else {
+                return authority;
+            }
 		} else {
 			return host;
 		} 
