@@ -249,7 +249,7 @@ public class Frontier
         Type t;
         t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
                 "Whether to hold newly-created per-host URI work" +
-                " queues until needed to stay busy\n. If false (default)," +
+                " queues until needed to stay busy.\n If false (default)," +
                 " all queues may contribute URIs for crawling at all" +
                 " times. If true, queues begin (and collect URIs) in" +
                 " an 'inactive' state, and only when the Frontier needs" +

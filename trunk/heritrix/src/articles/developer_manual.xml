@@ -85,12 +85,29 @@
       Be careful. Do not confuse the 'sdocbook' plugin with the similarly
       named 'docbook' plugin. This latter converts docbook to xdocs where
       what's wanted is the former, which converts docbook xml to html. This
-      'sdocbook' plugin is used to generate the user and developer
-      documentation. The sdocbook plugin has a dependency on the <ulink
+      'sdocbook' plugin is used to generate the user
+	and developer documentation. 
+	Download the plugin jar and put it into your maven
+       repository plugins directory, usually      
+               at <literal>.maven/plugins</literal>.</para>
+
+
+	<para>The sdocbook plugin has a dependency on the <ulink
       url="http://java.sun.com/products/jimi/">jimi jar from sun</ulink> which
       you will have to manually pull down and place into your maven
-      respository (Had to unzip the jini zip file and repackage it as a jar to
-      make maven happy).</para>
+      respository (Its got a sun license you must
+               accept so maven cannot autodownload).
+               Download the jimi package and unzip it.  Rename the
+               file named <literal>JimiProClasses.zip</literal>
+               as <literal>jimi-1.0.jar</literal> and put it into
+               your maven jars repository (Usually
+               <literal>.maven/repository/jimi/jars</literal>. You
+               may have to create the later directories manually).
+		Maven will be looking for a jar named 
+                jimi-1.0.jar.  Thats why you have to rename the
+		jimi class zip (jars are effectively zips).
+               </para>
+
 
       <para>To build a CVS source checkout with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</programlisting>In the target/distribution
