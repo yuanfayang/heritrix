@@ -98,6 +98,21 @@ to <literal>stringList</literal>):
       is to retry. The page should eventually come up.
       </para>
       </sect3>
+      <sect3 id="arcfile_suffix">
+        <title>New ARC file suffix</title>
+        <para>Pre-release 1.2.0, currently open ARC files that are being
+        written to by the crawler were differentiated by an '.open' suffix.
+        When the crawler finished writing, the suffix was removed.
+        A new suffix has been introduced -- '.invalid' -- which the crawler
+        will use to mark ARC files it thinks suspect -- usually because there
+        was an IOException thrown during the writing of an ARC Record. Such
+        ARCs need to be checked for validity.  Run <literal>% gzip -t</literal> 
+        and <literal>% ARCReader --strict</literal> 
+        against all files with an '.invalid' suffix -- and any unclosed
+        '.open' files present after a crawl has ended -- to
+        check for corruption.
+        </para>
+      </sect3>
     </sect2>
   </sect1>
 
