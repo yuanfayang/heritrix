@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<faqs title="Frequently Asked Questions">
+
+  <part id="general">
+    <title>General</title>
+
+
+    <faq id="heritrix">
+      <question>
+            What does "Heritrix" mean?
+      </question>
+      <answer>
+        <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>) is an archaic word for <em>inheritess</em>. Since our crawler seeks to collect the digital artifacts of our culture and <i>preserve</i> them for the benefit of future researchers and generations, this name seemed apt.</p>
+      </answer>
+    </faq>
+
+    <faq id="developer">
+      <question>
+    I'm a developer, can I help?
+      </question>
+      <answer>
+        <p>Yes -- especially if you have experience with Java, open-source projects, and web protocols! Drop us a message or join our <a href="mailing-lists.html">mailing lists</a> for more details.
+        </p>
+      </answer>
+    </faq>
+
+    <faq id="user-heritrix">
+      <question>
+    I need to crawl/archive a set of websites, can I use Heritrix?
+      </question>
+      <answer>
+        <p>Yes.  Start by checking out the 
+        <a href="articles/user_manual.html">Heritrix User Manual</a>.
+        </p>
+      </answer>
+    </faq>
+
+  </part>
+  <part id="problems">
+    <title>Common Problems</title>
+    <faq id="limitations">
+      <question>Are there known limitations?</question>
+      <answer>See the 
+      <a href="articles/limitations.html">Known Limitations</a>
+      page.</answer>
+    </faq>
+    <faq id="toomanyopenfiles">
+      <question>Why do I get
+      <i>java.io.FileNotFoundException...(Too many open files)</i>?
+      </question>
+      <answer>
+      <p>On linux the usual upper bound is 1024 file descriptors per
+      process.  To change this upper bound, there's a couple of things
+      you can do.</p>  
+      <p>If running the crawler as non-root (recommended), 
+      you can configure limits in 
+      <code>/etc/security/limits.conf</code>. For example you can
+      setup open files limit for all users in webcrawler group as:
+<source>
+# Each line describes a limit for a user in the form:
+#
+# domain    type    item    value
+#
+@webcrawler     hard    nofile  32768
+</source>
+      </p>
+      <p>Otherwise, running as root, you can do the following:
+    <code># (ulimit -n 4096; JAVA_OPTS=-Xmx320 bin/heritrix -p 9876)</code>
+        to up the ulimit for the heritrix process only.
+      </p>
+      <p>Below is a rough accounting of FDs used in heritrix.</p>
+      <p>In Heritrix, the number of concurrent threads is configurable.  The
+      default frontier implementation allocates a thread per server.  Per
+      server, the frontier keeps a disk-backed queue.  Disk-backed queues
+      maintain two backing files (One to read from while the other is
+      being written to).  So, per thread there will be at least two
+      file descriptors occupied.</p>
+      <p>Apart from the above per thread FD cost, there is 
+      a set FD cost instantiating the crawler:
+      <ul>
+      <li>The JVM, its native shared libs and jars count for about 40
+      FDs.</li>
+      <li>There are about 20 or so heritrix jars and 2 webapps.
+      </li>
+      <li>There are about 10-20 heritrix logging files counting
+      counting lock files.</li>
+      <li>Miscellaneous sockets, /dev/null and stderr/stdout make
+      for 10 or 20 more FDs.</li>
+          </ul>
+      </p>
+      </answer>
+      </faq>
+      <faq id="traps">
+        <question>What are crawler traps?</question>
+        <answer>
+        <p>Traps are infinite page sources put up to occupy ('trap') a crawler.
+        Traps may be as innocent as a calendar that returns pages years into
+        the future or not-so-innocent 
+        <a href="http://spiders.must.die.net/">http://spiders.must.die.net/</a>.
+        Traps are created by CGIs/server-side code that dynamically conjures
+        'nonsense' pages or else exploits combination of soft and relative links
+        to generate URI paths of infinite variety and depth.
+        Once identified, use filters to guard against falling in.
+        </p>
+
+        <p>Another trap that works by feeding documents of infinite sizes
+        to the crawler is
+        http://yahoo.domain.com.au/tools/spiderbait.aspx* as in
+        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=vic or
+        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=nsw.
+        To filter out infinite document size traps, add a maximum doc.
+        size filter to your crawl order.
+        </p>
+        <p>See <a href="#crawl_junk">What to do when I'm crawling "junk"?</a>
+        </p>
+        </answer>
+      </faq>
+      <faq id="oome_broadcrawl">
+        <question>Why
+        do I get an OutOfMemoryException ten minutes after starting 
+        a broad scoped crawl?</question>
+        <answer>
+        <p>See the note in
+        <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a>.
+        </p>
+        </answer>
+      </faq>
+      <faq id="new_writer">
+        <question>Can I insert
+        the crawl download directly into a MYSQL database instead of
+        into an ARC file on disk while crawling?</question>
+        <answer>
+        <p>Yes.  See <a href="http://groups.yahoo.com/group/archive-crawler/message/508">RE: [archive-crawler] Inserting information to MYSQL during crawl</a>
+        for pointers on how but also see the rest of this thread for why you
+            might rather do database insertion post-crawl rather than during.
+        </p>
+        </answer>
+      </faq>
+      <faq id="eclipse_assert">
+        <question>Why when
+        running heritrix in eclipse does it complain about the
+        'assert' keyword?</question>
+        <answer>
+        <p>
+        See <a href="http://groups.yahoo.com/group/archive-crawler/message/490">Re: [archive-crawler] Eclipse Heritrix and the assert keyword</a> and other messages in this thread.
+        </p>
+        </answer>
+      </faq>
+      <faq id="crawl_finished">
+        <question>Why won't my crawl finish?</question>
+        <answer>
+        <p>The crawl can get hung up on sites that are actually down or are non-responsive.
+        Manual intervention is necessary in such cases. 
+        Study the frontier to get a picture of what is left to be crawled.
+        Looking at the local errors log will give let you see the problems with currently
+        crawled URIs.  Along with robots.txt retries, you will probably also see
+        httpclient timeouts.
+        In general you want to look for repetition of problems with particular
+        host/URIs.</p> 
+
+
+        <p>Grepping the local errors log is a bit tricky because
+        of the shape of its content. Its recommend that you first "flatten"
+        the local errors file.  Here's an example :
+        <source>% cat  local-errors.log | tr -d \\\n | perl -pe 's/([0-9]{17} )/\n$1/g'</source>
+        </p>
+
+         <p>This will remove all new lines and then add a new line in front of 17-digit dates (hopefully only 17-digit tokens followed by a space are dates.).  The result is one line per entry with a 17-digit
+         date prefix. Makes it easier to parse.
+         </p>
+
+        <p>To eliminate URIs for unresponsive hosts from the frontier queue,
+        pause the crawl and block the
+        fetch from that host by creating a new per-host setting 
+        -- an override -- in the preselector processor.</p>
+
+         <p>Also, check for any hung threads. This does not happen
+         anymore (0.8.0+). Check the threads report for threads that
+         have been active for a long time but that should not be: 
+         i.e. documents being downloaded are small in size.
+        </p>
+        <p>Once you've identified hung threads, kill and replace it.</p>
+
+        </answer>
+      </faq>
+
+      <faq id="crawl_junk">
+        <question>What do I do to avoid crawling "junk"?</question>
+        <answer>
+         <p>In the past crawls were stopped when we ran into "junk."  
+         An example of what we mean by "junk" is the crawler stuck
+         in a web calender crawling the year 2020.  Nowadays, if 
+         "junk" is detected, we'll pause the crawl and set filters
+         to eliminate "junk" and then resume (Eliminated URIs will
+         show in the logs.  Helps when doing post-crawl analysis).
+         </p>
+         <p>To help guard against the crawling of "junk" setup 
+         the pathological and path-depth filters.
+         This will also help the crawler avoid <a href="#traps">traps</a>.
+         Recommended values for pathological filter is 3 repetitions of same
+         pattern -- e.g. /images/images/images/... -- and for path-depth, a
+         value of 20.
+         </p>
+
+        </answer>
+      </faq>
+
+  </part>
+
+  <part id="references">
+    <title>References</title>
+
+    <faq id="archive_data">
+      <question>Where can I learn more about what is stored at 
+      the Internet Archive, the ARC file format, and tools for manipulating
+      ARC files?
+      </question>
+      <answer>
+        <p>You need a free website login, but once made, a collection of
+        useful overview links of formats/tools appears on the left column
+        <a href="http://www.archive.org/web/researcher/researcher.php">here</a>
+        at the Internet Archive.
+        </p>
+      </answer>
+    </faq>
+   
+    <faq id="where_refs">
+      <question>Where can I get more background on Heritrix and 
+        learn more about "crawling" in general?
+      </question>
+      <answer>
+        <p>The following are all worth at least a quick skim:
+    <ol>
+    <li><a href="http://citeseer.nj.nec.com/heydon99mercator.html">Mercator: A 
+    Scalable, Extensible Web Crawler</a> is an overview of the original
+    Mercator design, which the Heritrix crawler parallels in many ways.</li>
+    <li><a href="http://citeseer.nj.nec.com/najork01highperformance.html">High-performance Web Crawling</a> is info on experience scaling Mercator.</li>
+
+    <li><a 
+    href="http://citeseer.nj.nec.com/heydon00performance.html">Performance 
+    Limitations of the Java Core Libraries</a> is info on Mercator's
+    experience working around Java problems and bottlenecks. 
+    Fortunately, many of these issues have been improved for us by later JVMs
+    and Java core API updates -- but some of these are still issues, and in
+    any case it gives a good flavor for the kinds of
+    problems and profiling one might need to do.
+    </li>
+
+    <li><a href="http://citeseer.nj.nec.com/leung01towards.html">Towards
+    Web-Scale Web Archeaology</a> is a higher-level view, not as focused on
+    crawling details, but rather the post-crawl needs that motivate crawling
+    in the first place.</li>
+   <li>A number of other potentially interesting papers are linked off
+   the "crawl-links.html" file in the <a 
+    href="http://groups.yahoo.com/group/archive-crawler/files/">YahooGroups
+        files section...</a>
+    </li>
+    </ol>
+    </p>
+      </answer>
+    </faq>
+  </part>  
+</faqs>
