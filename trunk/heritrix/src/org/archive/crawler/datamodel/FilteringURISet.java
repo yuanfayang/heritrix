@@ -6,7 +6,7 @@
  */
 package org.archive.crawler.datamodel;
 
-import org.archive.crawler.framework.UURIFilter;
+import org.archive.crawler.framework.Filter;
 
 /**
  * A URISet that also filters, for example by requiring
@@ -15,6 +15,6 @@ import org.archive.crawler.framework.UURIFilter;
  * @author gojomo
  *
  */
-public interface FilteringURISet extends UURIFilter, UURISet {
+public interface FilteringURISet extends Filter, UURISet {
 
 }

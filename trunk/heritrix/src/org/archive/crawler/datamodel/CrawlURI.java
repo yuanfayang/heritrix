@@ -25,8 +25,8 @@ import org.archive.crawler.framework.Processor;
 public class CrawlURI {
 	AttributeList alist;
 	UURI uuri; 
-	CrawlHost host;
 	Processor nextProcessor;
+	CrawlHost host;
 	CrawlFetch fetch;
 
 	/**
@@ -41,6 +41,12 @@ public class CrawlURI {
 	 */
 	public Processor nextProcessor() {
 		return nextProcessor;
+	}
+	/**
+	 * @param processor
+	 */
+	public void setNextProcessor(Processor processor) {
+		nextProcessor = processor;
 	}
 	
 	

@@ -4,17 +4,13 @@
  *
  * $Header$
  */
-package org.archive.crawler.core;
+package org.archive.crawler.framework;
 
 import java.util.List;
 
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlOrder;
-import org.archive.crawler.framework.HostCache;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.URIDB;
-import org.archive.crawler.framework.URIScheduler;
-import org.archive.crawler.framework.URISelector;
+import org.archive.crawler.datamodel.HostCache;
 
 /**
  * 
