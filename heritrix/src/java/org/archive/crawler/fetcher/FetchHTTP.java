@@ -130,6 +130,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
     private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(0);
+    
+    /**
+     * This is the default value pre-1.4. Needs special handling else
+     * treated as negative number doing math later in processing.
+     */
+    private static long OLD_DEFAULT_MAX_LENGTH_BYTES = 9223372036854775807L;
 
     /**
      * Default character encoding to use for pages that do not specify.
@@ -351,8 +357,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
 
         // Note completion time
-        curi.putLong(A_FETCH_COMPLETED_TIME,
-            System.currentTimeMillis());
+        curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
 
         // Set the response charset into the HttpRecord if available.
         setCharacterEncoding(rec, method);
@@ -675,7 +680,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         Set curiRfc2617Credentials = getCredentials(getSettingsHandler(),
         		curi, Rfc2617Credential.class);
         Rfc2617Credential extant = Rfc2617Credential.
-		getByRealm(curiRfc2617Credentials, realm, curi);
+		    getByRealm(curiRfc2617Credentials, realm, curi);
         if (extant != null) {
         	// Then, already tried this credential.  Remove ANY rfc2617
         	// credential since presence of a rfc2617 credential serves
@@ -921,6 +926,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         Long res;
         try {
             res = (Long) getAttribute(ATTR_MAX_LENGTH_BYTES, curi);
+            if (res.longValue() == OLD_DEFAULT_MAX_LENGTH_BYTES) {
+                res = DEFAULT_MAX_LENGTH_BYTES;
+            }
         } catch (Exception e) {
             res = DEFAULT_MAX_LENGTH_BYTES;
         }
