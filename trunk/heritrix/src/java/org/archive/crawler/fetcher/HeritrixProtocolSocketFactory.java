@@ -185,22 +185,23 @@ implements ProtocolSocketFactory {
      * failing that, go to the dnsjava cache.
      * 
      * Default access so can be used by other classes in this package.
+     *
      * @param host Host whose address we're to fetch.
      * @return an IP address for this host or null if one can't be found
      * in caches.
+     * @exception IOException If we fail to get host IP from ServerCache.
      */
-    static InetAddress getHostAddress(String host) {
+    static InetAddress getHostAddress(String host) throws IOException {
         InetAddress result = null;
         if (controller != null) {
         	CrawlHost ch = controller.getServerCache().getHostFor(host);
             if (ch != null) {
-            	    result = ch.getIP();
+                result = ch.getIP();
             }
         }
         if (result ==  null) {
-        	    // Failed to get address from heritrix cache.  Do next best
-            // thing.  Go to the dnsjava cache.
-            result = DNSJavaUtil.getHostAddress(host);
+            throw new IOException("Failed to get host " + host +
+                " address from ServerCache");
         }
         return result;
     }

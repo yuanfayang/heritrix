@@ -167,8 +167,9 @@ implements SecureProtocolSocketFactory {
      * @param host Host whose address we're to fetch.
      * @return an IP address for this host or null if one can't be found
      * in caches.
+     * @exception IOException If we failed to get host from ServerCache.
      */
-    static InetAddress getHostAddress(String host) {
-    	    return HeritrixProtocolSocketFactory.getHostAddress(host);
+    static InetAddress getHostAddress(String host) throws IOException {
+        return HeritrixProtocolSocketFactory.getHostAddress(host);
     }
 }
