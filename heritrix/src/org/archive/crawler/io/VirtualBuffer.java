@@ -90,7 +90,7 @@ public abstract class VirtualBuffer {
    * as long as the buffer remains writable. 
    * @return
    */
-  public abstract int getSize();
+  public abstract long getSize();
   
   /**
    * Returns the checksum of all written data. May change

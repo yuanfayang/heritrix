@@ -56,11 +56,13 @@ public class SpreadInputStream extends SeekableInputStream {
    * depending on the current position.
    */
   public synchronized int read() throws IOException {
-  
+    //ToDo:
+    return 0;
   }
   
   public synchronized int read(byte b[], int off, int len) throws IOException {
-  
+    //ToDo:
+    return 0;
   }
 
   public synchronized void seek(long loc) throws IOException {
@@ -72,7 +74,8 @@ public class SpreadInputStream extends SeekableInputStream {
   }
   
   public int available() throws IOException {
-  
+    //ToDo:
+    return 0;
   }
   
   /**

@@ -108,7 +108,7 @@ public class SpreadOutputStream extends OutputStream {
               ((off + len) > b.length) || ((off + len) < 0)) {
         throw new IndexOutOfBoundsException();
     } else if (len == 0) {
-        return 0;
+        return;
     }
     if ( ! isAugmented() ) {
       if ( ! mMemArea.isExhausted()) {
@@ -156,7 +156,7 @@ public class SpreadOutputStream extends OutputStream {
     mFileStream.write(b);
   }
   
-  private void createSpillFile() {
+  private void createSpillFile() throws IOException {
     spillFileNameGen++;
     mFile = File.createTempFile("Spill " + spillFileNameGen, "tmp");
     mFileStream = new FileOutputStream(mFile);
@@ -180,7 +180,7 @@ public class SpreadOutputStream extends OutputStream {
    */
   public void close() throws IOException {
     flush();
-    long length;
+    long length = 0;
     if (mMemArea != null) 
       length = mMemArea.getLength();
     else if (mAugmentedDataArray != null)
