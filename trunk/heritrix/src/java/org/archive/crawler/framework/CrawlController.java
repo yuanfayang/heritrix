@@ -361,6 +361,13 @@ public class CrawlController implements Serializable {
             envConfig.setCachePercent(bdbCachePercent);
         }
         envConfig.setLockTimeout(5000000); // 5 seconds
+        // Uncomment this section to see the bdbje Evictor logging.
+        /*
+        envConfig.setConfigParam("java.util.logging.level", "SEVERE");
+        envConfig.setConfigParam("java.util.logging.level.evictor", "SEVERE");
+        envConfig.setConfigParam("java.util.logging.ConsoleHandler.on",
+            "true");
+        */
         try {
             this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
             if (logger.isLoggable(Level.INFO)) {
