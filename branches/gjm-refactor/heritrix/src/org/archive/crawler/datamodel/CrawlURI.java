@@ -360,6 +360,7 @@ public class CrawlURI extends CandidateURI
 			localizedErrors = (List) alist.getObject(A_LOCALIZED_ERRORS);
 		} else {
 			localizedErrors = new ArrayList();
+			alist.putObject(A_LOCALIZED_ERRORS,localizedErrors);
 		}
 		
 		localizedErrors.add(new LocalizedError(processorName, ex, message));
