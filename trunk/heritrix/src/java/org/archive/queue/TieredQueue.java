@@ -85,20 +85,10 @@ public class TieredQueue implements Queue {
         length++;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#isEmpty()
-     */
     public boolean isEmpty() {
         return length == 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#dequeue()
-     */
     public Object dequeue() throws NoSuchElementException {
         Object o = peek();
         assert (o == innerQueues[headSource].peek()) : 
@@ -109,31 +99,16 @@ public class TieredQueue implements Queue {
         return o;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#length()
-     */
     public long length() {
         return length;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#release()
-     */
     public void release() {
         for (int i = 0; i <= lastQueue; i++) {
             innerQueues[i].release();
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#peek()
-     */
     public Object peek() {
         if (isEmpty()) {
             throw new NoSuchElementException();
@@ -153,11 +128,6 @@ public class TieredQueue implements Queue {
         headObject = innerQueues[headSource].peek();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#unpeek()
-     */
     public void unpeek() {
         headObject = null;
         headSource = -1;
@@ -168,8 +138,8 @@ public class TieredQueue implements Queue {
      * Set the internal queue tier to be the 
      * supplied Queue instance. 
      *  
-     * @param tier
-     * @param q
+     * @param tier Tier level to set.
+     * @param q Queue to use.
      */
     public void setQueue(int tier, Queue q) {
         innerQueues[tier] = q;
@@ -183,21 +153,11 @@ public class TieredQueue implements Queue {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#getIterator(boolean)
-     */
     public Iterator getIterator(boolean inCacheOnly) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
-     */
     public long deleteMatchedItems(Predicate matcher) {
         // TODO Auto-generated method stub
         return 0;
@@ -207,8 +167,8 @@ public class TieredQueue implements Queue {
      * Initialize all innerQueues to be DiskBackedQueues in the given scratch
      * directory, using the tmpName prefix.
      * 
-     * @param scratchDir
-     * @param tmpName
+     * @param scratchDir Directory to put tmp files in.
+     * @param tmpName Prefix to use in tmpnames.
      * @throws IOException
      */
     public void initializeDiskBackedQueues(File scratchDir, String tmpName,
@@ -223,7 +183,7 @@ public class TieredQueue implements Queue {
      * Set the total number of in-memory items, assuming the underlying
      * subqueues are DiskBackedQueue instances.
      * 
-     * @param inMemCap
+     * @param inMemCap Memory cap.
      */
     public void setMemoryResidentQueueCap(int inMemCap) {
         for (int i = 0; i <= lastQueue; i++) {
