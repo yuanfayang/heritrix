@@ -380,7 +380,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			curi = new CrawlURI(uuri);
 		}
 		
-		applyCarryforwards(curi,sourceCuri, embed );
+		applyCarryforwards(curi,sourceCuri, embed);
 		
 		allCuris.put(uuri,curi);
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
@@ -499,6 +499,18 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	 */
 	public Collection getSeeds() {
 		return seeds;
+	}
+
+	/**
+	 * Forget the given CrawlURI. This allows a new instance
+	 * to be created in the future, if it is reencountered under 
+	 * different circumstances. 
+	 * 
+	 * @param curi
+	 */
+	public void forget(CrawlURI curi) {
+		allCuris.remove(curi.getUURI());
+		curi.setStoreState(URIStoreable.FORGOTTEN);
 	}
 
 }

@@ -252,7 +252,6 @@ public class CrawlController implements CrawlerConfigurationConstants {
 		if (curi != null) {
 			curi.setNextProcessor(firstProcessor);
 			curi.setThreadNumber(thread.getSerialNumber());
-			curi.setController(this);
 		}
 		return curi;
 	}

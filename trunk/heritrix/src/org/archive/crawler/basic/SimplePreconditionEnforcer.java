@@ -36,10 +36,6 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 	 */
 	protected void innerProcess(CrawlURI curi) {
 		
-		if (considerChaff(curi)) {
-			return;
-		}
-		
 		if (considerDnsPreconditions(curi)) {
 			return;
 		}
@@ -62,22 +58,6 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		curi.setMinimumDelay(getMinimumDelayFor(curi));
 
 		return;
-	}
-
-	/**
-	 * @param curi
-	 * @return
-	 */
-	private boolean considerChaff(CrawlURI curi) {
-		//if (curi.getChaffness()>1) {
-		//	System.out.println(curi.getChaffness()+" "+curi.getUURI().toString());
-		//}
-        if(curi.getChaffness()>getIntAt(XP_CHAFF_THRESHOLD,DEFAULT_CHAFF_THRESHOLD)) {
-			curi.setFetchStatus(S_DEEMED_CHAFF);
-			curi.cancelFurtherProcessing();
-			return true;
-		}
-		return false;
 	}
 
 	/**

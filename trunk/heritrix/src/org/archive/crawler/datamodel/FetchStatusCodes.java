@@ -30,6 +30,9 @@ public interface FetchStatusCodes {
 	
 	public static int S_ROBOTS_PRECLUDED = -9998;
 	public static int S_DEEMED_CHAFF = -4000;
+	public static int S_TOO_MANY_LINK_HOPS = -4001;
+	public static int S_TOO_MANY_EMBED_HOPS = -4002;
+	public static int S_OUT_OF_SCOPE = -5000;
 	
 	public static int S_DNS_SUCCESS = 1;
 

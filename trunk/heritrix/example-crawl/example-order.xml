@@ -28,12 +28,17 @@
 # http://www.royal-navy.mod.uk
 # http://www.sabre.mod.uk
 # http://www.archive.org/..
-# http://www.yahoo.com/../../movies
+#http://www.yahoo.com/../../movies
+#http://www.archive.org/movies/fake/../movies.php
+#http://www.archive.org/movies/../../blahblah
+#http://www.archive.org/movies/../../../../somethingelse
+#http://www.army.mod.uk/ceremonialandheritage/museums_main.htm
 # http://www.creativecommons.org/../
-http://www.royal-navy.mod.uk/rn/form/form.html?page=1
-http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
+#http://www.royal-navy.mod.uk/rn/form/form.html?page=1
+#http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
 #http://directory.google.com/Top/Games/
 # http://www3.google.com/help/customize.html
+http://dmoz.org
 
    </seeds>
    <!--
@@ -42,6 +47,7 @@ http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
     class="org.archive.crawler.util.URIRegExpFilter"
     regexp=".*yahoo\.com.*" />
     -->
+    <!--
    <filter 
     name="pathological-path" 
     class="org.archive.crawler.util.URIRegExpFilter"
@@ -52,7 +58,7 @@ http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
     class="org.archive.crawler.util.URIRegExpFilter"
     modifier="not"
     regexp="[^/]*?//[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?/[^/]*?" />
-
+   -->
     <!--
     <filter
     name="problemarea"
@@ -66,13 +72,6 @@ http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
 \.uk)).*" />
     -->
 
-    <filter
-     name="focus"
-     class="org.archive.crawler.util.SeedExtensionFilter"
-     mode="domain"
-     />
-
-
   </selector>
   
   <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
@@ -80,6 +79,17 @@ http://www.dfid.gov.uk/../../aboutdfid/files/glossary_l.htm
   <store class="org.archive.crawler.basic.SimpleStore" />
  
   <processors>
+   <processor 
+     name="Preselector" 
+     class="org.archive.crawler.basic.SimplePreselector"
+     next="Preprocessor">
+    <params max-link-depth="1" max-embed-depth="2" />
+    <filter
+     name="focus"
+     class="org.archive.crawler.util.SeedExtensionFilter"
+     mode="domain"
+     />
+   </processor>
    <processor 
      name="Preprocessor" 
      class="org.archive.crawler.basic.SimplePreconditionEnforcer"

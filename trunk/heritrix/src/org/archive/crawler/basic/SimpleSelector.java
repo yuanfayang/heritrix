@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.basic;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,8 +37,10 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	CrawlController controller;
 	SimpleStore store;
 	ArrayList filters = new ArrayList();
-	private int maxLinkDepth = -1;
-	private int maxEmbedDepth = -1;
+	
+	// MOVED TO PRESELECTOR PROCESSOR
+	//private int maxLinkDepth = -1;
+	//private int maxEmbedDepth = -1;
 
 	private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 	private int maxRetries = 3;
@@ -76,23 +79,21 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 					return;
 				}
 				
+				
+				URI baseUri = getBaseURI(curi);
+				
 				// handle http headers 
 				if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
-					handleHttpHeaders(curi);
+					handleHttpHeaders(curi, baseUri);
 				}
 				// handle embeds 
-				if ((maxEmbedDepth >= 0)
-				    && (curi.getEmbedHopCount()<maxEmbedDepth)
-					&& curi.getAList().containsKey(A_HTML_EMBEDS)) {
-					handleEmbeds(curi);
+				if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+					handleEmbeds(curi, baseUri);
 				}
-				// handle links, if not too deep
-				if (curi.getAList().containsKey(A_HTML_LINKS)
-				    && ((maxLinkDepth == -1)
-				        || (curi.getLinkHopCount() < maxLinkDepth))) {
-					handleLinks(curi);
+				// handle links
+				if (curi.getAList().containsKey(A_HTML_LINKS)) {
+					handleLinks(curi, baseUri);
 				}
-				
 				
 				// SUCCESS: note & log
 				successDisposition(curi);
@@ -104,6 +105,24 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			}	
 		} 
 			
+	}
+
+	/**
+	 * @param curi
+	 */
+	private URI getBaseURI(CrawlURI curi) {
+		if (!curi.getAList().containsKey(A_HTML_BASE)) {
+			return curi.getUURI().getUri();
+		}
+		String base = curi.getAList().getString(A_HTML_BASE);
+		try {
+			return UURI.createUURI(base).getUri();
+		} catch (URISyntaxException e) {
+			Object[] array = { this, base };
+			controller.uriErrors.log(Level.INFO,e.getMessage(), array );
+			// next best thing: use self
+			return curi.getUURI().getUri();
+		}
 	}
 
 	/**
@@ -132,6 +151,13 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			case S_INTERNAL_ERROR:
 				// something unexpectedly bad happened
 			case S_UNFETCHABLE_URI:
+			    // no chance to fetch
+			case S_OUT_OF_SCOPE:
+			    // filtered out
+			case S_TOO_MANY_EMBED_HOPS:
+			    // too far from last true link
+			case S_TOO_MANY_LINK_HOPS:
+			    // too far from seeds
 				return true;
 			
 			case S_UNATTEMPTED:					
@@ -166,14 +192,14 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	/**
 	 * @param curi
 	 */
-	private void handleHttpHeaders(CrawlURI curi) {
+	private void handleHttpHeaders(CrawlURI curi, URI baseUri) {
 		// treat roughly the same as embeds, with same distance-from-seed
 		Collection uris = (Collection)curi.getAList().getObject(A_HTTP_HEADER_URIS);
 		Iterator iter = uris.iterator();
 		while(iter.hasNext()) {
 			String e = (String)iter.next();
 			try {
-				UURI u = UURI.createUURI(e,curi.getBaseUri());
+				UURI u = UURI.createUURI(e,baseUri);
 				//if(filtersAccept(u)) {
 					logger.fine("inserting header at head "+u);
 					//store.insertAtHead(u,curi.getAList().getInt("distance-from-seed"));
@@ -270,7 +296,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 
 
 
-	protected void handleLinks(CrawlURI curi) {
+	protected void handleLinks(CrawlURI curi, URI baseUri) {
 		if (curi.getFetchStatus() >= 400) {
 			// do not follow links of error pages
 			return;
@@ -280,7 +306,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		while(iter.hasNext()) {
 			String l = (String)iter.next();
 			try {
-				UURI link = UURI.createUURI(l,curi.getBaseUri());
+				UURI link = UURI.createUURI(l,baseUri);
 				if(filtersAccept(link)) {
 					logger.fine("inserting link "+link+" "+curi.getStoreState());
 					store.insert(link,curi,false);
@@ -293,7 +319,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	}
 
 
-	protected void handleEmbeds(CrawlURI curi) {
+	protected void handleEmbeds(CrawlURI curi, URI baseUri) {
 		if (curi.getFetchStatus() >= 400) {
 			// do not follow links of error pages
 			return;
@@ -303,7 +329,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		while(iter.hasNext()) {
 			String e = (String)iter.next();
 			try {
-				UURI embed = UURI.createUURI(e,curi.getBaseUri());
+				UURI embed = UURI.createUURI(e,baseUri);
 				//if(filtersAccept(embed)) {
 					logger.fine("inserting embed at head "+embed);
 					// For now, insert at tail instead of head
@@ -336,7 +362,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			}
 			logger.fine("inserting prereq at head "+prereq);
 			//CrawlURI prereqCuri = store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
-			CrawlURI prereqCuri = store.insert(prereq,curi,false);
+			CrawlURI prereqCuri = store.insert(prereq,curi,true);
 			if (prereqCuri.getStoreState()==URIStoreable.FINISHED) {
 				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
 				failureDisposition(curi);
@@ -405,15 +431,34 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			    curi.getUURI().getUri().toString(),
 				array);
 		}
-		curi.setStoreState(URIStoreable.FINISHED);
-		if (curi.getDontRetryBefore()<0) {
-			// if not otherwise set, retire this URI forever
-			curi.setDontRetryBefore(Long.MAX_VALUE);
+		if(shouldBeForgotten(curi)) {
+			// curi is dismissed without prejudice: it can be reconstituted
+			store.forget(curi);
+		} else {
+			curi.setStoreState(URIStoreable.FINISHED);
+			if (curi.getDontRetryBefore()<0) {
+				// if not otherwise set, retire this URI forever
+				curi.setDontRetryBefore(Long.MAX_VALUE);
+			}
+			curi.stripToMinimal();
 		}
-		curi.stripToMinimal();
 	}
 
 
+
+	/**
+	 * @param curi
+	 * @return
+	 */
+	private boolean shouldBeForgotten(CrawlURI curi) {
+		switch(curi.getFetchStatus()) {
+			case S_TOO_MANY_EMBED_HOPS:
+			case S_TOO_MANY_LINK_HOPS:
+				return true;
+			default:
+				return false;
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URISelector#initialize(org.archive.crawler.framework.CrawlController)
@@ -421,8 +466,8 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	public void initialize(CrawlController c) {
 		controller = c;
 		store = (SimpleStore)c.getStore();
-		maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value", maxLinkDepth);
-		maxEmbedDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-embed-depth/@value", maxEmbedDepth);
+		//maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value", maxLinkDepth);
+		//maxEmbedDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-embed-depth/@value", maxEmbedDepth);
 	
 		instantiateAllInto(XP_FILTERS,filters);
 		Iterator iter = filters.iterator();

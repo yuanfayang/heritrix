@@ -6,18 +6,11 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.archive.crawler.basic.FetcherDNS;
 import org.archive.crawler.basic.URIStoreable;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
 import st.ata.util.AList;
@@ -25,11 +18,11 @@ import st.ata.util.HashtableAList;
 
 
 /**
- * Represents a URI and the associated state it collects as
- * it is crawled.
+ * Represents a candidate URI and the associated state it 
+ * collects as it is crawled.
  * 
- * Except for a few special components, state is in a flexible
- * attibute list.
+ * Core state is in instance variables, but a flexible 
+ * attribute list is also available. 
  * 
  * Should only be instantiated via URIStore.getCrawlURI(...), 
  * which will assure only one CrawlURI can exist per 
@@ -39,36 +32,36 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI
 	implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
-	private Pattern FUZZY_TOKENS = Pattern.compile("\\w+");
-
-	private long wakeTime;
-
-	public static final String CONTENT_TYPE_LABEL = "content-type";
-	private static int FUZZY_WIDTH = 32;
-	
-	private UURI baseUri;
-	private AList alist = new HashtableAList();
+	// core identity: the "usable URI" to be crawled
 	private UURI uuri; 
-	private BitSet fuzzy; // uri token bitfield as sort of fuzzy checksum
-	private CrawlURI via; // curi that led to this (lowest hops from seed)
-	private Object state;
-	CrawlController controller;
-	Processor nextProcessor;
-	CrawlServer server;
 
+	// Scheduler lifecycle info
+	private Object state;   // state within scheduling/store/selector
+	private long wakeTime; // if "snoozed", when this CrawlURI may awake
+	private long dontRetryBefore = -1;
+	private int threadNumber;
+
+	// Processing progress
+	Processor nextProcessor;
 	private int fetchStatus = 0;	// default to unattempted
-	private int deferrals = 0;
-	private int fetchAttempts = 0;	// the number of fetch attempts that have been made
-	private int chaffness = 0; // suspiciousness of being of chaff
-	
+	private int deferrals = 0;     // count of postponements for prerequisites
+	private int fetchAttempts = 0; // the number of fetch attempts that have been made	
+
+	// flexible dynamic attributes
+	private AList alist = new HashtableAList();
+
+	// dynamic context
+	private CrawlURI via; // curi that led to this (lowest hops from seed)
 	private int linkHopCount = -1; // from seeds
 	private int embedHopCount = -1; // from a sure link
+
+////////////////////////////////////////////////////////////////////
+	CrawlServer server;
+
 	
-	private int threadNumber;
 	
 	private int contentSize = -1;
 	
-	private long dontRetryBefore = -1;
 
 	/**
 	 * @param uuri
@@ -82,20 +75,8 @@ public class CrawlURI
 	 */
 	private void setUuri(UURI u) {
 		uuri=u;
-		setFuzzy();
 	}
 
-	/**
-	 * set a fuzzy fingerprint for the correspoding URI based on its word-char segments
-	 */
-	private void setFuzzy() {
-		fuzzy = new BitSet(FUZZY_WIDTH);
-		Matcher tokens = FUZZY_TOKENS.matcher(uuri.toString());
-		tokens.find(); // skip http
-		while(tokens.find()) {
-			fuzzy.set(Math.abs(tokens.group().hashCode() % FUZZY_WIDTH));
-		}
-	}
 
 	/**
 	 * Set the time this curi is considered expired (and thus must be refetched)
@@ -288,28 +269,6 @@ public class CrawlURI
 	}
 	
 	/**
-	 * 
-	 */
-	public URI getBaseUri() {
-		if (baseUri != null) {
-			return baseUri.getUri();
-		}
-		if (!getAList().containsKey("html-base-href")) {
-			return getUURI().getUri();
-		}
-		String base = getAList().getString("html-base-href");
-		try {
-			baseUri = UURI.createUURI(base);
-		} catch (URISyntaxException e) {
-			Object[] array = { this, base };
-			controller.uriErrors.log(Level.INFO,e.getMessage(), array );
-			// next best thing: use self
-			baseUri = getUURI();
-		}
-		return getBaseUri();
-	}
-	
-	/**
 	 * @
 	 */
 	public String getURIString(){
@@ -336,13 +295,6 @@ public class CrawlURI
 	 */
 	public int getThreadNumber() {
 		return threadNumber;
-	}
-
-	/**
-	 * @param controller
-	 */
-	public void setController(CrawlController c) {
-		controller = c;
 	}
 
 	/**
@@ -436,28 +388,6 @@ public class CrawlURI
 	public void addLocalizedError(String processorName, Exception ex, String message) {
 		// TODO implement
 		System.out.println("CrawlURI.addLocalizedError() says: \"Implement me!\"");
-	}
-
-	/**
-	 * @return
-	 */
-	public int getChaffness() {
-		return chaffness;
-	}
-
-	/**
-	 * @return
-	 */
-	public BitSet getFuzzy() {
-		// TODO Auto-generated method stub
-		return fuzzy;
-	}
-
-	/**
-	 * @param i
-	 */
-	public void setChaffness(int i) {
-		chaffness = i;
 	}
 
 	/**
