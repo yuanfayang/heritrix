@@ -61,12 +61,12 @@ public abstract class ServerCache {
      * @param serverKey Server name we're to return server for.
      * @return CrawlServer instance that matches the passed server name.
      */
-    public CrawlServer getServerFor(String serverKey) {
+    public synchronized CrawlServer getServerFor(String serverKey) {
         CrawlServer cserver = (CrawlServer)this.servers.get(serverKey);
         return (cserver != null)? cserver: createServerFor(serverKey);
     }
     
-    private synchronized CrawlServer createServerFor(String s) {
+    private CrawlServer createServerFor(String s) {
         CrawlServer cserver = (CrawlServer)this.servers.get(s);
         if (cserver != null) {
             return cserver;
@@ -108,7 +108,7 @@ public abstract class ServerCache {
      * @param hostname Host name we're to return Host for.
      * @return CrawlHost instance that matches the passed Host name.
      */
-    public CrawlHost getHostFor(String hostname) {
+    public synchronized CrawlHost getHostFor(String hostname) {
         if (hostname == null || hostname.length() == 0) {
             return null;
         }
@@ -116,7 +116,7 @@ public abstract class ServerCache {
         return (host != null)? host: createHostFor(hostname);
     }
     
-    public synchronized CrawlHost createHostFor(String hostname) {
+    public CrawlHost createHostFor(String hostname) {
         if (hostname == null || hostname.length() == 0) {
             return null;
         }
