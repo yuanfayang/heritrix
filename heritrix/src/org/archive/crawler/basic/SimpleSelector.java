@@ -222,9 +222,9 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			String e = (String)iter.next();
 			try {
 				UURI embed = UURI.createUURI(e,curi.getBaseUri());
-				if(filtersAccept(embed)) {
+				//if(filtersAccept(embed)) {
 					store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
-				}
+				//}
 			} catch (URISyntaxException ex) {
 				Object[] array = { curi, e };
 				controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
@@ -336,7 +336,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		while(iter.hasNext()) {
 			Filter f = (Filter)iter.next();
 			if( !f.accepts(o) ) {
-				logger.info(f+" rejected "+o);
+				logger.fine(f+" rejected "+o);
 				return false; 
 			}
 		}
