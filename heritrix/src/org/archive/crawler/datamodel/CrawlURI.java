@@ -64,8 +64,7 @@ public class CrawlURI implements URIStoreable {
 	 * @return
 	 */
 	public Object getClassKey() {
-		// TODO Auto-generated method stub
-		return null;
+		return uuri.getUri().getAuthority();
 	}
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#getStoreState()

@@ -184,4 +184,18 @@ public class SimpleStore implements URIStore {
 		return Long.MAX_VALUE;
 	}
 
+	/**
+	 * 
+	 */
+	public TreeSet getSnoozeQueues() {
+		return snoozeQueues;
+	}
+
+	/**
+	 * 
+	 */
+	public LinkedList getHeldClassQueues() {
+		return heldClassQueues;
+	}
+
 }

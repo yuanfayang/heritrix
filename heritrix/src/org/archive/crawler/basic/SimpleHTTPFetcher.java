@@ -32,7 +32,7 @@ public class SimpleHTTPFetcher extends Processor {
 			return;
 		}
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
-		get.setFollowRedirects(true);
+		get.setFollowRedirects(false);
 		get.setRequestHeader("User-Agent","Heritrix 0.1 (+gojomo@archive.org)");
 		try {
 			http.executeMethod(get);

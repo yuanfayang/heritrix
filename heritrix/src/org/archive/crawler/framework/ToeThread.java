@@ -46,7 +46,7 @@ public class ToeThread extends Thread {
 		logger.info("ToeThread #"+serialNumber+" finished for order '"+controller.getOrder().getName()+"'");
 	}
 	
-	private void processingLoop() {
+	private synchronized void processingLoop() {
 		assert currentCuri == null;
 		
 		while ( paused ) {
@@ -68,6 +68,10 @@ public class ToeThread extends Thread {
 	
 			controller.getSelector().inter(currentCuri);
 			currentCuri = null;
+		} else {
+			// self-pause, because there's nothing left to crawl
+			logger.info("ToeThread #"+serialNumber+" pausing: nothing to crawl");
+			paused = true;
 		}
 	}
 
@@ -81,7 +85,7 @@ public class ToeThread extends Thread {
 	/**
 	 * 
 	 */
-	public void unpause() {
+	public synchronized void unpause() {
 		if(!paused) return;
 		paused = false;
 		this.notify();
