@@ -25,7 +25,6 @@ package org.archive.crawler.extractor;
 
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -45,28 +44,28 @@ import org.archive.util.TextUtils;
 public class ExtractorJS extends Processor implements CoreAttributeConstants {
     private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
-	static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
-	static final Pattern WHITESPACE = Pattern.compile("\\s");
+	static final String ESCAPED_AMP = "&amp;";
+	static final String WHITESPACE = "\\s";
 
     // finds strings in Javascript
     // (areas between paired ' or " characters, possibly backslash-quoted
     // on the ends, but not in the middle)
-    static final Pattern JAVASCRIPT_STRING_EXTRACTOR = Pattern.compile(
-     "(\\\\*(?:\"|\'))((?:[^\\n\\r]*?[^\\n\\r\\\\])??)(?:\\1)");
+    static final String JAVASCRIPT_STRING_EXTRACTOR =
+     "(\\\\*(?:\"|\'))((?:[^\\n\\r]*?[^\\n\\r\\\\])??)(?:\\1)";
 
     // determines whether a string is likely URI
     // (no whitespace or '<' '>',  has an internal dot or some slash,
     // begins and ends with either '/' or a word-char)
-    static final Pattern STRING_URI_EXTRACTOR = Pattern.compile(
-     "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)");
+    static final String STRING_URI_EXTRACTOR =
+     "(\\w|/)[\\S&&[^<>]]*(\\.|/)[\\S&&[^<>]]*(\\w|/)";
 
 	// finds strings in javascript likely to be URIs/paths
 	// guessing based on '.' in string, so if highly likely to 
 	// get gifs/etc, unable to get many other paths
 	// will find false positives
 	// TODO: add '/' check, suppress strings being concatenated via '+'?
-	static final Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
-	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");	
+	static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
+	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";	
 
     protected long numberOfCURIsHandled = 0;
     protected static long numberOfLinksExtracted = 0;

@@ -24,7 +24,6 @@ package org.archive.crawler.extractor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
 
@@ -70,15 +69,15 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      * 3 chars seperated by 3 dots). Does <b>not</b> ensure that the numbers are 
      * each in the range 0-255.
      */
-    static final Pattern IP_ADDRESS = Pattern.compile(
-        "((http://)|(https://))(\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?)");
+    static final String IP_ADDRESS =
+        "((http://)|(https://))(\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?\\.\\d(\\d)?(\\d)?)";
 
     /**
      * Matches any string that begins with a TLD (no .) followed by a '/' slash
      * or end of string. If followed by slash then nothing after the slash is
      * of consequence. 
      */
-    public static final Pattern TLDs = Pattern.compile(
+    public static final String TLDs =
           "(ac(/.*)?)"  // ac  Ascension Island
         + "|(ad(/.*)?)" // ad  Andorra
         + "|(ae(/.*)?)" // ae  United Arab Emirates
@@ -338,7 +337,7 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
         + "|(za(/.*)?)" // za  South Africa
         + "|(zm(/.*)?)" // zm  Zambia
         + "|(zw(/.*)?)" // zw  Zimbabwe
-        );
+        ;
 
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted= 0;

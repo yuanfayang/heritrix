@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -56,8 +55,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     // this pattern extracts either (1) whole <script>...</script>
     // ranges; or (2) any other open-tag with at least one attribute
     // (eg matches "<a href='boo'>" but not "</a>" or "<br>")
-	static final Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
-	 "(?is)<(?:((script.*?)>.*?</script)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>");
+	static final String RELEVANT_TAG_EXTRACTOR =
+	"(?is)<(?:((script.*?)>.*?</script)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
 	// groups:
 	// 1: SCRIPT SRC=blah>blah</SCRIPT 
 	// 2: just script open tag 
@@ -79,7 +78,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// this pattern extracts attributes from any open-tag innards 
 	// matched by the above. attributes known to be URIs of various
 	// sorts are matched specially
-	static final Pattern EACH_ATTRIBUTE_EXTRACTOR = Pattern.compile(
+	static final String EACH_ATTRIBUTE_EXTRACTOR =
 	  "(?is)\\s((href)|(action)|(on\\w*)"
 	 +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
 	 +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
@@ -88,7 +87,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 +"\\s*=\\s*"
 	 +"(?:(?:\"(.*?)(?:\"|$))"
 	 +"|(?:'(.*?)(?:'|$))"
-	 +"|(\\S+))");
+	 +"|(\\S+))";
 	// groups:
 	// 1: attribute name
 	// 2: HREF - single URI relative to doc base, or occasionally javascript:
@@ -110,10 +109,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// without requiring quotes -- this can indicate whether
 	// an HTML tag attribute that isn't definitionally a 
 	// URI might be one anyway, as in form-tag VALUE attributes
-	static final Pattern LIKELY_URI_PATH = Pattern.compile(
-	 "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)");
-	static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
-	static final Pattern WHITESPACE = Pattern.compile("\\s");
+	static final String LIKELY_URI_PATH =
+	 "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)";
+	static final String ESCAPED_AMP = "&amp;";
+	static final String WHITESPACE = "\\s";
 	
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
@@ -234,8 +233,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// get gifs/etc, unable to get many other paths
 	// will find false positives
 	// TODO: add '/' check, suppress strings being concatenated via '+'?
-	static final Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
-	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");
+	static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
+	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
 	
 	/**
 	 * @param curi
@@ -248,7 +247,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		ExtractorJS.considerStrings(curi,code);
 	}
 
-	static final Pattern JAVASCRIPT = Pattern.compile("(?i)^javascript:.*");
+	static final String JAVASCRIPT = "(?i)^javascript:.*";
 	
 	/**
 	 * @param curi
@@ -348,9 +347,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	}
 		
 	
-	static final Pattern NON_HTML_PATH_EXTENSION = Pattern.compile(
+	static final String NON_HTML_PATH_EXTENSION = 
 		"(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
-		"|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)");
+		"|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
 
 	/**
 	 * @param curi

@@ -28,7 +28,6 @@ package org.archive.crawler.extractor;
 
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -47,11 +46,10 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorHTML2 extends ExtractorHTML {
     static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
-	static final Pattern BACKSLAH = Pattern.compile("\\\\");
+	static final String BACKSLAH = "\\\\";
 	/** Regular expression that parses URIs for the CSS URL syntax */
-	static final Pattern CSS_URI_EXTRACTOR =
-		Pattern.compile(
-			"url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
+	static final String CSS_URI_EXTRACTOR =
+        "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]";
 
 	/**
      * Compiled relevant tag extractor.
@@ -72,8 +70,8 @@ public class ExtractorHTML2 extends ExtractorHTML {
 	 * 7: META<br>
 	 * 8: !-- comment --<br>
 	 */
-	static final Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
-	 "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>");
+	static final String RELEVANT_TAG_EXTRACTOR =
+	 "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
 
     /**
      * @param name
