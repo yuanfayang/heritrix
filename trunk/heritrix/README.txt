@@ -59,169 +59,549 @@ See ./docs/articles/developer_manual.html or
 
 6.0 Release History
 
-Release 0.8.1 - 2004-05-28 12:00
++---------------------------------------------------------------------+
+| Version |    Date    |                 Description                  |
+|---------+------------+----------------------------------------------|
+|         |            | Release for second heritrix workshop,        |
+|         |            | Copenhagen 06/2004 (1.0.0 first release      |
+|         |            | candidate). Added site-first prioritization, |
+|         |            | fixed link extraction of multibyte URIs,     |
+| 0.10.0  | 2004-06-04 | added metadata to arcs as xml, changed arc   |
+|         |            | naming template, new user and developer      |
+|         |            | manuals, added basic/digest auth and http    |
+|         |            | post/get login facility, and added help to   |
+|         |            | UI. Bug fixes.                               |
+|---------+------------+----------------------------------------------|
+| 0.8.1   | 2004-05-28 | Fixes to build with maven rc2+.              |
+|---------+------------+----------------------------------------------|
+|         |            | Release (and branch heritrix-0_8 made at the |
+|         |            | heritrix-0_7_1 tag) because of               |
+|         |            | concurrentmodificationexceptions if tens of  |
+|         |            | seeds supplied and to fix domain-scope       |
+|         |            | leakage. Also, made continuous build         |
+|         |            | publically available, incorporated           |
+|         |            | integration selftest into build, made it a   |
+|         |            | maven-build only (ant-build no longer        |
+| 0.8.0   | 2004-05-18 | supported), added day/night configurations   |
+|         |            | (refinements), ameliorated too-many-open     |
+|         |            | files, added exploit of http-header          |
+|         |            | content-type charset creating character      |
+|         |            | streams, and heritrix now crawls ssl sites.  |
+|         |            | UI improvements include red start by bad     |
+|         |            | configuration, precompilation, and           |
+|         |            | delineation of advanced settings. Many bug   |
+|         |            | fixes.                                       |
+|---------+------------+----------------------------------------------|
+|         |            | Release made in advance of radical frontier  |
+|         |            | changes. Added bandwidth throttle, operator  |
+|         |            | 'diary', settable robots expiration, crawl   |
+|         |            | er cookie pre-population, and changing of    |
+|         |            | certain options mid-crawl. Many UI           |
+| 0.6.0   | 2004-03-25 | improvements including UI display of         |
+|         |            | critical exceptions, UI desccription of      |
+|         |            | job-order options, and improved reporting.   |
+|         |            | Optimizations. Updated httpclient lib to 2.0 |
+|         |            | release and jmx libs to 1.2.1. Lots of bug   |
+|         |            | fixes.                                       |
+|---------+------------+----------------------------------------------|
+| 0.4.1   | 2004-02-12 | Memory retention fix.                        |
+|---------+------------+----------------------------------------------|
+|         |            | Release made for heritrix workshop, San      |
+|         |            | Francisco, 02/2004. New MBEAN-based          |
+|         |            | configuration, extensive UI revamp, first    |
+| 0.4.0   | 2004-02-10 | unit tests and integration selftest          |
+|         |            | framework added, pooling of ARCWriters, new  |
+|         |            | cmd-line start scripts, httpclient lib       |
+|         |            | update (2.0RC3) and bugfixes.                |
+|---------+------------+----------------------------------------------|
+| 0.2.0   | 2003-01-05 | First 'official' release                     |
+|---------+------------+----------------------------------------------|
+| 0.1.0   | 2003-12-31 | Mavenized build                              |
++---------------------------------------------------------------------+
 
-Type Changes                                               By
-fix  080 doesn't build with maven rc2+                     stack-sf
+Release 0.10.0 - 2004-06-04
+                 
++---------------------------------------------------------------------+
+| Type |                  Changes                   |       By        |
+|------+--------------------------------------------+-----------------|
+| add  | job report: show 'active' hosts, show more | kristinn_sig-sf |
+|      | size totals                                |                 |
+|------+--------------------------------------------+-----------------|
+| add  | "Site-first"/'frontline' prioritization    | gojomo          |
+|------+--------------------------------------------+-----------------|
+| add  | multiple open http connections per host    | gojomo          |
+|      | needed                                     |                 |
+|------+--------------------------------------------+-----------------|
+| add  | Add help to web UI                         | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| add  | When a host last had a completed URI shown | kristinn_sig    |
+|      | in crawl report                            |                 |
+|------+--------------------------------------------+-----------------|
+| add  | Encode multibyte URIs using page charset   | stack-sf        |
+|      | before queuing                             |                 |
+|------+--------------------------------------------+-----------------|
+| add  | One src for site, help, and readme docs.   | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| add  | identifying ARCs: unique names, header     | stack-sf        |
+|      | records                                    |                 |
+|------+--------------------------------------------+-----------------|
+| add  | Resetting arc file counter for every job.  | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| add  | ARCs need better headers                   | gojomo          |
+|------+--------------------------------------------+-----------------|
+| add  | Specify location of jobs dir               | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| add  | Logging in (HTTP POST, Basic Auth, etc.)   | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| add  | Update dnsjava from 1.5 to 1.6.2 (Fix NPE) | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | crawl.log entries without annotations end  | gojomo          |
+|      | with a space                               |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | An issue with arc names' date and serial   | stack-sf        |
+|      | number alignment                           |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Output of warning message leads to         | stack-sf        |
+|      | NullPointerExceptions                      |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Either UURI or ExtractHTML should strip    | stack-sf        |
+|      | whitespace better                          |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Maximum documents not enforced             | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | NPE in path depth filter                   | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | embed/speculative inclusion too loose      | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | UnsupportedCharsetException handled        | stack-sf        |
+|      | awkwardly                                  |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | UURI accepting/creating unUsable URIs (bad | stack-sf        |
+|      | hosts)                                     |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | CachingDiskLongFPSet UI availability       | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | Crawls slow till change a setting          | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | zero link-hops should work                 | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | multiple robots.txt URLs in the "default"  | kristinn_sig    |
+|      | frontier                                   |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | NPE in ExtractorHTML#isHtmlExpectedHere    | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | Unwanted behavior with seed redirection    | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | Link extraction failing                    | kristinn_sig    |
+|------+--------------------------------------------+-----------------|
+| fix  | Memory issues: Frontier.snoozeQueue        | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | Transitive scope confusion, may not work   | gojomo          |
+|      | as expected                                |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Wrong stats after deleting URIs from       | kristinn_sig    |
+|      | Frontier                                   |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | NoSuchElementException in admin/reports/   | kristinn_sig    |
+|      | frontier.jsp                               |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Alert: Authentication scheme(s) not        | stack-sf        |
+|      | supported                                  |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | IP validity: units, TTL vs. setting        | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | ConcurrentModificationException in         | stack-sf        |
+|      | DomainScope focus filter                   |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | ConcurrentModificationException terminate  | stack-sf        |
+|      | job                                        |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Authentication bug                         | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | terminate running crawl == NPE             | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | java.net.URI parses %20 but getHost null   | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | NPE in java.net.URI.encode                 | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | java.net.URI chokes on                     | stack-sf        |
+|      | hosts_with_underscores                     |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Doing separate DNS lookup for same host    | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | java.net.URI#getHost fails when leading    | stack-sf        |
+|      | digit                                      |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Constraining java URI class                | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | Same CrawlServer instance for http &       | stack-sf        |
+|      | https.                                     |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Broad crawl/ too many open files           | gojomo          |
+|------+--------------------------------------------+-----------------|
+| fix  | multiple charset headers + long lines      | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | Corrupted blue image in progress bars      | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | NPEs in Andy's Th-Fri Crawl + NPE in RIS   | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | IllegalArgumentEx/                         | stack-sf        |
+|      | ReplayCharSequenceFactory (offset vs. size |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | FTP URIs in seeds interpreted as HTTP      | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | maven rc2 won't make src distribution      | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | Corrupted arc files on termination of job  | stack-sf        |
+|------+--------------------------------------------+-----------------|
+| fix  | https exception: java.io.IOException: SSL  | stack-sf        |
+|      | failure                                    |                 |
+|------+--------------------------------------------+-----------------|
+| fix  | Excessive ARCWriterPool timeouts:          | stack-sf        |
++---------------------------------------------------------------------+
 
-Release 0.8.0 - 2004-05-18 14:00
+Release 0.8.1 - 2004-05-28
+                 
++---------------------------------------------------------------------+
+| Type  |                    Changes                    |     By      |
+|-------+-----------------------------------------------+-------------|
+| fix   | 080 doesn't build with maven rc2+             | stack-sf    |
++---------------------------------------------------------------------+
 
-Type Changes                                               By
-add  integrate selftest into cruisecontrol build           stack-sf
-add  On reedit, red star by bad attribute setting.         kristinn_sig
-add  day/night configurations                              kristinn_sig
-add  UI should only write changed config                   kristinn_sig
-add  record of settings changes should be kept             johnerik
-add  Only one build, not two                               stack-sf
-add  maven-only build rather than ant & maven              stack-sf
-add  ARCWriter should use a pool of open files -- if it    stack-sf
-     helps
-add  Precomp ile UI pages                                  stack-sf
-add  UI should be split into common/uncommon settings      kristinn_sig
-add  UI web pages need to be more responsive               kristinn_sig
-fix  ConcurrentModificationExceptions                      stack-sf
-fix  Too many open files                                   stack-sf
-fix  ConcurrentModificationExceptionsd                     stack-sf
-fix  empty seeds-report.txt                                kristinn_sig
-fix  Doc. assumes bash. Allow tcsh/csh                     stack-sf
-fix  script heritrix.sh goes into infinite loop            stack-sf
-fix  heritrix.sh launch file path weirdness                stack-sf
-fix  ToeThreads hung in ExtractorHTML after Pause          stack-sf
-fix  IllegalCharsetNameException: Windows-1256             stack-sf
-fix  No doc-files/package.html in javadoc.                 stack-sf
-fix  embed-count sensitivity WRT redirects, preconditions  gojomo
-fix  Refinement limits are not always saved                kristinn_sig
-fix  NPE exception in getMBeanInfo(settings)               johnerik
-fix  Untried CrawlURIs should have clear status code       gojomo
-fix  Thread underutilization in broad crawls               gojomo
-fix  KeyedQueue showing EMPTY status, but the length is 1. gojomo
-fix  NPE in XMLSettingsHandler.recursiveFindFiles()        johnerik
-fix  Failed DNS does not have intended impact              gojomo
-fix  ftp URIs are retried                                  gojomo
-fix  Refetching of robots and/or DNS broken                gojomo
-fix  NPE switching to 'expert' settings in HEAD            kristinn_sig
-fix  rss extractor                                         ia_igor
-fix  JS extractor clueless on relative URIs                ia_igor
-fix  converting URI's '\' into '/' character               ia_igor
-fix  When going back to overrides, directory is gone       kristinn_sig
-fix  shutdown.jsp unable to compile                        kristinn_sig
-fix  ARCWriterPool timeouts -- legitimate?                 stack-sf
-fix  If one URI connect-fails, hold queue, too             gojomo
-fix  Fetching simple URLs fails with S_CONNECT_FAILED (-2) gojomo
-     error
-fix  seeds held back/poor breadth first?                   gojomo
-fix  Parsing links found between escaped quotes in         ia_igor
-     JavaScript
-fix  Does not extract applet URI correctky                 ia_igor
-fix  links to likely-embed types should be treated as      ia_igor
-     embeds
-fix  Frontier.next() forceFetches will cause assertion     gojomo
-     error
-fix  Flash link extractor causes OutOfMemory exceptions.   ia_igor
-fix  Should be possible to resume from                     kristinn_sig
-fix  Heritrix ignores charset                              stack-sf
-fix  Max # of arcs not being respected.                    stack-sfkristinn_sig
-fix  New profile should ensure unique name                 kristinn_sig
-fix  When changing scope common scope settings are lost    johnerik
-fix  ssl doesn't work                                      stack-sf
-fix  Allow that people use tcsh/csh not just bash          stack-sf
-fix  https SSLHandshakeException: unknown certificate      stack-sf
-fix  Cannot override settings that isn't set in globals    johnerik
-fix  'Waiting for pause' even after all threads done       kristinn_sig
-fix  filter 'invert', filter names need work               kristinn_sig
-fix  max-link-hops (etc.) ignored unless                   stack-sf
-fix  order.xml absolute paths                              johnerik
-fix  Cannot set Transcl usionFilter attributes             johnerik
-fix  Link puts garbage into arc file: http://www.msn.com/  stack-sf
-     robots.t
+Release 0.8.0 - 2004-05-18
+                 
++---------------------------------------------------------------------+
+| Type |                Changes                |          By          |
+|------+---------------------------------------+----------------------|
+| add  | integrate selftest into cruisecontrol | stack-sf             |
+|      | build                                 |                      |
+|------+---------------------------------------+----------------------|
+| add  | On reedit, red star by bad attribute  | kristinn_sig         |
+|      | setting.                              |                      |
+|------+---------------------------------------+----------------------|
+| add  | day/night configurations              | kristinn_sig         |
+|------+---------------------------------------+----------------------|
+| add  | UI should only write changed config   | kristinn_sig         |
+|------+---------------------------------------+----------------------|
+| add  | record of settings changes should be  | johnerik             |
+|      | kept                                  |                      |
+|------+---------------------------------------+----------------------|
+| add  | Only one build, not two               | stack-sf             |
+|------+---------------------------------------+----------------------|
+| add  | maven-only build rather than ant &    | stack-sf             |
+|      | maven                                 |                      |
+|------+---------------------------------------+----------------------|
+| add  | ARCWriter should use a pool of open   | stack-sf             |
+|      | files -- if it helps                  |                      |
+|------+---------------------------------------+----------------------|
+| add  | Precompile UI pages                   | stack-sf             |
+|------+---------------------------------------+----------------------|
+| add  | UI should be split into common/uncom  | kristinn_sig         |
+|      | mon settings                          |                      |
+|------+---------------------------------------+----------------------|
+| add  | UI web pages need to be more          | kristinn_sig         |
+|      | responsive                            |                      |
+|------+---------------------------------------+----------------------|
+| fix  | domain scope leakage                  | ia_igor              |
+|------+---------------------------------------+----------------------|
+| fix  | ConcurrentModificationExceptions      | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | Too many open files                   | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | ConcurrentModificationExceptions      | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | empty seeds-report.txt                | kristinn_sig         |
+|------+---------------------------------------+----------------------|
+| fix  | Doc. assumes bash. Allow tcsh/csh     | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | script heritrix.sh goes into infinite | stack-sf             |
+|      | loop                                  |                      |
+|------+---------------------------------------+----------------------|
+| fix  | heritrix.sh launch file path          | stack-sf             |
+|      | weirdness                             |                      |
+|------+---------------------------------------+----------------------|
+| fix  | ToeThreads hung in ExtractorHTML      | stack-sf             |
+|      | after Pause                           |                      |
+|------+---------------------------------------+----------------------|
+| fix  | IllegalCharsetNameException:          | stack-sf             |
+|      | Windows-1256                          |                      |
+|------+---------------------------------------+----------------------|
+| fix  | No doc-files/package.html in javadoc. | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | embed-count sensitivity WRT           | gojomo               |
+|      | redirects, preconditions              |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Refinement limits are not always      | kristinn_sig         |
+|      | saved                                 |                      |
+|------+---------------------------------------+----------------------|
+| fix  | NPE exception in getMBeanInfo         | johnerik             |
+|      | (settings)                            |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Untried CrawlURIs should have clear   | gojomo               |
+|      | status code                           |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Thread underutilization in broad      | gojomo               |
+|      | crawls                                |                      |
+|------+---------------------------------------+----------------------|
+| fix  | KeyedQueue showing EMPTY status, but  | gojomo               |
+|      | the length is 1.                      |                      |
+|------+---------------------------------------+----------------------|
+|      | NPE in                                |                      |
+| fix  | XMLSettingsHandler.recursiveFindFiles | johnerik             |
+|      | ()                                    |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Failed DNS does not have intended     | gojomo               |
+|      | impact                                |                      |
+|------+---------------------------------------+----------------------|
+| fix  | ftp URIs are retried                  | gojomo               |
+|------+---------------------------------------+----------------------|
+| fix  | Refetching of robots and/or DNS       | gojomo               |
+|      | broken                                |                      |
+|------+---------------------------------------+----------------------|
+| fix  | NPE switching to 'expert' settings in | kristinn_sig         |
+|      | HEAD                                  |                      |
+|------+---------------------------------------+----------------------|
+| fix  | rss extractor                         | ia_igor              |
+|------+---------------------------------------+----------------------|
+| fix  | JS extractor clueless on relative     | ia_igor              |
+|      | URIs                                  |                      |
+|------+---------------------------------------+----------------------|
+| fix  | converting URI's '\' into '/'         | ia_igor              |
+|      | character                             |                      |
+|------+---------------------------------------+----------------------|
+| fix  | When going back to overrides,         | kristinn_sig         |
+|      | directory is gone                     |                      |
+|------+---------------------------------------+----------------------|
+| fix  | shutdown.jsp unable to compile        | kristinn_sig         |
+|------+---------------------------------------+----------------------|
+| fix  | ARCWriterPool timeouts -- legitimate? | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | If one URI connect-fail s, hold       | gojomo               |
+|      | queue, too                            |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Fetching simple URLs fails with       | gojomo               |
+|      | S_CONNECT_FAILED (-2) error           |                      |
+|------+---------------------------------------+----------------------|
+| fix  | seeds held back/poor breadth first?   | gojomo               |
+|------+---------------------------------------+----------------------|
+| fix  | Parsing links found between escaped   | ia_igor              |
+|      | quotes in JavaScript                  |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Does not extract applet URI correctky | ia_igor              |
+|------+---------------------------------------+----------------------|
+| fix  | links to likely-embed types should be | ia_igor              |
+|      | treated as embeds                     |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Frontier.next() forceFetches will     | gojomo               |
+|      | cause assertion error                 |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Flash link extractor causes           | ia_igor              |
+|      | OutOfMemory exceptions.               |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Should be possible to resume from     | kristinn_sig         |
+|------+---------------------------------------+----------------------|
+| fix  | Heritrix ignores charset              | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | Max # of arcs not being respected.    | stack-sfkristinn_sig |
+|------+---------------------------------------+----------------------|
+| fix  | New profile should ensure unique name | kristinn_sig         |
+|------+---------------------------------------+----------------------|
+| fix  | When changing scope common scope      | johnerik             |
+|      | settings are lost                     |                      |
+|------+---------------------------------------+----------------------|
+| fix  | ssl doesn't work                      | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | Allow that people use tcsh/csh not    | stack-sf             |
+|      | just bash                             |                      |
+|------+---------------------------------------+----------------------|
+| fix  | https SSLHandshakeException: unknown  | stack-sf             |
+|      | certificate                           |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Cannot override settings that isn't   | johnerik             |
+|      | set in globals                        |                      |
+|------+---------------------------------------+----------------------|
+| fix  | 'Waiting for pause' even after all    | kristinn_sig         |
+|      | threads done                          |                      |
+|------+---------------------------------------+----------------------|
+| fix  | filter 'invert', filter names need    | kristinn_sig         |
+|      | work                                  |                      |
+|------+---------------------------------------+----------------------|
+| fix  | max-link-hops (etc.) ignored unless   | stack-sf             |
+|------+---------------------------------------+----------------------|
+| fix  | order.xml absolute paths              | johnerik             |
+|------+---------------------------------------+----------------------|
+| fix  | Cannot set TransclusionFilter         | johnerik             |
+|      | attributes                            |                      |
+|------+---------------------------------------+----------------------|
+| fix  | Link puts garbage into arc file:      | stack-sf             |
+|      | http://www.msn.com/robots.t           |                      |
++---------------------------------------------------------------------+
 
 Release 0.6.0 - 2004-03-25
-
-Type   Changes                                                   By
-add    861861 Redirects(/refreshes) from seeds should == new     kristinn_sig
-       seeds - Completed
-add    899223 Special seed-success report shoudl be offered      kristinn_sig
-add    891986 Bandwidth throttle function, setting.              johnerik
-add    899223 Special seed-success report shoudl be offered      kristinn_sig
-add    877275 integrated operator 'diary' needed                 kristinn_sig
-add    891983 IP, Robots expirations should be settable          johnerik
-add    910152 Recovery of old jobs on WUI (re)s tart             kristinn_sig
-add    781171 parsing css                                        ia_igor
-add    912986 log views should give an idea of file size (where  kristinn_sig
-       possible)
-add    912989 Alerts should have 'select all' button...          kristinn_sig
-add    856593 [load ] [save ] [turn on/off ] cookies             ia_igor
-add    912201 Add levels to alerts                               kristinn_sig
-add    896665 Split processor chains.                            johnerik
-add    896754 Show total of disregards                           kristinn_sig
-add    903095 Show increments of megabytes in ui                 kristinn_sig
-add    896794 serious errors (eg outofmemory) should show up in  kristinn_sig
-       UI
-add    900520 Short description of ComplexTypes in user          kristinn_sig
-       interface.
-add    899982 Should be possible to alter filters while          kristinn_sig
-       crawling.
-add    896672 Display progress (doc/sec) with more precision     kristinn_sig
-add    896677 Highlight the success or failures of each seed     kristinn_sig
-add    896760 Prominent notification when seeds have problems    kristinn_sig
-add    896801 java regexps (in log view) need help text          kristinn_sig
-add    896778 Log viewing enhancements:                          kristinn_sig
-add    896795 frontier, thread report improvements               kristinn_sig
-add    876516 default launch should nohup, save stdout/stderr    ia_igor
-update Update of httpclient to release 2.0                       stack-sf
-update Update of jmx libs to release 1. 2.1                      stack-sf
-fix    896763 127.0.0.1 in job report                            kristinn_sig
-fix    896767 Frontier retry-delay should include units (eg      kristinn_sig
-       -seconds)
-fix    898994 Revisiting admin URIs if not logged in should      kristinn_sig
-       prompt login
-fix    899019 Deadlock in Andy's 2nd Crawl                       johnerik
-fix    767225 Better bad-config handling                         parkerthompson
-fix    815357 mysterious pause facing network (DNS) problem      gojomo
-fix    896747 ExtractorJS's report overstates it's discovered    kristinn_sig
-       URIs
-fix    896667 Web UI does not display correctly in IE            kristinn_sig
-fix    896780 console clarity/safety                             kristinn_sig
-fix    896655 Does not respect per settings added after crawl    johnerik
-       was started.
-fix    856555 'empty' records in compressed arc files            ia_igor
-fix    895955 URIRegExpFilter retains memory                     stack-sf
+                 
++---------------------------------------------------------------------+
+|  Type  |                  Changes                  |       By       |
+|--------+-------------------------------------------+----------------|
+| add    | 861861 Redirects(/refreshes) from seeds   | kristinn_sig   |
+|        | should == new seeds                       |                |
+|--------+-------------------------------------------+----------------|
+| add    | 899223 Special seed-success report should | kristinn_sig   |
+|        | be offered                                |                |
+|--------+-------------------------------------------+----------------|
+| add    | 891986 Bandwidth throttle function,       | johnerik       |
+|        | setting.                                  |                |
+|--------+-------------------------------------------+----------------|
+| add    | 877275 integrated operator 'diary' needed | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| add    | 891983 IP, Robots expirations should be   | johnerik       |
+|        | settable                                  |                |
+|--------+-------------------------------------------+----------------|
+| add    | 910152 Recovery of old jobs on WUI (re)   | kristinn_sig   |
+|        | start                                     |                |
+|--------+-------------------------------------------+----------------|
+| add    | 781171 parsing css                        | ia_igor        |
+|--------+-------------------------------------------+----------------|
+| add    | 912986 log views should give an idea of   | kristinn_sig   |
+|        | file size (where possible)                |                |
+|--------+-------------------------------------------+----------------|
+| add    | 912989 Alerts should have 'select all'    | kristinn_sig   |
+|        | button...                                 |                |
+|--------+-------------------------------------------+----------------|
+| add    | 856593 [load ] [save ] [turn on/off ]     | ia_igor        |
+|        | cookies                                   |                |
+|--------+-------------------------------------------+----------------|
+| add    | 912201 Add levels to alerts               | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| add    | 896665 Split processor chains.            | johnerik       |
+|--------+-------------------------------------------+----------------|
+| add    | 896754 Show total of disregards           | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| add    | 903095 Show increments of megabytes in ui | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| add    | 896794 serious errors (eg outofmemory)    | kristinn_sig   |
+|        | should show up in UI                      |                |
+|--------+-------------------------------------------+----------------|
+| add    | 900520 Short description of ComplexTypes  | kristinn_sig   |
+|        | in user interface.                        |                |
+|--------+-------------------------------------------+----------------|
+| add    | 899982 Should be possible to alter        | kristinn_sig   |
+|        | filters while crawling.                   |                |
+|--------+-------------------------------------------+----------------|
+| add    | 896672 Display progress (doc/sec) with    | kristinn_sig   |
+|        | more precision                            |                |
+|--------+-------------------------------------------+----------------|
+| add    | 896677 Highlight the success or failures  | kristinn_sig   |
+|        | of each seed                              |                |
+|--------+-------------------------------------------+----------------|
+| add    | 896760 Prominent notification when seeds  | kristinn_sig   |
+|        | have problems                             |                |
+|--------+-------------------------------------------+----------------|
+| add    | 896801 java regexps (in log view) need    | kristinn_sig   |
+|        | help text                                 |                |
+|--------+-------------------------------------------+----------------|
+| add    | 896778 Log viewing enhancements:          | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| add    | 896795 frontier, thread report            | kristinn_sig   |
+|        | improvements                              |                |
+|--------+-------------------------------------------+----------------|
+| add    | 876516 default launch should nohup, save  | ia_igor        |
+|        | stdout/stderr                             |                |
+|--------+-------------------------------------------+----------------|
+| update | Update of httpclient to release 2.0       | stack-sf       |
+|--------+-------------------------------------------+----------------|
+| update | Update of jmx libs to release 1.2.1       | stack-sf       |
+|--------+-------------------------------------------+----------------|
+| fix    | 896763 127.0.0.1 in job report            | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| fix    | 896767 Frontier retry-delay should        | kristinn_sig   |
+|        | include units (eg -seconds)               |                |
+|--------+-------------------------------------------+----------------|
+| fix    | 898994 Revisiting admin URIs if not       | kristinn_sig   |
+|        | logged in should prompt login             |                |
+|--------+-------------------------------------------+----------------|
+| fix    | 899019 Deadlock in Andy's 2nd Crawl       | johnerik       |
+|--------+-------------------------------------------+----------------|
+| fix    | 767225 Better bad-config handling         | parkerthompson |
+|--------+-------------------------------------------+----------------|
+| fix    | 815357 mysterious pause facing network    | gojomo         |
+|        | (DNS) problem                             |                |
+|--------+-------------------------------------------+----------------|
+| fix    | 896747 ExtractorJS's report overstates    | kristinn_sig   |
+|        | it's discovered URIs                      |                |
+|--------+-------------------------------------------+----------------|
+| fix    | 896667 Web UI does not display correctly  | kristinn_sig   |
+|        | in IE                                     |                |
+|--------+-------------------------------------------+----------------|
+| fix    | 896780 console clarity/safety             | kristinn_sig   |
+|--------+-------------------------------------------+----------------|
+| fix    | 896655 Does not respect per settings      | johnerik       |
+|        | added after crawl was started.            |                |
+|--------+-------------------------------------------+----------------|
+| fix    | 856555 'empty' records in compressed arc  | ia_igor        |
+|        | files                                     |                |
++---------------------------------------------------------------------+
 
 Release 0.4.1 - 2004-02-12
-
-Type Changes                               By
-fix  895955 URIRegExpFilter retains memory stack-sf
+                 
++---------------------------------------------------------------------+
+| Type  |                    Changes                     |     By     |
+|-------+------------------------------------------------+------------|
+| fix   | 895955 URIRegExpFilter retains memory          | stack-sf   |
++---------------------------------------------------------------------+
 
 Release 0.4.0 - 2004-02-10
-
-Type   Changes                                                         By
-add    New MBEAN-based configuration system. Reads and writes XML to   stack-sf
-       validate against heritrix_settings.xsd.
-update UI extensively revamped. Exploits new configuration system.     stack-sf
-add    60-odd unit tests added.                                        stack-sf
-add    Integration selftest framework.                                 stack-sf
-add    Added pooling of ARCWriters.                                    stack-sf
-       Start script backgrounds heritrix and redirects stdout/stderr
-update to heritrix_out.log. See 876516 Default launch should nohup,    stack-sf
-       save stdout/stderrWeb UI accesses are loggged to
-       heritrix_out.log also.
-update Updated httpclient to version 2.0RC3.                           stack-sf
-fix    763517 IAGZIPOutputStream NPE under IBM JVM                     stack-sf
-fix    809018 Cleaner versioned testing build needed                   stack-sf
-fix    872729 Cmd-line options for setting web ui username/password    stack-sf
-fix    863317 Universal single-pass extractor                          stack-sf
+                 
++---------------------------------------------------------------------+
+|  Type  |                     Changes                     |    By    |
+|--------+-------------------------------------------------+----------|
+|        | New MBEAN-based configuration system. Reads and |          |
+| add    | writes XML to validate against                  | stack-sf |
+|        | heritrix_settings.xsd.                          |          |
+|--------+-------------------------------------------------+----------|
+| update | UI extensively revamped. Exploits new           | stack-sf |
+|        | configuration system.                           |          |
+|--------+-------------------------------------------------+----------|
+| add    | 60-odd unit tests added.                        | stack-sf |
+|--------+-------------------------------------------------+----------|
+| add    | Integration selftest framework.                 | stack-sf |
+|--------+-------------------------------------------------+----------|
+| add    | Added pooling of ARCWriters.                    | stack-sf |
+|--------+-------------------------------------------------+----------|
+|        | Start script backgrounds heritrix and redirects |          |
+|        | stdout/stderr to heritrix_out.log. See 876516   |          |
+| update | Default launch should nohup, save stdout/stderr | stack-sf |
+|        | Web UI accesses are loggged to heritrix_out.log |          |
+|        | also.                                           |          |
+|--------+-------------------------------------------------+----------|
+| update | Updated httpclient to version 2.0RC3.           | stack-sf |
+|--------+-------------------------------------------------+----------|
+| fix    | 763517 IAGZIPOutputStream NPE under IBM JVM     | stack-sf |
+|--------+-------------------------------------------------+----------|
+| fix    | 809018 Cleaner versioned testing build needed   | stack-sf |
+|--------+-------------------------------------------------+----------|
+| fix    | 872729 Cmd-line options for setting web ui      | stack-sf |
+|        | username/password                               |          |
+|--------+-------------------------------------------------+----------|
+| fix    | Universal single-pass extractor                 | stack-sf |
++---------------------------------------------------------------------+
 
 Release 0.2.0 - 2003-01-05
-
-Type Changes                   By
-add  First 'official' release. stack-sf
+                 
++---------------------------------------------------------------------+
+|  Type   |                  Changes                  |      By       |
+|---------+-------------------------------------------+---------------|
+| add     | First 'official' release.                 | stack-sf      |
++---------------------------------------------------------------------+
 
 Release 0.1.0 - 2003-12-31
-
-Type Changes                                                             By
-add  Initial Mavenized development version number (CVS/internal only).   gojomo
-     Added everything to new project layout.
-
+                 
++---------------------------------------------------------------------+
+| Type |                       Changes                       |   By   |
+|------+-----------------------------------------------------+--------|
+|      | Initial Mavenized development version number (CVS/  |        |
+| add  | internal only). Added everything to new project     | gojomo |
+|      | layout.                                             |        |
++---------------------------------------------------------------------+
 
 7.0 License
 
