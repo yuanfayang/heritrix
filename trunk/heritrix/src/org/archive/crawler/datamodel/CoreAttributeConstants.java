@@ -42,4 +42,5 @@ public interface CoreAttributeConstants {
 	public static String A_FETCH_COMPLETED_TIME = "fetch-completed-time";
 	public static String A_HTTP_TRANSACTION = "http-transaction";
 
+	public static String A_RUNTIME_EXCEPTION = "runtime-exception";
 }
