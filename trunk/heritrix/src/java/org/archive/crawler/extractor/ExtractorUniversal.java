@@ -349,8 +349,8 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
      */
     public ExtractorUniversal(String name) {
         super(name, "Link extraction on unknown file types");
-        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES, "Max depth in bytes", new Long(DEFAULT_MAX_DEPTH_BYTES)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH, "Max length of URLs in bytes", new Long(DEFAULT_MAX_URL_LENGTH)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_DEPTH_BYTES, "How deep to look into files for URI strings, in bytes", new Long(DEFAULT_MAX_DEPTH_BYTES)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_URL_LENGTH, "Max length of URIs in bytes", new Long(DEFAULT_MAX_URL_LENGTH)));
     }
 
     /* (non-Javadoc)
