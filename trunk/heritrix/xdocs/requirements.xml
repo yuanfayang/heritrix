@@ -10,15 +10,21 @@
   <section name="System Runtime Requirements">
 
     <subsection name="Java Runtime Environment">
-		<p>The Heritrix crawler is implemented purely in java.  This means that 
-		the only true requirement for running it is that you have a JRE installed.</p>
+		<p>The Heritrix crawler is implemented purely in java.  This means
+        that the only true requirement for running it is that you have a
+        JRE installed.</p>
 		
 		<p>The Heritrix crawler makes use of Java 1.4 features so your JRE must 
 		be at least of a 1.4.0 pedigree.</p>
 		
-		<p>We currently include all of the free/open source third-party libraries 
-		necessary to run Heritrix in the distribution package, and will continue 
-		to do so as long as is practical.</p>
+		<p>We currently include all of the free/open source third-party
+        libraries necessary to run Heritrix in the distribution package.
+        See
+        <a href="http://crawler.archive.org/dependencies.html">dependencies</a>
+        for the complete list (Licenses for all of the listed libraries
+        are listed in the dependencies section of the raw project.xml 
+        at the root of the src download or here on
+        <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/project.xml?rev=1">sourceforge</a>).</p>
 	</subsection>
    
     <subsection name="Hardware">

@@ -32,18 +32,19 @@
             <p>You can build Heritrix from source using Ant or Maven. The Maven 
                 build is more comprehensive and will generate all from either 
                 the packaged source or from a CVS checkout. The Ant build is 
-                less so in that they doesn't generate the distribution 
+                less so in that it doesn't generate the distribution 
                 documentation but it does produce all else needed to run 
                 Heritrix.</p>
+
                 <p>If you are building Heritrix w/ Ant, you must have Ant 1.5 
-                    installed. If you want to run the Heritrix unit tests from 
-                    Ant, you will have to make sure the Ant optional.jar file 
+                    installed.  Make sure the Ant optional.jar file 
                     sits beside the junit.jar. See <a 
                     href="http://ant.apache.org/manual/OptionalTasks/junit.html">JUnit 
                     Task</a> for what you must do setting up Ant to run junit 
-                    tests.</p>
+                    tests (The build requires junit).</p>
                     <p>The Heritrix maven build was developed using 
                     1.0-rc1. See maven.apache.org. </p>
+
 	<subsection name="Building Heritrix with Ant">
 	    <p>If you obtained packaged source, here is how you build w/ Ant: 
 <source>% tar xfz heritrix-?.?.?-src.tar.gz 
@@ -93,16 +94,20 @@
                 href="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum 
                 line length of 80 characters</a>. Below are tightenings on the 
                 SUN conventions used in Heritrix. </p>
+
             <p>We also will favor much of what is written in this document, <a 
                 href="http://geosoft.no/javastyle.html">Java Programming Style 
                 Guidelines</a>.</p>
+
             <subsection name="No Tabs">
                 <p>No tabs in source code. Set your editor to indent w/ 
                     spaces.</p>
             </subsection>
+
             <subsection name="Indent Width">
                 <p>Indents are 4 charcters wide.</p>
             </subsection>
+
             <subsection name="File comment">
                 <p>Here is the eclipse
                     template we use for the file header comment:
@@ -170,11 +175,13 @@ ${package_declaration}</source></p>
                 version patchlevel or the 2.100.0 release. (And after such a 
                 release, the next development version would be 2.101.0.) </p>
         </section>
+
         <section name="Making a Heritrix Release" id="release">
-            <p>Below are some notes on how to go about a Heritrix release.</p>
             <p>Before going about a release, its assumed that the current HEAD 
-                version has been run through the (as yet non-existent) test 
-                suite to ensure HEAD is release worthy.</p>
+                version has been run through the integration self test, 
+                all unit tests pass, that the (as yet non-existent) test 
+                suite has been exercised, and that general usage
+                shows HEAD to be release worthy.</p>
             <ol>
                 <li>Send a mail to the list to freeze commits until the 
                     all-clear is given.</li>
@@ -183,18 +190,22 @@ ${package_declaration}</source></p>
                     the same version number. (See <em>Version and Release 
                     Numbering</em> on this page for guidance on what version 
                     number to use)</li>
-                <li>Make the maven distributions:
-<source>% $MAVEN_HOME/bin/maven dist</source></li>
+                <li>Generate the site.  Review all documentation making
+                sure it remains applicable. Fix at least the 
+                embarrassing.  Make issues to have the rest addressed.</li>
+
+                <li>Make the maven distributions: % $MAVEN_HOME/bin/maven dist</li>
                 <li>Build the maven produced src distribution version using 
                     both maven and ant.</li>
-                <li>Run both the binary and src-built product through the (as 
-                    yet non-existent) test suite.</li>
+                <li>Run both the binary and src-built product through the
+                    integration self test suite: % $HERITRIX_HOME/bin/heritrix.sh --selftest</li>
                 <li>Update <em>xdocs/changes.xml</em>.</li>
-                <li>Update the README.txt (Perhaps we should be copying the 
-                    changes in here so they are available in the base of the 
-                    heritrix bundle).</li>
-                <li> Tag the CVS repository:
-<source>% cvs -q tag heritrix-?_?_?</source> </li>
+                <li>(TODO: Changelog based off CVS history).</li>
+                <li>Update the README.txt.  Do html2txt on maven generated
+                xdocs (I did 'cat PAGE.html| w3m -dump -T text/html > PAGE.txt',
+                catted the product together and then did vi regex'ing to 
+                clean out website navigations and extra whitespace).</li>
+                <li> Tag the CVS repository: % cvs -q tag heritrix-?_?_?</li>
                 <li>Update the <em>project.xml</em>'currentVersion' and 
                     <em>build.xml</em> 'version' property to both be a version 
                     number beyond that of the release currently being made (If 
@@ -209,6 +220,19 @@ ${package_declaration}</source></p>
                     46804 is our project ID).</li>
             </ol>
         </section>
+
+        <section name="Integration self test">
+            <p>Run the integration self test on the command line by doing the
+            following:
+            <source>% $HERITRIX_HOME/bin/heritrix.sh --selftest</source>
+            </p>
+            <p>This will set the crawler going against itself, in particular,
+            the <i>garden</i> webapp.  When done, it runs an analsys of 
+            the produced arc files and logs and dumps a ruling into 
+            <i>heritrix_out.log</i>.  See the 
+            <i>org.archive.crawler.garden</i> package for more on how the
+            selftest works.</p>
+        </section>
                         
                             
                                 
@@ -216,7 +240,7 @@ ${package_declaration}</source></p>
                     href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc">src/cc</a> 
                     for a <em>config.xml</em> that will run the heritrix maven 
                     build under <a 
-                    href="http://cruisecontrol.sourceforge.net/">cruisecontrol</a> 
-                    (See the README.txt in the same directory for how to set up 
-                    continuous building using cc). </p> </section> </body> 
+                    href="http://cruisecontrol.sourceforge.net/">cruisecontrol</a>. 
+                    See the README.txt in the same directory for how to set up 
+                    continuous building using cc.</p> </section> </body> 
                     </document>

@@ -5,6 +5,62 @@
   </properties>
   <body>
 
+    <release version="0.4.0" date="2004-02-10">
+
+      <action dev="stack" type="add">
+        New MBEAN-based configuration system. Reads and writes
+        XML to validate against heritrix_settings.xsd.
+      </action>
+
+      <action dev="stack" type="update">
+        UI extensively revamped.  Exploits new configuration system.
+      </action>
+
+      <action dev="stack" type="add">
+        60-odd unit tests added.
+      </action>
+
+      <action dev="stack" type="add">
+        Integration selftest framework.
+      </action>
+
+      <action dev="stack" type="add">
+        Added pooling of ARCWriters.
+      </action>
+
+      <action dev="stack" type="update">
+        Start script backgrounds heritrix and redirects stdout/stderr to 
+        heritrix_out.log.  See <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=876516">Default launch should nohup, save stdout/stderr</a>
+        Web UI accesses are loggged to heritrix_out.log also.
+      </action>
+        
+
+      <action dev="stack" type="update">
+        Updated httpclient to version 2.0RC3.
+      </action>
+        
+      <action dev="stack" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=763517">IAGZIPOutputStream NPE under IBM JVM</a>
+      </action>
+      <action dev="stack" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=809018">Cleaner versioned testing build needed</a>
+      </action>
+        
+      <action dev="stack" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=763517">IAGZIPOutputStream NPE under IBM JVM</a>
+      </action>
+      <action dev="stack" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=809018">Cleaner versioned testing build needed</a>
+      </action>
+      <action dev="stack" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=872729">Cmd-line options for setting web ui username/password</a>
+      </action>
+      <action dev="stack" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=863317">Universal single-pass extractor</a>
+      </action>
+
+     </release>
+
     <release version="0.2.0" date="2003-01-05">
       <action dev="stack" type="add">
         First 'official' release.
