@@ -14,7 +14,7 @@
  <processors>
   <processor 
     name="Preprocessor" 
-    class="org.archive.crawler.basic.SimplePolitenessEnforcer"
+    class="org.archive.crawler.basic.SimplePreconditionEnforcer"
     next="DNS">
    <params delay-factor="1" />
   </processor>
