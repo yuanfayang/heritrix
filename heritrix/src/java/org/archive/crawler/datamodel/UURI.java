@@ -65,12 +65,12 @@ implements Serializable {
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
      */
-    private String cachedHost = null;
+    private transient String cachedHost = null;
     
     /**
      * Cache of the host base name.
      */
-    private String cachedHostBasename = null;
+    private transient String cachedHostBasename = null;
 
     /**
      * Cache of this uuri escaped as a string.
@@ -78,7 +78,7 @@ implements Serializable {
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
      */
-    private String cachedEscapedURI = null;
+    private transient String cachedEscapedURI = null;
 
     /**
      * Cache of this uuri escaped as a string.
@@ -86,7 +86,12 @@ implements Serializable {
      * Super class calculates on every call.  Profiling shows us spend 30% of
      * total elapsed time in URI class.
      */
-    private String cachedString = null;
+    private transient String cachedString = null;
+    
+    /**
+     * Cached authority minus userinfo.
+     */
+    private transient String cachedAuthorityMinusUserinfo = null;
 
     /**
      * Cache of this uuri in SURT format
@@ -125,7 +130,6 @@ implements Serializable {
     
     /**
      * @param uri URI as string that is resolved relative to this UURI.
-     * @param charset Charset to use.
      * @return UURI that uses this UURI as base.
      * @throws URIException
      */
@@ -137,25 +141,25 @@ implements Serializable {
 
     /**
      * @param uri URI as string that is resolved relative to this UURI.
-     * @param charset Charset to use.
+     * @param e True if escaped.
      * @return UURI that uses this UURI as base.
      * @throws URIException
      */
-    public UURI resolve(String uri, boolean escaped)
+    public UURI resolve(String uri, boolean e)
     throws URIException {
-        return resolve(uri, escaped, this.getProtocolCharset());
+        return resolve(uri, e, this.getProtocolCharset());
     }
     
     /**
      * @param uri URI as string that is resolved relative to this UURI.
-     * @param escaped True if uri is escaped.
+     * @param e True if uri is escaped.
      * @param charset Charset to use.
      * @return UURI that uses this UURI as base.
      * @throws URIException
      */
-    public UURI resolve(String uri, boolean escaped, String charset)
+    public UURI resolve(String uri, boolean e, String charset)
     throws URIException {
-        return new UURI(this, new UURI(uri, escaped, charset));
+        return new UURI(this, new UURI(uri, e, charset));
     }
 
     /**
@@ -285,8 +289,6 @@ implements Serializable {
 
     /**
      * @return Return the 'SURT' format of this UURI
-     * 
-     * @throws URIException
      */
     public String getSurtForm() {
         if (surtForm == null) {
@@ -305,13 +307,17 @@ implements Serializable {
      */
 	public String getAuthorityMinusUserinfo()
     throws URIException {
-        String result = getAuthority();
-        if (result != null && result.length() > 0) {
-        	int index = result.indexOf('@');
-            if (index >= 0 && index < result.length()) {
-            	result = result.substring(index + 1);
+        if (this.cachedAuthorityMinusUserinfo != null) {
+            return this.cachedAuthorityMinusUserinfo;
+        }
+        String tmp = getAuthority();
+        if (tmp != null && tmp.length() > 0) {
+        	int index = tmp.indexOf('@');
+            if (index >= 0 && index < tmp.length()) {
+                tmp = tmp.substring(index + 1);
             }
         }
-        return result;
+        this.cachedAuthorityMinusUserinfo = tmp;
+        return this.cachedAuthorityMinusUserinfo;
 	}
 }
