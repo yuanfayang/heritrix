@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.filter;
 
+import java.util.logging.Logger;
+
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -39,7 +41,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class HopsFilter extends Filter {
-
+    private static final Logger logger =
+        Logger.getLogger(HopsFilter.class.getName());
 
     /**
      * @param name

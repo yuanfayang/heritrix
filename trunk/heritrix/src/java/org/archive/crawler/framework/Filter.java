@@ -51,7 +51,7 @@ import org.archive.crawler.settings.SimpleType;
  * @see org.archive.crawler.framework.Processor
  */
 public class Filter extends ModuleType {
-    protected static Logger logger =
+    private static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 
     public static final String ATTR_ENABLED = "enabled";

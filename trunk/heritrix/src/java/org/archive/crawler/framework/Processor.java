@@ -25,6 +25,7 @@ package org.archive.crawler.framework;
 
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -112,7 +113,7 @@ public class Processor extends ModuleType {
     }
 
     /**
-     * @param curi
+     * @param curi CrawlURI instance.
      * @throws InterruptedException
      */
     protected void innerRejectProcess(CrawlURI curi)
@@ -176,9 +177,11 @@ public class Processor extends ModuleType {
         }
         for (Iterator i = fs.iterator(curi); i.hasNext();) {
             Filter filter = (Filter)i.next();
-            if( !filter.accepts(curi) ) {
-                logger.info(filter + " rejected " + curi + " in Processor " +
-                    getName());
+            if (!filter.accepts(curi)) {
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info(filter + " rejected " + curi +
+                        " in Processor " + getName());
+                }
                 return false;
             }
         }

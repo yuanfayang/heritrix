@@ -23,6 +23,9 @@
  */
 package org.archive.crawler.filter;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
@@ -37,7 +40,10 @@ import org.archive.util.TextUtils;
  *
  * @author Gordon Mohr
  */
-public class URIRegExpFilter extends Filter {
+public class URIRegExpFilter
+extends Filter {
+    private static final Logger logger =
+        Logger.getLogger(URIRegExpFilter.class.getName());
     public static final String ATTR_REGEXP = "regexp";
     public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 
@@ -68,7 +74,14 @@ public class URIRegExpFilter extends Filter {
 
     protected boolean innerAccepts(Object o) {
         String regexp = getRegexp(o);
-        return (regexp == null)? false: TextUtils.matches(regexp, asString(o));
+        String str = asString(o);
+        boolean result = (regexp == null)?
+            false: TextUtils.matches(regexp, str);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Tested '" + str + "' match with regex '" +
+                getRegexp(o) + " and result was " + result);
+        }
+        return result;
     }
 
     /** 

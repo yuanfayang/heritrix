@@ -27,6 +27,7 @@
 package org.archive.crawler.filter;
 
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
@@ -42,6 +43,8 @@ import org.archive.crawler.settings.SimpleType;
  * @author Igor Ranitovic
  */
 public class FilePatternFilter extends URIRegExpFilter {
+    private static final Logger logger =
+        Logger.getLogger(FilePatternFilter.class.getName());
     public static final String ATTR_USE_DEFAULT = "use-default-patterns";
     public static final String IMAGES_PATTERNS = ".*(?i)(\\.(bmp|gif|jpe?g" +
         "|png|tiff?))$";
@@ -107,19 +110,18 @@ public class FilePatternFilter extends URIRegExpFilter {
         try {
             String patternType = (String)getAttribute(o, ATTR_USE_DEFAULT);
 
-            if (patternType.equals(ALL)){
+            if (patternType.equals(ALL)) {
                 return ALL_DEFAULT_PATTERNS;
-            } else if (patternType.equals(IMAGES)){
+            } else if (patternType.equals(IMAGES)) {
                 return IMAGES_PATTERNS;
-            }else if (patternType.equals(AUDIO)){
+            }else if (patternType.equals(AUDIO)) {
                 return AUDIO_PATTERNS;
-            }else if(patternType.equals(VIDEO)){
+            }else if(patternType.equals(VIDEO)) {
                 return VIDEO_PATTERNS;
-            }else if(patternType.equals(MISC)){
+            }else if(patternType.equals(MISC)) {
                 return MISC_PATTERNS;
-            }else if(patternType.equals(CUSTOM)){
+            }else if(patternType.equals(CUSTOM)) {
                 return (String) getAttribute(o, ATTR_REGEXP);
-
             }else {
                 assert false : "Unrecognized pattern type " + patternType +
                                ". Should never happened!";
@@ -138,7 +140,7 @@ public class FilePatternFilter extends URIRegExpFilter {
     public boolean accepts(Object o) {
         CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
 
-        // Skip the evaluation if the filter is disabled
+        // Skip the evaluation if the filter is disabled.
         // Since this filter is primarily used with seed and focus filters
         // it has to return false when disabled -- unlike Filter's accepts
         // method.

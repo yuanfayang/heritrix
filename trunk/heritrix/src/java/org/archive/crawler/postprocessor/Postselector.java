@@ -142,8 +142,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     protected void innerProcess(CrawlURI curi) {
-        logger.finest(getName() + " processing " + curi);
-
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.finest(getName() + " processing " + curi);
+        }
+        
         // handle any prerequisites
         if (curi.containsKey(A_PREREQUISITE_URI)) {
             handlePrerequisites(curi);
@@ -155,8 +157,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
             return;
         }
 
-        Iterator iter = curi.getOutLinks().iterator();
-        while(iter.hasNext()) {
+        for (Iterator iter = curi.getOutLinks().iterator(); iter.hasNext();) {
             Link wref = (Link)iter.next();
             try {
                 CandidateURI caURI = createCandidateURI(curi, wref);
