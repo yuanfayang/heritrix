@@ -1,9 +1,9 @@
-#http://www.yahoo.com
-http://www.msn.com
-http://www.archive.org
-#http://www.google.com
-http://www.aol.com
-http://www.lycos.com
-http://www.dmoz.org
-http://www.excite.com
-http://www.cnn.com
+# http://www.yahoo.com
+# http://www.msn.com
+# http://www.archive.org
+# http://www.google.com
+# http://www.aol.com
+# http://www.lycos.com
+http://dmoz.org
+# http://www.excite.com
+# http://www.cnn.com
