@@ -30,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
@@ -78,7 +79,7 @@ import org.archive.util.QueueItemMatcher;
  * @author gojomo
  * @version $Date$ $Revision$
  */
-public class KeyedQueue implements Queue, Serializable  {
+public class KeyedQueue implements Serializable  {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
     
@@ -89,8 +90,8 @@ public class KeyedQueue implements Queue, Serializable  {
     public static final Object READY = "READY".intern();
     /** FROZEN: not considered as URI source until operator intervention */
     public static final Object FROZEN = "FROZEN".intern();
-    /** IN_PROCESS: on hold until a URI in progress is finished */
-    public static final Object IN_PROCESS = "IN_PROCESS".intern();
+    /** IN_PROCESS: on hold until one or more URIs in progress are finished */
+    public static final Object BUSY = "IN_PROCESS".intern();
     /** SNOOZED: on hold until a specific time interval has passed */
     public static final Object SNOOZED = "SNOOZED".intern();
     /** EMPTY: eligible to supply URIs, but without any to supply */
@@ -104,9 +105,12 @@ public class KeyedQueue implements Queue, Serializable  {
     String classKey;
     /** current state; see above values */
     Object state;
+    /** maximum simultaneous plain URIs to allow in-process at a time */
+    int valence = 1;
 
-    /** if state is IN_PROCESS, item in progress */
-    Object inProcessItem;
+    /** items in progress */
+    LinkedList inProcessItems = new LinkedList();
+    int inProcessLoad = 0;
     
     LinkedList innerStack; // topmost eligible items
     Queue innerQ; // rest of eligible items
@@ -132,7 +136,7 @@ public class KeyedQueue implements Queue, Serializable  {
         this.classKey = key;
         String tmpName = key;
         this.innerStack = new LinkedList();
-        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);
+        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);    
         // TODO: Currently unimplemented.  Commenting out for now because its
         // presence means extra two file descriptors per processed URI.
         // See https://sourceforge.net/tracker/?func=detail&aid=943768&group_id=73833&atid=539099
@@ -215,26 +219,49 @@ public class KeyedQueue implements Queue, Serializable  {
      * 
      * @param o
      */
-    public void noteInProcess(Object o) {
+    public void noteInProcess(CrawlURI o) {
         assert this.state == READY || this.state == EMPTY;
-        assert this.inProcessItem == null;
-        this.inProcessItem = o;
-        this.state = IN_PROCESS;
+        //assert this.inProcessItem == null;
+        inProcessItems.add(o);
+        inProcessLoad += loadFor(o);
+        if(inProcessLoad>=valence) {
+            this.state = BUSY;
+        }
     }
+    
     /**
      * Note that the given item's processing
      * has completed; forget the in-process item
-     * and move queue from IN_PROCESS to READY or 
+     * and move queue from BUSY to READY or 
      * EMPTY state
      * 
      * @param o
      */
-    public void noteProcessDone(Object o) {
-        assert this.state == IN_PROCESS;
-        assert this.inProcessItem == o;
-        this.inProcessItem = null;
-        this.state = isEmpty() ? EMPTY : READY;
+    public void noteProcessDone(CrawlURI o) {
+        // assert this.state == BUSY;
+        assert inProcessItems.contains(o);
+        inProcessItems.remove(o);
+        inProcessLoad -= loadFor(o);
+        if(inProcessLoad<valence) {
+            this.state = isEmpty() ? EMPTY : READY;
+        }
     }
+    
+    /**
+     * @param o
+     * @return
+     */
+    private int loadFor(CrawlURI o) {
+        if (o.needsImmediateScheduling()) {
+            // treat anything high-prio as
+            // blocking all others
+            return valence;
+        } else {
+            // otherwise, it's just normal 
+            return 1;
+        }
+    }
+
     /**
      * Update READY/EMPTY state after preceding
      * queue edit operations.
@@ -406,8 +433,8 @@ public class KeyedQueue implements Queue, Serializable  {
     /**
      * @return The remembered item in process (set with noteInProgress()).
      */
-    public Object getInProcessItem() {
-       return this.inProcessItem;
+    public List getInProcessItems() {
+       return inProcessItems;
     }
 
     /**
@@ -458,5 +485,12 @@ public class KeyedQueue implements Queue, Serializable  {
         stream.defaultReadObject();
         // ensure object identities of state value match
         this.state = ((String) this.state).intern();
+    }
+
+    /**
+     * @param v
+     */
+    public void setValence(int v) {
+        valence = v;
     }
 }
