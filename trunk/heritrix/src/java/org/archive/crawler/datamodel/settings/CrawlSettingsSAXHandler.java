@@ -56,7 +56,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private Map handlers = new HashMap();
     private Stack handlerStack = new Stack();
     private Stack stack = new Stack();
-    
+
     /** Keeps track of elements which subelements should be skipped. */
     private Stack skip = new Stack();
     private StringBuffer buffer = new StringBuffer();
