@@ -36,10 +36,11 @@ public class CrawlHost {
 	public CrawlHost(String h) {
 		// did they give us a dotted quad?
 		// don't set the host or do the lookup
-		if( h.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") ){
-			
-		}
+		//if( h.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") ){
+		//	
+		//}
 		
+		//TODO do we want to check this for valid host?
 		hostname = h;
 	}
 	
