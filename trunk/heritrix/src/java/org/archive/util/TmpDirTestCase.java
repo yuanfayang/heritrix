@@ -148,9 +148,10 @@ public class TmpDirTestCase
     }
     
     /**
-     * Return files that begin w/ {@link #fileFilterPrefix}
+     * Return files that begin w/ fileFilterPrefix.
      * 
      * Implementation of the FileFilter.accept method.
+     * 
      * @param pathname File to filter.
      * @return True if we are to include the passed file.
      */

@@ -55,7 +55,7 @@ import org.archive.util.HttpRecorder;
  * A Socket Factory that gives out ARCSockets.
  * 
  * This factory is odd in that it takes configuration.   If you don't call the 
- * {@link initialize(Properties)} before first use of {@link getInstance},
+ * {@link #initialize(Properties)} before first use of {@link #getInstance()},
  * you'll get <code>null</code> for a SocketFactory instance.
  *
  *<p>The {@link java.util.Properties} passed must contain at least an 
@@ -227,8 +227,9 @@ public class ARCSocketFactory extends SocketFactory
      * Returns singleton instance of ARCSocketFactory.
      * 
      *  @return Singleton instance of ARCSocketFactory or null if
-     * {@link initialize(Properties} hasn't first been called.  Return type is
-     * SocketFactory.  No need for client to know about ARCSocketFactory.
+     * {@link #initialize(java.util.Properties)} hasn't first been called.
+     * Return type is SocketFactory.  No need for client to know about
+     * ARCSocketFactory.
 	 */
 	public static SocketFactory getInstance()
 	{
