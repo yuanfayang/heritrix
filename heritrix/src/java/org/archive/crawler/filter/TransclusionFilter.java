@@ -151,11 +151,11 @@ public class TransclusionFilter extends Filter {
             // ...and the overall number of hops isn't too high
             && (transCount <= this.maxTransHops) 
             // ...and the number of spec-hops isn't too high
-            && (specCount > 0 && specCount <= this.maxSpeculativeHops) 
+            && (this.maxSpeculativeHops <= 0 ||  specCount <= this.maxSpeculativeHops) 
             // ...and the number of referral-hops isn't too high
-            && (this.maxReferralHops > 0 && refCount <= this.maxReferralHops)
+            && (this.maxReferralHops <= 0 || refCount <= this.maxReferralHops)
             // ...and the number of embed-hops isn't too high
-            && (this.maxEmbedHops > 0 && embedCount <= this.maxEmbedHops);
+            && (this.maxEmbedHops <= 0 || embedCount <= this.maxEmbedHops);
     }
 
     public void readMaxValues(Object o) {
