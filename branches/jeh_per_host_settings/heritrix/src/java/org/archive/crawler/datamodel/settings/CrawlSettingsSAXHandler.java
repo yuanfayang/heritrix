@@ -197,8 +197,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             if (name.equals(XMLSettingsHandler.XML_ELEMENT_CONTROLLER)) {
                 module = settingsHandler.getOrder();
             } else {
-                module =
-                settingsHandler.getModule(atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME));
+                module = settingsHandler.getSettingsObject(null)
+                .getModule(atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME));
             }
             stack.push(module);
         }

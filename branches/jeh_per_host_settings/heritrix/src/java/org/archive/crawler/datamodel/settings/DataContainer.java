@@ -45,8 +45,9 @@ public class DataContainer extends HashMap {
     private List attributes;
     private Map attributeNames;
 
-    /**
+    /** Create a data container for a module.
      * 
+     * @param module the module to create the data container for.
      */
     public DataContainer(ComplexType module) {
         super();
@@ -55,12 +56,24 @@ public class DataContainer extends HashMap {
         attributeNames = new HashMap();
     }
 
+    /** Add a new element to the data container.
+     * 
+     * @param name name of the element to add.
+     * @param description description ef the element to add.
+     * @param overrideable should this element be overrideable.
+     * @param legalValues an array of legal values for this element or null if
+     *                    there are no constraints.
+     * @param defaultValue the default value for this element.
+     * @param index index at which the specified element is to be inserted.
+     * @throws InvalidAttributeValueException
+     */
     public void addElementType(
         String name,
         String description,
         boolean overrideable,
         Object[] legalValues,
-        Object defaultValue)
+        Object defaultValue,
+        int index)
         throws InvalidAttributeValueException {
         if (attributeNames.containsKey(name)) {
             throw new IllegalArgumentException("Duplicate field: " + name);
@@ -68,8 +81,10 @@ public class DataContainer extends HashMap {
         if (defaultValue == null) {
             throw new InvalidAttributeValueException(
                 "null is not allowed as default value for attribute '"
-                + name + "' in class '"
-                + complexType.getClass().getName() + "'");
+                    + name
+                    + "' in class '"
+                    + complexType.getClass().getName()
+                    + "'");
         }
         MBeanAttributeInfo attribute =
             new ModuleAttributeInfo(
@@ -79,7 +94,7 @@ public class DataContainer extends HashMap {
                 overrideable,
                 legalValues,
                 defaultValue);
-        attributes.add(attribute);
+        attributes.add(index, attribute);
         attributeNames.put(name, attribute);
         try {
             put(name, defaultValue);
@@ -89,7 +104,33 @@ public class DataContainer extends HashMap {
             e.printStackTrace();
         }
     }
-    
+
+    /** Appends the specified element to the end of this data container.
+     * 
+     * @param name name of the element to add.
+     * @param description description ef the element to add.
+     * @param overrideable should this element be overrideable.
+     * @param legalValues an array of legal values for this element or null if
+     *                    there are no constraints.
+     * @param defaultValue the default value for this element.
+     * @throws InvalidAttributeValueException
+     */
+    public void addElementType(
+        String name,
+        String description,
+        boolean overrideable,
+        Object[] legalValues,
+        Object defaultValue)
+        throws InvalidAttributeValueException {
+        addElementType(
+            name,
+            description,
+            overrideable,
+            legalValues,
+            defaultValue,
+            attributes.size());
+    }
+
     public MBeanInfo getMBeanInfo() {
         MBeanAttributeInfo attrs[] =
             (MBeanAttributeInfo[]) attributes.toArray(
@@ -108,15 +149,15 @@ public class DataContainer extends HashMap {
     protected Iterator attributeInfoIterator() {
         return attributes.iterator();
     }
-    
+
     protected boolean hasAttributes() {
         return !attributes.isEmpty();
     }
-    
+
     public int size() {
         return attributes.size();
     }
-    
+
     protected MBeanAttributeInfo getAttributeInfo(String name) {
         return (MBeanAttributeInfo) attributeNames.get(name);
     }
@@ -171,5 +212,25 @@ public class DataContainer extends HashMap {
             throw new AttributeNotFoundException(key);
         }
         return res;
+    }
+    
+    /** Move an attribute up one place in the list. 
+     * 
+     * @param key name of attribute to move.
+     * @return true if attribute was moved, false if attribute was already
+     *              at the top.
+     */
+    protected boolean moveElementUp(String key) {
+        return true;
+    }
+    
+    /** Move an attribute down one place in the list. 
+     * 
+     * @param key name of attribute to move.
+     * @return true if attribute was moved, false if attribute was already
+     *              at bottom.
+     */
+    protected boolean moveElementDown(String key) {
+        return true;
     }
 }

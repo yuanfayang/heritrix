@@ -227,7 +227,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             XMLSettingsHandler.XML_ELEMENT_META,
             XMLSettingsHandler.XML_ELEMENT_META);
 
-        Iterator modules = settings.modules();
+        Iterator modules = settings.topLevelModules();
         while (modules.hasNext()) {
             ComplexType complexType = (ComplexType) modules.next();
             parseComplexType(complexType, 1 + indentAmount);
@@ -244,7 +244,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             return;
         }
         
-        DataContainer data = settings.getData(complexType.getAbsoluteName());
+        DataContainer data = settings.getData(complexType);
         MBeanInfo mbeanInfo = data.getMBeanInfo();
         String objectElement = resolveElementName(complexType);
 
@@ -375,7 +375,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
                 elementName = XMLSettingsHandler.XML_ELEMENT_CONTROLLER;
             } else if (
                 settings.getParent() != null
-                    && complexType.getSettingsHandler().getModule(
+                    && complexType.globalSettings().getModule(
                         complexType.getName())
                         != null) {
                 // This is not the order file and we are referencing an object

@@ -32,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.FileChannel;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
@@ -78,7 +79,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     protected static final String XML_ATTRIBUTE_CLASS = "class";
 
     private File orderFile;
-    private File settingsDirectory;
+    //private File settingsDirectory;
     private final static String settingsFilename = "settings.xml";
 
     /** Create a new XMLSettingsHandler object.
@@ -98,18 +99,6 @@ public class XMLSettingsHandler extends SettingsHandler {
      */
     public void initialize() {
         super.initialize();
-        try {
-            this.settingsDirectory =
-                new File(
-                    (String) getOrder().getAttribute(
-                        CrawlOrder.ATTR_SETTINGS_DIRECTORY));
-        } catch (AttributeNotFoundException e) {
-            e.printStackTrace();
-        } catch (MBeanException e) {
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            e.printStackTrace();
-        }
     }
 
     /** Initialize the SettingsHandler from a source.
@@ -128,6 +117,22 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     private File scopeToFile(String scope) {
+        String settingsDirectoryName = null;
+        try {
+            settingsDirectoryName =
+                    (String) getOrder().getAttribute(
+                        CrawlOrder.ATTR_SETTINGS_DIRECTORY);
+        } catch (AttributeNotFoundException e) {
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            e.printStackTrace();
+        }
+
+        File settingsDirectory =
+             new File(getPathRelativeToWorkingDirectory(settingsDirectoryName));
+
         File file;
         if (scope == null || scope.equals("")) {
             file = settingsDirectory;
@@ -272,7 +277,26 @@ public class XMLSettingsHandler extends SettingsHandler {
         writeSettingsObject(getSettingsObject(null));
         
         // Copy the per host files
-        
+        File[] entries = settingsDirectory.listFiles();
+        for(int i=0 ;i<entries.length; i++) {
+        }
+    }
+    
+    private void copyFile(File from, File to) throws IOException {
+       // get channels
+       FileInputStream fis = new FileInputStream(from);
+       FileOutputStream fos = new FileOutputStream(to);
+       FileChannel fcin = fis.getChannel();
+       FileChannel fcout = fos.getChannel();
+
+       // do the file copy
+       fcin.transferTo(0, fcin.size(), fcout);
+
+       // finish up
+       fcin.close();
+       fcout.close();
+       fis.close();
+       fos.close();
     }
     
     /**

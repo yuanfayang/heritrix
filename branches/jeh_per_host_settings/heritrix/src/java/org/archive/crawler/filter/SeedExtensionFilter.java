@@ -117,7 +117,7 @@ public class SeedExtensionFilter extends Filter {
             return extensionMode;
         }
         extensionMode = PATH;
-        String mode = ((Scope) getSettingsHandler().getModule(Scope.ATTR_NAME)).getMode();
+        String mode = ((Scope) globalSettings().getModule(Scope.ATTR_NAME)).getMode();
 		if(mode==null || Scope.MODE_PATH.equals(mode)) {
 			// default
 			extensionMode = PATH;

@@ -69,7 +69,7 @@ public class HopsFilter extends Filter {
 		}
         if (o instanceof CrawlURI) {
             CrawlURI curi = (CrawlURI) o;
-            Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
+            Scope scope = (Scope) globalSettings().getModule(Scope.ATTR_NAME);
             try {
                 maxLinkHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_LINK_HOPS, curi)).intValue();
                 maxTransHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
