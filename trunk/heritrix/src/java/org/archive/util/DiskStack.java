@@ -23,6 +23,8 @@
  */
 package org.archive.util;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,6 +34,7 @@ import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
@@ -47,6 +50,9 @@ import org.archive.io.RandomAccessOutputStream;
  *
  */
 public class DiskStack implements Stack, Serializable {
+    private static final Logger logger =
+        Logger.getLogger(DiskStack.class.getName());
+
     /** the backing file */
     protected File storage;
 
@@ -56,9 +62,15 @@ public class DiskStack implements Stack, Serializable {
     /** pointer to top prevIndex + topItem in backing file */
     protected long topItemPointer = -1;
 
+    /** random-access file into which bojects are serialized */
     transient RandomAccessFile raf;
+    /** stream offering non-serialization writing into raf */
+    transient DataOutputStream rawStream;
+    /** stream offering serialization writing into raf */
     transient HeaderlessObjectOutputStream pushStream;
+    /** stream offering serialization reading from raf */ 
     transient HeaderlessObjectInputStream popStream;
+
 
     /**
      * @param storage
@@ -90,8 +102,22 @@ public class DiskStack implements Stack, Serializable {
         } else {
             start();
         }
-        pushStream = new HeaderlessObjectOutputStream(new RandomAccessOutputStream(raf));
+        // buffer all writing to raf for efficiency
+        BufferedOutputStream outStream = new BufferedOutputStream(new RandomAccessOutputStream(raf),4096);
+        
+        rawStream = new DataOutputStream(outStream);
+        pushStream = new HeaderlessObjectOutputStream(outStream);
+        
         popStream = new HeaderlessObjectInputStream(new RandomAccessInputStream(raf));
+    }
+
+    /**
+     * @param raf2
+     * @return
+     */
+    private Object RandomAccessOutputStream(RandomAccessFile raf2) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     /**
@@ -127,8 +153,9 @@ public class DiskStack implements Stack, Serializable {
             pushStream.reset();
             pushStream.writeObject(object);
             height++;
-            raf.writeLong(height);
-            raf.writeLong(itemStartPointer);
+            rawStream.writeLong(height);
+            rawStream.writeLong(itemStartPointer);
+            pushStream.flush(); // flushes underlying bufferedstream
             topItemPointer = itemStartPointer;
         } catch (IOException e) {
             DevUtils.logger.log(Level.SEVERE,"push("+object+")" +
