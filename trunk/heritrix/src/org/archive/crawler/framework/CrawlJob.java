@@ -33,6 +33,9 @@ public interface CrawlJob
 	public static final String STATUS_FINISHED_TIME_LIMIT = "Finished - Timelimit hit"; // Job finished normally when the specified timelimit was hit.
 	public static final String STATUS_FINISHED_DATA_LIMIT = "Finished - Maximum amount of data limit hit"; // Job finished normally when the specifed amount of data (MB) had been downloaded
 	public static final String STATUS_FINISHED_DOCUMENT_LIMIT = "Finished - Maximum number of documents limit hit"; //Job finished normally when the specified number of documents had been fetched.
+	public static final String STATUS_WAITING_FOR_PAUSE = "Pausing - Waiting for threads to finish"; // Job is going to be temporarly stopped after active threads are finished.
+	public static final String STATUS_PAUSED = "Paused"; // Job was temporarly stopped. State is kept so it can be resumed
+	public static final String STATUS_RESUMED = "Resumed"; // Job has resumed from pause
 	
 	/**
 	 * Each job needs to be assigned a ID.
