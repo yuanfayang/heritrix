@@ -147,8 +147,13 @@ public class UURI {
 		// of the rfc2396 'delims' or 'unwise' characters
 		// and escape them, as well as other special 
 		// handling of '%' and '+'
-		if (s.indexOf(" ") < 0)
-			return s;
+		try {
+			if (s.indexOf(" ") < 0) {// TODOSOON: fix NPE here!
+				return s;
+			}
+		} catch (NullPointerException npe) {
+			logger.warning(npe.toString());
+		}
 
 		return s.replaceAll(" ", "%20");
 	}
@@ -194,7 +199,7 @@ public class UURI {
 		try {
 			return createUURI(normalize(string,uri));
 		} catch (URISyntaxException e) {
-			logger.info("BAD URI: "+string+" from "+uri);
+			logger.warning("BAD URI: "+string+" from "+uri);
 			return null;
 		}
 	}
