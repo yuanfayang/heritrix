@@ -1,4 +1,4 @@
-/* Position
+/* PositionableStream
  *
  * Created on May 3, 2004
  *
@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author stack
  * @version $Revision$, $Date$
  */
-public interface Position {
+public interface PositionableStream {
    /**
     * @return Position in stream (or whatever).
     * @throws IOException
@@ -43,4 +43,13 @@ public interface Position {
      * @throws IOException
      */
     public void seek(long position) throws IOException;
+    
+    /** 
+     * An implementation other than default
+     * {@link java.io.InputStream.available()} because that always returns 0.
+     * 
+     * @return Number of bytes available.
+     * @throws IOException
+     */
+    public int available() throws IOException;
 }

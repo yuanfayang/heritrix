@@ -42,7 +42,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.archive.io.Position;
+import org.archive.io.PositionableStream;
 
 /**
  * Get an iterator on an arc file or get a record by absolute position.
@@ -201,7 +201,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 		}
         if (this.in.markSupported()) {
             try {
-                ((Position)this.in).seek(0);
+                ((PositionableStream)this.in).seek(0);
             }
             catch (IOException e) {
                 throw new RuntimeException(e.getClass().getName() + ": " +
@@ -219,7 +219,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	 */
 	public ARCRecord get(long offset) throws IOException {
         cleanupCurrentRecord();
-        ((Position)this.in).seek(offset);
+        ((PositionableStream)this.in).seek(offset);
         // Calling next looks weird but under the wraps it does the right thing.
         return (ARCRecord)next();
     }
@@ -303,7 +303,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         }
 
         try {
-			return createARCRecord(this.in, ((Position)this.in).getFilePointer());
+			return createARCRecord(this.in, ((PositionableStream)this.in).getFilePointer());
 		} catch (IOException e) {
 			throw new NoSuchElementException(e.getClass() + ": " +
                 e.getMessage());
