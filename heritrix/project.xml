@@ -491,15 +491,8 @@
       </includes>
     </unitTest>
 
-    <!-- J A R  R E S O U R C E S -->
     <!-- Resources that are packaged up inside the JAR file -->
     <resources>
-      <resource>
-        <directory>${basedir}/src/java</directory>
-        <includes>
-          <include>**/package.html</include>
-        </includes>
-      </resource>
       <resource>
           <directory>${basedir}/src/java</directory>
           <includes>
