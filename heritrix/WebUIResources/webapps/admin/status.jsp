@@ -56,6 +56,14 @@
 								</tr>
 								<tr>
 									<td>
+										<b>Status:</b>&nbsp;
+									</td>
+									<td>
+										<%=handler.getCurrentJob().getStatus()%>
+									</td>
+								</tr>
+								<tr>
+									<td>
 										<b>Processed docs/sec:</b>&nbsp;
 									</td>
 									<td>
@@ -70,7 +78,7 @@
 									</td>
 									<td>
 										<%
-											long time = (stats.getCrawlEndTime()-stats.getCrawlStartTime())/1000;
+											long time = (stats.getCrawlerTotalElapsedTime())/1000;
 											
 											if(time>3600)
 											{
