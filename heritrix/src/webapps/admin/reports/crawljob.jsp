@@ -272,7 +272,10 @@
 				{
 					Map.Entry entry = (Map.Entry)statusCodes.next();
 					long count = ((LongWrapper)(entry.getValue())).longValue;
-					long displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+					long displaybarwidth = 0;
+					if(stats.successfulFetchAttempts()/6>0){
+					   displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+					} 
 					if(displaybarwidth==0){
 					   displaybarwidth=1;
 					}
@@ -313,7 +316,10 @@
 				{
 					Map.Entry file = (Map.Entry)files.next();
 					long count = ((LongWrapper)file.getValue()).longValue;
-                    long displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+                    long displaybarwidth = 0;
+                    if(stats.successfulFetchAttempts()/6>0){
+                       displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+                    } 
                     if(displaybarwidth==0){
                        displaybarwidth=1;
                     }
