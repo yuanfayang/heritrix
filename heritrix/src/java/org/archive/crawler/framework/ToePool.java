@@ -41,6 +41,7 @@ import org.archive.util.ArchiveUtils;
  * @see org.archive.crawler.framework.ToeThread
  */
 public class ToePool extends CrawlStatusAdapter {
+    /** run worker thread slightly lower than usual */
     public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
 
     protected CrawlController controller;
@@ -130,7 +131,7 @@ public class ToePool extends CrawlStatusAdapter {
         }
     }
 
-    /* (non-Javadoc)
+    /** 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String statusMessage)
@@ -227,14 +228,14 @@ public class ToePool extends CrawlStatusAdapter {
         }
     }
 
-    /* (non-Javadoc)
+    /** 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
         setShouldPause(true);
     }
     
-    /* (non-Javadoc)
+    /** 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
