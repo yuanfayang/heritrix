@@ -4,40 +4,6 @@
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 
 <%
-	String sAction = request.getParameter("action");
-	if(sAction != null)
-	{
-		// Need to handle an action	
-		if(sAction.equalsIgnoreCase("start"))
-		{
-			// Tell handler to start crawl job
-			handler.startCrawler();
-		}
-		else if(sAction.equalsIgnoreCase("stop"))
-		{
-			// Tell handler to stop crawl job
-			handler.stopCrawler();
-		}
-		else if(sAction.equalsIgnoreCase("terminate"))
-		{
-			// Delete current job
-			if(handler.getCurrentJob()!=null){
-				handler.deleteJob(handler.getCurrentJob().getUID());
-			}
-		}
-		else if(sAction.equalsIgnoreCase("pause"))
-		{
-			// Tell handler to pause crawl job
-			handler.pauseJob();
-		}
-		else if(sAction.equalsIgnoreCase("resume"))
-		{
-			// Tell handler to resume crawl job
-			handler.resumeJob();
-		}
-		
-	}	
-
 	StatisticsTracker stats = null;
 
 	if(handler.getCurrentJob() != null)
@@ -245,23 +211,23 @@
 	<%
 		if(handler.isRunning())
 		{
-			out.println("<a href='main.jsp?action=stop'>Stop crawling</a>");
+			out.println("<a href='/admin/action.jsp?action=stop'>Stop crawling</a>");
 		}
 		else
 		{
-			out.println("<a href='main.jsp?action=start'>Start crawling</a>");
+			out.println("<a href='/admin/action.jsp?action=start'>Start crawling</a>");
 		}
 
 		if(handler.isCrawling())
 		{
-			out.println(" | <a href='main.jsp?action=terminate'>Terminate current job</a> | ");
+			out.println(" | <a href='/admin/action.jsp?action=terminate'>Terminate current job</a> | ");
 			if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))
 			{
-				out.println("<a href='main.jsp?action=resume'>Resume current job</a> ");
+				out.println("<a href='/admin/action.jsp?action=resume'>Resume current job</a> ");
 			}
 			else
 			{
-				out.println("<a href='main.jsp?action=pause'>Pause current job</a> ");
+				out.println("<a href='/admin/action.jsp?action=pause'>Pause current job</a> ");
 			}
 		}
 	%> | <a href="">Refresh</a>
