@@ -4,9 +4,7 @@
  */
 package org.archive.util;
 
-import java.util.LinkedList;
 import java.util.Iterator;
-import st.ata.util.AList;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
