@@ -71,10 +71,10 @@ public class CrawlController {
 		order = o;	
 		
 		// don't start the crawl if they're using the default user-agent
-		String userAgent = order.getStringAt("//http-headers/User-Agent/");
+		String userAgent = order.getStringAt("//http-headers/User-Agent");
 		if(userAgent.equals(DEFAULT_USER_AGENT)){
-			System.out.println("Before using Heratrix you must " +
-				"change the default user agent in the Heratrix configuration " +
+			System.out.println("Before using Heritrix you must " +
+				"change the default user agent in the Heritrix configuration " +
 				"file to something other than '" + DEFAULT_USER_AGENT +
 				"'.  Please see the documentation for more information."
 				);
@@ -119,7 +119,7 @@ public class CrawlController {
 		// the statistics object must be created before modules that use it if those 
 		// modules retrieve the object from the controller during initialization 
 		// (which some do).  So here we go with that.
-		int interval = order.getIntAt("//crawl-statistics/interval");
+		int interval = order.getIntAt("//crawl-statistics/interval", 60);
 		statistics = new StatisticsTracker(this, interval);
 			
 		store = (URIStore) order.getBehavior().instantiate("//store");
