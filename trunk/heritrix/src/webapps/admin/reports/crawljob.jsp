@@ -180,7 +180,7 @@
                     </table>
                 </td>
             </tr>
-            <tr>
+            <!--tr>
                 <td>
                     <b>Pending:</b>
                 </td>
@@ -188,12 +188,12 @@
                     <%=stats.urisInFrontierCount()%>
                 </td>
                 <td colspan="4">
-                    &nbsp;<font size="-2">(Links extracted from documents, not yet processed further)</font>
+                    &nbsp;<font size="-2">(Total URIs )</font>
                 </td>
-            </tr>
+            </tr-->
             <tr>
                 <td>
-                    <b>Scheduled:</b>
+                    <b>Discovered:</b>
                 </td>
                 <td align="right">
                     <%=stats.urisEncounteredCount()%>
@@ -204,13 +204,13 @@
             </tr>
             <tr>
                 <td>
-                    &nbsp;&nbsp;<b>Waiting:</b>
+                    &nbsp;&nbsp;<b>Queued:</b>
                 </td>
                 <td align="right">
                     <%=stats.urisEncounteredCount()-(stats.successfulFetchAttempts()+stats.failedFetchAttempts()+stats.disregardedFetchAttempts())%>
                 </td>
                 <td colspan="4">
-                    &nbsp;<font size="-2">(Scheduled URIs that the crawler has not finished crawling)</font>
+                    &nbsp;<font size="-2">(Discovered URIs that the crawler has not finished crawling)</font>
                 </td>
             </tr>
             <tr>
