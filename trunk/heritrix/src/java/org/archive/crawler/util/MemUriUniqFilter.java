@@ -82,8 +82,9 @@ public class MemUriUniqFilter extends HashSet implements UriUniqFilter {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UriUniqFilter#flush()
      */
-    public void flush() {
+    public long flush() {
         // unnecessary; all actions here are immediate
+        return 0;
     }
 
     /* (non-Javadoc)

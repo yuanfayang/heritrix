@@ -111,8 +111,9 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.UriUniqFilter#flush()
      */
-    public void flush() {
+    public long flush() {
         // noop for now
+        return 0;
     }
     
     
