@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
+import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
@@ -245,22 +246,23 @@ public class ARCWriter implements ARCConstants {
      * @throws IOException
      */
     public void close() throws IOException {
-        if (this.out != null) {
-            this.out.close();
-            this.out = null;
-            if (this.arcFile != null && this.arcFile.exists()) {
-                String path = this.arcFile.getAbsolutePath();
-                if (path.endsWith(OCCUPIED_SUFFIX)) {
-                    File f = new File(path.substring(0,
+        if (this.out == null) {
+            return;
+        }
+        this.out.close();
+        this.out = null;
+        if (this.arcFile != null && this.arcFile.exists()) {
+            String path = this.arcFile.getAbsolutePath();
+            if (path.endsWith(OCCUPIED_SUFFIX)) {
+                File f = new File(path.substring(0,
                         path.length() - OCCUPIED_SUFFIX.length()));
-                    if (!this.arcFile.renameTo(f)) {
-                        logger.warning("Failed rename of " + path);
-                    }
-                    this.arcFile = f;
+                if (!this.arcFile.renameTo(f)) {
+                    logger.warning("Failed rename of " + path);
                 }
-                logger.info("Closed " + this.arcFile.getAbsolutePath() +
-                    ", size " + this.arcFile.length());
+                this.arcFile = f;
             }
+            logger.info("Closed " + this.arcFile.getAbsolutePath() +
+                    ", size " + this.arcFile.length());
         }
     }
 
@@ -454,11 +456,7 @@ public class ARCWriter implements ARCConstants {
             // produces a 'default' header only).  We can get away w/ these
             // maniupulations because the GZIP 'default' header doesn't
             // do the 'optional' CRC'ing of the header.
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            GZIPOutputStream gzipOS = new GZIPOutputStream(baos);
-            gzipOS.write(bytes, 0, bytes.length);
-            gzipOS.close();
-            byte [] gzippedMetaData = baos.toByteArray();
+            byte [] gzippedMetaData = GzippedInputStream.gzip(bytes);
             if (gzippedMetaData[3] != 0) {
                 throw new IOException("The GZIP FLG header is unexpectedly " +
                     " non-zero.  Need to add smarter code that can deal " +

@@ -240,18 +240,21 @@ public class ARCReaderFactory implements ARCConstants {
         
         protected void gotoEOR(ARCRecord rec) throws IOException {
             long skipped = ((GzippedInputStream)this.in).gotoEOR(LINE_SEPARATOR);
-            if (skipped > 0) {
-                // Report on system error the number of unexpected characters
-                // at the end of this record.
-                ARCRecordMetaData meta = (this.currentRecord != null)?
-                    rec.getMetaData(): null;
-                logStdErr(Level.SEVERE, this.arcFile +
-                    ": Record ENDING at " +
-                    ((GzippedInputStream)this.in).getFilePointer() +
-                    " has " + skipped + " trailing byte(s): " +
-                    ((meta != null)?
-                        meta.getHeaderFields().toString(): ""));
+            if (skipped <= 0) {
+                return;
             }
+            // Report on system error the number of unexpected characters
+            // at the end of this record.
+            ARCRecordMetaData meta = (this.currentRecord != null)?
+                    rec.getMetaData(): null;
+            String message = this.arcFile + ": Record ENDING at " +
+                ((GzippedInputStream)this.in).getFilePointer() +
+                " has " + skipped + " trailing byte(s): " +
+                ((meta != null)? meta.getHeaderFields().toString(): "");
+            if (isStrict()) {
+                throw new IOException(message);
+            }
+            logStdErr(Level.WARNING, message);
         }
     }
 }
