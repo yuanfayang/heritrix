@@ -56,7 +56,7 @@ public class RegularExpressionCriteria implements Criteria {
      * @see org.archive.crawler.settings.refinements.Criteria#isWithinRefinementBounds(org.archive.crawler.datamodel.UURI, int)
      */
     public boolean isWithinRefinementBounds(CrawlURI uri) {
-        if (uri == null) {
+        if (uri == null || uri.getUURI() == null) {
             return false;
         }
         return TextUtils.matches(regexp, uri.getURIString());
