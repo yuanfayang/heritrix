@@ -203,19 +203,23 @@ public class Frontier
     long processedBytesAfterLastEmittedURI = 0;
     int lastMaxBandwidthKB = 0;
     
+    public Frontier(String name){
+        this(name,"Frontier. \nMaintains the internal" +
+                " state of the crawl. It dictates the order in which URIs" +
+                " will be scheduled. \nThis frontier is mostly a breadth-first"+
+                " frontier, which refrains from emitting more than one" +
+                " CrawlURI of the same \'key\' (host) at once, and respects" +
+                " minimum-delay and delay-factor specifications for" +
+                " politeness.");  
+    }
+    
     /**
      * @param name
      */
-    public Frontier(String name) {
+    public Frontier(String name, String description) {
         //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         //therefore we'll ignore the supplied parameter. 
-        super(URIFrontier.ATTR_NAME, "Frontier. \nMaintains the internal" +
-            " state of the crawl. It dictates the order in which URIs" +
-            " will be scheduled. \nThis frontier is mostly a breadth-first" +
-            " frontier, which refrains from emitting more than one" +
-            " CrawlURI of the same \'key\' (host) at once, and respects" +
-            " minimum-delay and delay-factor specifications for" +
-            " politeness.");
+        super(URIFrontier.ATTR_NAME, description);
         addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
             "How many multiples of last fetch elapsed time to wait before " +
             "recontacting same server", DEFAULT_DELAY_FACTOR));
