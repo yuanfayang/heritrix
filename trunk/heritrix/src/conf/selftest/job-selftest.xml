@@ -11,7 +11,7 @@
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
-    <integer name="max-toe-threads">50</integer>
+    <integer name="max-toe-threads">5</integer>
     <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
       <string name="seedsfile">seeds.txt</string>
@@ -48,7 +48,7 @@
       <integer name="min-delay-ms">0</integer>
       <integer name="min-interval-ms">0</integer>
       <integer name="max-retries">10</integer>
-      <long name="retry-delay-seconds">900</long>
+      <long name="retry-delay-seconds">90</long>
     </newObject>
     <map name="processors">
       <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
@@ -75,7 +75,7 @@
         <boolean name="postprocessor">false</boolean>
         <map name="filters">
         </map>
-        <integer name="timeout-seconds">1200</integer>
+        <integer name="timeout-seconds">120</integer>
         <integer name="sotimeout-ms">20000</integer>
         <long name="max-length-bytes">9223372036854775807</long>
         <integer name="max-fetch-attempts">35</integer>
