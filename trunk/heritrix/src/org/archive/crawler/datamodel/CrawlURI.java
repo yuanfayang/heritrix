@@ -229,15 +229,15 @@ public class CrawlURI extends CandidateURI
 	/**
 	 * @param string
 	 */
-	public void setPrerequisiteUri(String string) {
-		alist.putString(A_PREREQUISITE_URI,string);
+	public void setPrerequisiteUri(Object stringOrUURI) {
+		alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
 	}
 
 	/**
 	 * 
 	 */
-	public String getPrerequisiteUri() {
-		return alist.getString(A_PREREQUISITE_URI);
+	public Object getPrerequisiteUri() {
+		return alist.getObject(A_PREREQUISITE_URI);
 	}
 
 	/* (non-Javadoc)
