@@ -37,67 +37,61 @@ public class RobotsExclusionPolicy {
 	/**
 	 * @param vb
 	 */
-	public static RobotsExclusionPolicy policyFor(BufferedReader reader, RobotsHonoringPolicy honoringPolicy) {
+	public static RobotsExclusionPolicy policyFor(BufferedReader reader, RobotsHonoringPolicy honoringPolicy) throws IOException {
 		String read;
 		ArrayList current = null;
 		LinkedList userAgents = new LinkedList();
 		HashMap disallows = new HashMap(); 
  		boolean hasErrors = false;
  		String catchall = null;
- 		
-		try {
-			while (reader != null) {
-				do {read = reader.readLine();}
-				while (
-				  (read != null) 
-				  && ( (read=read.trim()).startsWith("#") 
-					   || read.length() == 0) ); // skip comments & blanks
-			
-				if (read == null) {
-					reader.close();
-					reader = null;
-				} else {
-					int commentIndex = read.indexOf("#");
-					if( commentIndex >-1 ) {
-						// strip trailing comment
-						read = read.substring(0, commentIndex);
-					}
-					read = read.trim(); 
-					if (read.matches("(?i)^User-agent:.*")) {
-						String ua = read.substring(11).trim().toLowerCase();
-						if(current==null||current.size()!=0) {
-							// only create new rules-list if necessary
-							// otherwise share with previous user-agent
-							current = new ArrayList();
-						} 
-						if(ua.equals("*")) {
-							ua = ""; 
-							catchall = ua;
-						} else {
-							userAgents.addLast(ua);
-						}
-						disallows.put(ua,current);
-						continue;
-					}
-					if (read.matches("(?i)Disallow:.*")) {
-						if(current==null) {
-							// buggy robots.txt
-							hasErrors = true; 
-							continue;
-						}
-						String path = read.substring(9).trim();
-						current.add(path);
-						continue;
-					}
-					//unknown line; do nothing for now
+
+		while (reader != null) {
+			do {read = reader.readLine();}
+			while (
+			  (read != null) 
+			  && ( (read=read.trim()).startsWith("#") 
+				   || read.length() == 0) ); // skip comments & blanks
+		
+			if (read == null) {
+				reader.close();
+				reader = null;
+			} else {
+				int commentIndex = read.indexOf("#");
+				if( commentIndex >-1 ) {
+					// strip trailing comment
+					read = read.substring(0, commentIndex);
 				}
+				read = read.trim(); 
+				if (read.matches("(?i)^User-agent:.*")) {
+					String ua = read.substring(11).trim().toLowerCase();
+					if(current==null||current.size()!=0) {
+						// only create new rules-list if necessary
+						// otherwise share with previous user-agent
+						current = new ArrayList();
+					} 
+					if(ua.equals("*")) {
+						ua = ""; 
+						catchall = ua;
+					} else {
+						userAgents.addLast(ua);
+					}
+					disallows.put(ua,current);
+					continue;
+				}
+				if (read.matches("(?i)Disallow:.*")) {
+					if(current==null) {
+						// buggy robots.txt
+						hasErrors = true; 
+						continue;
+					}
+					String path = read.substring(9).trim();
+					current.add(path);
+					continue;
+				}
+				//unknown line; do nothing for now
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			// TODO: be smarter here: perhaps use partial results, if avail?
-			return ALLOWALL;
 		}
+
 		if (catchall!=null) {
 			userAgents.addLast(catchall);
 		}

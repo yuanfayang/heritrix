@@ -6,6 +6,8 @@
  */
 package org.archive.crawler.basic;
 
+import java.io.IOException;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
@@ -75,11 +77,15 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 		// if it's not dns make sure it's http, 'cause we don't know nuthin' else
 		}else if(curi.getUURI().getScheme().equals("http")){
 		
-			if (curi.getFetchStatus() == 200 && curi.getUURI().getPath().equals("/robots.txt")) {
+			if ( curi.getUURI().getPath().equals("/robots.txt")) {
 				// update host with robots info
 				if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 					GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-					curi.getServer().updateRobots(get, controller.getOrder().getRobotsHonoringPolicy());
+					try {
+						curi.getServer().updateRobots(get, controller.getOrder().getRobotsHonoringPolicy());
+					} catch (IOException e) {
+						curi.addLocalizedError(getName(),e,"robots.txt parsing IOException");
+					}
 									
 					// curi can be refetched once robots data expires
 					curi.setDontRetryBefore(curi.getServer().getRobotsExpires());

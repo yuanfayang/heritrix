@@ -77,22 +77,22 @@ public class CrawlServer implements Serializable {
 	/**
 	 * @param get
 	 */
-	public void updateRobots(GetMethod get, RobotsHonoringPolicy honoringPolicy) {
+	public void updateRobots(GetMethod get, RobotsHonoringPolicy honoringPolicy) throws IOException {
 		robotsExpires = System.currentTimeMillis()+DEFAULT_ROBOTS_VALIDITY_DURATION;
-		if (get.getStatusCode()==404 || honoringPolicy.getType() == RobotsHonoringPolicy.IGNORE) {
-			// not found == all ok
+		if (get.getStatusCode()!=200 || honoringPolicy.getType() == RobotsHonoringPolicy.IGNORE) {
+			// not found or other errors == all ok for now
+			// TODO: consider handling server errors, redirects differently
 			robots = RobotsExclusionPolicy.ALLOWALL;
 			return;
 		}
 //	PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed, 
 //  since they're usually indicative of a mistake
+// Thus these lines are commented out:
 //      if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
 //			// authorization/allowed errors = all deny
 //			robots = RobotsExclusionPolicy.DENYALL;
 //			return;
 //		}
-		// TODO: handle other errors, perhaps redirects
-		// note that akamai will return 400 for some "not founds"
 		try {
 			BufferedReader reader;
 			if(honoringPolicy.getType() == RobotsHonoringPolicy.CUSTOM) {
@@ -105,9 +105,8 @@ public class CrawlServer implements Serializable {
 			}
 			robots = RobotsExclusionPolicy.policyFor(reader, honoringPolicy);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			robots = RobotsExclusionPolicy.ALLOWALL;
+			throw e; // rethrow
 		}
 		return;
 	}
