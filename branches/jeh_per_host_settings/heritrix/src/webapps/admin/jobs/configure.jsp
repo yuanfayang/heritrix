@@ -140,7 +140,7 @@
 	if(theJob == null)
 	{
 		// Didn't find any job with the given UID or no UID given.
-		response.sendRedirect("/admin/jobs.jsp?message=No job selected");
+		response.sendRedirect("/admin/jobs.jsp?message=No job selected "+request.getParameter("job"));
 		return;
 	} else if(theJob.isReadOnly()){
 		// Can't edit this job.
@@ -186,15 +186,17 @@
 				}
 				response.sendRedirect("/admin/jobs.jsp?message=Job modified");
 			}
-		}else{
-			response.sendRedirect("/admin/jobs/editmodules.jsp?session=true");
+		}else if(request.getParameter("action").equals("modules")){
+			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
+		}else if(request.getParameter("action").equals("filters")){
+			response.sendRedirect("/admin/jobs/filters.jsp?job="+theJob.getUID());
 		}
 		return;
 	}	
 
 	String inputForm=printMBean(crawlOrder,"");
 	
-	String title = "Configure crawl order";
+	String title = "Configure settings";
 	int tab = 1;
 %>
 
@@ -239,6 +241,12 @@
 				document.frmConfig.action.value="modules";
 				doSubmit();
 			}
+			
+			function doGotoFilters()
+			{
+				document.frmConfig.action.value="filters";
+				doSubmit();
+			}
 		</script>
 
 		<p><font color="red"><%=message%></font>
@@ -250,6 +258,7 @@
 
 			<% if(theJob.isRunning() == false){ %>
 				<input type="button" value="Adjust modules" onClick="doGotoModules()">
+				<input type="button" value="Select filters" onClick="doGotoFilters()">
 			<% } %>
 			<input type="button" value="Done" onClick="doSubmit()">
 			<p>			
@@ -292,6 +301,7 @@
 			<p>
 			<% if(theJob.isRunning() == false){ %>
 				<input type="button" value="Adjust modules" onClick="doGotoModules()">
+				<input type="button" value="Select filters" onClick="doGotoFilters()">
 			<% } %>
 			<input type="button" value="Done" onClick="doSubmit()">
 		
