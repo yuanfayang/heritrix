@@ -1091,10 +1091,25 @@ public class Frontier
 			int i = 1;
 			while(q.hasNext())
 			{
-				CrawlURI cu = (CrawlURI)q.next();
-				rep.append("   Held CrawlUri " + (i++) + "\n");
-				rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
-				rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
+				Object qn = q.next();
+				if(qn instanceof CrawlURI)
+				{
+					CrawlURI cu = (CrawlURI)qn;
+					rep.append("   Held item " + (i++) + " is a CrawlURI\n");
+					rep.append("     UURI:           " + cu.getUURI().getUriString() + "\n");
+					rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
+				}
+				else if(qn instanceof UURI)
+				{
+					UURI uu = (UURI)qn;
+					rep.append("   Held item " + (i++) + " is a UURI\n");
+					rep.append("     UURI:           " + uu.getUriString() + "\n");
+				}
+				else
+				{
+					rep.append("   Held item " + (i++) + " is not a CrawlURI or a UURI\n");
+					rep.append("     Item: " + qn.toString() + "\n");
+				}
 			}
 		}
 		
