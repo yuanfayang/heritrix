@@ -36,17 +36,18 @@
   <processor 
     name="Archiver" 
     class="org.archive.crawler.basic.ARCWriter"
-    next="Cacher">
+    next="Updater">
   </processor>
   <processor 
-    name="Cacher" 
-    class="org.archive.crawler.basic.HostCacheMaintainer">
+    name="Updater" 
+    class="org.archive.crawler.basic.HostInfoUpdater">
   </processor>
  </processors>
  
  <limits>
   <!-- actual enforcement of these limits may depend on choice 
-       of processors that read and respect these limits -->
+       of SSS/processor instances that read and respect these limits -->
+  <max-link-depth value="0" /> <!-- zero means crawl seeds only -->
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
