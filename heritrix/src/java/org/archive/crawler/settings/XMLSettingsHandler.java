@@ -261,7 +261,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      *
      * @param settings the settings object to be updated with data from the
      *                 persistent storage.
-     * @param filename the file to read from.
+     * @param f the file to read from.
      * @return the updated settings object or null if there was no data for this
      *         in the persistent storage.
      */    
