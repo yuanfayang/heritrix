@@ -39,6 +39,7 @@ import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -137,6 +138,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private Vector profileJobs = new Vector();
     // The UIDs of profiles should be NOT be timestamps. A descriptive name is ideal.
+    private String defaultProfile = null;
 
     /**
      * If true the crawler is 'running'. That is the next pending job will start
@@ -165,8 +167,64 @@ public class CrawlJobHandler implements CrawlStatusListener {
         else {
             settingsFile = SimpleHttpServer.getAdminWebappPath() + DEFAULT_ORDER_FILE;
         }
+        loadProfiles();
     }
     
+    /**
+     * Returns the directory where profiles are stored. 
+     * @return the directory where profiles are stored. 
+     */
+    private String getProfilesDirectory(){
+        // TODO: FIX THIS! (Profiles directory)
+        return "src/conf/profiles";
+    }
+    
+    /**
+     * Loads all profiles found on disk.
+     */
+    private void loadProfiles() {
+        File profileDir = new File(getProfilesDirectory());
+        File[] profiles = profileDir.listFiles();
+        for (int i = 0; i < profiles.length; i++) {
+            if (profiles[i].isDirectory()) {
+                // Each directory in the profiles directory should contain the file order.xml.
+                File profile =
+                    new File(profiles[i].getPath() + File.separator + "order.xml");
+                if (profile != null && profile.canRead()) {
+                    // Ok, got the order file for this profile.
+                    try {
+                        // The directory name denotes the profiles UID and name.
+                        XMLSettingsHandler newSettingsHandler = new XMLSettingsHandler(profile);
+                        newSettingsHandler.initialize();
+                        addProfile(new CrawlJob(profiles[i].getName(),newSettingsHandler));
+                    } catch (InvalidAttributeValueException e) {
+                        System.err.println(
+                            "Failed to load profile '"
+                                + profiles[i].getName()
+                                + "'. InvalidAttributeValueException.");
+                    }
+                }
+            }
+        }
+        // TODO: set default profile (read from some properties).
+    }
+    
+    /**
+     * Add a new profile
+     * @param profile The new profile
+     */
+    public void addProfile(CrawlJob profile){
+        profileJobs.add(profile);
+    }
+    
+    /**
+     * Returns all known profiles.
+     * @return a Vector of all known profiles. 
+     */
+    public Vector getProfiles(){
+        return profileJobs;
+    }
+
     /**
      * Submit a job to the handler. Job will be scheduled for crawling. At present 
      * it will not take the job's* priority into consideration.
@@ -174,6 +232,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param job A new job for the handler
      */
     public void addJob(CrawlJob job) {
+        if(job.isProfile()){
+            return;     // Can't crawl profiles. 
+        }
         job.setStatus(CrawlJob.STATUS_PENDING);
         if(job.isNew()){
             // Are adding the new job to the pending queue.
@@ -186,6 +247,32 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // Start crawling
             startNextJob();
         }
+    }
+    
+    /**
+     * Returns the default profile. If no default profile has been set it will
+     * return the first profile that was set/loaded and still exists. If no 
+     * profiles exist it will return null
+     * @return the default profile.
+     */
+    public CrawlJob getDefaultProfile(){
+        if(defaultProfile!=null){
+            for(int i=0 ; i<profileJobs.size() ; i++){
+                CrawlJob item = (CrawlJob)profileJobs.get(i);
+                if(item.getJobName().equals(defaultProfile)){
+                    // Found it.
+                    return item;
+                }
+            }
+        }
+        if(profileJobs.size()>0){
+            return (CrawlJob)profileJobs.get(0);
+        }
+        return null;    
+    }
+    
+    public void setDefaultProfile(CrawlJob profile){
+        defaultProfile = profile.getJobName();
     }
 
     /**
@@ -346,14 +433,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Set the default settings filename. 
-     * @param filename The filename of the new default settings file, including path.
-     */
-    public void setDefaultSettingsFilename(String filename) {
-        settingsFile = filename;
-    }
-
-    /**
      * Returns a unique job ID.
      * <p>
      * No two calls to this method (on the same instance of this class) can ever 
@@ -372,52 +451,108 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Creates a new job. The new job will be returned and also registered as the
      * handler's 'new job'. The new job will be based on the settings provided but
      * created in a new location on disk.
-     * @param profileSettingsHandler The (XML) settings handler of the settings that should
-     *                        form the basis for the new job.
+     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the 
+     *               template for the new job.
      * @param name The name of the new job. 
+     * @param description
+     * @param seeds
      * @return The new crawl job.
      */
-    public CrawlJob newJob(XMLSettingsHandler profileSettingsHandler,String name, String description, String seeds){
-        CrawlerSettings orderfile = profileSettingsHandler.getSettingsObject(null);
- 
-        orderfile.setName(name);
-        orderfile.setDescription(description);
-        
+    public CrawlJob newJob(CrawlJob baseOn, String name, String description, String seeds) throws FatalConfigurationException{
+        if( newJob !=null){
+            //There already is a new job. Discard it.
+            discardNewJob();
+        }
+        String UID = getNextJobUID();
+        newJob = new CrawlJob(UID,name,makeNew(baseOn,name,description,seeds,"jobs"+File.separator+name+"-"+UID),CrawlJob.PRIORITY_AVERAGE);
+        return newJob;
+    }
+    
+    /**
+     * Creates a new profile. The new profile will be returned and also registered as the
+     * handler's 'new job'. The new profile will be based on the settings provided but
+     * created in a new location on disk.
+     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the 
+     *               template for the new profile.
+     * @param name The name of the new profile. 
+     * @param description Description of the new profile
+     * @param seeds The contents of the new profiles' seed file 
+     * @return The new profile.
+     */
+    public CrawlJob newProfile(CrawlJob baseOn, String name, String description, String seeds) throws FatalConfigurationException{
+       CrawlJob newProfile = new CrawlJob(name,makeNew(baseOn,name,description,seeds,getProfilesDirectory()+File.separator+name));
+       addProfile(newProfile);
+       return newProfile;
+    }
+    
+    /**
+     * Creates a new settings handler based on an existing job. Basically all the
+     * settings file for the 'based on' will be copied to the specified directory.
+     * @param baseOn A CrawlJob (with a valid settingshandler) to use as the 
+     *               template for the new profile.
+     * @param name Name for the new settings
+     * @param description Description of the new settings.
+     * @param seeds The contents of the new settings' seed file.
+     * @param path The directory where the new settings should be stored.
+     * @return The new settings handler.
+     * @throws FatalConfigurationException If there are problems with reading the
+     *         'base on' configuration, with writing the new configuration or it's
+     *         seed file.
+     */
+    private XMLSettingsHandler makeNew(CrawlJob baseOn, 
+                                       String name, 
+                                       String description, 
+                                       String seeds, 
+                                       String path) 
+                                       throws FatalConfigurationException{
+        XMLSettingsHandler profileSettingsHandler;
+        XMLSettingsHandler newHandler;
+        CrawlJob tmpJob = null; 
+
+        try {
+            newHandler = new XMLSettingsHandler(baseOn.getSettingsHandler().getOrderFile());
+            newHandler.initialize();
+        } catch (InvalidAttributeValueException e2) {
+            throw new FatalConfigurationException("InvalidAttributeValueException occured while creating new settings handler for new job/profile\n" + e2.getMessage());
+        }
+
         // Get a UID.
         String newUID = getNextJobUID();
         
         // Create filenames etc.
-        File f = new File("jobs"+File.separator+newUID);
-        f.mkdirs();
-        String seedfile = "seeds-"+orderfile.getName()+".txt";
+        File newSettingsDir = new File(path);
+        newSettingsDir.mkdirs();
+        String seedfile = "seeds-"+name+".txt";
         
         try {
-            ((ComplexType)profileSettingsHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
+            ((ComplexType)newHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
         } catch (AttributeNotFoundException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            throw new FatalConfigurationException("AttributeNotFoundException occured while setting seed file for new job/profile\n" + e1.getMessage());
         } catch (InvalidAttributeValueException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            throw new FatalConfigurationException("InvalidAttributeValueException occured while setting seed file for new job/profile\n" + e1.getMessage());
         } catch (MBeanException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            throw new FatalConfigurationException("MBeanException occured while setting seed file for new job/profile\n" + e1.getMessage());
         } catch (ReflectionException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            throw new FatalConfigurationException("ReflectionException occured while setting seed file for new job/profile\n" + e1.getMessage());
         }
-        File newFile = new File("jobs"+File.separator+newUID+File.separator+"job-"+orderfile.getName()+"-1.xml");
-        profileSettingsHandler.writeSettingsObject(orderfile,newFile);
-        XMLSettingsHandler newHandler;
+        
+        File newFile = new File(path+File.separator+"job-"+name+"-1.xml");
+        
         try {
-            newHandler = new XMLSettingsHandler(newFile);
-            newHandler.initialize();
-            newJob = new CrawlJob(getNextJobUID(),name,newHandler,CrawlJob.PRIORITY_AVERAGE);
-        } catch (InvalidAttributeValueException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-            return null;
-        }
+            newHandler.copySettings(newFile,(String)newHandler.getOrder().getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
+        } catch (IOException e3) {
+            throw new FatalConfigurationException("IOException occured while writing new settings files for new job/profile\n" + e3.getMessage());
+        } catch (AttributeNotFoundException e) {
+            throw new FatalConfigurationException("AttributeNotFoundException occured while writing new settings files for new job/profile\n" + e.getMessage());
+        } catch (MBeanException e) {
+            throw new FatalConfigurationException("MBeanException occured while writing new settings files for new job/profile\n" + e.getMessage());
+        } catch (ReflectionException e) {
+            throw new FatalConfigurationException("ReflectionException occured while writing new settings files for new job/profile\n" + e.getMessage());
+        } 
+        CrawlerSettings orderfile = newHandler.getSettingsObject(null);
+ 
+        orderfile.setName(name);
+        orderfile.setDescription(description);
 
         BufferedWriter writer;
         try {
@@ -427,12 +562,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 writer.close();
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new FatalConfigurationException("IOException occured while writing seed file for new job/profile\n" + e.getMessage());
         }
-        
-
-        return newJob;
+        return newHandler;
     }
 
     /**
@@ -440,8 +572,27 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * written to disk.
      */
     public void discardNewJob(){
-        //TODO: Implement
+        deleteDir(new File(newJob.getDirectory()));
     }
+    
+    /** Deletes all files and subdirectories under dir.
+     *  @return true if all deletions were successful. If a deletion fails, the 
+     *          method stops attempting to delete and returns false.
+     */
+    private static boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i=0; i<children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        // The directory is now empty so delete it
+        return dir.delete();
+    }
+
     
     /**
      * Get the handler's 'new job'
