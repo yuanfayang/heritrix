@@ -20,6 +20,7 @@ import java.io.OutputStream;
  *
  */
 public class ReplayInputStream extends InputStream {
+	protected FileInputStream fileStream;
 	protected BufferedInputStream diskStream;
 	protected byte[] buffer;
 	protected long size;
@@ -48,7 +49,8 @@ public class ReplayInputStream extends InputStream {
 		this.size = size;
 		if (size>buffer.length) {
 			this.backingFilename = backingFilename;
-			diskStream = new BufferedInputStream(new FileInputStream(backingFilename),4096);
+			fileStream = new FileInputStream(backingFilename);
+			diskStream = new BufferedInputStream(fileStream,4096);
 		}
 	}
 
@@ -99,6 +101,16 @@ public class ReplayInputStream extends InputStream {
 			os.write(buf,0,c);
 			c = read(buf);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see java.io.InputStream#close()
+	 */
+	public void close() throws IOException {
+		super.close();
+		if(diskStream!=null) {
+			diskStream.close();
+		} 
 	}
 
 }
