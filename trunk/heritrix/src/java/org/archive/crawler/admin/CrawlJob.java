@@ -210,7 +210,8 @@ public class CrawlJob
         this.errorHandler = errorHandler;
         // Open file
         // Read data and set up class variables accordingly...
-        BufferedReader jobReader = new BufferedReader(new FileReader(jobFile),4096);
+        BufferedReader jobReader =
+            new BufferedReader(new FileReader(jobFile),4096);
         // UID
         UID = jobReader.readLine();
         // name
@@ -303,6 +304,9 @@ public class CrawlJob
         }
         jobDir = jobFile.getParentFile();
         // TODO: Load stattrack if needed.
+
+        // TODO: This should be inside a finally block.
+        jobReader.close();
     }
 
     /**
@@ -312,10 +316,11 @@ public class CrawlJob
      */
     private void writeJobFile(){
         if(isProfile==false && isNew==false){
+            FileWriter jobWriter = null;
             try {
-                FileWriter jobWriter =
-                    new FileWriter(jobDir.getAbsolutePath() +
+                jobWriter = new FileWriter(jobDir.getAbsolutePath() +
                         File.separator + "state.job", false);
+                try {
                 jobWriter.write(UID+"\n");
                 jobWriter.write(name+"\n");
                 jobWriter.write(status+"\n");
@@ -328,7 +333,9 @@ public class CrawlJob
                 // Can be multiple lines so we keep it last
                 jobWriter.write(errorMessage==null?"":errorMessage+"\n");
                 jobWriter.flush();
-                jobWriter.close();
+                } finally {
+                	    jobWriter.close();
+                }
             } catch (IOException e) {
                 Heritrix.addAlert(new Alert("IOException saving job " + name,
                         "An IOException occured when saving job " +

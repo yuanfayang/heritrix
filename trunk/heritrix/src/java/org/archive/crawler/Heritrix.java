@@ -467,11 +467,8 @@ public class Heritrix
     {
         InputStream is =
             new FileInputStream(getPropertiesFile());
-        if (is != null)
-        {
-            properties = new Properties();
-            properties.load(is);
-        }
+        properties = new Properties();
+        properties.load(is);
     }
 
     protected static File getPropertiesFile() throws FileNotFoundException {
@@ -513,10 +510,7 @@ public class Heritrix
         // No user-set logging properties established; use defaults
         // from distribution-packaged 'heritrix.properties'
         InputStream is = new FileInputStream(getPropertiesFile());
-        if (is != null)
-        {
-            LogManager.getLogManager().readConfiguration(is);
-        }
+        LogManager.getLogManager().readConfiguration(is);
     }
 
     /**

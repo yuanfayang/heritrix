@@ -46,11 +46,11 @@ import org.archive.util.TextUtils;
 public class Preselector extends Processor implements FetchStatusCodes {
 
     /** whether to reapply crawl scope at this step */
-    public static String ATTR_RECHECK_SCOPE = "recheck-scope";
+    public static final String ATTR_RECHECK_SCOPE = "recheck-scope";
     /** indicator allowing all URIs (of a given host, typically) to be blocked at this step*/
-    public static String ATTR_BLOCK_ALL = "block-all";
+    public static final String ATTR_BLOCK_ALL = "block-all";
     /** indicator allowing all matching URIs to be blocked at this step */
-    public static String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
+    public static final String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
 
     /**
      * @param name

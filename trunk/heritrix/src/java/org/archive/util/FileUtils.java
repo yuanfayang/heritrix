@@ -179,13 +179,16 @@ public class FileUtils
         StringBuffer sb = new StringBuffer((int) file.length());
         String line;
         BufferedReader br = new BufferedReader(new InputStreamReader(
-                new FileInputStream(file)));
-        line = br.readLine();
-        while (line != null) {
-            sb.append(line);
-            line = br.readLine();
+        		new FileInputStream(file)));
+        try {
+        	    line = br.readLine();
+        	    while (line != null) {
+        	    	    sb.append(line);
+        	    	    line = br.readLine();
+        	    }
+        } finally {
+        	    br.close();
         }
-        br.close();
         return sb.toString();
     }
 
