@@ -25,8 +25,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
-import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -238,7 +238,7 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void schedule(CandidateURI caUri) {
-		if(alreadyIncluded.quickContains(caUri)) {
+		if(!caUri.forceFetch() && alreadyIncluded.quickContains(caUri)) {
 			logger.finer("Disregarding alreadyIncluded "+caUri);
 			return;
 		}
@@ -255,7 +255,7 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void scheduleHigh(CandidateURI caUri) {
-		if(alreadyIncluded.quickContains(caUri)) {
+		if(!caUri.forceFetch() && alreadyIncluded.quickContains(caUri)) {
 			logger.finer("Disregarding alreadyIncluded "+caUri);
 			return;
 		}
@@ -282,7 +282,6 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#next(int)
 	 */
 	public synchronized CrawlURI next(int timeout) {
-		
 		long now = System.currentTimeMillis();
 		long waitMax = 0;
 		CrawlURI curi = null;
@@ -293,7 +292,7 @@ public class Frontier
 			if( caUri instanceof CrawlURI ) {
 				curi = (CrawlURI) caUri;
 			} else {
-				if (alreadyIncluded.contains(caUri)) {
+				if (!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
 					// TODO: potentially up-prioritize URI
 					logger.finer("Disregarding alreadyContained "+caUri);
 					noteScheduledDuplicate();
@@ -303,6 +302,15 @@ public class Frontier
 				alreadyIncluded.add(caUri);
 				curi = new CrawlURI(caUri);
 			}
+			
+			// If URI should be forced it has to be done
+			// before everything that might be in a queue.
+			// Since this only aplies to refetching expired robots.txt
+			// and dns lookups it should be ok to be impolite.
+			if (caUri.forceFetch()) {
+				return emitCuri(curi);
+			}
+			
 			if (!enqueueIfNecessary(curi)) {
 				// OK to emit
 				return emitCuri(curi);
@@ -323,7 +331,7 @@ public class Frontier
 			if( caUri instanceof CrawlURI ) {
 				curi = (CrawlURI) caUri;
 			} else {
-				if (alreadyIncluded.contains(caUri)) {
+				if (!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
 					logger.finer("Disregarding alreadyContained "+caUri);
 					noteScheduledDuplicate();
 					continue;
@@ -332,6 +340,15 @@ public class Frontier
 				alreadyIncluded.add(caUri);
 				curi = new CrawlURI(caUri);
 			}
+			
+			// If URI should be forced it has to be done
+			// before everything that might be in a queue.
+			// Since this only aplies to refetching expired robots.txt
+			// and dns lookups it should be ok to be impolite.
+			if (caUri.forceFetch()) {
+				return emitCuri(curi);
+			}
+
 			if (!enqueueIfNecessary(curi)) {
 				// OK to emit
 				return emitCuri(curi);
@@ -673,8 +690,8 @@ public class Frontier
 	 * Defer curi until another curi with the given uuri is
 	 * completed.
 	 * 
-	 * @param curi
-	 * @param uuri
+	 * @param curi the curi to held
+	 * @param uuri the uuri to wait for
 	 */
 	private void addAsHeld(CrawlURI curi, UURI uuri) {
 		List heldsForUuri = (List) heldCuris.get(uuri);

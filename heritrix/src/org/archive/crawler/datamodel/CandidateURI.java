@@ -43,6 +43,9 @@ public class CandidateURI implements Serializable, Lineable {
 	// just a string or null when memory is an object (configurable)
 	Object via;
 	
+	// Should a fetch be forced even though the URI is in the already included map
+	private boolean forceFetch = false;
+	
 	
 	/**
 	 * @param u
@@ -197,5 +200,33 @@ public class CandidateURI implements Serializable, Lineable {
 			return false;
 		}
 		return other.getUURI().getHost().endsWith(domain);
+	}
+	
+	/**
+	 * If this method returns true, this URI should be fetched even though
+	 * it already has been crawled. This also implies
+	 * that this URI will be scheduled for crawl before any other waiting
+	 * URIs for the same host.
+	 * 
+	 * This value is used to refetch any expired robots.txt or dns-lookups.
+	 * 
+	 * @return true if crawling of this URI should be forced
+	 */
+	public boolean forceFetch() {
+		return forceFetch;
+	}
+
+	/**
+	 * Method to signal that this URI should be fetched even though
+	 * it already has been crawled. Setting this to true also implies
+	 * that this URI will be scheduled for crawl before any other waiting
+	 * URIs for the same host.
+	 * 
+	 * This value is used to refetch any expired robots.txt or dns-lookups.
+	 * 
+	 * @param b set to true to enforce the crawling of this URI
+	 */
+	public void setForceFetch(boolean b) {
+		forceFetch = b;
 	}
 }
