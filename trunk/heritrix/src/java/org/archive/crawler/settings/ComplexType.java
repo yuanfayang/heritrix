@@ -25,6 +25,7 @@
 package org.archive.crawler.settings;
 
 import java.util.ArrayList;
+import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -750,29 +751,12 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return getMBeanInfo(globalSettings());
     }
 
-    public MBeanInfo getMBeanInfo(CrawlerSettings settings) {
-        if( settings == null ){
-            // Then use global settings
-            settings = globalSettings();
-        }
-        Stack attributeStack = new Stack();
-        int attributeCount = 0;
-        Context context = new Context(settings, null);
-        DataContainer data = getDataContainerRecursive(context);
-        while (data != null) {
-            attributeStack.push(data.getLocalAttributeInfoList());
-            attributeCount += data.getLocalAttributeInfoList().size();
-            context.settings = data.getSettings().getParent();
-            data = getDataContainerRecursive(context);
-        }
-        MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[attributeCount];
-        int offset = 0;
-        while (!attributeStack.isEmpty()) {
-            List attList = (List) attributeStack.pop();
-            for (int i=0; i<attList.size(); i++) {
-                attributes[offset + i] = (MBeanAttributeInfo) attList.get(i);
-            }
-            offset += attList.size();
+    public MBeanInfo getMBeanInfo(Object context) {
+        MBeanAttributeInfoIterator it = getAttributeInfoIterator(context);
+        MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[it.size()];
+        int index = 0;
+        while(it.hasNext()) {
+            attributes[index++] = (MBeanAttributeInfo) it.next();
         }
 
         MBeanInfo info =
@@ -946,4 +930,136 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             this.uri = uri;
         }
     }
+
+    /** Get an Iterator over all the attributes in this ComplexType.
+    *
+    * @param context the context for which this set of attributes are valid.
+    * @return an iterator over all the attributes in this map.
+    */
+   public Iterator iterator(Object context) {
+       return new AttributeIterator(context);
+   }
+
+   /** Get an Iterator over all the MBeanAttributeInfo in this ComplexType.
+   *
+   * @param context the context for which this set of MBeanAttributeInfo are valid.
+   * @return an iterator over all the MBeanAttributeInfo in this map.
+   */
+   public MBeanAttributeInfoIterator getAttributeInfoIterator(Object context) {
+       return new MBeanAttributeInfoIterator(context);
+   }
+
+   /**
+    * Iterator over all attributes in a ComplexType.
+    * 
+    * @author John Erik Halse
+    */
+   private class AttributeIterator implements Iterator {
+       private Context context;
+       private Stack attributeStack = new Stack();
+       private Iterator currentIterator;
+
+       public AttributeIterator(Object ctxt) {
+           this.context = getSettingsFromObject(ctxt);
+
+           Context c = new Context(context.settings, context.uri);
+           DataContainer data = getDataContainerRecursive(c);
+           while (data != null) {
+               this.attributeStack.push(data.getLocalAttributeInfoList().
+                   iterator());
+               c.settings = data.getSettings().getParent();
+               data = getDataContainerRecursive(c);
+           }
+
+           this.currentIterator = (Iterator) this.attributeStack.pop();
+       }
+
+       public boolean hasNext() {
+           if (this.currentIterator.hasNext()) {
+               return true;
+           } else {
+               try {
+                   this.currentIterator = (Iterator) this.attributeStack.pop();
+               } catch (EmptyStackException e) {
+                   return false;
+               }
+           }
+           return this.currentIterator.hasNext();
+       }
+
+       public Object next() {
+           hasNext();
+           try {
+               MBeanAttributeInfo attInfo = (MBeanAttributeInfo) this.currentIterator.next();
+               Object attr = getAttribute(this.context, attInfo.getName());
+               if (!(attr instanceof Attribute)) {
+                   attr = new Attribute(attInfo.getName(), attr);
+               }
+               return attr;
+           } catch (AttributeNotFoundException e) {
+               // This should never happen
+               e.printStackTrace();
+               return null;
+           }
+       }
+
+       public void remove() {
+           throw new UnsupportedOperationException();
+       }
+   }
+
+   /**
+    * Iterator over all MBeanAttributeInfo for this ComplexType
+    * 
+    * @author John Erik Halse
+    */
+   public class MBeanAttributeInfoIterator implements Iterator {
+       private Context context;
+       private Stack attributeStack = new Stack();
+       private Iterator currentIterator;
+       private int attributeCount = 0;
+       
+       public MBeanAttributeInfoIterator(Object ctxt) {
+           this.context = getSettingsFromObject(ctxt);
+           //Stack attributeStack = new Stack();
+           //
+           DataContainer data = getDataContainerRecursive(context);
+           while (data != null) {
+               attributeStack.push(data.getLocalAttributeInfoList().iterator());
+               attributeCount += data.getLocalAttributeInfoList().size();
+               context.settings = data.getSettings().getParent();
+               data = getDataContainerRecursive(context);
+           }
+
+           this.currentIterator = (Iterator) this.attributeStack.pop();
+       }
+       
+       public boolean hasNext() {
+           if (this.currentIterator.hasNext()) {
+               return true;
+           } else {
+               try {
+                   this.currentIterator = (Iterator) this.attributeStack.pop();
+               } catch (EmptyStackException e) {
+                   return false;
+               }
+           }
+           return this.currentIterator.hasNext();
+       }
+
+       public Object next() {
+           hasNext();
+           MBeanAttributeInfo attInfo = (MBeanAttributeInfo) this.currentIterator.next();
+           return attInfo;
+       }
+
+       public void remove() {
+           throw new UnsupportedOperationException();
+       }
+       
+       public int size() {
+           return attributeCount;
+       }
+   }
+   
 }
