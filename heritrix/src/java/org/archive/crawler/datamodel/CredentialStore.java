@@ -22,12 +22,23 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.credential.CredentialDomain;
+import org.archive.crawler.datamodel.settings.Credential;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.ModuleType;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 
 /**
@@ -43,8 +54,26 @@ import org.archive.crawler.datamodel.settings.Type;
 public class CredentialStore extends ModuleType {
     
     public static final String ATTR_NAME = "credential-store";
-    private static final String ATTR_CREDENTIAL_DOMAINS = "credential-domains";
 
+    /**
+     * Name of the contained credentials map type.
+     */
+    public static final String CREDENTIALS = "credentials";
+    
+    /**
+     * List of possible credential types as a List.
+     * 
+     * This types are inner classes of this credential type so they cannot
+     * be created without their being associated with a credential list.
+     */
+    private static final List credentialTypes;
+    // Initialize the credentialType data member.
+    static {
+        // Array of all known credential types.
+        Class [] tmp = {HtmlFormCredential.class, Rfc2617Credential.class};
+        credentialTypes = Collections.unmodifiableList(Arrays.asList(tmp));
+    }
+    
     /**
      * Constructor.
      */
@@ -53,95 +82,213 @@ public class CredentialStore extends ModuleType {
         super(ATTR_NAME, "Credentials used by heritrix" +
             " authenticating.\nSee http://crawler.archive.org/proposals/auth/" +
             " for background.");
-        Type t = addElementToDefinition(
-            new MapType(ATTR_CREDENTIAL_DOMAINS,
-            "Map of credential domains keyed by domain name.",
-            CredentialDomain.class));
+        
+        Type t = addElementToDefinition(new MapType(CREDENTIALS,
+            "Map of credentials.", Credential.class));
         t.setOverrideable(true);
         t.setExpertSetting(true);
     }
     
     /**
-     * @param curi A crawl uri.  <code>curi</code> sets context for the 
-     * getting of parameters.  If null, we use global context.
-     * @return Returns the credentialDomains.
+     * @return Unmodifable list of credential types.
      */
-    public MapType getCredentialDomains(CrawlURI curi)
-        throws AttributeNotFoundException
-    {
-        return (MapType)getAttribute(ATTR_CREDENTIAL_DOMAINS, curi);
+    public static List getCredentialTypes() {
+        return CredentialStore.credentialTypes;
     }
     
     /**
-     * @param credentialDomainName Name of domain to get.
      * @param curi A crawl uri.  <code>curi</code> sets context for the 
      * getting of parameters.  If null, we use global context.
-     * @return A CredentialDomain.
+     * @return A map of all credentials.
      */
-    public CredentialDomain getCredentialDomain(String credentialDomainName,
-            CrawlURI curi) throws AttributeNotFoundException {
-        return (CredentialDomain)getCredentialDomains(curi).
-            getAttribute(credentialDomainName, curi);
-    }
-    
-    /**
-     * @param credentialDomainName Name of domain to get.
-     * @param curi A crawl uri.  <code>curi</code> sets context for the 
-     * getting of parameters.  If null, we use global context.
-     * @return A CredentialDomain.
-     */
-    public boolean hasCredentialDomain(String credentialDomainName,
-            CrawlURI curi) {
+    protected MapType get(CrawlURI curi)
+        throws AttributeNotFoundException {
         
-        boolean result = true;
-        try
-        {
-            getCredentialDomain(credentialDomainName, curi);
+        return (MapType)getAttribute(CREDENTIALS, curi);
+    }
+    
+    /**
+     * @param curi A crawl uri.  <code>curi</code> sets context for the 
+     * getting of parameters.  If null, we use global context.
+     * @return An interator over all credentials
+     */
+    protected Iterator iterator(CrawlURI curi)
+        throws AttributeNotFoundException {
+        
+        MapType cmt = get(curi);
+        return cmt.iterator(cmt.getSettingsFromObject(curi));
+    }   
+    
+    /**
+     * @param curi A crawl uri.  <code>curi</code> sets context for the 
+     * getting of parameters.  If null, we use global context.
+     * @param name Name to give the manufactured credential.  Should be unique
+     * else the add of the credential to the list of credentials will fail.
+     * @return Returns <code>name</code>'d credential.
+     */
+    public Credential get(CrawlURI curi, String name)
+        throws AttributeNotFoundException, MBeanException, ReflectionException {
+        
+        return (Credential)get(curi).getAttribute(name);
+    }
+    
+    /**
+     * Create and add to the list a credential of the passed <code>type</code>
+     * giving the credential the passed <code>name</code>.
+     * 
+     * @param curi A crawl uri.  <code>curi</code> sets context for the 
+     * getting of parameters.  If null, we use global context.
+     * @param name Name to give the manufactured credential.  Should be unique
+     * else the add of the credential to the list of credentials will fail.
+     * @param type Type of credentials to get.
+     * @return The credential created and added to the list of credentials.
+     */
+    public Credential create(CrawlURI curi, String name, Class type)
+        throws IllegalArgumentException, InstantiationException,
+        IllegalAccessException, InvocationTargetException,
+        InvalidAttributeValueException, AttributeNotFoundException {
+        
+        Constructor [] constructors = type.getConstructors();
+        if (constructors.length != 1) {
+            throw new IllegalArgumentException("More than or less than 1" +
+                " constructor(s) when expected one only: " +
+                constructors.toString());
         }
-        catch (AttributeNotFoundException e)
-        {
-            result = false;
+        Object [] objs = {this, name};
+        final Credential result = (Credential)constructors[0].newInstance(objs);
+        
+        // Now add the just-created credential to the list.
+        get(curi).addElement(getSettingsFromObject(curi), result);
+        
+        return result;
+    }
+    
+    /**
+     * Delete the credential <code>name</code>.
+     * 
+     * @param curi A crawl uri.  <code>curi</code> sets context for the 
+     * getting of parameters.  If null, we use global context.
+     * @param credential Credential to delete.
+     */
+    public void remove(CrawlURI curi, Credential credential)
+        throws IllegalArgumentException, AttributeNotFoundException {
+        
+        remove(curi, credential.getName());
+    }   
+    
+    /**
+     * Delete the credential <code>name</code>.
+     * 
+     * @param curi A crawl uri.  <code>curi</code> sets context for the 
+     * getting of parameters.  If null, we use global context.
+     * @param name Name of credential to delete.
+     */
+    public void remove(CrawlURI curi, String name)
+        throws IllegalArgumentException, AttributeNotFoundException {
+        
+        get(curi).removeElement(getSettingsFromObject(curi), name);
+    }
+    
+    /**
+     * Return sublist made up of all credentials of the passed
+     * <code>type</code>.
+     * 
+     * @param curi A crawl uri.  <code>curi</code> sets context for the 
+     * getting of parameters.  If null, we use global context.
+     * @param type Type of the list to return.  Type is some superclass of
+     * credentials.
+     * @return Unmodifable sublist of all elements of passed type.
+     */
+    public List sublist(CrawlURI curi, Class type)
+        throws AttributeNotFoundException {
+        
+        List result = new ArrayList();
+        for (Iterator i = iterator(curi); i.hasNext();) {
+            Credential c = (Credential)i.next();
+            if (!type.isInstance(c)) {
+                continue;
+            }
+            result.add(c);
         }
         return result;
     }
     
     /**
-     * Creates and adds to the list of credential domains a new
-     * CredentialDomain of the passed name.
+     * A Basic/Digest auth RFC2617 credential.
      * 
-     * @param credentialDomainName Name of domain to create.
-     * @param curi A crawl uri.  <code>curi</code> sets context for the 
-     * getting of parameters.  If null, we use global context.
-     * @return Created CredentialDomain.
+     * @author stack
+     * @version $Revision$, $Date$
      */
-    public synchronized CredentialDomain createCredentialDomain(
-            String credentialDomainName, CrawlURI curi)
-        throws AttributeNotFoundException, InvalidAttributeValueException {
-       
-        MapType domains = getCredentialDomains(curi);
-        CredentialDomain anonymousSubClass =
-            new CredentialDomain(credentialDomainName) {
-                // Anonymous subsclass done so class can't be instantiated
-                // directly -- you have to go via this create method.
-            };
-        return (CredentialDomain)domains.addElement(getSettingsFromObject(curi),
-            anonymousSubClass);
+    private class Rfc2617Credential extends Credential {
+
+        public Rfc2617Credential(String name)
+        {
+            super(name, "Basic/Digest Auth type credential.");
+            
+            Type t = addElementToDefinition(new SimpleType("realm",
+                "Basic/Digest Auth realm.", "Realm"));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+        
+            t = addElementToDefinition(new SimpleType("preempt",
+                "Preemptively offer credential in advance of 401 challenge.",
+                Boolean.FALSE));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+            
+            t = addElementToDefinition(new SimpleType("login", "Login.",
+                "login"));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+            
+            t = addElementToDefinition(new SimpleType("password", "Password.",
+                "password"));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+        }
     }
     
     /**
-     * Delete the named CredentialDomain for the list of credential domains.
-     *
-     * @param credentialDomainName Name of domain to delete.
-     * @param curi A crawl uri.  <code>curi</code> sets context for the 
-     * getting of parameters.  If null, we use global context.
-     * @return Deleted CredentialDomain.
+     * Credential that holds all needed to do a GET/POST to a HTML form.
+     * 
+     * @author stack
+     * @version $Revision$, $Date$
      */
-    public synchronized CredentialDomain deleteCredentialDomain(
-        String credentialDomainName, CrawlURI curi)
-        throws AttributeNotFoundException {
+    private class HtmlFormCredential extends Credential {
         
-        MapType domains = getCredentialDomains(curi);
-        return (CredentialDomain)domains.removeElement(
-            getSettingsFromObject(curi), credentialDomainName);
+        public HtmlFormCredential(String name)
+        {
+            super(name, "Credential that has all necessary" +
+                " for running a POST/GET to an HTML login form.");
+            
+            Type t = addElementToDefinition(new SimpleType("url-pattern",
+                    "Pattern that defines the realm this login covers.", ""));
+                t.setOverrideable(true);
+                t.setExpertSetting(true);
+            
+            t = addElementToDefinition(new SimpleType("login-uri",
+                "URI of page that contains the HTML login form we're to apply" +
+                " these credentials too.", ""));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+
+            final String [] METHODS = {"POST", "GET"};
+            t = addElementToDefinition(new SimpleType("http-method",
+                "GET or POST", METHODS[0], METHODS));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+            
+            t = addElementToDefinition(new MapType("form-items", "Form items.",
+                String.class));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);       
+            
+            t = addElementToDefinition(new SimpleType("cookie-name",
+                "Name of cookie that pertains to this authentication.\n" +
+                "This field will be logged before, if present, and after" +
+                " authentication attempt.  To aid debugging only.", ""));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+        }
     }
 }
