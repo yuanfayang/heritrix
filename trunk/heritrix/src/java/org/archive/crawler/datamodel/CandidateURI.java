@@ -53,7 +53,6 @@ public class CandidateURI implements Serializable, Lineable {
     boolean isSeed = false;
 
     String schedulingDirective = NORMAL;
-    boolean inclusionTested = false;
 
     /** String of letters indicating how this URI was reached from a seed */
     // P precondition
@@ -255,18 +254,7 @@ public class CandidateURI implements Serializable, Lineable {
     public void setForceFetch(boolean b) {
         schedulingDirective = FORCE_REVISIT;
     }
-    /**
-     * @return Returns the inclusionTested.
-     */
-    public boolean isInclusionTested() {
-        return inclusionTested;
-    }
-    /**
-     * @param inclusionTested The inclusionTested to set.
-     */
-    public void setInclusionTested(boolean inclusionTested) {
-        this.inclusionTested = inclusionTested;
-    }
+
     /**
      * @return Returns the schedulingDirective.
      */
