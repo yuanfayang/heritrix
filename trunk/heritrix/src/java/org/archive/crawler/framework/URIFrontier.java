@@ -44,12 +44,6 @@ public interface URIFrontier {
             IOException;
 
     /**
-     * Schedules a new URI for crawling.
-     * @param caUri URI to schedule
-     */
-    void schedule(CandidateURI caUri);
-
-    /**
      * Get the next URI that should be crawled.
      * @param timeout how long the calling thread is willing to wait for the
      *                next URI to become availible.
@@ -74,14 +68,6 @@ public interface URIFrontier {
     boolean isEmpty();
 
     /**
-     * Schedule at top priority (for example, before any subsequently
-     * finished() items that must be retried)
-     * 
-     * @param caUri URI to be scheduled.
-     */
-    void scheduleHigh(CandidateURI caUri);
-
-    /**
      * Get the number of successfully downloaded documents.
      * 
      * @return the number of successfully downloaded documents
@@ -102,6 +88,7 @@ public interface URIFrontier {
      * @return the number of documents that were disregarded
      */
     public long disregardedFetchCount();
+    
 
     /**
      * The number of URIs that have been scheduled <i>and</i> have passed the 
@@ -121,18 +108,18 @@ public interface URIFrontier {
     long pendingUriCount();
 
     /**
-     * Put caUri into a queue of items to be scheduled later (that is, avoid
-     * synchronization overhead)
+     * Put caURI to appropraite pending queue.
      * 
-     * @param caUri URI to be scheduled
+     * @param caURI URI to be scheduled.
      */
-    void batchSchedule(CandidateURI caUri);
-
+    void scheduleURI (CandidateURI caURI);
+    
     /**
-     * Same as <code>batchSchedule</code> but for high priority.
-     * @param caUri URI to be scheduled
+     * Put caURI into appropriate queue of items to be scheduled
+     * later (that is, avoid synchronization overhead)
+     * @param caURI URI to be scheduled.
      */
-    void batchScheduleHigh(CandidateURI caUri);
+    void batchScheduleURI(CandidateURI caURI);
 
     /**
      * Force all batch-scheduled candidates to be actually scheduled.
