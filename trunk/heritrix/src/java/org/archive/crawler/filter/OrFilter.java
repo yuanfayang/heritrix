@@ -59,7 +59,7 @@ public class OrFilter extends Filter {
         super(
             name,
             "OR Filter. \nA filter that serves as a placeholder for other" +
-            " filters who's functionality should be logically OR'ed together.");
+            " filters whose functionality should be logically OR'ed together.");
 
         addElementToDefinition(
             new SimpleType(
