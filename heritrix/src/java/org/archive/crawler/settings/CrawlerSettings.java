@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.refinements.Refinement;
 
@@ -314,14 +315,11 @@ public class CrawlerSettings {
     public CrawlerSettings getParent(UURI uri) {
         if (isRefinement()) {
             return settingsHandler.getSettingsForHost(scope);
-        } else {
-            if (scope == null || scope.equals("")) {
-                return null;
-            } else {
-                return settingsHandler.getSettings(settingsHandler
-                        .getParentScope(scope), uri);
-            }
         }
+        return (scope == null || scope.equals(""))?
+            null: 
+            settingsHandler.getSettings(settingsHandler.getParentScope(scope),
+                uri);
     }
 
     /** Get the SettingHandler this CrawlerSettings object belongs to.

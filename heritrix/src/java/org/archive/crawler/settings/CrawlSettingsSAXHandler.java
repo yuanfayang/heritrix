@@ -38,6 +38,7 @@ import javax.management.InvalidAttributeValueException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.settings.Constraint.FailedCheck;
+import org.archive.crawler.settings.refinements.ContentTypeRegExprCriteria;
 import org.archive.crawler.settings.refinements.PortnumberCriteria;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.crawler.settings.refinements.RegularExpressionCriteria;
@@ -140,6 +141,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                 new PortnumberHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_URIMATCHES,
                 new URIMatcherHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_CONTENTMATCHES,
+                new ContentTypeMatcherHandler());
     }
 
     /*
@@ -462,6 +465,17 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
         public void endElement(String name) throws SAXException {
             if (handlerStack.peek() instanceof LimitsHandler) {
                 ((Refinement) stack.peek()).addCriteria(new RegularExpressionCriteria(value));
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class ContentTypeMatcherHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof LimitsHandler) {
+                ((Refinement) stack.peek()).addCriteria(new ContentTypeRegExprCriteria(value));
             } else {
                 illegalElementError(name);
             }

@@ -24,6 +24,7 @@
 package org.archive.crawler.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +39,8 @@ import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
 import org.archive.util.HttpRecorder;
+
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -145,12 +148,21 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * toString.
      */
     private String cachedCrawlURIString = null;
+    
+    /**
+     * Array to hold keys of alist members that persist across URI processings.
+     * Any key mentioned in this list will not be cleared out at the end
+     * of a pass down the processing chain.
+     */
+    private static final List alistPersistentMember = new CopyOnWriteArrayList(
+            Arrays.asList(new String [] {A_CREDENTIAL_AVATARS_KEY}));
 
     /**
      * A digest (hash, usually SHA1) of retrieved content-body. 
      * 
      */
     private byte[] contentDigest = null;
+
 
     /**
      * Create a new instance of CrawlURI from a {@link UURI}.
@@ -394,7 +406,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @param lastProcessorChain Last processor chain reference.  This chain is
      * where this <code>CrawlURI</code> goes next.
-     * @param stringOrUURI Object to set a prerequisite.
+     * @param preq Object to set a prerequisite.
      * @throws URIException
      */
     public void markPrerequisite(String preq,
@@ -412,7 +424,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * A prerequisite is a URI that must be crawled before this URI can be
      * crawled.
      *
-     * @param stringOrUURI Either a string or a URI representation of a URI.
+     * @param link Link to set as prereq.
      */
     protected void setPrerequisiteUri(Link link) {
         putObject(A_PREREQUISITE_URI, link);
@@ -770,10 +782,34 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.setPrerequisite(false);
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
-        // Let current get method to be GC'd.
-        remove(A_HTTP_TRANSACTION);
-        // Discard any ideas of prereqs -- may no longer be valid.
-        remove(A_PREREQUISITE_URI);
+        // Clean the alist of all but registered permanent members.
+        for (Iterator i = keys(); i != null && i.hasNext();) {
+            String key = (String)i.next();
+            if(isPersistentAlistMember(key)) {
+                continue;
+            }
+            i.remove();
+        }
+    }
+    
+    protected boolean isPersistentAlistMember(String key) {
+        boolean result = false;
+        if (key == null || key.length() <= 0) {
+            return result;
+        }
+        if (alistPersistentMember != null && alistPersistentMember.size() > 0) {
+            for (Iterator i = alistPersistentMember.iterator(); i.hasNext();) {
+                String permanent = (String)i.next();
+                if (permanent == null || permanent.length() <= 0) {
+                    continue;
+                }
+                if (permanent.equals(key)) {
+                    result = true;
+                    break;
+                }
+            }
+        }       
+        return result;
     }
 
     /**
@@ -1037,6 +1073,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *            String to use to create Link
      * @param context
      *            CharSequence context to use
+     * @param hopType
+     * @return Link.
      * @throws URIException
      *             if Link UURI cannot be constructed
      */
@@ -1054,6 +1092,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *            String to use to create Link
      * @param context
      *            CharSequence context to use
+     * @param hopType
      * @throws URIException
      *             if Link UURI cannot be constructed
      */
@@ -1069,6 +1108,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * 
      * @param url
      * @param context
+     * @param hopType
      * @throws URIException
      */
     public void createAndAddLinkRelativeToBase(String url,
@@ -1084,6 +1124,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * 
      * @param url
      * @param context
+     * @param hopType
      * @throws URIException
      */
     public void createAndAddLinkRelativeToVia(String url,
@@ -1109,10 +1150,27 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @return UURI base URI previously set 
      */  
-    public UURI getBaseURI() throws URIException {
+    public UURI getBaseURI() {
         if (!containsKey(A_HTML_BASE)) {
             return getUURI();
         }
         return (UURI)getObject(A_HTML_BASE);
+    }
+    
+    /**
+     * Add the key of alist items you want to persist across
+     * processings.
+     * @param key Key to add.
+     */
+    public static void addAlistPersistentMember(Object key) {
+        alistPersistentMember.add(key);
+    }
+    
+    /**
+     * @param key Key to remove.
+     * @return True if list contained the element.
+     */
+    public static boolean removeAlistPersistentMember(Object key) {
+        return alistPersistentMember.remove(key);
     }
 }

@@ -24,7 +24,7 @@
  */
 package org.archive.crawler.settings.refinements;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CrawlURI;
 
 
 /**
@@ -56,12 +56,12 @@ public class PortnumberCriteria implements Criteria {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.refinements.Criteria#isWithinRefinementBounds(org.archive.crawler.datamodel.UURI, int)
      */
-    public boolean isWithinRefinementBounds(UURI uri) {
-        int port = uri.getPort();
+    public boolean isWithinRefinementBounds(CrawlURI uri) {
+        int port = uri.getUURI().getPort();
         if (port < 0) {
-            if (uri.getScheme().equals("http")) {
+            if (uri.getUURI().getScheme().equals("http")) {
                 port = 80;
-            } else if (uri.getScheme().equals("https")) {
+            } else if (uri.getUURI().getScheme().equals("https")) {
                 port = 443;
             }
         }

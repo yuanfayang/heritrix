@@ -24,6 +24,7 @@
 package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
+import java.util.Iterator;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.extractor.Link;
@@ -462,6 +463,10 @@ implements Serializable, Lineable {
     
     public void remove(String key) {
         getAList().remove(key);
+    }
+    
+    public Iterator keys() {
+        return getAList().getKeys();
     }
     
     /**
