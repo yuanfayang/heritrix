@@ -186,6 +186,11 @@ implements CrawlURIDispositionListener {
                     "hostsDistribution", String.class, LongWrapper.class);
             this.hostsBytes = BigMapFactory.getBigMap(c.getSettingsHandler(),
                     "hostsBytes", String.class, LongWrapper.class);
+            // This map is different from the above in that it doesn't
+            // increment a value per host.  Because of this, updates
+            // don't go via the incrementMapCount method which takes
+            // care to synchronize #puts.  This means any put into the
+            // below HashMap needs to be in a synchronize block.
             this.hostsLastFinished =
                 BigMapFactory.getBigMap(c.getSettingsHandler(),
                     "hostsLastFinished", String.class, Long.class);
@@ -196,7 +201,7 @@ implements CrawlURIDispositionListener {
         controller.addCrawlURIDispositionListener(this);
     }
     
-    public void cleanup() {
+    protected void cleanup() {
         if (this.hostsBytes != null) {
             this.hostsBytes.clear();
             this.hostsBytes = null;
@@ -381,7 +386,7 @@ implements CrawlURIDispositionListener {
         }
 
         if (map.containsKey(key)) {
-            ((LongWrapper) map.get(key)).longValue += increment;
+            ((LongWrapper)map.get(key)).longValue += increment;
         } else {
             // if we didn't find this key add it
             synchronized (map) {
@@ -682,20 +687,22 @@ implements CrawlURIDispositionListener {
         incrementMapCount(mimeTypeDistribution, mime);
         incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
 
-        // Save hosts
-        if(curi.getFetchStatus() == 1){
-            // DNS Lookup, handle it differently.
-            incrementMapCount(hostsDistribution, "dns:");
-            incrementMapCount(hostsBytes,"dns:",curi.getContentSize());
-            hostsLastFinished.put("dns:", new Long(System.currentTimeMillis()));
-        } else {
-            String hostname = this.controller.getServerCache().
-                getHostFor(curi).getHostName();
-        	incrementMapCount(hostsDistribution, hostname);
-            incrementMapCount(hostsBytes, hostname, curi.getContentSize());
-            hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
+        // Save hosts stats.
+        saveHostStats((curi.getFetchStatus() == 1)? "dns:":
+                this.controller.getServerCache().
+                getHostFor(curi).getHostName(),
+                curi.getContentSize());
+    }
+    
+    protected void saveHostStats(String hostname, long size) {
+        incrementMapCount(hostsDistribution, hostname);
+        incrementMapCount(hostsBytes, hostname, size);
+        synchronized(this.hostsLastFinished) {
+            hostsLastFinished.put(hostname,
+                new Long(System.currentTimeMillis()));
         }
     }
+    
 
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURINeedRetry(org.archive.crawler.datamodel.CrawlURI)
@@ -808,6 +815,7 @@ implements CrawlURIDispositionListener {
         CrawlController c = this.controller;
         super.crawlEnded(sExitMessage);
         report(c, sExitMessage);
+        cleanup();
         logger.info("Leaving crawlEnded");
     }
     
