@@ -45,16 +45,21 @@ import org.archive.util.ArchiveUtils;
  */
 public abstract class SettingsHandler {
     /** Registry of CrawlerModules in order file indexed on module name */
-    private final Map moduleRegistry = new HashMap();
+    //private final Map moduleRegistry = new HashMap();
     /** Registry of ComplexTypes in order file indexed on absolute name */
-    private final Map complexTypesRegistry = new HashMap();
+    //private final Map complexTypesRegistry = new HashMap();
+
     /** Settings object referencing order file */
     private final CrawlerSettings globalSettings =
         new CrawlerSettings(this, null, null);
+
     /** Cached CrawlerSettings objects */
     private final Map settingsCache = new WeakHashMap();
+    
+    /** Reference to the order module */
     private final CrawlOrder order;
 
+    /** Datatypes supported by the settings framwork */
     final static String INTEGER = "integer";
     final static String LONG = "long";
     final static String FLOAT = "float";
@@ -140,15 +145,16 @@ public abstract class SettingsHandler {
     /** Get a module by name.
      * 
      * All modules in the order should have unique names. This method makes it
-     * possible to get the modules of the order by this name.
+     * possible to get the modules of the order by its name.
      *  
      * @param name the modules name.
      * @return the module the name references.
      */
     public CrawlerModule getModule(String name) {
-        return (CrawlerModule) moduleRegistry.get(name);
+        return (CrawlerModule) globalSettings.getModule(name);
     }
 
+    /*
     protected void addToModuleRegistry(CrawlerModule module) {
         moduleRegistry.put(module.getName(), module);
     }
@@ -160,6 +166,7 @@ public abstract class SettingsHandler {
     protected ComplexType getComplexTypeFromRegistry(String absoluteName) {
         return (ComplexType) complexTypesRegistry.get(absoluteName);
     }
+    */
 
     protected static String getTypeName(String className) {
         return (String) class2name.get(className);

@@ -44,8 +44,22 @@ import java.util.Map;
  * @author John Erik Halse
  */
 public class CrawlerSettings {
+    /** Registry of DataContainers for ComplexTypes in this settings object
+     *  indexed on absolute name */
     private final Map localComplexTypes = new HashMap();
-    private final Map modules = new HashMap();
+
+    /** Registry of top level CrawlerModules in this settings object indexed on
+     * module name. These are modules that doesn't have parents in this
+     * settings object
+     */
+    private final Map topLevelModules = new HashMap();
+
+    /** Registry of all CrawlerModules in this settings object indexed on
+     * module name.
+     */
+    private final Map localModules = new HashMap();
+
+    /** Reference to the settings handler this settings object belongs to */
     private final SettingsHandler handler;
 
     /** Scope for this collection of settings (hostname) */
@@ -121,24 +135,27 @@ public class CrawlerSettings {
         name = string;
     }
 
-    protected void addModule(CrawlerModule module) {
-        if (modules.containsKey(module.getName())) {
+    protected void addTopLevelModule(CrawlerModule module) {
+        if (topLevelModules.containsKey(module.getName())) {
             throw new IllegalArgumentException(
                 "Duplicate module name: " + module.getName());
         } else {
-            modules.put(module.getName(), module);
+            topLevelModules.put(module.getName(), module);
         }
     }
 
     protected DataContainer addComplexType(ComplexType type) {
         DataContainer data = new DataContainer(type);
         localComplexTypes.put(type.getAbsoluteName(), data);
+        if (type instanceof CrawlerModule) {
+            localModules.put(type.getName(), type);
+        }
         return data;
     }
 
-    protected DataContainer getData(String absoluteName) {
+    protected DataContainer getData(ComplexType complex) {
         DataContainer data =
-            (DataContainer) localComplexTypes.get(absoluteName);
+            (DataContainer) localComplexTypes.get(complex.getAbsoluteName());
         if (data != null) {
             return data;
         } else {
@@ -146,12 +163,16 @@ public class CrawlerSettings {
         }
     }
 
-    protected CrawlerModule getModule(String name) {
-        return (CrawlerModule) modules.get(name);
+    protected CrawlerModule getTopLevelModule(String name) {
+        return (CrawlerModule) topLevelModules.get(name);
     }
 
-    protected Iterator modules() {
-        return modules.values().iterator();
+    public CrawlerModule getModule(String name) {
+        return (CrawlerModule) localModules.get(name);
+    }
+
+    protected Iterator topLevelModules() {
+        return topLevelModules.values().iterator();
     }
 
     /** Get the parent of this CrawlerSettings object.

@@ -94,10 +94,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         this.settingsHandler = settingsHandler;
         this.parent = null;
         this.absoluteName = getName();
-        settingsHandler.getSettingsObject(null).addModule((CrawlerModule) this);
-        settingsHandler.addToComplexTypeRegistry(this);
+        settingsHandler.getSettingsObject(null).addTopLevelModule((CrawlerModule) this);
+        //settingsHandler.addToComplexTypeRegistry(this);
         settingsHandler.getSettingsObject(null).addComplexType(this);
-        settingsHandler.addToModuleRegistry((CrawlerModule) this);
+        //settingsHandler.addToModuleRegistry((CrawlerModule) this);
         initializeComplexType(globalSettings());
     }
 
@@ -131,7 +131,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
         setupVaiables(object);
-
+/*
         if (settings.getScope() == null) {
             // We're working with the global order file
             getSettingsHandler().addToComplexTypeRegistry(object);
@@ -140,7 +140,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
                     (CrawlerModule) object);
             }
         }
-
+*/
         settings.addComplexType(object);
         //object.initializeComplexType(settings);
         if (!object.initialized) {
@@ -270,7 +270,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (settings == null) {
             settings = globalSettings();
         }
-        DataContainer data = settings.getData(getAbsoluteName());
+        DataContainer data = settings.getData(this);
         if (data == null) {
             //return null;
             throw new AttributeNotFoundException(name);
@@ -338,21 +338,20 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private DataContainer getDataContainer(CrawlerSettings settings)
         throws InvalidAttributeValueException {
         // Get this ComplexType's data container for the submitted settings
-        DataContainer data = settings.getData(getAbsoluteName());
+        DataContainer data = settings.getData(this);
 
         // If there isn't a container, create one
         if (data == null) {
             ComplexType parent = getParent();
             if (parent == null) {
-                settings.addModule((CrawlerModule) this);
+                settings.addTopLevelModule((CrawlerModule) this);
             } else {
                 DataContainer parentData =
-                    settings.getData(parent.getAbsoluteName());
+                    settings.getData(parent);
                 if (parentData == null) {
-                    settings.addModule((CrawlerModule) this);
+                    settings.addTopLevelModule((CrawlerModule) this);
                 } else {
-                    globalSettings().getData(
-                        parent.getAbsoluteName()).copyAttributeInfo(
+                    globalSettings().getData(parent).copyAttributeInfo(
                         getName(),
                         parentData);
                 }
@@ -402,14 +401,14 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     public MBeanInfo getMBeanInfo(CrawlerSettings settings) {
-        return settings.getData(getAbsoluteName()).getMBeanInfo();
+        return settings.getData(this).getMBeanInfo();
     }
 
     public MBeanAttributeInfo getAttributeInfo(
         CrawlerSettings settings,
         String name) {
         try {
-            return settings.getData(getAbsoluteName()).getAttributeInfo(name);
+            return settings.getData(this).getAttributeInfo(name);
         } catch (NullPointerException e) {
             return null;
         }

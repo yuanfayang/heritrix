@@ -64,15 +64,42 @@ public class MapType extends ComplexType {
             throw new IllegalArgumentException("Nested maps are not allowed.");
         }
     }
+    
+    public Type removeElement(CrawlerSettings settings, String name) {
+        settings = settings == null ? globalSettings() : settings;
+        return null;
+    }
+    
+    /** Move an attribute up one place in the list. 
+     * 
+     * @param name name of attribute to move.
+     * @return true if attribute was moved, false if attribute was already
+     *              at the top.
+     */
+    public boolean moveElementUp(CrawlerSettings settings, String name) {
+        settings = settings == null ? globalSettings() : settings;
+        return settings.getData(this).moveElementUp(name);
+    }
+
+    /** Move an attribute down one place in the list. 
+     * 
+     * @param name name of attribute to move.
+     * @return true if attribute was moved, false if attribute was already
+     *              at bottom.
+     */
+    public boolean moveElementDown(CrawlerSettings settings, String name) {
+        settings = settings == null ? globalSettings() : settings;
+        return settings.getData(this).moveElementDown(name);
+    }
 
     private class It implements Iterator {
         CrawlerSettings settings;
         Iterator atts;
 
-        public It(CrawlerSettings settings) {
+        public It(MapType map, CrawlerSettings settings) {
             this.settings = settings;
             this.atts =
-                settings.getData(getAbsoluteName()).attributeInfoIterator();
+                settings.getData(map).attributeInfoIterator();
         }
 
         public boolean hasNext() {
@@ -108,7 +135,7 @@ public class MapType extends ComplexType {
         } catch (NullPointerException e) {
             settings = globalSettings();
         }
-        return new It(settings);
+        return new It(this, settings);
     }
 
     /** Returns true if this map is empty.
@@ -123,7 +150,7 @@ public class MapType extends ComplexType {
         } catch (NullPointerException e) {
             settings = globalSettings();
         }
-        return !settings.getData(getAbsoluteName()).hasAttributes();
+        return !settings.getData(this).hasAttributes();
     }
 
     /** Get the number of elements in this map.
@@ -138,6 +165,6 @@ public class MapType extends ComplexType {
         } catch (NullPointerException e) {
             settings = globalSettings();
         }
-        return settings.getData(getAbsoluteName()).size();
+        return settings.getData(this).size();
     }
 }
