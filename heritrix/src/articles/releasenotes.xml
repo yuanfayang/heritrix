@@ -14,7 +14,7 @@
 
   <sect1 id="1_4_0">
     <title>Release 1.4.0 - NOT YET RELEASED</title>
-    <sect2 id="1_2_0_limitations">
+    <sect2 id="1_4_0_limitations">
       <title>Known Limitations/Issues</title>
       <sect3 id="glibc2_3_2"><title>Glibc 2.3.2 and NPTL</title>
         <para>NPTL is the 'new' linux threading model.  It replaces
