@@ -608,7 +608,16 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                     }
                 }
             } else {
-                ((ListType) container).add(value);
+                if (container == null) {
+                	// We can get here if an override is referring to a global
+                    // filter since removed.  Log it as severe; operator will
+                    // probably want to know of all overrides with references
+                    // to a global filter since removed.
+                    logger.severe("Empty container (Was a referenced parent" +
+                        " filter removed?)");
+                } else {
+                	((ListType) container).add(value);
+                }
             }
         }
     }
