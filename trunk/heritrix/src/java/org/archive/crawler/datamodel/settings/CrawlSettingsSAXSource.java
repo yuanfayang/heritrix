@@ -228,11 +228,13 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             XMLSettingsHandler.XML_ELEMENT_META,
             XMLSettingsHandler.XML_ELEMENT_META);
 
+        // Write the modules
         Iterator modules = settings.topLevelModules();
         while (modules.hasNext()) {
             ComplexType complexType = (ComplexType) modules.next();
             parseComplexType(complexType, 1 + indentAmount);
         }
+        
         handler.ignorableWhitespace(indentArray, 0, 1);
         handler.endElement(nsu, rootElement, rootElement);
         handler.ignorableWhitespace(indentArray, 0, 1);
@@ -246,110 +248,86 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
      * @throws SAXException is thrown if an error occurs.
      */
     private void parseComplexType(ComplexType complexType, int indent)
-        throws SAXException {
+            throws SAXException {
         if (complexType.isTransient()) {
             return;
         }
-
         MBeanInfo mbeanInfo = complexType.getMBeanInfo(settings);
         String objectElement = resolveElementName(complexType);
-
         AttributesImpl atts = new AttributesImpl();
-        atts.addAttribute(
-            nsu,
-            XMLSettingsHandler.XML_ATTRIBUTE_NAME,
-            XMLSettingsHandler.XML_ATTRIBUTE_NAME,
-            nsu,
-            complexType.getName());
-
+        atts.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_NAME,
+                XMLSettingsHandler.XML_ATTRIBUTE_NAME, nsu, complexType
+                        .getName());
         if (objectElement == XMLSettingsHandler.XML_ELEMENT_NEW_OBJECT) {
             // Only 'newObject' elements have a class attribute
-            atts.addAttribute(
-                nsu,
-                XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
-                XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
-                nsu,
-                mbeanInfo.getClassName());
+            atts.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_CLASS,
+                    XMLSettingsHandler.XML_ATTRIBUTE_CLASS, nsu, mbeanInfo
+                            .getClassName());
         }
-
         if (complexType.getParent() == null) {
             atts = new AttributesImpl();
         }
-
         handler.ignorableWhitespace(indentArray, 0, indent);
         handler.startElement(nsu, objectElement, objectElement, atts);
-
         MBeanAttributeInfo attsInfo[] = mbeanInfo.getAttributes();
         for (int i = 0; i < attsInfo.length; i++) {
             ModuleAttributeInfo attribute = (ModuleAttributeInfo) attsInfo[i];
-            Object value;
-            try {
-                value = complexType.getLocalAttribute(
-                    settings, attribute.getName());
-            } catch (AttributeNotFoundException e) {
-                throw new SAXException(e);
-            }
-            if (orderFile || value != null) {
-                // Write only overridden values unless this is the order file
-                if (attribute.isComplexType()) {
-                    // Call method recursively for complex types
-                    parseComplexType(
-                        (ComplexType) value, //attribute.getComplexType(),
-                        indent + indentAmount);
-                } else {
-                    // Write element
-                    String elementName =
-                        SettingsHandler.getTypeName(attribute.getType());
-                    atts.clear();
-                    atts.addAttribute(
-                        nsu,
-                        XMLSettingsHandler.XML_ATTRIBUTE_NAME,
-                        XMLSettingsHandler.XML_ATTRIBUTE_NAME,
-                        nsu,
-                        attribute.getName());
-                    if (value == null) {
-                        try {
-                            value =
-                                complexType.getAttribute(attribute.getName());
-                        } catch (Exception e) {
-                            throw new SAXException(
-                                "Internal error in settings subsystem",
-                                e);
-                        }
-                    }
-                    if (value != null) {
-                        handler.ignorableWhitespace(
-                            indentArray,
-                            0,
-                            indent + indentAmount);
-                        handler.startElement(
-                            nsu,
-                            elementName,
-                            elementName,
-                            atts);
-                        if (value instanceof ListType) {
-                            parseListData(value, indent + indentAmount);
-                            handler.ignorableWhitespace(
-                                indentArray,
-                                0,
-                                indent + indentAmount);
-                        } else {
-                            char valueArray[] = value.toString().toCharArray();
-                            handler.characters(
-                                valueArray,
-                                0,
-                                valueArray.length);
-                        }
-                        handler.endElement(nsu, elementName, elementName);
-                    }
-                }
+            if (!attribute.isTransient()) {
+                parseAttribute(complexType, attribute, indent);
             }
         }
-
         handler.ignorableWhitespace(indentArray, 0, indent);
         handler.endElement(nsu, objectElement, objectElement);
     }
-
+    
+    private void parseAttribute(ComplexType complexType,
+            ModuleAttributeInfo attribute, int indent) throws SAXException {
+        Object value;
+        try {
+            value = complexType
+                    .getLocalAttribute(settings, attribute.getName());
+        } catch (AttributeNotFoundException e) {
+            throw new SAXException(e);
+        }
+        if (orderFile || value != null) {
+            // Write only overridden values unless this is the order file
+            if (attribute.isComplexType()) {
+                // Call method recursively for complex types
+                parseComplexType((ComplexType) value, indent + indentAmount);
+            } else {
+                // Write element
+                String elementName = SettingsHandler.getTypeName(attribute
+                        .getType());
+                AttributesImpl atts = new AttributesImpl();
+                atts.addAttribute(nsu, XMLSettingsHandler.XML_ATTRIBUTE_NAME,
+                        XMLSettingsHandler.XML_ATTRIBUTE_NAME, nsu, attribute
+                                .getName());
+                if (value == null) {
+                    try {
+                        value = complexType.getAttribute(attribute.getName());
+                    } catch (Exception e) {
+                        throw new SAXException(
+                                "Internal error in settings subsystem", e);
+                    }
+                }
+                if (value != null) {
+                    handler.ignorableWhitespace(indentArray, 0, indent
+                            + indentAmount);
+                    handler.startElement(nsu, elementName, elementName, atts);
+                    if (value instanceof ListType) {
+                        parseListData(value, indent + indentAmount);
+                        handler.ignorableWhitespace(indentArray, 0, indent
+                                + indentAmount);
+                    } else {
+                        char valueArray[] = value.toString().toCharArray();
+                        handler.characters(valueArray, 0, valueArray.length);
+                    }
+                    handler.endElement(nsu, elementName, elementName);
+                }
+            }
+        }
+    }
+    
     /** Create SAX events for the content of a {@link ListType}.
      *
      * @param value the ListType whose content we create SAX events for.

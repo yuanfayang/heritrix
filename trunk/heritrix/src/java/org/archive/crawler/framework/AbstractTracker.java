@@ -26,6 +26,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.util.ArchiveUtils;
@@ -52,8 +53,8 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.admin.StatisticsTracker
  */
 public abstract class AbstractTracker extends CrawlerModule implements StatisticsTracking,
-    											 CrawlStatusListener,
-    											 CrawlURIDispositionListener
+                                                 CrawlStatusListener,
+                                                 CrawlURIDispositionListener
 {
     public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(60);
     public static final String ATTR_STATS_INTERVAL = "interval-seconds";
@@ -81,12 +82,10 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      */
     public AbstractTracker(String name, String description) {
         super(name, description);
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_STATS_INTERVAL,
+        Type e = addElementToDefinition(new SimpleType(ATTR_STATS_INTERVAL,
                 "The interval between writing progress information to log.",
-                DEFAULT_STATISTICS_REPORT_INTERVAL,
-                false));
+                DEFAULT_STATISTICS_REPORT_INTERVAL));
+        e.setOverrideable(false);
     }
 
     /**
@@ -98,15 +97,13 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      * @see CrawlStatusListener
      * @see CrawlURIDispositionListener
      */
-    public void initalize(CrawlController c)
-    {
-    	controller = c;
-    	periodicLogger = controller.progressStats;
-    	//logInterval = controller.getOrder().getIntAt(CrawlController.XP_STATS_INTERVAL,CrawlController.DEFAULT_STATISTICS_REPORT_INTERVAL);
+    public void initalize(CrawlController c) {
+        controller = c;
+        periodicLogger = controller.progressStats;
 
-    	// Add listeners
-    	controller.addCrawlStatusListener(this);
-    	controller.addCrawlURIDispositionListener(this);
+        // Add listeners
+        controller.addCrawlStatusListener(this);
+        controller.addCrawlURIDispositionListener(this);
     }
 
     /**
@@ -115,42 +112,42 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      *
      */
     public void run() {
-    	// don't start logging if we have no logger
-    	if (periodicLogger == null) {
-    		return;
-    	}
+        // don't start logging if we have no logger
+        if (periodicLogger == null) {
+            return;
+        }
 
-    	crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
-    	shouldrun = true; //If we are starting, this should always be true.
+        crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
+        shouldrun = true; //If we are starting, this should always be true.
 
-    	// log the legend
-    	periodicLogger.log(Level.INFO,
-    			"   [timestamp] [discovered]    [queued] [downloaded]"
-    				+ "   [doc/s(avg)]  [KB/s(avg)]"
-    				+ " [dl-failures] [busy-thread] [mem-use-KB]"
-    		);
+        // log the legend
+        periodicLogger.log(Level.INFO,
+                "   [timestamp] [discovered]    [queued] [downloaded]"
+                    + "   [doc/s(avg)]  [KB/s(avg)]"
+                    + " [dl-failures] [busy-thread] [mem-use-KB]"
+            );
 
-    	lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
+        lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
-    	// keep logging until someone calls stop()
-    	while (shouldrun)
-    	{
-    		// pause before writing the first entry (so we have real numbers)
-    		// and then pause between entries
-    		try {
-    			Thread.sleep(getLogWriteInterval() * 1000);
-    		} catch (InterruptedException e) {
-    			e.printStackTrace();
-    			controller.runtimeErrors.log(
-    				Level.INFO,
-    				"Periodic stat logger interrupted while sleeping.");
-    		}
+        // keep logging until someone calls stop()
+        while (shouldrun)
+        {
+            // pause before writing the first entry (so we have real numbers)
+            // and then pause between entries
+            try {
+                Thread.sleep(getLogWriteInterval() * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                controller.runtimeErrors.log(
+                    Level.INFO,
+                    "Periodic stat logger interrupted while sleeping.");
+            }
 
-    		// In case stop() was invoked while the thread was sleeping or we are paused.
-    		if(shouldrun && getCrawlPauseStartedTime()==0){
-    			logActivity();
-    		}
-    	}
+            // In case stop() was invoked while the thread was sleeping or we are paused.
+            if(shouldrun && getCrawlPauseStartedTime()==0){
+                logActivity();
+            }
+        }
     }
 
     /**
@@ -167,53 +164,53 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
     protected abstract void logActivity();
 
     public void setCrawlStartTime(long mili){
-    	crawlerStartTime = mili;
+        crawlerStartTime = mili;
     }
 
     public long getCrawlStartTime(){
-    	return crawlerStartTime;
+        return crawlerStartTime;
     }
 
     /**
      *
      * @return If crawl has ended it will return the time
      *         it ended (given by System.currentTimeMillis()
-     * 		   at that time).
+     *            at that time).
      *         If crawl is still going on it will return the
      *         same as System.currentTimeMillis()
      */
     public long getCrawlEndTime()
     {
-    	if(crawlerEndTime==-1)
-    	{
-    		return System.currentTimeMillis();
-    	}
+        if(crawlerEndTime==-1)
+        {
+            return System.currentTimeMillis();
+        }
 
-    	return crawlerEndTime;
+        return crawlerEndTime;
     }
 
     public long getCrawlTotalPauseTime()
     {
-    	return crawlerTotalPausedTime;
+        return crawlerTotalPausedTime;
     }
 
     public long getCrawlPauseStartedTime()
     {
-    	return crawlerPauseStarted;
+        return crawlerPauseStarted;
     }
 
     public long getCrawlerTotalElapsedTime()
     {
-    	if(getCrawlPauseStartedTime()!=0)
-    	{
-    		//Are currently paused, calculate time up to last pause
-    		return getCrawlPauseStartedTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
-    	}
-    	else
-    	{
-    		//Not paused, calculate total time.
-    		return getCrawlEndTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
-    	}
+        if(getCrawlPauseStartedTime()!=0)
+        {
+            //Are currently paused, calculate time up to last pause
+            return getCrawlPauseStartedTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
+        }
+        else
+        {
+            //Not paused, calculate total time.
+            return getCrawlEndTime()-getCrawlTotalPauseTime()-getCrawlStartTime();
+        }
     }
 
     public int getLogWriteInterval() {
@@ -223,63 +220,63 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
         } catch (AttributeNotFoundException e) {
             logInterval = 10;
         }
-    	return logInterval;
+        return logInterval;
     }
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
-    	periodicLogger.log(
-    				Level.INFO,
-    				new PaddingStringBuffer()
-    				 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
-    				 .append(" CRAWL WAITING TO PAUSE")
-    				 .toString()
-    			);
+        periodicLogger.log(
+                    Level.INFO,
+                    new PaddingStringBuffer()
+                     .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+                     .append(" CRAWL WAITING TO PAUSE")
+                     .toString()
+                );
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
      */
     public void crawlPaused(String statusMessage) {
-    	crawlerPauseStarted = System.currentTimeMillis();
-    	logActivity();
-    	periodicLogger.log(
-    				Level.INFO,
-    				new PaddingStringBuffer()
-    				 .append(ArchiveUtils.TIMESTAMP14.format(new Date(crawlerPauseStarted)))
-    				 .append(" CRAWL PAUSED")
-    				 .toString()
-    			);
+        crawlerPauseStarted = System.currentTimeMillis();
+        logActivity();
+        periodicLogger.log(
+                    Level.INFO,
+                    new PaddingStringBuffer()
+                     .append(ArchiveUtils.TIMESTAMP14.format(new Date(crawlerPauseStarted)))
+                     .append(" CRAWL PAUSED")
+                     .toString()
+                );
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
-    	crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
-    	crawlerPauseStarted = 0;
-    	periodicLogger.log(
-    				Level.INFO,
-    				new PaddingStringBuffer()
-    				 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
-    				 .append(" CRAWL RESUMED")
-    				 .toString()
-    			);
-    	lastLogPointTime = System.currentTimeMillis();
+        crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
+        crawlerPauseStarted = 0;
+        periodicLogger.log(
+                    Level.INFO,
+                    new PaddingStringBuffer()
+                     .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+                     .append(" CRAWL RESUMED")
+                     .toString()
+                );
+        lastLogPointTime = System.currentTimeMillis();
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlListener#crawlEnding(java.lang.String)
      */
     public void crawlEnding(String sExitMessage) {
-    	periodicLogger.log(
-    				Level.INFO,
-    				new PaddingStringBuffer()
-    				 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
-    				 .append(" CRAWL ENDING - " + sExitMessage)
-    				 .toString()
-    			);
+        periodicLogger.log(
+                    Level.INFO,
+                    new PaddingStringBuffer()
+                     .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+                     .append(" CRAWL ENDING - " + sExitMessage)
+                     .toString()
+                );
     }
 
 
@@ -287,16 +284,16 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-    	crawlerEndTime = System.currentTimeMillis(); //Note the time when the crawl stops.
-    	logActivity(); //Log end state
-    	periodicLogger.log(
-    				Level.INFO,
-    				new PaddingStringBuffer()
-    				 .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
-    				 .append(" CRAWL ENDED - " + sExitMessage)
-    				 .toString()
-    			);
-    	shouldrun = false;
+        crawlerEndTime = System.currentTimeMillis(); //Note the time when the crawl stops.
+        logActivity(); //Log end state
+        periodicLogger.log(
+                    Level.INFO,
+                    new PaddingStringBuffer()
+                     .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+                     .append(" CRAWL ENDED - " + sExitMessage)
+                     .toString()
+                );
+        shouldrun = false;
         controller = null; //Facilitate GC.
     }
 
@@ -304,7 +301,7 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      * @see org.archive.crawler.framework.StatisticsTracking#crawlDuration()
      */
     public long crawlDuration() {
-    	return getCrawlerTotalElapsedTime();
+        return getCrawlerTotalElapsedTime();
     }
 
 }

@@ -80,33 +80,23 @@ public class DataContainer extends HashMap {
      * @param index index at which the specified element is to be inserted.
      * @throws InvalidAttributeValueException
      */
-    public void addElementType(
-        String name,
-        String description,
-        boolean overrideable,
-        Object[] legalValues,
-        Object defaultValue,
-        int index)
-        throws InvalidAttributeValueException {
+    public void addElementType(String name, String description,
+            boolean isOverrideable, boolean isTransient, Object[] legalValues,
+            Object defaultValue, boolean isExpertSetting, int index)
+            throws InvalidAttributeValueException {
+        
         if (attributeNames.containsKey(name)) {
             throw new IllegalArgumentException("Duplicate field: " + name);
         }
         if (defaultValue == null) {
             throw new InvalidAttributeValueException(
-                "null is not allowed as default value for attribute '"
-                    + name
-                    + "' in class '"
-                    + complexType.getClass().getName()
-                    + "'");
+                    "null is not allowed as default value for attribute '"
+                            + name + "' in class '"
+                            + complexType.getClass().getName() + "'");
         }
-        MBeanAttributeInfo attribute =
-            new ModuleAttributeInfo(
-                name,
-                defaultValue,
-                description,
-                overrideable,
-                legalValues,
-                defaultValue);
+        MBeanAttributeInfo attribute = new ModuleAttributeInfo(name,
+                defaultValue, description, isOverrideable, isTransient,
+                legalValues, defaultValue, isExpertSetting);
         attributes.add(index, attribute);
         attributeNames.put(name, attribute);
         try {
@@ -128,34 +118,20 @@ public class DataContainer extends HashMap {
      * @param defaultValue the default value for this element.
      * @throws InvalidAttributeValueException
      */
-    public void addElementType(
-        String name,
-        String description,
-        boolean overrideable,
-        Object[] legalValues,
-        Object defaultValue)
-        throws InvalidAttributeValueException {
-        addElementType(
-            name,
-            description,
-            overrideable,
-            legalValues,
-            defaultValue,
-            attributes.size());
+    public void addElementType(String name, String description,
+            boolean isOverrideable, boolean isTransient, Object[] legalValues,
+            Object defaultValue, boolean isExpertSetting)
+            throws InvalidAttributeValueException {
+
+        addElementType(name, description, isOverrideable, isTransient,
+                legalValues, defaultValue, isExpertSetting, attributes.size());
     }
 
     public MBeanInfo getMBeanInfo() {
-        MBeanAttributeInfo attrs[] =
-            (MBeanAttributeInfo[]) attributes.toArray(
-                new MBeanAttributeInfo[0]);
-        MBeanInfo info =
-            new MBeanInfo(
-                complexType.getClass().getName(),
-                complexType.getDescription(),
-                attrs,
-                null,
-                null,
-                null);
+        MBeanAttributeInfo attrs[] = (MBeanAttributeInfo[]) attributes
+                .toArray(new MBeanAttributeInfo[0]);
+        MBeanInfo info = new MBeanInfo(complexType.getClass().getName(),
+                complexType.getDescription(), attrs, null, null, null);
         return info;
     }
 

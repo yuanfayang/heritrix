@@ -36,6 +36,7 @@ import javax.management.ReflectionException;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.URIFrontier;
@@ -76,70 +77,58 @@ public class CrawlOrder extends CrawlerModule {
      */
     public CrawlOrder() {
         super(ATTR_NAME, "Heritrix crawl order");
+        Type e;
+        
+        e = addElementToDefinition(new SimpleType(ATTR_SETTINGS_DIRECTORY,
+                "Directory where override settings are kept", "settings"));
+        e.setOverrideable(false);
 
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_SETTINGS_DIRECTORY,
-                "Directory where override settings are kept",
-                "settings",
-                false));
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_DISK_PATH,
-                "Directory relative to the crawl order where logs, arcs and other run time files will be kept",
-                "disk",
-                false));
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_BYTES_DOWNLOAD,
-                "Maximum number of bytes to download. Once this number is exceeded the crawler will stop.",
-                new Long(0),
-                false));
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_DOCUMENT_DOWNLOAD,
-                "Maximum number of documents to download. Once this number is exceeded the crawler will stop.",
-                new Long(0),
-                false));
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_TIME_SEC,
-                "Maximum amount of time to crawl (in seconds). Once this much time has elapsed the crawler will stop.",
-                new Long(0),
-                false));
-        addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_TOE_THREADS,
+        e = addElementToDefinition(new SimpleType(ATTR_DISK_PATH,
+                "Directory relative to the crawl order where logs, arcs and"
+                        + " other run time files will be kept", "disk"));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_DOWNLOAD,
+                "Maximum number of bytes to download. Once this number is"
+                        + " exceeded the crawler will stop.", new Long(0)));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_DOCUMENT_DOWNLOAD,
+                "Maximum number of documents to download. Once this number"
+                        + " is exceeded the crawler will stop.", new Long(0)));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_TIME_SEC,
+                "Maximum amount of time to crawl (in seconds). Once this"
+                        + " much time has elapsed the crawler will stop.",
+                new Long(0)));
+        e.setOverrideable(false);
+
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_TOE_THREADS,
                 "Max number of threads processing URIs at the same time.",
-                new Integer(100),
-                false));
+                new Integer(100)));
+        e.setOverrideable(false);
 
         addElementToDefinition(new CrawlScope());
 
-        httpHeaders =
-            (MapType) addElementToDefinition(new MapType(ATTR_HTTP_HEADERS,
-                "HTTP headers"));
-        httpHeaders.addElementToDefinition(
-            new SimpleType(
-                ATTR_USER_AGENT,
+        httpHeaders = (MapType) addElementToDefinition(new MapType(
+                ATTR_HTTP_HEADERS, "HTTP headers"));
+        
+        httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
                 "User agent to act as",
                 "os-heritrix/@VERSION@ (+PROJECT_URL_HERE)"));
-        httpHeaders.addElementToDefinition(
-            new SimpleType(
-                ATTR_FROM,
-                "Contact information",
-                "CONTACT_EMAIL_ADDRESS_HERE"));
+        
+        httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
+                "Contact information", "CONTACT_EMAIL_ADDRESS_HERE"));
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
         addElementToDefinition(new CrawlerModule(URIFrontier.ATTR_NAME, "Frontier"));
 
-        processors =
-            (MapType) addElementToDefinition(new MapType(ATTR_PROCESSORS,
-                "URI processors"));
+        processors = (MapType) addElementToDefinition(new MapType(
+                ATTR_PROCESSORS, "URI processors"));
 
-        loggers =
-            (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
+        loggers = (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
                 "Loggers"));
     }
 

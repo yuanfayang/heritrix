@@ -70,8 +70,6 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private final List definition = new ArrayList();
     protected final Map definitionMap = new HashMap();
     private boolean initialized = false;
-    /** Should this ComplexType be serialized to persistent storage */
-    private boolean isTransient = false;
 
     /**
      * Private constructor to make sure that no one
@@ -113,9 +111,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         getOrCreateDataContainer(settings).addElementType(
             type.getName(),
             type.getDescription(),
-            type.getOverrideable(),
+            type.isOverrideable(),
+            type.isTransient(),
             type.getLegalValues(),
-            type.getDefaultValue());
+            type.getDefaultValue(),
+            type.isExpertSetting());
         if (type instanceof ComplexType) {
             addComplexType(settings, (ComplexType) type);
         }
@@ -647,24 +647,6 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     public Object[] getLegalValues() {
         return null;
-    }
-
-    /** Returns true if this ComplexType should be saved to persistent storage.
-     *
-     * @return true if this ComplexType should be saved to persistent storage.
-     */
-    public boolean isTransient() {
-        return isTransient;
-    }
-
-    /** Set to false if this attribute should not be serialized to persistent
-     * storage.
-     *
-     * @param b if false this complexType will not be saved to persistent
-     *          storage.
-     */
-    public void setTransient(boolean b) {
-        isTransient = b;
     }
 
     /** Returns this object.
