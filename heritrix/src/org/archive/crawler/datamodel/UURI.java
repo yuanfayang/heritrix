@@ -88,10 +88,13 @@ public class UURI {
 		}
 		if (u.getSchemeSpecificPart().startsWith("/")) {
 			// hierarchical URI
-			if ("".equals(u.getPath())) {
-				u = u.resolve("/"); // ensure root URLs end with '/'
+			u = u.normalize(); // factor out path cruft, according to official spec
+			// now, go further and eliminate extra '..' segments
+			String fixedPath = u.getPath().replaceFirst("^(/\\.\\.)+","");
+			if ("".equals(fixedPath)) {
+//				ensure root URLs end with '/'
+				fixedPath = "/"; 
 			}
-			u = u.normalize(); // factor out path cruft
 			String canonizedAuthority = u.getAuthority();
 			if(canonizedAuthority==null) {
 				logger.warning("bad URI: "+s+" relative to "+parent);
@@ -136,7 +139,7 @@ public class UURI {
 			}
 			u = new URI(u.getScheme().toLowerCase(), // case-flatten scheme
 			            canonizedAuthority, // case and port flatten
-			            u.getPath(), // leave alone
+			            fixedPath, // leave alone
 			            u.getQuery(), // leave alone
 		                null); // drop fragment
 		} else {
