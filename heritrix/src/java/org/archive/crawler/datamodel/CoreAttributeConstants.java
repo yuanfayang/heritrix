@@ -79,4 +79,9 @@ public interface CoreAttributeConstants {
     public static String A_META_ROBOTS = "meta-robots";
 
     public static String A_HTTP_HEADER_URIS = "uris-from-headers";
+
+    /** 
+     * Define for org.archive.crawler.writer.MirrorWriterProcessor.
+     */
+    public static String A_MIRROR_PATH = "mirror-path";
 }
