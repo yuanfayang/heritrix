@@ -468,7 +468,7 @@ public class Frontier
      * First checks any "Ready" per-host queues, then the global
      * pending queue.
      *
-     * @return next CrawlURI to be processed. Or null if none is availible.
+     * @return next CrawlURI to be processed. Or null if none is available.
      *
      * @see org.archive.crawler.framework.URIFrontier#next(int)
      */
@@ -569,7 +569,7 @@ public class Frontier
     }
 
     /**
-     * @param timeout Time to wait on next CrawlURI.
+     * @param timeout Time to wait on next CrawlURI (milliseconds).
      * @return The next CrawlURI eligible for processing.
      * @throws InterruptedException
      */

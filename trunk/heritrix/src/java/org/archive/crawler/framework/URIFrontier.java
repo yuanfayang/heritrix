@@ -142,7 +142,7 @@ public interface URIFrontier {
      * during the time specified null will be returned.
      *
      * @param timeout how long the calling thread is willing to wait for the
-     *                next URI to become availible.
+     * next URI to become available (milliseconds).
      * @return the next URI that should be processed.
      * @throws InterruptedException
      */
