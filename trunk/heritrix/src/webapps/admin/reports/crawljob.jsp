@@ -8,7 +8,7 @@
 <%
 	/**
 	 *  Page allows user to view the information in the StatisticsTracker 
-	 *  for a completed job.
+	 *  for a completed job. 
 	 *	Parameter: job - UID for the job.
 	 */
 	 
@@ -31,7 +31,7 @@
 		stats = (StatisticsTracker)cjob.getStatisticsTracking();
 	}
 	
-	String title = "Crawl job report";
+	String title = "Crawl job report"; 
 	int tab = 4;
 	
 %>
@@ -158,7 +158,7 @@
                                 <b>Total data written:</b>&nbsp;
                             </td>
                             <td>
-                                <%=ArchiveUtils.formatBytesForDisplay(stats.getTotalBytesWritten())%>
+                                <%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%>
                             </td>
                         </tr>
 					</table>
@@ -180,23 +180,23 @@
                     </table>
                 </td>
             </tr>
-            <!--tr>
+            <tr>
                 <td>
                     <b>Pending:</b>
                 </td>
                 <td align="right">
-                    <%=stats.urisInFrontierCount()%>
+                    <%=stats.pendingUriCount()%>
                 </td>
                 <td colspan="4">
-                    &nbsp;<font size="-2">(Total URIs )</font>
+                    &nbsp;<font size="-2">(URIs found but not yet verified as in scope)</font>
                 </td>
-            </tr-->
+            </tr>
             <tr>
                 <td>
                     <b>Discovered:</b>
                 </td>
                 <td align="right">
-                    <%=stats.urisEncounteredCount()%>
+                    <%=stats.discoveredUriCount()%>
                 </td>
                 <td colspan="4">
                     &nbsp;<font size="-2">(URIs that the crawler has confirmed to be within scope)</font>
@@ -207,10 +207,21 @@
                     &nbsp;&nbsp;<b>Queued:</b>
                 </td>
                 <td align="right">
-                    <%=stats.urisEncounteredCount()-(stats.successfulFetchAttempts()+stats.failedFetchAttempts()+stats.disregardedFetchAttempts())%>
+                    <%=stats.queuedUriCount()%>
                 </td>
                 <td colspan="4">
-                    &nbsp;<font size="-2">(Discovered URIs that the crawler has not finished crawling)</font>
+                    &nbsp;<font size="-2">(Discovered URIs that are waiting to be processed)</font>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    &nbsp;&nbsp;<b>In progress:</b>
+                </td>
+                <td align="right">
+                    <%=stats.activeThreadCount()%>
+                </td>
+                <td colspan="4">
+                    &nbsp;<font size="-2">(Estimated based on number of active threads)</font>
                 </td>
             </tr>
             <tr>
@@ -236,18 +247,16 @@
                     &nbsp;&nbsp;<b>Finished:</b>
                 </td>
                 <td align="right">
-                    <%=stats.successfulFetchAttempts()+stats.failedFetchAttempts()+stats.disregardedFetchAttempts()%>
+                    <%=stats.finishedUriCount()%>
                 </td>
                 <td align="right">
-                    <%=stats.successfulFetchAttempts()%>
+                    <%=stats.successfullyFetchedCount()%>
                 </td>
                 <td align="right">
                     <%=stats.failedFetchAttempts()%>
                 </td>
                 <td align="right">
                     <%=stats.disregardedFetchAttempts()%>
-                </td>
-                <td width="150">
                 </td>
             </tr>
         </table>
@@ -273,8 +282,8 @@
 					Map.Entry entry = (Map.Entry)statusCodes.next();
 					long count = ((LongWrapper)(entry.getValue())).longValue;
 					long displaybarwidth = 0;
-					if(stats.successfulFetchAttempts()/6>0){
-					   displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+					if(stats.successfullyFetchedCount()/6>0){
+					   displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
 					} 
 					if(displaybarwidth==0){
 					   displaybarwidth=1;
@@ -317,8 +326,8 @@
 					Map.Entry file = (Map.Entry)files.next();
 					long count = ((LongWrapper)file.getValue()).longValue;
                     long displaybarwidth = 0;
-                    if(stats.successfulFetchAttempts()/6>0){
-                       displaybarwidth = count*100/(stats.successfulFetchAttempts()/6);
+                    if(stats.successfullyFetchedCount()/6>0){
+                       displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
                     } 
                     if(displaybarwidth==0){
                        displaybarwidth=1;

@@ -182,7 +182,7 @@
 										<b>Total data written:</b>&nbsp;
 									</td>
 									<td>
-										<%=ArchiveUtils.formatBytesForDisplay(stats.getTotalBytesWritten())%>
+										<%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%>
 									</td>
 								</tr>
 							</table>
@@ -192,14 +192,14 @@
 				}
 				if(handler.isCrawling())
 				{
-					long begin = stats.successfulFetchAttempts();
-					long end = stats.urisEncounteredCount();
+					long begin = stats.successfullyFetchedCount();
+					long end = (stats.discoveredUriCount() - stats.failedFetchAttempts()) - stats.disregardedFetchAttempts();
 					if(end < 1)
 						end = 1; 
 					int ratio = (int) (100 * begin / end);
 			%>
 					<tr>
-						<td colspan="2" height="5">
+						<td colspan="2" height="5"> 
 						</td>
 					</tr>
 					<tr>

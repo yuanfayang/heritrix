@@ -732,6 +732,10 @@ public class CrawlController extends Thread {
             
             try {
                 wait(); // resumeCrawl() will wake us.
+                if(shouldCrawl==false){
+                    // woken to stop crawling
+                    return;
+                }
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -809,7 +813,6 @@ public class CrawlController extends Thread {
         shouldCrawl = false;
         // If crawl is paused it should be resumed first so it
         // can be stopped properly
-        resumeCrawl();
         notifyAll();
     }
 
