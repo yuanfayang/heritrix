@@ -418,9 +418,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
 
         DataContainer data = settings.getData(this);
-        if (data.containsKey(name)) {
+        if (data != null & data.containsKey(name)) {
             // Remove value
-            data.removeElement(name);
+            return data.removeElement(name);
         }
 
         // Value not found. Check if we should return null or throw an exseption
