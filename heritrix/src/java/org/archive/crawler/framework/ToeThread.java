@@ -65,8 +65,13 @@ public class ToeThread extends Thread
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
     private static int DEFAULT_TAKE_TIMEOUT = 3000;
 
-    private volatile boolean shouldCrawl = true;
+    /**
+     * When marked volatile, should be safe updating outside of sync
+     * block -- if the JVM pays any attention to volatile keyword.
+     */
     private volatile boolean shouldPause = false;
+    
+    private volatile boolean shouldCrawl = true;
 
     /**
      * If set then this thread was 'killed' by an outside agent it should
@@ -74,15 +79,18 @@ public class ToeThread extends Thread
      */
     private volatile boolean shouldDie = false;
 
-    CrawlController controller;
-    int serialNumber;
-    HttpRecorder httpRecorder;
-    HashMap localProcessors = new HashMap();
-    String currentProcessorName = "";
+    private CrawlController controller;
+    
+    private int serialNumber;
+    
+    private HttpRecorder httpRecorder;
+    private HashMap localProcessors = new HashMap();
+    private String currentProcessorName = "";
 
-    CrawlURI currentCuri;
-    long lastStartTime;
-    long lastFinishTime;
+    private CrawlURI currentCuri;
+    private long lastStartTime;
+    private long lastFinishTime;
+    
     // in-process/on-hold curis? not for now
     // a queue of curis to do next? not for now
 
@@ -97,7 +105,7 @@ public class ToeThread extends Thread
     public ToeThread(CrawlController c, int sn) {
         controller = c;
         serialNumber = sn;
-        setName("ToeThread #"+serialNumber);
+        setName("ToeThread #" + serialNumber);
         setPriority(DEFAULT_PRIORITY);
         httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
         lastFinishTime = System.currentTimeMillis();
@@ -237,7 +245,7 @@ public class ToeThread extends Thread
      * @throws InterruptedException
      */
     private void processCrawlUri() throws InterruptedException {
-        currentCuri.setThreadNumber(serialNumber);
+        currentCuri.setThreadNumber(this.serialNumber);
         currentCuri.setNextProcessorChain(controller.getFirstProcessorChain());
         lastStartTime = System.currentTimeMillis();
         try {
@@ -315,7 +323,8 @@ public class ToeThread extends Thread
      *
      */
     public synchronized void stopAfterCurrent() {
-        logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
+        logger.info("ToeThread " + this.serialNumber +
+            " has been told to stopAfterCurrent()");
         shouldCrawl = false;
         notify();
     }
@@ -324,7 +333,7 @@ public class ToeThread extends Thread
      * @return Return toe thread serial number.
      */
     public int getSerialNumber() {
-        return serialNumber;
+        return this.serialNumber;
     }
 
     /**
@@ -348,32 +357,36 @@ public class ToeThread extends Thread
     /**
      * @return Compiles and returns a report on its status.
      */
-    public synchronized String report()
+    public String report()
     {
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
         rep.padTo(5);
-        rep.append("#"+serialNumber);
+        rep.append("#" + this.serialNumber);
         rep.padTo(11);
 
-        if(currentCuri!=null)
-        {
-            rep.append(currentCuri.getURIString());
-            rep.append(" ("+currentCuri.getFetchAttempts()+" attempts)");
+        // Make a local copy of the currentCuri reference in case it gets
+        // nulled while we're using it.  We're doing this because
+        // alternative is synchronizing and we don't want to do this --
+        // it causes hang ups as controller waits on a lock for this thread,
+        // something it gets easily enough on old threading model but something
+        // it can wait interminably for on NPTL threading model.
+        // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
+        CrawlURI c = currentCuri;
+        if(c != null) {
+            rep.append(c.getURIString());
+            rep.append(" (" + c.getFetchAttempts() + " attempts)");
             rep.newline();
             rep.padTo(8);
-            rep.append(currentCuri.getPathFromSeed());
-            if(currentCuri.getVia() != null
-                    && currentCuri.getVia() instanceof CandidateURI){
+            rep.append(c.getPathFromSeed());
+            if(c.getVia() != null && c.getVia() instanceof CandidateURI) {
                 rep.append(" ");
-                rep.append(((CandidateURI)currentCuri.getVia()).getURIString());
+                rep.append(((CandidateURI)c.getVia()).getURIString());
             }
             rep.newline();
             rep.padTo(8);
-            rep.append("Current processor: "+currentProcessorName);
-        }
-        else
-        {
+            rep.append("Current processor: " + currentProcessorName);
+        } else {
             rep.append("[no CrawlURI]");
         }
 
@@ -383,19 +396,14 @@ public class ToeThread extends Thread
         long now = System.currentTimeMillis();
         long time = 0;
 
-        if(lastFinishTime > lastStartTime)
-        {
+        if(lastFinishTime > lastStartTime) {
             // That means we finished something after we last started something
             // or in other words we are not working on anything.
             rep.append("WAITING for ");
-
-            time = now-lastFinishTime;
-        }
-        else if(lastStartTime > 0)
-        {
+            time = now - lastFinishTime;
+        } else if(lastStartTime > 0) {
             // We are working on something
             rep.append("ACTIVE for ");
-
             time = now-lastStartTime;
         }
         rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
@@ -419,12 +427,23 @@ public class ToeThread extends Thread
 
 
     /**
-     * @param b
+     * Pass true if want to pause this thread.
+     * 
+     * @param b If true pause else resume.
      */
-    public synchronized void setShouldPause(boolean b) {
+    public void setShouldPause(boolean b) {
+        // Updating this field outside of a synchronized block should be ok
+        // as its volatile -- the value will be read right through to
+        // memory (If the JVM acts on the volatile keyword at all).
         shouldPause = b;
-        if(!shouldPause) {
-            notifyAll();
+        // Don't synchronize if we don't have to.
+        if (!shouldPause) {
+            synchronized (this) {
+                // Recheck in case changed after we got the lock.
+                if(!shouldPause) {
+                    notifyAll();
+                }
+            }
         }
     }
 
@@ -457,11 +476,11 @@ public class ToeThread extends Thread
      * @param newSerial New serial (id) for the thread.
      */
     protected void kill(int newSerial){
+        shouldPause = false;
         synchronized(this) {
             shouldDie = true;
             shouldCrawl = false;
-            shouldPause = false;
-            serialNumber = newSerial;
+            this.serialNumber = newSerial;
             if (currentCuri!=null) {
                 currentCuri.setFetchStatus(S_PROCESSING_THREAD_KILLED);
                 controller.getFrontier().finished(currentCuri);
