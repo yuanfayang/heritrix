@@ -18,7 +18,6 @@
  */
 package org.archive.crawler.admin;
 
-import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.StatisticsTracking;
 
@@ -74,6 +73,8 @@ public class CrawlJob
     public static final String STATUS_PAUSED = "Paused";
     /** Job could not be launced due to an InitializationException */
     public static final String STATUS_MISCONFIGURED = "Could not launch job - Fatal InitializationException";
+    /** Job is actually a profile */
+    public static final String STATUS_PROFILE = "Profile";
 
     // Class variables	
     private String UID;       //A UID issued by the CrawlJobHandler.
@@ -87,7 +88,7 @@ public class CrawlJob
     private int priority;
     private int orderVersion;
     
-    protected SettingsHandler settingsHandler;
+    protected XMLSettingsHandler settingsHandler;
 
     /**
      * Simple constructor. Settings need to be added seperately before a job created
@@ -103,10 +104,26 @@ public class CrawlJob
     }
 
     /**
+     * A constructor for profiles. Any job created with this constructor will be
+     * considered a profile.
+     * @param UIDandName A unique ID for this job. For profiles this is the same as name
+     * @param settingsHandler 
+     * @param priority
+     */
+    public CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler) {
+        this.UID = UIDandName;
+        this.name = UIDandName;
+        this.settingsHandler = settingsHandler;
+        isProfile = true;
+        isNew = false;
+        status = STATUS_PROFILE;
+    }
+    
+    
+    /**
      * Advanced constructor. If given proper values this will create a CrawlJob
      * that is ready to be crawled at once.
      * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
-     * @param name
      * @param settingsHandler
      * @param priority
      */
@@ -230,7 +247,7 @@ public class CrawlJob
         return stats;
 	}
     
-    public void setSettingsHandler(SettingsHandler settingsHandler){
+    public void setSettingsHandler(XMLSettingsHandler settingsHandler){
         this.settingsHandler = settingsHandler;
     }
     
@@ -238,7 +255,7 @@ public class CrawlJob
      * Returns the settigns handler for this job. It will have been initialized.
      * @return the settigns handler for this job.
      */
-    public SettingsHandler getSettingsHandler(){
+    public XMLSettingsHandler getSettingsHandler(){
         return settingsHandler;
     }
     /**
@@ -286,4 +303,17 @@ public class CrawlJob
         isRunning = b;
     }
 
+    /**
+     * Returns the directory where the configuration files for this job are 
+     * located or null if no settings handler has been set.
+     * 
+     * @return the directory where the configuration files for this job are 
+     *         located 
+     */
+    public String getDirectory() {
+        if(settingsHandler!=null){
+            return settingsHandler.getOrderFile().getPath();      
+        }
+        return null;
+    }
 }
