@@ -526,8 +526,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
         // List must have at least 3 elements in it and no more than 10.  If
         // it has other than this, then bogus parse.
-        if (list != null && (list.size() < 3 || list.size() > 10)) {
-            throw new IOException("Empty header line.");
+        if (list != null && (list.size() < 3 || list.size() > 100)) {
+            throw new IOException("Unparseable header line: " + list);
         }
 
         return read;
