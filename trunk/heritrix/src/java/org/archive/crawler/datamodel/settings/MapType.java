@@ -274,8 +274,9 @@ public class MapType extends ComplexType {
         return this.definition.getLegalValueType();
     }
 
-    FailedCheck checkValue(Type definition, Attribute attribute) {
-        FailedCheck res = super.checkValue(definition, attribute);
+    FailedCheck checkValue(CrawlerSettings settings, Type definition,
+            Attribute attribute) {
+        FailedCheck res = super.checkValue(settings, definition, attribute);
 
         definition = super.getDefinition(attribute);
 
@@ -286,7 +287,8 @@ public class MapType extends ComplexType {
             FailedCheck ac = null;
             for (Iterator it = constraints.iterator(); it.hasNext()
                     && ac == null;) {
-                ac = ((Constraint) it.next()).check(this, definition, attribute);
+                ac = ((Constraint) it.next()).check(settings, this, definition,
+                        attribute);
                 if (res == null
                         || ac.getLevel().intValue() >= res.getLevel()
                                 .intValue()) {

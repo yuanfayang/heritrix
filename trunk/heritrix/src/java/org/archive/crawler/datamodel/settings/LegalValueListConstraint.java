@@ -79,7 +79,8 @@ public class LegalValueListConstraint extends Constraint {
      * @see org.archive.crawler.datamodel.settings.Constraint#innerCheck(org.archive.crawler.datamodel.settings.Type,
      *      java.lang.Object)
      */
-    public FailedCheck innerCheck(ComplexType owner, Type definition,
+    public FailedCheck innerCheck(CrawlerSettings settings, ComplexType owner,
+            Type definition,
             Attribute attribute) {
         FailedCheck res = null;
 
@@ -94,7 +95,7 @@ public class LegalValueListConstraint extends Constraint {
                 }
             }
             if (!found) {
-                res = new FailedCheck(owner, definition, attribute);
+                res = new FailedCheck(settings, owner, definition, attribute);
             }
         }
         return res;
