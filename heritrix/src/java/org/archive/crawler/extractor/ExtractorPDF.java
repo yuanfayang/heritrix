@@ -42,11 +42,19 @@ import org.apache.commons.httpclient.Header;
  *
  */
 public class ExtractorPDF extends Processor implements CoreAttributeConstants {
-	private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
+    private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
 	private long maxSizeToParse = DEFAULT_MAX_SIZE_TO_PARSE; // TODO: make configurable
 
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
 	
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorPDF(String name) {
+        super(name, "PDF extractor");
+    }
+
 	protected void innerProcess(CrawlURI curi){
 
 		if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {

@@ -28,7 +28,6 @@ import java.util.Iterator;
 import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -53,7 +52,7 @@ public class SeedExtensionFilter extends Filter {
 	static private int HOST = 1; // accept any URIs from same host
 	static private int DOMAIN = 2; // accept any URIs from same domain
  
-	private int extensionMode = PATH;
+	private int extensionMode = -1;
 	
     /**
      * @param name
@@ -67,6 +66,7 @@ public class SeedExtensionFilter extends Filter {
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
 	protected boolean innerAccepts(Object o) {
+        int extMode = getExtensionMode();
 		UURI u = null;
 		if(o instanceof UURI) {
 			u = (UURI)o;
@@ -81,7 +81,7 @@ public class SeedExtensionFilter extends Filter {
 			UURI s = (UURI)iter.next();
 			if(s.getHost().equals(u.getHost())) {
 				// hosts match
-				if (extensionMode == PATH) {
+				if (extMode == PATH) {
 					if(s.getPath().regionMatches(0,u.getPath(),0,s.getPath().lastIndexOf('/'))) {
 						// matches up to last '/'
 						return true;
@@ -92,7 +92,7 @@ public class SeedExtensionFilter extends Filter {
 				} // else extensionMode == HOST or DOMAIN, match is good enough
 				return true;
 			}
-			if (extensionMode == DOMAIN) {
+			if (extMode == DOMAIN) {
 				// might be a close-enough match
 				String seedDomain = s.getHost();
 				// strip www[#]
@@ -112,24 +112,20 @@ public class SeedExtensionFilter extends Filter {
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#initialize()
-	 */
-	public void initialize(CrawlerSettings settings) {
-		super.initialize(settings);
-/*        String mode = ((Scope) settings.getSettingsHandler().getModule(Scope.ATTR_NAME)).getMode();
-        System.out.println("XXX - SeedExtensionFilter:initialize:\n   " + mode);
+	public int getExtensionMode() {
+        if (extensionMode != -1) {
+            return extensionMode;
+        }
+        extensionMode = PATH;
+        String mode = ((Scope) getSettingsHandler().getModule(Scope.ATTR_NAME)).getMode();
 		if(mode==null || Scope.MODE_PATH.equals(mode)) {
 			// default
-			return;
-		}
-		if(Scope.MODE_HOST.equals(mode)) {
+			extensionMode = PATH;
+		} else if(Scope.MODE_HOST.equals(mode)) {
 			extensionMode = HOST;
-		}
-		if(Scope.MODE_DOMAIN.equals(mode)) {
+		} else if(Scope.MODE_DOMAIN.equals(mode)) {
 			extensionMode = DOMAIN;
-		}*/
+		}
+        return extensionMode;
 	}
-
-
 }

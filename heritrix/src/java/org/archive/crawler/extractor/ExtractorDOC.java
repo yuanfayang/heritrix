@@ -33,7 +33,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.poi.hdf.extractor.WordDocument;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -44,17 +43,17 @@ import org.archive.crawler.framework.Processor;
  */
 public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
-	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
 
-	/**
-	 *  Initialize this processor module.
-	 * 
-	 * @param c
-	 */
-	public void initialize(CrawlController c){
-		super.initialize(c);
-	}
-	
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorDOC(String name, String description) {
+        super(name, description);
+        // TODO Auto-generated constructor stub
+    }
+
 	/**
 	 *  Processes a word document and extracts any hyperlinks from it.
 	 *  This only extracts href style links, and does not examine the actual

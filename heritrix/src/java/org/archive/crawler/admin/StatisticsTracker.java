@@ -91,8 +91,8 @@ public class StatisticsTracker extends AbstractTracker{
 	/** Keep track of hosts */
 	protected HashMap hostsDistribution = new HashMap();
 	
-	public StatisticsTracker() {
-		super();
+	public StatisticsTracker(String name) {
+		super(name, "Statistics tracker");
 	}
 
 	/* (non-Javadoc)

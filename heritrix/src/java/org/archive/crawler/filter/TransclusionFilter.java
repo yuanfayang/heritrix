@@ -26,7 +26,7 @@ package org.archive.crawler.filter;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
 
@@ -105,6 +105,11 @@ public class TransclusionFilter extends Filter {
 			}
 			transCount++;
 		}
+        
+        if (o instanceof CrawlURI) {
+            readMaxValues((CrawlURI) o);
+        }
+        
 		return (transCount > 0) // this is a case of possible transclusion
 				&& (transCount <= maxTransHops) // and the overall number of hops isn't too high
 				&& (specCount <= maxSpeculativeHops) // and the number of spec-hops isn't too high
@@ -112,13 +117,12 @@ public class TransclusionFilter extends Filter {
 				&& (embedCount <= maxEmbedHops);  // and the number of embed-hops isn't too high
 	}
 
-	public void initialize(CrawlerSettings settings) {
-		super.initialize(settings);
+	public void readMaxValues(CrawlURI curi) {
 		try {
-            maxTransHops = ((Integer) getAttribute(settings, ATTR_MAX_TRANS_HOPS)).intValue();
-            maxSpeculativeHops = ((Integer) getAttribute(settings, ATTR_MAX_SPECULATIVE_HOPS)).intValue();
-            maxReferralHops = ((Integer) getAttribute(settings, ATTR_MAX_REFERRAL_HOPS)).intValue();
-            maxEmbedHops = ((Integer) getAttribute(settings, ATTR_MAX_EMBED_HOPS)).intValue();
+            maxTransHops = ((Integer) getAttribute(ATTR_MAX_TRANS_HOPS, curi)).intValue();
+            maxSpeculativeHops = ((Integer) getAttribute(ATTR_MAX_SPECULATIVE_HOPS, curi)).intValue();
+            maxReferralHops = ((Integer) getAttribute(ATTR_MAX_REFERRAL_HOPS, curi)).intValue();
+            maxEmbedHops = ((Integer) getAttribute(ATTR_MAX_EMBED_HOPS, curi)).intValue();
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

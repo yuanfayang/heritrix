@@ -25,9 +25,12 @@ package org.archive.crawler.filter;
 
 import java.util.regex.Pattern;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
 import org.archive.util.TextUtils;
 
@@ -39,7 +42,17 @@ import org.archive.util.TextUtils;
  * @author Gordon Mohr
  */
 public class URIRegExpFilter extends Filter {
-	Pattern pattern;
+    final static String ATTR_REGEXP = "regexp";
+    //Pattern pattern;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public URIRegExpFilter(String name) {
+        super(name, "URI regexp filter");
+        addElementToDefinition(new SimpleType(ATTR_REGEXP, "Regular expression", ""));
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
@@ -55,18 +68,12 @@ public class URIRegExpFilter extends Filter {
 			//TODO handle other inputs
 			input = o.toString();
 		}
-		return TextUtils.matches(pattern, input);
+        CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
+        try {
+            Pattern pattern = Pattern.compile((String) getAttribute(ATTR_REGEXP, curi));
+            return TextUtils.matches(pattern, input);
+        } catch (AttributeNotFoundException e) {
+            return true;
+        }
 	}
-
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#initialize()
-	 */
-	public void initialize(CrawlController c) {
-		// TODO Auto-generated method stub
-		super.initialize(c);
-		String regexp = getStringAt("@regexp");
-		pattern = Pattern.compile(regexp);
-	}
-
 }

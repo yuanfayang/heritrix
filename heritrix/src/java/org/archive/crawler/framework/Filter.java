@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -58,7 +59,6 @@ public abstract class Filter extends CrawlerModule {
     }
 
     //String name;
-    boolean inverter = false;
 
     /*
     public  void setName(String n) {
@@ -69,34 +69,26 @@ public abstract class Filter extends CrawlerModule {
     }
     */
 
-    public boolean accepts(CrawlerSettings settings, Object o) {
-        boolean localInverter = false;
+    public boolean accepts(Object o) {
+        CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
+        boolean inverter = false;
         try {
-            localInverter = ((Boolean) getAttribute(settings, ATTR_INVERTED)).booleanValue();
+            inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        return localInverter ^ innerAccepts(o);
-    }
-    
-    public boolean accepts(Object o) {
         return inverter ^ innerAccepts(o);
     }
-
+    
     /**
      * @param o
      * @return If it accepts.
      */
     protected abstract boolean innerAccepts(Object o);
 
-    public void initialize(CrawlerSettings settings) {
+    public void earlyInitialize(CrawlerSettings settings) {
         settings = settings == null ? globalSettings() : settings;
         this.controller = settings.getSettingsHandler().getOrder().getController();
-        try {
-            inverter = ((Boolean) getAttribute(settings, ATTR_INVERTED)).booleanValue();
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-        }
     }
 
     /* (non-Javadoc)

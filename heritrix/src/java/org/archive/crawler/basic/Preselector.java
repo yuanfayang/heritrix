@@ -23,8 +23,11 @@
  */
 package org.archive.crawler.basic;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
@@ -40,19 +43,33 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class Preselector extends Processor implements FetchStatusCodes {
-	private boolean recheckScope;
+    private boolean recheckScope;
 
-	private static String XP_RECHECK_SCOPE="@scope";
+	private static String ATTR_RECHECK_SCOPE="scope";
 	
 //	private static String XP_MAX_LINK_DEPTH="params/@max-link-depth";
 //	private static String XP_MAX_EMBED_DEPTH="params/@max-embed-depth";
 //	private int maxLinkDepth = -1;
 //	private int maxEmbedDepth = -1;
 
+    /**
+     * @param name
+     * @param description
+     */
+    public Preselector(String name) {
+        super(name, "Preselector");
+        addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE, "Recheck scope", new Boolean(false)));
+    }
+
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	protected void innerProcess(CrawlURI curi) {
+        try {
+            recheckScope = ((Boolean) getAttribute(ATTR_RECHECK_SCOPE, curi)).booleanValue();
+        } catch (AttributeNotFoundException e) {
+            recheckScope = false;
+        }
 		if (recheckScope) {
 			CrawlScope scope = controller.getScope();
 			if (curi.getScopeVersion()==scope.getVersion()) {
@@ -103,7 +120,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
 	 */
 	public void initialize(CrawlController c) {
 		super.initialize(c);
-	    recheckScope = getBooleanAt("@scope",false);
+	    //recheckScope = getBooleanAt("@scope",false);
 		
 		
 		//maxLinkDepth = getIntAt(XP_MAX_LINK_DEPTH, maxLinkDepth);
