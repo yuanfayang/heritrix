@@ -298,7 +298,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			// extension too long to recognize, HTML is fine
 			return true;
 		}
-		return NON_HTML_PATH_EXTENSION.matcher(path.substring(dot)).matches();
+		String ext = path.substring(dot+1);
+		return ! NON_HTML_PATH_EXTENSION.matcher(ext).matches();
 	}
 
 	/**
