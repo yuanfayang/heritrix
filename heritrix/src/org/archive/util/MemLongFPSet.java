@@ -90,5 +90,6 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 */
 	protected void clearAt(long index) {
 		slots[(int)index]=EMPTY;
+		values[(int)index]=0;
 	}
 }

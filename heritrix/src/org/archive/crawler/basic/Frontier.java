@@ -27,6 +27,7 @@ import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.FPUURISet;
+import org.archive.util.CachingDiskLongFPSet;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.DiskLongFPSet;
 import org.archive.util.MemLongFPSet;
@@ -111,10 +112,18 @@ public class Frontier
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
 		//alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
-		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
+		//alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
+		alreadyIncluded = new FPUURISet(
+			new CachingDiskLongFPSet(
+				c.getScratchDisk(),
+				"alreadyIncluded",
+				20,
+				0.75f,
+				20,
+				0.75f));
 		
 		this.controller = c;
-		Iterator iter = c.getScope().getSeeds().iterator();
+		Iterator iter = c.getScope().getSeedsIterator();
 		while (iter.hasNext()) {
 			UURI u = (UURI) iter.next();
 			CandidateURI caUri = new CandidateURI(u);
