@@ -61,14 +61,14 @@
 										<%=stats.processedDocsPerSec()%>
 									</td>
 								</tr>
-								<tr>
+								<!--tr>
 									<td>
 										<b>Current processed docs/sec:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.currentProcessedDocsPerSec()%>
+										<%/*=stats.currentProcessedDocsPerSec()*/%>
 									</td>
-								</tr>
+								</tr-->
 						<%	
 							}
 						%>
