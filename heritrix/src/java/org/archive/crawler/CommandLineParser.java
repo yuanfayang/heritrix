@@ -47,6 +47,7 @@ public class CommandLineParser
     private Options options = null;
     private CommandLine commandLine = null;
     private PrintWriter out = null;
+    private String version = null;
     
     /**
      * Block default construction.
@@ -62,15 +63,17 @@ public class CommandLineParser
      * 
      * @param args Command-line arguments to process.
      * @param out PrintStream to write on.
+     * @param version Heritrix version
      * 
      * @throws ParseException Failied parse of command line.
      */
-    public CommandLineParser(String [] args, PrintWriter out)
+    public CommandLineParser(String [] args, PrintWriter out, String version)
         throws ParseException
     {
         super();
      
         this.out = out;
+        this.version = version;
         
         this.options = new Options();
         this.options.addOption(new Option("h","help", false,
@@ -87,8 +90,6 @@ public class CommandLineParser
             " Do not put up web user interface."));
         this.options.addOption(new Option("s", "selftest", false,
             "Run integrated self test."));
-        this.options.addOption(new Option("v", "version", false,
-            "Prints version and exits."));
         
         PosixParser parser = new PosixParser();
         try
@@ -164,10 +165,11 @@ public class CommandLineParser
         
         if (doUsage)
         {
-            HeritrixHelpFormatter formatter = new HeritrixHelpFormatter();
+            HeritrixHelpFormatter formatter =
+                new HeritrixHelpFormatter(this.version);
             formatter.printHelp(this.out, 80, NAME, "Options:", this.options,
                 1, 2, "Arguments:", false);
-            this.out.println(" ORDER_FILE      Crawl order to run.\n");
+            this.out.println(" ORDER_FILE     Crawl order to run.\n");
         }
         
         // Close printwriter so stream gets flushed.
@@ -208,9 +210,12 @@ public class CommandLineParser
     public class HeritrixHelpFormatter
         extends HelpFormatter
     {
-        public HeritrixHelpFormatter()
+        private String version = null;
+
+        public HeritrixHelpFormatter(String version)
         {
             super();
+            this.version = version;
         }
 
         public void printUsage(PrintWriter pw, int width, String cmdLineSyntax)
@@ -219,7 +224,8 @@ public class CommandLineParser
             out.println(USAGE + NAME + " --nowui ORDER_FILE");
             out.println(USAGE + NAME + " [--port=PORT]" +
                 " [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]");
-            out.println(USAGE + NAME + " --selftest");
+            out.println(USAGE + NAME + " [--port=PORT] --selftest");
+            out.println("Version: " + this.version);
         }
 
         public void printUsage(PrintWriter pw, int width,
