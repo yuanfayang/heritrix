@@ -105,6 +105,12 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
         handlers.put(XMLSettingsHandler.XML_ELEMENT_NAME, new NameHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION,
                 new DescriptionHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_OPERATOR,
+                new OperatorHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_ORGANIZATION,
+                new OrganizationHandler());
+        handlers.put(XMLSettingsHandler.XML_ELEMENT_AUDIENCE,
+                new AudienceHandler());
         handlers.put(XMLSettingsHandler.XML_ELEMENT_DATE, new DateHandler());
         handlers.put(SettingsHandler.MAP, new MapHandler());
         handlers.put(SettingsHandler.INTEGER_LIST, new ListHandler());
@@ -327,6 +333,45 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                 settings.setDescription(value);
             } else if (handlerStack.peek() instanceof RefinementHandler) {
                 ((Refinement) stack.peek()).setDescription(value);
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class OrganizationHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                settings.setOrganization(value);
+            } else if (handlerStack.peek() instanceof RefinementHandler) {
+                ((Refinement) stack.peek()).setOrganization(value);
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class OperatorHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                settings.setOperator(value);
+            } else if (handlerStack.peek() instanceof RefinementHandler) {
+                ((Refinement) stack.peek()).setOperator(value);
+            } else {
+                illegalElementError(name);
+            }
+        }
+    }
+
+    private class AudienceHandler extends ElementHandler {
+
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                settings.setAudience(value);
+            } else if (handlerStack.peek() instanceof RefinementHandler) {
+                ((Refinement) stack.peek()).setAudience(value);
             } else {
                 illegalElementError(name);
             }

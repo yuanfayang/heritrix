@@ -84,6 +84,22 @@ public class CrawlerSettings {
     /** Description of this collection of settings */
     private String description = "";
     
+    /**
+     * Operator of this crawl job.
+     */
+    private String operator = "Admin";
+    
+    /**
+     * Organization running this crawl job.
+     */
+    private String organization = "";
+    
+    /**
+     * Audience/recipient/customer on whose behalf this crawl is being run.
+     */
+    private String audience = "";
+    
+    
     /** Time when this collection was last saved to persistent storage */
     private Date lastSaved = null;
 
@@ -142,6 +158,35 @@ public class CrawlerSettings {
     public String getName() {
         return name;
     }
+    
+    /**
+     * Get the name of operator of this crawl from this CrawlerSettings object.
+     *
+     * @return the name of this CrawlerSettings object.
+     */
+    public String getOperator() {
+        return operator;
+    }
+    
+    /** 
+     * Get the name of the organization running this crawl from this
+     * CrawlerSettings object.
+     *
+     * @return the name of the organization running this crawl.
+     */
+    public String getOrganization() {
+        return organization;
+    }
+    
+    /** 
+     * Get the audience/customer/recipient of the crawl job product from 
+     * this CrawlerSettings object.
+     *
+     * @return the audience/customer/recipient of the crawl job product.
+     */
+    public String getAudience() {
+        return audience;
+    }
 
     /** Get the scope of this CrawlerSettings object.
      *
@@ -157,6 +202,30 @@ public class CrawlerSettings {
      */
     public void setDescription(String string) {
         description = string;
+    }
+    
+    /**
+     * Set the operator of this crawl job.
+     * @param name Operator running this crawl.
+     */
+    public void setOperator(String name) {
+        this.operator = name;
+    }
+    
+    /**
+     * Set the name of the organization who is running this crawl.
+     * @param name Name of organization running this crawl.
+     */
+    public void setOrganization(String name) {
+        this.organization = name;
+    }
+    
+    /**
+     * Set the recipient/customer for the crawl job product.
+     * @param name Recipient of crawl job product.
+     */
+    public void setAudience(String name) {
+        this.audience = name;
     }
 
     /** Set the name of this CrawlerSettings object.

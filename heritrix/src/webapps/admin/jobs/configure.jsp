@@ -53,6 +53,9 @@
 		errorHandler.clearErrors();
 		writeNewOrderFile(crawlOrder,null,request,expert);
 		orderfile.setDescription(request.getParameter("meta/description"));
+		orderfile.setOperator(request.getParameter("meta/operator"));
+		orderfile.setOrganization(request.getParameter("meta/organization"));
+		orderfile.setAudience(request.getParameter("meta/audience"));
 		
 		settingsHandler.writeSettingsObject(orderfile);
 		
@@ -212,6 +215,33 @@
 				<td></td>
 				<td>
 					<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 320px">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Crawl Operator:
+				</td>
+				<td></td>
+				<td>
+					<input name="meta/operator" value="<%=orderfile.getOperator()%>" style="width: 320px">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Crawl Organization:
+				</td>
+				<td></td>
+				<td>
+					<input name="meta/organization" value="<%=orderfile.getOrganization()%>" style="width: 320px">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Crawl Job Recipient:
+				</td>
+				<td></td>
+				<td>
+					<input name="meta/audience" value="<%=orderfile.getAudience()%>" style="width: 320px">
 				</td>
 			</tr>
 			<%=inputForm%>

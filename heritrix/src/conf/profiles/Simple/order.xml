@@ -3,6 +3,9 @@
   <meta>
     <name>Simple</name>
     <description>Profile: Simple crawl</description>
+    <operator>Admin</operator>
+    <organization />
+    <audience />
     <date>20040409202922</date>
   </meta>
   <controller>

@@ -37,7 +37,7 @@
             <xsl:with-param name="value" select="$ip" />
         </xsl:call-template>
     </xsl:template>
-    <xsl:template match="name|description">
+    <xsl:template match="name|description|operator|organization|audience">
         <xsl:call-template name="print">
             <xsl:with-param name="key">
                 <xsl:text>crawl-order-</xsl:text>
