@@ -8,3 +8,4 @@ org.archive.crawler.filter.TransclusionFilter
 org.archive.crawler.filter.URIRegExpFilter
 org.archive.crawler.filter.PathologicalPathFilter
 org.archive.crawler.filter.SurtPrefixFilter
+org.archive.crawler.filter.ContentTypeRegExpFilter
