@@ -24,8 +24,12 @@ public class ToePool extends CrawlStatusAdapter {
 	protected CrawlController controller;
 	protected ArrayList toes;
 	protected int effectiveSize = 0;
+	
 	/**
-	 * @param i
+	 * Constructor
+	 * 
+	 * @param c A reference to the CrawlController for the current crawl.
+	 * @param count The number of ToeThreads to start with
 	 */
 	public ToePool(CrawlController c, int count) {
 		controller = c;
@@ -65,7 +69,7 @@ public class ToePool extends CrawlStatusAdapter {
 	/**
 	 * 
 	 * 
-	 * @return
+	 * @return The number of ToeThreads that are not available
 	 */
 	public int getActiveToeCount() {
 		int count = 0; 
@@ -79,7 +83,7 @@ public class ToePool extends CrawlStatusAdapter {
 	}
 
 	/**
-	 * @return
+	 * @return The number of ToeThreads
 	 */
 	public int getToeCount() {
 		return toes.size();

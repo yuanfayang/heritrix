@@ -6,10 +6,10 @@ import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.InitializationException;
 
 /**
- * @author Kristinn Sigurdsson
- *
  * This class encapsulates a crawl job.  This includes, a crawl order filename,
  * a name for the crawl, it's status etc.
+ * 
+ * @author Kristinn Sigurdsson
  */
 
 public class SimpleCrawlJob implements CrawlJob
@@ -36,21 +36,21 @@ public class SimpleCrawlJob implements CrawlJob
 	/**
 	 * Implemented to return 'crawl name' [UID]
 	 * 
-	 * @return
+	 * @return Crawl name followed by the UID in brackets.
 	 */
 	public String getJobName() {
 		return sName + " ["+UID+"]";
 	}
 
 	/**
-	 * @return
+	 * @return Status of the job.
 	 */
 	public String getStatus() {
 		return sStatus;
 	}
 
 	/**
-	 * @param string
+	 * @param string New status for the job.
 	 */
 	public void setStatus(String string) {
 		sStatus = string;

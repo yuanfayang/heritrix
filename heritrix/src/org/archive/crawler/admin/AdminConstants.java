@@ -1,16 +1,12 @@
-/*
- * Created on Oct 1, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package org.archive.crawler.admin;
 
 /**
- * @author Administrator
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
+ * An aggregate of various constants.
+ * <p>
+ * The concept behind this interface is that implmenting classes have quick access to these
+ * constants.
+ * <p>
+ * Most of the constants are XPaths in the configuration DOM. Used by the web interface.
  */
 public interface AdminConstants {
 	public static final String CRAWLER_STARTED = "Crawler Started!";

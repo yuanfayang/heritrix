@@ -22,8 +22,8 @@ public class User
 	}
 
 	/**
-	 * @return The int value of the user's role (ADMINISTRATOR, USER).  
-	 * A return of INVALID_USERS equals a failed authentication. 
+	 * @return The int value of the user's role (@link{User#ADMINISTRATOR}, @link{User#USER}).  
+	 * A return of @link{User#INVALID_USER} equals a failed authentication. 
 	 */
 	public int authenticate()
 	{

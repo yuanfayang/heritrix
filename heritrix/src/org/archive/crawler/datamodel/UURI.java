@@ -348,7 +348,7 @@ public class UURI implements Serializable {
 	 * Avoid casual use; java.net.URI may be phased out of crawler
 	 * for memory performance reasons
 	 * 
-	 * @return
+	 * @return URI
 	 */
 	public URI getRawUri() {
 		return getUri();
