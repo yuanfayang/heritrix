@@ -118,3 +118,16 @@ a build using the JMX server):
 
 Make sure its all running fine (Check the logs dir under CCBUILDDIR and 
 visit the website at HOST:8080).
+
++ Here is a summation of environment settings done on crawl04 in stack's home
+directory, the location out of which we're running cc:
+
+     1003  export CVS_RSH=ssh
+     1004  export MAVEN_HOME=/home/stack/bin/maven-1.0-rc1
+     1005  export ANT_HOME=/home/stack/bin/apache-ant-1.5.4
+     1009  export CCDIR=/home/stack/bin/cruisecontrol-2.1.4/main
+     1011  export JAVA_HOME=/home/stack/bin/j2sdk1.4.2_03/
+     1014  export PATH=$PATH:$JAVA_HOME/bin
+     1013  $CCDIR/bin/cruisecontrol.sh -port 8081
+     1020  cd ~/bin/Jetty-4.2.15rc0
+     1022  java -jar start.jar
