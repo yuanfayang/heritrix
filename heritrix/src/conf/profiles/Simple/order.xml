@@ -71,7 +71,7 @@
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
-        <integer name="ip-validity-duration-m">-1</integer>
+        <integer name="ip-validity-duration-seconds">-1</integer>
         <integer name="robot-validity-duration-m">4320</integer>
       </newObject>
     </map>

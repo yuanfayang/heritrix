@@ -64,7 +64,7 @@ public class PreconditionEnforcer
 
     /** minutes to keep IP information for */
     public final static String ATTR_IP_VALIDITY_DURATION
-        = "ip-validity-duration-m";
+        = "ip-validity-duration-seconds";
     /** minutes to cache robots info */ 
     public final static String ATTR_ROBOTS_VALIDITY_DURATION
         = "robot-validity-duration-m";
@@ -78,9 +78,10 @@ public class PreconditionEnforcer
         Type e;
         
         e = addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
-                "How long a dns-record is considered valid (in minutes). \n" +
+                "How long a dns-record is considered valid (in seconds). \n" +
                 "If the value is set to '-1', then the dns-record's ttl-value" +
-                " will be used. If set to '0', then the dns will never expire.",
+                " will be used. If value is greater than the proffered" +
+                " dns-record's TTL, again, we will use the dns-record ttl.",
                 DEFAULT_IP_VALIDITY_DURATION));
         e.setExpertSetting(true);
 
@@ -214,11 +215,12 @@ public class PreconditionEnforcer
         return false;
     }
 
-    /** Get the maximum time a dns-record is valid.
+    /**
+     * Get the maximum time a dns-record is valid.
      * 
      * @param curi the uri this time is valid for.
-     * @return the maximum time a dns-record is valid or negative if record's
-     *         ttl should be used.
+     * @return the maximum time a dns-record is valid -- in seconds -- or
+     * negative if record's ttl should be used.
      */
     public long getIPValidityDuration(CrawlURI curi) {
         Integer d;
@@ -228,7 +230,7 @@ public class PreconditionEnforcer
             d = DEFAULT_IP_VALIDITY_DURATION;
         }
         
-        return d.longValue() * 60 * 1000;
+        return d.longValue();
     }
 
     /** Return true if ip should be looked up.
@@ -250,14 +252,23 @@ public class PreconditionEnforcer
         
         long duration = getIPValidityDuration(curi);
         if (duration == 0) {
-            // Never expire ip if duration is null (set by user)
+            // Never expire ip if duration is null (set by user or more likely,
+            // set to zero in case where we tried in FetchDNS but failed).
             return false;
         }
-        
-        if (duration < 0) {
-            // If duration is negative dns record's ttl should be used
-            duration = host.getIpTTL();
+
+        long ttl = host.getIpTTL();
+        if (duration < 0 || duration > ttl) {
+            // If duration is negative dns record's ttl should be used or if
+            // the specified duration is longer than the dns ttl.
+            duration = ttl;
         }
+        
+        // Duration and ttl are in seconds.  Convert to millis.
+        if (duration > 0) {
+            duration *= 1000;
+        }
+        
         return (duration + host.getIpFetched()) < System.currentTimeMillis();
     }
 
