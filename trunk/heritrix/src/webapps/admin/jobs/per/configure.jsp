@@ -35,12 +35,14 @@
 	 *                 for.
 	 * @param lists All 'lists' encountered will have their name added	 
 	 *              to this StringBuffer followed by a comma.
+     * @param expert if true then expert settings will be included, else
+     *               they will be hidden.
 	 * @returns The HTML code described above.
 	 */
-	public String printMBean(ComplexType mbean, CrawlerSettings settings, String indent, StringBuffer lists) throws Exception {
-		if(mbean.isTransient()){
-			return "";
-		}
+	public String printMBean(ComplexType mbean, CrawlerSettings settings, String indent, StringBuffer lists, boolean expert) throws Exception {
+        if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
+            return "";
+        }
 		StringBuffer p = new StringBuffer();
 		MBeanInfo info = mbean.getMBeanInfo(settings);
 
@@ -74,7 +76,7 @@
 	            Object localAttribute = null;
 				ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
 
-                if(att.isTransient()==false){
+                if(att.isTransient()==false && (att.isExpertSetting()==false || expert)){
 					try {
 						currentAttribute = mbean.getAttribute(settings,att.getName());
 						localAttribute = mbean.getLocalAttribute(settings,att.getName());
@@ -84,7 +86,7 @@
 					}
 
 					if(currentAttribute instanceof ComplexType) {
-				    	p.append(printMBean((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",lists));
+				    	p.append(printMBean((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",lists,expert));
 					}
 					else if(currentAttribute instanceof ListType){
 						// Some type of list.
@@ -184,8 +186,8 @@
 	 * @param request The HttpServletRequest to use to update the 
 	 *                ComplexType
 	 */
-	public void writeNewOrderFile(ComplexType mbean, CrawlerSettings settings, HttpServletRequest request){
-		if(mbean.isTransient()){
+	public void writeNewOrderFile(ComplexType mbean, CrawlerSettings settings, HttpServletRequest request, boolean expert){
+        if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
 			return;
 		}
 		MBeanInfo info = mbean.getMBeanInfo(settings);
@@ -199,9 +201,9 @@
 				return;
 			}
 
-            if(att.isTransient()==false){
+            if(att.isTransient()==false && (att.isExpertSetting()==false || expert)){
 				if(currentAttribute instanceof ComplexType) {
-			    	writeNewOrderFile((ComplexType)currentAttribute, settings, request);
+			    	writeNewOrderFile((ComplexType)currentAttribute, settings, request,expert);
 				}
 				else {
 					// Have a 'setting'. Let's see if it's been overridden.
@@ -242,6 +244,11 @@
 	// Load the job to configure.
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
 
+    boolean expert = false;
+    if(getCookieValue(request.getCookies(),"expert","false").equals("true")){
+        expert = true;
+    }
+
 	// Load display level
 	String currDomain = request.getParameter("currDomain");
 	
@@ -264,7 +271,7 @@
 	// Check for actions.
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
-		writeNewOrderFile(crawlOrder,orderfile,request);
+		writeNewOrderFile(crawlOrder,orderfile,request,expert);
 		settingsHandler.writeSettingsObject(orderfile);
 		
 		if(request.getParameter("action").equals("done")){
@@ -272,15 +279,28 @@
 				handler.kickUpdate();
 			}
 			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
+            return;
 		}else if(request.getParameter("action").equals("filters")){
 			response.sendRedirect("/admin/jobs/per/filters.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+            return;
+        }else if(request.getParameter("action").equals("updateexpert")){
+            if(request.getParameter("expert") != null){
+                if(request.getParameter("expert").equals("true")){
+                    expert = true;
+                } else {
+                    expert = false;
+                }
+                // Save to cookie.
+                Cookie operatorCookie = new Cookie("expert", Boolean.toString(expert));
+                operatorCookie.setMaxAge(60*60*24*365);//One year
+                response.addCookie(operatorCookie);
+            }
 		}
-		return;
 	}	
 
 	// Get the HTML code to display the settigns.
 	StringBuffer listsBuffer = new StringBuffer();
-	String inputForm=printMBean(crawlOrder,orderfile,"",listsBuffer);
+	String inputForm=printMBean(crawlOrder,orderfile,"",listsBuffer,expert);
 	// The listsBuffer will have a trailing comma if not empty. Strip it off.
 	String lists = listsBuffer.toString().substring(0,(listsBuffer.toString().length()>0?listsBuffer.toString().length()-1:0));
 
@@ -331,6 +351,12 @@
 		function doPop(text){
 			alert(text);
 		}
+
+        function setExpert(val){
+            document.frmConfig.expert.value = val;
+            document.frmConfig.action.value="updateexpert";
+            doSubmit();
+        }
 	</script>
 
 	<p>
@@ -341,6 +367,7 @@
 	<form name="frmConfig" method="post" action="configure.jsp">
 		<input type="hidden" name="update" value="true">		
 		<input type="hidden" name="action" value="done">
+        <input type="hidden" name="expert" value="<%=expert%>">
 		<input type="hidden" name="currDomain" value="<%=currDomain%>">
 		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 	
@@ -350,6 +377,12 @@
 			do not have a checked box will be discarded. If no checkbox is provided then that<br>
 			setting is not overrideable. It is displayed for information only.
 		<p>		
+	        <% if(expert){ %>
+	            <a href="javascript:setExpert('false')">Hide expert settings</a>
+	        <% } else { %>
+	            <a href="javascript:setExpert('true')">View expert settings</a>
+	        <% } %>
+	    <p>
 		<table>
 			<%=inputForm%>
 		</table>
