@@ -90,7 +90,7 @@ public class XMLSettingsHandler extends SettingsHandler {
 		try {
 			this.settingsDirectory =
 				new File(
-					(String) getController().getAttribute("settings-directory"));
+					(String) getOrder().getAttribute("settings-directory"));
 		} catch (AttributeNotFoundException e) {
 			e.printStackTrace();
 		} catch (MBeanException e) {

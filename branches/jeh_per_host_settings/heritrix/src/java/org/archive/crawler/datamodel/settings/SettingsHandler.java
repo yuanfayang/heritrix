@@ -31,6 +31,7 @@ import java.util.WeakHashMap;
 
 import javax.management.InvalidAttributeValueException;
 
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -48,8 +49,7 @@ public abstract class SettingsHandler {
         new CrawlerSettings(this, null, null);
     /** Cached CrawlerSettings objects */
     private final Map settingsCache = new WeakHashMap();
-    private final CrawlerModule controller;
-    // TODO: Change this to real controller
+    private final CrawlOrder order;
 
     final static String INTEGER = "integer";
     final static String LONG = "long";
@@ -102,8 +102,8 @@ public abstract class SettingsHandler {
      * 
      */
     public SettingsHandler() throws InvalidAttributeValueException {
-        controller = new Controller(); // TODO: Change this to real controller
-        controller.setAsController(this);
+        order = new CrawlOrder();
+        order.setAsOrder(this);
     }
 
     /**
@@ -259,10 +259,9 @@ public abstract class SettingsHandler {
     protected abstract CrawlerSettings readSettingsObject(CrawlerSettings settings);
 
     /**
-     * TODO: Change this to real controller
      * @return
      */
-    public CrawlerModule getController() {
-        return controller;
+    public CrawlOrder getOrder() {
+        return order;
     }
 }
