@@ -93,12 +93,13 @@ public class CrawlServer implements Serializable {
 //			robots = RobotsExclusionPolicy.DENYALL;
 //			return;
 //		}
+		ReplayInputStream contentBodyStream = null;
 		try {
 			BufferedReader reader;
 			if(honoringPolicy.getType() == RobotsHonoringPolicy.CUSTOM) {
 				reader = new BufferedReader(new StringReader(honoringPolicy.getCustomRobots()));
 			} else {
-				ReplayInputStream contentBodyStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
+				contentBodyStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 				contentBodyStream.setToResponseBodyStart();
 				reader = new BufferedReader(
 					new InputStreamReader(contentBodyStream));
@@ -107,6 +108,10 @@ public class CrawlServer implements Serializable {
 		} catch (IOException e) {
 			robots = RobotsExclusionPolicy.ALLOWALL;
 			throw e; // rethrow
+		} finally {
+			if(contentBodyStream!=null) {
+				contentBodyStream.close();
+			}
 		}
 		return;
 	}
