@@ -29,6 +29,7 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.DiskLongFPSet;
+import org.archive.util.MemLongFPSet;
 import org.archive.util.Queue;
 
 /**
@@ -109,8 +110,8 @@ public class Frontier
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
-		alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
-		//alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
+		//alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
+		alreadyIncluded = new FPUURISet(new MemLongFPSet(8,0.75f));
 		
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();
@@ -239,7 +240,7 @@ public class Frontier
 			updateScheduling(curi);
 			notify(); // new items might be available
 			
-			noteLocalErrors(curi);
+			logLocalizedErrors(curi);
 			
 			// consider errors which halt further processing
 			if (isDispositiveFailure(curi)) {
@@ -266,7 +267,7 @@ public class Frontier
 	/**
 	 * 
 	 */
-	private void noteLocalErrors(CrawlURI curi) {
+	private void logLocalizedErrors(CrawlURI curi) {
 		if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
 			List localErrors = (List)curi.getAList().getObject(A_LOCALIZED_ERRORS);
 			Iterator iter = localErrors.iterator();
@@ -277,6 +278,8 @@ public class Frontier
 					curi.getUURI().getUri().toString(),
 					array);
 			}
+			// once logged, discard
+			curi.getAList().remove(A_LOCALIZED_ERRORS);
 		}
 	}
 
