@@ -1077,9 +1077,16 @@ public class CrawlController implements Serializable {
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-        if (this.frontier instanceof Frontier) {
-            ((Frontier)this.frontier).loadSeeds();
-        }
+//        if (this.frontier instanceof Frontier) {
+//            ((Frontier)this.frontier).loadSeeds();
+//        }
+        
+        this.scope.kickUpdate();
+        this.frontier.kickUpdate();
+        
+        // TODO: continue to generalize this, so that any major 
+        // component can get a kick when it may need to refresh its data
+
         setThresholds();
     }
 
