@@ -503,4 +503,11 @@ public class CrawlURI extends CandidateURI
 	public void addSpeculativeEmbed(String string) {
 		addToNamedSet(A_HTML_SPECULATIVE_EMBEDS,string);
 	}
+
+	/**
+	 * @param string
+	 */
+	public void addCSSLink(String string) {
+		addToNamedSet(A_CSS_LINKS, string);		
+	}
 }
