@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -48,8 +47,6 @@ import javax.management.AttributeNotFoundException;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -481,22 +478,17 @@ public class Frontier
         // TODO: have inactive queues sorted by priority
         // TODO: (probably elsewhere) deactivate active queues that "have 
         // done enough for now" ("enough" to be defined)
-        while(curi == null && (inactiveClassQueues.isEmpty() == false || readyClassQueues.isEmpty() == false)){
-            while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
-                URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
-                kq.activate();
-                kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                        ,curi)).intValue());
-                updateQ(kq);
-            }
-            
-            // now, see if any holding queues are ready with a CrawlURI
-            while (!this.readyClassQueues.isEmpty() && curi == null) {
-                curi = dequeueFromReady();
-            }
+        while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
+            URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
+            kq.activate();
+            kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
+                    ,curi)).intValue());
+            updateQ(kq);
         }
         
-        if (curi != null) {
+        // now, see if any holding queues are ready with a CrawlURI
+        if (!this.readyClassQueues.isEmpty()) {
+            curi = dequeueFromReady();
             try {
                 return emitCuri(curi);
             }
@@ -608,16 +600,10 @@ public class Frontier
         logger.fine("Frontier.finished: " + curi.getURIString());
         // Catch up on scheduling
         innerBatchFlush();
-
         notify(); // new items might be available, let waiting threads know
-
+        
         try {
-            // no need to update queues if user deleted items since they
-            // can not possibly have been in processing and do not affect
-            // politeness
-            if(curi.getFetchStatus() != S_DELETED_BY_USER){
-                noteProcessingDone(curi);
-            }
+            noteProcessingDone(curi);
 
             if (curi.isSuccess()) {
                 successDisposition(curi);
@@ -790,25 +776,8 @@ public class Frontier
     private CrawlURI dequeueFromReady() {
         URIWorkQueue firstReadyQueue = (URIWorkQueue)readyClassQueues.getFirst();
         assert firstReadyQueue.getState() == URIWorkQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
-        CrawlURI readyCuri = null;
-        try {
-            readyCuri = firstReadyQueue.dequeue();
-        } catch (NoSuchElementException e) {
-            StringBuffer alertbody = new StringBuffer();
-            alertbody.append("A NoSuchElementException occured while thread " + 
-                    Thread.currentThread().getName() + " tried to dequeue " +
-                    "an item from " +firstReadyQueue.getClassKey() + "\n" +
-                    "Queue report follows:\n");
-            appendKeyedQueue(alertbody,(KeyedQueue)firstReadyQueue,System.currentTimeMillis());
-            Heritrix.addAlert(
-                    new Alert("NoSuchElementException while dequeing from " + 
-                                    firstReadyQueue.getClassKey(),
-                            alertbody.toString(),
-                            e,
-                            Level.SEVERE));
-            firstReadyQueue.freeze(); // Do not want to do anything more with the queue
-            readyClassQueues.remove(firstReadyQueue);
-        }
+        assert firstReadyQueue.isEmpty() == false : "top ready queue inexplicably empty";
+        CrawlURI readyCuri = firstReadyQueue.dequeue();
         firstReadyQueue.checkEmpty();
         return readyCuri;
     }
@@ -1706,5 +1675,13 @@ public class Frontier
         coistream.pushAuxiliaryDirectory("frontier");
         coistream.defaultReadObject();
         coistream.popAuxiliaryDirectory();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#deleted(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public synchronized void deleted(CrawlURI curi) {
+        disregardDisposition(curi);
+        curi.processingCleanup();
     }
 }
