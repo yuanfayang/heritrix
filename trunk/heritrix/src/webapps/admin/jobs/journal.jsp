@@ -1,17 +1,16 @@
-<%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
 
 <%@ page import="java.io.FileWriter,java.io.File"%>
 <%@ page import="java.util.Date"%>
-<%@ page import="org.archive.crawler.admin.auth.User"%>
+<%@ page import="org.archive.crawler.admin.ui.CookieUtils"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
 
 <%
     String journal = null;
     
-    String operator = User.getCookieValue(request.getCookies(),
+    String operator = CookieUtils.getCookieValue(request.getCookies(),
         "operator","");
     
     String journalFilename = "operator.journal";

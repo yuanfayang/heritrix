@@ -301,24 +301,37 @@ public class SimpleHttpServer
      * a security constraint that points to a realm named for the passed
      * webapp, <code>webappName</code>.
      *
-     * @param webappName Name of webapp to configure.
-     * @param contextName Name of context we're using with this webapp.
-     * If null, we'll use the webapp name as context name.
+     * @param realmName Name of realm to configure.
+     * @param contextName Name of context we're using with this realm.
+     * If null, we'll use the realm name as context name.
      * @param authProperties Path to file that holds the auth login and
      * password.
      *
      * @throws IOException
      */
-    public void setAuthentication(String webappName, String contextName,
-                File authProperties)
-            throws IOException {
-        this.server.addRealm(new HashUserRealm(webappName,
-                authProperties.getAbsolutePath()));
+    public HashUserRealm setAuthentication(String realmName,
+        String contextName, String authProperties)
+    throws IOException {
+        HashUserRealm realm =
+            (authProperties != null && authProperties.length() > 0)?
+                new HashUserRealm(realmName, authProperties):
+                new HashUserRealm(realmName);
+        this.server.addRealm(realm);
         if (contextName == null || contextName.length() <= 0) {
-            contextName = webappName;
+            contextName = realmName;
         }
         WebApplicationContext context = getContext(contextName);
-        context.setRealmName(webappName);
+        context.setRealmName(realmName);
+        return realm;
+    }
+    
+    public void setAuthentication(String realmName, String contextName,
+            String username, String password, String role)
+    throws IOException {
+        HashUserRealm realm = setAuthentication(realmName, contextName,
+            null);
+        realm.put(username, password);
+        realm.addUserToRole(username, role);
     }
 
     /**

@@ -50,7 +50,6 @@ import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.framework.CrawlController;
@@ -213,7 +212,11 @@ public class Heritrix
      */
 	private static final String CRAWLER_PACKAGE = Heritrix.class.getName().
         substring(0, Heritrix.class.getName().lastIndexOf('.'));
-
+    
+    /**
+     * The root context for a webapp.
+     */
+    private static final String ROOT_CONTEXT = "/";
 
     /**
      * Launch program
@@ -630,14 +633,14 @@ public class Heritrix
         throws Exception {
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
-        final String CONTEXT = "/";
-        Heritrix.httpServer = new SimpleHttpServer(SELFTEST, CONTEXT,
+        final String REALM = SELFTEST;
+        Heritrix.httpServer = new SimpleHttpServer(SELFTEST, ROOT_CONTEXT,
             port, true);
         // Set up digest auth for a section of the server so selftest can run
         // auth tests.  Looks like can only set one login realm going by the
         // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
-        Heritrix.httpServer.setAuthentication(SELFTEST, CONTEXT,
-            getPropertiesFile());
+        Heritrix.httpServer.setAuthentication(REALM, ROOT_CONTEXT,
+            getPropertiesFile().getAbsolutePath());
         // Start server.
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), SELFTEST);
@@ -712,9 +715,12 @@ public class Heritrix
             adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
-        User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
-
-        httpServer = new SimpleHttpServer("admin", "/", port, false);
+        httpServer = new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
+        // Name of passed 'realm' must match what is in configured in web.xml.
+        // We'll use ROLE for 'realm' and 'role'.
+        final String ROLE = "administrator";
+        Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUN,
+            adminPW, ROLE);
         httpServer.startServer();
         Heritrix.jobHandler = new CrawlJobHandler();
         String status = null;

@@ -1,6 +1,4 @@
-<%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
-
 <%@ page import="java.util.Vector,java.util.HashMap" %>
 <%@ page import="java.util.logging.Level"%>
 <%@ page import="org.archive.crawler.admin.Alert"%>

@@ -1,5 +1,4 @@
 <%@include file="/include/handler.jsp"%>
-<%@include file="/include/secure.jsp"%>
 
 <%
     String title = "Frontier report";

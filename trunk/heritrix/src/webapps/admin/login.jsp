@@ -1,67 +1,23 @@
 <%@include file="/include/nocache.jsp"%>
 <%@ page errorPage="/error.jsp" %>
-<%@page import="org.archive.crawler.admin.auth.*,java.net.URLDecoder" %>
+<%@page import="java.net.URLDecoder" %>
 
 <%
     String sMessage = null;
     String sAction = request.getParameter("action");
-    if(sAction!=null) {
+    if(sAction != null) {
         // Some action has been specified.
         if(sAction.equalsIgnoreCase("redirect")) {
-            sMessage = "You must log in";
+            sMessage = "Incorrect login/password combination.";
         } else if(sAction.equalsIgnoreCase("login")) {
-            // Attempt login
-            User user = new User(request.getParameter("username"), 
-                request.getParameter("password"));
-            if(user == null || user.authenticate() == User.INVALID_USER) {
-                // Not logged in
-                sMessage = "Login failed";
-            } else {
-                // Successful login.
-                if(request.getParameter("remember") != null &&
-                    request.getParameter("remember").equalsIgnoreCase("true")) {
-                    // Need to write cookies to remember login.
-                    Cookie userCookie = new Cookie("username",
-                        request.getParameter("username"));
-                    Cookie passCookie = new Cookie("password",
-                        request.getParameter("password"));
-                    userCookie.setMaxAge(60*60*24*365);//One year
-                    passCookie.setMaxAge(60*60*24*365);//One year
-                    response.addCookie(userCookie);
-                    response.addCookie(passCookie);
-                } else {
-                    // Delete old cookies to be sure that no old logins are
-                    // remembered.
-                    Cookie userCookie = new Cookie("username", "");
-                    Cookie passCookie = new Cookie("password", "");
-                    userCookie.setMaxAge(0);//One year
-                    passCookie.setMaxAge(0);//One year
-                    response.addCookie(userCookie);
-                    response.addCookie(passCookie);
-                }
-                
-                session.setAttribute("user", user);
-                String back = request.getParameter("redirect");
-                String redirect = "";
-                // Redirect to user group entry page.
-                if(user.authenticate() == User.USER) {
-                    // Redirect to 'User' start page
-                    // TODO: This page currently does not exist.
-                    redirect = request.getContextPath() + "/simplerequest.jsp";
-                } else if(user.authenticate() == User.ADMINISTRATOR) {
-                    // Redirect to 'Administrator' start page.
-                    redirect = request.getContextPath() + "/index.jsp";
-                }
-                
-                if(back!=null && back.length()>0 &&
-                        back.equalsIgnoreCase("null")==false){
-                    redirect = URLDecoder.decode(back,"UTF-8");
-                }
-                response.sendRedirect(redirect);
-            }
+            // Do nothing.  Its all done by the container. 
         } else if(sAction.equalsIgnoreCase("logout")) {
-            // Logging out
-            session.removeAttribute("user");
+            // Logging out.
+            session = request.getSession();
+            if (session != null) {
+                session.invalidate();
+                sMessage = "Successful logout.";
+            }
         }
     }
 %>
@@ -100,7 +56,8 @@
             </tr>
             <tr>
                 <td colspan="2" height="100%" valign="top" class="main">
-                    <form method="post" action="login.jsp">
+                    <form method="post" 
+                        action='<%= response.encodeURL("j_security_check") %>'>
                         <input type="hidden" name="action" value="login">
                         <input type="hidden" name="redirect" 
                             value="<%=request.getParameter("back")%>">
@@ -117,7 +74,7 @@
                                     Username:
                                 </td>
                                 <td> 
-                                    <input name="username">
+                                    <input name="j_username">
                                 </td>
                             </tr>
                             <tr>
@@ -125,14 +82,7 @@
                                     Password:
                                 </td>
                                 <td>
-                                    <input type="password" name="password">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">
-                                    <input type="checkbox" name="remember" 
-                                    value="true">Remember my login on this
-                                        computer
+                                    <input type="password" name="j_password">
                                 </td>
                             </tr>
                             <tr>

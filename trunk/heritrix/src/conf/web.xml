@@ -4,7 +4,8 @@
 
 <web-app>
     <icon>
-    <large-icon>images/log.gif</large-icon>
+    <small-icon>images/small-logo.gif</small-icon>
+    <large-icon>images/logo.gif</large-icon>
     </icon>
 	<display-name>Heritrix</display-name>
     <description>Heritrix web crawler in a WAR file bundle.</description>

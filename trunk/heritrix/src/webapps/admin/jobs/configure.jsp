@@ -9,7 +9,6 @@
    */
 %>
 <%@include file="/include/handler.jsp"%>
-<%@include file="/include/secure.jsp"%>
 <%@include file="/include/jobconfigure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>

@@ -1,4 +1,3 @@
-<%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
