@@ -86,7 +86,7 @@ public class CrawlHost {
      * @param ttl the TTL from the dns record or -1 if it should live forever
      *            (is a numeric IP).
      */
-    public synchronized void setIP(InetAddress address, long ttl) {
+    public void setIP(InetAddress address, long ttl) {
         ip = address;
         // assume that a lookup as occurred by the time
         // a caller decides to set this (even to null)
