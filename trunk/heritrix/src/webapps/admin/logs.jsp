@@ -138,7 +138,7 @@
 
 <%@include file="/include/head.jsp"%>
 	<% if(iTime>0){ %>
-		<meta http-equiv=Refresh content="<%=iTime%> URL=logs.jsp?time=<%=iTime%>&log=<%=fileName%>">
+		<meta http-equiv=Refresh content="<%=iTime%> URL=logs.jsp?time=<%=iTime%>&log=<%=fileName%>&linesToShow=<%=linesToShow%>">
 	<% } %>
 	
 	<% 
