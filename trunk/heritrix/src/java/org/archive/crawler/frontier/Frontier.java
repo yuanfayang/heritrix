@@ -344,10 +344,7 @@ public class Frontier
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
         //
-        // TODO:  THe calling the refreshSeeds method forces the reading of all
-        // seeds into a cache.  This might not be always what is wanted,
-        // particularly if broad crawl with millions of seeds.
-        this.controller.getScope().refreshSeeds();
+
         List seeds = this.controller.getScope().getSeedlist();
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
@@ -1687,5 +1684,12 @@ public class Frontier
      */
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.add(u);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.URIFrontier#kickUpdate()
+     */
+    public void kickUpdate() {
+        loadSeeds();
     }
 }
