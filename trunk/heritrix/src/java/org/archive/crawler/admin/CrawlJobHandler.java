@@ -487,7 +487,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // First check to see if we are deleting the current job.
         if (currentJob != null && jobUID.equals(currentJob.getUID())) {
             // Need to terminate the current job.
-            controller.stopCrawl(); // This will cause crawlEnding to be invoked.
+            controller.requestCrawlStop(); // This will cause crawlEnding to be invoked.
                                     // It will handle the clean up.
             crawling = false;
 
@@ -550,7 +550,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void resumeJob() {
         if (controller != null) {
-            controller.resumeCrawl();
+            controller.requestCrawlResume();
         }
     }
     /**
@@ -867,7 +867,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         currentJob.setRunning(true);
         currentJob.setStatisticsTracking(controller.getStatistics());
-        controller.startCrawl();
+        controller.requestCrawlStart();
     }
 
     /**
