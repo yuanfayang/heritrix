@@ -204,7 +204,7 @@ public class Refinement {
         return this.organization;
     }
     /**
-     * @param organziation The organziation to set.
+     * @param organization The organziation to set.
      */
     public void setOrganization(String organization) {
         this.organization = organization;
