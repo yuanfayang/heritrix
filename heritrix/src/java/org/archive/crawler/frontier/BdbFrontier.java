@@ -27,14 +27,20 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections.Bag;
+import org.apache.commons.collections.BagUtils;
+import org.apache.commons.collections.HashBag;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -49,11 +55,11 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.util.BdbUriUniqFilter;
+import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
 import st.ata.util.FPGenerator;
 import EDU.oswego.cs.dl.util.concurrent.ClockDaemon;
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -96,21 +102,33 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     // TODO: BDBify
     /** all known queues */
     protected HashMap allQueues = new HashMap(); // of classKey -> BDBWorkQueue
-    /** count of unheld queues (since for now we're not discarding them) */
-    protected int unheldQueueCount = 0;
 
     /** all per-class queues whose first item may be handed out */
-    protected LinkedQueue readyClassQueues = new LinkedQueue(); // of KeyedQueues
-    /** count of items in readyClassQueues */
-    protected int readyQueueCount = 0;
+    protected LinkedQueue readyClassQueues = new LinkedQueue(); // of BDBWorkQueue
 
-    /** daemon to wake (put in ready queue) WorkQueues at the appropriate time */
-    protected ClockDaemon daemon = new ClockDaemon();
+    /** all per-class queues from whom a URI is outstanding */
+    protected Bag inProcessQueues = BagUtils.synchronizedBag(new HashBag()); // of BDBWorkQueue
 
+    /** all per-class queues held in snoozed state, sorted by wake time */
+    protected SortedSet snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet());
+
+    /** moves waking items from snoozedClassQueues to readyClassQueues */
+    protected ClockDaemon wakeDaemon = new ClockDaemon();
+    
+    /** runnable task to wake snoozed queues */
+    protected Runnable waker = new Runnable() {
+        public void run() {
+            BdbFrontier.this.wakeQueues();
+        }
+    };
+    
     /** shared bdb Environment for Frontier subcomponents */
-    protected Environment dbEnvironment;
     // TODO: investigate using multiple environments to split disk accesses
     // across separate physical disks
+    protected Environment dbEnvironment;
+
+    /** how long to wait for a ready queue when there's nothing snoozed */
+    private static final long DEFAULT_WAIT = 1000; // 1 seconds
     
     /**
      * Create the BdbFrontier
@@ -216,7 +234,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             wq.enqueue(curi);
             if(!wq.isHeld()) {
                 wq.setHeld();
-                unheldQueueCount--;
                 readyQueue(wq);
             }
         }
@@ -231,7 +248,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     private void readyQueue(BdbWorkQueue wq) {
         try {
             readyClassQueues.put(wq);
-            readyQueueCount++;
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.err.println("unable to ready queue "+wq);
@@ -254,7 +270,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             if (wq == null) {
                 wq = new BdbWorkQueue(classKey, pendingUris);
                 allQueues.put(classKey, wq);
-                unheldQueueCount++;
             }
         }
         return wq;
@@ -279,20 +294,22 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
             // do common checks for pause, terminate, bandwidth-hold
             preNext(now);
-
-            BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(5000);
+            
+            // don't wait if there are items buffered in alreadyIncluded
+            long wait = alreadyIncluded.pending() > 0 ? 0 : DEFAULT_WAIT;
+            
+            BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
             if (readyQ != null) {
                 synchronized(readyQ) {
-                    readyQueueCount--;
                     CrawlURI curi = readyQ.peek();
                     if (curi != null) {
                         noteAboutToEmit(curi, readyQ);
+                        inProcessQueues.add(readyQ);
                         return curi;
                     } else {
                         // readyQ is empty and ready: release held, allowing
                         // subsequent enqueues to ready
                         readyQ.clearHeld();
-                        unheldQueueCount++;
                     }
                 }
             }
@@ -302,6 +319,32 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         }
     }
 
+
+    /**
+     * Wake any queues sitting in the snoozed queue whose time has come
+     */
+    private void wakeQueues() {
+        long now = System.currentTimeMillis();
+        synchronized (snoozedClassQueues) {
+            while (true) {
+                if (snoozedClassQueues.isEmpty()) {
+                    return;
+                }
+                BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
+                if (peek.getWakeTime() < now) {
+                    snoozedClassQueues.remove(peek);
+                    try {
+                        peek.setWakeTime(0);
+                        readyClassQueues.put(peek);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    return;
+                }
+            }
+        }
+    }
 
     /**
      * Note that the previously emitted CrawlURI has completed
@@ -321,6 +364,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         logLocalizedErrors(curi);
         BdbWorkQueue wq = (BdbWorkQueue) curi.getHolder();
         assert (wq.peek() == curi) : "unexpected peek " + wq;
+        inProcessQueues.remove(wq,1);
 
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
@@ -328,9 +372,8 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             wq.unpeek();
             synchronized(wq) {
                 if (delay_sec > 0) {
-                    long delay = delay_sec * 1000;
-                    wq.snooze();
-                    daemon.executeAfterDelay(delay, new WakeTask(wq));
+                    long delay_ms = delay_sec * 1000;
+                    snoozeQueue(wq, now, delay_ms);
                 } else {
                     readyQueue(wq);
                 }
@@ -343,6 +386,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
 
         // curi will definitely be disposed of without retry, so remove from q
         wq.dequeue();
+        decrementQueuedCount(1);
         log(curi);
 
         if (curi.isSuccess()) {
@@ -382,8 +426,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         long delay_ms = politenessDelayFor(curi);
         synchronized(wq) {
             if (delay_ms > 0) {
-                wq.snooze();
-                daemon.executeAfterDelay(delay_ms, new WakeTask(wq));
+                snoozeQueue(wq,now,delay_ms);
             } else {
                 readyQueue(wq);
             }
@@ -392,6 +435,17 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         curi.stripToMinimal();
         curi.processingCleanup();
 
+    }
+
+    /**
+     * @param wq
+     * @param now
+     * @param delay_ms
+     */
+    private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
+        wq.setWakeTime(now+delay_ms);
+        snoozedClassQueues.add(wq);
+        wakeDaemon.executeAfterDelay(delay_ms,waker);
     }
 
     /**
@@ -464,6 +518,8 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         while(iter.hasNext()) {
             ((BdbWorkQueue)iter.next()).unpeek();
         }
+        // TODO: update per-queue counts!
+        decrementQueuedCount(count);
         return count;
     }
 
@@ -473,8 +529,10 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public String oneLineReport() {
         StringBuffer rep = new StringBuffer();
-        rep.append(allQueues.size() + " queues: " + readyQueueCount
-                + " ready; " + unheldQueueCount + " unheld (empty)");
+        rep.append(allQueues.size() + " queues: " + 
+                inProcessQueues.uniqueSet().size() + " in-process; " +
+                readyClassQueues.getCount() + " ready; " + 
+                snoozedClassQueues.size() + " snoozed");
         // TODO: include active, snoozed counts if/when possible
         return rep.toString();
     }
@@ -504,10 +562,34 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         rep.append(" Already included size:     " + alreadyIncluded.count()
                 + "\n");
         rep.append("\n All class queues map size: " + allQueues.size() + "\n");
-        rep.append(   "             Ready queues: " + readyQueueCount + "\n");
-        rep.append(   "        Idle/empty queues: " + unheldQueueCount + "\n");
-        
-        // TODO: improve/update for new backing queues
+        rep.append(  "         In-process queues: " + 
+                inProcessQueues.uniqueSet().size()  + "\n");
+        rep.append(  "              Ready queues: " + 
+                readyClassQueues.getCount() + "\n");
+        rep.append(  "            Snoozed queues: " + 
+                snoozedClassQueues.size() + "\n");
+        rep.append("\n -----===== READY QUEUES =====-----\n");
+        Iterator iter = readyClassQueues.iterator();
+        int count = 0; 
+        while(iter.hasNext() && count < 50 ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(readyClassQueues.getCount()>50) {
+            rep.append("...and "+(readyClassQueues.getCount()-50)+" more.\n");
+        }
+        rep.append("\n -----===== SNOOZED QUEUES =====-----\n");
+        count = 0;
+        iter = snoozedClassQueues.iterator();
+        while(iter.hasNext() && count < 50 ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(snoozedClassQueues.size()>50) {
+            rep.append("   ...and"+(snoozedClassQueues.size()-50)+" more.\n");
+        }    
         return rep.toString();
     }
 
@@ -768,7 +850,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * 
      * @author gojomo
      */
-    public class BdbWorkQueue {
+    public class BdbWorkQueue implements Comparable {
         String classKey;
         
         /** where items are really stored, for now */
@@ -777,10 +859,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         /** total number of stored items */
         long count = 0;
         
-        /** whether the queue is snoozed (held unready even if items
-         *  available */
-        boolean snoozed = false;
-
         /** the next item to be returned */ 
         CrawlURI peekItem = null;
 
@@ -796,6 +874,9 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         /** whether queue is already in lifecycle stage */
         boolean isHeld = false; 
         
+        /** time to wake, if snoozed */
+        long wakeTime = 0;
+        
         /**
          * Create a virtual queue inside the given BdbMultiQueue 
          * 
@@ -810,6 +891,40 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             ArchiveUtils.longIntoByteArray(fp, origin, 0);
         }
 
+        /**
+         * @return a string describing this queue
+         */
+        public String report() {
+            return "Queue " + classKey + "\n" + 
+                   "  "+ count + " items" + "\n" +
+                   "    last enqueued: " + lastQueued + "\n" +
+                   "      last peeked: " + lastPeeked + "\n" +
+                   ((wakeTime == 0) ? "" :
+                   "         wakes in: " + 
+                           (wakeTime-System.currentTimeMillis()) + "ms\n");
+        }
+
+        /**
+         * @param l
+         */
+        public void setWakeTime(long l) {
+            wakeTime = l;
+        }
+
+        /**
+         * @return wakeTime
+         */
+        public long getWakeTime() {
+            return wakeTime;
+        }
+        
+        /**
+         * @return classKey
+         */
+        private String getClassKey() {
+            return classKey;
+        }
+        
         /**
          * Clear isHeld to false
          */
@@ -833,16 +948,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
          */
         public void setHeld() {
             isHeld = true; 
-        }
-
-        /**
-         * Note that the queue is snoozed, so that a zero-item queue
-         * that gets an add isn't prematurely or redundantly made ready. 
-         * 
-         */
-        public void snooze() {
-            // TODO: revisit sync issues around snooze ops
-            snoozed = true;
         }
 
         /**
@@ -908,47 +1013,24 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             count++;
         }
 
-        /**
-         * clear the snoozed indicator upon wake
-         */
-        public void unsnooze() {
-            snoozed = false;
-        }
-
-    }
-
-    /**
-     * Utility task to put a queue whose politeness timeout
-     * has expired onto the readyQueues queue. 
-     * 
-     * TODO: consider reverting to previous style, with 
-     * sorted list of wakers checked occasionally, so that
-     * there's a clear list with a count of waiting items.
-     * 
-     * @author gojomo
-     */
-    protected class WakeTask implements Runnable {
-        BdbWorkQueue waker;
-
-        /**
-         * Create the WakeTask for the given queue
-         * @param q queue to wake
-         */
-        public WakeTask(BdbWorkQueue q) {
-            super();
-            waker = q;
-        }
-
         /* (non-Javadoc)
-         * @see java.lang.Runnable#run()
+         * @see java.lang.Comparable#compareTo(java.lang.Object)
          */
-        public void run() {
-            synchronized(waker) {
-                waker.unsnooze();
-                readyQueue(waker);
+        public int compareTo(Object obj) {
+            if(this==obj) {
+                return 0; // for exact identity only
             }
+            BdbWorkQueue other = (BdbWorkQueue)obj;
+            if (getWakeTime() > other.getWakeTime()) {
+                return 1;
+            }
+            if (getWakeTime() < other.getWakeTime()) {
+                return -1;
+            }
+            // at this point, the ordering is arbitrary, but still
+            // must be consistent/stable over time
+            return this.classKey.compareTo(other.getClassKey());
         }
-
     }
 
     /**
