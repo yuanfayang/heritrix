@@ -10,21 +10,22 @@
   <section name="System Runtime Requirements">
 
     <subsection name="Java Runtime Environment">
-<p>The Heritrix crawler is implemented purely in java.  This means that 
-the only true requirement for running it is that you have a JRE installed.
-
-<p>The Heritrix crawler makes use of Java 1.4 features so your JRE must 
-be at least of a 1.4.0 pedigree.</p>
-
-<p>We currently include all of the free/open source third-party libraries 
-necessary to run Heritrix in the distribution package, and will continue 
-to do so as long as is practical.</p>
-    </subsection>
+		<p>The Heritrix crawler is implemented purely in java.  This means that 
+		the only true requirement for running it is that you have a JRE installed.</p>
+		
+		<p>The Heritrix crawler makes use of Java 1.4 features so your JRE must 
+		be at least of a 1.4.0 pedigree.</p>
+		
+		<p>We currently include all of the free/open source third-party libraries 
+		necessary to run Heritrix in the distribution package, and will continue 
+		to do so as long as is practical.</p>
+	</subsection>
    
     <subsection name="Hardware">
-<p>We recommend assigning at least 256MB RAM to the Java heap (via the
-"-Xmx256MB" VM argument), which is usually suitable for crawls that range 
-over hundreds of hosts.</p>
+		<p>We recommend assigning at least 256MB RAM to the Java heap (via the
+		"-Xmx256MB" VM argument), which is usually suitable for crawls that range 
+		over hundreds of hosts.</p>
+	</subsection>
     
     <subsection name="Linux">
         <p>The Heritrix crawler has been built and tested primarily on Linux. 
@@ -32,7 +33,7 @@ over hundreds of hosts.</p>
         is not tested, packaged, or supported on platforms other than Linux
         at this time.</p>
     </subsection>
-    </section>
+  </section>
 
   </body>
 </document>
