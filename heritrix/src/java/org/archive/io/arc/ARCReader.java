@@ -564,7 +564,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @param f Arc file to read.
      * @throws IOException
      */
-    protected static void writePseudoCDX(File f) throws IOException {
+    protected static void index(File f) throws IOException {
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
         ARCRecord headRecord = arc.getCurrentRecord();
@@ -624,7 +624,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * <a href="http://www.archive.org/web/researcher/cdx_legend.php">CDX
      * Legent</a> and here
      * <a href="http://www.archive.org/web/researcher/example_cdx.php">Example</a>.
-     * Legend used in below is: 'CDX b e a m c V (or v if uncompressed) n'.
+     * Legend used in below is: 'CDX b e a m s c V (or v if uncompressed) n g'.
      * Hash is hard-coded straight SHA-1 hash of content.
      *
      * @param args Command-line arguments.
@@ -695,7 +695,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 // long start = System.currentTimeMillis();
-                writePseudoCDX(new File((String)i.next()));
+                index(new File((String)i.next()));
             }
         }
     }
