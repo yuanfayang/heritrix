@@ -319,27 +319,25 @@ implements CoreAttributeConstants {
             // Some other extractor already handled this one. We'll pass on it.
             return;
         }
-        if (!curi.isHttpTransaction())
-        {
+        
+        if (!curi.isHttpTransaction()) {
             return;
         }
 
-        if(this.ignoreUnexpectedHTML) {
+        if (this.ignoreUnexpectedHTML) {
             try {
                 if(!isHtmlExpectedHere(curi)) {
                     // HTML was not expected (eg a GIF was expected) so ignore
                     // (as if a soft 404)
                     return;
                 }
-            }
-            catch (URIException e) {
+            } catch (URIException e) {
                 logger.severe("Failed expectedHTML test: " + e.getMessage());
             }
         }
 
         String contentType = curi.getContentType();
-        if ((contentType==null) || (!contentType.startsWith("text/html")))
-        {
+        if ((contentType == null) || (!contentType.startsWith("text/html"))) {
             // nothing to extract for other types here
             return;
         }
@@ -350,6 +348,13 @@ implements CoreAttributeConstants {
         
         try {
 	       cs = curi.getHttpRecorder().getReplayCharSequence();
+           HttpRecorder hr = curi.getHttpRecorder();
+           if (hr == null) {
+               // Note. We can return out of here! 
+               return;
+           }
+           cs = hr.getReplayCharSequence();
+
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e,
                 "Failed get of replay char sequence " + curi.toString() +
