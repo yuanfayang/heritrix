@@ -120,8 +120,8 @@ public class CrawlController extends Thread{
 		}
 
 		setupStatTracking();
-		setupCrawlModules();
 		setupToePool();
+		setupCrawlModules();
 		
 		// start periodic background logging of crawl statistics
 		Thread statLogger = new Thread(statistics);
