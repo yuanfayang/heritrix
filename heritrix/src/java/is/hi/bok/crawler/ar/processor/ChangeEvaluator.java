@@ -76,8 +76,8 @@ public class ChangeEvaluator extends Processor implements ARAttributeConstants {
         }
 
         String oldDigest = null;
-        if(curi.getAList().containsKey(A_LAST_CONTENT_DIGEST)){
-            oldDigest = curi.getAList().getString(A_LAST_CONTENT_DIGEST);
+        if(curi.containsKey(A_LAST_CONTENT_DIGEST)){
+            oldDigest = curi.getString(A_LAST_CONTENT_DIGEST);
         }
 
         // Compare the String representation of the byte arrays.
@@ -101,24 +101,24 @@ public class ChangeEvaluator extends Processor implements ARAttributeConstants {
                     ", new: " + (currentDigest==null? "null" : currentDigest));
             // currentDigest may be null, that probably means a failed download
             curi.setContentState(CrawlURI.CONTENT_CHANGED);
-            curi.getAList().putString(A_LAST_CONTENT_DIGEST,currentDigest); 
+            curi.putString(A_LAST_CONTENT_DIGEST,currentDigest); 
         }
         
         /* Update visit and version counters */
         // Update visits
         int visits = 1;
-        if(curi.getAList().containsKey(A_NUMBER_OF_VISITS)){
-            visits = curi.getAList().getInt(A_NUMBER_OF_VISITS) + 1;
+        if(curi.containsKey(A_NUMBER_OF_VISITS)){
+            visits = curi.getInt(A_NUMBER_OF_VISITS) + 1;
         }
-        curi.getAList().putInt(A_NUMBER_OF_VISITS,visits);
+        curi.putInt(A_NUMBER_OF_VISITS,visits);
 
         // Update versions
         if(curi.getContentState() == CrawlURI.CONTENT_CHANGED){
             int versions = 1;
-            if(curi.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
-                versions = curi.getAList().getInt(A_NUMBER_OF_VERSIONS) + 1;
+            if(curi.containsKey(A_NUMBER_OF_VERSIONS)){
+                versions = curi.getInt(A_NUMBER_OF_VERSIONS) + 1;
             }
-            curi.getAList().putInt(A_NUMBER_OF_VERSIONS,versions);
+            curi.putInt(A_NUMBER_OF_VERSIONS,versions);
         }
     }
 }

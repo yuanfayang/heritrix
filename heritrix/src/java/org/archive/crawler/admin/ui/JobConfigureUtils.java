@@ -404,6 +404,21 @@ public class JobConfigureUtils {
     }
     
     /**
+     * Test whether seeds file is of a size that's reasonable
+     * to edit in an HTML textarea. 
+     * @param h current settingsHandler
+     * @return true if seeds size is manageable, false otherwise
+     * @throws AttributeNotFoundException 
+     * @throws MBeanException 
+     * @throws ReflectionException 
+     * 
+     */
+    public static boolean seedsEdittableSize(SettingsHandler h)
+            throws AttributeNotFoundException, MBeanException,
+            ReflectionException {
+        return getSeedFile(h).length() <= (32 * 1024); // 32K
+    }
+    /**
      * @param hndlr Settings handler.
      * @return Seeds file.
      * @throws ReflectionException

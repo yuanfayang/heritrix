@@ -454,8 +454,7 @@ HasUriReceiver,  CrawlStatusListener {
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
                 UURI u = (UURI)i.next();
-                CandidateURI caUri = new CandidateURI(u);
-                caUri.setSeed();
+                CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
                 caUri.setSchedulingDirective(CandidateURI.MEDIUM);
                 innerSchedule(caUri);
             }
@@ -813,7 +812,7 @@ HasUriReceiver,  CrawlStatusListener {
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
-            curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
+            curi.putObject(A_RUNTIME_EXCEPTION, e);
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
@@ -868,17 +867,16 @@ HasUriReceiver,  CrawlStatusListener {
      * @param curi CrawlURI with errors.
      */
     private void logLocalizedErrors(CrawlURI curi) {
-        if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
-            List localErrors = (List)curi.getAList().
-                getObject(A_LOCALIZED_ERRORS);
+        if(curi.containsKey(A_LOCALIZED_ERRORS)) {
+            List localErrors = (List)curi.getObject(A_LOCALIZED_ERRORS);
             Iterator iter = localErrors.iterator();
             while(iter.hasNext()) {
                 Object array[] = {curi, iter.next()};
                 controller.localErrors.log(Level.WARNING,
                     curi.getUURI().toString(), array);
             }
-            // once logged, discard
-            curi.getAList().remove(A_LOCALIZED_ERRORS);
+            // Once logged, discard
+            curi.remove(A_LOCALIZED_ERRORS);
         }
     }
 
@@ -1044,7 +1042,7 @@ HasUriReceiver,  CrawlStatusListener {
                     logger.severe(e2.getMessage());
                 } catch (IOException e) {
                     // An IOException occured trying to make new KeyedQueue.
-                    curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
+                    curi.putObject(A_RUNTIME_EXCEPTION,e);
                     Object array[] = { curi };
                     this.controller.runtimeErrors.log(Level.SEVERE,
                         curi.getUURI().toString(), array);
@@ -1157,14 +1155,14 @@ HasUriReceiver,  CrawlStatusListener {
     protected void updateScheduling(CrawlURI curi, URIWorkQueue kq)
     throws AttributeNotFoundException {
         long durationToWait = 0;
-        if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
-            && curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
+        if (curi.containsKey(A_FETCH_BEGAN_TIME)
+            && curi.containsKey(A_FETCH_COMPLETED_TIME)) {
 
-            long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
-            long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+            long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
+            long durationTaken = (completeTime - curi.getLong(A_FETCH_BEGAN_TIME));
             durationToWait =
-                    (long) (((Float) getAttribute(ATTR_DELAY_FACTOR, curi)).floatValue()
-                        * durationTaken);
+                (long)(((Float)getAttribute(ATTR_DELAY_FACTOR, curi)).
+                    floatValue() * durationTaken);
 
             long minDelay = ((Integer) getAttribute(ATTR_MIN_DELAY, curi)).longValue();
             if (minDelay > durationToWait) {
@@ -1310,8 +1308,8 @@ HasUriReceiver,  CrawlStatusListener {
             throws AttributeNotFoundException {
         long delay;
 
-        if(curi.getAList().containsKey(A_RETRY_DELAY)) {
-            delay = curi.getAList().getInt(A_RETRY_DELAY);
+        if(curi.containsKey(A_RETRY_DELAY)) {
+            delay = curi.getInt(A_RETRY_DELAY);
         } else {
             // use overall default
             delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();

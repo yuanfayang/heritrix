@@ -192,7 +192,10 @@
         a broad scoped crawl?</question>
         <answer>
         <p>See the note in
-        <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a>.
+        <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a> and this Release Note, <a href="http://crawler.archive.org/articles/releasenotes.html#1_0_0_limitations">5.1.1 Crawl Size Upper Bounds</a>.
+        See this note by Kris from the list, <a href="http://groups.yahoo.com/group/archive-crawler/message/1027">1027</a> for how
+        to mitigate memory-use when using HostQueuesFrontier (The advice is
+        less applicable if using a post-1.2.0, BdbFrontier Heritrix).
         </p>
         </answer>
       </faq>
@@ -302,7 +305,7 @@
         </answer>
       </faq>
       <faq id="embedding">
-        <question>Can Heritrix I embedd Heritrix in another application?
+        <question>Can I embedd Heritrix in another application?
         </question>
         <answer>
         <p>Sure.  Make sure all that is in the Heritrix lib directory is on
@@ -332,21 +335,50 @@ to learn more.</p>
         </answer>
       </faq>
 
+      <faq id="more_than_one_job">
+        <question>What techniques exist for crawling more than one job at 
+        time?
+        </question>
+        <answer>
+        <p>See this, <a href="http://groups.yahoo.com/group/archive-crawler/message/1182">1182</a>, Tom Emerson note for a suggestion.</p>  
+        </answer>
+      </faq>
+
 
 <faq id="toethreads">
 <question>Why are the main crawler worker threads called "ToeThreads"??
 </question>
-
 <answer>
 <p>While the mascots of web crawlers have usually been spider-related,
 I'd rather think of Heritrix as a centipede or millipede: fast and
 many-segmented.</p>
-
 <p>Anything that "crawls" over many things at once would presumably have
 a lot of feet and toes. Heritrix will often use many hundreds of worker
 threads to "crawl", but 'WorkerThread' or 'CrawlThread' seem mundane.</p>
-
 <p>So instead, we have 'ToeThreads'.  :)</p>
+</answer>
+</faq>
+
+<faq id="using_heritrix">
+<question>Who is using Heritrix?</question>
+<answer>
+<p>Below is listing of users of Heritrix (To qualify for inclusion in the
+list below, send a description of a couple of lines to the mailing list).
+<ul>
+    <li><b>The National and University Library of Iceland</b>: Crawls the
+    entire <i>.is</i> domain (~11,000 domains) using Heritrix. Has performed
+    complete snapshot using Heritrix 1.0.4 (35million URIs) and plans on
+    running three more snapshots in 2005. See <a href="http://groups.yahoo.com/group/archive-crawler/message/1385">1385</a>.</li>
+    <li><a href="http://www.lib.helsinki.fi/english/index.htm">The National
+    Library of Finland</a>:  Has used Heritrix to crawl Finnish
+    museum sites and sites pertaining to the June 2004 European parliament
+    elections.  The main crawl done in
+    2004 was of Finnish university sites (~4million URLs).
+    Kaisa supplies more detail on how this larger crawl was done: <a 
+    href="http://groups.yahoo.com/group/archive-crawler/message/1406">1406</a>.
+    </li>
+</ul>
+</p>
 </answer>
 </faq>
 

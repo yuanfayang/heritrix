@@ -99,12 +99,17 @@ public class DiskStackTest extends TmpDirTestCase {
 
     /*
      * DiskStack specific tests
+     */ 
+    /** Test the creation of a stack using a non-creatable file.
      */
-
-    /** test the creation of a stack using a non-creatable file */
     public void testCtorBadFile() {
          try {
-            File storeFile = new File("/dev/uncreateablefile");
+            // Create an uncreateable file by first creating a tmp file, and
+            // then, treating this just-created file as a directory (Idea
+            // courtesy of Dave Skinner).
+            File notReallyADir =
+                File.createTempFile("NotADirectory", "txt", getTmpDir());
+            File storeFile = new File(notReallyADir, "uncreateablefile");
             DiskStack stack = new DiskStack(storeFile);
             stack.height(); // suppress never-accessed warning
         } catch(IOException e) {

@@ -82,26 +82,29 @@ public class SeedListTest extends TmpDirTestCase {
 
         // First create array of seeds and add to treeset.
         SeedListTest.seeds = new TreeSet(SeedListTest.CMP);
-        UURI [] tmp = {
-            UURIFactory.getInstance("mailto:www.google.com"),
-            UURIFactory.getInstance("news:www.google.com"),
-            UURIFactory.getInstance("http://www.google.com"),
-            UURIFactory.getInstance("https://www.google.com"),
-            UURIFactory.getInstance("gopher://www.google.com"),
-            UURIFactory.getInstance("news://www.google.com"),
-            UURIFactory.getInstance("rss://www.google.com"),
-            UURIFactory.getInstance("telnet://www.google.com"),
-            UURIFactory.getInstance("ftp://myname@example.com/etc/motd"),
-            UURIFactory.getInstance("ftp://example.com/etc/motd2")
+        String [] uris = {"mailto:www.google.com",
+            "http://www.port.com:80/etc/motd2",
+            "http://a:b@userinfo.com/etc/motd2",
+            "news:www.google.com",
+            "http://www.google.com",
+            "https://www.google.com",
+            "gopher://www.google.com",
+            "news://www.google.com",
+            "rss://www.google.com",
+            "telnet://www.google.com",
+            "ftp://myname@example.com/etc/motd",
+            "ftp://example.com/etc/motd2"
         };
-        SeedListTest.seeds.addAll(Arrays.asList(tmp));
+        for (int i = 0; i < uris.length; i++) {
+            SeedListTest.seeds.add(UURIFactory.getInstance(uris[i]));
+        }
 
         // Write a seeds file w/ our list of seeds.
         this.seedsfile = new File(getTmpDir(),
             SeedListTest.class.getName() + ".seedfile");
         PrintWriter writer = new PrintWriter(new FileWriter(this.seedsfile));
-        for (Iterator i = seeds.iterator(); i.hasNext();) {
-            writer.println(((UURI)i.next()).toString());
+        for (int i = 0; i < uris.length; i++) {
+            writer.println(uris[i]);
         }
         writer.close();
     }

@@ -50,7 +50,9 @@ import com.sleepycat.je.OperationStatus;
  * per-grouping (per-classKey/per-Host) starting points allows
  * this to act as a collection of independent queues. 
  * 
- * TODO: cleanup/close handles, refactor, improve naming
+ * <p>For how the bdb keys are made, see {@link #calculateInsertKey(CrawlURI}.
+ * 
+ * TODO: refactor, improve naming.
  * @author gojomo
  */
 public class BdbMultipleWorkQueues {
@@ -283,9 +285,8 @@ public class BdbMultipleWorkQueues {
      */
     public void close() {
         try {
-            pendingUrisDB.close();
+            this.pendingUrisDB.close();
         } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

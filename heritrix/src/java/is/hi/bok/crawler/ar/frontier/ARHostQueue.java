@@ -244,7 +244,7 @@ public class ARHostQueue implements ARAttributeConstants {
             if (size > 0) {
                 // If size > 0 then we just opened an existing DB.
                 // Set nextReadyTime;
-                nextReadyTime = peek().getAList().getLong(
+                nextReadyTime = peek().getLong(
                         A_TIME_OF_NEXT_PROCESSING);
                 // Move any items in processingUriDB into the primariUriDB, ensure
                 // that they wind up on top!
@@ -296,7 +296,7 @@ public class ARHostQueue implements ARAttributeConstants {
             
             OperationStatus opStatus = strictAdd(curi,false);
             
-            long curiProcessingTime = curi.getAList().getLong(
+            long curiProcessingTime = curi.getLong(
                     A_TIME_OF_NEXT_PROCESSING);
     
             if (opStatus == OperationStatus.KEYEXIST){ 
@@ -310,7 +310,7 @@ public class ARHostQueue implements ARAttributeConstants {
                     // on past crawls), update its time of next processing and
                     // put it back into the queue (overwriting it's old value)
                     CrawlURI curiExisting = getCrawlURI(curi.getURIString());
-                    long oldCuriProcessingTime = curiExisting.getAList().getLong(
+                    long oldCuriProcessingTime = curiExisting.getLong(
                             A_TIME_OF_NEXT_PROCESSING);
                     if( curiProcessingTime >= oldCuriProcessingTime ){
                         // The new processing time is later or equal to the 
@@ -318,7 +318,7 @@ public class ARHostQueue implements ARAttributeConstants {
                         // the fetching of a URI we can do nothing and exit method.
                         return;
                     }
-                    curiExisting.getAList().putLong(
+                    curiExisting.putLong(
                             A_TIME_OF_NEXT_PROCESSING,
                             curiProcessingTime);
                     opStatus = strictAdd(curiExisting,true); //Override
@@ -414,7 +414,7 @@ public class ARHostQueue implements ARAttributeConstants {
                 strictAdd(curi,false); // Ignore any duplicates. Go with the
                                        // ones already in the queue.
                 // Update nextReadyTime if needed.
-                long curiNextReadyTime = curi.getAList().getLong(
+                long curiNextReadyTime = curi.getLong(
                         A_TIME_OF_NEXT_PROCESSING);
                 if(curiNextReadyTime<nextReadyTime){
                     setNextReadyTime(curiNextReadyTime);
@@ -667,7 +667,7 @@ public class ARHostQueue implements ARAttributeConstants {
                 }
 
                 // Check if we need to update nextReadyTime
-                long curiTimeOfNextProcessing = curi.getAList().getLong(
+                long curiTimeOfNextProcessing = curi.getLong(
                         A_TIME_OF_NEXT_PROCESSING);
                 if(nextReadyTime > curiTimeOfNextProcessing){
                     setNextReadyTime(curiTimeOfNextProcessing);
@@ -741,7 +741,7 @@ public class ARHostQueue implements ARAttributeConstants {
             CrawlURI top = peek();
             long nextReady = Long.MAX_VALUE;
             if(top != null){
-                nextReady = top.getAList().getLong(
+                nextReady = top.getLong(
                         A_TIME_OF_NEXT_PROCESSING);
             }
             inProcessing++;
@@ -1055,22 +1055,20 @@ public class ARHostQueue implements ARAttributeConstants {
                 }
                 ret.append("  Next processing:  " + 
                         ArchiveUtils.formatMillisecondsToConventional(
-                                tmp.getAList().getLong(
+                                tmp.getLong(
                                         A_TIME_OF_NEXT_PROCESSING) - 
                                         System.currentTimeMillis()) + "\n");
-                if(tmp.getAList().containsKey(
-                        A_WAIT_INTERVAL)){
+                if(tmp.containsKey(A_WAIT_INTERVAL)){
                     ret.append("  Wait interval:    " + 
                             ArchiveUtils.formatMillisecondsToConventional(
-                                    tmp.getAList().getLong(
-                                            A_WAIT_INTERVAL)) + "\n");
+                                    tmp.getLong(A_WAIT_INTERVAL)) + "\n");
                 }
-                if(tmp.getAList().containsKey(A_NUMBER_OF_VISITS)){
-                    ret.append("  Visits:           " + tmp.getAList().getInt(
+                if(tmp.containsKey(A_NUMBER_OF_VISITS)){
+                    ret.append("  Visits:           " + tmp.getInt(
                             A_NUMBER_OF_VISITS) + "\n");
                 }
-                if(tmp.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
-                    ret.append("  Versions:         " + tmp.getAList().getInt(
+                if(tmp.containsKey(A_NUMBER_OF_VERSIONS)){
+                    ret.append("  Versions:         " + tmp.getInt(
                             A_NUMBER_OF_VERSIONS) + "\n");
                 }
                 
@@ -1128,7 +1126,7 @@ public class ARHostQueue implements ARAttributeConstants {
             
             indexKeyOutput.writeInt(directive);
             
-            long timeOfNextProcessing = curi.getAList().getLong(
+            long timeOfNextProcessing = curi.getLong(
                     A_TIME_OF_NEXT_PROCESSING);
             
             indexKeyOutput.writeLong(timeOfNextProcessing);

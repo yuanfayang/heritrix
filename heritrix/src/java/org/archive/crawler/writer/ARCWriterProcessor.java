@@ -354,7 +354,7 @@ ARCWriterSettings {
         try {
             writer.write(curi.getURIString(), curi.getContentType(),
                getHostAddress(curi),
-               curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
+               curi.getLong(A_FETCH_BEGAN_TIME), recordLength,
                curi.getHttpRecorder().getRecordedInput().
                    getReplayInputStream());
         } finally {
@@ -367,14 +367,13 @@ ARCWriterSettings {
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // Start the record with a 14-digit date per RFC 2540
-        long ts = curi.getAList().getLong(A_FETCH_BEGAN_TIME);
+        long ts = curi.getLong(A_FETCH_BEGAN_TIME);
         byte[] fetchDate = ArchiveUtils.get14DigitDate(ts).getBytes();
         baos.write(fetchDate);
         // Don't forget the newline
         baos.write("\n".getBytes());
         int recordLength = fetchDate.length + 1;
-        Record[] rrSet = (Record[]) curi.getAList().
-            getObject(A_RRECORD_SET_LABEL);
+        Record[] rrSet = (Record[]) curi.getObject(A_RRECORD_SET_LABEL);
         if (rrSet != null) {
             for (int i = 0; i < rrSet.length; i++) {
                 byte[] record = rrSet[i].toString().getBytes();
@@ -393,9 +392,8 @@ ARCWriterSettings {
         
         try {
             writer.write(curi.getURIString(), curi.getContentType(),
-                getHostAddress(curi),
-                curi.getAList().getLong(A_FETCH_BEGAN_TIME),
-                recordLength, baos);
+                getHostAddress(curi), curi.getLong(A_FETCH_BEGAN_TIME),
+                    recordLength, baos);
         } finally {
             this.pool.returnARCWriter(writer);
         }

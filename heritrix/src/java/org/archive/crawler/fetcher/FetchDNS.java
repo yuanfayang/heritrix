@@ -31,7 +31,6 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
@@ -124,7 +123,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         now = System.currentTimeMillis();
-        curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+        curi.putLong(A_FETCH_BEGAN_TIME, now);
 
         // try to get the records for this host (assume domain name)
         // TODO: Bug #935119 concerns potential hang here
@@ -136,7 +135,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         if (rrecordSet != null) {
             curi.setFetchStatus(S_DNS_SUCCESS);
             curi.setContentType("text/dns");
-            curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
+            curi.putObject(A_RRECORD_SET_LABEL, rrecordSet);
             // Get TTL and IP info from the first A record (there may be
             // multiple, e.g. www.washington.edu) then update the CrawlServer
             for (int i = 0; i < rrecordSet.length; i++) {
@@ -152,6 +151,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
             curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
         }
 
-        curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+        curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
     }
 }

@@ -29,13 +29,13 @@ import java.io.Serializable;
 import org.apache.commons.httpclient.URIException;
 import org.archive.util.Lineable;
 
+import st.ata.util.AList;
+import st.ata.util.HashtableAList;
+
 /**
  * A URI, discovered or passed-in, that may be scheduled (and
  * thus become a CrawlURI). Contains just the fields necessary
  * to perform quick in-scope analysis.
- *
- * A flexible AttributeList, as in CrawlURI, could be added,
- * possibly even subsuming the existing fields.
  *
  * @author Gordon Mohr
  */
@@ -43,36 +43,66 @@ public class CandidateURI
 implements Serializable, Lineable {
     private static final long serialVersionUID = -7152937921526560388L;
 
-    /** Highest priority */
-    public static final int HIGHEST = 0; // before any others of its class
-    /** High priority */
-    public static final int HIGH = 1; // after any highest
-    /** Medium priority */
-    public static final int MEDIUM = 2; // after any Highs
-    /** Normal/low priority */
-    public static final int NORMAL = 3; // whenever/end of queue
-
-    /** Usuable URI under consideration */
-    UURI uuri;
-    /** Seed status */
-    boolean isSeed = false;
-
-    int schedulingDirective = NORMAL;
-    boolean forceRevisit = false; // even if already visited
+    /** Highest scheduling priority.
+     * Before any others of its class.
+     */
+    public static final int HIGHEST = 0;
     
-    /** String of letters indicating how this URI was reached from a seed */
-    // P precondition
-    // R redirection
-    // E embedded (as frame, src, link, codebase, etc.)
-    // X speculative embed (as from javascript, some alternate-format extractors
-    // L link
-    // for example LLLE (an embedded image on a page 3 links from seed)
-    String pathFromSeed;
-    /** Where this URI was (presently) discovered */
+    /** High scheduling priority.
+     * After any {@link #HIGHEST}.
+     */
+    public static final int HIGH = 1;
+    
+    /** Medium priority.
+     * After any {@link #HIGH}.
+     */
+    public static final int MEDIUM = 2;
+    
+    /** Normal/low priority.
+     * Whenever/end of queue.
+     */
+    public static final int NORMAL = 3;
+    
+    private int schedulingDirective = NORMAL;
+    
+    /** Usuable URI under consideration */
+    private UURI uuri;
+    
+    /** Seed status */
+    private boolean isSeed = false;
+
+    private boolean forceRevisit = false; // even if already visited
+    
+    /** String of letters indicating how this URI was reached from a seed.
+     * <pre>
+     * P precondition
+     * R redirection
+     * E embedded (as frame, src, link, codebase, etc.)
+     * X speculative embed (as from javascript, some alternate-format extractors
+     * L link</pre>
+     * For example LLLE (an embedded image on a page 3 links from seed).
+     */
+    private String pathFromSeed;
+    
+    /**
+     * Where this URI was (presently) discovered.
+     * Can be String, CrawlURI or null.  Is turned into a String when
+     * we serialize.
+     */
     // mostly for debugging; will be a CrawlURI when memory is no object
     // just a string or null when memory is an object (configurable)
-    Object via;
+    private Object via;
 
+    /**
+     * Flexible dynamic attributes list.
+     * <p>
+     * The attribute list is a flexible map of key/value pairs for storing
+     * status of this URI for use by other processors. By convention the
+     * attribute list is keyed by constants found in the
+     * {@link CoreAttributeConstants} interface.
+     */
+    private AList alist;
+    
     /**
      * Cache of this candidate uuri as a string.
      *
@@ -82,10 +112,29 @@ implements Serializable, Lineable {
     private String cachedCandidateURIString = null;
 
     /**
-     * @param u
+     * Constructor.
+     * Protected access to block access to default constructor.
+     */
+    protected CandidateURI () {
+        super();
+    }
+    
+    /**
+     * @param u uuri instance this CandidateURI wraps.
      */
     public CandidateURI(UURI u) {
-        uuri = u;
+        this.uuri = u;
+    }
+    
+    /**
+     * @param u uuri instance this CandidateURI wraps.
+     * @param pathFromSeed
+     * @param via
+     */
+    public CandidateURI(UURI u, String pathFromSeed, Object via) {
+        this.uuri = u;
+        this.pathFromSeed = pathFromSeed;
+        this.via = via;
     }
 
     /**
@@ -93,7 +142,10 @@ implements Serializable, Lineable {
      * @param b Is this URI a seed, true or false.
      */
     public void setIsSeed(boolean b) {
-        isSeed=b;
+        this.isSeed = b;
+        if (this.isSeed) {
+            setSeed();
+        }
     }
 
     /**
@@ -106,8 +158,8 @@ implements Serializable, Lineable {
      *   setVia("")
      * </code>
      */
-    public void setSeed(){
-        isSeed=true;
+    protected void setSeed(){
+        isSeed = true;
         setPathFromSeed("");
         setVia("");
     }
@@ -116,42 +168,43 @@ implements Serializable, Lineable {
      * @return UURI
      */
     public UURI getUURI() {
-        return uuri;
-    }
-
-    /**
-     * @param u
-     */
-    private void setUURI(UURI u) {
-        uuri=u;
+        return this.uuri;
     }
 
     /**
      * @return Whether seeded.
      */
     public boolean isSeed() {
-        return isSeed;
+        return this.isSeed;
     }
 
     /**
      * @return path (hop-types) from seed
      */
     public String getPathFromSeed() {
-        return pathFromSeed;
+        return this.pathFromSeed;
     }
 
     /**
      * @return URI via which this one was discovered
      */
     public Object getVia() {
-        return via;
+        return this.via;
     }
 
     /**
      * @param string
      */
-    public void setPathFromSeed(String string) {
+    protected void setPathFromSeed(String string) {
         pathFromSeed = string;
+    }
+    
+    /**
+     * Called when making a copy of another CandidateURI.
+     * @param alist AList to use.
+     */
+    protected void setAList(AList alist) {
+        this.alist = alist;
     }
 
     /**
@@ -178,8 +231,8 @@ implements Serializable, Lineable {
     }
 
     private void writeObject(java.io.ObjectOutputStream out)
-         throws IOException {
-         via = flattenVia();
+    throws IOException {
+         this.via = flattenVia();
          out.defaultWriteObject();
     }
 
@@ -188,6 +241,9 @@ implements Serializable, Lineable {
      * @return String version of referral URI
      */
     public String flattenVia() {
+        if(via == null) {
+            return "";
+        }
         if (via instanceof String) {
             // already OK
             return (String) via;
@@ -201,16 +257,11 @@ implements Serializable, Lineable {
         return via.toString();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Lineable#getLine()
-     */
     public String getLine() {
         String className = this.getClass().getName();
         className = className.substring(className.lastIndexOf(".")+1);
-        return className
-                +" "+getUURI().toString()
-                +" "+pathFromSeed
-                +" "+flattenVia();
+        return className + " " + getUURI().toString() + " " + pathFromSeed +
+            " " + flattenVia();
     }
 
     /**
@@ -221,7 +272,8 @@ implements Serializable, Lineable {
     }
 
     /**
-     * Compares the domain of this CandidateURI with that of another CandidateURI
+     * Compares the domain of this CandidateURI with that of another
+     * CandidateURI
      *
      * @param other The other CandidateURI
      *
@@ -230,12 +282,14 @@ implements Serializable, Lineable {
      */
     public boolean sameDomainAs(CandidateURI other) throws URIException {
         String domain = getUURI().getHost();
-        if (domain==null) return false;
-        while(domain.lastIndexOf('.')>domain.indexOf('.')) {
-            // while has more than one dot, lop off first segment
-            domain = domain.substring(domain.indexOf('.')+1);
+        if (domain == null) {
+            return false;
         }
-        if(other.getUURI().getHost()==null ) {
+        while(domain.lastIndexOf('.') > domain.indexOf('.')) {
+            // While has more than one dot, lop off first segment
+            domain = domain.substring(domain.indexOf('.') + 1);
+        }
+        if(other.getUURI().getHost() == null) {
             return false;
         }
         return other.getUURI().getHost().endsWith(domain);
@@ -287,7 +341,7 @@ implements Serializable, Lineable {
      * @return True if needs immediate scheduling.
      */
     public boolean needsImmediateScheduling() {
-        return schedulingDirective==HIGH;
+        return schedulingDirective == HIGH;
     }
 
     /**
@@ -315,9 +369,8 @@ implements Serializable, Lineable {
         for(int i=path.length()-1;i>=0;i--) {
             if(path.charAt(i)=='L') {
                 break;
-            } else {
-                transCount++;
             }
+            transCount++;
         }
         return transCount;
     }
@@ -334,18 +387,75 @@ implements Serializable, Lineable {
     public static CandidateURI fromString(String uriHopsViaString)
             throws URIException {
         String args[] = uriHopsViaString.split("\\s+");
-        CandidateURI caUri = new CandidateURI(UURIFactory.getInstance(args[0]));
-        if (args.length > 1 && !args[1].equals("-")) {
-            caUri.setPathFromSeed(args[1]);
-        } else {
-            caUri.setPathFromSeed("");
+        String pathFromSeeds = (args.length > 1 && !args[1].equals("-"))?
+            args[1]: "";
+        Object via = (args.length > 2 && !args[2].equals("-"))? args[2]: "";
+        return new CandidateURI(UURIFactory.getInstance(args[0]),
+            pathFromSeeds, via);
+    }
+    
+    public static CandidateURI createSeedCandidateURI(UURI uuri) {
+        CandidateURI c = new CandidateURI(uuri);
+        c.setIsSeed(true);
+        return c;
+    }
+    
+    /**
+     * Assumption is that only one at a thread will ever be accessing
+     * a CandidateURI.
+     * 
+     * @deprecated Public access will be deprecated.  This methods access
+     * will change in next release.
+     * @return the attribute list.
+     */
+    public AList getAList() {
+        if (this.alist == null) {
+            this.alist = new HashtableAList();
         }
-        if (args.length > 2 && !args[2].equals("-")) {
-            caUri.setVia(args[2]);
-        } else {
-            // filler
-            caUri.setVia("");
-        }
-        return caUri;
+        return this.alist;
+    }
+    
+    protected void clearAList() {
+        this.alist = null;
+    }
+    
+    public void putObject(String key, Object value) {
+        getAList().putObject(key, value);
+    }
+    
+    public Object getObject(String key) {
+        return getAList().getObject(key);
+    }
+    
+    public String getString(String key) {
+        return getAList().getString(key);
+    }
+    
+    public void putString(String key, String value) {
+        getAList().putString(key, value);
+    }
+    
+    public long getLong(String key) {
+        return getAList().getLong(key);
+    }
+    
+    public void putLong(String key, long value) {
+        getAList().putLong(key, value);
+    }
+    
+    public int getInt(String key) {
+        return getAList().getInt(key);
+    }
+    
+    public void putInt(String key, int value) {
+        getAList().putInt(key, value);
+    }
+    
+    public boolean containsKey(String key) {
+        return getAList().containsKey(key);
+    }
+    
+    public void remove(String key) {
+        getAList().remove(key);
     }
 }

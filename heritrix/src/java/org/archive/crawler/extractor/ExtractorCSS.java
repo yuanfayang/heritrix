@@ -58,16 +58,21 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         Logger.getLogger("org.archive.crawler.extractor.ExtractorCSS");
 
     private static String ESCAPED_AMP = "&amp";
-    static final String BACKSLAH = "\\\\";
+    // CSS escapes: "Parentheses, commas, whitespace characters, single 
+    // quotes (') and double quotes (") appearing in a URL must be 
+    // escaped with a backslash"
+    static final String CSS_BACKSLASH_ESCAPE = "\\\\([,'\"\\(\\)\\s])";
     
     /**
      *  CSS URL extractor pattern.
      *
      *  This pattern extracts URIs for CSS files
      **/
-    static final String CSS_URI_EXTRACTOR =
-        "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]";
-
+//    static final String CSS_URI_EXTRACTOR =
+//        "url[(]\\s*([\"\']?)([^\\\"\\'].*?)\\1\\s*[)]";
+    static final String CSS_URI_EXTRACTOR =    
+    "(?:@import (?:url[(]|)|url[(])\\s*([\\\"\']?)([^\\\"\'].*?)\\1\\s*[);]";
+    
     private long numberOfCURIsHandled = 0;
     private long numberOfLinksExtracted = 0;
 
@@ -83,7 +88,10 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      * @param curi Crawl URI to process.
      */
     public void innerProcess(CrawlURI curi) {
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!curi.isHttpTransaction()) {
             return;
         }
@@ -128,11 +136,11 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         try {
             Matcher uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
             while (uris.find()) {
-                String cssUri = uris.group(1);
+                String cssUri = uris.group(2);
                 // TODO: Escape more HTML Entities.
                 cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
-                // Remove backslash(s), an escape character, used in CSS URL
-                cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
+                // Remove backslashes when used as escape character in CSS URL
+                cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri, "$1");
                 foundLinks++;
                 curi.addLinkToCollection(cssUri, A_CSS_LINKS);
             }

@@ -77,13 +77,13 @@ public class OrFilter extends Filter {
     }
 
     private MapType getFilters (Object o) {
+        MapType filters = null;
         try {
-            MapType filters = (MapType) getAttribute(o, ATTR_FILTERS);
-            return filters;
+            filters = (MapType)getAttribute(o, ATTR_FILTERS);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getLocalizedMessage());
-            return null;
         }
+        return filters;
     }
 
     protected boolean innerAccepts(Object o) {

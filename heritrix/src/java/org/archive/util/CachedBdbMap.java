@@ -60,10 +60,10 @@ import com.sleepycat.je.EnvironmentConfig;
  */
 public class CachedBdbMap extends AbstractMap implements Map {
 
-    private static final Logger logger = Logger.getLogger(CachedBdbMap.class
-            .getName());
+    private static final Logger logger =
+        Logger.getLogger(CachedBdbMap.class.getName());
 
-    /** The database name of the class definition catalog */
+    /** The database name of the class definition catalog.*/
     private static final String CLASS_CATALOG = "java_class_catalog";
 
     /**
@@ -76,10 +76,10 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private DbEnvironmentEntry dbEnvironment;
 
     /** The BDB JE database used for this instance. */
-    private Database db;
+    protected Database db;
 
     /** The Collection view of the BDB JE database used for this instance. */
-    private StoredMap diskMap;
+    protected StoredMap diskMap;
 
     /** The softreferenced cache */
     private Map cache;
@@ -105,6 +105,22 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private long diskHit = 0;
 
     private static Field referent;
+    
+    static {
+        // We need access to the referent field in the PhantomReference.
+        // For more on this trick, see
+        // http://www.javaspecialists.co.za/archive/Issue098.html and for
+        // discussion:
+        // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
+        try {
+            referent = Reference.class.getDeclaredField("referent");
+            referent.setAccessible(true);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Simple structure to keep needed information about a DB Environment.
@@ -114,6 +130,14 @@ public class CachedBdbMap extends AbstractMap implements Map {
         StoredClassCatalog classCatalog;
         int openDbCount = 0;
         File dbDir;
+    }
+    
+    /**
+     * Constructor for subclasses to use.
+     */
+    public CachedBdbMap() {
+        super();
+        initialize();
     }
 
     /**
@@ -135,7 +159,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public CachedBdbMap(File dbDir, String dbName, Class keyClass,
             Class valueClass) throws DatabaseException {
         super();
-        initialization();
+        initialize();
         dbEnvironment = getDbEnvironment(dbDir);
         this.db = openDatabase(dbEnvironment.environment, dbName);
         dbEnvironment.openDbCount++;
@@ -157,26 +181,12 @@ public class CachedBdbMap extends AbstractMap implements Map {
             String dbName, Class keyClass, Class valueClass)
     throws DatabaseException {
         super();
-        initialization();
+        initialize();
         this.db = openDatabase(environment, dbName);
         this.diskMap = createDiskMap(this.db, classCatalog, keyClass, valueClass);
     }
     
-    private void initialization() {
-        // We need access to the referent field in the PhantomReference.
-        // For more on this trick, see
-        // http://www.javaspecialists.co.za/archive/Issue098.html and for
-        // discussion:
-        // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
-        try {
-            referent = Reference.class.getDeclaredField("referent");
-            referent.setAccessible(true);
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-
+    private void initialize() {
         // Setup memory cache
         this.cache = Collections.synchronizedMap(new HashMap());
     }
@@ -284,11 +294,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
         return entrySet;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.util.Map#get(java.lang.Object)
-     */
     public Object get(Object key) {
         getCount++;
         expungeStaleEntries();

@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -87,11 +88,13 @@ implements StatisticsTracking, CrawlStatusListener {
      * for CrawlStatus and CrawlURIDisposition events.
      *
      * @param c A crawl controller instance.
+     * @throws FatalConfigurationException
      *
      * @see CrawlStatusListener
      * @see org.archive.crawler.event.CrawlURIDispositionListener
      */
-    public void initialize(CrawlController c) {
+    public void initialize(CrawlController c)
+    throws FatalConfigurationException {
         controller = c;
 
         // Add listeners

@@ -57,6 +57,11 @@ public interface FrontierJournal {
     public abstract void emitted(CrawlURI curi);
 
     /**
+     * @param u UURI that finished unsuccessfully 
+     */
+    public abstract void finishedFailure(UURI u);
+    
+    /**
      * @param curi CrawlURI finished unsuccessfully.
      */
     public abstract void finishedFailure(CrawlURI curi);

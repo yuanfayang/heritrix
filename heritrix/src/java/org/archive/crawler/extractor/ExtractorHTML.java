@@ -178,7 +178,7 @@ implements CoreAttributeConstants {
                     processLink(curi, value);
                 }
                 if (element.toString().equalsIgnoreCase(BASE)) {
-                    curi.getAList().putString(A_HTML_BASE, value.toString());
+                    curi.putString(A_HTML_BASE, value.toString());
                 }
             } else if (attr.start(3) > -1) {
                 // ACTION
@@ -315,7 +315,10 @@ implements CoreAttributeConstants {
     }
 
     public void innerProcess(CrawlURI curi) {
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!curi.isHttpTransaction())
         {
             return;
@@ -513,7 +516,7 @@ implements CoreAttributeConstants {
 
         // Look for the 'robots' meta-tag
         if("robots".equalsIgnoreCase(name) && content != null ) {
-            curi.getAList().putString(A_META_ROBOTS, content);
+            curi.putString(A_META_ROBOTS, content);
             RobotsHonoringPolicy policy =
                 getSettingsHandler().getOrder().getRobotsHonoringPolicy();
             String contentLower = content.toLowerCase();

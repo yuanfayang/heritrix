@@ -48,8 +48,7 @@ implements CoreAttributeConstants {
             // CrawlURI is always first parameter.
             CrawlURI curi = (CrawlURI)parameters[0];
             if (curi != null) {
-                Exception e = (Exception)curi.getAList().
-                	getObject(A_RUNTIME_EXCEPTION);
+                Exception e = (Exception)curi.getObject(A_RUNTIME_EXCEPTION);
                 assert e != null : "Null exception";
                 StringWriter sw = new StringWriter();
                 if (e == null) {

@@ -36,11 +36,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -95,7 +97,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTracker extends AbstractTracker
-implements CrawlURIDispositionListener{
+implements CrawlURIDispositionListener {
     /**
      * Messages from the StatisticsTracker.
      */
@@ -134,20 +136,23 @@ implements CrawlURIDispositionListener{
     /** Keep track of the file types we see (mime type -> count) */
     protected Hashtable mimeTypeDistribution = new Hashtable();
     protected Hashtable mimeTypeBytes = new Hashtable();
+    
     /** Keep track of fetch status codes */
     protected Hashtable statusCodeDistribution = new Hashtable();
+    
     /** Keep track of hosts */
-    protected Hashtable hostsDistribution = new Hashtable();
-    protected Hashtable hostsBytes = new Hashtable();
-    protected Hashtable hostsLastFinished = new Hashtable();
+    protected Map hostsDistribution = null;
+    protected Map hostsBytes = null;
+    protected Map hostsLastFinished = null;
 
     /** Keep track of processed seeds disposition*/
-    protected Hashtable processedSeedsDisposition = new Hashtable();
+    protected Map processedSeedsDisposition = new Hashtable();
 
     /** Keep track of processed seeds status codes*/
-    protected Hashtable processedSeedsStatusCodes = new Hashtable();
+    protected Map processedSeedsStatusCodes = new Hashtable();
 
-    /** Cache seed list */
+    /** Cache seed list.
+     */
     protected List allSeeds = new Vector();
 
     /** Seed successfully crawled */
@@ -172,9 +177,43 @@ implements CrawlURIDispositionListener{
                 "with the web UI and creates the progress-statistics log.");
     }
 
-    public void initialize(CrawlController c) {
+    public void initialize(CrawlController c)
+    throws FatalConfigurationException {
         super.initialize(c);
+        try {
+            this.hostsDistribution =
+                BigMapFactory.getBigMap(c.getSettingsHandler(),
+                    "hostsDistribution", String.class, LongWrapper.class);
+            this.hostsBytes = BigMapFactory.getBigMap(c.getSettingsHandler(),
+                    "hostsBytes", String.class, LongWrapper.class);
+            // This map is different from the above in that it doesn't
+            // increment a value per host.  Because of this, updates
+            // don't go via the incrementMapCount method which takes
+            // care to synchronize #puts.  This means any put into the
+            // below HashMap needs to be in a synchronize block.
+            this.hostsLastFinished =
+                BigMapFactory.getBigMap(c.getSettingsHandler(),
+                    "hostsLastFinished", String.class, Long.class);
+        } catch (Exception e) {
+            throw new FatalConfigurationException("Failed setup of" +
+                " StatisticsTracker: " + e);
+        }
         controller.addCrawlURIDispositionListener(this);
+    }
+    
+    protected void cleanup() {
+        if (this.hostsBytes != null) {
+            this.hostsBytes.clear();
+            this.hostsBytes = null;
+        }
+        if (this.hostsDistribution != null) {
+            this.hostsDistribution.clear();
+            this.hostsDistribution = null;
+        }
+        if (this.hostsLastFinished != null) {
+            this.hostsLastFinished.clear();
+            this.hostsLastFinished = null;
+        }
     }
 
     protected synchronized void logActivity() {
@@ -323,7 +362,7 @@ implements CrawlURIDispositionListener{
      *               exist it will be added (set to 1).  If null it will
      *            increment the counter "unknown".
      */
-    protected static void incrementMapCount(Hashtable map, String key) {
+    protected static void incrementMapCount(Map map, String key) {
     	incrementMapCount(map,key,1);
     }
 
@@ -340,15 +379,14 @@ implements CrawlURIDispositionListener{
      * @param increment
      *            The amount to increment counter related to the <code>key</code>.
      */
-    protected static void incrementMapCount(Hashtable map, String key,
+    protected static void incrementMapCount(Map map, String key,
             long increment) {
         if (key == null) {
             key = "unknown";
         }
 
         if (map.containsKey(key)) {
-            ((LongWrapper) map.get(key)).longValue += increment;
-
+            ((LongWrapper)map.get(key)).longValue += increment;
         } else {
             // if we didn't find this key add it
             synchronized (map) {
@@ -369,7 +407,7 @@ implements CrawlURIDispositionListener{
      *            Assumes values are wrapped with LongWrapper.
      * @return a sorted set containing the same elements as the map.
      */
-    public TreeSet getSortedByValue(Hashtable map) {
+    public TreeSet getSortedByValue(Map map) {
         TreeSet sortedSet = new TreeSet(new Comparator() {
 
             public int compare(Object e1, Object e2) {
@@ -412,7 +450,7 @@ implements CrawlURIDispositionListener{
      *
      * @return Hosts distribution as a Hashtable
      */
-    public Hashtable getHostsDistribution() {
+    public Map getHostsDistribution() {
         return hostsDistribution;
     }
     
@@ -427,11 +465,7 @@ implements CrawlURIDispositionListener{
      */
     public long getHostLastFinished(String host){
     	Long l = (Long)hostsLastFinished.get(host);
-        if(l != null){
-            return l.longValue();   
-        } else {
-            return -1;
-        }
+        return (l != null)? l.longValue(): -1;
     }
 
     /**
@@ -547,7 +581,7 @@ implements CrawlURIDispositionListener{
      *
      * @return The number of successully fetched URIs
      *
-     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
@@ -651,22 +685,24 @@ implements CrawlURIDispositionListener{
             mime = "not set";
         }
         incrementMapCount(mimeTypeDistribution, mime);
-        incrementMapCount(mimeTypeBytes,mime,curi.getContentSize());
+        incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
 
-        // Save hosts
-        if(curi.getFetchStatus()==1){
-            // DNS Lookup, handle it differently.
-            incrementMapCount(hostsDistribution, "dns:");
-            incrementMapCount(hostsBytes,"dns:",curi.getContentSize());
-            hostsLastFinished.put("dns:",new Long(System.currentTimeMillis()));
-        } else {
-            String hostname = this.controller.getServerCache().
-                getHostFor(curi).getHostName();
-        	incrementMapCount(hostsDistribution, hostname);
-            incrementMapCount(hostsBytes, hostname, curi.getContentSize());
-            hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
+        // Save hosts stats.
+        saveHostStats((curi.getFetchStatus() == 1)? "dns:":
+                this.controller.getServerCache().
+                getHostFor(curi).getHostName(),
+                curi.getContentSize());
+    }
+    
+    protected void saveHostStats(String hostname, long size) {
+        incrementMapCount(hostsDistribution, hostname);
+        incrementMapCount(hostsBytes, hostname, size);
+        synchronized(this.hostsLastFinished) {
+            hostsLastFinished.put(hostname,
+                new Long(System.currentTimeMillis()));
         }
     }
+    
 
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURINeedRetry(org.archive.crawler.datamodel.CrawlURI)
@@ -779,6 +815,7 @@ implements CrawlURIDispositionListener{
         CrawlController c = this.controller;
         super.crawlEnded(sExitMessage);
         report(c, sExitMessage);
+        cleanup();
         logger.info("Leaving crawlEnded");
     }
     
@@ -792,6 +829,7 @@ implements CrawlURIDispositionListener{
     }
     
     /**
+     * @param i Iterator.
      * @return Length of longest URL.
      */
     protected int getLongestString(Iterator i) {
@@ -806,6 +844,7 @@ implements CrawlURIDispositionListener{
     }
     
     /**
+     * @param i Iterator instance.
      * @return Get longest map entry key.
      */
     protected int getLongestMapEntryKey(Iterator i) {
@@ -821,6 +860,7 @@ implements CrawlURIDispositionListener{
     }
     
     /**
+     * @param c CrawlController instance.
      * @return A summary of seeds crawled and not crawled.
      */
     protected SeedsSummary writeSeedsReport(CrawlController c) {
@@ -840,10 +880,6 @@ implements CrawlURIDispositionListener{
                 i.hasNext();) {
             String UriString = (String)i.next();
             int code = getSeedStatusCode(UriString);
-            String statusCode = "";
-            if (code != 0) {
-                statusCode = Integer.toString(code);
-            }
             rep.append(UriString);
             rep.raAppend(maxURILength + 11, code);
             if (code > 0) {
@@ -991,7 +1027,7 @@ implements CrawlURIDispositionListener{
     /**
      * Run the reports.
      * @param c A CrawlController instance.
-     * @param seeds A seeds iterator.
+     * @param exitMessage
      */
     public void report(CrawlController c, String exitMessage) {
         // Add all files mentioned in the crawl order to the

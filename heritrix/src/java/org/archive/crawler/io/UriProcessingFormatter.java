@@ -70,9 +70,9 @@ public class UriProcessingFormatter
 
         long time;
         String duration;
-        if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
-            time = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
-            duration = Long.toString(time-curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+        if(curi.containsKey(A_FETCH_COMPLETED_TIME)) {
+            time = curi.getLong(A_FETCH_COMPLETED_TIME);
+            duration = Long.toString(time-curi.getLong(A_FETCH_BEGAN_TIME));
         } else {
             time = System.currentTimeMillis();
             duration = NA;

@@ -35,14 +35,14 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.Lineable;
 
 /**
- * Allows display of serialized object streams in a line-oriented format.
+ * Command-line tool that displays serialized object streams in a
+ *line-oriented format.
  *
  * @author gojomo
- *
  */
 public class QueueCat {
-
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args) 
+    throws IOException, ClassNotFoundException {
         InputStream inStream;
         if (args.length == 0) {
             inStream = System.in;
@@ -50,7 +50,7 @@ public class QueueCat {
             inStream = new FileInputStream(args[0]);
         }
 
-        // need to handle the case where the stream lacks the usual
+        // Need to handle the case where the stream lacks the usual
         // objectstream prefix
         byte[] serialStart = { (byte)0xac, (byte)0xed, (byte)0x00, (byte)0x05 };
         byte[] actualStart = new byte[4];
@@ -59,7 +59,7 @@ public class QueueCat {
         if (ArchiveUtils.byteArrayEquals(serialStart,actualStart)) {
             pseudoStart = serialStart;
         } else {
-            // have to fake serialStart and original 4 bytes
+            // Have to fake serialStart and original 4 bytes
             pseudoStart = new byte[8];
             System.arraycopy(serialStart,0,pseudoStart,0,4);
             System.arraycopy(actualStart,0,pseudoStart,4,4);

@@ -89,13 +89,13 @@ public class ARHostQueueTest extends TmpDirTestCase {
          * peek(); All are added later then current time!
          */
 
-        curis[0].getAList().putLong(
+        curis[0].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()); // now
-        curis[1].getAList().putLong(
+        curis[1].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+5000); // in 5 sec
-        curis[2].getAList().putLong(
+        curis[2].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+20000); // in 20 sec.
         
@@ -133,9 +133,9 @@ public class ARHostQueueTest extends TmpDirTestCase {
         assertEquals("Size of HQ should now be 2",2,hq.getSize());
 
         // Return it with next fetch time in the future.
-        curi.getAList().putLong(
+        curi.putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                hq.peek().getAList().getLong(
+                hq.peek().getLong(
                         AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING)
                         +100000); // 100 sec behind current top.
         hq.update(curi,false,0);
@@ -171,18 +171,18 @@ public class ARHostQueueTest extends TmpDirTestCase {
          * this fails as it should (i.e. URIs time of next processing remains 
          * unchanged).
          */
-        curis[2].getAList().putLong(
+        curis[2].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getAList().getLong(
+                curis[1].getLong(
                         AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING)
                             -1000); // 1 sec. prior to current top 
         hq.add(curis[2],true);
         assertEquals("Size of HQ should still be 3",hq.getSize(),3);
         assertEquals("Third CrawlURI should be now be top",
                 curis[2].getURIString(), hq.peek().getURIString());
-        curis[2].getAList().putLong(
+        curis[2].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getAList().getLong(
+                curis[1].getLong(
                         AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING)
                             +10000); // 10 sec. later 
         hq.add(curis[2],true);
@@ -217,9 +217,9 @@ public class ARHostQueueTest extends TmpDirTestCase {
          *
          */
         
-        curis[3].getAList().putLong(
+        curis[3].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getAList().getLong(
+                curis[1].getLong(
                         AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING) 
                         - 1); // 1 msec. ahead of current top (order [2] 3 1 0) 
         hq.add(curis[3],false);
@@ -337,9 +337,9 @@ public class ARHostQueueTest extends TmpDirTestCase {
          */
         
         hq.update(curis[2],true,System.currentTimeMillis() + 1000000); // 10sec
-        curis[3].getAList().putLong(
+        curis[3].putLong(
                 AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getAList().getLong(
+                curis[1].getLong(
                         AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING) 
                         + 1000); // 1 sec. behind of current top 
         assertTrue("HQ should still be ready, is " + hq.getStateByName(),

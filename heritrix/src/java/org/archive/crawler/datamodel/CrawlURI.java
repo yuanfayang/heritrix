@@ -36,9 +36,6 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
 import org.archive.util.HttpRecorder;
 
-import st.ata.util.AList;
-import st.ata.util.HashtableAList;
-
 
 /**
  * Represents a candidate URI and the associated state it
@@ -87,9 +84,6 @@ public class CrawlURI extends CandidateURI
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
     private int threadNumber;
 
-    // flexible dynamic attributes
-    private AList alist = new HashtableAList();
-
     // dynamic context
     private int linkHopCount = UNCALCULATED; // from seeds
     private int embedHopCount = UNCALCULATED; // from a sure link; reset upon any link traversal
@@ -128,7 +122,8 @@ public class CrawlURI extends CandidateURI
     /**
      * Key to get credential avatars from A_LIST.
      */
-    private static final String A_CREDENTIAL_AVATARS_KEY = "credential-avatars";
+    private static final String A_CREDENTIAL_AVATARS_KEY =
+        "credential-avatars";
 
     /**
      * True if this CrawlURI has been deemed a prerequisite by the
@@ -147,11 +142,13 @@ public class CrawlURI extends CandidateURI
      */
     private boolean post = false;
 
-    /** monotonically increasing number within a crawl;
+    /** 
+     * Monotonically increasing number within a crawl;
      * useful for tending towards breadth-first ordering.
-     * will sometimes be truncated to 56 bits, so behavior
+     * Will sometimes be truncated to 56 bits, so behavior
      * over 72 quadrillion instantiated CrawlURIs may be 
-     * buggy */
+     * buggy
+     */
     protected long ordinal;
 
     /**
@@ -184,12 +181,12 @@ public class CrawlURI extends CandidateURI
      * @param o
      */
     public CrawlURI(CandidateURI caUri, long o) {
-        super(caUri.getUURI());
+        super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia());
         ordinal = o;
         setIsSeed(caUri.isSeed());
-        setPathFromSeed(caUri.getPathFromSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
-        setVia(caUri.getVia());
+        setAList(caUri.getAList());
+        
     }
 
     /**
@@ -416,20 +413,6 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Get the attribute list.
-     * <p>
-     * The attribute list is a flexible map of key/value pairs for storing
-     * status of this URI for use by other processors. By convention the
-     * attribute list is keyed by constants found in the
-     * {@link CoreAttributeConstants}interface.
-     *
-     * @return the attribute list.
-     */
-    public AList getAList() {
-        return alist;
-    }
-
-    /**
      * Do all actions associated with setting a <code>CrawlURI</code> as
      * requiring a prerequisite.
      *
@@ -454,7 +437,7 @@ public class CrawlURI extends CandidateURI
      * @param stringOrUURI Either a string or a URI representation of a URI.
      */
     protected void setPrerequisiteUri(Object stringOrUURI) {
-        this.alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
+        getAList().putObject(A_PREREQUISITE_URI, stringOrUURI);
     }
 
     /**
@@ -466,7 +449,7 @@ public class CrawlURI extends CandidateURI
      * @return the prerequisite for this URI or null if no prerequisite.
      */
     public Object getPrerequisiteUri() {
-        return this.alist.getObject(A_PREREQUISITE_URI);
+        return getAList().getObject(A_PREREQUISITE_URI);
     }
 
     /**
@@ -562,16 +545,16 @@ public class CrawlURI extends CandidateURI
      * This methods removes the attribute list.
      */
     public void stripToMinimal() {
-        alist = null;
+        clearAList();
     }
 
     private void addToNamedSet(String key, Object o) {
         Set s;
-        if(!alist.containsKey(key)) {
+        if(!getAList().containsKey(key)) {
             s = new HashSet();
-            alist.putObject(key, s);
+            getAList().putObject(key, s);
         } else {
-            s = (Set)alist.getObject(key);
+            s = (Set)getAList().getObject(key);
         }
         s.add(o);
     }
@@ -584,20 +567,6 @@ public class CrawlURI extends CandidateURI
      */
     public long getContentSize(){
         return contentSize;
-    }
-
-    /**
-     * Set the attribute list.
-     * <p>
-     * The attribute list is a flexible map of key/value pairs for storing
-     * status of this URI for use by other processors. By convention the
-     * attribute list is keyed by constants found in the
-     * {@link CoreAttributeConstants}interface.
-     *
-     * @param a the attribute list to set.
-     */
-    public void setAList(AList a){
-        alist = a;
     }
 
     /**
@@ -616,11 +585,11 @@ public class CrawlURI extends CandidateURI
     public void addLocalizedError(String processorName, Exception ex,
         	String message) {
         List localizedErrors;
-        if(alist.containsKey(A_LOCALIZED_ERRORS)) {
-            localizedErrors = (List) alist.getObject(A_LOCALIZED_ERRORS);
+        if(getAList().containsKey(A_LOCALIZED_ERRORS)) {
+            localizedErrors = (List)getAList().getObject(A_LOCALIZED_ERRORS);
         } else {
             localizedErrors = new ArrayList();
-            alist.putObject(A_LOCALIZED_ERRORS,localizedErrors);
+            getAList().putObject(A_LOCALIZED_ERRORS,localizedErrors);
         }
 
         localizedErrors.add(new LocalizedError(processorName, ex, message));
@@ -633,14 +602,14 @@ public class CrawlURI extends CandidateURI
      */
     public void addAnnotation(String annotation) {
         String annotations;
-        if(alist.containsKey(A_ANNOTATIONS)) {
-            annotations = alist.getString(A_ANNOTATIONS);
+        if(getAList().containsKey(A_ANNOTATIONS)) {
+            annotations = getAList().getString(A_ANNOTATIONS);
             annotations += ","+annotation;
         } else {
             annotations = annotation;
         }
 
-        alist.putString(A_ANNOTATIONS,annotations);
+        getAList().putString(A_ANNOTATIONS,annotations);
     }
 
     /**
@@ -649,8 +618,8 @@ public class CrawlURI extends CandidateURI
      * @return the annotations set for this uri.
      */
     public String getAnnotations() {
-        return (alist.containsKey(A_ANNOTATIONS))?
-            alist.getString(A_ANNOTATIONS): null;
+        return (getAList().containsKey(A_ANNOTATIONS))?
+            getAList().getString(A_ANNOTATIONS): null;
     }
 
     /**
@@ -756,10 +725,21 @@ public class CrawlURI extends CandidateURI
 
     /**
      * If true then a link extractor has already claimed this CrawlURI and
-     * performed link extraction on it. This does not preclude other link
-     * extractors that may have an interest in this CrawlURI from also doing
-     * link extraction.
-     * @return True if a processor has performed link extraction on this CrawlURI
+     * performed link extraction on the document content. This does not
+     * preclude other link extractors that may have an interest in this
+     * CrawlURI from also doing link extraction but default behavior should
+     * be to not run if link extraction has already been done.
+     * 
+     * <p>There is an onus on link extractors to set this flag if they have
+     * run.
+     * 
+     * <p>The only extractor of the default Heritrix set that does not
+     * respect this flag is
+     * {@link org.archive.crawler.extractor.ExtractorHTTP}.
+     * It runs against HTTP headers, not the document content.
+     * 
+     * @return True if a processor has performed link extraction on this
+     * CrawlURI
      *
      * @see #linkExtractorFinished()
      */
@@ -776,7 +756,7 @@ public class CrawlURI extends CandidateURI
      *
      * @see #hasBeenLinkExtracted()
      */
-    public void linkExtractorFinished(){
+    public void linkExtractorFinished() {
         linkExtractorFinished = true;
     }
 
@@ -827,16 +807,13 @@ public class CrawlURI extends CandidateURI
      * state gathered during processing.
      */
     public void processingCleanup() {
-
         this.httpRecorder = null;
         this.fetchStatus = S_UNATTEMPTED;
         this.setPrerequisite(false);
-        if (this.alist != null) {
-            // Let current get method to be GC'd.
-            this.alist.remove(A_HTTP_TRANSACTION);
-            // Discard any ideas of prereqs -- may no longer be valid.
-            this.alist.remove(A_PREREQUISITE_URI);
-        }
+        // Let current get method to be GC'd.
+        getAList().remove(A_HTTP_TRANSACTION);
+        // Discard any ideas of prereqs -- may no longer be valid.
+        getAList().remove(A_PREREQUISITE_URI);
     }
 
     /**
@@ -850,24 +827,22 @@ public class CrawlURI extends CandidateURI
      * @return A crawlURI made from the passed CandidateURI.
      */
     public static CrawlURI from(CandidateURI caUri, long ordinal) {
-        if (caUri instanceof CrawlURI) {
-            return (CrawlURI) caUri;
-        }
-        return new CrawlURI(caUri,ordinal);
+        return (caUri instanceof CrawlURI)?
+            (CrawlURI)caUri: new CrawlURI(caUri, ordinal);
     }
 
     /**
      * @param avatars Credential avatars to save off.
      */
     private void setCredentialAvatars(Set avatars) {
-        this.alist.putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
+        getAList().putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
     }
 
     /**
      * @return Credential avatars.  Null if none set.
      */
     public Set getCredentialAvatars() {
-        return (Set)this.alist.getObject(A_CREDENTIAL_AVATARS_KEY);
+        return (Set)getAList().getObject(A_CREDENTIAL_AVATARS_KEY);
     }
 
     /**
@@ -899,7 +874,7 @@ public class CrawlURI extends CandidateURI
      */
     public void removeCredentialAvatars() {
         if (hasCredentialAvatars()) {
-            this.alist.remove(A_CREDENTIAL_AVATARS_KEY);
+            getAList().remove(A_CREDENTIAL_AVATARS_KEY);
         }
     }
 
@@ -1056,7 +1031,6 @@ public class CrawlURI extends CandidateURI
         return ordinal;
     }
 
-
     /** spot for an integer cost to be placed by external facility (frontier).
      *  cost is truncated to 8 bits at times, so should not exceed 255 */
     int holderCost = UNCALCULATED;
@@ -1069,7 +1043,7 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     *  Remember a 'holderCost' which some enclosing/queueing
+     * Remember a 'holderCost' which some enclosing/queueing
      * facility has assigned this CrawlURI
      * @param cost value to remember
      */
