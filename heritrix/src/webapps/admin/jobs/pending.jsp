@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
 
 <%
 	String sAction = request.getParameter("action");
@@ -12,7 +12,7 @@
 		{
 			try
 			{
-				handler.removeJob(request.getParameter("job"));
+				handler.deleteJob(request.getParameter("job"));
 			}
 			catch(java.lang.NumberFormatException e){}
 		}

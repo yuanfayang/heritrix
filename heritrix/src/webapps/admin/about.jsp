@@ -1,6 +1,5 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.framework.CrawlJob" %>
 
 <%
 	String title = "About Heritrix";
