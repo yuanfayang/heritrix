@@ -100,7 +100,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
         // handle js file links
         if (curi.getAList().containsKey(A_JS_FILE_LINKS)) {
             URI viaURI = baseUri;
-            if (curi.flattenVia() != null) {
+            if (curi.flattenVia() != null && curi.flattenVia().length() != 0) {
                 try {
                     viaURI = URI.create(curi.flattenVia());
                 } catch (IllegalArgumentException e) {
