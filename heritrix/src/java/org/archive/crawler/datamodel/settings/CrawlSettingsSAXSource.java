@@ -59,8 +59,9 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     private ContentHandler handler;
     private boolean orderFile = false;
 
-    /**
+    /** Constructs a new CrawlSettingsSAXSource.
      * 
+     * @param settings the settings object to create SAX events from.
      */
     public CrawlSettingsSAXSource(CrawlerSettings settings) {
         super();
@@ -238,6 +239,12 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endDocument();
     }
 
+    /** Create SAX events from a @link ComplexType.
+     * 
+     * @param complexType the object to creat SAX events from.
+     * @param indent the indentation amount for prettyprinting XML.
+     * @throws SAXException is thrown if an error occurs.
+     */
     private void parseComplexType(ComplexType complexType, int indent)
         throws SAXException {
         if (complexType.isTransient()) {
@@ -351,8 +358,13 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endElement(nsu, objectElement, objectElement);
     }
 
+    /** Create SAX events for the content of a @link ListType.
+     * 
+     * @param value the ListType whose content we create SAX events for.
+     * @param indent the indentation amount for prettyprinting XML.
+     * @throws SAXException is thrown if an error occurs.
+     */
     private void parseListData(Object value, int indent) throws SAXException {
-        AttributesImpl atts = new AttributesImpl();
         ListType list = (ListType) value;
         Iterator it = list.iterator();
         while (it.hasNext()) {
@@ -367,6 +379,11 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         }
     }
 
+    /** Resolve the XML element name of a @link ComplexType.
+     * 
+     * @param complexType the object to investigate.
+     * @return the name of the XML element.
+     */
     private String resolveElementName(ComplexType complexType) {
         String elementName;
         if (complexType instanceof CrawlerModule) {
@@ -392,6 +409,17 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         return elementName;
     }
 
+    /** Create SAX events for a simple element.
+     * 
+     * Creates all the SAX events needed for prettyprinting an XML element
+     * with a simple value and possible attributes.
+     * 
+     * @param elementName the name of the XML element.
+     * @param value the value to pu inside the XML element.
+     * @param atts the attributes for the XML element.
+     * @param indent the indentation amount for prettyprinting XML.
+     * @throws SAXException is thrown if an error occurs.
+     */
     private void writeSimpleElement(
         String elementName,
         String value,
@@ -413,7 +441,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
      * @see org.xml.sax.XMLReader#parse(java.lang.String)
      */
     public void parse(String systemId) throws IOException, SAXException {
-        System.out.println("1");
+        // Do nothing. Just for conformance to the XMLReader API.
     }
 
     /* (non-Javadoc)
