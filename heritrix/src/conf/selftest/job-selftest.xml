@@ -1,56 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">
   <meta>
-    <name>selftest</name>
-    <description>Selftest Order File</description>
-    <date>20040212010110</date>
+    <name>heritrix-selftest</name>
+    <description>Heritrix Selftest</description>
+    <date>20040219192737</date>
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
-    <string name="disk-path">data</string>
+    <string name="disk-path">disk</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
-    <integer name="max-toe-threads">5</integer>
-    <newObject name="scope" class="org.archive.crawler.basic.Scope">
+    <integer name="max-toe-threads">50</integer>
+    <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
       <boolean name="inverted">false</boolean>
       <string name="seedsfile">seeds.txt</string>
       <integer name="max-link-hops">5</integer>
       <integer name="max-trans-hops">5</integer>
-      <string name="mode">domain</string>
-      <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
-        <boolean name="enabled">true</boolean>
-        <boolean name="inverted">false</boolean>
-        <integer name="max-speculative-hops">0</integer>
-        <integer name="max-referral-hops">0</integer>
-        <integer name="max-embed-hops">2147483647</integer>
-      </newObject>
       <newObject name="excludeFilter" class="org.archive.crawler.filter.OrFilter">
         <boolean name="enabled">true</boolean>
         <boolean name="inverted">false</boolean>
         <map name="filters">
         </map>
       </newObject>
+      <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
+        <boolean name="enabled">true</boolean>
+        <boolean name="inverted">false</boolean>
+        <integer name="max-speculative-hops">0</integer>
+        <integer name="max-referral-hops">0</integer>
+        <integer name="max-embed-hops">0</integer>
+      </newObject>
     </newObject>
     <map name="http-headers">
-      <string name="user-agent">heritrix-selftest (+http://localhost.localdomain)</string>
+      <string name="user-agent">selftest-heritrix/@VERSION@ (+http://localhost.localdomain)</string>
       <string name="from">webmaster@localhost.localdomain</string>
     </map>
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
       <string name="type">classic</string>
       <boolean name="masquerade">false</boolean>
-      <string name="custom-robots"/>
+      <string name="custom-robots"></string>
       <stringList name="user-agents">
       </stringList>
     </newObject>
     <newObject name="frontier" class="org.archive.crawler.basic.Frontier">
-      <float name="delay-factor">0.0</float>
-      <integer name="max-delay-ms">20000</integer>
+      <float name="delay-factor">0</float>
+      <integer name="max-delay-ms">0</integer>
       <integer name="min-delay-ms">0</integer>
       <integer name="min-interval-ms">0</integer>
       <integer name="max-retries">10</integer>
-      <long name="retry-delay">10000</long>
+      <long name="retry-delay-seconds">900</long>
     </newObject>
     <map name="processors">
       <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
@@ -81,7 +80,7 @@
         <integer name="sotimeout-ms">20000</integer>
         <long name="max-length-bytes">9223372036854775807</long>
         <integer name="max-fetch-attempts">35</integer>
-        <string name="cookies-file"/>
+        <string name="cookies-file"></string>
         <boolean name="strict">false</boolean>
       </newObject>
       <newObject name="ExtractorHTTP" class="org.archive.crawler.extractor.ExtractorHTTP">
@@ -116,7 +115,7 @@
         <map name="filters">
         </map>
         <boolean name="compress">true</boolean>
-        <string name="prefix">IAH</string>
+        <string name="prefix">SELFTEST</string>
         <integer name="max-size-bytes">100000000</integer>
         <string name="path">arcs</string>
         <integer name="pool-max-active">1</integer>

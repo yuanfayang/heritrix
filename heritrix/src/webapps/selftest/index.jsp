@@ -6,7 +6,8 @@
 <% 
 	// This code looks for all subdirs -- each test occupies its own subdir.
 	// Assumption is that the war file has been extracted else this technique
-	// will fail.
+	// will fail.  We exclude CVS and WEB-INF dirs as well as all selftests
+    // not yet implemented.
 	File cwd = new File(pageContext.getServletContext().
 	    getRealPath(File.separator));
 	ArrayList dirs = new ArrayList();
@@ -16,6 +17,13 @@
 		for (int i = 0; i < files.length; i++)
 		{
 	    	if (files[i].isDirectory() &&
+	    		!files[i].getName().equals("TrickyRelativeURIs") &&
+	    		!files[i].getName().equals("SpacesInHrefPath") &&
+	    		!files[i].getName().equals("SimpleJavascriptExtraction") &&
+	    		!files[i].getName().equals("RobotsExclusion") &&
+	    		!files[i].getName().equals("Refresh") &&
+	    		!files[i].getName().equals("FormTagExtraction") &&
+	    		!files[i].getName().equals("SimpleDocumentTypes") &&
 	    		!files[i].getName().equals("WEB-INF") &&
 	    		!files[i].getName().equals("CVS"))
 	    	{
