@@ -334,38 +334,44 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     protected ARCRecord createARCRecord(InputStream is, long offset)
         		throws IOException {
-        ArrayList values = getTokenizedHeaderLine(is);
-        boolean contentRead = false;
+        ArrayList firstLineValues = new ArrayList(20);
+        getTokenizedHeaderLine(is, firstLineValues);
+        int bodyOffset = 0;
         if (offset == 0) {
             // If offset is zero, then no records have been read yet
             // and we're reading our first one, the record of ARC file meta
             // info.  Its special.  Has three lines of meta info. We've just
-        		// read the first line.  There are two more.   The second line
-        		// has misc. info.  We're only interested in the first field,
-        		// the version number.  The third line is the list of field
-        		// names. Here's what ARC file version 1 meta content looks like:
+            // read the first line.  There are two more.   The second line
+            // has misc. info.  We're only interested in the first field,
+            // the version number.  The third line is the list of field
+            // names. Here's what ARC file version 1 meta content looks like:
             //
             // filedesc://testIsBoundary-JunitIAH200401070157520.arc 0.0.0.0 \\
             //      20040107015752 text/plain 77
             // 1 0 InternetArchive
             // URL IP-address Archive-date Content-type Archive-length
-        		//
-        		// Cannot read other ARCRecords till this first field has been
-        		// read because it has the field names for subsequent record
-        		// metadata.
             //
-            // Set the content read flag because
-            // there we've read it all; there is no content in this record:
-            // Its all meta info.
+            // Cannot read other ARCRecords till this first field has been
+            // read because it has the field names for subsequent record
+            // metadata.
             //
-            this.version = ((String)getTokenizedHeaderLine(is).get(0));
-            this.headerFieldNameKeys = computeHeaderFieldNameKeys(is);
-            contentRead = true;
+            ArrayList secondLineValues = new ArrayList(20);
+            bodyOffset += getTokenizedHeaderLine(is, secondLineValues);
+            this.version = (String)secondLineValues.get(0) +
+                "." + (String)secondLineValues.get(1) ;
+            ArrayList thirdLineValues = new ArrayList(20);
+            bodyOffset += getTokenizedHeaderLine(is, thirdLineValues);
+            // Lowercase the field names found.
+            for (int i = 0; i < thirdLineValues.size(); i++) {
+                thirdLineValues.set(i,
+                    ((String)thirdLineValues.get(i)).toLowerCase());
+            }
+            this.headerFieldNameKeys = thirdLineValues;
         }
 
         return this.currentRecord = new ARCRecord(is,
-            computeMetaData(this.headerFieldNameKeys, values, this.version, 
-                offset), contentRead);
+            computeMetaData(this.headerFieldNameKeys, firstLineValues,
+                this.version, offset), bodyOffset);
     }
 
     /**
@@ -375,26 +381,26 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * of file w/o finding a LINE_SEPARATOR or the line length is crazy.
      *
      * @param stream InputStream to read from.
-     * @return List of string tokens.
-     *
+     * @param list Empty list that gets filled w/ string tokens.
+     * @return Count of characters read.
      * @exception IOException If problem reading stream or no line separator
      * found or EOF before EOL or we didn't get minimum header fields.
      */
-    private ArrayList getTokenizedHeaderLine(InputStream stream)
-            throws IOException {
-        ArrayList list = new ArrayList(20);
+    private int getTokenizedHeaderLine(final InputStream stream,
+            List list) throws IOException {
         StringBuffer buffer = new StringBuffer();
-        int c = -1;
-        for (int i = 0; true; i++) {
-            if (i > MAX_HEADER_LINE_LENGTH) {
-                throw new IOException("Header line longer than max allowed " +
-                        " -- " + String.valueOf(MAX_HEADER_LINE_LENGTH) +
-                " -- or passed buffer doesn't contain a line.");
-            }
-
+        int read = 0;
+        for (int c = -1; true;) {
             c = stream.read() & 0xff;
             if (c == -1) {
                 throw new IOException("Hit EOF before header EOL.");
+            }
+            
+            read++;
+            if (read > MAX_HEADER_LINE_LENGTH) {
+                throw new IOException("Header line longer than max allowed " +
+                        " -- " + String.valueOf(MAX_HEADER_LINE_LENGTH) +
+                " -- or passed buffer doesn't contain a line.");
             }
 
             if (c == LINE_SEPARATOR) {
@@ -420,28 +426,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             throw new IOException("Empty header line.");
         }
 
-        return list;
-    }
-
-    /**
-     * Get the header field names lowercased.
-     *
-     * Assumption is that we're cue'd up to read the 3rd line of the ARC file
-     * record when this method is called.
-     *
-     * @param is Stream to use reading.
-     * @return Lowercased field names parsed from 3rd line of the ARC file.
-     *
-     * @exception IOException If we fail reading ARC file meta line no. 3.
-     */
-    private ArrayList computeHeaderFieldNameKeys(InputStream stream)
-        throws IOException {
-        ArrayList values = getTokenizedHeaderLine(stream);
-        // Lowercase the field names found.
-        for (int i = 0; i < values.size(); i++) {
-            values.set(i, ((String)values.get(i)).toLowerCase());
-        }
-        return values;
+        return read;
     }
 
     /**
@@ -511,8 +496,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @throws IOException
      */
     public List validate(int noRecords) throws IOException {
-    		List metaDatas = new ArrayList();
-		 
+        List metaDatas = new ArrayList(); 
         int count = 0;
         for (Iterator i = iterator(); hasNext();) {
             count++;
