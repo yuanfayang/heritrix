@@ -270,11 +270,9 @@
 			<%
 				TreeSet hostsDistribution = stats.getSortedByValue(stats.getHostsDistribution());
 				Iterator hosts = hostsDistribution.iterator();
-				long i=0;
 				while(hosts.hasNext())
 				{
 					Map.Entry host = (Map.Entry)hosts.next();
-					i+=((LongWrapper)host.getValue()).longValue;
 			%>
 					<tr>
 						<td>
@@ -289,7 +287,6 @@
 			%>				
 		</table>
 		<%
-			out.println(i);
 			} // End if(cjob==null)else clause
 		%>
 <%@include file="/include/foot.jsp"%>
