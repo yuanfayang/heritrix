@@ -26,6 +26,10 @@ package org.archive.io.arc;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
@@ -33,6 +37,7 @@ import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Base32;
 
 
 /**
@@ -45,7 +50,7 @@ public class ARCWriterPool {
     /**
      * Logger instance used by this class.
      */
-    private static Logger logger =
+    protected static Logger logger =
         Logger.getLogger("org.archive.io.arc.ARCWriterPool");
     
     /**
@@ -77,7 +82,8 @@ public class ARCWriterPool {
     public ARCWriterPool(File arcsDir, String prefix)
         throws IOException
     {
-        this(arcsDir, prefix, ARCConstants.DEFAULT_COMPRESS, DEFAULT_MAX_ACTIVE,
+        this(arcsDir, prefix, ARCConstants.DEFAULT_COMPRESS,
+            ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE, DEFAULT_MAX_ACTIVE,
             DEFAULT_MAXIMUM_WAIT);
     }
 
@@ -95,8 +101,8 @@ public class ARCWriterPool {
     public ARCWriterPool(File arcsDir, String prefix, boolean compress)
         throws IOException
     {
-        this(arcsDir, prefix, compress, DEFAULT_MAX_ACTIVE,
-            DEFAULT_MAXIMUM_WAIT);
+        this(arcsDir, prefix, compress, ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE,
+            DEFAULT_MAX_ACTIVE, DEFAULT_MAXIMUM_WAIT);
     }
 
     /**
@@ -113,14 +119,14 @@ public class ARCWriterPool {
      * to create the directory.
      */
     public ARCWriterPool(File arcsDir, String prefix, boolean compress,
-            int maxActive, int maxWait)
+            int arcMaxSize, int maxActive, int maxWait)
         throws IOException
     {
         logger.fine("Configuration: prefix=" + prefix + ", compress=" +
                 compress + ", maxActive=" + maxActive + ", maxWait=" + 
                 maxWait);
         this.pool = new GenericObjectPool(
-            new ARCWriterFactory(arcsDir, prefix, compress),
+            new ARCWriterFactory(arcsDir, prefix, compress, arcMaxSize),
             maxActive, GenericObjectPool.WHEN_EXHAUSTED_BLOCK, maxWait);
     }
 
@@ -219,6 +225,16 @@ public class ARCWriterPool {
          * Compress ARC files.
          */
         private boolean compress = ARCConstants.DEFAULT_COMPRESS;
+        
+        /**
+         * Used as part of arc name.
+         */
+        private final String host;
+
+        /**
+         * Maximum size for arc.
+         */
+		private final int arcMaxSize;
 
         
         /**
@@ -227,17 +243,27 @@ public class ARCWriterPool {
          * @param arcsDir Directory we drop ARC files into.
          * @param prefix ARC file prefix to use.
          * @param compress True if ARC files should be compressed.
+         * @param arcMaxSize Maximum size for arc file.
          *
          * @throws IOException Passed directory is not writeable or we were unable
          * to create the directory.
          */
-        public ARCWriterFactory(File arcsDir, String prefix, boolean compress)
+        public ARCWriterFactory(File arcsDir, String prefix, boolean compress,
+                int arcMaxSize)
             throws IOException
         {
             super();
             this.arcsDir = ArchiveUtils.ensureWriteableDirectory(arcsDir);
             this.prefix = prefix;
             this.compress = compress;
+            this.arcMaxSize = arcMaxSize;
+            String tmp = "127.0.0.1";
+            try {
+            	    tmp = InetAddress.getLocalHost().getHostAddress();
+            } catch (UnknownHostException e) {
+                logger.severe("Failed getHostAddress for this host");
+            }
+            this.host = tmp;
         }
 
         /* (non-Javadoc)
@@ -246,7 +272,11 @@ public class ARCWriterPool {
         public Object makeObject() throws Exception
         {
             return new ARCWriter(this.arcsDir, this.prefix, this.compress,
-                ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE);
+                this.arcMaxSize, getTail());
+        }
+        
+        protected synchronized String getTail() {
+            return "-" + this.host;
         }
 
         /* (non-Javadoc)

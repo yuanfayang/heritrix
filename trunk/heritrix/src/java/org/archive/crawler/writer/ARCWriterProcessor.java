@@ -169,7 +169,7 @@ public class ARCWriterProcessor extends Processor
         Logger logger = getSettingsHandler().getOrder().getController()
             .runtimeErrors;
         
-        // Add myself as a listener for crawl job events.
+        // Add this class to crawl state listeners
         getSettingsHandler().getOrder().getController().
             addCrawlStatusListener(this);
         
@@ -190,6 +190,7 @@ public class ARCWriterProcessor extends Processor
                 new ARCWriterPool(this.outputDir,
                     this.arcPrefix,
                     this.useCompression,
+                    this.arcMaxSize,
                     this.poolMaximumActive,
                     this.poolMaximumWait);
             
@@ -391,26 +392,36 @@ public class ARCWriterProcessor extends Processor
         this.poolMaximumWait = poolMaximumWait;
     }
 
-    public void crawlEnding(String sExitMessage) {
+	public void crawlEnding(String sExitMessage) {
+		// sExitMessage is unused.
+		ARCWriter.resetSerialNo();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+	 */
+	public void crawlEnded(String sExitMessage) {
         // sExitMessage is unused.
-        
-        // Reset crawl serial id so that it is zero when the next job starts.
-        ARCWriter.resetId();
-    }
+	}
 
-    public void crawlEnded(String sExitMessage) {
-        // Do nothing.
-    }
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+	 */
+	public void crawlPausing(String statusMessage) {
+        // sExitMessage is unused.
+	}
 
-    public void crawlPausing(String statusMessage) {
-        // Do nothing. 
-    }
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+	 */
+	public void crawlPaused(String statusMessage) {
+        // sExitMessage is unused.
+	}
 
-    public void crawlPaused(String statusMessage) {
-        // Do nothing.
-    }
-
-    public void crawlResuming(String statusMessage) {
-        // Do nothing.
-    }
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+	 */
+	public void crawlResuming(String statusMessage) {
+        // sExitMessage is unused.
+	}
 }

@@ -218,8 +218,6 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             // do not follow links of error pages
             return;
         }
-        Collection links = (Collection)curi.getAList().getObject(collection);
-        Iterator iter = links.iterator();
         
         // Check if this is a seed with a 301 or 302.
         boolean seed = false;
@@ -242,8 +240,12 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             }
         }
         
-        while(iter.hasNext()) {
+        Collection links = (Collection)curi.getAList().getObject(collection);
+        for (Iterator iter = links.iterator(); iter.hasNext(); ) {
             String link = (String)iter.next();
+            if (link == null || link.length() <= 0) {
+                continue;   
+            }
             try {
                 UURI uuri = new UURI(baseUri, link);
                 CandidateURI caURI = new CandidateURI(uuri);

@@ -130,6 +130,9 @@ public class ToeThread extends Thread
                 }
                 dieCheck();
                 step = STEP_ABOUT_TO_GET_URI;
+                if (controller.getFrontier() == null) {
+                	    throw new NullPointerException("Frontier is null");
+                }
                 currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
                 if ( currentCuri != null ) {
                     processCrawlUri();
