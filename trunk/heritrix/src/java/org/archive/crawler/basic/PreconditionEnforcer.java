@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.basic;
 
+import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -31,7 +33,10 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -45,18 +50,23 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  *
  */
-public class PreconditionEnforcer extends Processor implements CoreAttributeConstants, FetchStatusCodes {
+public class PreconditionEnforcer
+        extends Processor
+        implements CoreAttributeConstants, FetchStatusCodes {
 
-    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimplePolitenessEnforcer");
+    private static final Logger logger =
+        Logger.getLogger(PreconditionEnforcer.class.getName());
 
     private final static Integer DEFAULT_IP_VALIDITY_DURATION = new Integer(-1);
     private final static Integer DEFAULT_ROBOTS_VALIDITY_DURATION =
         new Integer(3*(60*24)); // three days
 
     /** minutes to keep IP information for */
-    public final static String ATTR_IP_VALIDITY_DURATION = "ip-validity-duration-m";
+    public final static String ATTR_IP_VALIDITY_DURATION
+        = "ip-validity-duration-m";
     /** minutes to cache robots info */ 
-    public final static String ATTR_ROBOTS_VALIDITY_DURATION = "robot-validity-duration-m";
+    public final static String ATTR_ROBOTS_VALIDITY_DURATION
+        = "robot-validity-duration-m";
 
     /**
      * @param name
@@ -81,9 +91,6 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         e.setExpertSetting(true);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
-     */
     protected void innerProcess(CrawlURI curi) {
 
         if (considerDnsPreconditions(curi)) {
@@ -92,8 +99,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 
         // make sure we only process schemes we understand (i.e. not dns)
         String scheme = curi.getUURI().getScheme().toLowerCase(); 
-        if (! (scheme.equals("http") || scheme.equals("https")))
-        {
+        if (! (scheme.equals("http") || scheme.equals("https"))) {
             logger.fine("PolitenessEnforcer doesn't understand uri's of type " +
                 scheme + " (ignoring)");
             return;
@@ -102,21 +108,33 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         if (considerRobotsPreconditions(curi)) {
             return;
         }
+        
+        if (!curi.isPrerequisite() && credentialPrecondition(curi)) {
+            return;
+        }
 
         // OK, it's allowed
 
-        // for all curis that will in fact be fetched, set appropriate delays
-        // TODOSOMEDAY: allow per-host, per-protocol, etc. factors
-//        curi.setDelayFactor(getDelayFactorFor(curi));
-//        curi.setMinimumDelay(getMinimumDelayFor(curi));
+        // For all curis that will in fact be fetched, set appropriate delays.
+        // TODO: SOMEDAY: allow per-host, per-protocol, etc. factors
+        // curi.setDelayFactor(getDelayFactorFor(curi));
+        // curi.setMinimumDelay(getMinimumDelayFor(curi));
 
         return;
     }
 
+    /**
+     * Consider the robots precondition.
+     * 
+     * @param curi CrawlURI we're checking for any required preconditions.
+     * @return True, if this <code>curi</code> has a precondition.  False if
+     * we can precede to process this url.
+     */
     private boolean considerRobotsPreconditions(CrawlURI curi) {
         // treat /robots.txt fetches specially
         if (curi.getUURI().getPath().equals("/robots.txt")) {
             // allow processing to continue
+            curi.setPrerequisite(true);
             return false;
         }
         // require /robots.txt if not present
@@ -124,27 +142,24 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             logger.fine( "No valid robots for " + curi.getServer()
                 + "; deferring " + curi);
                 
-                // Robots expired - should be refetched even though its already
-                // crawled.
-             curi.setPrerequisiteUri(
-                curi.getUURI().getRawUri().resolve("/robots.txt").toString());
-                
-             curi.incrementDeferrals();
-             curi.setFetchStatus(S_DEFERRED);
-             curi.skipToProcessorChain(getController().getPostprocessorChain());
-             return true;
-         }
-         // test against robots.txt if available
-          String ua = getController().getOrder().getUserAgent(curi);
-         if( curi.getServer().getRobots().disallows(curi, ua)) {
-             // don't fetch
-             curi.skipToProcessorChain(getController().getPostprocessorChain());  // turn off later stages
-             curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-             curi.getAList().putString("error","robots.txt exclusion");
-             logger.fine("robots.txt precluded "+curi);
+            // Robots expired - should be refetched even though its already
+            // crawled.
+            curi.markPrerequisite(
+                curi.getUURI().getRawUri().resolve("/robots.txt").toString(),
+                getController().getPostprocessorChain());
             return true;
         }
-         return false;
+        // test against robots.txt if available
+        String ua = getController().getOrder().getUserAgent(curi);
+        if( curi.getServer().getRobots().disallows(curi, ua)) {
+            // Don't fetch and turn off later stages of processing.
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            curi.setFetchStatus(S_ROBOTS_PRECLUDED);
+            curi.getAList().putString("error","robots.txt exclusion");
+            logger.fine("robots.txt precluded " + curi);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -177,15 +192,10 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         // if we haven't done a dns lookup  and this isn't a dns uri
         // shoot that off and defer further processing
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
-            logger.fine(
-                "deferring processing of "
-                    + curi.toString()
-                    + " for dns lookup.");
-
-            curi.setPrerequisiteUri("dns:" + curi.getServer().getHostname());
-            curi.setFetchStatus(S_DEFERRED);
-            curi.incrementDeferrals();
-            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            logger.fine("Deferring processing of " + curi.toString()
+                + " for dns lookup.");
+            curi.markPrerequisite("dns:" + curi.getServer().getHostname(),
+                getController().getPostprocessorChain());          
             return true;
         }
 
@@ -258,34 +268,132 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         return d.longValue() * 60 * 1000;
     }
 
-    /** Is the robots policy expired.
-    *
-    * This method will also return true if we haven't tried to get the
-    * robots.txt for this server. 
-    * 
-    * @param curi
+    /**
+     * Is the robots policy expired.
+     * 
+     * This method will also return true if we haven't tried to get the
+     * robots.txt for this server.
+     * 
+     * @param curi
      * @return true if the robots policy is expired.
+     */
+    public boolean isRobotsExpired(CrawlURI curi) {
+        long robotsFetched = curi.getServer().getRobotsFetchedTime();
+        if (robotsFetched == CrawlServer.ROBOTS_NOT_FETCHED) {
+            // Have not attempted to fetch robots
+            return true;
+        }
+        long duration = getRobotsValidityDuration(curi);
+        if (duration == 0) {
+            // When zero, robots should be valid forever
+            return false;
+        }
+        if (robotsFetched + duration < System.currentTimeMillis()) {
+            // Robots is still valid
+            return true;
+        }
+        return false;
+    }
+
+   /**
+    * Consider credential preconditions.
+    * 
+    * Looks to see if any credential preconditions (e.g. html form login
+    * credentials) for this <code>CrawlServer</code>. If there are, have they
+    * been run already? If not, make the running of these logins a precondition
+    * of accessing any other url on this <code>CrawlServer</code>.
+    * 
+    * <p>
+    * One day, do optimization and avoid running the bulk of the code below.
+    * Argument for running the code everytime is that overrides and refinements
+    * may change what comes back from credential store.
+    * 
+    * @param curi CrawlURI we're checking for any required preconditions.
+    * @return True, if this <code>curi</code> has a precondition that needs to
+    *         be met before we can proceed. False if we can precede to process
+    *         this url.
     */
-   public boolean isRobotsExpired(CrawlURI curi) {
-       long robotsFetched = curi.getServer().getRobotsFetchedTime();
-       if (robotsFetched == CrawlServer.ROBOTS_NOT_FETCHED) {
-           // Have not attempted to fetch robots
-           return true;
-       }
+    private boolean credentialPrecondition(final CrawlURI curi) {
+        
+        boolean result = false;
+        
+        CredentialStore cs =
+            CredentialStore.getCredentialStore(getSettingsHandler());
+        if (cs == null) {
+            logger.severe("No credential store for " + curi);
+            return result;
+        }
+        Iterator i = cs.iterator(curi);
+        if (i == null) {
+            return result;
+        }
 
-       long duration = getRobotsValidityDuration(curi);
-       
-       if (duration == 0) {
-           // When zero, robots should be valid forever
-           return false;
-       }
-
-       if (robotsFetched + duration < System.currentTimeMillis()) {
-           // Robots is still valid
-           return true;
-       }
-       
-       return false;
-   }
-
+        while (i.hasNext()) {
+            Credential c = (Credential)i.next();
+            if (!c.hasPrerequisite(curi)) {
+                continue;
+            }
+            
+            if (c.isPrerequisite(curi)) {
+                // This credential has a prereq. and this curi is it.  Let it
+                // through.  Add its avatar to the curi as a mark.  Also, does
+                // this curi need to be posted?
+                c.attach(curi);
+                curi.setPost(c.isPost(curi));
+                break;
+            }
+            
+            if (!authenticated(c, curi)) {
+                // Han't been authenticated.  Queue it and move on (Assumption
+                // is that we can do one authentication at a time -- usually one
+                // html form).
+                String prereq = c.getPrerequisite(curi);
+                if (prereq == null || prereq.length() <= 0) {
+                    logger.severe(curi.getServer().getName() + " has "
+                        + " credential(s) of type " + c + " but prereq"
+                        + " is null.");
+                } else {
+                    curi.markPrerequisite(prereq,
+                        getController().getPostprocessorChain());
+                    result = true;
+                    logger.fine("Queueing prereq " + prereq + " of type " + c +
+                        " for " + curi);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Has passed credential already been authenticated.
+     * 
+     * @param credential Credential to test.
+     * @param curi CrawlURI.
+     * @return True if already run.
+     */
+    private boolean authenticated(final Credential credential,
+            final CrawlURI curi) {
+        
+        boolean result = false;
+        if (!curi.getServer().hasCredentialAvatars()) {
+            return result;
+        }
+        Set avatars = curi.getServer().getCredentialAvatars();
+        for (Iterator i = avatars.iterator(); i.hasNext();) {
+            CredentialAvatar ca = (CredentialAvatar)i.next();
+            String key = null;
+            try {
+                key = credential.getKey(curi);
+            } catch (AttributeNotFoundException e) {
+                logger.severe("Failed getting key for " + credential +
+                    " for " + curi);
+                continue;
+            }
+            if (ca.match(credential.getClass(), key)) {
+                result = true;
+            }
+        }
+        return result;
+    }
 }

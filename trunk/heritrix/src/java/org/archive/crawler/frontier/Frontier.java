@@ -1027,11 +1027,19 @@ public class Frontier
         switch (curi.getFetchStatus()) {
             case S_DEFERRED:
                 return true;
+                
             case HttpStatus.SC_UNAUTHORIZED:
-                // Check to see if we should let this 401 go around again?
-                // If any rfc2617 credential present, assume it got loaded in 
-                // FetchHTTP on expectation that we're to go around again.
-                return curi.hasRfc2617Credentials();
+                // We can get here though usually a positive status code is
+                // a success.  We get here if there is rfc2617 credential data
+                // loaded and we're supposed to go around again.  See if any
+                // rfc2617 credential present and if there, assume it got
+                // loaded in FetchHTTP on expectation that we're to go around
+                // again.  If no rfc2617 loaded, we should not be here.
+                boolean loaded = curi.hasRfc2617CredentialAvatar();
+                if (!loaded) {
+                    logger.severe("Have 401 but no creds loaded " + curi);
+                }
+                return loaded;
             
             default:
                 return false;

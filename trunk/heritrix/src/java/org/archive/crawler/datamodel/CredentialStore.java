@@ -26,8 +26,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -35,7 +37,9 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.credential.*;
+import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.HtmlFormCredential;
+import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
@@ -106,9 +110,33 @@ public class CredentialStore extends ModuleType {
     }
     
     /**
+     * Get a credential store reference.
+     * @param context A settingshandler object.
+     * @return A credential store or null if we failed getting one.
+     */
+    public static CredentialStore getCredentialStore(SettingsHandler context) {
+
+        CredentialStore cs = null;
+        
+        try {
+            cs = (CredentialStore)context.getOrder().
+                getAttribute(CredentialStore.ATTR_NAME);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed to get credential store: " + e.getMessage());
+        } catch (MBeanException e) {
+            logger.severe("Failed to get credential store: " + e.getMessage());
+        } catch (ReflectionException e) {
+            logger.severe("Failed to get credential store: " + e.getMessage());
+        }
+        
+        return cs;
+    }
+    
+    /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
      * context.  If null, we use global context.
      * @return A map of all credentials from passed context.
+     * @throws AttributeNotFoundException
      */
     protected MapType get(Object context)
         throws AttributeNotFoundException {
@@ -119,9 +147,28 @@ public class CredentialStore extends ModuleType {
     /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
      * context.  If null, we use global context.
+     * @return An iterator or null.
+     */
+    public Iterator iterator(Object context) {
+        
+        MapType m = null;
+        try {
+            m = (MapType)getAttribute(context, ATTR_CREDENTIALS);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed get credentials: " + e.getMessage());
+        }
+        return (m == null)? null: m.iterator(context);
+    }
+    
+    /**
+     * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
+     * context.  If null, we use global context.
      * @param name Name to give the manufactured credential.  Should be unique
      * else the add of the credential to the list of credentials will fail.
      * @return Returns <code>name</code>'d credential.
+     * @throws AttributeNotFoundException
+     * @throws MBeanException
+     * @throws ReflectionException
      */
     public Credential get(Object context, String name)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
@@ -139,6 +186,10 @@ public class CredentialStore extends ModuleType {
      * else the add of the credential to the list of credentials will fail.
      * @param type Type of credentials to get.
      * @return The credential created and added to the list of credentials.
+     * @throws IllegalArgumentException
+     * @throws AttributeNotFoundException
+     * @throws InvocationTargetException
+     * @throws InvalidAttributeValueException
      */
     public Credential create(CrawlerSettings context, String name, Class type)
         throws IllegalArgumentException, InvocationTargetException,
@@ -157,6 +208,8 @@ public class CredentialStore extends ModuleType {
      * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param credential Credential to delete.
+     * @throws IllegalArgumentException
+     * @throws AttributeNotFoundException
      */
     public void remove(CrawlerSettings context, Credential credential)
         throws AttributeNotFoundException, IllegalArgumentException {
@@ -170,6 +223,8 @@ public class CredentialStore extends ModuleType {
      * @param context Pass a CrawlerSettings.  Used to set
      * context.  If null, we use global context.
      * @param name Name of credential to delete.
+     * @throws IllegalArgumentException
+     * @throws AttributeNotFoundException
      */
     public void remove(CrawlerSettings context, String name)
         throws IllegalArgumentException, AttributeNotFoundException {
@@ -178,23 +233,7 @@ public class CredentialStore extends ModuleType {
     }
     
     /**
-     * @return Iterator over the credentials in this CredentialStore.
-     */
-    public Iterator iterator(Object context) {
-        
-        Iterator result =  null;
-        try
-        {
-            result = get(context).iterator(context);
-        } catch (AttributeNotFoundException e) {
-            logger.severe("Failed getting iterator: " + e.getMessage());
-        }
-        
-        return result;
-    }
-    
-    /**
-     * Return sublist made up of all credentials of the passed
+     * Return set made up of all credentials of the passed
      * <code>type</code>.
      * 
      * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
@@ -203,15 +242,21 @@ public class CredentialStore extends ModuleType {
      * credentials.
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public List sublist(Object context, Class type) {
+    public Set subset(Object context, Class type) {
         
-        List result = new ArrayList();
-        for (Iterator i = iterator(context); i.hasNext();) {
-            Credential c = (Credential)i.next();
-            if (!type.isInstance(c)) {
-                continue;
+        Set result = null;
+        Iterator i = iterator(context);
+        if (i != null) {
+            while(i.hasNext()) {
+                Credential c = (Credential)i.next();
+                if (!type.isInstance(c)) {
+                    continue;
+                }
+                if (result == null) {
+                    result = new HashSet();
+                }
+                result.add(c);
             }
-            result.add(c);
         }
         return result;
     }
