@@ -75,7 +75,7 @@
       <title>Building Heritrix</title>
 
       <para>You can build Heritrix from source using Maven. Heritrix build has
-      been tested against maven-1.0rc1 and maven-1.0rc2. See <ulink
+      been tested against maven-1.0.2 (and all previous versions). See <ulink
       url="http://maven.apache.org">maven.apache.org</ulink> for how to obtain
       the binary and setup of your maven environment.</para>
 
@@ -86,12 +86,14 @@
       named 'docbook' plugin. This latter converts docbook to xdocs where
       what's wanted is the former, which converts docbook xml to html. This
       'sdocbook' plugin is used to generate the user
-	and developer documentation. 
-	Download the plugin jar -- currently its called 
+	and developer documentation.</para> 
+	<para>Download the plugin jar -- currently its called 
     maven-sdocbook-plugin-1.4-SNAPSHOT.jar --
-    and put it into your maven
-       repository plugins directory, usually      
-               at <literal>${HOME}/.maven/plugins/</literal>.</para>
+    and put it into your maven repository plugins directory, usually      
+               at <literal>${MAVEN_HOME}/plugins/</literal> (in earlier
+               versions of maven, pre 1.0.2, plugins are at
+               <literal>${HOME}/.maven/plugins/</literal>).
+               </para>
 
 
 	<para>The sdocbook plugin has a dependency on the <ulink

@@ -306,24 +306,36 @@
             </properties>
         </dependency>
         <dependency>
-            <id>commons-httpclient</id>
-            <version>3.0-alpha2</version>
+            <id>commons-httpclient-local</id>
+            <version>3.0-beta1</version>
             <url>http://jakarta.apache.org/commons/httpclient/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <description>This package is used for fetching URIs via http.
+                Need to give this component an id other than the natural
+                one of 'commons-httpclient' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
                 </description>
                 <license>Apache 2.0
                 http://www.apache.org/licenses/LICENSE-2.0</license>
             </properties>
         </dependency>
         <dependency>
-            <id>commons-logging</id>
+            <id>commons-logging-local</id>
             <version>1.0.4</version>
             <url>http://jakarta.apache.org/commons/logging.html</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <description>Provides logging adapters.
+                Need to give this component an id other than the natural
+                one of 'commons-logging' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
                 </description>
                 <license>Apache 2.0
                 http://www.apache.org/licenses/LICENSE-2.0</license>
@@ -477,25 +489,39 @@
             </properties>
         </dependency>
         <dependency>
-            <id>ant</id>
-            <version>1.5.4</version>
+            <id>ant-local</id>
+            <version>1.6.2</version>
             <url>http://ant.apache.org</url>
             <properties>
                 <description>Build tool. An ant task is used to compile
                 the jspc pages at build time and then for the selftest at
-                runtime.</description>
+                runtime.
+                Need to give this component an id other than the natural
+                one of 'ant' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
+                </description>
                 <license>Apache 1.1.  http://ant.apache.org/license.html
                 </license>
             </properties>
         </dependency>
         <dependency>
-            <id>junit</id>
+            <id>junit-local</id>
             <version>3.8.1</version>
             <url>http://www.junit.org/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <description>A framework for implimenting the unit testing
-                methology.</description>
+                methology.
+                Need to give this component an id other than the natural
+                one of 'junit' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
+                </description>
                 <license>IBM's Common Public License Version 0.5.</license>
             </properties>
         </dependency>
@@ -511,12 +537,18 @@
             </properties>
         </dependency>
         <dependency>
-            <id>commons-collections</id>
+            <id>commons-collections-local</id>
             <version>3.1</version>
             <url>http://jakarta.apache.org/site/binindex.cgi#commons-collections</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <description>Needed by commons-pool.
+                Need to give this component an id other than the natural
+                one of 'commons-collections' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
                 </description>
                 <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
@@ -544,12 +576,18 @@
             </properties>
         </dependency>
         <dependency>
-            <id>commons-net</id>
+            <id>commons-net-local</id>
             <version>1.1.0</version>
             <url>http://jakarta.apache.org/commons/net/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <description> This is an Internet protocol suite Java library originally developed by ORO, Inc. This version supports Finger, Whois, TFTP, Telnet, POP3, FTP, NNTP, SMTP, and some miscellaneous protocols like Time and Echo as well as BSD R command support. Heritrix uses its FTP implementation.
+                Need to give this component an id other than the natural
+                one of 'commons-net' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
                 </description>
                 <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
