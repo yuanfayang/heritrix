@@ -16,6 +16,16 @@
     <title>Release 1.4.0 - NOT YET RELEASED</title>
     <sect2 id="1_4_0_changes">
         <title>Changes</title>
+        <sect3 id="bdbfrontier">
+        <title>Berkeley DB Based Frontier</title>
+        <para>The BdbFrontier -- a frontier that keeps its queues of
+        URIs in
+        <ulink url="http://www.sleepycat.com/products/je.shtml">Berkeley
+        DB Java Edition</ulink> databases -- has been made the default
+        Frontier.  Other core datastructures such as the queue of 
+        'alreadyseen' URIs have also been moved into bdbje databases.
+        </para>
+        </sect3>
         <sect3 id="dns_arc_ip">
             <title>The IP in dns ARC Records</title>
             <para>Dns entries in ARCs look like this:
@@ -33,17 +43,30 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
             </para>
         </sect3>
         <sect3 id="mem_improvements">
-            <title>Memory Usage Improvements</title>
-
-        <para>Memory usage has been improved. RAM-based datastructures that
-        grew without bound now are disk-backed kept in berkeley db.
-        Long-running crawls that encounter many hosts over the life of a crawl,
-        or crawls started with hundreds-of-thousands-of seeds, or crawls that
-        encounter the unusual, say a page of a million seeds, will continue to
-        throw OutOfMemoryExceptions, but incidence should be less. 
+            <title>Crawl Size Upper Bounds Update</title>
+        <para>Memory usage has been improved in this release.
+        Previously RAM-based datastructures that
+        grew without bound now are disk-backed kept in berkeley db 
+        databases.
+        Where previous, see <xref linkend="upper_bounds" />,
+        Heritrix was unsuited for broad crawling, while still experimental,
+        using default memory settings
+        -- a heap of 256m -- broad-crawls of 5 to 6 days before
+        encountering OutOfMemoryErrors (OOMEs) are now possible; longer
+        if more heap is
+        assigned.  Where 10k hosts was an upper bound on narrow domain- or
+        host-scoped crawls, now, using the default heap size, it should now be
+        possible to do 500k+ hosts.
         </para>
-        <para>TODO: Add more specifics on how 
-        <xref xlink="upper_bounds" /> have changed.</para>
+        <para>
+        Long-running crawls that encounter hundreds-of-thousands of hosts over
+        the life of a crawl, or crawls started with hundreds-of-thousands of
+        seeds, continue to throw OutOfMemoryErrors
+        because there are still a few RAM-based datastructures that grow
+        without bound left in Heritrix; the lists of queue names and internal
+        structures inside 3rd party libraries used by Heritrix. These last few
+        items we intend to address in a later release.</para>
+
         </sect3>
 
     </sect2>
