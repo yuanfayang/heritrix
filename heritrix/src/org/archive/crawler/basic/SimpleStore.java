@@ -232,12 +232,16 @@ public class SimpleStore implements URIStore {
 	 */
 	public void insertAtHead(UURI uuri, int dist) {
 		if(filteredOut(uuri)) return;
-		if(allCuris.get(uuri)!=null) {
+		CrawlURI curi = null;
+		if((curi=(CrawlURI) allCuris.get(uuri))!=null) {
 			// already inserted
 			// TODO: perhaps yank to front?
+			if(curi.getStoreState()==URIStoreable.FINISHED) {
+				System.out.println("maybe a prob");
+			}
 			return;
 		}
-		CrawlURI curi = new CrawlURI(uuri);
+		curi = new CrawlURI(uuri);
 		curi.getAList().putInt("distance-from-seed",dist);
 		allCuris.put(uuri,curi);
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());

@@ -13,13 +13,14 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.Processor;
 
 /**
  * @author gojomo
  *
  */
-public class SimpleHTTPFetcher extends Processor {
+public class SimpleHTTPFetcher extends Processor implements InstancePerThread {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
 	HttpClient http = new HttpClient();
 	
@@ -29,8 +30,10 @@ public class SimpleHTTPFetcher extends Processor {
 	public void process(CrawlURI curi) {
 		super.process(curi);
 		if(!curi.getUURI().getUri().getScheme().equals("http")) {
+			// only handles plain http for now
 			return;
 		}
+		
 		curi.getAList().putLong("http-begin-time",System.currentTimeMillis());
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false);

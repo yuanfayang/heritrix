@@ -12,6 +12,7 @@ package org.archive.crawler.basic;
  */
 public interface URIStoreable {
 
+	public static final Object FINISHED = "FINISHED".intern();;
 	public static final Object HELD = "HELD".intern();
 	public static final Object IN_PROCESS = "IN_PROCESS".intern();
 	public static final Object PENDING = "PENDING".intern();

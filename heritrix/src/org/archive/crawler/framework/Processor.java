@@ -37,4 +37,20 @@ public class Processor extends XMLConfig {
 			defaultNext = (Processor)c.getProcessors().get(n.getNodeValue());
 		}
 	}
+	
+	public Processor spawn() {
+		Processor newInstance = null;
+		try {
+			newInstance = (Processor) this.getClass().newInstance();
+			newInstance.setNode(xNode);
+			newInstance.initialize(controller);
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return newInstance;
+	}
 }

@@ -6,9 +6,11 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.InstancePerThread;
 
 /**
  * 
@@ -21,6 +23,7 @@ public class ToeThread extends Thread {
 	private boolean shouldCrawl = true;
 	CrawlController controller;
 	int serialNumber;
+	HashMap localProcessors = new HashMap();
 	
 	CrawlURI currentCuri;
 	// in-process/on-hold curis? not for now
@@ -58,21 +61,44 @@ public class ToeThread extends Thread {
 			}
 		}
 		
-		currentCuri = controller.crawlUriFor(this);
-		
-		if ( currentCuri != null ) {
-		
-			while ( currentCuri.nextProcessor() != null ) {
-				currentCuri.nextProcessor().process(currentCuri);
+		try {
+			currentCuri = controller.crawlUriFor(this);
+			
+			if ( currentCuri != null ) {
+			
+				while ( currentCuri.nextProcessor() != null ) {
+					getProcessor(currentCuri.nextProcessor()).process(currentCuri);
+				}
+			
+				controller.getSelector().inter(currentCuri);
+				currentCuri = null;
+			} else {
+				// self-pause, because there's nothing left to crawl
+				logger.info("ToeThread #"+serialNumber+" pausing: nothing to crawl");
+				paused = true;
 			}
-	
-			controller.getSelector().inter(currentCuri);
-			currentCuri = null;
-		} else {
-			// self-pause, because there's nothing left to crawl
-			logger.info("ToeThread #"+serialNumber+" pausing: nothing to crawl");
+		} catch (OutOfMemoryError e) {
+			e.printStackTrace();
+			logger.warning("ToeThread #"+serialNumber+" pausing: out of memory error");
 			paused = true;
 		}
+	}
+
+	/**
+	 * @param processor
+	 */
+	private Processor getProcessor(Processor processor) {
+		if(!(processor instanceof InstancePerThread)) {
+			// just use the shared Processor
+			 return processor;
+		}
+		// must use local copy of processor
+		Processor localProcessor = (Processor) localProcessors.get(processor.getClass().getName());
+		if (localProcessor == null) {
+			localProcessor = processor.spawn();
+			localProcessors.put(processor.getClass().getName(),localProcessor);
+		}
+		return localProcessor;
 	}
 
 	/**
