@@ -54,10 +54,9 @@
         <echo message="Classpath setting is ${classpath}" />
 	-->
 
-	<mkdir dir="RunThis" />
-	<mkdir dir="RunThis/test-config" />
+		<mkdir dir="RunThis" />
         <mkdir dir="RunThis/lib" />
-        <mkdir dir="RunThis/bin" />
+
     </target>
 
 
