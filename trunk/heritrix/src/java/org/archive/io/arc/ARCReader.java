@@ -147,11 +147,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
     /**
      * Convenience method used by subclass constructors.
-     * @param arcFile ARC that this reader goes against.
-     * @throws IOException
+     * @param f ARC that this reader goes against.
      */
-    protected void initialize(File arcFile) throws IOException {
-        this.arcFile = arcFile;
+    protected void initialize(File f) {
+        this.arcFile = f;
     }
     
     /**
@@ -290,7 +289,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             throw new RuntimeException(e.getClass().getName() + ": " +
                     e.getMessage());
         }
-        return (Iterator)this;
+        return this;
     }
     
     /**
@@ -327,18 +326,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             logger.warning("Recoverable error: " + e.getMessage());
             if (hasNext()) {
                 return next();
-            } else {
-                return null;
             }
+            return null;
         } catch (IOException e) {
             throw new NoSuchElementException(e.getClass() + ": " +
                 e.getMessage());
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.util.Iterator#remove()
-     */
     public void remove() {
         throw new UnsupportedOperationException();
     }
@@ -464,29 +459,29 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * Here we check the meta field has right number of items in it.
      *
-     * @param headerFieldNameKeys Keys to use composing headerFields map.
+     * @param keys Keys to use composing headerFields map.
      * @param values Values to set into the headerFields map.
-     * @param version The version of this ARC file.
+     * @param v The version of this ARC file.
      * @param offset Offset into arc file.
      *
      * @return Metadata structure for this record.
      *
      * @exception IOException  If no. of keys doesn't match no. of values.
      */
-    private ARCRecordMetaData computeMetaData(List headerFieldNameKeys,
-                ArrayList values, String version, long offset)
+    private ARCRecordMetaData computeMetaData(List keys,
+                ArrayList values, String v, long offset)
             throws IOException {
-        if (headerFieldNameKeys.size() != values.size()) {
+        if (keys.size() != values.size()) {
             throw new IOException("Size of field name keys does " +
             " not match count of field values.");
         }
 
         HashMap headerFields = new HashMap();
-        for (int i = 0; i < headerFieldNameKeys.size(); i++) {
-            headerFields.put(headerFieldNameKeys.get(i), values.get(i));
+        for (int i = 0; i < keys.size(); i++) {
+            headerFields.put(keys.get(i), values.get(i));
         }
 
-        headerFields.put(VERSION_HEADER_FIELD_KEY, version);
+        headerFields.put(VERSION_HEADER_FIELD_KEY, v);
         headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
         return new ARCRecordMetaData(this.arcFile, headerFields);
@@ -581,12 +576,20 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * @param formatter Help formatter instance.
      * @param options Usage options.
+     * @param exitCode Exit code.
      */
     private static void usage(HelpFormatter formatter, Options options,
             int exitCode) {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
             " [--offset=# [--nohead]] ARCFILE",  options);
         System.exit(exitCode);
+    }
+    
+    protected static String stripExtension(String name, String ext) {
+        if (name.endsWith(ext)) {
+            name = name.substring(0, name.length() - ext.length());
+        }
+        return name;
     }
 
     /**
@@ -602,11 +605,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         // Get arc header record, the first record in the file.
         ARCRecord headerRecord = arc.get(0);
         String arcFileName = headerRecord.getMetaData().getArcFile().getName();
-        if (arcFileName.endsWith("." + COMPRESSED_FILE_EXTENSION)) {
-            int stripLen = COMPRESSED_FILE_EXTENSION.length() + 1;
-            arcFileName = arcFileName.substring(0,
-                    arcFileName.length() - stripLen);
-        }
+        arcFileName =
+            stripExtension(arcFileName, '.' + COMPRESSED_FILE_EXTENSION);
+        arcFileName = stripExtension(arcFileName, '.' + ARC_FILE_EXTENSION);
         // Write output as pseudo-CDX file.  See
         // http://www.archive.org/web/researcher/cdx_legend.php
         // and http://www.archive.org/web/researcher/example_cdx.php.
@@ -724,7 +725,16 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
-                index(new File((String)i.next()));
+                File f = new File((String)i.next());
+                try {
+                    index(f);
+                } catch (RuntimeException e) {
+                    // Write out name of file we failed on to help with
+                    // debugging.
+                    System.err.println("Exception processing " + f + ": " +
+                        e.getMessage());
+                    throw e;
+                }
             }
         }
     }
@@ -736,7 +746,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @author stack
      * @version $Date$, $Revision$
      */
-    public class RecoverableIOException extends IOException {
+    public class RecoverableIOException
+    extends IOException {
         private RecoverableIOException() {
             super();
         }
