@@ -30,12 +30,12 @@
 
 						</td>
 						<td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-							<a href="javascript:doGoto('/admin/jobs/per/filters.jsp')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
+							<a href="javascript:doGoto('/admin/jobs/per/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
 						</td>
 						<td class="tab_seperator">
 						</td>
 						<td class="tab<%=jobtab==2?"_selected":""%>" nowrap>
-							<a href="javascript:doGoto('/admin/jobs/per/configure.jsp')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
+							<a href="javascript:doGoto('/admin/jobs/per/configure.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
 						</td>
 						<td class="tab_seperator">
 						</td>

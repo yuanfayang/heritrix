@@ -266,7 +266,7 @@
             return;
 		}else if(request.getParameter("action").equals("goto")){
             // Goto another page of the job/profile settings
-			response.sendRedirect(request.getParameter("where")+"?job="+theJob.getUID());
+			response.sendRedirect(request.getParameter("where"));
             return;
 		}else if(request.getParameter("action").equals("updateexpert")){
 		    if(request.getParameter("expert") != null){

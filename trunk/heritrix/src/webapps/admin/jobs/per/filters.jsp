@@ -201,7 +201,7 @@
 			return;
 		}else if(action.equals("goto")){
             // Goto another page of the job/profile settings
-			response.sendRedirect(request.getParameter("subaction")+"?job="+theJob.getUID()+"&currDomain="+currDomain);
+			response.sendRedirect(request.getParameter("subaction")+"&currDomain="+currDomain);
 			return;
 		}
 	}
