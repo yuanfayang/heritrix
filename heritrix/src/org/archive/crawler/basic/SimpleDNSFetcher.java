@@ -28,13 +28,15 @@ public class SimpleDNSFetcher extends Processor {
  	private short ClassType = DClass.IN;
  	private short TypeType = Type.A;
 
+	String DnsName = null;		// store the name of the host we wish to look up
+
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
 		
-		Record[] RRecordSet = null; 					// store retrieved dns records
+		Record[] rrecordSet = null; 					// store retrieved dns records
 		long now = System.currentTimeMillis(); 	// the time this operation happened
 				
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
@@ -42,27 +44,26 @@ public class SimpleDNSFetcher extends Processor {
 			return;
 		}
 		
-		// get the host we want to look up
 		//TODO currently the dns uri spec uses inconsistent syntax, this means we currently only support the syntax "dns:dnsname", resolve this issue with Joseffson, or support both semantic structures
-		String DnsName = curi.getUURI().getUri().getSchemeSpecificPart();
+		DnsName = curi.getUURI().getUri().getSchemeSpecificPart();
 		
 		//TODO add support for type and class specifications in query string, for now always use defaults
 		/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
 		} */
 
 		// do the lookup and store the results back to the curi
-		RRecordSet = dns.getRecords(DnsName, TypeType, ClassType);
-		curi.getAList().putObject(SimpleDNSFetcher.RRECORDS_ALIST_LABEL, RRecordSet);
+		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
+		curi.getAList().putObject(SimpleDNSFetcher.RRECORDS_ALIST_LABEL, rrecordSet);
 		curi.getAList().putLong(SimpleDNSFetcher.DNSFETCH_TIMESTAMP_LABEL, now);
 
 		// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
 		// then update the CrawlHost
-		for(int i=0;i < RRecordSet.length; i++){
+		for(int i=0;i < rrecordSet.length; i++){
 
-			if(RRecordSet[i].getType() != Type.A)
+			if(rrecordSet[i].getType() != Type.A)
 				continue;
 			
-			ARecord AsA = (ARecord)RRecordSet[i];
+			ARecord AsA = (ARecord)rrecordSet[i];
 			
 			CrawlHost h = curi.getHost();
 			h.setIP(AsA.getAddress());
