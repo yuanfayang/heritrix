@@ -84,18 +84,14 @@ public class ReplayCharSequence implements CharSequence {
 	 * @see java.lang.CharSequence#charAt(int)
 	 */
 	public char charAt(int index) {
-		if(index>size) {
-			throw new IndexOutOfBoundsException();
-		}
+//		if(index>size) {
+//			throw new IndexOutOfBoundsException();
+//		}
 		if(index < prefixBuffer.length) {
 			return (char) prefixBuffer[index];
 		}
 		if(index >= wrapOrigin && index-wrapOrigin < wraparoundBuffer.length) {
-			try {
-				return (char) wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length];
-			} catch (ArrayIndexOutOfBoundsException aoe) {
-				System.out.println("oops");
-			}
+			return (char) wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length];
 		}
 		return faultCharAt(index);
 	}
