@@ -26,6 +26,7 @@ package org.archive.crawler.fetcher;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -33,6 +34,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.DNSJavaUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Record;
@@ -68,19 +70,17 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     protected void innerProcess(CrawlURI curi) {
-
         Record[] rrecordSet = null;         // store retrieved dns records
         long now;                           // the time this operation happened
         CrawlServer targetServer = null;
         String dnsName = parseTargetDomain(curi);
-
         if (!curi.getUURI().getScheme().equals("dns")) {
             // only handles dns
             return;
         }
 
-        // Make sure we're in "normal operating mode", e.g. a cache + controller
-        // exist to assist us
+        // Make sure we're in "normal operating mode", e.g. a cache +
+        // controller exist to assist us
         if (getController() != null &&
                 getController().getServerCache() != null) {
             targetServer =
@@ -89,34 +89,29 @@ implements CoreAttributeConstants, FetchStatusCodes {
             // Standalone operation (mostly for test cases/potential other uses)
             targetServer = new CrawlServer(dnsName);
         }
-
+        
+        Matcher matcher = DNSJavaUtil.IPV4_QUADS.matcher(dnsName);
         // if it's an ip no need to do a lookup
-        if (dnsName.matches(
-                "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+        if (matcher != null && matcher.matches()) {
             // Ideally this branch would never be reached: no CrawlURI
             // would be created for numerical IPs
-            logger.warning("unnecessary DNS CrawlURI created: "+curi);
-
+            logger.warning("unnecessary DNS CrawlURI created: " + curi);
             try {
-                String[] octets = dnsName.split("\\.");
-
-                targetServer.getHost().setIP (
-                    InetAddress.getByAddress(
-                        dnsName,
+                targetServer.getHost().setIP(
+                    InetAddress.getByAddress(dnsName,
                         new byte[] {
-                            (byte) (new Integer(octets[0])).intValue(),
-                            (byte) (new Integer(octets[1])).intValue(),
-                            (byte) (new Integer(octets[2])).intValue(),
-                            (byte) (new Integer(octets[3])).intValue()}),
-                        CrawlHost.IP_NEVER_EXPIRES); // never expire numeric IPs
-
+                            (byte)(new Integer(matcher.group(1)).intValue()),
+                            (byte)(new Integer(matcher.group(2)).intValue()),
+                            (byte)(new Integer(matcher.group(3)).intValue()),
+                            (byte)(new Integer(matcher.group(4)).intValue())}),
+                     CrawlHost.IP_NEVER_EXPIRES); // Never expire numeric IPs
             } catch (UnknownHostException e) {
                 // This should never happen as a dns lookup is not made
                 e.printStackTrace();
             }
             curi.setFetchStatus(S_DNS_SUCCESS);
 
-            // no further lookup necessary
+            // No further lookup necessary
             return;
         }
 
@@ -130,7 +125,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
         // Set null ip to mark that we have tried to look it up even if
         // dns fetch fails.
         targetServer.getHost().setIP(null, 0);
-
         if (rrecordSet != null) {
             curi.setFetchStatus(S_DNS_SUCCESS);
             curi.setContentType("text/dns");
