@@ -215,21 +215,6 @@ public interface URIWorkQueue {
      * for assessing queue state.
      */
     public String getLastDequeued();
-
-// 
-// resource management
-//
-    /**
-     * Set maximum number of items to hold in memory.
-     * @param load
-     */
-    public abstract void setMaximumMemoryLoad(int load);
-    
-    /**
-     * @return current memory load (items in memory rather
-     * than on disk).
-     */
-    public int memoryLoad();
     
     /**
      * May this KeyedQueue be completely discarded. 
@@ -262,4 +247,5 @@ public interface URIWorkQueue {
      * @return Count of items deleted.
      */
     public abstract long deleteMatchedItems(Predicate matcher);
+
 }
