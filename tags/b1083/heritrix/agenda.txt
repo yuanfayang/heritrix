@@ -1,0 +1,14 @@
+In the source code:
+_Recently done:
+strip excess '.' on domain names
+
+_Upcoming things to do:
+establish true max-size thresholds and timeouts
+treat HREFs to certain patterns (*.gif, etc.) as if they were SRCs
+evaluate (and probably replace) HTTPClient for efficiency & bit-gfor-bit veracity
+ToeThread start/pause/stop cleanup, allowing clean ends and pause-restarts for WUI
+investigate MG4J, Nutch components (Nutch HTTP + MG4J Strings?)
+handle &amp; etc html entities inside element attributes (ie HREFs)
+implement Filters for seed-extension, domain-broadening (seed-based masking)
+link markup conventions (docs)
+evaluate (and probably replace) java.net.URI for URI processing
