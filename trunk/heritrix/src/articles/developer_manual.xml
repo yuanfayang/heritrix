@@ -2185,7 +2185,8 @@ public class SimpleExtractor extends Processor
 
   <sect1 id="arcreader">
     <title>Reading arc files</title>
-    <p>By default, heritrix runs with the <literal>ARCWriterProcessor</literal>.
+    <para>By default, heritrix runs with the
+    <literal>ARCWriterProcessor</literal>.
     This processor writes internet archive arc files.  Arc files are described
     here: <ulink 
     url="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
@@ -2199,7 +2200,7 @@ public class SimpleExtractor extends Processor
         see the arc file parsing tools that have been developed by
         <ulink 
         url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink>.
-        </p>
+        </para>
 
   </sect1>
 
