@@ -113,11 +113,12 @@ public class ChangeEvaluator extends Processor implements ARAttributeConstants {
         curi.getAList().putInt(A_NUMBER_OF_VISITS,visits);
 
         // Update versions
-        int versions = 1;
-        if(curi.getContentState() == CrawlURI.CONTENT_CHANGED && 
-                curi.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
-            versions =  curi.getAList().getInt(A_NUMBER_OF_VERSIONS) + 1;
+        if(curi.getContentState() == CrawlURI.CONTENT_CHANGED){
+            int versions = 1;
+            if(curi.getAList().containsKey(A_NUMBER_OF_VERSIONS)){
+                versions = curi.getAList().getInt(A_NUMBER_OF_VERSIONS) + 1;
+            }
+            curi.getAList().putInt(A_NUMBER_OF_VERSIONS,versions);
         }
-        curi.getAList().putInt(A_NUMBER_OF_VERSIONS,versions);
     }
 }
