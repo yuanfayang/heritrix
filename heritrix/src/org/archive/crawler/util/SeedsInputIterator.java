@@ -37,7 +37,7 @@ import org.archive.util.DevUtils;
 public class SeedsInputIterator implements Iterator {
 	//  regexp for identifying URIs in seed input data
 	public static final Pattern DEFAULT_SEED_EXTRACTOR = 
-		Pattern.compile("(?i:(http(s)?://)?\\w+\\.\\w+(\\.\\w+)*(:\\d+)?(/\\S*)?)");
+		Pattern.compile("(?i:(http(s)?://\\w+)|(\\w+\\.\\w+)(\\.\\w+)*(:\\d+)?(/\\S*)?)");
 	// pattern to extract seeds
 	Pattern seedExtractor = DEFAULT_SEED_EXTRACTOR;
 
@@ -97,7 +97,7 @@ public class SeedsInputIterator implements Iterator {
 			String read;
 			while ((read = reader.readLine()) != null) {
 				read = read.trim();
-				if (read.startsWith("#")) {
+				if (read.length() == 0 || read.startsWith("#")) {
 					continue;
 				}
 				Matcher m = seedExtractor.matcher(read);
@@ -119,6 +119,8 @@ public class SeedsInputIterator implements Iterator {
 						continue;
 					}
 				}
+				Object[] array = { null, read };
+				controller.uriErrors.log(Level.INFO, "bad seed line", array);
 			}
 			reader.close();
 			// no more seeds
