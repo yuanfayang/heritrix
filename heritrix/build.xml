@@ -23,7 +23,7 @@
     <!--Be sure to make this 'version' property match the currentVersion in
         project.xml.
      -->
-    <property name="version" value="0.5.0" />
+    <property name="version" value="0.4.1" />
 
     <property name="src.libdir" value="lib" />
     <property name="src.confdir" value="src/conf" />
