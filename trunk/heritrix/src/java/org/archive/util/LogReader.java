@@ -147,6 +147,16 @@ public class LogReader
         }
     }
 
+    public static String buildDisplayingHeader(int len, long logsize)
+    {
+        double percent = 0.0;
+        if (logsize != 0) {
+            percent = ((double) len/logsize) * 100;
+        }
+        return "Displaying: " + ArchiveUtils.doubleToString(percent,1) +
+            "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
+    }
+
     /**
      * Gets a portion of a log file. Starting at a given line number and the n-1
      * lines following that one or until the end of the log if that is reached
@@ -188,8 +198,7 @@ public class LogReader
                 }
                 i++;
             }
-            double percent = ((double)ret.length()/logsize)*100;
-            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
+            info = buildDisplayingHeader(ret.length(), logsize);
         }catch(IOException e){
             e.printStackTrace();
             return null;
@@ -459,8 +468,7 @@ public class LogReader
                 }
                 i++;
             }
-            double percent = ((double)ret.length()/logsize)*100;
-            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
+            info = buildDisplayingHeader(ret.length(), logsize);
         }catch(FileNotFoundException e){
             return null;
         }catch(IOException e){
@@ -648,8 +656,7 @@ public class LogReader
                 }
                 i++;
             }
-            double percent = ((double)ret.length()/logsize)*100;
-            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
+            info = buildDisplayingHeader(ret.length(), logsize);
         }catch(FileNotFoundException e){
             return null;
         }catch(IOException e){
@@ -771,9 +778,7 @@ public class LogReader
                 sb.append(new String(buffer));
             }
 
-            long logsize = raf.length();
-            double percent = ((double)sb.length()/logsize)*100;
-            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
+            info = buildDisplayingHeader(sb.length(), raf.length());
         } catch (FileNotFoundException e) {
             sb = null;
         } catch (IOException e) {
