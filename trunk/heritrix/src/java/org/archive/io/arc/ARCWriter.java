@@ -97,14 +97,12 @@ import org.archive.util.DevUtils;
  *
  * @author stack
  */
-public class ARCWriter
-    implements ARCConstants
-{
+public class ARCWriter implements ARCConstants {
     /**
      * Logger.
      */
-    private static Logger logger =
-        Logger.getLogger("org.archive.io.arc.ARCWriter");
+    private static final Logger logger =
+        Logger.getLogger(ARCWriter.class.getName());
     
     /**
      * Max size we allow ARC files to be (bytes).
@@ -285,9 +283,18 @@ public class ARCWriter
      * @return Next id.
      * @see #getUniqueBasename(String)
      */
-    private synchronized int getNextId()
-    {
+    private synchronized int getNextId() {
         return id++;
+    }
+    
+    /**
+     * Reset base arc id.
+     * 
+     * Call this at end of a job so we start over at zero when we do start
+     * the next job.
+     */
+    public static synchronized void resetId() {
+        id = 0;
     }
 
     /**

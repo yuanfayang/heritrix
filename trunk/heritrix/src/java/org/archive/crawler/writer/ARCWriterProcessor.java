@@ -36,6 +36,7 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -56,8 +57,8 @@ import org.xbill.DNS.Record;
  *
  * @author Parker Thompson
  */
-public class ARCWriterProcessor
-    extends Processor implements CoreAttributeConstants, ARCConstants
+public class ARCWriterProcessor extends Processor
+    implements CoreAttributeConstants, ARCConstants, CrawlStatusListener
 {
     /**
      * Key to use asking settings for compression value.
@@ -167,7 +168,11 @@ public class ARCWriterProcessor
     public synchronized void initialTasks() {
         Logger logger = getSettingsHandler().getOrder().getController()
             .runtimeErrors;
-
+        
+        // Add myself as a listener for crawl job events.
+        getSettingsHandler().getOrder().getController().
+            addCrawlStatusListener(this);
+        
         // ReadConfiguration populates settings used creating ARCWriter.
         try {
             readConfiguration();
@@ -384,5 +389,28 @@ public class ARCWriterProcessor
     public void setPoolMaximumWait(int poolMaximumWait)
     {
         this.poolMaximumWait = poolMaximumWait;
+    }
+
+    public void crawlEnding(String sExitMessage) {
+        // sExitMessage is unused.
+        
+        // Reset crawl serial id so that it is zero when the next job starts.
+        ARCWriter.resetId();
+    }
+
+    public void crawlEnded(String sExitMessage) {
+        // Do nothing.
+    }
+
+    public void crawlPausing(String statusMessage) {
+        // Do nothing. 
+    }
+
+    public void crawlPaused(String statusMessage) {
+        // Do nothing.
+    }
+
+    public void crawlResuming(String statusMessage) {
+        // Do nothing.
     }
 }
