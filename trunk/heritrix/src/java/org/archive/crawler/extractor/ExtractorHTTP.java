@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.HttpMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -58,17 +58,16 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         if(curi.isHttpTransaction())
         {
             numberOfCURIsHandled++;
-            GetMethod get =
-                (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+            HttpMethod method =
+                (HttpMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
             CrawlURI curi1 = curi;
-            GetMethod get1 = get;
 
             ArrayList uris = new ArrayList();
-            Header loc = get1.getResponseHeader("Location");
+            Header loc = method.getResponseHeader("Location");
             if ( loc != null ) {
                 uris.add(loc.getValue());
             }
-            loc = get1.getResponseHeader("Content-Location");
+            loc = method.getResponseHeader("Content-Location");
             if ( loc != null ) {
                 uris.add(loc.getValue());
             }

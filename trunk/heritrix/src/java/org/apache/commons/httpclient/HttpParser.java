@@ -5,59 +5,25 @@
  *
  * ====================================================================
  *
- * The Apache Software License, Version 1.1
+ *  Copyright 1999-2004 The Apache Software Foundation
  *
- * Copyright (c) 1999-2003 The Apache Software Foundation.  All rights
- * reserved.
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The end-user documentation included with the redistribution, if
- *    any, must include the following acknowlegement:
- *       "This product includes software developed by the
- *        Apache Software Foundation (http://www.apache.org/)."
- *    Alternately, this acknowlegement may appear in the software itself,
- *    if and wherever such third-party acknowlegements normally appear.
- *
- * 4. The names "The Jakarta Project", "Commons", and "Apache Software
- *    Foundation" must not be used to endorse or promote products derived
- *    from this software without prior written permission. For written
- *    permission, please contact apache@apache.org.
- *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
  * individuals on behalf of the Apache Software Foundation.  For more
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
- *
- * [Additional notices, if required by prior licensing conditions]
  *
  */
 
@@ -68,6 +34,7 @@ import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
+import org.apache.commons.httpclient.util.EncodingUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -125,13 +92,15 @@ public class HttpParser {
      * If no input data available, <code>null</code> is returned
      *
      * @param inputStream the stream to read from
+     * @param charset charset of HTTP protocol elements
      *
      * @throws IOException if an I/O problem occurs
      * @return a line from the stream
+     * 
+     * @since 3.0
      */
-
-    public static String readLine(InputStream inputStream) throws IOException {
-        LOG.trace("enter HttpParser.readLine()");
+    public static String readLine(InputStream inputStream, String charset) throws IOException {
+        LOG.trace("enter HttpParser.readLine(InputStream, String)");
         byte[] rawdata = readRawLine(inputStream);
         if (rawdata == null) {
             return null;
@@ -148,28 +117,50 @@ public class HttpParser {
                 }
             }
         }
-        return HttpConstants.getString(rawdata, 0, len - offset);
+        return EncodingUtil.getString(rawdata, 0, len - offset, charset);
     }
 
+    /**
+     * Read up to <tt>"\n"</tt> from an (unchunked) input stream.
+     * If the stream ends before the line terminator is found,
+     * the last part of the string will still be returned.
+     * If no input data available, <code>null</code> is returned
+     *
+     * @param inputStream the stream to read from
+     *
+     * @throws IOException if an I/O problem occurs
+     * @return a line from the stream
+     * 
+     * @deprecated use #readLine(InputStream, String)
+     */
+
+    public static String readLine(InputStream inputStream) throws IOException {
+        LOG.trace("enter HttpParser.readLine(InputStream)");
+        return readLine(inputStream, "US-ASCII");
+    }
+    
     /**
      * Parses headers from the given stream.  Headers with the same name are not
      * combined.
      * 
      * @param is the stream to read headers from
+     * @param charset the charset to use for reading the data
      * 
      * @return an array of headers in the order in which they were parsed
      * 
      * @throws IOException if an IO error occurs while reading from the stream
      * @throws HttpException if there is an error parsing a header value
+     * 
+     * @since 3.0
      */
-    public static Header[] parseHeaders(InputStream is) throws IOException, HttpException {
-        LOG.trace("enter HeaderParser.parseHeaders(HttpConnection, HeaderGroup)");
+    public static Header[] parseHeaders(InputStream is, String charset) throws IOException, HttpException {
+        LOG.trace("enter HeaderParser.parseHeaders(InputStream, String)");
 
         ArrayList headers = new ArrayList();
         String name = null;
         StringBuffer value = null;
         for (; ;) {
-            String line = HttpParser.readLine(is);
+            String line = HttpParser.readLine(is, charset);
             if ((line == null) || (line.length() < 1)) {
                 break;
             }
@@ -194,16 +185,21 @@ public class HttpParser {
                 // Otherwise we should have normal HTTP header line
                 // Parse the header name and value
                 int colon = line.indexOf(":");
+                // START HERITRIX Change
+                // Don't throw an exception if can't parse.  We want to keep
+                // going even though header is bad. Rather, create
+                // pseudo-header.
                 if (colon < 0) {
-                    // don't throw exception...
-                    // throw new HttpException("Unable to parse header: " + line);
-                    // rather, create pseudo-header with bad line
-                    name = "HttpClient-Bad-Header-Line";
+                    // throw new ProtocolException("Unable to parse header: " +
+                    //      line);
+                    name = "HttpClient-Bad-Header-Line-Failed-Parse";
                     value = new StringBuffer(line);
+
                 } else {
                     name = line.substring(0, colon).trim();
                     value = new StringBuffer(line.substring(colon + 1).trim());
                 }
+                // END HERITRIX change.
             }
 
         }
@@ -215,5 +211,22 @@ public class HttpParser {
         
         return (Header[]) headers.toArray(new Header[headers.size()]);    
     }
-    
+
+    /**
+     * Parses headers from the given stream.  Headers with the same name are not
+     * combined.
+     * 
+     * @param is the stream to read headers from
+     * 
+     * @return an array of headers in the order in which they were parsed
+     * 
+     * @throws IOException if an IO error occurs while reading from the stream
+     * @throws HttpException if there is an error parsing a header value
+     * 
+     * @deprecated use #parseHeaders(InputStream, String)
+     */
+    public static Header[] parseHeaders(InputStream is) throws IOException, HttpException {
+        LOG.trace("enter HeaderParser.parseHeaders(InputStream, String)");
+        return parseHeaders(is, "US-ASCII");
+    }
 }

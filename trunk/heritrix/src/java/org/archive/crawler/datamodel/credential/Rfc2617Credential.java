@@ -31,10 +31,10 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScheme;
-import org.apache.commons.httpclient.auth.AuthenticationException;
-import org.apache.commons.httpclient.auth.HttpAuthenticator;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -142,7 +142,6 @@ public class Rfc2617Credential extends Credential {
 
     public boolean populate(CrawlURI curi, HttpClient http, HttpMethod method,
             Object payload) {
-
         boolean result = false;
         AuthScheme authscheme = (AuthScheme)payload;
         if (authscheme == null) {
@@ -164,29 +163,22 @@ public class Rfc2617Credential extends Credential {
         // does an instanceof down in its guts.
         UsernamePasswordCredentials upc = null;
         try {
-            upc = new UsernamePasswordCredentials(getLogin(curi),
-                getPassword(curi));
-            http.getState().setCredentials(authscheme.getRealm(),
-                /* curi.getServer().getName() */null, upc);
-
-            try {
-                boolean done = HttpAuthenticator.authenticate(authscheme,
-                    method, null, http.getState());
-                result = done;
-                logger.fine("Credentials for realm " + authscheme.getRealm() +
-                    " for curi " + curi.toString() + " added to request: " +
-                    result);
-            } catch (AuthenticationException e) {
-                logger.severe("Failed setting auth for " +
-                    authscheme.getRealm() + " for " + curi.toString() + ": " +
-                    e.getMessage());
-            }
+        	upc = new UsernamePasswordCredentials(getLogin(curi),
+        	    getPassword(curi));
+        	http.getState().setCredentials(new AuthScope(curi.getUURI().getHost(),
+        	    curi.getUURI().getPort(), authscheme.getRealm()), upc);
+        	logger.fine("Credentials for realm " + authscheme.getRealm() +
+        	    " for curi " + curi.toString() + " added to request: " +
+				result);
+        	result = true;
+        } catch (AttributeNotFoundException e1) {
+        	logger.severe("Failed to get login and password for " +
+        			curi + " and " + authscheme);
+        } catch (URIException e) {
+        	logger.severe("Failed to parse host from " + curi + ": " +
+        			e.getMessage());
         }
-        catch (AttributeNotFoundException e1) {
-            logger.severe("Failed to get login and password for " +
-                curi + " and " + authscheme);
-        }
-
+        
         return result;
     }
 

@@ -32,9 +32,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpConstants;
 import org.apache.commons.httpclient.HttpParser;
 import org.apache.commons.httpclient.StatusLine;
+import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.util.Base32;
 
 
@@ -219,8 +219,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
             throw new IOException("Failed to read http status where one " +
                 " was expected: " + new String(statusBytes));
         }
-        String statusLine = HttpConstants.getString(statusBytes, 0,
-                statusBytes.length - eolCharCount);
+        String statusLine = EncodingUtil.getString(statusBytes, 0,
+            statusBytes.length - eolCharCount, ARCConstants.DEFAULT_ENCODING);
         if ((statusLine == null) ||
                 !StatusLine.startsWithHTTP(statusLine)) {
             throw new IOException("Failed parse of http status line.");
@@ -264,7 +264,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
         // Read the status line.  Don't let it into the parseHeaders function.
         // It doesn't know what to do with it.
         bais.read(statusBytes, 0, statusBytes.length);
-        this.httpHeaders = HttpParser.parseHeaders(bais);
+        this.httpHeaders = HttpParser.parseHeaders(bais,
+            ARCConstants.DEFAULT_ENCODING);
         bais.reset();
         return bais;
     }

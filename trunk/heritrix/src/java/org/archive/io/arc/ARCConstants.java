@@ -75,6 +75,14 @@ public interface ARCConstants {
             + '.' + COMPRESSED_FILE_EXTENSION;
 
     /**
+     * Encoding to use getting bytes from strings.
+     *
+     * Specify an encoding rather than leave it to chance: i.e whatever the
+     * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
+     */
+    public static final String DEFAULT_ENCODING = "ISO-8859-1";
+
+    /**
      * ARC file line seperator character.
      * 
      * This is what the alexa c-code looks for delimiting lines.

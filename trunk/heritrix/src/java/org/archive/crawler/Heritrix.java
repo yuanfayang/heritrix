@@ -171,6 +171,13 @@ public class Heritrix
     private static final String STARTLOG = "heritrix_dmesg.log";
 
     /**
+     * Default encoding.
+     * 
+     * Used for content when fetching if none specified.
+     */
+	public static final String DEFAULT_ENCODING = "ISO-8859-1";
+
+    /**
      * Heritrix stderr/stdout log file.
      *
      * This file should have nothing in it except messages over which we have
@@ -309,9 +316,14 @@ public class Heritrix
     protected static void doStart(String [] args)
         throws Exception
     {
-        int port = SimpleHttpServer.DEFAULT_PORT;
+        int port = (Heritrix.properties.get("heritrix.port") == null)?
+            SimpleHttpServer.DEFAULT_PORT:
+            Integer.parseInt((String)Heritrix.properties.get("heritrix.port"));
+        String adminLoginPassword =
+            (Heritrix.properties.get("heritrix.admin.login") == null)?
+                "admin:letmein":
+                (String)Heritrix.properties.get("heritrix.admin.login");
         String crawlOrderFile = null;
-        String adminLoginPassword = "admin:letmein";
         boolean runMode = false;
         boolean selfTest = false;
         String selfTestName = null;
@@ -325,9 +337,7 @@ public class Heritrix
         if (arguments.size() > 1)
         {
             clp.usage(1);
-        }
-        else if (arguments.size() == 1)
-        {
+        } else if (arguments.size() == 1) {
             crawlOrderFile = (String)arguments.get(0);
             if (!(new File(crawlOrderFile).exists()))
             {
@@ -355,8 +365,7 @@ public class Heritrix
 
                 case 'a':
                     adminLoginPassword = options[i].getValue();
-                    if (!isValidLoginPasswordString(adminLoginPassword))
-                    {
+                    if (!isValidLoginPasswordString(adminLoginPassword)) {
                         clp.usage("Invalid admin login/password value.", 1);
                     }
                     break;
@@ -448,16 +457,13 @@ public class Heritrix
      * @param str String to test.
      * @return True if valid password/login string.
      */
-    protected static boolean isValidLoginPasswordString(String str)
-    {
+    protected static boolean isValidLoginPasswordString(String str) {
         boolean isValid = false;
         StringTokenizer tokenizer = new StringTokenizer(str,  ":");
-        if (tokenizer.countTokens() == 2)
-        {
-            String login = (String)tokenizer.nextElement();
-            String password = (String)tokenizer.nextElement();
-            if (login.length() > 0 && password.length() > 0)
-            {
+        if (tokenizer.countTokens() == 2) {
+            String login = ((String)tokenizer.nextElement()).trim();
+            String password = ((String)tokenizer.nextElement()).trim();
+            if (login.length() > 0 && password.length() > 0) {
                 isValid = true;
             }
         }
@@ -489,12 +495,13 @@ public class Heritrix
         // Any property that begins with CRAWLER_PACKAGE, make it
         // into a system property.
         for (Enumeration e = properties.keys(); e.hasMoreElements();) {
-            String key = (String)e.nextElement();
+            String key = ((String)e.nextElement()).trim();
         	if (key.startsWith(CRAWLER_PACKAGE)) {
                 // Don't add the heritrix.properties entries that are
                 // changing the logging level of particular classes.
                 if (key.indexOf(".level") < 0) {
-                	System.setProperty(key, properties.getProperty(key));
+                	System.setProperty(key,
+                        ((String)properties.getProperty(key)).trim());
                 }
             }
         }
