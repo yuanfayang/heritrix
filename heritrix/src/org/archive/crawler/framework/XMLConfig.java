@@ -236,7 +236,7 @@ public class XMLConfig {
 			e.printStackTrace();
 		}
 
-		return new BufferedReader(new StringReader(node.getNodeValue()));
+		return new BufferedReader(new StringReader(textOf(node)));
 	}
 	
 	public static BufferedReader nodeValueOrSrcReader(Node node, String path) throws IOException {
@@ -247,7 +247,10 @@ public class XMLConfig {
 		
 		try {
 			Node srcNode = XPathAPI.selectSingleNode(node, "@src");
-			if (srcNode != null) {
+			if (srcNode == null) {
+				// paths aren't relevant, just return node contents
+				return nodeValueOrSrcReader(node);
+			} else {
 				String srcFile;
 				if(isAbsoluteFilePath(srcNode.getNodeValue())){
 					srcFile = srcNode.getNodeValue();
@@ -258,14 +261,6 @@ public class XMLConfig {
 				return new BufferedReader(
 					new FileReader(srcFile));
 
-			}else{
-				String value = node.getNodeValue();
-				
-				if(isAbsoluteFilePath(value)){
-					return new BufferedReader(new StringReader(value) );
-				}else{
-					return new BufferedReader(new StringReader(path + File.separator + value));
-				}
 			}
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block
@@ -339,7 +334,7 @@ public class XMLConfig {
 	 * @param node
 	 * @return
 	 */
-	private String textOf(Node node) {
+	private static String textOf(Node node) {
 		if (node == null) {
 			return null;
 		}
