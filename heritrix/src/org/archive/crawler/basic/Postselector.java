@@ -82,7 +82,8 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 				UURI embed = UURI.createUURI(e,baseUri);
 				CandidateURI caUri = new CandidateURI(embed);
 				caUri.setVia(curi);
-				caUri.setPathFromSeed(curi.getPathFromSeed()+"X");
+				char pathSuffix = caUri.sameDomainAs(curi) ? 'D' : 'X'; 
+				caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
 				logger.finest("inserting speculative embed at head "+embed);
 				schedule(caUri);
 			} catch (URISyntaxException ex) {
@@ -112,17 +113,19 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 
 	protected void handlePrerequisites(CrawlURI curi) {
 		try {
-			UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),getBaseURI(curi));
-			CandidateURI caUri = new CandidateURI(prereq);
-			caUri.setVia(curi);
-			caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
-			
 			if ( curi.getDeferrals() > maxDeferrals ) {
 				// too many deferrals, equals failure
 				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
 				//failureDisposition(curi);
 				return;
-			}		
+			}	
+			
+			UURI prereq = UURI.createUURI((String) curi.getPrerequisiteUri(),getBaseURI(curi));
+			curi.setPrerequisiteUri(prereq); // convert to UURI for convenience of Frontier
+			CandidateURI caUri = new CandidateURI(prereq);
+			caUri.setVia(curi);
+			caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
+			
 			if (!scheduleHigh(caUri)) {
 				// prerequisite cannot be scheduled (perhaps excluded by scope)
 				// must give up on 
@@ -130,8 +133,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 				//failureDisposition(curi);
 				return;
 			}
-			// TODO possibly offload prerq-chaining to frontier (resuscitate 'held' facility)
-			curi.getAList().remove(A_PREREQUISITE_URI);
+			// leave PREREQ in place so frontier can properly defer this curi
 		} catch (URISyntaxException ex) {
 			Object[] array = { curi, curi.getPrerequisiteUri() };
 			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
@@ -236,7 +238,8 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 				UURI embed = UURI.createUURI(e,baseUri);
 				CandidateURI caUri = new CandidateURI(embed);
 				caUri.setVia(curi);
-				caUri.setPathFromSeed(curi.getPathFromSeed()+"E");
+				char pathSuffix = caUri.sameDomainAs(curi) ? 'D' : 'E'; 
+				caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
 				logger.finest("inserting embed at head "+embed);
 				schedule(caUri);
 			} catch (URISyntaxException ex) {
