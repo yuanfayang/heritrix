@@ -48,6 +48,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 				hostname = curi.getUURI().getUri().getAuthority();
 			}
 			curi.setPrerequisiteUri("dns:" + hostname);
+			curi.incrementDeferrals();
 			curi.cancelFurtherProcessing();			
 			return;
 		}
@@ -68,7 +69,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		
 		// make sure we only process schemes we understand (i.e. not dns)
 		if(!curi.getUURI().getUri().getScheme().equals("http")){
-			logger.info("PolitenessEnforcer doesn't undersand uri's of type "+curi + " (ignoring)");
+			// logger.info("PolitenessEnforcer doesn't understand uri's of type "+curi.getUURI().getUri().getScheme() + " (ignoring)");
 			return;
 		}
 		
@@ -85,6 +86,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		if (curi.getHost().getRobotsExpires()<System.currentTimeMillis()) {
 			logger.info("No valid robots for "+curi.getHost()+"; deferring "+curi);
 			curi.setPrerequisiteUri("/robots.txt");
+			curi.incrementDeferrals();
 			curi.cancelFurtherProcessing();
 			return;
 		}
