@@ -35,9 +35,18 @@ public class Processor extends XMLConfig {
 		curi.setNextProcessor(getDefaultNext());
 		if(filtersAccept(curi)) {
 			innerProcess(curi);
-		} // TODO: else perhaps send to different next? 
+		} else {
+			innerRejectProcess(curi);
+		}
 	}
 	
+	/**
+	 * @param curi
+	 */
+	protected void innerRejectProcess(CrawlURI curi) {
+		// by default do nothing
+	}
+
 	/**
 	 * @param curi
 	 */
