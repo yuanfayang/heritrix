@@ -906,7 +906,7 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * @return
+     * @return Active toe thread count.
      */
     public int getActiveToeCount() {
         return toePool.getActiveToeCount();
@@ -917,14 +917,14 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * @return
+     * @return The order file instance.
      */
     public CrawlOrder getOrder() {
         return order;
     }
 
     /**
-     * @return
+     * @return The server cache instance.
      */
     public ServerCache getServerCache() {
         return serverCache;
@@ -946,7 +946,7 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * @return
+     * @return This crawl scope.
      */
     public CrawlScope getScope() {
         return scope;
@@ -985,7 +985,7 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * @return
+     * @return Scratch disk location.
      */
     public File getScratchDisk() {
         return scratchDisk;

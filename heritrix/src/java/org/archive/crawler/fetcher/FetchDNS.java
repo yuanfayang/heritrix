@@ -154,15 +154,16 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
     }
 
     /**
-     * Extract the target hostname of a 'dns:' URI. Returns null
-     * for non-'dns:' input.
-     * 
-     * @param curi
-     * @return
+     * Parse passed dns <code>CrawlURI</code> for its hostname component.
+     *
+     * CrawlURI should look like:
+     * <code>"dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]</code>
+     *
+     * @param curi Crawl URI to parse.
+     * @return The target hostname of a 'dns:' URI. Returns null for 
+     * non-'dns:' input.
      */
     public static String parseTargetDomain(CrawlURI curi){
-
-        // should look like "dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]
         String uri = curi.getURIString();
 
         // if it's not a dns uri
@@ -183,5 +184,4 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
 
         return uri;
     }
-
 }

@@ -46,7 +46,7 @@ import org.archive.crawler.framework.StatisticsTracking;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob, String, String, String)
+ * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob, String, String, String, int)
  * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob, String, String, String)
  */
 

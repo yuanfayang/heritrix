@@ -91,7 +91,7 @@ public abstract class AbstractTracker extends ModuleType
      * @param c A crawl controller instance.
      *
      * @see CrawlStatusListener
-     * @see CrawlURIDispositionListener
+     * @see org.archive.crawler.event.CrawlURIDispositionListener
      */
     public void initalize(CrawlController c) {
         controller = c;

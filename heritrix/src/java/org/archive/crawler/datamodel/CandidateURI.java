@@ -263,7 +263,7 @@ public class CandidateURI implements Serializable, Lineable {
 
     
     /**
-     * @return
+     * @return True if needs immediate scheduling.
      */
     public boolean needsImmediateScheduling() {
         return schedulingDirective==HIGH || schedulingDirective == FORCE_REVISIT;

@@ -322,7 +322,6 @@ public class LogReader
      *
      * @param aFileName a file name String
      * @param n int number of lines to be returned
-     * @return 
      * @return An array of two strings is returned. At index 0 the String 
      *         representation of at most n last lines is located.
      *         At index 1 there is an informational string about how large a

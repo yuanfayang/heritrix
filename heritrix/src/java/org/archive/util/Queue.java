@@ -62,9 +62,6 @@ public interface Queue {
      */
     void release();
     
-    /**
-     * @return
-     */
     Object peek();
     
     /**

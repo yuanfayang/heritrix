@@ -59,7 +59,7 @@ public class URIQueueMatcher implements QueueItemMatcher {
      *                <code>finish</code> method for final disposition.
      * @param frontier The parent frontier. This can be null if delete is false.
      *                Must be valid if delete is true.
-     * @see Frontier#finished(CrawlURI);
+     * @see Frontier#finished(CrawlURI)
      */
     public URIQueueMatcher(String pattern, boolean delete, URIFrontier frontier){
         p = Pattern.compile(pattern);

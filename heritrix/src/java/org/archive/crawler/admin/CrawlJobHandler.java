@@ -532,8 +532,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Cause the current job to pause. If no current job is crawling this method
      * will have to effect. If the job is already paused it may cause the status
      * of the job to be incorrectly states as 'Waiting to pause'.
-     *
-     * @see CrawlController#pauseCrawl()
      */
     public void pauseJob() {
         if (controller != null && controller.isPaused()==false) {
@@ -1061,8 +1059,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *             When marker is inconsistent with the current state of the
      *             frontier.
      * @see #getInitialMarker(String, boolean)
-     * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(URIFrontierMarker,
-     *      int, boolean)
      * @see org.archive.crawler.framework.URIFrontierMarker
      */
     public ArrayList getPendingURIsList(URIFrontierMarker marker,

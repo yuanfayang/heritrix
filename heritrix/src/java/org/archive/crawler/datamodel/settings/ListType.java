@@ -54,7 +54,7 @@ public abstract class ListType extends Type implements List {
      * @param element element to be appended to this list.
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
-     * @returns true if this collection changed as a result of the call (as
+     * @return true if this collection changed as a result of the call (as
      * per the Collections.add contract).
      */
     public boolean add(Object element) {

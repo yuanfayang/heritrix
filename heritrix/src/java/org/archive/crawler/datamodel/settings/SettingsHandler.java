@@ -323,7 +323,8 @@ public abstract class SettingsHandler {
      * @param refinement the refinement reference to get.
      * @return settings object for the host/domain or null if no
      *         settings exist for the host/domain.
-     * @return
+     * @return CrawlerSettings object for a host/domain and a particular
+     * refinement.
      */
     public CrawlerSettings getSettingsObject(String scope, String refinement) {
         CrawlerSettings settings = settingsCache.getSettingsObject(scope, refinement);
@@ -497,7 +498,7 @@ public abstract class SettingsHandler {
     }
     
     /**
-     * Fire events on all registered {@link ValueErrorHandlers}.
+     * Fire events on all registered {@link ValueErrorHandler}.
      * 
      * @param error the failed constraints return value.
      * @return true if there was any registered ValueErrorHandlers to notify.

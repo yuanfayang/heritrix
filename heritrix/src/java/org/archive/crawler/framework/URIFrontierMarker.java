@@ -33,7 +33,6 @@ package org.archive.crawler.framework;
  * marker will instantly become out of date.
  * 
  * @author Kristinn Sigurdsson
- * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(String, boolean, boolean, Marker, long)
  */
 public interface URIFrontierMarker {
     

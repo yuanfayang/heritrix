@@ -887,7 +887,7 @@ public class Heritrix
     }
     
     /**
-     * Mark a specific alert as seen (i.e. not now)
+     * Mark a specific alert as seen (That is, not now).
      * @param alertID the ID of the alert 
      */
     public static void seenAlert(String alertID){

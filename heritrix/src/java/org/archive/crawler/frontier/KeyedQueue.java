@@ -139,9 +139,7 @@ public class KeyedQueue implements Queue {
     }
 
     /** 
-     * The state of this queue.
-     * 
-     * @return
+     * @return The state of this queue.
      */
     public Object getState() {
         return state;
@@ -248,18 +246,14 @@ public class KeyedQueue implements Queue {
 //
     
     /** 
-     * time to wake, when snoozed
-     * 
-     * @return
+     * @return Ttime to wake, when snoozed
      */
     public long getWakeTime() {
         return wakeTime;
     }
 
     /**
-     * set time to wake, when snoozed
-     * 
-     * @param w
+     * @param w time to wake, when snoozed
      */
     public void setWakeTime(long w) {
         wakeTime = w;
@@ -268,7 +262,7 @@ public class KeyedQueue implements Queue {
     /** 
      * To ensure total and consistent ordering when 
      * in scheduled order, a fallback sort criterion
-     * @return
+     * @return Fallback sort.
      */
     public String getSortFallback() {
         return classKey.toString();
@@ -327,9 +321,7 @@ public class KeyedQueue implements Queue {
     }
 
     /** 
-     * Total number of 'frozen' items. 
-     * 
-     * @return
+     * @return Total number of 'frozen' items. 
      */
     public long frozenLength() {
         return innerQ.length()+innerStack.size();
@@ -338,7 +330,6 @@ public class KeyedQueue implements Queue {
     /**
      * Release any external resources (eg open files) which
      * may be held.
-     * 
      */
     public void release() {
         innerQ.release();
@@ -375,10 +366,7 @@ public class KeyedQueue implements Queue {
     }
 
     /**
-     * the remembered item in process (set
-     * with noteInProgress()
-     * 
-     * @return
+     * @return The remembered item in process (set with noteInProgress()).
      */
     public Object getInProcessItem() {
        return inProcessItem;
@@ -414,9 +402,9 @@ public class KeyedQueue implements Queue {
     }
     
     /**
-     * return, without removing, the top available item
+     * Return, without removing, the top available item.
      * 
-     * @return
+     * @return The top available item.
      */
     public Object peek() {
         if(!innerStack.isEmpty()) {
@@ -429,15 +417,15 @@ public class KeyedQueue implements Queue {
     }
 
     /**
-     * may this KeyedQueue be completely discarded? only
-     * if empty of available and frozen items, and not 
-     * SNOOZED or FROZEN (which implies state info which 
-     * would be lost if discarded)
+     * May this KeyedQueue be completely discarded. 
+     *
+     * It may be discarded only if empty of available and frozen items, and
+     * not SNOOZED or FROZEN (which implies state info which would be lost if
+     * discarded).
      * 
-     * @return
+     * @return True if discardable.
      */
     public boolean isDiscardable() {
         return isEmpty() && frozenQ.isEmpty() && state == EMPTY;
     }
-
 }
