@@ -66,8 +66,15 @@ public class ARCWriterPool {
     /**
      * Pool instance.
      */
-    private ObjectPool pool = null;
-
+    private GenericObjectPool pool = null;
+    
+    /**
+     * Retry getting an ARC on fail the below arbitrary amount of times.
+     * This facility is not configurable.  If we fail this many times
+     * getting an ARC writer, something is seriously wrong.
+     */
+    private final int arbitraryRetryMax = 10;
+    
 
     /**
      * Constructor
@@ -148,7 +155,7 @@ public class ARCWriterPool {
             boolean compress, int arcMaxSize, List metadata, int maxActive,
             int maxWait)
         throws IOException
-    {
+    {        
         logger.fine("Configuration: prefix=" + prefix +
                 ", suffix=" + suffix +
                 ", compress=" + compress +
@@ -177,20 +184,62 @@ public class ARCWriterPool {
         throws IOException
     {
         ARCWriter writer = null;
+        for (int i = 0; writer == null; i++) {
+        long waitStart = System.currentTimeMillis();
         try {
             writer = (ARCWriter)this.pool.borrowObject();
-            logger.fine("Borrowed " + writer + " (" + getNumActive() +
-                " active).");
+            logger.fine("Borrowed " + writer + " (Pool State: " +
+                getPoolState(waitStart) + ").");
         } catch(NoSuchElementException e) {
             // Let this exception out.  Unit test at least depends on it.
-            throw e;
+            // Log current state of the pool.
+            logger.severe(e.getMessage() + ": Retry #" + i + " of " +
+                " max of " + this.arbitraryRetryMax +
+                ": NSEE Pool State: " + getPoolState(waitStart));
+            if (i >= this.arbitraryRetryMax) {
+                throw e;
+            }
         } catch(Exception e) {
             // Convert.
+            logger.severe(e.getMessage() + ": E Pool State: " +
+                getPoolState(waitStart));
             throw new IOException("Failed getting ARCWriter from pool: " +
                 e.getMessage());
         }
+        }
         return writer;
     }
+    
+    /**
+     * @return State of the pool string
+     */
+    protected String getPoolState() {
+        return getPoolState(-1);
+    }
+    
+    /**
+     * @param startTime If we are passed a start time, we'll add difference
+     * between it and now to end of string.  Pass -1 if don't want this
+     * added to end of state string.
+     * @return State of the pool string
+     */
+    protected String getPoolState(long startTime) {
+        StringBuffer buffer = new StringBuffer("Active ");
+        buffer.append(getNumActive());
+        buffer.append(" of max ");
+        buffer.append(this.pool.getMaxActive());
+        buffer.append(", idle ");
+        buffer.append(this.pool.getNumIdle());
+        if (startTime != -1) {
+            buffer.append(", time ");
+            buffer.append(System.currentTimeMillis() - startTime);
+            buffer.append("ms of max ");
+            buffer.append(this.pool.getMaxWait());
+            buffer.append("ms");
+        }
+        return buffer.toString();
+    }
+    
 
     /**
      * @return Number of ARCWriters checked out of the ARCWriter pool.
