@@ -82,6 +82,7 @@ public class CrawlJob
     private boolean isReadOnly = false;
     private boolean isNew = true;
     private boolean isProfile = false;
+    private boolean isRunning = false;
     private StatisticsTracking stats;
     private int priority;
     private int orderVersion;
@@ -233,6 +234,10 @@ public class CrawlJob
         this.settingsHandler = settingsHandler;
     }
     
+    /**
+     * Returns the settigns handler for this job. It will have been initialized.
+     * @return the settigns handler for this job.
+     */
     public SettingsHandler getSettingsHandler(){
         return settingsHandler;
     }
@@ -263,6 +268,22 @@ public class CrawlJob
      */
     public void setProfile(boolean b) {
         isProfile = b;
+    }
+
+    /**
+     * Returns true if the job is being crawled.
+     * @return true if the job is being crawled
+     */
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    /**
+     * Set if job is being crawled.
+     * @param b Is job being crawled.
+     */
+    public void setRunning(boolean b) {
+        isRunning = b;
     }
 
 }

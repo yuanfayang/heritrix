@@ -914,39 +914,12 @@ public class CrawlController extends Thread {
     }
 
     /**
-     * Set's a new CrawlOrder for this controller.  Objects that do not cache the values they
-     * read from the CrawlOrder will be updated automatically.  
-     * 
-     * Some changes may not take effect until the Crawl is stopped and restarted.
-     * 
-     * The following changes will by applied immediately:
-     *  - Max link hops
-     *  - Max trans hops
-     *  - Crawl mode
-     *  - All politeness rules
-     *  - All HTTP Fetch rules except sotimeout
-     *  - All request header settings
-     *  - Number of worker threads
-     *  - Logging interval for crawl statistics
-     *  - Seeds (Any seeds that have been already crawled - regardless of wether 
-     *    they are old seeds or were simply encountered - will be ignored. Other 
-     *    valid seeds will be scheduled high.)
-     * 
-     * @param o The new CrawlOrder
+     * While many settings will update automatically when the SettingsHandler is
+     * modified, some settings need to be explicitly changed to reflect new settings.
+     * This includes, number of toe threads and seeds.
      */
-    public void updateOrder(CrawlOrder o) {
-        // Prepare the new CrawlOrder
-        // TODO: o.initialize();
-        // Replace the old CrawlOrder
-        order = o;
-        // Resize the ToePool
+    public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-        // Prepare the new CrawlScope	
-        // TODO: CrawlScope newscope = (CrawlScope) order.instantiate(XP_CRAWL_SCOPE);
-        // TODO: newscope.initialize(this);
-        // Replace the old CrawlScope		
-        // TODO: scope = newscope;
-        // Update the seed list in the frontier
         Iterator iter = getScope().getSeedsIterator();
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();

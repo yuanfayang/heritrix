@@ -142,13 +142,16 @@
 		// Didn't find any job with the given UID or no UID given.
 		response.sendRedirect("/admin/jobs.jsp?message=No job selected");
 		return;
+	} else if(theJob.isReadOnly()){
+		// Can't edit this job.
+		response.sendRedirect("/admin/jobs.jsp?message=Can't configure a running job");
+		return;
 	}
 
 	XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob.getSettingsHandler();
 
 	boolean isNew = theJob.isNew();
 	
-	settingsHandler.initialize();
 	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
 
@@ -159,15 +162,17 @@
 		
 		settingsHandler.writeSettingsObject(orderfile);
 		
-		try{
+        BufferedWriter writer;
+        try {
 			String seedfile = (String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile");
-            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(seedfile)));
+            writer = new BufferedWriter(new FileWriter(new File(settingsHandler.getPathRelativeToWorkingDirectory(seedfile))));
             if (writer != null) {
+                // TODO Read seeds from profile.
                 writer.write(request.getParameter("seeds"));
                 writer.close();
             }
-        } catch (Exception e) {
-            // TODO: handle exception
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -176,6 +181,9 @@
 				handler.addJob(theJob);
 				response.sendRedirect("/admin/jobs.jsp?message=Job created");
 			}else{
+				if(theJob.isRunning()){
+					handler.kickUpdate();
+				}
 				response.sendRedirect("/admin/jobs.jsp?message=Job modified");
 			}
 		}else{
@@ -240,7 +248,10 @@
 			<input type="hidden" name="action" value="done">
 			<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 
-			<input type="button" value="Adjust modules" onClick="doGotoModules()"> <input type="button" value="Submit job" onClick="doSubmit()">
+			<% if(theJob.isRunning() == false){ %>
+				<input type="button" value="Adjust modules" onClick="doGotoModules()">
+			<% } %>
+			<input type="button" value="Done" onClick="doSubmit()">
 			<p>			
 			<table>
 				<tr>
@@ -279,7 +290,10 @@
 				</tr>
 			</table>
 			<p>
-			<input type="button" value="Adjust modules" onClick="doGotoModules()"> <input type="button" value="Submit job" onClick="doSubmit()">
+			<% if(theJob.isRunning() == false){ %>
+				<input type="button" value="Adjust modules" onClick="doGotoModules()">
+			<% } %>
+			<input type="button" value="Done" onClick="doSubmit()">
 		
 		</form>
 		
