@@ -63,15 +63,12 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
     public final static int CUSTOM = 2;
     public final static int MOST_FAVORED = 3;
     public final static int MOST_FAVORED_SET = 4;
-    public final static Integer DEFAULT_ROBOTS_VALIDITY_DURATION =
-        new Integer(3*(60*24)); // three days
 
     public final static String ATTR_NAME = "robots-honoring-policy";
     public final static String ATTR_TYPE = "type";
     public final static String ATTR_MASQUERADE = "masquerade";
     public final static String ATTR_CUSTOM_ROBOTS = "custom-robots";
     public final static String ATTR_USER_AGENTS = "user-agents";
-    public final static String ATTR_ROBOTS_VALIDITY_DURATION = "robot-validity-duration-m";
     
 
     /**
@@ -91,9 +88,6 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
         addElementToDefinition(new SimpleType(ATTR_CUSTOM_ROBOTS,
                 "Custom robots to use if type is custom", ""));
         addElementToDefinition(new StringList(ATTR_USER_AGENTS, "User agents"));
-        addElementToDefinition(new SimpleType(ATTR_ROBOTS_VALIDITY_DURATION,
-                "The time in minutes, between robots.txt are refreshed.",
-                DEFAULT_ROBOTS_VALIDITY_DURATION));
     }
 
     public RobotsHonoringPolicy() {
@@ -196,19 +190,4 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
         return type == getType(getSettingsFromObject(o));
     }
 
-    /** Get the maximum time a robots.txt is valid.
-     * 
-     * @param curi the Crawl URI this time is valid for.
-     * @return the time a robots.txt is valid in milliseconds.
-     */
-    public long getRobotsValidityDuration(CrawlerSettings settings) {
-        Integer d;
-        try {
-            d = (Integer) getAttribute(settings, ATTR_ROBOTS_VALIDITY_DURATION);
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getLocalizedMessage());
-            d = DEFAULT_ROBOTS_VALIDITY_DURATION;
-        }
-        return d.longValue() * 1000 * 60;
-    }
 }

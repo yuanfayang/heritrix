@@ -125,32 +125,6 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Set the time this curi is considered expired (and thus must be refetched)
-     * to 'expires'.  This function will set the time to an arbitrary value.
-     * @param expires
-     */
-    public void setDontRetryBefore(long expires){
-        dontRetryBefore = expires;
-    }
-
-    public long getDontRetryBefore(){
-        return dontRetryBefore;
-    }
-
-    /**
-     * Returns a boolean representing the status of the content in terms
-     * of expiration date.  If the content is considered expired dontFetchYet()
-     * returns false.
-     * @return A boolean representing the status of the content in terms
-     */
-    public boolean dontFetchYet(){
-        if(dontRetryBefore > System.currentTimeMillis()){
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Takes a status code and converts it into a human readable string.
      * @param code the status code
      * @return a human readable string declaring what the status code is.
@@ -451,7 +425,6 @@ public class CrawlURI extends CandidateURI
         if (alist == null) {
             alist = new HashtableAList();
         }
-        setDontRetryBefore(-1);
     }
 
     /** Get the size in bytes of this URI's content.  This may be set

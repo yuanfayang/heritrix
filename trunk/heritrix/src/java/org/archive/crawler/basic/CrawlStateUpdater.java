@@ -39,38 +39,24 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  * @version $Id$
  */
-public class CrawlStateUpdater
-    extends Processor implements CoreAttributeConstants, FetchStatusCodes
-{
+public class CrawlStateUpdater extends Processor implements
+        CoreAttributeConstants, FetchStatusCodes {
+
     public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 
-    
-    public CrawlStateUpdater(String name)
-    {
+    public CrawlStateUpdater(String name) {
         super(name, "Crawl state updater");
     }
 
-    protected void innerProcess(CrawlURI curi)
-    {
+    protected void innerProcess(CrawlURI curi) {
         String scheme = curi.getUURI().getScheme().toLowerCase();
-    
-        // if it's a dns entry set the expire time
-        if(scheme.equals("dns"))
-        {
-            // if we've looked up the host update the expire time
-            if(curi.getServer().getHost().hasBeenLookedUp())
-            {
-                long expires = curi.getServer().getHost().getIpExpires();
 
-                if(expires > 0)
-                {
-                    curi.setDontRetryBefore(expires);
-                }
-            }
-            else
-            {
+        // if it's a dns entry set the expire time
+        if (scheme.equals("dns")) {
+            // if we've looked up the host update the expire time
+            if (!curi.getServer().getHost().hasBeenLookedUp()) {
                 // TODO: resolve several issues here:
-                //   (1) i don't think this else clause is ever reached;
+                //   (1) i don't think this if clause is ever reached;
                 //       won't every DNS uri that gets this far imply
                 //       hasBeenLookedUp will have been set?
                 //   (2) we don't want repeated successful attempts to
@@ -79,37 +65,24 @@ public class CrawlStateUpdater
                 //       fact the retry count needs to be reset somewhere,
                 //       maybe at each success
 
-
                 // if we've tried too many times give up
-                if (curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+                if (curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS) {
                     curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
                 }
             }
-            // If not dns make sure it's http, 'cause we don't know nuthin' else
-        }
-        else if (scheme.equals("http") || scheme.equals("https"))
-        {
-            if (curi.getFetchStatus() > 0 &&
-                (curi.getUURI().getPath() != null) && 
-                    curi.getUURI().getPath().equals("/robots.txt"))
-            {
+            // If not dns make sure it's http, 'cause we don't know nuthin'
+            // else
+        } else if (scheme.equals("http") || scheme.equals("https")) {
+            if (curi.getFetchStatus() > 0 && (curi.getUURI().getPath() != null)
+                    && curi.getUURI().getPath().equals("/robots.txt")) {
                 // Update host with robots info
-                if(curi.isHttpTransaction())
-                {
-                    try
-                    {
+                if (curi.isHttpTransaction()) {
+                    try {
                         curi.getServer().updateRobots(curi);
-                    }
-                    catch (IOException e)
-                    {
+                    } catch (IOException e) {
                         curi.addLocalizedError(getName(), e,
-                            "robots.txt parsing IOException");
+                                "robots.txt parsing IOException");
                     }
-
-                    // curi can be refetched once robots data expires
-                    // In the current implementation this has no effect
-                    curi.setDontRetryBefore(curi.getServer().
-                        getRobotsExpires());
                 }
             }
         }

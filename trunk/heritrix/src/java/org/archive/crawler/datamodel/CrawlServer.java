@@ -44,12 +44,14 @@ import org.archive.io.ReplayInputStream;
  * @author gojomo
  */
 public class CrawlServer implements Serializable {
+    public static final long ROBOTS_NOT_FETCHED = -1;
+
     private final String server; // actually, host+port in the http case
     private int port;
     private CrawlHost host;
     private SettingsHandler settingsHandler;
     RobotsExclusionPolicy robots;
-    long robotsFetched = -1;
+    long robotsFetched = ROBOTS_NOT_FETCHED;
     Checksum robotstxtChecksum;
 
     /** Creates a new CrawlServer object.
@@ -69,17 +71,6 @@ public class CrawlServer implements Serializable {
                 port = -1;
             }
         }
-    }
-
-    /** Get the time when the fetched robots policy expires.
-     * 
-     * @return the time when the fetched robots policy expires.
-     */
-    public long getRobotsExpires() {
-        RobotsHonoringPolicy honoringPolicy =
-            settingsHandler.getOrder().getRobotsHonoringPolicy();
-        long duration = honoringPolicy.getRobotsValidityDuration(getSettings());
-        return robotsFetched + duration;
     }
 
     /** Get the robots exclusion policy for this server.
@@ -169,19 +160,11 @@ public class CrawlServer implements Serializable {
         return;
     }
 
-    /** Is the robots policy expired.
-     *
-     * This method will also return true if we haven't tried to get the
-     * robots.txt for this server. 
-     * 
-     * @return true if the robots policy is expired.
+    /**
+     * @return Returns the time when robots.txt was fetched.
      */
-    public boolean isRobotsExpired() {
-        if (robotsFetched == -1 ||
-                getRobotsExpires() < System.currentTimeMillis()) {
-            return true;
-        }
-        return false;
+    public long getRobotsFetchedTime() {
+        return robotsFetched;
     }
 
     /** Get the server string which might include a port number.

@@ -28,6 +28,7 @@ import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -56,8 +57,9 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
      protected InetAddress serverInetAddr = null;
      // protected CrawlServer dnsServer = null;
 
-    /**
-     * @param name
+    /** Create a new instance of FetchDNS.
+     * 
+     * @param name the name of this attribute.
      */
     public FetchDNS(String name) {
         super(name, "DNS Fetcher");
@@ -127,8 +129,8 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
                             (byte) (new Integer(octets[0])).intValue(),
                             (byte) (new Integer(octets[1])).intValue(),
                             (byte) (new Integer(octets[2])).intValue(),
-                            (byte) (new Integer(octets[3])).intValue()})
-                );
+                            (byte) (new Integer(octets[3])).intValue()}),
+                        CrawlHost.IP_NEVER_EXPIRES); // never expire numeric IPs
 
 //                if(targetHost.getIP() == null){
 //                    System.out.println("crapped out creating ip address for " + dnsName);
@@ -140,8 +142,6 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
                 e.printStackTrace();
             }
 
-            // don't expire numeric IPs
-            targetServer.getHost().setIpExpires(Long.MAX_VALUE);
             curi.setFetchStatus(S_DNS_SUCCESS);
 
             // no further lookup necessary
@@ -166,7 +166,9 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         // try to get the records for this host (assume domain name)
         rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
 
-        targetServer.getHost().setHasBeenLookedUp();
+        // Set null ip to mark that we have tried to look it up even if
+        // dns fetch fails.
+        targetServer.getHost().setIP(null, 0);
 
         if (rrecordSet != null) {
             curi.setFetchStatus(S_DNS_SUCCESS);
@@ -182,8 +184,8 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
                 }
 
                 ARecord AsA = (ARecord) rrecordSet[i];
-                targetServer.getHost().setIP(AsA.getAddress());
-                targetServer.getHost().setIpExpires(1000 * (long) AsA.getTTL() + now);
+                targetServer.getHost().setIP(
+                        AsA.getAddress(), (1000 * (long) AsA.getTTL()));
                 break; // only need to process one record
             }
         } else {
