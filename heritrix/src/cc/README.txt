@@ -87,6 +87,14 @@ after downloading.
     % chmod u+x build.sh
     % ./build.sh
 
++ Note that I had to up the amount of memory cc uses.  To do this, I edited
+the cruisecontrol.sh start script at main/bin.  I changed the EXEC line to 
+read:
+
+    EXEC="java -Xmx256m -cp $CRUISE_PATH CruiseControl $@"
+
+I added the -Xmx256m after 'java'.
+
 + After installing java and cruisecontrol, checkout the 'heritrix/src/cc', This
 is the checked-in cruisecontrol directory structure  (This README.txt is in the
 root of the 'heritrix/src/cc' subodule).  Check it out to a location that can
