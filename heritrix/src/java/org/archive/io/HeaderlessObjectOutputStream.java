@@ -28,6 +28,16 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 
+/**
+ * Block write of java serialization stream header.
+ *
+ * Default java serialization writes a header of magic bytes, version and
+ * length at start of a serialization stream.  This class blocks the writing of
+ * this header.  It works with the {@link HeaderlessObjectInputStream} which
+ * blocks the reading of the serialization header.
+ *
+ * <p>Used when want more control of serialization stream.
+ */
 public class HeaderlessObjectOutputStream extends ObjectOutputStream {
 
 	public HeaderlessObjectOutputStream(OutputStream out) throws IOException {
