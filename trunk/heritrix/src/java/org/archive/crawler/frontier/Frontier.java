@@ -534,6 +534,12 @@ public class Frontier
                 throw new EndedException("exhausted");
             } 
             
+            if(alreadyIncluded.pending()>0) {
+                if(alreadyIncluded.flush()>0) {
+                    continue; // the while(true) with fresh URIs
+                }
+            } // else
+            
             // wait until something changes
             waitForChange(now);
         }
@@ -768,6 +774,7 @@ public class Frontier
     public boolean isEmpty() {
         return 
 //            pendingQueue.isEmpty() &&
+            alreadyIncluded.pending()==0 &&
             allClassQueuesMap.isEmpty();
     }
 
