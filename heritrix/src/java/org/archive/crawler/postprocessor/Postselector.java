@@ -270,15 +270,15 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             logger.finer("Accepted: "+caUri);
             getController().getFrontier().schedule(caUri);
             return true;
-        } else {
-            // Run the curi through another set of filters to see
-            // if we should log it to the scope rejection log.
-            if (logger.isLoggable(Level.INFO)) {
-                CrawlURI curi = (caUri instanceof CrawlURI)?
-                    (CrawlURI)caUri: new CrawlURI(caUri.getUURI());
-                if (filtersAccept(this.rejectLogFilters, curi)) {
-                    logger.info("Rejected " + curi.getUURI().toString());
-                }
+        }
+
+        // Run the curi through another set of filters to see
+        // if we should log it to the scope rejection log.
+        if (logger.isLoggable(Level.INFO)) {
+            CrawlURI curi = (caUri instanceof CrawlURI)?
+                (CrawlURI)caUri: new CrawlURI(caUri.getUURI());
+            if (filtersAccept(this.rejectLogFilters, curi)) {
+                logger.info("Rejected " + curi.getUURI().toString());
             }
         }
         return false;
@@ -352,9 +352,10 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 caURI.setIsSeed(seed);
                 caURI.setVia(curi);
                 caURI.setPathFromSeed(curi.getPathFromSeed()+ linkType);
-                logger.finest("inserting link from " + collection + " of type "
-                    + linkType + " at head " + uuri);
-
+                if (logger.isLoggable(Level.FINEST)) {
+                    logger.finest("inserting link from " + collection +
+                        " of type " + linkType + " at head " + uuri);
+                }
                 schedule(caURI);
             } catch (URIException ex) {
                 Object[] array = { curi, link };
