@@ -1,6 +1,7 @@
-package org.archive.crawler.admin;
+package org.archive.util;
 
 import java.io.*;
+import java.util.regex.Pattern;
 
 public class TextUtils {
 
@@ -100,5 +101,63 @@ public class TextUtils {
 			e.printStackTrace();
 		}
 		return "";
+	}
+
+	/**
+	 * Utility method using a precompiled pattern instead of using the replaceAll method of
+	 * the String class.
+	 * 
+	 * @see java.lang.String#replaceAll
+	 * @see java.util.regex.Pattern
+	 * @param p precompiled Pattern to match against
+	 * @param input the character sequence to check
+	 * @param replacement the String to substitute every match with
+	 * @return the String with all the matches substituted
+	 */
+	public static String replaceAll(Pattern p, CharSequence input, String replacement) {
+		return p.matcher(input).replaceAll(replacement);
+	}
+
+	/**
+	 * Utility method using a precompiled pattern instead of using the replaceFirst method of
+	 * the String class.
+	 * 
+	 * @see java.lang.String#replaceFirst
+	 * @see java.util.regex.Pattern
+	 * @param p precompiled Pattern to match against
+	 * @param input the character sequence to check
+	 * @param replacement the String to substitute the first match with
+	 * @return the String with the first match substituted
+	 */
+	public static String replaceFirst(Pattern p, CharSequence input, String replacement) {
+		return p.matcher(input).replaceFirst(replacement);
+	}
+	
+	/**
+	 * Utility method using a precompiled pattern instead of using the matches method of
+	 * the String class.
+	 * 
+	 * @see java.lang.String#matches
+	 * @see java.util.regex.Pattern
+	 * @param p precompiled Pattern to match against
+	 * @param input the character sequence to check
+	 * @return true if character sequence matches
+	 */
+	public static boolean matches(Pattern p, CharSequence input) {
+		return p.matcher(input).matches();
+	}
+	
+	/**
+	 * Utility method using a precompiled pattern instead of using the split method of
+	 * the String class.
+	 * 
+	 * @see java.lang.String#split
+	 * @see java.util.regex.Pattern
+	 * @param p precompiled Pattern to split by
+	 * @param input the character sequence to split
+	 * @return array of Strings split by pattern
+	 */
+	public static String[] split(Pattern p, CharSequence input) {
+		return p.split(input);
 	}
 }

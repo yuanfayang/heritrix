@@ -19,6 +19,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.TextUtils;
 
 /**
  * Basic link-extraction, from an HTML content-body, 
@@ -35,7 +36,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     // this pattern extracts either (1) whole <script>...</script>
     // ranges; or (2) any other open-tag with at least one attribute
     // (eg matches "<a href='boo'>" but not "</a>" or "<br>")
-	static Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
+	static final Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
 	 "(?is)<(?:((script.*?)>.*?</script)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>");
 	// groups:
 	// 1: SCRIPT SRC=blah>blah</SCRIPT 
@@ -58,7 +59,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// this pattern extracts attributes from any open-tag innards 
 	// matched by the above. attributes known to be URIs of various
 	// sorts are matched specially
-	static Pattern EACH_ATTRIBUTE_EXTRACTOR = Pattern.compile(
+	static final Pattern EACH_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 	  "(?is)\\s((href)|(action)|(on\\w*)"
 	 +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
 	 +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
@@ -89,9 +90,11 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// without requiring quotes -- this can indicate whether
 	// an HTML tag attribute that isn't definitionally a 
 	// URI might be one anyway, as in form-tag VALUE attributes
-	static Pattern LIKELY_URI_PATH = Pattern.compile(
+	static final Pattern LIKELY_URI_PATH = Pattern.compile(
 	 "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)");
-
+	static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
+	static final Pattern WHITESPACE = Pattern.compile("\\s");
+	
 	/**
 	 * @param tags
 	 * @param i
@@ -132,8 +135,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				processEmbed(curi, value);
 			} else if (attr.start(6)>-1) {
 				// CODEBASE
-				codebase = value.toString();
-				codebase = codebase.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+				//codebase = value.toString();
+				//codebase = codebase.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+				codebase = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
 				processEmbed(curi,codebase);
 			} else if (attr.start(7)>-1) {
 				// CLASSID,DATA
@@ -142,7 +146,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			} else if (attr.start(8)>-1) {
 				// ARCHIVE
 				if (resources==null) { resources = new ArrayList(); }
-				String[] multi = value.toString().split("\\s");
+				//String[] multi = value.toString().split("\\s");
+				String[] multi = TextUtils.split(WHITESPACE, value);
 				for(int i = 0; i < multi.length; i++ ) {
 					resources.add(multi[i]);
 				}
@@ -172,7 +177,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 			}
 			while(iter.hasNext()) {
 				String res = iter.next().toString();
-				res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+				//res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+				res = TextUtils.replaceAll(ESCAPED_AMP, res, "&");
 				if (codebaseURI != null) {
 					res = codebaseURI.resolve(res).toString();
 				}
@@ -193,7 +199,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// get gifs/etc, unable to get many other paths
 	// will find false positives
 	// TODO: add '/' check, suppress strings being concatenated via '+'?
-	static Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
+	static final Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
 	 "(\"|\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");
 	
 	/**
@@ -202,7 +208,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 */
 	private void processScriptCode(CrawlURI curi, CharSequence cs) {
 		String code = cs.toString();
-		code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		//code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
 		Matcher candidates = JAVASCRIPT_LIKELY_URI_EXTRACTOR.matcher(code);
 		while (candidates.find()) {
 			logger.finest("script: "+candidates.group(2)+ " from "+curi);
@@ -211,14 +218,18 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		}
 	}
 
+	static final Pattern JAVASCRIPT = Pattern.compile("(?i)^javascript:.*");
+	
 	/**
 	 * @param curi
 	 * @param value
 	 */
 	private void processLink(CrawlURI curi, CharSequence value) {
-		String link = value.toString();
-		link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-		if(link.matches("(?i)^javascript:.*")) {
+		//String link = value.toString();
+		//link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+		//if(link.matches("(?i)^javascript:.*")) {
+		if(TextUtils.matches(JAVASCRIPT, link)) {
 			processScriptCode(curi,value.subSequence(11,value.length()));
 		} else {
 			logger.finest("link: "+link+ " from "+curi);
@@ -233,8 +244,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param value
 	 */
 	private void processEmbed(CrawlURI curi, CharSequence value) {
-		String embed = value.toString();
-		embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		//String embed = value.toString();
+		//embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
 		logger.finest("embed: "+embed+ " from "+curi);
 		curi.addEmbed(embed);
 	}
@@ -299,7 +311,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	}
 		
 	
-	static Pattern NON_HTML_PATH_EXTENSION = Pattern.compile(
+	static final Pattern NON_HTML_PATH_EXTENSION = Pattern.compile(
 		"(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
 		"|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)");
 	/**
