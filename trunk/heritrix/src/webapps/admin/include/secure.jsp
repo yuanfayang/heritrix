@@ -1,14 +1,16 @@
-<%@page import="org.archive.crawler.admin.auth.User" %><%!
+<%@page import="org.archive.crawler.admin.auth.User,java.net.URLEncoder" %><%!
 
 	public static String getCookieValue(Cookie[] cookies,
                                         String cookieName,
                                         String defaultValue) {
-	    for(int i=0; i<cookies.length; i++) {
-	    	Cookie cookie = cookies[i];
-	      	if(cookieName.equals(cookie.getName())){
-	        	return(cookie.getValue());
-	    	}
-	    }
+	    if(cookies != null){
+		    for(int i=0; i<cookies.length; i++) {
+		    	Cookie cookie = cookies[i];
+		      	if(cookieName.equals(cookie.getName())){
+		        	return(cookie.getValue());
+		    	}
+		    }
+		}
 	    return(defaultValue);
   	}
 
@@ -24,17 +26,18 @@
 
 		User user = (User)session.getAttribute("user");
 		
-		if(user == null || user.authenticate() != User.ADMINISTRATOR)
+		if(user == null)
 		{
 			//Try cookies.
 			user = new User(getCookieValue(request.getCookies(),"username",null),
 			                getCookieValue(request.getCookies(),"password",null));
 			                
-			if(user == null || user.authenticate() != User.ADMINISTRATOR)
-			{
-				// Not logged in.  Send to login page.
-				response.sendRedirect("/admin/login.jsp?action=redirect");
-				return; // Without this the rest of the code on the page would be executed before the redirect is done.
-			}
+		}
+
+		if(user == null || user.authenticate() != User.ADMINISTRATOR)
+		{
+			// Not logged in.  Send to login page.
+			response.sendRedirect("/admin/login.jsp?action=redirect&back=" + URLEncoder.encode(request.getRequestURL().toString()) );
+			return; // Without this the rest of the code on the page would be executed before the redirect is done.
 		}
 %>

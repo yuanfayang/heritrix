@@ -1,4 +1,4 @@
-<%@page import="org.archive.crawler.admin.auth.*" %>
+<%@page import="org.archive.crawler.admin.auth.*,java.net.URLDecoder" %>
 
 <%
 	String sMessage = null;
@@ -44,18 +44,24 @@
 				}
 				
 				session.setAttribute("user",user);
-
+				String back = request.getParameter("redirect");
+				String redirect = "";
 				//Redirect to user group entry page.
 				if(user.authenticate()==User.USER)
 				{
 					// Redirect to 'User' start page
-					response.sendRedirect("/admin/simplerequest.jsp");
+					redirect = "/admin/simplerequest.jsp";
 				}
 				else if(user.authenticate()==User.ADMINISTRATOR)
 				{
 					// Redirect to 'Administrator' start page.
-					response.sendRedirect("/admin/main.jsp");
+					redirect = "/admin/main.jsp";
 				}
+				
+				if(back!=null && back.length()>0){
+					redirect = URLDecoder.decode(back);
+				}
+				response.sendRedirect(redirect);
 			}
 		}
 		else if(sAction.equalsIgnoreCase("logout"))
@@ -101,6 +107,7 @@
 				<td colspan="2" height="100%" valign="top" class="main">
 					<form method="post" action="login.jsp">
 						<input type="hidden" name="action" value="login">
+						<input type="hidden" name="redirect" value="<%=request.getParameter("back")%>">
 						<table border="0">
 							<% if(sMessage != null ){ %>
 								<tr>
