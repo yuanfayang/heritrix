@@ -67,7 +67,8 @@ public class DataContainer extends HashMap {
         super();
         this.settings = new WeakReference(settings);
         this.complexType = module;
-        attributes = new ArrayList();
+        attributes =
+            new EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList();
         attributeNames = new HashMap();
     }
 
