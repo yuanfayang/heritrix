@@ -9,7 +9,6 @@ package org.archive.crawler.basic;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 
