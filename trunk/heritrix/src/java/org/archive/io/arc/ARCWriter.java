@@ -272,8 +272,7 @@ public class ARCWriter implements ARCConstants {
      * Close any extant ARC file.
      *
      * Will close current ARC file.  Any subsequent attempts at using ARC file
-     * will open a new file one.  Provided as a convenience. Used by unit
-     * testing code.
+     * will open a new file.
      *
      * @throws IOException
      */
@@ -281,6 +280,9 @@ public class ARCWriter implements ARCConstants {
         if (this.out != null) {
             this.out.close();
             this.out = null;
+            if (this.arcFile != null && this.arcFile.exists()) {
+                logger.info("Closed " + this.arcFile.getAbsolutePath());
+            }
         }
     }
 
@@ -315,7 +317,7 @@ public class ARCWriter implements ARCConstants {
         this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
         this.out.write(generateARCFileMetaData(tsn.getNow()));
-        logger.fine("Created new arc file: " + this.arcFile.getAbsolutePath());
+        logger.info("Opened " + this.arcFile.getAbsolutePath());
     }
     
     /**
