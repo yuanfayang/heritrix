@@ -728,6 +728,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     public MBeanInfo getMBeanInfo(CrawlerSettings settings) {
+        if( settings == null ){
+            // The use global settings
+            settings = globalSettings();
+        }
         Stack attributeStack = new Stack();
         int attributeCount = 0;
         DataContainer data = getDataContainerRecursive(settings);
