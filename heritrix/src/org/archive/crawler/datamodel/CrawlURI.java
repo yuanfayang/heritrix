@@ -4,7 +4,8 @@
  *
  * $Header$
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.datamodel;
+
 
 /**
  * Represents a URI and the associated state it collects as
@@ -21,15 +22,16 @@ package org.archive.crawler.framework;
  */
 public class CrawlURI {
 	// AttributeList alist;
-	NormalizedURIString nuri; 
+	UURI uuri; 
 	CrawlHost host;
 	boolean doProcess;
 
 	/**
 	 * @return
 	 */
-	public NormalizedURIString getNormalizedURIString() {
-		return nuri;
+	public UURI getUURI() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	
