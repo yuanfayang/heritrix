@@ -8,6 +8,7 @@ package org.archive.crawler.basic;
 
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -21,7 +22,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
  * @author gojomo
  *
  */
-public class PreconditionEnforcer extends Processor implements FetchStatusCodes {
+public class PreconditionEnforcer extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 	private static String XP_DELAY_FACTOR = "params/@delay-factor";
 	private static String XP_MINIMUM_DELAY = "params/@minimum-delay";
 	private static int DEFAULT_DELAY_FACTOR = 10;
@@ -73,6 +74,7 @@ public class PreconditionEnforcer extends Processor implements FetchStatusCodes 
 			){
 			logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
 			curi.setPrerequisiteUri("/robots.txt");
+			curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
 			curi.incrementDeferrals();
 			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
@@ -112,6 +114,7 @@ public class PreconditionEnforcer extends Processor implements FetchStatusCodes 
 
 			String hostname = curi.getServer().getHostname();
 			curi.setPrerequisiteUri("dns:" + hostname);
+			curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry 
 			curi.incrementDeferrals();
 			curi.skipToProcessor(controller.getPostprocessor());
 			return true;

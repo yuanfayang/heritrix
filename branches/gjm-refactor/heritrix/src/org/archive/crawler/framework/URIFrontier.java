@@ -22,22 +22,6 @@ public interface URIFrontier {
 	void finished(CrawlURI curi);
 	
 	boolean isEmpty();
-	long size();
-
-	/**
-	 * @return
-	 */
-	int discoveredUriCount();
-
-	/**
-	 * 
-	 */
-	int successfullyFetchedCount();
-
-	/**
-	 * 
-	 */
-	int failedFetchCount();
 
 	/**
 	 * Schedule at top priority (for example, before any
@@ -46,4 +30,19 @@ public interface URIFrontier {
 	 * @param caUri
 	 */
 	void scheduleHigh(CandidateURI caUri);
+
+	/**
+	 * @return
+	 */
+	int successfullyFetchedCount();
+
+	/**
+	 * @return
+	 */
+	int discoveredUriCount();
+
+	/**
+	 * @return
+	 */
+	int failedFetchCount();
 }

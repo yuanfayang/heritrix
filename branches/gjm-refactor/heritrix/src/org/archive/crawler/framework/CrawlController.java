@@ -272,6 +272,7 @@ public class CrawlController {
 			 	toePool.available().crawl(curi);
 			 } 
 		}
+		System.out.println("exitting runCrawl");
 	}
 
 	/**
@@ -422,6 +423,14 @@ public class CrawlController {
 	 */
 	public void setPostprocessor(Processor processor) {
 		postprocessor = processor;
+	}
+
+
+	/**
+	 * 
+	 */
+	public File getDisk() {
+		return disk;
 	}
 
 }

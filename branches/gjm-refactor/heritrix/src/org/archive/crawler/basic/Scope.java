@@ -71,8 +71,8 @@ public class Scope extends CrawlScope {
 			if(transitiveFilter == null) {
 				transitiveFilter = new TransclusionFilter();
 				transitiveFilter.setNode(xNode);
-				transitiveFilter.initialize(controller);
 			}
+			transitiveFilter.initialize(controller);
 		}
 		// setup exclude filter
 		if(getNodeAt("@max-link-hops")!=null) {
@@ -82,6 +82,7 @@ public class Scope extends CrawlScope {
 		} else {
 			excludeFilter = (Filter) instantiate("exclude");
 		}
+		excludeFilter.initialize(controller);
 	}
 
 	/** 
@@ -126,6 +127,27 @@ public class Scope extends CrawlScope {
 
 	private boolean isSeed(Object o) {
 		return o instanceof CandidateURI && ((CandidateURI)o).getIsSeed();
+	}
+
+	/**
+	 * @return
+	 */
+	public Filter getExcludeFilter() {
+		return excludeFilter;
+	}
+
+	/**
+	 * @return
+	 */
+	public Filter getFocusFilter() {
+		return focusFilter;
+	}
+
+	/**
+	 * @return
+	 */
+	public Filter getTransitiveFilter() {
+		return transitiveFilter;
 	}
 
 } 

@@ -66,7 +66,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		// set up output directory
 		CrawlOrder order = controller.getOrder();
 		
-		setUseCompression(getBooleanAt("@compression",false));
+		setUseCompression(getBooleanAt("@compress",false));
 		setArcPrefix(getStringAt("@prefix",arcPrefix));
 		setArcMaxSize(getIntAt("@max-size-bytes",arcMaxSize));
 		setOutputDir(getStringAt("@path",outputDir));
@@ -351,25 +351,22 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	}
 
 	public void setOutputDir(String buffer) {
-				
-		// make sure it's got a trailing file.seperator so the
+
+		// make sure it's got a trailing file.separator so the
 		// dir is not treated as a file prefix
-		if(! buffer.endsWith(File.separator)){
+		if ((buffer.length() > 0) && !buffer.endsWith(File.separator)) {
 			buffer = new String(buffer + File.separator);
 		}
-			
-		File newDir = new File(buffer);
-		
-		if(!newDir.exists()){
-			try{
+
+		File newDir = new File(controller.getDisk(), buffer);
+
+		if (!newDir.exists()) {
+			try {
 				newDir.mkdirs();
-				outputDir = buffer;
-					
-			}catch(Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
-			}		
-		}else{
-			outputDir = buffer;
+			}
 		}
-	}	
+		outputDir = newDir.getAbsolutePath()+ File.separatorChar;
+	}
 }

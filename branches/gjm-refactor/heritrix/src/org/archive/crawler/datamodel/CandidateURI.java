@@ -48,9 +48,9 @@ public class CandidateURI {
 	 */
 	public CandidateURI(String s){
 		try{
-			setUuri(UURI.createUURI(s));
+			setUURI(UURI.createUURI(s));
 		}catch(Exception e){
-			setUuri(null);
+			setUURI(null);
 		}
 	}
 
@@ -61,19 +61,20 @@ public class CandidateURI {
 	public void setIsSeed(boolean b) {
 		isSeed=b;
 		setPathFromSeed("");
+		setVia("");
 	}
 
 	/**
 	 * 
 	 */
-	public UURI getUuri() {
+	public UURI getUURI() {
 		return uuri;
 	}
 	
 	/**
 	 * @param u
 	 */
-	private void setUuri(UURI u) {
+	private void setUURI(UURI u) {
 		uuri=u;
 	}
 
@@ -129,6 +130,6 @@ public class CandidateURI {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "CandidateURI("+getUuri()+")";
+		return "CandidateURI("+getUURI()+")";
 	}
 }

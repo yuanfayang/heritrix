@@ -138,10 +138,16 @@ public class Frontier
 		// first, empty the high-priority queue
 		CandidateURI caUri; 
 		while ((caUri = dequeueFromPendingHigh()) != null) {
-			if(alreadyIncluded.contains(caUri)) {
-				continue;
+			if( caUri instanceof CrawlURI ) {
+				curi = (CrawlURI) caUri;
+			} else {
+				if (alreadyIncluded.contains(caUri)) {
+					// TODO: potentially up-prioritize URI
+					continue;
+				}
+				alreadyIncluded.add(caUri);
+				curi = new CrawlURI(caUri);
 			}
-			curi = new CrawlURI(caUri);
 			if (!enqueueIfNecessary(curi)) {
 				// OK to emit
 				return emitCuri(curi);
@@ -151,7 +157,7 @@ public class Frontier
 		// if enough time has passed to wake any snoozing queues, do it
 		wakeReadyQueues(now);
 		
-		// first, see if any holding queues are ready with a CrawlURI
+		// now, see if any holding queues are ready with a CrawlURI
 		if (!readyClassQueues.isEmpty()) {
 			curi = dequeueFromReady();
 			return emitCuri(curi);
@@ -159,10 +165,15 @@ public class Frontier
 		
 		// if that fails, check the pending queue
 		while ((caUri = dequeueFromPending()) != null) {
-			if(alreadyIncluded.contains(caUri)) {
-				continue;
+			if( caUri instanceof CrawlURI ) {
+				curi = (CrawlURI) caUri;
+			} else {
+				if (alreadyIncluded.contains(caUri)) {
+					continue;
+				}
+				alreadyIncluded.add(caUri);
+				curi = new CrawlURI(caUri);
 			}
-			curi = new CrawlURI(caUri);
 			if (!enqueueIfNecessary(curi)) {
 				// OK to emit
 				return emitCuri(curi);
@@ -208,6 +219,10 @@ public class Frontier
 			// snooze queues as necessary
 			updateScheduling(curi);
 			notify(); // new items might be available
+			
+			//if(curi.getAList()) {
+			//	curi.getAList().remove(A_PREREQUISITE_URI);
+			//}
 			
 			// consider errors which halt further processing
 			if (isDispositiveFailure(curi)) {
@@ -293,20 +308,12 @@ public class Frontier
 	 */
 	public boolean isEmpty() {
 		return pendingQueue.isEmpty()
+			    && pendingHighQueue.isEmpty()
 				&& readyClassQueues.isEmpty()
 				&& heldClassQueues.isEmpty() 
 				&& snoozeQueues.isEmpty()
 				&& inProcessMap.isEmpty();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIFrontier#size()
-	 */
-	public long size() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
+	}	
 	
 	
 	/**
@@ -483,30 +490,6 @@ public class Frontier
 		pendingQueue.addFirst(curi);
 		curi.setStoreState(URIStoreable.PENDING);
 	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
-	 */
-	public int discoveredUriCount() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
-	 */
-	public int successfullyFetchedCount() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIFrontier#failedFetchCount()
-	 */
-	public int failedFetchCount() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 	
 	/**
 	 * 
@@ -662,8 +645,21 @@ public class Frontier
 	 * @param curi
 	 */
 	private void scheduleForRetry(CrawlURI curi) {
-		logger.fine("inserting snoozed "+curi+" for "+retryDelay);
-		insertSnoozed(curi,retryDelay);
+		int delay;
+		if(curi.getAList().containsKey(A_RETRY_DELAY)) {
+			delay = curi.getAList().getInt(A_RETRY_DELAY);
+		} else {
+			// use overall default
+			delay = retryDelay; 
+		}
+		if (delay>0) {
+			// snooze to future
+			logger.fine("inserting snoozed "+curi+" for "+delay);
+			insertSnoozed(curi,retryDelay);
+		} else {
+			// eligible for retry asap
+			pushToPending(curi);
+		}
 	}
 	
 	/**
@@ -720,5 +716,29 @@ public class Frontier
 		curi.setStoreState(URIStoreable.SNOOZED);
 		snoozeQueues.add(curi);
 	}
+
+	/** Return the number of URIs successfully completed to date.
+	 * 
+	 * @return
+	 */
+	public int successfullyFetchedCount(){
+		return completionCount;
+	}
+	
+	/** Return the number of URIs that failed to date.
+	 * 
+	 * @return
+	 */
+	public int failedFetchCount(){
+		return failedCount;
+	}
+	
+	/** Return the size of the URI store.
+	 * @return storeSize
+	 */
+	public int discoveredUriCount(){
+		return alreadyIncluded.size();	
+	}
+
 
 }

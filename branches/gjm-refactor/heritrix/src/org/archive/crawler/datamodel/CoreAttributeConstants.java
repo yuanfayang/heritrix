@@ -49,6 +49,7 @@ public interface CoreAttributeConstants {
 	public static String A_DISTANCE_FROM_SEED = "distance-from-seed";
 	public static String A_HTML_LINKS = "html-links";
 	public static String A_HTML_BASE = "html-base-href";
+	public static String A_RETRY_DELAY = "retry-delay";
 
 	public static String A_META_ROBOTS = "meta-robots";
 	

@@ -11,12 +11,14 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.util.ArchiveUtils;
 
 /**
- * Expects parameters 
+ * Formmatter for 'crawl.log'. Expects completed CrawlURI as parameter.  
  *   
  * @author gojomo
  *
@@ -53,6 +55,14 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			time = System.currentTimeMillis();
 		}
 		
+		Object via = curi.getVia();
+		if (via instanceof CandidateURI) {
+			via = ((CandidateURI)via).getUURI().getUri().toASCIIString();
+		}
+		if (via instanceof UURI) {
+			via = ((UURI)via).getUri().toASCIIString();
+		}
+		
 		return ArchiveUtils.get17DigitDate(time)
 			+ " "
 			+ ArchiveUtils.padTo(curi.getFetchStatus(),4)
@@ -65,6 +75,11 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 			+ uri
 			+ " "
 			+ mime
+			+ "\n"
+			+ "  "
+			+ curi.getPathFromSeed()
+			+ " "
+			+ via
 			+ "\n";
 	}
 
