@@ -152,14 +152,14 @@ public class RobotsExclusionPolicy {
 		// In the common case with policy=Classic, the useragent is remembered from uri to uri on
 		// the same server
 		if(honoringPolicy.isType(RobotsHonoringPolicy.CLASSIC) && (lastUsedUserAgent == null || !lastUsedUserAgent.equals(userAgent))) {
-			lastUsedUserAgent = null;
+			lastUsedUserAgent = userAgent; 
+			userAgentsToTest = new ArrayList();
 			Iterator iter = userAgents.iterator();
-			while ( iter.hasNext() && lastUsedUserAgent == null) {
+			while ( iter.hasNext() ) {
 				String ua = (String)iter.next();
 				if (userAgent.indexOf(ua)>-1) {
-					lastUsedUserAgent = userAgent; 
-					userAgentsToTest = new ArrayList();
 					userAgentsToTest.add(ua);
+					break; // consider no more sections 
 				}
 			}
 		}
