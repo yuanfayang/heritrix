@@ -24,7 +24,7 @@ import org.archive.io.ReplayInputStream;
  *
  */
 public class CrawlServer implements Serializable {
-	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day 
+	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 3*(1000*60*60*24); // three days
 	String server; // actually, host+port in the http case
 	CrawlHost host;
 	RobotsExclusionPolicy robots;
