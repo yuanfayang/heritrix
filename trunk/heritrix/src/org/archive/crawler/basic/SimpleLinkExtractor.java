@@ -36,8 +36,8 @@ public class SimpleLinkExtractor extends Processor implements CoreAttributeConst
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void process(CrawlURI curi) {
-		super.process(curi);
+	public void innerProcess(CrawlURI curi) {
+
 		if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
 			GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 			

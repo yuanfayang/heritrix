@@ -96,8 +96,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   	 * to disk.  Currently
   	 * this method understands the following uri types: dns, http
   	 */
-  	public synchronized void process(CrawlURI curi){
-  		super.process(curi);
+  	protected synchronized void innerProcess(CrawlURI curi){
   		
   		// if  there was a failure, or we haven't fetched the resource yet, return
 		if(curi.getFetchStatus()<=0){

@@ -26,8 +26,7 @@ public class HostInfoUpdater extends Processor {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	public void process(CrawlURI curi) {
-		super.process(curi);
+	protected void innerProcess(CrawlURI curi) {
 		
 		// make sure we only process schemes we understand (i.e. not dns)
 		if(!curi.getUURI().getUri().getScheme().equals("http")){
