@@ -16,6 +16,8 @@
 <b>New jobs</b><br>
 <ul>
 	<li><a href="/admin/jobs/new.jsp">Create new crawl job</a>
+	<li><a href="#">Create new crawl job based on a profile</a>
+	<li><a href="#">Create new crawl job based on an existing job</a>
 </ul>
 
 <% if(handler.isCrawling()){ %>
@@ -24,8 +26,7 @@
 	<ul>
 		<li><a href="/admin/reports/crawljob.jsp">View crawl report</a>
 		<li><a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">View crawl order (xml file)</a>
-		<li><a href="/admin/jobs/modify.jsp">Modify crawl order</a>
-		<li><a href="/admin/jobs/poweredit.jsp">Power edit crawl order</a>
+		<li><a href="/admin/jobs/configure.jsp?job=<%=handler.getCurrentJob().getUID()%>">Modify crawl order</a>
 	</ul>
 <% } %>
 

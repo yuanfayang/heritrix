@@ -23,9 +23,12 @@
  */
 package org.archive.crawler.filter;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -37,10 +40,20 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class PathDepthFilter extends Filter {
-	int maxPathDepth = Integer.MAX_VALUE;
+    static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
+    Integer maxPathDepth = new Integer(Integer.MAX_VALUE);
     char slash = '/';
 	String path;
 	
+    /**
+     * @param name
+     * @param description
+     */
+    public PathDepthFilter(String name) {
+        super(name, "Path depth filter");
+        addElementToDefinition(new SimpleType(ATTR_MAX_PATH_DEPTH, "Max path depth", maxPathDepth));
+    }
+
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
@@ -63,12 +76,15 @@ public class PathDepthFilter extends Filter {
 			i = path.indexOf(slash, i + 1)) {
 			count++;
 		}
-		return (count <= maxPathDepth);
-	}
-
-	public void initialize(CrawlController c) {
-		super.initialize(c);
-		maxPathDepth = getIntAt("@max-path-depth", maxPathDepth);
+        if (o instanceof CrawlURI) {
+            try {
+                maxPathDepth = (Integer) getAttribute(ATTR_MAX_PATH_DEPTH, (CrawlURI) o);
+            } catch (AttributeNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+		return (count <= maxPathDepth.intValue());
 	}
 
 }

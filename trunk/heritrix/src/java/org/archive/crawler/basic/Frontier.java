@@ -35,17 +35,19 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.admin.AdminConstants;
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.URIFrontier;
-import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.FPUURISet;
 import org.archive.util.ArchiveUtils;
@@ -64,23 +66,25 @@ import org.archive.util.Queue;
  *f
  */
 public class Frontier
-	extends XMLConfig 
+	extends CrawlerModule 
 	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlStatusListener {
-	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
+
+
+    private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
 	// how many multiples of last fetch elapsed time to wait before recontacting same server
-	private static String XP_DELAY_FACTOR = "@delay-factor";
+	private static String ATTR_DELAY_FACTOR = "delay-factor";
 	// always wait this long after one completion before recontacting same server, regardless of multiple
-	private static String XP_MIN_DELAY = "@min-delay-ms";
+	private static String ATTR_MIN_DELAY = "min-delay-ms";
 	// never wait more than this long, regardless of multiple
-	private static String XP_MAX_DELAY = "@max-delay-ms";
+	private static String ATTR_MAX_DELAY = "max-delay-ms";
 	// always wait at least this long between request *starts*
 	// (contrasted with min-delay: if min-interval time has already elapsed during last
 	// fetch, then next fetch may occur immediately; it constrains starts not off-cycles)
-	private static String XP_MIN_INTERVAL = "@min-interval-ms";
-	private static float DEFAULT_DELAY_FACTOR = 5;
-	private static int DEFAULT_MIN_DELAY = 500;
-	private static int DEFAULT_MAX_DELAY = 5000;
-	private static int DEFAULT_MIN_INTERVAL = 1000;
+	private static String ATTR_MIN_INTERVAL = "min-interval-ms";
+	private static Float DEFAULT_DELAY_FACTOR = new Float(5);
+	private static Integer DEFAULT_MIN_DELAY = new Integer(500);
+	private static Integer DEFAULT_MAX_DELAY = new Integer(5000);
+	private static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
 	
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.basic.Frontier");
@@ -151,6 +155,24 @@ public class Frontier
 	// scheduledDuplicates/totalUrisScheduled is running estimate of rate to discount pendingQueues
 	long scheduledDuplicates = 0;
 
+
+    /**
+     * @param name
+     * @param description
+     */
+    public Frontier(String name) {
+        // The frontier should always have the same name.
+        // the argument to this constructor is just ignored.
+        super(URIFrontier.ATTR_NAME, "Frontier");
+        addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR, "How many multiples of last fetch elapsed time to wait before recontacting same server", DEFAULT_DELAY_FACTOR));
+        addElementToDefinition(new SimpleType(ATTR_MAX_DELAY, "Never wait more than this long, regardless of multiple", DEFAULT_MAX_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_MIN_DELAY, "Always wait this long after one completion before recontacting same server, regardless of multiple", DEFAULT_MIN_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_MIN_INTERVAL, "always wait at least this long between request *starts* (contrasted with min-delay: if min-interval time has already elapsed during last fetch, then next fetch may occur immediately; it constrains starts not off-cycles)", DEFAULT_MIN_INTERVAL));
+    }
+    
+    public Frontier() {
+        this(null);
+    }
 
 	/**
 	 * Initializes the Frontier, given the supplied CrawlController. 
@@ -466,7 +488,9 @@ public class Frontier
 			// store exception temporarily for logging
 			curi.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
 			failureDisposition(curi);
-		}	
+		} catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }	
 	} 
 			
 	/**
@@ -833,30 +857,37 @@ public class Frontier
 	 * 
 	 * @param curi
 	 */
-	protected void updateScheduling(CrawlURI curi) {
+	protected void updateScheduling(CrawlURI curi) throws AttributeNotFoundException {
 		long durationToWait = 0;
 		if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
 			&& curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
 				
 			long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
 			long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
-			durationToWait =
-				(long) (getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR)
-					* durationTaken);
+//			durationToWait =
+//				(long) (getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR)
+//					* durationTaken);
+            durationToWait =
+                    (long) (((Float) getAttribute(ATTR_DELAY_FACTOR, curi)).floatValue()
+                        * durationTaken);
+            
 
-			long minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
+			//long minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
+            long minDelay = ((Integer) getAttribute(ATTR_MIN_DELAY, curi)).longValue();
 			if (minDelay > durationToWait) {
 				// wait at least the minimum
 				durationToWait = minDelay;
 			}
 			
-			long maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
+			//long maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
+            long maxDelay = ((Integer) getAttribute(ATTR_MAX_DELAY, curi)).longValue();
 			if (durationToWait > maxDelay) {
 				// wait no more than the maximum
 				durationToWait = maxDelay;
 			}
 			
-			long minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
+			//long minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
+            long minInterval = ((Integer) getAttribute(ATTR_MIN_INTERVAL, curi)).longValue();
 			if (durationToWait < (minInterval - durationTaken) ) {
 				// wait at least as long as necessary to space off from last fetch begin
 				durationToWait = minInterval - durationTaken;
@@ -1110,7 +1141,7 @@ public class Frontier
 		StringBuffer rep = new StringBuffer();
 		
 		rep.append("Frontier report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-		rep.append(" Job being crawled:         " + controller.getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
+		rep.append(" Job being crawled:         " + controller.getOrder().getName() + "\n");
 		rep.append("\n -----===== QUEUES =====-----\n");
 		rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
 		rep.append(" Pending high queue length: " + pendingHighQueue.length() + "\n");

@@ -23,58 +23,77 @@
  */
 package org.archive.crawler.framework;
 
-import org.archive.crawler.filter.OrFilter;
+import java.util.logging.Logger;
+
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
  * 
  * @author Gordon Mohr
  */
-public abstract class Filter extends XMLConfig {
-	String name;
-	boolean inverter = false;
-	
-	public  void setName(String n) {
-		name = n;
-	}
-	public String getName() {
-		return name;
-	}
-	
-	public boolean accepts(Object o) {
-		return inverter ^ innerAccepts(o);
-	}
-	
-	/**
-	 * @param o
-	 * @return If it accepts.
-	 */
-	protected abstract boolean innerAccepts(Object o);
-	
-	public void initialize(CrawlController controller) {
-		if(xNode!=null) {
-			setName(getStringAt("@name"));
-			if("not".equals(getStringAt("@modifier"))) {
-				inverter = true;
-			}
-		}
-	}
+public class Filter extends CrawlerModule {
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.framework.Filter");
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		return "Filter<"+name+">";
-	}
+    static final String ATTR_INVERTED = "inverted";
 
-	/**
-	 * @param other
-	 * @return Filter.
-	 */
-	public Filter orWith(Filter other) {
-		OrFilter orF = new OrFilter();
-		orF.addFilter(this);
-		orF.addFilter(other);
-		return orF;
-	}
+    // associated CrawlController
+    protected CrawlController controller;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public Filter(String name, String description) {
+        super(name, description);
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_INVERTED,
+                "Filter functionality should be inverted",
+                new Boolean(false)));
+    }
+
+
+    public boolean accepts(Object o) {
+        CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
+        boolean inverter = false;
+        try {
+            inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
+        } catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+        return inverter ^ innerAccepts(o);
+    }
+    
+    /** Do nothing default implementation.
+     * 
+     * @param o
+     * @return If it accepts.
+     */
+    protected boolean innerAccepts(Object o) {
+        return true;
+    }
+
+    public void initialize(CrawlController controller) {
+        this.controller = controller;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        return "Filter<" + getName() + ">";
+    }
+
+    /**
+     * @return
+     */
+    public CrawlController getController() {
+        return controller;
+    }
 
 }

@@ -37,10 +37,18 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
 
     protected long numberOfCURIsHandled = 0;
-    protected long numberOfLinksExtracted= 0;
+    protected long numberOfLinksExtracted = 0;
+
+    /**
+     * @param name
+     * @param description
+     */
+    public ExtractorHTTP(String name) {
+        super(name, "HTTP extractor");
+    }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)

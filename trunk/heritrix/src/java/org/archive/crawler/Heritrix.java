@@ -35,13 +35,14 @@ import java.util.Properties;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import org.archive.crawler.admin.SimpleCrawlJob;
-import org.archive.crawler.admin.SimpleHandler;
+import javax.management.InvalidAttributeValueException;
+
+import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.admin.auth.User;
-import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.exceptions.InitializationException;
 
 
@@ -81,12 +82,12 @@ public class Heritrix {
      */
     protected static Properties properties = null;
     
-   /**
+    /**
      * Logging handler.
      *
      * TODO: Make implementation of CrawlJobHandler configurable
      */
-    protected static SimpleHandler handler;
+    protected static CrawlJobHandler jobHandler;
 
     /**
      * Heritirx start log file.
@@ -311,12 +312,24 @@ public class Heritrix {
      */
     protected static void launch(String crawlOrderFile){
         try {
+            XMLSettingsHandler handler = new XMLSettingsHandler(new File(crawlOrderFile));
+            handler.initialize();
             CrawlController controller = new CrawlController();
-            CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
-            controller.initialize(order);
+            controller.initialize(handler);
             controller.startCrawl();
+
+
+
+            //CrawlController controller = new CrawlController();
+            //CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
+            //controller.initialize(order);
+            //controller.startCrawl();
             // catch all configuration exceptions, which at this level are fatal
-        }catch(InitializationException e){
+        } catch (InitializationException e){
+            print("Fatal configuration exception: " + 
+                    e.toString() + "\n");
+            return; 
+        } catch (InvalidAttributeValueException e) {
             print("Fatal configuration exception: " + 
                     e.toString() + "\n");
             return; 
@@ -337,33 +350,46 @@ public class Heritrix {
      *                     3 = set as default configuration,
      *                        Any other = no crawl order specified)
      */
-    protected static void launch(int port, String crawlOrderFile,
-                                 int crawllaunch, String admin, String user)
-    {
-        handler = new SimpleHandler();
+    protected static void launch(
+        int port,
+        String crawlOrderFile,
+        int crawllaunch,
+        String admin,
+        String user) {
+        jobHandler = new CrawlJobHandler();
         String status = "";
-        
-        // Deconstruction of login permissions.
-        String adminUN = admin.substring(0,admin.indexOf(":"));
-        String adminPW = admin.substring(admin.indexOf(":")+1);
-        User.addLogin(adminUN, adminPW,User.ADMINISTRATOR);
-        String userUN = user.substring(0,user.indexOf(":"));
-        String userPW = user.substring(user.indexOf(":")+1);
-		User.addLogin(userUN, userPW,User.USER);
 
-        if(crawllaunch == 3){
+        // Deconstruction of login permissions.
+        String adminUN = admin.substring(0, admin.indexOf(":"));
+        String adminPW = admin.substring(admin.indexOf(":") + 1);
+        User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
+        String userUN = user.substring(0, user.indexOf(":"));
+        String userPW = user.substring(user.indexOf(":") + 1);
+        User.addLogin(userUN, userPW, User.USER);
+
+        if (crawllaunch == 3) {
             // Set crawl order file as new default 
-            handler.setDefaultCrawlOrder(crawlOrderFile);
-            status = "\t- default crawl order updated to match: " + 
-                crawlOrderFile;
-        }
-        else if(crawllaunch == 1 || crawllaunch == 2){
-            CrawlJob cjob = new SimpleCrawlJob(handler.getNextJobUID(),
-                    "Auto launched",crawlOrderFile, CrawlJob.PRIORITY_HIGH);
-            handler.addJob(cjob);
+            // TODO: Allow this via profiles.
+            //jobHandler.setDefaultSettingsFilename(crawlOrderFile);
+            status =
+                "\t- default crawl order updated to match: " + crawlOrderFile;
+        } else if (crawllaunch == 1 || crawllaunch == 2) {
+            try {
+                CrawlJob cjob =
+                    new CrawlJob(
+                        jobHandler.getNextJobUID(),
+                        "Auto launched",
+                        new XMLSettingsHandler(new File(crawlOrderFile)),
+                        CrawlJob.PRIORITY_HIGH);
+                jobHandler.addJob(cjob);
+            } catch (InvalidAttributeValueException e) {
+                System.out.println(
+                    "Fatal configuration exception: " + e.toString());
+                return;
+            }
             status = "\t1 crawl job ready and pending: " + crawlOrderFile;
-            if(crawllaunch == 1){
-                handler.startCrawler();
+            if (crawllaunch == 1) {
+                jobHandler.startCrawler();
                 status = "\t1 job being crawled: " + crawlOrderFile;
             }
         }
@@ -378,20 +404,17 @@ public class Heritrix {
         print("Heritrix is running\n");
         print(" Web UI on port " + port + "\n");
         try {
-          InetAddress addr = InetAddress.getLocalHost();
-          // Get hostname
-          String hostname = addr.getHostName();
-          print(" http://" + hostname + ":" + port + "/admin\n");
+            InetAddress addr = InetAddress.getLocalHost();
+
+            // Get hostname
+            String hostname = addr.getHostName();
+            print(" http://" + hostname + ":" + port + "/admin\n");
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        print(
-      " operator login/password = "
-        + adminUN
-        + "/"
-        + adminPW
-        + "\n");
-        print(status + "\n");
+            print(
+               " operator login/password = " + adminUN + "/" + adminPW + "\n");
+            print(status + "\n");
     }
 
     /**
@@ -513,8 +536,8 @@ public class Heritrix {
      * 
      * @return The CrawlJobHandler being used.
      */    
-    public static SimpleHandler getHandler()
+    public static CrawlJobHandler getJobHandler()
     {
-        return handler;    
+        return jobHandler;    
     }
 }

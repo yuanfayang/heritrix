@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
-<%@ page import="org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,java.util.Vector" %>
 
 <%
 	Vector jobs = handler.getCompletedJobs();

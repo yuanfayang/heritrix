@@ -34,6 +34,8 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
  *
  */
 public interface URIFrontier {
+    final static String ATTR_NAME = "frontier";
+    
 	void initialize(CrawlController c) throws FatalConfigurationException, IOException;
 
 	void schedule(CandidateURI caUri);

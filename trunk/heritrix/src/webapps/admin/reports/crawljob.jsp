@@ -1,7 +1,7 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<%@ page import="org.archive.crawler.framework.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
 <%
 	/**
 	 *  Page allows user to view the information in the StatisticsTracker 
