@@ -130,7 +130,6 @@ public class ToeThread extends Thread
             }
         } catch (EndedException e) {
             // crawl ended, allow thread to end
-            
         } catch (InterruptedException e1) {
             // Thread was interrupted 
             System.err.println("interrupted while working on "+currentCuri);
@@ -435,7 +434,6 @@ public class ToeThread extends Thread
      */
     public boolean isActive() {
         // if alive and not waiting in/for frontier.next(), we're 'active'
-        return this.isAlive() && this.getStep() != STEP_ABOUT_TO_GET_URI;
-        // TODO: maybe just currentCuri != null is a better def'n of 'active'?
+        return this.isAlive() && (currentCuri != null);
     }
 }
