@@ -16,7 +16,15 @@
 %>
 
 <%@include file="/include/head.jsp"%>
-
+	
+	<script type="text/javascript">
+		function doTerminateCurrentJob(){
+			if(confirm("Are you sure you wish to terminate the job currently being crawled?")){
+				document.location = '/admin/action.jsp?action=terminate';
+			}
+		}	
+	</script>
+	
 	<fieldset style="width: 750px">
 		<legend>Crawler status</legend>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%">
@@ -211,16 +219,16 @@
 	<%
 		if(handler.isRunning())
 		{
-			out.println("<a href='/admin/action.jsp?action=stop'>Stop crawling</a>");
+			out.println("<a href='/admin/action.jsp?action=stop'>Stop crawling pending jobs</a>");
 		}
 		else
 		{
-			out.println("<a href='/admin/action.jsp?action=start'>Start crawling</a>");
+			out.println("<a href='/admin/action.jsp?action=start'>Start crawling pending jobs</a>");
 		}
 
 		if(handler.isCrawling())
 		{
-			out.println(" | <a href='/admin/action.jsp?action=terminate'>Terminate current job</a> | ");
+			out.println(" | <a href='javascript:doTerminateCurrentJob()'>Terminate current job</a> | ");
 			if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))
 			{
 				out.println("<a href='/admin/action.jsp?action=resume'>Resume current job</a> ");
@@ -231,6 +239,10 @@
 			}
 		}
 	%> | <a href="/admin/main.jsp">Refresh</a>
+	<p>
+		&nbsp;
+	<p>
+		&nbsp;
 	<p>
 		<a href="/admin/shutdown.jsp">Shut down Heritrix software</a>
 
