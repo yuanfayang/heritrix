@@ -252,7 +252,8 @@ public class UURIFactory extends URI {
      */
     private UURI create(String uri, String charset) throws URIException {
         UURI uuri = isEscaped(uri)? 
-            new UURIImpl(fixup(uri, null).toCharArray(), charset):
+            new UURIImpl(escapeSpaces(fixup(uri, null)).toCharArray(),
+                charset):
             new UURIImpl(fixup(uri, null), charset);
          if (logger.isLoggable(Level.FINE)) {
              logger.fine("URI " + uri +
@@ -321,7 +322,7 @@ public class UURIFactory extends URI {
             // after all the fixup and normalization has been done.
             throw new URIException("URI length > " + MAX_URL_LENGTH);
         }
-
+        
         // Replace nbsp with normal spaces (so that they get stripped if at
         // ends, or encoded if in middle)
         uri = TextUtils.replaceAll(NBSP, uri, SPACE);
@@ -421,6 +422,27 @@ public class UURIFactory extends URI {
         return buffer.toString();
     }
 
+    /**
+     * Escape any spaces found.
+     * 
+     * The parent class takes care of the bulk of escaping.  But if any
+     * instance of escaping is found in the URI, then we ask for parent
+     * to do NO escaping.  Here we escape any spaces found irrespective
+     * of whether the uri has already been escaped.  We do this for
+     * case where uri has been judged already-escaped only, its been
+     * incompletly done and spaces remain.  Spaces in the URI are
+     * a real pain.  They're presence will break log file and
+     * ARC parsing.
+     * @param uri URI string to check.
+     * @return uri with spaces escaped if any found.
+     */
+    protected String escapeSpaces(String uri) {
+        if (uri.indexOf(" ") >= 0) {
+            uri = TextUtils.replaceAll(SPACE, uri, "%20");
+        }
+        return uri;
+    }
+    
     /**
      * Check the domain label part of the authority.
      * 
