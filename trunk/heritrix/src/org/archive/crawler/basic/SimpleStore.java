@@ -8,13 +8,14 @@ package org.archive.crawler.basic;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIStore;
-import org.archive.crawler.datamodel.FetchStatusCodes;
 
 import java.util.logging.Logger;
 
@@ -53,7 +54,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 	LinkedList heldClassQueues = new LinkedList(); // of String (queueKey) -> KeyedQueue 
 
     // all per-class queues who are on hold until a certain time
-	TreeSet snoozeQueues = new TreeSet(); // of KeyedQueue, sorted by wakeTime
+	SortedSet snoozeQueues = new TreeSet(); // of KeyedQueue, sorted by wakeTime
 
 
 	/* (non-Javadoc)
@@ -82,15 +83,18 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 	/**
 	 * 
 	 */
-	public void wakeReadyQueues(long now) {
+	public synchronized void wakeReadyQueues(long now) {
 		while(!snoozeQueues.isEmpty()&&((URIStoreable)snoozeQueues.first()).getWakeTime()<=now) {
 			URIStoreable awoken = (URIStoreable)snoozeQueues.first();
-			snoozeQueues.remove(awoken);
+			if (!snoozeQueues.remove(awoken)) {
+				logger.severe("first() item couldn't be remove()d!");
+			}
 			if (awoken instanceof KeyedQueue) {
 				assert inProcessMap.get(awoken.getClassKey()) == null : "false ready: class peer still in process";
 				if(((KeyedQueue)awoken).isEmpty()) {
 					// just drop queue
 					allClassQueuesMap.remove(((KeyedQueue)awoken).getClassKey());
+					awoken.setStoreState(URIStoreable.FINISHED);
 					return;
 				}
 				readyClassQueues.add(awoken);
@@ -223,7 +227,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 	/**
 	 * 
 	 */
-	public TreeSet getSnoozeQueues() {
+	public SortedSet getSnoozeQueues() {
 		return snoozeQueues;
 	}
 
@@ -261,6 +265,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		if ( classQueue == null ) {
 			pendingQueue.addFirst(curi);
 			curi.setStoreState(URIStoreable.PENDING);
+			notify();
 			return;
 		}
 		classQueue.addFirst(curi);
@@ -297,7 +302,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 			case S_CONNECT_FAILED:					
 			case S_CONNECT_LOST:
 			case S_DOMAIN_UNRESOLVABLE:
-				if(fetchAttempts >= SimpleStore.MAX_FETCH_ATTEMPTS){
+				if(fetchAttempts >= MAX_FETCH_ATTEMPTS){
 					// don't let the madness continue
 					return;
 				}else{
@@ -367,9 +372,24 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		if ( classQueue == null ) {
 			pendingQueue.addLast(curi);
 			curi.setStoreState(URIStoreable.PENDING);
+			notify();
 			return;
 		}
 		classQueue.addLast(curi);
 		curi.setStoreState(classQueue.getStoreState());
+	}
+
+	/**
+	 * Store is empty only if all queues are empty and 
+	 * no URIs are in-process
+	 * 
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return pendingQueue.isEmpty()
+		        && readyClassQueues.isEmpty()
+		        && heldClassQueues.isEmpty() 
+				&& snoozeQueues.isEmpty()
+				&& inProcessMap.isEmpty();
 	}
 }
