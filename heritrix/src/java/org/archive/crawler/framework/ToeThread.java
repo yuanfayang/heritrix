@@ -59,14 +59,13 @@ public class ToeThread extends Thread
     private static final String STEP_DONE_WITH_PROCESSORS = "DONE_WITH_PROCESSORS";
     private static final String STEP_HANDLING_RUNTIME_EXCEPTION = "HANDLING_RUNTIME_EXCEPTION";
     private static final String STEP_ABOUT_TO_RETURN_URI = "ABOUT_TO_RETURN_URI";
-    private static final String STEP_HANDLING_SERIOUS_ERROR = "HANDLING_SERIOUS_ERROR";
+//    private static final String STEP_HANDLING_SERIOUS_ERROR = "HANDLING_SERIOUS_ERROR";
     private static final String STEP_FINISHING_PROCESS = "FINISHING_PROCESS";
 
 
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
     private static int DEFAULT_TAKE_TIMEOUT = 3000;
 
-    private ToePool pool;
     private volatile boolean shouldCrawl = true;
     private volatile boolean shouldPause = false;
 
@@ -90,27 +89,27 @@ public class ToeThread extends Thread
 
     // debugging + used by kill() to know what state the toe is in.
     private String step = STEP_NASCENT;
+    private static final int DEFAULT_PRIORITY = Thread.NORM_PRIORITY-2;
 
     /**
      * @param c
-     * @param p
      * @param sn
      */
-    public ToeThread(CrawlController c, ToePool p, int sn) {
+    public ToeThread(CrawlController c, int sn) {
         controller = c;
-        pool = p;
         serialNumber = sn;
         setName("ToeThread #"+serialNumber);
+        setPriority(DEFAULT_PRIORITY);
         httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
         lastFinishTime = System.currentTimeMillis();
     }
 
-    /**
-     * @return If true then this thread is idle or dead.
-     */
-    public synchronized boolean isIdleOrDead() {
-        return currentCuri == null || shouldDie == true;
-    }
+//    /**
+//     * @return If true then this thread is idle or dead.
+//     */
+//    public synchronized boolean isIdleOrDead() {
+//        return currentCuri == null || shouldDie == true;
+//    }
 
     /** (non-Javadoc)
      * @see java.lang.Thread#run()
@@ -128,22 +127,27 @@ public class ToeThread extends Thread
                         wait();
                     }
                 }
-                dieCheck();
+                continueCheck();
                 step = STEP_ABOUT_TO_GET_URI;
                 if (controller.getFrontier() == null) {
                 	    throw new NullPointerException("Frontier is null");
                 }
-                currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
+                currentCuri = controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
                 if ( currentCuri != null ) {
-                    processCrawlUri();
-                    step = STEP_ABOUT_TO_RETURN_URI;
-                    synchronized(this) {
-                        dieCheck();
-                        controller.getFrontier().finished(currentCuri);
-                        currentCuri = null;
+                    controller.toePool.noteActive(this);
+                    try {
+                        processCrawlUri();
+                        step = STEP_ABOUT_TO_RETURN_URI;
+                        synchronized(this) {
+                            continueCheck();
+                            controller.getFrontier().finished(currentCuri);
+                            currentCuri = null;
+                        }
+                        step = STEP_FINISHING_PROCESS;
+                        lastFinishTime = System.currentTimeMillis();
+                    } finally {
+                        controller.toePool.noteInactive(this);
                     }
-                    step = STEP_FINISHING_PROCESS;
-                    lastFinishTime = System.currentTimeMillis();
                 }
                 controller.checkFinish(); // after each URI or null
             }
@@ -154,13 +158,14 @@ public class ToeThread extends Thread
                 System.err.println("interrupted while working on "+currentCuri);
                 e1.printStackTrace();
             }
-        } finally {
+        } catch (Error err) {
+            seriousError(err);
+        } // finally {
             currentCuri = null;
             if(controller!=null) {
                 controller.toeChanged(this);
             }
             // Do cleanup so that objects can be GC.
-            pool = null;
             controller = null;
             httpRecorder.closeRecorders();
             httpRecorder = null;
@@ -168,20 +173,59 @@ public class ToeThread extends Thread
 
             logger.fine(getName()+" finished for order '"+name+"'");
             step = STEP_FINISHED;
-        }
+        // }
     }
 
     /**
+	 * @param err
+	 */
+	private void seriousError(Error err) {
+	    // try to prevent timeslicing until we have a chance to deal with OOM
+        setPriority(DEFAULT_PRIORITY+1);  
+        if (controller!=null) {
+            controller.freeReserveMemory();
+            // actually hold all ToeThreads
+            controller.lockMemory();
+            controller.requestCrawlPause();
+        }
+        
+        // OutOfMemory & StackOverflow & etc.
+        System.err.println("<<<");
+        System.err.println(err);
+        System.err.println(DevUtils.extraInfo());
+        err.printStackTrace(System.err);
+        System.err.println(">>>");
+
+        String context = "unknown";
+		if(currentCuri!=null) {
+			// currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+            context = currentCuri.getURIString();
+		}
+        String title = "Serious error occured processing '" + context + "'";
+        String message = "The following serious error occured when trying " +
+            "to process '" + context + "'\n";
+		Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
+        setPriority(DEFAULT_PRIORITY);
+	}
+
+	/**
+     * Perform checks as to whether normal execution shoudl proceed.
+     * 
      * If an external die request is detected, throw an interrupted exception.
      * Used before anything that should not be attempted by a 'zombie' thread
      * that the Frontier/Crawl has given up on.
+     * 
+     * Otherwise, if the controller's memoryGate has been closed,
+     * hold until it is opened. (Provides a better chance of 
+     * being able to complete some tasks after an OutOfMemoryError.)
      *
      * @throws InterruptedException
      */
-    private void dieCheck() throws InterruptedException {
+    private void continueCheck() throws InterruptedException {
         if(Thread.interrupted()) {
             throw new InterruptedException("die request detected");
         }
+        controller.acquireMemory();
     }
 
     /**
@@ -204,32 +248,25 @@ public class ToeThread extends Thread
                     step = STEP_ABOUT_TO_BEGIN_PROCESSOR;
                     Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
                     currentProcessorName = currentProcessor.getName();
-                    dieCheck();
+                    continueCheck();
                     currentProcessor.process(currentCuri);
                 }
             }
             step = STEP_DONE_WITH_PROCESSORS;
+            currentProcessorName = "";
         } catch (RuntimeException e) {
             step = STEP_HANDLING_RUNTIME_EXCEPTION;
             e.printStackTrace(System.err);
             currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
-            currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+            currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,e);
             String title = "RuntimeException occured processing '" + currentCuri.getURIString() + "'";
             String message = "The following RuntimeException occure when trying " +
             		"to process '" + currentCuri.getURIString() + "'\n";
             Heritrix.addAlert(new Alert(title,message.toString(),e, Level.SEVERE));
         } catch (Error err) {
-            step = STEP_HANDLING_SERIOUS_ERROR;
             // OutOfMemory & StackOverflow & etc.
-            System.err.println(err);
-            System.err.println(DevUtils.extraInfo());
-            err.printStackTrace(System.err);
-            currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-            String title = "Serious error occured processing '" + currentCuri.getURIString() + "'";
-            String message = "The following serious error occure when trying " +
-            		"to process '" + currentCuri.getURIString() + "'\n";
-            Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
+            seriousError(err);
         }
     }
 
@@ -253,20 +290,17 @@ public class ToeThread extends Thread
         return localProcessor;
     }
 
-    private boolean shouldCrawl() {
-        return shouldCrawl;
-    }
-
     /**
      *
      */
     public synchronized void stopAfterCurrent() {
         logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
         shouldCrawl = false;
-        if(isIdleOrDead())
-        {
-            notify();
-        }
+        notify();
+//        if(isIdleOrDead())
+//        {
+//            notify();
+//        }
     }
 
     /**
