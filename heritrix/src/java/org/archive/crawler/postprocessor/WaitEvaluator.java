@@ -128,6 +128,9 @@ implements AdaptiveRevisitAttributeConstants {
                 "be added to the wait time before the new wait time is " +
                 "calculated.",
                 DEFAULT_USE_OVERDUE_TIME));
+
+        // Register persistent CrawlURI items 
+        CrawlURI.addAlistPersistentMember(A_WAIT_INTERVAL);
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
