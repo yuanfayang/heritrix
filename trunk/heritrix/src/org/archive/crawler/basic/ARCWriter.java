@@ -114,10 +114,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			} // else skip the special gzip jive and just write to a FileOutputStream
   			
   			if(scheme.equals("dns")){
-  				// this breaks the tools, don't do it for now
-  				//return;
   				writeDns(curi);
-  				
   			}else if(scheme.equals("http")){
 	  			writeHttp(curi);
   			}
