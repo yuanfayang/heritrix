@@ -27,7 +27,8 @@ public interface FetchStatusCodes {
 	public static int S_INTERNAL_ERROR = -5;
 	public static int S_PREREQUISITE_FAILURE = -6;
 	public static int S_UNFETCHABLE_URI = -7;
-	
+	public static int S_TOO_MANY_RETRIES = -8;
+
 	public static int S_ROBOTS_PRECLUDED = -9998;
 	public static int S_DEEMED_CHAFF = -4000;
 	public static int S_TOO_MANY_LINK_HOPS = -4001;
