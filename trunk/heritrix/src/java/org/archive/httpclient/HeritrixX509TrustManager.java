@@ -122,11 +122,6 @@ public class HeritrixX509TrustManager implements X509TrustManager
      */
     private X509TrustManager standardTrustManager = null;
     
-    /**
-     * Key for the truststore property.
-     */
-    public static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
-    
     
     public HeritrixX509TrustManager()
         throws NoSuchAlgorithmException, KeyStoreException
@@ -169,7 +164,8 @@ public class HeritrixX509TrustManager implements X509TrustManager
         
         this.trustLevel =
             (LEVELS.contains(level.toLowerCase()))? level: DEFAULT;
-        configureTrustStore();
+        
+        Heritrix.configureTrustStore();
     }
     
     public void checkClientTrusted(X509Certificate[] certificates, String type)
@@ -222,39 +218,5 @@ public class HeritrixX509TrustManager implements X509TrustManager
     public X509Certificate[] getAcceptedIssuers()
     {
         return this.standardTrustManager.getAcceptedIssuers(); 
-    }
-    
-    
-    /**
-     * Configure trust store by setting passed value as truststore system 
-     * property.
-     * 
-     * This public version used by unit test of heritrix trust manager.
-     * 
-     * @param trustStore Pointer to trustStore to use.  Only used if nonnull.
-     */
-    private static void configureTrustStore(String trustStore)
-    {
-        if (trustStore != null && trustStore.length() > 0)
-        {
-            // May point at a file that doesn't exist.  May be intentional so 
-            // we use an empty truststore.  Issue warning just in case this is
-            // not the intent.
-            if (!(new File(trustStore)).exists())
-            {
-                logger.warning(TRUSTSTORE_KEY +
-                    " points at nonexistent keystore: " + trustStore);
-            }
-            
-            System.setProperty(TRUSTSTORE_KEY, trustStore);
-        }       
-    }
-    
-    /**
-     * Set up our truststore used by ssl sockets.
-     */
-    private static void configureTrustStore()
-    {
-        configureTrustStore(Heritrix.getProperty(TRUSTSTORE_KEY));
     }
 }

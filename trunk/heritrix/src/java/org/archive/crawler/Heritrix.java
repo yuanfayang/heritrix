@@ -176,7 +176,15 @@ public class Heritrix
      * Alerts that have occured
      */
     private static Vector alerts = new Vector();
+    
+    /**
+     * Key for the truststore property.
+     * 
+     * This must be defined somewhere in JSSE but can't find reference.
+     */
+    private  static final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
 
+    
     /**
      * Launch program
      *
@@ -546,8 +554,7 @@ public class Heritrix
      * @param crawlOrderFile The crawl order to crawl.
      */
     private static void launch(String crawlOrderFile)
-        throws InitializationException, IOException,
-            InvalidAttributeValueException
+        throws InitializationException, InvalidAttributeValueException
     {
         XMLSettingsHandler handler =
             new XMLSettingsHandler(new File(crawlOrderFile));
@@ -623,7 +630,7 @@ public class Heritrix
         }
     }
 
-    private static CrawlJob createCrawlJob(CrawlJobHandler jobHandler,
+    private static CrawlJob createCrawlJob(CrawlJobHandler handler,
             File crawlOrderFile, String descriptor)
         throws InvalidAttributeValueException, FileNotFoundException
     {
@@ -633,7 +640,7 @@ public class Heritrix
         }
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
         settings.initialize();
-        return new CrawlJob(jobHandler.getNextJobUID(), descriptor, settings,
+        return new CrawlJob(handler.getNextJobUID(), descriptor, settings,
             CrawlJob.PRIORITY_HIGH);
     }
 
@@ -675,6 +682,34 @@ public class Heritrix
     public static File getConfdir()
     {
         return confdir;
+    }
+    
+    /**
+     * Get our trust store.
+     * 
+     * If system property is defined, then use it for our truststore.  Otherwise
+     * use the heritrix truststore under conf.  If a truststore hasn't been 
+     * set on the commandline, calling this method sets the heritrix truststore
+     * into system properties.
+     * 
+     * <p>This method is in here because this class knows how to build up 
+     * paths for the production and development contexts.
+     * 
+     * @return The truststore to use.
+     */
+    public static void configureTrustStore()
+    {
+        String value = System.getProperty(TRUSTSTORE_KEY);
+        if (value == null || value.length() <= 0)
+        {
+            // Use the heritrix store if it exists on disk.
+            File heritrixStore = new File(getConfdir(), "heritrix.cacerts");
+            if(heritrixStore.exists())
+            {
+                value = heritrixStore.getAbsolutePath();
+                System.setProperty(TRUSTSTORE_KEY, value);
+            }
+        }
     }
 
     /**
