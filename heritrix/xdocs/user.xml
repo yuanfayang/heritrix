@@ -124,13 +124,13 @@ recent and more likely to work.
 can influence Heritrix behavior.
 </p>
 <subsection name="heritrix.webapp.path">
-    Path to webapp directory.  Default: <em>webapps</em>.  
-    Set to <em>src/webapps</em> if you want to
-    run the webapp inside eclipse, etc.
+<p>Path to webapp directory.  Default: <em>webapps</em>.  Set
+to <em>src/webapps</em> if you want to run the webapp inside eclipse, etc.</p>
 </subsection>
 <subsection name="heritrix.default.orderfile">
-    Default order.xml file to use when making jobs via the web UI.
-    Default: <em>webapp/admin/order.xml</em>.
+<p>Default order.xml file to use when making jobs via the web UI.
+Default: <em>webapp/admin/order.xml</em>.
+</p>
 </subsection>
 
 </section>
