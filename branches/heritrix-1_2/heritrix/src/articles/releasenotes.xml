@@ -1,0 +1,2405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <title>Heritrix Release Notes</title>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <authorgroup>
+      <corpauthor>Internet Archive</corpauthor>
+    </authorgroup>
+  </articleinfo>
+
+  <sect1 id="1_2_0">
+    <title>Release 1.2.0 - TBD</title>
+
+    <abstract>
+      <para>TBD</para>
+    </abstract>
+
+    <sect2 id="1_2_0_limitations">
+      <title>Known Limitations</title>
+
+      <sect3 id="ibmjvm">
+        <title>IBM JVM</title>
+
+        <para>The IBM JVM generally is more performant than SUN JVMs. It also
+        emits more detailed heap dumps. For these reasons we like the IBM JVM.
+        That said, new Heritrix 1.2.0 features may not work on the IBM
+        JVM.</para>
+
+        <sect4 id="ibmhttps">
+          <title>HTTPS</title>
+
+          <para>Heritrix 1.2.0 uses the new HttpClient 3.0x library which
+          allows the setting of socket read timeouts. Connections to https
+          sites fail if using the IBM JVM.</para>
+
+          <para>The IBM JVM 141 (cxia321411-20030930) NPEs setting the
+          NoTcpDelay. <programlisting>
+java.lang.NullPointerException
+   at com.ibm.jsse.bf.setTcpNoDelay(Unknown Source)
+   at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:683)
+   at org.apache.commons.httpclient.MultiThreadedHttpConnectionManager$HttpConnectionAdapter.open(MultiThreadedHttpConnectionManager.java:1328)</programlisting></para>
+
+          <para>Using the IBM JVM 142, its saying SSL connection not open when
+          we go to use inputstreams: <programlisting>
+java.net.SocketException: Socket is not connected
+   at java.net.Socket.getInputStream(Socket.java:726)     at com.ibm.jsse.bs.getInputStream(Unknown Source)
+   at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:715)
+   at org.apache.commons.httpclient.MultiThreadedHttpConnectionManager$HttpConnectionAdapter.open(MultiThreadedHttpConnectionManager.java:1328)</programlisting></para>
+
+          <para>Newer versions of the httpclient library may address this
+          (Current version is alpha2).</para>
+        </sect4>
+      </sect3>
+
+    <sect3 id="lostjobs">
+        <title>Jobs don't show in UI when a bunch are run back-to-back</title>
+        <para>If more than one job waiting in the queue of pending jobs, 
+        then the second job often won't show in the UI; The UI says its
+        running but its not possible to see a status bar on the running job.
+        See 
+        <ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=1024120&amp;group_id=73833&amp;atid=539099">[ 1024120 ] Lost crawl job after terminate running job with jobs pending</ulink>. For now, the workaround is to study the running job
+        by viewing the crawl job logs on disk (Oddly, the 3rd queued up job
+        will start to show in the UI again).
+        </para>
+    </sect3>
+    <sect3 id="oome_pending_jobs">
+        <title>Running more than one job in series throws OOME</title>
+        <para>OutOfMemoryExceptions are frequent when jobs are run in series.
+        <ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1055592&amp;group_id=73833&amp;atid=539099">[ 1055592 ]
+        terminated crawl still hogging memory, causing OOM</ulink>. 
+        For now, restart Heritrix between the running of jobs.
+        </para>
+    </sect3>
+    </sect2>
+        
+
+    <sect2 id="1_2_0_changes">
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="5">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+                <entry>Open Date</entry>
+                <entry>By</entry>
+              </row>
+            </thead>
+
+            <tbody>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1067095">1067095</ulink></entry><entry>Add</entry><entry>Hang in http fetcher when mid-fetch aborts</entry><entry>2004-11-15</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1066804">1066804</ulink></entry><entry>Add</entry><entry>Allow specification of heritrix_out.log filename</entry><entry>2004-11-15</entry><entry> stack-sf</entry></row>
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=903845">903845</ulink></entry><entry>Add</entry><entry>IP-based politeness</entry><entry>2004-10-28</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1054849">1054849</ulink></entry><entry>Add</entry><entry>Recover from crawl initialized with a recovery log</entry><entry>2004-10-26</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1054851">1054851</ulink></entry><entry>Add</entry><entry>Import gzipped or non-gzipped recovery log</entry><entry>2004-10-26</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1050378">1050378</ulink></entry><entry>Add</entry><entry>Add bdb alreadyseen option to hostsqueuesfrontier</entry><entry>2004-10-19</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=973881">973881</ulink></entry><entry>Add</entry><entry>Force generation of report files</entry><entry>2004-06-16</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1010883">1010883</ulink></entry><entry>Add</entry><entry>Scripts to generate end-of-job reports</entry><entry>2004-08-17</entry><entry>danavery</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=988277">988277</ulink></entry><entry>Add</entry><entry>[Need feedback] "Done with ARC file" event</entry><entry>2004-07-09</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1044977">1044977</ulink></entry><entry>Add</entry><entry>Logging of scope-rejected URIs</entry><entry>2004-10-11</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=902970">902970</ulink></entry><entry>Add</entry><entry>HTTPClient should use supplied IP / avoid DNS lookup</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=903093">903093</ulink></entry><entry>Add</entry><entry>Setting of Integer.MAX_VALUE is ugly</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=900004">900004</ulink></entry><entry>Add</entry><entry>canonicalization of URIs for alreadyIncluded testing</entry><entry>2004-02-18</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=941072">941072</ulink></entry><entry>Add</entry><entry>Allow operator-configured mid-HTTP-fetch filters</entry><entry>2004-04-23</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1037891">1037891</ulink></entry><entry>Add</entry><entry>Cmdline defaults in properties file</entry><entry>2004-09-30</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1037304">1037304</ulink></entry><entry>Add</entry><entry>Upgrade httpclient to 3.0.x</entry><entry>2004-09-29</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=994141">994141</ulink></entry><entry>Add</entry><entry>Update build to use maven 1.0</entry><entry>2004-07-19</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1002336">1002336</ulink></entry><entry>Add</entry><entry>Figure what profiler to use</entry><entry>2004-08-02</entry><entry>stack-sf</entry>
+</row>
+
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1064887">1064887</ulink></entry><entry>Fix</entry><entry>http and https prerequisites contention</entry><entry>2004-11-11</entry><entry>stack-sf</entry></row>
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1062604">1062604</ulink></entry><entry>Fix</entry><entry>Seed to SURT coversion issuesI</entry><entry>22004-11-08</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=11061795">11061795</ulink></entry><entry>Fix</entry><entry>ServerCache HashMaps access thread-safetyI</entry><entry>22004-11-06</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1060589">1060589</ulink></entry><entry>Fix</entry><entry>Can't open logs of old jobs post-restart in UII</entry><entry>22004-11-04</entry><entry>stack-sf</entry></row>
+
+
+
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058565">1058565</ulink></entry><entry>Fix</entry><entry>Non-default 'logs' location doesn't show in web UI</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058568">1058568</ulink></entry><entry>Fix</entry><entry>IMG 'lowsrc' may not be extracted</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1055854">1055854</ulink></entry><entry>Fix</entry><entry>completed crawls show as 'aborted by user'</entry><entry>2004-10-270</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1059237">1059237</ulink></entry><entry>Fix</entry><entry>MultiThreadedHttpConnectionManager https already connected</entry><entry>2004-11-020</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052578">1052578</ulink></entry><entry>Fix</entry><entry>recovery log of recovered crawl insufficient to recover</entry><entry>2004-10-220</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908690">908690</ulink></entry><entry>Fix</entry><entry>Some dates are GMT, others are not  *</entry><entry>2004-03-020</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=958096">958096</ulink></entry><entry>Fix</entry><entry>Flushing CrawlServers problematic   *</entry><entry>2004-05-210</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052570">1052570</ulink></entry><entry>Fix</entry><entry>Threads contend for scratch files (after kill/readFully/Gap)</entry><entry>2004-10-220</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1033701">1033701</ulink></entry><entry>Fix</entry><entry>incorrect number of total active threads    *</entry><entry>2004-09-230</entry><entry>gojomo</entry></row>
+
+
+
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1000840">1000840</ulink></entry><entry>Fix</entry><entry>diskincludedfrontier performance is awful</entry><entry>2004-07-30</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1043251">1043251</ulink></entry><entry>Fix</entry><entry>better/longer dns retries on lookup failure</entry><entry>2004-10-08</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1051072">1051072</ulink></entry><entry>Fix</entry><entry>ExtractorHTML takes forever on worst-case HTML</entry><entry>2004-10-20</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1051916">1051916</ulink></entry><entry>Fix</entry><entry>ExtractorJS takes forever on worst-case JS</entry><entry>2004-10-21</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1050238">1050238</ulink></entry><entry>Fix</entry><entry>jdk required (doc implies jre)</entry><entry>2004-10-19</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1038135">1038135</ulink></entry><entry>Fix</entry><entry>prerequisite hysteresis/robots ahead of dns</entry><entry>2004-09-30</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1015728">1015728</ulink></entry><entry>Fix</entry><entry>Crawl upper time/size bounds ignored</entry><entry>2004-08-24</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002356">1002356</ulink></entry><entry>Fix</entry><entry>timing issue on crawl-start &amp; run-time stat</entry><entry>2004-08-02</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002332">1002332</ulink></entry><entry>Fix</entry><entry>inactiveQueuesMemoryLoadTarget mechanism behaves poorly</entry><entry>2004-08-02</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1045016">1045016</ulink></entry><entry>Fix</entry><entry>DNS URIs don't get override settings</entry><entry>2004-10-11</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=998184">998184</ulink></entry><entry>Fix</entry><entry>Gzipped recover log corrupt at end; last &lt; 32K unrecoverable</entry><entry>2004-07-26</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=998272">998272</ulink></entry><entry>Fix</entry><entry>No crawl if host-queues-memory-capacity = 0</entry><entry>2004-07-26</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002335">1002335</ulink></entry><entry>Fix</entry><entry>frontier report unusable in big crawls; frontier info needed</entry><entry>2004-08-02</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=984390">984390</ulink></entry><entry>Fix</entry><entry>Build fails: "rws" mode and Mac OS X interact badly</entry><entry>2004-07-02</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1000929">1000929</ulink></entry><entry>Fix</entry><entry>fatal runtimeexceptions in frontier give no info in web UI</entry><entry>2004-07-30</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=964625">964625</ulink></entry><entry>Fix</entry><entry>seed parser *too* lenient</entry><entry>2004-06-01</entry><entry>johnerik</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=980051">980051</ulink></entry><entry>Fix</entry><entry>Auth unsupported logged to console</entry><entry>2004-06-25</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002146">1002146</ulink></entry><entry>Fix</entry><entry>bad queue keys: shouldn't be URIs; should be handled better</entry><entry>2004-08-02</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1046696">1046696</ulink></entry><entry>Fix</entry><entry>UURIFactory.validateEscaping() -> IllegalArgumentException</entry><entry>2004-10-13</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1045736">1045736</ulink></entry><entry>Fix</entry><entry>ARCReader crashes if zero-length gzip record</entry><entry>2004-10-12</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002144">1002144</ulink></entry><entry>Fix</entry><entry>[UURI] Catch bad-encoding earlier</entry><entry>2004-08-02</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1036680">1036680</ulink></entry><entry>Fix</entry><entry>PathDepthFilter innerAccepts SEVERE log: "Failed getPath..."</entry><entry>2004-09-28</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1045847">1045847</ulink></entry><entry>Fix</entry><entry>Unnecessary toString() in ExtractorHTML.processScriptCode()</entry><entry>2004-10-12</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1044527">1044527</ulink></entry><entry>Fix</entry><entry>Domain names in 'overrides' are not in alphabetical order</entry><entry>2004-10-11</entry><entry>kristinn_sig</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1012639">1012639</ulink></entry><entry>Fix</entry><entry>If CC timesout selftest, no build failed message</entry><entry>2004-08-19</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1012642">1012642</ulink></entry><entry>Fix</entry><entry>selftest hanging because no crawl stop event</entry><entry>2004-08-19</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=931565">931565</ulink></entry><entry>Fix</entry><entry>CrawlStateUpdater - NullPointerException</entry><entry>2004-04-08</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=973294">973294</ulink></entry><entry>Fix</entry><entry>NoSuchElementException in URI queues halts crawling</entry><entry>2004-06-15</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1033657">1033657</ulink></entry><entry>Fix</entry><entry>[UURI] >2047 AFTER escaping (Stops crawl)</entry><entry>2004-09-23</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010966">1010966</ulink></entry><entry>Fix</entry><entry>crawl.log has URIs with spaces in them</entry><entry>2004-08-17</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=963970">963970</ulink></entry><entry>Fix</entry><entry>unfetchable URI schemes should never be queued</entry><entry>2004-05-31</entry><entry>gojomo</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1031607">1031607</ulink></entry><entry>Fix</entry><entry>KeyedQueue server&lt;->key mismatch noted: pfbuser&lt;->mprsrv.agr</entry><entry>2004-09-20</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1031525">1031525</ulink></entry><entry>Fix</entry><entry>NPE reading override</entry><entry>2004-09-20</entry><entry>stack-sf</entry>
+</row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1031168">1031168</ulink></entry><entry>Fix</entry><entry>Wrong handling of date in ARCRecordMetaData</entry><entry>2004-09-20</entry><entry>johnerik</entry>
+</row>
+
+
+            
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="1_0_4">
+    <title>Release 1.0.4 - 2004-09-22</title>
+
+    <abstract>
+      <para>Bug fix.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="4">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+                <entry>Open Date</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010966">1010966</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>crawl.log has URIs with spaces in them</entry>
+
+                <entry>2004-08-17</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="1_0_2">
+    <title>Release 1.0.2 - 2004-09-14</title>
+
+    <abstract>
+      <para>Bug fixes.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1020770">1020770</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>old crawls stick around, consuming memory</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002319">1002319</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>Terminating paused crawl leaves zombie threads</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935146">935146</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>Excessive ARCWriterPool timeouts</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010859">1010859</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>Per host overrides not taking effect.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1014732">1014732</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>document size limit not working</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1012520">1012520</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>UURI.length() &gt; 2k</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010966">1010966</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>crawl.log has URIs with spaces in them stack-sf</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="1_0_0">
+    <title>Release 1.0.0 - 2004-08-06</title>
+
+    <abstract>
+      <para>Added new prefix ('SURT') scope and filter, compression of
+      recovery log, mass adding of URIs to running crawler, crawling via a
+      http proxy, adding of headers to request, improved out-of-the-box
+      defaults, hash of content to crawl log and to arcreader output, and many
+      bug fixes.</para>
+    </abstract>
+
+    <sect2 id="1_0_0_limitations">
+      <title>Known Limitations</title>
+
+      <sect3 id="upper_bounds">
+        <title>Crawl Size Upper Bounds</title>
+
+        <para>Heritrix 1.0.0 uses disk-based queues to hold any number of
+        pending URIs bounded only by available disk space, but still relies on
+        in-memory structures to efficiently track all discovered hosts and
+        previously-scheduled URIs. Crawls whose total scheduled URIs or
+        discovered hosts exhaust all available memory will trigger
+        out-of-memory errors, which freeze a crawl at the point of the
+        error.</para>
+
+        <para>With the default settings, and an assignment of a 256MB Java
+        heap to the Heritrix process, crawling which discovers up to 10 000
+        hosts, and schedules over 6 000 000 URIs, should be possible.
+        Discovery of higher numbers of URIs/hosts will likely trigger
+        out-of-memory problems unless a larger java heap was assigned at
+        startup.</para>
+
+        <para>Broad crawls -- those using the BroadScope or ranging over
+        domains with many subdomains -- can easily and quickly exceed these
+        parameters. Thus broad crawls in Heritrix 1.0.0 are not recommended,
+        except for experimental purposes.</para>
+
+        <para>Narrower crawls, restricted to specific hosts or domains a
+        limited number of subdomains, can run for a week or more, collecting
+        millions of resources. Larger heaps can allow crawls to run into the
+        tens of millions of collected URIS, and tens of thousands of
+        discovered hosts.</para>
+
+        <para>An experimental alternate Frontier, the DiskIncludedFrontier, is
+        also available via the 'Modules' crawl configuration tab. It uses a
+        capped amount of memory plus disk storage to remember any number of
+        scheduled URIs, but its performance is poor and it has not received
+        the same testing as our default Frontier. The memory cost of
+        additional discovered hosts continues to rise without limit when using
+        a DiskIncludedFrontier.</para>
+
+        <para>Future versions of Heritrix will include other frontier
+        implementations allowing larger and unbounded crawls with minimal
+        performance penalties.</para>
+      </sect3>
+
+      <sect3 id="958055">
+        <title><ulink
+        url="https://sourceforge.net/tracker/?func=detail&amp;aid=958055&amp;group_id=73833&amp;atid=539099">[
+        958055 ] Seed ConcurrentModificationException</ulink></title>
+
+        <para>Its possible to get ConcurrentModificationsException editing
+        options on a running crawl.</para>
+
+        <sect4>
+          <title>Workaround</title>
+
+          <para>Pause the crawl when making changes to crawl options.</para>
+        </sect4>
+      </sect3>
+
+      <sect3 id="984390">
+        <title><ulink
+        url="https://sourceforge.net/tracker/?func=detail&amp;aid=984390&amp;group_id=73833&amp;atid=539099">[
+        984390 ] Build fails: "rws" mode and Mac OS X interact
+        badly</ulink></title>
+
+        <para>On macintoshes and linux kernel version 2.6, heritrix fails to
+        build (unit tests fail).</para>
+
+        <sect4>
+          <title>Workaround</title>
+
+          <para>See issue, <ulink
+          url="https://sourceforge.net/tracker/?func=detail&amp;aid=984390&amp;group_id=73833&amp;atid=539099">[
+          984390 ] Build fails: "rws" mode and Mac OS X interact
+          badly</ulink>, for source code workaround edit.</para>
+        </sect4>
+      </sect3>
+
+      <sect3 id="955975">
+        <title><ulink
+        url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=955975&amp;group_id=73833&amp;atid=539099">[
+        955975 ] Build fails: JVM and kernel 2.6+ (Was 2 tests
+        fail...)</ulink></title>
+
+        <para>Heritrix fails to build on linux kernel 2.6.</para>
+
+        <sect4>
+          <title>Workaround</title>
+
+          <para>Build fails unless you use a JDK in advance of pedigree 1.5
+          beta 2 (It works with jdk1.5.0-rc). See <ulink
+          url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=955975&amp;group_id=73833&amp;atid=539099">[
+          955975 ] Build fails: JVM and kernel 2.6+ (Was 2 tests
+          fail...)</ulink> and <ulink url="#984390">above</ulink>.</para>
+        </sect4>
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=939679">939679</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Mass-add URIs to running crawl and force
+                reconsideration</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=986977">986977</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>SurtPrefix scope (and filter)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=989816">989816</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>Specification of default CharSequence charset</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=983001">983001</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>crawl.log entries all on one line</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=869584">869584</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>Hash content-bodies, show in logs (and future
+                ARCs)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=964581">964581</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>option to preference (quick-get) embeds</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=964493">964493</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>Compress recover.log</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=988106">988106</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>[UURI] 'http:///...' converted to 'http://...'</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=926143">926143</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>enable use through HTTP proxy</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=945922">945922</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>Allow adding (subtracting?) http headers</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=983109">983109</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>Improved out-of-the-box defaults</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=982909">982909</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>ARCWriter makes FAT gzip header</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=925734">925734</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>exponential backoff URI/host retries</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Total data "written" isn't necessarily written
+                (wording)</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>embeds within scope problem</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>NPE clearing alerts</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>arcmetadata repeated once for every domain
+                config</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>CCE deserializing diskqueue [Was:
+                IllegalArgumentExcepti...]</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>no docs for recovery-journal feature</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Pause/Terminate ignored on 2.6 kernel 1.5 JVM</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Investigate "Relative URI but no base"</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>User-Agent should be able to mimic Mozilla (as does
+                Google)</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>referral URL should be stored in recover.log</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>ToeThreads hung in FetchDNS after Pause</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>robots.txt lookup for different ports on same
+                host</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Empty log percentages displayed as NaN%</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>UURI doubly-encodes %XX sequences</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Single settings change causes two versions to be
+                created</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>New IA debian image is 2.6 (Was: Build fails: JVM and
+                ...)</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>NPE in PathDepthFilter</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>[investigate &amp; rule out] Thread report deadlock
+                risks</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>jetty susceptible to DoS attack</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>'ignore' robots does not ignore meta nofollow</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>URI Syntax Errors stop page parsing.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>NPE in ExtractorHTML/TextUtils.getMatcher()</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>ARCReader: Failed to find GZIP MAGIC</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>javascript embedded URLs</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>NoClassDefFoundError when starting a job</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Max number of deferrals hard-coded to 10.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Frontier report thread safety problems?</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>ARCReader hanging</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>log-browsing by regexp outofmemoryerror</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Deferred URLs due the DNS problem --
+                Heritrix(-50)-Deferred</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Assertion failures shouldn't be more fatal than Runtime
+                Exc.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>min-interval is superfluous; remove</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>crawl doesn't end when using valence &gt; 1</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>Giant (in # of files) state directory
+                problematic</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>robots-expiration units, default wrong</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>NoSuchElementException in URI queues halts
+                crawling</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>#anchor links not trimmed, and thus recrawled</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>arc's filedesc file name includes .gz</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>[denmark-workshop] Cookie mangling</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>HttpException: Unable to parse header</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>bogus ARC-header when no Content-type</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>paths when crawling without UI</entry>
+              </row>
+
+              <row>
+              <entry>-</entry><entry>Fix</entry>
+                <entry>domain scope leakage</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_10_0">
+    <title>Release 0.10.0 - 2004-06-046</title>
+
+    <abstract>
+      <para>Release for second heritrix workshop, Copenhagen 06/2004 (1.0.0
+      first release candidate). Added site-first prioritization, fixed link
+      extraction of multibyte URIs, added metadata to arcs as xml, changed arc
+      naming template, new user and developer manuals, added basic/digest auth
+      and http post/get login facility, and added help to UI. Bug
+      fixes.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896769">896769</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>job report: show 'active' hosts, show more size
+                totals</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896772">896772</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>"Site-first"/'frontline' prioritization</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=956614">956614</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>multiple open http connections per host needed</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896674">896674</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Add help to web UI</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=964931">964931</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>When a host last had a completed URI shown in crawl
+                report</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=958335">958335</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Encode multibyte URIs using page charset before
+                queuing</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=909246">909246</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>One src for site, help, and readme docs.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=936684">936684</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>identifying ARCs: unique names, header records</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=930667">930667</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Resetting arc file counter for every job.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=863318">863318</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>ARCs need better headers</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908507">908507</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Specify location of jobs dir</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=914301">914301</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Logging in (HTTP POST, Basic Auth, etc.)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=944066">944066</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Update dnsjava from 1.5 to 1.6.2 (Fix NPE)</entry>
+              </row>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=966168">966168</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>crawl.log entries without annotations end with a
+                space</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=966172">966172</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>An issue with arc names' date and serial number
+                alignment</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=957963">957963</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Output of warning message leads to
+                NullPointerExceptions</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=963965">963965</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Either UURI or ExtractHTML should strip whitespace
+                better</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=965267">965267</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Maximum documents not enforced</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=965308">965308</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPE in path depth filter</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=934549">934549</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>embed/speculative inclusion too loose</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=962899">962899</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>UnsupportedCharsetException handled awkwardly</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=962892">962892</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>UURI accepting/creating unUsable URIs (bad
+                hosts)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=860733">860733</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>CachingDiskLongFPSet UI availability</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=954130">954130</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Crawls slow till change a setting</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=961867">961867</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>zero link-hops should work</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=942627">942627</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>multiple robots.txt URLs in the "default"
+                frontier</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=957941">957941</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPE in ExtractorHTML#isHtmlExpectedHere</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=953718">953718</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Unwanted behavior with seed redirection</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=952636">952636</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Link extraction failing</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=863315">863315</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Memory issues: Frontier.snoozeQueue</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=903838">903838</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Transitive scope confusion, may not work as
+                expected</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=955345">955345</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Wrong stats after deleting URIs from Frontier</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=952276">952276</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NoSuchElementException in
+                admin/reports/frontier.jsp</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=952665">952665</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Alert: Authentication scheme(s) not supported</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=936702">936702</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>IP validity: units, TTL vs. setting</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=951582">951582</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ConcurrentModificationException in DomainScope focus
+                filter</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=949489">949489</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ConcurrentModificationException terminate job</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=949551">949551</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Authentication bug</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=948898">948898</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>terminate running crawl == NPE</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=927940">927940</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>java.net.URI parses %20 but getHost null</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=874220">874220</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPE in java.net.URI.encode</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=808270">808270</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>java.net.URI chokes on hosts_with_underscores</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=788277">788277</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Doing separate DNS lookup for same host</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=910120">910120</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>java.net.URI#getHost fails when leading digit</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=949548">949548</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Constraining java URI class</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=943373">943373</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Same CrawlServer instance for http &amp; https.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=887999">887999</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Broad crawl/ too many open files</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=926912">926912</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>multiple charset headers + long lines</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=926338">926338</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Corrupted blue image in progress bars</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=896757">896757</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPEs in Andy's Th-Fri Crawl + NPE in RIS</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=922080">922080</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>IllegalArgumentEx/ReplayCharSequenceFactory (offset vs.
+                size</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=935271">935271</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>FTP URIs in seeds interpreted as HTTP</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=945923">945923</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>maven rc2 won't make src distribution</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=947754">947754</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Corrupted arc files on termination of job</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=931269">931269</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>https exception: java.io.IOException: SSL
+                failure</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833amp;atid=539099amp;aid=935146">935146</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Excessive ARCWriterPool timeouts:</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_8_1">
+    <title>Release 0.10.0 - 2004-06-04</title>
+
+    <abstract>
+      <para>Fixes to build with maven rc2+.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=962361">962361</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>080 doesn't build with maven rc2+</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_8_0">
+    <title>Release 0.8.0 - 2004-05-18</title>
+
+    <abstract>
+      <para>Release (and branch heritrix-0_8 made at the heritrix-0_7_1 tag)
+      because of concurrentmodificationexceptions if tens of seeds supplied
+      and to fix domain-scope leakage. Also, made continuous build publically
+      available, incorporated integration selftest into build, made it a
+      maven-build only (ant-build no longer supported), added day/night
+      configurations (refinements), ameliorated too-many-open files, added
+      exploit of http-header content-type charset creating character streams,
+      and heritrix now crawls ssl sites. UI improvements include red start by
+      bad configuration, precompilation, and delineation of advanced settings.
+      Many bug fixes.</para>
+    </abstract>
+
+    <sect2>
+      <title>Synopsis</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=939032">939032</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>integrate selftest into cruisecontrol build</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903078">903078</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>On reedit, red star by bad attribute setting.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935215">935215</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>day/night configurations</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=928745">928745</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>UI should only write changed config</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908723">908723</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>record of settings changes should be kept</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=909249">909249</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Only one build, not two</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=925614">925614</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>maven-only build rather than ant &amp; maven</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=877295">877295</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>ARCWriter should use a pool of open files -- if it
+                helps</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=899226">899226</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>Precompile UI pages</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896798">896798</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>UI should be split into common/uncommon
+                settings</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=895341">895341</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>UI web pages need to be more responsive</entry>
+              </row>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=955527">955527</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>domain scope leakage</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=943770">943770</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ConcurrentModificationExceptions</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=943768">943768</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Too many open files</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=943781">943781</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ConcurrentModificationExceptions</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=943453">943453</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>empty seeds-report.txt</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903092">903092</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Doc. assumes bash. Allow tcsh/csh</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908419">908419</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>script heritrix.sh goes into infinite loop</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=922104">922104</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>heritrix.sh launch file path weirdness</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935122">935122</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ToeThreads hung in ExtractorHTML after Pause</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=938591">938591</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>IllegalCharsetNameException: Windows-1256</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=934642">934642</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>No doc-files/package.html in javadoc.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=815544">815544</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>embed-count sensitivity WRT redirects,
+                preconditions</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=936610">936610</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Refinement limits are not always saved</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935340">935340</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPE exception in getMBeanInfo(settings)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=904767">904767</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Untried CrawlURIs should have clear status code</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=914287">914287</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>Thread underutilization in broad crawls</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=930736">930736</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>KeyedQueue showing EMPTY status, but the length is
+                1.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=934585">934585</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPE in XMLSettingsHandler.recursiveFindFiles()</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935352">935352</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Failed DNS does not have intended impact</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896764">896764</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ftp URIs are retried</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=848661">848661</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Refetching of robots and/or DNS broken</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=935221">935221</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>NPE switching to 'expert' settings in HEAD</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896779">896779</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>rss extractor</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896775">896775</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>JS extractor clueless on relative URIs</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=913214">913214</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>converting URI's '\' into '/' character</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=928665">928665</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>When going back to overrides, directory is gone</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=923342">923342</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>shutdown.jsp unable to compile</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=913876">913876</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ARCWriterPool timeouts -- legitimate?</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896766">896766</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>If one URI connect-fails, hold queue, too</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908719">908719</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Fetching simple URLs fails with S_CONNECT_FAILED (-2)
+                error</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=809567">809567</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>seeds held back/poor breadth first?</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=831480">831480</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Parsing links found between escaped quotes in
+                JavaScript</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=895303">895303</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Does not extract applet URI correctky</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=791481">791481</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>links to likely-embed types should be treated as
+                embeds</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=900826">900826</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Frontier.next() forceFetches will cause assertion
+                error</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=877873">877873</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Flash link extractor causes OutOfMemory
+                exceptions.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=899976">899976</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Should be possible to resume from</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896878">896878</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Heritrix ignores charset</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=910210">910210</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Max # of arcs not being respected.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=904723">904723</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>New profile should ensure unique name</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=902940">902940</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>When changing scope common scope settings are
+                lost</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903910">903910</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ssl doesn't work</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903084">903084</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Allow that people use tcsh/csh not just bash</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896788">896788</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>https SSLHandshakeException: unknown
+                certificate</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=901397">901397</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Cannot override settings that isn't set in
+                globals</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=892253">892253</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>'Waiting for pause' even after all threads done</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896800">896800</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>filter 'invert', filter names need work</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896835">896835</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>max-link-hops (etc.) ignored unless</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=872069">872069</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>order.xml absolute paths</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=892105">892105</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Cannot set TransclusionFilter attributes</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=874057">874057</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Link puts garbage into arc file:
+                http://www.msn.com/robots.t</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_6_0">
+    <title>Release 0.6.0 - 2004-03-25</title>
+
+    <abstract>
+      <para>Release made in advance of radical frontier changes. Added
+      bandwidth throttle, operator 'diary', settable robots expiration,
+      crawler cookie pre-population, and changing of certain options
+      mid-crawl. Many UI improvements including UI display of critical
+      exceptions, UI desccription of job-order options, and improved
+      reporting. Optimizations. Updated httpclient lib to 2.0 release and jmx
+      libs to 1.2.1. Lots of bug fixes.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=861861">861861</ulink></entry>
+
+                <entry>Add</entry>
+                <entry>861861 Redirects(/refreshes) from seeds should == new
+                seeds</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=899223">899223</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>899223 Special seed-success report should be
+                offered</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=891986">891986</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>891986 Bandwidth throttle function, setting.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=877275">877275</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>877275 integrated operator 'diary' needed</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=891983">891983</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>891983 IP, Robots expirations should be
+                settable</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=910152">910152</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>910152 Recovery of old jobs on WUI (re)start</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=781171">781171</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>781171 parsing css</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=912986">912986</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>912986 log views should give an idea of file size
+                (where possible)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=912989">912989</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>912989 Alerts should have 'select all'
+                button...</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=856593">856593</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>856593 [load][save][turn on/off] cookies</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=912201">912201</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>912201 Add levels to alerts</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896665">896665</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896665 Split processor chains.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896754">896754</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896754 Show total of disregards</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903095">903095</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>903095 Show increments of megabytes in ui</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896794">896794</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896794 serious errors (eg outofmemory) should show up
+                in UI</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=900520">900520</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>900520 Short description of ComplexTypes in user
+                interface.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=899982">899982</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>899982 Should be possible to alter filters while
+                crawling.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896672">896672</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896672 Display progress (doc/sec) with more
+                precision</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896677">896677</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896677 Highlight the success or failures of each
+                seed</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896760">896760</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896760 Prominent notification when seeds have
+                problems</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896801">896801</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896801 java regexps (in log view) need help
+                text</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896778">896778</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896778 Log viewing enhancements:</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896795">896795</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>896795 frontier, thread report improvements</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=876516">876516</ulink></entry>
+                <entry>Add</entry>
+
+                <entry>876516 default launch should nohup, save
+                stdout/stderr</entry>
+              </row>
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896763">896763</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>127.0.0.1 in job report</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896767">896767</ulink></entry>
+
+                <entry>Fix</entry>
+                <entry>Frontier retry-delay should include units (eg
+                -seconds)</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=898994">898994</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Revisiting admin URIs if not logged in should prompt
+                login</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=899019">899019</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Deadlock in Andy's 2nd Crawl</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=767225">767225</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Better bad-config handling</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=815357">815357</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>mysterious pause facing network (DNS) problem</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896747">896747</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>ExtractorJS's report overstates it's discovered
+                URIs</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896667">896667</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Web UI does not display correctly in IE</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896780">896780</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>console clarity/safety</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896655">896655</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>Does not respect per settings added after crawl was
+                started.</entry>
+              </row>
+
+              <row>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=856555">856555</ulink></entry>
+                <entry>Fix</entry>
+
+                <entry>'empty' records in compressed arc files</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_4_1">
+    <title>Release 0.4.1 - 2004-06-04</title>
+
+    <abstract>
+      <para>Memory retention fix.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Changes</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+              <entry>-</entry>
+              <entry>Fix</entry>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=895955&amp;group_id=73833&amp;atid=539099">895955
+                </ulink>URIRegExpFilter retains memory</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_4_0">
+    <title>Release 0.4.0 - 2004-02-10</title>
+
+    <abstract>
+      <para>Release made for heritrix workshop, San Francisco, 02/2004. New
+      MBEAN-based configuration, extensive UI revamp, first unit tests and
+      integration selftest framework added, pooling of ARCWriters, new
+      cmd-line start scripts, httpclient lib update (2.0RC3) and
+      bugfixes.</para>
+    </abstract>
+
+    <sect2>
+      <title>Changes</title>
+
+      <para><table>
+          <title>Feature</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+              <entry>ID</entry>
+              <entry>Type</entry>
+                <entry>Summary</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>New MBEAN-based configuration system. Reads and writes
+                XML to validate against heritrix_settings.xsd.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>UI extensively revamped. Exploits new configuration
+                system.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>60-odd unit tests added.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>Integration selftest framework.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>Added pooling of ARCWriters.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>Start script backgrounds heritrix and redirects
+                stdout/stderr to</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=876516">876516</ulink>
+                Default launch should nohup, save stdout/stderr</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>Web UI accesses are loggged to heritrix_out.log
+                also.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry>Updated httpclient to version 2.0RC3.</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=763517">763517</ulink>
+                IAGZIPOutputStream NPE under IBM JVM</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=809018">809018</ulink>
+                Cleaner versioned testing build needed</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=872729">872729</ulink>
+                Cmd-line options for setting web ui username/password</entry>
+              </row>
+
+              <row>
+              <entry>-</entry>
+              <entry>Add</entry>
+                <entry><ulink
+                url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=863317">863317</ulink>
+                Universal single-pass extractor</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="0_2_0">
+    <title>Release 0.2.0 - 2004-01-05</title>
+
+    <abstract>
+      <para>First 'official' release.</para>
+    </abstract>
+  </sect1>
+
+  <sect1 id="0_1_0">
+    <title>Release 0.1.0 - 2003-12-31</title>
+
+    <abstract>
+      <para>Initial Mavenized development version number (CVS/internal only).
+      Added everything to new project layout.</para>
+    </abstract>
+  </sect1>
+</article>
