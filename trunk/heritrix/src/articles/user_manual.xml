@@ -1205,7 +1205,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           <para>This equates to the canonical root URI of RFC2617;
           effectively, in our case, its the CrawlServer name or <ulink
           url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
-          authority</ulink> (domain plus port if other than port 80).</para>
+          authority</ulink> (domain plus port if other than port 80).
+          Examples of credential-domain would be: 'www.archive.org' or
+          'www.archive.org:8080', etc.</para>
         </sect4>
 
         <sect4 id="realm">
