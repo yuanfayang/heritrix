@@ -51,8 +51,9 @@ public class UURI {
 	 * This is NOT the same as Alexa's canonicalization.
 	 * 
 	 * Normalization cleans a URI to the maximum extent
-	 * possible without regard to what it returns or 
-	 * special-casing based on past observed behavior.
+	 * possible without regard to what it would return
+	 * if fetched, or any special-casing based on past 
+	 * observed behavior.
 	 * 
 	 * For example, the URI scheme is case-flattened, 
 	 * hostnames are case-flattened, default ports are
