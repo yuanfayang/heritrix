@@ -26,7 +26,6 @@ package org.archive.crawler.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -68,7 +67,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     // protected transient FPGenerator fpgen64 = FPGenerator.std64;
     protected transient FPGenerator fpgen40 = FPGenerator.std40;
     protected transient FPGenerator fpgen24 = FPGenerator.std24;
-    protected Environment environment = null;
+    protected boolean createdEnvironment = false;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
     protected Database alreadySeen = null;
@@ -134,6 +133,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
             envConfig.setCachePercent(cacheSizePercentage);
         }
         try {
+            createdEnvironment = true;
             initialize(new Environment(bdbEnv, envConfig));
         } catch (DatabaseException e) {
             throw new IOException(e.getMessage());
@@ -142,51 +142,52 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     
     /**
      * Method shared by constructors.
+     * @param env Environment to use.
      * @throws DatabaseException
-     * @throws UnsupportedEncodingException
      */
-    protected void initialize(Environment environment)
+    protected void initialize(Environment env)
     throws DatabaseException {
-        this.environment = environment;
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        this.alreadySeen = this.environment.openDatabase(null, 
+        this.alreadySeen = env.openDatabase(null, 
             DB_NAME, dbConfig);
         this.value = new DatabaseEntry("".getBytes());
     }
     
     public synchronized void close() {
+        Environment env = null;
         if (this.alreadySeen != null) {
         	try {
+                env = this.alreadySeen.getEnvironment();
 				this.alreadySeen.close();
 			} catch (DatabaseException e) {
 				logger.severe(e.getMessage());
 			}
             this.alreadySeen = null;
         }
-    	if (this.environment != null) {
+    	if (env != null && createdEnvironment) {
             try {
 				// This sync flushes whats in RAM.  Its expensive operation.
 				// Without, data can be lost.  Not for transactional operation.
 				// TODO: This close needs to be inside a finally so that if 
 				// we pop out, already seen gets flushed.
-				this.environment.sync();
-                this.environment.close();
+				env.sync();
+                env.close();
 			} catch (DatabaseException e) {
 				logger.severe(e.getMessage());
 			}
-            this.environment = null;
         }
     }
     
     public synchronized long getCacheMisses() throws DatabaseException {
-        long cacheMiss = this.environment.getStats(null).getNCacheMiss();
+        long cacheMiss = this.alreadySeen.getEnvironment().
+            getStats(null).getNCacheMiss();
         this.lastCacheMissDiff = cacheMiss - this.lastCacheMiss;
         this.lastCacheMiss = cacheMiss;
         return this.lastCacheMiss;
     }
     
-    public long getLastCacheMissDiff() throws DatabaseException {
+    public long getLastCacheMissDiff() {
         return this.lastCacheMissDiff;
     }
     
