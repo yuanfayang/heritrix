@@ -34,12 +34,14 @@
         journal</a>
         
         <li>View:<br> 
-        &raquo; <a href="<%=request.getContextPath()%>/reports/crawljob.jsp">
-            crawl report</a>&nbsp;&nbsp;&nbsp;
-        &raquo; <a href="<%=request.getContextPath()%>/reports/seeds.jsp">
-            seeds report</a>&nbsp;&nbsp;&nbsp;
-        &raquo; <a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">
+        <ul>
+        <li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp">
+            crawl report</a></li>
+        <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp">
+            seeds report</a></li>
+        <li><a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>"></li>
             crawl order (raw xml)</a>
+        </ul>
     </ul>
 <% } %>
 
