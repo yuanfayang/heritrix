@@ -321,8 +321,6 @@ public abstract class SettingsHandler {
      * 
      * @param scope the host or domain to get the settings for.
      * @param refinement the refinement reference to get.
-     * @return settings object for the host/domain or null if no
-     *         settings exist for the host/domain.
      * @return CrawlerSettings object for a host/domain and a particular
      * refinement or null if no settings exist for the host/domain.
      */
