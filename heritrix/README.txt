@@ -1,9 +1,11 @@
-Archive Open Crawler README.txt
+Archive Open Crawler (Heritrix) README.txt
 
 This document is a work in progress.  Hopefully it should be enough to get you
 at least up and running, but if you run into major confusions please bring them
 to the mailing list so we can what types of issues users are facing and either
 address them in the code or here in the documentation.
+
+For more on the Archive Open Crawler (Heritrix), see crawler.archive.org.
 
 Table of Contents
 
@@ -27,6 +29,8 @@ III.  Configuration Files
 IV. Crawling
    a. The Graphical User Interface
    b. The Command Line Interface
+
+V.  License
  
    
 I. Before You Begin
@@ -230,3 +234,20 @@ b.  Command Line Interface
 
 If you have an aversion to GUIs there's also a shell script called
 startcrawl.[sh,bat] that may be used to start a crawl.  
+
+
+V. License
+
+Heritrix is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser Public License as published by
+the Free Software Foundation; either version 2.1 of the License, or
+any later version.
+ 
+Heritrix is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser Public License for more details.
+
+You should have received a copy of the GNU Lesser Public License
+along with Heritrix (See LICENSE.txt); if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
