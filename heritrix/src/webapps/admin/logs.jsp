@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
+<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader,java.io.File" %>
 
 <%
     /* Various settings with default values (where applicable) */
@@ -20,8 +20,7 @@
         
     /* Which log to display */
     String fileName = request.getParameter("log");
-    if(fileName == null || fileName.length() <= 0)
-    {
+    if(fileName == null || fileName.length() <= 0) {
         fileName = "crawl.log";
     }
     
@@ -49,11 +48,18 @@
         }
     }
     
-    if(theJob != null)
-    {
+    if(theJob != null) {
         settingsHandler = theJob.getSettingsHandler();
-        String logsPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_LOGS_PATH);
-        String diskPath = settingsHandler.getPathRelativeToWorkingDirectory(logsPath).getAbsolutePath()+"/";
+        String logsPath = (String)settingsHandler.getOrder().
+            getAttribute(CrawlOrder.ATTR_LOGS_PATH);
+        File f = new File(logsPath);
+        if (f.isAbsolute()) {
+            fileName = (new File(f, fileName)).getAbsolutePath(); 
+        } else {
+            f = settingsHandler.getOrder().getController().
+                getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+            fileName = (new File(f, fileName)).getAbsolutePath();
+        }
 
         // Got a valid crawl order, find it's logs
         if(mode != null && mode.equalsIgnoreCase("number"))
@@ -66,7 +72,7 @@
             }
             catch(Exception e){/*Ignore*/}
           
-            log = LogReader.getFromSeries(diskPath + fileName,linenumber,linesToShow);
+            log = LogReader.getFromSeries(fileName, linenumber, linesToShow);
         }
         else if(mode != null && mode.equalsIgnoreCase("time"))
         {
@@ -80,8 +86,11 @@
             }    
             else
             {
-                int timestampLinenumber = LogReader.findFirstLineContainingFromSeries(diskPath+fileName,timestamp+".*");
-                log = LogReader.getFromSeries(diskPath + fileName,timestampLinenumber,linesToShow);
+                int timestampLinenumber = LogReader.
+                    findFirstLineContainingFromSeries(fileName,
+                        timestamp + ".*");
+                log = LogReader.getFromSeries(fileName, 
+                        timestampLinenumber, linesToShow);
             }
         }
         else if(mode != null && mode.equalsIgnoreCase("regexpr"))
@@ -111,11 +120,13 @@
                 
                 if(indent)
                 {
-                    log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, " ", ln,linesToSkip-1,linesToShow);
+                    log = LogReader.getByRegExprFromSeries(fileName, 
+                        regexpr, " ", ln,linesToSkip-1,linesToShow);
                 }
                 else
                 {
-                    log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, 0, ln,linesToSkip-1,linesToShow);
+                    log = LogReader.getByRegExprFromSeries(fileName, regexpr,
+                            0, ln,linesToSkip-1,linesToShow);
                 }
             }
         }
@@ -130,7 +141,7 @@
             }
             catch(Exception e){/* Ignore - default value will do */}
             
-            log = LogReader.tail(diskPath + fileName,linesToShow);
+            log = LogReader.tail(fileName, linesToShow);
         }
     } 
     else 
