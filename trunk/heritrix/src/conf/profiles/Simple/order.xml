@@ -50,8 +50,8 @@
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
         <boolean name="enabled">true</boolean>
         <integer name="max-speculative-hops">1</integer>
-        <integer name="max-referral-hops">2147483647</integer>
-        <integer name="max-embed-hops">2147483647</integer>
+        <integer name="max-referral-hops">0</integer>
+        <integer name="max-embed-hops">0</integer>
       </newObject>
     </newObject>
     <map name="http-headers">
@@ -120,7 +120,7 @@
         </map>
         <integer name="timeout-seconds">1200</integer>
         <integer name="sotimeout-ms">20000</integer>
-        <long name="max-length-bytes">9223372036854775807</long>
+        <long name="max-length-bytes" >0</long>
         <string name="load-cookies-from-file"/>
         <string name="save-cookies-to-file"/>
         <string name="trust-level">open</string>

@@ -127,7 +127,7 @@ public class FetchHTTP extends Processor
     
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
-    private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
+    private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(0);
 
     /**
      * Default character encoding to use for pages that do not specify.
@@ -190,7 +190,8 @@ public class FetchHTTP extends Processor
                 DEFAULT_SOTIMEOUT_MS));
         e.setExpertSetting(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
-            "Max length in bytes to fetch (truncate at this length)",
+            "Maximum length in bytes to fetch.\n" +
+            "Fetch is truncated at this length. A value of 0 means no limit.",
             DEFAULT_MAX_LENGTH_BYTES));
         e = addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
