@@ -8,6 +8,7 @@ import java.util.Vector;
 import java.util.Enumeration;
 import java.util.logging.Logger;
 
+import org.archive.crawler.basic.Frontier;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJob;
@@ -127,6 +128,23 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		if(shouldcrawl)
 		{
 			startNextJob();		
+		}
+	}
+	
+	/**
+	 * Returns the Frontier report..
+	 * 
+	 * @return A report of the frontiers status.
+	 */
+	public String getFrontierReport()
+	{
+		if(controller == null || controller.getFrontier() == null)
+		{
+			return "Crawler not running";
+		}
+		else
+		{
+			return ((Frontier)controller.getFrontier()).report();
 		}
 	}
 	
