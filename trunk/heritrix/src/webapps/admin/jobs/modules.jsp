@@ -200,7 +200,7 @@
 <p>
 	<b>Select Processors</b>
 <p>
-<table>
+<table cellspacing="0" cellpadding="2">
 <%
 	Vector unusedProcessors = new Vector();
 	ComplexType procs = ((ComplexType)settingsHandler.getOrder().getAttribute("processors"));
@@ -208,11 +208,16 @@
 	MBeanAttributeInfo p[] = procInfo.getAttributes();
 	
 	// Printout used proc.
+	boolean alt = false;
 	for(int n=0; n<p.length; n++) {
         Object currentAttribute = null;
 		ModuleAttributeInfo att = (ModuleAttributeInfo)p[n]; //The attributes of the current attribute.
 
-		out.println("<tr><td>&nbsp;"+att.getType()+"</td>");
+		out.println("<tr");
+		if(alt){
+			out.println(" bgcolor='#EEEEFF'");
+		}
+		out.println("><td>&nbsp;"+att.getType()+"</td>");
 		if(n!=0){
 			out.println("<td><a href=\"javascript:doMoveUpProcessor('"+att.getName()+"')\">Move up</a></td>");
 		} else {
@@ -225,6 +230,7 @@
 		}
 		out.println("<td><a href=\"javascript:doRemoveProcessor('"+att.getName()+"')\">Remove</a></td>");
 		out.println("</tr>");
+		alt = !alt;
 	}
 
 	// Find out which aren't being used.

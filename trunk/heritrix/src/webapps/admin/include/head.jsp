@@ -84,7 +84,7 @@
 										}
 										else
 										{
-											out.println("No job ready for crawling");
+											out.println("No job ready for crawling <a href='/admin/jobs/new.jsp' style='color: #000000'>(create new)</a>");
 										}
 									}
 								%>
@@ -92,7 +92,12 @@
 						</tr>
 						<tr>
 							<td>
-								<%=handler.getPendingJobs().size()%> jobs <a style="color: #000000" href="/admin/jobs/pending.jsp">pending</a>, <%=handler.getCompletedJobs().size()%> <a style="color: #000000" href="/admin/jobs/completed.jsp">completed</a>&nbsp;&nbsp;
+								<%=handler.getPendingJobs().size()%>
+								jobs
+								<a style="color: #000000" href="/admin/jobs/pending.jsp">pending</a>,
+								<%=handler.getCompletedJobs().size()%>
+								<a style="color: #000000" href="/admin/jobs/completed.jsp">completed</a>
+								&nbsp;
 							</td>
 							<td>
 								<% if(handler.isCrawling()){ %>
@@ -119,7 +124,6 @@
 							</td>
 						</tr>
 					</table>
-					<!--iframe name="frmHeadStatus" src="/admin/iframes/headstatus.jsp" width="100%" height="60" frameborder="0" ></iframe-->
 				</td>
 			</tr>
 			<tr>
