@@ -568,15 +568,15 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (data == null) {
             ComplexType parent = getParent();
             if (parent == null) {
-                settings.addTopLevelModule((CrawlerModule) this);
+                settings.addTopLevelModule((ModuleType) this);
             } else {
                 DataContainer parentData =
                     settings.getData(parent);
                 if (parentData == null) {
-                    if (this instanceof CrawlerModule) {
-                        settings.addTopLevelModule((CrawlerModule) this);
+                    if (this instanceof ModuleType) {
+                        settings.addTopLevelModule((ModuleType) this);
                     } else {
-                        settings.addTopLevelModule((CrawlerModule) parent);
+                        settings.addTopLevelModule((ModuleType) parent);
                         try {
                             parent.setAttribute(settings, this);
                         } catch (AttributeNotFoundException e) {
@@ -596,7 +596,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
         // Make sure that the DataContainer references right type
         if (data.getComplexType() != this) {
-            if (this instanceof CrawlerModule) {
+            if (this instanceof ModuleType) {
                 data = settings.addComplexType(this);
             }
         }

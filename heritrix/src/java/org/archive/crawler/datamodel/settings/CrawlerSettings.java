@@ -48,13 +48,13 @@ public class CrawlerSettings {
      *  indexed on absolute name */
     private final Map localComplexTypes = new HashMap();
 
-    /** Registry of top level CrawlerModules in this settings object indexed on
+    /** Registry of top level ModuleTypes in this settings object indexed on
      * module name. These are modules that doesn't have parents in this
      * settings object
      */
     private final Map topLevelModules = new HashMap();
 
-    /** Registry of all CrawlerModules in this settings object indexed on
+    /** Registry of all ModuleTypes in this settings object indexed on
      * module name.
      */
     private final Map localModules = new HashMap();
@@ -127,7 +127,7 @@ public class CrawlerSettings {
         name = string;
     }
 
-    protected void addTopLevelModule(CrawlerModule module) {
+    protected void addTopLevelModule(ModuleType module) {
 //        if (topLevelModules.containsKey(module.getName())) {
 //            throw new IllegalArgumentException(
 //                "Duplicate module name: " + module.getName());
@@ -139,7 +139,7 @@ public class CrawlerSettings {
     protected DataContainer addComplexType(ComplexType type) {
         DataContainer data = new DataContainer(this, type);
         localComplexTypes.put(type.getAbsoluteName(), data);
-        if (type instanceof CrawlerModule) {
+        if (type instanceof ModuleType) {
             localModules.put(type.getName(), type);
         }
         return data;
@@ -153,12 +153,12 @@ public class CrawlerSettings {
         return (DataContainer) localComplexTypes.get(absoluteName);
     }
 
-    protected CrawlerModule getTopLevelModule(String name) {
-        return (CrawlerModule) topLevelModules.get(name);
+    protected ModuleType getTopLevelModule(String name) {
+        return (ModuleType) topLevelModules.get(name);
     }
 
-    public CrawlerModule getModule(String name) {
-        return (CrawlerModule) localModules.get(name);
+    public ModuleType getModule(String name) {
+        return (ModuleType) localModules.get(name);
     }
 
     protected Iterator topLevelModules() {

@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -50,7 +50,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker extends CrawlerModule 
+public abstract class AbstractTracker extends ModuleType 
                                    implements StatisticsTracking,
                                               CrawlStatusListener{
     public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(20);

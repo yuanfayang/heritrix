@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -51,7 +51,7 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * 
  * @see org.archive.crawler.framework.ToeThread
  */
-public class Processor extends CrawlerModule {
+public class Processor extends ModuleType {
     /**
      * Key to use asking settings for filters value.
      */

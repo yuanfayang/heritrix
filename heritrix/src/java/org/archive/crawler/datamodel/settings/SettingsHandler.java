@@ -82,7 +82,7 @@ public abstract class SettingsHandler {
             { BOOLEAN, "java.lang.Boolean"},
             { STRING, "java.lang.String"},
             { TEXT, "org.archive.crawler.datamodel.settings.TextField"},
-            { OBJECT, "org.archive.crawler.datamodel.settings.CrawlerModule"},
+            { OBJECT, "org.archive.crawler.datamodel.settings.ModuleType"},
             { TIMESTAMP, "java.util.Date"},
             { MAP, "org.archive.crawler.datamodel.settings.MapType"},
             { INTEGER_LIST,
@@ -139,8 +139,8 @@ public abstract class SettingsHandler {
      * @param name the modules name.
      * @return the module the name references.
      */
-    public CrawlerModule getModule(String name) {
-        return (CrawlerModule) globalSettings.getModule(name);
+    public ModuleType getModule(String name) {
+        return (ModuleType) globalSettings.getModule(name);
     }
 
     /** Get a complex type by its absolute name.
@@ -375,7 +375,7 @@ public abstract class SettingsHandler {
         return order;
     }
 
-    /** Instatiate a new CrawlerModule given its name and className.
+    /** Instatiate a new ModuleType given its name and className.
      *
      * @param name the name for the new ComplexType.
      * @param className the class name of the new ComplexType.
@@ -383,7 +383,7 @@ public abstract class SettingsHandler {
      *
      * @throws InvocationTargetException
      */
-    public static CrawlerModule instantiateCrawlerModuleFromClassName(
+    public static ModuleType instantiateModuleTypeFromClassName(
             String name, String className)
             throws InvocationTargetException {
 
@@ -394,11 +394,11 @@ public abstract class SettingsHandler {
             throw new InvocationTargetException(e);
         }
 
-        CrawlerModule module;
+        ModuleType module;
         try {
             Constructor co =
                 cl.getConstructor(new Class[] { String.class });
-            module = (CrawlerModule) co.newInstance(new Object[] { name });
+            module = (ModuleType) co.newInstance(new Object[] { name });
         } catch (IllegalArgumentException e) {
             throw new InvocationTargetException(e);
         } catch (InstantiationException e) {

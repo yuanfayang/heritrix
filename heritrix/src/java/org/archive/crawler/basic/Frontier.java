@@ -47,7 +47,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
-import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -84,7 +84,7 @@ import org.archive.util.QueueItemMatcher;
  * @author Gordon Mohr
  */
 public class Frontier
-    extends CrawlerModule
+    extends ModuleType
     implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlStatusListener {
 
     private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;

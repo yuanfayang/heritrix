@@ -252,7 +252,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private class ModuleHandler extends ElementHandler {
         public void startElement(String name, Attributes atts)
             throws SAXException {
-            CrawlerModule module;
+            ModuleType module;
             if (name.equals(XMLSettingsHandler.XML_ELEMENT_CONTROLLER)) {
                 module = settingsHandler.getOrder();
             } else {
@@ -276,8 +276,8 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             String moduleClass =
                 atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_CLASS);
             try {
-                CrawlerModule module =
-                    SettingsHandler.instantiateCrawlerModuleFromClassName(
+                ModuleType module =
+                    SettingsHandler.instantiateModuleTypeFromClassName(
                         moduleName, moduleClass);
                 try {
                     parentModule.setAttribute(settings, module);

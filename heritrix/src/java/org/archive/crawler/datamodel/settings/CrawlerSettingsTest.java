@@ -54,13 +54,13 @@ public class CrawlerSettingsTest extends SettingsFrameworkTestCase {
     }
 
     final public void testAddComplexType() {
-        CrawlerModule mod = new CrawlerModule("name");
+        ModuleType mod = new ModuleType("name");
         DataContainer data = getGlobalSettings().addComplexType(mod);
         assertNotNull(data);
     }
 
     final public void testGetModule() {
-        CrawlerModule mod = new CrawlerModule("name");
+        ModuleType mod = new ModuleType("name");
         DataContainer data = getGlobalSettings().addComplexType(mod);
         assertSame(mod, getGlobalSettings().getModule("name"));
     }
