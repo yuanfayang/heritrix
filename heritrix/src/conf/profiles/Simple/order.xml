@@ -10,8 +10,11 @@
   </meta>
   <controller>
     <string name="settings-directory">settings</string>
-    <string name="disk-path" />
+    <string name="disk-path"></string>
     <string name="scratch-path">scratch</string>
+    <string name="state-path">state</string>
+    <string name="logs-path">logs</string>
+    <string name="checkpoints-path">checkpoints</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>
     <long name="max-time-sec">0</long>
