@@ -220,7 +220,20 @@ public class DataContainer extends HashMap {
      * @return true if attribute was moved, false if attribute was already
      *              at the top.
      */
-    protected boolean moveElementUp(String key) {
+    protected boolean moveElementUp(String key) throws AttributeNotFoundException {
+        MBeanAttributeInfo element = getAttributeInfo(key);
+        if (element == null) {
+            throw new AttributeNotFoundException(key);
+        }
+
+        int prevIndex = attributes.indexOf(element);
+        if (prevIndex == 0) {
+            return false;
+        }
+        
+        attributes.remove(prevIndex);
+        attributes.add(prevIndex-1, element);
+        
         return true;
     }
     
@@ -230,7 +243,20 @@ public class DataContainer extends HashMap {
      * @return true if attribute was moved, false if attribute was already
      *              at bottom.
      */
-    protected boolean moveElementDown(String key) {
+    protected boolean moveElementDown(String key) throws AttributeNotFoundException {
+        MBeanAttributeInfo element = getAttributeInfo(key);
+        if (element == null) {
+            throw new AttributeNotFoundException(key);
+        }
+
+        int prevIndex = attributes.indexOf(element);
+        if (prevIndex == attributes.size()-1) {
+            return false;
+        }
+        
+        attributes.remove(prevIndex);
+        attributes.add(prevIndex+1, element);
+        
         return true;
     }
 }
