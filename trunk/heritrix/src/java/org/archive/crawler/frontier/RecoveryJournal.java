@@ -81,11 +81,11 @@ public class RecoveryJournal {
     }
 
     /**
-     * Note that a CrawlURI was added (scheduled) to the Frontier
+     * Note that a CrawlURI was added (scheduled) to the Frontier.
      * 
      * @param curi
      */
-    public void added(CrawlURI curi) {
+    public synchronized void added(CrawlURI curi) {
         write("\n" + F_ADD + curi.getURIString() + " " 
                  + curi.getPathFromSeed() + " " + curi.flattenVia());
     }
