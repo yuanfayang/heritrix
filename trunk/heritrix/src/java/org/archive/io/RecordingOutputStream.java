@@ -353,15 +353,27 @@ public class RecordingOutputStream extends OutputStream {
 
     /**
      * Convenience method for setting SHA1 digest.
+     * @see #setDigest(String)
      */
-    public synchronized void setSha1Digest() {
+    public void setSha1Digest() {
+        setDigest(SHA1);
+    }
+    
+
+    /**
+     * Sets a digest function which may be applied to recorded data.
+     * The difference between calling this method and {@link #setDigest(MessageDigest)}
+     * is that this method tries to reuse MethodDigest instance if already allocated
+     * and of appropriate algorithm.
+     * @param algorithm Message digest algorithm to use.
+     * @see #setDigest(MessageDigest)
+     */
+    public void setDigest(String algorithm) {
         try {
-            // Reuse extant SHA1 digest if one.
-            if (this.digest != null &&
-                    this.digest.getAlgorithm().equals(SHA1)) {
-                this.digest.reset();
-            } else {
-                setDigest(MessageDigest.getInstance(SHA1));
+            // Reuse extant digest if its sha1 algorithm.
+            if (this.digest == null ||
+                    !this.digest.getAlgorithm().equals(algorithm)) {
+                setDigest(MessageDigest.getInstance(algorithm));
             }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
