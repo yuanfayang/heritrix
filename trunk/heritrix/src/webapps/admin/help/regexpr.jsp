@@ -55,7 +55,7 @@
             java.util.ArrayList lines = new ArrayList();
             int newLine = testLines.indexOf("\n");
             while( newLine > -1 ){
-                lines.add(testLines.substring(0,newLine));
+                lines.add(testLines.substring(0,newLine-1));
                 testLines = testLines.substring(newLine+1);
                 newLine = testLines.indexOf("\n");
             }
@@ -66,7 +66,7 @@
                 &nbsp;<p>
                 <b>Results:</b> (bold lines were matched)
                 <p>
-                <pre><% 
+                <pre><%
                     try{
 	                    for(int i=0 ; i < lines.size() ; i++){
 	                        String tmp = (String)lines.get(i);
@@ -74,7 +74,7 @@
 	                            // Matches, make bold
 	                            tmp = "<b>"+tmp+"</b>";
 	                        }
-	                        out.print(tmp);
+	                        out.println(tmp);
 	                    }
 			        } catch (PatternSyntaxException e){
 			            out.println(e.getMessage());
