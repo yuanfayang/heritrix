@@ -135,6 +135,7 @@ public class PaddingStringBufferTest extends TestCase {
         assertEquals("nothing should be in the buffer", "", buf.toString());
         retBuf = buf.newline();
         assertTrue("should contain newline", buf.toString().indexOf('\n')!=-1);
+        assertEquals("line position should be 0",0,buf.linePos);
     }
 
     /** check what happens when we right append, but the string is longer
