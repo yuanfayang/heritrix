@@ -93,6 +93,12 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 	 * @return true if no further processing in this module shoudl occur
 	 */
 	private boolean considerDnsPreconditions(CrawlURI curi) {
+		
+		if(curi.getHost()==null) {
+			curi.setFetchStatus(S_UNFETCHABLE_URI);
+			curi.cancelFurtherProcessing();
+			return true;
+		}
 		// if we haven't done a dns lookup  and this isn't a dns uri 
 		// shoot that off and defer further processing
 		if( !curi.getHost().hasBeenLookedUp() && 
