@@ -40,6 +40,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author John Erik Halse
  */
 public class MapType extends ComplexType {
+    private final Class contentType;
 
     /** Construct a new MapType object.
      * 
@@ -47,19 +48,30 @@ public class MapType extends ComplexType {
      * @param description the description of the attribute.
      */
     public MapType(String name, String description) {
+        this(name, description, Type.class);
+    }
+
+    /** Construct a new MapType object.
+     * 
+     * @param name the name of this element.
+     * @param description the description of the attribute.
+     * @param type the type allowed for this map
+     */
+    public MapType(String name, String description, Class type) {
         super(name, description);
+        this.contentType = type;
     }
 
     /** Add a new element to this map.
      * 
      * @param settings the settings object for this method to have effect.
-     * @param type the element to be added.
+     * @param element the element to be added.
      */
-    public Type addElement(CrawlerSettings settings, Type type)
+    public Type addElement(CrawlerSettings settings, Type element)
         throws InvalidAttributeValueException {
         settings = settings == null ? globalSettings() : settings;
-        if (!(type instanceof MapType)) {
-            return super.addElement(settings, type);
+        if (!(element instanceof MapType) && (contentType.isInstance(element))) {
+            return super.addElement(settings, element);
         } else {
             throw new IllegalArgumentException("Nested maps are not allowed.");
         }
@@ -184,4 +196,13 @@ public class MapType extends ComplexType {
         }
         return settings.getData(this).size();
     }
+    
+    /** Get the content type allowed for this map.
+     * 
+     * @return the content type allowed for this map.
+     */
+    public Class getContentType() {
+        return contentType;
+    }
+
 }
