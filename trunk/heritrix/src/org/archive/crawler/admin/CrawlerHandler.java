@@ -79,7 +79,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 			switch (_crawlerAction) {
 				case STOP :
 					outputMessage(
-						"===>Crawling stoped!<===<br>\nShutting Down the Server!",
+						"===>Crawling Stopped!<===<br>\nShutting Down the Server!",
 						response);
 					_controller.stopCrawl();
 					_crawling = false;
@@ -129,11 +129,11 @@ public class CrawlerHandler extends AbstractHttpHandler {
 	private void outputCrawlerStats(HttpResponse r)
 		throws HttpException, IOException, FatalConfigurationException {
 
-		StringBuffer sb = new StringBuffer(32768);
+		StringBuffer sb = new StringBuffer();
 		sb.append("<html>\n<head>\n<title>Heritrix WUI</title>\n");
 		if (_controller.getStatistics().activeThreadCount() != 0)
 			sb.append(
-				"<META HTTP-EQUIV=Refresh CONTENT=\"3\" URL=\"CrawlAction?CrawlAction=\"4\"\n");
+				"<META HTTP-EQUIV=Refresh CONTENT=\"10\" URL=\"CrawlAction?CrawlAction=\"4\"\n");
 		sb.append("</head>\n");
 		sb.append(genPageHeader());
 		sb.append(genNavigationLinks());
@@ -153,7 +153,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 				"darkorange",
 				"lightblue"));
 
-		sb.append("</td></center></tr></table><br><center><table border=1><tr><td><center><b><u>MIME TYPES</u></b></center></td><td><center><b><u>HTTP RESPONSE CODE</u><b></center></td></tr><tr><td>");
+		sb.append("</td></center></tr></table><br><center><table border=1><tr><td><center><b><u>MIME TYPES</u></b></center></td><td><center><b><u>HTTP RESPONSE CODE</u><b></center></td></tr><tr><td valign=\"TOP\">");
 		Object[] mimeTypesSorted = Sorts.sortStringIntHashMap(_controller.getStatistics().getFileDistribution());
 		Arrays.sort(mimeTypesSorted, new StringIntPairComparator());
 		for (int i = mimeTypesSorted.length - 1; i >= 0; i--)
@@ -165,7 +165,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 					"darkorange",
 					"lightblue"));
 
-			sb.append("</td><td>");
+			sb.append("</td><td valign=\"TOP\">");
 			Object[] httpResCodeSorted = Sorts.sortStringIntHashMap(_controller.getStatistics().getStatusCodeDistribution());
 			Arrays.sort(httpResCodeSorted, new StringIntPairComparator());
 			for (int i = httpResCodeSorted.length - 1; i >= 0; i--)
