@@ -79,7 +79,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
-    private int threadNumber;
+    transient private int threadNumber;
 
     // dynamic context
     private int linkHopCount = UNCALCULATED; // from seeds
@@ -88,8 +88,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
     // User agent to masquerade as when crawling this URI. If null, globals should be used
     private String userAgent = null;
 
-    // Once a link extractor has finished processing this curi this will be set as true
-    private boolean linkExtractorFinished = false;
+    // Once a link extractor has finished processing this curi this will be
+    // set as true
+    transient private boolean linkExtractorFinished = false;
 
 ////////////////////////////////////////////////////////////////////
     private long contentSize = UNCALCULATED;
@@ -780,6 +781,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.httpRecorder = null;
         this.fetchStatus = S_UNATTEMPTED;
         this.setPrerequisite(false);
+        this.contentSize = 0;
+        this.contentLength = 0;
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
         // Clean the alist of all but registered permanent members.
