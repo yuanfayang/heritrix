@@ -20,9 +20,10 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 
 /**
+ *  This class allows the caller to extract href style links from word97-format word documents.
+ * 
  * @author Parker Thompson
  *
- *  This class allows the caller to extract href style links from word97-format word documents.
  */
 public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
@@ -63,26 +64,21 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		// get the doc as a File
 		try{
 		  	documentStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
-		}catch(IOException e){
-			e.printStackTrace();
-		}
 		
-		if (documentStream==null) {
-			// TODO: note problem
-			return;
-		}
-		
-		// extract the text from the doc and write it to a stream we
-		// can then process
-		out = new StringWriter();
-		WordDocument w = null;
-		try{
+			if (documentStream==null) {
+				// TODO: note problem
+				return;
+			}	
+			// extract the text from the doc and write it to a stream we
+			// can then process
+			out = new StringWriter();
+			WordDocument w = null;
+
 			w = new WordDocument( documentStream );
 			w.writeAllText(out);
 
 		}catch(IOException e){
-			//TODO better failure handling
-			e.printStackTrace();
+			curi.addLocalizedError(getName(),e,"ExtractorDOC IOException");
 			return;
 		}
 		
