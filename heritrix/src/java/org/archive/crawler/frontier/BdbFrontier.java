@@ -29,13 +29,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
@@ -63,6 +64,7 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.OperationStatus;
 
 /**
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
@@ -77,7 +79,6 @@ import com.sleepycat.je.EnvironmentConfig;
  */
 public class BdbFrontier extends AbstractFrontier implements Frontier,
         FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
-
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(BdbFrontier.class, 1);
@@ -95,6 +96,8 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     // TODO: BDBify
     /** all known queues */
     protected HashMap allQueues = new HashMap(); // of classKey -> BDBWorkQueue
+    /** count of unheld queues (since for now we're not discarding them) */
+    protected int unheldQueueCount = 0;
 
     /** all per-class queues whose first item may be handed out */
     protected LinkedQueue readyClassQueues = new LinkedQueue(); // of KeyedQueues
@@ -142,7 +145,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             pendingUris = createMultiQueue();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
         }
@@ -170,7 +172,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @throws DatabaseException
      */
     protected UriUniqFilter createAlreadyIncluded() throws DatabaseException {
-        // TODO: adapt to use stack's Bdb already-seen facility
         UriUniqFilter uuf = new BdbUriUniqFilter(this.dbEnvironment);
         uuf.setDestination(this);
         return uuf;
@@ -211,6 +212,8 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         synchronized (wq) {
             wq.enqueue(curi);
             if(!wq.isHeld()) {
+                wq.setHeld();
+                unheldQueueCount--;
                 readyQueue(wq);
             }
         }
@@ -225,12 +228,12 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     private void readyQueue(BdbWorkQueue wq) {
         try {
             readyClassQueues.put(wq);
-            wq.setHeld();
             readyQueueCount++;
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             System.err.println("unable to ready queue "+wq);
+            // propagate interrupt up 
+            throw new RuntimeException(e);
         }
     }
 
@@ -248,6 +251,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             if (wq == null) {
                 wq = new BdbWorkQueue(classKey, pendingUris);
                 allQueues.put(classKey, wq);
+                unheldQueueCount++;
             }
         }
         return wq;
@@ -285,6 +289,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
                         // readyQ is empty and ready: release held, allowing
                         // subsequent enqueues to ready
                         readyQ.clearHeld();
+                        unheldQueueCount++;
                     }
                 }
             }
@@ -294,19 +299,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         }
     }
 
-    /**
-     * Perform fixups on a CrawlURI about to be returned via next().
-     * 
-     * @param curi
-     */
-    protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
-        curi.setHolder(q);
-        CrawlServer cs = this.controller.getServerCache().getServerFor(curi);
-        if (cs != null) {
-            curi.setServer(cs);
-        }
-        this.controller.recover.emitted(curi);
-    }
 
     /**
      * Note that the previously emitted CrawlURI has completed
@@ -332,7 +324,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             // Consider errors which can be retried, leaving uri atop queue
             long delay_sec = retryDelayFor(curi);
             wq.unpeek();
-            synchronized(wq) { // TODO: possibly narrow this to just cover snooze()
+            synchronized(wq) {
                 if (delay_sec > 0) {
                     long delay = delay_sec * 1000;
                     wq.snooze();
@@ -359,7 +351,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             controller.recover.finishedSuccess(curi);
         } else if (isDisregarded(curi)) {
             // Check for codes that mean that while we the crawler did
-            // manage to try it, it must be disregarded for some reason.
+            // manage to schedule it, it must be disregarded for some reason.
             incrementDisregardedUriCount();
             //Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
@@ -386,7 +378,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         }
 
         long delay_ms = politenessDelayFor(curi);
-        synchronized(wq) { // TODO: possibly narrow this to just cover snooze()
+        synchronized(wq) {
             if (delay_ms > 0) {
                 wq.snooze();
                 daemon.executeAfterDelay(delay_ms, new WakeTask(wq));
@@ -423,8 +415,7 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @see org.archive.crawler.framework.Frontier#getInitialMarker(java.lang.String, boolean)
      */
     public FrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
-        // TODO: implement again based on new backing quqes
-        return null;
+        return pendingUris.getInitialMarker(regexpr);
     }
 
     /** (non-Javadoc)
@@ -432,13 +423,26 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @param marker
      * @param numberOfMatches
      * @param verbose
-     * @return List of URIS.
+     * @return List of URIs (strings).
      * @throws InvalidFrontierMarkerException
      */
     public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
             boolean verbose) throws InvalidFrontierMarkerException {
-        // TODO: implement again based on new underlying queues
-        return null;
+        List curis;
+        try {
+            curis = pendingUris.getFrom(marker,numberOfMatches);
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        ArrayList results = new ArrayList(curis.size());
+        Iterator iter = curis.iterator();
+        while(iter.hasNext()) {
+            CrawlURI curi = (CrawlURI) iter.next();
+            results.add(curi.getLine());
+        }
+        return results;
     }
 
     /**
@@ -446,8 +450,19 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @return Number of items deleted.
      */
     public long deleteURIs(String match) {
-        // TODO: implement again
-        return 0;
+        long count;
+        try {
+            count = pendingUris.deleteMatching(match);
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        Iterator iter = allQueues.values().iterator();
+        while(iter.hasNext()) {
+            ((BdbWorkQueue)iter.next()).unpeek();
+        }
+        return count;
     }
 
     /**
@@ -456,8 +471,9 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public String oneLineReport() {
         StringBuffer rep = new StringBuffer();
-        rep.append(allQueues.size() + " queues: "+ readyQueueCount + " ready");
-        // TODO: improve based on new backing queues
+        rep.append(allQueues.size() + " queues: " + readyQueueCount
+                + " ready; " + unheldQueueCount + " unheld (empty)");
+        // TODO: include active, snoozed counts if/when possible
         return rep.toString();
     }
 
@@ -486,6 +502,9 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         rep.append(" Already included size:     " + alreadyIncluded.count()
                 + "\n");
         rep.append("\n All class queues map size: " + allQueues.size() + "\n");
+        rep.append(   "             Ready queues: " + readyQueueCount + "\n");
+        rep.append(   "        Idle/empty queues: " + unheldQueueCount + "\n");
+        
         // TODO: improve/update for new backing queues
         return rep.toString();
     }
@@ -509,43 +528,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      */
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(u);
-    }
-
-    /**
-     * Perform any special handling of the CrawlURI, such as promoting
-     * its URI to seed-status, or preferencing it because it is an 
-     * embed. 
-     *  
-     * @param curi
-     */
-    protected void applySpecialHandling(CrawlURI curi) {
-        if (curi.isSeed() && curi.getVia() != null
-                && curi.flattenVia().length() > 0) {
-            // The only way a seed can have a non-empty via is if it is the
-            // result of a seed redirect.  Add it to the seeds list.
-            //
-            // This is a feature.  This is handling for case where a seed
-            // gets immediately redirected to another page.  What we're doing is
-            // treating the immediate redirect target as a seed.
-            List seeds = this.controller.getScope().getSeedlist();
-            synchronized (seeds) {
-                seeds.add(curi.getUURI());
-            }
-            // And it needs rapid scheduling.
-            curi.setSchedulingDirective(CandidateURI.MEDIUM);
-        }
-
-        // optionally preferencing embeds up to MEDIUM
-        int prefHops = 1; // TODO: restore as configurable setting
-        if (prefHops > 0) {
-            int embedHops = curi.getTransHops();
-            if (embedHops > 0 && embedHops <= prefHops
-                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
-                // number of embed hops falls within the preferenced range, and
-                // uri is not already MEDIUM -- so promote it
-                curi.setSchedulingDirective(CandidateURI.MEDIUM);
-            }
-        }
     }
 
     /**
@@ -582,6 +564,109 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             classCatalogDB = env.openDatabase(null, "classes", dbConfig);
             classCatalog = new StoredClassCatalog(classCatalogDB);
             crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
+        }
+
+        /**
+         * Delete all CrawlURIs matching the given expression.
+         * 
+         * @param match
+         */
+        public long deleteMatching(String match) throws DatabaseException {
+            long deletedCount = 0;
+            Pattern pattern = Pattern.compile(match);
+            DatabaseEntry key = new DatabaseEntry();
+            DatabaseEntry value = new DatabaseEntry();
+
+            Cursor cursor = null;
+            try {
+                cursor = pendingUrisDB.openCursor(null, null);
+                OperationStatus result = cursor.getNext(key, value, null);
+
+                while (result == OperationStatus.SUCCESS) {
+                    CrawlURI curi = (CrawlURI) crawlUriBinding
+                            .entryToObject(value);
+                    if (pattern.matcher(curi.getURIString()).matches()) {
+                        cursor.delete();
+                        deletedCount++;
+                    }
+                    result = cursor.getNext(key, value, null);
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+            return deletedCount;
+        }
+
+        /**
+         * @param marker
+         * @param numberOfMatches
+         * @return
+         * @throws DatabaseException
+         */
+        public List getFrom(FrontierMarker m, int maxMatches) throws DatabaseException {
+            int matches = 0;
+            ArrayList results = new ArrayList(maxMatches);
+            BdbFrontierMarker marker = (BdbFrontierMarker) m;
+            
+            DatabaseEntry key = marker.getStartKey();
+            DatabaseEntry value = new DatabaseEntry();
+            
+            Cursor cursor = null;
+            OperationStatus result = null;
+            try {
+                cursor = pendingUrisDB.openCursor(null,null);
+                result = cursor.getSearchKey(key, value, null);
+                
+                while(matches<maxMatches && result == OperationStatus.SUCCESS) {
+                    CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
+                    if(marker.accepts(curi)) {
+                        results.add(curi);
+                        matches++;
+                    }
+                    result = cursor.getNext(key,value,null);
+                }
+            } finally {
+                if (cursor !=null) {
+                    cursor.close();
+                }
+            }
+            
+            if(result != OperationStatus.SUCCESS) {
+                // end of scan
+                marker.setStartKey(null);
+            }
+            return results;
+        }
+
+        /**
+         * Get a marker for beginning a scan over all contents
+         * 
+         * @param regexpr
+         * @return a marker pointing to the first item
+         */
+        public FrontierMarker getInitialMarker(String regexpr) {
+            try {
+                return new BdbFrontierMarker(getFirstKey(), regexpr);
+            } catch (DatabaseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return null; 
+            }
+        }
+
+        /**
+         * @return the key to the first item in the database
+         * @throws DatabaseException
+         */
+        protected DatabaseEntry getFirstKey() throws DatabaseException {
+            DatabaseEntry key = new DatabaseEntry();
+            DatabaseEntry value = new DatabaseEntry();
+            Cursor cursor = pendingUrisDB.openCursor(null,null);
+            cursor.getNext(key,value,null);
+            cursor.close();
+            return key;
         }
 
         /**
@@ -866,5 +951,77 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
         }
 
     }
+
+    /**
+     * Marker for remembering a position within the BdbMultiQueue.
+     * 
+     * @author gojomo
+     */
+    public class BdbFrontierMarker implements FrontierMarker {
+        DatabaseEntry startKey;
+        Pattern pattern; 
+        int nextItemNumber;
+        
+        /**
+         * Create a marker pointed at the given start location.
+         * 
+         * @param startKey
+         * @param regexpr
+         */
+        public BdbFrontierMarker(DatabaseEntry startKey, String regexpr) {
+            this.startKey = startKey;
+            pattern = Pattern.compile(regexpr);
+            nextItemNumber = 1;
+        }
+
+        /**
+         * @param curi
+         * @return whether the marker accepts the given CrawlURI
+         */
+        public boolean accepts(CrawlURI curi) {
+            boolean retVal = pattern.matcher(curi.getURIString()).matches();
+            if(retVal==true) {
+                nextItemNumber++;
+            }
+            return retVal;
+        }
+
+        /**
+         * @param object
+         */
+        public void setStartKey(DatabaseEntry key) {
+            startKey = key;
+        }
+
+        /**
+         * @return startKey
+         */
+        public DatabaseEntry getStartKey() {
+            return startKey;
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.crawler.framework.FrontierMarker#getMatchExpression()
+         */
+        public String getMatchExpression() {
+            return pattern.pattern();
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.crawler.framework.FrontierMarker#getNextItemNumber()
+         */
+        public long getNextItemNumber() {
+            return nextItemNumber;
+        }
+
+        /* (non-Javadoc)
+         * @see org.archive.crawler.framework.FrontierMarker#hasNext()
+         */
+        public boolean hasNext() {
+            // as long as any startKey is stated, consider as having next
+            return startKey != null;
+        }
+    }
+
 }
 
