@@ -158,7 +158,9 @@ public class Refinement {
     }
     
     public boolean equals(Object o) {
-        if (o instanceof Refinement && this.reference.equals(((Refinement) o).reference)) {
+        if (this == o
+                || (o instanceof Refinement && this.reference
+                        .equals(((Refinement) o).reference))) {
             return true;
         }
         return false;
