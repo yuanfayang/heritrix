@@ -201,7 +201,7 @@ public class CrawlScope extends Filter {
      * @return Whether the given object (typically a CandidateURI) falls
      * within this scope.
      */
-    protected final boolean innerAccepts(Object o) {
+    protected boolean innerAccepts(Object o) {
         return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
                 transitiveAccepts(o)) && !excludeAccepts(o);
     }
