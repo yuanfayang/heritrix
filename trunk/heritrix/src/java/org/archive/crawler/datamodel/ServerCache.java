@@ -29,7 +29,6 @@ import java.util.WeakHashMap;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.SettingsHandler;
-//import org.xbill.DNS.FindServer;
 
 /**
  * All CrawlServer instances created by a crawl are held here,
@@ -80,20 +79,6 @@ public class ServerCache {
             // make the server of a dns CrawlURI the looked-up domain,
             // also simplifying FetchDNS?
             String scheme = curi.getUURI().getScheme();
-//        if (scheme.equals("dns")) {
-//            System.out.println("hold");
-//            // set crawlhost to default nameserver
-//            String primaryDns = FindServer.server();
-//            if (primaryDns == null) {
-//                Object [] curiArray = {curi};
-//                this.settingsHandler.getOrder().getController()
-//                    .runtimeErrors.log(Level.WARNING,
-//                        "Could not get primary DNS server.", curiArray);
-//                return null;
-//            } else {
-//                return getServerFor(primaryDns);
-//            }
-//        }
 
             String hostOrAuthority = curi.getUURI().getAuthority();
             if (hostOrAuthority == null) {
