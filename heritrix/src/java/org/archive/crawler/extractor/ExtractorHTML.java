@@ -40,6 +40,7 @@ import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
+import org.archive.util.HttpRecorder;
 
 /**
  * Basic link-extraction, from an HTML content-body,
