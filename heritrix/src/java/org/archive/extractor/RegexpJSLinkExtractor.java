@@ -36,6 +36,8 @@ import org.archive.util.TextUtils;
 /**
  * Uses regular expressions to find likely URIs inside Javascript.
  *
+ * ROUGH DRAFT IN PROGRESS / incomplete... untested...
+ * 
  * @author gojomo
  */
 public class RegexpJSLinkExtractor extends CharSequenceLinkExtractor {

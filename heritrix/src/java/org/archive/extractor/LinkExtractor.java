@@ -41,7 +41,8 @@ import org.archive.crawler.extractor.Link;
  * depending on whether the link-extraction technique used is amenable
  * to incremental scanning.
  *
- *
+ * ROUGH DRAFT IN PROGRESS / incomplete... untested...
+ * 
  * @author gojomo
  */
 public interface LinkExtractor extends Iterator {
