@@ -54,7 +54,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI extends CandidateURI
-    implements CoreAttributeConstants, FetchStatusCodes {
+implements CoreAttributeConstants, FetchStatusCodes {
     public static final int UNCALCULATED = -1;
     
     // INHERITED FROM CANDIDATEURI
@@ -89,8 +89,6 @@ public class CrawlURI extends CandidateURI
     private boolean linkExtractorFinished = false;
 
 ////////////////////////////////////////////////////////////////////
-    private transient CrawlServer server;
-
     private long contentSize = UNCALCULATED;
     private long contentLength = UNCALCULATED;
 
@@ -403,24 +401,6 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Return the associated CrawlServer
-     *
-     * @return server
-     */
-    public CrawlServer getServer() {
-        return server;
-    }
-
-    /**
-     * Set the CrawlServer which this URI is to be associated with.
-     *
-     * @param host the CrawlServer which this URI is to be associated with.
-     */
-    public void setServer(CrawlServer host) {
-        this.server = host;
-    }
-
-    /**
      * Do all actions associated with setting a <code>CrawlURI</code> as
      * requiring a prerequisite.
      *
@@ -640,11 +620,8 @@ public class CrawlURI extends CandidateURI
      * @return the annotations set for this uri.
      */
     public String getAnnotations() {
-        if(alist.containsKey(A_ANNOTATIONS)) {
-            return alist.getString(A_ANNOTATIONS);
-        } else {
-            return null;
-        }
+        return (alist.containsKey(A_ANNOTATIONS))?
+            alist.getString(A_ANNOTATIONS): null;
     }
 
     /**

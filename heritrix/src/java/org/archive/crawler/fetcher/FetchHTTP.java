@@ -67,6 +67,7 @@ import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -476,16 +477,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
              // handles only plain http and https
              return false;
          }
-
-//         System.out.println(curi.toString() + " : " + curi.getFetchAttempts());
-//         if (curi.getFetchAttempts() >= getMaxFetchAttempts(curi)) {
-//             curi.setFetchStatus(S_TOO_MANY_RETRIES);
-//             return false;
-//         }
-
+         CrawlHost host = getController().getServerCache().getHostFor(curi);
          // make sure the dns lookup succeeded
-         if (curi.getServer().getHost().getIP() == null
-             && curi.getServer().getHost().hasBeenLookedUp()) {
+         if (host.getIP() == null && host.hasBeenLookedUp()) {
              curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
              return false;
          }
@@ -571,12 +565,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * server.
      */
     private boolean populateCredentials(CrawlURI curi, HttpMethod method) {
-
         // First look at the server avatars. Add any that are to be volunteered
         // on every request (e.g. RFC2617 credentials).  Every time creds will
         // return true when we call 'isEveryTime().
-        if (curi.getServer().hasCredentialAvatars()) {
-            Set avatars = curi.getServer().getCredentialAvatars();
+        CrawlServer server =
+            getController().getServerCache().getServerFor(curi);
+        if (server.hasCredentialAvatars()) {
+            Set avatars = server.getCredentialAvatars();
             for (Iterator i = avatars.iterator(); i.hasNext();) {
                 CredentialAvatar ca = (CredentialAvatar)i.next();
                 Credential c = ca.getCredential(getSettingsHandler(), curi);
@@ -688,8 +683,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	if (cs == null) {
         		logger.severe("No credential store for " + curi);
         	} else {
+                CrawlServer server = getController().getServerCache().
+                    getServerFor(curi);
         		Set storeRfc2617Credentials = cs.subset(curi,
-        				Rfc2617Credential.class, curi.getServer().getName());
+        		    Rfc2617Credential.class, server.getName());
         		if (storeRfc2617Credentials == null ||
         				storeRfc2617Credentials.size() <= 0) {
         			logger.info("No rfc2617 credentials for " + curi);

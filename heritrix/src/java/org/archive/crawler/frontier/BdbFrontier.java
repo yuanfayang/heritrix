@@ -553,7 +553,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                     synchronized(readyQ) {
                         curi = readyQ.peek();                     
                         if (curi != null) {
-                            curi.setServer(getServer(curi));
                             // check if curi belongs in different queue
                             String currentQueueKey = getClassKey(curi);
                             if (currentQueueKey.equals(curi.getClassKey())) {

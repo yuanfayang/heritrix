@@ -353,7 +353,7 @@ ARCWriterSettings {
         
         try {
             writer.write(curi.getURIString(), curi.getContentType(),
-               curi.getServer().getHost().getIP().getHostAddress(),
+               getHostAddress(curi),
                curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
                curi.getHttpRecorder().getRecordedInput().
                    getReplayInputStream());
@@ -393,9 +393,9 @@ ARCWriterSettings {
         
         try {
             writer.write(curi.getURIString(), curi.getContentType(),
-                    curi.getServer().getHost().getIP().getHostAddress(),
-                    curi.getAList().getLong(A_FETCH_BEGAN_TIME),
-                    recordLength, baos);
+                getHostAddress(curi),
+                curi.getAList().getLong(A_FETCH_BEGAN_TIME),
+                recordLength, baos);
         } finally {
             this.pool.returnARCWriter(writer);
         }
@@ -403,6 +403,11 @@ ARCWriterSettings {
         // Save the calculated contentSize for logging purposes
         // TODO handle this need more sensibly
         curi.setContentSize(recordLength);
+    }
+    
+    private String getHostAddress(CrawlURI curi) {
+        return getController().getServerCache().getHostFor(curi).getIP().
+            getHostAddress();
     }
     
     /**

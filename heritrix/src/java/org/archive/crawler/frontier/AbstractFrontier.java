@@ -439,7 +439,6 @@ CoreAttributeConstants {
         } else {
             curi = CrawlURI.from(caUri,nextOrdinal++);
         }
-        curi.setServer(getServer(curi));
         curi.setClassKey(getClassKey(curi));
         return curi;
     }
@@ -526,11 +525,10 @@ CoreAttributeConstants {
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
         curi.setHolder(q);
-        curi.setServer(getServer(curi)); // TODO: may be redundant
-        if (curi.getServer() == null) {
-            // TODO: perhaps short-circuit the emit here, 
-            // because URI will be rejected as unfetchable
-        }
+        // if (curi.getServer() == null) {
+        //    // TODO: perhaps short-circuit the emit here, 
+        //    // because URI will be rejected as unfetchable
+        // }
         doJournalEmitted(curi);
     }
 
@@ -597,7 +595,7 @@ CoreAttributeConstants {
                         ATTR_MAX_HOST_BANDWIDTH_USAGE)).intValue();
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
-                CrawlHost host = curi.getServer().getHost();
+                CrawlHost host = controller.getServerCache().getHostFor(curi);
                 long minDurationToWait =
                     host.getEarliestNextURIEmitTime() - now;
                 float maxBandwidth = maxBandwidthKB * 1.024F; // kilo factor
@@ -822,7 +820,8 @@ CoreAttributeConstants {
             (String)getUncheckedAttribute(curi, ATTR_FORCE_QUEUE);
         if("".equals(queueKey)) {
             // typical case, barring overrides
-            queueKey = queueAssignmentPolicy.getClassKey(curi);
+            queueKey =
+                queueAssignmentPolicy.getClassKey(this.controller, curi);
         }
         return queueKey;
     }

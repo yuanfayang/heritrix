@@ -69,17 +69,10 @@ implements ServerCache {
     public synchronized CrawlServer getServerFor(String h) {
         CrawlServer cserver = (CrawlServer)this.servers.get(h);
         if (cserver == null) {
-            String skey = new String(h); // ensure key is private object
+            // Ensure key is private object
+            String skey = new String(h);
             cserver = new CrawlServer(skey);
             cserver.setSettingsHandler(settingsHandler);
-            String hostname = cserver.getHostname();
-            CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-            if (host == null) {
-                String hkey = new String(hostname); 
-                host = new CrawlHost(hkey);
-                hosts.put(hkey, host);
-            }
-            cserver.setHost(host);
             servers.put(skey,cserver);
         }
         return cserver;
@@ -88,35 +81,11 @@ implements ServerCache {
     public CrawlServer getServerFor(CrawlURI curi) {
         CrawlServer hostOrAuthority = null;
         try {
-            // TODO: evaluate if this is really necessary -- why not 
-            // make the server of a dns CrawlURI the looked-up domain,
-            // also simplifying FetchDNS?
-            String hostOrAuthorityStr =
-                curi.getUURI().getAuthorityMinusUserinfo();
-            if (hostOrAuthorityStr == null) {
-                // Fallback for cases where getAuthority() fails (eg 'dns:'.
-                // DNS UURIs have the 'domain' in the 'path' parameter, not
-                // in the authority).
-                hostOrAuthorityStr = curi.getUURI().getCurrentHierPath();
-                if(hostOrAuthorityStr != null &&
-                    !hostOrAuthorityStr.matches("[-_\\w\\.:]+")) {
-                    // Not just word chars and dots and colons and dashes and
-                    // underscores; throw away
-                    hostOrAuthorityStr = null;
-                }
-            }
-            if (hostOrAuthorityStr != null &&
-                    curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
-                // If https and no port specified, add default https port to
-                // distinuish https from http server without a port.
-                if (!hostOrAuthorityStr.matches(".+:[0-9]+")) {
-                    hostOrAuthorityStr += ":" + UURIFactory.HTTPS_PORT;
-                }
-            }
+            String key = CrawlServer.getServerKey(curi);
             // TODOSOMEDAY: make this robust against those rare cases
             // where authority is not a hostname.
-            if (hostOrAuthorityStr != null) {
-                hostOrAuthority = getServerFor(hostOrAuthorityStr);
+            if (key != null) {
+                hostOrAuthority = getServerFor(key);
             }
         } catch (URIException e) {
             e.printStackTrace();
@@ -125,6 +94,29 @@ implements ServerCache {
             npe.printStackTrace();
         }
         return hostOrAuthority;
+    }
+    
+    public CrawlHost getHostFor(String hostname) {
+        if (hostname == null || hostname.length() == 0) {
+            return null;
+        }
+        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
+        if (host == null) {
+            String hkey = new String(hostname); 
+            host = new CrawlHost(hkey);
+            this.hosts.put(hkey, host);
+        }
+        return host;
+    }
+    
+    public CrawlHost getHostFor(CrawlURI curi) {
+        CrawlHost h = null;
+        try {
+            h = getHostFor(curi.getUURI().getReferencedHost());
+        } catch (URIException e) {
+            e.printStackTrace();
+        }
+        return h;
     }
     
     public boolean containsServer(String serverKey) {

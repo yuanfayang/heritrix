@@ -77,7 +77,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
         Record[] rrecordSet = null;         // store retrieved dns records
         long now;                           // the time this operation happened
-        CrawlServer targetServer = null;
         String dnsName = null;
         try {
             dnsName = curi.getUURI().getReferencedHost();
@@ -89,13 +88,14 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
         // Make sure we're in "normal operating mode", e.g. a cache +
         // controller exist to assist us
+        CrawlHost targetHost = null;
         if (getController() != null &&
                 getController().getServerCache() != null) {
-            targetServer =
-                getController().getServerCache().getServerFor(dnsName);
+            targetHost =
+                getController().getServerCache().getHostFor(dnsName);
         } else {
             // Standalone operation (mostly for test cases/potential other uses)
-            targetServer = new CrawlServer(dnsName);
+            targetHost = new CrawlHost(dnsName);
         }
         
         Matcher matcher = InetAddressUtil.IPV4_QUADS.matcher(dnsName);
@@ -105,7 +105,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
             // would be created for numerical IPs
             logger.warning("unnecessary DNS CrawlURI created: " + curi);
             try {
-                targetServer.getHost().setIP(
+                targetHost.setIP(
                     InetAddress.getByAddress(dnsName,
                         new byte[] {
                             (byte)(new Integer(matcher.group(1)).intValue()),
@@ -132,23 +132,20 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
         // Set null ip to mark that we have tried to look it up even if
         // dns fetch fails.
-        targetServer.getHost().setIP(null, 0);
+        targetHost.setIP(null, 0);
         if (rrecordSet != null) {
             curi.setFetchStatus(S_DNS_SUCCESS);
             curi.setContentType("text/dns");
             curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
-
             // Get TTL and IP info from the first A record (there may be
             // multiple, e.g. www.washington.edu) then update the CrawlServer
             for (int i = 0; i < rrecordSet.length; i++) {
-
                 if (rrecordSet[i].getType() != Type.A) {
                     continue;
                 }
 
                 ARecord AsA = (ARecord) rrecordSet[i];
-                targetServer.getHost().setIP(
-                        AsA.getAddress(), AsA.getTTL());
+                targetHost.setIP(AsA.getAddress(), AsA.getTTL());
                 break; // only need to process one record
             }
         } else {
