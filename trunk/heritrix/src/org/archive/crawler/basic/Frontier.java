@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,19 +44,27 @@ import org.archive.util.Queue;
  * for politeness
  * 
  * @author gojomo
- *
+ *f
  */
 public class Frontier
 	extends XMLConfig 
 	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlListener {
 	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
+	// how many multiples of last fetch elapsed time to wait before recontacting same server
 	private static String XP_DELAY_FACTOR = "@delay-factor";
+	// always wait this long after one completion before recontacting same server, regardless of multiple
 	private static String XP_MIN_DELAY = "@min-delay-ms";
+	// never wait more than this long, regardless of multiple
 	private static String XP_MAX_DELAY = "@max-delay-ms";
-	private static int DEFAULT_DELAY_FACTOR = 5;
-	private static int DEFAULT_MIN_DELAY = 1000;
+	// always wait at least this long between request *starts*
+	// (contrasted with min-delay: if min-interval time has already elapsed during last
+	// fetch, then next fetch may occur immediately; it constrains starts not off-cycles)
+	private static String XP_MIN_INTERVAL = "@min-interval-ms";
+	private static float DEFAULT_DELAY_FACTOR = 5;
+	private static int DEFAULT_MIN_DELAY = 500;
 	private static int DEFAULT_MAX_DELAY = 5000;
-
+	private static int DEFAULT_MIN_INTERVAL = 1000;
+	
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.basic.Frontier");
 	CrawlController controller;
@@ -99,8 +108,9 @@ public class Frontier
 	private int maxRetries = 3;
 	private int retryDelay = 15000;
 	private long minDelay;
-	private long delayFactor;
+	private float delayFactor;
 	private long maxDelay;
+	private int minInterval;
 
 	// top-level stats
 	long completionCount = 0;
@@ -122,9 +132,10 @@ public class Frontier
 	public void initialize(CrawlController c)
 		throws FatalConfigurationException, IOException {
 		
-		delayFactor = getIntAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
+		delayFactor = getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR);
 		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
 		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
+		minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
@@ -366,7 +377,7 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public synchronized void finished(CrawlURI curi) {
-		logger.fine(this+".finished("+curi+")");
+		//logger.fine(this+".finished("+curi+")");
 		
 		// catch up on scheduling
 		batchFlush();
@@ -386,13 +397,13 @@ public class Frontier
 				failureDisposition(curi);
 				return;
 			}
-				
+			
 			// consider errors which can be retried
 			if (needsRetrying(curi)) {
 				scheduleForRetry(curi);
 				return;
 			}
-								
+					
 			// SUCCESS: note & log
 			successDisposition(curi);
 		} catch (RuntimeException e) {
@@ -436,7 +447,10 @@ public class Frontier
 			logger.info("==========> " +
 				completionCount+" <========== HTTP URIs completed");
 		}
-				
+		
+		// release any other curis that were waiting for this to finish
+		releaseHeld(curi);	
+		
 		Object array[] = { curi };
 		controller.uriProcessing.log(
 			Level.INFO,
@@ -552,13 +566,13 @@ public class Frontier
 		
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if (classQueue == null) {
-			releaseHeld(curi); 
+			//releaseHeld(curi); 
 			return;
 		}
 		assert classQueue.getStoreState() == URIStoreable.READY : "odd state "+ classQueue.getStoreState() + " for classQueue "+ classQueue + "of to-be-emitted CrawlURI";
 		readyClassQueues.remove(classQueue);
 		enqueueToHeld(classQueue);
-		releaseHeld(curi);
+		//releaseHeld(curi);
 	}
 
 	/**
@@ -570,13 +584,33 @@ public class Frontier
 	}
 
 	/**
+	 * Defer curi until another curi with the given uuri is
+	 * completed.
+	 * 
+	 * @param curi
+	 * @param uuri
+	 */
+	private void addAsHeld(CrawlURI curi, UURI uuri) {
+		List heldsForUuri = (List) heldCuris.get(uuri);
+		if(heldsForUuri ==null) {
+			heldsForUuri = new ArrayList();
+		}
+		heldsForUuri.add(curi);
+		heldCuris.put(uuri,heldsForUuri);
+		curi.setStoreState(URIStoreable.HELD);
+	}
+	
+	/**
 	 * @param curi
 	 */
 	private void releaseHeld(CrawlURI curi) {
-		CrawlURI released = (CrawlURI) heldCuris.get(curi.getUURI());
-		if(released!=null) {
+		List heldsForUuri = (List) heldCuris.get(curi.getUURI());
+		if(heldsForUuri!=null) {
 			heldCuris.remove(curi.getUURI());
-			reinsert(released);
+			Iterator iter = heldsForUuri.iterator();
+			while(iter.hasNext()) {
+				reinsert((CrawlURI) iter.next());
+			} 
 		}
 	}
 
@@ -584,7 +618,6 @@ public class Frontier
 	 * @param curi
 	 */
 	protected void reinsert(CrawlURI curi) {
-
 		if(enqueueIfNecessary(curi)) {
 			// added to classQueue
 			return;
@@ -613,6 +646,8 @@ public class Frontier
 	}
 
 	/**
+	 * Place curi on a queue for its class (server), if either (1) such a queue
+	 * already exists; or (2) another curi of the same class is in progress.
 	 * 
 	 * @param curi
 	 * @return true if enqueued
@@ -699,16 +734,22 @@ public class Frontier
 			&& curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
 				
 			long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+			long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
 			durationToWait =
-				delayFactor
-					* (completeTime
-						- curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+				(long) (delayFactor
+					* completeTime);
 
 			if (minDelay > durationToWait) {
+				// wait at least the minimum
 				durationToWait = minDelay;
 			}
 			if (durationToWait > maxDelay) {
+				// wait no more than the maximum
 				durationToWait = maxDelay;
+			}
+			if (durationToWait < (minInterval - durationTaken) ) {
+				// wait at least as long as necessary to space off from last fetch begin
+				durationToWait = minInterval - durationTaken;
 			}
 			
 			if(durationToWait>0) {
@@ -726,6 +767,9 @@ public class Frontier
 	protected void failureDisposition(CrawlURI curi) {
 
 		failedCount++;
+
+		// release any other curis that were waiting for this to finish
+		releaseHeld(curi);	
 
 		// send to basic log 
 		Object array[] = { curi };
@@ -781,6 +825,8 @@ public class Frontier
 				// no chance to fetch
 			case S_TOO_MANY_RETRIES :
 				// no success after configurable number of retries
+			case S_UNATTEMPTED :
+				// nothing happened to this URI: don't send it through again
 
 // THESE NEXT FOUR AREN'T TRULY FAILURES
 //			case S_ROBOTS_PRECLUDED :
@@ -793,8 +839,6 @@ public class Frontier
 //				// too far from seeds
 				return true;
 
-			case S_UNATTEMPTED :
-				// this uri is virgin, let it carry on
 			default :
 				return false;
 		}
@@ -812,7 +856,7 @@ public class Frontier
 		switch (curi.getFetchStatus()) {
 			case S_CONNECT_FAILED:					
 			case S_CONNECT_LOST:
-			case S_UNATTEMPTED:
+			case S_DEFERRED: 
 			case S_TIMEOUT:
 				// these are all worth a retry
 				return true;
@@ -826,6 +870,13 @@ public class Frontier
 	 */
 	private void scheduleForRetry(CrawlURI curi) {
 		int delay;
+		if(curi.getAList().containsKey(A_PREREQUISITE_URI)) {
+			// schedule as a function of other URI's progress
+			UURI prereq = (UURI) curi.getPrerequisiteUri();
+			addAsHeld(curi,prereq);
+			curi.getAList().remove(A_PREREQUISITE_URI);
+			return;
+		}
 		if(curi.getAList().containsKey(A_RETRY_DELAY)) {
 			delay = curi.getAList().getInt(A_RETRY_DELAY);
 		} else {
