@@ -29,8 +29,8 @@
     I need to crawl/archive a set of websites, can I use Heritrix?
       </question>
       <answer>
-        <p>
-Eventually. For now, the crawler is still in early development, and only if you are comfortable grabbing code directly from CVS, wrestling with incomplete documentation, and running into undocumented limitations, would you want to use the current software.
+        <p>Yes.  Start by checking out the 
+        <a href="articles/user_manual.html">Heritrix User Manual</a>.
         </p>
       </answer>
     </faq>
@@ -91,8 +91,7 @@ Eventually. For now, the crawler is still in early development, and only if you 
       </answer>
       </faq>
       <faq id="traps">
-        <question>
-        <p>What are crawler traps?</p></question>
+        <question>What are crawler traps?</question>
         <answer>
         <p>Traps are infinite page sources put up to occupy ('trap') a crawler.
         Traps may be as innocent as a calendar that returns pages years into
@@ -117,9 +116,9 @@ Eventually. For now, the crawler is still in early development, and only if you 
         </answer>
       </faq>
       <faq id="oome_broadcrawl">
-        <question>
-        <p>Why do I get an OutOfMemoryException ten minutes after starting 
-        a broad scoped crawl?</p></question>
+        <question>Why
+        do I get an OutOfMemoryException ten minutes after starting 
+        a broad scoped crawl?</question>
         <answer>
         <p>See the note in
         <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a>.
@@ -127,9 +126,9 @@ Eventually. For now, the crawler is still in early development, and only if you 
         </answer>
       </faq>
       <faq id="new_writer">
-        <question>
-        <p>Can I insert the crawl download directly into a MYSQL database instead of into an ARC file on disk while crawling?
-        </p></question>
+        <question>Can I insert
+        the crawl download directly into a MYSQL database instead of
+        into an ARC file on disk while crawling?</question>
         <answer>
         <p>Yes.  See <a href="http://groups.yahoo.com/group/archive-crawler/message/508">RE: [archive-crawler] Inserting information to MYSQL during crawl</a>
         for pointers on how but also see the rest of this thread for why you
@@ -138,10 +137,9 @@ Eventually. For now, the crawler is still in early development, and only if you 
         </answer>
       </faq>
       <faq id="eclipse_assert">
-        <question>
-        <p>Why when running heritrix in eclipse does it complain about the
-        'assert' keyword?
-        </p></question>
+        <question>Why when
+        running heritrix in eclipse does it complain about the
+        'assert' keyword?</question>
         <answer>
         <p>
         See <a href="http://groups.yahoo.com/group/archive-crawler/message/490">Re: [archive-crawler] Eclipse Heritrix and the assert keyword</a> and other messages in this thread.
@@ -149,8 +147,7 @@ Eventually. For now, the crawler is still in early development, and only if you 
         </answer>
       </faq>
       <faq id="crawl_finished">
-        <question>
-        <p>Why won't my crawl finish?</p></question>
+        <question>Why won't my crawl finish?</question>
         <answer>
         <p>The crawl can get hung up on sites that are actually down or are non-responsive.
         Manual intervention is necessary in such cases. 
@@ -188,8 +185,7 @@ Eventually. For now, the crawler is still in early development, and only if you 
       </faq>
 
       <faq id="crawl_junk">
-        <question>
-        <p>What do I do to avoid crawling "junk"?</p></question>
+        <question>What do I do to avoid crawling "junk"?</question>
         <answer>
          <p>In the past crawls were stopped when we ran into "junk."  
          An example of what we mean by "junk" is the crawler stuck
