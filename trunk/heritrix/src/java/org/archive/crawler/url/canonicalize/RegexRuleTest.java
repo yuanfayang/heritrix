@@ -29,7 +29,6 @@ import javax.management.InvalidAttributeValueException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.UURIFactory;
-import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.TmpDirTestCase;
@@ -42,7 +41,6 @@ import org.archive.util.TmpDirTestCase;
  */
 public class RegexRuleTest extends TmpDirTestCase {
     private File orderFile;
-    private CrawlerSettings globalSettings;
     protected XMLSettingsHandler settingsHandler;
     private MapType rules = null;
     
@@ -60,7 +58,6 @@ public class RegexRuleTest extends TmpDirTestCase {
     public void testCanonicalize()
     throws URIException, InvalidAttributeValueException {
         final String url = "http://www.aRchive.Org/index.html";
-        final String urlMinusWWW = "http://aRchive.Org/index.html";
         RegexRule rr = new RegexRule("Test " + this.getClass().getName());
         this.rules.addElement(null, rr);
         rr.canonicalize(url, UURIFactory.getInstance(url));
@@ -69,7 +66,7 @@ public class RegexRuleTest extends TmpDirTestCase {
     }
 
     public void testSessionid()
-    throws URIException, InvalidAttributeValueException {
+    throws InvalidAttributeValueException {
         final String urlBase = "http://joann.com/catalog.jhtml";
         final String urlMinusSessionid = urlBase + "?CATID=96029";
         final String url = urlBase +
@@ -80,5 +77,18 @@ public class RegexRuleTest extends TmpDirTestCase {
         this.rules.addElement(null, rr);
         String product = rr.canonicalize(url, null);
         assertTrue("Failed " + url, urlMinusSessionid.equals(product));
+    }
+    
+    public void testNullFormat()
+    throws InvalidAttributeValueException {
+        final String urlBase = "http://joann.com/catalog.jhtml";
+        final String url = urlBase +
+            ";$sessionid$JKOFFNYAAKUTIP4SY5NBHOR50LD3OEPO";
+        RegexRule rr = new RegexRule("Test",
+            "^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})$",
+            "$1$2");
+        this.rules.addElement(null, rr);
+        String product = rr.canonicalize(url, null);
+        assertTrue("Failed " + url, urlBase.equals(product));
     }
 }
