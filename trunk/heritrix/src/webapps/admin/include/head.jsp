@@ -42,90 +42,96 @@
 	<body>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">
 			<tr>
-				<td height="60" width="155" valign="top" nowrap>
-					<table border="0" width="155" cellspacing="0" cellpadding="0" height="60">
+				<td>
+					<table border="0" cellspacing="0" cellpadding="0" height="100%">
 						<tr>
-							<td align="center" height="40" valign="bottom">
-								<a border="0" href="/admin/main.jsp"><img border="0" src="/admin/images/logo.gif" height="37" width="145"></a>
+							<td height="60" width="155" valign="top" nowrap>
+								<table border="0" width="155" cellspacing="0" cellpadding="0" height="60">
+									<tr>
+										<td align="center" height="40" valign="bottom">
+											<a border="0" href="/admin/main.jsp"><img border="0" src="/admin/images/logo.gif" height="37" width="145"></a>
+										</td>
+									</tr>
+									<tr>
+										<td class="subheading">
+											<%=title%>
+										</td>
+									</tr>
+								</table>
 							</td>
-						</tr>
-						<tr>
-							<td class="subheading">
-								<%=title%>
+							<td width="5" nowrap>
+								&nbsp;&nbsp;
+							</td>
+							<td width="460" align="left" nowrap>
+								<table border="0" cellspacing="0" cellpadding="0" height="60">
+									<tr>
+										<td colspan="2" nowrap>
+											<%
+												java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM. d, yyyy HH:mm:ss");
+												sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
+											%>
+											<b>Status of crawler as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a></b>
+										</td>
+									</tr>
+									<tr>
+										<td nowrap>
+											<%=handler.isRunning()?"Crawler is running":"Crawler is not running"%>
+										</td>
+										<td nowrap>
+											<%
+												if(handler.isRunning() || handler.isCrawling())
+												{
+													if(handler.isCrawling())
+													{
+														out.println("<b>Current job:</b> " + handler.getCurrentJob().getJobName());
+													}
+													else
+													{
+														out.println("No job ready for crawling <a href='/admin/jobs/new.jsp' style='color: #000000'>(create new)</a>");
+													}
+												}
+											%>
+										</td>
+									</tr>
+									<tr>
+										<td nowrap>
+											<%=handler.getPendingJobs().size()%>
+											jobs
+											<a style="color: #000000" href="/admin/jobs/pending.jsp">pending</a>,
+											<%=handler.getCompletedJobs().size()%>
+											<a style="color: #000000" href="/admin/jobs/completed.jsp">completed</a>
+											&nbsp;
+										</td>
+										<td nowrap>
+											<% if(handler.isCrawling()){ %>
+													Downloaded <%=head_stats.successfulFetchAttempts()%> documents in 
+											<%
+													long time = (head_stats.getCrawlerTotalElapsedTime())/1000;
+						
+													if(time>3600)
+													{
+														//got hours.
+														out.println(time/3600 + " h., ");
+														time = time % 3600;
+													}
+						
+													if(time > 60)
+													{
+														out.println(time/60 + " min. and ");
+														time = time % 60;
+													}
+						
+													out.println(time + " sec.");
+												} 
+											%>
+										</td>
+									</tr>
+								</table>
 							</td>
 						</tr>
 					</table>
 				</td>
-				<td width="5" nowrap>
-					&nbsp;&nbsp;
-				</td>
-				<td width="460" align="left" nowrap>
-					<table border="0" cellspacing="0" cellpadding="0" height="60">
-						<tr>
-							<td colspan="2" nowrap>
-								<%
-									java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM. d, yyyy HH:mm:ss");
-									sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
-								%>
-								<b>Status of crawler as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a></b>
-							</td>
-						</tr>
-						<tr>
-							<td nowrap>
-								<%=handler.isRunning()?"Crawler is running":"Crawler is not running"%>
-							</td>
-							<td nowrap>
-								<%
-									if(handler.isRunning() || handler.isCrawling())
-									{
-										if(handler.isCrawling())
-										{
-											out.println("<b>Current job:</b> " + handler.getCurrentJob().getJobName());
-										}
-										else
-										{
-											out.println("No job ready for crawling <a href='/admin/jobs/new.jsp' style='color: #000000'>(create new)</a>");
-										}
-									}
-								%>
-							</td>
-						</tr>
-						<tr>
-							<td nowrap>
-								<%=handler.getPendingJobs().size()%>
-								jobs
-								<a style="color: #000000" href="/admin/jobs/pending.jsp">pending</a>,
-								<%=handler.getCompletedJobs().size()%>
-								<a style="color: #000000" href="/admin/jobs/completed.jsp">completed</a>
-								&nbsp;
-							</td>
-							<td nowrap>
-								<% if(handler.isCrawling()){ %>
-										Downloaded <%=head_stats.successfulFetchAttempts()%> documents in 
-								<%
-										long time = (head_stats.getCrawlerTotalElapsedTime())/1000;
-			
-										if(time>3600)
-										{
-											//got hours.
-											out.println(time/3600 + " h., ");
-											time = time % 3600;
-										}
-			
-										if(time > 60)
-										{
-											out.println(time/60 + " min. and ");
-											time = time % 60;
-										}
-			
-										out.println(time + " sec.");
-									} 
-								%>
-							</td>
-						</tr>
-					</table>
-				</td>
-				<td width="100%">
+				<td width="100%" nowrap>
 					&nbsp;
 				</td>
 			</tr>
