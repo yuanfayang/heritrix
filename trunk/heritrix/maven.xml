@@ -201,11 +201,10 @@
         </exec>
     </goal>
 
-  <!--Below we override two goals out of the default javadoc plugin.
+  <!--Below we our own version of the default javadoc plugin.
       Override is because default tool does not copy doc-files nor
-      package.html.  The below is ugly but there is other means left
-      to us when the plugin only passes java files to the javadoc
-      ant task.
+      package.html files.  The below is ugly but there is no other means left
+      to us when the plugin only passes java files to the javadoc ant task.
     -->
   <goal name="heritrix-javadoc"
         prereqs="xdoc:init"
@@ -273,6 +272,7 @@
         additionalparam="${maven.javadoc.additionalparam}"
         useexternalfile="${maven.javadoc.useexternalfile}"
             sourcepath="${pom.build.sourceDirectory}" 
+            overview="${pom.build.sourceDirectory}/overview.html" 
             source="${maven.javadoc.source}" >
                                                                                 
         <ant:classpath>
