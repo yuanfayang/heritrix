@@ -185,19 +185,19 @@
 						</th>
 					</tr>
 					<%
-						HashMap statusCodeDistribution = stats.getStatusCodeDistribution();
-						Iterator statusCodes = statusCodeDistribution.keySet().iterator();
+						TreeSet statusCodeDistribution = stats.getSortedByValue(stats.getStatusCodeDistribution());
+						Iterator statusCodes = statusCodeDistribution.iterator();
 						
 						
 						while(statusCodes.hasNext())
 						{
-							Object code = statusCodes.next();
-							long count = Integer.parseInt(statusCodeDistribution.get(code).toString());
-							double percent = ((double)count/stats.successfulFetchAttempts())*100;
+							Map.Entry entry = (Map.Entry)statusCodes.next();
+							long count = ((Number)(entry.getValue())).longValue();
+							long percent = count*100/stats.successfulFetchAttempts();
 					%>
 							<tr>
 								<td>
-									<%=code%>
+									<%=entry.getKey()%>
 								</td>
 								<td width="600" colspan="2">
 									<table width="600" cellspacing="0" cellpadding="0" border="0">
@@ -229,17 +229,17 @@
 						</th>
 					</tr>
 					<%
-						HashMap fileDistribution = stats.getFileDistribution();
-						Iterator files = fileDistribution.keySet().iterator();
+						TreeSet fileDistribution = stats.getSortedByValue(stats.getFileDistribution());
+						Iterator files = fileDistribution.iterator();
 						while(files.hasNext())
 						{
-							Object file = files.next();
-							long count = Integer.parseInt(fileDistribution.get(file).toString());
-							double percent = ((double)count/stats.successfulFetchAttempts())*100;
+							Map.Entry file = (Map.Entry)files.next();
+							long count = ((Number)file.getValue()).longValue();
+							long percent = count*100/stats.successfulFetchAttempts();
 					%>
 							<tr>
 								<td nowrap>
-									<%=file%>
+									<%=file.getKey()%>
 								</td>
 								<td width="600" colspan="2">
 									<table width="600" cellspacing="0" cellpadding="0" border="0">
@@ -268,20 +268,20 @@
 				</th>
 			</tr>
 			<%
-				HashMap hostsDistribution = stats.getHostsDistribution();
-				Iterator hosts = hostsDistribution.keySet().iterator();
+				TreeSet hostsDistribution = stats.getSortedByValue(stats.getHostsDistribution());
+				Iterator hosts = hostsDistribution.iterator();
 				int i=0;
 				while(hosts.hasNext())
 				{
 					i++;
-					Object host = hosts.next();
+					Map.Entry host = (Map.Entry)hosts.next();
 			%>
 					<tr>
 						<td>
-							<%=host%>
+							<%=host.getKey()%>
 						</td>
 						<td>
-							<%=hostsDistribution.get(host)%>
+							<%=host.getValue()%>
 						</td>
 					</tr>
 			<%
