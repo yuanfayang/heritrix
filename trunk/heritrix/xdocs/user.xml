@@ -124,13 +124,7 @@ recent and more likely to work.
 </p>
 
 </section>
-<section name="Crawling">
-<p>TODO
-</p>
-</section>
-<section name="Monitoring the Crawler">
-    <p>TODO</p>
-</section>
+
 <section name="System Properties">
 <p>Below we document system properties passed on the command-line that 
 can influence Heritrix behavior.
@@ -145,6 +139,42 @@ Default: <em>webapp/admin/order.xml</em>.
 </p>
 </subsection>
 
+<subsection name="java.util.logging.config.file">
+<p>The heritrix jar includes a file named <em>heritrix.properties</em>.  A 
+	section of this file specifies the default heritrix logging configuration.
+	To override, point
+	<em>java.util.logging.config.file</em> at a properties file w/ an alternate
+	logging configuration.  Below we reproduce the default for reference:
+	<source># Basic logging setup; to console, all levels
+handlers= java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level= ALL
+
+# Default global logging level: only warnings or higher
+.level= WARNING
+
+# currently necessary (?) for standard logs to work
+crawl.level= INFO
+runtime-errors.level= INFO
+uri-errors.level= INFO
+progress-statistics.level= INFO
+recover.level= INFO
+
+# HttpClient is too chatty... only want to hear about severe problems
+org.apache.commons.httpclient.level= SEVERE</source>
+</p>
+<p>Here's an example of how you might specify an override: 
+    <source>% JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
+        ./bin/heritrix.sh --no-wui order.xml</source> </p>
+</subsection>
+
+</section>
+
+<section name="Crawling">
+<p>TODO
+</p>
+</section>
+<section name="Monitoring the Crawler">
+    <p>TODO</p>
 </section>
 
 </body>

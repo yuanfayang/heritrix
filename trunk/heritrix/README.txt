@@ -21,6 +21,7 @@ II.  Getting Started
   b. Starting Heritrix
   
 III. Configuration Files
+  a. System Properties
 
 IV.   Crawling
   a. ARC Files
@@ -127,31 +128,29 @@ Next run:
 
 This should output something like the following:
 
-    Heritrix: Version unknown. Build unknown
-    USAGE: java Heritrix [--no-wui | --port:xxxx] ORDER.XML
-            [--start | --wait | --set-as-default] [-?]
-        --no-wui    Start crawler without Web User Interface
-        --port:xxxx The port that the web UI will run on, 8080 is default
-        ORDER.XML   The "crawl order file" to launch. Optional if --no-wui not
-                    specified, in which case the next parameter controls it's
-                    behavior.  
-    Only if --no-wui is NOT selected and a "crawl order file" file IS specified:
-       --start      Start crawling as specified by the given crawl order file.
-       --wait       Load the job specified by the given crawl order file but
-                    do not start crawling. Default behavior.
-       --set-as-default Set the specified crawl order as default crawl order
-       -?           Display this message
+Usage: java org.archive.crawler.Heritrix --help|-h
+Usage: java org.archive.crawler.Heritrix --no-wui ORDER.XML
+Usage: java org.archive.crawler.Heritrix [--port=PORT] \
+            [ORDER.XML [--start|--wait|--set]]
+Options:
+    --help|-h   Prints this message.
+    --no-wui    Start crawler without a web User Interface.
+    --port      PORT is port the web UI runs on. Default: 8080.
+    ORDER.XML   The crawl to launch. Optional if '--no-wui' NOT specified.
+    --start     Start crawling using specified ORDER.XML:
+    --wait      Load job specified by ORDER.XML but do not start. Default.
+    --set       Set specified ORDER.XML as the default.
 
-The "crawl order file" or "order.xml" is the "master config file".  It
-specifies which modules will be used to  process URIs, in which order 
-URIs will be processed, how and where files will be written to disk, how 
-"polite" the crawler should be, crawl limits, etc.  The configuration 
-system is currently undergoing revision and the format of order.xml will 
-be changed.  The best thing to do meantime is to copy an existing 
-"order.xml" file.  See under 'docs/example-settings/broad-crawl' for an 
-up-to-date sample configuration that does a broad crawl (If there is no 
-docs/example-settings in your built distribution, see 
-http://crawler.archive.org/docs/example-settings/broad-crawl/order.xml).
+The usage output talks of the an  ORDER.XML  file. The ORDER.XML is the "master
+config file". It specifies which modules will be used to process URIs, in which
+order URIs will be processed, how and where files will ge written to disk, how
+"polite" the crawler should be, crawl limits, etc. The configuration system is
+currently undergoing revision and the format of ORDER.XML will probably be
+changed. The best thing to do meantime is to copy an existing  order.xml file.
+See under 'docs/example-settings/broad-crawl' for an up-to-date sample
+configuration that does a broad crawl (If there is no 'docs/example-settings'
+in your built distribution, see
+<http://crawler.archive.org/docs/example-settings/broad-crawl/order.xml>).
 
 Before you begin crawling you *MUST* at least change the default 
 "User-Agent" and "From" header fields in the order.xml (or via the
@@ -203,6 +202,51 @@ III. Configuration
 
 TODO: The configuration system is being revised at the moment.  Meantime 
 study extant configurations at docs/example-settings.
+
+a. System Properties
+
+Below we document system properties passed on the command-line that can
+influence Heritrix behavior.
+
+i. heritrix.webapp.path
+
+Path to webapp directory. Default: webapps. Set to src/webapps if you want to
+run the webapp inside eclipse, etc.  
+
+ii. heritrix.default.orderfile
+
+Default order.xml file to use when making jobs via the web UI.
+Default: webapp/admin/order.xml.
+
+iii. java.util.logging.config.file
+
+The heritrix jar includes a file named heritrix.properties . A section of this
+file specifies the def ault heritrix logging configuration. To override, point
+java.util.logging.config.file at a properties file w/ an alternate logging
+configuration. Below we reproduce the default for reference:
+
+    # Basic logging setup; to console, all levels
+    handlers= java.util.logging.ConsoleHandler
+    java.util.logging.ConsoleHandler.level= ALL
+
+    # Default global logging level: only warnings or higher
+    .level= WARNING
+
+    # currently necessary (?) for standard logs to work
+    crawl.level= INFO
+    runtime-errors.level= INFO
+    uri-errors.level= INFO
+    progress-statistics.level= INFO
+    recover.level= INFO
+
+    # HttpClient is too chatty... only want to hear about severe problems
+    org.apache.commons.httpclient.level= SEVERE
+
+Here's an example of how you might specify an override:
+
+    % JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
+            ./bin/heritrix.sh --no-wui order.xml
+
 
 IV. Crawling
 
