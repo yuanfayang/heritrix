@@ -77,27 +77,39 @@ public class CrawlOrder extends CrawlerModule {
         addElementToDefinition(
             new SimpleType(
                 ATTR_SETTINGS_DIRECTORY,
-                "Directory where per host settings are kept",
-                "settings"));
+                "Directory where override settings are kept",
+                "settings",
+                false));
         addElementToDefinition(
-            new SimpleType(ATTR_DISK_PATH, "Working directory", "disk"));
+            new SimpleType(
+                ATTR_DISK_PATH,
+                "Directory relative to the crawl order where logs, arcs and other run time files will be kept",
+                "disk",
+                false));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_BYTES_DOWNLOAD,
-                "Max number of bytes to download",
-                new Long(0)));
+                "Maximum number of bytes to download. Once this number is exceeded the crawler will stop.",
+                new Long(0),
+                false));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_DOCUMENT_DOWNLOAD,
-                "Max number of documents to download",
-                new Long(0)));
+                "Maximum number of documents to download. Once this number is exceeded the crawler will stop.",
+                new Long(0),
+                false));
         addElementToDefinition(
-            new SimpleType(ATTR_MAX_TIME_SEC, "Max time", new Long(0)));
+            new SimpleType(
+                ATTR_MAX_TIME_SEC,
+                "Maximum amount of time to crawl (in seconds). Once this much time has elapsed the crawler will stop.",
+                new Long(0),
+                false));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_TOE_THREADS,
-                "Max number of threads",
-                new Integer(100)));
+                "Max number of threads processing URIs at the same time.",
+                new Integer(100),
+                false));
 
         addElementToDefinition(new Scope());
         
