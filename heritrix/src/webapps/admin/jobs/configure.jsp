@@ -164,19 +164,19 @@
 				return;
 			}
 
-			if(currentAttribute instanceof ComplexType) {
-		    	writeNewOrderFile((ComplexType)currentAttribute, request);
-			}
-			else if(currentAttribute instanceof ListType){
-				ListType list = (ListType)currentAttribute;
-				list.clear();
-				String[] elems = request.getParameterValues(mbean.getAbsoluteName() + "/" + att.getName());
-				for(int i=0 ; elems != null && i < elems.length ; i++){
-					list.add(elems[i]);
+            if (att.isTransient() == false) {
+				if(currentAttribute instanceof ComplexType) {
+			    	writeNewOrderFile((ComplexType)currentAttribute, request);
 				}
-			}
-			else{
-			    if (att.isTransient() == false) {
+				else if(currentAttribute instanceof ListType){
+					ListType list = (ListType)currentAttribute;
+					list.clear();
+					String[] elems = request.getParameterValues(mbean.getAbsoluteName() + "/" + att.getName());
+					for(int i=0 ; elems != null && i < elems.length ; i++){
+						list.add(elems[i]);
+					}
+				}
+				else{
 				    try{
 					   mbean.setAttribute(new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
     				} catch (Exception e1) {

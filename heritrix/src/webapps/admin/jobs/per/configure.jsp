@@ -194,37 +194,39 @@
 				return;
 			}
 
-			if(currentAttribute instanceof ComplexType) {
-		    	writeNewOrderFile((ComplexType)currentAttribute, settings, request);
-			}
-			else {
-				// Have a 'setting'. Let's see if it's been overridden.
-				if(request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()+".override") != null
-				   && request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()+".override").equals("true")){
-					//Is being overridden.
-					if(currentAttribute instanceof ListType){
-						ListType list = (ListType)currentAttribute;
-						list.clear();
-						String[] elems = request.getParameterValues(mbean.getAbsoluteName() + "/" + att.getName());
-						for(int i=0 ; elems != null && i < elems.length ; i++){
-							list.add(elems[i]);
+            if(att.isTransient()==false){
+				if(currentAttribute instanceof ComplexType) {
+			    	writeNewOrderFile((ComplexType)currentAttribute, settings, request);
+				}
+				else {
+					// Have a 'setting'. Let's see if it's been overridden.
+					if(request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()+".override") != null
+					   && request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()+".override").equals("true")){
+						//Is being overridden.
+						if(currentAttribute instanceof ListType){
+							ListType list = (ListType)currentAttribute;
+							list.clear();
+							String[] elems = request.getParameterValues(mbean.getAbsoluteName() + "/" + att.getName());
+							for(int i=0 ; elems != null && i < elems.length ; i++){
+								list.add(elems[i]);
+							}
 						}
-					}
-					else{
+						else{
+							try{
+								mbean.setAttribute(settings, new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
+							} catch (Exception e1) {
+								e1.printStackTrace();
+								return;
+							}
+						}
+					} else if(request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()) != null) {
+						// Is not being overriden. 
 						try{
-							mbean.setAttribute(settings, new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
+							mbean.unsetAttribute(settings,att.getName());
 						} catch (Exception e1) {
 							e1.printStackTrace();
 							return;
 						}
-					}
-				} else if(request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()) != null) {
-					// Is not being overriden. 
-					try{
-						mbean.unsetAttribute(settings,att.getName());
-					} catch (Exception e1) {
-						e1.printStackTrace();
-						return;
 					}
 				}
 			}
