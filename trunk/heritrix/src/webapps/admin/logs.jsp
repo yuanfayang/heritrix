@@ -7,7 +7,7 @@
 	/* Various settings with default values (where applicable) */
 	String mode = request.getParameter("mode");
 	String logText = "";
-	int defaultNumberOfLines = 50;
+	int linesToShow = 50;
 	int iTime = -1;
 	int linenumber = 1;
 	String timestamp = null;
@@ -21,6 +21,14 @@
 	if(fileName == null || fileName.length() <= 0)
 	{
 		fileName = "crawl.log";
+	}
+	
+	if(request.getParameter("linesToShow") != null && request.getParameter("linesToShow").length()>0 ){
+		try{
+			linesToShow = Integer.parseInt(request.getParameter("linesToShow"));
+		} catch(java.lang.NumberFormatException e){
+			linesToShow = 50;
+		}
 	}
 
 	/* Location of logs */
@@ -56,7 +64,7 @@
 			}
 			catch(Exception e){/*Ignore*/}
 		
-			logText = LogReader.get(diskPath + fileName,linenumber,defaultNumberOfLines).replaceAll(" ","&nbsp;");
+			logText = LogReader.get(diskPath + fileName,linenumber,linesToShow).replaceAll(" ","&nbsp;");
 		}
 		else if(mode != null && mode.equalsIgnoreCase("time"))
 		{
@@ -71,7 +79,7 @@
 			else
 			{
 				int timestampLinenumber = LogReader.findFirstLineContaining(diskPath+fileName,timestamp+".*");
-				logText = LogReader.get(diskPath + fileName,timestampLinenumber,defaultNumberOfLines).replaceAll(" ","&nbsp;");
+				logText = LogReader.get(diskPath + fileName,timestampLinenumber,linesToShow).replaceAll(" ","&nbsp;");
 			}
 		}
 		else if(mode != null && mode.equalsIgnoreCase("regexpr"))
@@ -114,7 +122,7 @@
 			}
 			catch(Exception e){/* Ignore - default value will do */}
 			
-			logText = LogReader.tail(diskPath + fileName,defaultNumberOfLines).replaceAll(" ","&nbsp;");
+			logText = LogReader.tail(diskPath + fileName,linesToShow).replaceAll(" ","&nbsp;");
 		}
 	} 
 	else 
@@ -212,6 +220,14 @@
 								</select>
 							</td>
 						</tr>
+						<tr>
+							<td>
+								<b>Lines to show:</b>&nbsp;
+							</td>
+							<td>
+								<input size="4" name="linesToShow" value="<%=linesToShow%>">
+							</td>
+						</tr>
 					</table>
 				<% } else if(mode.equalsIgnoreCase("number")){ %>
 					<table border="0" cellspacing="0" cellpadding="0">
@@ -219,8 +235,16 @@
 							<td nowrap align="right">
 								<b>Line number:</b>&nbsp;
 							</td>
-							<td width="100%">
-								<input value="<%=linenumber%>" name="linenumber">&nbsp;<input type="submit" value="Get">
+							<td>
+								<input size="4" value="<%=linenumber%>" name="linenumber">&nbsp;<input type="submit" value="Get">
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Lines to show:</b>&nbsp;
+							</td>
+							<td>
+								<input size="4" name="linesToShow" value="<%=linesToShow%>">
 							</td>
 						</tr>
 					</table>
@@ -230,9 +254,17 @@
 							<td nowrap align="right" valign="top">
 								<b>Timestamp:</b>&nbsp;
 							</td>
-							<td width="100%">
+							<td>
 								<input value="<%=request.getParameter("timestamp")==null?"":request.getParameter("timestamp")%>" name="timestamp" align="absmiddle" size="21">&nbsp;<input type="submit" value="Get"><br>
 								(YYYYMMDDHHMMSS)
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Lines to show:</b>&nbsp;
+							</td>
+							<td>
+								<input size="4" name="linesToShow" value="<%=linesToShow%>">
 							</td>
 						</tr>
 					</table>
@@ -251,7 +283,7 @@
 								<font size="-2">(<a href="/admin/help/regexpr.jsp">about java reg.expr.</a>)</font>&nbsp;
 							</td>
 							<td nowrap>
-								<input name="ln" value="true" type="checkbox" <%=request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true")?"checked":""%>>
+								<input name="ln" value="true" type="checkbox" <%=request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true")?"checked":""%>><input type="hidden" name="linesToShow" value="<%=linesToShow%>">
 							</td>
 							<td nowrap>
 								&nbsp;Line numbers&nbsp;&nbsp;
