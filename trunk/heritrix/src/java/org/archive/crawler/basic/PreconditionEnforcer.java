@@ -93,9 +93,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             return false;
         }
         // require /robots.txt if not present
-        if (curi.getServer().getRobotsExpires() < 0 // "cheap" test of default
-            || curi.getServer().getRobotsExpires() < System.currentTimeMillis())
-        {
+        if (curi.getServer().isRobotsExpired()) {
             logger.fine( "No valid robots for " + curi.getServer()
                 + "; deferring " + curi);
                 
