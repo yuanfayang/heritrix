@@ -510,7 +510,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             if (cj.getUID().equals(jobUID)) {
                 // Found the one to delete.
                 cj.setStatus(CrawlJob.STATUS_DELETED);
-                pendingCrawlJobs.remove(cj);
+                it.remove();
                 //completedCrawlJobs.add(cj);
                 return; // We're not going to find another job with the same UID
             }
@@ -522,7 +522,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             if (cj.getUID().equals(jobUID)) {
                 // Found the one to delete.
                 cj.setStatus(CrawlJob.STATUS_DELETED);
-                completedCrawlJobs.remove(cj);
+                it.remove();
             }
         }
     }
