@@ -39,6 +39,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -73,12 +75,6 @@ public class ReplayCharSequenceFactory {
      */
     private static final ReplayCharSequenceFactory factory =
         new ReplayCharSequenceFactory();
-
-
-    /**
-     * Pattern to use stripping underscores and hyphens from encoding names.
-     */
-    private Pattern HYPHENS_UNDERSCORES = Pattern.compile("[-_]?");
 
 
     /**
@@ -140,7 +136,7 @@ public class ReplayCharSequenceFactory {
 
         return rcs;
     }
-
+    
     /**
      * Make decision as to whether encoding warrants single-byte replay char
      * sequence or multi-byte.
@@ -152,64 +148,36 @@ public class ReplayCharSequenceFactory {
      * @return True if multibyte encoding.
      */
     private boolean isMultibyteEncoding(String encoding) {
+        boolean isMultibyte;
 
-        boolean isMultibyte = false;
-        if (encoding != null)
-        {
-            // Have seen '\n\r' appended to encoding.  Remove.
-            encoding = encoding.trim();
+        final Charset cs;
+        try {
+            cs = Charset.forName(encoding);
 
-            // TODO: Add a set here that we populate from a properties
-            // file that has in it a list of charsets that we'd like to
-            // be handled by the multibyte ReplayCharSequence.  Members of this
-            // set would include names of charsets other than the canonical
-            // java names.
-            try
-            {
-                "".getBytes(encoding);
-                // Lower case and replace all hyphens and underscores to make
-                // it easier to compare (Sometimes an encoding can have the
-                // underscore and other times not as in ISO-8859-1 or ISO8859-1.
-                // As an aside, java seems fine w/ iso-8859-1 and ISO-8859-1:
-                // i.e. its case insenstive.
-                String encodingLowerCase = encoding.toLowerCase();
-                encodingLowerCase = this.HYPHENS_UNDERSCORES.
-                    matcher(encodingLowerCase).replaceAll("");
-                if (encodingLowerCase.startsWith("utf")         ||
-                    encodingLowerCase.startsWith("euc")         ||
-                    encodingLowerCase.startsWith("xeuc")        ||
-                    encodingLowerCase.startsWith("shift")       ||
-                    encodingLowerCase.startsWith("sjis")        ||
-                    encodingLowerCase.startsWith("x-sjis")      ||
-                    encodingLowerCase.startsWith("iso2022")     ||
-                    encodingLowerCase.startsWith("windows31")   ||
-                    encodingLowerCase.startsWith("big5")        ||
-                    encodingLowerCase.startsWith("ms9")         ||
-                    encodingLowerCase.startsWith("xms9")        ||
-                    encodingLowerCase.startsWith("xmswin9")     ||
-                    encodingLowerCase.startsWith("xwindows9")   ||
-                    encodingLowerCase.startsWith("cp9")         ||
-                    encodingLowerCase.startsWith("cp10")        ||
-                    encodingLowerCase.startsWith("gb180")       ||
-                    encodingLowerCase.startsWith("gbk")         ||
-                    encodingLowerCase.startsWith("ksc_56")      ||
-                    encodingLowerCase.startsWith("iscii") ) {
+            if(cs.canEncode()) {
+                isMultibyte = cs.newEncoder().maxBytesPerChar() > 1;
+            } else {
+                isMultibyte = false;
 
-                    isMultibyte = true;
-                    logger.info("Encoding " + encoding +
-                        " considered multibyte.");
-                }
+                logger.info("Encoding not fully supported: " + encoding
+                    + ".  Defaulting to single byte.");
             }
+        } catch (IllegalCharsetNameException e) {
+            // Unsupported encoding.  Default to singlebyte.
+            isMultibyte = false;
 
-            catch (UnsupportedEncodingException e)
-            {
-                // Unsupported encoding.  Default to singlebyte.
-                logger.info("Unsupported encoding " + encoding +
-                    ".  Defaulting to single byte.");
-            }
+            logger.info("Illegal encoding name: " + encoding
+                + ".  Defaulting to single byte.");
+        } catch (UnsupportedCharsetException e) {
+            // Unsupported encoding.  Default to singlebyte.
+            isMultibyte = false;
+
+            logger.info("Unsupported encoding " + encoding
+                + ".  Defaulting to single byte.");
         }
-        logger.fine("Encoding " + encoding + " is multibyte: " +
-            ((isMultibyte)? Boolean.TRUE: Boolean.FALSE));
+        logger.fine("Encoding " + encoding + " is multibyte: "
+            + ((isMultibyte) ? Boolean.TRUE : Boolean.FALSE));
+        
         return isMultibyte;
     }
 
