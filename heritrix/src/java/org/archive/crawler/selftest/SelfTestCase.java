@@ -39,6 +39,7 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
+import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecordMetaData;
 import org.archive.util.FileUtils;
 
@@ -242,7 +243,7 @@ public class SelfTestCase extends TestCase
                 " instead " + Integer.toString(arcs.length) + " files.");
         }
         SelfTestCase.arcFile = arcs[0];
-        SelfTestCase.readReader = new ARCReader(arcFile);
+        SelfTestCase.readReader = ARCReaderFactory.get(arcFile);
         SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
 
         SelfTestCase.initialized = true;

@@ -144,7 +144,8 @@ public class ARCSocketFactoryTest
                 ARCSocketFactory.DEFAULT_PREFIX);
         for (int i = 0; i < f.length; i++)
         {
-            (new ARCReader(f[i])).validate(urls.length + 1 /*ARC file header*/);
+            ARCReader r = ARCReaderFactory.get(f[i]);
+            r.validate(urls.length + 1 /*ARC file header*/);
         }
     }
 

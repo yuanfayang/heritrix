@@ -33,9 +33,7 @@ import java.io.InputStream;
  *
  * @author stack
  */
-public class ARCRecord
-    implements ARCConstants
-{
+public class ARCRecord implements ARCConstants {
     /**
      * Map of record header fields.
      *
@@ -52,27 +50,27 @@ public class ARCRecord
      * Stream can only be read sequentially.  Will only return this records
      * content returning a -1 if you try to read beyond the end of the current
      * record.
+     * 
+     * <p>Streams can be markable or not.  If they are, we'll be able to roll
+     * back when we've read too far.  If not markable, assumption is that
+     * the underlying stream is managing our not reading too much (This pertains
+     * to the skipping over the end of the ARCRecord.  See {@link skip()}.
      */
     private InputStream in = null;
 
     /**
-     * Position w/i the ARCRecord content.
+     * Position w/i the ARCRecord content, within <code>in</code>.
+     * 
+     * This position is relative within this ARCRecord.  Its not
+     * same as the arcfile position.
      */
     private long position = 0;
-    
-    /**
-     * Absolute offset at which this record begins in arc file.
-     * 
-     * Position is beginning of the compressed or uncompressed record.
-     */
-    private long offset = 0;
 
     /**
      * Set flag when we've reached the end-of-record.
      */
     private boolean eor = false;
 
-
     /**
      * Constructor.
      *
@@ -82,56 +80,55 @@ public class ARCRecord
      *
      * @throws IOException
      */
-    public ARCRecord(InputStream in, long offset, ARCRecordMetaData metaData)
-        throws IOException
-    {
-        this(in, offset, metaData, false);
+    public ARCRecord(InputStream in, ARCRecordMetaData metaData)
+            throws IOException {
+        this(in, metaData, false);
     }
-
+    
     /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
      * @param metaData Meta data.
-     * @param contentRead True if content has already been read.  Only case
-     * where this should be true is in the reading of the actual ARC file
-     * header.  If passed, the content position pointer is set to end-of-record.
+     * @param contentRead True if all content has been read already before the
+     * making of this arc record.  Update the body position so it points to end
+     * of the record.  This flag is only needed creating the arcfile meta data
+     * record.  It has not content.  Its all meta info.
      *
      * @throws IOException
      */
-    public ARCRecord(InputStream in, long offset, ARCRecordMetaData metaData,
-            boolean contentRead)
-        throws IOException
-    {
+    public ARCRecord(InputStream in, ARCRecordMetaData metaData,
+                boolean contentRead)
+            throws IOException {
         this.in = in;
-        this.offset = offset;
         this.metaData = metaData;
-        if (contentRead)
-        {
-            this.position = this.metaData.getLength();
-            close();
+        if (contentRead) {
+        	    this.position = metaData.getLength();
         }
     }
 
     /**
      * @return Meta data for this record.
      */
-    public ARCRecordMetaData getMetaData()
-    {
+    public ARCRecordMetaData getMetaData() {
         return this.metaData;
     }
 
     /**
      * Calling close on a record skips us past this record to the next record
      * in the stream.
+     * 
+     * It does not close the stream.  The underlying steam is probably being
+     * used by the next arc record.
      *
      * @throws IOException
      */
-    public void close()
-        throws IOException
-    {
-        skip();
+    public void close() throws IOException {
+        if (this.in != null) {
+        	    skip();
+            this.in = null;
+        }
     }
 
     /**
@@ -139,15 +136,11 @@ public class ARCRecord
      * this record.
      * @throws IOException
      */
-    public int read()
-        throws IOException
-    {
+    public int read() throws IOException {
         int c = -1;
-        if (isRemaining())
-        {
+        if (isRemaining()) {
             c = this.in.read();
-            if (c == -1)
-            {
+            if (c == -1) {
                 throw new IOException("Premature EOF before end-of-record.");
             }
             this.position++;
@@ -157,10 +150,9 @@ public class ARCRecord
     }
 
     /**
-     * @return True if bytes remaing in record content.
+     * @return True if bytes remaining in record content.
      */
-    private boolean isRemaining()
-    {
+    private boolean isRemaining() {
         return this.position < this.metaData.getLength();
     }
 
@@ -169,18 +161,13 @@ public class ARCRecord
      *
      * @throws IOException
      */
-    private void skip()
-        throws IOException
-    {
-        if (!this.eor)
-        {
-            while(read() != -1)
-            {
-                continue;
+    private void skip() throws IOException {
+        if (!this.eor) {
+            // Read to the end of the body of the record.
+            while(read() != -1) {
+            	    continue;
             }
-
-            if (this.in.available() > 0)
-            {
+            if (this.in.available() > 0) {
                 // If there's still stuff on the line, its the LINE_SEPARATOR
                 // that lies between records.  Lets read it so we're cue'd up
                 // aligned ready to read the next record.
@@ -196,26 +183,19 @@ public class ARCRecord
                 // Use the mark to go back if we read anything but
                 // LINE_SEPARATOR characters.
                 int c = -1;
-                while (this.in.available() > 0)
-                {
-                    if (this.in.markSupported())
-                    {
+                while (this.in.available() > 0) {
+                    if (this.in.markSupported()) {
                         this.in.mark(1);
                     }
                     c = this.in.read();
-                    if (c != -1)
-                    {
-                        if (c == LINE_SEPARATOR)
-                        {
+                    if (c != -1) {
+                        if (c == LINE_SEPARATOR) {
                             continue;
                         }
-                        if (this.in.markSupported())
-                        {
+                        if (this.in.markSupported()) {
                             this.in.reset();
                             break;
-                        }
-                        else
-                        {
+                        } else {
                             throw new IOException("Read " + (char)c +
                                 " when only" + LINE_SEPARATOR + " expected.");
                         }
@@ -226,12 +206,4 @@ public class ARCRecord
             this.eor = true;
         }
     }
-    
-	/**
-	 * @return Returns the absolute offset at which this record begins in the
-	 * arc. Position is beginning of the compressed or uncompressed record.
-	 */
-	public long getOffset() {
-		return this.offset;
-	}
 }
