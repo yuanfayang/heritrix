@@ -855,6 +855,9 @@ public class ReplayCharSequenceFactory {
                             unicode.getAbsolutePath();
                     }
                 }
+               
+                // REMOVE
+                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
             
                 // Flush any remaining state from the decoder, being careful
                 // to detect output buffer overflow(s)
@@ -865,6 +868,8 @@ public class ReplayCharSequenceFactory {
                     }
                 }
             
+                // REMOVE
+                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
                 // Drain any chars remaining in the output buffer
                 if (drainCharBuffer(cb, writer)) {
                     assert unicode.exists(): "No file: " +
@@ -878,9 +883,14 @@ public class ReplayCharSequenceFactory {
             }
             
             finally {
+                // REMOVE
+                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
                 if (writer != null) {
                     writer.close();
                 }
+                // REMOVE
+                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
+                assert isException: "IsException is true";
                 if (isException) {
                     deleteFile(unicode);
                 }
@@ -910,7 +920,7 @@ public class ReplayCharSequenceFactory {
             // being drained by calls to get(), a loop might be needed here.
             if (cb.hasRemaining()) {
                 // REMOVE
-                System.out.println("WRITE " + cb.arrayOffset() + ", " +
+                logger.info("Writing " + cb.arrayOffset() + ", " +
                     cb.limit());
                 assert cb.limit() > cb.arrayOffset(): cb.limit() + ", " +
                     cb.arrayOffset();
