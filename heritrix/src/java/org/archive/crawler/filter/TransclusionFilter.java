@@ -56,14 +56,14 @@ public class TransclusionFilter extends Filter {
      *
      * No limit beside the overall trans limit
      */
-    private static final int DEFAULT_MAX_REFERRAL_HOPS = Integer.MAX_VALUE;
+    private static final int DEFAULT_MAX_REFERRAL_HOPS = 0;
 
     /**
      * Default embedded link hops.
      *
      * No limit beside the overall trans limit
      */
-    private static final int DEFAULT_MAX_EMBED_HOPS = Integer.MAX_VALUE;
+    private static final int DEFAULT_MAX_EMBED_HOPS = 0;
 
     int maxTransHops = DEFAULT_MAX_TRANS_HOPS;
     int maxSpeculativeHops = DEFAULT_MAX_SPECULATIVE_HOPS;
@@ -82,18 +82,21 @@ public class TransclusionFilter extends Filter {
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_SPECULATIVE_HOPS,
-                "Maximum number of consecutive speculative (i.e. URIs extracted " +
-                "that we are not sure if they are embeds or not) hops to allow.",
+                "Maximum number of consecutive speculative (i.e. URIs" +
+                " extracted that we are not sure if they are embeds or" +
+                " not) hops to allow.\nA value of 0 means no upper limit.",
                 new Integer(DEFAULT_MAX_SPECULATIVE_HOPS)));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_REFERRAL_HOPS,
-                "Maximum number of consecutive referral hops to allow.",
+                "Maximum number of consecutive referral hops to allow.\n" +
+                "A value of 0 means no upper limit.",
                 new Integer(DEFAULT_MAX_REFERRAL_HOPS)));
         addElementToDefinition(
             new SimpleType(
                 ATTR_MAX_EMBED_HOPS,
-                "Maximum number of consecutive embed hops to allow.",
+                "Maximum number of consecutive embed hops to allow.\n" +
+                "A value of 0 means no upper limit.",
                 new Integer(DEFAULT_MAX_EMBED_HOPS)));
     }
 
@@ -143,11 +146,16 @@ public class TransclusionFilter extends Filter {
 
         readMaxValues(o);
 
-        return (transCount > 0) // this is a case of possible transclusion
-            && (transCount <= this.maxTransHops) // and the overall number of hops isn't too high
-            && (specCount <= this.maxSpeculativeHops) // and the number of spec-hops isn't too high
-            && (refCount <= this.maxReferralHops)  // and the number of referral-hops isn't too high
-            && (embedCount <= this.maxEmbedHops);  // and the number of embed-hops isn't too high
+        // This is a case of possible transclusion
+        return (transCount > 0) 
+            // ...and the overall number of hops isn't too high
+            && (transCount <= this.maxTransHops) 
+            // ...and the number of spec-hops isn't too high
+            && (specCount > 0 && specCount <= this.maxSpeculativeHops) 
+            // ...and the number of referral-hops isn't too high
+            && (this.maxReferralHops > 0 && refCount <= this.maxReferralHops)
+            // ...and the number of embed-hops isn't too high
+            && (this.maxEmbedHops > 0 && embedCount <= this.maxEmbedHops);
     }
 
     public void readMaxValues(Object o) {

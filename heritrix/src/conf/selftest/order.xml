@@ -117,7 +117,7 @@
         </map>
         <integer name="timeout-seconds">12</integer>
         <integer name="sotimeout-ms">20000</integer>
-        <long name="max-length-bytes">9223372036854775807</long>
+        <long name="max-length-bytes">0</long>
         <string name="load-cookies-from-file"></string>
         <string name="save-cookies-to-file"></string>
         <string name="trust-level">open</string>

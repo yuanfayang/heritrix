@@ -153,7 +153,7 @@ public class RecordingInputStream
 
     /**
      * Read all of a stream (Or read until we timeout or have read to the max).
-     * @param maxLength Maximum length to read.
+     * @param maxLength Maximum length to read. If zero or < 0, then no limit.
      * @param timeout Timeout in milliseconds for total read.  If zero or
      * negative, timeout is <code>Long.MAX_VALUE</code>.
      * @throws IOException failed read.
@@ -210,7 +210,7 @@ public class RecordingInputStream
                     e.getMessage() + " " + Thread.currentThread().getName());
             }
 
-            if (totalBytes > maxLength) {
+            if (maxLength > 0 && totalBytes > maxLength) {
                 throw new RecorderLengthExceededException();
             }
             if (System.currentTimeMillis() > timeoutTime) {

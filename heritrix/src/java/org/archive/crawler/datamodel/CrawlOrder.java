@@ -155,18 +155,21 @@ public class CrawlOrder extends ModuleType {
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_DOWNLOAD,
-                "Maximum number of bytes to download. Once this number is"
-                        + " exceeded the crawler will stop.", new Long(0)));
+                "Maximum number of bytes to download. Once this number is" +
+                " exceeded the crawler will stop.\n" +
+                "A value of zero means no upper limit.", new Long(0)));
         e.setOverrideable(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_DOCUMENT_DOWNLOAD,
-                "Maximum number of documents to download. Once this number"
-                        + " is exceeded the crawler will stop.", new Long(0)));
+                "Maximum number of documents to download. Once this number" +
+                " is exceeded the crawler will stop.\n" +
+                "A value of zero means no upper limit.", new Long(0)));
         e.setOverrideable(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_TIME_SEC,
-                "Maximum amount of time to crawl (in seconds). Once this"
-                        + " much time has elapsed the crawler will stop.",
+                "Maximum amount of time to crawl (in seconds).\nOnce this" +
+                " much time has elapsed the crawler will stop. A value of" +
+                " zero means no upper limit.",
                 new Long(0)));
         e.setOverrideable(false);
         
