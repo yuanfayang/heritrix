@@ -1,13 +1,15 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.datamodel.settings.*" %>
-<%@ page import="org.archive.crawler.framework.CrawlController" %>
+<%@ page import="org.archive.crawler.datamodel.settings.ComplexType" %>
+<%@ page import="org.archive.crawler.datamodel.settings.CrawlerSettings" %>
+<%@ page import="org.archive.crawler.datamodel.settings.XMLSettingsHandler" %>
 
-<%@ page import="java.io.*,java.lang.Boolean" %>
-<%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
+<%@ page import="java.io.BufferedReader" %>
+<%@ page import="java.io.FileReader" %>
+<%@ page import="java.util.regex.Matcher"%>
+<%@ page import="java.util.regex.Pattern" %>
 
 <%
 	/**
@@ -34,28 +36,51 @@
 	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
     
+    String error = null;
+    String metaName = request.getParameter("meta/name");
+    
     if(request.getParameter("action") != null){
     	//Make new job.
-    	CrawlJob newJob;
-    	if(isProfile){
-    		newJob = handler.newProfile(theJob,request.getParameter("meta/name"),request.getParameter("meta/description"),request.getParameter("seeds"));
-    	}else{
-    		newJob = handler.newJob(theJob,request.getParameter("meta/name"),request.getParameter("meta/description"),request.getParameter("seeds"));
+    	CrawlJob newJob = null;
+
+    	// Ensure we got a valid name. ([a-zA-Z][0-9][-_])
+    	Pattern p = Pattern.compile("[a-zA-Z_\\-0-9]*");
+    	if(p.matcher(metaName).matches()==false){
+            // Illegal name!
+            error = "Name can only contain alphanumeric chars, dash and underscore.<br>No spaces are allowed";
     	}
     	
-    	if(request.getParameter("action").equals("configure")){
-    		response.sendRedirect("/admin/jobs/configure.jsp?job="+newJob.getUID());
-    	} else if(request.getParameter("action").equals("modules")){
-    		response.sendRedirect("/admin/jobs/modules.jsp?job="+newJob.getUID());
-    	} else if(request.getParameter("action").equals("filters")){
-    		response.sendRedirect("/admin/jobs/filters.jsp?job="+newJob.getUID());
-    	} else if(request.getParameter("action").equals("override")){
-    		response.sendRedirect("/admin/jobs/per/overview.jsp?job="+newJob.getUID());
-    	} else {
-    		handler.addJob(newJob);
-    		response.sendRedirect("/admin/jobs.jsp?message=Job created");
+    	if(error == null){
+	    	if(isProfile){
+	    		// Ensure unique name
+	    		CrawlJob test = handler.getJob(metaName);
+	    		if(test == null){
+	                // unique name
+	                newJob = handler.newProfile(theJob,metaName,request.getParameter("meta/description"),request.getParameter("seeds"));
+	            } else {
+	                // Need a unique name!
+	                error = "Profile name must be unique!";
+	            }
+	    	}else{
+	    		newJob = handler.newJob(theJob,metaName,request.getParameter("meta/description"),request.getParameter("seeds"));
+	    	}
     	}
-    	return;
+    	
+    	if(error == null && newJob != null){
+	    	if(request.getParameter("action").equals("configure")){
+	    		response.sendRedirect("/admin/jobs/configure.jsp?job="+newJob.getUID());
+	    	} else if(request.getParameter("action").equals("modules")){
+	    		response.sendRedirect("/admin/jobs/modules.jsp?job="+newJob.getUID());
+	    	} else if(request.getParameter("action").equals("filters")){
+	    		response.sendRedirect("/admin/jobs/filters.jsp?job="+newJob.getUID());
+	    	} else if(request.getParameter("action").equals("override")){
+	    		response.sendRedirect("/admin/jobs/per/overview.jsp?job="+newJob.getUID());
+	    	} else {
+	    		handler.addJob(newJob);
+	    		response.sendRedirect("/admin/jobs.jsp?message=Job created");
+	    	}
+	    	return;
+        }
     }
 	
 	String title = isProfile?"New profile":"New crawl job";
@@ -96,15 +121,24 @@
 						Name of new job:
 					</td>
 					<td>
-						<input name="meta/name" value="<%=orderfile.getName()%>" style="width: 320px">
+						<input maxlength="38" name="meta/name" value="<%=error==null?orderfile.getName():metaName%>" style="width: 320px">
 					</td>
 				</tr>
+				<% if(error != null){ %>
+				    <tr>
+				        <td>
+				        </td>
+				        <td>
+				            <font color="red"><%=error%></font>
+				        </td>
+				    </tr>
+				<% } %>
 				<tr>
 					<td>
 						Description:
 					</td>
 					<td>
-						<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 320px">
+						<input name="meta/description" value="<%=error==null?orderfile.getDescription():request.getParameter("meta/description")%>" style="width: 320px">
 					</td>
 				</tr>
 				<tr>
@@ -113,12 +147,16 @@
 					</td>
 					<td>
 						<textarea name="seeds" style="width: 320px" rows="8"><%
-							BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
-							String sout = seeds.readLine();
-							while(sout!=null){
-								out.println(sout);
-								sout = seeds.readLine();
-							}
+							if(error==null){
+								BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+								String sout = seeds.readLine();
+								while(sout!=null){
+									out.println(sout);
+									sout = seeds.readLine();
+								}
+                            } else {
+                                out.println(request.getParameter("seeds"));
+                            }
 						%></textarea>
 					</td>
 				</tr>
