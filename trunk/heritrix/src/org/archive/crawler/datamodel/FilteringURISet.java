@@ -25,4 +25,12 @@ public class FilteringURISet extends Filter {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
+	 */
+	protected boolean innerAccepts(Object o) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }
