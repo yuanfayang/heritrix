@@ -35,9 +35,9 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.admin.CrawlJob;
-import org.archive.crawler.basic.ARCWriterProcessor;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.ComplexType;
+import org.archive.crawler.writer.ARCWriterProcessor;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCRecordMetaData;
 import org.archive.util.FileUtils;

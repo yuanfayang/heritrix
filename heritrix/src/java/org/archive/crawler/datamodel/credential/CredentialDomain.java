@@ -60,6 +60,8 @@ public class CredentialDomain
      */
     private String credentialDomainName = null;
     
+    static String xxx = null;
+    
     
     /**
      * Constructor.
