@@ -599,9 +599,9 @@ public class CrawlController implements Serializable {
     private void setupDisk() throws AttributeNotFoundException {
         String diskPath
             = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
-        disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
-        disk.mkdirs();
-        
+        this.disk = getSettingsHandler().
+            getPathRelativeToWorkingDirectory(diskPath);
+        this.disk.mkdirs();
         this.logsDisk = getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
         this.checkpointsDisk = getSettingsDir(CrawlOrder.ATTR_CHECKPOINTS_PATH);
         this.stateDisk = getSettingsDir(CrawlOrder.ATTR_STATE_PATH);
@@ -683,35 +683,24 @@ public class CrawlController implements Serializable {
 
         this.fileHandlers = new HashMap();
 
-        setupLogFile(
-                uriProcessing,
-                logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
-                new UriProcessingFormatter(),
-                true);
+        setupLogFile(uriProcessing,
+            logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
+            new UriProcessingFormatter(), true);
 
-        setupLogFile(
-                runtimeErrors,
-                logsPath + LOGNAME_RUNTIME_ERRORS + CURRENT_LOG_SUFFIX,
-                new RuntimeErrorFormatter(),
-                true);
+        setupLogFile(runtimeErrors,
+            logsPath + LOGNAME_RUNTIME_ERRORS + CURRENT_LOG_SUFFIX,
+            new RuntimeErrorFormatter(), true);
 
-        setupLogFile(
-                localErrors,
-                logsPath + LOGNAME_LOCAL_ERRORS + CURRENT_LOG_SUFFIX,
-                new LocalErrorFormatter(),
-                true);
+        setupLogFile(localErrors,
+            logsPath + LOGNAME_LOCAL_ERRORS + CURRENT_LOG_SUFFIX,
+            new LocalErrorFormatter(), true);
 
-        setupLogFile(
-                uriErrors,
-                logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
-                new UriErrorFormatter(),
-                true);
+        setupLogFile(uriErrors,
+            logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
+            new UriErrorFormatter(), true);
 
-        setupLogFile(
-                progressStats,
-                logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
-                new StatisticsLogFormatter(),
-                true);
+        setupLogFile(progressStats, logsPath + LOGNAME_PROGRESS_STATISTICS
+                + CURRENT_LOG_SUFFIX, new StatisticsLogFormatter(), true);
 
     }
 
