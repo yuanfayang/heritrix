@@ -63,6 +63,13 @@ path:
 path:
 
     % export PATH=$PATH:$MAVEN_HOME/bin
+
++ Install the maven sdocbook plugin by copying it to $MAVEN_HOME/plugins
+Its used generating docbook articles.  You'll also need to manually add
+the jimi jar to your maven repository. Its needed by sdocbook and its
+sun licensed so you'll have to go pull it down yourself.  Maven can't do 
+it for you.  I undid the JimiProClasses.zip file and redid is a jar called
+jimi-1.0.jar.
     
 + Install cruisecontrol.  This doc. was done w/ 2.1.4.  You have to build it
 after downloading (This is the best doc. I found on cruisecontrol setup:

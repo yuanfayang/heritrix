@@ -12,7 +12,12 @@
     <preGoal name="xdoc:jelly-transform">
         <attainGoal name="faq"/>
         <attainGoal name="heritrix-javadoc"/>
+        <attainGoal name="docbook"/>
     </preGoal> 
+
+    <goal name="docbook">
+        <attainGoal name="sdocbook"/>
+    </goal>
 
     <preGoal name="java:jar-resources"> 
         <filter token="VERSION" value="${pom.currentVersion}" /> 
