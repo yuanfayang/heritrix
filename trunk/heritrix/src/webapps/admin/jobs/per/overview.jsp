@@ -9,7 +9,8 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.Collection"%>
+<%@page import="java.util.Iterator"%>
 
 <%@page import="org.archive.crawler.admin.CrawlJob"%>
 <%@page import="org.archive.crawler.settings.CrawlerSettings"%>
@@ -167,9 +168,9 @@
 				<li> <a href="javascript:doGotoDomain('<%=parentDomain%>')">- Up -</a>
 		<%
 			}
-			ArrayList subs = settingsHandler.getDomainOverrides(currDomain);
-			for(int i=0 ; i < subs.size() ; i++){
-				String printDomain = (String)subs.get(i);
+			Collection subs = settingsHandler.getDomainOverrides(currDomain);
+            for (Iterator i = subs.iterator(); i.hasNext();) {
+                String printDomain = (String)i.next();
 				if(currDomain.length()>0){
 					printDomain += "."+currDomain;
 				}

@@ -32,7 +32,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
@@ -363,7 +366,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         return f;
     }
 
-    public ArrayList getDomainOverrides(String rootDomain) {
+    public Collection getDomainOverrides(String rootDomain) {
         File settingsDir = getSettingsDirectory();
 
         //Find the right start directory.
@@ -389,7 +392,17 @@ public class XMLSettingsHandler extends SettingsHandler {
         }
         //Then we move to the approprite directory.
         settingsDir = new File(settingsDir.getPath()+subDir);
-        ArrayList confirmedSubDomains = new ArrayList();
+        TreeSet confirmedSubDomains = new TreeSet(new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    if(o1 instanceof String && o2 instanceof String){
+                        return ((String)o1).compareTo(o2);
+                    } else {
+                        // We only account for strings.
+                        return 0;
+                    }
+                }
+            }
+        );
         if(settingsDir.exists()){
             // Found our place! Search through it's subdirs.
             File[] possibleSubDomains = settingsDir.listFiles();

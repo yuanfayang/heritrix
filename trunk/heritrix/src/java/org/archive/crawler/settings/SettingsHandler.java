@@ -28,7 +28,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -451,8 +451,10 @@ public abstract class SettingsHandler {
     public abstract File getPathRelativeToWorkingDirectory(String path);
 
     /**
-     * Will return an array of strings with domains that contain 'per' domain
-     * overrides (or their subdomains contain them). The domains considered are
+     * Will return a Collection of strings with domains that contain 'per'
+     * domain overrides (or their subdomains contain them). 
+     * 
+     * The domains considered are
      * limited to those that are subdomains of the supplied domain. If null or
      * empty string is supplied the TLDs will be considered.
      * @param rootDomain The domain to get domain overrides for. Examples:
@@ -460,7 +462,7 @@ public abstract class SettingsHandler {
      * @return An array of domains that contain overrides. If rootDomain does not
      *         exist an empty array will be returned.
      */
-    public abstract ArrayList getDomainOverrides(String rootDomain);
+    public abstract Collection getDomainOverrides(String rootDomain);
 
     /**
      * Unregister an instance of {@link ValueErrorHandler}.
