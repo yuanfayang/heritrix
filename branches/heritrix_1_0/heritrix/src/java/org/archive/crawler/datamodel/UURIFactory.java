@@ -273,8 +273,8 @@ public class UURIFactory extends URI {
     private UURI create(UURI base, String relative) throws URIException {
         UURI uuri = isEscaped(relative)? 
             new UURIImpl(base,
-                    new UURI(fixup(relative, base).toCharArray(),
-                    base.getProtocolCharset())):
+                    new UURI(escapeWhitespace(fixup(relative, base)).
+                        toCharArray(), base.getProtocolCharset())):
             new UURIImpl(base, new UURI(fixup(relative, base),
                     base.getProtocolCharset()));
         if (logger.isLoggable(Level.FINE)) {
