@@ -492,7 +492,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         try {
             return getAttribute(context, name);
         } catch (AttributeNotFoundException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Was passed '" + name +
+                "' and got this exception: " + e.getMessage());
         }
     }
 
