@@ -11,10 +11,17 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 
 /**
+ * A step, late in the processing of a CrawlURI, for
+ * updating the per-host information that may have
+ * been affected by the fetch. This will initially
+ * be robots and ip address info; it could include 
+ * other per-host stats that would affect the crawl
+ * (like total pages visited at the site) as well.
+ * 
  * @author gojomo
  *
  */
-public class HostCacheMaintainer extends Processor {
+public class HostInfoUpdater extends Processor {
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -26,7 +33,6 @@ public class HostCacheMaintainer extends Processor {
 			if(curi.getAList().containsKey("http-transaction")) {
 				GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
 				curi.getHost().updateRobots(get);
-					
 			}
 		}
 	}

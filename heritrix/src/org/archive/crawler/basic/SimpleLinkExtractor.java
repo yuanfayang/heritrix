@@ -51,6 +51,10 @@ public class SimpleLinkExtractor extends Processor {
 		
 		String cb = get.getResponseBodyAsString();
 		
+		if (cb==null) {
+			// TODO: note problem
+			return;
+		}
 		// extract BASE HREF
 		Pattern baseExtractor = Pattern.compile(
 			"(?i)<base[^<]*\\s(?:href)=(?:(?:\"([^>\"]*)\")|([\\S&&[^>]]*))(?:[^>]+)*>");
