@@ -306,6 +306,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
         configureMethod(curi, method);
         
+        // Set httpRecorder into curi for convenience of subsequent processors.
+        curi.setHttpRecorder(rec);
+        
         // Populate credentials. Set config so auth. is not automatic.
         boolean addedCredentials = populateCredentials(curi, method);
         method.setDoAuthentication(addedCredentials);
@@ -361,9 +364,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
         // Set the response charset into the HttpRecord if available.
         setCharacterEncoding(rec, method);
-
-        // Set httpRecorder into curi for convenience of subsequent processors.
-        curi.setHttpRecorder(rec);
         
         int statusCode = method.getStatusCode();
         long contentSize = rec.getRecordedInput().getSize();
