@@ -304,6 +304,8 @@ public class ToeThread extends Thread
         rep.append("Where: "+where);
         rep.newline();
 
+        this.dumpStack(); // Have report() trigger a write of stack trace. DEBUGING.
+
         return rep.toString();
     }
 
