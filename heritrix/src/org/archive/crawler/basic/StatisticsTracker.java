@@ -256,6 +256,8 @@ public class StatisticsTracker implements Runnable {
 		int completed = totalFetchAttempts();
 		int total = urisEncounteredCount();
 		
+		if(total == 0){ return 0; }
+		
 		return (int)(100*completed/total);
 	}
 	

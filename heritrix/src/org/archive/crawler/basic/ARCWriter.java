@@ -38,7 +38,7 @@ import org.xbill.DNS.Record;
  */
 public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
-	private int arcMaxSize = 10000000;		// max size we want arc files to be (bytes)
+	private int arcMaxSize = 100000000;		// max size we want arc files to be (bytes)
 	private String arcPrefix = "archive";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
@@ -105,6 +105,16 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   		// if  there was a failure, or we haven't fetched the resource yet, return
 		if(curi.getFetchStatus()<=0){
 			return;
+		}
+		
+		// create a new arc file if the existing one is too big
+		if(isNewArcNeeded()) {
+			try{
+				createNewArcFile();
+			}catch(Exception e){
+				//TODO deal better with not being able to write files to disk (a serious problem)
+				e.printStackTrace();
+			}
 		}
 
   		// find the write protocol and write this sucker
@@ -178,10 +188,6 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 					+ recordLength
 					+ "\n";	
 					
-			if(isNewArcNeeded()) {
-							createNewArcFile();
-			}
-					
 			try{	
 			out.write(metaLineStr.getBytes());  		
 			
@@ -232,6 +238,10 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 					+ " text/plain 77\n1 0 InternetArchive\nURL IP-address Archive-date Content-type Archive-length\n\n\n";
 			
 			out.write(arcFileDesc.getBytes());
+		
+			if(useCompression()){
+				((IAGZIPOutputStream)out).endCompressionBlock();
+			}
 			
 		} catch (IOException e) {
 			e.printStackTrace();

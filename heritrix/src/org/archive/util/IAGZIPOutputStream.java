@@ -134,6 +134,12 @@ public class IAGZIPOutputStream extends GZIPOutputStream {
 		}
 	}	
 	
+	/** Tidy up and close the underlying stream */
+	public void close() throws IOException {
+		endCompressionBlock();
+		out.close();
+	}
+	
 	// ibm stuff
 	
 	/*
