@@ -45,16 +45,16 @@ import java.security.MessageDigest;
  */
 public class RecordingInputStream
     extends InputStream 
-{
-    /**
-     * The stream we're recording.
-     */
-	protected InputStream wrappedStream;
-    
+{   
     /**
      * Where we are recording to.
      */
-	protected RecordingOutputStream recordingOutputStream;
+	private RecordingOutputStream recordingOutputStream;
+    
+    /**
+     * Stream to record.
+     */
+    private InputStream in = null;
 
 
 	/**
@@ -62,17 +62,16 @@ public class RecordingInputStream
 	 * 
 	 * @param bufferSize Size of buffer to use.
 	 * @param backingFilename Name of backing file.
-	 * @param maxSize Maximum amount to record.
 	 */
-	public RecordingInputStream(int bufferSize, String backingFilename,
-            int maxSize)
+	public RecordingInputStream(int bufferSize, String backingFilename)
     {
 		recordingOutputStream = new RecordingOutputStream(bufferSize,
-            backingFilename, maxSize);
+            backingFilename);
 	}
 
 	public void open(InputStream wrappedStream) throws IOException {
-		this.wrappedStream = wrappedStream;
+        assert this.in == null;
+		this.in = wrappedStream;
 		recordingOutputStream.open(); 
 	}
 
@@ -80,11 +79,10 @@ public class RecordingInputStream
 	 * @see java.io.InputStream#read()
 	 */
 	public int read() throws IOException {
-		int b = wrappedStream.read();
+		int b = this.in.read();
 		if (b != -1) {
 			recordingOutputStream.write(b);
 		}
-//		checkLimits();
 		return b;
 	}
 	
@@ -92,8 +90,8 @@ public class RecordingInputStream
 	 * @see java.io.InputStream#read(byte[], int, int)
 	 */
 	public int read(byte[] b, int off, int len) throws IOException {
-		int count = wrappedStream.read(b,off,len);
-		if (count>0) {
+		int count = this.in.read(b,off,len);
+		if (count > 0) {
 			recordingOutputStream.write(b,off,count);
 		} 
 		return count;
@@ -103,8 +101,8 @@ public class RecordingInputStream
 	 * @see java.io.InputStream#read(byte[])
 	 */
 	public int read(byte[] b) throws IOException {
-		int count = wrappedStream.read(b);
-		if (count>0) {
+		int count = this.in.read(b);
+		if (count > 0) {
 			recordingOutputStream.write(b,0,count);
 		} 
 		return count;
@@ -114,8 +112,11 @@ public class RecordingInputStream
 	 * @see java.io.OutputStream#close()
 	 */
 	public void close() throws IOException {
-		super.close();
-		wrappedStream.close();
+        if (this.in != null)
+        {
+            this.in.close();
+            this.in = null;
+        }
 		recordingOutputStream.close();
 	}
 	
@@ -133,22 +134,15 @@ public class RecordingInputStream
 		}
 		return recordingOutputStream.getSize();
 	}
-
-//	/**
-//	 * @param maxLength
-//	 * @param timeout
-//	 */
-//	public void setLimits(long maxLength, long timeout) {
-//		this.maxLength = maxLength;
-//		this.timeout = timeout;
-//	}
 	
 	/**
 	 * @param maxLength
 	 * @param timeout
 	 * @throws IOException
 	 */
-	public void readFullyOrUntil(long maxLength, long timeout) throws IOException {
+	public void readFullyOrUntil(long maxLength, long timeout)
+        throws IOException
+    {
 		long timeoutTime;
 		long totalBytes = 0;
 		if(timeout>0) {
@@ -178,7 +172,6 @@ public class RecordingInputStream
 	}
 
 	public long getSize() {
-		// TODO Auto-generated method stub
 		return recordingOutputStream.getSize();
 	}
 
@@ -209,7 +202,6 @@ public class RecordingInputStream
         recordingOutputStream.setDigest(md);
     }
 
-    
     /**
      * Return the digest value for any recorded, digested data. Call
      * only after all data has been recorded; otherwise, the running
@@ -244,13 +236,4 @@ public class RecordingInputStream
 		fos.close();
 		ris.close();
 	}
-
-	/**
-	 * 
-	 */
-	public void verify() {
-		recordingOutputStream.verify();
-	}
-
-
 }

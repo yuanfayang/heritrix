@@ -36,6 +36,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
+import org.archive.io.arc.ARCWriterPool;
 import org.archive.util.ArchiveUtils;
 import org.xbill.DNS.Record;
 
@@ -68,10 +69,10 @@ public class ARCWriterProcessor
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     protected String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
- 
+    
     /**
      * Use compression flag.
-     * 
+     *
      * Default is ARCConstants.DEFAULT_COMPRESS.
      */
     protected boolean useCompression = DEFAULT_COMPRESS;
@@ -84,7 +85,7 @@ public class ARCWriterProcessor
     /**
      * Reference to an ARCWriter.
      */
-    ARCWriter arcWriter = null;
+    ARCWriterPool pool = null;
     
     
     public void initialize(CrawlController c)
@@ -96,8 +97,9 @@ public class ARCWriterProcessor
         
         try
         {
-            this.arcWriter = new ARCWriter(new File(this.outputDir),
-                 this.arcPrefix, this.useCompression, this.arcMaxSize);
+            // Set up the pool of ARCWriters.
+            this.pool = new ARCWriterPool(new File(outputDir), this.arcPrefix,
+                this.useCompression);
         }
         
         catch (IOException e) 
@@ -170,10 +172,18 @@ public class ARCWriterProcessor
             return;
         }
 
-        this.arcWriter.write(curi.getURIString(), curi.getContentType(),
-            curi.getServer().getHost().getIP().getHostAddress(),
-            curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
-            get.getHttpRecorder().getRecordedInput().getReplayInputStream());
+        ARCWriter writer = this.pool.borrowARCWriter();
+        try
+        {
+            writer.write(curi.getURIString(), curi.getContentType(),
+               curi.getServer().getHost().getIP().getHostAddress(),
+               curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
+               get.getHttpRecorder().getRecordedInput().getReplayInputStream());
+        }
+        finally
+        {
+            this.pool.returnARCWriter(writer);
+        }
     }
 
     protected void writeDns(CrawlURI curi)
@@ -202,9 +212,17 @@ public class ARCWriterProcessor
             }
         }
         
-        this.arcWriter.write(curi.getURIString(), curi.getContentType(),
-            curi.getServer().getHost().getIP().getHostAddress(),
-            curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength, baos);
+        ARCWriter writer = this.pool.borrowARCWriter();
+        try
+        {
+            writer.write(curi.getURIString(), curi.getContentType(),
+               curi.getServer().getHost().getIP().getHostAddress(),
+               curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength, baos);
+        }
+        finally
+        {
+            this.pool.returnARCWriter(writer);
+        }
         
         // Save the calculated contentSize for logging purposes
         // TODO handle this need more sensibly

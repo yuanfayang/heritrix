@@ -26,7 +26,6 @@ package org.archive.io.arc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -44,18 +43,12 @@ import org.archive.util.TmpDirTestCase;
  */
 public class ARCWriterTest
     extends TmpDirTestCase
-    implements ARCConstants, FileFilter
+    implements ARCConstants
 {
     /**
      * Prefix to use for ARC files made by JUNIT.
      */
     private static final String PREFIX = DEFAULT_ARC_FILE_PREFIX;
-    
-    /**
-     * Store in here the file prefix for filefiltering done by some of the 
-     * unit tests.
-     */
-    private String fileFilterPrefix = null;
   
     
     /*
@@ -152,40 +145,11 @@ public class ARCWriterTest
     {
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
-        this.fileFilterPrefix = baseName;
         File [] files = getTmpDir().listFiles(this);
         for (int i = 0; i < files.length; i++)
         {
             validate(files[i], -1);
         }        
-    }
-    
-    /**
-     * Delete any files left over from previous run.
-     * 
-     * @param baseName Base name of files we're to clean up.
-     */
-    private void cleanUpOldFiles(String baseName)
-    {
-        this.fileFilterPrefix = baseName;
-        // Delete any files hanging about from last test run if any.
-        File [] files = getTmpDir().listFiles(this);
-        for (int i = 0; i < files.length; i++)
-        {
-            files[i].delete();
-        }
-    }
-    
-    /**
-     * Return files that begin w/ {@link #fileFilterPrefix}
-     * 
-     * Implementation of the FileFilter.accept method.
-     * @param pathname File to filter.
-     * @return True if we are to include the passed file.
-     */
-    public boolean accept(File pathname)
-    {
-        return pathname.getName().startsWith(this.fileFilterPrefix);
     }
 
     public void testWriteRecord()
@@ -211,7 +175,7 @@ public class ARCWriterTest
     {
         ARCWriter arcWriter = new ARCWriter(getTmpDir(),
             "getOutputDir-" + PREFIX, false, DEFAULT_MAX_ARC_FILE_SIZE);
-        assertEquals(getTmpDir(), arcWriter.getOutputDir());
+        assertEquals(getTmpDir(), arcWriter.getArcsDir());
         arcWriter.close();
     }
 }

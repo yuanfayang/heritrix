@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* ReplayableOutputStream
+ * 
+ * $Id$
+ * 
+ * Created on Sep 23, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,16 +21,10 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ReplayableOutputStream.java
- * Created on Sep 23, 2003
- *
- * $Header$
  */
 package org.archive.io;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -64,25 +64,31 @@ import java.security.NoSuchAlgorithmException;
  *
  */
 public class RecordingOutputStream extends OutputStream {
-	protected long size = 0;
-	protected String backingFilename;
-	protected BufferedOutputStream diskStream;
-	protected byte[] buffer;
-	protected long position;
-	protected boolean shouldDigest = false;
-    protected MessageDigest digest; 
     
     /**
-     * Stream we wrap.
+     * Size of recording.
      * 
-     * May be null.
+     * Later passed to ReplayInputStream on creation.  It uses it to know when
+     * EOS.
      */
-    protected OutputStream wrappedStream = null;
+	private long size = 0;
+    
+    private String backingFilename;
+    private BufferedOutputStream diskStream;
+    private byte[] buffer;
+    private long position;
+    private boolean shouldDigest = false;
+    private MessageDigest digest; 
 	
     /**
      * When recording HTTP, where the content-body starts.
      */
-    protected long contentBeginMark;
+    private long contentBeginMark;
+    
+    /**
+     * Stream to record.
+     */
+    private OutputStream out = null;
     
 	
     /**
@@ -90,11 +96,8 @@ public class RecordingOutputStream extends OutputStream {
 	 * 
 	 * @param bufferSize Buffer size to use.
 	 * @param backingFilename Name of backing file to use.
-	 * @param maxSize Maximum size to record.  Currently ignored.  We just
-     * write until we fill the file/disk.
 	 */
-	public RecordingOutputStream(int bufferSize, String backingFilename,
-            int maxSize)
+	public RecordingOutputStream(int bufferSize, String backingFilename)
     {
 		this.buffer = new byte[bufferSize];
 		this.backingFilename = backingFilename;
@@ -124,7 +127,8 @@ public class RecordingOutputStream extends OutputStream {
 	public void open(OutputStream wrappedStream)
         throws IOException
    {
-		this.wrappedStream = wrappedStream;
+        assert this.out == null;
+		this.out = wrappedStream;
 		this.position = 0;
 		this.size = 0;
 		// Always begins false; must use startDigest() to begin
@@ -137,6 +141,7 @@ public class RecordingOutputStream extends OutputStream {
 	private void lateOpen()
         throws FileNotFoundException
     {
+        // TODO: Fix so we only make file when its actually needed.
 		if (diskStream == null) {
 			FileOutputStream fis = new FileOutputStream(backingFilename);
 			this.diskStream = new BufferedOutputStream(fis, 4096);
@@ -148,9 +153,9 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void write(int b) throws IOException {
 		record(b);
-        if (wrappedStream != null)
+        if (this.out != null)
         {
-            wrappedStream.write(b);
+            this.out.write(b);
         }
 	}
 	
@@ -159,9 +164,9 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void write(byte[] b) throws IOException {
 		record(b, 0, b.length);
-        if (wrappedStream != null)
+        if (this.out != null)
         {
-            wrappedStream.write(b);
+            this.out.write(b);
         }
 	}
 	
@@ -170,9 +175,9 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	public void write(byte[] b, int off, int len) throws IOException {
 		record(b, off, len);
-        if (wrappedStream != null)
+        if (this.out != null)
         {
-            wrappedStream.write(b, off, len);
+            this.out.write(b, off, len);
         }
 	}
 	
@@ -231,29 +236,51 @@ public class RecordingOutputStream extends OutputStream {
 	/* (non-Javadoc)
 	 * @see java.io.OutputStream#close()
 	 */
-	public void close() throws IOException {
-		super.close();
-		if(wrappedStream != null) {
-			wrappedStream.close();
-			wrappedStream = null;
-		} 
+	public void close()
+        throws IOException
+    {
+		if (this.out != null)
+        {
+		    this.out.close();
+            this.out = null;
+        }
         closeRecorder();
 	}
+    
+    public void closeRecorder()
+        throws IOException
+    {
+        if (diskStream != null) {
+            diskStream.close();
+            diskStream = null;
+        }
+        
+        // This setting of size is important.  Its passed to ReplayInputStream
+        // on creation.  It uses it to know EOS.
+        if (size == 0)
+        {
+            size = position;
+        }
+    }
 
 	/* (non-Javadoc)
 	 * @see java.io.OutputStream#flush()
 	 */
 	public void flush() throws IOException {
-		super.flush();
+        if (this.out != null)
+        {
+            this.out.flush();
+        }
 		if (diskStream != null) {
 			diskStream.flush();
-		}
-		if (wrappedStream != null) {
-			wrappedStream.flush();
 		}
 	}
 	
 	public ReplayInputStream getReplayInputStream() throws IOException {
+        // If this method is being called, then assumption must be that the 
+        // stream is closed (If it ain't, then the stream gotten won't work
+        // -- the size will zero so any attempt at a read will get back EOF.
+        assert this.out == null: "Stream is still open.";
 		return new ReplayInputStream(buffer, size, contentBeginMark,
             backingFilename);
 	}
@@ -345,28 +372,5 @@ public class RecordingOutputStream extends OutputStream {
 
 	public long getResponseContentLength() {
 		return size-contentBeginMark;
-	}
-
-	public void closeRecorder() throws IOException {
-		if (diskStream != null) {
-			diskStream.close();
-			diskStream = null;
-		}
-        if (size == 0)
-        {
-            size = position;
-        }
-	}
-
-	public void verify() {
-		if (size > buffer.length) {
-			File f = new File(backingFilename);
-			assert f.exists();
-			assert f.length() == size - buffer.length;
-			System.out.println(backingFilename + ".length()=" +
-			    f.length() + " size=" + size +
-			    " size-buffer.length=" + (size - buffer.length));
-			//locksize = true;
-		}
 	}
 }
