@@ -23,7 +23,8 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.util.HashMap;
+import java.lang.ref.SoftReference;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 
 import org.apache.commons.httpclient.URIException;
@@ -39,27 +40,33 @@ import org.xbill.DNS.FindServer;
  */
 public class ServerCache {
     private final SettingsHandler settingsHandler;
-    private HashMap servers = new HashMap(); // hostname[:port] -> CrawlServer
-    private HashMap hosts = new HashMap(); // hostname -> CrawlHost
+    private WeakHashMap servers = new WeakHashMap(); // hostname[:port] -> SoftReference(CrawlServer)
+    private WeakHashMap hosts = new WeakHashMap(); // hostname -> SoftReference(CrawlHost)
 
     public ServerCache(SettingsHandler settingsHandler) {
         this.settingsHandler = settingsHandler;
     }
 
     public CrawlServer getServerFor(String h) {
-        CrawlServer cserver = (CrawlServer) servers.get(h);
+        SoftReference serverRef = (SoftReference) servers.get(h);
+        CrawlServer cserver = (CrawlServer) ((serverRef==null) ? null : serverRef.get());
         if (cserver==null) {
-            cserver = new CrawlServer(h);
+            String skey = new String(h); // ensure key is private object
+            cserver = new CrawlServer(skey);
             cserver.setSettingsHandler(settingsHandler);
-            servers.put(h,cserver);
+            
+            String hostname = cserver.getHostname();
+            SoftReference hostRef = (SoftReference) hosts.get(hostname);
+            CrawlHost host = (CrawlHost) ((hostRef==null) ? null : hostRef.get());
+            if (host==null) {
+                String hkey = new String(hostname); 
+                host = new CrawlHost(hkey);
+                hosts.put(hkey,new SoftReference(host));
+            }
+            cserver.setHost(host);
+            
+            servers.put(skey,new SoftReference(cserver));
         }
-        String hostname = cserver.getHostname();
-        CrawlHost host = (CrawlHost) hosts.get(hostname);
-        if (host==null) {
-            host = new CrawlHost(hostname);
-            hosts.put(hostname,host);
-        }
-        cserver.setHost(host);
         return cserver;
     }
 
@@ -69,6 +76,9 @@ public class ServerCache {
      * @throws URIException
      */
     public CrawlServer getServerFor(CrawlURI curi) throws URIException {
+        // TODO: evaluate if this is really necessary -- why not 
+        // make the server of a dns CrawlURI the looked-up domain,
+        // also simplifying FetchDNS?
         String scheme = curi.getUURI().getScheme();
         if (scheme.equals("dns")) {
             // set crawlhost to default nameserver
@@ -95,5 +105,17 @@ public class ServerCache {
         // TODOSOMEDAY: make this robust against those rare cases
         // where authority is not a hostname.
         return (hostOrAuthority != null)? getServerFor(hostOrAuthority): null;
+    }
+    
+    public boolean containsServer(String serverKey) {
+        SoftReference serverRef = (SoftReference) servers.get(serverKey);
+        CrawlServer cserver = (CrawlServer) ((serverRef==null) ? null : serverRef.get());
+        return cserver != null; 
+    }
+    
+    public boolean containsHost(String hostKey) {
+        SoftReference hostRef = (SoftReference) hosts.get(hostKey);
+        CrawlHost chost = (CrawlHost) ((hostRef==null) ? null : hostRef.get());
+        return chost != null; 
     }
 }
