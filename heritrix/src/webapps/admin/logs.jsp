@@ -274,7 +274,7 @@
 								<input name="grep" value="true" type="checkbox" <%=request.getParameter("grep")!=null&&request.getParameter("grep").equalsIgnoreCase("true")?"checked":""%>>
 							</td>
 							<td nowrap>
-								&nbsp;Grep stype&nbsp;&nbsp;
+								&nbsp;Grep style&nbsp;&nbsp;
 							</td>
 						</tr>
 					</table>
