@@ -220,7 +220,7 @@ public class LogReader
                 }
                 i++;
             }
-            info = "Displaying " + linesMatched + " of " + lines + " total lines in file";
+            info = "Displaying: " + linesMatched + " of " + lines + " total lines in file";
         }catch(FileNotFoundException e){
             e.printStackTrace();
             return null;
@@ -294,7 +294,7 @@ public class LogReader
                 }
                 i++;
             }
-            info = "Displaying " + linesMatched + " of " + lines + " total lines in file";
+            info = "Displaying: " + linesMatched + " of " + lines + " total lines in file";
         }catch(FileNotFoundException e){
             e.printStackTrace();
             return null;
