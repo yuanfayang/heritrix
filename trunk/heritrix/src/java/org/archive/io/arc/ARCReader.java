@@ -51,6 +51,7 @@ import org.archive.io.RandomAccessInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
 import org.archive.util.MimetypeUtils;
+import org.archive.util.TextUtils;
 
 
 /**
@@ -560,10 +561,19 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             logStdErr(Level.WARNING, "Fixed spaces in metadata URL." +
                 " Original: " + originalValues + ", New: " + values);
         }
-
+        
         Map headerFields = new HashMap(keys.size() + 2);
         for (int i = 0; i < keys.size(); i++) {
             headerFields.put(keys.get(i), values.get(i));
+        }
+        
+        // Add a check for tabs in URLs.  If any, replace with '%09'.
+        // See https://sourceforge.net/tracker/?group_id=73833&atid=539099&func=detail&aid=1010966,
+        // [ 1010966 ] crawl.log has URIs with spaces in them.
+        String url = (String)headerFields.get(URL_HEADER_FIELD_KEY);
+        if (url != null && url.indexOf('\t') >= 0) {
+            headerFields.put(URL_HEADER_FIELD_KEY,
+                TextUtils.replaceAll("\t", url, "&09"));
         }
 
         headerFields.put(VERSION_HEADER_FIELD_KEY, v);
