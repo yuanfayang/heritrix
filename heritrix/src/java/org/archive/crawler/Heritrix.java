@@ -132,9 +132,7 @@ public class Heritrix
     protected static Properties properties = null;
     
     /**
-     * Logging handler.
-     *
-     * TODO: Make implementation of CrawlJobHandler configurable
+     * CrawlJob handler. Manages multiple crawl jobs at runtime.
      */
     protected static CrawlJobHandler jobHandler;
 
@@ -551,9 +549,9 @@ public class Heritrix
 		User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
 		
         String status = null;
+        jobHandler = new CrawlJobHandler();
         if (crawlOrderFile != null)
         {
-            jobHandler = new CrawlJobHandler();
             CrawlJob job = createCrawlJob(jobHandler, new File(crawlOrderFile),
                 "Auto launched");
             jobHandler.addJob(job);
