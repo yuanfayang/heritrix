@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 	<head>
-		<title>HTML AUTH HOME</title>
+		<title>DIGEST AUTH Success Page</title>
 		<meta name="author" content="Debian User,,," >
 		<meta name="generator" content="screem 0.8.2" >
 		<meta name="keywords" content="" >
@@ -10,15 +10,15 @@
 		<meta http-equiv="Content-Style-Type" content="text/css" >
 	</head>
 	<body>
-			<h1>HTML AUTH HOME</h1>
-			<p>This page just points down into subdirectories that hold 
-		html login forms and pages protected by basic or digest auth.</p>
-		<ul>
-        <li>Accessing this page, <a href="digest/">digest</a>, will generate
-        a 401.</li>
-        <li>Accessing this page, <a href="basic/">basic</a>, will generate
-        a 401.</li>
-		<li><a href="form/">form</a></li>
-		</ul>
+		<h1>DIGEST AUTH Success Page</h1>
+		<p>To get to this page, selftest needs to have successfully 
+		negotiated the DIGEST AUTH protections set in place by code
+		in org.archive.crawler.Heritrix#selftest and by directives set in
+		the selftest <i>web.xml</i> file.</p>
+
+        <p>Link to a file thats only accessible if we've successfully
+        logged in: <a href="digest-loggedin.html">digest-loggedin.html</a>
+        page.</p>
+		
 	</body>
 </html>

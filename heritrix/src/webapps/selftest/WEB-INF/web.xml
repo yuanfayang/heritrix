@@ -7,7 +7,7 @@
     <display-name>Heritrix Selftest</display-name>
 
     <security-constraint>
-        <display-name>Basic auth constraint.</display-name>
+        <display-name>BASIC auth constraint.</display-name>
        <web-resource-collection>
           <web-resource-name>Selftest BASIC Auth Test</web-resource-name>
           <url-pattern>/Auth/basic/*</url-pattern>
@@ -24,7 +24,7 @@
     </login-config>
 
     <security-role>
-        <description>Role used to get into the area protected by basic auth.
+        <description>Role used to get into the area protected by digest auth.
             </description>
         <role-name>selftest</role-name>
     </security-role>

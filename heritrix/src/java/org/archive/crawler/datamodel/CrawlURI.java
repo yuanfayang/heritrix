@@ -25,9 +25,13 @@ package org.archive.crawler.datamodel;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.httpclient.HttpStatus;
+import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
@@ -106,7 +110,11 @@ public class CrawlURI extends CandidateURI
      * May be null even on successfully fetched URI.
      */
     private String contentType = null;
-
+    
+    /**
+     * Key to get credentials from A_LIST.
+     */
+    private static final String A_CREDENTIALS_KEY = "credentials";
 
     /**
      * @param uuri
@@ -413,9 +421,6 @@ public class CrawlURI extends CandidateURI
         s.add(o);
     }
 
-    /**
-     *
-     */
     public void reconstitute() {
         if (alist == null) {
             alist = new HashtableAList();
@@ -661,15 +666,15 @@ public class CrawlURI extends CandidateURI
      * state gathered during processing.
      */
     public void processingCleanup() {
+        
         this.httpRecorder = null; 
         this.fetchStatus = S_UNATTEMPTED;
-        
-        // Allow get to be GC'd.
         if (this.alist != null)
         {
+            // Let current get method to be GC'd.
             this.alist.remove(A_HTTP_TRANSACTION);
-            // discard any ideas of prereqs -- may no longer be valid
-            this.alist.remove(A_PREREQUISITE_URI);  
+            // Discard any ideas of prereqs -- may no longer be valid.
+            this.alist.remove(A_PREREQUISITE_URI);
         }
     }
     
@@ -687,5 +692,115 @@ public class CrawlURI extends CandidateURI
             return (CrawlURI) caUri;
         }
         return new CrawlURI(caUri);
+    }
+    
+    /**
+     * @param credentials Set of credentials.
+     */
+    private void setCredentials(Set credentials) {
+        this.alist.putObject(A_CREDENTIALS_KEY, credentials);
+    }
+    
+    /**
+     * @param credential Add credential to list of credentials.  Creates a set
+     * if none currently in place.
+     * @return Credential just added.
+     */
+    public Credential addCredential(Credential credential) {
+        Set credentials = getCredentials();
+        if (credentials == null)
+        {
+            synchronized(this) {
+                credentials = getCredentials();
+                if (credentials == null) {
+                    credentials = new HashSet();
+                    setCredentials(credentials);
+                }
+            }
+        }
+        credentials.add(credential);
+        return credential;
+    }
+
+    /**
+     * @return Set of credential objects.  Null if none set.
+     */
+    public Set getCredentials() {
+        return (Set)this.alist.getObject(A_CREDENTIALS_KEY);
+    }
+    
+    /**
+     * @return True if there are credentials in the CrawlURI.
+     */
+    public boolean hasCredentials() {
+        Set c = getCredentials();
+        return (c == null || c.size() <= 0)? false: true;
+    }
+    
+    /**
+     * Does this crawlURI have credentials of the passed type?
+     * 
+     * @return True if there are credentials in the CrawlURI of passed type.
+     */
+    public boolean hasCredentials(Class type) {
+        Set credentials = Credential.filterCredentials(getCredentials(), type);
+        return (credentials != null && credentials.size() > 0)? true: false;
+    }
+    
+    /**
+     * @return True if there are rfc2617 credentials in the CrawlURI.
+     */
+    public boolean hasRfc2617Credentials() {
+        return hasCredentials(Rfc2617Credential.class);
+    }
+
+    /**
+     * @param credential Credential to remove.
+     */
+    public void removeCredential(Credential credential) {
+        Set credentials = getCredentials();
+        if (credentials != null && credentials.size() > 0 ) {
+            boolean removed = credentials.remove(credential);
+        }
+    }
+
+    /**
+     * Remove any instance of passed type.
+     * @param type Type to remove.
+     */
+    public void removeCredentials(Class type)
+    {
+        Set credentials = Credential.filterCredentials(getCredentials(), type);
+        if (credentials != null && credentials.size() > 0) {
+            for (Iterator i = credentials.iterator(); i.hasNext();) {
+                removeCredential((Credential)i.next());
+            }
+        }
+    }
+    
+    /**
+     * Ask this URI if it was a success or not.
+     * 
+     * Only makes sense to call this method after execution of get method.
+     * Regard any status larger then 0 as success (Except for caveat regarding
+     * 401s).
+     * 
+     * <p>If any rfc2617 credential present and we got a 401, assume it
+     * got loaded in FetchHTTP on expectation that we're to go around again.
+     * 
+     * @param curi Finishing CrawlURI to examine.
+     * @return True if ths URI has been successfully processed.
+     */
+    public boolean isSuccess()
+    {
+        boolean result = false;
+        int statusCode = this.fetchStatus;
+        if (statusCode == HttpStatus.SC_UNAUTHORIZED &&
+                hasRfc2617Credentials()) {
+            result = false;
+        } else {
+            result = (statusCode > 0);
+        }
+        return result;
     }
 }

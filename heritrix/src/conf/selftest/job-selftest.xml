@@ -145,7 +145,13 @@
     </map>
     <string name="recover-path"></string>
     <newObject name="credential-store" class="org.archive.crawler.datamodel.CredentialStore">
-      <map name="credentials">
+      <map name="credentials" >
+        <newObject name="selftest" class="org.archive.crawler.datamodel.credential.Rfc2617Credential">
+          <string name="credential-domain">127.0.0.1:8080</string>
+          <string name="realm">selftest</string>
+          <string name="login">selftest</string>
+          <string name="password">basic</string>
+        </newObject>
       </map>
     </newObject>
   </controller>

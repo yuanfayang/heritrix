@@ -29,7 +29,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -39,12 +42,21 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpRecoverableException;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScheme;
+import org.apache.commons.httpclient.auth.AuthenticationException;
+import org.apache.commons.httpclient.auth.HttpAuthenticator;
+import org.apache.commons.httpclient.auth.MalformedChallengeException;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
@@ -69,6 +81,9 @@ import org.archive.util.HttpRecorder;
  */
 public class FetchHTTP extends Processor
     	implements CoreAttributeConstants, FetchStatusCodes {
+    
+
+    private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
     
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
@@ -103,10 +118,6 @@ public class FetchHTTP extends Processor
      * SSL trust level setting attribute name.
      */
     public static final String ATTR_TRUST = "trust-level";
-    
-
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 
     PatchedHttpClient http = null;
 
@@ -118,10 +129,18 @@ public class FetchHTTP extends Processor
     private boolean initialized = false;
     
     /**
+     * Reference to the credential store.
+     */
+    private CredentialStore credentialStore = null;
+    
+    /**
      * How many 'instant retries' of HttpRecoverableExceptions have occurred
      */
-    private int recoveryRetries = 0; // would like to be 'long', but longs aren't atomic
-    private int curisHandled = 0; // would like to be 'long', but longs aren't atomic
+    // Would like to be 'long', but longs aren't atomic
+    private int recoveryRetries = 0;
+    
+    // Would like to be 'long', but longs aren't atomic
+    private int curisHandled = 0; 
     
     /**
      * Constructor.
@@ -186,9 +205,11 @@ public class FetchHTTP extends Processor
         HttpRecorderGetMethod get =
             new HttpRecorderGetMethod(curi.getUURI().getURIString(), rec);
         configureGetMethod(curi, get);
-
+        boolean addCrawlURICredentials = populateRfc2617Credentials(curi, get);
         int immediateRetries = 0;
-        while (true) { // retry until success (break) or unrecoverable exception (early return)
+        while (true) {
+            // Retry until success (break) or unrecoverable exception
+            // (early return)
             try {
                 // TODO: make this initial reading subject to the same
                 // length/timeout limits; currently only the soTimeout
@@ -201,54 +222,45 @@ public class FetchHTTP extends Processor
                     immediateRetries++;
                     continue;
                 } else {
-                    // treat as connect failed
-                    curi.addLocalizedError(this.getName(), e, "executeMethod");
-                    curi.setFetchStatus(S_CONNECT_FAILED);
-                    get.releaseConnection();
+                    // Treat as connect failed
+                    failedExecuteCleanup(get, curi, e);
                     return;
                 }
             } catch (IOException e) {
-                curi.addLocalizedError(this.getName(), e, "executeMethod");
-                curi.setFetchStatus(S_CONNECT_FAILED);
-                get.releaseConnection();
+                failedExecuteCleanup(get, curi, e);
                 return;
             } catch (ArrayIndexOutOfBoundsException e) {
-                // for weird windows-only ArrayIndex exceptions in native
+                // For weird windows-only ArrayIndex exceptions in native
                 // code... see
                 // http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
                 // treating as if it were an IOException
-                curi.addLocalizedError(this.getName(), e, "executeMethod");
-                curi.setFetchStatus(S_CONNECT_FAILED);
-                get.releaseConnection();
+                failedExecuteCleanup(get, curi, e);
                 return;
             }
         }
 
         try {
-            // force read-to-end, so that any socket hangs occur here,
+            // Force read-to-end, so that any socket hangs occur here,
             // not in later modules
-            rec.getRecordedInput().readFullyOrUntil(
-                getMaxLength(curi),
+            rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
                 1000 * getTimeout(curi));
         } catch (RecorderTimeoutException ex) {
             curi.addAnnotation("timeTrunc");
         } catch (RecorderLengthExceededException ex) {
             curi.addAnnotation("lengthTrunc");
         } catch (IOException e) {
-            curi.addLocalizedError(this.getName(), e, "readFully");
-            curi.setFetchStatus(S_CONNECT_LOST);
+            cleanup(get, curi, e, "readFully", S_CONNECT_LOST);
             return;
         } catch (ArrayIndexOutOfBoundsException e) {
-            // for weird windows-only ArrayIndex exceptions from native code
+            // For weird windows-only ArrayIndex exceptions from native code
             // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
             // treating as if it were an IOException
-            curi.addLocalizedError(this.getName(),e,"readFully");
-            curi.setFetchStatus(S_CONNECT_LOST);
+            cleanup(get, curi, e, "readFully", S_CONNECT_LOST);
             return;
         } finally {
             get.releaseConnection();
         }
-
+        
         // Note completion time
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
@@ -256,24 +268,62 @@ public class FetchHTTP extends Processor
         // Set the response charset into the HttpRecord if available.
         rec.setCharacterEncoding(get.getResponseCharSet());
         
-        // Set current httpRecorder into curi for convenience of subsequent
-        // processors.
+        // Set httpRecorder into curi for convenience of subsequent processors.
         curi.setHttpRecorder(rec);
         
+        int statusCode = get.getStatusCode();
         long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
-        logger.fine(curi.getUURI().getURIString() + ": " +
-            get.getStatusCode() + " " + contentSize);
         curi.setContentSize(contentSize);
-        curi.setFetchStatus(get.getStatusCode());
+        curi.setFetchStatus(statusCode);
         Header ct = get.getResponseHeader("content-type");
         curi.setContentType((ct == null)? null: ct.getValue());
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(curi.getUURI().getURIString() + " " + statusCode + " " +
+                contentSize + " " + curi.getContentType());
+        }
+        if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+            handle401(get, curi);
+        } else if (curi.isSuccess() && addCrawlURICredentials) {
+            // Promote the credentials from the CrawlURI to the CrawlServer
+            // so they are available for all subsequent CrawlURIs on this
+            // server.
+            promoteCredentials(curi);
+        }
 
         // Save off the GetMethod just in case needed by subsequent processors.
         curi.getAList().putObject(A_HTTP_TRANSACTION, get);
     }
 
     /**
-     * @return
+     * Cleanup after a failed method execute.
+     * @param curi CrawlURI we failed on.
+     * @param get Method we failed on.
+     * @param exception Exception we failed with.
+     */
+    private void failedExecuteCleanup(final HttpRecorderGetMethod get,
+            final CrawlURI curi, final Exception exception) {
+        cleanup(get, curi, exception, "executeMethod", S_CONNECT_FAILED);
+    }
+    /**
+     * Cleanup after a failed method execute.
+     * @param curi CrawlURI we failed on.
+     * @param get Method we failed on.
+     * @param exception Exception we failed with.
+     * @param message Message to log with failure.
+     * @param status Status to set on the fetch.
+     */
+    private void cleanup(final HttpRecorderGetMethod get, final CrawlURI curi,
+            final Exception exception, final String message, final int status) {
+        curi.addLocalizedError(this.getName(), exception, message);
+        curi.setFetchStatus(status);
+        // Its ok if releaseConnection is called multiple times: i.e. here and
+        // in the finally that is at end of one of the innerProcess blocks
+        // above.
+        get.releaseConnection();
+    }
+    
+    /**
+     * @return maximum immediate retures.
      */
     private int getMaxImmediateRetries() {
         // TODO make configurable
@@ -335,6 +385,195 @@ public class FetchHTTP extends Processor
             getSettingsHandler().getOrder().getFrom(curi));
     }
 
+    /**
+     * Add rfc2617 credentials.
+     *
+     * Do credential handling.  Credentials are in two places.  Credentials
+     * that succeeded are added to the CrawlServer.  Credentials to be tried
+     * are in the curi.  Returns true if credentials to be tried.
+     * 
+     * @param curi Current CrawlURI.
+     * @param get The method to add to.
+     * @return True if prepopulated url with credentials AND the credentials 
+     * came from the URI, not from the CrawlServer.  The latter condition is 
+     * special in that if the credentials succeed, then they need to be 
+     * promoted from the CrawlURI to the CrawlServer so they are available for
+     * all subsequent CrawlURIs on this server.
+     */
+    private boolean populateRfc2617Credentials(final CrawlURI curi,
+            final GetMethod get) {
+        boolean addCrawlURICredentials = false;
+        if (curi.getServer().hasCredentials()) {
+            addRfc2617Credentials(curi, get, curi.getServer().getCredentials());
+        }
+        if (curi.hasCredentials()) {
+            addCrawlURICredentials = addRfc2617Credentials(curi, get,
+                curi.getCredentials());
+        }
+        return addCrawlURICredentials;
+    }
+
+    /**
+     * @param curi CrawlURI whose credentials we are to promote.
+     */
+    private void promoteCredentials(final CrawlURI curi)
+    {
+        Set rfc2617credentials = Credential.
+            filterCredentials(curi.getCredentials(), Rfc2617Credential.class);
+        if (rfc2617credentials != null && rfc2617credentials.size() > 0) {
+            for (Iterator i = rfc2617credentials.iterator(); i.hasNext();) {
+                Rfc2617Credential c = (Rfc2617Credential)i.next();
+                curi.getServer().addCredential(c);
+                logger.fine("Promoted credential " + c + " to " +
+                    curi.getServer().getName());
+            }
+        }
+    }
+    
+    /**
+     * @param curi Current CrawlURI.
+     * @param get Method to add the credentials to.
+     * @param credentials List of credentials.  Contains mixed types.
+     * @return True if prepopulated url with credentials.
+     */
+    private boolean addRfc2617Credentials(final CrawlURI curi,
+            final GetMethod get, final Set credentials) {
+        
+        boolean result = false;
+        Set rfc2617credentials = Credential.filterCredentials(credentials,
+            Rfc2617Credential.class);
+        if (rfc2617credentials == null || rfc2617credentials.size() <= 0) {
+            return result; // Early return.  No creds to be found.
+        }
+        
+        for (Iterator i = rfc2617credentials.iterator(); i.hasNext();) {
+            Rfc2617Credential c = (Rfc2617Credential)i.next();
+            // HttpClient wants to get a 401 before it offers the
+            // credentials -- even if preemptive is set.  Means I have
+            // to handle the WWW-Authenticate header stuff myself.
+            AuthScheme authscheme = c.getAuthScheme();
+            if (authscheme == null) {
+                logger.severe("No authscheme though credentials: " +
+                    curi.toString());
+                continue;
+            }
+            
+            try {
+                // Always add the credential to HttpState. Doing this
+                // because no way of removing the credential once added AND
+                // there is a bug in the credentials management system
+                // in that it always sets URI root to null: it means the key
+                // used to find a credential is NOT realm + root URI but
+                // just the realm.  Unless I set it everytime, there is
+                // possibility that as this thread progresses, it might
+                // come across a realm already loaded but the login and 
+                // password are from another server.  We'll get a failed
+                // authentication that'd be difficult to explain.
+                //
+                // Have to make a UsernamePasswordCredentials.  The
+                // httpclient auth code does an instanceof down in its
+                // guts.
+                UsernamePasswordCredentials upc = 
+                    new UsernamePasswordCredentials(c.getLogin(curi), 
+                        c.getPassword(curi));
+                this.http.getState().setCredentials(authscheme.getRealm(),
+                        /*curi.getServer().getName()*/null, upc);
+                try
+                {
+                    boolean done = HttpAuthenticator.
+                      authenticate(authscheme, get, null, this.http.getState());
+                    result = done;
+                    logger.fine("Credentials for realm " +
+                        authscheme.getRealm() + " for curi " + curi.toString() +
+                        " added to request: " + done);
+                } catch (AuthenticationException e) {
+                    logger.severe("Failed setting auth for " +
+                        authscheme.getRealm() + " for " +
+                        curi.toString() + ": " + e.getMessage());
+                }
+            }
+            
+            catch (AttributeNotFoundException e)
+            {
+                logger.severe("Failed to set rfc2617 credential " +
+                    c.toString() + ": " + e.getMessage());
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Server is looking for basic/digest auth credentials (RFC2617).
+     * If we have any, put them into the CrawlURI and have it come
+     * around again.  Presence of the credential serves as flag to frontier to 
+     * requeue promptly.  If we already tried this domain and still got a
+     * 401, then our credentials are bad. Remove them and let this curi die.
+     * @param get Method that got a 401.
+     * @param curi CrawlURI that got a 401.
+     */
+    private void handle401(final HttpRecorderGetMethod get,
+            final CrawlURI curi) {
+        
+        AuthScheme authscheme = null;
+        String realm = null;
+        Header header = get.getResponseHeader(HttpAuthenticator.WWW_AUTH);
+        if (header == null) {
+            logger.info("No " + HttpAuthenticator.WWW_AUTH + " headers though" +
+                " we got a 401: " + curi.toString());
+        } else {
+            try
+            {
+                authscheme = HttpAuthenticator.
+                    selectAuthScheme(new Header[] {header});
+                realm = authscheme.getRealm();
+            }
+            catch (MalformedChallengeException e)
+            {
+                logger.severe("Failed to get auth headers: " + e.toString() +
+                    " " + curi.toString());
+            }
+        }
+        
+        if (realm != null) {
+            Set curiRfc2617Credentials = curi.getCredentials();
+            // If realm already in the curi credentials, then we've
+            // tried this credential and it failed.  Let this curi die
+            // with a 401.
+            Rfc2617Credential extant = Rfc2617Credential.
+                getByRealm(curiRfc2617Credentials, realm, curi);
+            // TODO: Check that auth scheme is same.
+            if (extant != null) {
+                // Then, already tried this credential.  Remove ANY rfc2617 
+                // credential since presence of a rfc2617 credential serves as
+                // flag to frontier to requeue this curi and let the curi die a
+                // natural death.
+                curi.removeCredentials(Rfc2617Credential.class);
+                logger.fine("Auth failed (401) though supplied realm " +
+                    realm + " to " + curi.toString());
+            } else {
+                // Look see if we have a credential that corresponds to this 
+                // realm in credential store.  Filter by type and credential
+                // domain.  If not, let this curi die.
+                // Else, add it to the curi and let it come around again.
+                // Add in the AuthScheme we got too.  Its needed when we go
+                // to run the Auth on second time around.
+                Set storeRfc2617Credentials = Credential.
+                     filterCredentials(this.credentialStore.iterator(curi),
+                         Rfc2617Credential.class, curi,
+                         curi.getServer().getName());
+                Rfc2617Credential found = Rfc2617Credential.
+                    getByRealm(storeRfc2617Credentials, realm, curi);
+                if (found != null) {
+                    found.setAuthScheme(authscheme);
+                    curi.addCredential(found);
+                    logger.fine("Found credential realm " + realm + " in " +
+                        " store for " + curi.toString());
+                }
+            }
+        }
+    }
+
     public void initialize()
     {
         if (!this.initialized)
@@ -351,14 +590,20 @@ public class FetchHTTP extends Processor
                 Protocol.registerProtocol("https", new Protocol("https", 
                   new ConfigurableTrustManagerProtocolSocketFactory(trustLevel),
                   443));
+                
+                // Get a credential store object reference.
+                this.credentialStore =
+                    (CredentialStore)this.getSettingsHandler().getOrder().
+                        getAttribute(CredentialStore.ATTR_NAME);
             }
             
             catch (Exception e)
             {
                 // Convert all to RuntimeException so get an exception out if
                 // initialization fails.
-                throw new RuntimeException("Failed setting SSL Protocol: " +
-                    e.getMessage());
+                throw new RuntimeException(
+                    "Failed initialization getting attributes: " +
+                        e.getMessage());
             }
 
             // load cookies from a file if specified in the order file.
@@ -373,6 +618,7 @@ public class FetchHTTP extends Processor
             // this
             // frequently
             this.http.setTimeout(this.soTimeout);
+     
             this.initialized = true;
         }
     }

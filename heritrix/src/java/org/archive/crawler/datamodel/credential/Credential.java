@@ -22,6 +22,14 @@
  */
 package org.archive.crawler.datamodel.credential;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
@@ -43,6 +51,11 @@ import org.archive.crawler.datamodel.settings.Type;
  */
 public abstract class Credential extends ModuleType {
     
+    private static Logger logger = Logger.getLogger(
+        "org.archive.crawler.datamodel.settings.Credential");
+    
+    private static final String ATTR_CREDENTIAL_DOMAIN = "credential-domain";
+    
     /**
      * Constructor.
      * 
@@ -52,9 +65,135 @@ public abstract class Credential extends ModuleType {
     public Credential(String name, String description)
     {
         super(name, description);
-        Type t = addElementToDefinition(new SimpleType("credential-domain",
+        Type t = addElementToDefinition(new SimpleType(ATTR_CREDENTIAL_DOMAIN,
                 "The root URI this credential goes against.", ""));
             t.setOverrideable(false);
             t.setExpertSetting(true);
+    }
+    
+    /**
+     * @param context Context to use when searching for credential domain.
+     * @return The domain/root URI this credential is to go against.
+     */
+    public String getCredentialDomain(CrawlURI context)
+            throws AttributeNotFoundException {
+        return (String)getAttribute(ATTR_CREDENTIAL_DOMAIN, context);  
+    }
+    
+    /**
+     * Convenience method for pulling credentials of a single type from passed
+     * set of mixed credential types.
+     * 
+     * @param credentials Set of credentials of mixed type.
+     * @param type Type to strain the list of passed credentials with.
+     * 
+     * @return Credentials of the passed type set for this server.  Returns
+     * null if no credentials of passed type associated with this server.
+     */
+    public static Set filterCredentials(Set credentials, Class type) {
+        Set result = null;
+        if (credentials != null && credentials.size() > 0) {
+            result = filterCredentials(credentials.iterator(), type);
+        }
+        return result;    
+    }
+    
+    /**
+     * Convenience method for pulling credentials of a single type from passed
+     * set of mixed credential types.
+     * 
+     * @param credentials Set of credentials of mixed type.
+     * @param type Type to strain the list of passed credentials with.
+     * @param context Context to use when searching for credential domain.
+     * @param credentialDomain Name of server to use filtering credentials.  Can
+     * have a port appended (i.e. its the root URI as per RFC2617).  If null,
+     * we return all credentials w/o filtering on credentialDomain.
+     * 
+     * @return Credentials of the passed type set for this server.  Returns
+     * null if no credentials of passed type associated with this server.
+     */
+    public static Set filterCredentials(Set credentials, Class type,
+            CrawlURI context, String credentialDomain) {
+        Set result = null;
+        if (credentials != null && credentials.size() > 0) {
+            result = filterCredentials(credentials.iterator(), type, context,
+                credentialDomain);
+        }
+        return result;    
+    }
+    
+    /**
+     * Convenience method for pulling credentials of a single type from passed
+     * set of mixed credential types.
+     * 
+     * @param iterator Iterator over a set credentials of mixed type.
+     * @param type Type to strain the list of passed credentials with.
+     * 
+     * @return New set of credentials of the passed type set for this server. 
+     * Returns null if no credentials of passed type associated with this
+     * server.
+     */
+    public static Set filterCredentials(Iterator iterator, Class type) {
+
+        return filterCredentials(iterator, type, null, null);
+    }
+    
+    /**
+     * Convenience method for pulling credentials of a single type from passed
+     * set of mixed credential types.
+     * 
+     * If non-null context and credentialDomain, will filter on type AND
+     * credential domain.
+     * 
+     * @param iterator Iterator over a set credentials of mixed type.
+     * @param type Type to strain the list of passed credentials with.
+     * @param context Context to use when searching for credential domain.
+     * @param credentialDomain Name of server to use filtering credentials.
+     * This is the credential domain we're looking to match. Can
+     * have a port appended (i.e. its the root URI as per RFC2617).  If null,
+     * we return all credentials w/o filtering on credentialDomain.
+     * 
+     * @return New set of credentials of the passed type set for this server. 
+     * Returns null if no credentials of passed type associated with this
+     * server.
+     */
+    public static Set filterCredentials(Iterator iterator, Class type,
+            CrawlURI context, String credentialDomain) {
+        
+        Set result = null;
+        if (iterator == null) {
+            return result;
+        }
+        while (iterator.hasNext()) {
+            
+            Credential c = (Credential)iterator.next();
+            if (!type.isInstance(c)) {
+                continue;
+            }
+            
+            if (credentialDomain != null && credentialDomain.length() > 0 &&
+                    context !=  null) {
+                String cd = null;
+                try
+                {
+                    cd = c.getCredentialDomain(context);
+                } catch (AttributeNotFoundException e) {
+                    logger.severe("Failed get of credential domain: " +
+                        c + " " + context.toString());
+                    continue;
+                }
+                
+                if (!cd.equals(credentialDomain)) {
+                    // If credentials don't match, skip..continue.
+                    continue;
+                }
+            }
+            
+            if (result == null) {
+                result = new HashSet();
+            }
+            result.add(c);
+        }
+        return result;    
     }
 }

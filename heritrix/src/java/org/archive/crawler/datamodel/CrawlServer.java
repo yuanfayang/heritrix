@@ -29,8 +29,14 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.io.StringReader;
+import java.security.Principal;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.zip.Checksum;
 
+import javax.security.auth.Subject;
+
+import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.framework.ToeThread;
@@ -44,7 +50,7 @@ import org.archive.io.ReplayInputStream;
  *
  * @author gojomo
  */
-public class CrawlServer implements Serializable {
+public class CrawlServer implements Serializable, Principal {
     public static final long ROBOTS_NOT_FETCHED = -1;
 
     private final String server; // actually, host+port in the http case
@@ -59,6 +65,18 @@ public class CrawlServer implements Serializable {
     // used to drive exponentially increasing retry timeout or decision
     // to 'freeze' entire class (queue) of URIs
     protected int consecutiveConnectionErrors = 0;
+    
+    /**
+     * Subject to hold principals and credentials for this crawlserver.
+     * 
+     * Instance only created if credentials associated with this CrawlServer.
+     * 
+     * <p>Marked transient so not part of serialization.  Notion is that if 
+     * this instance is serialized, then on reconstitution, logins need to be
+     * rerun (Probably makes sense.  If we've been serialized, we've been put
+     * aside for a period so relogin is apt).
+     */
+    private transient Subject subject = null;
     
     /** Creates a new CrawlServer object.
      * 
@@ -275,4 +293,51 @@ public class CrawlServer implements Serializable {
         consecutiveConnectionErrors = 0;
     }
 
+    /* (non-Javadoc)
+     * @see java.security.Principal#getName()
+     */
+    public String getName()
+    {
+        return getServer();
+    }
+    
+    /**
+     * @return Credentials for this server.  Returns null if no credentials
+     * associated with this server.
+     */
+    public Set getCredentials() {
+        return this.subject == null? null:
+            (this.subject.getPublicCredentials() == null) ||
+                (this.subject.getPublicCredentials().size() <= 0)? null:
+                    this.subject.getPublicCredentials();
+    }
+    
+    /**
+     * @return True if this crawlserver has credentials.
+     */
+    public boolean hasCredentials() {
+        return (getCredentials() == null)? false: true;
+    }
+    
+    /**
+     * @param credential Credential to add.
+     */
+    public void addCredential(Credential credential) {
+        if (this.subject == null) {
+            createSubject();
+        }
+        this.subject.getPublicCredentials().add(credential);
+    }
+    
+    /**
+     * Create subject for this class.
+     * 
+     * Called only when needed to hold credentials.
+     */
+    private synchronized void createSubject() {
+        if (this.subject == null) {
+            this.subject = new Subject();
+            this.subject.getPrincipals().add(this);
+        }
+    }
 }

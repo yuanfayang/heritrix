@@ -382,7 +382,7 @@ public class SelfTestCase extends TestCase
      * Find all files that belong to this test that are mentioned in the arc.
      * @return List of found files.
      */
-    private List filesFoundInArc()
+    protected List filesFoundInArc()
     {
         String baseURL = getSelftestURLWithTrailingSlash();
         if (baseURL.endsWith(getTestName() + '/')) {

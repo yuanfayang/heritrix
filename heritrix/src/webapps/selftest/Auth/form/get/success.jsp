@@ -56,8 +56,7 @@
     <body>
             <h1>Successful <%=METHOD%> Login Page</h1>
             <p>You get this page if a successful login.</p>
-</form>
-            
-</form>
+            <p><a href="get-loggedin.html">Page crawler can get only if it
+            successfully negotiated login.</p>
     </body>
 </html>
