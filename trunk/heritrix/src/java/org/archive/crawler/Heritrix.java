@@ -625,7 +625,7 @@ public class Heritrix
         final String SELFTEST = "selftest";
         List webapps = Arrays.asList(
             new String [] {SimpleHttpServer.getRootWebappName(), SELFTEST});
-        Heritrix.httpServer = new SimpleHttpServer(webapps, port);
+        Heritrix.httpServer = new SimpleHttpServer(webapps, port, true);
         // Set up digest auth for a section of the server so selftest can run
         // auth tests.  Looks like can only set one login realm going by the
         // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
@@ -709,7 +709,7 @@ public class Heritrix
 
         String status = null;
 
-        httpServer = new SimpleHttpServer(port);
+        httpServer = new SimpleHttpServer(port, false);
         httpServer.startServer();
 
         jobHandler = new CrawlJobHandler();

@@ -82,16 +82,22 @@ public class SimpleHttpServer
 
     public SimpleHttpServer() throws Exception {
 
-        this(DEFAULT_PORT);
+        this(DEFAULT_PORT, true);
     }
 
-    public SimpleHttpServer(int port) throws Exception {
-
-        this(SimpleHttpServer.webapps, port);
+    public SimpleHttpServer(int port, boolean expandWebapps)
+    throws Exception {
+        this(SimpleHttpServer.webapps, port, expandWebapps);
     }
 
-    public SimpleHttpServer(List webapps, int port) throws Exception {
-
+    /**
+     * @param webapps List of webapps to load.
+     * @param port Port to run on.
+     * @param expandWebapps True if we're to expand the webapps found.
+     * @throws Exception
+     */
+    public SimpleHttpServer(List webapps, int port, boolean expandWebapps)
+    throws Exception {
         this.server = new Server();
         this.port = port;
         SocketListener listener = new SocketListener();
@@ -121,7 +127,7 @@ public class SimpleHttpServer
                 this.server.setRootWebApp(name);
             }
             // Selftest depends on finding the extracted WARs. TODO: Fix.
-            c.setExtractWAR(true);
+            c.setExtractWAR(expandWebapps);
             this.contexts.add(c);
         }
 
