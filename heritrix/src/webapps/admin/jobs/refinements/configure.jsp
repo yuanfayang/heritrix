@@ -48,7 +48,10 @@
             if(theJob.isRunning()){
                 handler.kickUpdate();
             }
-            response.sendRedirect("/admin/jobs/refinements/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Refinement changes saved");
+            response.sendRedirect(request.getContextPath() +
+                    "/jobs/refinements/overview.jsp?job=" +
+                    theJob.getUID() + "&currDomain=" + currDomain +
+                    "&message=Refinement changes saved");
             return;
         }else if(action.equals("goto")){
             // Goto another page of the job/profile settings

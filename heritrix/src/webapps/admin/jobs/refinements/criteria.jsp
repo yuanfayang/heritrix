@@ -12,29 +12,24 @@
 <%@page import="java.util.regex.Pattern" %>
 
 <%@page import="org.archive.crawler.settings.CrawlerSettings"%>
+<%@page import="org.archive.crawler.admin.ui.JobConfigureUtils"%>
 <%@page import="org.archive.crawler.settings.XMLSettingsHandler"%>
 <%@page import="org.archive.crawler.settings.refinements.*"%>
 
 <%
     String message = request.getParameter("message");
     int deleteCriteriaNumber = -1;
-    // Load the job.
-    CrawlJob theJob = handler.getJob(request.getParameter("job"));
-    
-    if(theJob == null)
-    {
-        // Didn't find any job with the given UID or no UID given.
-        response.sendRedirect("/admin/jobs.jsp?message=No job selected "+request.getParameter("job"));
-        return;
-    } else if(theJob.isReadOnly()){
-        // Can't edit this job.
-        response.sendRedirect("/admin/jobs.jsp?message=Can't configure a running job");
-        return;
-    }
 
     // Load display level
-    String currDomain = request.getParameter("currDomain");
     String reference = request.getParameter("reference");
+    String currDomain = request.getParameter("currDomain");
+    // Load the job to manipulate   
+    CrawlJob theJob = JobConfigureUtils.checkCrawlJob(
+        handler.getJob(request.getParameter("job")), response,
+        request.getContextPath() + "/jobs.jsp", currDomain);
+    if (theJob == null) {
+        return;
+    }
 
     // Get the settings objects.
     XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
@@ -60,7 +55,10 @@
             if(theJob.isRunning()){
                 handler.kickUpdate();
             }
-            response.sendRedirect("/admin/jobs/refinements/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Refinement changes saved");
+            response.sendRedirect(request.getContextPath () +
+                "/jobs/refinements/overview.jsp?job=" +
+                theJob.getUID() + "&currDomain=" + currDomain +
+                "&message=Refinement changes saved");
             return;
         } else if(action.equals("add")){
             // Add new criteria

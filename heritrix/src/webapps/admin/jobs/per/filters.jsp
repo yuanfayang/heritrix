@@ -17,7 +17,8 @@
 <%
     String currDomain = request.getParameter("currDomain");
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
-            response, "/admin/jobs/per/overview.jsp", currDomain);
+            response, request.getContextPath() + "/jobs/per/overview.jsp",
+            currDomain);
     int tab = theJob.isProfile()?2:1;
 %>
 <%

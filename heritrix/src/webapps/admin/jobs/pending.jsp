@@ -43,13 +43,13 @@
                             <i><%=job.getStatus()%></i>&nbsp;&nbsp;
                         </td>
                         <td>
-                            <a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
+                            <a target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
                             &nbsp;
-                            <a href="/admin/jobs/configure.jsp?job=<%=job.getUID()%>">Edit configuration</a>
+                            <a href="<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=job.getUID()%>">Edit configuration</a>
                             &nbsp;
-                            <a href="/admin/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
+                            <a href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
                             &nbsp;
-                            <a href="/admin/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
+                            <a href="<%=request.getContextPath()%>/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
                             &nbsp;
                         </td>
                     </tr>

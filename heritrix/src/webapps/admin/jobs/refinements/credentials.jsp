@@ -10,29 +10,23 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
+<%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.datamodel.CredentialStore" %>
 <%@page import="org.archive.crawler.settings.refinements.*"%>
 
 <%@include file="/include/jobcredentials.jsp"%>
 
 <%
+    // Load display level
+    String reference = request.getParameter("reference");
+    String currDomain = request.getParameter("currDomain");
     // Load the job to manipulate   
-    CrawlJob theJob = handler.getJob(request.getParameter("job"));
-    
-    if(theJob == null)
-    {
-        // Didn't find any job with the given UID or no UID given.
-        response.sendRedirect("/admin/jobs.jsp?message=No job selected");
-        return;
-    } else if(theJob.isReadOnly()){
-        // Can't edit this job.
-        response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a read only job");
+    CrawlJob theJob = JobConfigureUtils.checkCrawlJob(
+        handler.getJob(request.getParameter("job")), response,
+        request.getContextPath() + "/jobs.jsp", currDomain);
+    if (theJob == null) {
         return;
     }
-
-    // Load display level
-    String currDomain = request.getParameter("currDomain");
-    String reference = request.getParameter("reference");
 
     // Get the settings objects.
     XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
@@ -84,7 +78,10 @@
             if(theJob.isRunning()){
                 handler.kickUpdate();
             }
-            response.sendRedirect("/admin/jobs/refinements/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Refinement changes saved");
+            response.sendRedirect(request.getContextPath () +
+                "/jobs/refinements/overview.jsp?job=" +
+                theJob.getUID() + "&currDomain=" + currDomain +
+                "&message=Refinement changes saved");
             return;
         }else if(action.equals("goto")){
             // Goto another page of the job/profile settings

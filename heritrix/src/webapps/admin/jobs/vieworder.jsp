@@ -30,7 +30,7 @@
 <html>
     <head>
         <title>Heritrix: View crawl order</title>
-        <link rel="stylesheet" href="/admin/css/heritrix.css">
+        <link rel="stylesheet" href="<%=request.getContextPath()%>/css/heritrix.css">
     </head>
     
     <body>
@@ -45,7 +45,7 @@
             else
             {
         %>
-            <iframe name="frmStatus" src="/admin/iframes/xml.jsp?file=<%=((XMLSettingsHandler)cjob.getSettingsHandler()).getOrderFile().getAbsolutePath()%>" width="100%" height="100%" frameborder="0" ></iframe>
+            <iframe name="frmStatus" src="<%=request.getContextPath()%>/iframes/xml.jsp?file=<%=((XMLSettingsHandler)cjob.getSettingsHandler()).getOrderFile().getAbsolutePath()%>" width="100%" height="100%" frameborder="0" ></iframe>
         <%
             } // End if(cjob==null)else clause
         %>

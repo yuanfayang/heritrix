@@ -13,27 +13,22 @@
 <%@page import="java.util.regex.Pattern" %>
 
 <%@page import="org.archive.crawler.settings.CrawlerSettings"%>
+<%@page import="org.archive.crawler.admin.ui.JobConfigureUtils"%>
 <%@page import="org.archive.crawler.settings.XMLSettingsHandler"%>
 <%@page import="org.archive.crawler.settings.refinements.Refinement"%>
 
 <%
-    String message = request.getParameter("message");
-    // Load the job.
-    CrawlJob theJob = handler.getJob(request.getParameter("job"));
-    
-    if(theJob == null)
-    {
-        // Didn't find any job with the given UID or no UID given.
-        response.sendRedirect("/admin/jobs.jsp?message=No job selected "+request.getParameter("job"));
-        return;
-    } else if(theJob.isReadOnly()){
-        // Can't edit this job.
-        response.sendRedirect("/admin/jobs.jsp?message=Can't configure a running job");
+    // Load display level
+    String currDomain = request.getParameter("currDomain");
+    // Load the job to manipulate   
+    CrawlJob theJob = JobConfigureUtils.checkCrawlJob(
+        handler.getJob(request.getParameter("job")), response,
+        request.getContextPath() + "/jobs.jsp", currDomain);
+    if (theJob == null) {
         return;
     }
 
-    // Load display level
-    String currDomain = request.getParameter("currDomain");
+    String message = request.getParameter("message");
 
     // Get the settings objects.
     XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
@@ -57,22 +52,28 @@
             if(global){
                 if(theJob.isNew()){         
                     handler.addJob(theJob);
-                    response.sendRedirect("/admin/jobs.jsp?message=Job created");
+                    response.sendRedirect(request.getContextPath () +
+                        "/jobs.jsp?message=Job created");
                 }else{
                     if(theJob.isRunning()){
                         handler.kickUpdate();
                     }
                     if(theJob.isProfile()){
-                        response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
+                        response.sendRedirect(request.getContextPath () +
+                            "/profiles.jsp?message=Profile modified");
                     }else{
-                        response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+                        response.sendRedirect(request.getContextPath () +
+                           "/jobs.jsp?message=Job modified");
                     }
                 }
             } else {
                 if(theJob.isRunning()){
                     handler.kickUpdate();
                 }
-                response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
+                response.sendRedirect(request.getContextPath () +
+                    "/jobs/per/overview.jsp?job=" + theJob.getUID() +
+                    "&currDomain=" + currDomain +
+                    "&message=Override changes saved");
             }
             return;
         } else if(action.equals("new")){
@@ -91,7 +92,10 @@
             }
         } else if(action.equals("edit")){
             // Edit an existing refinement.
-            response.sendRedirect("/admin/jobs/refinements/criteria.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&reference="+request.getParameter("refinement"));
+            response.sendRedirect(request.getContextPath () +
+                "/jobs/refinements/criteria.jsp?job=" + theJob.getUID() +
+                "&currDomain=" + currDomain + "&reference=" +
+                request.getParameter("refinement"));
             return;
         } else if(action.equals("delete")){
             // Delete refinement.

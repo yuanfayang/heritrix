@@ -3,16 +3,21 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="java.util.List" %>
+<%@ page import="javax.servlet.http.HttpServletRequest" %>
 
 <%!
-    public String printJobList(List jobs, boolean isJobs){
-        if(jobs==null){
+    public String printJobList(List jobs, boolean isJobs,
+            HttpServletRequest request) {
+        if(jobs==null) {
             return null;
         }
         StringBuffer ret = new StringBuffer();
-        for(int i=0 ; i<jobs.size() ; i++){
+        for(int i = 0 ; i < jobs.size(); i++) {
             CrawlJob tmp = (CrawlJob)jobs.get(i);
-            ret.append("<li><a href='/admin/jobs/new.jsp?job="+tmp.getUID()+"'>"+tmp.getJobName());
+            ret.append("<li><a href=\"");
+            ret.append(request.getContextPath());
+            ret.append("/jobs/new.jsp?job=" + tmp.getUID() + "\">" +
+                tmp.getJobName());
             if(isJobs){
                 ret.append(" ["+tmp.getUID()+"]");
             }
@@ -34,13 +39,19 @@
     <ul>
 <%
     if(isJobs){
-        out.println(printJobList(handler.getPendingJobs(),true));
+        out.println(printJobList(handler.getPendingJobs(), true,
+            request));
         if(handler.getCurrentJob()!=null){
-            out.println("<li><a href='/admin/jobs/new.jsp?job="+handler.getCurrentJob().getUID()+"'>"+handler.getCurrentJob().getJobName()+" ["+handler.getCurrentJob().getUID()+"]</a>");
+            out.println("<li><a href=\"");
+            out.println(request.getContextPath());
+            out.println("/jobs/new.jsp?job=" +
+                handler.getCurrentJob().getUID() + "\">" +
+                handler.getCurrentJob().getJobName() +
+                " [" + handler.getCurrentJob().getUID() + "]</a>");
         }
-        out.println(printJobList(handler.getCompletedJobs(),true));
+        out.println(printJobList(handler.getCompletedJobs(),true, request));
     } else {
-        out.println(printJobList(handler.getProfiles(),false));
+        out.println(printJobList(handler.getProfiles(),false, request));
     }
 %>    
     </ul>

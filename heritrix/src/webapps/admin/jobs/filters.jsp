@@ -16,7 +16,7 @@
 <%@include file="/include/filters.jsp"%>
 <%
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
-        response, "/admin/jobs.jsp", null);
+        response, request.getContextPath() + "/jobs.jsp", null);
     int tab = theJob.isProfile()?2:1;
 %>
 
