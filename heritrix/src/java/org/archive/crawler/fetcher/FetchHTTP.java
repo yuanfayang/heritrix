@@ -150,13 +150,6 @@ public class FetchHTTP
     		rec.closeRecorders();
     		get.releaseConnection();
     		return;
-    	} catch (IllegalArgumentException e) {
-    		// httpclient may throw this for bad cookies
-    		curi.addLocalizedError(this.getName(), e, "executeMethod");
-    		curi.setFetchStatus(S_CONNECT_FAILED);
-    		rec.closeRecorders();
-    		get.releaseConnection();
-    		return;
     	} catch (ArrayIndexOutOfBoundsException e) {
     		// for weird windows-only ArrayIndex exceptions from native code
     		// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
