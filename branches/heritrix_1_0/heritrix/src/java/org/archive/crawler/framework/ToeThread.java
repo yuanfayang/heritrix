@@ -153,7 +153,9 @@ public class ToeThread extends Thread
                         step = STEP_FINISHING_PROCESS;
                         lastFinishTime = System.currentTimeMillis();
                     } finally {
-                        controller.toePool.noteInactive(this);
+                        if (controller.toePool != null) {
+                        	controller.toePool.noteInactive(this);
+                        }
                     }
                 }
                 controller.checkFinish(); // after each URI or null
