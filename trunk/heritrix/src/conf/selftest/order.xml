@@ -18,7 +18,7 @@
     <integer name="max-toe-threads">1</integer>
     <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
-      <string name="seedsfile">seeds-selftest.txt</string>
+      <string name="seedsfile">seeds.txt</string>
       <integer name="max-link-hops">5</integer>
       <integer name="max-trans-hops">5</integer>
       <newObject name="exclude-filter" class="org.archive.crawler.filter.OrFilter">
@@ -124,7 +124,7 @@
         <string name="prefix">SELFTEST</string>
         <string name="suffix">${HOSTNAME}</string>
         <integer name="max-size-bytes">100000000</integer>
-        <string name="path"></string>
+        <string name="path">arcs</string>
         <integer name="pool-max-active">1</integer>
         <integer name="pool-max-wait">300000</integer>
       </newObject>

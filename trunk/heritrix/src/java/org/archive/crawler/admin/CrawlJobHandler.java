@@ -212,8 +212,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Loads any availible jobs in the jobs directory.
      * <p>
      * Availible jobs are any directory containing a file called
-     * <code>name.job</code> where 'name' is the name of the job. The file
-     * must contain valid job information. 
+     * <code>state.job</code>. The file must contain valid job information. 
      */
     private void loadJobs() {
         File jobDir = Heritrix.getJobsdir();
@@ -221,7 +220,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         File[] jobs = jobDir.listFiles();
         for (int i = 0; i < jobs.length; i++) {
             if (jobs[i].isDirectory()) {
-                // Need to find job file ('name'.job).
+                // Need to find job file ('state.job').
                 File[] jobFiles = jobs[i].listFiles();
                 for (int j = 0; j < jobFiles.length; j++) {
                     File job = jobFiles[j];
@@ -622,16 +621,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         File jobDir = new File(Heritrix.getJobsdir(), name + "-" + UID);
         CrawlJobErrorHandler errorHandler = new CrawlJobErrorHandler();
         newJob = new CrawlJob(UID, name,
-                makeNew(baseOn, 
-                        name, 
-                        description, 
-                        seeds, 
-                        jobDir,
-                        errorHandler,
-                        "job-" + name + ".xml", 
-                        "seeds-" + name + ".txt"),
-                errorHandler,
-                priority, jobDir);
+            makeNew(baseOn, name, description, seeds, jobDir, errorHandler,
+                "order.xml", "seeds.txt"), errorHandler, priority, jobDir);
         return newJob;
     }
 
@@ -663,14 +654,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE); 
         
         CrawlJob newProfile = new CrawlJob(name, 
-                makeNew(baseOn, 
-                        name,
-                        description, 
-                        seeds, 
-                        profileDir,
-                        cjseh,
-                        "order.xml", 
-                        "seeds.txt"),
+            makeNew(baseOn, name, description, seeds, profileDir, cjseh,
+                "order.xml", "seeds.txt"),
                 cjseh);
         addProfile(newProfile);
         return newProfile;
@@ -704,15 +689,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *             configuration, with writing the new configuration or it's
      *             seed file.
      */
-    private XMLSettingsHandler makeNew(CrawlJob baseOn, 
-                                       String name,
-                                       String description, 
-                                       String seeds, 
-                                       File newSettingsDir,
-                                       CrawlJobErrorHandler errorHandler,
-                                       String filename, 
-                                       String seedfile)
-                                throws FatalConfigurationException {
+    private XMLSettingsHandler makeNew(CrawlJob baseOn, String name,
+       String description, String seeds, File newSettingsDir,
+       CrawlJobErrorHandler errorHandler, String filename, String seedfile) 
+            throws FatalConfigurationException {
+
         XMLSettingsHandler newHandler;
 
         try {
@@ -725,8 +706,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
             newHandler.initialize();
         } catch (InvalidAttributeValueException e2) {
             throw new FatalConfigurationException(
-                    "InvalidAttributeValueException occured while creating new settings handler for new job/profile\n"
-                            + e2.getMessage());
+                "InvalidAttributeValueException occured while creating" +
+                " new settings handler for new job/profile\n" +
+                e2.getMessage());
         }
 
         // Make sure the directory exists.
