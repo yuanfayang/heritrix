@@ -14,6 +14,7 @@ import org.xbill.DNS.FindServer;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.HostCache;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.framework.CrawlController;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -31,6 +32,21 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 	// defaults
  	private short ClassType = DClass.IN;
  	private short TypeType = Type.A;
+ 	
+ 	protected InetAddress serverInetAddr = null;
+
+  	public void initialize(CrawlController c){
+  		super.initialize(c);
+  		
+  		// lookup nameserver
+		String nameServer = FindServer.server();
+		try{
+			serverInetAddr = InetAddress.getByName(nameServer);
+		}catch(UnknownHostException e){
+			e.printStackTrace();
+		}	
+  	}
+
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -38,10 +54,8 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 	public void process(CrawlURI curi) {
 		super.process(curi);
 		
-		String DnsName = null;				// store the name of the host we wish to look up		
 		Record[] rrecordSet = null; 		// store retrieved dns records
 		long now; 									// the time this operation happened
-				
 				
 		// TODO this should deny requests for non-dns URIs, for now this will figure out 'http' requests too
 		if(!curi.getUURI().getUri().getScheme().equals("dns")) {
@@ -49,49 +63,39 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 			return;
 		}
 		
-		// give it a go
+		String DnsName = parseTargetDomain(curi);	
+		CrawlHost targetHost = controller.getHostCache().getHostFor(DnsName);
+		
+		if(targetHost.hasBeenLookedUp()){
+			return;			
+		}
+		
+		// give it a go    
 		curi.incrementFetchAttempts();
 
 		//TODO add support for type and class specifications in query string, for now always use defaults
 		/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
 		} */
 
-		// if the dns server hasn't been looked up yet populate it's crawlhost
-		if( ! curi.getHost().hasBeenLookedUp() ){
-			
-			// now we know we've at least tried
-			curi.getHost().setHasBeenLookedUp();
-			
-			String nameServer = FindServer.server();
-			InetAddress serverInetAddr = null;
-			
-			try{
-				serverInetAddr = InetAddress.getByName(nameServer);
-
-				// TODO define success status codes
-				curi.setFetchStatus(1);
-			
-			}catch(UnknownHostException e){
-				curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-				e.printStackTrace();
-			}
-			
-			curi.getHost().setIP(serverInetAddr);
-		}
-
+		// add the nameserver as the curi's ip, to indicate the machine that did the lookup
+		curi.getHost().setIP(serverInetAddr);
+		
 		// do the lookup and store the results back to the curi
 		now = System.currentTimeMillis();
-		DnsName = parseTargetDomain(curi);
+		
 		rrecordSet = dns.getRecords(DnsName, TypeType, ClassType);
 		curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+		
 
-		// get the CrawlHost object for the host we're looking up (not this curi's host, which is the nameserver)
-		CrawlHost targetHost = controller.getHostCache().getHostFor(parseTargetDomain(curi));
+		//TODO define success status codes
+		curi.getHost().setHasBeenLookedUp();
+	
 		targetHost.setHasBeenLookedUp();
 		
 		if(rrecordSet != null){
 
+			curi.setFetchStatus(1);
 			curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 
 			// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
@@ -108,6 +112,9 @@ public class SimpleDNSFetcher extends Processor implements CoreAttributeConstant
 
 				break; 	// only need to process one record
 			}
+			
+		}else{
+				curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 		}
 	}
 	

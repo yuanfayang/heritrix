@@ -16,6 +16,10 @@ import org.xbill.DNS.FindServer;
 public class HostCache {
 	private static HashMap hosts = new HashMap(); // hostname -> CrawlHost
 	
+	public boolean isCached(String h){
+		return hosts.containsKey(h);
+	}
+	
 	public static CrawlHost getHostFor(String h) {
 		CrawlHost chost = (CrawlHost) hosts.get(h);
 		if (chost==null) {
