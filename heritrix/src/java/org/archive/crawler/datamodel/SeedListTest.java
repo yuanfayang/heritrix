@@ -134,7 +134,7 @@ public class SeedListTest extends TmpDirTestCase {
         fw.flush();
         fw.close();
         boolean found = false;
-        SeedList sl = new SeedList(this.seedsfile, false);
+        SeedList sl = new SeedList(this.seedsfile, null, false);
         for (Iterator i = sl.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
             if (uuri.getHost() == null) {
@@ -166,7 +166,7 @@ public class SeedListTest extends TmpDirTestCase {
 
     private SeedList checkContent(SeedList sl, Set seedSet, boolean caching) {
         if (sl == null) {
-            sl = new SeedList(this.seedsfile, caching);
+            sl = new SeedList(this.seedsfile, null, caching);
         }
         int count = 0;
         for (Iterator i = sl.iterator(); i.hasNext();) {

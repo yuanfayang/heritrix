@@ -13,10 +13,10 @@
   </articleinfo>
 
   <sect1 id="1_2_0">
-    <title>Release 1.2.0 - 11/16/2004</title>
+    <title>Release 1.2.0 - TBD</title>
 
     <abstract>
-      <para>Added IP-based politeness, configurable URI-canonicalization, and mid-fetch abort. Lots of Bug fixes.</para>
+      <para>TBD</para>
     </abstract>
 
     <sect2 id="1_2_0_limitations">
@@ -55,28 +55,7 @@ java.net.SocketException: Socket is not connected
           (Current version is alpha2).</para>
         </sect4>
       </sect3>
-
-    <sect3 id="lostjobs">
-        <title>Jobs don't show in UI when a bunch are run back-to-back</title>
-        <para>If more than one job waiting in the queue of pending jobs, 
-        then the second job often won't show in the UI; The UI says its
-        running but its not possible to see a status bar on the running job.
-        See 
-        <ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=1024120&amp;group_id=73833&amp;atid=539099">[ 1024120 ] Lost crawl job after terminate running job with jobs pending</ulink>. For now, the workaround is to study the running job
-        by viewing the crawl job logs on disk (Oddly, the 3rd queued up job
-        will start to show in the UI again).
-        </para>
-    </sect3>
-    <sect3 id="oome_pending_jobs">
-        <title>Running more than one job in series throws OOME</title>
-        <para>OutOfMemoryExceptions are frequent when jobs are run in series.
-        <ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1055592&amp;group_id=73833&amp;atid=539099">[ 1055592 ]
-        terminated crawl still hogging memory, causing OOM</ulink>. 
-        For now, restart Heritrix between the running of jobs.
-        </para>
-    </sect3>
     </sect2>
-        
 
     <sect2 id="1_2_0_changes">
       <title>Changes</title>
@@ -96,62 +75,52 @@ java.net.SocketException: Socket is not connected
             </thead>
 
             <tbody>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1067095">1067095</ulink></entry><entry>Add</entry><entry>Hang in http fetcher when mid-fetch aborts</entry><entry>2004-11-15</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1066804">1066804</ulink></entry><entry>Add</entry><entry>Allow specification of heritrix_out.log filename</entry><entry>2004-11-15</entry><entry> stack-sf</entry></row>
 
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=903845">903845</ulink></entry><entry>Add</entry><entry>IP-based politeness</entry><entry>2004-10-28</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1054849">1054849</ulink></entry><entry>Add</entry><entry>Recover from crawl initialized with a recovery log</entry><entry>2004-10-26</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1054851">1054851</ulink></entry><entry>Add</entry><entry>Import gzipped or non-gzipped recovery log</entry><entry>2004-10-26</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1050378">1050378</ulink></entry><entry>Add</entry><entry>Add bdb alreadyseen option to hostsqueuesfrontier</entry><entry>2004-10-19</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=973881">973881</ulink></entry><entry>Add</entry><entry>Force generation of report files</entry><entry>2004-06-16</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903845">903845</ulink></entry><entry>Add</entry><entry>IP-based politeness</entry><entry>2004-10-28</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1054849">1054849</ulink></entry><entry>Add</entry><entry>Recover from crawl initialized with a recovery log</entry><entry>2004-10-26</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1054851">1054851</ulink></entry><entry>Add</entry><entry>Import gzipped or non-gzipped recovery log</entry><entry>2004-10-26</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1050378">1050378</ulink></entry><entry>Add</entry><entry>Add bdb alreadyseen option to hostsqueuesfrontier</entry><entry>2004-10-19</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=973881">973881</ulink></entry><entry>Add</entry><entry>Force generation of report files</entry><entry>2004-06-16</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1010883">1010883</ulink></entry><entry>Add</entry><entry>Scripts to generate end-of-job reports</entry><entry>2004-08-17</entry><entry>danavery</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1010883">1010883</ulink></entry><entry>Add</entry><entry>Scripts to generate end-of-job reports</entry><entry>2004-08-17</entry><entry>danavery</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=988277">988277</ulink></entry><entry>Add</entry><entry>[Need feedback] "Done with ARC file" event</entry><entry>2004-07-09</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=988277">988277</ulink></entry><entry>Add</entry><entry>[Need feedback] "Done with ARC file" event</entry><entry>2004-07-09</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1044977">1044977</ulink></entry><entry>Add</entry><entry>Logging of scope-rejected URIs</entry><entry>2004-10-11</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1044977">1044977</ulink></entry><entry>Add</entry><entry>Logging of scope-rejected URIs</entry><entry>2004-10-11</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=902970">902970</ulink></entry><entry>Add</entry><entry>HTTPClient should use supplied IP / avoid DNS lookup</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=902970">902970</ulink></entry><entry>Add</entry><entry>HTTPClient should use supplied IP / avoid DNS lookup</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=903093">903093</ulink></entry><entry>Add</entry><entry>Setting of Integer.MAX_VALUE is ugly</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903093">903093</ulink></entry><entry>Add</entry><entry>Setting of Integer.MAX_VALUE is ugly</entry><entry>2004-02-23</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=900004">900004</ulink></entry><entry>Add</entry><entry>canonicalization of URIs for alreadyIncluded testing</entry><entry>2004-02-18</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=900004">900004</ulink></entry><entry>Add</entry><entry>canonicalization of URIs for alreadyIncluded testing</entry><entry>2004-02-18</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=941072">941072</ulink></entry><entry>Add</entry><entry>Allow operator-configured mid-HTTP-fetch filters</entry><entry>2004-04-23</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=941072">941072</ulink></entry><entry>Add</entry><entry>Allow operator-configured mid-HTTP-fetch filters</entry><entry>2004-04-23</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1037891">1037891</ulink></entry><entry>Add</entry><entry>Cmdline defaults in properties file</entry><entry>2004-09-30</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1037891">1037891</ulink></entry><entry>Add</entry><entry>Cmdline defaults in properties file</entry><entry>2004-09-30</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1037304">1037304</ulink></entry><entry>Add</entry><entry>Upgrade httpclient to 3.0.x</entry><entry>2004-09-29</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1037304">1037304</ulink></entry><entry>Add</entry><entry>Upgrade httpclient to 3.0.x</entry><entry>2004-09-29</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=994141">994141</ulink></entry><entry>Add</entry><entry>Update build to use maven 1.0</entry><entry>2004-07-19</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=994141">994141</ulink></entry><entry>Add</entry><entry>Update build to use maven 1.0</entry><entry>2004-07-19</entry><entry>stack-sf</entry>
 </row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=1002336">1002336</ulink></entry><entry>Add</entry><entry>Figure what profiler to use</entry><entry>2004-08-02</entry><entry>stack-sf</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1002336">1002336</ulink></entry><entry>Add</entry><entry>Figure what profiler to use</entry><entry>2004-08-02</entry><entry>stack-sf</entry>
 </row>
 
 
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1064887">1064887</ulink></entry><entry>Fix</entry><entry>http and https prerequisites contention</entry><entry>2004-11-11</entry><entry>stack-sf</entry></row>
 
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1062604">1062604</ulink></entry><entry>Fix</entry><entry>Seed to SURT coversion issuesI</entry><entry>22004-11-08</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=11061795">11061795</ulink></entry><entry>Fix</entry><entry>ServerCache HashMaps access thread-safetyI</entry><entry>22004-11-06</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1060589">1060589</ulink></entry><entry>Fix</entry><entry>Can't open logs of old jobs post-restart in UII</entry><entry>22004-11-04</entry><entry>stack-sf</entry></row>
-
-
-
-
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058565">1058565</ulink></entry><entry>Fix</entry><entry>Non-default 'logs' location doesn't show in web UI</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058568">1058568</ulink></entry><entry>Fix</entry><entry>IMG 'lowsrc' may not be extracted</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1055854">1055854</ulink></entry><entry>Fix</entry><entry>completed crawls show as 'aborted by user'</entry><entry>2004-10-270</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1059237">1059237</ulink></entry><entry>Fix</entry><entry>MultiThreadedHttpConnectionManager https already connected</entry><entry>2004-11-020</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052578">1052578</ulink></entry><entry>Fix</entry><entry>recovery log of recovered crawl insufficient to recover</entry><entry>2004-10-220</entry><entry>stack-sf</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908690">908690</ulink></entry><entry>Fix</entry><entry>Some dates are GMT, others are not  *</entry><entry>2004-03-020</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=958096">958096</ulink></entry><entry>Fix</entry><entry>Flushing CrawlServers problematic   *</entry><entry>2004-05-210</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052570">1052570</ulink></entry><entry>Fix</entry><entry>Threads contend for scratch files (after kill/readFully/Gap)</entry><entry>2004-10-220</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1033701">1033701</ulink></entry><entry>Fix</entry><entry>incorrect number of total active threads    *</entry><entry>2004-09-230</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058565">1058565</ulink></entry><entry>fix</entry><entry>Non-default 'logs' location doesn't show in web UI</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058568">1058568</ulink></entry><entry>fix</entry><entry>IMG 'lowsrc' may not be extracted</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1055854">1055854</ulink></entry><entry>fix</entry><entry>completed crawls show as 'aborted by user'</entry><entry>2004-10-270</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1059237">1059237</ulink></entry><entry>fix</entry><entry>MultiThreadedHttpConnectionManager https already connected</entry><entry>2004-11-020</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052578">1052578</ulink></entry><entry>fix</entry><entry>recovery log of recovered crawl insufficient to recover</entry><entry>2004-10-220</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908690">908690</ulink></entry><entry>fix</entry><entry>Some dates are GMT, others are not  *</entry><entry>2004-03-020</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=958096">958096</ulink></entry><entry>fix</entry><entry>Flushing CrawlServers problematic   *</entry><entry>2004-05-210</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052570">1052570</ulink></entry><entry>fix</entry><entry>Threads contend for scratch files (after kill/readFully/Gap)</entry><entry>2004-10-220</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1033701">1033701</ulink></entry><entry>fix</entry><entry>incorrect number of total active threads    *</entry><entry>2004-09-230</entry><entry>gojomo</entry></row>
 
 
 
 
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1000840">1000840</ulink></entry><entry>Fix</entry><entry>diskincludedfrontier performance is awful</entry><entry>2004-07-30</entry><entry>gojomo</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1000840">1000840</ulink></entry><entry>fix</entry><entry>diskincludedfrontier performance is awful</entry><entry>2004-07-30</entry><entry>gojomo</entry>
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1043251">1043251</ulink></entry><entry>Fix</entry><entry>better/longer dns retries on lookup failure</entry><entry>2004-10-08</entry><entry>gojomo</entry>
 </row>

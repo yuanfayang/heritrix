@@ -164,11 +164,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     private MapType midfetchfilters = null;
     
-    /**
-     * What to log if midfetch abort.
-     */
-    private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
-    
 
     /**
      * Constructor.
@@ -274,8 +269,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     super.readResponseBody(state, connection);
                     addResponseContent(this, curi);
         			if(!filtersAccept(midfetchfilters, curi)) {
-                        curi.addAnnotation(MIDFETCH_ABORT_LOG);
-                        releaseConnection();
+                        curi.addAnnotation("midFetchAabort");
         				abort();
         			}
         		}
@@ -288,8 +282,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     super.readResponseBody(state, connection);
                     addResponseContent(this, curi);
                 	if(!filtersAccept(midfetchfilters, curi)) {
-                        curi.addAnnotation(MIDFETCH_ABORT_LOG);
-                        releaseConnection();
+                        curi.addAnnotation("midFetchAbort");
                         abort();
                     }
                 }
@@ -325,11 +318,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 1000 * getTimeout(curi));
         } catch (RecorderTimeoutException ex) {
             curi.addAnnotation("timeTrunc");
-            method.releaseConnection();
             method.abort();
         } catch (RecorderLengthExceededException ex) {
             curi.addAnnotation("lenTrunc");
-            method.releaseConnection();
             method.abort();
         } catch (IOException e) {
             cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
@@ -833,10 +824,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         
         MultiThreadedHttpConnectionManager cm =
             new MultiThreadedHttpConnectionManager();
-        // TODO: Tie this to host valence in frontier (When its made
-        // work properly).
+        // TODO: Tie this to host valence in frontier.
         cm.getParams().setDefaultMaxConnectionsPerHost(10);
-        
         // Multiply toethread max by 2 in case one is occupied when
         // we go to get another (Allow some slack).
         cm.getParams().setMaxTotalConnections(getController().

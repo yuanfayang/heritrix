@@ -2,7 +2,6 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*,java.io.*" %>
 <%@ page import="org.archive.crawler.settings.ComplexType"%>
-<%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils"%>
 <%
     String job = request.getParameter("job");
     CrawlJob cjob = null;
@@ -33,8 +32,12 @@
                 <fieldset style="width: 600px">
                     <legend>Seed file for '<%=cjob.getJobName()%>'</legend>
                     <pre><%
-                    JobConfigureUtils.printOutSeeds(cjob.getSettingsHandler(),
-                        out); 
+                BufferedReader seeds = new BufferedReader(new FileReader(cjob.getSettingsHandler().getPathRelativeToWorkingDirectory((String)((ComplexType)cjob.getSettingsHandler().getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+                String sout = seeds.readLine();
+                while(sout!=null){
+                    out.println(sout);
+                    sout = seeds.readLine();
+                }
         %></pre>
                 </fieldset>
         <%

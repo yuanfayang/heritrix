@@ -22,8 +22,6 @@
  */
 package org.archive.crawler.admin.ui;
 
-import java.io.IOException;
-
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -35,23 +33,20 @@ import org.archive.crawler.Heritrix;
  * @version $Date$, $Revision$
  */
 public class WebappLifecycle implements ServletContextListener {
-    private Heritrix heritrix = null;
     public void contextInitialized(ServletContextEvent sce) {
         if (!Heritrix.isCommandLine()) {
             try {
-				this.heritrix = new Heritrix();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-            if (this.heritrix != null) {
-            	    this.heritrix.start();
+                Heritrix.initialize();
+                Heritrix.launch();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
 
     public void contextDestroyed(ServletContextEvent sce) {
-        if (this.heritrix !=  null) {
-            this.heritrix.stop();
+        if (!Heritrix.isCommandLine()) {
+            Heritrix.prepareHeritrixShutDown();
         }
     }
 }

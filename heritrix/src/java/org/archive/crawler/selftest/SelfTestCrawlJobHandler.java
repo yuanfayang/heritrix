@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -64,13 +63,13 @@ public class SelfTestCrawlJobHandler
 
 
     public SelfTestCrawlJobHandler()
-    throws IOException {
+    {
         this(null);
     }
 
     public SelfTestCrawlJobHandler(String selfTestName)
-    throws IOException {
-        super(false, false); //No need to load jobs or profiles
+    {
+        super(false,false); //No need to load jobs or profiles
         this.selfTestName = selfTestName;
     }
 

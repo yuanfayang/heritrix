@@ -54,7 +54,7 @@
        be picked up and appended to the currentVersion.  Handy for continuous
        builds if the version.build.suffix holds time of build.
     -->
-  <currentVersion>1.3.0${version.build.suffix}</currentVersion>
+  <currentVersion>1.1.0${version.build.suffix}</currentVersion>
   
   <!-- details about the organization that 'owns' the project -->
   <organization>
@@ -418,32 +418,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>jmxremote</id>
-            <version />
-            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <description>JMX Remote.
-                </description>
-                <license>SUN Binary Code License
-                http://java.com/en/download/license.jsp
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
-            <id>jmxremote_optional</id>
-            <version />
-            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <description>JMX Remote Optional Tools.
-                </description>
-                <license>SUN Binary Code License
-                http://java.com/en/download/license.jsp
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>poi</id>
             <version>2.0-RC1-20031102</version>
             <url>http://jakarta.apache.org/poi/</url>
@@ -593,10 +567,9 @@
     <resource>
         <directory>${basedir}/src/conf/</directory>
         <includes>
-            <include>heritrix.properties</include>
+            <include>heritrix.*</include>
             <include>profiles/**</include>
             <include>modules/**</include>
-            <include>selftest/**</include>
         </includes>
     </resource>
     </resources>

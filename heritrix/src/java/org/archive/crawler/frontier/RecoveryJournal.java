@@ -132,7 +132,7 @@ implements FrontierJournal {
      * 
      * @see org.archive.crawler.framework.Frontier#importRecoverLog(java.lang.String)
      */
-    public static void importRecoverLog(File source, Frontier frontier, boolean retainFailures)
+    public static void importRecoverLog(File source, Frontier frontier)
             throws IOException {
         if (source == null) {
             throw new IllegalArgumentException("Passed source file is null.");
@@ -142,8 +142,7 @@ implements FrontierJournal {
         String read;
         try {
             while ((read = reader.readLine()) != null) {
-                if (read.startsWith(F_SUCCESS)
-						|| (retainFailures && read.startsWith(F_FAILURE))) {
+                if (read.startsWith(F_SUCCESS)) {
                     String args[] = read.split("\\s+");
                     try {
                         UURI u = UURIFactory.getInstance(args[1]);

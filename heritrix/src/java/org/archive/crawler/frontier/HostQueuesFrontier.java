@@ -1754,14 +1754,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
      */
-    public void importRecoverLog(String pathToLog, boolean retainFailures)
-			throws IOException {
+    public void importRecoverLog(String pathToLog) throws IOException {
         File source = new File(pathToLog);
         if (!source.isAbsolute()) {
             source = new File(getSettingsHandler().getOrder()
                     .getController().getDisk(), pathToLog);
         }
-        RecoveryJournal.importRecoverLog(source,this,retainFailures);
+        RecoveryJournal.importRecoverLog(source,this);
     }
 
     public void considerIncluded(UURI u) {

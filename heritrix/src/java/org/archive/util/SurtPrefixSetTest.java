@@ -26,7 +26,6 @@ package org.archive.util;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Iterator;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -130,36 +129,5 @@ public class SurtPrefixSetTest extends TestCase {
     private void assertContains(SurtPrefixSet surts, String s) {
         assertEquals(s+" is missing", surts.contains(s), true);
     }
-    
-    public void testImportFromUris() throws IOException {
-        String seed = "http://www.archive.org/index.html";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).equals("http://(org,archive,www,)/"));
-        seed = "http://timmknibbs4senate.blogspot.com/";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).
-                equals("http://(com,blogspot,timmknibbs4senate,)/"));
-        seed = "https://one.two.three";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).equals("http://(three,two,one"));
-        seed = "https://xone.two.three/a/b/c/";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).
-                equals("http://(three,two,xone,)/a/b/c/"));
-        seed = "https://yone.two.three/a/b/c";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).
-                equals("http://(three,two,yone,)/a/b/"));
-    }
-    
-    private String makeSurtPrefix(String seed) {
-        SurtPrefixSet surts = new SurtPrefixSet();
-        StringReader sr = new StringReader(seed);
-        surts.importFromUris(sr);
-        String result = null;
-        for (Iterator i = surts.iterator(); i.hasNext();) {
-            result = (String)i.next();
-        }
-        return result;
-    }
+
 }

@@ -25,15 +25,7 @@
  */
 package org.archive.crawler.admin.ui;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,14 +34,11 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ListType;
@@ -363,69 +352,5 @@ public class JobConfigureUtils {
             }
         }
         return theJob;
-    }
-    
-    /**
-     * Print complete seeds list on passed in PrintWriter.
-     * @param settingsHandler Current handler.
-     * @param out Writer to write out all seeds to.
-     * @param payload What to write out.
-     * @throws AttributeNotFoundException
-     * @throws MBeanException
-     * @throws ReflectionException
-     * @throws IOException
-     * @throws IOException
-     */
-    public static void printOutSeeds(SettingsHandler hndlr, String payload)
-    throws AttributeNotFoundException, MBeanException, ReflectionException, IOException {
-        File seedfile = getSeedFile(hndlr);
-        writeReader(new StringReader(payload),
-            new BufferedWriter(new FileWriter(seedfile)));
-    }
-    
-    /**
-     * Print complete seeds list on passed in PrintWriter.
-     * @param settingsHandler Current handler.
-     * @param out Writer to write out all seeds to.
-     * @throws ReflectionException
-     * @throws MBeanException
-     * @throws AttributeNotFoundException
-     * @throws IOException
-     */
-    public static void printOutSeeds(SettingsHandler hndlr, Writer out)
-    throws AttributeNotFoundException, MBeanException, ReflectionException,
-            IOException {
-        File seedfile = getSeedFile(hndlr);
-        SeedList seeds = new SeedList(seedfile, true);
-        writeReader(new BufferedReader(new InputStreamReader(seeds.getSeedStream())),
-            out);
-    }
-    
-    /**
-     * @return Seeds file.
-     * @throws ReflectionException
-     * @throws MBeanException
-     * @throws AttributeNotFoundException
-     */
-    protected static File getSeedFile(SettingsHandler hndlr)
-    throws AttributeNotFoundException, MBeanException, ReflectionException {
-        String seedsFileStr = (String)((ComplexType)hndlr.getOrder().
-            getAttribute("scope")).getAttribute("seedsfile");
-        return hndlr.getPathRelativeToWorkingDirectory(seedsFileStr);
-    }
-    
-    /**
-     * Print complete seeds list on passed in PrintWriter.
-     * @param seedsFile File to read seeds from.
-     * @param out Writer to write out all seeds to.
-     * @throws IOException
-     */
-    protected static void writeReader(Reader reader, Writer out)
-    throws IOException {
-        char [] buffer = new char[1024 * 4];
-        for(int read = reader.read(buffer); read != -1; read = reader.read()) {
-            out.write(buffer, 0, read);
-        }
-        out.flush();
     }
 }

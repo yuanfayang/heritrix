@@ -29,6 +29,9 @@
     <session-config>
         <session-timeout>120</session-timeout>
     </session-config>
+    <welcome-file-list>
+        <welcome-file>/index.jsp</welcome-file>
+    </welcome-file-list>
     <security-constraint>
         <display-name>Heritrix Console Constraint</display-name>
         <web-resource-collection>

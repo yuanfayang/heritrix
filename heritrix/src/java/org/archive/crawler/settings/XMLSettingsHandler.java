@@ -122,8 +122,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         super.initialize();
     }
 
-    /** 
-     * Initialize the SettingsHandler from a source.
+    /** Initialize the SettingsHandler from a source.
      *
      * This method builds the settings data structure and initializes it with
      * settings from the order file given as a parameter. The intended use is
@@ -263,54 +262,42 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param filename the file to read from.
      * @return the updated settings object or null if there was no data for this
      *         in the persistent storage.
-     */    
-    protected final CrawlerSettings readSettingsObject(CrawlerSettings settings,
-            File f) {
-        CrawlerSettings result = null;
-        try {
-            InputStream is = null;
-            if (!f.exists()) {
-                // Perhaps the file we're looking for is on the CLASSPATH.
-                // DON'T look on the CLASSPATH for 'settings.xml' files.  The
-                // look for 'settings.xml' files happens frequently. Not looking
-                // on classpath for 'settings.xml' is an optimization based on
-                // ASSUMPTION that there will never be a 'settings.xml' saved
-                // on classpath.
-                if (!f.getName().startsWith(settingsFilename)) {
-                    is = XMLSettingsHandler.class.
-                        getResourceAsStream(f.getPath());
-                }
-            } else {
-                is = new FileInputStream(f);
-            }
-            if (is != null) {
+     */
+    protected final CrawlerSettings readSettingsObject(
+            CrawlerSettings settings, File filename) {
+        if (filename.exists()) {
+            logger.fine("Reading " + filename.getAbsolutePath());
+            try {
                 XMLReader parser = SAXParserFactory.newInstance()
-                    .newSAXParser().getXMLReader();
-                InputStream file = new BufferedInputStream(is);
+                        .newSAXParser().getXMLReader();
+                InputStream file = new BufferedInputStream(new FileInputStream(
+                        filename));
                 parser.setContentHandler(new CrawlSettingsSAXHandler(settings));
                 InputSource source = new InputSource(file);
-                source.setSystemId(f.toURL().toExternalForm());
+                source.setSystemId(filename.toURL().toExternalForm());
                 parser.parse(source);
-                result = settings;
+            } catch (SAXParseException e) {
+                logger.warning(e.getMessage() + " in '" + e.getSystemId()
+                        + "', line: " + e.getLineNumber() + ", column: "
+                        + e.getColumnNumber());
+            } catch (SAXException e) {
+                logger.warning(e.getMessage() + ": "
+                        + e.getException().getMessage());
+            } catch (ParserConfigurationException e) {
+                logger.warning(e.getMessage() + ": "
+                        + e.getCause().getMessage());
+            } catch (FactoryConfigurationError e) {
+                logger.warning(e.getMessage() + ": "
+                        + e.getException().getMessage());
+            } catch (IOException e) {
+                logger.warning("Could not access file '"
+                        + filename.getAbsolutePath() + "': " + e.getMessage());
             }
-        } catch (SAXParseException e) {
-            logger.warning(e.getMessage() + " in '" + e.getSystemId()
-                + "', line: " + e.getLineNumber() + ", column: "
-                + e.getColumnNumber());
-        } catch (SAXException e) {
-            logger.warning(e.getMessage() + ": "
-                + e.getException().getMessage());
-        } catch (ParserConfigurationException e) {
-            logger.warning(e.getMessage() + ": "
-                + e.getCause().getMessage());
-        } catch (FactoryConfigurationError e) {
-            logger.warning(e.getMessage() + ": "
-                + e.getException().getMessage());
-        } catch (IOException e) {
-            logger.warning("Could not access file '"
-                + f.getAbsolutePath() + "': " + e.getMessage());
+        } else {
+            // File doesn't exist, return null to indicate this.
+            settings = null;
         }
-        return result;
+        return settings;
     }
 
     protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
@@ -369,7 +356,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @return The same path modified so that it is relative to the file level
      *         location of the order file for the settings handler.
      */
-    public File getPathRelativeToWorkingDirectory(String path) {
+    public File getPathRelativeToWorkingDirectory(String path){
         File f = new File(path);
         // If path is not absolute, set f's directory
         // relative to the path of the order file

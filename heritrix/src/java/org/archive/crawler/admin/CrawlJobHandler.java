@@ -28,8 +28,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -120,7 +118,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_FRONTIERS = "urifrontiers.options";
 	/** path to directory featuring lists of options to offer in UI */
-
+    public static final String MODULE_OPTIONS_DIRECTORY = Heritrix.getConfdir()
+		+ File.separator + "modules" + File.separator;
 
     /**
      * Name of system property whose specification overrides default profile
@@ -133,14 +132,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * Default profile name.
      */
-    public static final String DEFAULT_PROFILE = "default";
-    
-    /**
-     * Name of the profiles directory.
-     */
-    public static final String PROFILES_DIR_NAME = "profiles";
-    
-    public static final String ORDER_FILE_NAME = "order.xml";
+    public static final String DEFAULT_PROFILE = "Simple";
 
     /**
      * Job currently being crawled.
@@ -185,21 +177,18 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Constructor.
-     * @throws IOException
+     *
      */
-    public CrawlJobHandler()
-    throws IOException{
-        this(true, true);
+    public CrawlJobHandler(){
+        this(true,true);
     }
 
     /**
      * Constructor allowing for optional loading of profiles and jobs.
      * @param loadJobs If true then any applicable jobs will be loaded.
      * @param loadProfiles If true then any applicable profiles will be loaded.
-     * @throws IOException
      */
-    public CrawlJobHandler(boolean loadJobs, boolean loadProfiles)
-    throws IOException{
+    public CrawlJobHandler(boolean loadJobs, boolean loadProfiles){
         // Make a comparator for CrawlJobs.
         Comparator comp = new Comparator(){
             public int compare(Object o1, Object o2) {
@@ -233,9 +222,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * <p>
      * Availible jobs are any directory containing a file called
      * <code>state.job</code>. The file must contain valid job information.
-     * @throws IOException
      */
-    private void loadJobs() throws IOException {
+    private void loadJobs() {
         File jobDir = Heritrix.getJobsdir();
         jobDir.mkdirs();
         File[] jobs = jobDir.listFiles();
@@ -301,88 +289,47 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Looks in conf dir for a profiles dir.
-     * @return the directory where profiles are stored else null if none
-     * available
-     * @throws IOException
+     * Returns the directory where profiles are stored.
+     * @return the directory where profiles are stored.
      */
-    private File getProfilesDirectory() throws IOException {
-        return (Heritrix.getConfdir() == null)? null:
-            new File(Heritrix.getConfdir().getAbsolutePath(),
-                PROFILES_DIR_NAME);
+    private File getProfilesDirectory(){
+        return new File(Heritrix.getConfdir().getAbsolutePath() +
+                File.separator + "profiles");
     }
 
     /**
-     * Loads the default profile and all other profiles found on disk.
+     * Loads all profiles found on disk.
      */
     private void loadProfiles() {
-        boolean loadedDefault = false;
-        File profileDir = null;
-		try {
-			profileDir = getProfilesDirectory();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (profileDir != null) {
-            File[] ps = profileDir.listFiles();
-            if (ps != null && ps.length > 0) {
-                for (int i = 0; i < ps.length; i++) {
-                    File f = ps[i];
-                    if (f.isDirectory()) {
-                        // Each directory in the profiles directory should
-                        // contain the file order.xml.
-                        File profile = new File(f, ORDER_FILE_NAME);
-                        if (profile.canRead()) {
-                            boolean b = loadProfile(profile);
-                            if (b) {
-                                loadedDefault = b;
-                            }
-                        }
+        File profileDir = getProfilesDirectory();
+        File[] profiles = profileDir.listFiles();
+        for (int i = 0; i < profiles.length; i++) {
+            if (profiles[i].isDirectory()) {
+                // Each directory in the profiles directory should contain the file order.xml.
+                File profile =
+                    new File(profiles[i], "order.xml");
+                if (profile.canRead()) {
+                    // Ok, got the order file for this profile.
+                    try {
+                        // The directory name denotes the profiles UID and name.
+                        XMLSettingsHandler newSettingsHandler = new XMLSettingsHandler(profile);
+                        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE);
+                        newSettingsHandler.setErrorReportingLevel(cjseh.getLevel());
+                        newSettingsHandler.initialize();
+                        addProfile(new CrawlJob(profiles[i].getName(),newSettingsHandler,cjseh));
+                    } catch (InvalidAttributeValueException e) {
+                        System.err.println(
+                            "Failed to load profile '"
+                                + profiles[i].getName()
+                                + "'. InvalidAttributeValueException.");
                     }
                 }
             }
         }
-        // Now add in the default profile.  Its on the CLASSPATH and needs
-        // special handling.  Don't add if already a default present.
-        if (!loadedDefault) {
-            String parent = File.separator + PROFILES_DIR_NAME +
-                File.separator + DEFAULT_PROFILE;
-            loadProfile(new File(parent, ORDER_FILE_NAME));
-        }
-        
         // Look to see if a default profile system property has been
         // supplied. If so, use it instead.
         // TODO: Try and read default profile from some permanent storage.
         defaultProfile = DEFAULT_PROFILE;
-    }
-    
-    /**
-     * Load one profile.
-     * @param profile Profile to load.
-     * @return True if loaded profile was the default profile.
-     */
-    protected boolean loadProfile(File profile) {
-        boolean loadedDefault = false;
-        // Ok, got the order file for this profile.
-        try {
-            // The directory name denotes the profiles UID and name.
-            XMLSettingsHandler newSettingsHandler =
-                new XMLSettingsHandler(profile);
-            CrawlJobErrorHandler cjseh =
-                new CrawlJobErrorHandler(Level.SEVERE);
-            newSettingsHandler.
-            setErrorReportingLevel(cjseh.getLevel());
-            newSettingsHandler.initialize();
-            addProfile(new CrawlJob(profile.getParentFile().getName(),
-                    newSettingsHandler, cjseh));
-            loadedDefault = profile.getParentFile().getName().
-                equals(DEFAULT_PROFILE);
-        } catch (InvalidAttributeValueException e) {
-            System.err.println("Failed to load profile '" +
-                    profile.getParentFile().getName() +
-            "'. InvalidAttributeValueException.");
-        }
-        return loadedDefault;
     }
 
     /**
@@ -668,14 +615,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new crawl job.
      * @throws FatalConfigurationException If a problem occurs creating the
      *             settings.
-     * @throws IOException
      */
     public CrawlJob newJob(CrawlJob baseOn,
                            String name,
                            String description,
                            String seeds,
                            int priority)
-                    throws FatalConfigurationException, IOException {
+                    throws FatalConfigurationException {
         if (newJob != null) {
             //There already is a new job. Discard it.
             discardNewJob();
@@ -705,13 +651,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *            The contents of the new profiles' seed file
      * @return The new profile.
      * @throws FatalConfigurationException
-     * @throws IOException
      */
     public CrawlJob newProfile(CrawlJob baseOn,
                                String name,
                                String description,
                                String seeds)
-                        throws FatalConfigurationException, IOException {
+                        throws FatalConfigurationException {
         File profileDir = new File(getProfilesDirectory().getAbsoluteFile()
                 + File.separator + name);
 
@@ -1114,29 +1059,21 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Loads options from a file. Typically these are a list of available
+     * Loads options from a file. Typically these are a list of availible
      * modules that can be plugged into some part of the configuration.
      * For examples Processors, Frontiers, Filters etc. Leading and trailing
      * spaces are trimmed from each line.
-     * 
-     * <p>Options are loaded from the CLASSPATH.
      * @param file the name of the option file (without path!)
      * @return The option file with each option line as a seperate entry in the
      *         ArrayList.
      * @throws IOException when there is trouble reading the file.
      */
-    public static ArrayList loadOptions(String file)
-    throws IOException {
-        InputStream is = CrawlJob.class.getResourceAsStream(File.separator +
-                "modules" + File.separator + file);
-        if (is == null) {
-            throw new IOException("Failed to get " + file + " from the " +
-                " CLASSPATH");
-        }
+    public static ArrayList loadOptions(String file) throws IOException{
+        File optionfile = new File(MODULE_OPTIONS_DIRECTORY+file);
         ArrayList ret = new ArrayList();
         String line = null;
         BufferedReader bf =
-            new BufferedReader(new InputStreamReader(is), 8192);
+            new BufferedReader(new FileReader(optionfile), 8192);
         try {
             while ((line = bf.readLine()) != null) {
                 line = line.trim();

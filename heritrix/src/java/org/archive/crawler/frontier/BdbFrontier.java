@@ -54,8 +54,6 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
@@ -99,12 +97,6 @@ implements Frontier,
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
 
-    /** percentage of heap to allocate to bdb cache */
-    public final static String ATTR_BDB_CACHE_PERCENT =
-        "bdb-cache-percent";
-    protected final static Integer DEFAULT_BDB_CACHE_PERCENT =
-        new Integer(0);
-    
     /** all URIs scheduled to be crawled */
     protected BdbMultiQueue pendingUris;
 
@@ -165,13 +157,6 @@ implements Frontier,
         // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         // therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
-        Type t = addElementToDefinition(
-                new SimpleType(ATTR_BDB_CACHE_PERCENT,
-                "Percentage of heap to allocate to BerkeleyDB JE cache. " +
-                "Default of zero means no preference (accept BDB's default" +
-                "or properties setting).",
-                DEFAULT_BDB_CACHE_PERCENT));
-        t.setExpertSetting(true);
     }
 
     /**
@@ -186,13 +171,6 @@ implements Frontier,
         this.controller = c;
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
-        int bdbCachePercent = ((Integer) getUncheckedAttribute(null,
-				ATTR_BDB_CACHE_PERCENT)).intValue();
-        if(bdbCachePercent>0) {
-        	// operator has expressed a preference; override BDB default or 
-        	// je.properties value
-        	envConfig.setCachePercent(bdbCachePercent);
-        }
         try {
             dbEnvironment = new Environment(c.getStateDisk(), envConfig);
             pendingUris = createMultiQueue();

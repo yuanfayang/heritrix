@@ -120,11 +120,9 @@ public class SurtPrefixSet extends TreeSet {
         while (iter.hasNext()) {
             s = (String) iter.next();
             // s is a URI (or even fragmentary hostname), not a SURT
-            if(s.indexOf(':') == -1 || s.indexOf('.') < s.indexOf(':')) {
-                // No scheme present; prepend "http://"
+            if(s.indexOf(':')==-1 || s.indexOf('.')<s.indexOf(':')) {
+                // no scheme present; prepend "http://"
                 s = "http://" + s;
-            } else if (s.startsWith("https://")) {
-                s = "http" + s.substring("https".length());
             }
             // convert to full SURT
             s = SURT.fromURI(s);
@@ -132,6 +130,7 @@ public class SurtPrefixSet extends TreeSet {
             s = SurtPrefixSet.asPrefix(s);
             add(s);
         }
+        
     }
 
     /**
@@ -158,12 +157,10 @@ public class SurtPrefixSet extends TreeSet {
      * @return As prefix.
      */
     private static String asPrefix(String s) {
-        // Strip last path-segment, if more than 3 slashes
+        // strip last path-segment, if more than 3 slashes
         s = s.replaceAll("^(.*//.*/)[^/]*","$1");
-        // Strip trailing ",)", if present and NO path (no 3rd slash).
-        if (!s.endsWith("/")) {
-            s = s.replaceAll("^(.*),\\)","$1");
-        }
+        // strip trailing ",)", if present
+        s = s.replaceAll("^(.*),\\)","$1");       
         return s;
     }
 

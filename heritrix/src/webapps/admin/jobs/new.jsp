@@ -1,8 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
-<%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
-<%@ page import="org.archive.crawler.datamodel.SeedList" %>
 <%@ page import="org.archive.crawler.settings.ComplexType" %>
 <%@ page import="org.archive.crawler.settings.CrawlerSettings" %>
 <%@ page import="org.archive.crawler.settings.XMLSettingsHandler" %>
@@ -10,8 +8,6 @@
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.FileReader" %>
 <%@ page import="java.util.regex.Pattern" %>
-<%@ page import="java.util.Iterator" %>
-<%@ page import="java.io.File" %>
 
 <%
     /**
@@ -54,24 +50,19 @@
                    +"No spaces are allowed";
         }
         
-        if(error == null) {
+        if(error == null){
             if(isProfile){
                 // Ensure unique name
                 CrawlJob test = handler.getJob(metaName);
-                if(test == null) {
+                if(test == null){
                     // unique name
-                    newJob = handler.newProfile(theJob, metaName,
-                        request.getParameter("meta/description"),
-                        request.getParameter("seeds"));
+                    newJob = handler.newProfile(theJob,metaName,request.getParameter("meta/description"),request.getParameter("seeds"));
                 } else {
                     // Need a unique name!
                     error = "Profile name must be unique!";
                 }
             }else{
-                newJob = handler.newJob(theJob, metaName, 
-                    request.getParameter("meta/description"),
-                    request.getParameter("seeds"),
-                    CrawlJob.PRIORITY_AVERAGE);
+                newJob = handler.newJob(theJob,metaName,request.getParameter("meta/description"),request.getParameter("seeds"),CrawlJob.PRIORITY_AVERAGE);
             }
         }
         
@@ -163,12 +154,15 @@
                     <td valign="top">
                         Seeds:
                     </td>
-                    <td><font size="-1">Fill in seed URIs below, one per line.
-                    Comment lines begin with '#'.</font></br>
+                    <td>
                         <textarea name="seeds" style="width: 440px" rows="8"><%
-                            if(error == null) {
-                                JobConfigureUtils.
-                                    printOutSeeds(settingsHandler, out);
+                            if(error==null){
+                                BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+                                String sout = seeds.readLine();
+                                while(sout!=null){
+                                    out.println(sout);
+                                    sout = seeds.readLine();
+                                }
                             } else {
                                 out.println(request.getParameter("seeds"));
                             }

@@ -37,17 +37,16 @@
         <filter token="VERSION" value="${pom.currentVersion}" />
 
         <!--Add the conf dir to our binary distribution.  Be careful w/
-            filtering.  It ruins truststores so exclude those during 
+            filtering.  It ruins truststores so exclude those when during 
             filter copy.  Copy truststores separately afterward.
          -->
         <copy todir="${maven.dist.bin.assembly.dir}/conf" filtering="true">
-          <fileset dir="./src/conf/">
-            <include name="heritrix.*"/>
+          <fileset dir="./src/conf">
             <exclude name="*.cacerts"/>
           </fileset>
         </copy>
         <copy todir="${maven.dist.bin.assembly.dir}/conf">
-          <fileset dir="./src/conf/">
+          <fileset dir="./src/conf">
             <include name="*cacerts"/>
           </fileset>
         </copy>

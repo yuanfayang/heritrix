@@ -36,8 +36,15 @@
         settingsHandler.writeSettingsObject(orderfile);
         BufferedWriter writer;
         try {
-            JobConfigureUtils.printOutSeeds(settingsHandler,
-                    request.getParameter("seeds"));
+            String seedfile = (String)((ComplexType)settingsHandler.getOrder().
+                getAttribute("scope")).getAttribute("seedsfile");
+            writer = new BufferedWriter(new FileWriter(settingsHandler.
+                getPathRelativeToWorkingDirectory(seedfile)));
+            if (writer != null) {
+                // TODO Read seeds from profile.
+                writer.write(request.getParameter("seeds"));
+                writer.close();
+            }
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -244,7 +251,12 @@
                 <td>
                     <textarea name="seeds" style="width: 440px" 
                         rows="8" onChange="setUpdate()"><%
-                        JobConfigureUtils.printOutSeeds(settingsHandler, out);
+                        BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+                        String sout = seeds.readLine();
+                        while(sout!=null) {
+                            out.println(sout);
+                            sout = seeds.readLine();
+                        }
                     %></textarea>
                 </td>
             </tr>
