@@ -200,6 +200,14 @@ public class DiskQueue implements Queue, Savable {
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {

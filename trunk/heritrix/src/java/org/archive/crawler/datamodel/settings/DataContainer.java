@@ -73,7 +73,7 @@ public class DataContainer extends HashMap {
      *
      * @param name name of the element to add.
      * @param description description ef the element to add.
-     * @param overrideable should this element be overrideable.
+     * @param isOverrideable should this element be overrideable.
      * @param legalValues an array of legal values for this element or null if
      *                    there are no constraints.
      * @param defaultValue the default value for this element.
@@ -112,7 +112,7 @@ public class DataContainer extends HashMap {
      *
      * @param name name of the element to add.
      * @param description description ef the element to add.
-     * @param overrideable should this element be overrideable.
+     * @param isOverrideable should this element be overrideable.
      * @param legalValues an array of legal values for this element or null if
      *                    there are no constraints.
      * @param defaultValue the default value for this element.

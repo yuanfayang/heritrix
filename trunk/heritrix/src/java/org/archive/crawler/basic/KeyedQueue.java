@@ -26,8 +26,11 @@ package org.archive.crawler.basic;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.util.CompositeIterator;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
@@ -44,9 +47,12 @@ public class KeyedQueue implements Queue, URIStoreable {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
 
     long wakeTime;
-    Object classKey;
+    String classKey;
     Object state;
 
+    Object inProcessItem;
+    
+    LinkedList innerStack; // topmost items
     Queue innerQ;
 
     /**
@@ -54,13 +60,14 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @param scratchDir
      * @param headMax
      */
-    public KeyedQueue(Object key, File scratchDir, int headMax) {
+    public KeyedQueue(String key, File scratchDir, int headMax) {
         super();
         classKey = key;
         String tmpName = null;
         if (key instanceof String) {
             tmpName = (String) key;
         }
+        innerStack = new LinkedList();
 //        innerQ = new MemQueue();
         try {
             innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
@@ -77,7 +84,7 @@ public class KeyedQueue implements Queue, URIStoreable {
     /**
      * @return Object
      */
-    public Object getClassKey() {
+    public String getClassKey() {
         return classKey;
     }
 
@@ -145,13 +152,16 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
-        return innerQ.isEmpty();
+        return innerStack.isEmpty() && innerQ.isEmpty();
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
+        if (!innerStack.isEmpty()) {
+            return innerStack.removeFirst();
+        }
         return innerQ.dequeue();
     }
 
@@ -173,14 +183,54 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
-        return innerQ.getIterator(inCacheOnly);
+        return new CompositeIterator(innerStack.iterator(),innerQ.getIterator(inCacheOnly));
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
-        return innerQ.deleteMatchedItems(matcher);
+        return innerQ.deleteMatchedItems(matcher); // TODO delete from stack too
+    }
+
+    /**
+     * @return
+     */
+    public Object getInProcessItem() {
+       return inProcessItem;
+    }
+
+    /**
+     * @param curi
+     */
+    public void setInProcessItem(CrawlURI curi) {
+        inProcessItem = curi;
+    }
+
+    /**
+     * @param curi
+     */
+    public void enqueueMedium(CrawlURI curi) {
+        innerStack.addLast(curi);
+    }
+    /**
+     * @param curi
+     */
+    public void enqueueHigh(CrawlURI curi) {
+        innerStack.addFirst(curi);
+    }
+
+    /**
+     * @return
+     */
+    public Object peek() {
+        if(!innerStack.isEmpty()) {
+            return innerStack.getFirst();
+        }
+        if(!innerQ.isEmpty()) {
+            return innerQ.peek();
+        }
+        return null;
     }
 
 }

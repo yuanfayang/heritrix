@@ -53,6 +53,8 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
     implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
+    private static String DEFAULT_CLASS_KEY = "default..."; // when neat host-based class-key fails us
+    
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
     // isSeed
@@ -63,6 +65,7 @@ public class CrawlURI extends CandidateURI
     // Scheduler lifecycle info
     private Object state;   // state within scheduling/store/selector
     private long wakeTime; // if "snoozed", when this CrawlURI may awake
+    private String classKey; // cached classKey value
     private long dontRetryBefore = -1;
 
     // Processing progress
@@ -268,9 +271,14 @@ public class CrawlURI extends CandidateURI
      * class is processed at once, all items of the class
      * are held for a politeness period, etc.
      */
-    public Object getClassKey() {
-        //return host.getHostname();
+    public String getClassKey() {
+        if(classKey==null) {
+            classKey = calculateClassKey();
+        }
+        return classKey;
+    }
 
+    private String calculateClassKey() {
         String scheme = getUURI().getUri().getScheme();
         if (scheme.equals("dns")){
             return FetchDNS.parseTargetDomain(this);
@@ -279,8 +287,7 @@ public class CrawlURI extends CandidateURI
         if (host == null) {
             String authority =  getUURI().getUri().getAuthority();
             if(authority == null) {
-                // let it be its own key
-                return getUURI().getURIString();
+                return DEFAULT_CLASS_KEY;
             } else {
                 return authority;
             }
@@ -672,6 +679,19 @@ public class CrawlURI extends CandidateURI
         if (this.alist != null)
         {
             this.alist.remove(A_HTTP_TRANSACTION);
+            // discard any ideas of prereqs -- may no longer be valid
+            this.alist.remove(A_PREREQUISITE_URI);  
         }
+    }
+    
+    /**
+     * @param caUri
+     * @return
+     */
+    public static CrawlURI from(CandidateURI caUri) {
+        if (caUri instanceof CrawlURI) {
+            return (CrawlURI) caUri;
+        }
+        return new CrawlURI(caUri);
     }
 }

@@ -38,10 +38,24 @@ import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerExceptio
  */
 public interface URIFrontier {
 
+    /**
+     * Comment for <code>ATTR_NAME</code>
+     */
     final static String ATTR_NAME = "frontier";
 
+    /**
+     * @param c
+     * @throws FatalConfigurationException
+     * @throws IOException
+     */
     void initialize(CrawlController c) throws FatalConfigurationException,
             IOException;
+
+    /**
+     * Schedules a new URI for crawling.
+     * @param caUri URI to schedule
+     */
+    void schedule(CandidateURI caUri);
 
     /**
      * Get the next URI that should be crawled.
@@ -49,7 +63,7 @@ public interface URIFrontier {
      *                next URI to become availible.
      * @return the next URI that should be crawled
      */
-    CrawlURI next(int timeout);
+    CrawlURI next(int timeout) throws InterruptedException;
 
     /**
      * Report finished crawl URIs. Once the processors finish with a URI 
@@ -106,20 +120,14 @@ public interface URIFrontier {
      * @return Estimated number of URIs scheduled for prcoessing..
      */
     long pendingUriCount();
-
-    /**
-     * Put caURI to appropraite pending queue.
-     * 
-     * @param caURI URI to be scheduled.
-     */
-    void scheduleURI (CandidateURI caURI);
     
     /**
-     * Put caURI into appropriate queue of items to be scheduled
-     * later (that is, avoid synchronization overhead)
-     * @param caURI URI to be scheduled.
+     * Put caUri into a queue of items to be scheduled later (that is, avoid
+     * synchronization overhead)
+     * 
+     * @param caUri URI to be scheduled
      */
-    void batchScheduleURI(CandidateURI caURI);
+    void batchSchedule(CandidateURI caUri);
 
     /**
      * Force all batch-scheduled candidates to be actually scheduled.
@@ -133,7 +141,7 @@ public interface URIFrontier {
      * @return The total amounts of bytes written
      */
     public long totalBytesWritten();
-
+    
     /**
      * This methods compiles a human readable report on the status of the
      * frontier at the time of the call.
@@ -142,6 +150,10 @@ public interface URIFrontier {
      */
     public String report();
 
+     /**
+     * @param pathToLog
+     * @throws IOException
+     */
     public void importRecoverLog(String pathToLog) throws IOException;
 
     /**
@@ -225,4 +237,10 @@ public interface URIFrontier {
      * @return the number of URIs deleted
      */
     public long deleteURIsFromPending(String match);
+
+    /**
+     * 
+     */
+    void start();
+
 }
