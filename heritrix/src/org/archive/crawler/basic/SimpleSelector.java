@@ -38,6 +38,9 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	ArrayList filters = new ArrayList();
 	private int maxLinkDepth = -1;
 	private int maxDeferrals = 5;
+	private int maxRetries = 3;
+	private int retryDelay = 30000;
+
 	int completionCount = 0;
 	
 	/* (non-Javadoc)
@@ -56,12 +59,19 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				failureDisposition(curi);
 				return;
 			}
-
+			
 			// handle any prerequisites
 			if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
 				handlePrerequisites(curi);
 				return;
 			}
+			
+			// consider errors which can be retried
+			if (needsRetrying(curi)) {
+				scheduleForRetry(curi);
+				return;
+			}
+
 			// handle http headers 
 			if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
 				handleHttpHeaders(curi);
@@ -82,6 +92,37 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			successDisposition(curi);	
 		} 
 			
+	}
+
+
+	/**
+	 * @param curi
+	 */
+	private void scheduleForRetry(CrawlURI curi) {
+		store.insertSnoozed(curi,retryDelay);
+	}
+
+
+	/**
+	 * @param curi
+	 * @return
+	 */
+	private boolean needsRetrying(CrawlURI curi) {
+		//
+		if (curi.getFetchAttempts()>=maxRetries) {
+			return false;
+		}
+		switch (curi.getFetchStatus()) {
+			case S_CONNECT_FAILED:					
+			case S_CONNECT_LOST:
+			case S_INTERNAL_ERROR:
+			case S_UNATTEMPTED:
+			case S_TIMEOUT:
+				// these are all worth a retry
+				return true;
+			default:
+				return false;
+		}
 	}
 
 
@@ -115,7 +156,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	 */
 	protected void successDisposition(CrawlURI curi) {
 		completionCount++;
-		if ( (completionCount % 50) == 0) {
+		if ( (completionCount % 500) == 0) {
 			logger.info("==========> " +
 				completionCount+" <========== HTTP URIs completed");
 		}
@@ -128,6 +169,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		
 		// note that CURI has passed out of scheduling
 		curi.setStoreState(URIStoreable.FINISHED);
+		curi.stripToMinimal();
 	}
 
 
@@ -301,6 +343,8 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 			    curi.getUURI().getUri().toString(),
 				array);
 		}
+		curi.setStoreState(URIStoreable.FINISHED);
+		curi.stripToMinimal();
 	}
 
 
