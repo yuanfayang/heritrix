@@ -166,7 +166,7 @@ public class ToePool extends ThreadGroup {
     public void setSize(int newsize)
     {
         targetSize = newsize;
-        while(newsize>getToeCount()) {
+        while(newsize > getToeCount()) {
             startNewThread(nextSerialNumber++);
         }
     }
@@ -208,7 +208,7 @@ public class ToePool extends ThreadGroup {
     }
 
     /**
-     * @return
+     * @return Instance of CrawlController.
      */
     public CrawlController getController() {
         return controller;
