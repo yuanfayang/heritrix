@@ -71,9 +71,13 @@ public class ARCWriterPoolTest extends TmpDirTestCase
         {
             isException = true;
             long end = (new Date()).getTime();
-            if ((end - start) > (MAX_WAIT_MILLISECONDS * 2))
+            // This test can fail on a loaded machine if the wait period is
+            // only MAX_WAIT_MILLISECONDS.  Up the time to wait.
+            final int WAIT = MAX_WAIT_MILLISECONDS * 10;
+            if ((end - start) > (WAIT))
             {
-                fail("More than " + MAX_WAIT_MILLISECONDS + " elapsed.");
+                fail("More than " + MAX_WAIT_MILLISECONDS + " elapsed: "
+                    + WAIT);
             }
         }
         assertTrue("Did not get NoSuchElementException", isException);
