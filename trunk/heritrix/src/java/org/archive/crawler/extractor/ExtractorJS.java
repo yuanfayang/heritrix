@@ -52,7 +52,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     // (areas between paired ' or " characters, possibly backslash-quoted
     // on the ends, but not in the middle)
     static final Pattern JAVASCRIPT_STRING_EXTRACTOR = Pattern.compile(
-     "(?:(\\\\*(?:\"|\'))(?:([^\\n\\r]*?[^\\n\\r\\\\]))??(?:\\1))");
+     "(\\\\*(?:\"|\'))((?:[^\\n\\r]*?[^\\n\\r\\\\])??)(?:\\1)");
 
     // determines whether a string is likely URI
     // (no whitespace or '<' '>',  has an internal dot or some slash,
