@@ -306,16 +306,30 @@ public class ARCWriter implements ARCConstants {
      */
     private void createARCFile() throws IOException {
         close();
-        String now = ArchiveUtils.get14DigitDate();
-        String name = this.prefix + '-' + getUniqueBasename(now) +
+        TimestampSerialNumber tsn = getTimestampSerialNumber(this);
+        String name = this.prefix + '-' + getUniqueBasename(tsn) +
             ((this.suffix == null || this.suffix.length() <= 0)?
                 "": "-" + this.suffix) +
             '.' + ARC_FILE_EXTENSION +
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
         this.arcFile = new File(this.arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
-        this.out.write(generateARCFileMetaData(now));
+        this.out.write(generateARCFileMetaData(tsn.getNow()));
         logger.fine("Created new arc file: " + this.arcFile.getAbsolutePath());
+    }
+    
+    /**
+     * Do static synchronization around getting of counter and timestamp so
+     * no chance of a thread getting in between the getting of timestamp and
+     * allocation of serial number throwing the two out of alignment.
+     * 
+     * @param writer An instance of ARCWriter.
+     * @return Instance of data structure that has timestamp and serial no.
+     */
+    private static synchronized TimestampSerialNumber
+    		getTimestampSerialNumber(ARCWriter writer) {
+        return writer.new TimestampSerialNumber(ArchiveUtils.get14DigitDate(),
+            ARCWriter.serialNo++);
     }
 
     /**
@@ -323,20 +337,14 @@ public class ARCWriter implements ARCConstants {
      *
      * Name is timestamp + an every increasing sequence number.
      *
-     * @param now The current timestamp.
+     * @param tsn Structure with timestamp and serial number.
      *
      * @return Unique basename.
      */
-    private synchronized String getUniqueBasename(String now) {
-        return now + "-" + ARCWriter.serialNoFormatter.format(getNewSerialNo());
+    private String getUniqueBasename(TimestampSerialNumber tsn) {
+        return tsn.getNow() + "-" + 
+        	ARCWriter.serialNoFormatter.format(tsn.getSerialNumber());
     }
-
-    /**
-	 * @return New serial number.
-	 */
-	private static synchronized int getNewSerialNo() {
-		return ARCWriter.serialNo++;
-	}
 
     /**
      * Reset the serial number.
@@ -760,6 +768,38 @@ public class ARCWriter implements ARCConstants {
          */
         OutputStream getOut() {
             return this.out;
+        }
+    }
+    
+    /**
+     * Immutable data structure that holds a timestamp and an accompanying
+     * serial number.
+	 * 
+	 * For Igor!
+     *
+     * @author stack
+     */
+    private class TimestampSerialNumber {
+        private final String now;
+        private final int serialNumber;
+        
+        private TimestampSerialNumber(String now, int serialNo) {
+            this.now = now;
+            this.serialNumber = serialNo;
+        }
+        
+        /**
+         * @return Returns the now.
+         */
+        public String getNow() {
+            return this.now;
+        }
+        
+        /**
+         * @return Returns the serialNumber.
+         */
+        public int getSerialNumber() {
+            return this.serialNumber;
         }
     }
 }
