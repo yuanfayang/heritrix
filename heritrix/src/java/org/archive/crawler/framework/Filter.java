@@ -35,7 +35,7 @@ import org.archive.crawler.datamodel.settings.SimpleType;
  * 
  * @author Gordon Mohr
  */
-public abstract class Filter extends CrawlerModule {
+public class Filter extends CrawlerModule {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 
@@ -57,16 +57,6 @@ public abstract class Filter extends CrawlerModule {
                 new Boolean(false)));
     }
 
-    //String name;
-
-    /*
-    public  void setName(String n) {
-    	name = n;
-    }
-    public String getName() {
-    	return name;
-    }
-    */
 
     public boolean accepts(Object o) {
         CrawlURI curi = (o instanceof CrawlURI) ? (CrawlURI) o : null;
@@ -79,11 +69,14 @@ public abstract class Filter extends CrawlerModule {
         return inverter ^ innerAccepts(o);
     }
     
-    /**
+    /** Do nothing default implementation.
+     * 
      * @param o
      * @return If it accepts.
      */
-    protected abstract boolean innerAccepts(Object o);
+    protected boolean innerAccepts(Object o) {
+        return true;
+    }
 
     public void initialize(CrawlController controller) {
         this.controller = controller;
