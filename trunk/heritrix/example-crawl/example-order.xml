@@ -33,8 +33,8 @@
      name="Preprocessor" 
      class="org.archive.crawler.basic.SimplePreconditionEnforcer"
      next="DNS">
-    <params delay-factor="20" />
-    <params minimum-delay="1000" />
+    <params delay-factor="5" />
+    <params minimum-delay="100" />
    </processor>
    <processor 
      name="DNS" 
@@ -49,12 +49,12 @@
    </processor>
    <processor 
      name="ExtractorHTTP" 
-     class="org.archive.crawler.basic.ExtractorHTTP"
+     class="org.archive.crawler.extractor.ExtractorHTTP"
      next="ExtractorHTML">
    </processor>
    <processor 
      name="ExtractorHTML" 
-     class="org.archive.crawler.basic.ExtractorHTML"
+     class="org.archive.crawler.extractor.ExtractorHTML"
      next="Archiver">
    </processor>
    <processor 
@@ -77,11 +77,11 @@
   <limits>
    <!-- actual enforcement of these limits may depend on choice 
         of SSS/processor instances that read and respect these limits -->
-   <max-link-depth value="2" /> <!-- zero means crawl seeds only -->
+   <max-link-depth value="1" /> <!-- zero means crawl seeds only -->
    <max-pages value="1000" />
    <max-duration value="1h" />
    <max-resources-per-site value="1000" />
-   <max-toe-threads value="50" />
+   <max-toe-threads value="20" />
   </limits>
 
  </crawler-behavior>
