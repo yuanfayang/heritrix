@@ -33,8 +33,10 @@ public class CrawlOrder extends XMLConfig {
 	RobotsHonoringPolicy robotsHonoringPolicy = null;
 	
 	/**
+	 * Create a CrawlOrder instance from the given file.
+	 * 
 	 * @param crawlOrderFile
-	 * @return
+	 * @return the created CrawlOrder
 	 */
 	public static CrawlOrder readFromFile(String crawlOrderFile) throws InitializationException {
 		

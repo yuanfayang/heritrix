@@ -12,7 +12,8 @@ import java.util.logging.Logger;
 
 
 /**
- * 
+ * Queue which uses a DiskQueue ('tailQ') for spillover entries once a 
+ * MemQueue ('headQ') reaches a maximum size. 
  * 
  * 
  * @author Gordon Mohr
