@@ -456,17 +456,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param status Status to set on the fetch.
      */
     private void cleanup(final HttpMethod method, final CrawlURI curi,
-            final Exception exception, final String message, final int status) {
+            final Exception exception, final String message,
+            final int status) {
         curi.addLocalizedError(this.getName(), exception, message);
         curi.setFetchStatus(status);
-    }
-
-    /**
-     * @return maximum immediate retures.
-     */
-    private int getMaxImmediateRetries() {
-        // TODO make configurable
-        return 5;
     }
 
     /**
@@ -503,7 +496,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * Configure the HttpMethod setting options and headers.
      *
      * @param curi CrawlURI from which we pull configuration.
-     * @param get The GetMethod to configure.
+     * @param method The Method to configure.
      */
     private void configureMethod(CrawlURI curi, HttpMethod method)
     {
@@ -616,7 +609,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * Promote successful credential to the server.
      *
      * @param curi CrawlURI whose credentials we are to promote.
-     * @param method Method used.
      */
     private void promoteCredentials(final CrawlURI curi) {
         if (!curi.hasCredentialAvatars()) {
@@ -839,8 +831,15 @@ implements CoreAttributeConstants, FetchStatusCodes {
         
         // Multiply toethread max by 2 in case one is occupied when
         // we go to get another (Allow some slack).
-        cm.getParams().setMaxTotalConnections(getController().
-            getOrder().getMaxToes() * 2);
+        // Also, if max total connections is less than toe threads, 
+        // then getting a connection becomes a bottleneck (See
+        // '[ 1080925 ] MultiThreadedConnectionManager bottleneck').
+        // For now, hardcode max total connections so never less that
+        // 400.  TODO: Revisit and have max total connections follow
+        // toethread count or do away with MTHCM as per a suggestion
+        // in above cited issue.
+        cm.getParams().setMaxTotalConnections(Math.
+            max(getController().getOrder().getMaxToes() * 2, 400));
         cm.getParams().setConnectionTimeout(timeout);
         cm.getParams().setStaleCheckingEnabled(true);
         // Minimizes bandwidth usage.  Setting to true disables Nagle's
@@ -1181,6 +1180,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
         coistream.registerFinishTask( new PostRestore(cookies) );
     }
     
+    /**
+     * @return Returns the http instance.
+     */
+    protected HttpClient getHttp() {
+        return this.http;
+    }
+    
     class PostRestore implements Runnable {
         Cookie cookies[];
         public PostRestore(Cookie cookies[]) {
@@ -1189,7 +1195,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     	public void run() {
             configureHttp();
             for(int i = 0; i < cookies.length; i++) {
-                FetchHTTP.this.http.getState().addCookie(cookies[i]);
+                getHttp().getState().addCookie(cookies[i]);
             }
         }
     }
