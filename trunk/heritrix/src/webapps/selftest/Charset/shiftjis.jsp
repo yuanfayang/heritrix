@@ -1,3 +1,5 @@
+<%@ page contentType="text/html; charset=SJIS" %>
+
 <!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
 <html>
 <head>
