@@ -48,6 +48,8 @@ public class XMLConfig {
 	protected HashMap cachedStrings = new HashMap(); // String -> String
 
 	protected String defaultFilePath = null;
+	
+	protected XMLConfig parentConfigurationFile;
 
 	/**
 	 * Convenience method for reading an XML file into a Document instance
@@ -130,15 +132,13 @@ public class XMLConfig {
 				return (Node) readDocumentFromFile(srcNode.getNodeValue());
 			}
 		} catch (TransformerException te) {
-			// TODO something maybe
 			te.printStackTrace();
 
 		} catch (IOException e){
 			e.printStackTrace();
 		}
-		
-		return node;
 
+		return node;
 	}
 	
 	public static Node nodeOrSrc(Node node, String path) throws IOException {
@@ -170,7 +170,13 @@ public class XMLConfig {
 	 * @return
 	 */
 	public BufferedReader nodeValueOrSrcReader(String xpath) throws IOException {
-		return nodeValueOrSrcReader(getNodeAt(xpath));
+		Node node = getNodeAt(xpath);
+		BufferedReader reader = nodeValueOrSrcReader(node);
+		
+		if(reader == null && parentConfigurationFile != null){
+			return parentConfigurationFile.nodeValueOrSrcReader(xpath);
+		}
+		return reader;
 	}
 	
 	public BufferedReader nodeValueOrSrcReader(String xpath, String path) throws IOException {
@@ -193,6 +199,10 @@ public class XMLConfig {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				cacheNode = null;
+			}
+			
+			if(cacheNode == null && parentConfigurationFile != null){
+				cacheNode = parentConfigurationFile.getNodeAt(xpath);
 			}
 			cachedPathNodes.put(xpath, cacheNode);
 		}
@@ -295,16 +305,25 @@ public class XMLConfig {
 				String n = getStringAt(xpath);
 				if (n != null) {
 					cacheInteger = new Integer(getStringAt(xpath));
-				} else {
-					cacheInteger = new Integer(defaultValue);
+//				} else {
+//					cacheInteger = new Integer(defaultValue);
 				}
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				cacheInteger = new Integer(defaultValue);
+				//cacheInteger = new Integer(defaultValue);
 			} catch (DOMException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				//cacheInteger = new Integer(defaultValue);
+			}
+			
+			// if we didn't find it here and there is a parent try it
+			if(cacheInteger == null && parentConfigurationFile != null){
+				cacheInteger= new Integer(parentConfigurationFile.getIntAt(xpath, defaultValue));
+			}
+			// if we didn't find it any the parent(s) or there were none use the default
+			if(cacheInteger == null){
 				cacheInteger = new Integer(defaultValue);
 			}
 			cachedIntegers.put(xpath, cacheInteger);
@@ -335,6 +354,12 @@ public class XMLConfig {
 				value = value + ci.getNodeValue();
 			}
 		}
+		
+		// return null rather than an empty string
+		// if the node is not found
+		if(value.length() == 0){
+			return null;
+		}
 		return value;
 	}
 
@@ -350,11 +375,15 @@ public class XMLConfig {
 			try {
 				cacheString = textOf(getNodeAt(xpath));
 			} catch (NumberFormatException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (DOMException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} catch (NullPointerException e){
+				e.printStackTrace();
+			}
+			
+			if(cacheString == null && parentConfigurationFile != null){
+				cacheString = parentConfigurationFile.getStringAt(xpath);
 			}
 			cachedStrings.put(xpath, cacheString);
 		}
@@ -371,7 +400,13 @@ public class XMLConfig {
 	 */
 	public Object instantiate(String xpath) {
 		try {
-			return instantiate(XPathAPI.selectSingleNode(xNode, xpath));
+			
+			Node node = XPathAPI.selectSingleNode(xNode, xpath);
+			if(node == null && parentConfigurationFile != null){
+				return parentConfigurationFile.instantiate(xpath);
+			}
+			
+			return instantiate(node);
 		} catch (DOMException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -403,16 +438,12 @@ public class XMLConfig {
 			}
 			return instance;
 		} catch (DOMException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
@@ -440,8 +471,16 @@ public class XMLConfig {
 	 * @return
 	 */
 	public Object instantiateAllInto(String xpath, Object results) {
+		
 		Object first = null;
 		NodeIterator iter;
+		
+		// first do parent config files if applicable
+		// then we can override any that also exist "below"
+		if(parentConfigurationFile != null){
+			first = parentConfigurationFile.instantiateAllInto(xpath, results);
+		}
+
 		try {
 			iter = XPathAPI.selectNodeIterator(xNode, xpath);
 		} catch (TransformerException e) {
@@ -455,6 +494,15 @@ public class XMLConfig {
 			if (first == null) {
 				first = currentObject;
 			}
+			
+			try{
+				// if they actually specify which one should come first, use that
+				if(currentNode.getAttributes().getNamedItem("isFirst").getNodeValue().equals("true")){
+					first = currentObject;
+				}
+			// ignore null pointers, this just means they didn't include this attribute (which is cool)
+			}catch(NullPointerException e){}
+			
 			if (results instanceof HashMap) {
 				// if supplied hashmap, look for 'name' key
 				if (currentNode.getAttributes().getNamedItem("name") != null) {
@@ -472,9 +520,7 @@ public class XMLConfig {
 		}
 		return first;
 	}
-	/**
-	 * @return
-	 */
+
 	public Node getXNode() {
 		return xNode;
 	}
@@ -483,6 +529,12 @@ public class XMLConfig {
 		cachedPathNodes = new HashMap();
 		cachedIntegers = new HashMap();
 		cachedStrings = new HashMap();
-
+	}
+	
+	public void setParentConfig(XMLConfig x){
+		parentConfigurationFile = x;
+	}
+	public XMLConfig getParentConfig(){
+		return parentConfigurationFile;
 	}
 }

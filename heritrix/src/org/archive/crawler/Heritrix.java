@@ -13,6 +13,10 @@ import org.archive.crawler.admin.SimpleHttpServer;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;
 
+import org.archive.crawler.datamodel.ConfigurationException;
+import org.archive.crawler.datamodel.FatalConfigurationException;
+import org.archive.crawler.datamodel.InitializationException;
+
 /**
  * Main class for Heritrix crawler.
  * 
@@ -61,10 +65,15 @@ public class Heritrix {
 					usage();
 					return;
 			}
-		} catch (IOException e) {
-			System.out.println("Unable to read order file: " + e);
-			return;
+//		} catch (IOException e) {
+//			System.out.println("Unable to read order file: " + e);
+//			return;
+
+		// catch all configuration exceptions, which at this level are fatal
+		}catch(InitializationException e){
+			System.out.println("Fatal configuration exception: " + e.toString());
 		}
+		
 		logger.info("exitting main thread");
 	}
 	
