@@ -186,7 +186,7 @@ public class ARCReaderFactory implements ARCConstants {
         
         /**
          * Constructor.
-         * @param arcfile Uncompressed arcfile to read.
+         * @param arcFile Uncompressed arcfile to read.
          * @throws IOException
          */
         public UncompressedARCReader(File arcFile) throws IOException {

@@ -47,36 +47,31 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
      * @param name
      */
     public ExtractorHTTP(String name) {
-        super(name, "HTTP extractor. \nExtracts URIs from HTTP response headers.");
+        super(name,
+            "HTTP extractor. \nExtracts URIs from HTTP response headers.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
-     */
     public void innerProcess(CrawlURI curi) {
-
-        if(curi.isHttpTransaction())
-        {
-            numberOfCURIsHandled++;
-            HttpMethod method =
-                (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
-            CrawlURI curi1 = curi;
-
-            ArrayList uris = new ArrayList();
-            Header loc = method.getResponseHeader("Location");
-            if ( loc != null ) {
-                uris.add(loc.getValue());
-            }
-            loc = method.getResponseHeader("Content-Location");
-            if ( loc != null ) {
-                uris.add(loc.getValue());
-            }
-            // TODO: consider possibility of multiple headers
-            if(uris.size()>0) {
-                numberOfLinksExtracted += uris.size();
-                curi1.putObject(A_HTTP_HEADER_URIS, uris);
-                logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
-            }
+        if (!curi.isHttpTransaction()) {
+            return;
+        }
+        numberOfCURIsHandled++;
+        HttpMethod method = (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
+        CrawlURI curi1 = curi;
+        ArrayList uris = new ArrayList();
+        Header loc = method.getResponseHeader("Location");
+        if ( loc != null ) {
+            uris.add(loc.getValue());
+        }
+        loc = method.getResponseHeader("Content-Location");
+        if ( loc != null ) {
+            uris.add(loc.getValue());
+        }
+        // TODO: consider possibility of multiple headers
+        if(uris.size()>0) {
+            numberOfLinksExtracted += uris.size();
+            curi1.putObject(A_HTTP_HEADER_URIS, uris);
+            logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
         }
     }
 

@@ -315,7 +315,10 @@ implements CoreAttributeConstants {
     }
 
     public void innerProcess(CrawlURI curi) {
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!curi.isHttpTransaction())
         {
             return;

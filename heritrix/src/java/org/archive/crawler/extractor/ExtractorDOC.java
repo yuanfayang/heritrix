@@ -60,7 +60,10 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      *  text for valid URIs.
      */
     protected void innerProcess(CrawlURI curi){
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         ArrayList links  = new ArrayList();
         InputStream documentStream = null;
         Writer out = null;

@@ -59,7 +59,10 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
     }
 
     protected void innerProcess(CrawlURI curi){
-
+        if (curi.hasBeenLinkExtracted()) {
+            // Some other extractor already handled this one. We'll pass on it.
+            return;
+        }
         if (!(curi.isHttpTransaction() && curi.getFetchStatus() == 200))
         {
             // TODO: generalize for when codes other than 200 might have good
