@@ -518,13 +518,15 @@ public class XMLSettingsHandler extends SettingsHandler {
      */
     private void recursiveFindFiles(File dir, ArrayList list){
         File[] subs = dir.listFiles();
-        for(int i=0 ; i < subs.length ; i++){
-            if(subs[i].isDirectory()){
-                recursiveFindFiles(subs[i],list);
-            } else {
-                if(subs[i].getName().endsWith(settingsFilenameSuffix)){
-                    // Add it to list
-                    list.add(subs[i].getAbsolutePath());
+        if (subs != null) {
+            for(int i=0 ; i < subs.length ; i++){
+                if(subs[i].isDirectory()){
+                    recursiveFindFiles(subs[i],list);
+                } else {
+                    if(subs[i].getName().endsWith(settingsFilenameSuffix)){
+                        // Add it to list
+                        list.add(subs[i].getAbsolutePath());
+                    }
                 }
             }
         }
