@@ -354,7 +354,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @throws IOException
      */
     protected ARCRecord createARCRecord(InputStream is, long offset)
-                throws IOException {
+    throws IOException {
         ArrayList firstLineValues = new ArrayList(20);
         getTokenizedHeaderLine(is, firstLineValues);
         int bodyOffset = 0;
@@ -386,9 +386,17 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             bodyOffset += getTokenizedHeaderLine(is, null);
         }
 
-        return this.currentRecord = new ARCRecord(is,
-            computeMetaData(this.headerFieldNameKeys, firstLineValues,
-                this.version, offset), bodyOffset);
+        try {
+            this.currentRecord = new ARCRecord(is,
+                computeMetaData(this.headerFieldNameKeys, firstLineValues,
+                    this.version, offset), bodyOffset);
+        } catch (IOException e) {
+            IOException newE = new IOException(e.getMessage() + " (Offset " +
+                    offset + ").");
+            newE.setStackTrace(e.getStackTrace());
+            throw newE;
+        }
+        return this.currentRecord;
     }
 
     /**
@@ -472,8 +480,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 ArrayList values, String v, long offset)
             throws IOException {
         if (keys.size() != values.size()) {
-            throw new IOException("Size of field name keys does " +
-            " not match count of field values.");
+            throw new IOException("Size of field name keys does" +
+            " not match count of field values: " + values);
         }
 
         HashMap headerFields = new HashMap();
@@ -730,10 +738,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     index(f);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
-                    // debugging.
-                    System.err.println("Exception processing " + f + ": " +
-                        e.getMessage());
-                    throw e;
+                    // debugging.  Then print stack trace and try to keep
+                    // going.  We do this for case where we're being fed
+                    // a bunch of ARCs; just note the bad one and move
+                    // on to the next.
+                    System.err.println("Exception processing " + f);
+                    e.printStackTrace(System.err);
                 }
             }
         }

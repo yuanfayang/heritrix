@@ -42,6 +42,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -58,8 +59,9 @@ import org.archive.crawler.url.Canonicalizer;
  * 
  * @author gojomo
  */
-public abstract class AbstractFrontier extends ModuleType implements Frontier,
-        FetchStatusCodes, CoreAttributeConstants {
+public abstract class AbstractFrontier extends ModuleType
+implements CrawlStatusListener, Frontier, FetchStatusCodes,
+CoreAttributeConstants {
     private static final Logger logger =
         Logger.getLogger(AbstractFrontier.class.getName());
 
@@ -67,10 +69,10 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
     /** should the frontier hold any threads asking for URIs? */
-    private boolean shouldPause = false;
+    protected boolean shouldPause = false;
     /** should the frontier send an EndedException to any threads 
      * asking for URIs? */
-    private boolean shouldTerminate = false;
+    protected boolean shouldTerminate = false;
     
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
@@ -233,6 +235,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     
     public void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
+        c.addCrawlStatusListener(this);
         File logsDisk = null;
         try {
             logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
@@ -503,7 +506,6 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         return this.controller.getServerCache().getServerFor(curi);
     }
 
-
     /**
      * Return a suitable value to wait before retrying the given URI.
      * 
@@ -744,7 +746,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
                 // again.  If no rfc2617 loaded, we should not be here.
                 boolean loaded = curi.hasRfc2617CredentialAvatar();
                 if (!loaded) {
-                    logger.severe("Have 401 but no creds loaded " + curi);
+                    logger.info("Have 401 but no creds loaded " + curi);
                 }
                 return loaded;
             case S_DEFERRED:
@@ -791,5 +793,45 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     
     public FrontierJournal getFrontierJournal() {
         return this.recover;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
+     */
+    public void crawlEnding(String sExitMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+     */
+    public void crawlPaused(String statusMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        // TODO Auto-generated method stub
+        
     }
 }

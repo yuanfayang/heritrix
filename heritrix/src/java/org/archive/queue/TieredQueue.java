@@ -167,6 +167,9 @@ public class TieredQueue implements Queue {
         for (int i = 0; i <= lastQueue; i++) {
             count += innerQueues[i].deleteMatchedItems(matcher);
         }
+        if (count > 0) {
+            recalculateLength();
+        }
         return count;
     }
 

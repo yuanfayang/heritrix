@@ -73,7 +73,6 @@ import com.sleepycat.je.SecondaryDatabase;
 public class ARHostQueue implements ARAttributeConstants {
     
     // TODO: Need to be able to remove URIs, both by name and reg.expr.
-    // TODO: Possibly remove on update under certain conditions?
     
     // Constants declerations
     /** HQ contains no queued CrawlURIs elements. This state only occurs after 

@@ -33,7 +33,6 @@ import org.archive.crawler.settings.SettingsHandler;
 public class ServerCacheFactory {
     private static final ServerCacheFactory factory =
         new ServerCacheFactory();
-    private ServerCache cache = null;
     
     /**
      * Key to use getting class to instantiate from heritrix.properties.
@@ -62,29 +61,12 @@ public class ServerCacheFactory {
     public static ServerCache getServerCache(SettingsHandler handler)
     throws ClassNotFoundException, InstantiationException,
             IllegalAccessException {
-        if (ServerCacheFactory.factory.cache != null) {
-            return ServerCacheFactory.factory.cache;
-        }
         // The ServerCache instance has not been created yet.
         // Go instantiate it.
         String className = Heritrix.getProperty(KEY, DEFAULT_SERVERCACHE);
         Class classDefinition = Class.forName(className);
-        ServerCacheFactory.factory.cache =
-            (ServerCache)classDefinition.newInstance();
-        ServerCacheFactory.factory.cache.initialize(handler);
-        return ServerCacheFactory.factory.cache;
-    }
-    
-    /**
-     * @return Returns ServerCache instance.
-     * @throws NullPointerException If the cache has not yet been
-     * created (Be sure to call {@link #getServerCache(SettingsHandler)}
-     * at least once before you call this method). 
-     */
-    public static ServerCache getServerCache() {
-        if (ServerCacheFactory.factory.cache == null) {
-            throw new NullPointerException("ServerCache is null.");
-        }
-        return ServerCacheFactory.factory.cache;
+        ServerCache cache = (ServerCache)classDefinition.newInstance();
+        cache.initialize(handler);
+        return cache;
     }
 }
