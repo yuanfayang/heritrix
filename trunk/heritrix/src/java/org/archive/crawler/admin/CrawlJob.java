@@ -213,7 +213,7 @@ public class CrawlJob
 	}
 
 	/**
-	 * 
+	 * Is job read only?
 	 * @return false until setReadOnly has been invoked, after that it returns true.
 	 */	
 	public boolean isReadOnly(){
@@ -260,6 +260,7 @@ public class CrawlJob
         return settingsHandler;
     }
     /**
+     * Is this a new job?
      * @return True if is new.
      */
     public boolean isNew() {
@@ -267,6 +268,7 @@ public class CrawlJob
     }
 
     /**
+     * Set if the job is considered to be a profile
      * @return True if is a profile.
      */
     public boolean isProfile() {
@@ -274,7 +276,8 @@ public class CrawlJob
     }
 
     /**
-     * @param b
+     * Set if the job is considered a new job or not.
+     * @param b Is the job considered to be new.
      */
     public void setNew(boolean b) {
         isNew = b;
