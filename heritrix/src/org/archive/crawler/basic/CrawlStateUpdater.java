@@ -70,8 +70,7 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 					curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 				}
 			}
-
-			
+		
 		// if it's not dns make sure it's http, 'cause we don't know nuthin' else
 		}else if(curi.getUURI().getUri().getScheme().equals("http")){
 		
@@ -80,19 +79,11 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 				if(curi.getAList().containsKey("http-transaction")) {
 					GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
 					curi.getHost().updateRobots(get);
-				
-					// see which expires first, the dns or the robots.txt
-					// long expireCuri = ( curi.getHost().getRobotsExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getRobotsExpires() : curi.getHost().getIpExpires();
-					
+									
 					// curi can be refetched once robots data expires
 					curi.setDontRetryBefore(curi.getHost().getRobotsExpires());
 				}
 			}
-		}
-		
-		// print statistics
-		if ( (statistics.totalFetchAttempts() == 25) || (statistics.totalFetchAttempts() % 1000) == 0) {
-			controller.printStatistics();
 		}
 		
 		// if we've "successfully" fetched it increment our count for this type of file

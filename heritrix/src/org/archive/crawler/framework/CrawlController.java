@@ -37,7 +37,8 @@ public class CrawlController {
 	public Logger uriErrors = Logger.getLogger("uri-errors");
 	public Logger progressStats = Logger.getLogger("progress-statistics");
 	
-	protected StatisticsTracker statistics = new StatisticsTracker(this);
+	// create a statistic tracking object and have it write to the log every 
+	protected StatisticsTracker statistics = null;
 
 	CrawlOrder order;
 	
@@ -64,37 +65,9 @@ public class CrawlController {
 
 
 	public void initialize(CrawlOrder o) {
-		order = o;
-				
-		store = (URIStore) order.getBehavior().instantiate("//store");
-		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
-		selector = (URISelector) order.getBehavior().instantiate("//selector");
-		
-		firstProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
-		
-		// for statistics log interval
-		//Integer timeIntervalSec = (Integer)order.getBehavior().instantiate("//crawl-statistics/interval");
-		//f(timeIntervalSec==null){
-		//	timeIntervalSec=new Integer(60);
-		//}
-		
-		
-		store.initialize(this);
-		scheduler.initialize(this);
-		selector.initialize(this);
-		
-		hostCache = new HostCache();
-		//kicker = new ThreadKicker();
-		//kicker.start();
-		
-		Iterator iter = processors.entrySet().iterator();
-		while (iter.hasNext()) {
-			Object obj = iter.next();
-			System.out.println(obj);
-			Processor p = (Processor) ((Map.Entry)obj).getValue();
-			p.initialize(this);
-		}
-		
+		order = o;	
+			
+		// read from the configuration file
 		try {
 			String diskPath = order.getStringAt("//disk/@path");
 			if(! diskPath.endsWith(File.separator)){
@@ -102,7 +75,6 @@ public class CrawlController {
 			}
 			disk = new File(diskPath);
 			disk.mkdirs();
-
 			
 			FileHandler up = new FileHandler(diskPath+"uri-processing.log");
 			up.setFormatter(new UriProcessingFormatter());
@@ -129,10 +101,39 @@ public class CrawlController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		// the statistics object must be created before modules that use it if those 
+		// modules retrieve the object from the controller during initialization 
+		// (which some do).  So here we go with that.
+		int interval = order.getIntAt("//crawl-statistics/interval");
+		statistics = new StatisticsTracker(this, interval);
+			
+		store = (URIStore) order.getBehavior().instantiate("//store");
+		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
+		selector = (URISelector) order.getBehavior().instantiate("//selector");
 		
-		// start periodic background logging
+		firstProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
+				
+		store.initialize(this);
+		scheduler.initialize(this);
+		selector.initialize(this);
+		
+		hostCache = new HostCache();
+		//kicker = new ThreadKicker();
+		//kicker.start();
+		
+		Iterator iter = processors.entrySet().iterator();
+		while (iter.hasNext()) {
+			Object obj = iter.next();
+			System.out.println(obj);
+			Processor p = (Processor) ((Map.Entry)obj).getValue();
+			p.initialize(this);
+		}
+		
+		// start periodic background logging of crawl statistics
 		Thread statLogger = new Thread(statistics);
 		statLogger.start();
+
 	}
 	
 	/**

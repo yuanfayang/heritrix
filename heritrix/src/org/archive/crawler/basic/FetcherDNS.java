@@ -39,6 +39,7 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
  	private short TypeType = Type.A;
  	
  	protected InetAddress serverInetAddr = null;
+ 	protected CrawlHost dnsServer = null;
 
   	public void initialize(CrawlController c){
   		super.initialize(c);
@@ -53,6 +54,11 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 			} else {
 				serverInetAddr = InetAddress.getByName(nameServer);
 			}
+			
+			// create a dns host to attach to dns records
+			dnsServer = new CrawlHost(nameServer);
+			dnsServer.setIP(serverInetAddr);
+			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -72,6 +78,8 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 			// only handles dns
 			return;
 		}
+		
+		curi.setHost(dnsServer);
 		
 		// make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
 		if (controller != null && controller.getHostCache() != null) {
@@ -159,6 +167,8 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 		} else {
 			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 		}
+		
+		curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
 	}
 	
 	// TODO should throw some sort of exception if it's passed

@@ -21,7 +21,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlerBehavior;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
-import org.archive.util.DiskWrite;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IAGZIPOutputStream;
 import org.w3c.dom.Node;
@@ -194,13 +193,13 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}catch(IOException e){
 				e.printStackTrace();
 			}
+				
+			// store size since we've already calculated it and it can be used 
+			// to generate interesting statistics
+			curi.setContentSize(recordLength);
 			
-			// keep statistics on how much we're writing (it's interesting stuff)
-			statistics.sentToDisk( 
-					new DiskWrite(
-							recordLength + metaLineStr.getBytes().length, System.currentTimeMillis() 
-							)
-				);
+			// note completion
+			statistics.completedProcessing(curi);
   		}
   	}
   	
