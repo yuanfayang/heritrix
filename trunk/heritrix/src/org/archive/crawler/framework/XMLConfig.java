@@ -44,6 +44,11 @@ public class XMLConfig {
 	 */
 	protected Node xNode;
 	
+	protected HashMap cachedPathNodes = new HashMap(); // String -> Node
+	protected HashMap cachedIntegers = new HashMap(); // String -> Integer
+	protected HashMap cachedStrings = new HashMap(); // String -> String
+
+	
 	/**
 	 * Convenience method for reading an XML file into a Document instance
 	 * 
@@ -122,13 +127,18 @@ public class XMLConfig {
 	 * @return
 	 */
 	public Node getNodeAt(String xpath) {
-		try {
-			return XPathAPI.selectSingleNode(xNode,xpath);
-		} catch (TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		Node cacheNode = null;
+		if (! cachedPathNodes.containsKey(xpath)) {
+			try {
+				cacheNode = XPathAPI.selectSingleNode(xNode,xpath);
+			} catch (TransformerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				cacheNode = null;
+			}
+			cachedPathNodes.put(xpath,cacheNode);
 		}
-		return null;
+		return (Node)cachedPathNodes.get(xpath);
 	}
 
 	/**
@@ -184,23 +194,27 @@ public class XMLConfig {
 	 * @return
 	 */
 	public int getIntAt(String xpath, int defaultValue) {
-
+		Integer cacheInteger = null;
+		if (! cachedIntegers.containsKey(xpath)) {
 			try {
-				Node n = XPathAPI.selectSingleNode(xNode,xpath);
+				String n = getStringAt(xpath);
 				if (n!=null) {
-					return Integer.parseInt(textOf(n));
-				} 
+					cacheInteger = new Integer(getStringAt(xpath));
+				} else {
+					cacheInteger = new Integer(defaultValue);
+				}
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				cacheInteger = new Integer(defaultValue);
 			} catch (DOMException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (TransformerException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				cacheInteger = new Integer(defaultValue);
 			}
-			return defaultValue;
+			cachedIntegers.put(xpath,cacheInteger);
+		}
+		return ((Integer)cachedIntegers.get(xpath)).intValue();
 	}
 
 	/**
@@ -236,20 +250,20 @@ public class XMLConfig {
 	 * @return
 	 */
 	protected String getStringAt(String xpath) {
-
+		String cacheString = null;
+		if (!cachedStrings.containsKey(xpath)) {
 			try {
-				return textOf(XPathAPI.selectSingleNode(xNode,xpath));
+				cacheString = textOf(getNodeAt(xpath));
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (DOMException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (TransformerException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-			return null;
+			cachedStrings.put(xpath,cacheString);
+		}
+		return (String) cachedStrings.get(xpath);
 	}
 	
 	
