@@ -184,7 +184,6 @@ public class ToePool extends ThreadGroup {
      *           will decrease by one.
      */
     public void killThread(int threadNumber, boolean replace){
-        // Thread number should always be equal to its placement in toes.
 
         Thread[] toes = getToes();
         for (int i = 0; i< toes.length; i++) {
@@ -192,7 +191,9 @@ public class ToePool extends ThreadGroup {
                 continue;
             }
             ToeThread toe = (ToeThread) toes[i];
-            toe.kill(-1);
+            if(toe.getSerialNumber()==threadNumber) {
+                toe.kill(-1);
+            }
         }
 
         if(replace){
