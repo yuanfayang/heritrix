@@ -26,29 +26,6 @@ import java.util.regex.Pattern;
 
 public class TextUtils {
 
-//    /**
-//     * Implementation of a unix-like 'tail' command
-//     * @param aFileName a file name String
-//     * @return the String representation of at most 10 last lines
-//     *
-//     * @deprecated Use @link LogReader#tail(String) instead.
-//     */
-//    public static String tail(String aFileName) {
-//        return LogReader.tail(aFileName, 10);
-//    }
-
-//    /**
-//     * Implementation of a unix-like 'tail -n' command
-//     * @param aFileName a file name String
-//     * @param n int number of lines to be returned
-//     * @return the String representation of at most n last lines
-//     *
-//     * @deprecated Use @link LogReader#tail(String, int) instead.
-//     */
-//    public static String tail(String aFileName, int n) {
-//        return LogReader.tail(aFileName, n);
-//    }
-
     /** Reusable precompiled Pattern objects indexed on pattern string. */
     final static Hashtable patterns = new Hashtable(50);
 
@@ -66,6 +43,8 @@ public class TextUtils {
      * @return a matcher object loaded with the submitted character sequence
      */
     public static Matcher getMatcher(String pattern, CharSequence input) {
+        pattern = pattern == null ? "" : pattern;
+        input = input == null ? "" : input;
         Matcher matcher;
         Pattern p = (Pattern) patterns.get(pattern);
         if (p == null) {
@@ -85,11 +64,11 @@ public class TextUtils {
     }
 
     /**
-     * Use this method to indicate that you are finnished with a Matcher object so
-     * that it can be recycled. It is up to the user to make sure that this object really isn't
-     * used anymore. If used after it is marked as freed behaviour is unknown because
-     * the Matcher object is not thread safe.
-     *
+     * Use this method to indicate that you are finnished with a Matcher object
+     * so that it can be recycled. It is up to the user to make sure that this
+     * object really isn't used anymore. If used after it is marked as freed
+     * behaviour is unknown since the Matcher object is not thread safe.
+     * 
      * @param m the Matcher object that is no longer needed.
      */
     public static void freeMatcher(Matcher m) {
@@ -97,16 +76,18 @@ public class TextUtils {
         if((matchers = (Stack) patternMatchers.get(m.pattern().pattern()))
             == null) {
 
-            // This matcher wasn't created by any pattern in the map, throw it away
+            // This matcher wasn't created by any pattern in the map, throw it
+            // away
             return;
         }
         matchers.push(m);
     }
 
     /**
-     * Utility method using a precompiled pattern instead of using the replaceAll method of
-     * the String class. This method will also be reusing Matcher objects.
-     *
+     * Utility method using a precompiled pattern instead of using the
+     * replaceAll method of the String class. This method will also be reusing
+     * Matcher objects.
+     * 
      * @see java.util.regex.Pattern
      * @param p precompiled Pattern to match against
      * @param input the character sequence to check
@@ -122,9 +103,10 @@ public class TextUtils {
     }
 
     /**
-     * Utility method using a precompiled pattern instead of using the replaceFirst method of
-     * the String class. This method will also be reusing Matcher objects.
-     *
+     * Utility method using a precompiled pattern instead of using the
+     * replaceFirst method of the String class. This method will also be reusing
+     * Matcher objects.
+     * 
      * @see java.util.regex.Pattern
      * @param p precompiled Pattern to match against
      * @param input the character sequence to check
@@ -140,9 +122,10 @@ public class TextUtils {
     }
 
     /**
-     * Utility method using a precompiled pattern instead of using the matches method of
-     * the String class. This method will also be reusing Matcher objects.
-     *
+     * Utility method using a precompiled pattern instead of using the matches
+     * method of the String class. This method will also be reusing Matcher
+     * objects.
+     * 
      * @see java.util.regex.Pattern
      * @param p precompiled Pattern to match against
      * @param input the character sequence to check
@@ -156,9 +139,9 @@ public class TextUtils {
     }
 
     /**
-     * Utility method using a precompiled pattern instead of using the split method of
-     * the String class.
-     *
+     * Utility method using a precompiled pattern instead of using the split
+     * method of the String class.
+     * 
      * @see java.util.regex.Pattern
      * @param pattern precompiled Pattern to split by
      * @param input the character sequence to split
@@ -175,10 +158,11 @@ public class TextUtils {
     }
 
     /**
-     * Escapes a string so that it can be passed as an argument to a javscript in
-     * a JSP page. This method takes a string and returns the same string
-     * with any single quote escaped by prepending the character with a backslash.
-     * Linebreaks are also replaced with '\n'.
+     * Escapes a string so that it can be passed as an argument to a javscript
+     * in a JSP page. This method takes a string and returns the same string
+     * with any single quote escaped by prepending the character with a
+     * backslash. Linebreaks are also replaced with '\n'.
+     * 
      * @param s The string to escape
      * @return The same string escaped.
      */
