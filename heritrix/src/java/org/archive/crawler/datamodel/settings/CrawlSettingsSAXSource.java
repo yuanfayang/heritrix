@@ -25,6 +25,7 @@
 package org.archive.crawler.datamodel.settings;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Iterator;
 
 import javax.management.AttributeNotFoundException;
@@ -221,6 +222,13 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             dateStamp,
             null,
             1 + indentAmount * 2);
+        try {
+            settings.setLastSavedTime(ArchiveUtils.parse14DigitDate(dateStamp));
+        } catch (ParseException e) {
+            // Should never happen since we just created it. If this exception
+            // is thrown, then there is a bug in ArchiveUtils.
+            e.printStackTrace();
+        }
 
         handler.ignorableWhitespace(indentArray, 0, 1 + indentAmount);
         handler.endElement(

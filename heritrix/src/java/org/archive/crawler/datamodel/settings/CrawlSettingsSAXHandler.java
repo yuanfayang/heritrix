@@ -25,6 +25,7 @@
 package org.archive.crawler.datamodel.settings;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -38,6 +39,7 @@ import javax.management.InvalidAttributeValueException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.settings.Constraint.FailedCheck;
+import org.archive.util.ArchiveUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -376,6 +378,17 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements ValueErro
     }
 
     private class DateHandler extends ElementHandler {
+        public void endElement(String name) throws SAXException {
+            if (handlerStack.peek() instanceof MetaHandler) {
+                try {
+                    settings.setLastSavedTime(ArchiveUtils.parse14DigitDate(value));
+                } catch (ParseException e) {
+                    throw new SAXException(e);
+                }
+            } else {
+                illegalElementError(name);
+            }
+        }
     }
 
     private class SimpleElementHandler extends ElementHandler {

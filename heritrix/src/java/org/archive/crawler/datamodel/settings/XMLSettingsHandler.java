@@ -48,6 +48,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -78,8 +79,8 @@ public class XMLSettingsHandler extends SettingsHandler {
     protected static final String XML_ATTRIBUTE_CLASS = "class";
 
     private File orderFile;
-    //private File settingsDirectory;
-    private final static String settingsFilename = "settings.xml";
+    private final static String settingsFilename = "settings";
+    private final static String settingsFilenameSuffix = "xml";
 
     /** Create a new XMLSettingsHandler object.
      *
@@ -162,7 +163,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             file = new File(settingsDirectory, path.toString());
         }
 
-        file = new File(file, settingsFilename);
+        file = new File(file, settingsFilename + "." + settingsFilenameSuffix);
         return file;
     }
 
@@ -188,7 +189,17 @@ public class XMLSettingsHandler extends SettingsHandler {
 
         logger.fine("Writing " + filename.getAbsolutePath());
         filename.getParentFile().mkdirs();
+
         try {
+            if (getOrder().getController() != null && filename.exists()) {
+                // The crawler is running and file exists - make backup first.
+                String name = filename.getName();
+                //name = name.substring(0, name.lastIndexOf('.'));
+                name = name.substring(0, name.lastIndexOf('.')) + '_' + ArchiveUtils.get14DigitDate(settings.getLastSavedTime().getTime()) + "." + settingsFilenameSuffix;
+                File backup = new File(filename.getParentFile(), name);
+                FileUtils.copyFiles(filename, backup);
+            }
+
             StreamResult result =
                 new StreamResult(
                     new BufferedOutputStream(new FileOutputStream(filename)));
