@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
-import org.archive.crawler.basic.CrawlerConfigurationContants;
+import org.archive.crawler.basic.CrawlerConfigurationConstants;
 import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -33,7 +33,7 @@ import org.archive.crawler.io.UriProcessingFormatter;
  * 
  * @author Gordon Mohr
  */
-public class CrawlController implements CrawlerConfigurationContants{
+public class CrawlController implements CrawlerConfigurationConstants {
 	
 
 	
@@ -74,15 +74,7 @@ public class CrawlController implements CrawlerConfigurationContants{
 		order = o;	
 		order.initialize();
 		
-		// don't let them use the default user agent
-		String userAgent = order.getStringAt("//http-headers/User-Agent/");
-		if(userAgent.equals(DEFAULT_USER_AGENT)){
-			throw new FatalConfigurationException(
-				"Default user agent must be changed from '" + DEFAULT_USER_AGENT + "'",
-				"order.xml",
-				"//http-headers/User-Agent"
-			);
-		}
+		checkUserAgentAndFrom();
 		
 		String diskPath = order.getStringAt("//disk/@path");
 		if(diskPath == null || diskPath.length() == 0){
@@ -93,6 +85,7 @@ public class CrawlController implements CrawlerConfigurationContants{
 			);
 		}
 		
+			
 		// read from the configuration file
 		try {
 
@@ -196,6 +189,26 @@ public class CrawlController implements CrawlerConfigurationContants{
 		// start periodic background logging of crawl statistics
 		Thread statLogger = new Thread(statistics);
 		statLogger.start();
+	}
+
+	// must include a bot name and info URL
+	private static String ACCEPTABLE_USER_AGENT = 
+	 "\\S+.*\\(\\+http://\\S*\\).*";
+	// must include a contact email address
+	private static String ACCEPTABLE_FROM =
+	 "\\S+@\\S+\\.\\S+";
+	 
+	private void checkUserAgentAndFrom() throws InitializationException {
+		// don't start the crawl if they're using the default user-agent
+		String userAgent = order.getBehavior().getUserAgent();
+		String from = order.getBehavior().getFrom();
+		if(!userAgent.matches(ACCEPTABLE_USER_AGENT)||!from.matches(ACCEPTABLE_FROM)) {
+			throw new FatalConfigurationException(
+				"You must set the User-Agent and From HTTP header values " +
+				"to acceptable strings before proceeding. \n" +
+				" User-Agent: [software-name](+[info-url])[misc]\n" +
+				" From: [email-address]");
+		}
 	}
 	
 	/**
