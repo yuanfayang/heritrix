@@ -25,8 +25,9 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.util.DiskFPUURISet;
+import org.archive.crawler.util.FPUURISet;
 import org.archive.util.DiskBackedQueue;
+import org.archive.util.DiskLongFPSet;
 import org.archive.util.Queue;
 
 /**
@@ -42,8 +43,8 @@ public class Frontier
 	extends XMLConfig 
 	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants {
 	private static String XP_DELAY_FACTOR = "@delay-factor";
-	private static String XP_MIN_DELAY = "@min-delay";
-	private static String XP_MAX_DELAY = "@max-delay";
+	private static String XP_MIN_DELAY = "@min-delay-ms";
+	private static String XP_MAX_DELAY = "@max-delay-ms";
 	private static int DEFAULT_DELAY_FACTOR = 5;
 	private static int DEFAULT_MIN_DELAY = 1000;
 	private static int DEFAULT_MAX_DELAY = 5000;
@@ -52,9 +53,8 @@ public class Frontier
 		Logger.getLogger("org.archive.crawler.basic.Frontier");
 	CrawlController controller;
 	
-	// HashMap allCuris = new HashMap(); // of UURI -> CrawlURI 
-	
-	// TODO update to use fingerprints only
+	// those UURIs which are already in-process (or processed), and
+	// thus should not be rescheduled	
 	UURISet alreadyIncluded;
 	
 	// every CandidateURI not yet in process or another queue; 
@@ -108,7 +108,7 @@ public class Frontier
 		
 		pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10);
 	    pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10);
-		alreadyIncluded = new DiskFPUURISet(c.getScratchDisk(),"alreadyIncluded");
+		alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded"));
 		
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();

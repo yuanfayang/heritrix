@@ -16,6 +16,8 @@ import java.util.zip.GZIPInputStream;
  * Utility class for reading ARC files, including .arc.gz
  * files. 
  * 
+ * IN PROGRESS / THINKING OUT LOUD CODE
+ * 
  * @author gojomo
  *
  */
