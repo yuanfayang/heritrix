@@ -62,7 +62,7 @@
 	                error = "Profile name must be unique!";
 	            }
 	    	}else{
-	    		newJob = handler.newJob(theJob,metaName,request.getParameter("meta/description"),request.getParameter("seeds"));
+	    		newJob = handler.newJob(theJob,metaName,request.getParameter("meta/description"),request.getParameter("seeds"),CrawlJob.PRIORITY_AVERAGE);
 	    	}
     	}
     	

@@ -12,6 +12,7 @@
 <%@include file="/include/secure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.admin.CrawlJobErrorHandler" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.settings.*" %>
 <%@ page import="org.archive.util.TextUtils" %>
@@ -37,9 +38,15 @@
 	 *              to this StringBuffer followed by a comma.
 	 * @param expert if true then expert settings will be included, else
 	 *               they will be hidden.
+	 * @param errorHandler the error handler for the current job
 	 * @returns The HTML code described above.
 	 */
-	public String printMBean(ComplexType mbean, String indent, StringBuffer lists, boolean expert) throws Exception {
+	public String printMBean(ComplexType mbean, 
+	                         String indent, 
+	                         StringBuffer lists, 
+	                         boolean expert,
+	                         CrawlJobErrorHandler errorHandler) 
+	                     throws Exception {
 		if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
 			return "";
 		}
@@ -82,73 +89,88 @@
 						return error;
 					}
 	
+
 					if(currentAttribute instanceof ComplexType) {
-				    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",lists,expert));
-					}
-					else if(currentAttribute instanceof ListType){
-						// Some type of list.
-						ListType list = (ListType)currentAttribute;
-						p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-						p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-						p.append(TextUtils.escapeForJavascript(att.getDescription()));
-						p.append("')\">?</a>&nbsp;</td>\n");
-						p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
-						p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
-						for(int i=0 ; i<list.size() ; i++){
-							p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
-						}
-						p.append("</select></td>\n");
-						p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-						p.append("<tr><td><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
-						p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
-						p.append("</table></td></tr>\n");
-	
-						lists.append("'"+mbean.getAbsoluteName() + "/" + att.getName()+"',");
-					}
-					else{
-						Object[] legalValues = att.getLegalValues();
-						
-						p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
-						p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-						p.append(TextUtils.escapeForJavascript(att.getDescription()));
-						p.append("')\">?</a>&nbsp;</td><td>\n");
-						
-						if(legalValues != null && legalValues.length > 0){
-							//Have legal values. Build combobox.
-							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
-							for(int i=0 ; i < legalValues.length ; i++){
-								p.append("<option value='"+legalValues[i]+"'");
-								if(currentAttribute.equals(legalValues[i])){
-									p.append(" selected");
-								}
-								p.append(">"+legalValues[i]+"</option>\n");
+					    // Recursive call for complex types (contain other nodes and leaves)
+				    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",lists,expert,errorHandler));
+					} else {
+					    // Print out interface for simple types (leaves)
+                        String attAbsoluteName = mbean.getAbsoluteName() + "/" + att.getName();
+	                    if(currentAttribute instanceof ListType){
+							// Some type of list.
+							ListType list = (ListType)currentAttribute;
+							p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
+							p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
+							p.append(TextUtils.escapeForJavascript(att.getDescription()));
+							p.append("')\">?</a>&nbsp;</td>\n");
+							p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
+							p.append("<tr><td><select multiple name='" + attAbsoluteName + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
+							for(int i=0 ; i<list.size() ; i++){
+								p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
 							}
-							p.append("</select>\n");
+							p.append("</select>");
+	                        p.append(checkError(attAbsoluteName,errorHandler));
+							p.append("</td>\n");
+							p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
+							p.append("<tr><td><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "/add' style='width: 320px'></td>\n");
+							p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + mbean.getAbsoluteName() + "/" + att.getName() + "')\"></td></tr>\n");
+							p.append("</table></td></tr>\n");
+		
+							lists.append("'"+mbean.getAbsoluteName() + "/" + att.getName()+"',");
+						} else {
+							Object[] legalValues = att.getLegalValues();
+							
+							p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
+							p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
+							p.append(TextUtils.escapeForJavascript(att.getDescription()));
+							p.append("')\">?</a>&nbsp;</td><td>\n");
+							
+							if(legalValues != null && legalValues.length > 0){
+								//Have legal values. Build combobox.
+								p.append("<select name='" + attAbsoluteName + "' style='width: 320px'>\n");
+								for(int i=0 ; i < legalValues.length ; i++){
+									p.append("<option value='"+legalValues[i]+"'");
+									if(currentAttribute.equals(legalValues[i])){
+										p.append(" selected");
+									}
+									p.append(">"+legalValues[i]+"</option>\n");
+								}
+								p.append("</select>\n");
+							} else if (currentAttribute instanceof Boolean){
+								// Boolean value
+								p.append("<select name='" + attAbsoluteName + "' style='width: 320px'>\n");
+								p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
+								p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
+								p.append("</select>\n");
+							} else if (currentAttribute instanceof TextField){
+								// Text area
+								p.append("<textarea name='" + attAbsoluteName + "' style='width: 320px' rows='4'>");
+								p.append(currentAttribute + "\n");
+								p.append("</textarea>\n");
+							} else {
+								//Input box
+								p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 320px'>\n");
+							}
+							
+							p.append(checkError(attAbsoluteName,errorHandler));
+							
+							p.append("</td></tr>\n");
 						}
-						else if(currentAttribute instanceof Boolean){
-							// Boolean value
-							p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
-							p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
-							p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
-							p.append("</select>\n");
-						}
-						else if(currentAttribute instanceof TextField){
-							// Text area
-							p.append("<textarea name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' rows='4'>");
-							p.append(currentAttribute + "\n");
-							p.append("</textarea>\n");
-						}
-						else{
-							//Input box
-							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px'>\n");
-						}
-						
-						p.append("</td></tr>\n");
 					}
 				}
 		    }
 		}
 		return p.toString();
+	}
+	
+	public String checkError(String key, CrawlJobErrorHandler errorHandler){
+        Constraint.FailedCheck failedCheck = (Constraint.FailedCheck)errorHandler.getError(key);
+        if(failedCheck!=null){
+	        return "<a class='help' style='color: red' href=\"javascript:doPop('" + 
+	            TextUtils.escapeForJavascript(failedCheck.getMessage()) + "')\">*</a>";
+	    } else {
+	       return "";
+	    }
 	}
 	
 	/**
@@ -192,7 +214,9 @@
 				}
 				else{
 				    try{
-					   mbean.setAttribute(new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
+				       Attribute arr = new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName()));
+                       Constraint.FailedCheck f = mbean.checkValue(arr);
+					   mbean.setAttribute(arr);
     				} catch (Exception e1) {
 	   				    e1.printStackTrace();
 					   return;
@@ -205,6 +229,7 @@
 <%
 	// Load the job to configure.
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
+    CrawlJobErrorHandler errorHandler = theJob.getErrorHandler();
 	
 	boolean expert = false;
     if(getCookieValue(request.getCookies(),"expert","false").equals("true")){
@@ -224,12 +249,14 @@
 
 	// Get the settings objects.
 	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
+
 	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
 
 	// Check for actions.
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
+		errorHandler.clearErrors();
 		writeNewOrderFile(crawlOrder,request,expert);
 		orderfile.setDescription(request.getParameter("meta/description"));
 		
@@ -286,7 +313,7 @@
 
 	// Get the HTML code to display the settigns.
 	StringBuffer listsBuffer = new StringBuffer();
-	String inputForm=printMBean(crawlOrder,"",listsBuffer,expert);
+	String inputForm=printMBean(crawlOrder,"",listsBuffer,expert,errorHandler);
 	// The listsBuffer will have a trailing comma if not empty. Strip it off.
 	String lists = listsBuffer.toString().substring(0,(listsBuffer.toString().length()>0?listsBuffer.toString().length()-1:0));
 
