@@ -299,7 +299,7 @@ public class UURI extends URI {
         String uriAuthority = checkUriElement(matcher.group(5));
         String uriPath = checkUriElement(matcher.group(6));
         String uriQuery = checkUriElement(matcher.group(8));
-        String uriFragment = checkUriElement(matcher.group(10));
+        // UNUSED String uriFragment = checkUriElement(matcher.group(10));
 
         // Lowercase the host part of the uriAuthority; don't destroy any
         // userinfo capitalizations.  Make sure no illegal characters in
