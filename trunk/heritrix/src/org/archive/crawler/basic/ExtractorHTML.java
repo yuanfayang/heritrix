@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +25,8 @@ import org.archive.crawler.framework.Processor;
  *
  */
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTML");
+	
 	// TODO: correct this so that it handles name= and content= in alternate order, with intervening spaces, etc.
 	static Pattern META_ROBOTS_EXTRACTOR = Pattern.compile(
 	 "(?i)<meta\\s[^<]*?name=(?:\"|')robots(?:\"|')[^<]*?(?:content=(?:\"|')([^\"^']*)(?:\"|'))[^<]*>"
@@ -37,6 +40,19 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	static Pattern EMBED_EXTRACTOR = Pattern.compile(
 	 "(?i)<[^<]+\\s(?:src)=(?:(?:\"([^>\"]*)\")|(?:'([^>']*)')|(^\\[\\S&&[^>]]*))(?:[^>]+)*>"
 	);
+
+    // this pattern extracts either (1) whole <script>...</script>
+    // ranges; or (2) any other open-tag with at least one attribute
+    // (eg matches "<a href='boo'>" but not "</a>" or "<br>")
+	static Pattern RELEVANT_TAG_EXTRACTOR = Pattern.compile(
+	 "(?is)<(?:(script\\s.*?>.*?</script>)|((?:(base)|(meta)|(\\w+))\\s+.*?)>)");
+	// this pattern extracts 'href' or 'src' attributes from 
+	// any open-tag innards matched by the above
+	static Pattern RELEVANT_ATTRIBUTE_EXTRACTOR = Pattern.compile(
+	 "(?is)(\\w+)\\s+.*?(?:(href)|(src))\\s*=(?:(?:\\s*\"(.+?)\")|(?:\\s*'(.+?)')|(\\S+))");
+	// this pattern extracts 'robots' attributes
+	static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
+	 "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -56,82 +72,115 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		ArrayList links  = new ArrayList();
 		ArrayList embeds = new ArrayList();
 		
-		String cb = get.getResponseBodyAsString();
+		CharSequence cs = get.getResponseBodyAsString();
 		
-		if (cb==null) {
+		if (cs==null) {
 			// TODO: note problem
 			return;
 		}
-		// extract meta robots
-		Matcher m = META_ROBOTS_EXTRACTOR.matcher(cb);
-		if(m.find()) {
-			String directives = m.group(1).toLowerCase();
-			curi.getAList().putString(A_META_ROBOTS,directives);
-			// TODO handle multiple, name= qualifiers
-			if(directives.indexOf("nofollow")>0) {
-				// if 'nofollow' is specified, end html extraction
-				return;
-			}
-		}
 		
-		// extract BASE HREF
-		Matcher b = BASE_EXTRACTOR.matcher(cb);
-		if(b.find()) {
-			String baseHref;
-			if (b.group(1)!=null) {
-				// "" quoted attribute
-				baseHref = b.group(1);
-			} else if (b.group(2)!=null) {
-				//   quoted attribute
-				baseHref = b.group(2);
-			} else {
-				// unquoted attribute
-				baseHref = b.group(3);
+		Matcher tags = RELEVANT_TAG_EXTRACTOR.matcher(cs);
+		while(tags.find()) {
+			if(tags.start(5)>0) {
+				// generic <whatever> match
+				processTagInto(cs.subSequence(tags.start(2),tags.end(2)),links,embeds);
+			} else if(tags.start(3)>0) {
+				// <base> match
+				processBase(curi,cs.subSequence(tags.start(3),tags.end(3)));
+			} else if (tags.start(4)>0) {
+				// <meta> match
+				if (processMeta(curi,cs.subSequence(tags.start(4),tags.end(4)))) {
+					// meta tag included NOFOLLOW; abort processing
+					return;
+				}
+			} else if (tags.start(1)>0) {
+				// <script> match
+				processScript(curi,cs.subSequence(tags.start(1),tags.end(1)));
 			}
-			curi.getAList().putString("html-base-href",baseHref);
-		}
-		
-		// extract links
-		Matcher l = LINK_EXTRACTOR.matcher(cb);
-		while(l.find()) {
-			String match;
-			if (l.group(1)!=null) {
-				// "" quoted attribute
-				match = l.group(1);
-			} else if (l.group(2)!=null) {
-				//   quoted attribute
-				match = l.group(2);
-			} else {
-				// unquoted attribute
-				match = l.group(3);
-			}
-			links.add(match);
 		}
 		
 		if(links.size()>0) {
 			curi.getAList().putObject("html-links", links);
-		}
-
-		// extract embeds
-		Matcher e = EMBED_EXTRACTOR.matcher(cb);
-		while(e.find()) {
-			String match;
-			if (e.group(1)!=null) {
-				// "" quoted attribute
-				match = e.group(1);
-			} else if (e.group(2)!=null) {
-				//   quoted attribute
-				match = e.group(2);
-			} else {
-				// unquoted attribute
-				match = e.group(3);
-			}
-			embeds.add(match);
+			logger.fine(curi+" has "+links.size()+" links.");
 		}
 		
 		if(embeds.size()>0) {
 			curi.getAList().putObject("html-embeds", embeds);
+			logger.fine(curi+" has "+embeds.size()+" embeds.");
+	
 		}
 	}
+		
+		
+	/**
+	 * @param curi
+	 * @param sequence
+	 */
+	private void processScript(CrawlURI curi, CharSequence sequence) {
+		// for now, do nothing
+	}
 
+
+	/**
+	 * @param curi
+	 * @param sequence
+	 */
+	private boolean processMeta(CrawlURI curi, CharSequence cs) {
+		Matcher attr = ROBOTS_ATTRIBUTE_EXTRACTOR.matcher(cs);
+		if(!attr.lookingAt()) {
+			// no robots
+			return false;
+		}
+		int which = attr.start(3) > 0 ? 3 : attr.start(4) > 0 ? 4 : 5;
+		String directives = attr.group(which);
+		curi.getAList().putString(A_META_ROBOTS,directives);
+		if(directives.indexOf("nofollow")>0) {
+			// if 'nofollow' is specified, end html extraction
+			return true;
+		}
+		return false;
+	}
+
+
+	/**
+	 * @param curi
+	 * @param sequence
+	 */
+	private void processBase(CrawlURI curi, CharSequence cs) {
+		Matcher attr = RELEVANT_ATTRIBUTE_EXTRACTOR.matcher(cs);
+		if(!attr.lookingAt()) {
+			// no href or src
+			return;
+		}
+		int which = attr.start(4) > 0 ? 4 : attr.start(5) > 0 ? 5 : 6;
+		String baseHref = attr.group(which);
+		if (attr.start(2)>0) {
+			// HREF match
+			curi.getAList().putString(A_HTML_BASE,baseHref);
+		} 
+	}
+
+
+	/**
+	 * @param tags
+	 * @param i
+	 * @param links
+	 * @param embeds
+	 */
+	private void processTagInto(CharSequence cs, ArrayList links, ArrayList embeds) {
+		Matcher attr = RELEVANT_ATTRIBUTE_EXTRACTOR.matcher(cs);
+		if(!attr.lookingAt()) {
+			// no href or src
+			return;
+		}
+		int which = attr.start(4) > 0 ? 4 : attr.start(5) > 0 ? 5 : 6;
+		String uri = attr.group(which);
+		if (attr.start(2)>0) {
+			// HREF match
+			links.add(uri);
+		} else if (attr.start(3)>0) {
+			// SRC match
+			embeds.add(uri);
+		}
+	}
 }
