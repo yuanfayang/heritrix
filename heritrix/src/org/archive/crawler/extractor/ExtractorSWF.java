@@ -87,7 +87,8 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 		try {
 			reader.readFile();
 		} catch (IOException e) {
-			// this couldn't possibly work: the crawlError log 
+			// this direct writing to the crawlErrors log 
+			// couldn't possibly work: the crawlError log 
 			// currently expects a runtime error instance inside 
 			// the problem crawlURI
 //			Object array[] = { curi };
@@ -95,7 +96,7 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 //				Level.INFO,
 //				curi.getUURI().getUri().toString(),
 //				array);
-			curi.addLocalizedError(getName(),e);
+			curi.addLocalizedError(getName(),e,null);
 			
 		}
 		
