@@ -2,29 +2,35 @@
 <project>
     <preGoal name="xdoc:jelly-transform">
         <attainGoal name="faq"/>
-    </preGoal>  
+    </preGoal> 
+
+    <preGoal name="java:jar-resources"> 
+        <filter token="VERSION" value="${pom.currentVersion}" /> 
+    </preGoal> 
 
     <postGoal name="dist:prepare-bin-filesystem">
     <echo>[Heritrix] dist:prepare-bin-filesystem postGoal</echo>
 
-    <!--Add the lib dir to our binary distribution.-->
-    <copy todir="${maven.dist.bin.assembly.dir}/lib">
-      <fileset dir="./lib">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
-    <!--Copy to a bin dir the heritrix start script.-->
-    <copy todir="${maven.dist.bin.assembly.dir}/bin">
-      <fileset dir="${maven.src.dir}/shell">
-        <include name="heritrix.sh"/>
-      </fileset>
-    </copy>
-    <!--Copy over the admin webapp.-->
-    <copy todir="${maven.dist.bin.assembly.dir}/webapps">
-      <fileset dir="${maven.src.dir}/webapps">
-        <include name="**/*"/>
-      </fileset>
-    </copy>
+        <!--Add the lib dir to our binary distribution.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/lib">
+          <fileset dir="./lib">
+            <include name="*.jar"/>
+          </fileset>
+        </copy>
+        <!--Copy to a bin dir the heritrix start script.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/bin">
+          <fileset dir="${maven.src.dir}/shell">
+            <include name="heritrix.sh"/>
+          </fileset>
+        </copy>
+        <!--Copy over the admin webapp.-->
+        <filter token="VERSION" value="${pom.currentVersion}" />
+        <copy todir="${maven.dist.bin.assembly.dir}/webapps" filtering="true">
+          <fileset dir="${maven.src.dir}/webapps">
+            <include name="**/*"/>
+          </fileset>
+        </copy>
+
     </postGoal>
 
     <postGoal name="dist:prepare-src-filesystem">
@@ -38,9 +44,9 @@
     </postGoal>
 
     <goal name="site:update-sourceforge">
-        <!--This goal will update sourceforge crawler.archive.org site.
-            Assumes sourceforge.update.site.user has been defined in
-            project.properties, that that users public ssh key has been
+        <!--This goal will update sourceforge crawler.archive.org site. Assumes
+            maven.username has been defined in project.properties or in a 
+            build.properties, and that that users public ssh key has been
             uploaded totheir sourceforge preferences (see
             http://sourceforge.net/docman/display_doc.php?docid=761&group_id=1)
             and that this key has no password associated (Means that 
@@ -60,7 +66,7 @@
             <arg value="--rsh=ssh" />
             <arg
               value="${maven.build.dir}/docs/"/>
-            <arg value="${sourceforge.update.site.user}@crawler.archive.org:/home/groups/a/ar/archive-crawler/htdocs/" />
+            <arg value="${maven.username}@crawler.archive.org:/home/groups/a/ar/archive-crawler/htdocs/" />
         </exec>
     </goal>
 </project>

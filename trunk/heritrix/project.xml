@@ -45,7 +45,12 @@
   <!-- The version of the project under development, e.g.
        1.1, 1.2, 2.0-SNAPSHOT
 
-       TODO: Point to versioning scheme.
+       See "Version and Release Numbering" on
+       http://crawler.archive.org/developer.html for how version is done in 
+       this project.
+
+       NOTE: If this version is changed, you MUST update the version property
+       in build.xml.
     -->
   <currentVersion>0.3.0</currentVersion>
   
@@ -403,6 +408,7 @@
 
     <resources>
       <resource>
+        <filtering>true</filtering> 
         <directory>src/conf</directory>
         <includes>
           <include>*.properties</include>
