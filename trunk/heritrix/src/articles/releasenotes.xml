@@ -61,7 +61,7 @@
         <para>See <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1086554&amp;group_id=73833&amp;atid=539099">[ 1086554 ] glibc 2.3.2 NPTL hang (Was bdbfrontier stall in...)</ulink> for more on the issue.</para>
       </sect3>
       <sect3 id="1093962">
-        <title><ulink url="">[1093962]
+        <title><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1093962&amp;group_id=73833&amp;atid=539099">[1093962]
         SSL handshake fails when server requests switch to SSL
         V3</ulink></title>
         <para>When connecting to a secure server, if the server wants to 
