@@ -43,10 +43,12 @@
     	CrawlJob newJob = null;
 
     	// Ensure we got a valid name. ([a-zA-Z][0-9][-_])
-    	Pattern p = Pattern.compile("[a-zA-Z_\\-0-9]*");
+    	Pattern p = Pattern.compile("[a-zA-Z_\\-0-9\\.,]*");
     	if(p.matcher(metaName).matches()==false){
             // Illegal name!
-            error = "Name can only contain alphanumeric chars, dash and underscore.<br>No spaces are allowed";
+            error = "Name can only contain letters, digits, and dash, "
+                   +"underscore, period, or comma ( - _ . , ).<br> "
+                   +"No spaces are allowed";
     	}
     	
     	if(error == null){
