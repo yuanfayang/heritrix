@@ -1,3 +1,6 @@
 disk
 jobs
 target
+.checkstyle
+heritrix_dmesg.log
+heritrix_out.log
