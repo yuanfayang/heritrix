@@ -86,7 +86,7 @@ public class SimpleScheduler implements URIScheduler {
 		controller = c;
 		store = (SimpleStore)c.getStore();
 		// load seeds
-		Iterator iter = c.getOrder().getScope().getSeeds().iterator();
+		Iterator iter = c.getOrder().getBehavior().getSeeds().iterator();
 		while (iter.hasNext()) {
 			insertAsSeed((UURI)iter.next());
 		}
