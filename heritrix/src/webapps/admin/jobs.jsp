@@ -16,6 +16,8 @@
 <b>New jobs</b><br>
 <ul>
 	<li><a href="/admin/jobs/new.jsp">Create new crawl job</a>
+	<li><a href="#">Create new crawl job based on a profile</a>
+	<li><a href="#">Create new crawl job based on an existing job</a>
 </ul>
 
 <% if(handler.isCrawling()){ %>
