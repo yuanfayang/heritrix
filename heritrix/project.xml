@@ -612,8 +612,8 @@
             </properties>
         </dependency>
         <dependency>
-            <id>dsi.unimi.it</id>
-            <version>0.9.1-4.4.0</version>
+            <id>dsi-unimi-it</id>
+            <version>0.9.1</version>
             <url>http://mg4j.dsi.unimi.it/</url>
             <properties>
                 <war.bundle>true</war.bundle>
