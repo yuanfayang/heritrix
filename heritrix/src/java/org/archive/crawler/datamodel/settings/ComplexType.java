@@ -105,7 +105,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the global settings object.
      */
     public CrawlerSettings globalSettings() {
-        return settingsHandler.getSettingsObject(null);
+        try {
+            return settingsHandler.getSettingsObject(null);
+        } catch (NullPointerException e) {
+            return null;
+        }
     }
 
     public Type addElement(CrawlerSettings settings, Type type)
@@ -346,6 +350,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
 
+        // If settings is not set, return the default value
+        if (settings == null) {
+            try {
+                return ((Type) definitionMap.get(name)).getDefaultValue();
+            } catch (NullPointerException e) {
+                throw new AttributeNotFoundException(
+                        "Could not find attribute: " + name);
+            }
+        }
+        
         return getDataContainerRecursive(settings, name).get(name);
     }
 
@@ -638,10 +652,17 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Add a new attribute to the definition of this ComplexType.
      *
+     * This method can only be called before the ComplexType has been
+     * initialized. This usally means that this method is available for
+     * constructors of subclasses of this class.
+     * 
      * @param type the type to add.
      * @return the newly added type.
      */
     public Type addElementToDefinition(Type type) {
+        if (isInitialized()) {
+            throw new IllegalStateException("Elements should only be added to definition in the constructor.");
+        }
         if (definitionMap.containsKey(type.getName())) {
             definition.remove(type);
             definitionMap.remove(type.getName());
@@ -649,6 +670,22 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         definition.add(type);
         definitionMap.put(type.getName(), type);
         return type;
+    }
+    
+    /** Get an element definition from this complex type.
+     * 
+     * This method can only be called before the ComplexType has been
+     * initialized. This usally means that this method is available for
+     * constructors of subclasses of this class.
+     * 
+     * @param name name of element to get.
+     * @return the requested element or null if non existent.
+     */
+    public Type getElementFromDefinition(String name) {
+        if (isInitialized()) {
+            throw new IllegalStateException("Elements definition can only be accessed in the constructor.");
+        }
+        return (Type) definitionMap.get(name);
     }
 
     /** This method can be overridden in subclasses to do local
