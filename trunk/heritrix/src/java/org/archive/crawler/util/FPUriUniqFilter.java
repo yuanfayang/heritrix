@@ -33,89 +33,64 @@ import org.archive.util.LongFPSet;
 import st.ata.util.FPGenerator;
 
 /**
- * UriUniqFilter which only stores 64-bit UURI fingerprints, using an
- * internal LongFPSet instance. (This internal instance may be
- * disk or memory based.)
+ * UriUniqFilter stores 64-bit UURI fingerprints, using an internal LongFPSet
+ * instance. 
+ * 
+ * The passed LongFPSet internal instance may be disk or memory based.
  *
  * @author gojomo
- *
  */
 public class FPUriUniqFilter implements UriUniqFilter, Serializable {
-    // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class,1);
-    private static Logger logger = Logger.getLogger(FPUriUniqFilter.class.getName());
-
-    LongFPSet fpset;
-    transient FPGenerator fpgen = FPGenerator.std64;
-    HasUriReceiver receiver;
+    // Be robust against trivial implementation changes
+    private static final long serialVersionUID =
+        ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
     
-    /**
-     * @param fpset
-     */
+    private static Logger logger =
+        Logger.getLogger(FPUriUniqFilter.class.getName());
+    
+    private LongFPSet fpset;
+    private transient FPGenerator fpgen = FPGenerator.std64;
+    private HasUriReceiver receiver;
+    
     public FPUriUniqFilter(LongFPSet fpset) {
         this.fpset = fpset;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#setDestination(org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver)
-     */
     public void setDestination(HasUriReceiver r) {
         this.receiver = r;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#add(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public synchronized void add(HasUri obj) {
         if(fpset.add(getFp(obj))) {
             this.receiver.receive(obj);
         }
     }
 
-    /**
-     * @param obj
-     * @return
-     */
     private long getFp(HasUri obj) {
         return fpgen.fp(obj.getUri());
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addNow(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public void addNow(HasUri obj) {
         add(obj);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addForce(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public synchronized void addForce(HasUri obj) {
         fpset.add(getFp(obj));
         this.receiver.receive(obj);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#note(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public synchronized void note(HasUri hu) {
         fpset.add(getFp(hu));        
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#forget(org.archive.crawler.datamodel.UriUniqFilter.HasUri)
-     */
     public synchronized void forget(HasUri hu) {
         fpset.remove(getFp(hu));        
     }
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#flush()
-     */
+
     public long flush() {
         // noop for now
         return 0;
     }
-    
     
     /**
      * @see org.archive.crawler.datamodel.UriUniqFilter#count()
@@ -124,18 +99,8 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
         return fpset.count();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#pending()
-     */
     public long pending() {
-        // no items pile up in this implementation
+        // No items pile up in this implementation
         return 0;
     }
-
-//    // custom serialization
-//    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-//    	stream.defaultReadObject();
-//    	fpgen = FPGenerator.std64;
-//    }
-
 }

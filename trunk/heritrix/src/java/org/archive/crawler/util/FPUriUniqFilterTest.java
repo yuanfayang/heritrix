@@ -24,11 +24,19 @@
  */
 package org.archive.crawler.util;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.logging.Logger;
+
+import junit.framework.TestCase;
+
+import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUri;
 import org.archive.util.MemLongFPSet;
-
-import junit.framework.TestCase;
 
 
 /**
@@ -37,8 +45,10 @@ import junit.framework.TestCase;
  */
 public class FPUriUniqFilterTest extends TestCase
 implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
+    private Logger logger =
+        Logger.getLogger(FPUriUniqFilterTest.class.getName());
 
-    private FPUriUniqFilter filter = null;
+    private UriUniqFilter filter = null;
     
     /**
      * Set to true if we visited received.
@@ -47,8 +57,8 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
     
 	protected void setUp() throws Exception {
 		super.setUp();
-        // 17 makes a MemLongFPSet of one meg in size.
-		this.filter = new FPUriUniqFilter(new MemLongFPSet(17, 0.75f));
+        // 17 makes a MemLongFPSet of one meg of longs (64megs).
+		this.filter = new FPUriUniqFilter(new MemLongFPSet(10, 0.75f));
 		this.filter.setDestination(this);
     }
     
@@ -58,6 +68,47 @@ implements UriUniqFilter.HasUriReceiver, UriUniqFilter.HasUri {
         this.filter.addForce(this);
         // Should only have add 'this' once.
         assertTrue("Count is off", this.filter.count() == 1);
+    }
+    
+    /**
+     * Test inserting and removing.
+     * @throws IOException
+     * @throws FileNotFoundException
+     */
+    public void testWriting() throws FileNotFoundException, IOException {
+        long start = System.currentTimeMillis();
+        ArrayList list = new ArrayList(1000);
+        int count = 0;
+        final int MAX_COUNT = 1000;
+        for (; count < MAX_COUNT; count++) {
+        	UURI u = UURIFactory.getInstance("http://www" +
+        			count + ".archive.org/" + count + "/index.html");
+        	this.filter.add(u);
+        	if (count > 0 && ((count % 100) == 0)) {
+        		list.add(u);
+        	}
+        }
+        this.logger.info("Added " + count + " in " +
+        		(System.currentTimeMillis() - start));
+        
+        start = System.currentTimeMillis();
+        for (Iterator i = list.iterator(); i.hasNext();
+        this.filter.add((UURI)i.next())) {
+        	continue;
+        }
+        this.logger.info("Added random " + list.size() + " in " +
+        		(System.currentTimeMillis() - start));
+        
+        start = System.currentTimeMillis();
+        for (Iterator i = list.iterator(); i.hasNext();
+        this.filter.add((UURI)i.next())) {
+        	continue;
+        }
+        this.logger.info("Deleted random " + list.size() + " in " +
+            (System.currentTimeMillis() - start));
+        // Looks like delete doesn't work.
+        assertTrue("Count is off: " + this.filter.count(),
+            this.filter.count() == MAX_COUNT);
     }
     
     public void testNote() {

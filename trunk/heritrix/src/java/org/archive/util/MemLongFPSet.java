@@ -25,62 +25,65 @@
 package org.archive.util;
 
 import java.io.Serializable;
+import java.util.logging.Logger;
 
 /**
  * Open-addressing in-memory hash set for holding primitive long fingerprints.
  *
  * @author Gordon Mohr
  */
-public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet, Serializable {
-    static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
-    static final float DEFAULT_LOAD_FACTOR = 0.75f;
+public class MemLongFPSet extends AbstractLongFPSet
+implements LongFPSet, Serializable {
+    private static Logger logger =
+        Logger.getLogger(MemLongFPSet.class.getName());
+    private static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
+    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
+    private byte[] slots;
+    private long[] values;
 
-    byte[] slots;
-    long[] values;
-
-    /**
-     *
-     */
     public MemLongFPSet() {
         this(DEFAULT_CAPACITY_POWER_OF_TWO, DEFAULT_LOAD_FACTOR);
     }
 
     /**
-     * @param capacityPowerOfTwo
-     * @param loadFactor
+     * @param capacityPowerOfTwo The capacity as the exponent of a power of 2.
+     *  e.g if the capacity is <code>4</code> this means <code>2^^4</code>
+     * entries.
+     * @param loadFactor The load factor as a fraction.  This gives the amount
+     * of free space to keep in the Set.
      */
     public MemLongFPSet(int capacityPowerOfTwo, float loadFactor) {
         super(capacityPowerOfTwo, loadFactor);
-        slots = new byte[1<<capacityPowerOfTwo];
-        for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
-            slots[i]=EMPTY; // flag value for unused
+        slots = new byte[1 << capacityPowerOfTwo];
+        for(int i = 0; i < (1 << capacityPowerOfTwo); i++) {
+            slots[i] = EMPTY; // flag value for unused
         }
-        values = new long[1<<capacityPowerOfTwo];
+        values = new long[1 << capacityPowerOfTwo];
     }
 
     protected void setAt(long i, long val) {
-        slots[(int)i]=1;
-        values[(int)i]=val;
+        slots[(int)i] = 1;
+        values[(int)i] = val;
     }
 
     protected long getAt(long i) {
         return values[(int)i];
     }
 
-    /**
-     *
-     */
     protected void makeSpace() {
         grow();
     }
 
     private void grow() {
+        // Catastrophic event.  Log its occurance.
+        logger.info("Doubling fingerprinting slots to "
+            + (1 << this.capacityPowerOfTwo));
         long[] oldValues = values;
         byte[] oldSlots = slots;
         capacityPowerOfTwo++;
-        values = new long[1<<capacityPowerOfTwo];
-        slots = new byte[1<<capacityPowerOfTwo];
-        for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
+        values = new long[1 << capacityPowerOfTwo];
+        slots = new byte[1 << capacityPowerOfTwo];
+        for(int i = 0; i < (1 << capacityPowerOfTwo); i++) {
             slots[i]=EMPTY; // flag value for unused
         }
         count=0;
@@ -97,16 +100,10 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet, Serial
         slots[(int)oldIndex] = EMPTY;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.AbstractLongFPSet#getSlotState(long)
-     */
     protected int getSlotState(long i) {
         return slots[(int)i];
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.AbstractLongFPSet#clearAt(long)
-     */
     protected void clearAt(long index) {
         slots[(int)index]=EMPTY;
         values[(int)index]=0;
