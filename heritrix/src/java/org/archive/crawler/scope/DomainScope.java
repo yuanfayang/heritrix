@@ -26,6 +26,7 @@ package org.archive.crawler.scope;
 import java.util.Iterator;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
@@ -66,7 +67,10 @@ import org.archive.crawler.framework.Filter;
 public class DomainScope extends CrawlScope {
 
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
+    public static final String ATTR_ADDITIONAL_FOCUS_FILTER = 
+        "additionalScopeFocus";
 
+    Filter additionalFocusFilter;
     Filter transitiveFilter;
 
     public DomainScope(String name) {
@@ -76,6 +80,9 @@ public class DomainScope extends CrawlScope {
             "limited to the domain of it's seeds. It will however reach " +
             "subdomains of the seeds' original domains. www[#].host is considered " +
             "to be the same as host.");
+
+        additionalFocusFilter = (Filter) addElementToDefinition(
+                new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
 
         this.transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
@@ -138,5 +145,12 @@ public class DomainScope extends CrawlScope {
         // if none found, fail
         return false;
     }
-
+    
+    /**
+     *  
+     * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
+     */
+    protected boolean additionalFocusAccepts(Object o) {
+        return additionalFocusFilter.accepts(o);
+    }
 }

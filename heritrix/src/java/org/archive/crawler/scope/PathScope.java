@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
@@ -66,10 +67,15 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class PathScope extends CrawlScope {
+ 
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.PathScope");
+        
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
+    public static final String ATTR_ADDITIONAL_FOCUS_FILTER = 
+        "additionalScopeFocus";
 
+    Filter additionalFocusFilter;
     Filter transitiveFilter;
 
     public PathScope(String name) {
@@ -81,6 +87,9 @@ public class PathScope extends CrawlScope {
             "one of the seeds is 'archive.org/example/' all URIs under the" +
             "path 'examples' will be crawled (like 'archive.org/examples/hello.html')" +
             "but not URIs in other paths or root (i.e. 'archive.org/index.html).");
+
+        additionalFocusFilter = (Filter) addElementToDefinition(
+                new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
 
         transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
@@ -133,6 +142,14 @@ public class PathScope extends CrawlScope {
         }
         // if none found, fail
         return false;
+    }
+    
+    /**
+     *  
+     * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
+     */
+    protected boolean additionalFocusAccepts(Object o) {
+        return additionalFocusFilter.accepts(o);
     }
 
 }
