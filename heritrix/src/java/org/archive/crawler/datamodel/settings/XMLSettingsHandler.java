@@ -279,19 +279,27 @@ public class XMLSettingsHandler extends SettingsHandler {
         // Write new orderfile and point the settingshandler to it
         orderFile = newOrderFileName;
         try {
-            getOrder().setAttribute(new Attribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY, newSettingsDirectory));
+            getOrder().setAttribute(
+                new Attribute(
+                    CrawlOrder.ATTR_SETTINGS_DIRECTORY, newSettingsDirectory));
         } catch (Exception e) {
-            throw new IOException("Could not update settings with new location: " + e.getMessage());
+            throw new IOException("Could not update settings with new location: "
+                + e.getMessage());
         }
         writeSettingsObject(getSettingsObject(null));
         
-        File newDir = new File(getPathRelativeToWorkingDirectory(newSettingsDirectory));
+        File newDir = new File(
+            getPathRelativeToWorkingDirectory(newSettingsDirectory));
         
         // Copy the per host files
         copyFiles(oldSettingsDirectory, newDir);
     }
     
     private void copyFiles(File src, File dest) throws IOException {
+        if (!src.exists()) {
+            return;
+        }
+
         if (src.isDirectory()) {
             // Create destination directory
             dest.mkdirs();
