@@ -56,23 +56,25 @@
 
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
-		if(possible && mbean instanceof Filter){
-			// Have a local filter.
-			p.append("<tr");
-			if(alt){
-				p.append(" bgcolor='#EEEEFF'");
+		if(mbean instanceof Filter){
+            if(possible){
+				// Have a local filter.
+				p.append("<tr");
+				if(alt){
+					p.append(" bgcolor='#EEEEFF'");
+				}
+				alt = !alt;
+				p.append("><td nowrap><b>" + indent + "</b>" + mbean.getName() + "</td><td nowrap>");
+				if(first==false){
+					p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Move up</a>");
+				}
+				p.append("</td><td nowrap>");
+				if(last==false){
+					p.append("<a href=\"javascript:doMoveDown('"+mbean.getName()+"','"+parent+"')\">Move down</a>");
+				}
+				p.append("</td><td><a href=\"javascript:doRemove('"+mbean.getName()+"','"+parent+"')\">Remove</a></td>");
+				p.append("<td><i>"+mbean.getClass().getName()+"</i></td></tr>\n");
 			}
-			alt = !alt;
-			p.append("><td nowrap><b>" + indent + "</b>" + mbean.getName() + "</td><td nowrap>");
-			if(first==false){
-				p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Move up</a>");
-			}
-			p.append("</td><td nowrap>");
-			if(last==false){
-				p.append("<a href=\"javascript:doMoveDown('"+mbean.getName()+"','"+parent+"')\">Move down</a>");
-			}
-			p.append("</td><td><a href=\"javascript:doRemove('"+mbean.getName()+"','"+parent+"')\">Remove</a></td>");
-			p.append("<td><i>"+mbean.getClass().getName()+"</i></td></tr>\n");
 		} else {
 			// Not a filter, or an inherited filter.
 			p.append("<tr><td colspan='5'><b>" + indent + mbean.getName() + "</b></td></tr>\n");
@@ -110,8 +112,8 @@
 			    	{
 			    		MapType thisMap = (MapType)currentAttribute;
 			    		if(thisMap.getContentType().getName().equals(Filter.class.getName())){
-				    		p.append("<tr><td colspan='5'>\n<b>"+indent+"&nbsp;&nbsp;</b>");
-				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
+				    		p.append("<tr><td colspan='5'>\n<b>"+indent+"&nbsp;&nbsp;&nbsp;&nbsp;</b>");
+				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
 				    		p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
 				    		for(int i=0 ; i<availibleFilters.size() ; i++){
 					    		p.append("<option value='"+availibleFilters.get(i)+"'>"+availibleFilters.get(i)+"</option>\n");
@@ -246,10 +248,14 @@
 	}
 
 	function doAdd(map){
-		document.frmFilters.action.value = "filters";
-		document.frmFilters.subaction.value = "add";
-		document.frmFilters.map.value = map;
-		doSubmit();
+        if(document.getElementById(map+".name").value == ""){
+            alert("Must enter a unique name for the filter");
+        } else {
+			document.frmFilters.action.value = "filters";
+			document.frmFilters.subaction.value = "add";
+			document.frmFilters.map.value = map;
+			doSubmit();
+		}
 	}
 </script>
 	<p>

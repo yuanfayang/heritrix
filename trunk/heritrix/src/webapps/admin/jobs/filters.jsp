@@ -95,9 +95,9 @@
 			    	{
 			    		MapType thisMap = (MapType)currentAttribute;
 			    		if(thisMap.getContentType().getName().equals(Filter.class.getName())){
-				    		p.append("<tr><td colspan='5'>\n"+indent+"&nbsp;&nbsp;");
-				    		p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
-				    		p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
+				    		p.append("<tr><td colspan='5'>\n"+indent+"&nbsp;&nbsp;&nbsp;&nbsp;");
+				    		p.append("Name: <input size='8' name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name' id='" + mbean.getAbsoluteName() + "/" + att.getName() + ".name'>\n");
+				    		p.append("Filter: <select name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".class'>\n");
 				    		for(int i=0 ; i<availibleFilters.size() ; i++){
 					    		p.append("<option value='"+availibleFilters.get(i)+"'>"+availibleFilters.get(i)+"</option>\n");
 					    	}
@@ -253,10 +253,14 @@
 	}
 
 	function doAdd(map){
-		document.frmFilters.action.value = "filters";
-		document.frmFilters.subaction.value = "add";
-		document.frmFilters.map.value = map;
-		doSubmit();
+        if(document.getElementById(map+".name").value == ""){
+            alert("Must enter a unique name for the filter");
+        } else {
+			document.frmFilters.action.value = "filters";
+			document.frmFilters.subaction.value = "add";
+			document.frmFilters.map.value = map;
+			doSubmit();
+	    }
 	}
 </script>
 	<p>
