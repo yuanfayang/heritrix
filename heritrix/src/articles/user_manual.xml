@@ -136,11 +136,11 @@
         <sect4>
           <title>Hardware</title>
 
-          <para>Default a java heap of 256MB RAM, which is usually suitable for
-          crawls that range over hundreds of hosts. Assign more -- see 
-          <xref linkend="java_opts" /> for how -- of your
-          available RAM to the heap if you are crawling thousands of hosts or
-          experience Java out-of-memory problems.</para>
+          <para>Default a java heap of 256MB RAM, which is usually suitable
+          for crawls that range over hundreds of hosts. Assign more -- see
+          <xref linkend="java_opts" /> for how -- of your available RAM to the
+          heap if you are crawling thousands of hosts or experience Java
+          out-of-memory problems.</para>
         </sect4>
 
         <sect4>
@@ -440,8 +440,8 @@
     the two settings under <emphasis role="bold">http-headers</emphasis>.
     These are the <literal>user-agent</literal> and <literal>from</literal>
     field of the HTTP headers in the crawlers requests. You must set them to
-    valid values before a crawl can be run. The current values upper-case
-    what needs replacing. If you have trouble with that please refer to <xref
+    valid values before a crawl can be run. The current values upper-case what
+    needs replacing. If you have trouble with that please refer to <xref
     linkend="httpheaders" /> for what's regarded as valid values.</para>
 
     <para>Once you've set the <emphasis role="bold">http-headers</emphasis>
@@ -738,7 +738,7 @@
         it offers configuration options controlling how it throttles its
         activity against particular hosts, and whether it has a bias towards
         finishing hosts in progress ('site-first' crawling) or cycling among
-        all hosts with pending URIs. </para>
+        all hosts with pending URIs.</para>
       </sect3>
 
       <sect3 id="scopes">
@@ -755,7 +755,7 @@
 
             <para>This scope allows for limiting the depth of a crawl (how
             many links away Heritrix should crawl) but does not impose any
-            limits on the hosts, domains, or URI paths crawled. </para>
+            limits on the hosts, domains, or URI paths crawled.</para>
           </listitem>
 
           <listitem>
@@ -793,6 +793,16 @@
             <para>A highly configurable scope. By adding different filters in
             different combinations this scope can be configured to provide a
             wide variety of behaviour.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">SurtPrefixScope</emphasis></para>
+
+            <para>A highly flexible scope which can mix the Domain, Host, and
+            Path scope behavior in a single crawl. The operator may supply an
+            external file of <xref linkend="surt" /> prefixes defining URIs to
+            consider in-scope. Seeds may also be considered to imply SURT
+            prefixes. </para>
           </listitem>
         </itemizedlist>
 
@@ -832,9 +842,9 @@
         <sect4 id="scopeproblems">
           <title>Problems with the current Scopes</title>
 
-          <para>Up until now, our predefined Scope classes -- PathScope,
-          HostScope, DomainScope, BroadScope -- all could be thought of as
-          fitting a specific pattern: A URI is included if and only if:</para>
+          <para>Our original Scope classes -- PathScope, HostScope,
+          DomainScope, BroadScope -- all could be thought of as fitting a
+          specific pattern: A URI is included if and only if:</para>
 
           <para><programlisting>    ( ( focusFilter.accepts(u)
         || transitiveFilter.accepts(u) )
@@ -883,8 +893,8 @@
               <listitem>
                 <para>Adding mixed focuses -- such as all of this one host,
                 all of this other domain, and then just these paths on this
-                other host -- is not supported, nor easy to mix-in to the
-                <emphasis>focus</emphasis> filter.</para>
+                other host -- is not supported by these classes, nor easy to
+                mix-in to the <emphasis>focus</emphasis> filter.</para>
               </listitem>
 
               <listitem>
@@ -901,11 +911,11 @@
               </listitem>
             </orderedlist></para>
 
-          <para>As a result of these problems major changes are planed in post
-          1.0.0 versions of Heritrix. The concept of scope will remain but how
-          they are defined and configured will change drastically . Those
-          changes will also greatly affect the filters (see <xref
-          linkend="filters" />).</para>
+          <para>As a result of these problems, the SurtPrefixScope was added,
+          and further major changes are planed in post 1.0.0 versions of
+          Heritrix. The concept of scope will remain but how they are defined
+          and configured will change drastically . Those changes will also
+          greatly affect the filters (see <xref linkend="filters" />).</para>
         </sect4>
       </sect3>
 
@@ -963,7 +973,7 @@
             <para>Ensures that all preconditions for crawling a URI have been
             met. These currently include verifying that DNS and robots.txt
             information has been fetched for the URI. Should always be
-            included. </para>
+            included.</para>
           </listitem>
         </itemizedlist>
 
@@ -976,7 +986,7 @@
 
             <para>Updates the per-host information that may have been affected
             by the fetch. This is currently robots and IP address info. Should
-            always be included. </para>
+            always be included.</para>
           </listitem>
 
           <listitem>
@@ -1040,7 +1050,7 @@
         list), selecting the class type of the filter from a combobox and
         clicking the associated add button. After the filter is added, its
         custom settings, if any, will appear in the Settings page of the
-        configuration UI. </para>
+        configuration UI.</para>
 
         <para>Since filters can in turn contain other filters (the OrFilter
         being the best example of this) these lists can become quite complex
@@ -1066,6 +1076,13 @@
           <para>Returns true if a URI matches the regular expression set for
           it. See <xref linkend="regexpr" /> for more about regular
           expressions in Heritrix.</para>
+        </sect4>
+
+        <sect4>
+          <title>org.archive.crawler.filter.SurtPrefixFilter</title>
+
+          <para>Returns true if a URI is prefixed by one of the <xref
+          linkend="surt" /> prefixes supplied by an external file. </para>
         </sect4>
 
         <sect4>
@@ -1432,31 +1449,37 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           the HTTP headers generated when requesting URIs from
           webservers.</para>
 
-        <sect5 id="from">
+          <sect5 id="from">
             <title>from</title>
-          <para>The <literal>from</literal> attribute must contain a valid
-          e-mail address.</para>
+
+            <para>The <literal>from</literal> attribute must contain a valid
+            e-mail address.</para>
           </sect5>
-         
-         <sect5 id="user-agent">
+
+          <sect5 id="user-agent">
             <title>user-agent</title>
 
-            <para>The initial user-agent template you see when you first start heritrix will
-            look something like the following:</para>
-          <para><programlisting>Mozilla/5.0 (compatible; heritrix/0.11.0 +PROJECT_URL_HERE</programlisting></para>
-            <para>You must change at least the 'PROJECT_URL_HERE' and put in place a website
-            that webmasters can go to to view information on the organization or person running
-            a crawl.</para>
+            <para>The initial user-agent template you see when you first start
+            heritrix will look something like the following:</para>
 
-            <para>The <literal>user-agent</literal> string must adhere to the following
-            format:</para>
-          <para><programlisting>[optional-text] ([optional-text] +PROJECT_URL [optional-text]) [optional-text]</programlisting></para>
-          <para>The parenthesis and plus sign before the URL must be present.  Other examples of
-          valid user agents would include:</para>
-          <para><programlisting>my-heritrix-crawler (+http://mywebsite.com)
+            <para><programlisting>Mozilla/5.0 (compatible; heritrix/0.11.0 +PROJECT_URL_HERE</programlisting></para>
+
+            <para>You must change at least the 'PROJECT_URL_HERE' and put in
+            place a website that webmasters can go to to view information on
+            the organization or person running a crawl.</para>
+
+            <para>The <literal>user-agent</literal> string must adhere to the
+            following format:</para>
+
+            <para><programlisting>[optional-text] ([optional-text] +PROJECT_URL [optional-text]) [optional-text]</programlisting></para>
+
+            <para>The parenthesis and plus sign before the URL must be
+            present. Other examples of valid user agents would include:</para>
+
+            <para><programlisting>my-heritrix-crawler (+http://mywebsite.com)
 Mozilla/5.0 (compatible; bush-crawler +http://whitehouse.gov)
 Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Library of Congress)</programlisting></para>
-        </sect5>
+          </sect5>
         </sect4>
 
         <sect4>
@@ -1471,7 +1494,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
               <para>Simply obey the <literal>robots.txt</literal> rules.
               Recommended unless you have special permission to collect a site
-              more aggressively. </para>
+              more aggressively.</para>
             </listitem>
 
             <listitem>
@@ -1768,7 +1791,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               from being a bottleneck in multithreaded operation. This setting
               establishes the maximum number of such files to keep ready.
               Default is 5. For small crawls that you want to confine to a
-              single ARC file, this should be set to 1. </para>
+              single ARC file, this should be set to 1.</para>
             </listitem>
 
             <listitem>
@@ -2198,14 +2221,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         </sect4>
 
         <sect4>
-          <title>Inspect frontier URIs</title>
+          <title>View or Edit Frontier URIs</title>
 
           <para>Only available for paused jobs (and only for those that
           <emphasis>have</emphasis> paused, not those that have been told to
           pause and are waiting for threads to finish).</para>
 
           <para>Takes the user to a page that allows him to lookup URIs in the
-          frontier and to delete them by using a regular expression.</para>
+          frontier and to delete them by using a regular expression, or add
+          URIs to the crawl from an external file (even URIs that have already
+          been processed). </para>
         </sect4>
 
         <sect4>
@@ -2309,7 +2334,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
           <para>A report on the internal state of the frontier.Can be unweildy
           in size or the amount of time/memory it takes to compose in large
-          crawls (with thousands of hosts with pending URIs). </para>
+          crawls (with thousands of hosts with pending URIs).</para>
         </sect4>
 
         <sect4>
@@ -2447,7 +2472,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       <para>If changing more than an existing atomic value -- for example,
       adding a new filter -- it is good practice to pause the crawl first, as
       some modifications to composite configuration entities may not occur in
-      a thread-safe manner with respect to ongoing crawling otherwise. </para>
+      a thread-safe manner with respect to ongoing crawling otherwise.</para>
 
       <sect3>
         <title id="journal">Journal</title>
@@ -2651,16 +2676,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>Next comes the discovery path that got us to this URI (<xref
         linkend="discoverypath" />) and then the URI that immediately
-        referenced this URI ('referrer').  Both of the latter two fields
-        will be empty for such as the seed URIs.</para>
+        referenced this URI ('referrer'). Both of the latter two fields will
+        be empty for such as the seed URIs.</para>
 
-        <para>Next up is the document mime type, the id of
-        the worker thread that downloaded this document, the time in
-        milliseconds to download the document, and finally
-        (if pertinent) the number of times the URI had to be tried. If never
-        retried (i.e. just 1 try) then this is '-'.</para>
-
+        <para>Next up is the document mime type, the id of the worker thread
+        that downloaded this document, the time in milliseconds to download
+        the document, and finally (if pertinent) the number of times the URI
+        had to be tried. If never retried (i.e. just 1 try) then this is
+        '-'.</para>
       </sect3>
+
       <sect3>
         <title>local-errors.log</title>
 
@@ -2767,11 +2792,11 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
       <sect3 id="recover_gz">
         <title>recover.gz</title>
-        <para>The recover.gz file is a gzipped journal of Frontier events.
-        It can be used to restore the Frontier after a crash
-        to roughly the state it had before the crash.
-        See <xref linkend="recover" /> to learn more.
-        </para>
+
+        <para>The recover.gz file is a gzipped journal of Frontier events. It
+        can be used to restore the Frontier after a crash to roughly the state
+        it had before the crash. See <xref linkend="recover" /> to learn
+        more.</para>
       </sect3>
     </sect2>
 
@@ -2909,8 +2934,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         linkend="manifest_bundle.pl" />). In the example above the
         <literal>recover.gz</literal> is marked for exclusion because it is
         generally only of interest if the job crashes and must be restarted.
-        It has negligible value once the job is completed (See
-        <xref linkend="recover" />).</para>
+        It has negligible value once the job is completed (See <xref
+        linkend="recover" />).</para>
 
         <para>After this initial legend the filename with full path
         follows.</para>
@@ -3015,8 +3040,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
-        Javadoc</ulink> and to the 
-        <ulink 
+        Javadoc</ulink> and to the <ulink
         url="http://crawler.archive.org/articles/user_manual.html#logs">ARC
         Writer developer documentation</ulink>.</para>
       </sect3>
@@ -3089,45 +3113,42 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>The L in the above example refers to the type of link followed
         (see <xref linkend="discoverypath" />).</para>
-
       </sect3>
     </sect2>
 
-      <sect2 id="recover">
+    <sect2 id="recover">
       <title>Recovery of Frontier State and recover.gz</title>
-      <para>During normal running, the Heritrix Frontier keeps a journal.
-      The journal is kept in the jobs logs directory.  Its named
-      <literal>recover.gz</literal>.  If a crawl crashes, the recover.gz
-      journal can be used to recreate approximately the status of the
-      crawler at the time of the crash.  Recovery can take a long
-      time in some cases, but is usually much quicker then 
-      repeating a crawl.</para>
-      <para>To run the recovery process, relaunch the crashed crawler.
-      Create a new crawl order job based on the crawl that crashed. Make
-      any adjustments.  Before submitting the job, browse to the 
-      settings panel of the crawl order job configuration.  Towards the
-      end of the list of settings options, there is a
-      <literal>recover-path</literal> option.  Fill in the full path to
-      the recover.gz journal file that you want replayed.  Submit the job.
-      The submission will hang a long time as the recover.gz file is
-      read by the frontier.  Eventually the submit should complete.
-      The crawl should pick up from close to where the crash occurred.
-      There is no marking in the logs that this crawl was started
-      by reading a recover log (Be sure to mark this was done in the
-      crawl journal).
-      </para>
-      <para>The recovery log is gzipped because it gets very large
-      otherwise and because of the reptition of terms, it compresses
-      very well. On abnormal termination of the crawl job, if you look
-      at the recover.gz file with gzip, gzip will
-      report <literal>unexpected end of file</literal> if you try to
-      ungzip it.  Gzip is complaining that the file write was
-      abnormally terminated.  But the recover.gz file will be of
-      use restoring the frontier at least to where the gzip file
-      went bad (Gzip zips in 32k blocks; the worst loss would
-      be the last 32k of gzipped data).
-      </para>
-      </sect2>
+
+      <para>During normal running, the Heritrix Frontier keeps a journal. The
+      journal is kept in the jobs logs directory. Its named
+      <literal>recover.gz</literal>. If a crawl crashes, the recover.gz
+      journal can be used to recreate approximately the status of the crawler
+      at the time of the crash. Recovery can take a long time in some cases,
+      but is usually much quicker then repeating a crawl.</para>
+
+      <para>To run the recovery process, relaunch the crashed crawler. Create
+      a new crawl order job based on the crawl that crashed. Make any
+      adjustments. Before submitting the job, browse to the settings panel of
+      the crawl order job configuration. Towards the end of the list of
+      settings options, there is a <literal>recover-path</literal> option.
+      Fill in the full path to the recover.gz journal file that you want
+      replayed. Submit the job. The submission will hang a long time as the
+      recover.gz file is read by the frontier. Eventually the submit should
+      complete. The crawl should pick up from close to where the crash
+      occurred. There is no marking in the logs that this crawl was started by
+      reading a recover log (Be sure to mark this was done in the crawl
+      journal).</para>
+
+      <para>The recovery log is gzipped because it gets very large otherwise
+      and because of the reptition of terms, it compresses very well. On
+      abnormal termination of the crawl job, if you look at the recover.gz
+      file with gzip, gzip will report <literal>unexpected end of
+      file</literal> if you try to ungzip it. Gzip is complaining that the
+      file write was abnormally terminated. But the recover.gz file will be of
+      use restoring the frontier at least to where the gzip file went bad
+      (Gzip zips in 32k blocks; the worst loss would be the last 32k of
+      gzipped data).</para>
+    </sect2>
   </sect1>
 
   <glossary id="glossary">
@@ -3403,7 +3424,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         logs may be a bug.
     -60 Failure status assigned URIs which could not be queued by the 
         Frontier (and may in fact be unfetchable).
-  -3000 Severe Java 'Error' conditions (OutOfMemoryError?, StackOverflowError?,
+  -3000 Severe Java 'Error' conditions (OutOfMemoryError, StackOverflowError,
         etc.) during URI processing.
   -4000 'chaff' detection of traps/content of negligible value applied
   -4001 Too many link hops away from seed
@@ -3418,6 +3439,23 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>Please note that status codes defined by Heritrix may be
           subject to change between versions, especially new codes may be
           added to tackle a wider array of situations.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry id="surt">
+        <glossterm>SURT</glossterm>
+
+        <glossdef>
+          <para>SURT stands for Sort-friendly URI Reordering Transform, and is
+          a transformation applied to URIs which makes their left-to-right
+          representation better match the natural hierarchy of domain names. A
+          URI &lt;scheme://domain.tld/path?query&gt; has SURT form
+          &lt;scheme://(tld,domain,:port@userinfo)/path?query&gt;. SURT forms
+          sort into natural groups, and a SURT prefix can be helpful to define
+          an area of the URI space to include or exclude from a crawl. For
+          example, the prefix &lt;http://(is,&gt; will match all URIs in the
+          .is top-level domain. (Typically, https URIs are converted to be
+          http URIs for SURT prefix matching.)</para>
         </glossdef>
       </glossentry>
 
