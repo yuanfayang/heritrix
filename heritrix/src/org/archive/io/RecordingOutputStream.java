@@ -7,6 +7,7 @@
 package org.archive.io;
 
 import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,22 +56,30 @@ public class RecordingOutputStream extends OutputStream {
 	public void open(OutputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
 		this.position = 0;
-		fileStream = new FileOutputStream(backingFilename);
-		diskStream = new BufferedOutputStream(fileStream,4096);
+		//lateOpen();
+		diskStream=null; 
+	}
+
+
+	private void lateOpen() throws FileNotFoundException {
+		if(diskStream==null) {
+			fileStream = new FileOutputStream(backingFilename);
+			diskStream = new BufferedOutputStream(fileStream,4096);
+		}
 	}
 	
-	/**
-	 * Total reset -- discarding all 
-	 */
-	public void clear() {
-		try {
-			// diskStream.flush(); // redundant
-			diskStream.close();
-		} catch (IOException e) {
-			// nothing
-		}
-		diskStream = null;
-	}
+//	/**
+//	 * Total reset -- discarding all 
+//	 */
+//	public void clear() {
+//		try {
+//			// diskStream.flush(); // redundant
+//			diskStream.close();
+//		} catch (IOException e) {
+//			// nothing
+//		}
+//		diskStream = null;
+//	}
 
 
 	/* (non-Javadoc)
@@ -102,6 +111,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	private void record(int b) throws IOException {
 		if(position>=buffer.length){
+			lateOpen();
 			diskStream.write(b);
 		} else {
 			buffer[(int)position] = (byte)b;
@@ -116,6 +126,7 @@ public class RecordingOutputStream extends OutputStream {
 	 */
 	private void record(byte[] b, int off, int len) throws IOException {
 		if(position>=buffer.length){
+			lateOpen();
 			diskStream.write(b,off,len);
 			position += len;
 		} else {
