@@ -36,20 +36,21 @@ import org.archive.util.TextUtils;
 
 /**
  * A last ditch extractor that will look at the raw byte code and try to extract
- * anything that <i>looks</i> like a link. If used, it should always be specified
- * as the last link extractor in the order file.
+ * anything that <i>looks</i> like a link. 
+ *
+ * If used, it should always be specified as the last link extractor in the
+ * order file.
  * <p>
  * To accomplish this it will scan through the bytecode and try and build up
  * strings of consecutive bytes that all represent characters that are valid
- * in a URL (see {@link #isURLableChar(int) isURLableChar()} for details).
+ * in a URL (see #isURLableChar(int) for details).
  * Once it hits the end of such a string (i.e. finds a character that
- * should not be in a URL) it will try to determine if it has found a URL. This is
- * done be seeing if the string is an IP address prefixed with http(s):// or
- * contains a dot followed by a Top Level Domain and end of string or a slash.
+ * should not be in a URL) it will try to determine if it has found a URL.
+ * This is done be seeing if the string is an IP address prefixed with 
+ * http(s):// or contains a dot followed by a Top Level Domain and end of 
+ * string or a slash.
  *
  * @author Kristinn Sigurdsson
- *
- * @see org.archive.crawler.datamodel.CrawlURI#addSpeculativeEmbed(String)
  */
 public class ExtractorUniversal extends Processor
     implements CoreAttributeConstants

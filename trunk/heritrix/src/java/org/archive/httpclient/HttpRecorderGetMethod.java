@@ -41,7 +41,7 @@ import org.archive.util.HttpRecorder;
  * one that came w/ httpclient.  Here is the patch of the difference between
  * shipped httpclient code and our mods:
  * <pre>
- *    @@ -1338,6 +1346,12 @@
+ *    -- -1338,6 +1346,12 --
  *         
  *        public void releaseConnection() {
  *                                                                                   
@@ -54,7 +54,7 @@ import org.archive.util.HttpRecorder;
  *            if (responseStream != null) {
  *                try {
  *                    // FYI - this may indirectly invoke responseBodyConsumed.
- *   @@ -1959,6 +1973,11 @@
+ *   -- -1959,6 +1973,11 -- 
  *                        this.statusLine = null;
  *                    }
  *                }

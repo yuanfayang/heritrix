@@ -131,7 +131,7 @@ public class Alert {
     }
 
     /**
-     * Mark alert as seen (i.e. no isNew() no longer returns true)
+     * Mark alert as seen (That is, isNew() no longer returns true).
      */
     public void setAlertSeen() {
         newAlert = false;

@@ -385,9 +385,10 @@ public class StatisticsTracker extends AbstractTracker
     /** 
      * Return a HashMap representing the distribution of status codes for
      * successfully fetched curis, as represented by a hashmap where
-     * key -> val represents (string)code -> (integer)count
-     * <p>
-     * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
+     * key -&gt; val represents (string)code -&gt; (integer)count.
+     *
+     * <b>Note:</b> All the values are wrapped with a 
+     * {@link LongWrapper LongWrapper}
      * @return statusCodeDistribution
      */
     public Hashtable getStatusCodeDistribution() {
@@ -397,9 +398,11 @@ public class StatisticsTracker extends AbstractTracker
     /** 
      * Return a Hashtable representing the distribution of hosts for
      * successfully fetched curis, as represented by a hashmap where
-     * key -> val represents (string)code -> (integer)count
-     * <p>
-     * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
+     * key -&gt; val represents (string)code -&gt; (integer)count.
+     *
+     * <b>Note:</b> All the values are wrapped with a 
+     * {@link LongWrapper LongWrapper}
+     *
      * @return Hosts distribution as a Hashtable
      */
     public Hashtable getHostsDistribution() {

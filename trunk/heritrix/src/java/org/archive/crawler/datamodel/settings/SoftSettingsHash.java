@@ -161,7 +161,7 @@ public class SoftSettingsHash {
      * @param   key the key whose associated settings object is to be returned.
      * @return  the settings object represented by the key, or
      *          <tt>null</tt> if the map contains no mapping for this key.
-     * @see #put(Object, Object)
+     * @see #put(String, CrawlerSettings)
      */
     public CrawlerSettings get(String key) {
         if (key == null) {

@@ -286,8 +286,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
      * Test first w/o our trust manager and we should fail because we don't have
      * the CA for the verisign site when running on IBM JVM 1.4.1.  Then test 
      * w/ our test manager set to NORMAL AND load the heritrix truststore
-     * which does have the verisign CA
-     * (See {@link org.archive.crawler.Heritrix#configureTrustStore()}).
+     * which does have the verisign CA.
      * 
      * <p>THIS TEST ONLY WORKS IF IBM JVM 1.4.1.
      * 

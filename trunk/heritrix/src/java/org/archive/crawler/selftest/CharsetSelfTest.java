@@ -26,8 +26,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Simple test to ensure we can extract links from multibyte pages: i.e. we 
- * can regex over a multibyte stream.
+ * Simple test to ensure we can extract links from multibyte pages. 
+ *
+ * That is, can we regex over a multibyte stream.
  * 
  * @author stack
  * @version $Revision$, $Date$

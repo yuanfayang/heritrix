@@ -132,8 +132,6 @@ public class ARCWriterProcessor
 
     /**
      * Reference to an ARCWriter.
-     * 
-     * Gets set by synchronized {@link #_initialize()}.
      */
     private ARCWriterPool pool = null;
 

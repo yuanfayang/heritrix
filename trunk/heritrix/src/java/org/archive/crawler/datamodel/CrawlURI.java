@@ -673,9 +673,14 @@ public class CrawlURI extends CandidateURI
         }
     }
     
-    /**
-     * @param caUri
-     * @return
+    /**  
+     * Make a <code>CrawlURI</code> from the passed <code>CandidateURI</code>.
+     *
+     * Its safe to pass a CrawlURI instance.  In this case we just return it
+     * as a result. Otherwise, we create new CrawlURI instance.
+     *
+     * @param caUri Candidate URI.
+     * @return A crawlURI made from the passed CandidateURI.
      */
     public static CrawlURI from(CandidateURI caUri) {
         if (caUri instanceof CrawlURI) {

@@ -38,7 +38,7 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 /**
  * Compares suffix of a passed CrawlURI, UURI, or String against a regular 
  * expression pattern accepting matches. 
- * * 
+ *
  * @author Igor Ranitovic
  */
 public class FilePatternFilter extends URIRegExpFilter {

@@ -243,7 +243,7 @@ public class ToeThread extends Thread
     }
 
     /**
-     * @return
+     * @return Return toe thread serial number.
      */
     public int getSerialNumber() {
         return serialNumber;

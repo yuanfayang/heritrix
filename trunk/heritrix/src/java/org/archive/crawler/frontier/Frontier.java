@@ -446,10 +446,8 @@ public class Frontier
     }
 
     /** 
-     * Return the next CrawlURI eligible for processing.
-     * 
-     * @param timeout
-     * @return
+     * @param timeout Time to wait on next CrawlURI.
+     * @return The next CrawlURI eligible for processing.
      * @throws InterruptedException
      */
     public synchronized CrawlURI next(int timeout) throws InterruptedException {
@@ -1228,10 +1226,11 @@ public class Frontier
      * @param marker
      * @param numberOfMatches
      * @param verbose
-     * @return
+     * @return List of URIS.
      * @throws InvalidURIFrontierMarkerException
      */
-    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
+    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches,
+            boolean verbose) throws InvalidURIFrontierMarkerException {
         if(marker instanceof FrontierMarker == false){
             throw new InvalidURIFrontierMarkerException();
         }
@@ -1339,9 +1338,9 @@ public class Frontier
         return foundMatches;
     }
 
-    /** (non-Javadoc)
-     * @param match
-     * @return
+    /**
+     * @param match String to  match.
+     * @return Number of items deleted.
      */
     public long deleteURIs(String match) {
         long numberOfDeletes = 0;
