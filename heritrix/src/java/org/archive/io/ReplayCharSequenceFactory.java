@@ -1029,32 +1029,6 @@ public class ReplayCharSequenceFactory {
         public CharSequence subSequence(int start, int end) {
             return new CharSubSequence(this, start, end);
         }
-
-//        /* (non-Javadoc)
-//         * @see org.archive.io.EnhancedCharSequence#substring(int, int)
-//         */
-//        public String substring(int offset, int length) {
-//
-//            if ((offset + length) > this.content.limit()) {
-//                throw new IllegalArgumentException("Limit is " +
-//                    this.content.limit() + " but " + " offset is " + offset +
-//                    " and length is " + length);
-//            }
-//
-//            String result = null;
-//            if (offset == 0 && (length == this.content.limit())) {
-//                result = this.content.toString();
-//            } else {
-//                int originalPosition = this.content.position();
-//                int originalLimit = this.content.limit();
-//                // Set position to offset and limit to offset+length.
-//                this.content.position(offset).limit(offset + length);
-//                result = this.content.slice().toString();
-//                this.content.position(originalPosition);
-//                this.content.limit(originalLimit);
-//            }
-//            return result;
-//        }
         
         public String toString() {
             StringBuffer sb = new StringBuffer(length());
