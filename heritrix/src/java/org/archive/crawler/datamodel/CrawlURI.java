@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
@@ -45,10 +45,10 @@ import st.ata.util.HashtableAList;
  * Represents a candidate URI and the associated state it
  * collects as it is crawled.
  *
- * Core state is in instance variables, but a flexible
+ * <p>Core state is in instance variables, but a flexible
  * attribute list is also available.
  *
- * Should only be instantiated via URIStore.getCrawlURI(...),
+ * <p>Should only be instantiated via URIStore.getCrawlURI(...),
  * which will assure only one CrawlURI can exist per
  * UURI within a distinct "crawler".
  *
@@ -66,8 +66,6 @@ public class CrawlURI extends CandidateURI
     // via
 
     // Scheduler lifecycle info
-    private Object state;   // state within scheduling/store/selector
-    private long wakeTime; // if "snoozed", when this CrawlURI may awake
     private String classKey; // cached classKey value
 
     // Processing progress
@@ -112,9 +110,27 @@ public class CrawlURI extends CandidateURI
     private String contentType = null;
     
     /**
-     * Key to get credentials from A_LIST.
+     * Key to get credential avatars from A_LIST.
      */
-    private static final String A_CREDENTIALS_KEY = "credentials";
+    private static final String A_CREDENTIAL_AVATARS_KEY = "credential-avatars";
+    
+    /**
+     * True if this CrawlURI has been deemed a prerequisite by the
+     * {@link org.archive.crawler.basic.PreconditionEnforcer}.
+     * 
+     * This flag is used at least inside in the precondition enforcer so that
+     * subsequent prerequisite tests know to let this CrawlURI through because
+     * its a prerequisite needed by an earlier prerequisite tests (e.g. If 
+     * this is a robots.txt, then the subsequent login credentials prereq
+     * test must not throw it out because its not a login curi).
+     */
+    private boolean prerequisite = false;
+
+    /**
+     * Set to true if this <code>curi</code> is to be POST'd rather than GET-d.
+     */
+    private boolean post = false;
+    
 
     /**
      * @param uuri
@@ -337,25 +353,47 @@ public class CrawlURI extends CandidateURI
     public void setServer(CrawlServer host) {
         this.server = host;
     }
-
-//    /**
-//     *
-//     */
-//    public void cancelFurtherProcessing() {
-//        nextProcessor = null;
-//    }
-
+    
     /**
-     * @param stringOrUURI
+     * Do all actions associated with setting a <code>CrawlURI</code> as 
+     * requiring a prerequisite.
+     * 
+     * @param lastProcesorChain Last processor chain reference.  This chain is
+     * where this <code>CrawlURI</code> goes next.
+     * @param stringOrUURI Object to set a prerequisite.
      */
-    public void setPrerequisiteUri(Object stringOrUURI) {
-        alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
+    public void markPrerequisite(Object stringOrUURI,
+            ProcessorChain lastProcesorChain) {
+        setPrerequisiteUri(stringOrUURI);   
+        incrementDeferrals();
+        setFetchStatus(S_DEFERRED);
+        skipToProcessorChain(lastProcesorChain);
+    }
+    
+    /**
+     * @param stringOrUURI Either a string or a URI representation of a a URI.
+     */
+    protected void setPrerequisiteUri(Object stringOrUURI) {
+        this.alist.putObject(A_PREREQUISITE_URI,stringOrUURI);
     }
 
     public Object getPrerequisiteUri() {
-        return alist.getObject(A_PREREQUISITE_URI);
+        return this.alist.getObject(A_PREREQUISITE_URI);
     }
-
+    
+    /**
+     * @return Returns true if this CrawlURI is a prerequisite.
+     */
+    public boolean isPrerequisite() {
+        return this.prerequisite;
+    }
+    
+    /**
+     * @param prerequisite True if this CrawlURI is itself a prerequiste url.
+     */
+    public void setPrerequisite(boolean prerequisite) {
+        this.prerequisite = prerequisite;
+    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -669,6 +707,7 @@ public class CrawlURI extends CandidateURI
         
         this.httpRecorder = null; 
         this.fetchStatus = S_UNATTEMPTED;
+        this.setPrerequisite(false);
         if (this.alist != null)
         {
             // Let current get method to be GC'd.
@@ -695,100 +734,80 @@ public class CrawlURI extends CandidateURI
     }
     
     /**
-     * @param credentials Set of credentials.
+     * @param avatars Credential avatars to save off.
      */
-    private void setCredentials(Set credentials) {
-        this.alist.putObject(A_CREDENTIALS_KEY, credentials);
+    private void setCredentialAvatars(Set avatars) {
+        this.alist.putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
     }
     
     /**
-     * @param credential Add credential to list of credentials.  Creates a set
-     * if none currently in place.
-     * @return Credential just added.
+     * @return Credential avatars.  Null if none set.
      */
-    public Credential addCredential(Credential credential) {
-        Set credentials = getCredentials();
-        if (credentials == null)
-        {
-            synchronized(this) {
-                credentials = getCredentials();
-                if (credentials == null) {
-                    credentials = new HashSet();
-                    setCredentials(credentials);
-                }
-            }
-        }
-        credentials.add(credential);
-        return credential;
-    }
-
-    /**
-     * @return Set of credential objects.  Null if none set.
-     */
-    public Set getCredentials() {
-        return (Set)this.alist.getObject(A_CREDENTIALS_KEY);
+    public Set getCredentialAvatars() {
+        return (Set)this.alist.getObject(A_CREDENTIAL_AVATARS_KEY);
     }
     
     /**
-     * @return True if there are credentials in the CrawlURI.
+     * @return True if there are avatars attached to this instance.
      */
-    public boolean hasCredentials() {
-        Set c = getCredentials();
-        return (c == null || c.size() <= 0)? false: true;
+    public boolean hasCredentialAvatars() {
+        return getCredentialAvatars() != null &&
+            getCredentialAvatars().size() > 0;
     }
     
     /**
-     * Does this crawlURI have credentials of the passed type?
+     * Add an avatar.
      * 
-     * @return True if there are credentials in the CrawlURI of passed type.
+     * We do lazy instantiation.
+     * 
+     * @param ca Credential avatar to add to set of avatars.
      */
-    public boolean hasCredentials(Class type) {
-        Set credentials = Credential.filterCredentials(getCredentials(), type);
-        return (credentials != null && credentials.size() > 0)? true: false;
+    public void addCredentialAvatar(CredentialAvatar ca) {  
+    	    Set avatars = getCredentialAvatars();
+    	    if (avatars == null) {
+    	    	    avatars = new HashSet();
+    	    	    	setCredentialAvatars(avatars);
+    	    }
+    	    avatars.add(ca);
     }
     
     /**
-     * @return True if there are rfc2617 credentials in the CrawlURI.
+     * Remove all credential avatars from this crawl uri.
      */
-    public boolean hasRfc2617Credentials() {
-        return hasCredentials(Rfc2617Credential.class);
-    }
-
-    /**
-     * @param credential Credential to remove.
-     */
-    public void removeCredential(Credential credential) {
-        Set credentials = getCredentials();
-        if (credentials != null && credentials.size() > 0 ) {
-            boolean removed = credentials.remove(credential);
+    public void removeCredentialAvatars() {
+        if (hasCredentialAvatars()) {
+            this.alist.remove(A_CREDENTIAL_AVATARS_KEY);
         }
     }
-
+    
     /**
-     * Remove any instance of passed type.
-     * @param type Type to remove.
+     * Remove all credential avatars from this crawl uri.
+     * @param ca Avatar to remove.
+     * @return True if we removed passed parameter.  False if no operation 
+     * performed.
      */
-    public void removeCredentials(Class type)
-    {
-        Set credentials = Credential.filterCredentials(getCredentials(), type);
-        if (credentials != null && credentials.size() > 0) {
-            for (Iterator i = credentials.iterator(); i.hasNext();) {
-                removeCredential((Credential)i.next());
-            }
+    public boolean removeCredentialAvatar(CredentialAvatar ca) {
+        boolean result = false;
+        Set avatars = getCredentialAvatars();
+        if (avatars != null && avatars.size() > 0) {
+            result = avatars.remove(ca);
         }
+        return result;
     }
     
     /**
      * Ask this URI if it was a success or not.
      * 
-     * Only makes sense to call this method after execution of get method.
-     * Regard any status larger then 0 as success (Except for caveat regarding
-     * 401s).
+     * Only makes sense to call this method after execution of
+     * HttpMethod#execute. Regard any status larger then 0 as success
+     * except for below caveat regarding 401s.
      * 
-     * <p>If any rfc2617 credential present and we got a 401, assume it
-     * got loaded in FetchHTTP on expectation that we're to go around again.
+     * <p>401s caveat: If any rfc2617 credential data present and we got a 401 
+     * assume it got loaded in FetchHTTP on expectation that we're to go around
+     * the processing chain again. Report this condition as a failure so we
+     * get another crack at the processing chain only this time we'll be making
+     * use of the loaded credential data.
      * 
-     * @param curi Finishing CrawlURI to examine.
      * @return True if ths URI has been successfully processed.
      */
     public boolean isSuccess()
@@ -796,11 +815,43 @@ public class CrawlURI extends CandidateURI
         boolean result = false;
         int statusCode = this.fetchStatus;
         if (statusCode == HttpStatus.SC_UNAUTHORIZED &&
-                hasRfc2617Credentials()) {
+            hasRfc2617CredentialAvatar()) {
             result = false;
         } else {
             result = (statusCode > 0);
         }
         return result;
+    }
+
+    /**
+	 * @return True if we have an rfc2617 payload.
+	 */
+	public boolean hasRfc2617CredentialAvatar() {
+	    boolean result = false;
+	    Set avatars = getCredentialAvatars();
+	    if (avatars != null && avatars.size() > 0) {
+	        for (Iterator i = avatars.iterator(); i.hasNext();) {
+	            if (((CredentialAvatar)i.next()).
+	                match(Rfc2617Credential.class)) {
+	                result = true;
+	                break;
+	            }
+	        }
+	    }
+        return result;
+	}
+
+    /**
+     * @param b Set whether this curi is to be POST'd.  Else its to be GET'd.
+     */
+    public void setPost(boolean b) {
+        this.post = b;
+    }
+    
+    /**
+     * @return Returns is this CrawlURI instance is to be posted.
+     */
+    public boolean isPost() {
+        return this.post;
     }
 }

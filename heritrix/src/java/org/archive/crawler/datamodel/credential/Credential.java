@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.datamodel.credential;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -31,6 +30,8 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ModuleType;
@@ -54,9 +55,9 @@ import org.archive.crawler.settings.Type;
  */
 public abstract class Credential extends ModuleType {
     
-    private static Logger logger = Logger.getLogger(
-        "org.archive.crawler.datamodel.credential.Credential");
-    
+    private static final Logger logger =
+        Logger.getLogger(Credential.class.getName());
+
     private static final String ATTR_CREDENTIAL_DOMAIN = "credential-domain";
     
     /**
@@ -77,6 +78,7 @@ public abstract class Credential extends ModuleType {
     /**
      * @param context Context to use when searching for credential domain.
      * @return The domain/root URI this credential is to go against.
+     * @throws AttributeNotFoundException If attribute not found.
      */
     public String getCredentialDomain(CrawlURI context)
             throws AttributeNotFoundException {
@@ -86,126 +88,149 @@ public abstract class Credential extends ModuleType {
     /**
      * @param context Context to use when searching for credential domain.
      * @param domain New domain.
+     * @throws AttributeNotFoundException
+     * @throws InvalidAttributeValueException
      */
     public void setCredentialDomain(CrawlerSettings context, String domain)
             throws InvalidAttributeValueException, AttributeNotFoundException {
-        setAttribute(context, new Attribute(ATTR_CREDENTIAL_DOMAIN, domain));
+        setAttribute(context, new Attribute(ATTR_CREDENTIAL_DOMAIN, domain));   
     }
     
     /**
-     * Convenience method for pulling credentials of a single type from passed
-     * set of mixed credential types.
+     * Attach this credentials avatar to the passed <code>curi</code> .
      * 
-     * @param credentials Set of credentials of mixed type.
-     * @param type Type to strain the list of passed credentials with.
+     * Override if credential knows internally what it wants to attach as
+     * payload.  Otherwise, if payload is external, use the below
+     * {@link #attach(CrawlURI, Object)}.
      * 
-     * @return Credentials of the passed type set for this server.  Returns
-     * null if no credentials of passed type associated with this server.
+     * @param curi CrawlURI to load with credentials.
      */
-    public static Set filterCredentials(Set credentials, Class type) {
-        Set result = null;
-        if (credentials != null && credentials.size() > 0) {
-            result = filterCredentials(credentials.iterator(), type);
-        }
-        return result;    
+    public void attach(CrawlURI curi) {
+        attach(curi, null);
     }
     
     /**
-     * Convenience method for pulling credentials of a single type from passed
-     * set of mixed credential types.
+     * Attach this credentials avatar to the passed <code>curi</code> .
      * 
-     * @param credentials Set of credentials of mixed type.
-     * @param type Type to strain the list of passed credentials with.
-     * @param context Context to use when searching for credential domain.
-     * @param credentialDomain Name of server to use filtering credentials.  Can
-     * have a port appended (i.e. its the root URI as per RFC2617).  If null,
-     * we return all credentials w/o filtering on credentialDomain.
-     * 
-     * @return Credentials of the passed type set for this server.  Returns
-     * null if no credentials of passed type associated with this server.
+     * @param curi CrawlURI to load with credentials.
+     * @param payload Payload to carry in avatar.  Usually credentials.
      */
-    public static Set filterCredentials(Set credentials, Class type,
-            CrawlURI context, String credentialDomain) {
-        Set result = null;
-        if (credentials != null && credentials.size() > 0) {
-            result = filterCredentials(credentials.iterator(), type, context,
-                credentialDomain);
-        }
-        return result;    
-    }
-    
-    /**
-     * Convenience method for pulling credentials of a single type from passed
-     * set of mixed credential types.
-     * 
-     * @param iterator Iterator over a set credentials of mixed type.
-     * @param type Type to strain the list of passed credentials with.
-     * 
-     * @return New set of credentials of the passed type set for this server. 
-     * Returns null if no credentials of passed type associated with this
-     * server.
-     */
-    public static Set filterCredentials(Iterator iterator, Class type) {
+    public void attach(CrawlURI curi, Object payload) {
 
-        return filterCredentials(iterator, type, null, null);
+        CredentialAvatar ca = null;
+        try {
+            ca = (payload == null )?
+                new CredentialAvatar(this.getClass(), getKey(curi)):
+                new CredentialAvatar(this.getClass(), getKey(curi), payload);
+            curi.addCredentialAvatar(ca);
+        }
+        catch (AttributeNotFoundException e) {
+            logger.severe("Failed attach of " + this  + " for " + curi);
+        }
     }
     
     /**
-     * Convenience method for pulling credentials of a single type from passed
-     * set of mixed credential types.
+     * Detach this credential from passed curi.
      * 
-     * If non-null context and credentialDomain, will filter on type AND
-     * credential domain.
-     * 
-     * @param iterator Iterator over a set credentials of mixed type.
-     * @param type Type to strain the list of passed credentials with.
-     * @param context Context to use when searching for credential domain.
-     * @param credentialDomain Name of server to use filtering credentials.
-     * This is the credential domain we're looking to match. Can
-     * have a port appended (i.e. its the root URI as per RFC2617).  If null,
-     * we return all credentials w/o filtering on credentialDomain.
-     * 
-     * @return New set of credentials of the passed type set for this server. 
-     * Returns null if no credentials of passed type associated with this
-     * server.
+     * @param curi
+     * @return True if we detached a Credential reference.
      */
-    public static Set filterCredentials(Iterator iterator, Class type,
-            CrawlURI context, String credentialDomain) {
-        
-        Set result = null;
-        if (iterator == null) {
-            return result;
-        }
-        while (iterator.hasNext()) {
-            
-            Credential c = (Credential)iterator.next();
-            if (!type.isInstance(c)) {
-                continue;
-            }
-            
-            if (credentialDomain != null && credentialDomain.length() > 0 &&
-                    context !=  null) {
-                String cd = null;
-                try
-                {
-                    cd = c.getCredentialDomain(context);
-                } catch (AttributeNotFoundException e) {
-                    logger.severe("Failed get of credential domain: " +
-                        c + " " + context.toString());
-                    continue;
+    public boolean detach(CrawlURI curi) {
+        boolean result = false;
+        if (!curi.hasCredentialAvatars()) {
+            logger.severe("This curi " + curi +
+                " has no cred when it should");
+        } else {
+            Set avatars = curi.getCredentialAvatars();
+            for (Iterator i = avatars.iterator(); i.hasNext();) {
+                CredentialAvatar ca = (CredentialAvatar)i.next();
+                try {
+                    if (ca.match(getClass(), getKey(curi))) {
+                        result = curi.removeCredentialAvatar(ca);
+                    }
                 }
-                
-                if (!cd.equals(credentialDomain)) {
-                    // If credentials don't match, skip..continue.
-                    continue;
+                catch (AttributeNotFoundException e) {
+                    logger.severe("Failed detach of " + ca + " from " + curi);
                 }
             }
-            
-            if (result == null) {
-                result = new HashSet();
-            }
-            result.add(c);
         }
-        return result;    
+        return result;
     }
+    
+    /**
+     * Detach all credentials of this type from passed curi.
+     * 
+     * @param curi
+     * @return True if we detached references.
+     */
+    public boolean detachAll(CrawlURI curi) {
+        boolean result = false;
+        if (!curi.hasCredentialAvatars()) {
+            logger.severe("This curi " + curi +
+                " has no creds when it should.");
+        } else {
+            Set avatars = curi.getCredentialAvatars();
+            for (Iterator i = avatars.iterator(); i.hasNext();) {
+                CredentialAvatar ca = (CredentialAvatar)i.next();
+                if (ca.match(getClass())) {
+                    result = curi.removeCredentialAvatar(ca);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param curi CrawlURI to look at.
+     * @return True if this credential IS a prerequisite for passed
+     * CrawlURI.
+     */
+    public abstract boolean isPrerequisite(CrawlURI curi);
+    
+    /**
+     * @param curi CrawlURI to look at.
+     * @return True if this credential HAS a prerequisite for passed CrawlURI.
+     */
+    public abstract boolean hasPrerequisite(CrawlURI curi); 
+    
+    /**
+     * Return the authentication URI, either absolute or relative, that serves
+     * as prerequisite the passed <code>curi</code>.
+     * 
+     * @param curi CrawlURI to look at.
+     * @return Prerequisite URI for the passed curi.
+     */
+    public abstract String getPrerequisite(CrawlURI curi);
+
+    /**
+     * @param context Context to use when searching for credential domain.
+     * @return Key that is unique to this credential type.
+     * @throws AttributeNotFoundException
+     */
+    public abstract String getKey(CrawlURI context)
+        throws AttributeNotFoundException;
+
+    /**
+     * @return True if this credential is of the type that needs to be offered
+     * on each visit to the server (e.g. Rfc2617 is such a type).
+     */
+    public abstract boolean isEveryTime();
+
+    /**
+     * @param curi CrawlURI to as for context.
+     * @param http Instance of httpclient.
+     * @param method Method to populate.
+     * @param payload Avatar payload to use populating the method.
+     * @return True if added a credentials.
+     */
+    public abstract boolean populate(CrawlURI curi, HttpClient http,
+        HttpMethod method, Object payload);
+
+    /**
+     * @param curi CrawlURI to look at.
+     * @return True if this credential is to be posted.  Return false if the
+     * credential is to be GET'd or if POST'd or GET'd are not pretinent to this
+     * credential type.
+     */
+    public abstract boolean isPost(CrawlURI curi);
 }

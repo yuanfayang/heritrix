@@ -29,13 +29,11 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.io.StringReader;
-import java.security.Principal;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.Checksum;
 
-import javax.security.auth.Subject;
-
-import org.archive.crawler.datamodel.credential.Credential;
+import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -49,7 +47,7 @@ import org.archive.io.ReplayInputStream;
  *
  * @author gojomo
  */
-public class CrawlServer implements Serializable, Principal {
+public class CrawlServer implements Serializable {
     public static final long ROBOTS_NOT_FETCHED = -1;
 
     private final String server; // actually, host+port in the http case
@@ -66,16 +64,9 @@ public class CrawlServer implements Serializable, Principal {
     protected int consecutiveConnectionErrors = 0;
     
     /**
-     * Subject to hold principals and credentials for this crawlserver.
-     * 
-     * Instance only created if credentials associated with this CrawlServer.
-     * 
-     * <p>Marked transient so not part of serialization.  Notion is that if 
-     * this instance is serialized, then on reconstitution, logins need to be
-     * rerun (Probably makes sense.  If we've been serialized, we've been put
-     * aside for a period so relogin is apt).
+     * Set of credential avatars.
      */
-    private transient Subject subject = null;
+    private transient Set avatars =  null;
     
     /** Creates a new CrawlServer object.
      * 
@@ -139,14 +130,14 @@ public class CrawlServer implements Serializable, Principal {
             robots = RobotsExclusionPolicy.ALLOWALL;
             return;
         }
-//    PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
-//  since they're usually indicative of a mistake
-// Thus these lines are commented out:
+//      PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
+//      since they're usually indicative of a mistake
+//      Thus these lines are commented out:
 //      if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
-//            // authorization/allowed errors = all deny
-//            robots = RobotsExclusionPolicy.DENYALL;
-//            return;
-//        }
+//      // authorization/allowed errors = all deny
+//      robots = RobotsExclusionPolicy.DENYALL;
+//      return;
+//      }
         ReplayInputStream contentBodyStream = null;
         try {
             BufferedReader reader;
@@ -187,11 +178,10 @@ public class CrawlServer implements Serializable, Principal {
         return robotsFetched;
     }
 
-    /** Get the server string which might include a port number.
-     *
-     * @return the server string.
+    /** 
+     * @return The server string which might include a port number.
      */
-    public String getServer(){
+    public String getName() {
        return server;
     }
 
@@ -259,7 +249,7 @@ public class CrawlServer implements Serializable, Principal {
      * @return the settings handler.
      */
     public SettingsHandler getSettingsHandler() {
-        return settingsHandler;
+        return this.settingsHandler;
     }
 
     /** Get the settings object in effect for this server.
@@ -267,7 +257,7 @@ public class CrawlServer implements Serializable, Principal {
      * @return the settings object in effect for this server.
      */
     private CrawlerSettings getSettings(UURI uri) {
-        return settingsHandler.getSettings(uri.getHost(), uri);
+        return this.settingsHandler.getSettings(uri.getHost(), uri);
     }
 
     /** Set the settings handler to be used by this server.
@@ -278,65 +268,37 @@ public class CrawlServer implements Serializable, Principal {
         this.settingsHandler = settingsHandler;
     }
 
-    /**
-     * 
-     */
     public void incrementConsecutiveConnectionErrors() {
-        consecutiveConnectionErrors++;
+        this.consecutiveConnectionErrors++;
     }
 
-    /**
-     * 
-     */
     public void resetConsecutiveConnectionErrors() {
-        consecutiveConnectionErrors = 0;
-    }
-
-    /* (non-Javadoc)
-     * @see java.security.Principal#getName()
-     */
-    public String getName()
-    {
-        return getServer();
+        this.consecutiveConnectionErrors = 0;
     }
     
     /**
-     * @return Credentials for this server.  Returns null if no credentials
-     * associated with this server.
+     * @return Credential avatars for this server.  Returns null if none.
      */
-    public Set getCredentials() {
-        return this.subject == null? null:
-            (this.subject.getPublicCredentials() == null) ||
-                (this.subject.getPublicCredentials().size() <= 0)? null:
-                    this.subject.getPublicCredentials();
+    public Set getCredentialAvatars() {
+        return this.avatars;
     }
     
     /**
-     * @return True if this crawlserver has credentials.
+     * @return True if there are avatars attached to this instance.
      */
-    public boolean hasCredentials() {
-        return (getCredentials() == null)? false: true;
+    public boolean hasCredentialAvatars() {
+        return this.avatars != null && this.avatars.size() > 0;
     }
     
     /**
-     * @param credential Credential to add.
-     */
-    public void addCredential(Credential credential) {
-        if (this.subject == null) {
-            createSubject();
-        }
-        this.subject.getPublicCredentials().add(credential);
-    }
-    
-    /**
-     * Create subject for this class.
+     * Add an avatar.
      * 
-     * Called only when needed to hold credentials.
+     * @param ca Credential avatar to add to set of avatars.
      */
-    private synchronized void createSubject() {
-        if (this.subject == null) {
-            this.subject = new Subject();
-            this.subject.getPrincipals().add(this);
+    public void addCredentialAvatar(CredentialAvatar ca) {
+        if (this.avatars == null) {
+            this.avatars = new HashSet();
         }
+        this.avatars.add(ca);
     }
 }

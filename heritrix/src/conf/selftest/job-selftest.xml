@@ -159,7 +159,7 @@
             class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
           <string name="credential-domain" />
           <string 
-            name="login-uri">/selftest/Auth/form/get/index.html</string>
+            name="login-uri">/selftest/Auth/form/get/success.jsp</string>
           <string name="http-method">GET</string>
           <map name="form-items">
             <string name="login">login</string>
@@ -171,7 +171,7 @@
             class="org.archive.crawler.datamodel.credential.HtmlFormCredential">
           <string name="credential-domain" />
           <string 
-            name="login-uri">/selftest/Auth/form/post/index.html</string>
+            name="login-uri">/selftest/Auth/form/post/success.jsp</string>
           <string name="http-method">POST</string>
           <map name="form-items">
             <string name="login">login</string>

@@ -50,10 +50,8 @@ public class AuthSelfTest
                 new File(BASIC, "basic-loggedin.html"),
                 FORM,
                 new File(POST, "success.jsp"),
-                new File(POST, "index.html"),
                 new File(POST, "post-loggedin.html"),
                 new File(GET, "success.jsp"),
-                new File(GET, "index.html"),
                 new File(GET, "get-loggedin.html")
         });
 
