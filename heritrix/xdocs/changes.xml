@@ -5,6 +5,10 @@
   </properties>
   <body>
                                                                                 
+    <release version="0.8.1" date="2004-05-28 12:00">
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=962361">080 doesn't build with maven rc2+</a></action>
+    </release>
+
     <release version="0.8.0" date="2004-05-18 14:00">
 <action dev="stack-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=939032">integrate selftest into cruisecontrol build</a></action>
 <action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=903078">On reedit, red star by bad attribute setting.</a></action>
