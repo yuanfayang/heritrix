@@ -312,19 +312,39 @@ public class Heritrix
         }
         return dir;
     }
+    
+    /**
+     * @param key Property key.
+     * @return Named property or null if the property is null or empty.
+     */
+    protected static String getPropertyOrNull(String key) {
+        String value = (String)Heritrix.properties.get(key);
+        return (value == null || value.length() <= 0)? null: value;
+    }
+    
+    /**
+     * @param key Property key.
+     * @return Boolean value or false if null or unreadable.
+     */
+    protected static boolean getBooleanProperty(String key) {
+        return (getPropertyOrNull(key) == null)?
+            false: Boolean.valueOf(getPropertyOrNull(key)).booleanValue();
+    }
 
     protected static void doStart(String [] args)
-        throws Exception
-    {
-        int port = (Heritrix.properties.get("heritrix.port") == null)?
-            SimpleHttpServer.DEFAULT_PORT:
-            Integer.parseInt((String)Heritrix.properties.get("heritrix.port"));
-        String adminLoginPassword =
-            (Heritrix.properties.get("heritrix.admin.login") == null)?
-                "admin:letmein":
-                (String)Heritrix.properties.get("heritrix.admin.login");
-        String crawlOrderFile = null;
-        boolean runMode = false;
+    throws Exception {
+        // Get defaults for commandline arguments from the properties file.
+        String tmpStr = getPropertyOrNull("heritrix.cmdline.port");
+        int port = (tmpStr == null)?
+            SimpleHttpServer.DEFAULT_PORT: Integer.parseInt(tmpStr);
+        tmpStr = getPropertyOrNull("heritrix.cmdline.admin");
+        String adminLoginPassword = (tmpStr == null)?
+            "admin:letmein": tmpStr;
+        String crawlOrderFile = getPropertyOrNull("heritrix.cmdline.order");
+        tmpStr = getPropertyOrNull("heritrix.cmdline.run");
+        boolean runMode = getBooleanProperty("heritrix.cmdline.run");
+        boolean noWui = getBooleanProperty("heritrix.cmdline.nowui");    
+        
         boolean selfTest = false;
         String selfTestName = null;
 
@@ -334,29 +354,25 @@ public class Heritrix
 
         // Check passed argument.  Only one argument, the ORDER_FILE is allowed.
         // If one argument, make sure exists and xml suffix.
-        if (arguments.size() > 1)
-        {
+        if (arguments.size() > 1) {
             clp.usage(1);
         } else if (arguments.size() == 1) {
             crawlOrderFile = (String)arguments.get(0);
-            if (!(new File(crawlOrderFile).exists()))
-            {
+            if (!(new File(crawlOrderFile).exists())) {
                 clp.usage("ORDER_FILE <" + crawlOrderFile +
                     "> specified does not exist.", 1);
             }
             // Must end with '.xml'
             if (crawlOrderFile.length() > 4 &&
                     !crawlOrderFile.substring(crawlOrderFile.length() - 4).
-                        equalsIgnoreCase(".xml"))
-            {
+                        equalsIgnoreCase(".xml")) {
                 clp.usage("ORDER_FILE <" + crawlOrderFile +
                     "> does not have required '.xml' suffix.", 1);
             }
         }
 
         // Now look at options passed.
-        for (int i = 0; i < options.length; i++)
-        {
+        for (int i = 0; i < options.length; i++) {
             switch(options[i].getId())
             {
                 case 'h':
@@ -371,8 +387,7 @@ public class Heritrix
                     break;
 
                 case 'n':
-                    if (crawlOrderFile == null)
-                    {
+                    if (crawlOrderFile == null) {
                         clp.usage("You must specify an ORDER_FILE with" +
                             " '--nowui' option.", 1);
                     }
@@ -380,17 +395,13 @@ public class Heritrix
                     break;
 
                 case 'p':
-                    try
-                    {
+                    try {
                         port = Integer.parseInt(options[i].getValue());
-                    }
-                    catch (NumberFormatException e)
-                    {
+                    } catch (NumberFormatException e) {
                         clp.usage("Failed parse of port number: " +
                             options[i].getValue(), 1);
                     }
-                    if (port <= 0)
-                    {
+                    if (port <= 0) {
                         clp.usage("Nonsensical port number: " +
                             options[i].getValue(), 1);
                     }
@@ -411,39 +422,30 @@ public class Heritrix
         }
 
         // Ok, we should now have everything to launch the program.
-        if (selfTest)
-        {
+        if (selfTest) {
             // If more than just '--selftest' and '--port' passed, then
             // there is confusion on what is being asked of us.  Print usage
             // rather than proceed.
-            for (int i = 0; i < options.length; i++)
-            {
-                if (options[i].getId() != 'p' && options[i].getId() != 's')
-                {
+            for (int i = 0; i < options.length; i++) {
+                if (options[i].getId() != 'p' && options[i].getId() != 's') {
                     clp.usage(1);
                 }
             }
 
-            if (arguments.size() > 0)
-            {
+            if (arguments.size() > 0) {
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
             selftest(selfTestName, port);
-        }
-        else if (noWui)
-        {
-            if (options.length > 1)
-            {
+        } else if (noWui) {
+            if (options.length > 1) {
                 // If more than just '--nowui' passed, then there is
                 // confusion on what is being asked of us.  Print usage
                 // rather than proceed.
                 clp.usage(1);
             }
             launch(crawlOrderFile);
-        }
-        else
-        {
+        } else {
             launch(crawlOrderFile, runMode, port, adminLoginPassword);
         }
     }
