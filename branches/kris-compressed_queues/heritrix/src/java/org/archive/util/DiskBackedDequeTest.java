@@ -73,7 +73,7 @@ public class DiskBackedDequeTest extends DiskBackedQueueTest {
 
     protected Queue makeQueue() {
         try {
-            return new DiskBackedDeque(getTmpDir(),"foo",false,5);
+            return new DiskBackedDeque(getTmpDir(),"foo",false,true,5);
         } catch (final IOException e) {
             fail("Caught IO Exception on creation of deque : " + e.getMessage());
             // never gets here

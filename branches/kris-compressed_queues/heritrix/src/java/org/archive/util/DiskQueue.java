@@ -79,6 +79,7 @@ public class DiskQueue implements Queue, Serializable {
     private boolean isInitialized = false;
     
     private boolean reuse;
+    private boolean compress;
 
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
@@ -88,9 +89,11 @@ public class DiskQueue implements Queue, Serializable {
      * @param dir the directory in which to create the data files
      * @param prefix
      * @param reuse whether to reuse any existing backing files
+     * @param compress should data written to disk be compressed
      * @throws IOException if we cannot create an appropriate file
      */
-    public DiskQueue(File dir, String prefix, boolean reuse) throws IOException {
+    public DiskQueue(File dir, String prefix, boolean reuse, boolean compress) 
+            throws IOException {
         if(dir == null || prefix == null) {
             throw new FileNotFoundException("null arguments not accepted");
         }
@@ -99,6 +102,7 @@ public class DiskQueue implements Queue, Serializable {
         this.prefix = prefix;
         this.scratchDir = dir;
         this.reuse = reuse;
+        this.compress = compress;
         // test minimally if supplied disk paths are sensible
         if(dir.exists()==false) {
             if(dir.mkdirs()==false) {
@@ -116,12 +120,12 @@ public class DiskQueue implements Queue, Serializable {
      * @throws IOException
      */
     public DiskQueue(File file, String file_prefix) throws IOException {
-        this(file,file_prefix,false);
+        this(file,file_prefix,false,false);
     }
 
     private void lazyInitialize() throws FileNotFoundException, IOException {
         if(bytes==null) {
-            bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
+            bytes = new DiskByteQueue(scratchDir, this.prefix, reuse, compress);
             bytes.initializeStreams(0);
         }
         testStream = new ObjectOutputStream(new DevNull());        

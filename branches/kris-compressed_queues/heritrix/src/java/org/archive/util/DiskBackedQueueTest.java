@@ -73,7 +73,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
 
     protected Queue makeQueue() {
         try {
-            return new DiskBackedQueue(getTmpDir(), "foo", false, 5);
+            return new DiskBackedQueue(getTmpDir(), "foo", false, true, 5);
         } catch (final IOException e) {
             fail("Caught IO Exception on creation of queue : " + e.getMessage());
             // never gets here

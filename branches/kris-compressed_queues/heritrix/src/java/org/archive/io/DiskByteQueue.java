@@ -38,6 +38,8 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.io.Serializable;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
@@ -68,6 +70,9 @@ public class DiskByteQueue implements Serializable {
     transient FlipFileInputStream headStream;   // read stream
     long rememberedPosition = -1;
     transient FlipFileOutputStream tailStream;  // write stream
+    transient long readSinceLastFlip = 0;
+    
+    boolean compress;
     
     /**
      * Create a new BiskBackedByteQueue in the given directory with given 
@@ -76,8 +81,12 @@ public class DiskByteQueue implements Serializable {
      * @param tempDir
      * @param backingFilenamePrefix
      * @param reuse whether to reuse any prexisting backing files
+     * @param compress whether to compress data being written to disk
      */
-    public DiskByteQueue(File tempDir, String backingFilenamePrefix, boolean reuse) {
+    public DiskByteQueue(File tempDir, 
+                         String backingFilenamePrefix, 
+                         boolean reuse,
+                         boolean compress) {
         super();
         this.tempDir = tempDir;
         this.backingFilenamePrefix=backingFilenamePrefix;
@@ -93,6 +102,8 @@ public class DiskByteQueue implements Serializable {
                 outFile.delete();
             }
         }
+        
+        this.compress = compress;
     }
     
     /**
@@ -146,7 +157,6 @@ public class DiskByteQueue implements Serializable {
      * @throws IOException
      */
     public InputStream getReadAllInputStream() throws IOException {
-        tailStream.flush();
         // Get the head file, move the input stream for it to the current
         // position and wrap in a bufferedInputStream
         BufferedInputStream inStream1;
@@ -155,17 +165,31 @@ public class DiskByteQueue implements Serializable {
             inStream1 = null;
         } else {
             FileInputStream tmpFileStream1 = new FileInputStream(inFile);
-            tmpFileStream1.getChannel().position(
-                    headStream.getReadPosition());
-            inStream1 = new BufferedInputStream(tmpFileStream1, 4096);
+            if(compress){
+                GZIPInputStream tmpZipStream1 = new GZIPInputStream(tmpFileStream1);
+                inStream1 = new BufferedInputStream(tmpZipStream1, 4096);
+                // Need to skip ahead to right position or else we'll 
+                // get item's that have been removed from the queue first
+                inStream1.skip(headStream.position);
+            } else {
+                tmpFileStream1.getChannel().position(
+                        headStream.getReadPosition());
+                inStream1 = new BufferedInputStream(tmpFileStream1, 4096);
+            }
         }
         
         // Get the tail file, alright to read it from start. Wrap it up.
         tailStream.flush(); // Let's make sure nothing is stuck in buffers.
         FileInputStream tmpFileStream2 = new FileInputStream(
                 outFile);
-        BufferedInputStream inStream2 = new BufferedInputStream(tmpFileStream2,
-                4096);
+        
+        BufferedInputStream inStream2;
+        if(compress){
+            GZIPInputStream tmpZipStream2 = new GZIPInputStream(tmpFileStream2);
+            inStream2 = new BufferedInputStream(tmpZipStream2, 4096);
+        } else {
+        	inStream2 = new BufferedInputStream(tmpFileStream2, 4096);
+        }
         
         // Create input stream with object stream header and then wrap it up
         // along with the two input streams in a SequenceInputStream and return it.
@@ -254,18 +278,24 @@ public class DiskByteQueue implements Serializable {
     class FlipFileOutputStream extends OutputStream {        
         BufferedOutputStream outStream;
         FileOutputStream fileStream;
+        GZIPOutputStream compressedStream;
         
         /**
          * Constructor
          * @throws FileNotFoundException if unable to create FileOutStream.
          */
-        public FlipFileOutputStream() throws FileNotFoundException  {
+        public FlipFileOutputStream() throws IOException  {
             setupStreams();
         }
         
-        protected void setupStreams() throws FileNotFoundException {
+        protected void setupStreams() throws IOException {
             fileStream = new FileOutputStream(outFile,true);
-            outStream = new BufferedOutputStream(fileStream, 4096);
+            if(compress){
+            	compressedStream = new GZIPOutputStream(fileStream);
+                outStream = new BufferedOutputStream(compressedStream, 4096);
+            } else {
+                outStream = new BufferedOutputStream(fileStream, 4096);
+            }
         }
         
         /** (non-Javadoc)
@@ -317,6 +347,7 @@ public class DiskByteQueue implements Serializable {
     public class FlipFileInputStream extends InputStream {
         FileInputStream fileStream;
         InputStream inStream;
+        GZIPInputStream compressedStream;
         long position;
         
         /**
@@ -387,9 +418,22 @@ public class DiskByteQueue implements Serializable {
         }
         
         private void setupStreams(long readPosition) throws IOException {
-            inFile.createNewFile(); // if does not already exist
+            if(inFile.createNewFile() && compress){
+                 // Creating a new file, need to write GZIPHeader into it.
+                FileOutputStream tmp1 = new FileOutputStream(inFile);
+                GZIPOutputStream tmp2 = new GZIPOutputStream(tmp1);
+                tmp2.finish();
+                tmp2.flush();
+                tmp2.close();
+                tmp1.flush();
+            }
             fileStream = new FileInputStream(inFile);
-            inStream = new BufferedInputStream(fileStream,4096);
+            if(compress){
+                compressedStream = new GZIPInputStream(fileStream);
+                inStream = new BufferedInputStream(compressedStream, 4096);
+            } else {
+                inStream = new BufferedInputStream(fileStream, 4096);
+            }
             inStream.skip(readPosition);
             position = readPosition;
         }

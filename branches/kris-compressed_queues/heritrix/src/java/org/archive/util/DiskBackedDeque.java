@@ -44,8 +44,13 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
      * @param headMax
      * @throws IOException
      */
-    public DiskBackedDeque(File dir, String name, boolean reuse, int headMax) throws IOException {
-        super(dir, name, reuse, headMax);
+    public DiskBackedDeque(File dir, 
+                           String name, 
+                           boolean reuse,
+                           boolean compress,
+                           int headMax) 
+            throws IOException {
+        super(dir, name, reuse, compress, headMax);
         stack = new DiskStack(new File(dir,name+".top"));
     }
     

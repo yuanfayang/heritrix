@@ -137,6 +137,10 @@ public class Frontier
     public final static String ATTR_HOST_QUEUES_MEMORY_CAPACITY =
         "host-queues-memory-capacity";
 
+    /** compress disk bound portions of queues */
+    public final static String ATTR_COMPRESS_ONDISK_QUEUES =
+        "compress-ondisk-queues";
+
 
     protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
     protected final static Integer DEFAULT_MIN_DELAY = new Integer(500);
@@ -149,12 +153,12 @@ public class Frontier
         new Integer(0);
     protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
         new Integer(0);
-
     protected final static Integer DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY =
         new Integer(10000);
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
-
+    protected final static Boolean DEFAULT_COMPRESS_ONDISK_QUEUES =
+        new Boolean(false);
     
     protected final static float KILO_FACTOR = 1.024F;
 
@@ -281,6 +285,13 @@ public class Frontier
                 " value will require more disk I/O.",
                 DEFAULT_HOST_QUEUES_MEMORY_CAPACITY));
         t.setExpertSetting(true);
+        t = addElementToDefinition(
+                new SimpleType(ATTR_COMPRESS_ONDISK_QUEUES,
+                "If set to true then the parts of URI queues that get pushed " +
+                "to disk will be compressed. This saves disk space at the " +
+                "expense of performance. By default this is disabled.",
+                DEFAULT_COMPRESS_ONDISK_QUEUES));
+        t.setExpertSetting(true);
     }
 
     /**
@@ -316,6 +327,8 @@ public class Frontier
                     dir,
                     filePrefix,
                     false,
+                    ((Boolean) getAttribute(ATTR_COMPRESS_ONDISK_QUEUES))
+                        .booleanValue(),
                     ((Integer) getAttribute(ATTR_PENDING_QUEUE_MEMORY_CAPACITY))
                         .intValue());
         } catch (AttributeNotFoundException e) {
@@ -894,8 +907,10 @@ public class Frontier
                 try {
 					kq = new KeyedQueue(curi.getClassKey(), 
 					    this.controller.getStateDisk(),
-					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                                ,curi)).intValue());
+                        ((Boolean) getAttribute(ATTR_COMPRESS_ONDISK_QUEUES,
+                                curi)).booleanValue(),
+					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
+                                curi)).intValue());
 				} catch (AttributeNotFoundException e3) {
                     logger.severe(e3.getMessage());
 				}

@@ -74,7 +74,7 @@ public class DiskQueueTest extends QueueTestBase {
      */
     protected Queue makeQueue() {
         try {
-            return new DiskQueue(getTmpDir(), FILE_PREFIX);
+            return new DiskQueue(getTmpDir(), FILE_PREFIX, false, true);
         } catch (IOException e) {
             fail("IOException: " + e.getMessage());
             // never gets here
@@ -123,10 +123,11 @@ public class DiskQueueTest extends QueueTestBase {
      * @throws IOException
      */
     public void testIterator() throws IOException {
-        DiskQueue queue = new DiskQueue(getTmpDir(), "bar");
+        DiskQueue queue = new DiskQueue(getTmpDir(), "bar", false, true);
         queue.enqueue("Item 1");
         queue.enqueue("Item 2");
         queue.enqueue("Item 3");
+        
         Iterator it = queue.getIterator(false);
         assertTrue("disk queue iterator has first item (no dequeues have been made)",it.hasNext());
         assertEquals("disk queue iterator checking item 1 (no dequeues have been made)","Item 1",(String)it.next());
@@ -140,7 +141,38 @@ public class DiskQueueTest extends QueueTestBase {
         assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());
         assertEquals("disk queue iterator checking item 4","Item 5",(String)it.next());
         assertFalse("disk queue iterator ends correctly",it.hasNext());
+        queue.release();
     }
+
+    public void testIteratorHandoff() throws IOException {
+        // Test if the iterator successfully crosses from the 'read' section
+        // and to the 'write' section of the queue. Also tests if it starts 
+        // at the current read position.
+        DiskQueue queue = new DiskQueue(getTmpDir(), "bar2", false, true);
+        queue.enqueue("Item 0");
+        queue.enqueue("Item 1");
+        queue.enqueue("Item 2");
+        queue.enqueue("Item 3");
+        queue.dequeue();
+        // 3 items (1-3) in 'read' queue.
+        queue.enqueue("Item 4");
+        queue.enqueue("Item 5");
+        queue.enqueue("Item 6");
+        // and another 3 in the 'write' queue
+       
+        Iterator it = queue.getIterator(false);
+        assertTrue("disk queue iterator has first item",it.hasNext());
+        assertEquals("disk queue iterator checking item 1","Item 1",(String)it.next());
+        assertEquals("disk queue iterator checking item 2","Item 2",(String)it.next());
+        assertEquals("disk queue iterator checking item 3","Item 3",(String)it.next());
+        // Finished reading from 'read' section, next item will be from 'write'.
+        assertEquals("disk queue iterator checking item 4","Item 4",(String)it.next());
+        assertEquals("disk queue iterator checking item 5","Item 5",(String)it.next());
+        assertEquals("disk queue iterator checking item 6","Item 6",(String)it.next());
+        assertFalse("disk queue iterator ends correctly",it.hasNext());
+    }
+
+
 }
 
 
