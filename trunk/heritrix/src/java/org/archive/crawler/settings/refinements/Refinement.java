@@ -43,9 +43,13 @@ import org.archive.crawler.settings.CrawlerSettings;
 public class Refinement {
     private final CrawlerSettings owner;
     private String description;
+    private String operator = "Admin";
+    private String organization = "";
+    private String audience = "";
     private String reference;
     private List criteria = new ArrayList();
     
+
     /**
      * Create a new instance of Refinement
      * 
@@ -167,5 +171,42 @@ public class Refinement {
             return true;
         }
         return false;
+    }
+    
+    /**
+     * @return Returns the audience.
+     */
+    public String getAudience() {
+        return this.audience;
+    }
+    /**
+     * @param audience The audience to set.
+     */
+    public void setAudience(String audience) {
+        this.audience = audience;
+    }
+    /**
+     * @return Returns the operator.
+     */
+    public String getOperator() {
+        return this.operator;
+    }
+    /**
+     * @param operator The operator to set.
+     */
+    public void setOperator(String operator) {
+        this.operator = operator;
+    }
+    /**
+     * @return Returns the organziation.
+     */
+    public String getOrganization() {
+        return this.organization;
+    }
+    /**
+     * @param organziation The organziation to set.
+     */
+    public void setOrganization(String organization) {
+        this.organization = organization;
     }
 }

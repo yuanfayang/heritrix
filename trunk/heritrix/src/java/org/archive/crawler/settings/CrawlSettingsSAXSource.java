@@ -305,6 +305,18 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         // Write settings description
         writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION, settings
                 .getDescription(), null, indent + indentAmount);
+        
+        // Write settings operator
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_OPERATOR, settings
+                .getOperator(), null, indent + indentAmount);
+        
+        // Write settings description
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_ORGANIZATION, settings
+                .getOrganization(), null, indent + indentAmount);
+        
+        // Write settings description
+        writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_AUDIENCE, settings
+                .getAudience(), null, indent + indentAmount);
 
         // Write file date
         String dateStamp = ArchiveUtils.get14DigitDate();

@@ -76,6 +76,9 @@ public class XMLSettingsHandler extends SettingsHandler {
     protected static final String XML_ELEMENT_META = "meta";
     protected static final String XML_ELEMENT_NAME = "name";
     protected static final String XML_ELEMENT_DESCRIPTION = "description";
+    protected static final String XML_ELEMENT_OPERATOR = "operator";
+    protected static final String XML_ELEMENT_ORGANIZATION = "organization";
+    protected static final String XML_ELEMENT_AUDIENCE = "audience";
     protected static final String XML_ELEMENT_DATE = "date";
     protected static final String XML_ELEMENT_REFINEMENTLIST = "refinement-list";
     protected static final String XML_ELEMENT_REFINEMENT = "refinement";
