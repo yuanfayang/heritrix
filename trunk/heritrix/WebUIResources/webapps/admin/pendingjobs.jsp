@@ -1,8 +1,8 @@
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.ArrayList" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
 
 <%
-	ArrayList jobs = handler.getPendingJobs();
+	Vector jobs = handler.getPendingJobs();
 %>
 
 <html>

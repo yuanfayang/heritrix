@@ -1,5 +1,5 @@
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob" %>
 
 <jsp:useBean id="textutils" class="org.archive.crawler.admin.TextUtils" scope="application">
 </jsp:useBean>
@@ -17,7 +17,7 @@
 	if(handler.getCurrentJob() != null)
 	{
 		// Use current job settings rather then default
-		crawlOrder = CrawlOrder.readFromFile(handler.getCurrentJob().getOrderFile());
+		crawlOrder = handler.getCurrentJob().getCrawlOrder();
 	}
 	
 	String fileName = request.getParameter("log");

@@ -1,8 +1,8 @@
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.util.ArrayList" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.util.Vector" %>
 
 <%
-	ArrayList jobs = handler.getCompletedJobs();
+	Vector jobs = handler.getCompletedJobs();
 %>
 
 <html>
@@ -35,8 +35,8 @@
 							<%=job.getStatus()%>
 						</td>
 						<td>
-							<a href="">View order</a>
-							<a href="">View statistics</a>
+							<a href="viewjob.jsp?name=<%=job.getJobName()%>">View order</a>
+							<a href="viewstatistics.jsp?name=<%=job.getJobName()%>">View statistics</a>
 						</td>
 					</tr>
 			<%

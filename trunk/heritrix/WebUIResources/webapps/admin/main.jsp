@@ -33,13 +33,11 @@
 	
 	<body>
 	
-	<p> CRAWLER STATUS
-		<br>
+	<p>
 		<fieldset style="width: 600px">
-			<legend>Status</legend>
-			<iframe name="frmStatus" src="/admin/status.jsp?time=10" width="730" height="200" frameborder="0" ></iframe>
+			<legend>Crawler status</legend>
+			<iframe name="frmStatus" src="/admin/status.jsp?time=10" width="730" height="170" frameborder="0" ></iframe>
 		</fieldset><br>
-		ACTIONS:
 		<%
 			if(handler.shouldcrawl())
 			{
@@ -49,13 +47,17 @@
 			{
 				out.println("<a href='main.jsp?action=start'>Start crawling</a>");
 			}
-			
+		%>
+		|
+		<%
 			if(handler.isCrawling())
 			{
-				out.println("<a href='main.jsp?action=terminate'>Terminate current job</a>");
+				out.println("<a href='main.jsp?action=terminate'>Terminate current job</a> |");
 			}
 		%>
-		<a href="newjob.jsp">New job</a> <a href="pendingjobs.jsp">View pending jobs</a> <a href="completedjobs.jsp">View completed jobs</a>
+		<a href="newjob.jsp">New job</a>
+		| <a href="pendingjobs.jsp">View pending jobs</a> 
+		| <a href="completedjobs.jsp">View completed jobs</a>
 	<p> OPTIONS
 	
 		<ul>
