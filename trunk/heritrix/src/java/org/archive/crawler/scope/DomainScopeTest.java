@@ -28,7 +28,6 @@ package org.archive.crawler.scope;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -42,7 +41,7 @@ import org.archive.crawler.datamodel.UURIFactory;
  */
 public class DomainScopeTest extends TestCase {
 
-    private ArrayList seeds;
+    private ArrayList testSeeds;
     private ArrayList urlsInScope;
     private ArrayList urlsOutOfScope;
 
@@ -52,18 +51,21 @@ public class DomainScopeTest extends TestCase {
      * Since testing only focus filter overwrite all other filter to return
      * false.
      *
-     * Also overwrite getSeedlsit so the test seeds is used.
+     * Also override seedsIterator so the test seeds are used.
      */
     private class TestUnitDomainScope extends DomainScope {
 
         public TestUnitDomainScope(String name) {
             super(name);
         }
-
-        public List getSeedlist() {
-            return seeds;
+        
+        /* Force test seeds to be used. 
+         * @see org.archive.crawler.framework.CrawlScope#seedsIterator()
+         */
+        public Iterator seedsIterator() {
+            return testSeeds.iterator();
         }
-
+        
         protected boolean additionalFocusAccepts(Object o) {
             return false;
         }
@@ -78,18 +80,18 @@ public class DomainScopeTest extends TestCase {
     }
 
     public void setUp() throws URIException {
-        seeds = new ArrayList();
+        testSeeds = new ArrayList();
         urlsInScope = new ArrayList();
         urlsOutOfScope = new ArrayList();
         dc = new TestUnitDomainScope("TESTCASE");
 
         // Add seeds
-        addURL(seeds, "http://www.a.com/");
-        addURL(seeds, "http://b.com/");
-        addURL(seeds, "http://www11.c.com");
-        addURL(seeds, "http://www.x.y.z.com/index.html");
-        addURL(seeds, "http://www.1.com/index.html");
-        addURL(seeds, "http://www.a_b.com/index.html");
+        addURL(testSeeds, "http://www.a.com/");
+        addURL(testSeeds, "http://b.com/");
+        addURL(testSeeds, "http://www11.c.com");
+        addURL(testSeeds, "http://www.x.y.z.com/index.html");
+        addURL(testSeeds, "http://www.1.com/index.html");
+        addURL(testSeeds, "http://www.a_b.com/index.html");
 
 
         // Add urls in domain scope
