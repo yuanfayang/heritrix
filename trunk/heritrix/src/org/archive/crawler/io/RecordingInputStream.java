@@ -9,8 +9,6 @@ package org.archive.crawler.io;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.swing.text.Position;
-
 import org.archive.util.NullOutputStream;
 
 /**
@@ -80,6 +78,13 @@ public class RecordingInputStream extends InputStream {
 	 */
 	public void markResponseBodyStart() {
 		recordingOutputStream.markResponseBodyStart();
+	}
+
+	/**
+	 * @return
+	 */
+	public CharSequence getCharSequence() {
+		return recordingOutputStream.getCharSequence();
 	}
 
 }

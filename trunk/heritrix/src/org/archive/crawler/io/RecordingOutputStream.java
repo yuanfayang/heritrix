@@ -132,4 +132,18 @@ public class RecordingOutputStream extends OutputStream {
 		responseBodyStart = position;
 	}
 
+
+	/**
+	 * @return
+	 */
+	public CharSequence getCharSequence() {
+		try {
+			return new ReplayCharSequence(buffer,size,responseBodyStart,backingFilename);
+		} catch (IOException e) {
+			// TODO convert to runtime exception?
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 }
