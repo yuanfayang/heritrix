@@ -24,11 +24,12 @@ public interface FetchStatusCodes {
 	public static int S_CONNECT_FAILED = -2;
 	public static int S_CONNECT_LOST = -3;
 	public static int S_TIMEOUT = -4;
-	public static int S_INTERNAL_ERROR = -5;
+	public static int S_RUNTIME_EXCEPTION = -5;
 	public static int S_PREREQUISITE_FAILURE = -6;
 	public static int S_UNFETCHABLE_URI = -7;
 	public static int S_TOO_MANY_RETRIES = -8;
 
+	public static int S_SERIOUS_ERROR = -3000;
 	public static int S_DEFERRED = -50;
 
 	public static int S_ROBOTS_PRECLUDED = -9998;
